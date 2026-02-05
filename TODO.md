@@ -49,6 +49,25 @@ Go to: Repository → Settings → Secrets and variables → Actions
   git push -u origin dev
   ```
 
+## Pre-Production Database Cleanup
+
+Before deploying to production, squash all development migrations into a clean initial schema:
+
+- [ ] Consolidate migrations into single `00001_initial_schema.sql`:
+  ```bash
+  # 1. Delete all files in supabase/migrations/
+  # 2. Create clean 00001_initial_schema.sql with final schema
+  # 3. Reset staging database to verify it works:
+  #    - Clear migration history in Supabase Dashboard (SQL Editor):
+  #      DELETE FROM supabase_migrations.schema_migrations;
+  #    - Push fresh: npx supabase db push
+  # 4. Commit the consolidated migration
+  ```
+
+**Why:** During development, we accumulate fix/repair migrations (00005, 00006, 00007, etc.). These clutter the history and make it hard to understand the final schema. Squashing gives production a clean starting point.
+
+**Important:** Only do this BEFORE production has real users. After launch, you must keep all migrations for the audit trail.
+
 ## Post-Deployment Verification
 
 - [ ] Verify staging deployment works on Vercel preview URL
