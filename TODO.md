@@ -34,20 +34,16 @@
 
 Go to: Repository → Settings → Secrets and variables → Actions
 
-- [ ] `SUPABASE_ACCESS_TOKEN` - Personal access token from [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens)
-- [ ] `SUPABASE_STAGING_PROJECT_REF` = `dbcozhkmfsczwgduizkg`
+- [x] `SUPABASE_ACCESS_TOKEN` - Personal access token from [supabase.com/dashboard/account/tokens](https://supabase.com/dashboard/account/tokens)
+- [x] `SUPABASE_STAGING_PROJECT_REF` = `dbcozhkmfsczwgduizkg`
 - [ ] `SUPABASE_PROD_PROJECT_REF` = (your prod project ref)
-- [ ] `NEXT_PUBLIC_SUPABASE_URL` = `https://dbcozhkmfsczwgduizkg.supabase.co` (staging, for CI builds)
-- [ ] `NEXT_PUBLIC_SUPABASE_ANON_KEY` = staging anon key (for CI builds)
+- [x] `NEXT_PUBLIC_SUPABASE_URL` = staging URL (for CI builds)
+- [x] `NEXT_PUBLIC_SUPABASE_ANON_KEY` = staging anon key (for CI builds)
 
 ## Git Branches
 
 - [x] Push `main` branch (production)
-- [ ] Create and push `dev` branch (staging):
-  ```bash
-  git checkout -b dev
-  git push -u origin dev
-  ```
+- [x] Create and push `dev` branch (staging)
 
 ## Pre-Production Database Cleanup
 
@@ -75,3 +71,16 @@ Before deploying to production, squash all development migrations into a clean i
 - [ ] Test user registration flow
 - [ ] Test login flow (email and gamer username)
 - [ ] Verify RLS policies are working (users can only see their own data)
+
+## Future Improvements
+
+### E2E Tests with Real Database
+
+Current E2E tests are smoke tests that verify pages render correctly but don't test actual Supabase interactions. Consider adding critical path tests that connect to staging:
+
+- [ ] Add E2E tests for real auth flows (register, login, logout)
+- [ ] Add E2E tests for customer adding a gamer
+- [ ] Add E2E tests for core purchase flow
+- [ ] Set up test user cleanup after each run
+
+**Why:** RLS policies and role-based routing are complex enough that testing against the real DB catches integration bugs that mocked tests miss.
