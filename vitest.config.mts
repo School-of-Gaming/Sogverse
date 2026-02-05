@@ -14,6 +14,7 @@ export default defineConfig({
       exclude: [
         "node_modules/",
         "tests/",
+        ".next/",
         "**/*.d.ts",
         "**/*.config.*",
         "**/types/**",
