@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Menu, X, LogOut, Settings, User } from "lucide-react";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Menu, X, LogOut, Settings } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/providers";
@@ -18,12 +18,33 @@ const publicNavLinks = [
 
 export function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, profile, signOut, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
     : null;
+
+  const handleSignOut = () => {
+    setDropdownOpen(false);
+    signOut();
+    router.push("/");
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const getInitials = () => {
     if (profile?.display_name) {
@@ -84,8 +105,11 @@ export function Header() {
                   </Button>
                 </Link>
               )}
-              <div className="relative group">
-                <button className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-ring">
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-ring"
+                >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={profile?.avatar_url || undefined} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs">
@@ -93,30 +117,33 @@ export function Header() {
                     </AvatarFallback>
                   </Avatar>
                 </button>
-                <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md border border-border bg-card py-1 shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                  <div className="px-4 py-2 border-b border-border">
-                    <p className="text-sm font-medium">
-                      {profile?.display_name || profile?.username}
-                    </p>
-                    <p className="text-xs text-muted-foreground capitalize">
-                      {profile?.role}
-                    </p>
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md border border-border bg-card py-1 shadow-lg">
+                    <div className="px-4 py-2 border-b border-border">
+                      <p className="text-sm font-medium">
+                        {profile?.display_name || profile?.username}
+                      </p>
+                      <p className="text-xs text-muted-foreground capitalize">
+                        {profile?.role}
+                      </p>
+                    </div>
+                    <Link
+                      href="/settings"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent"
+                    >
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      Sign Out
+                    </button>
                   </div>
-                  <Link
-                    href="/settings"
-                    className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </Link>
-                  <button
-                    onClick={signOut}
-                    className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent"
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
-                  </button>
-                </div>
+                )}
               </div>
             </div>
           ) : (
@@ -187,8 +214,8 @@ export function Header() {
                 </Link>
                 <button
                   onClick={() => {
-                    signOut();
                     setMobileMenuOpen(false);
+                    handleSignOut();
                   }}
                   className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent"
                 >

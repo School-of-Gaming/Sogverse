@@ -78,3 +78,21 @@ Migrations in `supabase/migrations/`. After schema changes:
 ```bash
 npm run supabase:gen-types
 ```
+
+### Remote Database Migrations
+
+This project uses a remote Supabase instance (not local Docker). To push migrations:
+
+1. **Link the project** (first time only):
+   ```bash
+   npx supabase link --project-ref dbcozhkmfsczwgduizkg
+   # Enter the database password from SUPABASE_DB_PASSWORD in .env.local when prompted
+   ```
+
+2. **Push migrations**:
+   ```bash
+   npx supabase db push
+   # Enter password when prompted, then confirm with Y
+   ```
+
+The database password is stored in `.env.local` as `SUPABASE_DB_PASSWORD`.

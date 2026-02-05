@@ -61,9 +61,17 @@ export function AuthProvider({
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      // Ignore abort errors during navigation
+      if (error instanceof Error && error.name === 'AbortError') {
+        return;
+      }
+      console.error('Sign out error:', error);
+    }
   };
 
   useEffect(() => {
