@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+/* SOG Brand Theme - Dark by default */
+:root {
+  /* Background colors */
+  --background: 0 0% 7%;           /* #121212 */
+  --foreground: 0 0% 93%;          /* #ededed */
+
+  /* Card/Surface colors */
+  --card: 0 0% 10%;                /* #1a1a1a */
+  --card-foreground: 0 0% 93%;
+
+  /* Popover colors */
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 93%;
+
+  /* Primary - SOG Purple */
+  --primary: 276 100% 44%;         /* #8F00E2 */
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary - SOG Yellow */
+  --secondary: 42 98% 49%;         /* #FAA901 */
+  --secondary-foreground: 0 0% 7%;
+
+  /* Muted colors */
+  --muted: 0 0% 15%;
+  --muted-foreground: 0 0% 65%;
+
+  /* Accent colors */
+  --accent: 276 100% 44%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Destructive colors */
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  /* Border colors */
+  --border: 0 0% 20%;
+  --input: 0 0% 20%;
+  --ring: 276 100% 44%;
+
+  /* Chart colors */
+  --chart-1: 276 100% 44%;
+  --chart-2: 42 98% 49%;
+  --chart-3: 160 60% 45%;
+  --chart-4: 200 80% 50%;
+  --chart-5: 340 75% 55%;
+
+  /* Radius */
+  --radius: 0.5rem;
+
+  /* Sidebar */
+  --sidebar-background: 0 0% 9%;
+  --sidebar-foreground: 0 0% 93%;
+  --sidebar-primary: 276 100% 44%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 15%;
+  --sidebar-accent-foreground: 0 0% 93%;
+  --sidebar-border: 0 0% 20%;
+  --sidebar-ring: 276 100% 44%;
+}
+
+/* Light theme override */
+.light {
+  --background: 0 0% 98%;
+  --foreground: 0 0% 7%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 7%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 7%;
+
+  --primary: 276 100% 44%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 42 98% 49%;
+  --secondary-foreground: 0 0% 7%;
+
+  --muted: 0 0% 93%;
+  --muted-foreground: 0 0% 40%;
+
+  --accent: 276 100% 44%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 0 0% 85%;
+  --input: 0 0% 85%;
+  --ring: 276 100% 44%;
+
+  --sidebar-background: 0 0% 96%;
+  --sidebar-foreground: 0 0% 7%;
+  --sidebar-primary: 276 100% 44%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 90%;
+  --sidebar-accent-foreground: 0 0% 7%;
+  --sidebar-border: 0 0% 85%;
+  --sidebar-ring: 276 100% 44%;
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+  --color-sidebar-background: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-press-start-2p);
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Utility classes for brand colors */
+.text-brand-purple {
+  color: hsl(276 100% 44%);
+}
+
+.text-brand-yellow {
+  color: hsl(42 98% 49%);
+}
+
+.bg-brand-purple {
+  background-color: hsl(276 100% 44%);
+}
+
+.bg-brand-yellow {
+  background-color: hsl(42 98% 49%);
+}
+
+/* Gaming-inspired glow effects */
+.glow-purple {
+  box-shadow: 0 0 20px hsla(276, 100%, 44%, 0.5);
+}
+
+.glow-yellow {
+  box-shadow: 0 0 20px hsla(42, 98%, 49%, 0.5);
+}
+
+/* Scrollbar styling for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}

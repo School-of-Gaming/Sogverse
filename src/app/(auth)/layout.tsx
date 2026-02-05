@@ -1,0 +1,16 @@
+import { Footer } from "@/components/layout";
+
+export default function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col">
+      <main className="flex flex-1 items-center justify-center p-4">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  );
+}
