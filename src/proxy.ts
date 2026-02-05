@@ -17,7 +17,7 @@ const ROLE_ROUTES: Record<string, string> = {
   gedu: "/gedu",
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Create response that can be modified
