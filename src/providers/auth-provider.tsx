@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { User } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 
@@ -37,6 +38,7 @@ export function AuthProvider({
   const [isLoading, setIsLoading] = useState(!initialUser);
 
   const supabase = getClient();
+  const queryClient = useQueryClient();
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -103,9 +105,13 @@ export function AuthProvider({
         setUser(session.user);
         const userProfile = await fetchProfile(session.user.id);
         setProfile(userProfile);
+        queryClient.invalidateQueries();
       } else if (event === "SIGNED_OUT") {
         setUser(null);
         setProfile(null);
+        queryClient.removeQueries();
+      } else if (event === "TOKEN_REFRESHED") {
+        queryClient.invalidateQueries();
       }
     });
 
