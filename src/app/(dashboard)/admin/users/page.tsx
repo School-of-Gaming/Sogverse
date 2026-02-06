@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Search, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,10 +36,12 @@ export default function AdminUsersPage() {
             Manage user accounts and permissions
           </p>
         </div>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add User
-        </Button>
+        <Link href="/admin/users/add">
+          <Button>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add User
+          </Button>
+        </Link>
       </div>
 
       <Card>

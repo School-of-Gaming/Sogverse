@@ -5,4 +5,5 @@ export {
   useUsersByRole,
   useSearchUsers,
   useUpdateProfile,
+  useCreateGedu,
 } from "./users.queries";

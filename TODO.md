@@ -101,10 +101,3 @@ Auth email templates (signup confirmation, password reset, etc.) are currently p
 
 **Why:** Supabase's built-in templates are developer-edited HTML. Brevo's visual editor lets marketing/design team members own the email branding and content without code changes.
 
-### Supabase Invitation Flow Support
-
-The app doesn't handle Supabase's invitation token flow. When an invited user clicks the email link, Supabase redirects to the site URL with tokens in the URL hash (`#access_token=...&type=invite`), but there's no client-side code to process them. The existing callback route (`src/app/api/auth/callback/route.ts`) only handles the PKCE code flow.
-
-- [ ] Add client-side detection of `#access_token` and `type=invite` hash params (e.g., on the home page or a dedicated `/auth/confirm` page)
-- [ ] Exchange the hash token for a session and redirect to the `/reset-password` page (already exists — reusable for setting an initial password)
-- [ ] Consider also handling `type=recovery` and `type=magiclink` hash tokens
