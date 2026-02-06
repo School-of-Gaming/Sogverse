@@ -97,6 +97,7 @@ export function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
               required
+              autoComplete="username"
             />
           </div>
           <div className="space-y-2">

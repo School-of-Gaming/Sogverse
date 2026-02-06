@@ -1,5 +1,4 @@
 import type { Profile, ParentGamer, CreateGamerInput } from "@/types";
-import { generateGamerEmail } from "@/lib/utils";
 
 // Using generic type to avoid version-specific Supabase type incompatibilities
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,59 +40,26 @@ export class GamerService {
   }
 
   async createGamerAccount(
-    parentId: string,
+    _parentId: string,
     input: CreateGamerInput
   ): Promise<{ gamer: Profile; link: ParentGamer }> {
-    // This requires the admin client to create the auth user
-    // The actual implementation would be in an API route that uses the admin client
-
-    const syntheticEmail = generateGamerEmail(input.username);
-
-    // Create auth user (this should be done server-side with admin client)
-    const { data: authData, error: authError } =
-      await this.supabase.auth.signUp({
-        email: syntheticEmail,
+    const response = await fetch("/api/gamers/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: input.username,
         password: input.password,
-        options: {
-          data: {
-            display_name: input.displayName || input.username,
-            role: "gamer",
-            username: input.username,
-          },
-        },
-      });
+        displayName: input.displayName,
+      }),
+    });
 
-    if (authError) throw authError;
-    if (!authData.user) throw new Error("Failed to create gamer account");
+    const data = await response.json();
 
-    // Wait a moment for the trigger to create the profile
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to create gamer account");
+    }
 
-    // Get the created profile
-    const { data: gamerProfile, error: profileError } = await this.supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", authData.user.id)
-      .single();
-
-    if (profileError) throw profileError;
-
-    // Create parent-gamer link
-    const { data: linkData, error: linkError } = await this.supabase
-      .from("parent_gamer")
-      .insert({
-        parent_id: parentId,
-        gamer_id: authData.user.id,
-      })
-      .select()
-      .single();
-
-    if (linkError) throw linkError;
-
-    return {
-      gamer: gamerProfile,
-      link: linkData,
-    };
+    return { gamer: data.gamer, link: data.link };
   }
 
   async linkGamer(parentId: string, gamerId: string): Promise<ParentGamer> {
