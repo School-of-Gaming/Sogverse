@@ -79,6 +79,18 @@ Current E2E tests are smoke tests that verify pages render correctly but don't t
 
 **Why:** RLS policies and role-based routing are complex enough that testing against the real DB catches integration bugs that mocked tests miss.
 
+### Brevo Domain Verification (Email Deliverability)
+
+Brevo SMTP is configured in Supabase for transactional emails (signup, password reset). The `sog.gg` domain still needs to be authenticated to:
+- Remove "via sendinblue.com" from sender info
+- Improve deliverability (avoid spam folder)
+
+Steps:
+- [ ] In Brevo: go to **Senders & IP** > **Domains** > **Add domain** (`sog.gg`)
+- [ ] Add the DNS TXT records Brevo provides (Brevo code + DKIM) to `sog.gg` DNS
+- [ ] Verify in Brevo by clicking **Check Configuration**
+- [ ] Rotate the Brevo SMTP key (current one was shared in plaintext) and update it in Supabase dashboard under **Authentication > SMTP Settings**
+
 ### Supabase Invitation Flow Support
 
 The app doesn't handle Supabase's invitation token flow. When an invited user clicks the email link, Supabase redirects to the site URL with tokens in the URL hash (`#access_token=...&type=invite`), but there's no client-side code to process them. The existing callback route (`src/app/api/auth/callback/route.ts`) only handles the PKCE code flow.
