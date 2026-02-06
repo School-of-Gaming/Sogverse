@@ -85,7 +85,8 @@ This project uses a remote Supabase instance (not local Docker). To push migrati
 
 1. **Link the project** (first time only):
    ```bash
-   npx supabase link --project-ref dbcozhkmfsczwgduizkg
+   npx supabase link --project-ref $SUPABASE_PROJECT_REF
+   # Get the project ref from SUPABASE_PROJECT_REF in .env.local
    # Enter the database password from SUPABASE_DB_PASSWORD in .env.local when prompted
    ```
 
