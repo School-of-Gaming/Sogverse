@@ -61,3 +61,6 @@ logs
 
 # Keep .env.local.example for reference
 !.env.local.example
+
+.vercel
+.env*.local
