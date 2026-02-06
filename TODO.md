@@ -91,6 +91,16 @@ Steps:
 - [ ] Verify in Brevo by clicking **Check Configuration**
 - [ ] Rotate the Brevo SMTP key (current one was shared in plaintext) and update it in Supabase dashboard under **Authentication > SMTP Settings**
 
+### Migrate Auth Email Templates to Brevo
+
+Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.
+
+- [ ] Create branded email templates in Brevo's visual editor (signup, password reset, magic link, etc.)
+- [ ] Set up Supabase Auth Hooks or Edge Functions to send emails via Brevo's template API instead of Supabase's built-in templates
+- [ ] Pass user data (name, email, confirmation URL) as template variables to Brevo
+
+**Why:** Supabase's built-in templates are developer-edited HTML. Brevo's visual editor lets marketing/design team members own the email branding and content without code changes.
+
 ### Supabase Invitation Flow Support
 
 The app doesn't handle Supabase's invitation token flow. When an invited user clicks the email link, Supabase redirects to the site URL with tokens in the URL hash (`#access_token=...&type=invite`), but there's no client-side code to process them. The existing callback route (`src/app/api/auth/callback/route.ts`) only handles the PKCE code flow.
