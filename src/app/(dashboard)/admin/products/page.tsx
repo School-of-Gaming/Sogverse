@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, Search, MoreVertical, Pencil, Trash, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,10 +41,12 @@ export default function AdminProductsPage() {
             Manage your product catalog
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        <Link href="/admin/products/add">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        </Link>
       </div>
 
       <Card>
