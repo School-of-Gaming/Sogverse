@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ const loginSchema = z.object({
 });
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,8 +57,10 @@ export function LoginForm() {
           ? ROLE_DASHBOARD_PATHS[role]
           : "/customer";
 
-        router.push(redirectTo || dashboardPath);
-        router.refresh();
+        // Full page navigation so the root layout re-runs server-side
+        // and hydrates AuthProvider with the correct initialProfile.
+        // Client-side router.push() doesn't re-initialize useState.
+        window.location.href = redirectTo || dashboardPath;
       }
     } catch (err) {
       if (err instanceof z.ZodError) {

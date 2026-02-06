@@ -2,81 +2,223 @@
 
 ## The Bug
 
-Three related symptoms, all intermittent:
+After leaving the browser tab for even a few minutes and returning, **all data-loading pages get stuck in a permanent loading state**. The UI still shows the user as signed in, but no data ever loads. A hard browser refresh (Ctrl+Shift+R) immediately fixes it.
 
-1. **Product creation hangs** on "Creating..." indefinitely
-2. **Pages stuck loading** during SPA navigation (dashboard -> Products), but load instantly after a full page reload
-3. **Broken sign-out state** — header shows signed out, but dashboard content still visible without sidebar
+Affected pages: Products, Users, and any page that makes Supabase data queries via React Query.
 
-The key observation: **it never hangs immediately after a page reload**, only during SPA navigation. And when stuck, the network tab shows no Supabase requests — the requests were queued in JavaScript and never reached the network.
+### Steps to Reproduce
 
-## Root Cause
+1. Login
+2. Go to Products and see that they load
+3. Click Home
+4. Shift+Ctrl+R to hard refresh while on Home
+5. Leave the tab and do something else for about 5 minutes
+6. Come back to the tab and navigate to Products
+7. **BUG**: Products fail to load but the UI still shows the user as signed in
 
-The Supabase browser client (`@supabase/auth-js` GoTrueClient) uses an internal lock queue (`Navigator.locks` API) to serialize auth operations like token refresh. When a token refresh gets stuck or times out inside this lock, **every subsequent Supabase request queues behind it and never executes**. A full page reload clears the JS state and the lock, which is why refreshing always fixed it.
+Key observations:
+- It **never** breaks immediately after a page reload — only after switching away from the tab and coming back
+- The network tab shows **no Supabase requests** — requests are queued in JavaScript and never reach the network
+- The user is **not** signed out — the UI correctly shows them as authenticated
+- A full page reload always fixes it immediately
 
-## Why This App Specifically?
+## Debugging History
 
-Most Supabase apps don't hit this because they rely solely on the browser client for session management. This app has a **dual refresh architecture**:
+### First Theory: `stopAutoRefresh()` Is a No-Op (Wrong Fix)
 
-- **`proxy.ts`** (server-side, runs on every navigation) refreshes the auth token via `supabase.auth.getUser()` and writes updated cookies
-- **Browser client** (`@supabase/ssr` `createBrowserClient`) runs `autoRefreshToken` by default, which fires `_autoRefreshTokenTick` every ~30 seconds
+**Theory**: The browser Supabase client was calling `stopAutoRefresh()` synchronously after `createBrowserClient()`, but GoTrueClient's `initialize()` is async. The init method re-registers the `visibilitychange` listener and starts auto-refresh *after* `stopAutoRefresh()` runs, making it a no-op. On tab return, `_recoverAndRefresh()` would fire, race with the proxy for token rotation, and potentially clear the session.
 
-Both independently try to refresh the same token. Supabase uses **refresh token rotation** — each refresh token is single-use. When the proxy and browser client race to refresh the same token, one wins and the other gets an invalid/already-used token. The loser's refresh call can fail or hang inside the lock queue, poisoning all subsequent requests.
+**Fix attempted**: Changed `client.ts` to use `autoRefreshToken: false` as a constructor option instead of calling `stopAutoRefresh()` after creation.
 
-This is a known tension in Next.js + Supabase SSR setups where the server (middleware/proxy) and client both manage auth. Apps that don't do server-side session refresh, or that run on older Supabase client versions without `Navigator.locks`, don't hit this.
+**Result**: Did not fix the bug. The user confirmed it still reproduced exactly the same way. However, `autoRefreshToken: false` *is* correct and was kept — `stopAutoRefresh()` genuinely is a no-op when called before init completes.
+
+**Why this theory was wrong**: The bug has nothing to do with token expiry or session clearing. The user is NOT signed out — `SIGNED_OUT` never fires. The issue is that all data queries are blocked from executing at all.
+
+### Second Theory: Lock Deadlock from `onAuthStateChange` (Correct)
+
+**Theory**: The `onAuthStateChange` callback in `auth-provider.tsx` was calling `fetchProfile()` (a Supabase data query) when it received a `SIGNED_IN` event. But `SIGNED_IN` can fire from inside `_recoverAndRefresh()`, which holds the GoTrueClient's internal lock. The data query tries to acquire the same lock, creating a deadlock that blocks all subsequent Supabase requests.
+
+**Fix**: Removed `fetchProfile()` from the callback + added post-init `stopAutoRefresh()` to remove the visibility change listener.
+
+**Result**: Fixes the bug.
+
+## Root Cause: The Lock Deadlock
+
+### The Deadlock Chain
+
+```
+visibilitychange (tab gains focus)
+  → _onVisibilityChanged(false)
+    → _acquireLock("lock")           // acquires the GoTrueClient internal lock
+      → _recoverAndRefresh()
+        → _notifyAllSubscribers('SIGNED_IN')    // fires WHILE holding lock
+          → auth-provider's onAuthStateChange callback
+            → fetchProfile(userId)
+              → supabase.from("profiles").select("*")
+                → _getAccessToken()              // every data query calls this
+                  → getSession()
+                    → await initializePromise    // resolves immediately (init done)
+                    → _acquireLock("lock")       // TRIES TO ACQUIRE THE SAME LOCK
+                      → lockAcquired is true     // lock is held by _recoverAndRefresh
+                      → chains onto pendingInLock
+                      → WAITS for _recoverAndRefresh to release lock
+                        → _recoverAndRefresh waits for subscriber callback
+                          → subscriber waits for fetchProfile()
+                            → fetchProfile waits for _acquireLock
+                              → CIRCULAR WAIT = DEADLOCK
+```
+
+Every subsequent Supabase data query also calls `_getAccessToken()` → `getSession()` → `_acquireLock()`, so they all queue behind the deadlocked lock. The entire app's data layer freezes.
+
+### Why It Works on Initial Page Load
+
+React's `useEffect` runs after paint (macrotask). The GoTrueClient's `initialize()` runs as microtasks and completes before the `useEffect` runs. So `_recoverAndRefresh()` fires `SIGNED_IN` *before* the `onAuthStateChange` listener is registered. No listener = no `fetchProfile()` = no deadlock.
+
+Timeline on page load:
+```
+1. createBrowserClient() → GoTrueClient constructor → schedules initialize()
+2. React renders AuthProvider → schedules useEffect
+3. initialize() runs (microtask) → _recoverAndRefresh() → SIGNED_IN fires
+   → No listener registered yet → nothing happens → lock released
+4. useEffect runs (macrotask) → registers onAuthStateChange listener
+   → initAuth() fetches profile directly (not inside callback) → works fine
+```
+
+### Why It Breaks on Tab Return
+
+By the time the user switches tabs and comes back, the `useEffect` has long since run and the `onAuthStateChange` listener is registered. The `visibilitychange` event fires `_recoverAndRefresh()` which fires `SIGNED_IN` inside the lock, and this time the listener IS there to catch it and call `fetchProfile()` → deadlock.
+
+Timeline on tab return:
+```
+1. User switches back to tab → visibilitychange fires
+2. GoTrueClient's _handleVisibilityChange() calls _onVisibilityChanged()
+3. _onVisibilityChanged() → _acquireLock() → _recoverAndRefresh()
+4. _recoverAndRefresh() checks session → session is valid (NOT expired)
+5. Fires SIGNED_IN with session → subscriber callback runs
+6. Callback calls fetchProfile() → supabase data query → getSession() → _acquireLock()
+7. Lock is held → DEADLOCK
+```
+
+### Why the No-Op Lock Doesn't Prevent This
+
+The `client.ts` has a no-op lock that bypasses `Navigator.locks`:
+```typescript
+lock: async (_name, _acquireTimeout, fn) => {
+  return await fn();
+}
+```
+
+This prevents the *browser-level* `Navigator.locks` API from blocking, but the GoTrueClient has its **own internal lock mechanism** (`lockAcquired`, `pendingInLock`) that operates independently. The no-op lock config only replaces the outer lock — the inner JavaScript-level lock serialization still operates and still deadlocks.
+
+Looking at the GoTrueClient source:
+```javascript
+async _acquireLock(acquireTimeout, fn) {
+  // ... calls this.lock() (our no-op) but ALSO manages internal state:
+  if (this.lockAcquired) {
+    // Another operation holds the lock — queue this one
+    return this.pendingInLock.push(/* ... */);
+  }
+  this.lockAcquired = true;
+  // ... run fn() ... then process pendingInLock queue
+}
+```
+
+The no-op replaces `navigator.locks.request()` but the `lockAcquired` / `pendingInLock` logic is in `_acquireLock()` itself, above the `lock()` call. So re-entrant calls still queue.
 
 ## What We Changed
 
-### 1. `src/lib/supabase/client.ts` — Bypass lock + stop auto-refresh + add timeout
+### 1. `src/lib/supabase/client.ts` — `autoRefreshToken: false` + no-op lock + timeout
 
 ```typescript
 auth: {
+  autoRefreshToken: false,
   lock: async (_name, _acquireTimeout, fn) => {
     return await fn();
   },
 }
-// ...
-client.auth.stopAutoRefresh();
 ```
 
-- **No-op lock**: Bypasses `Navigator.locks` so auth operations can't deadlock the request queue. Safe because we're single-tab and the proxy handles session refresh.
-- **`stopAutoRefresh()`**: Prevents the browser client from refreshing tokens at all — the proxy already does this server-side on every navigation. Eliminates the race condition entirely.
-- **`fetchWithTimeout` (15s)**: Safety net so no request hangs forever even if something unexpected happens.
+- **`autoRefreshToken: false`**: Constructor option that prevents the GoTrueClient from ever starting auto-refresh or registering the `visibilitychange` listener during initialization. This MUST be a constructor option — calling `stopAutoRefresh()` after creation is a no-op because `initialize()` is async and completes after `stopAutoRefresh()` runs, re-registering the listener. Data queries still refresh expired tokens on-demand via `__loadSession()` → `_callRefreshToken()`, which is NOT gated by `autoRefreshToken`.
+- **No-op lock**: Bypasses `Navigator.locks` so browser-level locks can't block. Partially mitigates the deadlock (but doesn't fully prevent the internal JS-level lock issue — see above).
+- **`fetchWithTimeout` (15s)**: Safety net so no request hangs forever.
 
-### 2. `src/providers/auth-provider.tsx` — Server-side sign-out + remove aggressive cache invalidation
+### 2. `src/providers/auth-provider.tsx` — Remove data queries from callback + post-init stopAutoRefresh
 
-- **Server-side sign-out**: `signOut()` immediately navigates to `/api/auth/signout` — no React state updates, no browser Supabase client calls. The API route calls `signOut()` server-side (clearing cookies in the response) and redirects to `/`. The full page navigation wipes all client state (React, query cache, Supabase singleton). This avoids two problems: (1) GoTrueClient's `signOut()` can fail silently if the session is stale (user was away from the tab), leaving cookies intact, and (2) updating React state before navigation causes a flash of broken UI (dashboard without sidebar).
-- **Removed `queryClient.invalidateQueries()` from `SIGNED_IN` and `TOKEN_REFRESHED`**: The previous commit (`0489be3`) added these to fix stale cache, but unscoped invalidation triggers refetches on every token event, which compounds the lock queue problem.
+Two critical changes:
 
-### 3. `src/providers/query-provider.tsx` — Restore `refetchOnWindowFocus: false`
+**a) Removed `fetchProfile()` from `onAuthStateChange` callback:**
 
-Commit `0489be3` removed this, causing React Query to refetch all queries on tab focus. Combined with the lock issue, this increased the chance of hitting the stuck state.
+The `SIGNED_IN` event fires from `_recoverAndRefresh()` which holds the GoTrueClient's internal lock. If the callback makes a Supabase data query (like `fetchProfile()`), that query calls `getSession()` → `_acquireLock()` → waits for the lock → but the lock is held by `_recoverAndRefresh()` which is waiting for the callback → **deadlock**. The callback now only does synchronous React state updates:
+
+```typescript
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_IN" && session?.user) {
+    // Only update the user object — NO data queries here
+    setUser(session.user);
+  } else if (event === "SIGNED_OUT") {
+    setUser(null);
+    setProfile(null);
+    queryClient.removeQueries();
+  }
+});
+```
+
+**b) Remove visibilitychange listener after init:**
+
+```typescript
+supabase.auth.initialize().then(() => {
+  supabase.auth.stopAutoRefresh();
+});
+```
+
+This removes the GoTrueClient's `visibilitychange` listener after initialization completes, preventing `_recoverAndRefresh()` from ever running on tab focus. This eliminates the trigger for the deadlock entirely.
+
+This must run *after* `initializePromise` resolves. Calling `stopAutoRefresh()` before init completes is a no-op because init re-registers the listener. The `autoRefreshToken: false` constructor option prevents auto-refresh from *starting* during init, but the `visibilitychange` handler is registered regardless — it needs to be removed explicitly via `stopAutoRefresh()` after init.
+
+### 3. `src/providers/query-provider.tsx` — `refetchOnWindowFocus: false`
+
+React Query's `refetchOnWindowFocus` is disabled to prevent bulk refetches on tab focus. Without this, returning to the tab would trigger all active queries to refetch simultaneously, increasing the chance of hitting the lock contention.
 
 ### 4. `src/components/layout/header.tsx` — Remove competing navigation
 
-Removed `router.push("/")` after `signOut()`. The auth provider now owns the redirect (navigates to `/api/auth/signout`), so there's no race between Next.js client-side navigation and the server-side sign-out flow.
+Removed `router.push("/")` after `signOut()`. The auth provider owns the redirect (navigates to `/api/auth/signout`).
 
-### 6. `src/app/api/auth/signout/route.ts` (new) — Server-side sign-out
+### 5. `src/app/api/auth/signout/route.ts` — Server-side sign-out
 
-Signs out via the server Supabase client (which clears cookies in the response) and redirects to `/`. Mirrors the existing `/api/auth/callback` pattern for sign-in. The browser client is never involved in auth operations.
+Signs out via the server Supabase client (clears cookies) and redirects to `/`. The browser client is never involved in auth operations, avoiding the lock queue entirely.
 
-### 5. `src/services/products/products.service.ts` + `src/app/api/admin/create-product/route.ts` (new)
+### 6. `src/services/products/products.service.ts` + `src/app/api/admin/create-product/route.ts`
 
-Moved product creation from the browser Supabase client to a server-side API route. The API route:
-- Authenticates via server client
-- Checks admin role
-- Inserts via admin client (bypasses RLS)
+Moved product creation to a server-side API route. Writes through the browser client were the most visible symptom of the lock issue because mutations don't retry.
 
-This follows the same pattern as the existing `/api/admin/create-gedu` route. Writes through the browser client were the most visible symptom because mutations don't retry.
+## Defense in Depth
+
+The fix has three layers:
+
+1. **`autoRefreshToken: false`** — Prevents auto-refresh from starting, so `_recoverAndRefresh` is never called by the auto-refresh timer
+2. **Post-init `stopAutoRefresh()`** — Removes the `visibilitychange` listener so `_recoverAndRefresh` is never called on tab focus
+3. **No data queries in `onAuthStateChange`** — Even if `_recoverAndRefresh` somehow fires, the callback can't deadlock because it doesn't acquire the lock
+
+Layer 3 is the most important — it breaks the deadlock chain regardless of how `SIGNED_IN` is triggered.
+
+### 7. `src/components/auth/login-form.tsx` + `src/components/auth/gamer-login-form.tsx` — Full page nav after sign-in
+
+Changed `router.push()` + `router.refresh()` to `window.location.href`. After removing `fetchProfile()` from `onAuthStateChange`, client-side navigation after sign-in left `profile` as null because:
+
+1. Root layout doesn't re-run on client-side navigation
+2. React's `useState(initialProfile)` ignores new props after the first render
+3. `onAuthStateChange` only sets `user`, not `profile`
+
+The sidebar (`if (!profile?.role) return null`) was invisible until a hard refresh. Full page navigation forces the root layout to re-run server-side, hydrating `initialProfile` correctly.
+
+**Note:** The login forms still use the browser Supabase client for `signInWithPassword()`. Moving sign-in to a server-side API route (like sign-out) is tracked in `TODO.md` as a future improvement.
 
 ## What Might Be Revisitable
 
-1. **Is the no-op lock safe long-term?** It's safe for single-tab usage. If multi-tab support becomes important, this would need revisiting. The lock exists to prevent concurrent token refreshes across tabs — but since we disabled auto-refresh entirely, there's nothing to serialize.
+1. **Is the no-op lock safe long-term?** Safe for single-tab usage. The lock exists to prevent concurrent token refreshes across tabs. Since auto-refresh is disabled and the proxy handles session refresh, there's nothing to serialize.
 
-2. **Is `stopAutoRefresh()` sufficient on its own?** Possibly. If `stopAutoRefresh()` fully prevents all background auth operations, the no-op lock and `fetchWithTimeout` may be unnecessary safety nets. Worth testing in isolation.
+2. **Should read queries also go through API routes?** Currently `getAllProducts`, `getProduct`, etc. still use the browser Supabase client. The deadlock fix should prevent hangs, but if issues resurface, moving reads server-side is the next step.
 
-3. **Should read queries also go through API routes?** Currently `getAllProducts`, `getProduct`, etc. still use the browser Supabase client. They haven't been reported as failing, but they could theoretically be affected by the same lock issue. The no-op lock + stopAutoRefresh should prevent this, but if hangs resurface, moving reads server-side is the next step.
+3. **Will a Supabase client update fix this?** The `Navigator.locks` behavior is intentional in `@supabase/auth-js`. The Supabase team is aware of SSR token rotation conflicts. A future version may handle this more gracefully, at which point these workarounds could be removed.
 
-4. **Will a Supabase client update fix this?** The `Navigator.locks` behavior is intentional in `@supabase/auth-js`. The Supabase team is aware of SSR token rotation conflicts. A future version may handle this more gracefully, at which point these workarounds could be removed.
-
-5. **`@supabase/ssr` singleton cache**: `createBrowserClient` caches at the module level (`cachedBrowserClient`). Our options (like `stopAutoRefresh()`) are applied after creation, so they work. But be aware that HMR during development won't reset this singleton — changes to client config require a hard refresh (Ctrl+Shift+R) to take effect.
+4. **`@supabase/ssr` singleton cache**: `createBrowserClient` caches at the module level. Our config options are applied at creation time, so they work. But HMR during development won't reset this singleton — changes to client config require a hard refresh (Ctrl+Shift+R) to take effect.

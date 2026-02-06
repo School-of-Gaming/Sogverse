@@ -65,6 +65,10 @@ The proxy (`src/proxy.ts`) owns session management: it refreshes tokens server-s
 
 **Rule: Never use the browser Supabase client for auth operations** (sign in, sign out, token refresh, password reset). Always use server-side API routes (`src/app/api/auth/`). The browser client's GoTrueClient has an internal lock queue that can deadlock and block all subsequent requests. See `docs/supabase-auth-lock-fix.md` for full context.
 
+**Rule: After any auth state change (sign-in, sign-out), navigate with `window.location.href`, not `router.push()`**. The root layout passes `initialUser`/`initialProfile` to AuthProvider via server-side `getUserWithProfile()`. React's `useState` ignores new initial values after mount, so client-side navigation won't update auth state. Full page navigation forces the root layout to re-run and hydrate correctly.
+
+**Rule: Never make Supabase data queries inside `onAuthStateChange` callbacks.** The callback can fire from `_recoverAndRefresh()` which holds the GoTrueClient's internal lock. A data query would call `getSession()` → `_acquireLock()` → deadlock. Only do synchronous React state updates in the callback.
+
 ### Styling
 - Use `cn()` utility from `lib/utils.ts` for conditional classes
 - Brand colors: primary yellow `#FAA901`, secondary purple `#8F00E2`

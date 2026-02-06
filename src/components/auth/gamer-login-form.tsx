@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Gamepad2 } from "lucide-react";
 import { z } from "zod";
@@ -18,7 +17,6 @@ const gamerLoginSchema = z.object({
 });
 
 export function GamerLoginForm() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -53,8 +51,9 @@ export function GamerLoginForm() {
       }
 
       if (data.user) {
-        router.push("/gamer");
-        router.refresh();
+        // Full page navigation so the root layout re-runs server-side
+        // and hydrates AuthProvider with the correct initialProfile.
+        window.location.href = "/gamer";
       }
     } catch (err) {
       if (err instanceof z.ZodError) {

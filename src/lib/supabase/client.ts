@@ -27,7 +27,7 @@ function fetchWithTimeout(
 }
 
 export function createClient() {
-  const client = createBrowserClient<Database>(
+  return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -35,6 +35,12 @@ export function createClient() {
         fetch: fetchWithTimeout,
       },
       auth: {
+        // The proxy refreshes auth tokens server-side on every navigation.
+        // Disable auto-refresh to prevent the browser client from competing
+        // with the proxy for token rotation. This MUST be set as a constructor
+        // option — calling stopAutoRefresh() after creation is a no-op because
+        // it runs before the async initialization completes.
+        autoRefreshToken: false,
         // Bypass Navigator.locks API which can get stuck during token refresh,
         // causing all Supabase requests to hang until a full page reload.
         // Safe for single-tab usage; the proxy handles session refresh server-side.
@@ -48,13 +54,6 @@ export function createClient() {
       },
     }
   );
-
-  // The proxy refreshes auth tokens server-side on every navigation.
-  // Stop the browser client's auto-refresh to prevent token rotation conflicts
-  // where both the proxy and client compete to refresh the same token.
-  client.auth.stopAutoRefresh();
-
-  return client;
 }
 
 // Singleton instance for client-side usage

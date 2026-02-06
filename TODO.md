@@ -103,6 +103,17 @@ GitHub Actions and Vercel currently duplicate work (both do a full build), and V
 
 **Why:** Currently the `build` job in CI is redundant with Vercel's build, and Vercel deploys even when CI fails. Branch protection prevents broken code from reaching production, while Vercel's preview deploys remain useful for PR review.
 
+### Move Sign-In to Server-Side API Route
+
+Login forms (`login-form.tsx`, `gamer-login-form.tsx`) currently call `supabase.auth.signInWithPassword()` on the browser client, which violates the "never use browser client for auth" rule. They work around the missing profile hydration by doing a full page navigation (`window.location.href`) after sign-in.
+
+- [ ] Create `/api/auth/signin` API route (mirrors existing `/api/auth/signout` pattern)
+- [ ] Move `signInWithPassword()` to the server-side route
+- [ ] Return role/redirect path in the response so the form can navigate
+- [ ] Update login forms to POST to the API route instead of using the browser client
+
+**Why:** Consolidates all auth operations server-side, consistent with sign-out. Eliminates the browser Supabase client's GoTrueClient lock as a concern for auth flows entirely. See `docs/supabase-auth-lock-fix.md` for the lock deadlock context.
+
 ### Migrate Auth Email Templates to Brevo
 
 Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.
