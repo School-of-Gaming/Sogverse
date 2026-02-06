@@ -112,14 +112,15 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
 
-  # Deploy job only runs on push to main/dev, after CI passes
+  # Deploy job only runs on push to main, after CI passes
+  # Vercel handles preview/staging deploys for dev automatically via GitHub integration
   deploy:
-    name: Deploy to ${{ github.ref == 'refs/heads/main' && 'Production' || 'Staging' }}
+    name: Deploy to Production
     runs-on: ubuntu-latest
     needs: [build, e2e]
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      name: production
     steps:
       - uses: actions/checkout@v4
 
@@ -132,31 +133,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Sync database migrations to Supabase
-      - name: Push migrations to Supabase (Staging)
-        if: github.ref == 'refs/heads/dev'
-        run: npx supabase db push --project-ref ${{ secrets.SUPABASE_STAGING_PROJECT_REF }}
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Push migrations to Supabase (Production)
-        if: github.ref == 'refs/heads/main'
-        run: npx supabase db push --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      # Generate types after migration
-      - name: Generate TypeScript types
+      - name: Push migrations to Supabase
         run: |
-          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
-            npx supabase gen types typescript --project-id ${{ secrets.SUPABASE_PROD_PROJECT_REF }} > src/types/database.types.ts
-          else
-            npx supabase gen types typescript --project-id ${{ secrets.SUPABASE_STAGING_PROJECT_REF }} > src/types/database.types.ts
-          fi
+          npx supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+          npx supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Generate TypeScript types
+        run: npx supabase gen types typescript --project-id ${{ secrets.SUPABASE_PROD_PROJECT_REF }} > src/types/database.types.ts
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
-      # Check if types changed
       - name: Check for type changes
         id: types-changed
         run: |
@@ -166,7 +155,6 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           fi
 
-      # Commit type changes if any
       - name: Commit type changes
         if: steps.types-changed.outputs.changed == 'true'
         run: |
@@ -175,6 +163,3 @@ jobs:
           git add src/types/database.types.ts
           git commit -m "chore: update database types [skip ci]"
           git push
-
-      # Vercel handles the actual deployment automatically via GitHub integration
-      # This workflow ensures migrations are applied before deployment
