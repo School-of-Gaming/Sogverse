@@ -62,7 +62,7 @@ src/
 
 ### Styling
 - Use `cn()` utility from `lib/utils.ts` for conditional classes
-- Brand colors: purple `#8F00E2`, yellow `#FAA901`
+- Brand colors: primary yellow `#FAA901`, secondary purple `#8F00E2`
 - Dark mode is default (class-based via next-themes)
 
 ## Environment Variables
