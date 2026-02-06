@@ -8,7 +8,7 @@ const Avatar = React.forwardRef<
   <span
     ref={ref}
     className={cn(
-      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-md",
       className
     )}
     {...props}
@@ -28,19 +28,4 @@ const AvatarImage = React.forwardRef<
 ));
 AvatarImage.displayName = "AvatarImage";
 
-const AvatarFallback = React.forwardRef<
-  HTMLSpanElement,
-  React.HTMLAttributes<HTMLSpanElement>
->(({ className, ...props }, ref) => (
-  <span
-    ref={ref}
-    className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
-      className
-    )}
-    {...props}
-  />
-));
-AvatarFallback.displayName = "AvatarFallback";
-
-export { Avatar, AvatarImage, AvatarFallback };
+export { Avatar, AvatarImage };

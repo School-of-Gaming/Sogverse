@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
 import { useUsers, useSearchUsers } from "@/services/users";
 import { ROLE_LABELS, type UserRole } from "@/lib/constants";
 
@@ -24,16 +25,6 @@ export default function AdminUsersPage() {
 
   const users = searchQuery.length >= 2 ? searchResults : allUsers;
   const isLoading = searchQuery.length >= 2 ? isSearching : isLoadingAll;
-
-  const getInitials = (displayName?: string | null, username?: string | null) => {
-    const name = displayName || username || "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
 
   return (
     <div className="space-y-6">
@@ -72,7 +63,7 @@ export default function AdminUsersPage() {
                   key={i}
                   className="flex items-center gap-4 rounded-lg border p-4 animate-pulse"
                 >
-                  <div className="h-10 w-10 rounded-full bg-muted" />
+                  <div className="h-10 w-10 rounded-md bg-muted" />
                   <div className="flex-1 space-y-2">
                     <div className="h-4 w-32 rounded bg-muted" />
                     <div className="h-3 w-48 rounded bg-muted" />
@@ -90,9 +81,7 @@ export default function AdminUsersPage() {
                   <div className="flex items-center gap-4">
                     <Avatar>
                       <AvatarImage src={user.avatar_url || undefined} />
-                      <AvatarFallback>
-                        {getInitials(user.display_name, user.username)}
-                      </AvatarFallback>
+                      <Identicon id={user.id} size={40} />
                     </Avatar>
                     <div>
                       <p className="font-medium">

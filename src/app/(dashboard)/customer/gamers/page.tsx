@@ -4,17 +4,13 @@ import Link from "next/link";
 import { UserPlus, Gamepad2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
 import { useMyGamers } from "@/services/gamers";
 import { formatRelativeTime } from "@/lib/utils";
 
 export default function CustomerGamersPage() {
   const { data: gamers, isLoading } = useMyGamers();
-
-  const getInitials = (displayName?: string | null, username?: string | null) => {
-    const name = displayName || username || "G";
-    return name.slice(0, 2).toUpperCase();
-  };
 
   return (
     <div className="space-y-6">
@@ -39,7 +35,7 @@ export default function CustomerGamersPage() {
             <Card key={i} className="animate-pulse">
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-muted" />
+                  <div className="h-12 w-12 rounded-md bg-muted" />
                   <div className="space-y-2">
                     <div className="h-4 w-24 rounded bg-muted" />
                     <div className="h-3 w-16 rounded bg-muted" />
@@ -58,9 +54,7 @@ export default function CustomerGamersPage() {
                   <div className="flex items-center gap-4">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={gamer.avatar_url || undefined} />
-                      <AvatarFallback className="bg-secondary text-secondary-foreground">
-                        {getInitials(gamer.display_name, gamer.username)}
-                      </AvatarFallback>
+                      <Identicon id={gamer.id} size={48} />
                     </Avatar>
                     <div>
                       <CardTitle className="text-lg">

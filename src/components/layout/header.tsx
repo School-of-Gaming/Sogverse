@@ -5,7 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { Menu, X, LogOut, Settings } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants";
@@ -45,21 +46,6 @@ export function Header() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const getInitials = () => {
-    if (profile?.display_name) {
-      return profile.display_name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    if (profile?.username) {
-      return profile.username.slice(0, 2).toUpperCase();
-    }
-    return "U";
-  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -108,13 +94,11 @@ export function Header() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={profile?.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {getInitials()}
-                    </AvatarFallback>
+                    <Identicon id={profile?.id || user.id} size={32} />
                   </Avatar>
                 </button>
                 {dropdownOpen && (

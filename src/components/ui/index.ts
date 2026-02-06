@@ -9,5 +9,5 @@ export {
   CardDescription,
   CardContent,
 } from "./card";
-export { Avatar, AvatarImage, AvatarFallback } from "./avatar";
+export { Avatar, AvatarImage } from "./avatar";
 export { Badge, badgeVariants, type BadgeProps } from "./badge";

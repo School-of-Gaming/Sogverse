@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { useUpdateProfile } from "@/services/users";
 import { getClient } from "@/lib/supabase/client";
@@ -22,21 +23,6 @@ export default function SettingsPage() {
   const [passwordResetSent, setPasswordResetSent] = useState(false);
   const [passwordResetLoading, setPasswordResetLoading] = useState(false);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
-
-  const getInitials = () => {
-    if (profile?.display_name) {
-      return profile.display_name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    if (profile?.username) {
-      return profile.username.slice(0, 2).toUpperCase();
-    }
-    return "U";
-  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -115,7 +101,7 @@ export default function SettingsPage() {
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
+              <Identicon id={profile?.id || user?.id || ""} size={64} />
             </Avatar>
             <div>
               <p className="font-medium">
