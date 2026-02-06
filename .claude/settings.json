@@ -2,11 +2,15 @@
   "permissions": {
     "allow": [
       "WebSearch",
+      "Bash(ls:*)",
+      "Bash(find:*)",
       "Bash(npm run test:*)",
+      "Bash(npm run test:e2e:*)",
       "Bash(npm run build:*)",
       "Bash(npm run lint:*)",
       "Bash(npm run type-check:*)",
-      "Bash(npx playwright test)"
+      "Bash(npx playwright test)",
+      "WebFetch(domain:supabase.com)"
     ]
   }
 }
