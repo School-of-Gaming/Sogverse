@@ -10,7 +10,8 @@
       "Bash(npm run lint:*)",
       "Bash(npm run type-check:*)",
       "Bash(npx playwright test)",
-      "WebFetch(domain:supabase.com)"
+      "WebFetch(domain:supabase.com)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
