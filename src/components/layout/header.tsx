@@ -169,7 +169,7 @@ export function Header() {
                 className={cn(
                   "block rounded-md px-3 py-2 text-sm font-medium",
                   pathname === link.href
-                    ? "bg-accent text-primary"
+                    ? "bg-accent text-accent-foreground"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
                 onClick={() => setMobileMenuOpen(false)}
