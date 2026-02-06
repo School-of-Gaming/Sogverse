@@ -16,9 +16,19 @@ test.describe("Home Page", () => {
   test("should have navigation links", async ({ page }) => {
     await page.goto("/");
 
-    await expect(page.getByRole("link", { name: /home/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /products/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /about/i })).toBeVisible();
+    // On mobile viewports, open the hamburger menu first
+    const menuButton = page.getByLabel("Toggle menu");
+    if (await menuButton.isVisible()) {
+      await menuButton.click();
+    }
+
+    await expect(page.getByRole("link", { name: "Home" }).first()).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Products", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "About", exact: true })
+    ).toBeVisible();
   });
 
   test("should navigate to register page", async ({ page }) => {
@@ -45,7 +55,7 @@ test.describe("Home Page", () => {
     ).toBeVisible();
 
     await expect(
-      page.getByText(/educational content/i)
+      page.getByRole("heading", { name: /educational content/i })
     ).toBeVisible();
   });
 

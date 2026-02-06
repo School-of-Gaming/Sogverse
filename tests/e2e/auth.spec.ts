@@ -12,7 +12,7 @@ test.describe("Authentication Pages", () => {
       await expect(page.getByLabel(/email/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
       await expect(
-        page.getByRole("button", { name: /sign in/i })
+        page.locator("form").getByRole("button", { name: /sign in/i })
       ).toBeVisible();
     });
 
@@ -83,7 +83,9 @@ test.describe("Authentication Pages", () => {
     test("should have link to login", async ({ page }) => {
       await page.goto("/register");
 
-      await expect(page.getByRole("link", { name: /sign in/i })).toBeVisible();
+      await expect(
+        page.getByText(/already have an account/i).getByRole("link", { name: /sign in/i })
+      ).toBeVisible();
     });
   });
 
