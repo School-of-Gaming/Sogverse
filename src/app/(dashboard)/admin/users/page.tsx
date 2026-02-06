@@ -76,7 +76,7 @@ export default function AdminUsersPage() {
               {users.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent"
+                  className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <div className="flex items-center gap-4">
                     <Avatar>
@@ -87,7 +87,7 @@ export default function AdminUsersPage() {
                       <p className="font-medium">
                         {user.display_name || user.username || "Unnamed User"}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70">
                         {user.email || user.username}
                       </p>
                     </div>

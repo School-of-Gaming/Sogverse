@@ -48,7 +48,7 @@ export default function CustomerGamersPage() {
       ) : gamers && gamers.length > 0 ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {gamers.map((gamer) => (
-            <Card key={gamer.id} className="transition-colors hover:bg-accent">
+            <Card key={gamer.id} className="group transition-colors hover:bg-accent hover:text-accent-foreground">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -60,18 +60,18 @@ export default function CustomerGamersPage() {
                       <CardTitle className="text-lg">
                         {gamer.display_name || gamer.username}
                       </CardTitle>
-                      <CardDescription>@{gamer.username}</CardDescription>
+                      <CardDescription className="group-hover:text-accent-foreground/70">@{gamer.username}</CardDescription>
                     </div>
                   </div>
-                  <Gamepad2 className="h-5 w-5 text-muted-foreground" />
+                  <Gamepad2 className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground/70" />
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70">
                     Joined {formatRelativeTime(gamer.created_at)}
                   </p>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground">
                     <Settings className="mr-2 h-4 w-4" />
                     Manage
                   </Button>

@@ -114,14 +114,14 @@ export function Header() {
                     <Link
                       href="/settings"
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent"
+                      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
                     >
                       <Settings className="h-4 w-4" />
                       Settings
                     </Link>
                     <button
                       onClick={handleSignOut}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent"
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-accent-foreground"
                     >
                       <LogOut className="h-4 w-4" />
                       Sign Out
@@ -170,7 +170,7 @@ export function Header() {
                   "block rounded-md px-3 py-2 text-sm font-medium",
                   pathname === link.href
                     ? "bg-accent text-primary"
-                    : "text-muted-foreground hover:bg-accent"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -183,7 +183,7 @@ export function Header() {
                 {dashboardPath && (
                   <Link
                     href={dashboardPath}
-                    className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                    className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Dashboard
@@ -191,7 +191,7 @@ export function Header() {
                 )}
                 <Link
                   href="/settings"
-                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Settings
@@ -201,7 +201,7 @@ export function Header() {
                     setMobileMenuOpen(false);
                     handleSignOut();
                   }}
-                  className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent"
+                  className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent hover:text-accent-foreground"
                 >
                   Sign Out
                 </button>
@@ -210,7 +210,7 @@ export function Header() {
               <>
                 <Link
                   href="/login"
-                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign In

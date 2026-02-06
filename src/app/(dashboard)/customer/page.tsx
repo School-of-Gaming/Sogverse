@@ -53,15 +53,15 @@ export default function CustomerDashboardPage() {
       <div className="grid gap-4 md:grid-cols-2">
         {quickActions.map((action) => (
           <Link key={action.href} href={action.href}>
-            <Card className="h-full transition-colors hover:bg-accent">
+            <Card className="group h-full transition-colors hover:bg-accent hover:text-accent-foreground">
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <action.icon className="h-6 w-6 text-primary" />
+                    <action.icon className="h-6 w-6 text-primary group-hover:text-accent-foreground/70" />
                   </div>
                   <div>
                     <CardTitle className="text-lg">{action.title}</CardTitle>
-                    <CardDescription>{action.description}</CardDescription>
+                    <CardDescription className="group-hover:text-accent-foreground/70">{action.description}</CardDescription>
                   </div>
                 </div>
               </CardHeader>

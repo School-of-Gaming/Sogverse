@@ -84,7 +84,7 @@ export default function AdminProductsPage() {
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent"
+                  className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <div className="flex items-center gap-4">
                     <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
@@ -102,12 +102,12 @@ export default function AdminProductsPage() {
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{product.name}</p>
                         {!product.is_active && (
-                          <Badge variant="outline" className="text-muted-foreground">
+                          <Badge variant="outline" className="text-muted-foreground group-hover:text-accent-foreground/70">
                             Inactive
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground line-clamp-1">
+                      <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70 line-clamp-1">
                         {product.description || "No description"}
                       </p>
                       <p className="text-sm font-semibold text-primary">
