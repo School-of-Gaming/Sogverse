@@ -56,9 +56,14 @@ src/
 ```
 
 ### Supabase Clients
-- `createBrowserClient()` - Browser-side, singleton pattern
+- `createBrowserClient()` - Browser-side, singleton pattern. **Data queries only — never use for auth operations.**
 - `createServerComponentClient()` - Server components (RSC)
 - `createAdminClient()` - Service role key for privileged operations
+
+### Auth Architecture
+The proxy (`src/proxy.ts`) owns session management: it refreshes tokens server-side on every request and enforces role-based routing. The browser Supabase client has auto-refresh disabled (`stopAutoRefresh()`) to avoid competing with the proxy for token rotation.
+
+**Rule: Never use the browser Supabase client for auth operations** (sign in, sign out, token refresh, password reset). Always use server-side API routes (`src/app/api/auth/`). The browser client's GoTrueClient has an internal lock queue that can deadlock and block all subsequent requests. See `docs/supabase-auth-lock-fix.md` for full context.
 
 ### Styling
 - Use `cn()` utility from `lib/utils.ts` for conditional classes

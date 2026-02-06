@@ -63,17 +63,11 @@ export function AuthProvider({
   };
 
   const signOut = async () => {
-    setUser(null);
-    setProfile(null);
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      // Ignore abort errors during navigation
-      if (error instanceof Error && error.name === 'AbortError') {
-        return;
-      }
-      console.error('Sign out error:', error);
-    }
+    // Navigate immediately — don't update React state first or the user
+    // sees a broken layout flash. The full page navigation to the API route
+    // clears cookies server-side, then redirects. All client state (React,
+    // query cache, Supabase singleton) is wiped by the page reload.
+    window.location.href = "/api/auth/signout";
   };
 
   useEffect(() => {
@@ -105,13 +99,10 @@ export function AuthProvider({
         setUser(session.user);
         const userProfile = await fetchProfile(session.user.id);
         setProfile(userProfile);
-        queryClient.invalidateQueries();
       } else if (event === "SIGNED_OUT") {
         setUser(null);
         setProfile(null);
         queryClient.removeQueries();
-      } else if (event === "TOKEN_REFRESHED") {
-        queryClient.invalidateQueries();
       }
     });
 

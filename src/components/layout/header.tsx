@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Menu, X, LogOut, Settings } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ const publicNavLinks = [
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, profile, signOut, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -32,7 +31,6 @@ export function Header() {
   const handleSignOut = () => {
     setDropdownOpen(false);
     signOut();
-    router.push("/");
   };
 
   // Close dropdown when clicking outside

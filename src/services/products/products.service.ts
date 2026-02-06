@@ -35,14 +35,19 @@ export class ProductsService {
   }
 
   async createProduct(product: ProductInsert): Promise<Product> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .insert(product)
-      .select()
-      .single();
+    const response = await fetch("/api/admin/create-product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(product),
+    });
 
-    if (error) throw error;
-    return data;
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Failed to create product");
+    }
+
+    const { product: created } = await response.json();
+    return created;
   }
 
   async updateProduct(id: string, updates: ProductUpdate): Promise<Product> {
