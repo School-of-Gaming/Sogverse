@@ -33,7 +33,7 @@ Four user roles with separate dashboards:
 - `gamer` → `/gamer` - Child accounts (use username login, synthetic email: `{username}@gamer.sogverse.internal`)
 - `gedu` → `/gedu` - Game educators
 
-Middleware (`src/middleware.ts`) enforces role-based routing. RLS policies protect data at the database level.
+Proxy (`src/proxy.ts`) refreshes Supabase auth sessions and enforces role-based routing (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
 
 ### Key Directory Structure
 ```

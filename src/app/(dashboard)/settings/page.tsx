@@ -18,6 +18,7 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [passwordResetSent, setPasswordResetSent] = useState(false);
   const [passwordResetLoading, setPasswordResetLoading] = useState(false);
   const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export default function SettingsPage() {
 
     setIsSaving(true);
     setSuccessMessage(null);
+    setErrorMessage(null);
 
     try {
       await updateProfile.mutateAsync({
@@ -50,8 +52,14 @@ export default function SettingsPage() {
       });
       await refreshProfile();
       setSuccessMessage("Profile updated successfully!");
-    } catch (error) {
-      console.error("Failed to update profile:", error);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String((error as { message: unknown }).message)
+            : "Failed to update profile";
+      setErrorMessage(message);
     } finally {
       setIsSaving(false);
     }
@@ -125,6 +133,12 @@ export default function SettingsPage() {
           {successMessage && (
             <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-500">
               {successMessage}
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {errorMessage}
             </div>
           )}
 
