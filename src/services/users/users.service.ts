@@ -27,6 +27,14 @@ export class UsersService {
       .single();
 
     if (error) throw error;
+
+    // Sync display_name to auth.users metadata so it shows in Supabase dashboard
+    if (updates.display_name !== undefined) {
+      await this.supabase.auth.updateUser({
+        data: { display_name: updates.display_name },
+      });
+    }
+
     return data;
   }
 
