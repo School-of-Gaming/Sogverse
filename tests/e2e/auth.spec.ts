@@ -111,4 +111,28 @@ test.describe("Authentication Pages", () => {
       ).toBeVisible();
     });
   });
+
+  test.describe("Reset Password Page", () => {
+    test("should display reset password form", async ({ page }) => {
+      await page.goto("/reset-password");
+
+      await expect(
+        page.getByRole("heading", { name: /reset your password/i })
+      ).toBeVisible();
+
+      await expect(page.getByLabel(/new password/i)).toBeVisible();
+      await expect(page.getByLabel(/confirm password/i)).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: /reset password/i })
+      ).toBeVisible();
+    });
+
+    test("should have link back to login", async ({ page }) => {
+      await page.goto("/reset-password");
+
+      await expect(
+        page.getByRole("link", { name: /back to login/i })
+      ).toBeVisible();
+    });
+  });
 });

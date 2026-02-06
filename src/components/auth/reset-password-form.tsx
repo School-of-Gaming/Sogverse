@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
@@ -10,12 +11,18 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+const resetPasswordSchema = z.object({
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
 });
 
-export function ForgotPasswordForm() {
-  const [email, setEmail] = useState("");
+export function ResetPasswordForm() {
+  const router = useRouter();
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -28,21 +35,19 @@ export function ForgotPasswordForm() {
     setIsLoading(true);
 
     try {
-      const validatedData = forgotPasswordSchema.parse({ email });
+      const validatedData = resetPasswordSchema.parse({ password, confirmPassword });
 
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        validatedData.email,
-        {
-          redirectTo: `${window.location.origin}/api/auth/callback?next=/reset-password`,
-        }
-      );
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: validatedData.password,
+      });
 
-      if (resetError) {
-        setError(resetError.message);
+      if (updateError) {
+        setError(updateError.message);
         return;
       }
 
       setSuccess(true);
+      setTimeout(() => router.push("/login"), 3000);
     } catch (err) {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
@@ -58,10 +63,10 @@ export function ForgotPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">Check your email</CardTitle>
+          <CardTitle className="text-2xl">Password updated</CardTitle>
           <CardDescription>
-            We&apos;ve sent a password reset link to {email}. Please check your
-            inbox and click the link to reset your password.
+            Your password has been successfully reset. You will be redirected to
+            the login page shortly.
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex flex-col space-y-4">
@@ -79,10 +84,9 @@ export function ForgotPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Forgot password?</CardTitle>
+        <CardTitle className="text-2xl text-center">Reset your password</CardTitle>
         <CardDescription className="text-center">
-          Enter your email address and we&apos;ll send you a link to reset your
-          password.
+          Enter your new password below.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -93,13 +97,28 @@ export function ForgotPasswordForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="password">New Password</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="password"
+              type="password"
+              placeholder="Enter your new password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              required
+            />
+            <p className="text-xs text-muted-foreground">
+              Must be at least 8 characters
+            </p>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirm your new password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}
               required
             />
@@ -107,7 +126,7 @@ export function ForgotPasswordForm() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Sending..." : "Send Reset Link"}
+            {isLoading ? "Updating..." : "Reset Password"}
           </Button>
           <Link
             href="/login"

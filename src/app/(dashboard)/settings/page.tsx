@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/providers";
 import { useUpdateProfile } from "@/services/users";
+import { getClient } from "@/lib/supabase/client";
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth();
@@ -17,6 +18,9 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [passwordResetSent, setPasswordResetSent] = useState(false);
+  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
+  const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
 
   const getInitials = () => {
     if (profile?.display_name) {
@@ -50,6 +54,32 @@ export default function SettingsPage() {
       console.error("Failed to update profile:", error);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    const email = profile?.email;
+    if (!email) return;
+
+    setPasswordResetLoading(true);
+    setPasswordResetError(null);
+
+    try {
+      const supabase = getClient();
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/api/auth/callback?next=/reset-password`,
+      });
+
+      if (error) {
+        setPasswordResetError(error.message);
+        return;
+      }
+
+      setPasswordResetSent(true);
+    } catch {
+      setPasswordResetError("An unexpected error occurred");
+    } finally {
+      setPasswordResetLoading(false);
     }
   };
 
@@ -149,10 +179,29 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Button variant="outline">Change Password</Button>
-          <p className="text-sm text-muted-foreground">
-            You will receive an email with instructions to reset your password.
-          </p>
+          {passwordResetSent ? (
+            <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-500">
+              Check your email for a password reset link.
+            </div>
+          ) : (
+            <>
+              {passwordResetError && (
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {passwordResetError}
+                </div>
+              )}
+              <Button
+                variant="outline"
+                onClick={handleChangePassword}
+                disabled={passwordResetLoading}
+              >
+                {passwordResetLoading ? "Sending..." : "Change Password"}
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                You will receive an email with instructions to reset your password.
+              </p>
+            </>
+          )}
         </CardContent>
       </Card>
 
