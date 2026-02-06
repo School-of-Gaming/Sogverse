@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { User, Lock, Bell, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,19 +11,16 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { useUpdateProfile } from "@/services/users";
-import { getClient } from "@/lib/supabase/client";
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth();
   const updateProfile = useUpdateProfile();
+  const router = useRouter();
 
   const [displayName, setDisplayName] = useState(profile?.display_name || "");
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [passwordResetSent, setPasswordResetSent] = useState(false);
-  const [passwordResetLoading, setPasswordResetLoading] = useState(false);
-  const [passwordResetError, setPasswordResetError] = useState<string | null>(null);
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -51,30 +49,8 @@ export default function SettingsPage() {
     }
   };
 
-  const handleChangePassword = async () => {
-    const email = profile?.email;
-    if (!email) return;
-
-    setPasswordResetLoading(true);
-    setPasswordResetError(null);
-
-    try {
-      const supabase = getClient();
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/api/auth/callback?next=/reset-password`,
-      });
-
-      if (error) {
-        setPasswordResetError(error.message);
-        return;
-      }
-
-      setPasswordResetSent(true);
-    } catch {
-      setPasswordResetError("An unexpected error occurred");
-    } finally {
-      setPasswordResetLoading(false);
-    }
+  const handleChangePassword = () => {
+    router.push("/reset-password");
   };
 
   return (
@@ -178,30 +154,13 @@ export default function SettingsPage() {
             Manage your password and security settings
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {passwordResetSent ? (
-            <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-500">
-              Check your email for a password reset link.
-            </div>
-          ) : (
-            <>
-              {passwordResetError && (
-                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                  {passwordResetError}
-                </div>
-              )}
-              <Button
-                variant="outline"
-                onClick={handleChangePassword}
-                disabled={passwordResetLoading}
-              >
-                {passwordResetLoading ? "Sending..." : "Change Password"}
-              </Button>
-              <p className="text-sm text-muted-foreground">
-                You will receive an email with instructions to reset your password.
-              </p>
-            </>
-          )}
+        <CardContent>
+          <Button
+            variant="outline"
+            onClick={handleChangePassword}
+          >
+            Change Password
+          </Button>
         </CardContent>
       </Card>
 

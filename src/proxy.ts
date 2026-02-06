@@ -7,7 +7,7 @@ import type { UserRole } from "@/types";
 const PUBLIC_ROUTES = ["/", "/products", "/about"];
 
 // Routes for authentication (login, register, etc.)
-const AUTH_ROUTES = ["/login", "/gamer-login", "/register", "/forgot-password", "/reset-password"];
+const AUTH_ROUTES = ["/login", "/gamer-login", "/register", "/forgot-password"];
 
 // Role-specific dashboard routes
 const ROLE_ROUTES: Record<string, string> = {
