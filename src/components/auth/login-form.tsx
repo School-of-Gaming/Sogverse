@@ -117,6 +117,7 @@ export function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
               required
+              autoComplete="current-password"
             />
           </div>
         </CardContent>

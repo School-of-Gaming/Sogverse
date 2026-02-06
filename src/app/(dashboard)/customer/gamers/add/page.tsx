@@ -173,6 +173,7 @@ export default function AddGamerPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={createGamer.isPending}
                 required
+                autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
                 Letters, numbers, and underscores only
@@ -190,6 +191,7 @@ export default function AddGamerPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={createGamer.isPending}
                   required
+                  autoComplete="new-password"
                 />
                 <button
                   type="button"
@@ -218,6 +220,7 @@ export default function AddGamerPage() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={createGamer.isPending}
                 required
+                autoComplete="new-password"
               />
             </div>
 
