@@ -91,6 +91,18 @@ Steps:
 - [ ] Verify in Brevo by clicking **Check Configuration**
 - [ ] Rotate the Brevo SMTP key (current one was shared in plaintext) and update it in Supabase dashboard under **Authentication > SMTP Settings**
 
+### Streamline CI/CD Pipeline
+
+GitHub Actions and Vercel currently duplicate work (both do a full build), and Vercel deploys regardless of CI results. Align with best practice: let each tool do what it's good at.
+
+- [ ] Remove the standalone `build` job from `.github/workflows/ci.yml` (Vercel handles builds)
+- [ ] Remove Vercel deployment logic from CI (let Vercel's Git integration handle deploys)
+- [ ] Simplify the `deploy` job to only run DB migrations + type generation on push to main
+- [ ] Set up GitHub branch protection on `main` requiring CI checks (`lint-and-typecheck`, `test`, `e2e`) to pass before merging
+- [ ] Verify Vercel preview deploys still work for PRs
+
+**Why:** Currently the `build` job in CI is redundant with Vercel's build, and Vercel deploys even when CI fails. Branch protection prevents broken code from reaching production, while Vercel's preview deploys remain useful for PR review.
+
 ### Migrate Auth Email Templates to Brevo
 
 Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.
