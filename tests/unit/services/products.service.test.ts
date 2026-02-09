@@ -83,19 +83,23 @@ describe("ProductsService", () => {
       };
       const createdProduct = createMockProduct(newProduct);
 
-      const mockInsert = vi.fn().mockReturnValue({
-        select: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(mockSupabaseSuccess(createdProduct)),
-        }),
-      });
-
-      mockSupabase.from.mockReturnValue({ insert: mockInsert });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ product: createdProduct }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
 
       const result = await service.createProduct(newProduct);
 
-      expect(mockSupabase.from).toHaveBeenCalledWith("products");
-      expect(mockInsert).toHaveBeenCalledWith(newProduct);
+      expect(fetchSpy).toHaveBeenCalledWith("/api/admin/create-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProduct),
+      });
       expect(result.name).toBe("New Product");
+
+      fetchSpy.mockRestore();
     });
   });
 
