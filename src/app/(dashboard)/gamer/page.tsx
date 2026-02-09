@@ -44,9 +44,9 @@ export default function GamerDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5">
+        <Card className="bg-gradient-to-br from-success/10 to-success/5">
           <CardHeader className="text-center">
-            <Zap className="mx-auto h-8 w-8 text-green-500" />
+            <Zap className="mx-auto h-8 w-8 text-success" />
             <CardTitle className="text-lg">XP Points</CardTitle>
           </CardHeader>
           <CardContent className="text-center">

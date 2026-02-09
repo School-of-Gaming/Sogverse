@@ -13,6 +13,8 @@ import {
   TrendingUp,
   DollarSign,
   Gamepad2,
+  Check,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -104,6 +106,7 @@ export default function AdminUIComponentsPage() {
             <Swatch label="Primary" className="bg-primary" />
             <Swatch label="Secondary" className="bg-secondary" />
             <Swatch label="Destructive" className="bg-destructive" />
+            <Swatch label="Success" className="bg-success" />
             <Swatch label="Accent" className="bg-accent" />
           </div>
         </SubSection>
@@ -132,6 +135,9 @@ export default function AdminUIComponentsPage() {
             </span>
             <span className="text-sm font-medium text-destructive">
               Destructive
+            </span>
+            <span className="text-sm font-medium text-success">
+              Success
             </span>
           </div>
         </SubSection>
@@ -324,7 +330,45 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 7: Composite Patterns                                 */}
+      {/* Section 7: Feedback Alerts                                    */}
+      {/* ============================================================ */}
+      <Section title="Feedback">
+        <SubSection title="Inline Alerts">
+          <div className="space-y-3 max-w-lg">
+            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
+              Profile updated successfully!
+            </div>
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              Something went wrong. Please try again.
+            </div>
+          </div>
+        </SubSection>
+
+        <SubSection title="Success Icon Circle">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+              <Check className="h-8 w-8 text-success" />
+            </div>
+            <span className="text-xs text-muted-foreground">
+              bg-success/10 + text-success
+            </span>
+          </div>
+        </SubSection>
+
+        <SubSection title="Error Icon Circle">
+          <div className="flex flex-col items-center gap-2">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+            </div>
+            <span className="text-xs text-muted-foreground">
+              bg-destructive/10 + text-destructive
+            </span>
+          </div>
+        </SubSection>
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 8: Composite Patterns                                 */}
       {/* ============================================================ */}
       <Section title="Composite Patterns">
         {/* -- Hoverable List Item (admin products) -- */}

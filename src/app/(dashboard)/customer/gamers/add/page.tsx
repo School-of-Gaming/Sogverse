@@ -85,8 +85,8 @@ export default function AddGamerPage() {
       <div className="mx-auto max-w-lg space-y-6">
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/10">
-              <Check className="h-8 w-8 text-green-500" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+              <Check className="h-8 w-8 text-success" />
             </div>
             <h3 className="mt-4 text-lg font-medium">Gamer Account Created!</h3>
             <p className="mt-2 text-center text-sm text-muted-foreground">

@@ -57,7 +57,7 @@ export default function CustomerDashboardPage() {
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <action.icon className="h-6 w-6 text-primary group-hover:text-accent-foreground/70" />
+                    <action.icon className="h-6 w-6 text-muted-foreground group-hover:text-accent-foreground/70" />
                   </div>
                   <div>
                     <CardTitle className="text-lg">{action.title}</CardTitle>

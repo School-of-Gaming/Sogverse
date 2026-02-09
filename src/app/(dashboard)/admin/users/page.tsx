@@ -99,7 +99,7 @@ export default function AdminUsersPage() {
                     <Badge variant={roleBadgeVariants[user.role]}>
                       {ROLE_LABELS[user.role]}
                     </Badge>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground">
                       View
                     </Button>
                   </div>
