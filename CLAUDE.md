@@ -74,6 +74,9 @@ The proxy (`src/proxy.ts`) owns session management: it refreshes tokens server-s
 - Brand colors: primary yellow `#FAA901`, secondary purple `#8F00E2`
 - Dark mode is default (class-based via next-themes)
 
+### UI Component Reference
+A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
+
 ## Environment Variables
 
 Copy `.env.local.example` to `.env.local`:

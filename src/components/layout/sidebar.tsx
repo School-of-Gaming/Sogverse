@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Users,
   Package,
+  Palette,
   Settings,
   Gamepad2,
   GraduationCap,
@@ -37,6 +38,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       href: "/admin/products",
       label: "Products",
       icon: <Package className="h-5 w-5" />,
+    },
+    {
+      href: "/admin/ui-components",
+      label: "UI Components",
+      icon: <Palette className="h-5 w-5" />,
     },
     {
       href: "/settings",
