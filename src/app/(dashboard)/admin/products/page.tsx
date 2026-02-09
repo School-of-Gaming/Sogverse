@@ -110,7 +110,7 @@ export default function AdminProductsPage() {
                       <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70 line-clamp-1">
                         {product.description || "No description"}
                       </p>
-                      <p className="text-sm font-semibold text-primary">
+                      <p className="text-sm font-semibold text-primary group-hover:text-secondary">
                         {formatCurrency(product.price, product.currency)}
                       </p>
                     </div>
@@ -119,6 +119,7 @@ export default function AdminProductsPage() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground"
                       onClick={() => handleToggleStatus(product.id, product.is_active)}
                       title={product.is_active ? "Deactivate" : "Activate"}
                     >
@@ -128,13 +129,13 @@ export default function AdminProductsPage() {
                         <Eye className="h-4 w-4" />
                       )}
                     </Button>
-                    <Button variant="ghost" size="icon" title="Edit">
+                    <Button variant="ghost" size="icon" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground" title="Edit">
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="text-destructive"
+                      className="text-destructive group-hover:bg-destructive group-hover:text-destructive-foreground hover:!bg-destructive/80 hover:!text-destructive-foreground"
                       onClick={() => handleDelete(product.id)}
                       title="Delete"
                     >
