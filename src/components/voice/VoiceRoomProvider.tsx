@@ -23,6 +23,8 @@ export interface VoiceParticipant {
   videoOn: boolean;
   isLocal: boolean;
   isOwner: boolean;
+  /** Whether this participant is the current active speaker */
+  isSpeaking: boolean;
 }
 
 interface VoiceRoomContextValue {
@@ -52,7 +54,7 @@ interface VoiceRoomContextValue {
 
 const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
 
-function mapParticipant(p: DailyParticipant): VoiceParticipant {
+function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): VoiceParticipant {
   // user_name is encoded as "userId|displayName" by the token endpoint
   const raw = p.user_name || "";
   const separatorIndex = raw.indexOf("|");
@@ -67,6 +69,7 @@ function mapParticipant(p: DailyParticipant): VoiceParticipant {
     videoOn: !p.video ? false : p.tracks.video?.state === "playable",
     isLocal: p.local,
     isOwner: p.owner ?? false,
+    isSpeaking: p.session_id === activeSpeakerId,
   };
 }
 
@@ -79,6 +82,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const callObjectRef = useRef<DailyCall | null>(null);
+  // Track the current active speaker (ref to avoid re-renders on every speaker change)
+  const activeSpeakerIdRef = useRef<string | null>(null);
   // Track <audio> elements for remote participants
   const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
 
@@ -131,7 +136,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
   const updateParticipants = useCallback((co: DailyCall) => {
     const pMap = co.participants();
-    const list = Object.values(pMap).map(mapParticipant);
+    const list = Object.values(pMap).map((p) => mapParticipant(p, activeSpeakerIdRef.current));
     setParticipants(list);
 
     // Update local audio/video state
@@ -185,13 +190,20 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         setMicOn(true);
         setCameraOn(false);
         setCameraAllowed(false);
+        activeSpeakerIdRef.current = null;
         cleanupAudioElements();
+      };
+
+      const handleActiveSpeakerChange = (event: { activeSpeaker: { peerId: string } }) => {
+        activeSpeakerIdRef.current = event.activeSpeaker.peerId;
+        updateParticipants(co);
       };
 
       co.on("joined-meeting", handleJoined);
       co.on("participant-joined", handleParticipantJoined);
       co.on("participant-left", handleParticipantLeft);
       co.on("participant-updated", handleParticipantUpdate);
+      co.on("active-speaker-change", handleActiveSpeakerChange);
       co.on("left-meeting", handleLeft);
 
       await co.join({ url: roomUrl, token });

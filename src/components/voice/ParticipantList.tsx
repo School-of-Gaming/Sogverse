@@ -23,8 +23,9 @@ export function ParticipantList() {
           <div
             key={p.sessionId}
             className={cn(
-              "flex items-center gap-3 rounded-lg border p-2 transition-colors",
-              p.isLocal && "bg-accent/50"
+              "flex items-center gap-3 rounded-lg border p-2 transition-colors transition-shadow",
+              p.isLocal && "bg-accent/50",
+              p.isSpeaking && p.audioOn && "ring-2 ring-success"
             )}
           >
             {/* Avatar */}
