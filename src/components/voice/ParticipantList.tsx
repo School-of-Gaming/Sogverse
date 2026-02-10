@@ -3,6 +3,7 @@
 import { Mic, MicOff, Video, Crown } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { cn } from "@/lib/utils";
@@ -27,9 +28,9 @@ export function ParticipantList() {
             )}
           >
             {/* Avatar */}
-            <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full">
-              <Identicon id={p.sessionId} size={32} />
-            </div>
+            <Avatar className="h-8 w-8">
+              <Identicon id={p.userId} size={32} />
+            </Avatar>
 
             {/* Name + badges */}
             <div className="flex min-w-0 flex-1 items-center gap-2">

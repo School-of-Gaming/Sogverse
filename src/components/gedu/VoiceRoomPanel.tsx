@@ -19,8 +19,10 @@ function VoiceRoomPanelInner() {
   const getToken = useVoiceToken();
   const { joined, join, leave, participants } = useVoiceRoom();
   const [starting, setStarting] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const reconnectAttempted = useRef(false);
+  // Only check for reconnect once, when room data first loads
+  const hasCheckedForReconnect = useRef(false);
 
   useVoiceRoomRealtime();
 
@@ -50,13 +52,17 @@ function VoiceRoomPanelInner() {
     }
   };
 
-  // Auto-reconnect if the room is open but we're not in the call (e.g. page reload)
+  // Auto-reconnect on mount if the room is already open (e.g. page reload).
+  // Runs exactly once when room data first loads — never re-triggers after that.
   useEffect(() => {
-    if (room?.status === "open" && !joined && !starting && !reconnectAttempted.current) {
-      reconnectAttempted.current = true;
-      handleStartSession();
+    if (hasCheckedForReconnect.current || isLoading) return;
+    hasCheckedForReconnect.current = true;
+
+    if (room?.status === "open" && !joined) {
+      setReconnecting(true);
+      handleStartSession().finally(() => setReconnecting(false));
     }
-  }, [room?.status, joined, starting, handleStartSession]);
+  }, [room, isLoading, joined, handleStartSession]);
 
   if (isLoading) {
     return (
@@ -115,8 +121,8 @@ function VoiceRoomPanelInner() {
     );
   }
 
-  // Reconnecting to active session
-  if (starting) {
+  // Reconnecting to active session (page reload)
+  if (reconnecting) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center gap-3 py-12">
@@ -148,7 +154,11 @@ function VoiceRoomPanelInner() {
           disabled={starting}
           className="gap-2"
         >
-          <Radio className="h-4 w-4" />
+          {starting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Radio className="h-4 w-4" />
+          )}
           Start Session
         </Button>
       </CardContent>

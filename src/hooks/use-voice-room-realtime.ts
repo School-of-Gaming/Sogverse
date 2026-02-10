@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { voiceKeys } from "@/services/voice";
@@ -14,24 +14,28 @@ import { voiceKeys } from "@/services/voice";
  */
 export function useVoiceRoomRealtime() {
   const queryClient = useQueryClient();
-  const mountRef = useRef(0);
 
   useEffect(() => {
-    const mountId = ++mountRef.current;
     const supabase = getClient();
+    // Unique channel name per effect run — avoids stale state after
+    // strict mode cleanup or hot module reload
+    const channelName = `voice_rooms_${crypto.randomUUID()}`;
 
     const channel = supabase
-      .channel(`voice_rooms_changes_${mountId}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "voice_rooms" },
-        () => {
+        (payload) => {
+          console.log("[Realtime] voice_rooms change:", payload.eventType);
           // Safe: only cache invalidation, no Supabase data queries
           queryClient.invalidateQueries({ queryKey: voiceKeys.rooms() });
           queryClient.invalidateQueries({ queryKey: voiceKeys.myRoom() });
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        console.log("[Realtime] status:", status, err ?? "");
+      });
 
     return () => {
       supabase.removeChannel(channel);

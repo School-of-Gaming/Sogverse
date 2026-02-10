@@ -16,6 +16,8 @@ import type {
 
 export interface VoiceParticipant {
   sessionId: string;
+  /** Supabase user ID (for Identicon generation) */
+  userId: string;
   userName: string;
   audioOn: boolean;
   videoOn: boolean;
@@ -51,9 +53,16 @@ interface VoiceRoomContextValue {
 const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
 
 function mapParticipant(p: DailyParticipant): VoiceParticipant {
+  // user_name is encoded as "userId|displayName" by the token endpoint
+  const raw = p.user_name || "";
+  const separatorIndex = raw.indexOf("|");
+  const userId = separatorIndex >= 0 ? raw.slice(0, separatorIndex) : p.session_id;
+  const userName = separatorIndex >= 0 ? raw.slice(separatorIndex + 1) : raw || "Unknown";
+
   return {
     sessionId: p.session_id,
-    userName: p.user_name || "Unknown",
+    userId,
+    userName,
     audioOn: !p.audio ? false : p.tracks.audio?.state === "playable",
     videoOn: !p.video ? false : p.tracks.video?.state === "playable",
     isLocal: p.local,

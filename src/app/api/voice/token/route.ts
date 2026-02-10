@@ -57,7 +57,10 @@ export async function POST(request: Request) {
     }
 
     // 5. Role-specific checks and token permissions
-    const userName = profile.display_name || profile.username || "User";
+    const displayName = profile.display_name || profile.username || "User";
+    // Encode user ID into the Daily.co user_name so the client can
+    // extract it for Identicon generation (must match profile ID).
+    const userName = `${user.id}|${displayName}`;
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
     const roomUrl = `https://${domain}.daily.co/${room.daily_room_name}`;
 

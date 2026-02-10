@@ -5,6 +5,7 @@ import { Mic, PhoneCall, Radio, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { VoiceControls } from "@/components/voice/VoiceControls";
@@ -159,9 +160,9 @@ function VoiceRoomListInner() {
           <Card key={room.id}>
             <CardContent className="flex items-center gap-4 py-4">
               {/* Educator avatar */}
-              <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full">
+              <Avatar>
                 <Identicon id={room.gedu_id} size={40} />
-              </div>
+              </Avatar>
 
               {/* Room info */}
               <div className="flex-1">
