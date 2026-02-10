@@ -84,8 +84,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ room: updated });
     }
 
-    // 5. No row — create Daily.co room + insert DB row
-    await createDailyRoom({ name: dailyRoomName });
+    // 5. No row — create Daily.co room (if not already on Daily.co) + insert DB row
+    const existingDaily = await getDailyRoom(dailyRoomName);
+    if (!existingDaily) {
+      await createDailyRoom({ name: dailyRoomName });
+    }
 
     const { data: created, error: insertError } = await admin
       .from("voice_rooms")

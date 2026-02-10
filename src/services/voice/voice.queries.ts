@@ -10,7 +10,6 @@ export const voiceKeys = {
   rooms: () => [...voiceKeys.all, "rooms"] as const,
   openRooms: () => [...voiceKeys.rooms(), "open"] as const,
   myRoom: () => [...voiceKeys.all, "myRoom"] as const,
-  room: (id: string) => [...voiceKeys.rooms(), id] as const,
 };
 
 /** List open voice rooms — for gamer dashboard */
@@ -33,18 +32,6 @@ export function useMyVoiceRoom() {
   return useQuery({
     queryKey: voiceKeys.myRoom(),
     queryFn: () => service.getMyRoom(),
-  });
-}
-
-/** Get a voice room by ID */
-export function useVoiceRoom(id: string) {
-  const supabase = getClient();
-  const service = new VoiceService(supabase);
-
-  return useQuery({
-    queryKey: voiceKeys.room(id),
-    queryFn: () => service.getRoomById(id),
-    enabled: !!id,
   });
 }
 

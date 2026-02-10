@@ -3,7 +3,6 @@ export {
   voiceKeys,
   useOpenVoiceRooms,
   useMyVoiceRoom,
-  useVoiceRoom,
   useOpenRoom,
   useCloseRoom,
   useVoiceToken,

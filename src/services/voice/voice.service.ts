@@ -35,18 +35,6 @@ export class VoiceService {
     return data;
   }
 
-  /** Get a voice room by ID */
-  async getRoomById(id: string): Promise<VoiceRoom> {
-    const { data, error } = await this.supabase
-      .from("voice_rooms")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
   /** Open the gedu's voice room (creates if needed) */
   async openRoom(name?: string): Promise<VoiceRoom> {
     const response = await fetch("/api/voice/room", {

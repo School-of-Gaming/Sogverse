@@ -24,6 +24,7 @@ npm run supabase:gen-types  # Regenerate database types from local Supabase
 - **React Query** for server state management
 - **Tailwind CSS 4** with class-variance-authority for component variants
 - **Stripe** for payments
+- **Daily.co** for real-time voice/video chat
 - **Vitest** + **Playwright** for testing
 
 ### Role-Based Access Control (RBAC)
@@ -77,12 +78,30 @@ The proxy (`src/proxy.ts`) owns session management: it refreshes tokens server-s
 ### UI Component Reference
 A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
+### Voice Chat (Daily.co)
+
+See `docs/voice-chat-architecture.md` for the full component map and data flow.
+
+- **`src/lib/daily.ts`** — Server-only wrapper for the Daily.co REST API. Never import client-side.
+- **`src/components/voice/VoiceRoomProvider.tsx`** — React context wrapping the Daily.co call object. Dynamically imports `@daily-co/daily-js` to avoid SSR issues. Both `VoiceRoomPanel` (gedu) and `VoiceRoomList` (gamer) wrap their inner component with `<VoiceRoomProvider>`.
+- **`src/components/voice/`** — Shared voice UI components (controls, participant list, video tile, mic level). These consume `useVoiceRoom()` from the provider.
+- **`src/services/voice/`** — Service class + React Query hooks following the same pattern as other services.
+- **`src/hooks/use-voice-room-realtime.ts`** — Supabase Realtime subscription that invalidates voice query cache on `voice_rooms` table changes.
+
+**Rule: Token issuance controls permissions.** Gamers get non-owner tokens (mic only, no camera). Gedus/admins get owner tokens (mic + camera). This is enforced server-side in `POST /api/voice/token` — the client-side `cameraAllowed` state derives from `p.owner` which Daily.co sets from the token.
+
+**Rule: Room lifecycle is managed via API routes, not direct DB writes from the client.** `POST /api/voice/room` creates/reopens rooms (gedu only), `PATCH /api/voice/room` closes them. Both use the admin Supabase client server-side. The `voice_rooms` table has a `UNIQUE(gedu_id)` constraint — each gedu gets exactly one room row that toggles between open/closed.
+
+**Rule: The Realtime hook must only invalidate queries — never make Supabase data queries in the callback.** Same deadlock risk as `onAuthStateChange`. See the existing comment in `use-voice-room-realtime.ts`.
+
 ## Environment Variables
 
 Copy `.env.local.example` to `.env.local`:
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase public config
 - `SUPABASE_SERVICE_ROLE_KEY` - For admin operations (server-only)
 - `STRIPE_SECRET_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe config
+- `DAILY_API_KEY` - Daily.co REST API key (server-only)
+- `NEXT_PUBLIC_DAILY_DOMAIN` - Daily.co subdomain for room URLs
 
 ## Database
 

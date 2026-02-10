@@ -62,6 +62,13 @@ export async function POST(request: Request) {
     // extract it for Identicon generation (must match profile ID).
     const userName = `${user.id}|${displayName}`;
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
+    if (!domain) {
+      console.error("Missing NEXT_PUBLIC_DAILY_DOMAIN environment variable");
+      return NextResponse.json(
+        { error: "Voice chat is not configured" },
+        { status: 500 }
+      );
+    }
     const roomUrl = `https://${domain}.daily.co/${room.daily_room_name}`;
 
     if (role === "gedu") {
