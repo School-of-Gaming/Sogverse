@@ -29,7 +29,11 @@ export function useVoiceRoomRealtime() {
           queryClient.invalidateQueries({ queryKey: voiceKeys.myRoom() });
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === "CHANNEL_ERROR") {
+          console.error("Voice room realtime subscription error:", err);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
