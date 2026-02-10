@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Mic, PhoneCall, Radio, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,21 +17,46 @@ import type { OpenVoiceRoom } from "@/types";
 function VoiceRoomListInner() {
   const { data: rooms, isLoading } = useOpenVoiceRooms();
   const getToken = useVoiceToken();
-  const { joined, joining, join, participants } = useVoiceRoom();
+  const { joined, joining, join, leave, participants } = useVoiceRoom();
   const [joinedRoomId, setJoinedRoomId] = useState<string | null>(null);
+  const [sessionEndedMessage, setSessionEndedMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Track the room name for the "session ended" message
+  const joinedRoomNameRef = useRef<string | null>(null);
 
   useVoiceRoomRealtime();
 
+  // Auto-leave when the educator ends the session (room disappears from open list)
+  useEffect(() => {
+    if (!joined || !joinedRoomId || !rooms) return;
+
+    const roomStillOpen = rooms.some((r) => r.id === joinedRoomId);
+    if (!roomStillOpen) {
+      leave();
+      setSessionEndedMessage(
+        `${joinedRoomNameRef.current ?? "The session"} has ended.`
+      );
+      setJoinedRoomId(null);
+      joinedRoomNameRef.current = null;
+    }
+  }, [joined, joinedRoomId, rooms, leave]);
+
   const handleJoin = async (room: OpenVoiceRoom) => {
     setError(null);
+    setSessionEndedMessage(null);
     try {
       const { token, roomUrl } = await getToken.mutateAsync(room.id);
       await join(roomUrl, token);
       setJoinedRoomId(room.id);
+      joinedRoomNameRef.current = room.name;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to join room");
     }
+  };
+
+  const handleLeave = async () => {
+    setJoinedRoomId(null);
+    joinedRoomNameRef.current = null;
   };
 
   if (isLoading) {
@@ -44,7 +69,7 @@ function VoiceRoomListInner() {
     );
   }
 
-  // Currently in a call
+  // In a session
   if (joined && joinedRoomId) {
     const currentRoom = rooms?.find((r) => r.id === joinedRoomId);
     const geduParticipant = participants.find((p) => p.isOwner && p.videoOn);
@@ -82,7 +107,7 @@ function VoiceRoomListInner() {
               />
             )}
 
-            <VoiceControls />
+            <VoiceControls onLeave={handleLeave} />
           </CardContent>
         </Card>
 
@@ -108,11 +133,19 @@ function VoiceRoomListInner() {
         </CardHeader>
       </Card>
 
+      {sessionEndedMessage && (
+        <Card>
+          <CardContent className="py-4 text-center">
+            <p className="text-sm text-muted-foreground">{sessionEndedMessage}</p>
+          </CardContent>
+        </Card>
+      )}
+
       {error && (
         <p className="text-sm text-destructive">{error}</p>
       )}
 
-      {openRooms.length === 0 ? (
+      {openRooms.length === 0 && !sessionEndedMessage ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Mic className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
