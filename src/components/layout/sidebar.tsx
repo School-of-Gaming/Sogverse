@@ -12,6 +12,7 @@ import {
   GraduationCap,
   ShoppingBag,
   UserPlus,
+  Mic,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -89,6 +90,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       icon: <Gamepad2 className="h-5 w-5" />,
     },
     {
+      href: "/gamer/voice",
+      label: "Voice Rooms",
+      icon: <Mic className="h-5 w-5" />,
+    },
+    {
       href: "/settings",
       label: "Settings",
       icon: <Settings className="h-5 w-5" />,
@@ -109,6 +115,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       href: "/gedu/courses",
       label: "Courses",
       icon: <GraduationCap className="h-5 w-5" />,
+    },
+    {
+      href: "/gedu/voice",
+      label: "Voice Room",
+      icon: <Mic className="h-5 w-5" />,
     },
     {
       href: "/settings",

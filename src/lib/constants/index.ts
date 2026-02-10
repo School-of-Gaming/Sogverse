@@ -1,5 +1,6 @@
 export * from "./roles";
 export * from "./routes";
+export * from "./voice";
 
 export const APP_NAME = "Sogverse";
 export const APP_DESCRIPTION = "School of Gaming Business Hub";

@@ -15,6 +15,7 @@
     "supabase:gen-types": "supabase gen types typescript --local > src/types/database.types.ts"
   },
   "dependencies": {
+    "@daily-co/daily-js": "^0.87.0",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.95.0",
     "@tanstack/react-query": "^5.90.20",
