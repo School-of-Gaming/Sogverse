@@ -114,6 +114,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   /** Clean up all audio elements */
   const cleanupAudioElements = useCallback(() => {
     for (const [, audioEl] of audioElementsRef.current) {
+      audioEl.pause();
       audioEl.srcObject = null;
     }
     audioElementsRef.current.clear();

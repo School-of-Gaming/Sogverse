@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mic, Radio, PhoneCall, Loader2 } from "lucide-react";
+import { Mic, Radio, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,37 +17,35 @@ function VoiceRoomPanelInner() {
   const openRoom = useOpenRoom();
   const closeRoom = useCloseRoom();
   const getToken = useVoiceToken();
-  const { joined, joining, join, participants } = useVoiceRoom();
+  const { joined, join, leave, participants } = useVoiceRoom();
+  const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useVoiceRoomRealtime();
 
-  const handleOpenRoom = async () => {
+  /** Open the room, get a token, and join the call in one action. */
+  const handleStartSession = async () => {
     setError(null);
+    setStarting(true);
     try {
-      await openRoom.mutateAsync(undefined);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to open room");
-    }
-  };
-
-  const handleCloseRoom = async () => {
-    setError(null);
-    try {
-      await closeRoom.mutateAsync();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to close room");
-    }
-  };
-
-  const handleJoin = async () => {
-    if (!room) return;
-    setError(null);
-    try {
-      const { token, roomUrl } = await getToken.mutateAsync(room.id);
+      const voiceRoom = await openRoom.mutateAsync(undefined);
+      const { token, roomUrl } = await getToken.mutateAsync(voiceRoom.id);
       await join(roomUrl, token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to join room");
+      setError(err instanceof Error ? err.message : "Failed to start session");
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  /** Leave the call and close the room in one action. */
+  const handleEndSession = async () => {
+    setError(null);
+    try {
+      await leave();
+      await closeRoom.mutateAsync();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to end session");
     }
   };
 
@@ -61,126 +59,83 @@ function VoiceRoomPanelInner() {
     );
   }
 
-  // No room yet or room is closed — show open/create button
-  if (!room || room.status === "closed") {
+  // Active session — gedu is in the call
+  if (joined) {
+    const localParticipant = participants.find((p) => p.isLocal);
+
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mic className="h-5 w-5" />
-            Voice Room
-          </CardTitle>
-          <CardDescription>
-            {room
-              ? "Your voice room is currently closed. Open it to start a live session with gamers."
-              : "Create and open your voice room to start a live session with gamers."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <p className="mb-4 text-sm text-destructive">{error}</p>
-          )}
-          <Button
-            onClick={handleOpenRoom}
-            disabled={openRoom.isPending}
-            className="gap-2"
-          >
-            {openRoom.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Radio className="h-4 w-4" />
+      <div className="space-y-4">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Mic className="h-5 w-5" />
+                {room?.name ?? "Voice Room"}
+              </CardTitle>
+              <Badge className="bg-success/10 text-success">
+                <Radio className="mr-1 h-3 w-3" />
+                Live
+              </Badge>
+            </div>
+            <CardDescription>
+              Your session is live. Gamers can see and join your room.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
             )}
-            {room ? "Open Room" : "Create & Open Room"}
-          </Button>
-        </CardContent>
-      </Card>
+
+            <VoiceControls
+              onLeave={handleEndSession}
+              leaveLabel="End Session"
+            />
+
+            {/* Gedu's own video tile */}
+            {localParticipant?.videoOn && (
+              <VideoTile
+                sessionId={localParticipant.sessionId}
+                className="aspect-video max-w-sm overflow-hidden rounded-lg border"
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        <ParticipantList />
+      </div>
     );
   }
 
-  // Room is open
+  // No active session — offer to start one
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Mic className="h-5 w-5" />
-              {room.name}
-            </CardTitle>
-            <Badge className="bg-success/10 text-success">
-              <Radio className="mr-1 h-3 w-3" />
-              Live
-            </Badge>
-          </div>
-          <CardDescription>
-            Your room is open. Gamers can see and join your session.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {error && (
-            <p className="mb-4 text-sm text-destructive">{error}</p>
-          )}
-
-          {!joined ? (
-            <div className="flex gap-2">
-              <Button
-                onClick={handleJoin}
-                disabled={joining || getToken.isPending}
-                className="gap-2"
-              >
-                {joining || getToken.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <PhoneCall className="h-4 w-4" />
-                )}
-                Join Room
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleCloseRoom}
-                disabled={closeRoom.isPending}
-              >
-                {closeRoom.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Close Room"
-                )}
-              </Button>
-            </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Mic className="h-5 w-5" />
+          Voice Room
+        </CardTitle>
+        <CardDescription>
+          Start a live voice session. Gamers will be able to see your room and join.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {error && (
+          <p className="mb-4 text-sm text-destructive">{error}</p>
+        )}
+        <Button
+          onClick={handleStartSession}
+          disabled={starting}
+          className="gap-2"
+        >
+          {starting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <VoiceControls />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCloseRoom}
-                  disabled={closeRoom.isPending}
-                >
-                  {closeRoom.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    "Close Room"
-                  )}
-                </Button>
-              </div>
-
-              {/* Gedu's own video tile */}
-              {participants.find((p) => p.isLocal && p.videoOn) && (
-                <VideoTile
-                  sessionId={
-                    participants.find((p) => p.isLocal)!.sessionId
-                  }
-                  className="aspect-video max-w-sm overflow-hidden rounded-lg border"
-                />
-              )}
-            </div>
+            <Radio className="h-4 w-4" />
           )}
-        </CardContent>
-      </Card>
-
-      {joined && <ParticipantList />}
-    </div>
+          Start Session
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 

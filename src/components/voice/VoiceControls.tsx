@@ -1,13 +1,31 @@
 "use client";
 
-import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
+import { useState } from "react";
+import { Mic, MicOff, Video, VideoOff, PhoneOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
-import { cn } from "@/lib/utils";
 
-export function VoiceControls() {
+interface VoiceControlsProps {
+  /** Called after leaving the call (e.g. to close the room for gedu) */
+  onLeave?: () => Promise<void>;
+  /** Label for the leave button */
+  leaveLabel?: string;
+}
+
+export function VoiceControls({ onLeave, leaveLabel = "Leave" }: VoiceControlsProps) {
   const { micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, leave, joining } =
     useVoiceRoom();
+  const [leaving, setLeaving] = useState(false);
+
+  const handleLeave = async () => {
+    setLeaving(true);
+    try {
+      await leave();
+      await onLeave?.();
+    } finally {
+      setLeaving(false);
+    }
+  };
 
   return (
     <div className="flex items-center gap-2">
@@ -16,7 +34,7 @@ export function VoiceControls() {
         variant={micOn ? "secondary" : "destructive"}
         size="icon"
         onClick={toggleMic}
-        disabled={joining}
+        disabled={joining || leaving}
         title={micOn ? "Mute microphone" : "Unmute microphone"}
       >
         {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
@@ -28,7 +46,7 @@ export function VoiceControls() {
           variant={cameraOn ? "secondary" : "outline"}
           size="icon"
           onClick={toggleCamera}
-          disabled={joining}
+          disabled={joining || leaving}
           title={cameraOn ? "Turn off camera" : "Turn on camera"}
         >
           {cameraOn ? (
@@ -43,12 +61,16 @@ export function VoiceControls() {
       <Button
         variant="destructive"
         size="sm"
-        onClick={leave}
-        disabled={joining}
-        className={cn("gap-1.5")}
+        onClick={handleLeave}
+        disabled={joining || leaving}
+        className="gap-1.5"
       >
-        <PhoneOff className="h-4 w-4" />
-        Leave
+        {leaving ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <PhoneOff className="h-4 w-4" />
+        )}
+        {leaveLabel}
       </Button>
     </div>
   );
