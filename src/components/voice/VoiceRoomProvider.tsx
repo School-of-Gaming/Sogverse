@@ -158,7 +158,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       const Daily = (await import("@daily-co/daily-js")).default as typeof DailyIframe;
       const co = Daily.createCallObject({
         audioSource: true,
-        videoSource: false, // Start with video off; gedu can toggle on
+        videoSource: true,
+        startVideoOff: true,
       });
 
       callObjectRef.current = co;

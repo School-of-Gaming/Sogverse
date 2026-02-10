@@ -22,10 +22,12 @@ export function VideoTile({ sessionId, className }: VideoTileProps) {
 
   useEffect(() => {
     const videoEl = videoRef.current;
-    if (!callObject || !videoEl || !hasVideo) return;
+    if (!callObject || !videoEl || !hasVideo) {
+      if (videoEl) videoEl.srcObject = null;
+      return;
+    }
 
     const pMap = callObject.participants();
-    // Find the matching participant by session_id
     const dailyParticipant = Object.values(pMap).find(
       (p) => p.session_id === sessionId
     );
@@ -33,18 +35,20 @@ export function VideoTile({ sessionId, className }: VideoTileProps) {
     if (!dailyParticipant) return;
 
     const videoTrack = dailyParticipant.tracks.video;
-    if (
-      videoTrack?.state === "playable" &&
-      videoTrack.persistentTrack
-    ) {
-      const stream = new MediaStream([videoTrack.persistentTrack]);
-      videoEl.srcObject = stream;
+    if (videoTrack?.state === "playable" && videoTrack.persistentTrack) {
+      // Only update srcObject if the track actually changed
+      const existing = videoEl.srcObject instanceof MediaStream
+        ? videoEl.srcObject.getVideoTracks()[0]
+        : null;
+      if (existing !== videoTrack.persistentTrack) {
+        videoEl.srcObject = new MediaStream([videoTrack.persistentTrack]);
+      }
     }
 
     return () => {
-      videoEl.srcObject = null;
+      if (videoEl) videoEl.srcObject = null;
     };
-  }, [callObject, sessionId, hasVideo, participants]);
+  }, [callObject, sessionId, hasVideo]);
 
   if (!hasVideo) return null;
 

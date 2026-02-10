@@ -26,16 +26,13 @@ export function useVoiceRoomRealtime() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "voice_rooms" },
-        (payload) => {
-          console.log("[Realtime] voice_rooms change:", payload.eventType);
+        () => {
           // Safe: only cache invalidation, no Supabase data queries
           queryClient.invalidateQueries({ queryKey: voiceKeys.rooms() });
           queryClient.invalidateQueries({ queryKey: voiceKeys.myRoom() });
         }
       )
-      .subscribe((status, err) => {
-        console.log("[Realtime] status:", status, err ?? "");
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
