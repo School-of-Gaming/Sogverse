@@ -43,7 +43,7 @@ interface VoiceRoomContextValue {
   /** Toggle microphone */
   toggleMic: () => void;
   /** Toggle camera */
-  toggleCamera: () => void;
+  toggleCamera: () => Promise<void> | void;
   /** Get the Daily call object (for video track access) */
   callObject: DailyCall | null;
 }
@@ -160,12 +160,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         setJoining(false);
         updateParticipants(co);
 
-        // Check if camera is allowed by token
+        // Only room owners (gedu/admin) can use camera
         const local = co.participants().local;
-        const canSend = local?.permissions?.canSend;
-        const canUseCam = canSend === true ||
-          (canSend instanceof Set && canSend.has("video"));
-        setCameraAllowed(canUseCam);
+        setCameraAllowed(local?.owner === true);
       };
 
       const handleParticipantUpdate = () => updateParticipants(co);
@@ -211,11 +208,15 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     setMicOn(newState);
   }, [micOn]);
 
-  const toggleCamera = useCallback(() => {
+  const toggleCamera = useCallback(async () => {
     if (!callObjectRef.current || !cameraAllowed) return;
     const newState = !cameraOn;
-    callObjectRef.current.setLocalVideo(newState);
-    setCameraOn(newState);
+    try {
+      await callObjectRef.current.setLocalVideo(newState);
+      setCameraOn(newState);
+    } catch {
+      // Camera permission denied or device unavailable — leave state unchanged
+    }
   }, [cameraOn, cameraAllowed]);
 
   // Cleanup on unmount
