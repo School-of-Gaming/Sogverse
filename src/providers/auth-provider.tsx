@@ -126,6 +126,9 @@ export function AuthProvider({
     return () => {
       subscription.unsubscribe();
     };
+    // fetchProfile and queryClient are intentionally excluded: fetchProfile is not
+    // memoized so including it would re-run the effect on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialUser, supabase]);
 
   return (

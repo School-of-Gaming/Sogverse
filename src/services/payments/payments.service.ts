@@ -10,9 +10,9 @@ export interface CheckoutSession {
 
 export class PaymentsService {
   async createCheckoutSession(
-    productId: string,
-    successUrl: string,
-    cancelUrl: string
+    _productId: string,
+    _successUrl: string,
+    _cancelUrl: string
   ): Promise<CheckoutSession> {
     // TODO: Implement Stripe checkout session creation
     // This would be called from an API route that has access to the Stripe secret key
@@ -25,7 +25,7 @@ export class PaymentsService {
     return product.price;
   }
 
-  async handleWebhook(payload: string, signature: string): Promise<void> {
+  async handleWebhook(_payload: string, _signature: string): Promise<void> {
     // TODO: Implement Stripe webhook handling
     // This would verify the webhook signature and process events like:
     // - checkout.session.completed

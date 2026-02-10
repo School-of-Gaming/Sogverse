@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ export default function ProductsPage() {
           </div>
         ) : products && products.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {products.map((product) => {
+            {products.map((product, index) => {
               const metadata = product.metadata as Record<string, unknown>;
               const category = metadata?.category as string | undefined;
 
@@ -49,10 +50,13 @@ export default function ProductsPage() {
                 <Card key={product.id} className="flex flex-col">
                   <div className="relative aspect-video overflow-hidden rounded-t-lg bg-muted">
                     {product.image_url ? (
-                      <img
+                      <Image
                         src={product.image_url}
                         alt={product.name}
-                        className="h-full w-full object-cover"
+                        fill
+                        unoptimized
+                        priority={index === 0}
+                        className="object-cover"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-4xl">

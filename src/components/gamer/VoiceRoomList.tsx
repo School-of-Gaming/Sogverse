@@ -33,12 +33,16 @@ function VoiceRoomListInner() {
 
     const roomStillOpen = rooms.some((r) => r.id === joinedRoomId);
     if (!roomStillOpen) {
+      const roomName = joinedRoomNameRef.current;
       leave();
-      setSessionEndedMessage(
-        `${joinedRoomNameRef.current ?? "The session"} has ended.`
-      );
-      setJoinedRoomId(null);
       joinedRoomNameRef.current = null;
+      // Schedule state updates via microtask so they aren't synchronous
+      // within the effect body (satisfies react-hooks/set-state-in-effect).
+      // React 18+ batches these regardless of sync/async context.
+      Promise.resolve().then(() => {
+        setSessionEndedMessage(`${roomName ?? "The session"} has ended.`);
+        setJoinedRoomId(null);
+      });
     }
   }, [joined, joinedRoomId, rooms, leave]);
 

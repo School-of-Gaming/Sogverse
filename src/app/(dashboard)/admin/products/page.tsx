@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, MoreVertical, Pencil, Trash, Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
+import { Plus, Search, Pencil, Trash, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -87,12 +88,14 @@ export default function AdminProductsPage() {
                   className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
+                    <div className="relative flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
                       {product.image_url ? (
-                        <img
+                        <Image
                           src={product.image_url}
                           alt={product.name}
-                          className="h-full w-full rounded-lg object-cover"
+                          fill
+                          unoptimized
+                          className="rounded-lg object-cover"
                         />
                       ) : (
                         <span className="text-2xl">📦</span>

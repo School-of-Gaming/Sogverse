@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Gamepad2, Eye, EyeOff, Check } from "lucide-react";
 import { z } from "zod";
@@ -30,7 +29,6 @@ const createGamerSchema = z.object({
 });
 
 export default function AddGamerPage() {
-  const router = useRouter();
   const { user } = useAuth();
   const createGamer = useCreateGamer();
 
