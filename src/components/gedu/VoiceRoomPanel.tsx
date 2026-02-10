@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Mic, Radio, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,11 +20,12 @@ function VoiceRoomPanelInner() {
   const { joined, join, leave, participants } = useVoiceRoom();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const reconnectAttempted = useRef(false);
 
   useVoiceRoomRealtime();
 
-  /** Open the room, get a token, and join the call in one action. */
-  const handleStartSession = async () => {
+  /** Open the room (idempotent if already open), get a token, and join. */
+  const handleStartSession = useCallback(async () => {
     setError(null);
     setStarting(true);
     try {
@@ -36,7 +37,7 @@ function VoiceRoomPanelInner() {
     } finally {
       setStarting(false);
     }
-  };
+  }, [openRoom, getToken, join]);
 
   /** Leave the call and close the room in one action. */
   const handleEndSession = async () => {
@@ -48,6 +49,14 @@ function VoiceRoomPanelInner() {
       setError(err instanceof Error ? err.message : "Failed to end session");
     }
   };
+
+  // Auto-reconnect if the room is open but we're not in the call (e.g. page reload)
+  useEffect(() => {
+    if (room?.status === "open" && !joined && !starting && !reconnectAttempted.current) {
+      reconnectAttempted.current = true;
+      handleStartSession();
+    }
+  }, [room?.status, joined, starting, handleStartSession]);
 
   if (isLoading) {
     return (
@@ -106,6 +115,18 @@ function VoiceRoomPanelInner() {
     );
   }
 
+  // Reconnecting to active session
+  if (starting) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center gap-3 py-12">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Reconnecting to session...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   // No active session — offer to start one
   return (
     <Card>
@@ -127,11 +148,7 @@ function VoiceRoomPanelInner() {
           disabled={starting}
           className="gap-2"
         >
-          {starting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Radio className="h-4 w-4" />
-          )}
+          <Radio className="h-4 w-4" />
           Start Session
         </Button>
       </CardContent>
