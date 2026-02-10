@@ -70,6 +70,54 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const callObjectRef = useRef<DailyCall | null>(null);
+  // Track <audio> elements for remote participants
+  const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+
+  /** Attach or update an <audio> element for a remote participant's audio track */
+  const manageAudioTrack = useCallback((co: DailyCall) => {
+    const pMap = co.participants();
+    const activeSessionIds = new Set<string>();
+
+    Object.values(pMap).forEach((p) => {
+      if (p.local) return; // Don't play our own audio back
+
+      activeSessionIds.add(p.session_id);
+      const audioTrack = p.tracks.audio;
+
+      if (audioTrack?.state === "playable" && audioTrack.persistentTrack) {
+        let audioEl = audioElementsRef.current.get(p.session_id);
+        if (!audioEl) {
+          audioEl = document.createElement("audio");
+          audioEl.autoplay = true;
+          audioElementsRef.current.set(p.session_id, audioEl);
+        }
+
+        // Only update srcObject if the track changed
+        const existingTrack = audioEl.srcObject instanceof MediaStream
+          ? audioEl.srcObject.getAudioTracks()[0]
+          : null;
+        if (existingTrack !== audioTrack.persistentTrack) {
+          audioEl.srcObject = new MediaStream([audioTrack.persistentTrack]);
+        }
+      }
+    });
+
+    // Clean up audio elements for participants who left
+    for (const [sessionId, audioEl] of audioElementsRef.current) {
+      if (!activeSessionIds.has(sessionId)) {
+        audioEl.srcObject = null;
+        audioElementsRef.current.delete(sessionId);
+      }
+    }
+  }, []);
+
+  /** Clean up all audio elements */
+  const cleanupAudioElements = useCallback(() => {
+    for (const [, audioEl] of audioElementsRef.current) {
+      audioEl.srcObject = null;
+    }
+    audioElementsRef.current.clear();
+  }, []);
 
   const updateParticipants = useCallback((co: DailyCall) => {
     const pMap = co.participants();
@@ -82,13 +130,17 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       setMicOn(local.tracks.audio?.state === "playable");
       setCameraOn(local.tracks.video?.state === "playable");
     }
-  }, []);
+
+    // Manage audio playback for remote participants
+    manageAudioTrack(co);
+  }, [manageAudioTrack]);
 
   const join = useCallback(
     async (roomUrl: string, token: string) => {
       if (callObjectRef.current) {
         await callObjectRef.current.destroy();
       }
+      cleanupAudioElements();
 
       setJoining(true);
 
@@ -116,14 +168,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       };
 
       const handleParticipantUpdate = () => updateParticipants(co);
-
-      const handleParticipantJoined = () => {
-        updateParticipants(co);
-      };
-
-      const handleParticipantLeft = () => {
-        updateParticipants(co);
-      };
+      const handleParticipantJoined = () => updateParticipants(co);
+      const handleParticipantLeft = () => updateParticipants(co);
 
       const handleLeft = () => {
         setJoined(false);
@@ -131,6 +177,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         setMicOn(true);
         setCameraOn(false);
         setCameraAllowed(false);
+        cleanupAudioElements();
       };
 
       co.on("joined-meeting", handleJoined);
@@ -141,7 +188,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       await co.join({ url: roomUrl, token });
     },
-    [updateParticipants]
+    [updateParticipants, cleanupAudioElements]
   );
 
   const leave = useCallback(async () => {
@@ -152,8 +199,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       setCallObject(null);
       setJoined(false);
       setParticipants([]);
+      cleanupAudioElements();
     }
-  }, []);
+  }, [cleanupAudioElements]);
 
   const toggleMic = useCallback(() => {
     if (!callObjectRef.current) return;
@@ -172,12 +220,13 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      cleanupAudioElements();
       if (callObjectRef.current) {
         callObjectRef.current.leave().catch(() => {});
         callObjectRef.current.destroy().catch(() => {});
       }
     };
-  }, []);
+  }, [cleanupAudioElements]);
 
   return (
     <VoiceRoomContext.Provider
