@@ -26,8 +26,21 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const dragStartRef = useRef<{ offsetX: number; offsetY: number } | null>(null);
+  const draggingRef = useRef(false);
+  const lastBroadcastRef = useRef(0);
+
+  draggingRef.current = dragging;
 
   const pos = dragPos ?? position ?? { x: 0, y: 0 };
+
+  // Clear dragPos when the provider's position prop catches up after drag ends.
+  // Uses a ref for dragging so the effect only fires on position changes, not on drag state changes.
+  useEffect(() => {
+    if (!draggingRef.current) {
+      setDragPos(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position]);
 
   // Attach video track when available
   useEffect(() => {
@@ -99,8 +112,19 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
       y = Math.max(0, Math.min(CANVAS_HEIGHT - AVATAR_SIZE, y));
 
       setDragPos({ x, y });
+
+      // Broadcast position to other users (throttled ~20fps)
+      const now = Date.now();
+      if (now - lastBroadcastRef.current >= 50) {
+        lastBroadcastRef.current = now;
+        if (participant.isLocal) {
+          moveLocal(x, y);
+        } else {
+          moveOther(participant.sessionId, x, y);
+        }
+      }
     },
-    [dragging]
+    [dragging, participant.isLocal, participant.sessionId, moveLocal, moveOther]
   );
 
   const handlePointerUp = useCallback(
@@ -120,19 +144,15 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
         return;
       }
 
-      // Broadcast zone is admin/gedu only for self-placement
-      if (participant.isLocal && participant.role === "gamer" && zone === "broadcast") {
-        setDragPos(null);
-        return;
-      }
-
+      // Send final position update
       if (participant.isLocal) {
         moveLocal(dragPos.x, dragPos.y);
       } else {
         moveOther(participant.sessionId, dragPos.x, dragPos.y);
       }
 
-      setDragPos(null);
+      // Don't clear dragPos here — the useEffect clears it when the
+      // provider's position prop catches up, preventing snap-back.
     },
     [dragging, dragPos, participant, moveLocal, moveOther]
   );
