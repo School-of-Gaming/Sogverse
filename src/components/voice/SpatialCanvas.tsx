@@ -9,7 +9,7 @@ export function SpatialCanvas() {
   const { participants, positions, localZone, localRole } = useVoiceRoom();
 
   return (
-    <div className="relative w-full overflow-hidden rounded-lg border bg-card" style={{ aspectRatio: "4 / 3" }}>
+    <div className="relative w-full overflow-hidden rounded-lg border bg-card" style={{ aspectRatio: "21 / 9" }}>
       {/* Zones */}
       {ZONE_RECTS.map((zone) => (
         <Zone key={zone.id} zone={zone} isActive={localZone === zone.id} />

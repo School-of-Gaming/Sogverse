@@ -84,7 +84,7 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): Vo
     videoOn: !p.video ? false : p.tracks.video?.state === "playable",
     isLocal: p.local,
     isOwner: p.owner ?? false,
-    isSpeaking: p.session_id === activeSpeakerId,
+    isSpeaking: p.session_id === activeSpeakerId && Boolean(p.audio) && p.tracks.audio?.state === "playable",
   };
 }
 

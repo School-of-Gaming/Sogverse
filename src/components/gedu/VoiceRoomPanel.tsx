@@ -49,7 +49,14 @@ function VoiceRoomPanelInner() {
 
   // No active session — offer to start one + browse rooms
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Voice Rooms</h1>
+        <p className="text-muted-foreground">
+          Start a session or join an open room.
+        </p>
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

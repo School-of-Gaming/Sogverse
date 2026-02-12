@@ -26,7 +26,7 @@ function mapParticipant(
     videoOn: !p.video ? false : p.tracks.video?.state === "playable",
     isLocal: p.local,
     isOwner: p.owner ?? false,
-    isSpeaking: p.session_id === activeSpeakerId,
+    isSpeaking: p.session_id === activeSpeakerId && Boolean(p.audio) && p.tracks.audio?.state === "playable",
   };
 }
 
@@ -186,6 +186,13 @@ describe("mapParticipant", () => {
     it("should not mark anyone as speaking when no active speaker", () => {
       const p = createFakeParticipant({ session_id: "sess-abc" });
       const result = mapParticipant(p, null);
+
+      expect(result.isSpeaking).toBe(false);
+    });
+
+    it("should not mark participant as speaking when muted even if active speaker", () => {
+      const p = createFakeParticipant({ session_id: "sess-abc", audio: false });
+      const result = mapParticipant(p, "sess-abc");
 
       expect(result.isSpeaking).toBe(false);
     });

@@ -1,7 +1,7 @@
 "use client";
 
 import { Mic, PhoneCall, Loader2 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -36,18 +36,13 @@ function VoiceRoomListInner() {
 
   // Room browser
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Mic className="h-5 w-5" />
-            Voice Rooms
-          </CardTitle>
-          <CardDescription>
-            Join a live voice session with your educator.
-          </CardDescription>
-        </CardHeader>
-      </Card>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Voice Rooms</h1>
+        <p className="text-muted-foreground">
+          Join a live voice session with your educator.
+        </p>
+      </div>
 
       {session.sessionEndedMessage && (
         <Card>
