@@ -34,7 +34,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { useAuth } from "@/providers";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
-import { SPEAKING_GLOW } from "@/lib/constants/spatial.config";
+import { computeGlowStyle } from "@/lib/constants/spatial.config";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -128,13 +128,7 @@ function VoiceAvatarDemo() {
   }, [cameraOn]);
 
   const effectiveLevel = micOn ? level : 0;
-  const glowStyle: React.CSSProperties =
-    effectiveLevel > 0.05
-      ? {
-          boxShadow: `0 0 ${effectiveLevel * SPEAKING_GLOW.maxSpread}px rgba(${SPEAKING_GLOW.color}, ${0.3 + effectiveLevel * 0.5})`,
-          borderColor: `rgba(${SPEAKING_GLOW.color}, ${0.5 + effectiveLevel * 0.5})`,
-        }
-      : {};
+  const glowStyle = computeGlowStyle(effectiveLevel);
 
   return (
     <div className="flex items-center gap-8">

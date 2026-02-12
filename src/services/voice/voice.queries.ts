@@ -25,13 +25,14 @@ export function useOpenVoiceRooms() {
 }
 
 /** Get the current user's own voice room */
-export function useMyVoiceRoom() {
+export function useMyVoiceRoom(options?: { enabled?: boolean }) {
   const supabase = getClient();
   const service = new VoiceService(supabase);
 
   return useQuery({
     queryKey: voiceKeys.myRoom(),
     queryFn: () => service.getMyRoom(),
+    enabled: options?.enabled ?? true,
   });
 }
 

@@ -54,7 +54,7 @@ export function useVoiceSession({
   autoReconnect = true,
 }: UseVoiceSessionOptions): UseVoiceSessionReturn {
   const { user } = useAuth();
-  const { data: myRoom, isLoading: myRoomLoading } = useMyVoiceRoom();
+  const { data: myRoom, isLoading: myRoomLoading } = useMyVoiceRoom({ enabled: canCreate });
   const { data: openRoomsList } = useOpenVoiceRooms();
   const openRoomMutation = useOpenRoom();
   const closeRoomMutation = useCloseRoom();
@@ -120,8 +120,9 @@ export function useVoiceSession({
     joinedRoomNameRef.current = null;
   }, [leave]);
 
-  /** Leave the call and close the room */
+  /** Leave the call and close the room. Only valid when joined to own room. */
   const endSession = useCallback(async () => {
+    if (!canCreate || !joinedRoomId) return;
     setError(null);
     try {
       await leave();
@@ -131,7 +132,7 @@ export function useVoiceSession({
     }
     setJoinedRoomId(null);
     joinedRoomNameRef.current = null;
-  }, [leave, closeRoomMutation]);
+  }, [canCreate, joinedRoomId, leave, closeRoomMutation]);
 
   // Auto-reconnect to own open room on mount
   useEffect(() => {

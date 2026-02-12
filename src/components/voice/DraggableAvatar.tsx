@@ -12,7 +12,7 @@ import {
   resolveOverlap,
   ejectFromBroadcastZone,
 } from "@/lib/constants/spatial";
-import { SPEAKING_GLOW } from "@/lib/constants/spatial.config";
+import { computeGlowStyle } from "@/lib/constants/spatial.config";
 
 interface DraggableAvatarProps {
   participant: VoiceParticipant;
@@ -66,10 +66,17 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
     }
   }, [callObject, participant.sessionId, participant.videoOn]);
 
-  // Animate speaking glow based on real-time audio level (DOM manipulation, no React re-renders)
+  // Animate speaking glow based on real-time audio level (DOM manipulation, no React re-renders).
+  // Skip the rAF loop entirely when the participant is muted to save CPU.
   useEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
+
+    if (!participant.audioOn) {
+      frame.style.boxShadow = "";
+      frame.style.borderColor = "";
+      return;
+    }
 
     const dataArray = new Uint8Array(256);
     let rafId = 0;
@@ -85,16 +92,9 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
         }
         const rms = Math.sqrt(sum / dataArray.length);
         const level = Math.min(1, rms * 3);
-
-        if (level > 0.05) {
-          const spread = level * SPEAKING_GLOW.maxSpread;
-          const opacity = 0.3 + level * 0.5;
-          frame.style.boxShadow = `0 0 ${spread}px rgba(${SPEAKING_GLOW.color}, ${opacity})`;
-          frame.style.borderColor = `rgba(${SPEAKING_GLOW.color}, ${0.5 + level * 0.5})`;
-        } else {
-          frame.style.boxShadow = "";
-          frame.style.borderColor = "";
-        }
+        const glow = computeGlowStyle(level);
+        frame.style.boxShadow = (glow.boxShadow as string) ?? "";
+        frame.style.borderColor = (glow.borderColor as string) ?? "";
       } else {
         frame.style.boxShadow = "";
         frame.style.borderColor = "";
@@ -104,7 +104,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [getAnalyser, participant.sessionId]);
+  }, [getAnalyser, participant.sessionId, participant.audioOn]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -128,7 +128,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
       dragStartRef.current = { offsetX: pointerX - currentX, offsetY: pointerY - currentY };
 
       setDragging(true);
-      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      containerRef.current?.setPointerCapture(e.pointerId);
     },
     [canDrag, pos.x, pos.y]
   );

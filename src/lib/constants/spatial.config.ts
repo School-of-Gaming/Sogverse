@@ -30,7 +30,20 @@ export const ZONE_RECTS: ZoneRect[] = [
 export const SPEAKING_GLOW = {
   color: "255, 255, 255",
   maxSpread: 14,
+  threshold: 0.05,
 };
+
+/** Compute inline glow styles for a given audio level (0–1).
+ *  Returns empty object when below threshold (no glow). */
+export function computeGlowStyle(level: number): React.CSSProperties {
+  if (level <= SPEAKING_GLOW.threshold) return {};
+  const spread = level * SPEAKING_GLOW.maxSpread;
+  const opacity = 0.3 + level * 0.5;
+  return {
+    boxShadow: `0 0 ${spread}px rgba(${SPEAKING_GLOW.color}, ${opacity})`,
+    borderColor: `rgba(${SPEAKING_GLOW.color}, ${0.5 + level * 0.5})`,
+  };
+}
 
 // ── Zone colours (Tailwind classes) ─────────────────────────────────
 export const ZONE_COLORS: Record<ZoneId, { bg: string; border: string; accent: string }> = {

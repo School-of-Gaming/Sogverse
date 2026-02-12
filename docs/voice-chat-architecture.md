@@ -1,24 +1,34 @@
 # Voice Chat Architecture
 
-Daily.co-powered voice (and optional video) chat between gedus and gamers.
+Daily.co-powered spatial voice (and optional video) chat for gedus, admins, and gamers.
 
 ## Overview
 
-A gedu opens a voice room, which creates a Daily.co room and a `voice_rooms` row in Supabase. Gamers see open rooms in a list and can join. When the gedu ends the session, gamers are auto-disconnected via Supabase Realtime.
+An admin or gedu opens a voice room, which creates a Daily.co room and a `voice_rooms` row in Supabase. All roles can browse and join open rooms. The spatial canvas lets participants drag avatars into zones (breakout rooms, broadcast) for zone-based audio isolation. When the host ends the session, participants are auto-disconnected via Supabase Realtime.
 
 ## Component Map
 
 ```
 Pages
-├── /gedu/voice  → VoiceRoomPanel (start/end session, self-video, participant list)
-└── /gamer/voice → VoiceRoomList  (browse open rooms, join, view gedu video)
+├── /admin/voice → VoiceRoomPanel (start/end session, browse/join rooms, spatial canvas)
+├── /gedu/voice  → VoiceRoomPanel (start/end session, browse/join rooms, spatial canvas)
+└── /gamer/voice → VoiceRoomList  (browse open rooms, join, spatial canvas)
 
 Shared voice components (src/components/voice/)
-├── VoiceRoomProvider  — React context wrapping Daily.co call object
-├── VoiceControls      — Mic/camera toggle, leave button, mic level meter
-├── ParticipantList    — Avatars + audio/video/speaking indicators
-├── VideoTile          — Renders a participant's camera feed
+├── VoiceRoomProvider  — React context: Daily.co call, spatial positions, audio routing
+├── SpatialVoiceRoom   — In-session layout: canvas + controls + leave/end buttons
+├── SpatialCanvas      — Renders zones + draggable avatars on a 21:9 canvas
+├── DraggableAvatar    — Pointer-drag avatar with speaking glow (rAF + AnalyserNode)
+├── VoiceAvatar        — Presentational avatar (identicon/video, mic status, name label)
+├── Zone               — Renders a named zone rectangle on the canvas
+├── VoiceControls      — Mic/camera toggle, mic level meter
+├── ParticipantList    — Avatars + audio/video/speaking indicators (legacy, non-spatial)
+├── VideoTile          — Renders a participant's camera feed (legacy, non-spatial)
 └── MicLevelIndicator  — Real-time mic input level bar (Web Audio API)
+
+Hooks
+├── src/hooks/use-voice-session.ts       — Shared session logic (join/leave/reconnect)
+└── src/hooks/use-voice-room-realtime.ts — Supabase Realtime → query invalidation
 
 API routes (src/app/api/voice/)
 ├── room/route.ts   — POST (open/create room), PATCH (close room)
@@ -29,38 +39,45 @@ Service layer (src/services/voice/)
 ├── voice.queries.ts  — React Query hooks (useOpenVoiceRooms, useMyVoiceRoom, etc.)
 └── index.ts          — Barrel exports
 
+Spatial config (src/lib/constants/)
+├── spatial.ts        — Types, pure functions (zone detection, overlap, gain calc)
+├── spatial.config.ts — Canvas dimensions, zone rects, avatar size, colors
+└── voice.ts          — TOKEN_EXPIRY, MAX_PARTICIPANTS, POLL_INTERVAL
+
 Supporting
-├── src/lib/daily.ts                    — Daily.co REST API wrapper (server-only)
-├── src/lib/constants/voice.ts          — TOKEN_EXPIRY, MAX_PARTICIPANTS, POLL_INTERVAL
-└── src/hooks/use-voice-room-realtime.ts — Supabase Realtime → query invalidation
+├── src/lib/daily.ts  — Daily.co REST API wrapper (server-only)
 ```
 
 ## Data Flow
 
-### Gedu starts a session
-1. `VoiceRoomPanel` calls `useOpenRoom` mutation → `POST /api/voice/room`
-2. API route creates/reopens a Daily.co room + upserts `voice_rooms` row (status = open)
-3. API route returns room data → panel calls `useVoiceToken` → `POST /api/voice/token`
-4. Token route issues an owner token (camera + mic enabled)
-5. `VoiceRoomProvider.join()` dynamically imports `@daily-co/daily-js`, creates a call object, and joins
+### Host (admin/gedu) starts a session
+1. `VoiceRoomPanel` calls `useVoiceSession({ canCreate: true })` → `startSession()`
+2. `useOpenRoom` mutation → `POST /api/voice/room` creates/reopens a Daily.co room + upserts `voice_rooms` row (status = open)
+3. `useVoiceToken` → `POST /api/voice/token` issues an owner token (camera + mic + moderation)
+4. `VoiceRoomProvider.join()` dynamically imports `@daily-co/daily-js`, creates a call object, joins, and places avatar in the general zone
 
-### Gamer joins a session
-1. `VoiceRoomList` polls open rooms via `useOpenVoiceRooms` (backed by `get_open_voice_rooms()` RPC)
+### Participant joins a session
+1. Room browser (in both `VoiceRoomList` and `VoiceRoomPanel`) polls open rooms via `useOpenVoiceRooms` (backed by `get_open_voice_rooms()` RPC)
 2. Supabase Realtime also invalidates the query on any `voice_rooms` change
-3. Gamer clicks Join → `POST /api/voice/token` issues a non-owner token (mic only, no camera)
-4. `VoiceRoomProvider.join()` connects to the same Daily.co room
+3. User clicks Join → `POST /api/voice/token` issues a token (owner for admin/gedu, non-owner for gamer)
+4. `VoiceRoomProvider.join()` connects to the Daily.co room, requests positions from existing participants via app message
 
-### Gedu ends a session
-1. `VoiceRoomPanel` calls `leave()` then `useCloseRoom` → `PATCH /api/voice/room`
+### Spatial audio routing
+1. Participants drag avatars on the canvas → `moveLocal`/`moveOther` broadcast position via Daily.co `sendAppMessage`
+2. `updateAudioRouting()` sets `<audio>` element volume per remote participant based on zone membership
+3. Same zone or broadcast zone = full volume; different zones = silent
+
+### Host ends a session
+1. `SpatialVoiceRoom` calls `endSession()` → `leave()` then `useCloseRoom` → `PATCH /api/voice/room`
 2. API route sets status = closed → Supabase Realtime fires
-3. Gamer's `VoiceRoomList` detects the room disappeared from the open list → auto-calls `leave()`
+3. Other participants detect the room disappeared from the open list → auto-calls `leave()`
 
 ## Database Schema
 
 ```sql
 voice_rooms (
   id              UUID PK,
-  gedu_id         UUID FK → profiles(id) UNIQUE,  -- one room per gedu
+  creator_id      UUID FK → profiles(id) UNIQUE,  -- one room per creator
   name            TEXT,
   daily_room_name TEXT UNIQUE,
   status          voice_room_status ('open' | 'closed'),
@@ -71,20 +88,23 @@ voice_rooms (
 )
 ```
 
-**RLS policies:** Admin has full access. Gedu has full access to own room. Gamer has read-only access. All policies use `get_user_role()` (SECURITY DEFINER) to avoid recursive RLS.
+**RLS policies:** Admin has full access. Gedu has full access to own room + read access to all rooms. Gamer has read-only access. All policies use `get_user_role()` (SECURITY DEFINER) to avoid recursive RLS.
 
 **Realtime:** Table has `REPLICA IDENTITY FULL` so UPDATE/DELETE events are delivered through RLS.
 
-**Helper function:** `get_open_voice_rooms()` (SECURITY DEFINER) joins `voice_rooms` with `profiles` to return gedu display names.
+**Helper function:** `get_open_voice_rooms()` (SECURITY DEFINER) joins `voice_rooms` with `profiles` to return creator display names and roles.
 
 ## Role Permissions
 
 | Capability | Admin | Gedu | Gamer |
 |---|---|---|---|
-| Create/manage rooms | - | Own room only | - |
-| Join any room | Yes (owner token) | Own room (owner token) | Open rooms (non-owner token) |
-| Camera | Yes | Yes | No |
+| Create/manage rooms | Own room | Own room | - |
+| Close any room | Yes (by roomId) | Own room only | - |
+| Join any open room | Yes (owner token) | Yes (owner token) | Yes (non-owner token) |
+| Camera | Yes | Yes | Yes |
 | Microphone | Yes | Yes | Yes |
+| Drag other avatars | Yes | Yes | Own only |
+| Enter broadcast zone | Yes | Yes | No (ejected to nearest edge) |
 
 ## Environment Variables
 
@@ -114,3 +134,6 @@ Currently participant presence is only tracked in Daily.co's runtime. Persisting
 
 ### Customer (parent) subscription gate
 The token route has a `// Future: check parent subscription here` comment. Before going to production, gamers should only be able to join if their linked customer has an active subscription.
+
+### Extract VoiceRoomProvider into smaller hooks
+The provider (~600 lines) handles call lifecycle, audio playback, audio analysis, spatial positions, app messaging, and audio routing. Consider extracting `useSpatialPositions` and `useAudioAnalysis` as internal hooks to improve maintainability.

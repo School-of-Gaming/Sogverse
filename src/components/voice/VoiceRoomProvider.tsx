@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -234,6 +235,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       audioEl.srcObject = null;
     }
     audioElementsRef.current.clear();
+    audioTrackIdsRef.current.clear();
 
     for (const [, nodes] of analyserNodesRef.current) {
       nodes.source.disconnect();
@@ -519,6 +521,12 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       co.on("app-message", handleAppMessage);
 
       await co.join({ url: roomUrl, token });
+
+      // Note: event handlers above close over `co` and the current values of
+      // scheduleFlush, updateAudioRouting, etc. These callback identities are
+      // stable (their own deps are refs/stable setters), so the handlers won't
+      // go stale. If `join` is called again, the old call object is destroyed
+      // first, removing all its listeners.
     },
     [updateParticipants, cleanupAudioNodes, flushPositions, scheduleFlush, broadcastPosition, updateAudioRouting]
   );
@@ -569,28 +577,31 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     };
   }, [cleanupAudioNodes]);
 
+  const contextValue = useMemo<VoiceRoomContextValue>(
+    () => ({
+      joined,
+      joining,
+      participants,
+      micOn,
+      cameraOn,
+      cameraAllowed,
+      join,
+      leave,
+      toggleMic,
+      toggleCamera,
+      callObject,
+      positions,
+      localZone,
+      localRole,
+      moveLocal,
+      moveOther,
+      getAnalyser,
+    }),
+    [joined, joining, participants, micOn, cameraOn, cameraAllowed, join, leave, toggleMic, toggleCamera, callObject, positions, localZone, localRole, moveLocal, moveOther, getAnalyser]
+  );
+
   return (
-    <VoiceRoomContext.Provider
-      value={{
-        joined,
-        joining,
-        participants,
-        micOn,
-        cameraOn,
-        cameraAllowed,
-        join,
-        leave,
-        toggleMic,
-        toggleCamera,
-        callObject,
-        positions,
-        localZone,
-        localRole,
-        moveLocal,
-        moveOther,
-        getAnalyser,
-      }}
-    >
+    <VoiceRoomContext.Provider value={contextValue}>
       {children}
     </VoiceRoomContext.Provider>
   );
