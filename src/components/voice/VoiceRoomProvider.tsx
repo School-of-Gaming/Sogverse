@@ -110,9 +110,11 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   const [localZone, setLocalZone] = useState<ZoneId>("general");
   const posUpdateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Web Audio API refs
+  // Audio playback: <audio> elements for reliable WebRTC playback
+  const audioElementsRef = useRef<Map<string, HTMLAudioElement>>(new Map());
+  // Web Audio API: only for AnalyserNode (glow visualization), not for playback
   const audioContextRef = useRef<AudioContext | null>(null);
-  const audioNodesRef = useRef<Map<string, { source: MediaStreamAudioSourceNode; analyser: AnalyserNode; gain: GainNode }>>(new Map());
+  const analyserNodesRef = useRef<Map<string, { source: MediaStreamAudioSourceNode; analyser: AnalyserNode }>>(new Map());
   const localAnalyserRef = useRef<{ source: MediaStreamAudioSourceNode; analyser: AnalyserNode } | null>(null);
 
   /** Flush positionsRef to state (throttled) */
@@ -129,10 +131,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     }, 50);
   }, [flushPositions]);
 
-  /** Update audio routing based on current positions */
+  /** Update audio routing based on current positions (sets <audio> element volume) */
   const updateAudioRouting = useCallback(() => {
     const co = callObjectRef.current;
-    if (!co || !audioContextRef.current) return;
+    if (!co) return;
 
     const localSessionId = co.participants().local?.session_id;
     if (!localSessionId) return;
@@ -140,32 +142,16 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     const localPos = positionsRef.current.get(localSessionId);
     const lZone = localPos?.zone ?? "general";
 
-    for (const [sessionId, nodes] of audioNodesRef.current) {
+    for (const [sessionId, audioEl] of audioElementsRef.current) {
       const remotePos = positionsRef.current.get(sessionId);
       const rZone = remotePos?.zone ?? "general";
-      const gain = calculateGain(lZone, rZone);
-      nodes.gain.gain.value = gain;
+      audioEl.volume = calculateGain(lZone, rZone);
     }
   }, []);
 
-  /** Ensure AudioContext is running (may be suspended by browser autoplay policy) */
-  const ensureAudioContext = useCallback(async () => {
-    const ctx = audioContextRef.current;
-    if (ctx && ctx.state === "suspended") {
-      await ctx.resume();
-    }
-  }, []);
-
-  /** Manage Web Audio nodes for remote participants */
+  /** Manage <audio> elements for playback + AnalyserNodes for glow visualization */
   const manageAudioNodes = useCallback((co: DailyCall) => {
-    if (!audioContextRef.current) return;
     const ctx = audioContextRef.current;
-
-    // Resume AudioContext if suspended (browser autoplay policy)
-    if (ctx.state === "suspended") {
-      ctx.resume();
-    }
-
     const pMap = co.participants();
     const activeSessionIds = new Set<string>();
 
@@ -175,56 +161,74 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       const audioTrack = p.tracks.audio;
       if (audioTrack?.state === "playable" && audioTrack.persistentTrack) {
-        const existing = audioNodesRef.current.get(p.session_id);
-        const existingTrack = existing?.source.mediaStream?.getAudioTracks()[0];
+        // --- Audio playback via <audio> element ---
+        let audioEl = audioElementsRef.current.get(p.session_id);
+        if (!audioEl) {
+          audioEl = document.createElement("audio");
+          audioEl.autoplay = true;
+          audioElementsRef.current.set(p.session_id, audioEl);
+        }
+        const existingElTrack = audioEl.srcObject instanceof MediaStream
+          ? audioEl.srcObject.getAudioTracks()[0]
+          : null;
+        if (existingElTrack !== audioTrack.persistentTrack) {
+          audioEl.srcObject = new MediaStream([audioTrack.persistentTrack]);
+        }
 
-        if (existingTrack !== audioTrack.persistentTrack) {
-          // Disconnect old nodes if they exist
-          if (existing) {
-            existing.source.disconnect();
-            existing.analyser.disconnect();
-            existing.gain.disconnect();
+        // --- AnalyserNode for glow visualization (not connected to destination) ---
+        if (ctx) {
+          const existing = analyserNodesRef.current.get(p.session_id);
+          const existingTrack = existing?.source.mediaStream?.getAudioTracks()[0];
+
+          if (existingTrack !== audioTrack.persistentTrack) {
+            if (existing) {
+              existing.source.disconnect();
+            }
+            const stream = new MediaStream([audioTrack.persistentTrack]);
+            const source = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            source.connect(analyser);
+            // Don't connect to destination — playback is handled by <audio> element
+            analyserNodesRef.current.set(p.session_id, { source, analyser });
           }
-
-          const stream = new MediaStream([audioTrack.persistentTrack]);
-          const source = ctx.createMediaStreamSource(stream);
-          const analyser = ctx.createAnalyser();
-          analyser.fftSize = 256;
-          const gain = ctx.createGain();
-          gain.gain.value = 1;
-          source.connect(analyser);
-          analyser.connect(gain);
-          gain.connect(ctx.destination);
-
-          audioNodesRef.current.set(p.session_id, { source, analyser, gain });
         }
       }
     });
 
-    // Clean up nodes for participants who left
-    for (const [sessionId] of audioNodesRef.current) {
+    // Clean up elements/nodes for participants who left
+    for (const [sessionId] of audioElementsRef.current) {
       if (!activeSessionIds.has(sessionId)) {
-        const nodes = audioNodesRef.current.get(sessionId);
+        const audioEl = audioElementsRef.current.get(sessionId);
+        if (audioEl) {
+          audioEl.pause();
+          audioEl.srcObject = null;
+        }
+        audioElementsRef.current.delete(sessionId);
+
+        const nodes = analyserNodesRef.current.get(sessionId);
         if (nodes) {
           nodes.source.disconnect();
-          nodes.analyser.disconnect();
-          nodes.gain.disconnect();
         }
-        audioNodesRef.current.delete(sessionId);
+        analyserNodesRef.current.delete(sessionId);
       }
     }
 
     updateAudioRouting();
   }, [updateAudioRouting]);
 
-  /** Clean up all audio nodes */
+  /** Clean up all audio elements and analyser nodes */
   const cleanupAudioNodes = useCallback(() => {
-    for (const [, nodes] of audioNodesRef.current) {
-      nodes.source.disconnect();
-      nodes.analyser.disconnect();
-      nodes.gain.disconnect();
+    for (const [, audioEl] of audioElementsRef.current) {
+      audioEl.pause();
+      audioEl.srcObject = null;
     }
-    audioNodesRef.current.clear();
+    audioElementsRef.current.clear();
+
+    for (const [, nodes] of analyserNodesRef.current) {
+      nodes.source.disconnect();
+    }
+    analyserNodesRef.current.clear();
 
     if (localAnalyserRef.current) {
       localAnalyserRef.current.source.disconnect();
@@ -285,7 +289,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         return localAnalyserRef.current.analyser;
       }
     }
-    return audioNodesRef.current.get(sessionId)?.analyser ?? null;
+    return analyserNodesRef.current.get(sessionId)?.analyser ?? null;
   }, []);
 
   /** Broadcast local position via app message */
@@ -343,9 +347,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       setJoining(true);
 
-      // Create AudioContext and ensure it's running
+      // Create AudioContext for analyser nodes (glow visualization only, not for playback)
       audioContextRef.current = new AudioContext();
-      await ensureAudioContext();
 
       const Daily = (await import("@daily-co/daily-js")).default as typeof DailyIframe;
       const co = Daily.createCallObject({
@@ -500,7 +503,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       await co.join({ url: roomUrl, token });
     },
-    [updateParticipants, cleanupAudioNodes, ensureAudioContext, flushPositions, scheduleFlush, broadcastPosition, updateAudioRouting]
+    [updateParticipants, cleanupAudioNodes, flushPositions, scheduleFlush, broadcastPosition, updateAudioRouting]
   );
 
   const leave = useCallback(async () => {
