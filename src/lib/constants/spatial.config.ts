@@ -26,9 +26,10 @@ export const ZONE_RECTS: ZoneRect[] = [
 ];
 
 // ── Avatar speaking glow ─────────────────────────────────────────────
+/** Dynamic glow driven by audio level. Color is RGB for use in rgba(). */
 export const SPEAKING_GLOW = {
-  border: "border-white",
-  shadow: "shadow-[0_0_12px_rgba(255,255,255,0.5)]",
+  color: "255, 255, 255",
+  maxSpread: 14,
 };
 
 // ── Zone colours (Tailwind classes) ─────────────────────────────────

@@ -61,6 +61,8 @@ interface VoiceRoomContextValue {
   localRole: UserRole;
   moveLocal: (x: number, y: number) => void;
   moveOther: (targetSessionId: string, x: number, y: number) => void;
+  // Audio analysis
+  getAnalyser: (sessionId: string) => AnalyserNode | null;
 }
 
 const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
@@ -110,7 +112,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
   // Web Audio API refs
   const audioContextRef = useRef<AudioContext | null>(null);
-  const audioNodesRef = useRef<Map<string, { source: MediaStreamAudioSourceNode; gain: GainNode }>>(new Map());
+  const audioNodesRef = useRef<Map<string, { source: MediaStreamAudioSourceNode; analyser: AnalyserNode; gain: GainNode }>>(new Map());
+  const localAnalyserRef = useRef<{ source: MediaStreamAudioSourceNode; analyser: AnalyserNode } | null>(null);
 
   /** Flush positionsRef to state (throttled) */
   const flushPositions = useCallback(() => {
@@ -166,17 +169,21 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
           // Disconnect old nodes if they exist
           if (existing) {
             existing.source.disconnect();
+            existing.analyser.disconnect();
             existing.gain.disconnect();
           }
 
           const stream = new MediaStream([audioTrack.persistentTrack]);
           const source = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
           const gain = ctx.createGain();
           gain.gain.value = 1;
-          source.connect(gain);
+          source.connect(analyser);
+          analyser.connect(gain);
           gain.connect(ctx.destination);
 
-          audioNodesRef.current.set(p.session_id, { source, gain });
+          audioNodesRef.current.set(p.session_id, { source, analyser, gain });
         }
       }
     });
@@ -187,6 +194,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         const nodes = audioNodesRef.current.get(sessionId);
         if (nodes) {
           nodes.source.disconnect();
+          nodes.analyser.disconnect();
           nodes.gain.disconnect();
         }
         audioNodesRef.current.delete(sessionId);
@@ -200,13 +208,43 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   const cleanupAudioNodes = useCallback(() => {
     for (const [, nodes] of audioNodesRef.current) {
       nodes.source.disconnect();
+      nodes.analyser.disconnect();
       nodes.gain.disconnect();
     }
     audioNodesRef.current.clear();
 
+    if (localAnalyserRef.current) {
+      localAnalyserRef.current.source.disconnect();
+      localAnalyserRef.current = null;
+    }
+
     if (audioContextRef.current) {
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
+    }
+  }, []);
+
+  /** Manage analyser for local user's mic track */
+  const manageLocalAnalyser = useCallback((co: DailyCall) => {
+    const ctx = audioContextRef.current;
+    if (!ctx) return;
+
+    const local = co.participants().local;
+    const audioTrack = local?.tracks?.audio;
+    if (audioTrack?.state === "playable" && audioTrack.persistentTrack) {
+      const existingTrack = localAnalyserRef.current?.source.mediaStream?.getAudioTracks()[0];
+      if (existingTrack !== audioTrack.persistentTrack) {
+        if (localAnalyserRef.current) {
+          localAnalyserRef.current.source.disconnect();
+        }
+        const stream = new MediaStream([audioTrack.persistentTrack]);
+        const source = ctx.createMediaStreamSource(stream);
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        source.connect(analyser);
+        // Don't connect to destination — we don't play our own audio back
+        localAnalyserRef.current = { source, analyser };
+      }
     }
   }, []);
 
@@ -222,7 +260,20 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     }
 
     manageAudioNodes(co);
-  }, [manageAudioNodes]);
+    manageLocalAnalyser(co);
+  }, [manageAudioNodes, manageLocalAnalyser]);
+
+  /** Get the AnalyserNode for a participant (local or remote) */
+  const getAnalyser = useCallback((sessionId: string): AnalyserNode | null => {
+    const co = callObjectRef.current;
+    if (co) {
+      const localSid = co.participants().local?.session_id;
+      if (sessionId === localSid && localAnalyserRef.current) {
+        return localAnalyserRef.current.analyser;
+      }
+    }
+    return audioNodesRef.current.get(sessionId)?.analyser ?? null;
+  }, []);
 
   /** Broadcast local position via app message */
   const broadcastPosition = useCallback((sessionId: string, position: SpatialPosition) => {
@@ -498,6 +549,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         localRole,
         moveLocal,
         moveOther,
+        getAnalyser,
       }}
     >
       {children}

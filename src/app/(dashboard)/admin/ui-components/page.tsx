@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import {
   Plus,
   Pencil,
@@ -30,6 +31,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
+import { useAuth } from "@/providers";
+import { AVATAR_SIZE } from "@/lib/constants/spatial";
+import { SPEAKING_GLOW } from "@/lib/constants/spatial.config";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -78,6 +83,116 @@ function Swatch({
     <div className="flex flex-col items-center gap-1.5">
       <div className={`h-12 w-12 rounded-lg border ${className}`} />
       <span className="text-xs text-muted-foreground">{label}</span>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Voice Room Avatar Demo                                             */
+/* ------------------------------------------------------------------ */
+
+function VoiceAvatarDemo() {
+  const { user, profile } = useAuth();
+  const [level, setLevel] = useState(0);
+  const [micOn, setMicOn] = useState(true);
+  const [cameraOn, setCameraOn] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (cameraOn) {
+      navigator.mediaDevices
+        .getUserMedia({ video: true })
+        .then((stream) => {
+          streamRef.current = stream;
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream;
+          }
+        })
+        .catch(() => setCameraOn(false));
+    } else {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+    }
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+    };
+  }, [cameraOn]);
+
+  const effectiveLevel = micOn ? level : 0;
+  const glowStyle: React.CSSProperties =
+    effectiveLevel > 0.05
+      ? {
+          boxShadow: `0 0 ${effectiveLevel * SPEAKING_GLOW.maxSpread}px rgba(${SPEAKING_GLOW.color}, ${0.3 + effectiveLevel * 0.5})`,
+          borderColor: `rgba(${SPEAKING_GLOW.color}, ${0.5 + effectiveLevel * 0.5})`,
+        }
+      : {};
+
+  return (
+    <div className="flex items-center gap-8">
+      <div style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}>
+        <VoiceAvatar
+          userId={profile?.id || user?.id || "demo"}
+          userName={profile?.display_name || "You"}
+          audioOn={micOn}
+          videoOn={cameraOn}
+          isLocal
+          glowStyle={glowStyle}
+        >
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="h-full w-full object-cover"
+          />
+        </VoiceAvatar>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <Label htmlFor="mic-level" className="text-xs">
+            Mic level: {Math.round(level * 100)}%
+          </Label>
+          <input
+            id="mic-level"
+            type="range"
+            min="0"
+            max="100"
+            value={Math.round(level * 100)}
+            onChange={(e) => setLevel(Number(e.target.value) / 100)}
+            className="w-48 accent-primary"
+          />
+        </div>
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={micOn}
+              onChange={(e) => setMicOn(e.target.checked)}
+              className="accent-primary"
+            />
+            Mic on
+          </label>
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={cameraOn}
+              onChange={(e) => setCameraOn(e.target.checked)}
+              className="accent-primary"
+            />
+            Camera on
+          </label>
+        </div>
+      </div>
     </div>
   );
 }
@@ -327,6 +442,10 @@ export default function AdminUIComponentsPage() {
             </div>
           </div>
         </SubSection>
+
+        <SubSection title="Voice Room Avatar (speaking glow)">
+          <VoiceAvatarDemo />
+        </SubSection>
       </Section>
 
       {/* ============================================================ */}
@@ -556,6 +675,7 @@ export default function AdminUIComponentsPage() {
           </div>
         </SubSection>
       </Section>
+
     </div>
   );
 }

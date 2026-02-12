@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Mic, MicOff } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Identicon } from "@/components/ui/identicon";
 import { useVoiceRoom, type VoiceParticipant } from "./VoiceRoomProvider";
+import { VoiceAvatar } from "./VoiceAvatar";
 import {
   type SpatialPosition,
   CANVAS_WIDTH,
@@ -21,10 +20,11 @@ interface DraggableAvatarProps {
 }
 
 export function DraggableAvatar({ participant, position, canDrag }: DraggableAvatarProps) {
-  const { callObject, moveLocal, moveOther } = useVoiceRoom();
+  const { callObject, moveLocal, moveOther, getAnalyser } = useVoiceRoom();
   const [dragging, setDragging] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const dragStartRef = useRef<{ offsetX: number; offsetY: number } | null>(null);
   const draggingRef = useRef(false);
@@ -40,7 +40,6 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
     if (!draggingRef.current) {
       setDragPos(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position]);
 
   // Attach video track when available
@@ -65,6 +64,46 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
       }
     }
   }, [callObject, participant.sessionId, participant.videoOn]);
+
+  // Animate speaking glow based on real-time audio level (DOM manipulation, no React re-renders)
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (!frame) return;
+
+    const dataArray = new Uint8Array(256);
+    let rafId = 0;
+
+    const tick = () => {
+      const analyser = getAnalyser(participant.sessionId);
+      if (analyser) {
+        analyser.getByteTimeDomainData(dataArray);
+        let sum = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const v = (dataArray[i] - 128) / 128;
+          sum += v * v;
+        }
+        const rms = Math.sqrt(sum / dataArray.length);
+        const level = Math.min(1, rms * 3);
+
+        if (level > 0.05) {
+          const spread = level * SPEAKING_GLOW.maxSpread;
+          const opacity = 0.3 + level * 0.5;
+          frame.style.boxShadow = `0 0 ${spread}px rgba(${SPEAKING_GLOW.color}, ${opacity})`;
+          frame.style.borderColor = `rgba(${SPEAKING_GLOW.color}, ${0.5 + level * 0.5})`;
+        } else {
+          frame.style.boxShadow = "";
+          frame.style.borderColor = "";
+        }
+      } else {
+        frame.style.boxShadow = "";
+        frame.style.borderColor = "";
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [getAnalyser, participant.sessionId]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
@@ -181,17 +220,15 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      {/* Avatar frame */}
-      <div
-        className={cn(
-          "relative h-full w-full overflow-hidden rounded-md border-2 transition-shadow",
-          participant.isSpeaking
-            ? `${SPEAKING_GLOW.border} ${SPEAKING_GLOW.shadow}`
-            : "border-border",
-          participant.isLocal && "ring-1 ring-primary/30"
-        )}
+      <VoiceAvatar
+        ref={frameRef}
+        userId={participant.userId}
+        userName={participant.userName}
+        audioOn={participant.audioOn}
+        videoOn={participant.videoOn}
+        isLocal={participant.isLocal}
       >
-        {participant.videoOn ? (
+        {participant.videoOn && (
           <video
             ref={videoRef}
             autoPlay
@@ -199,29 +236,8 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
             muted={participant.isLocal}
             className="h-full w-full object-cover"
           />
-        ) : (
-          <Identicon id={participant.userId} size={AVATAR_SIZE} />
         )}
-
-        {/* Mic status overlay */}
-        <div className="absolute bottom-0.5 right-0.5">
-          {participant.audioOn ? (
-            <Mic className="h-3 w-3 text-emerald-400 drop-shadow" />
-          ) : (
-            <MicOff className="h-3 w-3 text-destructive drop-shadow" />
-          )}
-        </div>
-      </div>
-
-      {/* Name label */}
-      <p
-        className={cn(
-          "mt-0.5 truncate text-center text-[9px] font-medium leading-tight",
-          participant.isLocal ? "text-primary" : "text-muted-foreground"
-        )}
-      >
-        {participant.userName}
-      </p>
+      </VoiceAvatar>
     </div>
   );
 }
