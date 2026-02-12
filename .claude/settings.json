@@ -14,7 +14,10 @@
       "WebFetch(domain:supabase.com)",
       "WebFetch(domain:docs.daily.co)",
       "WebFetch(domain:www.daily.co)",
-      "Bash(npx tsc:*)"
+      "WebFetch(domain:github.com)",
+      "Bash(npx next lint:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx eslint:*)"
     ]
   }
 }
