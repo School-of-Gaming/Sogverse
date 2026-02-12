@@ -42,9 +42,11 @@ export default async function RootLayout({
           initialUser={userWithProfile?.user ?? null}
           initialProfile={userWithProfile?.profile ?? null}
         >
-          <div className="flex min-h-screen flex-col">
+          <div className="flex h-screen flex-col">
             <Header />
-            <main className="flex-1">{children}</main>
+            <main className="flex-1 min-h-0 overflow-auto">
+              {children}
+            </main>
           </div>
         </Providers>
       </body>
