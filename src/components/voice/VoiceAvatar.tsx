@@ -56,8 +56,8 @@ export const VoiceAvatar = forwardRef<HTMLDivElement, VoiceAvatarProps>(
         {/* Name label */}
         <p
           className={cn(
-            "mt-0.5 truncate text-center text-[9px] font-medium leading-tight",
-            isLocal ? "text-primary" : "text-muted-foreground"
+            "mt-0.5 truncate rounded-sm bg-black/60 px-1 text-center text-[9px] font-medium leading-tight",
+            isLocal ? "text-primary" : "text-foreground"
           )}
         >
           {userName}
