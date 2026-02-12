@@ -50,10 +50,10 @@ export function Zone({ zone, isActive }: ZoneProps) {
 export function getZoneLabel(zoneId: ZoneId): string {
   const labels: Record<ZoneId, string> = {
     general: "General",
-    breakout_1: "Breakout 1",
-    breakout_2: "Breakout 2",
-    breakout_3: "Breakout 3",
-    breakout_4: "Breakout 4",
+    breakout_1: "Emerald",
+    breakout_2: "Amber",
+    breakout_3: "Rose",
+    breakout_4: "Violet",
     broadcast: "Broadcast",
   };
   return labels[zoneId];

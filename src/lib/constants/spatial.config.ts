@@ -18,10 +18,10 @@ export const GENERAL_AREA = { x: 310, y: 120, width: 500, height: 240 };
 /** Explicit zones rendered on the canvas.
  *  "general" has no rect — it's everywhere outside these zones. */
 export const ZONE_RECTS: ZoneRect[] = [
-  { id: "breakout_1", label: "Breakout 1", x: 10, y: 10, width: 280, height: 200 },
-  { id: "breakout_2", label: "Breakout 2", x: 830, y: 10, width: 280, height: 200 },
-  { id: "breakout_3", label: "Breakout 3", x: 10, y: 270, width: 280, height: 200 },
-  { id: "breakout_4", label: "Breakout 4", x: 830, y: 270, width: 280, height: 200 },
+  { id: "breakout_1", label: "Emerald", x: 10, y: 10, width: 280, height: 200 },
+  { id: "breakout_2", label: "Amber", x: 830, y: 10, width: 280, height: 200 },
+  { id: "breakout_3", label: "Rose", x: 10, y: 270, width: 280, height: 200 },
+  { id: "breakout_4", label: "Violet", x: 830, y: 270, width: 280, height: 200 },
   { id: "broadcast", label: "Broadcast", x: 485, y: 10, width: 150, height: 100 },
 ];
 
