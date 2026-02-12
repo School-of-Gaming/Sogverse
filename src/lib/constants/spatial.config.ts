@@ -25,6 +25,12 @@ export const ZONE_RECTS: ZoneRect[] = [
   { id: "broadcast", label: "Broadcast", x: 485, y: 10, width: 150, height: 100 },
 ];
 
+// ── Avatar speaking glow ─────────────────────────────────────────────
+export const SPEAKING_GLOW = {
+  border: "border-white",
+  shadow: "shadow-[0_0_12px_rgba(255,255,255,0.5)]",
+};
+
 // ── Zone colours (Tailwind classes) ─────────────────────────────────
 export const ZONE_COLORS: Record<ZoneId, { bg: string; border: string; accent: string }> = {
   general: { bg: "bg-blue-500/10", border: "border-blue-500/30", accent: "text-blue-400" },

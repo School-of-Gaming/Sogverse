@@ -12,6 +12,7 @@ import {
   AVATAR_SIZE,
   getZoneAtPosition,
 } from "@/lib/constants/spatial";
+import { SPEAKING_GLOW } from "@/lib/constants/spatial.config";
 
 interface DraggableAvatarProps {
   participant: VoiceParticipant;
@@ -185,7 +186,7 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
         className={cn(
           "relative h-full w-full overflow-hidden rounded-md border-2 transition-shadow",
           participant.isSpeaking
-            ? "border-primary shadow-[0_0_12px_rgba(250,169,1,0.5)]"
+            ? `${SPEAKING_GLOW.border} ${SPEAKING_GLOW.shadow}`
             : "border-border",
           participant.isLocal && "ring-1 ring-primary/30"
         )}
