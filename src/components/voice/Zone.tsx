@@ -4,7 +4,6 @@ import { Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   type ZoneRect,
-  type ZoneId,
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   ZONE_COLORS,
@@ -45,16 +44,4 @@ export function Zone({ zone, isActive }: ZoneProps) {
       </div>
     </div>
   );
-}
-
-export function getZoneLabel(zoneId: ZoneId): string {
-  const labels: Record<ZoneId, string> = {
-    general: "General",
-    breakout_1: "Emerald",
-    breakout_2: "Amber",
-    breakout_3: "Rose",
-    breakout_4: "Violet",
-    broadcast: "Broadcast",
-  };
-  return labels[zoneId];
 }

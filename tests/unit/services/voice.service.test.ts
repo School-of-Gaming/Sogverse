@@ -162,7 +162,7 @@ describe("VoiceService", () => {
   });
 
   describe("closeRoom", () => {
-    it("should PATCH /api/voice/room and return the room", async () => {
+    it("should PATCH /api/voice/room without body when no roomId", async () => {
       const mockRoom = createMockVoiceRoom({ status: "closed" as any });
       const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
         new Response(JSON.stringify({ room: mockRoom }), {
@@ -175,8 +175,27 @@ describe("VoiceService", () => {
 
       expect(fetchSpy).toHaveBeenCalledWith("/api/voice/room", {
         method: "PATCH",
+      });
+      expect(result).toEqual(mockRoom);
+
+      fetchSpy.mockRestore();
+    });
+
+    it("should PATCH /api/voice/room with roomId for admin", async () => {
+      const mockRoom = createMockVoiceRoom({ status: "closed" as any });
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(JSON.stringify({ room: mockRoom }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+
+      const result = await service.closeRoom("specific-room-id");
+
+      expect(fetchSpy).toHaveBeenCalledWith("/api/voice/room", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId: undefined }),
+        body: JSON.stringify({ roomId: "specific-room-id" }),
       });
       expect(result).toEqual(mockRoom);
 

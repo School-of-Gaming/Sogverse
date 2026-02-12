@@ -88,9 +88,9 @@ See `docs/voice-chat-architecture.md` for the full component map and data flow.
 - **`src/services/voice/`** — Service class + React Query hooks following the same pattern as other services.
 - **`src/hooks/use-voice-room-realtime.ts`** — Supabase Realtime subscription that invalidates voice query cache on `voice_rooms` table changes.
 
-**Rule: Token issuance controls permissions.** Gamers get non-owner tokens (mic only, no camera). Gedus/admins get owner tokens (mic + camera). This is enforced server-side in `POST /api/voice/token` — the client-side `cameraAllowed` state derives from `p.owner` which Daily.co sets from the token.
+**Rule: Token issuance controls permissions.** Gamers get non-owner tokens (mic + camera enabled, but no moderation rights). Gedus/admins get owner tokens (mic + camera + moderation). This is enforced server-side in `POST /api/voice/token`. The `userName` field encodes `userId|role|displayName` for client-side role extraction.
 
-**Rule: Room lifecycle is managed via API routes, not direct DB writes from the client.** `POST /api/voice/room` creates/reopens rooms (gedu only), `PATCH /api/voice/room` closes them. Both use the admin Supabase client server-side. The `voice_rooms` table has a `UNIQUE(gedu_id)` constraint — each gedu gets exactly one room row that toggles between open/closed.
+**Rule: Room lifecycle is managed via API routes, not direct DB writes from the client.** `POST /api/voice/room` creates/reopens rooms (gedu/admin), `PATCH /api/voice/room` closes them (admins can close any room by passing `roomId`). Both use the admin Supabase client server-side. The `voice_rooms` table has a `UNIQUE(creator_id)` constraint — each creator gets exactly one room row that toggles between open/closed.
 
 **Rule: The Realtime hook must only invalidate queries — never make Supabase data queries in the callback.** Same deadlock risk as `onAuthStateChange`. See the existing comment in `use-voice-room-realtime.ts`.
 

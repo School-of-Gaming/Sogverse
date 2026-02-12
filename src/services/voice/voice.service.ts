@@ -56,8 +56,9 @@ export class VoiceService {
   async closeRoom(roomId?: string): Promise<VoiceRoom> {
     const response = await fetch("/api/voice/room", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roomId }),
+      ...(roomId
+        ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ roomId }) }
+        : {}),
     });
 
     if (!response.ok) {

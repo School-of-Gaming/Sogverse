@@ -23,7 +23,7 @@ export function SpatialVoiceRoom({
   onEndSession,
   leaveLabel = "Leave",
 }: SpatialVoiceRoomProps) {
-  const { participants, localRole, leave, joining } = useVoiceRoom();
+  const { participants, localRole, joining } = useVoiceRoom();
   const [leaving, setLeaving] = useState(false);
   const [ending, setEnding] = useState(false);
 
@@ -38,7 +38,6 @@ export function SpatialVoiceRoom({
   const handleLeave = async () => {
     setLeaving(true);
     try {
-      await leave();
       await onLeave();
     } finally {
       setLeaving(false);
@@ -49,7 +48,6 @@ export function SpatialVoiceRoom({
     if (!onEndSession) return;
     setEnding(true);
     try {
-      await leave();
       await onEndSession();
     } finally {
       setEnding(false);

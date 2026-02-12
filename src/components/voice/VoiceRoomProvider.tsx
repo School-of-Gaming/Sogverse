@@ -151,11 +151,15 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  /** Manage <audio> elements for playback + AnalyserNodes for glow visualization */
+  /** Manage <audio> elements for playback + AnalyserNodes for glow visualization.
+   *  Tracks which audio tracks are already wired up to avoid redundant work. */
+  const audioTrackIdsRef = useRef<Map<string, string>>(new Map());
+
   const manageAudioNodes = useCallback((co: DailyCall) => {
     const ctx = audioContextRef.current;
     const pMap = co.participants();
     const activeSessionIds = new Set<string>();
+    let changed = false;
 
     Object.values(pMap).forEach((p) => {
       if (p.local) return;
@@ -163,6 +167,14 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       const audioTrack = p.tracks.audio;
       if (audioTrack?.state === "playable" && audioTrack.persistentTrack) {
+        const trackId = audioTrack.persistentTrack.id;
+        const prevTrackId = audioTrackIdsRef.current.get(p.session_id);
+
+        // Skip if we've already wired this exact track
+        if (prevTrackId === trackId) return;
+        audioTrackIdsRef.current.set(p.session_id, trackId);
+        changed = true;
+
         // --- Audio playback via <audio> element ---
         let audioEl = audioElementsRef.current.get(p.session_id);
         if (!audioEl) {
@@ -170,30 +182,21 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
           audioEl.autoplay = true;
           audioElementsRef.current.set(p.session_id, audioEl);
         }
-        const existingElTrack = audioEl.srcObject instanceof MediaStream
-          ? audioEl.srcObject.getAudioTracks()[0]
-          : null;
-        if (existingElTrack !== audioTrack.persistentTrack) {
-          audioEl.srcObject = new MediaStream([audioTrack.persistentTrack]);
-        }
+        audioEl.srcObject = new MediaStream([audioTrack.persistentTrack]);
 
         // --- AnalyserNode for glow visualization (not connected to destination) ---
         if (ctx) {
           const existing = analyserNodesRef.current.get(p.session_id);
-          const existingTrack = existing?.source.mediaStream?.getAudioTracks()[0];
-
-          if (existingTrack !== audioTrack.persistentTrack) {
-            if (existing) {
-              existing.source.disconnect();
-            }
-            const stream = new MediaStream([audioTrack.persistentTrack]);
-            const source = ctx.createMediaStreamSource(stream);
-            const analyser = ctx.createAnalyser();
-            analyser.fftSize = 256;
-            source.connect(analyser);
-            // Don't connect to destination — playback is handled by <audio> element
-            analyserNodesRef.current.set(p.session_id, { source, analyser });
+          if (existing) {
+            existing.source.disconnect();
           }
+          const stream = new MediaStream([audioTrack.persistentTrack]);
+          const source = ctx.createMediaStreamSource(stream);
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          source.connect(analyser);
+          // Don't connect to destination — playback is handled by <audio> element
+          analyserNodesRef.current.set(p.session_id, { source, analyser });
         }
       }
     });
@@ -201,6 +204,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     // Clean up elements/nodes for participants who left
     for (const [sessionId] of audioElementsRef.current) {
       if (!activeSessionIds.has(sessionId)) {
+        changed = true;
+        audioTrackIdsRef.current.delete(sessionId);
+
         const audioEl = audioElementsRef.current.get(sessionId);
         if (audioEl) {
           audioEl.pause();
@@ -216,7 +222,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    updateAudioRouting();
+    if (changed) {
+      updateAudioRouting();
+    }
   }, [updateAudioRouting]);
 
   /** Clean up all audio elements and analyser nodes */
@@ -435,13 +443,13 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
         switch (msg.type) {
           case "requestPositions": {
-            // Send our current positions to the requester
+            // Send our current positions only to the requester
             const posObj: Record<string, SpatialPosition> = {};
             for (const [sid, pos] of positionsRef.current) {
               posObj[sid] = pos;
             }
             const reply: AppMessage = { type: "positionSync", positions: posObj };
-            co.sendAppMessage(reply, "*");
+            co.sendAppMessage(reply, fromId);
             break;
           }
           case "positionSync": {
@@ -466,6 +474,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
             break;
           }
           case "moveUser": {
+            // Only accept moves from owners (admin/gedu) — ignore from regular participants
+            const sender = Object.values(co.participants()).find((p) => p.session_id === fromId);
+            if (!sender?.owner) break;
+
             const localSid = co.participants().local?.session_id;
             if (msg.targetSessionId === localSid) {
               // We are being moved by an admin/gedu
@@ -495,8 +507,6 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
             break;
           }
         }
-        // Suppress unused variable lint for fromId
-        void fromId;
       };
 
       co.on("joined-meeting", handleJoined);

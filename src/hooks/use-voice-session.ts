@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { useMyVoiceRoom, useOpenRoom, useCloseRoom, useVoiceToken, useOpenVoiceRooms } from "@/services/voice";
 import { useVoiceRoomRealtime } from "@/hooks/use-voice-room-realtime";
+import { useAuth } from "@/providers";
 import type { OpenVoiceRoom, VoiceRoom } from "@/types";
 
 interface UseVoiceSessionOptions {
@@ -52,6 +53,7 @@ export function useVoiceSession({
   canCreate,
   autoReconnect = true,
 }: UseVoiceSessionOptions): UseVoiceSessionReturn {
+  const { user } = useAuth();
   const { data: myRoom, isLoading: myRoomLoading } = useMyVoiceRoom();
   const { data: openRoomsList } = useOpenVoiceRooms();
   const openRoomMutation = useOpenRoom();
@@ -72,8 +74,8 @@ export function useVoiceSession({
   const isLoading = canCreate ? myRoomLoading : (openRoomsList === undefined);
   const openRooms = openRoomsList || [];
 
-  const otherRooms = canCreate
-    ? openRooms.filter((r) => r.creator_id !== myRoom?.creator_id)
+  const otherRooms = canCreate && user
+    ? openRooms.filter((r) => r.creator_id !== user.id)
     : openRooms;
 
   const isOwnRoom = canCreate && myRoom?.id === joinedRoomId;
@@ -113,21 +115,23 @@ export function useVoiceSession({
 
   /** Leave the call without closing the room */
   const leaveSession = useCallback(async () => {
+    await leave();
     setJoinedRoomId(null);
     joinedRoomNameRef.current = null;
-  }, []);
+  }, [leave]);
 
-  /** Leave and close the room */
+  /** Leave the call and close the room */
   const endSession = useCallback(async () => {
     setError(null);
     try {
+      await leave();
       await closeRoomMutation.mutateAsync(undefined);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to end session");
     }
     setJoinedRoomId(null);
     joinedRoomNameRef.current = null;
-  }, [closeRoomMutation]);
+  }, [leave, closeRoomMutation]);
 
   // Auto-reconnect to own open room on mount
   useEffect(() => {

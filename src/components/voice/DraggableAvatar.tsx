@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useVoiceRoom, type VoiceParticipant } from "./VoiceRoomProvider";
 import { VoiceAvatar } from "./VoiceAvatar";
@@ -20,7 +20,7 @@ interface DraggableAvatarProps {
   canDrag: boolean;
 }
 
-export function DraggableAvatar({ participant, position, canDrag }: DraggableAvatarProps) {
+export const DraggableAvatar = memo(function DraggableAvatar({ participant, position, canDrag }: DraggableAvatarProps) {
   const { callObject, moveLocal, moveOther, getAnalyser, positions } = useVoiceRoom();
   const [dragging, setDragging] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
@@ -252,4 +252,4 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
       </VoiceAvatar>
     </div>
   );
-}
+});
