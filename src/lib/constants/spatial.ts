@@ -37,14 +37,16 @@ import {
   GENERAL_AREA,
 } from "./spatial.config";
 
-/** Determine which zone a position falls within. Returns "general" if not inside any explicit zone. */
+/** Determine which zone a position falls within based on avatar center point. Returns "general" if not inside any explicit zone. */
 export function getZoneAtPosition(x: number, y: number): ZoneId {
+  const cx = x + AVATAR_SIZE / 2;
+  const cy = y + AVATAR_SIZE / 2;
   for (const zone of ZONE_RECTS) {
     if (
-      x >= zone.x &&
-      x <= zone.x + zone.width - AVATAR_SIZE &&
-      y >= zone.y &&
-      y <= zone.y + zone.height - AVATAR_SIZE
+      cx >= zone.x &&
+      cx <= zone.x + zone.width &&
+      cy >= zone.y &&
+      cy <= zone.y + zone.height
     ) {
       return zone.id;
     }
