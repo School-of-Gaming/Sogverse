@@ -3,6 +3,7 @@ import { UserRole } from "./roles";
 export const PUBLIC_ROUTES = [
   "/",
   "/products",
+  "/sorg",
   "/about",
   "/login",
   "/gamer-login",

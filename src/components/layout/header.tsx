@@ -14,6 +14,7 @@ import { ROLE_DASHBOARD_PATHS } from "@/lib/constants";
 const publicNavLinks = [
   { href: "/", label: "Home" },
   { href: "/products", label: "Products" },
+  { href: "/sorg", label: "Sorg" },
   { href: "/about", label: "About" },
 ];
 
