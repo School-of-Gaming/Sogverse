@@ -9,8 +9,8 @@ import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   AVATAR_SIZE,
-  getZoneAtPosition,
   resolveOverlap,
+  ejectFromBroadcastZone,
 } from "@/lib/constants/spatial";
 import { SPEAKING_GLOW } from "@/lib/constants/spatial.config";
 
@@ -177,12 +177,13 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
 
       if (!dragPos) return;
 
-      const zone = getZoneAtPosition(dragPos.x, dragPos.y);
-
-      // Gamers cannot enter broadcast zone — snap back
-      if (participant.role === "gamer" && zone === "broadcast") {
-        setDragPos(null);
-        return;
+      // Gamers cannot enter broadcast zone — push to nearest edge
+      let dropX = dragPos.x;
+      let dropY = dragPos.y;
+      if (participant.role === "gamer") {
+        const ejected = ejectFromBroadcastZone(dropX, dropY);
+        dropX = ejected.x;
+        dropY = ejected.y;
       }
 
       // Resolve overlap: nudge so avatars don't stack on top of each other
@@ -192,7 +193,7 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
           others.push(pos);
         }
       }
-      const resolved = resolveOverlap(dragPos.x, dragPos.y, others);
+      const resolved = resolveOverlap(dropX, dropY, others);
       setDragPos(resolved);
 
       // Send final position update

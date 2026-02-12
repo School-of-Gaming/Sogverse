@@ -110,6 +110,46 @@ export function resolveOverlap(
   return { x: Math.round(cx), y: Math.round(cy) };
 }
 
+/** Push a position so the entire avatar is outside the broadcast zone.
+ *  Ejects to the nearest side (left, right, or below) — never upward since the
+ *  broadcast zone sits near the top of the canvas. Returns unchanged if already outside. */
+export function ejectFromBroadcastZone(
+  x: number,
+  y: number,
+): { x: number; y: number } {
+  const zone = ZONE_RECTS.find((z) => z.id === "broadcast");
+  if (!zone) return { x, y };
+
+  // Check if avatar rectangle overlaps zone rectangle
+  const overlapsX = x < zone.x + zone.width && x + AVATAR_SIZE > zone.x;
+  const overlapsY = y < zone.y + zone.height && y + AVATAR_SIZE > zone.y;
+  if (!overlapsX || !overlapsY) return { x, y };
+
+  // Distance to push the entire avatar clear of the zone in each direction.
+  // Skip upward — not enough room above the broadcast zone.
+  const pushLeft = x - (zone.x - AVATAR_SIZE);
+  const pushRight = (zone.x + zone.width) - x;
+  const pushDown = (zone.y + zone.height) - y;
+  const minPush = Math.min(pushLeft, pushRight, pushDown);
+
+  let newX = x;
+  let newY = y;
+
+  if (minPush === pushLeft) {
+    newX = zone.x - AVATAR_SIZE;
+  } else if (minPush === pushRight) {
+    newX = zone.x + zone.width;
+  } else {
+    newY = zone.y + zone.height;
+  }
+
+  // Clamp to canvas bounds
+  newX = Math.max(0, Math.min(CANVAS_WIDTH - AVATAR_SIZE, newX));
+  newY = Math.max(0, Math.min(CANVAS_HEIGHT - AVATAR_SIZE, newY));
+
+  return { x: Math.round(newX), y: Math.round(newY) };
+}
+
 /** Get a random position within a zone. For "general", scatters across the open canvas area. */
 export function getRandomPositionInZone(zoneId: ZoneId): { x: number; y: number } {
   if (zoneId === "general") {

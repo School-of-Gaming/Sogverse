@@ -21,6 +21,7 @@ import {
   getZoneAtPosition,
   getRandomPositionInZone,
   resolveOverlap,
+  ejectFromBroadcastZone,
 } from "@/lib/constants/spatial";
 
 // ---------- Types ----------
@@ -471,17 +472,20 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
               const local = co.participants().local;
               const mapped = local ? mapParticipant(local, null) : null;
 
-              // Gamers cannot be placed in broadcast zone — reject
+              // Gamers cannot be placed in broadcast zone — eject to nearest edge
+              let finalPos = msg.position;
               if (mapped?.role === "gamer" && msg.position.zone === "broadcast") {
-                break;
+                const ejected = ejectFromBroadcastZone(msg.position.x, msg.position.y);
+                const ejectedZone = getZoneAtPosition(ejected.x, ejected.y);
+                finalPos = { ...ejected, zone: ejectedZone };
               }
 
-              positionsRef.current.set(localSid, msg.position);
-              setLocalZone(msg.position.zone);
+              positionsRef.current.set(localSid, finalPos);
+              setLocalZone(finalPos.zone);
               scheduleFlush();
               updateAudioRouting();
               // Re-broadcast our new position so others see the update
-              broadcastPosition(localSid, msg.position);
+              broadcastPosition(localSid, finalPos);
             } else {
               // Someone else is being moved — update our view
               positionsRef.current.set(msg.targetSessionId, msg.position);
