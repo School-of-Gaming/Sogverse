@@ -148,10 +148,23 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  /** Ensure AudioContext is running (may be suspended by browser autoplay policy) */
+  const ensureAudioContext = useCallback(async () => {
+    const ctx = audioContextRef.current;
+    if (ctx && ctx.state === "suspended") {
+      await ctx.resume();
+    }
+  }, []);
+
   /** Manage Web Audio nodes for remote participants */
   const manageAudioNodes = useCallback((co: DailyCall) => {
     if (!audioContextRef.current) return;
     const ctx = audioContextRef.current;
+
+    // Resume AudioContext if suspended (browser autoplay policy)
+    if (ctx.state === "suspended") {
+      ctx.resume();
+    }
 
     const pMap = co.participants();
     const activeSessionIds = new Set<string>();
@@ -330,8 +343,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       setJoining(true);
 
-      // Create AudioContext
+      // Create AudioContext and ensure it's running
       audioContextRef.current = new AudioContext();
+      await ensureAudioContext();
 
       const Daily = (await import("@daily-co/daily-js")).default as typeof DailyIframe;
       const co = Daily.createCallObject({
@@ -373,6 +387,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       };
 
       const handleParticipantUpdate = () => updateParticipants(co);
+
+      // track-started fires reliably when a remote track becomes playable —
+      // more reliable than participant-updated for catching the exact moment audio is ready
+      const handleTrackStarted = () => updateParticipants(co);
 
       const handleParticipantJoined = () => {
         updateParticipants(co);
@@ -475,13 +493,14 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       co.on("participant-joined", handleParticipantJoined);
       co.on("participant-left", handleParticipantLeft);
       co.on("participant-updated", handleParticipantUpdate);
+      co.on("track-started", handleTrackStarted);
       co.on("active-speaker-change", handleActiveSpeakerChange);
       co.on("left-meeting", handleLeft);
       co.on("app-message", handleAppMessage);
 
       await co.join({ url: roomUrl, token });
     },
-    [updateParticipants, cleanupAudioNodes, flushPositions, scheduleFlush, broadcastPosition, updateAudioRouting]
+    [updateParticipants, cleanupAudioNodes, ensureAudioContext, flushPositions, scheduleFlush, broadcastPosition, updateAudioRouting]
   );
 
   const leave = useCallback(async () => {
