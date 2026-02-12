@@ -1,32 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Mic, MicOff, Video, VideoOff, PhoneOff, Loader2 } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { MicLevelIndicator } from "./MicLevelIndicator";
 
-interface VoiceControlsProps {
-  /** Called after leaving the call (e.g. to close the room for gedu) */
-  onLeave?: () => Promise<void>;
-  /** Label for the leave button */
-  leaveLabel?: string;
-}
-
-export function VoiceControls({ onLeave, leaveLabel = "Leave" }: VoiceControlsProps) {
-  const { micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, leave, joining } =
+export function VoiceControls() {
+  const { micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, joining } =
     useVoiceRoom();
-  const [leaving, setLeaving] = useState(false);
-
-  const handleLeave = async () => {
-    setLeaving(true);
-    try {
-      await leave();
-      await onLeave?.();
-    } finally {
-      setLeaving(false);
-    }
-  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -36,19 +17,19 @@ export function VoiceControls({ onLeave, leaveLabel = "Leave" }: VoiceControlsPr
           variant={micOn ? "secondary" : "destructive"}
           size="icon"
           onClick={toggleMic}
-          disabled={joining || leaving}
+          disabled={joining}
           title={micOn ? "Mute microphone" : "Unmute microphone"}
         >
           {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
         </Button>
 
-        {/* Camera toggle — only shown if allowed (gedu/admin) */}
+        {/* Camera toggle */}
         {cameraAllowed && (
           <Button
             variant={cameraOn ? "secondary" : "outline"}
             size="icon"
             onClick={toggleCamera}
-            disabled={joining || leaving}
+            disabled={joining}
             title={cameraOn ? "Turn off camera" : "Turn on camera"}
           >
             {cameraOn ? (
@@ -58,26 +39,10 @@ export function VoiceControls({ onLeave, leaveLabel = "Leave" }: VoiceControlsPr
             )}
           </Button>
         )}
-
-        {/* Leave */}
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleLeave}
-          disabled={joining || leaving}
-          className="gap-1.5"
-        >
-          {leaving ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <PhoneOff className="h-4 w-4" />
-          )}
-          {leaveLabel}
-        </Button>
       </div>
 
       {/* Mic input level meter */}
-      {!joining && !leaving && <MicLevelIndicator />}
+      {!joining && <MicLevelIndicator />}
     </div>
   );
 }

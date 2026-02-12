@@ -12,7 +12,7 @@ export const voiceKeys = {
   myRoom: () => [...voiceKeys.all, "myRoom"] as const,
 };
 
-/** List open voice rooms — for gamer dashboard */
+/** List open voice rooms — for any dashboard's room browser */
 export function useOpenVoiceRooms() {
   const supabase = getClient();
   const service = new VoiceService(supabase);
@@ -24,7 +24,7 @@ export function useOpenVoiceRooms() {
   });
 }
 
-/** Get the current gedu's voice room */
+/** Get the current user's own voice room */
 export function useMyVoiceRoom() {
   const supabase = getClient();
   const service = new VoiceService(supabase);
@@ -35,7 +35,7 @@ export function useMyVoiceRoom() {
   });
 }
 
-/** Open a voice room (gedu) */
+/** Open a voice room (gedu/admin) */
 export function useOpenRoom() {
   const queryClient = useQueryClient();
   const supabase = getClient();
@@ -50,14 +50,14 @@ export function useOpenRoom() {
   });
 }
 
-/** Close a voice room (gedu) */
+/** Close a voice room (gedu/admin). Optionally pass roomId for admin closing another room. */
 export function useCloseRoom() {
   const queryClient = useQueryClient();
   const supabase = getClient();
   const service = new VoiceService(supabase);
 
   return useMutation({
-    mutationFn: () => service.closeRoom(),
+    mutationFn: (roomId?: string) => service.closeRoom(roomId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: voiceKeys.myRoom() });
       queryClient.invalidateQueries({ queryKey: voiceKeys.openRooms() });

@@ -5,9 +5,9 @@ export function createMockVoiceRoom(
 ): VoiceRoom {
   return {
     id: "room-uuid-1234",
-    gedu_id: "gedu-user-id",
+    creator_id: "gedu-user-id",
     name: "Test Room",
-    daily_room_name: "gedu-gedu-use",
+    daily_room_name: "room-gedu-use",
     status: "open" as VoiceRoomStatus,
     opened_at: new Date().toISOString(),
     closed_at: null,
@@ -22,12 +22,13 @@ export function createMockOpenVoiceRoom(
 ): OpenVoiceRoom {
   return {
     id: "room-uuid-1234",
-    gedu_id: "gedu-user-id",
+    creator_id: "gedu-user-id",
     name: "Test Room",
-    daily_room_name: "gedu-gedu-use",
+    daily_room_name: "room-gedu-use",
     status: "open" as VoiceRoomStatus,
     opened_at: new Date().toISOString(),
-    gedu_display_name: "Test Educator",
+    creator_display_name: "Test Educator",
+    creator_role: "gedu",
     ...overrides,
   };
 }

@@ -135,8 +135,8 @@ export type Database = {
         Row: {
           closed_at: string | null
           created_at: string
+          creator_id: string
           daily_room_name: string
-          gedu_id: string
           id: string
           name: string
           opened_at: string | null
@@ -146,8 +146,8 @@ export type Database = {
         Insert: {
           closed_at?: string | null
           created_at?: string
+          creator_id: string
           daily_room_name: string
-          gedu_id: string
           id?: string
           name: string
           opened_at?: string | null
@@ -157,8 +157,8 @@ export type Database = {
         Update: {
           closed_at?: string | null
           created_at?: string
+          creator_id?: string
           daily_room_name?: string
-          gedu_id?: string
           id?: string
           name?: string
           opened_at?: string | null
@@ -167,8 +167,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "voice_rooms_gedu_id_fkey"
-            columns: ["gedu_id"]
+            foreignKeyName: "voice_rooms_creator_id_fkey"
+            columns: ["creator_id"]
             isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -244,9 +244,10 @@ export type Database = {
       get_open_voice_rooms: {
         Args: never
         Returns: {
+          creator_display_name: string
+          creator_id: string
+          creator_role: string
           daily_room_name: string
-          gedu_display_name: string
-          gedu_id: string
           id: string
           name: string
           opened_at: string

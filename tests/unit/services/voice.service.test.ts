@@ -175,6 +175,8 @@ describe("VoiceService", () => {
 
       expect(fetchSpy).toHaveBeenCalledWith("/api/voice/room", {
         method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId: undefined }),
       });
       expect(result).toEqual(mockRoom);
 

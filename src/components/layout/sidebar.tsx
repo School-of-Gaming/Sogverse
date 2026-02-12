@@ -41,6 +41,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       icon: <Package className="h-5 w-5" />,
     },
     {
+      href: "/admin/voice",
+      label: "Voice Rooms",
+      icon: <Mic className="h-5 w-5" />,
+    },
+    {
       href: "/admin/ui-components",
       label: "UI Components",
       icon: <Palette className="h-5 w-5" />,
@@ -118,7 +123,7 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
     },
     {
       href: "/gedu/voice",
-      label: "Voice Room",
+      label: "Voice Rooms",
       icon: <Mic className="h-5 w-5" />,
     },
     {

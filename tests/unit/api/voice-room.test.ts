@@ -7,7 +7,6 @@ import { createMockVoiceRoom } from "../../mocks/voice";
 
 const mockGetUser = vi.fn();
 const mockFromSelect = vi.fn();
-const mockFromSelectEqSingle = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
@@ -83,6 +82,14 @@ function createJsonRequest(body?: Record<string, unknown>): Request {
   });
 }
 
+function createPatchRequest(body?: Record<string, unknown>): Request {
+  return new Request("http://localhost:3000/api/voice/room", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
 // --- Tests ---
 
 describe("POST /api/voice/room", () => {
@@ -100,14 +107,14 @@ describe("POST /api/voice/room", () => {
     expect(data.error).toBe("Unauthorized");
   });
 
-  it("should return 403 for non-gedu roles", async () => {
+  it("should return 403 for non-gedu/admin roles", async () => {
     mockAuthenticatedWithRole("gamer");
 
     const response = await POST(createJsonRequest());
     const data = await response.json();
 
     expect(response.status).toBe(403);
-    expect(data.error).toBe("Only gedus can manage voice rooms");
+    expect(data.error).toBe("Only gedus and admins can manage voice rooms");
   });
 
   it("should return 403 for customer role", async () => {
@@ -145,7 +152,7 @@ describe("POST /api/voice/room", () => {
     const closedRoom = createMockVoiceRoom({ status: "closed" as any });
     const reopenedRoom = createMockVoiceRoom({ status: "open" as any });
 
-    // First call: admin.from("voice_rooms").select("*").eq("gedu_id",...).single()
+    // First call: admin.from("voice_rooms").select("*").eq("creator_id",...).single()
     // Second call: admin.from("voice_rooms").update(...).eq("id",...).select().single()
     let callCount = 0;
     mockAdminFrom.mockImplementation(() => {
@@ -213,7 +220,7 @@ describe("POST /api/voice/room", () => {
     });
 
     mockGetDailyRoom.mockResolvedValue(null);
-    mockCreateDailyRoom.mockResolvedValue({ name: "gedu-gedu-use" });
+    mockCreateDailyRoom.mockResolvedValue({ name: "room-gedu-use" });
 
     const response = await POST(createJsonRequest());
     const data = await response.json();
@@ -253,7 +260,7 @@ describe("POST /api/voice/room", () => {
     });
 
     // Daily.co room already exists
-    mockGetDailyRoom.mockResolvedValue({ name: "gedu-gedu-use", url: "https://test.daily.co/gedu-gedu-use" });
+    mockGetDailyRoom.mockResolvedValue({ name: "room-gedu-use", url: "https://test.daily.co/room-gedu-use" });
 
     const response = await POST(createJsonRequest());
     const data = await response.json();
@@ -273,24 +280,24 @@ describe("PATCH /api/voice/room", () => {
   it("should return 401 when not authenticated", async () => {
     mockUnauthenticated();
 
-    const response = await PATCH();
+    const response = await PATCH(createPatchRequest());
     const data = await response.json();
 
     expect(response.status).toBe(401);
     expect(data.error).toBe("Unauthorized");
   });
 
-  it("should return 403 for non-gedu roles", async () => {
+  it("should return 403 for non-gedu/admin roles", async () => {
     mockAuthenticatedWithRole("gamer");
 
-    const response = await PATCH();
+    const response = await PATCH(createPatchRequest());
     const data = await response.json();
 
     expect(response.status).toBe(403);
-    expect(data.error).toBe("Only gedus can manage voice rooms");
+    expect(data.error).toBe("Only gedus and admins can manage voice rooms");
   });
 
-  it("should close the gedu's room", async () => {
+  it("should close the creator's room", async () => {
     mockAuthenticatedGedu();
 
     const closedRoom = createMockVoiceRoom({ status: "closed" as any });
@@ -304,7 +311,7 @@ describe("PATCH /api/voice/room", () => {
       }),
     });
 
-    const response = await PATCH();
+    const response = await PATCH(createPatchRequest());
     const data = await response.json();
 
     expect(response.status).toBe(200);

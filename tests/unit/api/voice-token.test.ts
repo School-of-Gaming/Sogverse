@@ -158,7 +158,7 @@ describe("POST /api/voice/token", () => {
       username: "edu1",
     });
 
-    const room = createMockVoiceRoom({ gedu_id: "gedu-user-id" });
+    const room = createMockVoiceRoom({ creator_id: "gedu-user-id" });
     mockRoomLookup(room);
 
     const response = await POST(createTokenRequest({ roomId: room.id }));
@@ -169,8 +169,8 @@ describe("POST /api/voice/token", () => {
   });
 
   describe("gedu token", () => {
-    it("should return owner token with camera for room owner", async () => {
-      const room = createMockVoiceRoom({ gedu_id: "gedu-user-id" });
+    it("should return owner token with camera for any open room", async () => {
+      const room = createMockVoiceRoom({ creator_id: "other-gedu-id" });
 
       mockAuthenticatedWithProfile("gedu-user-id", {
         role: "gedu",
@@ -184,6 +184,7 @@ describe("POST /api/voice/token", () => {
 
       expect(response.status).toBe(200);
       expect(data.token).toBe("mock-daily-token");
+      expect(data.role).toBe("gedu");
       expect(data.roomUrl).toBe(
         `https://testdomain.daily.co/${room.daily_room_name}`
       );
@@ -196,29 +197,12 @@ describe("POST /api/voice/token", () => {
         })
       );
     });
-
-    it("should return 403 when gedu tries to join another gedu's room", async () => {
-      const room = createMockVoiceRoom({ gedu_id: "other-gedu-id" });
-
-      mockAuthenticatedWithProfile("gedu-user-id", {
-        role: "gedu",
-        display_name: "Test Educator",
-        username: "testgedu",
-      });
-      mockRoomLookup(room);
-
-      const response = await POST(createTokenRequest({ roomId: room.id }));
-      const data = await response.json();
-
-      expect(response.status).toBe(403);
-      expect(data.error).toBe("You can only join your own room");
-    });
   });
 
   describe("gamer token", () => {
-    it("should return non-owner token without camera for open room", async () => {
+    it("should return non-owner token with camera for open room", async () => {
       const room = createMockVoiceRoom({
-        gedu_id: "other-gedu-id",
+        creator_id: "other-gedu-id",
         status: "open" as any,
       });
 
@@ -234,10 +218,11 @@ describe("POST /api/voice/token", () => {
 
       expect(response.status).toBe(200);
       expect(data.token).toBe("mock-daily-token");
+      expect(data.role).toBe("gamer");
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({
           isOwner: false,
-          enableCamera: false,
+          enableCamera: true,
           enableMic: true,
         })
       );
@@ -245,7 +230,7 @@ describe("POST /api/voice/token", () => {
 
     it("should return 403 when gamer tries to join a closed room", async () => {
       const room = createMockVoiceRoom({
-        gedu_id: "other-gedu-id",
+        creator_id: "other-gedu-id",
         status: "closed" as any,
       });
 
@@ -265,8 +250,8 @@ describe("POST /api/voice/token", () => {
   });
 
   describe("admin token", () => {
-    it("should return owner token with [Admin] prefix", async () => {
-      const room = createMockVoiceRoom({ gedu_id: "some-gedu-id" });
+    it("should return owner token with role encoded in userName", async () => {
+      const room = createMockVoiceRoom({ creator_id: "some-gedu-id" });
 
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
@@ -279,12 +264,13 @@ describe("POST /api/voice/token", () => {
       const data = await response.json();
 
       expect(response.status).toBe(200);
+      expect(data.role).toBe("admin");
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({
           isOwner: true,
           enableCamera: true,
           enableMic: true,
-          userName: expect.stringContaining("[Admin]"),
+          userName: "admin-user-id|admin|Admin User",
         })
       );
     });

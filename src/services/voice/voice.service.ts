@@ -7,14 +7,14 @@ type SupabaseClientType = any;
 export class VoiceService {
   constructor(private supabase: SupabaseClientType) {}
 
-  /** Get all currently open voice rooms (for gamers) */
+  /** Get all currently open voice rooms */
   async getOpenRooms(): Promise<OpenVoiceRoom[]> {
     const { data, error } = await this.supabase.rpc("get_open_voice_rooms");
     if (error) throw error;
     return data || [];
   }
 
-  /** Get the current gedu's voice room */
+  /** Get the current user's voice room (creator's own room) */
   async getMyRoom(): Promise<VoiceRoom | null> {
     const {
       data: { user },
@@ -24,18 +24,18 @@ export class VoiceService {
     const { data, error } = await this.supabase
       .from("voice_rooms")
       .select("*")
-      .eq("gedu_id", user.id)
+      .eq("creator_id", user.id)
       .single();
 
     if (error && error.code === "PGRST116") {
-      // No rows returned — gedu hasn't created a room yet
+      // No rows returned — user hasn't created a room yet
       return null;
     }
     if (error) throw error;
     return data;
   }
 
-  /** Open the gedu's voice room (creates if needed) */
+  /** Open a voice room (creates if needed) */
   async openRoom(name?: string): Promise<VoiceRoom> {
     const response = await fetch("/api/voice/room", {
       method: "POST",
@@ -52,10 +52,12 @@ export class VoiceService {
     return room;
   }
 
-  /** Close the gedu's voice room */
-  async closeRoom(): Promise<VoiceRoom> {
+  /** Close a voice room. Optionally pass roomId for admin closing another creator's room. */
+  async closeRoom(roomId?: string): Promise<VoiceRoom> {
     const response = await fetch("/api/voice/room", {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ roomId }),
     });
 
     if (!response.ok) {
@@ -68,7 +70,7 @@ export class VoiceService {
   }
 
   /** Get a Daily.co meeting token for a room */
-  async getToken(roomId: string): Promise<{ token: string; roomUrl: string }> {
+  async getToken(roomId: string): Promise<{ token: string; roomUrl: string; role: string }> {
     const response = await fetch("/api/voice/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

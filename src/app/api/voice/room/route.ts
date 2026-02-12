@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 2. Role check — gedu only
+    // 2. Role check — gedu or admin
     const { data: profileData } = await supabase
       .from("profiles")
       .select("role, display_name, username")
@@ -25,9 +25,9 @@ export async function POST(request: Request) {
 
     const profile = profileData as { role: string; display_name: string | null; username: string | null } | null;
 
-    if (profile?.role !== "gedu") {
+    if (!profile || !["gedu", "admin"].includes(profile.role)) {
       return NextResponse.json(
-        { error: "Only gedus can manage voice rooms" },
+        { error: "Only gedus and admins can manage voice rooms" },
         { status: 403 }
       );
     }
@@ -42,14 +42,14 @@ export async function POST(request: Request) {
     }
 
     const admin = createAdminClient();
-    const displayName = roomName || profile.display_name || profile.username || "Educator";
-    const dailyRoomName = `gedu-${user.id.slice(0, 8)}`;
+    const displayName = roomName || profile.display_name || profile.username || "Host";
+    const dailyRoomName = `room-${user.id.slice(0, 8)}`;
 
-    // 4. Check if a voice_rooms row already exists for this gedu
+    // 4. Check if a voice_rooms row already exists for this creator
     const { data: existing } = await admin
       .from("voice_rooms")
       .select("*")
-      .eq("gedu_id", user.id)
+      .eq("creator_id", user.id)
       .single();
 
     if (existing) {
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     const { data: created, error: insertError } = await admin
       .from("voice_rooms")
       .insert({
-        gedu_id: user.id,
+        creator_id: user.id,
         name: displayName,
         daily_room_name: dailyRoomName,
         status: "open",
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function PATCH() {
+export async function PATCH(request: Request) {
   try {
     // 1. Auth check
     const supabase = await createClient();
@@ -129,29 +129,49 @@ export async function PATCH() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 2. Role check — gedu only
+    // 2. Role check — gedu or admin
     const { data: patchProfile } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
 
-    if ((patchProfile as { role: string } | null)?.role !== "gedu") {
+    const role = (patchProfile as { role: string } | null)?.role;
+    if (!role || !["gedu", "admin"].includes(role)) {
       return NextResponse.json(
-        { error: "Only gedus can manage voice rooms" },
+        { error: "Only gedus and admins can manage voice rooms" },
         { status: 403 }
       );
     }
 
-    // 3. Close the room
+    // 3. Parse optional roomId from body (admin can close another creator's room)
+    let roomId: string | undefined;
+    try {
+      const body = await request.json();
+      roomId = body.roomId;
+    } catch {
+      // No body — close own room
+    }
+
+    // 4. Close the room
     const admin = createAdminClient();
-    const { data: updated, error: updateError } = await admin
+
+    let query = admin
       .from("voice_rooms")
       .update({
         status: "closed",
         closed_at: new Date().toISOString(),
-      })
-      .eq("gedu_id", user.id)
+      });
+
+    if (roomId && role === "admin") {
+      // Admin closing a specific room by ID
+      query = query.eq("id", roomId);
+    } else {
+      // Creator closing their own room
+      query = query.eq("creator_id", user.id);
+    }
+
+    const { data: updated, error: updateError } = await query
       .select()
       .single();
 

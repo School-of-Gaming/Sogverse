@@ -56,11 +56,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    // 5. Role-specific checks and token permissions
+    // 5. Room must be open
+    if (room.status !== "open") {
+      return NextResponse.json(
+        { error: "This room is not currently open" },
+        { status: 403 }
+      );
+    }
+
+    // 6. Build token — encode userId|role|displayName
     const displayName = profile.display_name || profile.username || "User";
-    // Encode user ID into the Daily.co user_name so the client can
-    // extract it for Identicon generation (must match profile ID).
-    const userName = `${user.id}|${displayName}`;
+    const userName = `${user.id}|${role}|${displayName}`;
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
     if (!domain) {
       console.error("Missing NEXT_PUBLIC_DAILY_DOMAIN environment variable");
@@ -71,62 +77,18 @@ export async function POST(request: Request) {
     }
     const roomUrl = `https://${domain}.daily.co/${room.daily_room_name}`;
 
-    if (role === "gedu") {
-      // Gedu must own the room
-      if (room.gedu_id !== user.id) {
-        return NextResponse.json(
-          { error: "You can only join your own room" },
-          { status: 403 }
-        );
-      }
+    // Gamers are non-owners (no moderation); admins/gedus are owners
+    const isOwner = role !== "gamer";
 
-      const token = await createMeetingToken({
-        roomName: room.daily_room_name,
-        isOwner: true,
-        enableCamera: true,
-        enableMic: true,
-        userName,
-      });
+    const token = await createMeetingToken({
+      roomName: room.daily_room_name,
+      isOwner,
+      enableCamera: true,
+      enableMic: true,
+      userName,
+    });
 
-      return NextResponse.json({ token, roomUrl });
-    }
-
-    if (role === "gamer") {
-      // Room must be open
-      if (room.status !== "open") {
-        return NextResponse.json(
-          { error: "This room is not currently open" },
-          { status: 403 }
-        );
-      }
-
-      // Future: check parent subscription here before issuing token
-
-      const token = await createMeetingToken({
-        roomName: room.daily_room_name,
-        isOwner: false,
-        enableCamera: false,
-        enableMic: true,
-        userName,
-      });
-
-      return NextResponse.json({ token, roomUrl });
-    }
-
-    if (role === "admin") {
-      // Admin can join any room with owner permissions (monitoring)
-      const token = await createMeetingToken({
-        roomName: room.daily_room_name,
-        isOwner: true,
-        enableCamera: true,
-        enableMic: true,
-        userName: `[Admin] ${userName}`,
-      });
-
-      return NextResponse.json({ token, roomUrl });
-    }
-
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    return NextResponse.json({ token, roomUrl, role });
   } catch (err) {
     console.error("Voice token error:", err);
     return NextResponse.json(
