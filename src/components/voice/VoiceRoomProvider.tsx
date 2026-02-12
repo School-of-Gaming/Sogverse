@@ -20,6 +20,7 @@ import {
   calculateGain,
   getZoneAtPosition,
   getRandomPositionInZone,
+  resolveOverlap,
 } from "@/lib/constants/spatial";
 
 // ---------- Types ----------
@@ -374,8 +375,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
           const mapped = mapParticipant(local, null);
           setLocalRole(mapped.role);
 
-          // Place ourselves in general zone
-          const pos = getRandomPositionInZone("general");
+          // Place ourselves in general zone, avoiding overlap with existing avatars
+          const randomPos = getRandomPositionInZone("general");
+          const others = Array.from(positionsRef.current.values());
+          const pos = resolveOverlap(randomPos.x, randomPos.y, others);
           const zone = getZoneAtPosition(pos.x, pos.y);
           const spatialPos: SpatialPosition = { ...pos, zone };
           positionsRef.current.set(local.session_id, spatialPos);

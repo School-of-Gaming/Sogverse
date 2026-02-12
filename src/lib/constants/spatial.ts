@@ -32,6 +32,8 @@ export {
 } from "./spatial.config";
 
 import {
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
   AVATAR_SIZE,
   ZONE_RECTS,
   GENERAL_AREA,
@@ -62,6 +64,50 @@ export function calculateGain(localZone: ZoneId, remoteZone: ZoneId): number {
   if (localZone === remoteZone) return 1;
   // Different zones: silent
   return 0;
+}
+
+/** Minimum separation (per axis) to keep avatars at most ~25% overlapping. */
+const MIN_SEP = Math.ceil(AVATAR_SIZE * 0.75);
+
+/** Nudge a proposed position so it doesn't overlap more than ~50% with any other avatar.
+ *  Both avatars remain visible and selectable. */
+export function resolveOverlap(
+  x: number,
+  y: number,
+  others: { x: number; y: number }[],
+): { x: number; y: number } {
+  let cx = x;
+  let cy = y;
+
+  for (let iter = 0; iter < 5; iter++) {
+    let nudged = false;
+    for (const other of others) {
+      const dx = cx - other.x;
+      const dy = cy - other.y;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      // Only a conflict when BOTH axes are closer than MIN_SEP
+      if (absDx >= MIN_SEP || absDy >= MIN_SEP) continue;
+
+      // Push in the axis that needs the least additional movement
+      if (absDx >= absDy) {
+        const dir = dx > 0 ? 1 : dx < 0 ? -1 : 1;
+        cx += (MIN_SEP - absDx) * dir;
+      } else {
+        const dir = dy > 0 ? 1 : dy < 0 ? -1 : 1;
+        cy += (MIN_SEP - absDy) * dir;
+      }
+      nudged = true;
+    }
+    if (!nudged) break;
+  }
+
+  // Clamp to canvas bounds
+  cx = Math.max(0, Math.min(CANVAS_WIDTH - AVATAR_SIZE, cx));
+  cy = Math.max(0, Math.min(CANVAS_HEIGHT - AVATAR_SIZE, cy));
+
+  return { x: Math.round(cx), y: Math.round(cy) };
 }
 
 /** Get a random position within a zone. For "general", scatters across the open canvas area. */

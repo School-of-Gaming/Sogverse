@@ -10,6 +10,7 @@ import {
   CANVAS_HEIGHT,
   AVATAR_SIZE,
   getZoneAtPosition,
+  resolveOverlap,
 } from "@/lib/constants/spatial";
 import { SPEAKING_GLOW } from "@/lib/constants/spatial.config";
 
@@ -20,27 +21,27 @@ interface DraggableAvatarProps {
 }
 
 export function DraggableAvatar({ participant, position, canDrag }: DraggableAvatarProps) {
-  const { callObject, moveLocal, moveOther, getAnalyser } = useVoiceRoom();
+  const { callObject, moveLocal, moveOther, getAnalyser, positions } = useVoiceRoom();
   const [dragging, setDragging] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const dragStartRef = useRef<{ offsetX: number; offsetY: number } | null>(null);
-  const draggingRef = useRef(false);
   const lastBroadcastRef = useRef(0);
 
-  draggingRef.current = dragging;
-
-  const pos = dragPos ?? position ?? { x: 0, y: 0 };
-
-  // Clear dragPos when the provider's position prop catches up after drag ends.
-  // Uses a ref for dragging so the effect only fires on position changes, not on drag state changes.
-  useEffect(() => {
-    if (!draggingRef.current) {
+  // Clear stale dragPos when the provider's position catches up after drag ends.
+  // Uses the React "adjust state during render" pattern instead of an effect.
+  const [prevPosKey, setPrevPosKey] = useState("");
+  const posKey = position ? `${position.x},${position.y}` : "";
+  if (posKey !== prevPosKey) {
+    setPrevPosKey(posKey);
+    if (!dragging) {
       setDragPos(null);
     }
-  }, [position]);
+  }
+
+  const pos = dragPos ?? position ?? { x: 0, y: 0 };
 
   // Attach video track when available
   useEffect(() => {
@@ -184,17 +185,27 @@ export function DraggableAvatar({ participant, position, canDrag }: DraggableAva
         return;
       }
 
+      // Resolve overlap: nudge so avatars don't stack on top of each other
+      const others: { x: number; y: number }[] = [];
+      for (const [sid, pos] of positions) {
+        if (sid !== participant.sessionId) {
+          others.push(pos);
+        }
+      }
+      const resolved = resolveOverlap(dragPos.x, dragPos.y, others);
+      setDragPos(resolved);
+
       // Send final position update
       if (participant.isLocal) {
-        moveLocal(dragPos.x, dragPos.y);
+        moveLocal(resolved.x, resolved.y);
       } else {
-        moveOther(participant.sessionId, dragPos.x, dragPos.y);
+        moveOther(participant.sessionId, resolved.x, resolved.y);
       }
 
-      // Don't clear dragPos here — the useEffect clears it when the
-      // provider's position prop catches up, preventing snap-back.
+      // Don't clear dragPos here — it gets cleared during render when
+      // the provider's position prop catches up, preventing snap-back.
     },
-    [dragging, dragPos, participant, moveLocal, moveOther]
+    [dragging, dragPos, participant, moveLocal, moveOther, positions]
   );
 
   // Determine avatar size as percentage of canvas
