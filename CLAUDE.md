@@ -5,7 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev              # Start dev server with Turbopack
+npm run dev              # Start dev server + Stripe webhook listener
+npm run dev:next         # Start dev server only (no Stripe)
 npm run build            # Production build
 npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
