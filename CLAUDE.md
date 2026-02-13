@@ -25,6 +25,7 @@ npm run supabase:gen-types  # Regenerate database types from local Supabase
 - **React Query** for server state management
 - **Tailwind CSS 4** with class-variance-authority for component variants
 - **Stripe** for payments
+- **Brevo** (formerly Sendinblue) for transactional email via SMTP (configured in Supabase dashboard)
 - **Daily.co** for real-time voice/video chat
 - **Vitest** + **Playwright** for testing
 

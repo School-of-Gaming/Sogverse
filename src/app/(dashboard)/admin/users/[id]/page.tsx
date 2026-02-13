@@ -19,6 +19,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
 import { useProfile } from "@/services/users";
 import { useTokenBalance, useTokenTransactions, useAdjustTokens } from "@/services/tokens";
 import { TransactionHistoryTable } from "@/components/tokens";
@@ -32,6 +33,16 @@ export default function AdminUserDetailPage() {
   const { data: balance } = useTokenBalance(userId, profile?.role === "customer");
   const { data: transactions } = useTokenTransactions(userId);
   const adjustMutation = useAdjustTokens();
+  const isGamer = profile?.role === "gamer";
+  const { data: authInfo } = useQuery({
+    queryKey: ["admin", "user-auth", userId],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/users/${userId}/auth`);
+      if (!res.ok) throw new Error("Failed to fetch auth info");
+      return res.json() as Promise<{ emailConfirmedAt: string | null }>;
+    },
+    enabled: !!profile && !isGamer,
+  });
 
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
@@ -93,9 +104,18 @@ export default function AdminUserDetailPage() {
             <h1 className="text-2xl font-bold">
               {profile.display_name || profile.username || "Unnamed User"}
             </h1>
-            <p className="text-muted-foreground">
-              {profile.email || profile.username}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-muted-foreground">
+                {profile.email || profile.username}
+              </p>
+              {!isGamer && authInfo && (
+                authInfo.emailConfirmedAt ? (
+                  <Badge className="bg-success/20 text-success border-success/30">Verified</Badge>
+                ) : (
+                  <Badge variant="outline" className="text-muted-foreground">Unverified</Badge>
+                )
+              )}
+            </div>
             <div className="mt-2 flex items-center gap-3">
               <Badge className={ROLE_BADGES[profile.role].className}>
                 {ROLE_BADGES[profile.role].label}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, Bell, Palette } from "lucide-react";
+import { User, Lock, Bell, Palette, CheckCircle2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,20 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  const isGamer = profile?.role === "gamer";
+  const isEmailVerified = !!user?.email_confirmed_at;
+
+  const handleResendVerification = async () => {
+    setResendStatus("sending");
+    try {
+      const res = await fetch("/api/auth/resend-verification", { method: "POST" });
+      setResendStatus(res.ok ? "sent" : "error");
+    } catch {
+      setResendStatus("error");
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -121,9 +135,34 @@ export default function SettingsPage() {
               disabled
               className="bg-muted"
             />
-            <p className="text-xs text-muted-foreground">
-              Email cannot be changed
-            </p>
+            {!isGamer && (
+              isEmailVerified ? (
+                <p className="flex items-center gap-1 text-xs text-success">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Verified
+                </p>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Mail className="h-3 w-3" />
+                    Unverified
+                  </p>
+                  {resendStatus === "sent" ? (
+                    <span className="text-xs text-success">Sent!</span>
+                  ) : resendStatus === "error" ? (
+                    <span className="text-xs text-destructive">Failed to send</span>
+                  ) : (
+                    <button
+                      onClick={handleResendVerification}
+                      disabled={resendStatus === "sending"}
+                      className="text-xs text-primary underline hover:text-primary/80 disabled:opacity-50"
+                    >
+                      {resendStatus === "sending" ? "Sending..." : "Resend verification"}
+                    </button>
+                  )}
+                </div>
+              )
+            )}
           </div>
 
           {profile?.username && (

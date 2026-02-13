@@ -148,6 +148,40 @@ Login forms (`login-form.tsx`, `gamer-login-form.tsx`) currently call `supabase.
 
 **Why:** Consolidates all auth operations server-side, consistent with sign-out. Eliminates the browser Supabase client's GoTrueClient lock as a concern for auth flows entirely. See `docs/supabase-auth-lock-fix.md` for the lock deadlock context.
 
+### Custom Email Verification (Non-Blocking)
+
+Supabase's "Confirm email" setting is disabled to keep signup frictionless (users can register and pay immediately). However, this means `email_confirmed_at` on `auth.users` is auto-set to `NOW()` on signup — it's always populated and useless for tracking real verification. `supabase.auth.resend({ type: 'signup' })` also does nothing when confirmation is disabled.
+
+**Goal:** Track which customers have actually verified their email, without blocking signup or payments. Gate certain actions behind verification later.
+
+**Approach — custom token + SMTP email:**
+
+1. Add `email_verified BOOLEAN DEFAULT false` column to `profiles` table
+2. Add `email_verification_token TEXT` and `email_verification_expires_at TIMESTAMPTZ` columns (or encode everything in a signed JWT to avoid extra columns)
+3. After signup, generate a secure token and send a verification email via SMTP (Brevo credentials already configured in Supabase — reuse the same SMTP host/port/user/password in `.env.local` with `nodemailer`)
+4. Create `/api/auth/verify-email?token=xxx` route that validates the token, sets `email_verified = true` on the profile, and redirects to a success page
+5. Create `/api/auth/resend-verification` route that generates a new token and sends another email
+6. Update Settings page (`/settings`) to show verified/unverified status next to email, with a "Resend" button for unverified users
+7. Update admin user detail page (`/admin/users/[id]`) to show verification badge (skip for gamer role — synthetic emails)
+8. Gate specific features behind `email_verified` via RLS policies or service-layer checks (TBD which features)
+
+**Scaffolding already in place:**
+- `src/app/api/auth/resend-verification/route.ts` — exists but uses `supabase.auth.resend()` which doesn't work with confirmation disabled. Needs rewrite to use custom token + SMTP.
+- `src/app/api/admin/users/[id]/auth/route.ts` — exists but returns `emailConfirmedAt` (useless). Needs rewrite to read `profiles.email_verified`.
+- Settings page (`src/app/(dashboard)/settings/page.tsx`) — has UI for verified/unverified status next to email field, but reads `user.email_confirmed_at` (always set). Needs to read `profile.email_verified` instead.
+- Admin user detail page (`src/app/(dashboard)/admin/users/[id]/page.tsx`) — has verification badge UI, but reads from the auth endpoint above. Needs to read `profile.email_verified` instead.
+
+**Note:** Gamer accounts use synthetic emails (`{username}@gamer.sogverse.internal`) — skip verification for them entirely.
+
+**Email sending options:**
+- **Option A: SMTP + `nodemailer`** — Reuse the same Brevo SMTP credentials already configured in Supabase. Copy host/port/user/password to `.env.local`. Simple, no new accounts needed.
+- **Option B: Brevo API + `@getbrevo/brevo`** — Get an API key from Brevo dashboard (SMTP & API > API Keys). Cleaner than raw SMTP, supports Brevo templates, better error handling and delivery tracking. Requires a Brevo API key in `.env.local`.
+
+**Dependencies:**
+- Brevo SMTP credentials or API key in `.env.local`
+- `nodemailer` (Option A) or `@getbrevo/brevo` (Option B) package
+- Database migration for new `profiles` columns
+
 ### Migrate Auth Email Templates to Brevo
 
 Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.
