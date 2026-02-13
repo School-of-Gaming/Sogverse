@@ -12,6 +12,7 @@ import {
   GraduationCap,
   ShoppingBag,
   UserPlus,
+  Coins,
   Mic,
   ChevronLeft,
   ChevronRight,
@@ -62,6 +63,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       href: ROUTES.customer.dashboard,
       label: "Dashboard",
       icon: <LayoutDashboard className="h-5 w-5" />,
+    },
+    {
+      href: ROUTES.customer.sorg,
+      label: "Sorg",
+      icon: <Coins className="h-5 w-5" />,
     },
     {
       href: ROUTES.customer.gamers,

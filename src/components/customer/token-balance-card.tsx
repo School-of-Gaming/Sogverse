@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { Coins } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers";
 import { useTokenBalance } from "@/services/tokens";
 
@@ -19,20 +17,15 @@ export function TokenBalanceCard() {
           Sorg Balance
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex items-center justify-between">
-        <div>
-          {isLoading ? (
-            <div className="h-10 w-20 animate-pulse rounded bg-muted" />
-          ) : (
-            <div className="flex items-baseline gap-2">
-              <span className="text-4xl font-bold">{balance ?? 0}</span>
-              <span className="text-muted-foreground">Sorgs</span>
-            </div>
-          )}
-        </div>
-        <Link href="/sorg#buy-sorgs">
-          <Button>Buy More</Button>
-        </Link>
+      <CardContent>
+        {isLoading ? (
+          <div className="h-10 w-20 animate-pulse rounded bg-muted" />
+        ) : (
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-bold">{balance ?? 0}</span>
+            <span className="text-muted-foreground">Sorgs</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

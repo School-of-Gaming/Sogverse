@@ -17,6 +17,7 @@ import {
   Check,
   AlertCircle,
   AlertTriangle,
+  Coins,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -409,6 +410,24 @@ export default function AdminUIComponentsPage() {
           {Object.values(ROLE_BADGES).map(({ label, className }) => (
             <Badge key={label} className={className}>{label}</Badge>
           ))}
+        </div>
+
+        <p className="text-sm text-muted-foreground mt-4 mb-2">Sorg balance badge (header)</p>
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="group flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium">
+              <Coins className="h-4 w-4 text-primary" />
+              <span>125</span>
+            </span>
+            <span className="text-xs text-muted-foreground">Default</span>
+          </div>
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="flex items-center gap-1.5 rounded-full border border-border bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
+              <Coins className="h-4 w-4 text-accent-foreground" />
+              <span>125</span>
+            </span>
+            <span className="text-xs text-muted-foreground">Hover state</span>
+          </div>
         </div>
       </Section>
 

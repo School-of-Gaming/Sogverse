@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Gamepad2, ShoppingBag, UserPlus, Settings } from "lucide-react";
+import { Coins, Gamepad2, ShoppingBag, UserPlus, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { TokenBalanceCard, SubscriptionStatusCard } from "@/components/customer";
 
 export const metadata: Metadata = {
   title: "Parent Dashboard",
@@ -15,28 +14,30 @@ const quickActions = [
     description: "View and manage your linked gamer accounts",
     icon: Gamepad2,
     href: "/customer/gamers",
-    variant: "default" as const,
+  },
+  {
+    title: "Sorg",
+    description: "Balance, purchases, and transaction history",
+    icon: Coins,
+    href: "/customer/sorg",
   },
   {
     title: "Add Gamer",
     description: "Create a new gamer account for your child",
     icon: UserPlus,
     href: "/customer/gamers/add",
-    variant: "outline" as const,
   },
   {
     title: "Orders",
     description: "View your purchase history",
     icon: ShoppingBag,
     href: "/customer/orders",
-    variant: "outline" as const,
   },
   {
     title: "Settings",
     description: "Update your account settings",
     icon: Settings,
     href: "/settings",
-    variant: "outline" as const,
   },
 ];
 
@@ -49,9 +50,6 @@ export default function CustomerDashboardPage() {
           Manage your gamer accounts and explore our educational gaming content.
         </p>
       </div>
-
-      <TokenBalanceCard />
-      <SubscriptionStatusCard />
 
       <div className="grid gap-4 md:grid-cols-2">
         {quickActions.map((action) => (

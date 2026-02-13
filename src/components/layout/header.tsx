@@ -99,10 +99,10 @@ export function Header() {
               )}
               {isCustomer && tokenBalance !== undefined && (
                 <Link
-                  href="/sorg"
-                  className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium transition-colors hover:bg-accent"
+                  href="/customer/sorg"
+                  className="group flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium transition-colors hover:bg-accent"
                 >
-                  <Coins className="h-4 w-4 text-primary" />
+                  <Coins className="h-4 w-4 text-primary group-hover:text-accent-foreground" />
                   <span>{tokenBalance}</span>
                 </Link>
               )}
@@ -206,11 +206,11 @@ export function Header() {
                 )}
                 {isCustomer && tokenBalance !== undefined && (
                   <Link
-                    href="/sorg"
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                    href="/customer/sorg"
+                    className="group flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <Coins className="h-4 w-4 text-primary" />
+                    <Coins className="h-4 w-4 text-primary group-hover:text-accent-foreground" />
                     {tokenBalance} Sorgs
                   </Link>
                 )}
