@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { TokenPurchaseSection } from "@/components/sorg";
 
 export const metadata: Metadata = {
   title: "Sorg - The Sogverse Currency",
@@ -100,7 +101,7 @@ const faqs = [
   {
     question: "Can I buy Sorgs with real money?",
     answer:
-      "Not at this time. Sorgs are earned through gameplay and learning activities, keeping the focus on achievement rather than purchasing power.",
+      "Yes! Parents can purchase Sorg packs or subscribe to a monthly plan. Check out our packages above. Sorgs can also be earned through gameplay and learning activities.",
   },
 ];
 
@@ -132,13 +133,16 @@ export default function SorgPage() {
           <CardContent className="text-center">
             <p className="text-lg text-muted-foreground">
               Sorgs are the virtual currency that fuels everything in the
-              Sogverse. They&apos;re earned through learning, playing, and
-              achieving—never purchased with real money. Every Sorg represents
-              real effort and real progress on your educational journey.
+              Sogverse. Earn them through learning, playing, and achieving — or
+              purchase packs to give your gamer a head start. Every Sorg powers
+              real progress on the educational journey.
             </p>
           </CardContent>
         </Card>
       </div>
+
+      {/* Buy Sorgs */}
+      <TokenPurchaseSection />
 
       {/* How to Earn */}
       <div className="mx-auto mt-16 max-w-5xl">

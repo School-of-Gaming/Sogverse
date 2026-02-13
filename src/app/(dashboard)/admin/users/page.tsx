@@ -92,9 +92,11 @@ export default function AdminUsersPage() {
                     <Badge className={ROLE_BADGES[user.role].className}>
                       {ROLE_BADGES[user.role].label}
                     </Badge>
-                    <Button variant="ghost" size="sm" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground">
-                      View
-                    </Button>
+                    <Link href={`/admin/users/${user.id}`}>
+                      <Button variant="ghost" size="sm" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground">
+                        View
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               ))}

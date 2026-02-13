@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LogOut, Settings } from "lucide-react";
+import { Menu, X, LogOut, Settings, Coins } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
+import { useTokenBalance } from "@/services/tokens";
 import { cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
 
@@ -24,6 +25,12 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isCustomer = profile?.role === "customer";
+  const { data: tokenBalance } = useTokenBalance(
+    profile?.id ?? "",
+    isCustomer
+  );
 
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
@@ -88,6 +95,15 @@ export function Header() {
                   <Button variant="ghost" size="sm">
                     Dashboard
                   </Button>
+                </Link>
+              )}
+              {isCustomer && tokenBalance !== undefined && (
+                <Link
+                  href="/sorg"
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium transition-colors hover:bg-accent"
+                >
+                  <Coins className="h-4 w-4 text-primary" />
+                  <span>{tokenBalance}</span>
                 </Link>
               )}
               <div className="relative" ref={dropdownRef}>
@@ -186,6 +202,16 @@ export function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Dashboard
+                  </Link>
+                )}
+                {isCustomer && tokenBalance !== undefined && (
+                  <Link
+                    href="/sorg"
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Coins className="h-4 w-4 text-primary" />
+                    {tokenBalance} Sorgs
                   </Link>
                 )}
                 <Link

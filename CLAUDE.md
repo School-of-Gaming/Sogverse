@@ -105,10 +105,13 @@ Copy `.env.local.example` to `.env.local`:
 
 ## Database
 
-Migrations in `supabase/migrations/`. After schema changes:
+Migrations in `supabase/migrations/`. After schema changes, regenerate types from the **remote** project:
 ```bash
-npm run supabase:gen-types
+npx supabase gen types typescript --project-id $SUPABASE_PROJECT_REF > src/types/database.types.ts
 ```
+The `npm run supabase:gen-types` script uses `--local` which requires Docker. For this project (remote Supabase, no local Docker), always use the command above with the project ref from `.env.local`.
+
+**Important:** The gen-types command may append a CLI upgrade warning to the output file. Always check and remove any trailing non-TypeScript text from `src/types/database.types.ts` after generation.
 
 ### Remote Database Migrations
 
@@ -123,11 +126,10 @@ This project uses a remote Supabase instance (not local Docker). To push migrati
 
 2. **Push migrations**:
    ```bash
-   npx supabase db push
-   # Enter password when prompted, then confirm with Y
+   npx supabase db push -p "YOUR_DB_PASSWORD"
    ```
-
-The database password is stored in `.env.local` as `SUPABASE_DB_PASSWORD`.
+   The `-p` flag passes the database password inline, avoiding interactive prompts.
+   The password is stored in `.env.local` as `SUPABASE_DB_PASSWORD`. Note: if the password contains `%`, double it to `%%` for shell escaping.
 
 ## Testing
 

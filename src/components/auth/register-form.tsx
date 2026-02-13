@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,12 +22,12 @@ const registerSchema = z.object({
 });
 
 export function RegisterForm() {
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const supabase = getClient();
@@ -67,7 +68,10 @@ export function RegisterForm() {
           return;
         }
 
-        setSuccess(true);
+        // Redirect to the intended page or default dashboard
+        const redirect = searchParams.get("redirect");
+        window.location.href = redirect || "/customer";
+        return;
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -79,27 +83,6 @@ export function RegisterForm() {
       setIsLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">Check your email</CardTitle>
-          <CardDescription>
-            We&apos;ve sent a confirmation link to {email}. Please check your
-            inbox and click the link to complete your registration.
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="flex flex-col space-y-4">
-          <Link href={ROUTES.login} className="w-full">
-            <Button variant="outline" className="w-full">
-              Back to Login
-            </Button>
-          </Link>
-        </CardFooter>
-      </Card>
-    );
-  }
 
   return (
     <Card className="w-full max-w-md">
@@ -185,7 +168,7 @@ export function RegisterForm() {
           </p>
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href={ROUTES.login} className="text-primary hover:underline">
+            <Link href={searchParams.get("redirect") ? `${ROUTES.login}?redirect=${encodeURIComponent(searchParams.get("redirect")!)}` : ROUTES.login} className="text-primary hover:underline">
               Sign in
             </Link>
           </div>

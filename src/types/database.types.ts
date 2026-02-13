@@ -551,6 +551,7 @@ export const Constants = {
 
 // Convenience type aliases
 export type UserRole = Database["public"]["Enums"]["user_role"];
+export type TokenTransactionType = Database["public"]["Enums"]["token_transaction_type"];
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
@@ -565,6 +566,8 @@ export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
 export type Game = Database["public"]["Tables"]["games"]["Row"];
 export type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
+
+export type TokenTransaction = Database["public"]["Tables"]["token_transactions"]["Row"];
 
 export type VoiceRoom = Database["public"]["Tables"]["voice_rooms"]["Row"];
 export type VoiceRoomInsert = Database["public"]["Tables"]["voice_rooms"]["Insert"];

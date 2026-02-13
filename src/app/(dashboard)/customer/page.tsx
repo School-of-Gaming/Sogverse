@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Gamepad2, ShoppingBag, UserPlus, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { TokenBalanceCard, SubscriptionStatusCard } from "@/components/customer";
 
 export const metadata: Metadata = {
   title: "Parent Dashboard",
@@ -48,6 +49,9 @@ export default function CustomerDashboardPage() {
           Manage your gamer accounts and explore our educational gaming content.
         </p>
       </div>
+
+      <TokenBalanceCard />
+      <SubscriptionStatusCard />
 
       <div className="grid gap-4 md:grid-cols-2">
         {quickActions.map((action) => (
@@ -112,6 +116,7 @@ export default function CustomerDashboardPage() {
           </div>
         </CardContent>
       </Card>
+
     </div>
   );
 }
