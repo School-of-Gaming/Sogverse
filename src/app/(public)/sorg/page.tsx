@@ -20,7 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { TokenPurchaseSection } from "@/components/sorg";
+import { TokenPurchaseSection } from "@/components/tokens";
 
 export const metadata: Metadata = {
   title: "Sorg - The Sogverse Currency",
