@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, CreditCard } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -45,6 +47,7 @@ export function SubscriptionStatusCard() {
 
   const isActive = subscription.subscription_status === "active";
   const isCanceled = subscription.subscription_status === "canceled";
+  const isPastDue = subscription.subscription_status === "past_due";
 
   const handleCancel = async () => {
     await cancelMutation.mutateAsync();
@@ -60,34 +63,62 @@ export function SubscriptionStatusCard() {
             Monthly Pass
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex items-center justify-between">
-          <div>
-            <p className="font-medium">
-              {SUB_PACKAGE ? `${SUB_PACKAGE.tokens} Sorgs/month` : "Subscription"}
-              {details?.amount && (
-                <span className="text-muted-foreground"> — {formatPrice(details.amount, details.currency)}/mo</span>
-              )}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {isActive && details?.currentPeriodEnd && (
-                <>Next payment: {formatDate(details.currentPeriodEnd)}</>
-              )}
-              {isActive && !details?.currentPeriodEnd && "Active — renews monthly"}
-              {isCanceled && details?.currentPeriodEnd && (
-                <>Canceled — access until {formatDate(details.currentPeriodEnd)}</>
-              )}
-              {isCanceled && !details?.currentPeriodEnd && "Canceled — access until end of billing period"}
-              {!isActive && !isCanceled && `Status: ${subscription.subscription_status}`}
-            </p>
-          </div>
-          {isActive && (
-            <Button
-              variant="outline"
-              onClick={() => setConfirmOpen(true)}
-            >
-              Cancel Subscription
-            </Button>
+        <CardContent className="space-y-4">
+          {isPastDue && (
+            <Alert variant="destructive">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+              <div>
+                <AlertTitle>Payment failed</AlertTitle>
+                <AlertDescription>
+                  Your last payment didn&apos;t go through. Please{" "}
+                  <Link
+                    href="/customer/billing"
+                    className="font-medium text-destructive underline underline-offset-4 hover:text-destructive/80"
+                  >
+                    update your payment method
+                  </Link>{" "}
+                  to keep your subscription active.
+                </AlertDescription>
+              </div>
+            </Alert>
           )}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium">
+                {SUB_PACKAGE ? `${SUB_PACKAGE.tokens} Sorgs/month` : "Subscription"}
+                {details?.amount && (
+                  <span className="text-muted-foreground"> — {formatPrice(details.amount, details.currency)}/mo</span>
+                )}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {isActive && details?.currentPeriodEnd && (
+                  <>Next payment: {formatDate(details.currentPeriodEnd)}</>
+                )}
+                {isActive && !details?.currentPeriodEnd && "Active — renews monthly"}
+                {isCanceled && details?.currentPeriodEnd && (
+                  <>Canceled — access until {formatDate(details.currentPeriodEnd)}</>
+                )}
+                {isCanceled && !details?.currentPeriodEnd && "Canceled — access until end of billing period"}
+                {isPastDue && "Past due — update payment to continue"}
+                {!isActive && !isCanceled && !isPastDue && `Status: ${subscription.subscription_status}`}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {(isActive || isPastDue) && (
+                <Link href="/customer/billing" className={buttonVariants({ variant: "outline" })}>
+                  Manage Billing
+                </Link>
+              )}
+              {isActive && (
+                <Button
+                  variant="outline"
+                  onClick={() => setConfirmOpen(true)}
+                >
+                  Cancel Subscription
+                </Button>
+              )}
+            </div>
+          </div>
         </CardContent>
       </Card>
 

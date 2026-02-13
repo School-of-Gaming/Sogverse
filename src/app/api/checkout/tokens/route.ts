@@ -19,11 +19,17 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, email")
+      .select("role, email, subscription_status")
       .eq("id", user.id)
       .single();
 
-    if ((profile as { role: string } | null)?.role !== "customer") {
+    const typedProfile = profile as {
+      role: string;
+      email: string | null;
+      subscription_status: string | null;
+    } | null;
+
+    if (typedProfile?.role !== "customer") {
       return NextResponse.json(
         { error: "Only customers can purchase tokens" },
         { status: 403 }
@@ -40,11 +46,22 @@ export async function POST(request: Request) {
       );
     }
 
+    if (
+      tokenPackage.type === "subscription" &&
+      (typedProfile.subscription_status === "active" ||
+        typedProfile.subscription_status === "past_due")
+    ) {
+      return NextResponse.json(
+        { error: "You already have an active subscription" },
+        { status: 409 }
+      );
+    }
+
     const origin = request.headers.get("origin") || "";
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: tokenPackage.type === "subscription" ? "subscription" : "payment",
-      customer_email: (profile as { email: string | null } | null)?.email || undefined,
+      customer_email: typedProfile?.email || undefined,
       line_items: [
         {
           price_data: {

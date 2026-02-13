@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/providers";
+import { useSubscription } from "@/services/tokens";
 import { TOKEN_PACKAGES, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
 
 const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
@@ -44,24 +45,31 @@ function PackageCard({
   icon: Icon,
   onBuy,
   isLoading,
+  hasActiveSubscription,
 }: {
   pkg: TokenPackage;
   icon: React.ElementType;
   onBuy: (packageId: string) => void;
   isLoading: boolean;
+  hasActiveSubscription: boolean;
 }) {
   const priceFormatted = `$${(pkg.priceCents / 100).toFixed(2)}`;
   const isSubscription = pkg.type === "subscription";
+  const isCurrentPlan = isSubscription && hasActiveSubscription;
 
   return (
-    <Card className="relative flex flex-col">
-      {pkg.savingsCents && (
+    <Card className={`relative flex flex-col${isCurrentPlan ? " opacity-60" : ""}`}>
+      {isCurrentPlan ? (
+        <div className="absolute -top-3 right-4">
+          <Badge variant="secondary">Current plan</Badge>
+        </div>
+      ) : pkg.savingsCents ? (
         <div className="absolute -top-3 right-4">
           <Badge className="bg-green-600 text-white hover:bg-green-600">
             Save ${(pkg.savingsCents / 100).toFixed(0)}{isSubscription ? "/mo" : ""}
           </Badge>
         </div>
-      )}
+      ) : null}
       <CardHeader className="text-center">
         <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
           <Icon className="h-6 w-6 text-primary" />
@@ -83,9 +91,9 @@ function PackageCard({
         <Button
           className="w-full"
           onClick={() => onBuy(pkg.id)}
-          disabled={isLoading}
+          disabled={isLoading || isCurrentPlan}
         >
-          {isSubscription ? "Subscribe" : "Buy Now"}
+          {isCurrentPlan ? "Subscribed" : isSubscription ? "Subscribe" : "Buy Now"}
         </Button>
       </CardContent>
     </Card>
@@ -94,7 +102,11 @@ function PackageCard({
 
 export function TokenPurchaseSection() {
   const { user, profile } = useAuth();
+  const { data: subscription } = useSubscription(profile?.id ?? "");
   const [loadingPackage, setLoadingPackage] = useState<string | null>(null);
+  const hasActiveSubscription =
+    subscription?.subscription_status === "active" ||
+    subscription?.subscription_status === "past_due";
 
   const startCheckout = useCallback(async (packageId: string) => {
     setLoadingPackage(packageId);
@@ -139,6 +151,7 @@ export function TokenPurchaseSection() {
             icon={PACKAGE_ICONS[pkg.id] ?? Coins}
             onBuy={handleBuy}
             isLoading={loadingPackage === pkg.id}
+            hasActiveSubscription={hasActiveSubscription}
           />
         ))}
       </div>

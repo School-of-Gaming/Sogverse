@@ -17,8 +17,10 @@ import {
   Check,
   AlertCircle,
   AlertTriangle,
+  Info,
   Coins,
 } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_BADGES } from "@/lib/constants";
@@ -557,39 +559,72 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 7: Feedback Alerts                                    */}
+      {/* Section 7: Alert                                              */}
       {/* ============================================================ */}
-      <Section title="Feedback">
-        <SubSection title="Inline Alerts">
+      <Section title="Alert">
+        <SubSection title="Variants">
           <div className="space-y-3 max-w-lg">
-            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-              Profile updated successfully!
-            </div>
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              Something went wrong. Please try again.
-            </div>
+            <Alert>
+              <Info className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <AlertTitle>Default</AlertTitle>
+                <AlertDescription>
+                  A neutral informational alert for general messages.
+                </AlertDescription>
+              </div>
+            </Alert>
+            <Alert variant="success">
+              <Check className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <AlertTitle>Success</AlertTitle>
+                <AlertDescription>
+                  Profile updated successfully!
+                </AlertDescription>
+              </div>
+            </Alert>
+            <Alert variant="destructive">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <AlertTitle>Destructive</AlertTitle>
+                <AlertDescription>
+                  Something went wrong. Please try again.
+                </AlertDescription>
+              </div>
+            </Alert>
           </div>
         </SubSection>
 
-        <SubSection title="Success Icon Circle">
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-              <Check className="h-8 w-8 text-success" />
-            </div>
-            <span className="text-xs text-muted-foreground">
-              bg-success/10 + text-success
-            </span>
+        <SubSection title="Without Title">
+          <div className="space-y-3 max-w-lg">
+            <Alert variant="success">
+              <Check className="mt-0.5 h-4 w-4 shrink-0" />
+              <AlertDescription>Profile updated successfully!</AlertDescription>
+            </Alert>
+            <Alert variant="destructive">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <AlertDescription>Something went wrong. Please try again.</AlertDescription>
+            </Alert>
           </div>
         </SubSection>
 
-        <SubSection title="Error Icon Circle">
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-              <AlertCircle className="h-8 w-8 text-destructive" />
+        <SubSection title="Icon Circles">
+          <div className="flex flex-wrap gap-6">
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
+                <Check className="h-8 w-8 text-success" />
+              </div>
+              <span className="text-xs text-muted-foreground">
+                bg-success/10 + text-success
+              </span>
             </div>
-            <span className="text-xs text-muted-foreground">
-              bg-destructive/10 + text-destructive
-            </span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+                <AlertCircle className="h-8 w-8 text-destructive" />
+              </div>
+              <span className="text-xs text-muted-foreground">
+                bg-destructive/10 + text-destructive
+              </span>
+            </div>
           </div>
         </SubSection>
       </Section>
