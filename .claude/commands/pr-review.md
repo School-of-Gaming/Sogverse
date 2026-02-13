@@ -14,6 +14,7 @@ I want you to perform a thorough Pull Request review of the current feature bran
     * **Alignment**: Does this align with the existing architectural patterns?
     * **Abstractions**: Are implementation details exposed inappropriately (leaky abstractions)?
     * **Responsibility**: Do new modules follow the Single Responsibility Principle?
+    * **Tech Debt**: Are adding new tech debt to the project?
 
 3.  **Code Quality**: 
     * Look for logic errors, code smells, and potential bugs.
@@ -23,11 +24,11 @@ I want you to perform a thorough Pull Request review of the current feature bran
     * Verify that critical pages and UI components and have e2e tests.
 
 4.  **Security & Performance**: 
-    * Identify security holes (especially Supabase RLS).
+    * Identify security holes (especially Supabase RLS and monetary payments).
     * Look for performance regressions (like unnecessary client-side rendering or "waterfall" fetches).
 
 Please provide the review in a structured format:
-- **Architectural & DRY Feedback**: High-level design and reusability thoughts.
+- **Architectural & Design Feedback**: High-level design and reusability thoughts.
 - **Critical**: Must-fix bugs, security issues, or major duplication.
 - **Suggested**: Improvements for readability/maintainability.
 - **Nitpick**: Minor style points.
