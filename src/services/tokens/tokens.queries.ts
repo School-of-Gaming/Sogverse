@@ -44,6 +44,17 @@ export function useSubscription(userId: string) {
   });
 }
 
+export function useSubscriptionDetails(userId: string) {
+  const supabase = getClient();
+  const service = new TokensService(supabase);
+
+  return useQuery({
+    queryKey: [...tokenKeys.subscription(userId), "details"] as const,
+    queryFn: () => service.getSubscriptionDetails(),
+    enabled: !!userId,
+  });
+}
+
 export function useAdjustTokens() {
   const queryClient = useQueryClient();
   const supabase = getClient();

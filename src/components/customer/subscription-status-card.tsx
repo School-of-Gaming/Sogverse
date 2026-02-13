@@ -13,11 +13,28 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/providers";
-import { useSubscription, useCancelSubscription } from "@/services/tokens";
+import { useSubscription, useSubscriptionDetails, useCancelSubscription } from "@/services/tokens";
+
+function formatDate(timestamp: number) {
+  return new Date(timestamp * 1000).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatPrice(amount: number | null, currency: string) {
+  if (amount === null) return "";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+  }).format(amount / 100);
+}
 
 export function SubscriptionStatusCard() {
   const { profile } = useAuth();
   const { data: subscription } = useSubscription(profile?.id ?? "");
+  const { data: details } = useSubscriptionDetails(profile?.id ?? "");
   const cancelMutation = useCancelSubscription(profile?.id ?? "");
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -42,10 +59,21 @@ export function SubscriptionStatusCard() {
         </CardHeader>
         <CardContent className="flex items-center justify-between">
           <div>
-            <p className="font-medium">25 Sorgs/month</p>
+            <p className="font-medium">
+              25 Sorgs/month
+              {details?.amount && (
+                <span className="text-muted-foreground"> — {formatPrice(details.amount, details.currency)}/mo</span>
+              )}
+            </p>
             <p className="text-sm text-muted-foreground">
-              {isActive && "Active — renews monthly"}
-              {isCanceled && "Canceled — access until end of billing period"}
+              {isActive && details?.currentPeriodEnd && (
+                <>Next payment: {formatDate(details.currentPeriodEnd)}</>
+              )}
+              {isActive && !details?.currentPeriodEnd && "Active — renews monthly"}
+              {isCanceled && details?.currentPeriodEnd && (
+                <>Canceled — access until {formatDate(details.currentPeriodEnd)}</>
+              )}
+              {isCanceled && !details?.currentPeriodEnd && "Canceled — access until end of billing period"}
               {!isActive && !isCanceled && `Status: ${subscription.subscription_status}`}
             </p>
           </div>

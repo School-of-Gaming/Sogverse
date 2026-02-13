@@ -3,6 +3,7 @@ export {
   useTokenBalance,
   useTokenTransactions,
   useSubscription,
+  useSubscriptionDetails,
   useAdjustTokens,
   useCancelSubscription,
 } from "./tokens.queries";

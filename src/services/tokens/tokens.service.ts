@@ -42,6 +42,24 @@ export class TokensService {
     return data;
   }
 
+  async getSubscriptionDetails(): Promise<{
+    status: string;
+    cancelAtPeriodEnd: boolean;
+    currentPeriodEnd: number;
+    amount: number | null;
+    currency: string;
+  } | null> {
+    const response = await fetch("/api/checkout/subscription");
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Failed to fetch subscription details");
+    }
+
+    const { subscription } = await response.json();
+    return subscription;
+  }
+
   async adjustBalance(
     userId: string,
     amount: number,
