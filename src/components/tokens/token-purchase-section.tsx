@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/providers";
-import { useSubscription } from "@/services/tokens";
+import { useSubscription, useSubscriptionDetails } from "@/services/tokens";
 import { TOKEN_PACKAGES, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
 
 const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
@@ -46,12 +46,14 @@ function PackageCard({
   onBuy,
   isLoading,
   hasActiveSubscription,
+  isCanceling,
 }: {
   pkg: TokenPackage;
   icon: React.ElementType;
   onBuy: (packageId: string) => void;
   isLoading: boolean;
   hasActiveSubscription: boolean;
+  isCanceling: boolean;
 }) {
   const priceFormatted = `$${(pkg.priceCents / 100).toFixed(2)}`;
   const isSubscription = pkg.type === "subscription";
@@ -59,7 +61,11 @@ function PackageCard({
 
   return (
     <Card className={`relative flex flex-col${isCurrentPlan ? " opacity-60" : ""}`}>
-      {isCurrentPlan ? (
+      {isCurrentPlan && isCanceling ? (
+        <div className="absolute -top-3 right-4">
+          <Badge variant="outline">Canceled</Badge>
+        </div>
+      ) : isCurrentPlan ? (
         <div className="absolute -top-3 right-4">
           <Badge variant="secondary">Current plan</Badge>
         </div>
@@ -93,7 +99,13 @@ function PackageCard({
           onClick={() => onBuy(pkg.id)}
           disabled={isLoading || isCurrentPlan}
         >
-          {isCurrentPlan ? "Subscribed" : isSubscription ? "Subscribe" : "Buy Now"}
+          {isCurrentPlan && isCanceling
+            ? "Canceled"
+            : isCurrentPlan
+              ? "Subscribed"
+              : isSubscription
+                ? "Subscribe"
+                : "Buy Now"}
         </Button>
       </CardContent>
     </Card>
@@ -103,10 +115,13 @@ function PackageCard({
 export function TokenPurchaseSection() {
   const { user, profile } = useAuth();
   const { data: subscription } = useSubscription(profile?.id ?? "");
+  const { data: details } = useSubscriptionDetails(profile?.id ?? "");
   const [loadingPackage, setLoadingPackage] = useState<string | null>(null);
   const hasActiveSubscription =
-    subscription?.subscription_status === "active" ||
-    subscription?.subscription_status === "past_due";
+    (subscription?.subscription_status === "active" ||
+      subscription?.subscription_status === "canceled" ||
+      subscription?.subscription_status === "past_due") &&
+    !!subscription?.stripe_subscription_id;
 
   const startCheckout = useCallback(async (packageId: string) => {
     setLoadingPackage(packageId);
@@ -152,6 +167,7 @@ export function TokenPurchaseSection() {
             onBuy={handleBuy}
             isLoading={loadingPackage === pkg.id}
             hasActiveSubscription={hasActiveSubscription}
+            isCanceling={details?.cancelAtPeriodEnd === true}
           />
         ))}
       </div>

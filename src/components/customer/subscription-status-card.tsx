@@ -45,9 +45,12 @@ export function SubscriptionStatusCard() {
 
   if (!subscription?.stripe_subscription_id) return null;
 
-  const isActive = subscription.subscription_status === "active";
-  const isCanceled = subscription.subscription_status === "canceled";
   const isPastDue = subscription.subscription_status === "past_due";
+  const isCanceling = details?.cancelAtPeriodEnd === true;
+  const isActive =
+    (subscription.subscription_status === "active" ||
+      subscription.subscription_status === "canceled") &&
+    !isCanceling;
 
   const handleCancel = async () => {
     await cancelMutation.mutateAsync();
@@ -95,16 +98,16 @@ export function SubscriptionStatusCard() {
                   <>Next payment: {formatDate(details.currentPeriodEnd)}</>
                 )}
                 {isActive && !details?.currentPeriodEnd && "Active — renews monthly"}
-                {isCanceled && details?.currentPeriodEnd && (
+                {isCanceling && details?.currentPeriodEnd && (
                   <>Canceled — access until {formatDate(details.currentPeriodEnd)}</>
                 )}
-                {isCanceled && !details?.currentPeriodEnd && "Canceled — access until end of billing period"}
+                {isCanceling && !details?.currentPeriodEnd && "Canceled — access until end of billing period"}
                 {isPastDue && "Past due — update payment to continue"}
-                {!isActive && !isCanceled && !isPastDue && `Status: ${subscription.subscription_status}`}
+                {!isActive && !isCanceling && !isPastDue && `Status: ${subscription.subscription_status}`}
               </p>
             </div>
             <div className="flex items-center gap-2">
-              {(isActive || isPastDue) && (
+              {(isActive || isCanceling || isPastDue) && (
                 <Link href="/customer/billing" className={buttonVariants({ variant: "outline" })}>
                   Manage Billing
                 </Link>

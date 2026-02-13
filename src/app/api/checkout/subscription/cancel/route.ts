@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -43,12 +42,6 @@ export async function POST() {
       typedProfile.stripe_subscription_id,
       { cancel_at_period_end: true }
     );
-
-    const admin = createAdminClient();
-    await admin
-      .from("profiles")
-      .update({ subscription_status: "canceled" })
-      .eq("id", user.id);
 
     return NextResponse.json({
       canceledAt: subscription.current_period_end,
