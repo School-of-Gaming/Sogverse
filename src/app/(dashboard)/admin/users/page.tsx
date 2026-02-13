@@ -10,14 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useUsers, useSearchUsers } from "@/services/users";
-import { ROLE_LABELS, type UserRole } from "@/lib/constants";
-
-const roleBadgeVariants: Record<UserRole, "default" | "secondary" | "outline"> = {
-  admin: "default",
-  customer: "secondary",
-  gamer: "outline",
-  gedu: "secondary",
-};
+import { ROLE_BADGES } from "@/lib/constants";
 
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,8 +89,8 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Badge variant={roleBadgeVariants[user.role]}>
-                      {ROLE_LABELS[user.role]}
+                    <Badge className={ROLE_BADGES[user.role].className}>
+                      {ROLE_BADGES[user.role].label}
                     </Badge>
                     <Button variant="ghost" size="sm" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground">
                       View

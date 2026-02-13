@@ -14,6 +14,13 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   gedu: "Game Educator",
 };
 
+export const ROLE_BADGES: Record<UserRole, { label: string; className: string }> = {
+  gamer: { label: "Gamer", className: "bg-primary text-primary-foreground" },
+  customer: { label: "Customer", className: "bg-secondary text-secondary-foreground" },
+  gedu: { label: "Gedu", className: "bg-gradient-to-r from-primary to-secondary text-white" },
+  admin: { label: "Admin", className: "bg-white text-black" },
+};
+
 export const ROLE_DESCRIPTIONS: Record<UserRole, string> = {
   admin: "Full access to manage users, products, and system settings",
   customer: "Can purchase products and manage linked gamer accounts",
