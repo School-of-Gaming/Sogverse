@@ -46,6 +46,7 @@ export const PUBLIC_ROUTES = [
   ROUTES.home,
   ROUTES.products,
   ROUTES.sorg,
+  ROUTES.checkout,
   ROUTES.about,
   ROUTES.login,
   ROUTES.gamerLogin,

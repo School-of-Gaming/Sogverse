@@ -1,15 +1,19 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Coins, Sparkles, Zap } from "lucide-react";
+import { Coins, Sparkles, Zap, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/providers";
-import { TOKEN_PACKAGES, type TokenPackage } from "@/lib/constants/tokens";
+import { TOKEN_PACKAGES, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
 
-const PACKAGE_ICONS = [Coins, Zap, Sparkles] as const;
+const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
+  tokens_5: Coins,
+  tokens_20: Zap,
+  tokens_sub_25: Sparkles,
+};
 
 function PurchaseFeedback() {
   const searchParams = useSearchParams();
@@ -92,12 +96,7 @@ export function TokenPurchaseSection() {
   const { user, profile } = useAuth();
   const [loadingPackage, setLoadingPackage] = useState<string | null>(null);
 
-  const handleBuy = async (packageId: string) => {
-    if (!user || profile?.role !== "customer") {
-      window.location.href = "/login?redirect=/sorg";
-      return;
-    }
-
+  const startCheckout = useCallback(async (packageId: string) => {
     setLoadingPackage(packageId);
     try {
       const response = await fetch("/api/checkout/tokens", {
@@ -113,6 +112,14 @@ export function TokenPurchaseSection() {
     } finally {
       setLoadingPackage(null);
     }
+  }, []);
+
+  const handleBuy = (packageId: string) => {
+    if (!user || profile?.role !== "customer") {
+      window.location.href = `/login?redirect=${encodeURIComponent(`/checkout?package=${packageId}`)}`;
+      return;
+    }
+    startCheckout(packageId);
   };
 
   return (
@@ -124,12 +131,12 @@ export function TokenPurchaseSection() {
       <p className="mt-2 text-center text-muted-foreground">
         Top up your balance and power up your Sogverse experience
       </p>
-      <div className="mt-8 grid gap-6 sm:grid-cols-3">
-        {TOKEN_PACKAGES.map((pkg, i) => (
+      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {TOKEN_PACKAGES.map((pkg) => (
           <PackageCard
             key={pkg.id}
             pkg={pkg}
-            icon={PACKAGE_ICONS[i]}
+            icon={PACKAGE_ICONS[pkg.id] ?? Coins}
             onBuy={handleBuy}
             isLoading={loadingPackage === pkg.id}
           />

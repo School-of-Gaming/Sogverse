@@ -14,6 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { useAuth } from "@/providers";
 import { useSubscription, useSubscriptionDetails, useCancelSubscription } from "@/services/tokens";
+import { TOKEN_PACKAGES } from "@/lib/constants/tokens";
+
+const SUB_PACKAGE = TOKEN_PACKAGES.find((pkg) => pkg.type === "subscription");
 
 function formatDate(timestamp: number) {
   return new Date(timestamp * 1000).toLocaleDateString("en-US", {
@@ -60,7 +63,7 @@ export function SubscriptionStatusCard() {
         <CardContent className="flex items-center justify-between">
           <div>
             <p className="font-medium">
-              25 Sorgs/month
+              {SUB_PACKAGE ? `${SUB_PACKAGE.tokens} Sorgs/month` : "Subscription"}
               {details?.amount && (
                 <span className="text-muted-foreground"> — {formatPrice(details.amount, details.currency)}/mo</span>
               )}
@@ -91,11 +94,12 @@ export function SubscriptionStatusCard() {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel Monthly Pass?</DialogTitle>
+            <DialogTitle>Cancel {SUB_PACKAGE?.name ?? "Subscription"}?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel your Monthly Pass? You&apos;ll lose the
-              monthly discount of $25/mo. Your current Sorgs will remain in your
-              account, and you&apos;ll keep access until the end of your billing period.
+              Are you sure you want to cancel your {SUB_PACKAGE?.name ?? "subscription"}?
+              {details?.amount && <> You&apos;ll lose the monthly rate of {formatPrice(details.amount, details.currency)}/mo.</>}
+              {" "}Your current Sorgs will remain in your account, and you&apos;ll keep
+              access until the end of your billing period.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
