@@ -2,13 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Package, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCreateProduct } from "@/services/products";
+import { useCreateProduct, useProduct } from "@/services/products";
 import { ProductForm, type ProductFormValues } from "@/components/admin/product-form";
 
 export default function AddProductPage() {
+  const searchParams = useSearchParams();
+  const cloneId = searchParams.get("clone");
+  const { data: cloneSource, isLoading: cloneLoading } = useProduct(cloneId ?? "");
+
   const createProduct = useCreateProduct();
   const [success, setSuccess] = useState(false);
   const [createdName, setCreatedName] = useState("");
@@ -45,6 +50,45 @@ export default function AddProductPage() {
     );
   }
 
+  if (cloneId && cloneLoading) {
+    return (
+      <div className="mx-auto max-w-lg space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded bg-muted animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-6 w-48 rounded bg-muted animate-pulse" />
+            <div className="h-4 w-64 rounded bg-muted animate-pulse" />
+          </div>
+        </div>
+        <Card className="animate-pulse">
+          <CardHeader>
+            <div className="h-12 w-full rounded bg-muted" />
+          </CardHeader>
+          <div className="p-6 space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 w-full rounded bg-muted" />
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const initialValues = cloneSource
+    ? {
+        name: `${cloneSource.name} (Copy)`,
+        description: cloneSource.description,
+        price: cloneSource.price,
+        image_url: cloneSource.image_url,
+        game_id: cloneSource.game_id,
+        day_of_week: cloneSource.day_of_week,
+        start_time: cloneSource.start_time,
+        duration_minutes: cloneSource.duration_minutes,
+        min_age: cloneSource.min_age,
+        max_age: cloneSource.max_age,
+      }
+    : undefined;
+
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="flex items-center gap-4">
@@ -54,9 +98,13 @@ export default function AddProductPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Add a Product</h1>
+          <h1 className="text-2xl font-bold">
+            {cloneSource ? "Clone Product" : "Add a Product"}
+          </h1>
           <p className="text-muted-foreground">
-            Create a new recurring event product
+            {cloneSource
+              ? `Cloning from "${cloneSource.name}"`
+              : "Create a new recurring event product"}
           </p>
         </div>
       </div>
@@ -76,6 +124,7 @@ export default function AddProductPage() {
           </div>
         </CardHeader>
         <ProductForm
+          initialValues={initialValues}
           onSubmit={handleSubmit}
           isPending={createProduct.isPending}
           submitLabel="Create Product"

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Plus, Search, Pencil, Trash, Eye, EyeOff } from "lucide-react";
+import { Plus, Search, Pencil, Trash, Eye, EyeOff, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -165,6 +165,11 @@ export default function AdminProductsPage() {
                       <Link href={`/admin/products/${product.id}/edit`}>
                         <Button variant="ghost" size="icon" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground" title="Edit">
                           <Pencil className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                      <Link href={`/admin/products/add?clone=${product.id}`}>
+                        <Button variant="ghost" size="icon" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground" title="Clone">
+                          <Copy className="h-4 w-4" />
                         </Button>
                       </Link>
                       <Button

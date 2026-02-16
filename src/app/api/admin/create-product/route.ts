@@ -83,9 +83,9 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    if (!/^\d{2}:\d{2}$/.test(startTime)) {
+    if (!/^\d{2}:\d{2}(:\d{2})?$/.test(startTime)) {
       return NextResponse.json(
-        { error: "Start time must be in HH:MM format" },
+        { error: "Start time must be a valid time" },
         { status: 400 }
       );
     }
