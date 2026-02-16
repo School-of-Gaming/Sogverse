@@ -413,13 +413,19 @@ export default function AdminUIComponentsPage() {
       <Section title="Avatar & Identicon">
         <SubSection title="Identicons (different IDs)">
           <div className="flex flex-wrap items-center gap-4">
-            {["alice", "bob", "charlie", "dave", "eve"].map((id) => (
+            {[
+              { id: "4babfc78-d197-496e-860d-48f1207f5bc6", name: "ShadowFox99" },
+              { id: "1a54d62e-828f-4a42-89f1-cc36185351b0", name: "JääKarhu" },
+              { id: "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47", name: "NovaBlitz" },
+              { id: "ff42551b-933b-4c37-9971-7fdbbeed0385", name: "TuliKettu42" },
+              { id: "1d589613-5fb0-4692-bcf1-029f8fc16b99", name: "PixelRogue" },
+            ].map(({ id, name }) => (
               <div key={id} className="flex flex-col items-center gap-1.5">
                 <Avatar>
                   <AvatarImage src={undefined} />
                   <Identicon id={id} />
                 </Avatar>
-                <span className="text-xs text-muted-foreground">{id}</span>
+                <span className="text-xs text-muted-foreground">{name}</span>
               </div>
             ))}
           </div>
@@ -429,7 +435,7 @@ export default function AdminUIComponentsPage() {
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col items-center gap-1.5">
               <Avatar>
-                <Identicon id="size-demo" />
+                <Identicon id="e3248221-170c-472f-ab56-eb60f1261966" />
               </Avatar>
               <span className="text-xs text-muted-foreground">
                 Default (40px)
@@ -437,7 +443,7 @@ export default function AdminUIComponentsPage() {
             </div>
             <div className="flex flex-col items-center gap-1.5">
               <Avatar className="h-12 w-12">
-                <Identicon id="size-demo" size={48} />
+                <Identicon id="e3248221-170c-472f-ab56-eb60f1261966" size={48} />
               </Avatar>
               <span className="text-xs text-muted-foreground">48px</span>
             </div>
@@ -562,11 +568,11 @@ export default function AdminUIComponentsPage() {
         <SubSection title="Hoverable Card (customer/gamers)">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[
-              { name: "PlayerOne", username: "player1" },
-              { name: "GamerKid", username: "gamerkid" },
+              { name: "MyrskySusi", id: "8e86d931-500c-49ed-889d-c2cd10879a28", username: "myrskysusi" },
+              { name: "CrimsonArrow", id: "5aec0f5a-5398-46d7-a150-3554cf701beb", username: "crimsonarrow" },
             ].map((gamer) => (
               <Card
-                key={gamer.username}
+                key={gamer.id}
                 className="group transition-colors hover:bg-accent hover:text-accent-foreground"
               >
                 <CardHeader>
@@ -574,7 +580,7 @@ export default function AdminUIComponentsPage() {
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12">
                         <AvatarImage src={undefined} />
-                        <Identicon id={gamer.username} size={48} />
+                        <Identicon id={gamer.id} size={48} />
                       </Avatar>
                       <div>
                         <CardTitle className="text-lg">
