@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants";
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -22,7 +22,7 @@ const registerSchema = z.object({
 });
 
 export function RegisterForm() {
-  const searchParams = useSearchParams();
+  const { redirect, status, navigateAfterAuth } = useAuthRedirect();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -68,9 +68,7 @@ export function RegisterForm() {
           return;
         }
 
-        // Redirect to the intended page or default dashboard
-        const redirect = searchParams.get("redirect");
-        window.location.href = redirect || "/customer";
+        navigateAfterAuth(ROUTES.customer.dashboard);
         return;
       }
     } catch (err) {
@@ -154,7 +152,7 @@ export function RegisterForm() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating account..." : "Create Account"}
+            {status ?? (isLoading ? "Creating account..." : "Create Account")}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
             By creating an account, you agree to our{" "}
@@ -168,7 +166,7 @@ export function RegisterForm() {
           </p>
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href={searchParams.get("redirect") ? `${ROUTES.login}?redirect=${encodeURIComponent(searchParams.get("redirect")!)}` : ROUTES.login} className="text-primary hover:underline">
+            <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">
               Sign in
             </Link>
           </div>

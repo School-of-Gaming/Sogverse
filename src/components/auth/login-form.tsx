@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -10,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -17,14 +17,13 @@ const loginSchema = z.object({
 });
 
 export function LoginForm() {
-  const searchParams = useSearchParams();
+  const { redirect, status, navigateAfterAuth } = useAuthRedirect();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const supabase = getClient();
-  const redirectTo = searchParams.get("redirect");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +59,7 @@ export function LoginForm() {
         // Full page navigation so the root layout re-runs server-side
         // and hydrates AuthProvider with the correct initialProfile.
         // Client-side router.push() doesn't re-initialize useState.
-        window.location.href = redirectTo || dashboardPath;
+        navigateAfterAuth(dashboardPath);
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -125,11 +124,11 @@ export function LoginForm() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Signing in..." : "Sign In"}
+            {status ?? (isLoading ? "Signing in..." : "Sign In")}
           </Button>
           <div className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href={redirectTo ? `${ROUTES.register}?redirect=${encodeURIComponent(redirectTo)}` : ROUTES.register} className="text-primary hover:underline">
+            <Link href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register} className="text-primary hover:underline">
               Sign up
             </Link>
           </div>
