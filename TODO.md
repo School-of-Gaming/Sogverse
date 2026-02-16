@@ -68,16 +68,29 @@ Before deploying to production, squash all development migrations into a clean i
 
 ## Future Improvements
 
-### E2E Tests with Real Database
+### E2E Tests with Local Supabase
 
-Current E2E tests are smoke tests that verify pages render correctly but don't test actual Supabase interactions. Consider adding critical path tests that connect to staging:
+Current E2E tests only cover unauthenticated flows (page renders, redirects). Authenticated tests (admin-only pages, role-based routing, CRUD operations) need real Supabase Auth + Postgres but shouldn't depend on the remote instance.
 
-- [ ] Add E2E tests for real auth flows (register, login, logout)
-- [ ] Add E2E tests for customer adding a gamer
-- [ ] Add E2E tests for core purchase flow
-- [ ] Set up test user cleanup after each run
+**Approach:** Run `supabase start` in CI to spin up a local Supabase stack (Postgres, Auth, Storage) in Docker. Existing migration files are applied automatically, giving an identical schema. Test accounts are created via `supabase/seed.sql`.
 
-**Why:** RLS policies and role-based routing are complex enough that testing against the real DB catches integration bugs that mocked tests miss.
+Setup tasks:
+- [ ] Add `supabase/seed.sql` with test accounts (admin, customer, gedu, gamer) using known passwords
+- [ ] Add `.env.test.local` with local Supabase URL/keys (`supabase start` prints these)
+- [ ] Create Playwright auth setup project that logs in via the UI and saves `storageState` per role
+- [ ] Update `playwright.config.ts` with auth setup project and role-specific test projects
+- [ ] Add GitHub Actions step: `supabase start` → `npm run dev` (with test env) → `npx playwright test`
+
+Test cases to add:
+- [ ] Admin can view `/admin/products` (sees "Products" heading)
+- [ ] Non-admin roles (customer, gedu, gamer) are redirected away from `/admin/*` to their own dashboard
+- [ ] Admin can create a product via the add form
+- [ ] Admin can edit an existing product
+- [ ] Real auth flows (register, login, logout)
+- [ ] Customer adding a gamer
+- [ ] Core purchase flow
+
+**Why:** RLS policies and role-based routing are complex enough that testing against a real DB catches integration bugs that mocked tests miss. Local Supabase keeps tests fast, deterministic, and free from network flakiness — and Docker is available by default in GitHub Actions runners.
 
 ### Brevo Domain Verification (Email Deliverability)
 
