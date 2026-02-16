@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   cn,
   formatCurrency,
@@ -7,6 +7,7 @@ import {
   extractUsernameFromGamerEmail,
   isGamerEmail,
   capitalize,
+  formatScheduleLocal,
 } from "@/lib/utils";
 
 describe("cn (className merge utility)", () => {
@@ -114,5 +115,132 @@ describe("capitalize", () => {
 
   it("handles empty string", () => {
     expect(capitalize("")).toBe("");
+  });
+});
+
+describe("formatScheduleLocal", () => {
+  // Pin the test timezone so results are deterministic in any CI environment.
+  // We mock Intl.DateTimeFormat to control the "local" timezone.
+  const RealDateTimeFormat = Intl.DateTimeFormat;
+
+  afterEach(() => {
+    Intl.DateTimeFormat = RealDateTimeFormat;
+  });
+
+  /**
+   * Helper: override the default (no-timeZone) formatters to use a fixed TZ,
+   * while leaving explicit-timeZone formatters untouched.
+   */
+  function pinLocalTimezone(tz: string) {
+    const Original = Intl.DateTimeFormat;
+    // @ts-expect-error — overriding built-in for test
+    Intl.DateTimeFormat = function (
+      locale?: string | string[],
+      options?: Intl.DateTimeFormatOptions,
+    ) {
+      // If the caller didn't specify a timeZone, inject our pinned TZ
+      if (options && !options.timeZone) {
+        return new Original(locale, { ...options, timeZone: tz });
+      }
+      return new Original(locale, options);
+    } as typeof Intl.DateTimeFormat;
+    // Preserve static methods
+    Intl.DateTimeFormat.supportedLocalesOf = Original.supportedLocalesOf;
+  }
+
+  it("returns a valid day name, formatted time, and timezone abbreviation", () => {
+    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki");
+
+    // Should return recognizable values regardless of local TZ
+    expect(typeof result.localDay).toBe("string");
+    expect(result.localDay.length).toBeGreaterThan(0);
+    expect(result.localTime).toMatch(/\d{1,2}:\d{2}\s*(AM|PM)/);
+    expect(typeof result.tzAbbrev).toBe("string");
+  });
+
+  it("handles HH:MM:SS format (DB returns seconds)", () => {
+    const result = formatScheduleLocal(2, "17:30:00", "Europe/Helsinki");
+
+    expect(result.localTime).toMatch(/\d{1,2}:\d{2}\s*(AM|PM)/);
+  });
+
+  it("converts Helsinki time to US Eastern correctly", () => {
+    // Pin local TZ to America/New_York
+    pinLocalTimezone("America/New_York");
+
+    // Wednesday 16:00 Helsinki → either 9:00 AM or 8:00 AM Eastern depending on DST
+    // Helsinki is UTC+2 (winter) or UTC+3 (summer)
+    // New York is UTC-5 (winter) or UTC-4 (summer)
+    // Difference is always 7 hours
+    const result = formatScheduleLocal(2, "16:00", "Europe/Helsinki");
+
+    // 16:00 Helsinki → 9:00 AM ET (summer: +3 vs -4 = 7h) or 8:00 AM ET (winter: +2 vs -5 = 7h)
+    // Either way the difference is 7 hours
+    expect(result.localTime).toMatch(/[89]:00\s*(AM)/);
+    expect(result.tzAbbrev).toMatch(/E[SD]T/);
+  });
+
+  it("same-timezone returns the same wall-clock time", () => {
+    // Pin local TZ to Helsinki
+    pinLocalTimezone("Europe/Helsinki");
+
+    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki");
+
+    expect(result.localTime).toMatch(/4:00\s*PM/);
+  });
+
+  it("maps dayOfWeek=0 to Monday", () => {
+    pinLocalTimezone("Europe/Helsinki");
+
+    const result = formatScheduleLocal(0, "12:00", "Europe/Helsinki");
+
+    expect(result.localDay).toBe("Monday");
+  });
+
+  it("maps dayOfWeek=6 to Sunday", () => {
+    pinLocalTimezone("Europe/Helsinki");
+
+    const result = formatScheduleLocal(6, "12:00", "Europe/Helsinki");
+
+    expect(result.localDay).toBe("Sunday");
+  });
+
+  it("maps dayOfWeek=4 to Friday", () => {
+    pinLocalTimezone("Europe/Helsinki");
+
+    const result = formatScheduleLocal(4, "12:00", "Europe/Helsinki");
+
+    expect(result.localDay).toBe("Friday");
+  });
+
+  it("handles timezone offset that crosses midnight (day shift)", () => {
+    // Pin to a timezone far behind Helsinki
+    pinLocalTimezone("Pacific/Honolulu"); // UTC-10
+
+    // Monday 01:00 Helsinki → Helsinki is UTC+2 (winter) or UTC+3 (summer)
+    // Honolulu is always UTC-10 (no DST)
+    // Difference is 12-13 hours behind → previous day
+    const result = formatScheduleLocal(0, "01:00", "Europe/Helsinki");
+
+    // 01:00 Helsinki → the previous day in Honolulu
+    expect(result.localDay).toBe("Sunday");
+  });
+
+  it("handles midnight start time", () => {
+    pinLocalTimezone("Europe/Helsinki");
+
+    const result = formatScheduleLocal(3, "00:00", "Europe/Helsinki");
+
+    expect(result.localTime).toMatch(/12:00\s*AM/);
+    expect(result.localDay).toBe("Thursday");
+  });
+
+  it("handles end-of-day start time", () => {
+    pinLocalTimezone("Europe/Helsinki");
+
+    const result = formatScheduleLocal(1, "23:30", "Europe/Helsinki");
+
+    expect(result.localTime).toMatch(/11:30\s*PM/);
+    expect(result.localDay).toBe("Tuesday");
   });
 });

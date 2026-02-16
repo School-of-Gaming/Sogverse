@@ -1,0 +1,391 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { POST } from "@/app/api/admin/create-product/route";
+import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
+
+// --- Mocks ---
+
+const mockGetUser = vi.fn();
+const mockFromSelect = vi.fn();
+
+vi.mock("@/lib/supabase/server", () => ({
+  createClient: vi.fn(async () => ({
+    auth: { getUser: mockGetUser },
+    from: vi.fn(() => ({
+      select: mockFromSelect,
+    })),
+  })),
+}));
+
+const mockAdminFrom = vi.fn();
+vi.mock("@/lib/supabase/admin", () => ({
+  createAdminClient: vi.fn(() => ({
+    from: mockAdminFrom,
+  })),
+}));
+
+// --- Helpers ---
+
+function mockUnauthenticated() {
+  mockGetUser.mockResolvedValue({
+    data: { user: null },
+    error: { message: "No session" },
+  });
+}
+
+function mockAuthenticatedWithRole(role: string) {
+  mockGetUser.mockResolvedValue({
+    data: { user: { id: "admin-user-id" } },
+    error: null,
+  });
+
+  mockFromSelect.mockReturnValue({
+    eq: vi.fn().mockReturnValue({
+      single: vi.fn().mockResolvedValue(
+        mockSupabaseSuccess({ role })
+      ),
+    }),
+  });
+}
+
+function createRequest(body: Record<string, unknown>): Request {
+  return new Request("http://localhost:3000/api/admin/create-product", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+const validBody = {
+  name: "Test Product",
+  description: "A test product",
+  price: 29.99,
+  image_url: "https://example.com/image.png",
+  game_id: "00000000-0000-0000-0000-000000000001",
+  day_of_week: 2,
+  start_time: "16:00",
+  duration_minutes: 60,
+  min_age: 7,
+  max_age: 12,
+};
+
+// --- Tests ---
+
+describe("POST /api/admin/create-product", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  // Auth & authorization
+
+  it("returns 401 when not authenticated", async () => {
+    mockUnauthenticated();
+
+    const response = await POST(createRequest(validBody));
+    const data = await response.json();
+
+    expect(response.status).toBe(401);
+    expect(data.error).toBe("Unauthorized");
+  });
+
+  it("returns 403 for non-admin roles", async () => {
+    mockAuthenticatedWithRole("customer");
+
+    const response = await POST(createRequest(validBody));
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(data.error).toBe("Only admins can create products");
+  });
+
+  it("returns 403 for gedu role", async () => {
+    mockAuthenticatedWithRole("gedu");
+
+    const response = await POST(createRequest(validBody));
+    const data = await response.json();
+
+    expect(response.status).toBe(403);
+  });
+
+  // Validation — required fields
+
+  it("returns 400 when name is missing", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, name: "" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Product name is required");
+  });
+
+  it("returns 400 when name is whitespace only", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, name: "   " }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Product name is required");
+  });
+
+  it("returns 400 when description is missing", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, description: "" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Description is required");
+  });
+
+  it("returns 400 when price is negative", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, price: -5 }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Valid price is required");
+  });
+
+  it("returns 400 when price is not a number", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, price: "free" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Valid price is required");
+  });
+
+  it("returns 400 when image_url is missing", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, image_url: "" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Image URL is required");
+  });
+
+  it("returns 400 when game_id is missing", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, game_id: "" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Game is required");
+  });
+
+  // Validation — day_of_week
+
+  it("returns 400 when day_of_week is out of range (negative)", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, day_of_week: -1 }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Day of week must be 0-6");
+  });
+
+  it("returns 400 when day_of_week is out of range (too high)", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, day_of_week: 7 }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Day of week must be 0-6");
+  });
+
+  // Validation — start_time
+
+  it("returns 400 for invalid start_time format", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, start_time: "4pm" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Start time must be a valid time");
+  });
+
+  it("accepts HH:MM format for start_time", async () => {
+    mockAuthenticatedWithRole("admin");
+    mockAdminFrom.mockReturnValue({
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "new-id" })),
+        }),
+      }),
+    });
+
+    const response = await POST(createRequest({ ...validBody, start_time: "16:00" }));
+
+    expect(response.status).toBe(200);
+  });
+
+  it("accepts HH:MM:SS format for start_time", async () => {
+    mockAuthenticatedWithRole("admin");
+    mockAdminFrom.mockReturnValue({
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "new-id" })),
+        }),
+      }),
+    });
+
+    const response = await POST(createRequest({ ...validBody, start_time: "16:00:00" }));
+
+    expect(response.status).toBe(200);
+  });
+
+  // Validation — duration, age
+
+  it("returns 400 when duration is zero", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, duration_minutes: 0 }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Duration must be greater than 0");
+  });
+
+  it("returns 400 when min_age is negative", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, min_age: -1 }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Min age must be 0 or greater");
+  });
+
+  it("returns 400 when max_age is less than min_age", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, min_age: 10, max_age: 5 }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Max age must be greater than or equal to min age");
+  });
+
+  // Successful creation
+
+  it("creates product and sets created_by from authenticated user", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const insertedProduct = { id: "new-product-id", ...validBody, created_by: "admin-user-id" };
+    const mockInsert = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(mockSupabaseSuccess(insertedProduct)),
+      }),
+    });
+    mockAdminFrom.mockReturnValue({ insert: mockInsert });
+
+    const response = await POST(createRequest(validBody));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.product).toEqual(insertedProduct);
+
+    // Verify created_by is the authenticated user, not from the request body
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.created_by).toBe("admin-user-id");
+  });
+
+  it("sets timezone to Europe/Helsinki", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const mockInsert = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "new-id" })),
+      }),
+    });
+    mockAdminFrom.mockReturnValue({ insert: mockInsert });
+
+    await POST(createRequest(validBody));
+
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.timezone).toBe("Europe/Helsinki");
+  });
+
+  it("trims name and description", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const mockInsert = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "new-id" })),
+      }),
+    });
+    mockAdminFrom.mockReturnValue({ insert: mockInsert });
+
+    await POST(createRequest({
+      ...validBody,
+      name: "  Padded Name  ",
+      description: "  Padded Desc  ",
+    }));
+
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.name).toBe("Padded Name");
+    expect(insertCall.description).toBe("Padded Desc");
+  });
+
+  it("accepts price of zero", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const mockInsert = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "new-id" })),
+      }),
+    });
+    mockAdminFrom.mockReturnValue({ insert: mockInsert });
+
+    const response = await POST(createRequest({ ...validBody, price: 0 }));
+
+    expect(response.status).toBe(200);
+  });
+
+  // DB error handling
+
+  it("returns 400 when database insert fails", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    mockAdminFrom.mockReturnValue({
+      insert: vi.fn().mockReturnValue({
+        select: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(
+            mockSupabaseError("duplicate key value violates unique constraint")
+          ),
+        }),
+      }),
+    });
+
+    const response = await POST(createRequest(validBody));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("duplicate key value violates unique constraint");
+  });
+
+  it("returns 500 for unexpected errors", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    // Trigger catch block by making request.json() fail
+    const badRequest = new Request("http://localhost:3000/api/admin/create-product", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "not-json",
+    });
+
+    const response = await POST(badRequest);
+    const data = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("Internal server error");
+  });
+});
