@@ -8,11 +8,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useAllProducts, useToggleProductStatus, useDeleteProduct } from "@/services/products";
 import { formatCurrency, formatScheduleLocal } from "@/lib/utils";
 
+type ConfirmAction =
+  | { type: "toggle"; id: string; name: string; currentStatus: boolean }
+  | { type: "delete"; id: string; name: string };
+
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const { data: products, isLoading } = useAllProducts();
   const toggleStatus = useToggleProductStatus();
   const deleteProduct = useDeleteProduct();
@@ -23,14 +36,14 @@ export default function AdminProductsPage() {
       product.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleToggleStatus = (id: string, currentStatus: boolean) => {
-    toggleStatus.mutate({ id, isActive: !currentStatus });
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      deleteProduct.mutate(id);
+  const handleConfirm = () => {
+    if (!confirmAction) return;
+    if (confirmAction.type === "toggle") {
+      toggleStatus.mutate({ id: confirmAction.id, isActive: !confirmAction.currentStatus });
+    } else {
+      deleteProduct.mutate(confirmAction.id);
     }
+    setConfirmAction(null);
   };
 
   return (
@@ -135,7 +148,12 @@ export default function AdminProductsPage() {
                         variant="ghost"
                         size="icon"
                         className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground"
-                        onClick={() => handleToggleStatus(product.id, product.is_active ?? true)}
+                        onClick={() => setConfirmAction({
+                          type: "toggle",
+                          id: product.id,
+                          name: product.name,
+                          currentStatus: product.is_active ?? true,
+                        })}
                         title={product.is_active ? "Deactivate" : "Activate"}
                       >
                         {product.is_active ? (
@@ -153,7 +171,11 @@ export default function AdminProductsPage() {
                         variant="ghost"
                         size="icon"
                         className="text-destructive group-hover:bg-destructive group-hover:text-destructive-foreground hover:!bg-destructive/80 hover:!text-destructive-foreground"
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => setConfirmAction({
+                          type: "delete",
+                          id: product.id,
+                          name: product.name,
+                        })}
                         title="Delete"
                       >
                         <Trash className="h-4 w-4" />
@@ -172,6 +194,42 @@ export default function AdminProductsPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={confirmAction !== null} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAction?.type === "delete"
+                ? "Delete Product"
+                : confirmAction?.type === "toggle" && confirmAction.currentStatus
+                  ? "Deactivate Product"
+                  : "Activate Product"}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmAction?.type === "delete"
+                ? `Are you sure you want to delete "${confirmAction.name}"? This action cannot be undone.`
+                : confirmAction?.type === "toggle" && confirmAction.currentStatus
+                  ? `Are you sure you want to deactivate "${confirmAction.name}"? It will no longer be visible to customers.`
+                  : `Are you sure you want to activate "${confirmAction?.name}"? It will become visible to customers.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmAction(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant={confirmAction?.type === "delete" ? "destructive" : "default"}
+              onClick={handleConfirm}
+            >
+              {confirmAction?.type === "delete"
+                ? "Delete"
+                : confirmAction?.type === "toggle" && confirmAction.currentStatus
+                  ? "Deactivate"
+                  : "Activate"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

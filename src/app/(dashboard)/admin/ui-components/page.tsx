@@ -16,6 +16,7 @@ import {
   Gamepad2,
   Check,
   AlertCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +32,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { useAuth } from "@/providers";
@@ -189,6 +198,79 @@ function VoiceAvatarDemo() {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Dialog Demo                                                        */
+/* ------------------------------------------------------------------ */
+
+function DialogDemo() {
+  const [openDialog, setOpenDialog] = useState<"confirm" | "destructive" | "info" | null>(null);
+
+  return (
+    <Section title="Dialog">
+      <SubSection title="Trigger Buttons">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="outline" onClick={() => setOpenDialog("confirm")}>
+            Confirmation Dialog
+          </Button>
+          <Button variant="destructive" onClick={() => setOpenDialog("destructive")}>
+            Destructive Dialog
+          </Button>
+          <Button variant="secondary" onClick={() => setOpenDialog("info")}>
+            Info Dialog
+          </Button>
+        </div>
+      </SubSection>
+
+      <Dialog open={openDialog === "confirm"} onOpenChange={(open) => !open && setOpenDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Deactivate Product</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to deactivate &ldquo;Sogverse Pro&rdquo;? It will no longer be visible to customers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenDialog(null)}>Cancel</Button>
+            <Button onClick={() => setOpenDialog(null)}>Deactivate</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openDialog === "destructive"} onOpenChange={(open) => !open && setOpenDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Delete Product
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &ldquo;Starter Pack&rdquo;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenDialog(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => setOpenDialog(null)}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={openDialog === "info"} onOpenChange={(open) => !open && setOpenDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>About Dialogs</DialogTitle>
+            <DialogDescription>
+              Dialogs use a portal to render above all content with a backdrop overlay. They dismiss on Escape key or clicking the backdrop.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setOpenDialog(null)}>Got it</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Section>
   );
 }
 
@@ -494,7 +576,12 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 8: Composite Patterns                                 */}
+      {/* Section 8: Dialog                                              */}
+      {/* ============================================================ */}
+      <DialogDemo />
+
+      {/* ============================================================ */}
+      {/* Section 9: Composite Patterns                                 */}
       {/* ============================================================ */}
       <Section title="Composite Patterns">
         {/* -- Hoverable List Item (admin products) -- */}

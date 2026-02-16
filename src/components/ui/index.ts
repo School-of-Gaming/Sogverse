@@ -11,3 +11,11 @@ export {
 } from "./card";
 export { Avatar, AvatarImage } from "./avatar";
 export { Badge, badgeVariants, type BadgeProps } from "./badge";
+export {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "./dialog";
