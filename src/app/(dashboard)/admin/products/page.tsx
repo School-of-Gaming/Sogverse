@@ -144,9 +144,11 @@ export default function AdminProductsPage() {
                           <Eye className="h-4 w-4" />
                         )}
                       </Button>
-                      <Button variant="ghost" size="icon" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground" title="Edit">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
+                      <Link href={`/admin/products/${product.id}/edit`}>
+                        <Button variant="ghost" size="icon" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground" title="Edit">
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </Link>
                       <Button
                         variant="ghost"
                         size="icon"
