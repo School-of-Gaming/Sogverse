@@ -14,23 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
-      parent_gamer: {
+      games: {
         Row: {
           created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      parent_gamer: {
+        Row: {
+          created_at: string | null
           gamer_id: string
           id: string
           parent_id: string
           relationship: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           gamer_id: string
           id?: string
           parent_id: string
           relationship?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           gamer_id?: string
           id?: string
           parent_id?: string
@@ -55,81 +73,183 @@ export type Database = {
       }
       products: {
         Row: {
-          created_at: string
-          currency: string
-          description: string | null
+          created_at: string | null
+          created_by: string
+          currency: string | null
+          day_of_week: number
+          description: string
+          duration_minutes: number
+          game_id: string
           id: string
-          image_url: string | null
-          is_active: boolean
-          metadata: Json
+          image_url: string
+          is_active: boolean | null
+          max_age: number
+          min_age: number
           name: string
           price: number
+          start_time: string
           stripe_price_id: string | null
           stripe_product_id: string | null
-          updated_at: string
+          timezone: string
+          updated_at: string | null
         }
         Insert: {
-          created_at?: string
-          currency?: string
-          description?: string | null
+          created_at?: string | null
+          created_by: string
+          currency?: string | null
+          day_of_week: number
+          description: string
+          duration_minutes: number
+          game_id: string
           id?: string
-          image_url?: string | null
-          is_active?: boolean
-          metadata?: Json
+          image_url: string
+          is_active?: boolean | null
+          max_age: number
+          min_age: number
           name: string
           price: number
+          start_time: string
           stripe_price_id?: string | null
           stripe_product_id?: string | null
-          updated_at?: string
+          timezone?: string
+          updated_at?: string | null
         }
         Update: {
-          created_at?: string
-          currency?: string
-          description?: string | null
+          created_at?: string | null
+          created_by?: string
+          currency?: string | null
+          day_of_week?: number
+          description?: string
+          duration_minutes?: number
+          game_id?: string
           id?: string
-          image_url?: string | null
-          is_active?: boolean
-          metadata?: Json
+          image_url?: string
+          is_active?: boolean | null
+          max_age?: number
+          min_age?: number
           name?: string
           price?: number
+          start_time?: string
           stripe_price_id?: string | null
           stripe_product_id?: string | null
-          updated_at?: string
+          timezone?: string
+          updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "games"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
           avatar_url: string | null
-          created_at: string
+          created_at: string | null
           display_name: string | null
           email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          token_balance: number
+          updated_at: string | null
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
-          created_at?: string
+          created_at?: string | null
           display_name?: string | null
           email?: string | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          token_balance?: number
+          updated_at?: string | null
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
-          created_at?: string
+          created_at?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
-          updated_at?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          token_balance?: number
+          updated_at?: string | null
           username?: string | null
         }
         Relationships: []
+      }
+      token_transactions: {
+        Row: {
+          admin_id: string | null
+          amount: number
+          balance_after: number
+          created_at: string
+          description: string | null
+          id: string
+          stripe_session_id: string | null
+          stripe_subscription_id: string | null
+          type: Database["public"]["Enums"]["token_transaction_type"]
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          amount: number
+          balance_after: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          type: Database["public"]["Enums"]["token_transaction_type"]
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          stripe_session_id?: string | null
+          stripe_subscription_id?: string | null
+          type?: Database["public"]["Enums"]["token_transaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "token_transactions_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "token_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       voice_rooms: {
         Row: {
@@ -167,7 +287,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "voice_rooms_creator_id_fkey"
+            foreignKeyName: "voice_rooms_gedu_id_fkey"
             columns: ["creator_id"]
             isOneToOne: true
             referencedRelation: "profiles"
@@ -180,20 +300,42 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_token_balance: {
+        Args: {
+          p_admin_id?: string
+          p_amount: number
+          p_description?: string
+          p_stripe_session_id?: string
+          p_stripe_subscription_id?: string
+          p_type: Database["public"]["Enums"]["token_transaction_type"]
+          p_user_id: string
+        }
+        Returns: {
+          new_balance: number
+          transaction_id: string
+        }[]
+      }
       get_active_products: {
         Args: never
         Returns: {
           created_at: string | null
+          created_by: string
           currency: string | null
-          description: string | null
+          day_of_week: number
+          description: string
+          duration_minutes: number
+          game_id: string
           id: string
-          image_url: string | null
+          image_url: string
           is_active: boolean | null
-          metadata: Json | null
+          max_age: number
+          min_age: number
           name: string
           price: number
+          start_time: string
           stripe_price_id: string | null
           stripe_product_id: string | null
+          timezone: string
           updated_at: string | null
         }[]
         SetofOptions: {
@@ -212,6 +354,10 @@ export type Database = {
           email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          token_balance: number
           updated_at: string | null
           username: string | null
         }[]
@@ -231,6 +377,10 @@ export type Database = {
           email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          token_balance: number
           updated_at: string | null
           username: string | null
         }[]
@@ -262,6 +412,7 @@ export type Database = {
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
     }
     Enums: {
+      token_transaction_type: "purchase" | "subscription" | "admin_adjustment"
       user_role: "admin" | "customer" | "gamer" | "gedu"
       voice_room_status: "open" | "closed"
     }
@@ -391,6 +542,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      token_transaction_type: ["purchase", "subscription", "admin_adjustment"],
       user_role: ["admin", "customer", "gamer", "gedu"],
       voice_room_status: ["open", "closed"],
     },
@@ -410,6 +562,9 @@ export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["In
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
+
+export type Game = Database["public"]["Tables"]["games"]["Row"];
+export type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
 
 export type VoiceRoom = Database["public"]["Tables"]["voice_rooms"]["Row"];
 export type VoiceRoomInsert = Database["public"]["Tables"]["voice_rooms"]["Insert"];

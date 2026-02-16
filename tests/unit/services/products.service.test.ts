@@ -23,24 +23,29 @@ describe("ProductsService", () => {
   });
 
   describe("getActiveProducts", () => {
-    it("returns active products from RPC", async () => {
+    it("returns active products via direct query", async () => {
       const mockProducts = [
         createMockProduct({ id: "1", name: "Product 1" }),
         createMockProduct({ id: "2", name: "Product 2" }),
       ];
 
-      mockSupabase.rpc.mockResolvedValue(
-        mockSupabaseSuccess(mockProducts)
-      );
+      const mockOrder = vi.fn().mockResolvedValue(mockSupabaseSuccess(mockProducts));
+      const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+      mockSupabase.from.mockReturnValue({ select: mockSelect });
 
       const result = await service.getActiveProducts();
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith("get_active_products");
+      expect(mockSupabase.from).toHaveBeenCalledWith("products");
+      expect(mockSelect).toHaveBeenCalledWith("*, games(name)");
       expect(result).toEqual(mockProducts);
     });
 
     it("returns empty array when no products", async () => {
-      mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess(null));
+      const mockOrder = vi.fn().mockResolvedValue(mockSupabaseSuccess(null));
+      const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+      mockSupabase.from.mockReturnValue({ select: mockSelect });
 
       const result = await service.getActiveProducts();
 
@@ -48,9 +53,10 @@ describe("ProductsService", () => {
     });
 
     it("throws on error", async () => {
-      mockSupabase.rpc.mockResolvedValue(
-        mockSupabaseError("Database error")
-      );
+      const mockOrder = vi.fn().mockResolvedValue(mockSupabaseError("Database error"));
+      const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
+      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+      mockSupabase.from.mockReturnValue({ select: mockSelect });
 
       await expect(service.getActiveProducts()).rejects.toThrow();
     });
@@ -79,7 +85,15 @@ describe("ProductsService", () => {
     it("creates a new product", async () => {
       const newProduct = {
         name: "New Product",
+        description: "A new product",
         price: 49.99,
+        image_url: "https://example.com/image.png",
+        game_id: "00000000-0000-0000-0000-000000000001",
+        day_of_week: 0,
+        start_time: "16:00",
+        duration_minutes: 60,
+        min_age: 7,
+        max_age: 12,
       };
       const createdProduct = createMockProduct(newProduct);
 

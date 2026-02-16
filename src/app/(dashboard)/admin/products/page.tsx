@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAllProducts, useToggleProductStatus, useDeleteProduct } from "@/services/products";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatScheduleLocal } from "@/lib/utils";
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,14 +82,21 @@ export default function AdminProductsPage() {
             </div>
           ) : filteredProducts && filteredProducts.length > 0 ? (
             <div className="space-y-4">
-              {filteredProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="relative flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
-                      {product.image_url ? (
+              {filteredProducts.map((product) => {
+                const schedule = formatScheduleLocal(
+                  product.day_of_week,
+                  product.start_time,
+                  product.timezone,
+                );
+                const gameName = product.games?.name;
+
+                return (
+                  <div
+                    key={product.id}
+                    className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
                         <Image
                           src={product.image_url}
                           alt={product.name}
@@ -97,56 +104,62 @@ export default function AdminProductsPage() {
                           unoptimized
                           className="rounded-lg object-cover"
                         />
-                      ) : (
-                        <span className="text-2xl">📦</span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{product.name}</p>
-                        {!product.is_active && (
-                          <Badge variant="outline" className="text-muted-foreground group-hover:text-accent-foreground/70">
-                            Inactive
-                          </Badge>
-                        )}
                       </div>
-                      <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70 line-clamp-1">
-                        {product.description || "No description"}
-                      </p>
-                      <p className="text-sm font-semibold text-primary group-hover:text-secondary">
-                        {formatCurrency(product.price, product.currency)}
-                      </p>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{product.name}</p>
+                          {!product.is_active && (
+                            <Badge variant="outline" className="text-muted-foreground group-hover:text-accent-foreground/70">
+                              Inactive
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70 line-clamp-1">
+                          {product.description}
+                        </p>
+                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground group-hover:text-accent-foreground/70">
+                          <span className="font-semibold text-primary group-hover:text-secondary">
+                            {formatCurrency(product.price, product.currency ?? undefined)}
+                          </span>
+                          <span>
+                            Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}
+                          </span>
+                          <span>{product.duration_minutes} min</span>
+                          {gameName && <span>{gameName}</span>}
+                          <span>Ages {product.min_age}–{product.max_age}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground"
+                        onClick={() => handleToggleStatus(product.id, product.is_active ?? true)}
+                        title={product.is_active ? "Deactivate" : "Activate"}
+                      >
+                        {product.is_active ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground" title="Edit">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive group-hover:bg-destructive group-hover:text-destructive-foreground hover:!bg-destructive/80 hover:!text-destructive-foreground"
+                        onClick={() => handleDelete(product.id)}
+                        title="Delete"
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground"
-                      onClick={() => handleToggleStatus(product.id, product.is_active)}
-                      title={product.is_active ? "Deactivate" : "Activate"}
-                    >
-                      {product.is_active ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button variant="ghost" size="icon" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground" title="Edit">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive group-hover:bg-destructive group-hover:text-destructive-foreground hover:!bg-destructive/80 hover:!text-destructive-foreground"
-                      onClick={() => handleDelete(product.id)}
-                      title="Delete"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="py-8 text-center text-muted-foreground">

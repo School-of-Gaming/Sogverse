@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useActiveProducts } from "@/services/products";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatScheduleLocal } from "@/lib/utils";
 
 export default function ProductsPage() {
   const { data: products, isLoading } = useActiveProducts();
@@ -43,41 +43,46 @@ export default function ProductsPage() {
         ) : products && products.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {products.map((product, index) => {
-              const metadata = product.metadata as Record<string, unknown>;
-              const category = metadata?.category as string | undefined;
+              const schedule = formatScheduleLocal(
+                product.day_of_week,
+                product.start_time,
+                product.timezone,
+              );
+              const gameName = product.games?.name;
 
               return (
                 <Card key={product.id} className="flex flex-col">
                   <div className="relative aspect-video overflow-hidden rounded-t-lg bg-muted">
-                    {product.image_url ? (
-                      <Image
-                        src={product.image_url}
-                        alt={product.name}
-                        fill
-                        unoptimized
-                        priority={index === 0}
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-4xl">
-                        🎮
-                      </div>
-                    )}
-                    {category && (
-                      <Badge className="absolute right-2 top-2 capitalize">
-                        {category}
+                    <Image
+                      src={product.image_url}
+                      alt={product.name}
+                      fill
+                      unoptimized
+                      priority={index === 0}
+                      className="object-cover"
+                    />
+                    {gameName && (
+                      <Badge className="absolute right-2 top-2">
+                        {gameName}
                       </Badge>
                     )}
                   </div>
                   <CardHeader className="flex-1">
                     <CardTitle>{product.name}</CardTitle>
                     <CardDescription className="line-clamp-2">
-                      {product.description || "No description available"}
+                      {product.description}
                     </CardDescription>
+                    <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      <p>
+                        Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}
+                      </p>
+                      <p>{product.duration_minutes} min</p>
+                      <p>Ages {product.min_age}–{product.max_age}</p>
+                    </div>
                   </CardHeader>
                   <CardFooter className="flex items-center justify-between">
                     <span className="text-xl font-bold text-primary">
-                      {formatCurrency(product.price, product.currency)}
+                      {formatCurrency(product.price, product.currency ?? undefined)}
                     </span>
                     <Button>
                       <ShoppingCart className="mr-2 h-4 w-4" />
@@ -91,7 +96,6 @@ export default function ProductsPage() {
         ) : (
           <Card className="mx-auto max-w-md">
             <CardContent className="flex flex-col items-center py-12 text-center">
-              <div className="text-5xl">📦</div>
               <h3 className="mt-4 text-lg font-medium">No Products Available</h3>
               <p className="mt-2 text-sm text-muted-foreground">
                 Check back soon for exciting educational gaming products!

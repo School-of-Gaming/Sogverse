@@ -12,7 +12,6 @@ const productKeys = {
   active: () => [...productKeys.all, "active"] as const,
   details: () => [...productKeys.all, "detail"] as const,
   detail: (id: string) => [...productKeys.details(), id] as const,
-  category: (category: string) => [...productKeys.all, "category", category] as const,
 };
 
 export function useActiveProducts() {
@@ -46,17 +45,6 @@ export function useProduct(id: string) {
   });
 }
 
-export function useProductsByCategory(category: string) {
-  const supabase = getClient();
-  const service = new ProductsService(supabase);
-
-  return useQuery({
-    queryKey: productKeys.category(category),
-    queryFn: () => service.getProductsByCategory(category),
-    enabled: !!category,
-  });
-}
-
 export function useSearchProducts(query: string) {
   const supabase = getClient();
   const service = new ProductsService(supabase);
@@ -74,7 +62,7 @@ export function useCreateProduct() {
   const service = new ProductsService(supabase);
 
   return useMutation({
-    mutationFn: (product: ProductInsert) => service.createProduct(product),
+    mutationFn: (product: Omit<ProductInsert, "created_by">) => service.createProduct(product),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       queryClient.invalidateQueries({ queryKey: productKeys.active() });

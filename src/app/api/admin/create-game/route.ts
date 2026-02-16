@@ -1,0 +1,67 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export async function POST(request: Request) {
+  try {
+    // Verify the caller is authenticated and is an admin
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if ((profile as { role: string } | null)?.role !== "admin") {
+      return NextResponse.json(
+        { error: "Only admins can create games" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const name = typeof body.name === "string" ? body.name.trim() : "";
+
+    if (!name) {
+      return NextResponse.json(
+        { error: "Game name is required" },
+        { status: 400 }
+      );
+    }
+
+    const admin = createAdminClient();
+
+    const { data, error } = await admin
+      .from("games")
+      .insert({ name })
+      .select()
+      .single();
+
+    if (error) {
+      // Unique constraint violation
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "A game with that name already exists" },
+          { status: 409 }
+        );
+      }
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    return NextResponse.json({ game: data });
+  } catch {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

@@ -4,3 +4,4 @@ export * from "./gamers";
 export * from "./products";
 export * from "./payments";
 export * from "./voice";
+export * from "./games";

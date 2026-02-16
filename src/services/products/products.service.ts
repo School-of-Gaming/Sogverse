@@ -4,29 +4,36 @@ import type { Product, ProductInsert, ProductUpdate } from "@/types";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClientType = any;
 
+export type ProductWithGame = Product & { games: { name: string } | null };
+
 export class ProductsService {
   constructor(private supabase: SupabaseClientType) {}
 
-  async getActiveProducts(): Promise<Product[]> {
-    const { data, error } = await this.supabase.rpc("get_active_products");
+  async getActiveProducts(): Promise<ProductWithGame[]> {
+    const { data, error } = await this.supabase
+      .from("products")
+      .select("*, games(name)")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+
     if (error) throw error;
     return data || [];
   }
 
-  async getAllProducts(): Promise<Product[]> {
+  async getAllProducts(): Promise<ProductWithGame[]> {
     const { data, error } = await this.supabase
       .from("products")
-      .select("*")
+      .select("*, games(name)")
       .order("created_at", { ascending: false });
 
     if (error) throw error;
     return data;
   }
 
-  async getProduct(id: string): Promise<Product> {
+  async getProduct(id: string): Promise<ProductWithGame> {
     const { data, error } = await this.supabase
       .from("products")
-      .select("*")
+      .select("*, games(name)")
       .eq("id", id)
       .single();
 
@@ -34,7 +41,7 @@ export class ProductsService {
     return data;
   }
 
-  async createProduct(product: ProductInsert): Promise<Product> {
+  async createProduct(product: Omit<ProductInsert, "created_by">): Promise<Product> {
     const response = await fetch("/api/admin/create-product", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -75,23 +82,11 @@ export class ProductsService {
     return this.updateProduct(id, { is_active: isActive });
   }
 
-  async searchProducts(query: string): Promise<Product[]> {
+  async searchProducts(query: string): Promise<ProductWithGame[]> {
     const { data, error } = await this.supabase
       .from("products")
-      .select("*")
+      .select("*, games(name)")
       .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return data;
-  }
-
-  async getProductsByCategory(category: string): Promise<Product[]> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select("*")
-      .eq("is_active", true)
-      .contains("metadata", { category })
       .order("created_at", { ascending: false });
 
     if (error) throw error;

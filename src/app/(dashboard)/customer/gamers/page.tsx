@@ -69,7 +69,7 @@ export default function CustomerGamersPage() {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70">
-                    Joined {formatRelativeTime(gamer.created_at)}
+                    Joined {formatRelativeTime(gamer.created_at ?? new Date().toISOString())}
                   </p>
                   <Button variant="ghost" size="sm" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground">
                     <Settings className="mr-2 h-4 w-4" />
