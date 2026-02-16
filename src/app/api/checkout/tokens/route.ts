@@ -101,7 +101,8 @@ export async function POST(request: Request) {
     const session = await stripe.checkout.sessions.create(sessionParams);
 
     return NextResponse.json({ url: session.url });
-  } catch {
+  } catch (err) {
+    console.error("Checkout tokens error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
