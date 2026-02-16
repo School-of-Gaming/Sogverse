@@ -4,6 +4,7 @@
       "WebSearch",
       "Bash(ls:*)",
       "Bash(find:*)",
+      "Bash(wc:*)",
       "Bash(npm run test:*)",
       "Bash(npm run test:e2e:*)",
       "Bash(npm run build:*)",
