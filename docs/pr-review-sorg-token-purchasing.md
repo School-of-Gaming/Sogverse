@@ -67,11 +67,9 @@ Exported `tokenKeys` from `tokens.queries.ts` and the barrel `tokens/index.ts`. 
 
 Added `info` and `warning` variants to the Alert component (with matching CSS color tokens). Refactored `PurchaseFeedback` to use `<Alert>` with the appropriate variant for each state (info/verifying, destructive/error, success/verified, warning/canceled). Updated the UI showcase page with the new variants.
 
-### 7. Silent error swallowing on checkout failure
+### ~~7. Silent error swallowing on checkout failure~~ RESOLVED
 
-**Files:** `token-purchase-section.tsx:206`, `checkout/page.tsx:44`, `billing/page.tsx:21`
-
-All three silently redirect or reset on failure with zero user feedback. The catch blocks should display an error message (e.g., via the `Alert` component).
+All three catch blocks now show a destructive `Alert` instead of silently redirecting or resetting: `token-purchase-section.tsx` displays an inline error above the package cards, `checkout/page.tsx` and `billing/page.tsx` replace the loading message with an error alert and a link back.
 
 ### ~~8. `<Link>` wrapping `<Button>` produces invalid HTML~~ RESOLVED
 

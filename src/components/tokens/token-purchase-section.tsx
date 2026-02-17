@@ -222,6 +222,7 @@ export function TokenPurchaseSection() {
   const { data: details } = useSubscriptionDetails(profile?.id ?? "");
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
   const [loadingPackage, setLoadingPackage] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState(false);
   const hasActiveSubscription =
     (subscription?.subscription_status === "active" ||
       subscription?.subscription_status === "past_due") &&
@@ -229,6 +230,7 @@ export function TokenPurchaseSection() {
 
   const startCheckout = useCallback(async (packageId: string) => {
     setLoadingPackage(packageId);
+    setCheckoutError(false);
     try {
       const response = await fetch("/api/checkout/tokens", {
         method: "POST",
@@ -243,8 +245,9 @@ export function TokenPurchaseSection() {
         window.location.href = data.url;
         return;
       }
+      setCheckoutError(true);
     } catch {
-      // Only clear on failure so the user can retry
+      setCheckoutError(true);
     }
     setLoadingPackage(null);
   }, []);
@@ -262,6 +265,14 @@ export function TokenPurchaseSection() {
       <Suspense>
         <PurchaseFeedback />
       </Suspense>
+      {checkoutError && (
+        <Alert variant="destructive" className="mb-8">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Something went wrong starting checkout. Please try again.
+          </AlertDescription>
+        </Alert>
+      )}
       <h2 className="text-center text-2xl font-bold">Buy Sorgs</h2>
       <p className="mt-2 text-center text-muted-foreground">
         Top up your balance and power up your Sogverse experience

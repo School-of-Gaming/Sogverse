@@ -1,7 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/providers";
 
 function CheckoutRedirect() {
@@ -9,6 +11,7 @@ function CheckoutRedirect() {
   const searchParams = useSearchParams();
   const packageId = searchParams.get("package");
   const triggered = useRef(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (triggered.current) return;
@@ -38,13 +41,24 @@ function CheckoutRedirect() {
         if (data.url) {
           window.location.href = data.url;
         } else {
-          window.location.href = "/sorg";
+          setError(true);
         }
       })
       .catch(() => {
-        window.location.href = "/sorg";
+        setError(true);
       });
   }, [user, profile, isLoading, packageId]);
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Something went wrong starting checkout. Please <a href="/sorg" className="underline">go back</a> and try again.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <p className="text-muted-foreground animate-pulse">

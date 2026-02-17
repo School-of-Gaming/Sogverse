@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function BillingRedirectPage() {
   const triggered = useRef(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (triggered.current) return;
@@ -15,19 +18,28 @@ export default function BillingRedirectPage() {
         if (data.url) {
           window.location.href = data.url;
         } else {
-          window.location.href = "/customer/sorg";
+          setError(true);
         }
       })
       .catch(() => {
-        window.location.href = "/customer/sorg";
+        setError(true);
       });
   }, []);
 
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
-      <p className="text-muted-foreground animate-pulse">
-        Redirecting to billing portal...
-      </p>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Something went wrong opening the billing portal. Please <a href="/customer/sorg" className="underline">go back</a> and try again.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <p className="text-muted-foreground animate-pulse">
+          Redirecting to billing portal...
+        </p>
+      )}
     </div>
   );
 }
