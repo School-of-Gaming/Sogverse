@@ -129,6 +129,48 @@ This project uses a remote Supabase instance (not local Docker). To push migrati
 
 The database password is stored in `.env.local` as `SUPABASE_DB_PASSWORD`.
 
+## Testing
+
+### Directory Structure
+```
+tests/
+├── setup.ts                       # Global Vitest setup (browser client mocks)
+├── mocks/                         # Shared test data generators & helpers
+│   ├── auth.ts                    #   Mock auth users/profiles
+│   ├── supabase.ts                #   Mock Supabase query builders
+│   └── voice.ts                   #   Mock voice room data
+├── unit/                          # Pure functions, classes with injected mocks
+│   ├── services/                  #   Service classes (mock injected via constructor)
+│   ├── spatial/                   #   Pure spatial math functions
+│   ├── voice/                     #   Pure mapping/transform logic
+│   └── utils.test.ts              #   Utility functions (cn, formatCurrency, etc.)
+├── integration/                   # Route handlers, proxy, auth flows
+│   ├── api/                       #   API route handler tests
+│   ├── auth/                      #   Auth callback/signout flow tests
+│   └── proxy.test.ts              #   Proxy routing/session tests
+└── e2e/                           # Playwright browser tests
+    └── *.spec.ts
+```
+
+### Classification Rules
+
+| Category | What goes here | Convention |
+|---|---|---|
+| **unit** | Pure functions, service classes with injected mock dependencies, mapping/transform logic | `.test.ts`, Vitest |
+| **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
+| **e2e** | Playwright browser tests against running dev server | `.spec.ts`, Playwright |
+
+### Running Tests
+```bash
+npm run test             # All Vitest tests (unit + integration)
+npm run test:ui          # Vitest with browser UI
+npm run test:e2e         # Playwright E2E tests (requires dev server)
+npm run test:e2e:ui      # Playwright with browser UI
+```
+
+### Shared Mocks
+Test helpers live in `tests/mocks/` and are imported by both unit and integration tests. Add new mock factories here rather than duplicating setup across test files.
+
 ## Code Style
 
 ### Non-obvious workarounds need comments

@@ -133,7 +133,6 @@ describe("formatScheduleLocal", () => {
    */
   function pinLocalTimezone(tz: string) {
     const Original = Intl.DateTimeFormat;
-    // @ts-expect-error — overriding built-in for test
     Intl.DateTimeFormat = function (
       locale?: string | string[],
       options?: Intl.DateTimeFormatOptions,
