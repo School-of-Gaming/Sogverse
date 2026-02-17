@@ -128,3 +128,8 @@ This project uses a remote Supabase instance (not local Docker). To push migrati
    ```
 
 The database password is stored in `.env.local` as `SUPABASE_DB_PASSWORD`.
+
+## Code Style
+
+### Non-obvious workarounds need comments
+When code exists to work around a framework bug, environment quirk, or other non-obvious reason, add a comment explaining **why** it's needed. The code should be readable on its own — if someone would look at a line and wonder "why is this here?", it needs a comment.
