@@ -158,7 +158,12 @@ function PackageCard({
           onClick={() => onBuy(pkg.id)}
           disabled={isLoading || isCurrentPlan}
         >
-          {isCurrentPlan && isCanceling
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Redirecting to checkout...
+            </>
+          ) : isCurrentPlan && isCanceling
             ? "Canceled"
             : isCurrentPlan
               ? "Subscribed"
@@ -193,11 +198,15 @@ export function TokenPurchaseSection() {
 
       const data = await response.json();
       if (data.url) {
+        // Don't clear loading state — keep "Redirecting to checkout..." visible
+        // until the browser navigates away
         window.location.href = data.url;
+        return;
       }
-    } finally {
-      setLoadingPackage(null);
+    } catch {
+      // Only clear on failure so the user can retry
     }
+    setLoadingPackage(null);
   }, []);
 
   const handleBuy = (packageId: string) => {
