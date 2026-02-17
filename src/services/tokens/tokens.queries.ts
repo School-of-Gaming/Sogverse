@@ -82,3 +82,16 @@ export function useCancelSubscription(userId: string) {
     },
   });
 }
+
+export function useResumeSubscription(userId: string) {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new TokensService(supabase);
+
+  return useMutation({
+    mutationFn: () => service.resumeSubscription(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tokenKeys.subscription(userId) });
+    },
+  });
+}

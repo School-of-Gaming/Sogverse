@@ -187,6 +187,54 @@ describe("POST /api/checkout/tokens", () => {
     expect(data.url).toBe("https://checkout.stripe.com/session_123");
   });
 
+  it("should allow subscription purchase when subscription_status is null (never subscribed)", async () => {
+    mockAuthenticatedCustomer({ subscription_status: null });
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/session_new_sub",
+    });
+
+    const response = await POST(
+      createRequest({ packageId: "tokens_sub_25" })
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.url).toBe("https://checkout.stripe.com/session_new_sub");
+  });
+
+  it("should allow subscription purchase when previous subscription is fully canceled", async () => {
+    // Stripe "canceled" means the subscription has ended — the user should be
+    // able to start a new one. This is a regression guard: the client-side
+    // previously treated "canceled" as active, and the server must never do so.
+    mockAuthenticatedCustomer({ subscription_status: "canceled" });
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/session_resub",
+    });
+
+    const response = await POST(
+      createRequest({ packageId: "tokens_sub_25" })
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.url).toBe("https://checkout.stripe.com/session_resub");
+  });
+
+  it("should block subscription purchase when active subscription is canceling at period end", async () => {
+    // When a user cancels, Stripe keeps status "active" with
+    // cancel_at_period_end=true. The DB subscription_status is still "active",
+    // so the server must block a second subscription to prevent duplicates.
+    mockAuthenticatedCustomer({ subscription_status: "active" });
+
+    const response = await POST(
+      createRequest({ packageId: "tokens_sub_25" })
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("You already have an active subscription");
+  });
+
   // -- One-time purchase --
 
   it("should create a payment session for one-time purchase", async () => {

@@ -35,17 +35,21 @@ Both routes now destructure `{ error: rpcError }` from the RPC call and return 5
 
 **Remaining:** The unchecked `admin.from("profiles").update(...)` calls (6 instances) still discard errors. These are lower-risk (metadata sync, not token crediting) but should still be addressed.
 
-### 3. `hasActiveSubscription` treats Stripe `"canceled"` as active — blocks re-subscription
+### ~~3. `hasActiveSubscription` treats Stripe `"canceled"` as active — blocks re-subscription~~ RESOLVED
 
-**Files:** `token-purchase-section.tsx:184-188`, `subscription-status-card.tsx:50-53`
+Removed `"canceled"` from the active subscription check in both `token-purchase-section.tsx` and `subscription-status-card.tsx`. Only `"active"` and `"past_due"` now count as active. The `subscription-status-card` also returns `null` early when `subscription_status === "canceled"` (fully ended subscription).
 
-```typescript
-subscription?.subscription_status === "canceled"
-```
+Added a full three-state subscription UI:
+- **No subscription:** Subscribe button enabled.
+- **Active + renewing:** "Current plan" badge, button disabled, cancel option in subscription card.
+- **Active + canceling at period end:** "Cancels at period end" badge, "Resume Subscription" button in both the package card and subscription status card.
 
-In Stripe's model, `canceled` means the subscription has **fully ended** (period is over). The code treats it as active, so a user whose subscription expired cannot re-subscribe — the button shows "Subscribed" and is disabled. The `cancel_at_period_end` state (subscription still active but set to cancel) is a separate flag, already handled via `details?.cancelAtPeriodEnd`.
+New resume subscription endpoint (`POST /api/checkout/subscription/resume`) undoes cancellation by setting `cancel_at_period_end: false` on the Stripe subscription. Service method, React Query mutation hook, and exports added.
 
-**Fix:** Remove `"canceled"` from the active check. Only `"active"` and `"past_due"` should count as having an active subscription.
+Test coverage added:
+- `subscription-cancel.test.ts` (5 tests) — auth, role, missing subscription, happy path, Stripe failure.
+- `subscription-resume.test.ts` (6 tests) — auth, role, missing subscription, happy path, Stripe failure.
+- 4 double-subscribe regression tests in `checkout-tokens.test.ts` — verifies `null` and `"canceled"` statuses allow re-subscription, while `"active"` (even when canceling at period end) blocks it.
 
 ### 4. Open redirect in `useAuthRedirect`
 
@@ -145,8 +149,8 @@ Added 4 tests across both test files: RPC failure → 500 and unique constraint 
 ### 13. `replace("_", " ")` only replaces the first underscore
 **File:** `transaction-history-table.tsx:34` — use `.replaceAll("_", " ")` or `/_/g`.
 
-### 14. `cn()` not used for conditional classes
-**File:** `token-purchase-section.tsx:122` — uses template literal instead of `cn()` per CLAUDE.md convention.
+### ~~14. `cn()` not used for conditional classes~~ RESOLVED
+**File:** `token-purchase-section.tsx:122` — replaced template literal with `cn()` per CLAUDE.md convention.
 
 ### 15. `AlertTitle` ref type mismatch
 **File:** `alert.tsx:35` — `forwardRef<HTMLParagraphElement, ...>` but renders `<h5>` (should be `HTMLHeadingElement`).

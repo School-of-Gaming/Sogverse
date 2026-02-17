@@ -7,8 +7,9 @@ import { Coins, Sparkles, Zap, Loader2, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
-import { useSubscription, useSubscriptionDetails } from "@/services/tokens";
+import { useSubscription, useSubscriptionDetails, useResumeSubscription } from "@/services/tokens";
 import { TOKEN_PACKAGES, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
 
 const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
@@ -103,26 +104,32 @@ function PackageCard({
   pkg,
   icon: Icon,
   onBuy,
+  onResume,
   isLoading,
+  isResuming,
   hasActiveSubscription,
   isCanceling,
 }: {
   pkg: TokenPackage;
   icon: React.ElementType;
   onBuy: (packageId: string) => void;
+  onResume: () => void;
   isLoading: boolean;
+  isResuming: boolean;
   hasActiveSubscription: boolean;
   isCanceling: boolean;
 }) {
   const priceFormatted = `$${(pkg.priceCents / 100).toFixed(2)}`;
   const isSubscription = pkg.type === "subscription";
   const isCurrentPlan = isSubscription && hasActiveSubscription;
+  // Active + renewing: fully locked. Active + canceling: show resume action.
+  const isLockedPlan = isCurrentPlan && !isCanceling;
 
   return (
-    <Card className={`relative flex flex-col${isCurrentPlan ? " opacity-60" : ""}`}>
+    <Card className={cn("relative flex flex-col", isLockedPlan && "opacity-60")}>
       {isCurrentPlan && isCanceling ? (
         <div className="absolute -top-3 right-4">
-          <Badge variant="outline">Canceled</Badge>
+          <Badge variant="outline">Cancels at period end</Badge>
         </div>
       ) : isCurrentPlan ? (
         <div className="absolute -top-3 right-4">
@@ -153,24 +160,39 @@ function PackageCard({
             <span className="text-sm text-muted-foreground">/month</span>
           )}
         </div>
-        <Button
-          className="w-full"
-          onClick={() => onBuy(pkg.id)}
-          disabled={isLoading || isCurrentPlan}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Redirecting to checkout...
-            </>
-          ) : isCurrentPlan && isCanceling
-            ? "Canceled"
-            : isCurrentPlan
+        {isCurrentPlan && isCanceling ? (
+          <Button
+            className="w-full"
+            onClick={onResume}
+            disabled={isResuming}
+          >
+            {isResuming ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Resuming...
+              </>
+            ) : (
+              "Resume Subscription"
+            )}
+          </Button>
+        ) : (
+          <Button
+            className="w-full"
+            onClick={() => onBuy(pkg.id)}
+            disabled={isLoading || isLockedPlan}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Redirecting to checkout...
+              </>
+            ) : isLockedPlan
               ? "Subscribed"
               : isSubscription
                 ? "Subscribe"
                 : "Buy Now"}
-        </Button>
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
@@ -180,10 +202,10 @@ export function TokenPurchaseSection() {
   const { user, profile } = useAuth();
   const { data: subscription } = useSubscription(profile?.id ?? "");
   const { data: details } = useSubscriptionDetails(profile?.id ?? "");
+  const resumeMutation = useResumeSubscription(profile?.id ?? "");
   const [loadingPackage, setLoadingPackage] = useState<string | null>(null);
   const hasActiveSubscription =
     (subscription?.subscription_status === "active" ||
-      subscription?.subscription_status === "canceled" ||
       subscription?.subscription_status === "past_due") &&
     !!subscription?.stripe_subscription_id;
 
@@ -233,7 +255,9 @@ export function TokenPurchaseSection() {
             pkg={pkg}
             icon={PACKAGE_ICONS[pkg.id] ?? Coins}
             onBuy={handleBuy}
+            onResume={() => resumeMutation.mutate()}
             isLoading={loadingPackage === pkg.id}
+            isResuming={resumeMutation.isPending}
             hasActiveSubscription={hasActiveSubscription}
             isCanceling={details?.cancelAtPeriodEnd === true}
           />

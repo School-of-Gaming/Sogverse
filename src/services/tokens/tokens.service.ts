@@ -91,4 +91,17 @@ export class TokensService {
 
     return response.json();
   }
+
+  async resumeSubscription(): Promise<{ resumed: boolean }> {
+    const response = await fetch("/api/checkout/subscription/resume", {
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Failed to resume subscription");
+    }
+
+    return response.json();
+  }
 }

@@ -6,4 +6,5 @@ export {
   useSubscriptionDetails,
   useAdjustTokens,
   useCancelSubscription,
+  useResumeSubscription,
 } from "./tokens.queries";

@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/providers";
-import { useSubscription, useSubscriptionDetails, useCancelSubscription } from "@/services/tokens";
+import { useSubscription, useSubscriptionDetails, useCancelSubscription, useResumeSubscription } from "@/services/tokens";
 import { TOKEN_PACKAGES } from "@/lib/constants/tokens";
 
 const SUB_PACKAGE = TOKEN_PACKAGES.find((pkg) => pkg.type === "subscription");
@@ -41,16 +41,16 @@ export function SubscriptionStatusCard() {
   const { data: subscription } = useSubscription(profile?.id ?? "");
   const { data: details } = useSubscriptionDetails(profile?.id ?? "");
   const cancelMutation = useCancelSubscription(profile?.id ?? "");
+  const resumeMutation = useResumeSubscription(profile?.id ?? "");
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (!subscription?.stripe_subscription_id) return null;
+  // Stripe "canceled" means fully ended — don't show the card
+  if (subscription.subscription_status === "canceled") return null;
 
   const isPastDue = subscription.subscription_status === "past_due";
   const isCanceling = details?.cancelAtPeriodEnd === true;
-  const isActive =
-    (subscription.subscription_status === "active" ||
-      subscription.subscription_status === "canceled") &&
-    !isCanceling;
+  const isActive = subscription.subscription_status === "active" && !isCanceling;
 
   const handleCancel = async () => {
     await cancelMutation.mutateAsync();
@@ -111,6 +111,15 @@ export function SubscriptionStatusCard() {
                 <Link href="/customer/billing" className={buttonVariants({ variant: "outline" })}>
                   Manage Billing
                 </Link>
+              )}
+              {isCanceling && (
+                <Button
+                  variant="default"
+                  onClick={() => resumeMutation.mutate()}
+                  disabled={resumeMutation.isPending}
+                >
+                  {resumeMutation.isPending ? "Resuming..." : "Resume Subscription"}
+                </Button>
               )}
               {isActive && (
                 <Button
