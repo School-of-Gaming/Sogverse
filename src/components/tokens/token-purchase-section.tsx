@@ -188,7 +188,7 @@ export function TokenPurchaseSection() {
       const response = await fetch("/api/checkout/tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId }),
+        body: JSON.stringify({ packageId, returnPath: window.location.pathname }),
       });
 
       const data = await response.json();

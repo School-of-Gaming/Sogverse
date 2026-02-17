@@ -5,6 +5,12 @@ import { createClient } from "@/lib/supabase/server";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
+// This endpoint is the primary fulfillment path for initial checkouts (both
+// one-time and subscription first payment). It works on any deployment URL,
+// unlike the webhook which only fires to a single configured endpoint.
+// The webhook handles subscription lifecycle events (renewals, status changes,
+// cancellations) but does NOT credit tokens for checkout.session.completed to
+// avoid race-condition double-crediting.
 export async function POST(request: Request) {
   try {
     // Authenticate the request

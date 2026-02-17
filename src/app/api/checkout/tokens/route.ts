@@ -36,7 +36,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const { packageId } = await request.json();
+    const { packageId, returnPath } = await request.json();
+
+    // Validate returnPath to prevent open redirects — must be a relative path
+    const safePath =
+      typeof returnPath === "string" && returnPath.startsWith("/")
+        ? returnPath
+        : "/sorg";
 
     const tokenPackage = getTokenPackage(packageId);
     if (!tokenPackage) {
@@ -84,8 +90,8 @@ export async function POST(request: Request) {
         tokenAmount: String(tokenPackage.tokens),
         packageType: tokenPackage.type,
       },
-      success_url: `${origin}/sorg?success=true&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/sorg?canceled=true`,
+      success_url: `${origin}${safePath}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}${safePath}?canceled=true`,
     };
 
     if (tokenPackage.type === "subscription") {

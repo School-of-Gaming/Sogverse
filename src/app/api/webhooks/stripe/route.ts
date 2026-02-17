@@ -25,34 +25,16 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
+        // Token crediting is handled by verify-session (the client-side
+        // fulfillment path) so it works on any deployment URL, not just the
+        // single webhook endpoint. This handler only persists profile metadata.
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.payment_status !== "paid") break;
 
         const userId = session.metadata?.userId;
-        const tokenAmount = Number(session.metadata?.tokenAmount);
         const packageType = session.metadata?.packageType;
 
-        if (!userId || !tokenAmount) break;
-
-        // Idempotency: check if this session was already processed
-        const { data: existing } = await admin
-          .from("token_transactions")
-          .select("id")
-          .eq("stripe_session_id", session.id)
-          .limit(1);
-
-        if (existing && existing.length > 0) break;
-
-        // Credit tokens
-        const txType = packageType === "subscription" ? "subscription" : "purchase";
-        await admin.rpc("adjust_token_balance", {
-          p_user_id: userId,
-          p_amount: tokenAmount,
-          p_type: txType,
-          p_description: `Purchased ${tokenAmount} Sorgs`,
-          p_stripe_session_id: session.id,
-          p_stripe_subscription_id: (session.subscription as string) || undefined,
-        });
+        if (!userId) break;
 
         // Store Stripe customer ID on profile
         if (session.customer) {

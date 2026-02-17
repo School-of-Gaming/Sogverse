@@ -31,7 +31,7 @@ function CheckoutRedirect() {
     fetch("/api/checkout/tokens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packageId }),
+      body: JSON.stringify({ packageId, returnPath: "/sorg" }),
     })
       .then((res) => res.json())
       .then((data) => {
