@@ -96,12 +96,31 @@ See `docs/voice-chat-architecture.md` for the full component map and data flow.
 
 **Rule: The Realtime hook must only invalidate queries — never make Supabase data queries in the callback.** Same deadlock risk as `onAuthStateChange`. See the existing comment in `use-voice-room-realtime.ts`.
 
+### Sorg Token Purchasing (Stripe)
+
+See `docs/sorg-token-architecture.md` for the full component map, data flows, and fulfillment model.
+
+- **`src/lib/constants/tokens.ts`** — `TOKEN_PACKAGES` array defining package IDs, token amounts, and prices. Server-side source of truth for Stripe session creation.
+- **`src/components/tokens/`** — `TokenPurchaseSection` (package cards + purchase flow), `TransactionHistoryTable` (ledger display).
+- **`src/services/tokens/`** — `TokensService` class + React Query hooks (`useTokenBalance`, `useTokenTransactions`, `useSubscription`, etc.).
+- **`src/app/api/checkout/`** — Checkout session creation, verify-session fulfillment, subscription management.
+- **`src/app/api/webhooks/stripe/route.ts`** — Handles subscription renewals (`invoice.paid`), status changes, and cancellations.
+
+**Rule: All token balance changes must go through the `adjust_token_balance()` RPC.** This SECURITY DEFINER function atomically updates `profiles.token_balance` and inserts a `token_transactions` row, keeping the balance and ledger consistent. Never update `token_balance` directly.
+
+**Rule: Prices are defined server-side only.** The client sends a `packageId`, never a price. The server looks up the package in `TOKEN_PACKAGES` and passes the price to Stripe. This prevents client-side price manipulation.
+
+**Rule: `verify-session` is the primary fulfillment path for initial checkout.** It works on any deployment URL without webhook configuration. The webhook's `checkout.session.completed` handler intentionally does not credit tokens — it only syncs Stripe IDs to the profile. The webhook credits tokens only for subscription renewals (`invoice.paid`).
+
+**Rule: Only customers can purchase tokens.** The checkout API route enforces `role === "customer"`. Admins can manually adjust any user's balance via `POST /api/admin/adjust-tokens`.
+
 ## Environment Variables
 
 Copy `.env.local.example` to `.env.local`:
 - `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase public config
 - `SUPABASE_SERVICE_ROLE_KEY` - For admin operations (server-only)
 - `STRIPE_SECRET_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe config
+- `STRIPE_WEBHOOK_SECRET` - Stripe webhook signature verification (server-only)
 - `DAILY_API_KEY` - Daily.co REST API key (server-only)
 - `NEXT_PUBLIC_DAILY_DOMAIN` - Daily.co subdomain for room URLs
 
