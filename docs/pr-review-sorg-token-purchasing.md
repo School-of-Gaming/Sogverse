@@ -51,25 +51,9 @@ Test coverage added:
 - `subscription-resume.test.ts` (6 tests) — auth, role, missing subscription, happy path, Stripe failure.
 - 4 double-subscribe regression tests in `checkout-tokens.test.ts` — verifies `null` and `"canceled"` statuses allow re-subscription, while `"active"` (even when canceling at period end) blocks it.
 
-### 4. Open redirect in `useAuthRedirect`
+### ~~4. Open redirect in `useAuthRedirect`~~ RESOLVED
 
-**File:** `src/hooks/use-auth-redirect.ts:23`
-
-```typescript
-window.location.href = redirect || fallbackPath;
-```
-
-The `redirect` value comes directly from `searchParams.get("redirect")` — user-controlled input. An attacker can craft `/login?redirect=https://evil.com` or `/login?redirect=//evil.com`. After authentication, the user is redirected to the attacker's site.
-
-**Fix:**
-```typescript
-function isSafeRedirect(url: string): boolean {
-  return url.startsWith("/") && !url.startsWith("//");
-}
-window.location.href = (redirect && isSafeRedirect(redirect)) ? redirect : fallbackPath;
-```
-
-Note: The `returnPath` validation in `checkout/tokens/route.ts:42-44` has the same `//` bypass — `"//evil.com".startsWith("/")` is `true`. While Stripe prepends the origin, the pattern should still be hardened.
+Added `isSafeRedirectPath()` utility in `src/lib/utils.ts` that uses the `URL` constructor to validate redirects against the same parsing rules browsers use. This covers absolute URLs, protocol-relative URLs (`//evil.com`), and backslash bypass (`\/evil.com`). Both `use-auth-redirect.ts` and `checkout/tokens/route.ts` now use this shared utility. Unit tests added covering all attack vectors.
 
 ---
 

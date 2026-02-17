@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { isSafeRedirectPath } from "@/lib/utils";
 
 /**
  * Manages the redirect-after-auth flow (e.g. user clicks Buy → login/register → checkout).
@@ -16,11 +17,13 @@ export function useAuthRedirect() {
   const redirect = searchParams.get("redirect");
   const [status, setStatus] = useState<string | null>(null);
 
+  const safeRedirect = redirect && isSafeRedirectPath(redirect) ? redirect : null;
+
   const navigateAfterAuth = (fallbackPath: string) => {
-    if (redirect) {
+    if (safeRedirect) {
       setStatus("Redirecting to checkout...");
     }
-    window.location.href = redirect || fallbackPath;
+    window.location.href = safeRedirect || fallbackPath;
   };
 
   return { redirect, status, navigateAfterAuth };

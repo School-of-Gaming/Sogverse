@@ -6,6 +6,7 @@ import {
   generateGamerEmail,
   extractUsernameFromGamerEmail,
   isGamerEmail,
+  isSafeRedirectPath,
   capitalize,
   formatScheduleLocal,
 } from "@/lib/utils";
@@ -115,6 +116,42 @@ describe("capitalize", () => {
 
   it("handles empty string", () => {
     expect(capitalize("")).toBe("");
+  });
+});
+
+describe("isSafeRedirectPath", () => {
+  it("allows simple relative paths", () => {
+    expect(isSafeRedirectPath("/customer/sorg")).toBe(true);
+    expect(isSafeRedirectPath("/login")).toBe(true);
+    expect(isSafeRedirectPath("/")).toBe(true);
+  });
+
+  it("allows paths with query strings and fragments", () => {
+    expect(isSafeRedirectPath("/sorg?tab=history")).toBe(true);
+    expect(isSafeRedirectPath("/sorg#pricing")).toBe(true);
+  });
+
+  it("blocks absolute URLs", () => {
+    expect(isSafeRedirectPath("https://evil.com")).toBe(false);
+    expect(isSafeRedirectPath("http://evil.com")).toBe(false);
+  });
+
+  it("blocks protocol-relative URLs", () => {
+    expect(isSafeRedirectPath("//evil.com")).toBe(false);
+  });
+
+  it("blocks backslash bypass", () => {
+    expect(isSafeRedirectPath("\\/evil.com")).toBe(false);
+    expect(isSafeRedirectPath("/\\evil.com")).toBe(false);
+  });
+
+  it("blocks javascript: and data: schemes", () => {
+    expect(isSafeRedirectPath("javascript:alert(1)")).toBe(false);
+    expect(isSafeRedirectPath("data:text/html,<script>")).toBe(false);
+  });
+
+  it("treats empty string as same-origin (resolves to base)", () => {
+    expect(isSafeRedirectPath("")).toBe(true);
   });
 });
 

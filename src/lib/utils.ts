@@ -46,8 +46,14 @@ export function isGamerEmail(email: string): boolean {
   return email.endsWith("@gamer.sogverse.internal");
 }
 
-export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+/** Check that a URL/path is a safe same-origin redirect (not absolute, protocol-relative, or backslash-escaped). */
+export function isSafeRedirectPath(path: string): boolean {
+  try {
+    const base = "http://n";
+    return new URL(path, base).origin === base;
+  } catch {
+    return false;
+  }
 }
 
 export function capitalize(str: string): string {
