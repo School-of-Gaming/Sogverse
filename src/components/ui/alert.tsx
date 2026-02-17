@@ -11,6 +11,8 @@ const alertVariants = cva(
         destructive:
           "border-destructive/50 bg-destructive/10 text-destructive",
         success: "border-success/50 bg-success/10 text-success",
+        info: "border-info/50 bg-info/10 text-info",
+        warning: "border-warning/50 bg-warning/10 text-warning",
       },
     },
     defaultVariants: {

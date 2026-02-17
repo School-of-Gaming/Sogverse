@@ -302,6 +302,8 @@ export default function AdminUIComponentsPage() {
             <Swatch label="Secondary" className="bg-secondary" />
             <Swatch label="Destructive" className="bg-destructive" />
             <Swatch label="Success" className="bg-success" />
+            <Swatch label="Info" className="bg-info" />
+            <Swatch label="Warning" className="bg-warning" />
             <Swatch label="Accent" className="bg-accent" />
           </div>
         </SubSection>
@@ -334,6 +336,8 @@ export default function AdminUIComponentsPage() {
             <span className="text-sm font-medium text-success">
               Success
             </span>
+            <span className="text-sm font-medium text-info">Info</span>
+            <span className="text-sm font-medium text-warning">Warning</span>
           </div>
         </SubSection>
       </Section>
@@ -591,6 +595,24 @@ export default function AdminUIComponentsPage() {
                 </AlertDescription>
               </div>
             </Alert>
+            <Alert variant="info">
+              <Info className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <AlertTitle>Info</AlertTitle>
+                <AlertDescription>
+                  Your session will expire in 5 minutes.
+                </AlertDescription>
+              </div>
+            </Alert>
+            <Alert variant="warning">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>
+                <AlertTitle>Warning</AlertTitle>
+                <AlertDescription>
+                  Tokens have monetary value. Double-check before adjusting.
+                </AlertDescription>
+              </div>
+            </Alert>
           </div>
         </SubSection>
 
@@ -623,6 +645,22 @@ export default function AdminUIComponentsPage() {
               </div>
               <span className="text-xs text-muted-foreground">
                 bg-destructive/10 + text-destructive
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-info/10">
+                <Info className="h-8 w-8 text-info" />
+              </div>
+              <span className="text-xs text-muted-foreground">
+                bg-info/10 + text-info
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-warning/10">
+                <AlertTriangle className="h-8 w-8 text-warning" />
+              </div>
+              <span className="text-xs text-muted-foreground">
+                bg-warning/10 + text-warning
               </span>
             </div>
           </div>

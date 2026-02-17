@@ -63,11 +63,9 @@ Added `isSafeRedirectPath()` utility in `src/lib/utils.ts` that uses the `URL` c
 
 Exported `tokenKeys` from `tokens.queries.ts` and the barrel `tokens/index.ts`. Replaced all three hand-rolled query key arrays in `token-purchase-section.tsx` with `tokenKeys.balance()`, `tokenKeys.transactions()`, and `tokenKeys.subscription()`.
 
-### 6. `PurchaseFeedback` should use the `Alert` component
+### ~~6. `PurchaseFeedback` should use the `Alert` component~~ RESOLVED
 
-**File:** `token-purchase-section.tsx:67-97`
-
-Four hand-rolled colored `<div>` elements duplicate what the `Alert` component provides (`role="alert"`, consistent styling, CVA variants). Same issue in `admin/users/[id]/page.tsx:147-152` and `settings/page.tsx:109-118`.
+Added `info` and `warning` variants to the Alert component (with matching CSS color tokens). Refactored `PurchaseFeedback` to use `<Alert>` with the appropriate variant for each state (info/verifying, destructive/error, success/verified, warning/canceled). Updated the UI showcase page with the new variants.
 
 ### 7. Silent error swallowing on checkout failure
 

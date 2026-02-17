@@ -3,10 +3,11 @@
 import { useState, useCallback, useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Coins, Sparkles, Zap, Loader2, type LucideIcon } from "lucide-react";
+import { Coins, Sparkles, Zap, Loader2, AlertCircle, AlertTriangle, Check, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useSubscription, useSubscriptionDetails, useResumeSubscription, tokenKeys } from "@/services/tokens";
@@ -66,33 +67,50 @@ function PurchaseFeedback() {
 
   if (verifying) {
     return (
-      <div className="mb-8 rounded-lg border border-blue-500/30 bg-blue-500/10 p-4 text-center text-blue-400 flex items-center justify-center gap-2">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Confirming your purchase...
+      <div className="mb-8">
+        <Alert variant="info">
+          <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
+          <AlertDescription>Confirming your purchase...</AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="mb-8 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-center text-red-400">
-        Something went wrong confirming your purchase. Your payment was received — if your balance doesn&apos;t update shortly, please contact support.
+      <div className="mb-8">
+        <Alert variant="destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <AlertDescription>
+            Something went wrong confirming your purchase. Your payment was received — if your balance doesn&apos;t update shortly, please contact support.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   if (success || verified) {
     return (
-      <div className="mb-8 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-center text-green-400">
-        Purchase successful! Your Sorgs have been added to your balance.
+      <div className="mb-8">
+        <Alert variant="success">
+          <Check className="mt-0.5 h-4 w-4 shrink-0" />
+          <AlertDescription>
+            Purchase successful! Your Sorgs have been added to your balance.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
 
   if (canceled) {
     return (
-      <div className="mb-8 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 text-center text-yellow-400">
-        Purchase canceled. No charges were made.
+      <div className="mb-8">
+        <Alert variant="warning">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <AlertDescription>
+            Purchase canceled. No charges were made.
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
