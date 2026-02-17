@@ -59,16 +59,9 @@ Added `isSafeRedirectPath()` utility in `src/lib/utils.ts` that uses the `URL` c
 
 ## Suggested (Should-Fix)
 
-### 5. Export `tokenKeys` to eliminate fragile hand-rolled query keys
+### ~~5. Export `tokenKeys` to eliminate fragile hand-rolled query keys~~ RESOLVED
 
-**File:** `tokens.queries.ts:7` (not exported), `token-purchase-section.tsx:52-54` (hand-rolled)
-
-```typescript
-// token-purchase-section.tsx — will silently break if keys change
-queryClient.invalidateQueries({ queryKey: ["tokens", "balance", profile.id] });
-```
-
-Export `tokenKeys` from `tokens.queries.ts` and import it in consumers.
+Exported `tokenKeys` from `tokens.queries.ts` and the barrel `tokens/index.ts`. Replaced all three hand-rolled query key arrays in `token-purchase-section.tsx` with `tokenKeys.balance()`, `tokenKeys.transactions()`, and `tokenKeys.subscription()`.
 
 ### 6. `PurchaseFeedback` should use the `Alert` component
 
@@ -82,19 +75,9 @@ Four hand-rolled colored `<div>` elements duplicate what the `Alert` component p
 
 All three silently redirect or reset on failure with zero user feedback. The catch blocks should display an error message (e.g., via the `Alert` component).
 
-### 8. `<Link>` wrapping `<Button>` produces invalid HTML
+### ~~8. `<Link>` wrapping `<Button>` produces invalid HTML~~ RESOLVED
 
-**File:** `sorg/page.tsx:235-244`
-
-```tsx
-<Link href="/register"><Button size="lg">Get Started</Button></Link>
-```
-
-Renders `<a><button>` — invalid HTML per spec (nested interactive content). Use the pattern already in the codebase:
-
-```tsx
-<Link href="/register" className={buttonVariants({ size: "lg" })}>Get Started</Link>
-```
+Replaced both `<Link><Button>` instances in `sorg/page.tsx` CTA section with `<Link className={buttonVariants(...)}>`, matching the existing codebase pattern. `Button` import replaced with `buttonVariants`.
 
 ### 9. Duplicate Stripe Customer objects on repeat purchases
 
@@ -130,8 +113,8 @@ Added 4 tests across both test files: RPC failure → 500 and unique constraint 
 
 ## Nitpick
 
-### 13. `replace("_", " ")` only replaces the first underscore
-**File:** `transaction-history-table.tsx:34` — use `.replaceAll("_", " ")` or `/_/g`.
+### ~~13. `replace("_", " ")` only replaces the first underscore~~ RESOLVED
+**File:** `transaction-history-table.tsx:34` — replaced `.replace("_", " ")` with `.replaceAll("_", " ")`.
 
 ### ~~14. `cn()` not used for conditional classes~~ RESOLVED
 **File:** `token-purchase-section.tsx:122` — replaced template literal with `cn()` per CLAUDE.md convention.

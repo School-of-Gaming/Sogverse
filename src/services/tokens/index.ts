@@ -1,5 +1,6 @@
 export { TokensService } from "./tokens.service";
 export {
+  tokenKeys,
   useTokenBalance,
   useTokenTransactions,
   useSubscription,

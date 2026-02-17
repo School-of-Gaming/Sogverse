@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { TokensService } from "./tokens.service";
 
-const tokenKeys = {
+export const tokenKeys = {
   all: ["tokens"] as const,
   balance: (userId: string) => [...tokenKeys.all, "balance", userId] as const,
   transactions: (userId: string) => [...tokenKeys.all, "transactions", userId] as const,

@@ -31,7 +31,7 @@ export function TransactionHistoryTable({ transactions }: TransactionHistoryTabl
                 {tx.amount > 0 ? "+" : ""}{tx.amount}
               </td>
               <td className="py-2 pr-4 capitalize">
-                {tx.type.replace("_", " ")}
+                {tx.type.replaceAll("_", " ")}
               </td>
               <td className="py-2 pr-4 text-muted-foreground">
                 {tx.description}

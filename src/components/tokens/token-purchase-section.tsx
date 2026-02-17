@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
-import { useSubscription, useSubscriptionDetails, useResumeSubscription } from "@/services/tokens";
+import { useSubscription, useSubscriptionDetails, useResumeSubscription, tokenKeys } from "@/services/tokens";
 import { TOKEN_PACKAGES, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
 
 const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
@@ -50,9 +50,9 @@ function PurchaseFeedback() {
         setVerified(true);
         // Invalidate token queries so balance and transactions update
         if (profile?.id) {
-          queryClient.invalidateQueries({ queryKey: ["tokens", "balance", profile.id] });
-          queryClient.invalidateQueries({ queryKey: ["tokens", "transactions", profile.id] });
-          queryClient.invalidateQueries({ queryKey: ["tokens", "subscription", profile.id] });
+          queryClient.invalidateQueries({ queryKey: tokenKeys.balance(profile.id) });
+          queryClient.invalidateQueries({ queryKey: tokenKeys.transactions(profile.id) });
+          queryClient.invalidateQueries({ queryKey: tokenKeys.subscription(profile.id) });
         }
       } catch {
         setError(true);
