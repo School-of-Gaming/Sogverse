@@ -25,48 +25,15 @@
 
 ## Critical (Must-Fix)
 
-### 1. TOCTOU race condition — double-crediting vulnerability
+### ~~1. TOCTOU race condition — double-crediting vulnerability~~ RESOLVED
 
-**Files:** `verify-session/route.ts:63-84`, `webhooks/stripe/route.ts:74-88`
+Added `UNIQUE (stripe_session_id)` constraint via migration `00017`. Both routes now handle `23505` (unique violation) gracefully — `verify-session` returns `already_processed`, the webhook silently breaks. The SELECT check remains as a fast-path optimization. Existing duplicate transactions were cleaned up and over-credited balances reversed by the migration.
 
-Both fulfillment paths use a check-then-insert pattern for idempotency:
+### ~~2. Unchecked `admin.rpc()` return — silent token crediting failure~~ RESOLVED
 
-```
-1. SELECT FROM token_transactions WHERE stripe_session_id = ?
-2. If no rows → call adjust_token_balance (INSERT)
-```
+Both routes now destructure `{ error: rpcError }` from the RPC call and return 500 on failure. The `23505` unique violation is handled separately as a success case (see #1). Tests added for both the RPC failure and unique violation paths.
 
-If two requests arrive concurrently (double-click, React StrictMode, Stripe webhook retry on timeout), both execute step 1 before either completes step 2. Both see zero rows. Both credit tokens.
-
-The migration (`00013_token_balance_and_transactions.sql:12-23`) has **no UNIQUE constraint on `stripe_session_id`**, and the `adjust_token_balance` function has no internal idempotency check.
-
-**Fix:** Add a database-level constraint:
-
-```sql
-ALTER TABLE token_transactions
-  ADD CONSTRAINT unique_stripe_session_id UNIQUE (stripe_session_id);
-```
-
-PostgreSQL allows multiple NULLs in UNIQUE columns, so admin adjustments (NULL `stripe_session_id`) are unaffected. Then handle the violation in code (`error.code === '23505'` → return `already_processed`).
-
-### 2. Unchecked `admin.rpc()` return — silent token crediting failure
-
-**Files:** `verify-session/route.ts:76`, `webhooks/stripe/route.ts:82`
-
-The Supabase JS client returns `{ data, error }` and does **not** throw. Both files discard the return value of `adjust_token_balance`. If the RPC fails, the endpoint returns success (`{ status: "fulfilled" }` / `{ received: true }`) even though no tokens were credited. The customer loses money.
-
-For the webhook path, Stripe sees 200 and won't retry. The tokens are permanently lost.
-
-**Fix:**
-```typescript
-const { error: rpcError } = await admin.rpc("adjust_token_balance", { ... });
-if (rpcError) {
-  console.error("Token credit failed:", rpcError);
-  return NextResponse.json({ error: "Failed to credit tokens" }, { status: 500 });
-}
-```
-
-The same pattern applies to all unchecked `admin.from("profiles").update(...)` calls in these two files (6 instances total).
+**Remaining:** The unchecked `admin.from("profiles").update(...)` calls (6 instances) still discard errors. These are lower-risk (metadata sync, not token crediting) but should still be addressed.
 
 ### 3. `hasActiveSubscription` treats Stripe `"canceled"` as active — blocks re-subscription
 
@@ -167,11 +134,9 @@ If origin is absent (some proxies, non-browser clients), `success_url` becomes a
 
 Fetches all transactions with no `.limit()`. For users with long purchase histories this will degrade.
 
-### 12. Missing test coverage for RPC failure path
+### ~~12. Missing test coverage for RPC failure path~~ RESOLVED
 
-**Files:** All three test files
-
-The single most important operation — `adjust_token_balance` — has no error-path test. Neither the verify-session nor the webhook test verifies behavior when the RPC returns an error. This should be the highest-priority test addition, especially once the production code is fixed to check the error.
+Added 4 tests across both test files: RPC failure → 500 and unique constraint violation (`23505`) → graceful handling, for both `verify-session` and `stripe-webhook`.
 
 ---
 

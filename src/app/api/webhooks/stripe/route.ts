@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
         if (existing && existing.length > 0) break;
 
-        await admin.rpc("adjust_token_balance", {
+        const { error: rpcError } = await admin.rpc("adjust_token_balance", {
           p_user_id: userId,
           p_amount: tokenAmount,
           p_type: "subscription" as const,
@@ -87,6 +87,17 @@ export async function POST(request: Request) {
           p_stripe_session_id: invoice.id,
           p_stripe_subscription_id: invoice.subscription as string,
         });
+
+        if (rpcError) {
+          // UNIQUE constraint on stripe_session_id — concurrent request already
+          // credited tokens for this invoice. Safe to ignore.
+          if (rpcError.code === "23505") break;
+          console.error("Token credit failed:", rpcError);
+          return NextResponse.json(
+            { error: "Failed to credit tokens" },
+            { status: 500 }
+          );
+        }
         break;
       }
 

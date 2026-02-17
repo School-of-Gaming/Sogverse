@@ -195,6 +195,42 @@ describe("POST /api/checkout/verify-session", () => {
     expect(mockAdminRpc).not.toHaveBeenCalled();
   });
 
+  // -- Double-crediting protection (UNIQUE constraint) --
+
+  it("should return already_processed when concurrent request triggers unique constraint violation", async () => {
+    mockAuthenticated();
+    mockSessionRetrieve.mockResolvedValue(createStripeSession());
+    mockAdminFromChain(); // idempotency SELECT returns empty (race: both see zero rows)
+    mockAdminRpc.mockResolvedValue({
+      data: null,
+      error: { message: 'duplicate key value violates unique constraint "unique_stripe_session_id"', code: "23505" },
+    });
+
+    const response = await POST(createRequest({ sessionId: "cs_test_123" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.status).toBe("already_processed");
+  });
+
+  // -- RPC failure --
+
+  it("should return 500 when adjust_token_balance RPC fails", async () => {
+    mockAuthenticated();
+    mockSessionRetrieve.mockResolvedValue(createStripeSession());
+    mockAdminFromChain();
+    mockAdminRpc.mockResolvedValue({
+      data: null,
+      error: { message: "connection error", code: "PGRST301" },
+    });
+
+    const response = await POST(createRequest({ sessionId: "cs_test_123" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(data.error).toBe("Failed to credit tokens");
+  });
+
   // -- One-time purchase fulfillment --
 
   it("should credit tokens and update profile for one-time purchase", async () => {

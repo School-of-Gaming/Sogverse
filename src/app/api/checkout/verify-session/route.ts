@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
     // Credit tokens
     const txType = packageType === "subscription" ? "subscription" : "purchase";
-    await admin.rpc("adjust_token_balance", {
+    const { error: rpcError } = await admin.rpc("adjust_token_balance", {
       p_user_id: user.id,
       p_amount: tokenAmount,
       p_type: txType,
@@ -82,6 +82,19 @@ export async function POST(request: Request) {
       p_stripe_subscription_id:
         (session.subscription as string) || undefined,
     });
+
+    if (rpcError) {
+      // UNIQUE constraint on stripe_session_id — concurrent request already
+      // credited tokens for this session. Safe to treat as success.
+      if (rpcError.code === "23505") {
+        return NextResponse.json({ status: "already_processed" });
+      }
+      console.error("Token credit failed:", rpcError);
+      return NextResponse.json(
+        { error: "Failed to credit tokens" },
+        { status: 500 }
+      );
+    }
 
     // Store Stripe customer ID on profile
     if (session.customer) {

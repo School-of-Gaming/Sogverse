@@ -339,6 +339,54 @@ describe("POST /api/webhooks/stripe", () => {
       expect(mockAdminRpc).not.toHaveBeenCalled();
     });
 
+    it("should handle concurrent duplicate gracefully when unique constraint fires", async () => {
+      mockConstructEvent.mockReturnValue(
+        createEvent("invoice.paid", {
+          id: "inv_race_123",
+          subscription: "sub_789",
+          billing_reason: "subscription_cycle",
+        })
+      );
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        metadata: { userId: "user-123", tokenAmount: "25" },
+      });
+      mockIdempotencyAndRpc(false); // SELECT returns empty (race condition)
+      mockAdminRpc.mockResolvedValue({
+        data: null,
+        error: { message: 'duplicate key value violates unique constraint "unique_stripe_session_id"', code: "23505" },
+      });
+
+      const response = await POST(createWebhookRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.received).toBe(true);
+    });
+
+    it("should return 500 when adjust_token_balance RPC fails", async () => {
+      mockConstructEvent.mockReturnValue(
+        createEvent("invoice.paid", {
+          id: "inv_rpc_fail",
+          subscription: "sub_789",
+          billing_reason: "subscription_cycle",
+        })
+      );
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        metadata: { userId: "user-123", tokenAmount: "25" },
+      });
+      mockIdempotencyAndRpc(false);
+      mockAdminRpc.mockResolvedValue({
+        data: null,
+        error: { message: "connection error", code: "PGRST301" },
+      });
+
+      const response = await POST(createWebhookRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data.error).toBe("Failed to credit tokens");
+    });
+
     it("should not double-credit already-processed invoices (idempotency)", async () => {
       mockConstructEvent.mockReturnValue(
         createEvent("invoice.paid", {
