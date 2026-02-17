@@ -5,6 +5,7 @@
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(wc:*)",
+      "Bash(sort:*)",
       "Bash(npm run test:*)",
       "Bash(npm run test:e2e:*)",
       "Bash(npm run build:*)",
@@ -20,7 +21,8 @@
       "Bash(npx tsc:*)",
       "Bash(npx eslint:*)",
       "Bash(npx vercel logs:*)",
-      "Bash(git diff:*)"
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
     ]
   }
 }
