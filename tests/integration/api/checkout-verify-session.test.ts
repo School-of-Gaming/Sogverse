@@ -264,7 +264,7 @@ describe("POST /api/checkout/verify-session", () => {
 
     // Verify profiles table was updated with customer ID
     const profileCalls = mockAdminFrom.mock.calls.filter(
-      ([table]: [string]) => table === "profiles"
+      (call) => call[0] === "profiles"
     );
     expect(profileCalls.length).toBeGreaterThanOrEqual(1);
   });
@@ -280,7 +280,7 @@ describe("POST /api/checkout/verify-session", () => {
 
     // Only token_transactions call (idempotency check), no profiles update for customer ID
     const profileCalls = mockAdminFrom.mock.calls.filter(
-      ([table]: [string]) => table === "profiles"
+      (call) => call[0] === "profiles"
     );
     expect(profileCalls.length).toBe(0);
   });
@@ -321,7 +321,7 @@ describe("POST /api/checkout/verify-session", () => {
 
     // Verify profiles was updated for both customer ID and subscription
     const profileCalls = mockAdminFrom.mock.calls.filter(
-      ([table]: [string]) => table === "profiles"
+      (call) => call[0] === "profiles"
     );
     expect(profileCalls.length).toBe(2); // customer ID + subscription
   });
@@ -335,7 +335,7 @@ describe("POST /api/checkout/verify-session", () => {
 
     // Only 1 profiles call (customer ID), not 2
     const profileCalls = mockAdminFrom.mock.calls.filter(
-      ([table]: [string]) => table === "profiles"
+      (call) => call[0] === "profiles"
     );
     expect(profileCalls.length).toBe(1);
   });
