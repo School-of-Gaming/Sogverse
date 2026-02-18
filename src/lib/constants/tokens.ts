@@ -2,19 +2,7 @@ export const TOKEN_BASE_RATE_CENTS = 300; // $3.00 per token
 
 export type TokenPackageType = "one_time" | "subscription";
 
-export interface TokenPackage {
-  id: TokenPackageId;
-  name: string;
-  tokens: number;
-  priceCents: number;
-  type: TokenPackageType;
-  savingsCents?: number;
-  description: string;
-}
-
-export type TokenPackageId = "tokens_5" | "tokens_20" | "tokens_sub_25";
-
-export const TOKEN_PACKAGES: TokenPackage[] = [
+export const TOKEN_PACKAGES = [
   {
     id: "tokens_5",
     name: "Starter Pack",
@@ -41,7 +29,27 @@ export const TOKEN_PACKAGES: TokenPackage[] = [
     savingsCents: 2500,
     description: "25 Sorgs every month — save $25/mo",
   },
-];
+] as const satisfies readonly {
+  id: string;
+  name: string;
+  tokens: number;
+  priceCents: number;
+  type: TokenPackageType;
+  savingsCents?: number;
+  description: string;
+}[];
+
+export type TokenPackageId = (typeof TOKEN_PACKAGES)[number]["id"];
+
+export interface TokenPackage {
+  id: TokenPackageId;
+  name: string;
+  tokens: number;
+  priceCents: number;
+  type: TokenPackageType;
+  savingsCents?: number;
+  description: string;
+}
 
 export function getTokenPackage(id: string): TokenPackage | undefined {
   return TOKEN_PACKAGES.find((pkg) => pkg.id === id);

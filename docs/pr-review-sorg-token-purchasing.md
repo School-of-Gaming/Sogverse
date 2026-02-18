@@ -105,23 +105,23 @@ Added 4 tests across both test files: RPC failure → 500 and unique constraint 
 ### ~~14. `cn()` not used for conditional classes~~ RESOLVED
 **File:** `token-purchase-section.tsx:122` — replaced template literal with `cn()` per CLAUDE.md convention.
 
-### 15. `AlertTitle` ref type mismatch
-**File:** `alert.tsx:35` — `forwardRef<HTMLParagraphElement, ...>` but renders `<h5>` (should be `HTMLHeadingElement`).
+### ~~15. `AlertTitle` ref type mismatch~~ RESOLVED
+**File:** `alert.tsx:35` — changed `forwardRef<HTMLParagraphElement, ...>` to `HTMLHeadingElement` to match the `<h5>` element.
 
 ### ~~16. `TOKEN_BASE_RATE_CENTS` is dead code~~ NOT AN ISSUE
 Imported and used in `admin/users/[id]/page.tsx` for the admin token-adjustment UI display.
 
-### 17. `TokenPackageId` type manually maintained
-**File:** `tokens.ts:15` — should be derived from the array: `type TokenPackageId = typeof TOKEN_PACKAGES[number]["id"]`.
+### ~~17. `TokenPackageId` type manually maintained~~ RESOLVED
+**File:** `tokens.ts` — `TOKEN_PACKAGES` now uses `as const satisfies` and `TokenPackageId` is derived via `(typeof TOKEN_PACKAGES)[number]["id"]`.
 
-### 18. Date formatting inconsistency
-`transaction-history-table.tsx` uses `toLocaleDateString()` with no locale. `subscription-status-card.tsx` uses `"en-US"` with explicit options. Consider a shared `formatDate` utility.
+### ~~18. Date formatting inconsistency~~ RESOLVED
+`transaction-history-table.tsx` now uses `toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })`, matching `subscription-status-card.tsx`.
 
-### 19. Admin users search input lacks accessible label
-**File:** `admin/users/page.tsx:45` — has placeholder text but no `<Label>` or `aria-label`. Add `aria-label="Search users"`.
+### ~~19. Admin users search input lacks accessible label~~ RESOLVED
+**File:** `admin/users/page.tsx:45` — added `aria-label="Search users"`.
 
-### 20. Hardcoded status message in generic hook
-**File:** `use-auth-redirect.ts:21` — `"Redirecting to checkout..."` is checkout-specific but the hook name is generic. Consider accepting the message as a parameter.
+### ~~20. Hardcoded status message in generic hook~~ NOT AN ISSUE
+**File:** `use-auth-redirect.ts:21` — The hook is intentionally checkout-specific (the sole post-auth redirect destination). Parameterizing the message would be premature generalization.
 
 ---
 

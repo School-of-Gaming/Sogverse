@@ -25,7 +25,11 @@ export function TransactionHistoryTable({ transactions }: TransactionHistoryTabl
           {transactions.map((tx) => (
             <tr key={tx.id} className="border-b border-border/50">
               <td className="py-2 pr-4 whitespace-nowrap">
-                {new Date(tx.created_at).toLocaleDateString()}
+                {new Date(tx.created_at).toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
               </td>
               <td className={`py-2 pr-4 font-medium ${tx.amount > 0 ? "text-green-400" : "text-red-400"}`}>
                 {tx.amount > 0 ? "+" : ""}{tx.amount}
