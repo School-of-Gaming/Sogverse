@@ -128,6 +128,15 @@ export async function POST(request: Request) {
             { status: 500 }
           );
         }
+
+        // Ensure subscription_status is "active" after a successful renewal.
+        // If the subscription was past_due and customer.subscription.updated
+        // is delayed or lost, this keeps the profile consistent.
+        await admin
+          .from("profiles")
+          .update({ subscription_status: "active" })
+          .eq("id", userId);
+
         break;
       }
 

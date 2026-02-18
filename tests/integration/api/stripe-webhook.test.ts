@@ -402,6 +402,46 @@ describe("POST /api/webhooks/stripe", () => {
       });
     });
 
+    it("should update subscription_status to active after crediting renewal tokens", async () => {
+      mockConstructEvent.mockReturnValue(
+        createEvent("invoice.paid", {
+          id: "inv_renewal_status",
+          subscription: "sub_789",
+          billing_reason: "subscription_cycle",
+        })
+      );
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        metadata: { userId: "user-123", tokenAmount: "25" },
+      });
+
+      const updateCalls: Record<string, unknown>[] = [];
+      mockAdminFrom.mockImplementation((table: string) => {
+        if (table === "token_transactions") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                limit: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+          };
+        }
+        // profiles
+        return {
+          update: vi.fn().mockImplementation((data: Record<string, unknown>) => {
+            updateCalls.push(data);
+            return {
+              eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+            };
+          }),
+        };
+      });
+
+      const response = await POST(createWebhookRequest());
+
+      expect(response.status).toBe(200);
+      expect(updateCalls).toContainEqual({ subscription_status: "active" });
+    });
+
     it("should skip subscription_create invoices (first payment handled by checkout.session.completed)", async () => {
       mockConstructEvent.mockReturnValue(
         createEvent("invoice.paid", {
