@@ -165,5 +165,8 @@ Checkout sessions currently use inline `price_data` with `product_data`, which c
 ### Paginate transaction history
 `TokensService.getTransactions()` fetches all rows with no `.limit()`. For users with long purchase histories this will degrade. Add server-side pagination (cursor or offset-based) and update `TransactionHistoryTable` to support it.
 
+### Handle `trialing` subscription status
+`getSubscriptionState()` treats all unrecognized Stripe statuses (including `trialing`) as `{ status: "none", hasActiveSubscription: false }`. If trial periods are offered, this would allow users to purchase a duplicate subscription while trialing. Add an explicit `trialing` case to the state machine and gate the Subscribe button accordingly.
+
 ### Gamer token spending
 Tokens are currently only purchased and credited. The spending side (gamers using tokens for activities) is not yet implemented.
