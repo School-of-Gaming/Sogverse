@@ -116,6 +116,27 @@ GitHub Actions and Vercel currently duplicate work (both do a full build), and V
 
 **Why:** Currently the `build` job in CI is redundant with Vercel's build, and Vercel deploys even when CI fails. Branch protection prevents broken code from reaching production, while Vercel's preview deploys remain useful for PR review.
 
+### Extract Shared Auth/Role-Check Helper for API Routes
+
+All 14 API route handlers repeat the same 11-13 line boilerplate: `createClient()` → `getUser()` → query profile → check role → return 401/403. Each route also casts the profile result with hand-written inline types instead of using the generated `Profile` type from `@/types`.
+
+- [ ] Create a shared `getAuthenticatedProfile()` helper (e.g. in `src/lib/auth.ts`) that accepts allowed roles and profile fields to select, returns a typed profile or an error response
+- [ ] Replace the boilerplate in all 14 route handlers with a one-liner call to the helper
+
+**Affected routes:** `checkout/tokens`, `checkout/subscription` (GET, cancel, resume, billing-portal), `admin/adjust-tokens`, `admin/create-gedu`, `admin/create-game`, `admin/create-product`, `admin/users/[id]/auth`, `gamers/create`, `voice/room` (POST + PATCH), `voice/token`.
+
+**Why:** ~150 lines of pure duplication across the project. A shared helper makes adding new routes less error-prone.
+
+### Use Generated Types in API Routes
+
+All 14 API route handlers cast the Supabase profile query result with hand-written inline types (e.g. `profile as { role: string; stripe_customer_id: string | null } | null`) instead of using the generated `Profile` type from `@/types`. If a column is renamed or its type changes, these casts will silently become wrong.
+
+- [ ] Replace all inline `as { role: string; ... }` casts with the generated `Database["public"]["Tables"]["profiles"]["Row"]` type (or a `Pick<>` of it)
+
+**Affected routes:** Same 14 routes as the auth helper item above.
+
+**Why:** Inline types drift out of sync with the schema. The generated type is always correct after `supabase:gen-types`.
+
 ### Consolidate Multiple Permissive RLS Policies
 
 Every table has a separate `admin_full_access_*` permissive policy alongside role-specific permissive policies for the same action. PostgreSQL evaluates ALL permissive policies per query, which is suboptimal at scale. Merge overlapping policies into single combined policies with OR conditions.

@@ -159,12 +159,6 @@ All token crediting happens exclusively through the Stripe webhook.
 
 ## Future Improvements
 
-### Extract shared auth/role-check helper for API routes
-All token API routes repeat the same pattern: `createClient()` → `getUser()` → query profile → check role → return 401/403. A shared `getAuthenticatedProfile(allowedRoles)` helper would reduce boilerplate.
-
-### Use generated types in API routes
-API routes cast profile query results with inline types. Importing the generated `Profile` type from `@/types` would stay in sync with schema changes automatically.
-
 ### Use stable Stripe Products and Prices
 Checkout sessions currently use inline `price_data` with `product_data`, which creates a new ad-hoc Product and Price in Stripe on every checkout. This clutters the Stripe dashboard and prevents meaningful revenue reporting by product. Instead, create Products and Prices once (via the Stripe dashboard or a seed script), store the Price IDs in `TOKEN_PACKAGES`, and pass `price: priceId` instead of `price_data`.
 
