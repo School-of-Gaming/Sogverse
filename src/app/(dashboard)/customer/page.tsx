@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Coins, Gamepad2, ShoppingBag, UserPlus, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Parent Dashboard",
@@ -13,31 +14,31 @@ const quickActions = [
     title: "My Gamers",
     description: "View and manage your linked gamer accounts",
     icon: Gamepad2,
-    href: "/customer/gamers",
+    href: ROUTES.customer.gamers,
   },
   {
     title: "Sorg",
     description: "Balance, purchases, and transaction history",
     icon: Coins,
-    href: "/customer/sorg",
+    href: ROUTES.customer.sorg,
   },
   {
     title: "Add Gamer",
     description: "Create a new gamer account for your child",
     icon: UserPlus,
-    href: "/customer/gamers/add",
+    href: ROUTES.customer.gamersAdd,
   },
   {
     title: "Orders",
     description: "View your purchase history",
     icon: ShoppingBag,
-    href: "/customer/orders",
+    href: ROUTES.customer.orders,
   },
   {
     title: "Settings",
     description: "Update your account settings",
     icon: Settings,
-    href: "/settings",
+    href: ROUTES.settings,
   },
 ];
 

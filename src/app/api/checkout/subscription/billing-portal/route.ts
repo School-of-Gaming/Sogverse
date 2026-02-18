@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
+import { ROUTES } from "@/lib/constants";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: typedProfile.stripe_customer_id,
-      return_url: `${origin}/customer/sorg`,
+      return_url: `${origin}${ROUTES.customer.sorg}`,
     });
 
     return NextResponse.json({ url: session.url });

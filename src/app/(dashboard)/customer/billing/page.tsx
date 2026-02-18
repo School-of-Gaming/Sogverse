@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ROUTES } from "@/lib/constants";
 
 export default function BillingRedirectPage() {
   const triggered = useRef(false);
@@ -32,7 +33,7 @@ export default function BillingRedirectPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Something went wrong opening the billing portal. Please <a href="/customer/sorg" className="underline">go back</a> and try again.
+            Something went wrong opening the billing portal. Please <a href={ROUTES.customer.sorg} className="underline">go back</a> and try again.
           </AlertDescription>
         </Alert>
       ) : (
