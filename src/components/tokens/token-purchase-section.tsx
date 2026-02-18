@@ -194,7 +194,7 @@ export function TokenPurchaseSection() {
 
   return (
     <div id="buy-sorgs" className="mx-auto mt-16 max-w-5xl scroll-mt-16">
-      <Suspense>
+      <Suspense fallback={null}>
         <PurchaseFeedback />
       </Suspense>
       {checkoutError && (
