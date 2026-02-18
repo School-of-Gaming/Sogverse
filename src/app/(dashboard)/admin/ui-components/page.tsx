@@ -19,7 +19,6 @@ import {
   AlertTriangle,
   Info,
   Coins,
-  Loader2,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -428,14 +427,6 @@ export default function AdminUIComponentsPage() {
               <span>125</span>
             </span>
             <span className="text-xs text-muted-foreground">Default</span>
-          </div>
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium">
-              <Coins className="h-4 w-4 text-primary" />
-              <span className="opacity-50">125</span>
-              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-            </span>
-            <span className="text-xs text-muted-foreground">Updating balance</span>
           </div>
         </div>
       </Section>
