@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import type { TokenTransaction } from "@/types";
 
 interface TransactionHistoryTableProps {
@@ -31,7 +32,7 @@ export function TransactionHistoryTable({ transactions }: TransactionHistoryTabl
                   year: "numeric",
                 })}
               </td>
-              <td className={`py-2 pr-4 font-medium ${tx.amount > 0 ? "text-green-400" : "text-red-400"}`}>
+              <td className={cn("py-2 pr-4 font-medium", tx.amount > 0 ? "text-green-400" : "text-red-400")}>
                 {tx.amount > 0 ? "+" : ""}{tx.amount}
               </td>
               <td className="py-2 pr-4 capitalize">
