@@ -20,13 +20,14 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, email, subscription_status")
+      .select("role, email, stripe_customer_id, subscription_status")
       .eq("id", user.id)
       .single();
 
     const typedProfile = profile as {
       role: string;
       email: string | null;
+      stripe_customer_id: string | null;
       subscription_status: string | null;
     } | null;
 
@@ -65,9 +66,17 @@ export async function POST(request: Request) {
 
     const origin = request.headers.get("origin") || "";
 
+    // Reuse existing Stripe customer to avoid creating duplicates
+    const customerParams: Pick<
+      Stripe.Checkout.SessionCreateParams,
+      "customer" | "customer_email"
+    > = typedProfile?.stripe_customer_id
+      ? { customer: typedProfile.stripe_customer_id }
+      : { customer_email: typedProfile?.email || undefined };
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: tokenPackage.type === "subscription" ? "subscription" : "payment",
-      customer_email: typedProfile?.email || undefined,
+      ...customerParams,
       line_items: [
         {
           price_data: {

@@ -348,7 +348,29 @@ describe("POST /api/checkout/tokens", () => {
     expect(params.cancel_url).toContain("/sorg?canceled=true");
   });
 
-  // -- Customer email handling --
+  // -- Customer identification --
+
+  it("should use existing stripe_customer_id instead of customer_email for returning customers", async () => {
+    mockAuthenticatedCustomer({ stripe_customer_id: "cus_existing123" });
+    mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
+
+    await POST(createRequest({ packageId: "tokens_5" }));
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    expect(params.customer).toBe("cus_existing123");
+    expect(params.customer_email).toBeUndefined();
+  });
+
+  it("should fall back to customer_email for first-time purchasers", async () => {
+    mockAuthenticatedCustomer({ stripe_customer_id: null });
+    mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
+
+    await POST(createRequest({ packageId: "tokens_5" }));
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    expect(params.customer).toBeUndefined();
+    expect(params.customer_email).toBe("customer@example.com");
+  });
 
   it("should omit customer_email when profile has no email", async () => {
     mockAuthenticatedCustomer({ email: null });
