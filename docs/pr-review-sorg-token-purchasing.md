@@ -85,11 +85,11 @@ Note: In practice, duplicate Customers were not occurring because Stripe's defau
 
 Both routes now fall back to the `host` header (`https://${request.headers.get("host")}`) instead of an empty string. This works correctly across all deployment environments (dev, prod, feature branch previews) without requiring an env var.
 
-### 11. No pagination on `getTransactions`
+### ~~11. No pagination on `getTransactions`~~ DEFERRED
 
 **File:** `tokens.service.ts:20-28`
 
-Fetches all transactions with no `.limit()`. For users with long purchase histories this will degrade.
+Fetches all transactions with no `.limit()`. For users with long purchase histories this will degrade. Tracked in `docs/sorg-token-architecture.md` under "Future Improvements → Paginate transaction history".
 
 ### ~~12. Missing test coverage for RPC failure path~~ RESOLVED
 

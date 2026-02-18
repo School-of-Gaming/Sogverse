@@ -168,5 +168,8 @@ API routes cast profile query results with inline types. Importing the generated
 ### Use stable Stripe Products and Prices
 Checkout sessions currently use inline `price_data` with `product_data`, which creates a new ad-hoc Product and Price in Stripe on every checkout. This clutters the Stripe dashboard and prevents meaningful revenue reporting by product. Instead, create Products and Prices once (via the Stripe dashboard or a seed script), store the Price IDs in `TOKEN_PACKAGES`, and pass `price: priceId` instead of `price_data`.
 
+### Paginate transaction history
+`TokensService.getTransactions()` fetches all rows with no `.limit()`. For users with long purchase histories this will degrade. Add server-side pagination (cursor or offset-based) and update `TransactionHistoryTable` to support it.
+
 ### Gamer token spending
 Tokens are currently only purchased and credited. The spending side (gamers using tokens for activities) is not yet implemented.
