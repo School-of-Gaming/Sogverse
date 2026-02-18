@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/providers";
+import { ROUTES } from "@/lib/constants";
 
 function CheckoutRedirect() {
   const { user, profile, isLoading } = useAuth();
@@ -17,7 +18,7 @@ function CheckoutRedirect() {
     if (triggered.current) return;
 
     if (!packageId) {
-      window.location.href = "/sorg";
+      window.location.href = ROUTES.sorg;
       return;
     }
 
@@ -25,7 +26,7 @@ function CheckoutRedirect() {
     if (isLoading) return;
 
     if (!user || profile?.role !== "customer") {
-      window.location.href = `/login?redirect=${encodeURIComponent(`/checkout?package=${packageId}`)}`;
+      window.location.href = `${ROUTES.login}?redirect=${encodeURIComponent(`${ROUTES.checkout}?package=${packageId}`)}`;
       return;
     }
 
@@ -34,7 +35,7 @@ function CheckoutRedirect() {
     fetch("/api/checkout/tokens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packageId, returnPath: "/sorg" }),
+      body: JSON.stringify({ packageId, returnPath: ROUTES.sorg }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -54,7 +55,7 @@ function CheckoutRedirect() {
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Something went wrong starting checkout. Please <a href="/sorg" className="underline">go back</a> and try again.
+          Something went wrong starting checkout. Please <a href={ROUTES.sorg} className="underline">go back</a> and try again.
         </AlertDescription>
       </Alert>
     );

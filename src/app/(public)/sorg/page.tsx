@@ -13,6 +13,7 @@ import {
   Coins,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { ROUTES } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -232,10 +233,10 @@ export default function SorgPage() {
               lesson brings you closer to your next reward.
             </p>
             <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">
-              <Link href="/register" className={buttonVariants({ size: "lg" })}>
+              <Link href={ROUTES.register} className={buttonVariants({ size: "lg" })}>
                 Get Started
               </Link>
-              <Link href="/products" className={buttonVariants({ variant: "outline", size: "lg" })}>
+              <Link href={ROUTES.products} className={buttonVariants({ variant: "outline", size: "lg" })}>
                 Explore Products
               </Link>
             </div>

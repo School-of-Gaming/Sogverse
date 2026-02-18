@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useSubscription, useSubscriptionDetails, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
 import { TOKEN_PACKAGES, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
+import { ROUTES } from "@/lib/constants";
 
 const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
   tokens_5: Coins,
@@ -185,7 +186,7 @@ export function TokenPurchaseSection() {
 
   const handleBuy = (packageId: string) => {
     if (!user || profile?.role !== "customer") {
-      window.location.href = `/login?redirect=${encodeURIComponent(`/checkout?package=${packageId}`)}`;
+      window.location.href = `${ROUTES.login}?redirect=${encodeURIComponent(`${ROUTES.checkout}?package=${packageId}`)}`;
       return;
     }
     startCheckout(packageId);

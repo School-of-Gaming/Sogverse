@@ -15,11 +15,11 @@
 
 2. ~~**Subscription status logic duplication.**~~ RESOLVED — Extracted `getSubscriptionState()` into `src/services/tokens/subscription-state.ts`. Returns a discriminated `{ status, hasActiveSubscription }` object. Both `token-purchase-section.tsx` and `subscription-status-card.tsx` now use this shared utility instead of independently computing subscription state. Unit tests added (10 tests) covering all status combinations.
 
-3. **`tokenKeys` not exported from `tokens.queries.ts`.** The query key factory is private, so `token-purchase-section.tsx:52-54` hand-rolls the query keys as raw string arrays (`["tokens", "balance", profile.id]`). If anyone renames a key in the factory, the invalidation silently breaks (stale data after purchase). Export `tokenKeys` and import it in consumers.
+3. ~~**`tokenKeys` not exported from `tokens.queries.ts`.**~~ RESOLVED — `tokenKeys` exported from `tokens.queries.ts` and barrel `tokens/index.ts`. All hand-rolled query key arrays in `token-purchase-section.tsx` replaced with `tokenKeys.balance()`, `tokenKeys.transactions()`, and `tokenKeys.subscription()`.
 
-4. **`PaymentsService` is dead code.** `createCheckoutSession()` always throws, `getProductPrice()` is a trivial passthrough, and the `CheckoutSession` type is unused. All real payment logic lives in `TokensService` and the API routes. Remove or consolidate.
+4. ~~**`PaymentsService` is dead code.**~~ RESOLVED — Deleted `src/services/payments/` directory and removed the barrel re-export from `src/services/index.ts`. All real payment logic lives in `TokensService` and the API routes.
 
-5. **Hardcoded route paths everywhere.** `/login`, `/sorg`, `/customer/sorg`, `/customer/billing`, `/admin/users`, etc. are scattered as string literals across many files despite `src/lib/constants/routes.ts` existing. This will cause silent breakage if routes are renamed.
+5. ~~**Hardcoded route paths everywhere.**~~ RESOLVED — Added centralized `ROUTES` constant to `src/lib/constants/routes.ts` with all page paths (public, auth, admin, customer, gamer, gedu). Updated 12 consumer files: sidebar, header, proxy, all auth forms, token purchase section, checkout page, subscription status card, and sorg page. `PUBLIC_ROUTES`, `AUTH_ROUTES`, and `PROTECTED_ROUTES` arrays now reference `ROUTES` values. Proxy now imports shared `ROUTES` and `ROLE_DASHBOARD_PATHS` instead of maintaining its own duplicate constants.
 
 ---
 

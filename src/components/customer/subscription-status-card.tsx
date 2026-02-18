@@ -17,6 +17,7 @@ import {
 import { useAuth } from "@/providers";
 import { useSubscription, useSubscriptionDetails, useCancelSubscription, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
 import { TOKEN_PACKAGES } from "@/lib/constants/tokens";
+import { ROUTES } from "@/lib/constants";
 
 const SUB_PACKAGE = TOKEN_PACKAGES.find((pkg) => pkg.type === "subscription");
 
@@ -75,7 +76,7 @@ export function SubscriptionStatusCard() {
                 <AlertDescription>
                   Your last payment didn&apos;t go through. Please{" "}
                   <Link
-                    href="/customer/billing"
+                    href={ROUTES.customer.billing}
                     className="font-medium text-destructive underline underline-offset-4 hover:text-destructive/80"
                   >
                     update your payment method
@@ -108,7 +109,7 @@ export function SubscriptionStatusCard() {
             </div>
             <div className="flex items-center gap-2">
               {(isActive || isCanceling || isPastDue) && (
-                <Link href="/customer/billing" className={buttonVariants({ variant: "outline" })}>
+                <Link href={ROUTES.customer.billing} className={buttonVariants({ variant: "outline" })}>
                   Manage Billing
                 </Link>
               )}
