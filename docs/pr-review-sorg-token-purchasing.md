@@ -75,15 +75,11 @@ All three catch blocks now show a destructive `Alert` instead of silently redire
 
 Replaced both `<Link><Button>` instances in `sorg/page.tsx` CTA section with `<Link className={buttonVariants(...)}>`, matching the existing codebase pattern. `Button` import replaced with `buttonVariants`.
 
-### 9. Duplicate Stripe Customer objects on repeat purchases
+### ~~9. Duplicate Stripe Customer objects on repeat purchases~~ RESOLVED
 
-**File:** `checkout/tokens/route.ts:70`
+The checkout route now fetches `stripe_customer_id` from the profile and passes `customer` to Stripe when it exists, falling back to `customer_email` for first-time purchasers. This consolidates payment history under a single Stripe Customer per user. Two integration tests added (returning customer uses `customer`, first-time uses `customer_email`).
 
-```typescript
-customer_email: typedProfile?.email || undefined,
-```
-
-Always passes `customer_email`, even for returning customers. After the first purchase, `stripe_customer_id` is stored on the profile. Subsequent checkouts should use `customer: profile.stripe_customer_id` when it exists, to avoid creating duplicate Stripe Customer objects that fragment payment history.
+Note: In practice, duplicate Customers were not occurring because Stripe's default `customer_creation: "if_required"` in `mode: "payment"` skips Customer creation for one-time purchases. Only subscription checkouts create Customers, and the existing 409 duplicate-subscription guard prevented repeat subscription checkouts. The fix is still correct — it ensures returning subscribers who make one-time purchases get their payment linked to their existing Customer.
 
 ### 10. `origin` header absence causes Stripe API rejection
 
