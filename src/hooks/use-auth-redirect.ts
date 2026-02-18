@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { isSafeRedirectPath } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
 
 /**
  * Manages the redirect-after-auth flow (e.g. user clicks Buy → login/register → checkout).
@@ -17,7 +17,9 @@ export function useAuthRedirect() {
   const redirect = searchParams.get("redirect");
   const [status, setStatus] = useState<string | null>(null);
 
-  const safeRedirect = redirect && isSafeRedirectPath(redirect) ? redirect : null;
+  // Only allow redirects to the checkout page — the sole post-auth redirect destination
+  const safeRedirect =
+    redirect?.startsWith(`${ROUTES.checkout}?`) ? redirect : null;
 
   const navigateAfterAuth = (fallbackPath: string) => {
     if (safeRedirect) {

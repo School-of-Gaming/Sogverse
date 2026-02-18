@@ -335,12 +335,25 @@ describe("POST /api/checkout/tokens", () => {
     expect(params.cancel_url).toContain("/sorg?canceled=true");
   });
 
-  it("should reject absolute URL returnPath to prevent open redirects", async () => {
+  it("should fall back to /sorg for unrecognized returnPath values", async () => {
     mockAuthenticatedCustomer();
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
     await POST(
       createRequest({ packageId: "tokens_5", returnPath: "https://evil.com" })
+    );
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    expect(params.success_url).toContain("/sorg?success=true");
+    expect(params.cancel_url).toContain("/sorg?canceled=true");
+  });
+
+  it("should fall back to /sorg for arbitrary path returnPath", async () => {
+    mockAuthenticatedCustomer();
+    mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
+
+    await POST(
+      createRequest({ packageId: "tokens_5", returnPath: "/some/other/page" })
     );
 
     const params = mockStripeSessionCreate.mock.calls[0][0];

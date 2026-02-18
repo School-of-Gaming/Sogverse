@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
 import { getTokenPackage } from "@/lib/constants/tokens";
-import { isSafeRedirectPath } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -40,10 +40,9 @@ export async function POST(request: Request) {
 
     const { packageId, returnPath } = await request.json();
 
+    // Only two known return destinations — allowlist instead of validating arbitrary paths
     const safePath =
-      typeof returnPath === "string" && isSafeRedirectPath(returnPath)
-        ? returnPath
-        : "/sorg";
+      returnPath === ROUTES.customer.sorg ? ROUTES.customer.sorg : ROUTES.sorg;
 
     const tokenPackage = getTokenPackage(packageId);
     if (!tokenPackage) {

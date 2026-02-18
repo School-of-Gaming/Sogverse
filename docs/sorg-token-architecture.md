@@ -24,7 +24,7 @@ Customer components (src/components/customer/)
 └── SubscriptionStatusCard  — Active/canceled status, renewal date, manage/cancel buttons
 
 Hooks
-└── src/hooks/use-auth-redirect.ts — Manages login → checkout redirect chain
+└── src/hooks/use-auth-redirect.ts — Manages login → checkout redirect (allowlist: /checkout only)
 
 API routes (src/app/api/)
 ├── checkout/tokens/route.ts                    — POST: create Stripe checkout session
@@ -57,9 +57,9 @@ Constants (src/lib/constants/)
 ### 2. One-time purchase (unauthenticated user)
 
 1. User clicks "Buy Now" on `/sorg` while not logged in
-2. Component redirects to `/login?redirect=/sorg` (preserves return path)
-3. User registers/logs in → `useAuthRedirect()` fires `navigateAfterAuth()` → full page navigation back to `/sorg`
-4. Flow continues from step 1 of the authenticated flow
+2. Component redirects to `/login?redirect=/checkout?package=<id>`
+3. User registers/logs in → `useAuthRedirect()` fires `navigateAfterAuth()` → full page navigation to `/checkout?package=<id>` (redirect allowlisted to `/checkout` paths only)
+4. Checkout page creates Stripe session with `returnPath: /sorg`, flow continues from step 3 of the authenticated flow
 
 ### 3. Subscription (initial)
 
