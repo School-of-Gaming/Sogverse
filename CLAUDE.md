@@ -103,14 +103,14 @@ See `docs/sorg-token-architecture.md` for the full component map, data flows, an
 - **`src/lib/constants/tokens.ts`** — `TOKEN_PACKAGES` array defining package IDs, token amounts, and prices. Server-side source of truth for Stripe session creation.
 - **`src/components/tokens/`** — `TokenPurchaseSection` (package cards + purchase flow), `TransactionHistoryTable` (ledger display).
 - **`src/services/tokens/`** — `TokensService` class + React Query hooks (`useTokenBalance`, `useTokenTransactions`, `useSubscription`, etc.).
-- **`src/app/api/checkout/`** — Checkout session creation, verify-session fulfillment, subscription management.
-- **`src/app/api/webhooks/stripe/route.ts`** — Handles subscription renewals (`invoice.paid`), status changes, and cancellations.
+- **`src/app/api/checkout/`** — Checkout session creation, subscription management.
+- **`src/app/api/webhooks/stripe/route.ts`** — Handles all token crediting (`checkout.session.completed`, `invoice.paid`), status changes, and cancellations.
 
 **Rule: All token balance changes must go through the `adjust_token_balance()` RPC.** This SECURITY DEFINER function atomically updates `profiles.token_balance` and inserts a `token_transactions` row, keeping the balance and ledger consistent. Never update `token_balance` directly.
 
 **Rule: Prices are defined server-side only.** The client sends a `packageId`, never a price. The server looks up the package in `TOKEN_PACKAGES` and passes the price to Stripe. This prevents client-side price manipulation.
 
-**Rule: `verify-session` is the primary fulfillment path for initial checkout.** It works on any deployment URL without webhook configuration. The webhook's `checkout.session.completed` handler intentionally does not credit tokens — it only syncs Stripe IDs to the profile. The webhook credits tokens only for subscription renewals (`invoice.paid`).
+**Rule: The Stripe webhook is the sole fulfillment path for all token crediting.** `checkout.session.completed` credits tokens for initial purchases (one-time and first subscription payment). `invoice.paid` credits tokens for subscription renewals. Both use idempotency checks + UNIQUE constraint on `stripe_session_id`.
 
 **Rule: Only customers can purchase tokens.** The checkout API route enforces `role === "customer"`. Admins can manually adjust any user's balance via `POST /api/admin/adjust-tokens`.
 

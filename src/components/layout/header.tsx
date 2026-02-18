@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X, LogOut, Settings, Coins } from "lucide-react";
+import { Menu, X, LogOut, Settings, Coins, Loader2 } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
@@ -27,7 +27,7 @@ export function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isCustomer = profile?.role === "customer";
-  const { data: tokenBalance } = useTokenBalance(
+  const { data: tokenBalance, isFetching: isBalanceFetching } = useTokenBalance(
     profile?.id ?? "",
     isCustomer
   );
@@ -100,10 +100,11 @@ export function Header() {
               {isCustomer && tokenBalance !== undefined && (
                 <Link
                   href="/customer/sorg"
-                  className="group flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium transition-colors hover:bg-accent"
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium"
                 >
-                  <Coins className="h-4 w-4 text-primary group-hover:text-accent-foreground" />
-                  <span>{tokenBalance}</span>
+                  <Coins className="h-4 w-4 text-primary" />
+                  <span className={cn(isBalanceFetching && "opacity-50")}>{tokenBalance}</span>
+                  {isBalanceFetching && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
                 </Link>
               )}
               <div className="relative" ref={dropdownRef}>
@@ -207,11 +208,12 @@ export function Header() {
                 {isCustomer && tokenBalance !== undefined && (
                   <Link
                     href="/customer/sorg"
-                    className="group flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    <Coins className="h-4 w-4 text-primary group-hover:text-accent-foreground" />
-                    {tokenBalance} Sorgs
+                    <Coins className="h-4 w-4 text-primary" />
+                    <span className={cn(isBalanceFetching && "opacity-50")}>{tokenBalance} Sorgs</span>
+                    {isBalanceFetching && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
                   </Link>
                 )}
                 <Link

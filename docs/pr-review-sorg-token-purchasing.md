@@ -7,11 +7,11 @@
 
 ## Architectural & Design Feedback
 
-**Overall impression:** The architecture is solid. Server-side price definitions prevent price manipulation, the atomic `adjust_token_balance` RPC keeps the balance and transaction ledger consistent, and the separation of verify-session (primary fulfillment) vs. webhook (lifecycle events) is a reasonable approach. The new services, hooks, and components follow existing project patterns.
+**Overall impression:** The architecture is solid. Server-side price definitions prevent price manipulation, the atomic `adjust_token_balance` RPC keeps the balance and transaction ledger consistent, and the webhook-driven fulfillment with Supabase Realtime for instant client sync is a clean approach. The new services, hooks, and components follow existing project patterns.
 
 **Key design concerns:**
 
-1. **Fulfillment gap.** The deliberate choice to exclude token crediting from the `checkout.session.completed` webhook means if the client never calls `/api/checkout/verify-session` (browser closed, network error, redirect failure), the user pays but receives no tokens. There is no reconciliation mechanism. Once the UNIQUE constraint (see Critical #1) is in place, the webhook should also attempt token crediting — the constraint guarantees idempotency regardless of execution order.
+1. ~~**Fulfillment gap.**~~ RESOLVED — All token crediting goes through the Stripe webhook (`checkout.session.completed` for initial purchases, `invoice.paid` for renewals). Stripe's automatic retry guarantees delivery even if the first attempt fails. The client uses Supabase Realtime for instant balance updates.
 
 2. **Subscription status logic duplication.** The "is active subscription" logic lives independently in both `token-purchase-section.tsx:184-188` and `subscription-status-card.tsx:50-53`, and both contain the same semantic bug (see Critical #3). Extract a shared `getSubscriptionState()` utility.
 
@@ -140,7 +140,7 @@ Added 4 tests across both test files: RPC failure → 500 and unique constraint 
 - **Server-side price definitions** in `TOKEN_PACKAGES` — the client sends only a `packageId`, never a price. Price manipulation is impossible.
 - **Atomic `adjust_token_balance` RPC** — balance update + transaction insert in a single DB transaction with `CHECK (token_balance >= 0)`.
 - **Stripe webhook signature verification** — proper `constructEvent()` with raw body.
-- **Session ownership cross-check** in verify-session (`session.metadata.userId === user.id`).
+- **Webhook idempotency** — SELECT + UNIQUE constraint on `stripe_session_id` prevents double-crediting.
 - **Admin audit trail** — `admin_id` stored on every manual adjustment.
 - **Cookie-preserving redirect helper** in proxy — fixes a real bug for all redirect flows.
 - **Comprehensive integration tests** for the happy paths and key security gates (auth, role checks, idempotency, session ownership).

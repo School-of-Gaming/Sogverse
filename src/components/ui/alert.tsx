@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const alertVariants = cva(
-  "relative flex items-start gap-3 rounded-lg border p-3 text-sm",
+  "relative flex rounded-lg border text-sm",
   {
     variants: {
       variant: {
@@ -14,9 +14,14 @@ const alertVariants = cva(
         info: "border-info/50 bg-info/10 text-info",
         warning: "border-warning/50 bg-warning/10 text-warning",
       },
+      align: {
+        left: "items-start gap-3 p-3",
+        center: "items-center justify-center gap-2 px-6 py-4",
+      },
     },
     defaultVariants: {
       variant: "default",
+      align: "left",
     },
   }
 );
@@ -24,11 +29,11 @@ const alertVariants = cva(
 const Alert = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
+>(({ className, variant, align, ...props }, ref) => (
   <div
     ref={ref}
     role="alert"
-    className={cn(alertVariants({ variant }), className)}
+    className={cn(alertVariants({ variant, align }), className)}
     {...props}
   />
 ));

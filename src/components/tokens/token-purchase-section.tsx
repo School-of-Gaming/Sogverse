@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, Suspense } from "react";
+import { useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import { Coins, Sparkles, Zap, Loader2, AlertCircle, AlertTriangle, Check, type LucideIcon } from "lucide-react";
+import { Coins, Sparkles, Zap, Loader2, AlertCircle, AlertTriangle, CheckCircle2, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
-import { useSubscription, useSubscriptionDetails, useResumeSubscription, tokenKeys } from "@/services/tokens";
+import { useSubscription, useSubscriptionDetails, useResumeSubscription } from "@/services/tokens";
 import { TOKEN_PACKAGES, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
 
 const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
@@ -21,81 +20,16 @@ const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
 
 function PurchaseFeedback() {
   const searchParams = useSearchParams();
-  const queryClient = useQueryClient();
-  const { profile } = useAuth();
   const success = searchParams.get("success");
-  const sessionId = searchParams.get("session_id");
   const canceled = searchParams.get("canceled");
-  const [verifying, setVerifying] = useState(!!sessionId);
-  const [verified, setVerified] = useState(false);
-  const [error, setError] = useState(false);
-  const verifiedRef = useRef(false);
 
-  useEffect(() => {
-    if (!sessionId || verifiedRef.current) return;
-    verifiedRef.current = true;
-
-    async function verifySession() {
-      try {
-        const res = await fetch("/api/checkout/verify-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId }),
-        });
-
-        if (!res.ok) {
-          setError(true);
-          return;
-        }
-
-        setVerified(true);
-        // Invalidate token queries so balance and transactions update
-        if (profile?.id) {
-          queryClient.invalidateQueries({ queryKey: tokenKeys.balance(profile.id) });
-          queryClient.invalidateQueries({ queryKey: tokenKeys.transactions(profile.id) });
-          queryClient.invalidateQueries({ queryKey: tokenKeys.subscription(profile.id) });
-        }
-      } catch {
-        setError(true);
-      } finally {
-        setVerifying(false);
-      }
-    }
-
-    verifySession();
-  }, [sessionId, profile?.id, queryClient]);
-
-  if (verifying) {
+  if (success) {
     return (
       <div className="mb-8">
-        <Alert variant="info">
-          <Loader2 className="mt-0.5 h-4 w-4 shrink-0 animate-spin" />
-          <AlertDescription>Confirming your purchase...</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="mb-8">
-        <Alert variant="destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+        <Alert variant="success" align="center">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
           <AlertDescription>
-            Something went wrong confirming your purchase. Your payment was received — if your balance doesn&apos;t update shortly, please contact support.
-          </AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  if (success || verified) {
-    return (
-      <div className="mb-8">
-        <Alert variant="success">
-          <Check className="mt-0.5 h-4 w-4 shrink-0" />
-          <AlertDescription>
-            Purchase successful! Your Sorgs have been added to your balance.
+            Purchase successful!
           </AlertDescription>
         </Alert>
       </div>
@@ -105,8 +39,8 @@ function PurchaseFeedback() {
   if (canceled) {
     return (
       <div className="mb-8">
-        <Alert variant="warning">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+        <Alert variant="warning" align="center">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
           <AlertDescription>
             Purchase canceled. No charges were made.
           </AlertDescription>

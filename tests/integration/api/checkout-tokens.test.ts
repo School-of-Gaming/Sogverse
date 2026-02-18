@@ -317,7 +317,7 @@ describe("POST /api/checkout/tokens", () => {
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.success_url).toBe(
-      "https://myapp.vercel.app/customer/sorg?success=true&session_id={CHECKOUT_SESSION_ID}"
+      "https://myapp.vercel.app/customer/sorg?success=true"
     );
     expect(params.cancel_url).toBe(
       "https://myapp.vercel.app/customer/sorg?canceled=true"

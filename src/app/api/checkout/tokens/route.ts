@@ -90,7 +90,7 @@ export async function POST(request: Request) {
         tokenAmount: String(tokenPackage.tokens),
         packageType: tokenPackage.type,
       },
-      success_url: `${origin}${safePath}?success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}${safePath}?success=true`,
       cancel_url: `${origin}${safePath}?canceled=true`,
     };
 

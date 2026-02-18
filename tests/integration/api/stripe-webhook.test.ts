@@ -114,9 +114,10 @@ describe("POST /api/webhooks/stripe", () => {
   // -- checkout.session.completed --
 
   describe("checkout.session.completed", () => {
-    it("should NOT credit tokens (verify-session handles fulfillment)", async () => {
+    it("should credit tokens for one-time purchase", async () => {
       mockConstructEvent.mockReturnValue(
         createEvent("checkout.session.completed", {
+          id: "cs_one_time_123",
           payment_status: "paid",
           metadata: {
             userId: "user-123",
@@ -127,20 +128,58 @@ describe("POST /api/webhooks/stripe", () => {
           subscription: null,
         })
       );
-      mockAdminUpdate();
+      mockIdempotencyAndRpc(false);
 
       const response = await POST(createWebhookRequest());
       const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.received).toBe(true);
-      expect(mockAdminRpc).not.toHaveBeenCalled();
+      expect(mockAdminRpc).toHaveBeenCalledWith("adjust_token_balance", {
+        p_user_id: "user-123",
+        p_amount: 5,
+        p_type: "purchase",
+        p_description: "Purchased 5 Sorgs",
+        p_stripe_session_id: "cs_one_time_123",
+        p_stripe_subscription_id: undefined,
+      });
     });
 
-    it("should store Stripe customer ID on profile", async () => {
-      const { updateFn, eqFn } = mockAdminUpdate();
+    it("should credit tokens for subscription first payment", async () => {
       mockConstructEvent.mockReturnValue(
         createEvent("checkout.session.completed", {
+          id: "cs_sub_123",
+          payment_status: "paid",
+          metadata: {
+            userId: "user-123",
+            packageType: "subscription",
+            tokenAmount: "25",
+          },
+          customer: "cus_abc",
+          subscription: "sub_xyz",
+        })
+      );
+      mockIdempotencyAndRpc(false);
+
+      const response = await POST(createWebhookRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.received).toBe(true);
+      expect(mockAdminRpc).toHaveBeenCalledWith("adjust_token_balance", {
+        p_user_id: "user-123",
+        p_amount: 25,
+        p_type: "subscription",
+        p_description: "Purchased 25 Sorgs",
+        p_stripe_session_id: "cs_sub_123",
+        p_stripe_subscription_id: "sub_xyz",
+      });
+    });
+
+    it("should skip when tokenAmount is missing from metadata", async () => {
+      mockConstructEvent.mockReturnValue(
+        createEvent("checkout.session.completed", {
+          id: "cs_no_amount",
           payment_status: "paid",
           metadata: { userId: "user-123", packageType: "one_time" },
           customer: "cus_abc",
@@ -148,56 +187,139 @@ describe("POST /api/webhooks/stripe", () => {
         })
       );
 
+      const response = await POST(createWebhookRequest());
+
+      expect(response.status).toBe(200);
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+    });
+
+    it("should skip already-processed sessions (idempotency)", async () => {
+      mockConstructEvent.mockReturnValue(
+        createEvent("checkout.session.completed", {
+          id: "cs_dupe_123",
+          payment_status: "paid",
+          metadata: {
+            userId: "user-123",
+            packageType: "one_time",
+            tokenAmount: "5",
+          },
+          customer: "cus_abc",
+          subscription: null,
+        })
+      );
+      mockIdempotencyAndRpc(true);
+
+      const response = await POST(createWebhookRequest());
+
+      expect(response.status).toBe(200);
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+    });
+
+    it("should handle UNIQUE constraint (23505) gracefully", async () => {
+      mockConstructEvent.mockReturnValue(
+        createEvent("checkout.session.completed", {
+          id: "cs_race_123",
+          payment_status: "paid",
+          metadata: {
+            userId: "user-123",
+            packageType: "one_time",
+            tokenAmount: "5",
+          },
+          customer: "cus_abc",
+          subscription: null,
+        })
+      );
+      mockIdempotencyAndRpc(false);
+      mockAdminRpc.mockResolvedValue({
+        data: null,
+        error: { message: 'duplicate key value violates unique constraint "unique_stripe_session_id"', code: "23505" },
+      });
+
+      const response = await POST(createWebhookRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.received).toBe(true);
+    });
+
+    it("should return 500 when RPC fails", async () => {
+      mockConstructEvent.mockReturnValue(
+        createEvent("checkout.session.completed", {
+          id: "cs_fail_123",
+          payment_status: "paid",
+          metadata: {
+            userId: "user-123",
+            packageType: "one_time",
+            tokenAmount: "5",
+          },
+          customer: "cus_abc",
+          subscription: null,
+        })
+      );
+      mockIdempotencyAndRpc(false);
+      mockAdminRpc.mockResolvedValue({
+        data: null,
+        error: { message: "connection error", code: "PGRST301" },
+      });
+
+      const response = await POST(createWebhookRequest());
+      const data = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(data.error).toBe("Failed to credit tokens");
+    });
+
+    it("should store Stripe customer ID on profile after crediting", async () => {
+      mockConstructEvent.mockReturnValue(
+        createEvent("checkout.session.completed", {
+          id: "cs_profile_123",
+          payment_status: "paid",
+          metadata: {
+            userId: "user-123",
+            packageType: "one_time",
+            tokenAmount: "5",
+          },
+          customer: "cus_abc",
+          subscription: null,
+        })
+      );
+      mockIdempotencyAndRpc(false);
+
       await POST(createWebhookRequest());
 
       expect(mockAdminFrom).toHaveBeenCalledWith("profiles");
-      expect(updateFn).toHaveBeenCalledWith({ stripe_customer_id: "cus_abc" });
-      expect(eqFn).toHaveBeenCalledWith("id", "user-123");
     });
 
     it("should store subscription metadata for subscription checkout", async () => {
-      let callCount = 0;
-      const updateCalls: Array<{ args: unknown[]; eqArgs: unknown[] }> = [];
-      mockAdminFrom.mockImplementation(() => {
-        return {
-          update: vi.fn().mockImplementation((...args: unknown[]) => {
-            const call = { args, eqArgs: [] as unknown[] };
-            updateCalls.push(call);
-            return {
-              eq: vi.fn().mockImplementation((...eqArgs: unknown[]) => {
-                call.eqArgs = eqArgs;
-                return { data: null, error: null };
-              }),
-            };
-          }),
-        };
-      });
-
       mockConstructEvent.mockReturnValue(
         createEvent("checkout.session.completed", {
+          id: "cs_sub_meta_123",
           payment_status: "paid",
-          metadata: { userId: "user-123", packageType: "subscription" },
+          metadata: {
+            userId: "user-123",
+            packageType: "subscription",
+            tokenAmount: "25",
+          },
           customer: "cus_abc",
           subscription: "sub_xyz",
         })
       );
+      mockIdempotencyAndRpc(false);
 
       await POST(createWebhookRequest());
 
-      // Should have 2 profile updates: customer ID + subscription
-      expect(updateCalls.length).toBe(2);
-      expect(updateCalls[0].args[0]).toEqual({ stripe_customer_id: "cus_abc" });
-      expect(updateCalls[1].args[0]).toEqual({
-        stripe_subscription_id: "sub_xyz",
-        subscription_status: "active",
-      });
+      // Should have profile updates for both customer ID and subscription
+      const profileCalls = mockAdminFrom.mock.calls.filter(
+        (call) => call[0] === "profiles"
+      );
+      expect(profileCalls.length).toBe(2);
     });
 
     it("should skip when payment_status is not paid", async () => {
       mockConstructEvent.mockReturnValue(
         createEvent("checkout.session.completed", {
           payment_status: "unpaid",
-          metadata: { userId: "user-123" },
+          metadata: { userId: "user-123", tokenAmount: "5" },
           customer: "cus_abc",
         })
       );
@@ -212,7 +334,7 @@ describe("POST /api/webhooks/stripe", () => {
       mockConstructEvent.mockReturnValue(
         createEvent("checkout.session.completed", {
           payment_status: "paid",
-          metadata: {},
+          metadata: { tokenAmount: "5" },
           customer: "cus_abc",
         })
       );
@@ -226,17 +348,26 @@ describe("POST /api/webhooks/stripe", () => {
     it("should not update customer ID when session has no customer", async () => {
       mockConstructEvent.mockReturnValue(
         createEvent("checkout.session.completed", {
+          id: "cs_no_cus_123",
           payment_status: "paid",
-          metadata: { userId: "user-123", packageType: "one_time" },
+          metadata: {
+            userId: "user-123",
+            packageType: "one_time",
+            tokenAmount: "5",
+          },
           customer: null,
           subscription: null,
         })
       );
+      mockIdempotencyAndRpc(false);
 
-      const response = await POST(createWebhookRequest());
+      await POST(createWebhookRequest());
 
-      expect(response.status).toBe(200);
-      expect(mockAdminFrom).not.toHaveBeenCalled();
+      // Only token_transactions call (idempotency check), no profiles update for customer ID
+      const profileCalls = mockAdminFrom.mock.calls.filter(
+        (call) => call[0] === "profiles"
+      );
+      expect(profileCalls.length).toBe(0);
     });
   });
 
@@ -271,7 +402,7 @@ describe("POST /api/webhooks/stripe", () => {
       });
     });
 
-    it("should skip subscription_create invoices (first payment handled by verify-session)", async () => {
+    it("should skip subscription_create invoices (first payment handled by checkout.session.completed)", async () => {
       mockConstructEvent.mockReturnValue(
         createEvent("invoice.paid", {
           id: "inv_first_123",

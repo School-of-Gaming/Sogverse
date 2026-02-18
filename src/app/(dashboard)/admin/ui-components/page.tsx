@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Info,
   Coins,
+  Loader2,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
+import { TokenBalanceCard } from "@/components/customer";
 import { useAuth } from "@/providers";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
 import { computeGlowStyle } from "@/lib/constants/spatial.config";
@@ -421,18 +423,19 @@ export default function AdminUIComponentsPage() {
         <p className="text-sm text-muted-foreground mt-4 mb-2">Sorg balance badge (header)</p>
         <div className="flex flex-wrap items-center gap-6">
           <div className="flex flex-col items-center gap-1.5">
-            <span className="group flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium">
+            <span className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium">
               <Coins className="h-4 w-4 text-primary" />
               <span>125</span>
             </span>
             <span className="text-xs text-muted-foreground">Default</span>
           </div>
           <div className="flex flex-col items-center gap-1.5">
-            <span className="flex items-center gap-1.5 rounded-full border border-border bg-accent px-3 py-1 text-sm font-medium text-accent-foreground">
-              <Coins className="h-4 w-4 text-accent-foreground" />
-              <span>125</span>
+            <span className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium">
+              <Coins className="h-4 w-4 text-primary" />
+              <span className="opacity-50">125</span>
+              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
             </span>
-            <span className="text-xs text-muted-foreground">Hover state</span>
+            <span className="text-xs text-muted-foreground">Updating balance</span>
           </div>
         </div>
       </Section>
@@ -625,6 +628,23 @@ export default function AdminUIComponentsPage() {
             <Alert variant="destructive">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <AlertDescription>Something went wrong. Please try again.</AlertDescription>
+            </Alert>
+          </div>
+        </SubSection>
+
+        <SubSection title="Centered (banners)">
+          <div className="space-y-3 max-w-lg">
+            <Alert variant="success" align="center">
+              <Check className="h-4 w-4 shrink-0" />
+              <AlertDescription>Purchase successful!</AlertDescription>
+            </Alert>
+            <Alert variant="warning" align="center">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <AlertDescription>Purchase canceled. No charges were made.</AlertDescription>
+            </Alert>
+            <Alert variant="destructive" align="center">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <AlertDescription>Something went wrong starting checkout. Please try again.</AlertDescription>
             </Alert>
           </div>
         </SubSection>
@@ -841,6 +861,11 @@ export default function AdminUIComponentsPage() {
               </Card>
             ))}
           </div>
+        </SubSection>
+
+        {/* -- Token Balance Card -- */}
+        <SubSection title="Token Balance Card (customer/sorg)">
+          <TokenBalanceCard />
         </SubSection>
 
         {/* -- Loading Skeleton -- */}
