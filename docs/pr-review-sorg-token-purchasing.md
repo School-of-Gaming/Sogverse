@@ -13,7 +13,7 @@
 
 1. ~~**Fulfillment gap.**~~ RESOLVED — All token crediting goes through the Stripe webhook (`checkout.session.completed` for initial purchases, `invoice.paid` for renewals). Stripe's automatic retry guarantees delivery even if the first attempt fails. The client uses Supabase Realtime for instant balance updates.
 
-2. **Subscription status logic duplication.** The "is active subscription" logic lives independently in both `token-purchase-section.tsx:184-188` and `subscription-status-card.tsx:50-53`, and both contain the same semantic bug (see Critical #3). Extract a shared `getSubscriptionState()` utility.
+2. ~~**Subscription status logic duplication.**~~ RESOLVED — Extracted `getSubscriptionState()` into `src/services/tokens/subscription-state.ts`. Returns a discriminated `{ status, hasActiveSubscription }` object. Both `token-purchase-section.tsx` and `subscription-status-card.tsx` now use this shared utility instead of independently computing subscription state. Unit tests added (10 tests) covering all status combinations.
 
 3. **`tokenKeys` not exported from `tokens.queries.ts`.** The query key factory is private, so `token-purchase-section.tsx:52-54` hand-rolls the query keys as raw string arrays (`["tokens", "balance", profile.id]`). If anyone renames a key in the factory, the invalidation silently breaks (stale data after purchase). Export `tokenKeys` and import it in consumers.
 
@@ -108,8 +108,8 @@ Added 4 tests across both test files: RPC failure → 500 and unique constraint 
 ### 15. `AlertTitle` ref type mismatch
 **File:** `alert.tsx:35` — `forwardRef<HTMLParagraphElement, ...>` but renders `<h5>` (should be `HTMLHeadingElement`).
 
-### 16. `TOKEN_BASE_RATE_CENTS` is dead code
-**File:** `tokens.ts:1` — defined but never imported anywhere. Remove or use it to compute `savingsCents` dynamically.
+### ~~16. `TOKEN_BASE_RATE_CENTS` is dead code~~ NOT AN ISSUE
+Imported and used in `admin/users/[id]/page.tsx` for the admin token-adjustment UI display.
 
 ### 17. `TokenPackageId` type manually maintained
 **File:** `tokens.ts:15` — should be derived from the array: `type TokenPackageId = typeof TOKEN_PACKAGES[number]["id"]`.

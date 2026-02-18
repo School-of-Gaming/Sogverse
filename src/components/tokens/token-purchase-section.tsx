@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
-import { useSubscription, useSubscriptionDetails, useResumeSubscription } from "@/services/tokens";
+import { useSubscription, useSubscriptionDetails, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
 import { TOKEN_PACKAGES, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
 
 const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
@@ -157,10 +157,7 @@ export function TokenPurchaseSection() {
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
   const [loadingPackage, setLoadingPackage] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState(false);
-  const hasActiveSubscription =
-    (subscription?.subscription_status === "active" ||
-      subscription?.subscription_status === "past_due") &&
-    !!subscription?.stripe_subscription_id;
+  const subState = getSubscriptionState(subscription, details);
 
   const startCheckout = useCallback(async (packageId: string) => {
     setLoadingPackage(packageId);
@@ -221,8 +218,8 @@ export function TokenPurchaseSection() {
             onResume={() => resumeMutation.mutate()}
             isLoading={loadingPackage === pkg.id}
             isResuming={resumeMutation.isPending}
-            hasActiveSubscription={hasActiveSubscription}
-            isCanceling={details?.cancelAtPeriodEnd === true}
+            hasActiveSubscription={subState.hasActiveSubscription}
+            isCanceling={subState.status === "canceling"}
           />
         ))}
       </div>

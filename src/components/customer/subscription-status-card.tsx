@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/providers";
-import { useSubscription, useSubscriptionDetails, useCancelSubscription, useResumeSubscription } from "@/services/tokens";
+import { useSubscription, useSubscriptionDetails, useCancelSubscription, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
 import { TOKEN_PACKAGES } from "@/lib/constants/tokens";
 
 const SUB_PACKAGE = TOKEN_PACKAGES.find((pkg) => pkg.type === "subscription");
@@ -44,13 +44,13 @@ export function SubscriptionStatusCard() {
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  if (!subscription?.stripe_subscription_id) return null;
-  // Stripe "canceled" means fully ended — don't show the card
-  if (subscription.subscription_status === "canceled") return null;
+  const subState = getSubscriptionState(subscription, details);
 
-  const isPastDue = subscription.subscription_status === "past_due";
-  const isCanceling = details?.cancelAtPeriodEnd === true;
-  const isActive = subscription.subscription_status === "active" && !isCanceling;
+  if (subState.status === "none" || subState.status === "canceled") return null;
+
+  const isPastDue = subState.status === "past_due";
+  const isCanceling = subState.status === "canceling";
+  const isActive = subState.status === "active";
 
   const handleCancel = async () => {
     await cancelMutation.mutateAsync();
@@ -103,7 +103,7 @@ export function SubscriptionStatusCard() {
                 )}
                 {isCanceling && !details?.currentPeriodEnd && "Canceled — access until end of billing period"}
                 {isPastDue && "Past due — update payment to continue"}
-                {!isActive && !isCanceling && !isPastDue && `Status: ${subscription.subscription_status}`}
+                {!isActive && !isCanceling && !isPastDue && `Status: ${subState.status}`}
               </p>
             </div>
             <div className="flex items-center gap-2">
