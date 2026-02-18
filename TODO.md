@@ -158,6 +158,15 @@ Affected tables and actions (11 issues):
 
 **When:** Before production launch or when table sizes grow large enough for this to matter.
 
+### Clarify Service Class Pattern for Mixed Data Sources
+
+Service classes (e.g. `TokensService`) mix two data-fetching patterns: some methods query Supabase directly via the injected client, while others use `fetch()` to call API routes (for operations that need server-side secrets like Stripe). The constructor-injected Supabase client is unused by the fetch-based methods.
+
+- [ ] Decide on a convention: split into separate classes (e.g. `TokensReader` for Supabase queries, `TokensActions` for API calls), or document the mixed pattern as intentional
+- [ ] Apply the chosen convention across all service classes
+
+**Affected services:** `src/services/tokens/tokens.service.ts` (and any future services that need server-side API calls).
+
 ### Move Sign-In to Server-Side API Route
 
 Login forms (`login-form.tsx`, `gamer-login-form.tsx`) currently call `supabase.auth.signInWithPassword()` on the browser client, which violates the "never use browser client for auth" rule. They work around the missing profile hydration by doing a full page navigation (`window.location.href`) after sign-in.
