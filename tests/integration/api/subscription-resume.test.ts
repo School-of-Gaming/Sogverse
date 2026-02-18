@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/checkout/subscription/resume/route";
-import { mockSupabaseSuccess } from "../../mocks/supabase";
+import { mockUnauthenticated, mockAuthenticatedSubscriptionProfile } from "../../mocks/stripe";
 
 // --- Mocks ---
 
@@ -26,34 +26,6 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
-// --- Helpers ---
-
-function mockUnauthenticated() {
-  mockGetUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: "No session" },
-  });
-}
-
-function mockAuthenticatedProfile(overrides: Record<string, unknown> = {}) {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: "user-123" } },
-    error: null,
-  });
-
-  mockFromSelect.mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue(
-        mockSupabaseSuccess({
-          role: "customer",
-          stripe_subscription_id: "sub_active_123",
-          ...overrides,
-        })
-      ),
-    }),
-  });
-}
-
 // --- Tests ---
 
 describe("POST /api/checkout/subscription/resume", () => {
@@ -64,7 +36,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   // -- Auth & Authorization --
 
   it("should return 401 when not authenticated", async () => {
-    mockUnauthenticated();
+    mockUnauthenticated(mockGetUser);
 
     const response = await POST();
     const data = await response.json();
@@ -74,7 +46,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   });
 
   it("should return 403 for non-customer role", async () => {
-    mockAuthenticatedProfile({ role: "gamer" });
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect, { role: "gamer" });
 
     const response = await POST();
     const data = await response.json();
@@ -84,7 +56,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   });
 
   it("should return 403 for admin role", async () => {
-    mockAuthenticatedProfile({ role: "admin" });
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect, { role: "admin" });
 
     const response = await POST();
     const data = await response.json();
@@ -95,7 +67,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   // -- Validation --
 
   it("should return 400 when customer has no subscription", async () => {
-    mockAuthenticatedProfile({ stripe_subscription_id: null });
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect, { stripe_subscription_id: null });
 
     const response = await POST();
     const data = await response.json();
@@ -107,7 +79,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   // -- Happy path --
 
   it("should resume subscription by setting cancel_at_period_end to false", async () => {
-    mockAuthenticatedProfile();
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect);
     mockSubscriptionsUpdate.mockResolvedValue({ id: "sub_active_123" });
 
     const response = await POST();
@@ -121,7 +93,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   });
 
   it("should return 500 when Stripe API fails", async () => {
-    mockAuthenticatedProfile();
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect);
     mockSubscriptionsUpdate.mockRejectedValue(new Error("Stripe error"));
 
     const response = await POST();
