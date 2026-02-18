@@ -158,6 +158,16 @@ Affected tables and actions (11 issues):
 
 **When:** Before production launch or when table sizes grow large enough for this to matter.
 
+### Centralize Date and Currency Formatting for Localization
+
+Date and currency formatting is currently scattered: `subscription-status-card.tsx` has local `formatDate()` and `formatPrice()` functions, `token-purchase-section.tsx` and `admin/users/[id]/page.tsx` use inline formatting (`` `$${(cents / 100).toFixed(2)}` ``), and `lib/utils.ts` already exports `formatCurrency()` and `formatDate()`. When the site is localized, all formatting must go through a single set of locale-aware helpers.
+
+- [ ] Audit all date/currency formatting across the codebase
+- [ ] Consolidate into `lib/utils.ts` helpers (or a dedicated `lib/format.ts`) that accept locale parameters
+- [ ] Replace all inline formatting with the shared helpers
+
+**Why:** Prerequisite for localization. Inline formatting with hardcoded `"en-US"` and `$` prefixes will break for non-US locales.
+
 ### Clarify Service Class Pattern for Mixed Data Sources
 
 Service classes (e.g. `TokensService`) mix two data-fetching patterns: some methods query Supabase directly via the injected client, while others use `fetch()` to call API routes (for operations that need server-side secrets like Stripe). The constructor-injected Supabase client is unused by the fetch-based methods.
