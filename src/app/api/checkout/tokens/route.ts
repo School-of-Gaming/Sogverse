@@ -64,7 +64,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const origin = request.headers.get("origin") || "";
+    const origin =
+      request.headers.get("origin") ||
+      `https://${request.headers.get("host")}`;
 
     // Reuse existing Stripe customer to avoid creating duplicates
     const customerParams: Pick<

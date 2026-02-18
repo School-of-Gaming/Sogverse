@@ -38,7 +38,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const origin = request.headers.get("origin") || "";
+    const origin =
+      request.headers.get("origin") ||
+      `https://${request.headers.get("host")}`;
 
     const session = await stripe.billingPortal.sessions.create({
       customer: typedProfile.stripe_customer_id,

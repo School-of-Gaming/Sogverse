@@ -81,15 +81,9 @@ The checkout route now fetches `stripe_customer_id` from the profile and passes 
 
 Note: In practice, duplicate Customers were not occurring because Stripe's default `customer_creation: "if_required"` in `mode: "payment"` skips Customer creation for one-time purchases. Only subscription checkouts create Customers, and the existing 409 duplicate-subscription guard prevented repeat subscription checkouts. The fix is still correct — it ensures returning subscribers who make one-time purchases get their payment linked to their existing Customer.
 
-### 10. `origin` header absence causes Stripe API rejection
+### ~~10. `origin` header absence causes Stripe API rejection~~ RESOLVED
 
-**Files:** `checkout/tokens/route.ts:66`, `subscription/billing-portal/route.ts:41`
-
-```typescript
-const origin = request.headers.get("origin") || "";
-```
-
-If origin is absent (some proxies, non-browser clients), `success_url` becomes a relative URL. Stripe requires absolute URLs and will reject the call with a 500. Use `process.env.NEXT_PUBLIC_APP_URL` as a fallback.
+Both routes now fall back to the `host` header (`https://${request.headers.get("host")}`) instead of an empty string. This works correctly across all deployment environments (dev, prod, feature branch previews) without requiring an env var.
 
 ### 11. No pagination on `getTransactions`
 
