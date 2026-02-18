@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
-import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -55,7 +55,7 @@ export function LoginForm() {
         const role = (profile as { role: UserRole } | null)?.role;
         const dashboardPath = role
           ? ROLE_DASHBOARD_PATHS[role]
-          : "/customer";
+          : ROUTES.customer.dashboard;
 
         // Full page navigation so the root layout re-runs server-side
         // and hydrates AuthProvider with the correct initialProfile.
@@ -105,7 +105,7 @@ export function LoginForm() {
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
               <Link
-                href="/forgot-password"
+                href={ROUTES.forgotPassword}
                 className="text-sm text-primary hover:underline"
               >
                 Forgot password?
@@ -129,7 +129,7 @@ export function LoginForm() {
           </Button>
           <div className="text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary hover:underline">
+            <Link href={ROUTES.register} className="text-primary hover:underline">
               Sign up
             </Link>
           </div>
@@ -143,7 +143,7 @@ export function LoginForm() {
               </span>
             </div>
           </div>
-          <Link href="/gamer-login" className="w-full">
+          <Link href={ROUTES.gamerLogin} className="w-full">
             <Button variant="outline" type="button" className="w-full">
               Gamer Login
             </Button>

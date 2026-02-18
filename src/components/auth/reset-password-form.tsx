@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
+import { ROUTES } from "@/lib/constants";
 
 const resetPasswordSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -47,7 +48,7 @@ export function ResetPasswordForm() {
       }
 
       setSuccess(true);
-      setTimeout(() => router.push("/login"), 3000);
+      setTimeout(() => router.push(ROUTES.login), 3000);
     } catch (err) {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
@@ -70,7 +71,7 @@ export function ResetPasswordForm() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex flex-col space-y-4">
-          <Link href="/login" className="w-full">
+          <Link href={ROUTES.login} className="w-full">
             <Button variant="outline" className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Login

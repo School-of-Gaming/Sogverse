@@ -19,6 +19,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
+import { ROUTES } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
 interface NavItem {
@@ -30,104 +31,104 @@ interface NavItem {
 const navItemsByRole: Record<UserRole, NavItem[]> = {
   admin: [
     {
-      href: "/admin",
+      href: ROUTES.admin.dashboard,
       label: "Dashboard",
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
-    { href: "/admin/users", label: "Users", icon: <Users className="h-5 w-5" /> },
+    { href: ROUTES.admin.users, label: "Users", icon: <Users className="h-5 w-5" /> },
     {
-      href: "/admin/products",
+      href: ROUTES.admin.products,
       label: "Products",
       icon: <Package className="h-5 w-5" />,
     },
     {
-      href: "/admin/voice",
+      href: ROUTES.admin.voice,
       label: "Voice Rooms",
       icon: <Mic className="h-5 w-5" />,
     },
     {
-      href: "/admin/ui-components",
+      href: ROUTES.admin.uiComponents,
       label: "UI Components",
       icon: <Palette className="h-5 w-5" />,
     },
     {
-      href: "/settings",
+      href: ROUTES.settings,
       label: "Settings",
       icon: <Settings className="h-5 w-5" />,
     },
   ],
   customer: [
     {
-      href: "/customer",
+      href: ROUTES.customer.dashboard,
       label: "Dashboard",
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
-      href: "/customer/gamers",
+      href: ROUTES.customer.gamers,
       label: "My Gamers",
       icon: <Gamepad2 className="h-5 w-5" />,
     },
     {
-      href: "/customer/gamers/add",
+      href: ROUTES.customer.gamersAdd,
       label: "Add Gamer",
       icon: <UserPlus className="h-5 w-5" />,
     },
     {
-      href: "/customer/orders",
+      href: ROUTES.customer.orders,
       label: "Orders",
       icon: <ShoppingBag className="h-5 w-5" />,
     },
     {
-      href: "/settings",
+      href: ROUTES.settings,
       label: "Settings",
       icon: <Settings className="h-5 w-5" />,
     },
   ],
   gamer: [
     {
-      href: "/gamer",
+      href: ROUTES.gamer.dashboard,
       label: "Home",
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
-      href: "/gamer/games",
+      href: ROUTES.gamer.games,
       label: "My Games",
       icon: <Gamepad2 className="h-5 w-5" />,
     },
     {
-      href: "/gamer/voice",
+      href: ROUTES.gamer.voice,
       label: "Voice Rooms",
       icon: <Mic className="h-5 w-5" />,
     },
     {
-      href: "/settings",
+      href: ROUTES.settings,
       label: "Settings",
       icon: <Settings className="h-5 w-5" />,
     },
   ],
   gedu: [
     {
-      href: "/gedu",
+      href: ROUTES.gedu.dashboard,
       label: "Dashboard",
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
-      href: "/gedu/students",
+      href: ROUTES.gedu.students,
       label: "Students",
       icon: <Users className="h-5 w-5" />,
     },
     {
-      href: "/gedu/courses",
+      href: ROUTES.gedu.courses,
       label: "Courses",
       icon: <GraduationCap className="h-5 w-5" />,
     },
     {
-      href: "/gedu/voice",
+      href: ROUTES.gedu.voice,
       label: "Voice Rooms",
       icon: <Mic className="h-5 w-5" />,
     },
     {
-      href: "/settings",
+      href: ROUTES.settings,
       label: "Settings",
       icon: <Settings className="h-5 w-5" />,
     },
@@ -168,10 +169,10 @@ export function Sidebar() {
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
-            (item.href !== "/admin" &&
-              item.href !== "/customer" &&
-              item.href !== "/gamer" &&
-              item.href !== "/gedu" &&
+            (item.href !== ROUTES.admin.dashboard &&
+              item.href !== ROUTES.customer.dashboard &&
+              item.href !== ROUTES.gamer.dashboard &&
+              item.href !== ROUTES.gedu.dashboard &&
               pathname.startsWith(item.href));
 
           return (

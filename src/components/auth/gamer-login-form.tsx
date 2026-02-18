@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { generateGamerEmail } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
 
 const gamerLoginSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -53,7 +54,7 @@ export function GamerLoginForm() {
       if (data.user) {
         // Full page navigation so the root layout re-runs server-side
         // and hydrates AuthProvider with the correct initialProfile.
-        window.location.href = "/gamer";
+        window.location.href = ROUTES.gamer.dashboard;
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -130,7 +131,7 @@ export function GamerLoginForm() {
               </span>
             </div>
           </div>
-          <Link href="/login" className="w-full">
+          <Link href={ROUTES.login} className="w-full">
             <Button variant="outline" type="button" className="w-full">
               Parent/Adult Login
             </Button>

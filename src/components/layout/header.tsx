@@ -9,13 +9,13 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
 
 const publicNavLinks = [
-  { href: "/", label: "Home" },
-  { href: "/products", label: "Products" },
-  { href: "/sorg", label: "Sorg" },
-  { href: "/about", label: "About" },
+  { href: ROUTES.home, label: "Home" },
+  { href: ROUTES.products, label: "Products" },
+  { href: ROUTES.sorg, label: "Sorg" },
+  { href: ROUTES.about, label: "About" },
 ];
 
 export function Header() {
@@ -111,7 +111,7 @@ export function Header() {
                       </p>
                     </div>
                     <Link
-                      href="/settings"
+                      href={ROUTES.settings}
                       onClick={() => setDropdownOpen(false)}
                       className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
                     >
@@ -131,12 +131,12 @@ export function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Link href="/login">
+              <Link href={ROUTES.login}>
                 <Button variant="ghost" size="sm">
                   Sign In
                 </Button>
               </Link>
-              <Link href="/register">
+              <Link href={ROUTES.register}>
                 <Button size="sm">Get Started</Button>
               </Link>
             </div>
@@ -189,7 +189,7 @@ export function Header() {
                   </Link>
                 )}
                 <Link
-                  href="/settings"
+                  href={ROUTES.settings}
                   className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -208,14 +208,14 @@ export function Header() {
             ) : (
               <>
                 <Link
-                  href="/login"
+                  href={ROUTES.login}
                   className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign In
                 </Link>
                 <Link
-                  href="/register"
+                  href={ROUTES.register}
                   className="block rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >

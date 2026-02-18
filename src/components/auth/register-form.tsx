@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
+import { ROUTES } from "@/lib/constants";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -90,7 +91,7 @@ export function RegisterForm() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex flex-col space-y-4">
-          <Link href="/login" className="w-full">
+          <Link href={ROUTES.login} className="w-full">
             <Button variant="outline" className="w-full">
               Back to Login
             </Button>
@@ -184,7 +185,7 @@ export function RegisterForm() {
           </p>
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href={ROUTES.login} className="text-primary hover:underline">
               Sign in
             </Link>
           </div>

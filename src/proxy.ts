@@ -2,20 +2,14 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
 import type { UserRole } from "@/types";
+import { ROUTES } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ["/", "/products", "/about"];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.about];
 
 // Routes for authentication (login, register, etc.)
-const AUTH_ROUTES = ["/login", "/gamer-login", "/register", "/forgot-password"];
-
-// Role-specific dashboard routes
-const ROLE_ROUTES: Record<string, string> = {
-  admin: "/admin",
-  customer: "/customer",
-  gamer: "/gamer",
-  gedu: "/gedu",
-};
+const AUTH_ROUTES = [ROUTES.login, ROUTES.gamerLogin, ROUTES.register, ROUTES.forgotPassword];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -79,7 +73,7 @@ export async function proxy(request: NextRequest) {
 
     if (profile) {
       const profileRole = (profile as { role: UserRole }).role;
-      const dashboardPath = ROLE_ROUTES[profileRole] || "/customer";
+      const dashboardPath = ROLE_DASHBOARD_PATHS[profileRole] || ROUTES.customer.dashboard;
       return redirect(new URL(dashboardPath, request.url));
     }
   }
@@ -91,7 +85,7 @@ export async function proxy(request: NextRequest) {
 
   // For protected routes, require authentication
   if (!user) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL(ROUTES.login, request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return redirect(loginUrl);
   }
@@ -104,22 +98,22 @@ export async function proxy(request: NextRequest) {
     .single();
 
   if (!profileData) {
-    return redirect(new URL("/login", request.url));
+    return redirect(new URL(ROUTES.login, request.url));
   }
 
   // Check role-based access
   const userRole = (profileData as { role: UserRole }).role;
 
   // Settings is accessible to all authenticated users
-  if (pathname.startsWith("/settings")) {
+  if (pathname.startsWith(ROUTES.settings)) {
     return supabaseResponse;
   }
 
   // Check if user has access to the requested route
-  for (const [role, basePath] of Object.entries(ROLE_ROUTES)) {
+  for (const [role, basePath] of Object.entries(ROLE_DASHBOARD_PATHS)) {
     if (pathname.startsWith(basePath)) {
       if (role !== userRole) {
-        const correctDashboard = ROLE_ROUTES[userRole];
+        const correctDashboard = ROLE_DASHBOARD_PATHS[userRole];
         return redirect(new URL(correctDashboard, request.url));
       }
       break;
