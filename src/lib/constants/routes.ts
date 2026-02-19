@@ -20,6 +20,7 @@ export const ROUTES = {
     products: "/admin/products",
     voice: "/admin/voice",
     uiComponents: "/admin/ui-components",
+    testing: "/admin/testing",
   },
   customer: {
     dashboard: "/customer",

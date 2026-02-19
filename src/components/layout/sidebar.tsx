@@ -14,6 +14,7 @@ import {
   UserPlus,
   Coins,
   Mic,
+  FlaskConical,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -51,6 +52,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       href: ROUTES.admin.uiComponents,
       label: "UI Components",
       icon: <Palette className="h-5 w-5" />,
+    },
+    {
+      href: ROUTES.admin.testing,
+      label: "Testing",
+      icon: <FlaskConical className="h-5 w-5" />,
     },
     {
       href: ROUTES.settings,
