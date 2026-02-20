@@ -11,14 +11,36 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useUsers, useSearchUsers } from "@/services/users";
 import { ROLE_BADGES } from "@/lib/constants";
+import type { UserRole } from "@/types";
+
+const ROLE_FILTERS: { value: UserRole; label: string }[] = [
+  { value: "admin", label: "Admin" },
+  { value: "customer", label: "Customer" },
+  { value: "gamer", label: "Gamer" },
+  { value: "gedu", label: "Gedu" },
+];
 
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilters, setRoleFilters] = useState<Set<UserRole>>(new Set());
   const { data: allUsers, isLoading: isLoadingAll } = useUsers();
   const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
 
-  const users = searchQuery.length >= 2 ? searchResults : allUsers;
-  const isLoading = searchQuery.length >= 2 ? isSearching : isLoadingAll;
+  const isSearchActive = searchQuery.length >= 2;
+  const baseUsers = isSearchActive ? searchResults : allUsers;
+  const users = roleFilters.size > 0
+    ? baseUsers?.filter((u) => roleFilters.has(u.role))
+    : baseUsers;
+  const isLoading = isSearchActive ? isSearching : isLoadingAll;
+
+  function toggleRole(role: UserRole) {
+    setRoleFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(role)) next.delete(role);
+      else next.add(role);
+      return next;
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -38,18 +60,42 @@ export default function AdminUsersPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search users by name, email, or username..."
-                aria-label="Search users"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <CardHeader className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search users by name, email, or username..."
+              aria-label="Search users"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground mr-1">Role:</span>
+            <button
+              onClick={() => setRoleFilters(new Set())}
+              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                roleFilters.size === 0
+                  ? "bg-info text-info-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              All
+            </button>
+            {ROLE_FILTERS.map((rf) => (
+              <button
+                key={rf.value}
+                onClick={() => toggleRole(rf.value)}
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  roleFilters.has(rf.value)
+                    ? ROLE_BADGES[rf.value].className
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {rf.label}
+              </button>
+            ))}
           </div>
         </CardHeader>
         <CardContent>
@@ -104,8 +150,8 @@ export default function AdminUsersPage() {
             </div>
           ) : (
             <div className="py-8 text-center text-muted-foreground">
-              {searchQuery
-                ? "No users found matching your search."
+              {searchQuery || roleFilters.size > 0
+                ? "No users found matching your filters."
                 : "No users found."}
             </div>
           )}
