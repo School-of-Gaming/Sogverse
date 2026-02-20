@@ -15,7 +15,6 @@ export interface TokenPackage {
   tokens: number;
   prices: Record<SupportedCurrency, number>;
   type: TokenPackageType;
-  savings?: Record<SupportedCurrency, number>;
   description: string;
 }
 
@@ -34,7 +33,6 @@ export const TOKEN_PACKAGES: TokenPackage[] = [
     tokens: 20,
     prices: { usd: 5500, gbp: 4400, eur: 5100 },
     type: "one_time",
-    savings: { usd: 500, gbp: 400, eur: 500 },
     description: "20 Sorgs at a discount",
   },
   {
@@ -43,7 +41,6 @@ export const TOKEN_PACKAGES: TokenPackage[] = [
     tokens: 25,
     prices: { usd: 5000, gbp: 4000, eur: 4600 },
     type: "subscription",
-    savings: { usd: 2500, gbp: 2000, eur: 2400 },
     description: "25 Sorgs every month at the best rate",
   },
 ];
@@ -59,5 +56,7 @@ export function getPackagePrice(pkg: TokenPackage, currency: SupportedCurrency):
 }
 
 export function getPackageSavings(pkg: TokenPackage, currency: SupportedCurrency): number {
-  return pkg.savings?.[currency] ?? 0;
+  const basePrice = pkg.tokens * TOKEN_BASE_RATE[currency];
+  const savings = basePrice - pkg.prices[currency];
+  return savings > 0 ? savings : 0;
 }
