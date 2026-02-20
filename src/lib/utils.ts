@@ -6,16 +6,27 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency: SupportedCurrency = "usd"): string {
-  const { locale } = CURRENCY_CONFIG[currency];
-  return new Intl.NumberFormat(locale, {
+export function formatCurrency(
+  amount: number,
+  currency: SupportedCurrency,
+  locale?: string,
+): string {
+  const resolvedLocale =
+    locale ??
+    (typeof navigator !== "undefined" ? navigator.language : undefined) ??
+    CURRENCY_CONFIG[currency].locale;
+  return new Intl.NumberFormat(resolvedLocale, {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(amount);
 }
 
-export function formatCurrencyFromCents(cents: number, currency: SupportedCurrency = "usd"): string {
-  return formatCurrency(cents / 100, currency);
+export function formatCurrencyFromCents(
+  cents: number,
+  currency: SupportedCurrency,
+  locale?: string,
+): string {
+  return formatCurrency(cents / 100, currency, locale);
 }
 
 export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
