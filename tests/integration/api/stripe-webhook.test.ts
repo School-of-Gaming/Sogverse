@@ -123,6 +123,7 @@ describe("POST /api/webhooks/stripe", () => {
             userId: "user-123",
             packageType: "one_time",
             tokenAmount: "5",
+            currency: "usd",
           },
           customer: "cus_abc",
           subscription: null,
@@ -142,6 +143,7 @@ describe("POST /api/webhooks/stripe", () => {
         p_description: "Purchased 5 Sorgs",
         p_stripe_session_id: "cs_one_time_123",
         p_stripe_subscription_id: undefined,
+        p_currency: "usd",
       });
     });
 
@@ -154,6 +156,7 @@ describe("POST /api/webhooks/stripe", () => {
             userId: "user-123",
             packageType: "subscription",
             tokenAmount: "25",
+            currency: "usd",
           },
           customer: "cus_abc",
           subscription: "sub_xyz",
@@ -173,6 +176,7 @@ describe("POST /api/webhooks/stripe", () => {
         p_description: "Purchased 25 Sorgs",
         p_stripe_session_id: "cs_sub_123",
         p_stripe_subscription_id: "sub_xyz",
+        p_currency: "usd",
       });
     });
 
@@ -224,6 +228,7 @@ describe("POST /api/webhooks/stripe", () => {
             userId: "user-123",
             packageType: "one_time",
             tokenAmount: "5",
+            currency: "usd",
           },
           customer: "cus_abc",
           subscription: null,
@@ -251,6 +256,7 @@ describe("POST /api/webhooks/stripe", () => {
             userId: "user-123",
             packageType: "one_time",
             tokenAmount: "5",
+            currency: "usd",
           },
           customer: "cus_abc",
           subscription: null,
@@ -278,6 +284,7 @@ describe("POST /api/webhooks/stripe", () => {
             userId: "user-123",
             packageType: "one_time",
             tokenAmount: "5",
+            currency: "usd",
           },
           customer: "cus_abc",
           subscription: null,
@@ -299,6 +306,7 @@ describe("POST /api/webhooks/stripe", () => {
             userId: "user-123",
             packageType: "subscription",
             tokenAmount: "25",
+            currency: "usd",
           },
           customer: "cus_abc",
           subscription: "sub_xyz",
@@ -354,6 +362,7 @@ describe("POST /api/webhooks/stripe", () => {
             userId: "user-123",
             packageType: "one_time",
             tokenAmount: "5",
+            currency: "usd",
           },
           customer: null,
           subscription: null,
@@ -380,6 +389,7 @@ describe("POST /api/webhooks/stripe", () => {
           id: "inv_renewal_456",
           subscription: "sub_789",
           billing_reason: "subscription_cycle",
+          currency: "usd",
         })
       );
       mockSubscriptionsRetrieve.mockResolvedValue({
@@ -399,6 +409,7 @@ describe("POST /api/webhooks/stripe", () => {
         p_description: "Monthly subscription — 25 Sorgs",
         p_stripe_session_id: "inv_renewal_456",
         p_stripe_subscription_id: "sub_789",
+        p_currency: "usd",
       });
     });
 
@@ -408,6 +419,7 @@ describe("POST /api/webhooks/stripe", () => {
           id: "inv_renewal_status",
           subscription: "sub_789",
           billing_reason: "subscription_cycle",
+          currency: "usd",
         })
       );
       mockSubscriptionsRetrieve.mockResolvedValue({
@@ -516,6 +528,7 @@ describe("POST /api/webhooks/stripe", () => {
           id: "inv_race_123",
           subscription: "sub_789",
           billing_reason: "subscription_cycle",
+          currency: "usd",
         })
       );
       mockSubscriptionsRetrieve.mockResolvedValue({
@@ -540,6 +553,7 @@ describe("POST /api/webhooks/stripe", () => {
           id: "inv_rpc_fail",
           subscription: "sub_789",
           billing_reason: "subscription_cycle",
+          currency: "usd",
         })
       );
       mockSubscriptionsRetrieve.mockResolvedValue({
@@ -564,6 +578,7 @@ describe("POST /api/webhooks/stripe", () => {
           id: "inv_dupe_789",
           subscription: "sub_789",
           billing_reason: "subscription_cycle",
+          currency: "usd",
         })
       );
       mockSubscriptionsRetrieve.mockResolvedValue({

@@ -158,15 +158,13 @@ Affected tables and actions (11 issues):
 
 **When:** Before production launch or when table sizes grow large enough for this to matter.
 
-### Centralize Date and Currency Formatting for Localization
+### ~~Centralize Date and Currency Formatting for Localization~~ — DONE
 
-Date and currency formatting is currently scattered: `subscription-status-card.tsx` has local `formatDate()` and `formatPrice()` functions, `token-purchase-section.tsx` and `admin/users/[id]/page.tsx` use inline formatting (`` `$${(cents / 100).toFixed(2)}` ``), and `lib/utils.ts` already exports `formatCurrency()` and `formatDate()`. When the site is localized, all formatting must go through a single set of locale-aware helpers.
+Multi-currency support (USD, GBP, EUR) implemented. `formatCurrency()` and `formatCurrencyFromCents()` in `lib/utils.ts` are locale-aware via `CURRENCY_CONFIG`. Local `formatPrice()`/`formatDate()` in `subscription-status-card.tsx` replaced with shared helpers. Inline `$` formatting in `token-purchase-section.tsx` and `admin/users/[id]/page.tsx` replaced with `formatCurrencyFromCents()`.
 
-- [ ] Audit all date/currency formatting across the codebase
-- [ ] Consolidate into `lib/utils.ts` helpers (or a dedicated `lib/format.ts`) that accept locale parameters
-- [ ] Replace all inline formatting with the shared helpers
-
-**Why:** Prerequisite for localization. Inline formatting with hardcoded `"en-US"` and `$` prefixes will break for non-US locales.
+- [x] Audit all date/currency formatting across the codebase
+- [x] Consolidate into `lib/utils.ts` helpers that accept locale parameters
+- [x] Replace all inline formatting with the shared helpers
 
 ### Clarify Service Class Pattern for Mixed Data Sources
 

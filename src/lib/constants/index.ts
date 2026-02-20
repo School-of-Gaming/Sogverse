@@ -1,3 +1,4 @@
+export * from "./currency";
 export * from "./roles";
 export * from "./routes";
 export * from "./tokens";

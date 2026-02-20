@@ -18,27 +18,21 @@ import { useAuth } from "@/providers";
 import { useSubscription, useSubscriptionDetails, useCancelSubscription, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
 import { TOKEN_PACKAGES } from "@/lib/constants/tokens";
 import { ROUTES } from "@/lib/constants";
+import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
+import { isSupportedCurrency, type SupportedCurrency } from "@/lib/constants/currency";
 
 const SUB_PACKAGE = TOKEN_PACKAGES.find((pkg) => pkg.type === "subscription");
 
-function formatDate(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
+function formatPeriodDate(timestamp: number) {
+  return formatDate(new Date(timestamp * 1000), {
+    dateStyle: "long",
   });
-}
-
-function formatPrice(amount: number | null, currency: string) {
-  if (amount === null) return "";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency,
-  }).format(amount / 100);
 }
 
 export function SubscriptionStatusCard() {
   const { profile } = useAuth();
+  const { currency: displayCurrency } = useCurrency();
   const { data: subscription } = useSubscription(profile?.id ?? "");
   const { data: details } = useSubscriptionDetails(profile?.id ?? "");
   const cancelMutation = useCancelSubscription(profile?.id ?? "");
@@ -52,6 +46,12 @@ export function SubscriptionStatusCard() {
   const isPastDue = subState.status === "past_due";
   const isCanceling = subState.status === "canceling";
   const isActive = subState.status === "active";
+
+  // Use the actual billing currency from Stripe for price display
+  const billingCurrency: SupportedCurrency =
+    details?.currency && isSupportedCurrency(details.currency)
+      ? details.currency
+      : displayCurrency;
 
   const handleCancel = async () => {
     await cancelMutation.mutateAsync();
@@ -91,16 +91,16 @@ export function SubscriptionStatusCard() {
               <p className="font-medium">
                 {SUB_PACKAGE ? `${SUB_PACKAGE.tokens} Sorgs/month` : "Subscription"}
                 {details?.amount && (
-                  <span className="text-muted-foreground"> — {formatPrice(details.amount, details.currency)}/mo</span>
+                  <span className="text-muted-foreground"> — {formatCurrencyFromCents(details.amount, billingCurrency)}/mo</span>
                 )}
               </p>
               <p className="text-sm text-muted-foreground">
                 {isActive && details?.currentPeriodEnd && (
-                  <>Next payment: {formatDate(details.currentPeriodEnd)}</>
+                  <>Next payment: {formatPeriodDate(details.currentPeriodEnd)}</>
                 )}
                 {isActive && !details?.currentPeriodEnd && "Active — renews monthly"}
                 {isCanceling && details?.currentPeriodEnd && (
-                  <>Canceled — access until {formatDate(details.currentPeriodEnd)}</>
+                  <>Canceled — access until {formatPeriodDate(details.currentPeriodEnd)}</>
                 )}
                 {isCanceling && !details?.currentPeriodEnd && "Canceled — access until end of billing period"}
                 {isPastDue && "Past due — update payment to continue"}
@@ -141,7 +141,7 @@ export function SubscriptionStatusCard() {
             <DialogTitle>Cancel {SUB_PACKAGE?.name ?? "Subscription"}?</DialogTitle>
             <DialogDescription>
               Are you sure you want to cancel your {SUB_PACKAGE?.name ?? "subscription"}?
-              {details?.amount && <> You&apos;ll lose the monthly rate of {formatPrice(details.amount, details.currency)}/mo.</>}
+              {details?.amount && <> You&apos;ll lose the monthly rate of {formatCurrencyFromCents(details.amount, billingCurrency)}/mo.</>}
               {" "}Your current Sorgs will remain in your account, and you&apos;ll keep
               access until the end of your billing period.
             </DialogDescription>

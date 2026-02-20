@@ -45,6 +45,7 @@ export async function POST(request: Request) {
 
         // Credit tokens
         const txType = packageType === "subscription" ? "subscription" : "purchase";
+        const sessionCurrency = session.metadata?.currency || null;
         const { error: rpcError } = await admin.rpc("adjust_token_balance", {
           p_user_id: userId,
           p_amount: tokenAmount,
@@ -53,6 +54,7 @@ export async function POST(request: Request) {
           p_stripe_session_id: session.id,
           p_stripe_subscription_id:
             (session.subscription as string) || undefined,
+          p_currency: sessionCurrency,
         });
 
         if (rpcError) {
@@ -109,6 +111,7 @@ export async function POST(request: Request) {
 
         if (existing && existing.length > 0) break;
 
+        const invoiceCurrency = (invoice.currency as string) || null;
         const { error: rpcError } = await admin.rpc("adjust_token_balance", {
           p_user_id: userId,
           p_amount: tokenAmount,
@@ -116,6 +119,7 @@ export async function POST(request: Request) {
           p_description: `Monthly subscription — ${tokenAmount} Sorgs`,
           p_stripe_session_id: invoice.id,
           p_stripe_subscription_id: invoice.subscription as string,
+          p_currency: invoiceCurrency,
         });
 
         if (rpcError) {

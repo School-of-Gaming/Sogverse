@@ -82,7 +82,7 @@ export default function ProductsPage() {
                   </CardHeader>
                   <CardFooter className="flex items-center justify-between">
                     <span className="text-xl font-bold text-primary">
-                      {formatCurrency(product.price, product.currency ?? undefined)}
+                      {formatCurrency(product.price, (product.currency ?? "usd") as import("@/lib/constants/currency").SupportedCurrency)}
                     </span>
                     <Button>
                       <ShoppingCart className="mr-2 h-4 w-4" />

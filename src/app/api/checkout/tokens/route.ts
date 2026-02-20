@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createClient } from "@/lib/supabase/server";
-import { getTokenPackage } from "@/lib/constants/tokens";
+import { getTokenPackage, getPackagePrice } from "@/lib/constants/tokens";
+import { isSupportedCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import { ROUTES } from "@/lib/constants";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -38,7 +39,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { packageId, returnPath } = await request.json();
+    const { packageId, currency: rawCurrency, returnPath } = await request.json();
+
+    const currency = isSupportedCurrency(rawCurrency) ? rawCurrency : DEFAULT_CURRENCY;
 
     // Only two known return destinations — allowlist instead of validating arbitrary paths
     const safePath =
@@ -75,18 +78,20 @@ export async function POST(request: Request) {
       ? { customer: typedProfile.stripe_customer_id }
       : { customer_email: typedProfile?.email || undefined };
 
+    const unitAmount = getPackagePrice(tokenPackage, currency);
+
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: tokenPackage.type === "subscription" ? "subscription" : "payment",
       ...customerParams,
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: currency,
             product_data: {
               name: `${tokenPackage.name} — ${tokenPackage.tokens} Sorgs`,
               description: tokenPackage.description,
             },
-            unit_amount: tokenPackage.priceCents,
+            unit_amount: unitAmount,
             ...(tokenPackage.type === "subscription" && {
               recurring: { interval: "month" as const },
             }),
@@ -99,6 +104,7 @@ export async function POST(request: Request) {
         packageId: tokenPackage.id,
         tokenAmount: String(tokenPackage.tokens),
         packageType: tokenPackage.type,
+        currency,
       },
       success_url: `${origin}${safePath}?success=true`,
       cancel_url: `${origin}${safePath}?canceled=true`,
@@ -110,6 +116,7 @@ export async function POST(request: Request) {
           userId: user.id,
           packageId: tokenPackage.id,
           tokenAmount: String(tokenPackage.tokens),
+          currency,
         },
       };
     }

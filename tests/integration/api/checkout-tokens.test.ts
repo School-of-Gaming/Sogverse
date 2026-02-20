@@ -104,7 +104,7 @@ describe("POST /api/checkout/tokens", () => {
   it("should return 401 when not authenticated", async () => {
     mockUnauthenticated();
 
-    const response = await POST(createRequest({ packageId: "tokens_5" }));
+    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(401);
@@ -114,7 +114,7 @@ describe("POST /api/checkout/tokens", () => {
   it("should return 403 for gamer role", async () => {
     mockAuthenticatedWithRole("gamer");
 
-    const response = await POST(createRequest({ packageId: "tokens_5" }));
+    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(403);
@@ -124,7 +124,7 @@ describe("POST /api/checkout/tokens", () => {
   it("should return 403 for gedu role", async () => {
     mockAuthenticatedWithRole("gedu");
 
-    const response = await POST(createRequest({ packageId: "tokens_5" }));
+    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(403);
@@ -133,7 +133,7 @@ describe("POST /api/checkout/tokens", () => {
   it("should return 403 for admin role", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest({ packageId: "tokens_5" }));
+    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(403);
@@ -144,7 +144,7 @@ describe("POST /api/checkout/tokens", () => {
   it("should return 400 for invalid packageId", async () => {
     mockAuthenticatedCustomer();
 
-    const response = await POST(createRequest({ packageId: "nonexistent" }));
+    const response = await POST(createRequest({ packageId: "nonexistent", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -155,7 +155,7 @@ describe("POST /api/checkout/tokens", () => {
     mockAuthenticatedCustomer({ subscription_status: "active" });
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25" })
+      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
     );
     const data = await response.json();
 
@@ -167,7 +167,7 @@ describe("POST /api/checkout/tokens", () => {
     mockAuthenticatedCustomer({ subscription_status: "past_due" });
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25" })
+      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
     );
     const data = await response.json();
 
@@ -180,7 +180,7 @@ describe("POST /api/checkout/tokens", () => {
       url: "https://checkout.stripe.com/session_123",
     });
 
-    const response = await POST(createRequest({ packageId: "tokens_5" }));
+    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -194,7 +194,7 @@ describe("POST /api/checkout/tokens", () => {
     });
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25" })
+      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
     );
     const data = await response.json();
 
@@ -212,7 +212,7 @@ describe("POST /api/checkout/tokens", () => {
     });
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25" })
+      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
     );
     const data = await response.json();
 
@@ -227,7 +227,7 @@ describe("POST /api/checkout/tokens", () => {
     mockAuthenticatedCustomer({ subscription_status: "active" });
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25" })
+      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
     );
     const data = await response.json();
 
@@ -243,7 +243,7 @@ describe("POST /api/checkout/tokens", () => {
       url: "https://checkout.stripe.com/session_abc",
     });
 
-    const response = await POST(createRequest({ packageId: "tokens_5" }));
+    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -261,6 +261,7 @@ describe("POST /api/checkout/tokens", () => {
       packageId: "tokens_5",
       tokenAmount: "5",
       packageType: "one_time",
+      currency: "usd",
     });
     expect(params.subscription_data).toBeUndefined();
   });
@@ -274,7 +275,7 @@ describe("POST /api/checkout/tokens", () => {
     });
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25" })
+      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
     );
     const data = await response.json();
 
@@ -292,14 +293,85 @@ describe("POST /api/checkout/tokens", () => {
       packageId: "tokens_sub_25",
       tokenAmount: "25",
       packageType: "subscription",
+      currency: "usd",
     });
     expect(params.subscription_data).toEqual({
       metadata: {
         userId: "customer-user-id",
         packageId: "tokens_sub_25",
         tokenAmount: "25",
+        currency: "usd",
       },
     });
+  });
+
+  // -- Currency handling --
+
+  it("should use GBP prices when currency is gbp", async () => {
+    mockAuthenticatedCustomer();
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/session_gbp",
+    });
+
+    const response = await POST(createRequest({ packageId: "tokens_5", currency: "gbp" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    expect(params.line_items[0].price_data.unit_amount).toBe(1200);
+    expect(params.line_items[0].price_data.currency).toBe("gbp");
+    expect(params.metadata.currency).toBe("gbp");
+  });
+
+  it("should use EUR prices when currency is eur", async () => {
+    mockAuthenticatedCustomer();
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/session_eur",
+    });
+
+    const response = await POST(createRequest({ packageId: "tokens_5", currency: "eur" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    expect(params.line_items[0].price_data.unit_amount).toBe(1400);
+    expect(params.line_items[0].price_data.currency).toBe("eur");
+    expect(params.metadata.currency).toBe("eur");
+  });
+
+  it("should default to EUR when currency is missing", async () => {
+    mockAuthenticatedCustomer();
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/session_default",
+    });
+
+    const response = await POST(createRequest({ packageId: "tokens_5" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    expect(params.line_items[0].price_data.currency).toBe("eur");
+    expect(params.line_items[0].price_data.unit_amount).toBe(1400);
+    expect(params.metadata.currency).toBe("eur");
+  });
+
+  it("should default to EUR when currency is invalid", async () => {
+    mockAuthenticatedCustomer();
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/session_invalid",
+    });
+
+    const response = await POST(createRequest({ packageId: "tokens_5", currency: "xyz" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    expect(params.line_items[0].price_data.currency).toBe("eur");
+    expect(params.metadata.currency).toBe("eur");
   });
 
   // -- returnPath / redirect URLs --
@@ -310,7 +382,7 @@ describe("POST /api/checkout/tokens", () => {
 
     await POST(
       createRequest(
-        { packageId: "tokens_5", returnPath: "/customer/sorg" },
+        { packageId: "tokens_5", currency: "usd", returnPath: "/customer/sorg" },
         "https://myapp.vercel.app"
       )
     );
@@ -328,7 +400,7 @@ describe("POST /api/checkout/tokens", () => {
     mockAuthenticatedCustomer();
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
-    await POST(createRequest({ packageId: "tokens_5" }));
+    await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.success_url).toContain("/sorg?success=true");
@@ -340,7 +412,7 @@ describe("POST /api/checkout/tokens", () => {
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
     await POST(
-      createRequest({ packageId: "tokens_5", returnPath: "https://evil.com" })
+      createRequest({ packageId: "tokens_5", currency: "usd", returnPath: "https://evil.com" })
     );
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
@@ -353,7 +425,7 @@ describe("POST /api/checkout/tokens", () => {
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
     await POST(
-      createRequest({ packageId: "tokens_5", returnPath: "/some/other/page" })
+      createRequest({ packageId: "tokens_5", currency: "usd", returnPath: "/some/other/page" })
     );
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
@@ -367,7 +439,7 @@ describe("POST /api/checkout/tokens", () => {
     mockAuthenticatedCustomer({ stripe_customer_id: "cus_existing123" });
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
-    await POST(createRequest({ packageId: "tokens_5" }));
+    await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.customer).toBe("cus_existing123");
@@ -378,7 +450,7 @@ describe("POST /api/checkout/tokens", () => {
     mockAuthenticatedCustomer({ stripe_customer_id: null });
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
-    await POST(createRequest({ packageId: "tokens_5" }));
+    await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.customer).toBeUndefined();
@@ -389,7 +461,7 @@ describe("POST /api/checkout/tokens", () => {
     mockAuthenticatedCustomer({ email: null });
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
-    await POST(createRequest({ packageId: "tokens_5" }));
+    await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.customer_email).toBeUndefined();

@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useSubscription, useSubscriptionDetails, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
-import { TOKEN_PACKAGES, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
+import { TOKEN_PACKAGES, getPackagePrice, getPackageSavings, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
 import { ROUTES } from "@/lib/constants";
+import { useCurrency } from "@/hooks/use-currency";
+import type { SupportedCurrency } from "@/lib/constants/currency";
 
 const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
   tokens_5: Coins,
@@ -56,6 +58,7 @@ function PurchaseFeedback() {
 function PackageCard({
   pkg,
   icon: Icon,
+  currency,
   onBuy,
   onResume,
   isLoading,
@@ -65,6 +68,7 @@ function PackageCard({
 }: {
   pkg: TokenPackage;
   icon: React.ElementType;
+  currency: SupportedCurrency;
   onBuy: (packageId: string) => void;
   onResume: () => void;
   isLoading: boolean;
@@ -72,7 +76,9 @@ function PackageCard({
   hasActiveSubscription: boolean;
   isCanceling: boolean;
 }) {
-  const priceFormatted = `$${(pkg.priceCents / 100).toFixed(2)}`;
+  const price = getPackagePrice(pkg, currency);
+  const savings = getPackageSavings(pkg, currency);
+  const priceFormatted = formatCurrencyFromCents(price, currency);
   const isSubscription = pkg.type === "subscription";
   const isCurrentPlan = isSubscription && hasActiveSubscription;
   // Active + renewing: fully locked. Active + canceling: show resume action.
@@ -88,10 +94,10 @@ function PackageCard({
         <div className="absolute -top-3 right-4">
           <Badge variant="secondary">Current plan</Badge>
         </div>
-      ) : pkg.savingsCents ? (
+      ) : savings > 0 ? (
         <div className="absolute -top-3 right-4">
           <Badge className="bg-green-600 text-white hover:bg-green-600">
-            Save ${(pkg.savingsCents / 100).toFixed(0)}{isSubscription ? "/mo" : ""}
+            Save {formatCurrencyFromCents(savings, currency)}{isSubscription ? "/mo" : ""}
           </Badge>
         </div>
       ) : null}
@@ -153,6 +159,7 @@ function PackageCard({
 
 export function TokenPurchaseSection() {
   const { user, profile } = useAuth();
+  const { currency } = useCurrency();
   const { data: subscription } = useSubscription(profile?.id ?? "");
   const { data: details } = useSubscriptionDetails(profile?.id ?? "");
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
@@ -167,7 +174,7 @@ export function TokenPurchaseSection() {
       const response = await fetch("/api/checkout/tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId, returnPath: window.location.pathname }),
+        body: JSON.stringify({ packageId, currency, returnPath: window.location.pathname }),
       });
 
       const data = await response.json();
@@ -182,7 +189,7 @@ export function TokenPurchaseSection() {
       setCheckoutError(true);
     }
     setLoadingPackage(null);
-  }, []);
+  }, [currency]);
 
   const handleBuy = (packageId: string) => {
     if (!user || profile?.role !== "customer") {
@@ -215,6 +222,7 @@ export function TokenPurchaseSection() {
             key={pkg.id}
             pkg={pkg}
             icon={PACKAGE_ICONS[pkg.id] ?? Coins}
+            currency={currency}
             onBuy={handleBuy}
             onResume={() => resumeMutation.mutate()}
             isLoading={loadingPackage === pkg.id}

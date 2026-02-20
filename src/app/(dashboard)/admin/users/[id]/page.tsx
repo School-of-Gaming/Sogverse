@@ -23,11 +23,14 @@ import { useQuery } from "@tanstack/react-query";
 import { useProfile } from "@/services/users";
 import { useTokenBalance, useTokenTransactions, useAdjustTokens } from "@/services/tokens";
 import { TransactionHistoryTable } from "@/components/tokens";
-import { ROLE_BADGES, TOKEN_BASE_RATE_CENTS } from "@/lib/constants";
+import { ROLE_BADGES, TOKEN_BASE_RATE } from "@/lib/constants";
+import { formatCurrencyFromCents } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 
 export default function AdminUserDetailPage() {
   const params = useParams();
   const userId = params.id as string;
+  const { currency } = useCurrency();
 
   const { data: profile, isLoading: profileLoading } = useProfile(userId);
   const { data: balance } = useTokenBalance(userId, profile?.role === "customer");
@@ -51,9 +54,10 @@ export default function AdminUserDetailPage() {
   const isCustomer = profile?.role === "customer";
   const parsedAmount = parseInt(amount, 10);
   const isValidAmount = !isNaN(parsedAmount) && parsedAmount !== 0;
+  const baseRate = TOKEN_BASE_RATE[currency];
   const monetaryValue = isValidAmount
-    ? `$${((Math.abs(parsedAmount) * TOKEN_BASE_RATE_CENTS) / 100).toFixed(2)}`
-    : "$0.00";
+    ? formatCurrencyFromCents(Math.abs(parsedAmount) * baseRate, currency)
+    : formatCurrencyFromCents(0, currency);
 
   const handleConfirmAdjust = async () => {
     if (!isValidAmount || !reason.trim()) return;
@@ -147,7 +151,7 @@ export default function AdminUserDetailPage() {
               <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3">
                 <div className="flex items-center gap-2 text-sm text-yellow-400">
                   <AlertTriangle className="h-4 w-4" />
-                  Tokens have monetary value (${(TOKEN_BASE_RATE_CENTS / 100).toFixed(2)}/token). All changes are logged.
+                  Tokens have monetary value ({formatCurrencyFromCents(baseRate, currency)}/token). All changes are logged.
                 </div>
               </div>
 

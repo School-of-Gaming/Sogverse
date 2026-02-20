@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   cn,
   formatCurrency,
+  formatCurrencyFromCents,
   formatDate,
   generateGamerEmail,
   extractUsernameFromGamerEmail,
@@ -29,8 +30,20 @@ describe("formatCurrency", () => {
     expect(formatCurrency(29.99)).toBe("$29.99");
   });
 
-  it("formats with different currencies", () => {
-    expect(formatCurrency(100, "EUR")).toContain("100");
+  it("formats USD explicitly", () => {
+    expect(formatCurrency(29.99, "usd")).toBe("$29.99");
+  });
+
+  it("formats GBP with pound sign", () => {
+    const result = formatCurrency(100, "gbp");
+    expect(result).toContain("£");
+    expect(result).toContain("100");
+  });
+
+  it("formats EUR with euro sign", () => {
+    const result = formatCurrency(100, "eur");
+    expect(result).toContain("€");
+    expect(result).toContain("100");
   });
 
   it("handles zero", () => {
@@ -39,6 +52,28 @@ describe("formatCurrency", () => {
 
   it("handles large numbers", () => {
     expect(formatCurrency(1000000)).toBe("$1,000,000.00");
+  });
+});
+
+describe("formatCurrencyFromCents", () => {
+  it("converts cents to formatted USD", () => {
+    expect(formatCurrencyFromCents(1500)).toBe("$15.00");
+  });
+
+  it("converts cents to formatted GBP", () => {
+    const result = formatCurrencyFromCents(1200, "gbp");
+    expect(result).toContain("£");
+    expect(result).toContain("12.00");
+  });
+
+  it("converts cents to formatted EUR", () => {
+    const result = formatCurrencyFromCents(1400, "eur");
+    expect(result).toContain("€");
+    expect(result).toContain("14.00");
+  });
+
+  it("handles zero cents", () => {
+    expect(formatCurrencyFromCents(0)).toBe("$0.00");
   });
 });
 

@@ -1,15 +1,21 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { CURRENCY_CONFIG, type SupportedCurrency } from "@/lib/constants/currency";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number, currency = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
+export function formatCurrency(amount: number, currency: SupportedCurrency = "usd"): string {
+  const { locale } = CURRENCY_CONFIG[currency];
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency,
+    currency: currency.toUpperCase(),
   }).format(amount);
+}
+
+export function formatCurrencyFromCents(cents: number, currency: SupportedCurrency = "usd"): string {
+  return formatCurrency(cents / 100, currency);
 }
 
 export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {

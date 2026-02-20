@@ -11,6 +11,7 @@ import { useAuth } from "@/providers";
 import { useTokenBalance } from "@/services/tokens";
 import { cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
+import { CurrencyPicker } from "@/components/layout/currency-picker";
 
 const publicNavLinks = [
   { href: ROUTES.home, label: "Home" },
@@ -97,6 +98,7 @@ export function Header() {
                   </Button>
                 </Link>
               )}
+              <CurrencyPicker />
               {isCustomer && tokenBalance !== undefined && (
                 <Link
                   href={ROUTES.customer.sorg}
@@ -147,6 +149,7 @@ export function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              <CurrencyPicker />
               <Link href={ROUTES.login}>
                 <Button variant="ghost" size="sm">
                   Sign In
@@ -204,6 +207,9 @@ export function Header() {
                     Dashboard
                   </Link>
                 )}
+                <div className="px-3 py-2">
+                  <CurrencyPicker />
+                </div>
                 {isCustomer && tokenBalance !== undefined && (
                   <Link
                     href={ROUTES.customer.sorg}
@@ -233,6 +239,9 @@ export function Header() {
               </>
             ) : (
               <>
+                <div className="px-3 py-2">
+                  <CurrencyPicker />
+                </div>
                 <Link
                   href={ROUTES.login}
                   className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"

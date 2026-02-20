@@ -156,6 +156,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          currency: string | null
           display_name: string | null
           email: string | null
           id: string
@@ -170,6 +171,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          currency?: string | null
           display_name?: string | null
           email?: string | null
           id: string
@@ -184,6 +186,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          currency?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
@@ -203,6 +206,7 @@ export type Database = {
           amount: number
           balance_after: number
           created_at: string
+          currency: string | null
           description: string | null
           id: string
           stripe_session_id: string | null
@@ -215,6 +219,7 @@ export type Database = {
           amount: number
           balance_after: number
           created_at?: string
+          currency?: string | null
           description?: string | null
           id?: string
           stripe_session_id?: string | null
@@ -227,6 +232,7 @@ export type Database = {
           amount?: number
           balance_after?: number
           created_at?: string
+          currency?: string | null
           description?: string | null
           id?: string
           stripe_session_id?: string | null
@@ -300,21 +306,38 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      adjust_token_balance: {
-        Args: {
-          p_admin_id?: string
-          p_amount: number
-          p_description?: string
-          p_stripe_session_id?: string
-          p_stripe_subscription_id?: string
-          p_type: Database["public"]["Enums"]["token_transaction_type"]
-          p_user_id: string
-        }
-        Returns: {
-          new_balance: number
-          transaction_id: string
-        }[]
-      }
+      adjust_token_balance:
+        | {
+            Args: {
+              p_admin_id?: string
+              p_amount: number
+              p_description?: string
+              p_stripe_session_id?: string
+              p_stripe_subscription_id?: string
+              p_type: Database["public"]["Enums"]["token_transaction_type"]
+              p_user_id: string
+            }
+            Returns: {
+              new_balance: number
+              transaction_id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_admin_id?: string
+              p_amount: number
+              p_currency?: string
+              p_description?: string
+              p_stripe_session_id?: string
+              p_stripe_subscription_id?: string
+              p_type: Database["public"]["Enums"]["token_transaction_type"]
+              p_user_id: string
+            }
+            Returns: {
+              new_balance: number
+              transaction_id: string
+            }[]
+          }
       get_active_products: {
         Args: never
         Returns: {
@@ -350,6 +373,7 @@ export type Database = {
         Returns: {
           avatar_url: string | null
           created_at: string | null
+          currency: string | null
           display_name: string | null
           email: string | null
           id: string
@@ -373,6 +397,7 @@ export type Database = {
         Returns: {
           avatar_url: string | null
           created_at: string | null
+          currency: string | null
           display_name: string | null
           email: string | null
           id: string
