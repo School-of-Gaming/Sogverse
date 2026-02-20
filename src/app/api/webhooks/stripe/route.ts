@@ -149,9 +149,16 @@ export async function POST(request: Request) {
         const userId = subscription.metadata?.userId;
         if (!userId) break;
 
+        // Stripe keeps status "active" when cancel_at_period_end is true.
+        // Store "canceling" so the DB alone reflects the full lifecycle.
+        const status =
+          subscription.status === "active" && subscription.cancel_at_period_end
+            ? "canceling"
+            : subscription.status;
+
         await admin
           .from("profiles")
-          .update({ subscription_status: subscription.status })
+          .update({ subscription_status: status })
           .eq("id", userId);
         break;
       }

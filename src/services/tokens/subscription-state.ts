@@ -12,18 +12,13 @@ interface SubscriptionData {
   subscription_status: string | null;
 }
 
-interface SubscriptionDetails {
-  cancelAtPeriodEnd: boolean;
-}
-
 /**
- * Derives a single subscription state from the DB profile and Stripe details.
- * Used by both TokenPurchaseSection (to gate the Subscribe button) and
- * SubscriptionStatusCard (to render the correct UI state).
+ * Derives a single subscription state from the DB profile.
+ * The webhook writes "canceling" to the DB when cancel_at_period_end is true,
+ * so the DB alone reflects the full subscription lifecycle.
  */
 export function getSubscriptionState(
   subscription: SubscriptionData | undefined,
-  details: SubscriptionDetails | null | undefined,
 ): SubscriptionState {
   if (!subscription?.stripe_subscription_id) {
     return { status: "none", hasActiveSubscription: false };
@@ -39,12 +34,12 @@ export function getSubscriptionState(
     return { status: "past_due", hasActiveSubscription: true };
   }
 
+  if (dbStatus === "canceling") {
+    return { status: "canceling", hasActiveSubscription: true };
+  }
+
   if (dbStatus === "active") {
-    const isCanceling = details?.cancelAtPeriodEnd === true;
-    return {
-      status: isCanceling ? "canceling" : "active",
-      hasActiveSubscription: true,
-    };
+    return { status: "active", hasActiveSubscription: true };
   }
 
   // Unknown/null status with a subscription ID

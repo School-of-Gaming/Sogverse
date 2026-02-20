@@ -613,18 +613,34 @@ describe("POST /api/webhooks/stripe", () => {
       expect(eqFn).toHaveBeenCalledWith("id", "user-123");
     });
 
-    it("should handle active status", async () => {
+    it("should write 'active' when active and not canceling", async () => {
       const { updateFn } = mockAdminUpdate();
       mockConstructEvent.mockReturnValue(
         createEvent("customer.subscription.updated", {
           metadata: { userId: "user-123" },
           status: "active",
+          cancel_at_period_end: false,
         })
       );
 
       await POST(createWebhookRequest());
 
       expect(updateFn).toHaveBeenCalledWith({ subscription_status: "active" });
+    });
+
+    it("should write 'canceling' when active with cancel_at_period_end", async () => {
+      const { updateFn } = mockAdminUpdate();
+      mockConstructEvent.mockReturnValue(
+        createEvent("customer.subscription.updated", {
+          metadata: { userId: "user-123" },
+          status: "active",
+          cancel_at_period_end: true,
+        })
+      );
+
+      await POST(createWebhookRequest());
+
+      expect(updateFn).toHaveBeenCalledWith({ subscription_status: "canceling" });
     });
 
     it("should skip when userId is missing from metadata", async () => {

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { useAuth } from "@/providers";
-import { useSubscription, useSubscriptionDetails, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
+import { useSubscription, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
 import { TOKEN_PACKAGES, getPackagePrice, getPackageSavings, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
 import { ROUTES } from "@/lib/constants";
 import { useCurrency } from "@/hooks/use-currency";
@@ -161,11 +161,10 @@ export function TokenPurchaseSection() {
   const { user, profile } = useAuth();
   const { currency } = useCurrency();
   const { data: subscription } = useSubscription(profile?.id ?? "");
-  const { data: details } = useSubscriptionDetails(profile?.id ?? "");
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
   const [loadingPackage, setLoadingPackage] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState(false);
-  const subState = getSubscriptionState(subscription, details);
+  const subState = getSubscriptionState(subscription);
 
   const startCheckout = useCallback(async (packageId: string) => {
     setLoadingPackage(packageId);

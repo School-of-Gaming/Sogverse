@@ -78,7 +78,15 @@ export function useCancelSubscription(userId: string) {
   return useMutation({
     mutationFn: () => service.cancelSubscription(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tokenKeys.subscription(userId) });
+      // Optimistically show "canceling" — the webhook will write this to the DB,
+      // and normal React Query refetching (window focus, navigation) will reconcile.
+      // Don't invalidateQueries here: the DB still says "active" until the webhook
+      // arrives, so an immediate refetch would overwrite the optimistic value.
+      queryClient.setQueryData(
+        tokenKeys.subscription(userId),
+        (old: { stripe_subscription_id: string | null; subscription_status: string | null } | undefined) =>
+          old ? { ...old, subscription_status: "canceling" } : old,
+      );
     },
   });
 }
@@ -91,7 +99,12 @@ export function useResumeSubscription(userId: string) {
   return useMutation({
     mutationFn: () => service.resumeSubscription(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: tokenKeys.subscription(userId) });
+      // Optimistically show "active" — same reasoning as useCancelSubscription.
+      queryClient.setQueryData(
+        tokenKeys.subscription(userId),
+        (old: { stripe_subscription_id: string | null; subscription_status: string | null } | undefined) =>
+          old ? { ...old, subscription_status: "active" } : old,
+      );
     },
   });
 }

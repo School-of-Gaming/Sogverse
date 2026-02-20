@@ -39,7 +39,7 @@ export function SubscriptionStatusCard() {
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const subState = getSubscriptionState(subscription, details);
+  const subState = getSubscriptionState(subscription);
 
   if (subState.status === "none" || subState.status === "canceled") return null;
 
