@@ -117,8 +117,9 @@ export default function AdminUsersPage() {
           ) : users && users.length > 0 ? (
             <div className="space-y-4">
               {users.map((user) => (
-                <div
+                <Link
                   key={user.id}
+                  href={`/admin/users/${user.id}`}
                   className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
                 >
                   <div className="flex items-center gap-4">
@@ -135,17 +136,10 @@ export default function AdminUsersPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <Badge className={ROLE_BADGES[user.role].className}>
-                      {ROLE_BADGES[user.role].label}
-                    </Badge>
-                    <Link href={`/admin/users/${user.id}`}>
-                      <Button variant="ghost" size="sm" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground">
-                        View
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
+                  <Badge className={ROLE_BADGES[user.role].className}>
+                    {ROLE_BADGES[user.role].label}
+                  </Badge>
+                </Link>
               ))}
             </div>
           ) : (
