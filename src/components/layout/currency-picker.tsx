@@ -6,7 +6,6 @@ import { useCurrency } from "@/hooks/use-currency";
 import {
   SUPPORTED_CURRENCIES,
   CURRENCY_CONFIG,
-  type SupportedCurrency,
 } from "@/lib/constants/currency";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +45,7 @@ export function CurrencyPicker({ className }: { className?: string }) {
               <button
                 key={c}
                 onClick={() => {
-                  setCurrency(c as SupportedCurrency);
+                  setCurrency(c);
                   setOpen(false);
                 }}
                 className={cn(

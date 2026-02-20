@@ -66,21 +66,15 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   // Track last synced profile currency to detect when it changes
   const lastProfileCurrency = useRef(profile?.currency);
 
-  // Sync cookie when profile currency changes (e.g. after login).
-  // Derive state from profile directly rather than using setState in an effect.
+  // Sync state + cookie when profile currency changes (e.g. after login)
   const profileCurrency = profile?.currency;
-  const derivedCurrency =
-    profileCurrency && isSupportedCurrency(profileCurrency)
-      ? profileCurrency
-      : currency;
-
-  // Keep cookie in sync when profile currency changes
   useEffect(() => {
     if (
       profileCurrency &&
       isSupportedCurrency(profileCurrency) &&
       profileCurrency !== lastProfileCurrency.current
     ) {
+      setCurrencyState(profileCurrency);
       setCookie(COOKIE_NAME, profileCurrency);
       lastProfileCurrency.current = profileCurrency;
     }
@@ -105,7 +99,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <CurrencyContext.Provider value={{ currency: derivedCurrency, setCurrency }}>
+    <CurrencyContext.Provider value={{ currency, setCurrency }}>
       {children}
     </CurrencyContext.Provider>
   );
