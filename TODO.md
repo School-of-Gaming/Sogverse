@@ -218,6 +218,31 @@ Supabase's "Confirm email" setting is disabled to keep signup frictionless (user
 **Dependencies:**
 - Database migration for new `profiles` columns
 
+### Split Profiles into Role-Specific Extension Tables
+
+The `profiles` table currently holds all columns for every role, including role-specific ones like `token_balance`/`stripe_customer_id` (customer-only) and upcoming `age`/`gender` (gamer-only). This is the standard "single wide table" approach that works early on but becomes messy as roles diverge.
+
+**Refactor to extension tables** (standard normalized pattern for multi-role systems):
+
+```
+profiles (shared)          → id, username, display_name, email, role, avatar_url, created_at, updated_at
+customer_profiles          → user_id FK, token_balance, stripe_customer_id, stripe_subscription_id, subscription_status
+gamer_profiles             → user_id FK, age, gender, (future gamer-specific fields)
+gedu_profiles              → user_id FK, (future gedu-specific fields like bio, specializations)
+```
+
+- [ ] Create migration adding `customer_profiles`, `gamer_profiles`, `gedu_profiles` tables
+- [ ] Migrate existing data from `profiles` columns into the new tables
+- [ ] Drop the role-specific columns from `profiles`
+- [ ] Update `adjust_token_balance()` RPC to target `customer_profiles`
+- [ ] Add RLS policies to the new tables (mirror existing role-based access patterns)
+- [ ] Update service classes and API routes to JOIN or query the extension tables
+- [ ] Regenerate TypeScript types
+
+**When:** Before adding gamer-specific fields (`age`, `gender`). No urgency before that.
+
+**Why:** Industry-standard normalization for multi-role user systems. Keeps each table focused, allows `NOT NULL` constraints on role-specific fields, and avoids a growing pile of nullable columns that only apply to one role.
+
 ### Migrate Auth Email Templates to Brevo
 
 Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.
