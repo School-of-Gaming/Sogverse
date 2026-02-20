@@ -17,7 +17,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useAllProducts, useToggleProductStatus, useDeleteProduct } from "@/services/products";
-import { formatCurrency, formatScheduleLocal } from "@/lib/utils";
+import { formatScheduleLocal } from "@/lib/utils";
 
 type ConfirmAction =
   | { type: "toggle"; id: string; name: string; currentStatus: boolean }
@@ -131,9 +131,7 @@ export default function AdminProductsPage() {
                           {product.description}
                         </p>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground group-hover:text-accent-foreground/70">
-                          <span className="font-semibold text-primary group-hover:text-secondary">
-                            {formatCurrency(product.price, (product.currency ?? "usd") as import("@/lib/constants/currency").SupportedCurrency)}
-                          </span>
+                          <span className="font-semibold text-primary group-hover:text-secondary">XX Sorgs</span>
                           <span>
                             Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}
                           </span>

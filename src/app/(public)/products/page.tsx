@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useActiveProducts } from "@/services/products";
-import { formatCurrency, formatScheduleLocal } from "@/lib/utils";
+import { formatScheduleLocal } from "@/lib/utils";
 
 export default function ProductsPage() {
   const { data: products, isLoading } = useActiveProducts();
@@ -81,9 +81,7 @@ export default function ProductsPage() {
                     </div>
                   </CardHeader>
                   <CardFooter className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-primary">
-                      {formatCurrency(product.price, (product.currency ?? "usd") as import("@/lib/constants/currency").SupportedCurrency)}
-                    </span>
+                    <span className="text-xl font-bold text-primary">XX Sorgs</span>
                     <Button>
                       <ShoppingCart className="mr-2 h-4 w-4" />
                       Add to Cart
