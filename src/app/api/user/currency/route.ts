@@ -24,7 +24,11 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // Use admin client to bypass the server client's type limitation with .update()
+    // Admin client because @supabase/ssr v0.5.2's createServerClient resolves
+    // .update() as `never` — likely a mismatch with the __InternalSupabase key
+    // in the generated Database type. Try the server client again if @supabase/ssr
+    // is upgraded (current: 0.5.2, latest: 0.8.0).
+    // Safe: user.id comes from the authenticated session, not the request body.
     const admin = createAdminClient();
     const { error } = await admin
       .from("profiles")

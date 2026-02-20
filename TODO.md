@@ -166,6 +166,15 @@ Multi-currency support (USD, GBP, EUR) implemented. `formatCurrency()` and `form
 - [x] Consolidate into `lib/utils.ts` helpers that accept locale parameters
 - [x] Replace all inline formatting with the shared helpers
 
+### Transaction History Currency Mismatch After Currency Switch
+
+If a customer changes their display currency (e.g. from USD to EUR) and re-subscribes, their old transaction history shows amounts in the old currency but `TransactionHistoryTable` has no per-row currency indicator — all rows appear formatted in the current display currency. This makes historical amounts misleading (e.g. a $15.00 purchase rendered as "€15.00").
+
+- [ ] Display the `token_transactions.currency` column in `TransactionHistoryTable` (fall back to display currency for old rows where `currency` is null)
+- [ ] Consider showing the currency code or symbol next to each amount when it differs from the user's current currency
+
+**When:** Before production launch or when multi-currency is used by real customers.
+
 ### Clarify Service Class Pattern for Mixed Data Sources
 
 Service classes (e.g. `TokensService`) mix two data-fetching patterns: some methods query Supabase directly via the injected client, while others use `fetch()` to call API routes (for operations that need server-side secrets like Stripe). The constructor-injected Supabase client is unused by the fetch-based methods.
