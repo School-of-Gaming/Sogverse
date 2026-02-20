@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/providers";
 
 type EmailProvider = "brevo" | "klaviyo";
 
@@ -20,11 +21,13 @@ interface EmailResult {
   message: string;
 }
 
+const FROM_EMAIL = "sogverse@sog.gg";
+
 export default function TestingPage() {
+  const { profile } = useAuth();
   const [provider, setProvider] = useState<EmailProvider>("brevo");
-  const [fromEmail, setFromEmail] = useState("");
-  const [fromName, setFromName] = useState("");
-  const [toEmail, setToEmail] = useState("");
+  const [fromName, setFromName] = useState("Sogverse");
+  const [toEmail, setToEmail] = useState(profile?.email ?? "");
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [replyToEmail, setReplyToEmail] = useState("");
@@ -42,7 +45,7 @@ export default function TestingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           provider,
-          fromEmail,
+          fromEmail: FROM_EMAIL,
           fromName,
           toEmail,
           subject,
@@ -112,10 +115,8 @@ export default function TestingPage() {
                 <Input
                   id="fromEmail"
                   type="email"
-                  required
-                  value={fromEmail}
-                  onChange={(e) => setFromEmail(e.target.value)}
-                  placeholder="noreply@example.com"
+                  value={FROM_EMAIL}
+                  disabled
                 />
               </div>
               <div className="space-y-2">
@@ -125,7 +126,6 @@ export default function TestingPage() {
                   required
                   value={fromName}
                   onChange={(e) => setFromName(e.target.value)}
-                  placeholder="Sogverse"
                 />
               </div>
             </div>
