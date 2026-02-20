@@ -48,13 +48,16 @@ export function GamerLoginForm() {
         } else {
           setError(signInError.message);
         }
+        setIsLoading(false);
         return;
       }
 
       if (data.user) {
         // Full page navigation so the root layout re-runs server-side
         // and hydrates AuthProvider with the correct initialProfile.
+        // Keep isLoading=true so the button doesn't flicker back before navigation completes.
         window.location.href = ROUTES.gamer.dashboard;
+        return;
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -62,9 +65,9 @@ export function GamerLoginForm() {
       } else {
         setError("An unexpected error occurred");
       }
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   return (

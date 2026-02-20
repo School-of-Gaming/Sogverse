@@ -40,6 +40,7 @@ export function LoginForm() {
 
       if (signInError) {
         setError(signInError.message);
+        setIsLoading(false);
         return;
       }
 
@@ -59,7 +60,9 @@ export function LoginForm() {
         // Full page navigation so the root layout re-runs server-side
         // and hydrates AuthProvider with the correct initialProfile.
         // Client-side router.push() doesn't re-initialize useState.
+        // Keep isLoading=true so the button doesn't flicker back before navigation completes.
         navigateAfterAuth(dashboardPath);
+        return;
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -67,9 +70,9 @@ export function LoginForm() {
       } else {
         setError("An unexpected error occurred");
       }
-    } finally {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   return (
