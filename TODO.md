@@ -92,17 +92,17 @@ Test cases to add:
 
 **Why:** RLS policies and role-based routing are complex enough that testing against a real DB catches integration bugs that mocked tests miss. Local Supabase keeps tests fast, deterministic, and free from network flakiness — and Docker is available by default in GitHub Actions runners.
 
-### Brevo Domain Verification (Email Deliverability)
+### ~~Brevo Domain Verification (Email Deliverability)~~ — DONE
 
-Brevo SMTP is configured in Supabase for transactional emails (signup, password reset). The `sog.gg` domain still needs to be authenticated to:
-- Remove "via sendinblue.com" from sender info
-- Improve deliverability (avoid spam folder)
+Domain `sog.gg` authenticated on Brevo (Brevo code, DKIM 1, DKIM 2). DMARC handled by existing EasyDMARC config. Sender `sogverse@sog.gg` verified. API key deployed to Vercel (production + preview).
 
-Steps:
-- [ ] In Brevo: go to **Senders & IP** > **Domains** > **Add domain** (`sog.gg`)
-- [ ] Add the DNS TXT records Brevo provides (Brevo code + DKIM) to `sog.gg` DNS
-- [ ] Verify in Brevo by clicking **Check Configuration**
-- [ ] Rotate the Brevo SMTP key (current one was shared in plaintext) and update it in Supabase dashboard under **Authentication > SMTP Settings**
+### Production Domain & Deployment
+
+- [ ] Deploy to production on Vercel (push to `main` or trigger production build)
+- [ ] Add `sogverse.sog.gg` domain in Vercel (production environment)
+- [ ] Add `CNAME` record in Nordname: `sogverse` → `cname.vercel-dns.com.`
+- [ ] Create Stripe **live mode** webhook endpoint pointing to `https://sogverse.sog.gg/api/webhooks/stripe`
+- [ ] Add the live mode `STRIPE_WEBHOOK_SECRET` to Vercel production environment
 
 ### Streamline CI/CD Pipeline
 
@@ -213,13 +213,9 @@ Supabase's "Confirm email" setting is disabled to keep signup frictionless (user
 
 **Note:** Gamer accounts use synthetic emails (`{username}@gamer.sogverse.internal`) — skip verification for them entirely.
 
-**Email sending options:**
-- **Option A: SMTP + `nodemailer`** — Reuse the same Brevo SMTP credentials already configured in Supabase. Copy host/port/user/password to `.env.local`. Simple, no new accounts needed.
-- **Option B: Brevo API + `@getbrevo/brevo`** — Get an API key from Brevo dashboard (SMTP & API > API Keys). Cleaner than raw SMTP, supports Brevo templates, better error handling and delivery tracking. Requires a Brevo API key in `.env.local`.
+**Email sending:** Use the Brevo API wrapper (`src/lib/brevo.ts`) already set up with `BREVO_API_KEY` and verified sender `sogverse@sog.gg`.
 
 **Dependencies:**
-- Brevo SMTP credentials or API key in `.env.local`
-- `nodemailer` (Option A) or `@getbrevo/brevo` (Option B) package
 - Database migration for new `profiles` columns
 
 ### Migrate Auth Email Templates to Brevo
