@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently --names next,stripe --prefix-colors blue,magenta \"next dev --turbopack\" \"stripe listen --forward-to localhost:3000/api/webhooks/stripe\"",
-    "dev:next": "next dev --turbopack",
+    "dev": "next dev --turbopack",
+    "dev:stripe": "concurrently --names next,stripe --prefix-colors blue,magenta \"next dev --turbopack\" \"stripe listen --forward-to localhost:3000/api/webhooks/stripe\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src/",
