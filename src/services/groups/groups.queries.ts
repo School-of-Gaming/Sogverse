@@ -30,6 +30,8 @@ export function useCommitGroupChanges(productId: string) {
       service.commitGroupChanges(productId, changes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: groupKeys.byProduct(productId) });
+      // Auto-hide may change product visibility, so refresh product caches
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
   });
 }

@@ -137,11 +137,34 @@ export async function POST(
       }
     }
 
+    // Auto-hide product if no groups remain
+    let autoHidden = false;
+    const { count } = await admin
+      .from("product_groups")
+      .select("id", { count: "exact", head: true })
+      .eq("product_id", productId);
+
+    if (count === 0) {
+      const { data: prod } = await admin
+        .from("products")
+        .select("is_visible")
+        .eq("id", productId)
+        .single();
+
+      if (prod?.is_visible) {
+        await admin
+          .from("products")
+          .update({ is_visible: false })
+          .eq("id", productId);
+        autoHidden = true;
+      }
+    }
+
     // Return refreshed group list
     const service = new GroupsService(admin);
     const groups = await service.getProductGroups(productId);
 
-    return NextResponse.json({ groups });
+    return NextResponse.json({ groups, autoHidden });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

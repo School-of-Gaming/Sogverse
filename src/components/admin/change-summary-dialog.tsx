@@ -38,9 +38,12 @@ export function ChangeSummaryDialog({
         <ul className="my-4 space-y-2 text-sm">
           {summary.lines.map((segments, i) => (
             <li key={i} className="flex items-start gap-2">
-              <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+              <span className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${segments.some((s: ChangeSegment) => s.type === "warning") ? "bg-amber-400" : "bg-primary"}`} />
               <span>
                 {segments.map((seg: ChangeSegment, j: number) => {
+                  if (seg.type === "warning") {
+                    return <span key={j} className="font-medium text-amber-400">{seg.value}</span>;
+                  }
                   if (seg.type === "gamer") {
                     return <span key={j} className="font-medium text-blue-400">{seg.value}</span>;
                   }

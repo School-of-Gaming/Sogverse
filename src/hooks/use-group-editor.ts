@@ -273,7 +273,8 @@ function computeEffectiveGroups(
 export type ChangeSegment =
   | { type: "text"; value: string }
   | { type: "gamer"; value: string }
-  | { type: "gedu"; value: string };
+  | { type: "gedu"; value: string }
+  | { type: "warning"; value: string };
 
 export type ChangeLine = ChangeSegment[];
 
@@ -330,6 +331,12 @@ function buildChangeSummary(
       text(" from "), gedu(from), text("'s group"),
       text(" to "), gedu(to), text("'s group"),
     ]);
+  }
+
+  // Warn if all groups will be removed (product will be auto-hidden)
+  const survivingServerGroups = serverGroups.length - state.deletedGroupIds.length;
+  if (survivingServerGroups + state.addedGroups.length === 0 && serverGroups.length > 0) {
+    lines.push([{ type: "warning", value: "Product will be automatically hidden (no groups remaining)" }]);
   }
 
   return { lines, hasChanges: lines.length > 0 };
