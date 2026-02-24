@@ -59,12 +59,27 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const { profile, user, refreshProfile } = useAuth();
-  const [currency, setCurrencyState] = useState<SupportedCurrency>(() =>
-    resolveInitialCurrency(profile?.currency)
-  );
+  // Start with DEFAULT_CURRENCY to match SSR (cookies/navigator aren't
+  // available server-side). Synced to the real value after hydration.
+  const [currency, setCurrencyState] = useState<SupportedCurrency>(DEFAULT_CURRENCY);
 
   // Track last synced profile currency to detect when it changes
   const lastProfileCurrency = useRef(profile?.currency);
+
+  // After hydration, resolve the real currency from profile/cookie/locale
+  const hasMounted = useRef(false);
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      const resolved = resolveInitialCurrency(profile?.currency);
+      // One-time hydration sync: cookies/navigator aren't available during
+      // SSR so we must defer resolution to the client. Only fires once.
+      if (resolved !== DEFAULT_CURRENCY) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCurrencyState(resolved);
+      }
+    }
+  }, [profile?.currency]);
 
   // Derive currency from profile on render rather than using setState in an
   // effect (which triggers a cascading re-render and violates the
