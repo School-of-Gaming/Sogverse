@@ -41,3 +41,5 @@ BEGIN
   ORDER BY pg.display_order, gmp.display_name;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
+
+GRANT EXECUTE ON FUNCTION get_product_groups_with_details(UUID) TO authenticated;

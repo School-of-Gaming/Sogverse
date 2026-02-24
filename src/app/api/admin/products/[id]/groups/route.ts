@@ -26,7 +26,7 @@ export async function POST(
 
     const admin = createAdminClient();
 
-    // Verify product exists
+    // Verify product exists (return a clean 404 before hitting the RPC)
     const { data: product, error: productError } = await admin
       .from("products")
       .select("id")
@@ -37,128 +37,28 @@ export async function POST(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    // Build a map of tempId → realId for new groups (resolved after insert)
-    const tempIdToRealId = new Map<string, string>();
+    // Execute all changes atomically via RPC — if any step fails the
+    // entire transaction rolls back, preventing inconsistent state.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rpcResult, error: rpcError } = await (admin as any).rpc(
+      "commit_group_changes",
+      {
+        p_product_id: productId,
+        p_added_groups: addedGroups,
+        p_updated_groups: updatedGroups,
+        p_deleted_group_ids: deletedGroupIds,
+        p_enrollment_moves: enrollmentMoves,
+      },
+    );
 
-    // Compute next display_order
-    const { data: existingGroups } = await admin
-      .from("product_groups")
-      .select("display_order")
-      .eq("product_id", productId)
-      .order("display_order", { ascending: false })
-      .limit(1);
-
-    let nextOrder = (existingGroups?.[0]?.display_order ?? -1) + 1;
-
-    // Step 1: Delete enrollment moves from source groups
-    for (const move of enrollmentMoves) {
-      const realFromId = tempIdToRealId.get(move.fromGroupId) ?? move.fromGroupId;
-      const { error } = await admin
-        .from("group_enrollments")
-        .delete()
-        .eq("group_id", realFromId)
-        .eq("gamer_id", move.gamerId);
-
-      if (error) {
-        return NextResponse.json(
-          { error: `Failed to remove enrollment: ${error.message}` },
-          { status: 400 },
-        );
-      }
+    if (rpcError) {
+      return NextResponse.json(
+        { error: rpcError.message },
+        { status: 400 },
+      );
     }
 
-    // Step 2: Delete groups (only works if enrollments were moved out)
-    for (const groupId of deletedGroupIds) {
-      const { error } = await admin
-        .from("product_groups")
-        .delete()
-        .eq("id", groupId);
-
-      if (error) {
-        return NextResponse.json(
-          { error: `Failed to delete group: ${error.message}` },
-          { status: 400 },
-        );
-      }
-    }
-
-    // Step 3: Insert new groups (map tempId → realId)
-    for (const group of addedGroups) {
-      const { data: newGroup, error } = await admin
-        .from("product_groups")
-        .insert({
-          product_id: productId,
-          gedu_id: group.geduId,
-          display_order: nextOrder++,
-        })
-        .select("id")
-        .single();
-
-      if (error) {
-        return NextResponse.json(
-          { error: `Failed to add group: ${error.message}` },
-          { status: 400 },
-        );
-      }
-
-      tempIdToRealId.set(group.tempId, newGroup.id);
-    }
-
-    // Step 4: Update existing groups (change gedu_id)
-    for (const group of updatedGroups) {
-      const { error } = await admin
-        .from("product_groups")
-        .update({ gedu_id: group.geduId, updated_at: new Date().toISOString() })
-        .eq("id", group.groupId);
-
-      if (error) {
-        return NextResponse.json(
-          { error: `Failed to update group: ${error.message}` },
-          { status: 400 },
-        );
-      }
-    }
-
-    // Step 5: Insert enrollment moves into destination groups (resolve tempIds)
-    for (const move of enrollmentMoves) {
-      const realToId = tempIdToRealId.get(move.toGroupId) ?? move.toGroupId;
-      const { error } = await admin
-        .from("group_enrollments")
-        .insert({
-          group_id: realToId,
-          gamer_id: move.gamerId,
-        });
-
-      if (error) {
-        return NextResponse.json(
-          { error: `Failed to move enrollment: ${error.message}` },
-          { status: 400 },
-        );
-      }
-    }
-
-    // Auto-hide product if no groups remain
-    let autoHidden = false;
-    const { count } = await admin
-      .from("product_groups")
-      .select("id", { count: "exact", head: true })
-      .eq("product_id", productId);
-
-    if (count === 0) {
-      const { data: prod } = await admin
-        .from("products")
-        .select("is_visible")
-        .eq("id", productId)
-        .single();
-
-      if (prod?.is_visible) {
-        await admin
-          .from("products")
-          .update({ is_visible: false })
-          .eq("id", productId);
-        autoHidden = true;
-      }
-    }
+    const autoHidden = rpcResult?.autoHidden ?? false;
 
     // Return refreshed group list
     const service = new GroupsService(admin);
