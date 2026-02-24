@@ -88,6 +88,7 @@ function SheetHeader({
       {onClose && (
         <button
           onClick={onClose}
+          aria-label="Close"
           className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground"
         >
           <X className="h-5 w-5" />

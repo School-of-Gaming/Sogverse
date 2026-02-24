@@ -156,9 +156,6 @@ function reducer(state: GroupEditorState, action: GroupEditorAction): GroupEdito
 
     case "RESET":
       return { addedGroups: [], updatedGroups: [], deletedGroupIds: [], enrollmentMoves: [] };
-
-    default:
-      return state;
   }
 }
 

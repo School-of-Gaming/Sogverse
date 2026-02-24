@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Search, UserRound } from "lucide-react";
 import {
   Sheet,
@@ -37,6 +37,14 @@ export function GeduPickerDialog({
   onSelect,
 }: GeduPickerDialogProps) {
   const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  // Focus the search input when the sheet opens (can't use autoFocus
+  // because the Sheet always mounts its children, so it would steal
+  // focus on page load)
+  useEffect(() => {
+    if (open) searchRef.current?.focus();
+  }, [open]);
 
   const handleOpenChange = (next: boolean) => {
     if (!next) setSearch("");
@@ -64,8 +72,8 @@ export function GeduPickerDialog({
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
+              ref={searchRef}
               placeholder="Search by name or email…"
-              autoFocus
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 focus-visible:ring-border"
