@@ -199,27 +199,32 @@ function computeEffectiveGroups(
     const isDeleted = state.deletedGroupIds.includes(sg.groupId);
     const update = state.updatedGroups.find((u) => u.groupId === sg.groupId);
 
-    // Compute effective gamers after moves
-    let gamers = sg.gamers.map((g) => ({ ...g, isMoved: false }));
+    // Deleted groups show no gamers — they've been moved elsewhere or will be unenrolled
+    let gamers: EffectiveGroup["gamers"] = [];
 
-    // Remove gamers that were moved out
-    const movedOut = state.enrollmentMoves
-      .filter((m) => m.fromGroupId === sg.groupId)
-      .map((m) => m.gamerId);
-    gamers = gamers.filter((g) => !movedOut.includes(g.gamerId));
+    if (!isDeleted) {
+      // Compute effective gamers after moves
+      gamers = sg.gamers.map((g) => ({ ...g, isMoved: false }));
 
-    // Add gamers that were moved in
-    const movedIn = state.enrollmentMoves.filter((m) => m.toGroupId === sg.groupId);
-    for (const move of movedIn) {
-      const gamer = gamerLookup.get(move.gamerId);
-      gamers.push({
-        gamerId: move.gamerId,
-        displayName: gamer?.displayName ?? "Unknown",
-        enrollmentId: "",
-        dateOfBirth: gamer?.dateOfBirth ?? null,
-        gender: gamer?.gender ?? null,
-        isMoved: true,
-      });
+      // Remove gamers that were moved out
+      const movedOut = state.enrollmentMoves
+        .filter((m) => m.fromGroupId === sg.groupId)
+        .map((m) => m.gamerId);
+      gamers = gamers.filter((g) => !movedOut.includes(g.gamerId));
+
+      // Add gamers that were moved in
+      const movedIn = state.enrollmentMoves.filter((m) => m.toGroupId === sg.groupId);
+      for (const move of movedIn) {
+        const gamer = gamerLookup.get(move.gamerId);
+        gamers.push({
+          gamerId: move.gamerId,
+          displayName: gamer?.displayName ?? "Unknown",
+          enrollmentId: "",
+          dateOfBirth: gamer?.dateOfBirth ?? null,
+          gender: gamer?.gender ?? null,
+          isMoved: true,
+        });
+      }
     }
 
     groups.push({
@@ -278,10 +283,14 @@ function buildChangeSummary(
     lines.push(`Add group with ${g.geduDisplayName}`);
   }
   for (const g of state.updatedGroups) {
-    lines.push(`Reassign group to ${g.geduDisplayName}`);
+    const prev = serverGroups.find((sg) => sg.groupId === g.groupId);
+    const from = prev?.geduDisplayName ?? "unknown";
+    lines.push(`Reassign ${from}'s group to ${g.geduDisplayName}`);
   }
   for (const id of state.deletedGroupIds) {
-    lines.push(`Delete group ${id.slice(0, 8)}…`);
+    const sg = serverGroups.find((g) => g.groupId === id);
+    const name = sg?.geduDisplayName ?? "unknown";
+    lines.push(`Delete ${name}'s group`);
   }
 
   // Build gamer lookup for move descriptions
