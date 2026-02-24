@@ -93,7 +93,7 @@ export default function AdminUserDetailPage() {
           </Avatar>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">
-              {profile.display_name || profile.username || "Unnamed User"}
+              {profile.display_name}
             </h1>
             <div className="flex items-center gap-2">
               <p className="text-muted-foreground">

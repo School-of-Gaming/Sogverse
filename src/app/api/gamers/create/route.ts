@@ -20,6 +20,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!displayName || typeof displayName !== "string") {
+      return NextResponse.json(
+        { error: "Display name is required" },
+        { status: 400 }
+      );
+    }
+
     const syntheticEmail = generateGamerEmail(username);
     const admin = createAdminClient();
 
@@ -30,7 +37,7 @@ export async function POST(request: Request) {
         password,
         email_confirm: true,
         user_metadata: {
-          display_name: displayName || username,
+          display_name: displayName,
           role: "gamer",
           username,
         },

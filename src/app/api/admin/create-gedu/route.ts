@@ -25,6 +25,13 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!displayName || typeof displayName !== "string") {
+      return NextResponse.json(
+        { error: "Display name is required" },
+        { status: 400 }
+      );
+    }
+
     const admin = createAdminClient();
 
     const { data, error } = await admin.auth.admin.createUser({
@@ -32,7 +39,7 @@ export async function POST(request: Request) {
       password,
       email_confirm: true,
       user_metadata: {
-        display_name: displayName || email,
+        display_name: displayName,
         role: "gedu",
       },
     });

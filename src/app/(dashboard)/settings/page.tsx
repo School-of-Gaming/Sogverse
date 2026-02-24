@@ -17,7 +17,7 @@ export default function SettingsPage() {
   const updateProfile = useUpdateProfile();
   const router = useRouter();
 
-  const [displayName, setDisplayName] = useState(profile?.display_name || "");
+  const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -79,7 +79,7 @@ export default function SettingsPage() {
             </Avatar>
             <div>
               <p className="font-medium">
-                {profile?.display_name || profile?.username || "User"}
+                {profile?.display_name}
               </p>
               <p className="text-sm text-muted-foreground">
                 {profile?.email || `@${profile?.username}`}

@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useCreateGedu } from "@/services/users";
 
 const createGeduSchema = z.object({
-  displayName: z.string().min(2, "Display name must be at least 2 characters").optional().or(z.literal("")),
+  displayName: z.string().min(2, "Display name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
@@ -35,7 +35,7 @@ export default function AddUserPage() {
       await createGedu.mutateAsync({
         email: validatedData.email,
         password: validatedData.password,
-        displayName: validatedData.displayName || undefined,
+        displayName: validatedData.displayName,
       });
 
       setSuccess(true);
@@ -129,6 +129,7 @@ export default function AddUserPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 disabled={createGedu.isPending}
+                required
                 autoComplete="off"
               />
             </div>

@@ -745,3 +745,9 @@ export type VoiceRoomInsert = Database["public"]["Tables"]["voice_rooms"]["Inser
 export type VoiceRoomUpdate = Database["public"]["Tables"]["voice_rooms"]["Update"];
 export type VoiceRoomStatus = Database["public"]["Enums"]["voice_room_status"];
 export type OpenVoiceRoom = Database["public"]["Functions"]["get_open_voice_rooms"]["Returns"][number];
+
+export type ProductGroup = Database["public"]["Tables"]["product_groups"]["Row"];
+export type ProductGroupInsert = Database["public"]["Tables"]["product_groups"]["Insert"];
+
+export type GroupEnrollment = Database["public"]["Tables"]["group_enrollments"]["Row"];
+export type GroupEnrollmentInsert = Database["public"]["Tables"]["group_enrollments"]["Insert"];

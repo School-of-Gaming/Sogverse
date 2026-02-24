@@ -35,7 +35,7 @@ function createTokenRequest(body: Record<string, unknown>): Request {
 
 function mockAuthenticatedWithProfile(
   userId: string,
-  profile: { role: string; display_name: string | null; username: string | null }
+  profile: { role: string; display_name: string; username: string | null }
 ) {
   if (profile.role === "customer") {
     mockRequireRole.mockResolvedValue(

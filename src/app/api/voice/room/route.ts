@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     const admin = createAdminClient();
-    const displayName = roomName || (profile.display_name as string | null) || (profile.username as string | null) || "Host";
+    const displayName = roomName || (profile.display_name as string);
     const dailyRoomName = `room-${user.id.slice(0, 8)}`;
 
     // Check if a voice_rooms row already exists for this creator

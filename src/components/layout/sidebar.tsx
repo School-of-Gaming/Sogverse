@@ -212,7 +212,7 @@ export function Sidebar() {
         <div className="border-t border-sidebar-border p-4">
           <div className="text-sm">
             <p className="font-medium text-sidebar-foreground">
-              {profile.display_name || profile.username}
+              {profile.display_name}
             </p>
             <p className="text-xs capitalize text-muted-foreground">
               {profile.role}

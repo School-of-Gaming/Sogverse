@@ -57,7 +57,7 @@ export default function CustomerGamersPage() {
                     </Avatar>
                     <div>
                       <CardTitle className="text-lg">
-                        {gamer.display_name || gamer.username}
+                        {gamer.display_name}
                       </CardTitle>
                       <CardDescription className="group-hover:text-accent-foreground/70">@{gamer.username}</CardDescription>
                     </div>

@@ -11,7 +11,6 @@ import {
   Pencil,
   Copy,
   Trash,
-  Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,16 +24,20 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useProduct, useToggleProductVisibility, useDeleteProduct } from "@/services/products";
+import { useProductGroups } from "@/services/groups";
+import { GeduGroupsCard, VisibilityWarningBanner } from "@/components/admin/gedu-groups-card";
 import { formatScheduleLocal } from "@/lib/utils";
 
 export default function ManageProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
+  const { data: groups = [] } = useProductGroups(id);
   const toggleVisibility = useToggleProductVisibility();
   const deleteProduct = useDeleteProduct();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmVisibility, setConfirmVisibility] = useState(false);
+  const [visibilityError, setVisibilityError] = useState("");
 
   if (isLoading) {
     return (
@@ -69,6 +72,11 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
   const isVisible = product.is_visible ?? true;
 
   const handleToggleVisibility = () => {
+    if (!isVisible && groups.length === 0) {
+      setVisibilityError("Add at least one group before making this product visible.");
+      setConfirmVisibility(false);
+      return;
+    }
     toggleVisibility.mutate({ id: product.id, isVisible: !isVisible });
     setConfirmVisibility(false);
   };
@@ -88,6 +96,8 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
       >
         <ArrowLeft className="h-4 w-4" /> Back to Products
       </Link>
+
+      <VisibilityWarningBanner isVisible={isVisible} groupCount={groups.length} />
 
       {/* Product Summary */}
       <Card>
@@ -174,20 +184,8 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
         </CardContent>
       </Card>
 
-      {/* Gedu Groups (placeholder) */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-muted-foreground" />
-            Gedu Groups
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            No gedus assigned yet. Gedu group management coming soon.
-          </p>
-        </CardContent>
-      </Card>
+      {/* Gedu Groups */}
+      <GeduGroupsCard productId={id} />
 
       {/* Visibility Confirmation Dialog */}
       <Dialog open={confirmVisibility} onOpenChange={setConfirmVisibility}>
@@ -209,6 +207,19 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
             <Button onClick={handleToggleVisibility}>
               {isVisible ? "Hide" : "Show"}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Visibility Error Dialog */}
+      <Dialog open={!!visibilityError} onOpenChange={() => setVisibilityError("")}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cannot Show Product</DialogTitle>
+            <DialogDescription>{visibilityError}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setVisibilityError("")}>OK</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

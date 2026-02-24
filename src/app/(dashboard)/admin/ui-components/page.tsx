@@ -148,7 +148,7 @@ function VoiceAvatarDemo() {
       <div style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}>
         <VoiceAvatar
           userId={profile?.id || user?.id || "demo"}
-          userName={profile?.display_name || "You"}
+          userName={profile?.display_name ?? "You"}
           audioOn={micOn}
           videoOn={cameraOn}
           isLocal

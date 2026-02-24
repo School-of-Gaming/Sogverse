@@ -15,7 +15,7 @@ const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
-  displayName: z.string().min(2, "Display name must be at least 2 characters").optional(),
+  displayName: z.string().min(2, "Display name must be at least 2 characters"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -42,7 +42,7 @@ export function RegisterForm() {
         email,
         password,
         confirmPassword,
-        displayName: displayName || undefined,
+        displayName,
       });
 
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -98,7 +98,7 @@ export function RegisterForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name (Optional)</Label>
+            <Label htmlFor="displayName">Display Name</Label>
             <Input
               id="displayName"
               type="text"
@@ -106,6 +106,7 @@ export function RegisterForm() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={isLoading}
+              required
             />
           </div>
           <div className="space-y-2">

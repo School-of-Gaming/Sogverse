@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     }
 
     // Build token — encode userId|role|displayName
-    const displayName = (profile.display_name as string | null) || (profile.username as string | null) || "User";
+    const displayName = profile.display_name as string;
     const userName = `${user.id}|${role}|${displayName}`;
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
     if (!domain) {

@@ -22,7 +22,7 @@ const createGamerSchema = z.object({
     ),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
-  displayName: z.string().optional(),
+  displayName: z.string().min(2, "Display name must be at least 2 characters"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -49,7 +49,7 @@ export default function AddGamerPage() {
         username,
         password,
         confirmPassword,
-        displayName: displayName || undefined,
+        displayName,
       });
 
       if (!user) {
@@ -88,7 +88,7 @@ export default function AddGamerPage() {
             </div>
             <h3 className="mt-4 text-lg font-medium">Gamer Account Created!</h3>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              <strong>{displayName || username}</strong> can now log in using their
+              <strong>{displayName}</strong> can now log in using their
               username and password at the Gamer Login page.
             </p>
             <div className="mt-6 flex gap-4">
@@ -150,7 +150,7 @@ export default function AddGamerPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name (Optional)</Label>
+              <Label htmlFor="displayName">Display Name</Label>
               <Input
                 id="displayName"
                 type="text"
@@ -158,6 +158,7 @@ export default function AddGamerPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 disabled={createGamer.isPending}
+                required
               />
             </div>
 

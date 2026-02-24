@@ -1,54 +1,25 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Package, Check } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCreateProduct, useProduct } from "@/services/products";
 import { ProductForm, type ProductFormValues } from "@/components/admin/product-form";
 
 export default function AddProductPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const cloneId = searchParams.get("clone");
   const { data: cloneSource, isLoading: cloneLoading } = useProduct(cloneId ?? "");
 
   const createProduct = useCreateProduct();
-  const [success, setSuccess] = useState(false);
-  const [createdName, setCreatedName] = useState("");
 
   const handleSubmit = async (values: ProductFormValues) => {
-    await createProduct.mutateAsync(values);
-    setCreatedName(values.name);
-    setSuccess(true);
+    const created = await createProduct.mutateAsync(values);
+    router.push(`/admin/products/${created.id}`);
   };
-
-  if (success) {
-    return (
-      <div className="mx-auto max-w-lg space-y-6">
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
-              <Check className="h-8 w-8 text-success" />
-            </div>
-            <h3 className="mt-4 text-lg font-medium">Product Created!</h3>
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              <strong>{createdName}</strong> has been added to your product catalog.
-            </p>
-            <div className="mt-6 flex gap-4">
-              <Link href="/admin/products">
-                <Button variant="outline">View All Products</Button>
-              </Link>
-              <Button onClick={() => setSuccess(false)}>
-                Add Another Product
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   if (cloneId && cloneLoading) {
     return (

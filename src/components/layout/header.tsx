@@ -121,7 +121,7 @@ export function Header() {
                   <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md border border-border bg-card py-1 shadow-lg">
                     <div className="px-4 py-2 border-b border-border">
                       <p className="text-sm font-medium">
-                        {profile?.display_name || profile?.username}
+                        {profile?.display_name}
                       </p>
                       <p className="text-xs text-muted-foreground capitalize">
                         {profile?.role}
