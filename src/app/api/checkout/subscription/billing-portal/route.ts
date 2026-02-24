@@ -19,11 +19,11 @@ export async function POST(request: NextRequest) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, stripe_customer_id")
+      .select("role")
       .eq("id", user.id)
       .single();
 
-    const typedProfile = profile as { role: string; stripe_customer_id: string | null } | null;
+    const typedProfile = profile as { role: string } | null;
 
     if (typedProfile?.role !== "customer") {
       return NextResponse.json(
@@ -32,7 +32,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!typedProfile.stripe_customer_id) {
+    const { data: customerProfile } = await supabase
+      .from("customer_profiles")
+      .select("stripe_customer_id")
+      .eq("user_id", user.id)
+      .single();
+
+    const typedCustomerProfile = customerProfile as { stripe_customer_id: string | null } | null;
+
+    if (!typedCustomerProfile?.stripe_customer_id) {
       return NextResponse.json(
         { error: "No billing account found" },
         { status: 400 }
@@ -44,7 +52,7 @@ export async function POST(request: NextRequest) {
       `https://${request.headers.get("host")}`;
 
     const session = await stripe.billingPortal.sessions.create({
-      customer: typedProfile.stripe_customer_id,
+      customer: typedCustomerProfile.stripe_customer_id,
       return_url: `${origin}${ROUTES.customer.sorg}`,
     });
 

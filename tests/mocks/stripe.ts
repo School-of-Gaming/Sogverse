@@ -19,27 +19,47 @@ export function mockUnauthenticated(mockGetUser: ReturnType<typeof vi.fn>) {
 
 /**
  * Configures mocks for an authenticated user with subscription profile fields.
+ * Routes now query `profiles` for role, then `customer_profiles` for Stripe fields.
+ * The mockFrom function dispatches by table name.
+ *
  * Default: customer role with an active stripe_subscription_id.
  */
 export function mockAuthenticatedSubscriptionProfile(
   mockGetUser: ReturnType<typeof vi.fn>,
-  mockFromSelect: ReturnType<typeof vi.fn>,
+  mockFrom: ReturnType<typeof vi.fn>,
   overrides: Record<string, unknown> = {},
 ) {
+  const { role = "customer", stripe_subscription_id = "sub_active_123", ...rest } = overrides;
+
   mockGetUser.mockResolvedValue({
     data: { user: { id: "user-123" } },
     error: null,
   });
 
-  mockFromSelect.mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue(
-        mockSupabaseSuccess({
-          role: "customer",
-          stripe_subscription_id: "sub_active_123",
-          ...overrides,
-        })
-      ),
-    }),
+  mockFrom.mockImplementation((table: string) => {
+    if (table === "customer_profiles") {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              mockSupabaseSuccess({
+                stripe_subscription_id,
+                ...rest,
+              })
+            ),
+          }),
+        }),
+      };
+    }
+    // profiles
+    return {
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(
+            mockSupabaseSuccess({ role })
+          ),
+        }),
+      }),
+    };
   });
 }

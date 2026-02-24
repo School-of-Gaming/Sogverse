@@ -15,14 +15,12 @@ vi.mock("stripe", () => ({
 }));
 
 const mockGetUser = vi.fn();
-const mockFromSelect = vi.fn();
+const mockFrom = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
-    from: vi.fn(() => ({
-      select: mockFromSelect,
-    })),
+    from: mockFrom,
   })),
 }));
 
@@ -46,7 +44,7 @@ describe("POST /api/checkout/subscription/cancel", () => {
   });
 
   it("should return 403 for non-customer role", async () => {
-    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect, { role: "gamer" });
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFrom, { role: "gamer" });
 
     const response = await POST();
     const data = await response.json();
@@ -58,7 +56,7 @@ describe("POST /api/checkout/subscription/cancel", () => {
   // -- Validation --
 
   it("should return 400 when customer has no subscription", async () => {
-    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect, { stripe_subscription_id: null });
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFrom, { stripe_subscription_id: null });
 
     const response = await POST();
     const data = await response.json();
@@ -70,7 +68,7 @@ describe("POST /api/checkout/subscription/cancel", () => {
   // -- Happy path --
 
   it("should cancel subscription at period end", async () => {
-    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect);
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFrom);
     mockSubscriptionsUpdate.mockResolvedValue({
       current_period_end: 1700000000,
     });
@@ -86,7 +84,7 @@ describe("POST /api/checkout/subscription/cancel", () => {
   });
 
   it("should return 500 when Stripe API fails", async () => {
-    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect);
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFrom);
     mockSubscriptionsUpdate.mockRejectedValue(new Error("Stripe error"));
 
     const response = await POST();

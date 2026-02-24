@@ -8,9 +8,9 @@ export class TokensService {
 
   async getBalance(userId: string): Promise<number> {
     const { data, error } = await this.supabase
-      .from("profiles")
+      .from("customer_profiles")
       .select("token_balance")
-      .eq("id", userId)
+      .eq("user_id", userId)
       .single();
 
     if (error) throw error;
@@ -33,9 +33,9 @@ export class TokensService {
     subscription_status: string | null;
   }> {
     const { data, error } = await this.supabase
-      .from("profiles")
+      .from("customer_profiles")
       .select("stripe_subscription_id, subscription_status")
-      .eq("id", userId)
+      .eq("user_id", userId)
       .single();
 
     if (error) throw error;

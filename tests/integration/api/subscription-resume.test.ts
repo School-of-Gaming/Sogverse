@@ -15,14 +15,12 @@ vi.mock("stripe", () => ({
 }));
 
 const mockGetUser = vi.fn();
-const mockFromSelect = vi.fn();
+const mockFrom = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
-    from: vi.fn(() => ({
-      select: mockFromSelect,
-    })),
+    from: mockFrom,
   })),
 }));
 
@@ -46,7 +44,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   });
 
   it("should return 403 for non-customer role", async () => {
-    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect, { role: "gamer" });
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFrom, { role: "gamer" });
 
     const response = await POST();
     const data = await response.json();
@@ -56,7 +54,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   });
 
   it("should return 403 for admin role", async () => {
-    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect, { role: "admin" });
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFrom, { role: "admin" });
 
     const response = await POST();
     const data = await response.json();
@@ -67,7 +65,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   // -- Validation --
 
   it("should return 400 when customer has no subscription", async () => {
-    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect, { stripe_subscription_id: null });
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFrom, { stripe_subscription_id: null });
 
     const response = await POST();
     const data = await response.json();
@@ -79,7 +77,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   // -- Happy path --
 
   it("should resume subscription by setting cancel_at_period_end to false", async () => {
-    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect);
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFrom);
     mockSubscriptionsUpdate.mockResolvedValue({ id: "sub_active_123" });
 
     const response = await POST();
@@ -93,7 +91,7 @@ describe("POST /api/checkout/subscription/resume", () => {
   });
 
   it("should return 500 when Stripe API fails", async () => {
-    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFromSelect);
+    mockAuthenticatedSubscriptionProfile(mockGetUser, mockFrom);
     mockSubscriptionsUpdate.mockRejectedValue(new Error("Stripe error"));
 
     const response = await POST();

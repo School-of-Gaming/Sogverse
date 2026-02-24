@@ -58,7 +58,6 @@ function mockAdminUpdate() {
 }
 
 function mockIdempotencyAndRpc(alreadyProcessed: boolean) {
-  let callCount = 0;
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "token_transactions") {
       return {
@@ -72,7 +71,7 @@ function mockIdempotencyAndRpc(alreadyProcessed: boolean) {
         }),
       };
     }
-    // profiles
+    // customer_profiles
     return {
       update: vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -294,7 +293,7 @@ describe("POST /api/webhooks/stripe", () => {
 
       await POST(createWebhookRequest());
 
-      expect(mockAdminFrom).toHaveBeenCalledWith("profiles");
+      expect(mockAdminFrom).toHaveBeenCalledWith("customer_profiles");
     });
 
     it("should store subscription metadata for subscription checkout", async () => {
@@ -316,11 +315,11 @@ describe("POST /api/webhooks/stripe", () => {
 
       await POST(createWebhookRequest());
 
-      // Should have profile updates for both customer ID and subscription
-      const profileCalls = mockAdminFrom.mock.calls.filter(
-        (call) => call[0] === "profiles"
+      // Should have customer_profiles updates for both customer ID and subscription
+      const customerProfileCalls = mockAdminFrom.mock.calls.filter(
+        (call) => call[0] === "customer_profiles"
       );
-      expect(profileCalls.length).toBe(2);
+      expect(customerProfileCalls.length).toBe(2);
     });
 
     it("should skip when payment_status is not paid", async () => {
@@ -372,11 +371,11 @@ describe("POST /api/webhooks/stripe", () => {
 
       await POST(createWebhookRequest());
 
-      // Only token_transactions call (idempotency check), no profiles update for customer ID
-      const profileCalls = mockAdminFrom.mock.calls.filter(
-        (call) => call[0] === "profiles"
+      // Only token_transactions call (idempotency check), no customer_profiles update for customer ID
+      const customerProfileCalls = mockAdminFrom.mock.calls.filter(
+        (call) => call[0] === "customer_profiles"
       );
-      expect(profileCalls.length).toBe(0);
+      expect(customerProfileCalls.length).toBe(0);
     });
   });
 
@@ -437,7 +436,7 @@ describe("POST /api/webhooks/stripe", () => {
             }),
           };
         }
-        // profiles
+        // customer_profiles
         return {
           update: vi.fn().mockImplementation((data: Record<string, unknown>) => {
             updateCalls.push(data);
@@ -608,9 +607,9 @@ describe("POST /api/webhooks/stripe", () => {
       const response = await POST(createWebhookRequest());
 
       expect(response.status).toBe(200);
-      expect(mockAdminFrom).toHaveBeenCalledWith("profiles");
+      expect(mockAdminFrom).toHaveBeenCalledWith("customer_profiles");
       expect(updateFn).toHaveBeenCalledWith({ subscription_status: "past_due" });
-      expect(eqFn).toHaveBeenCalledWith("id", "user-123");
+      expect(eqFn).toHaveBeenCalledWith("user_id", "user-123");
     });
 
     it("should write 'active' when active and not canceling", async () => {
@@ -672,12 +671,12 @@ describe("POST /api/webhooks/stripe", () => {
       const response = await POST(createWebhookRequest());
 
       expect(response.status).toBe(200);
-      expect(mockAdminFrom).toHaveBeenCalledWith("profiles");
+      expect(mockAdminFrom).toHaveBeenCalledWith("customer_profiles");
       expect(updateFn).toHaveBeenCalledWith({
         stripe_subscription_id: null,
         subscription_status: null,
       });
-      expect(eqFn).toHaveBeenCalledWith("id", "user-123");
+      expect(eqFn).toHaveBeenCalledWith("user_id", "user-123");
     });
 
     it("should skip when userId is missing from metadata", async () => {

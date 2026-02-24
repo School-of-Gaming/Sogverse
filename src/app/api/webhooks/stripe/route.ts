@@ -68,23 +68,23 @@ export async function POST(request: Request) {
           );
         }
 
-        // Store Stripe customer ID on profile
+        // Store Stripe customer ID on customer profile
         if (session.customer) {
           await admin
-            .from("profiles")
+            .from("customer_profiles")
             .update({ stripe_customer_id: session.customer as string })
-            .eq("id", userId);
+            .eq("user_id", userId);
         }
 
         // For subscriptions, store subscription ID
         if (packageType === "subscription" && session.subscription) {
           await admin
-            .from("profiles")
+            .from("customer_profiles")
             .update({
               stripe_subscription_id: session.subscription as string,
               subscription_status: "active",
             })
-            .eq("id", userId);
+            .eq("user_id", userId);
         }
         break;
       }
@@ -135,11 +135,11 @@ export async function POST(request: Request) {
 
         // Ensure subscription_status is "active" after a successful renewal.
         // If the subscription was past_due and customer.subscription.updated
-        // is delayed or lost, this keeps the profile consistent.
+        // is delayed or lost, this keeps the customer profile consistent.
         await admin
-          .from("profiles")
+          .from("customer_profiles")
           .update({ subscription_status: "active" })
-          .eq("id", userId);
+          .eq("user_id", userId);
 
         break;
       }
@@ -157,9 +157,9 @@ export async function POST(request: Request) {
             : subscription.status;
 
         await admin
-          .from("profiles")
+          .from("customer_profiles")
           .update({ subscription_status: status })
-          .eq("id", userId);
+          .eq("user_id", userId);
         break;
       }
 
@@ -169,12 +169,12 @@ export async function POST(request: Request) {
         if (!userId) break;
 
         await admin
-          .from("profiles")
+          .from("customer_profiles")
           .update({
             stripe_subscription_id: null,
             subscription_status: null,
           })
-          .eq("id", userId);
+          .eq("user_id", userId);
         break;
       }
     }

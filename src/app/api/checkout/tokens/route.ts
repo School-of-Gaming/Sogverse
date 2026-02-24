@@ -21,15 +21,13 @@ export async function POST(request: Request) {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, email, stripe_customer_id, subscription_status")
+      .select("role, email")
       .eq("id", user.id)
       .single();
 
     const typedProfile = profile as {
       role: string;
       email: string | null;
-      stripe_customer_id: string | null;
-      subscription_status: string | null;
     } | null;
 
     if (typedProfile?.role !== "customer") {
@@ -38,6 +36,17 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
+
+    const { data: customerProfile } = await supabase
+      .from("customer_profiles")
+      .select("stripe_customer_id, subscription_status")
+      .eq("user_id", user.id)
+      .single();
+
+    const typedCustomerProfile = customerProfile as {
+      stripe_customer_id: string | null;
+      subscription_status: string | null;
+    } | null;
 
     const { packageId, currency: rawCurrency, returnPath } = await request.json();
 
@@ -57,8 +66,8 @@ export async function POST(request: Request) {
 
     if (
       tokenPackage.type === "subscription" &&
-      (typedProfile.subscription_status === "active" ||
-        typedProfile.subscription_status === "past_due")
+      (typedCustomerProfile?.subscription_status === "active" ||
+        typedCustomerProfile?.subscription_status === "past_due")
     ) {
       return NextResponse.json(
         { error: "You already have an active subscription" },
@@ -74,8 +83,8 @@ export async function POST(request: Request) {
     const customerParams: Pick<
       Stripe.Checkout.SessionCreateParams,
       "customer" | "customer_email"
-    > = typedProfile?.stripe_customer_id
-      ? { customer: typedProfile.stripe_customer_id }
+    > = typedCustomerProfile?.stripe_customer_id
+      ? { customer: typedCustomerProfile.stripe_customer_id }
       : { customer_email: typedProfile?.email || undefined };
 
     const unitAmount = getPackagePrice(tokenPackage, currency);

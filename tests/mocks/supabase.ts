@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import type { Profile, Product, UserRole } from "@/types";
+import type { Profile, CustomerProfile, GamerProfile, Product, UserRole } from "@/types";
 
 // Mock data generators
 export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
@@ -11,10 +11,6 @@ export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
     display_name: "Test User",
     avatar_url: null,
     currency: null,
-    stripe_customer_id: null,
-    stripe_subscription_id: null,
-    subscription_status: null,
-    token_balance: 0,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,
@@ -32,12 +28,32 @@ export function createMockGamerProfile(
     display_name: "Test Gamer",
     avatar_url: null,
     currency: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+export function createMockCustomerProfile(
+  overrides: Partial<CustomerProfile> = {}
+): CustomerProfile {
+  return {
+    user_id: "test-user-id",
+    token_balance: 0,
     stripe_customer_id: null,
     stripe_subscription_id: null,
     subscription_status: null,
-    token_balance: 0,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    ...overrides,
+  };
+}
+
+export function createMockGamerExtProfile(
+  overrides: Partial<GamerProfile> = {}
+): GamerProfile {
+  return {
+    user_id: "test-gamer-id",
+    date_of_birth: null,
+    gender: null,
     ...overrides,
   };
 }

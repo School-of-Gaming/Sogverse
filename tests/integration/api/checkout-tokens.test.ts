@@ -19,14 +19,12 @@ vi.mock("stripe", () => ({
 }));
 
 const mockGetUser = vi.fn();
-const mockFromSelect = vi.fn();
+const mockFrom = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: { getUser: mockGetUser },
-    from: vi.fn(() => ({
-      select: mockFromSelect,
-    })),
+    from: mockFrom,
   })),
 }));
 
@@ -40,22 +38,45 @@ function mockUnauthenticated() {
 }
 
 function mockAuthenticatedCustomer(overrides: Record<string, unknown> = {}) {
+  const {
+    role = "customer",
+    email = "customer@example.com",
+    stripe_customer_id = null,
+    subscription_status = null,
+    ...rest
+  } = overrides;
+
   mockGetUser.mockResolvedValue({
     data: { user: { id: "customer-user-id" } },
     error: null,
   });
 
-  mockFromSelect.mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue(
-        mockSupabaseSuccess({
-          role: "customer",
-          email: "customer@example.com",
-          subscription_status: null,
-          ...overrides,
-        })
-      ),
-    }),
+  mockFrom.mockImplementation((table: string) => {
+    if (table === "customer_profiles") {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              mockSupabaseSuccess({
+                stripe_customer_id,
+                subscription_status,
+                ...rest,
+              })
+            ),
+          }),
+        }),
+      };
+    }
+    // profiles
+    return {
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(
+            mockSupabaseSuccess({ role, email })
+          ),
+        }),
+      }),
+    };
   });
 }
 
@@ -65,17 +86,16 @@ function mockAuthenticatedWithRole(role: string) {
     error: null,
   });
 
-  mockFromSelect.mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue(
-        mockSupabaseSuccess({
-          role,
-          email: "user@example.com",
-          subscription_status: null,
-        })
-      ),
+  // Non-customer roles fail at the role check, so only profiles mock is needed
+  mockFrom.mockImplementation(() => ({
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(
+          mockSupabaseSuccess({ role, email: "user@example.com" })
+        ),
+      }),
     }),
-  });
+  }));
 }
 
 function createRequest(

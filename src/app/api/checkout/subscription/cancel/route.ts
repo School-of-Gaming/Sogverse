@@ -18,11 +18,11 @@ export async function POST() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, stripe_subscription_id")
+      .select("role")
       .eq("id", user.id)
       .single();
 
-    const typedProfile = profile as { role: string; stripe_subscription_id: string | null } | null;
+    const typedProfile = profile as { role: string } | null;
 
     if (typedProfile?.role !== "customer") {
       return NextResponse.json(
@@ -31,7 +31,15 @@ export async function POST() {
       );
     }
 
-    if (!typedProfile.stripe_subscription_id) {
+    const { data: customerProfile } = await supabase
+      .from("customer_profiles")
+      .select("stripe_subscription_id")
+      .eq("user_id", user.id)
+      .single();
+
+    const typedCustomerProfile = customerProfile as { stripe_subscription_id: string | null } | null;
+
+    if (!typedCustomerProfile?.stripe_subscription_id) {
       return NextResponse.json(
         { error: "No active subscription found" },
         { status: 400 }
@@ -39,7 +47,7 @@ export async function POST() {
     }
 
     const subscription = await stripe.subscriptions.update(
-      typedProfile.stripe_subscription_id,
+      typedCustomerProfile.stripe_subscription_id,
       { cancel_at_period_end: true }
     );
 

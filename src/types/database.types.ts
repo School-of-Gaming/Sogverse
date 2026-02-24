@@ -14,6 +14,64 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_profiles: {
+        Row: {
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
+          token_balance: number
+          user_id: string
+        }
+        Insert: {
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          token_balance?: number
+          user_id: string
+        }
+        Update: {
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
+          token_balance?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gamer_profiles: {
+        Row: {
+          date_of_birth: string | null
+          gender: Database["public"]["Enums"]["gender_type"] | null
+          user_id: string
+        }
+        Insert: {
+          date_of_birth?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          user_id: string
+        }
+        Update: {
+          date_of_birth?: string | null
+          gender?: Database["public"]["Enums"]["gender_type"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gamer_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       games: {
         Row: {
           created_at: string
@@ -155,47 +213,35 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
-          created_at: string | null
+          created_at: string
           currency: string | null
           display_name: string | null
           email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          subscription_status: string | null
-          token_balance: number
-          updated_at: string | null
+          updated_at: string
           username: string | null
         }
         Insert: {
           avatar_url?: string | null
-          created_at?: string | null
+          created_at?: string
           currency?: string | null
           display_name?: string | null
           email?: string | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_status?: string | null
-          token_balance?: number
-          updated_at?: string | null
+          updated_at?: string
           username?: string | null
         }
         Update: {
           avatar_url?: string | null
-          created_at?: string | null
+          created_at?: string
           currency?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_status?: string | null
-          token_balance?: number
-          updated_at?: string | null
+          updated_at?: string
           username?: string | null
         }
         Relationships: []
@@ -342,17 +388,13 @@ export type Database = {
         Args: never
         Returns: {
           avatar_url: string | null
-          created_at: string | null
+          created_at: string
           currency: string | null
           display_name: string | null
           email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          subscription_status: string | null
-          token_balance: number
-          updated_at: string | null
+          updated_at: string
           username: string | null
         }[]
         SetofOptions: {
@@ -366,17 +408,13 @@ export type Database = {
         Args: never
         Returns: {
           avatar_url: string | null
-          created_at: string | null
+          created_at: string
           currency: string | null
           display_name: string | null
           email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          subscription_status: string | null
-          token_balance: number
-          updated_at: string | null
+          updated_at: string
           username: string | null
         }[]
         SetofOptions: {
@@ -437,6 +475,7 @@ export type Database = {
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
     }
     Enums: {
+      gender_type: "boy" | "girl" | "non_binary"
       token_transaction_type: "purchase" | "subscription" | "admin_adjustment"
       user_role: "admin" | "customer" | "gamer" | "gedu"
       voice_room_status: "open" | "closed"
@@ -567,6 +606,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      gender_type: ["boy", "girl", "non_binary"],
       token_transaction_type: ["purchase", "subscription", "admin_adjustment"],
       user_role: ["admin", "customer", "gamer", "gedu"],
       voice_room_status: ["open", "closed"],
@@ -577,10 +617,17 @@ export const Constants = {
 // Convenience type aliases
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type TokenTransactionType = Database["public"]["Enums"]["token_transaction_type"];
+export type GenderType = Database["public"]["Enums"]["gender_type"];
 
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+
+export type CustomerProfile = Database["public"]["Tables"]["customer_profiles"]["Row"];
+export type CustomerProfileUpdate = Database["public"]["Tables"]["customer_profiles"]["Update"];
+
+export type GamerProfile = Database["public"]["Tables"]["gamer_profiles"]["Row"];
+export type GamerProfileUpdate = Database["public"]["Tables"]["gamer_profiles"]["Update"];
 
 export type ParentGamer = Database["public"]["Tables"]["parent_gamer"]["Row"];
 export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["Insert"];
