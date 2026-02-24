@@ -1,33 +1,15 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateGamerEmail } from "@/lib/utils";
 
 export async function POST(request: Request) {
   try {
-    // Verify the caller is authenticated and is a customer
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if ((profile as { role: string } | null)?.role !== "customer") {
-      return NextResponse.json(
-        { error: "Only customers can create gamer accounts" },
-        { status: 403 }
-      );
-    }
+    const result = await requireRole("customer", {
+      forbiddenMessage: "Only customers can create gamer accounts",
+    });
+    if (result instanceof NextResponse) return result;
+    const { user } = result;
 
     const { username, password, displayName } = await request.json();
 

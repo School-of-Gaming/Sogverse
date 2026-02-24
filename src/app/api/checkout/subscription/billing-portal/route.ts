@@ -1,36 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
 import { ROUTES } from "@/lib/constants";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const typedProfile = profile as { role: string } | null;
-
-    if (typedProfile?.role !== "customer") {
-      return NextResponse.json(
-        { error: "Only customers can access the billing portal" },
-        { status: 403 }
-      );
-    }
+    const result = await requireRole("customer", {
+      forbiddenMessage: "Only customers can access the billing portal",
+    });
+    if (result instanceof NextResponse) return result;
+    const { user, supabase } = result;
 
     const { data: customerProfile } = await supabase
       .from("customer_profiles")

@@ -1,39 +1,20 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createMeetingToken } from "@/lib/daily";
 
 export async function POST(request: Request) {
   try {
-    // 1. Auth check
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const result = await requireRole(["gedu", "gamer", "admin"], {
+      select: "role, display_name, username",
+      forbiddenMessage: "You do not have permission to join voice rooms",
+    });
+    if (result instanceof NextResponse) return result;
+    const { user, profile } = result;
 
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const role = profile.role as string;
 
-    // 2. Get profile + role
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("role, display_name, username")
-      .eq("id", user.id)
-      .single();
-
-    const profile = profileData as { role: string; display_name: string | null; username: string | null } | null;
-    if (!profile || !["gedu", "gamer", "admin"].includes(profile.role)) {
-      return NextResponse.json(
-        { error: "You do not have permission to join voice rooms" },
-        { status: 403 }
-      );
-    }
-
-    const role = profile.role;
-
-    // 3. Parse body
+    // Parse body
     const body = await request.json();
     const { roomId } = body;
 
@@ -44,7 +25,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 4. Fetch the room (using admin client to bypass RLS)
+    // Fetch the room (using admin client to bypass RLS)
     const admin = createAdminClient();
     const { data: room, error: roomError } = await admin
       .from("voice_rooms")
@@ -56,7 +37,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    // 5. Room must be open
+    // Room must be open
     if (room.status !== "open") {
       return NextResponse.json(
         { error: "This room is not currently open" },
@@ -64,8 +45,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // 6. Build token — encode userId|role|displayName
-    const displayName = profile.display_name || profile.username || "User";
+    // Build token — encode userId|role|displayName
+    const displayName = (profile.display_name as string | null) || (profile.username as string | null) || "User";
     const userName = `${user.id}|${role}|${displayName}`;
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
     if (!domain) {

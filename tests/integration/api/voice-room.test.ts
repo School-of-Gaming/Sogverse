@@ -1,20 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST, PATCH } from "@/app/api/voice/room/route";
+import { NextResponse } from "next/server";
 import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
 import { createMockVoiceRoom } from "../../mocks/voice";
 
 // --- Mocks ---
 
-const mockGetUser = vi.fn();
-const mockFromSelect = vi.fn();
-
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: mockGetUser },
-    from: vi.fn(() => ({
-      select: mockFromSelect,
-    })),
-  })),
+const mockRequireRole = vi.fn();
+vi.mock("@/lib/auth", () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
 const mockAdminFrom = vi.fn();
@@ -34,43 +28,38 @@ vi.mock("@/lib/daily", () => ({
 // --- Helpers ---
 
 function mockAuthenticatedGedu() {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: "gedu-user-id" } },
-    error: null,
-  });
-
-  mockFromSelect.mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue(
-        mockSupabaseSuccess({
-          role: "gedu",
-          display_name: "Test Educator",
-          username: "testgedu",
-        })
-      ),
-    }),
+  mockRequireRole.mockResolvedValue({
+    user: { id: "gedu-user-id" },
+    profile: {
+      role: "gedu",
+      display_name: "Test Educator",
+      username: "testgedu",
+    },
+    supabase: {},
   });
 }
 
 function mockUnauthenticated() {
-  mockGetUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: "No session" },
-  });
+  mockRequireRole.mockResolvedValue(
+    NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  );
 }
 
 function mockAuthenticatedWithRole(role: string) {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: "some-user-id" } },
-    error: null,
-  });
+  if (!["gedu", "admin"].includes(role)) {
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json(
+        { error: "Only gedus and admins can manage voice rooms" },
+        { status: 403 }
+      )
+    );
+    return;
+  }
 
-  mockFromSelect.mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue(
-        mockSupabaseSuccess({ role, display_name: "User", username: "user" })
-      ),
-    }),
+  mockRequireRole.mockResolvedValue({
+    user: { id: "some-user-id" },
+    profile: { role, display_name: "User", username: "user" },
+    supabase: {},
   });
 }
 

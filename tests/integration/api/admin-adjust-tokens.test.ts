@@ -1,19 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/admin/adjust-tokens/route";
-import { mockSupabaseSuccess } from "../../mocks/supabase";
+import { NextResponse } from "next/server";
 
 // --- Mocks ---
 
-const mockGetUser = vi.fn();
-const mockFromSelect = vi.fn();
-
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: mockGetUser },
-    from: vi.fn(() => ({
-      select: mockFromSelect,
-    })),
-  })),
+const mockRequireRole = vi.fn();
+vi.mock("@/lib/auth", () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
 const mockAdminRpc = vi.fn();
@@ -26,24 +19,26 @@ vi.mock("@/lib/supabase/admin", () => ({
 // --- Helpers ---
 
 function mockUnauthenticated() {
-  mockGetUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: "No session" },
-  });
+  mockRequireRole.mockResolvedValue(
+    NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  );
 }
 
 function mockAuthenticatedWithRole(role: string) {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: "admin-user-id" } },
-    error: null,
-  });
+  if (role !== "admin") {
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json(
+        { error: "Only admins can adjust token balances" },
+        { status: 403 }
+      )
+    );
+    return;
+  }
 
-  mockFromSelect.mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue(
-        mockSupabaseSuccess({ role })
-      ),
-    }),
+  mockRequireRole.mockResolvedValue({
+    user: { id: "admin-user-id" },
+    profile: { role: "admin" },
+    supabase: {},
   });
 }
 

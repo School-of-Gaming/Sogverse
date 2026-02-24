@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/checkout/tokens/route";
-import { mockSupabaseSuccess } from "../../mocks/supabase";
+import { NextResponse } from "next/server";
 
 // --- Mocks ---
 
@@ -18,23 +18,17 @@ vi.mock("stripe", () => ({
   })),
 }));
 
-const mockGetUser = vi.fn();
-const mockFrom = vi.fn();
-
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: mockGetUser },
-    from: mockFrom,
-  })),
+const mockRequireRole = vi.fn();
+vi.mock("@/lib/auth", () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
 // --- Helpers ---
 
 function mockUnauthenticated() {
-  mockGetUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: "No session" },
-  });
+  mockRequireRole.mockResolvedValue(
+    NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  );
 }
 
 function mockAuthenticatedCustomer(overrides: Record<string, unknown> = {}) {
@@ -46,56 +40,45 @@ function mockAuthenticatedCustomer(overrides: Record<string, unknown> = {}) {
     ...rest
   } = overrides;
 
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: "customer-user-id" } },
-    error: null,
-  });
-
-  mockFrom.mockImplementation((table: string) => {
+  const mockFrom = vi.fn().mockImplementation((table: string) => {
     if (table === "customer_profiles") {
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue(
-              mockSupabaseSuccess({
-                stripe_customer_id,
-                subscription_status,
-                ...rest,
-              })
-            ),
+            single: vi.fn().mockResolvedValue({
+              data: { stripe_customer_id, subscription_status, ...rest },
+              error: null,
+            }),
           }),
         }),
       };
     }
-    // profiles
     return {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(
-            mockSupabaseSuccess({ role, email })
-          ),
+          single: vi.fn().mockResolvedValue({
+            data: { role, email },
+            error: null,
+          }),
         }),
       }),
     };
   });
+
+  mockRequireRole.mockResolvedValue({
+    user: { id: "customer-user-id" },
+    profile: { role, email },
+    supabase: { from: mockFrom },
+  });
 }
 
 function mockAuthenticatedWithRole(role: string) {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: "some-user-id" } },
-    error: null,
-  });
-
-  // Non-customer roles fail at the role check, so only profiles mock is needed
-  mockFrom.mockImplementation(() => ({
-    select: vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue(
-          mockSupabaseSuccess({ role, email: "user@example.com" })
-        ),
-      }),
-    }),
-  }));
+  mockRequireRole.mockResolvedValue(
+    NextResponse.json(
+      { error: "Only customers can purchase tokens" },
+      { status: 403 }
+    )
+  );
 }
 
 function createRequest(

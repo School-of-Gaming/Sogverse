@@ -1,20 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { POST } from "@/app/api/voice/token/route";
+import { NextResponse } from "next/server";
 import { mockSupabaseSuccess } from "../../mocks/supabase";
 import { createMockVoiceRoom } from "../../mocks/voice";
 
 // --- Mocks ---
 
-const mockGetUser = vi.fn();
-const mockFromSelect = vi.fn();
-
-vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: mockGetUser },
-    from: vi.fn(() => ({
-      select: mockFromSelect,
-    })),
-  })),
+const mockRequireRole = vi.fn();
+vi.mock("@/lib/auth", () => ({
+  requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
 const mockAdminFrom = vi.fn();
@@ -43,15 +37,20 @@ function mockAuthenticatedWithProfile(
   userId: string,
   profile: { role: string; display_name: string | null; username: string | null }
 ) {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: userId } },
-    error: null,
-  });
+  if (profile.role === "customer") {
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json(
+        { error: "You do not have permission to join voice rooms" },
+        { status: 403 }
+      )
+    );
+    return;
+  }
 
-  mockFromSelect.mockReturnValue({
-    eq: vi.fn().mockReturnValue({
-      single: vi.fn().mockResolvedValue(mockSupabaseSuccess(profile)),
-    }),
+  mockRequireRole.mockResolvedValue({
+    user: { id: userId },
+    profile,
+    supabase: {},
   });
 }
 
@@ -94,10 +93,9 @@ describe("POST /api/voice/token", () => {
   });
 
   it("should return 401 when not authenticated", async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-      error: { message: "No session" },
-    });
+    mockRequireRole.mockResolvedValue(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    );
 
     const response = await POST(createTokenRequest({ roomId: "room-1" }));
     const data = await response.json();

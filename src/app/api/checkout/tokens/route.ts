@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
 import { getTokenPackage, getPackagePrice } from "@/lib/constants/tokens";
 import { isSupportedCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import { ROUTES } from "@/lib/constants";
@@ -9,33 +9,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, email")
-      .eq("id", user.id)
-      .single();
-
-    const typedProfile = profile as {
-      role: string;
-      email: string | null;
-    } | null;
-
-    if (typedProfile?.role !== "customer") {
-      return NextResponse.json(
-        { error: "Only customers can purchase tokens" },
-        { status: 403 }
-      );
-    }
+    const result = await requireRole("customer", {
+      select: "role, email",
+      forbiddenMessage: "Only customers can purchase tokens",
+    });
+    if (result instanceof NextResponse) return result;
+    const { user, profile, supabase } = result;
 
     const { data: customerProfile } = await supabase
       .from("customer_profiles")
@@ -85,7 +64,7 @@ export async function POST(request: Request) {
       "customer" | "customer_email"
     > = typedCustomerProfile?.stripe_customer_id
       ? { customer: typedCustomerProfile.stripe_customer_id }
-      : { customer_email: typedProfile?.email || undefined };
+      : { customer_email: (profile.email as string | null) || undefined };
 
     const unitAmount = getPackagePrice(tokenPackage, currency);
 

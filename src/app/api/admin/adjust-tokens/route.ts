@@ -1,31 +1,14 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if ((profile as { role: string } | null)?.role !== "admin") {
-      return NextResponse.json(
-        { error: "Only admins can adjust token balances" },
-        { status: 403 }
-      );
-    }
+    const result = await requireRole("admin", {
+      forbiddenMessage: "Only admins can adjust token balances",
+    });
+    if (result instanceof NextResponse) return result;
+    const { user } = result;
 
     const { userId, amount, description } = await request.json();
 
@@ -61,10 +44,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    const result = data?.[0];
+    const result2 = data?.[0];
     return NextResponse.json({
-      newBalance: result?.new_balance,
-      transactionId: result?.transaction_id,
+      newBalance: result2?.new_balance,
+      transactionId: result2?.transaction_id,
     });
   } catch {
     return NextResponse.json(

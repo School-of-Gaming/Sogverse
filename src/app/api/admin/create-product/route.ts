@@ -1,32 +1,14 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
-    // Verify the caller is authenticated and is an admin
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if ((profile as { role: string } | null)?.role !== "admin") {
-      return NextResponse.json(
-        { error: "Only admins can create products" },
-        { status: 403 }
-      );
-    }
+    const result = await requireRole("admin", {
+      forbiddenMessage: "Only admins can create products",
+    });
+    if (result instanceof NextResponse) return result;
+    const { user } = result;
 
     const body = await request.json();
 

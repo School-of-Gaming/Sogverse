@@ -128,16 +128,12 @@ GitHub Actions and Vercel currently duplicate work (both do a full build), and V
 
 **Why:** Currently the `build` job in CI is redundant with Vercel's build, and Vercel deploys even when CI fails. Branch protection prevents broken code from reaching production, while Vercel's preview deploys remain useful for PR review.
 
-### Extract Shared Auth/Role-Check Helper for API Routes
+### ~~Extract Shared Auth/Role-Check Helper for API Routes~~ — DONE
 
-All 14 API route handlers repeat the same 11-13 line boilerplate: `createClient()` → `getUser()` → query profile → check role → return 401/403. Each route also casts the profile result with hand-written inline types instead of using the generated `Profile` type from `@/types`.
+Extracted `requireRole()` helper to `src/lib/auth.ts`. All 14 API route handlers now use the shared helper instead of repeating auth/profile/role-check boilerplate. Also fixes a latent bug where a profiles query failure returned a misleading 403 instead of 500.
 
-- [ ] Create a shared `getAuthenticatedProfile()` helper (e.g. in `src/lib/auth.ts`) that accepts allowed roles and profile fields to select, returns a typed profile or an error response
-- [ ] Replace the boilerplate in all 14 route handlers with a one-liner call to the helper
-
-**Affected routes:** `checkout/tokens`, `checkout/subscription` (GET, cancel, resume, billing-portal), `admin/adjust-tokens`, `admin/create-gedu`, `admin/create-game`, `admin/create-product`, `admin/users/[id]/auth`, `gamers/create`, `voice/room` (POST + PATCH), `voice/token`.
-
-**Why:** ~150 lines of pure duplication across the project. A shared helper makes adding new routes less error-prone.
+- [x] Create a shared `requireRole()` helper in `src/lib/auth.ts`
+- [x] Replace the boilerplate in all 14 route handlers with a one-liner call to the helper
 
 ### Use Generated Types in API Routes
 
@@ -237,30 +233,14 @@ Supabase's "Confirm email" setting is disabled to keep signup frictionless (user
 **Dependencies:**
 - Database migration for new `profiles` columns
 
-### Split Profiles into Role-Specific Extension Tables
+### ~~Split Profiles into Role-Specific Extension Tables~~ — DONE
 
-The `profiles` table currently holds all columns for every role, including role-specific ones like `token_balance`/`stripe_customer_id` (customer-only) and upcoming `age`/`gender` (gamer-only). This is the standard "single wide table" approach that works early on but becomes messy as roles diverge.
+Created `customer_profiles`, `gamer_profiles`, `gedu_profiles` extension tables. Migrated role-specific columns out of `profiles`. Updated `adjust_token_balance()` RPC, RLS policies, service classes, and API routes.
 
-**Refactor to extension tables** (standard normalized pattern for multi-role systems):
-
-```
-profiles (shared)          → id, username, display_name, email, role, avatar_url, created_at, updated_at
-customer_profiles          → user_id FK, token_balance, stripe_customer_id, stripe_subscription_id, subscription_status
-gamer_profiles             → user_id FK, age, gender, (future gamer-specific fields)
-gedu_profiles              → user_id FK, (future gedu-specific fields like bio, specializations)
-```
-
-- [ ] Create migration adding `customer_profiles`, `gamer_profiles`, `gedu_profiles` tables
-- [ ] Migrate existing data from `profiles` columns into the new tables
-- [ ] Drop the role-specific columns from `profiles`
-- [ ] Update `adjust_token_balance()` RPC to target `customer_profiles`
-- [ ] Add RLS policies to the new tables (mirror existing role-based access patterns)
-- [ ] Update service classes and API routes to JOIN or query the extension tables
-- [ ] Regenerate TypeScript types
-
-**When:** Before adding gamer-specific fields (`age`, `gender`). No urgency before that.
-
-**Why:** Industry-standard normalization for multi-role user systems. Keeps each table focused, allows `NOT NULL` constraints on role-specific fields, and avoids a growing pile of nullable columns that only apply to one role.
+- [x] Create migration adding extension tables
+- [x] Migrate data and drop role-specific columns from `profiles`
+- [x] Update RPC, RLS, services, and routes
+- [x] Regenerate TypeScript types
 
 ### Migrate Auth Email Templates to Brevo
 

@@ -1,35 +1,16 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 export async function GET() {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const typedProfile = profile as { role: string } | null;
-
-    if (typedProfile?.role !== "customer") {
-      return NextResponse.json(
-        { error: "Only customers can view subscriptions" },
-        { status: 403 }
-      );
-    }
+    const result = await requireRole("customer", {
+      forbiddenMessage: "Only customers can view subscriptions",
+    });
+    if (result instanceof NextResponse) return result;
+    const { user, supabase } = result;
 
     const { data: customerProfile } = await supabase
       .from("customer_profiles")

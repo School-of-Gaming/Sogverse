@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { mockSupabaseSuccess } from "./supabase";
+import { NextResponse } from "next/server";
 
 /**
  * Shared helpers for Stripe-related route tests.
@@ -9,57 +9,56 @@ import { mockSupabaseSuccess } from "./supabase";
  * profile setup used across subscription cancel, resume, etc.
  */
 
-/** Configures mockGetUser to return no session (unauthenticated request). */
-export function mockUnauthenticated(mockGetUser: ReturnType<typeof vi.fn>) {
-  mockGetUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: "No session" },
-  });
+/** Configures mockRequireRole to return a 401 response (unauthenticated). */
+export function mockUnauthenticated(mockRequireRole: ReturnType<typeof vi.fn>) {
+  mockRequireRole.mockResolvedValue(
+    NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  );
 }
 
 /**
- * Configures mocks for an authenticated user with subscription profile fields.
- * Routes now query `profiles` for role, then `customer_profiles` for Stripe fields.
- * The mockFrom function dispatches by table name.
+ * Configures mockRequireRole for an authenticated user with a mock supabase
+ * client that dispatches by table name (profiles → role, customer_profiles → Stripe fields).
  *
  * Default: customer role with an active stripe_subscription_id.
  */
 export function mockAuthenticatedSubscriptionProfile(
-  mockGetUser: ReturnType<typeof vi.fn>,
-  mockFrom: ReturnType<typeof vi.fn>,
+  mockRequireRole: ReturnType<typeof vi.fn>,
   overrides: Record<string, unknown> = {},
 ) {
   const { role = "customer", stripe_subscription_id = "sub_active_123", ...rest } = overrides;
 
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: "user-123" } },
-    error: null,
-  });
-
-  mockFrom.mockImplementation((table: string) => {
+  const mockFrom = vi.fn().mockImplementation((table: string) => {
     if (table === "customer_profiles") {
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue(
-              mockSupabaseSuccess({
-                stripe_subscription_id,
-                ...rest,
-              })
-            ),
+            single: vi.fn().mockResolvedValue({
+              data: { stripe_subscription_id, ...rest },
+              error: null,
+            }),
           }),
         }),
       };
     }
-    // profiles
+    // profiles (shouldn't be called after requireRole, but just in case)
     return {
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(
-            mockSupabaseSuccess({ role })
-          ),
+          single: vi.fn().mockResolvedValue({
+            data: { role },
+            error: null,
+          }),
         }),
       }),
     };
   });
+
+  mockRequireRole.mockResolvedValue({
+    user: { id: "user-123" },
+    profile: { role },
+    supabase: { from: mockFrom },
+  });
+
+  return mockFrom;
 }

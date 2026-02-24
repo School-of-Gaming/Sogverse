@@ -1,38 +1,18 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createDailyRoom, getDailyRoom } from "@/lib/daily";
 
 export async function POST(request: Request) {
   try {
-    // 1. Auth check
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const result = await requireRole(["gedu", "admin"], {
+      select: "role, display_name, username",
+      forbiddenMessage: "Only gedus and admins can manage voice rooms",
+    });
+    if (result instanceof NextResponse) return result;
+    const { user, profile } = result;
 
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // 2. Role check — gedu or admin
-    const { data: profileData } = await supabase
-      .from("profiles")
-      .select("role, display_name, username")
-      .eq("id", user.id)
-      .single();
-
-    const profile = profileData as { role: string; display_name: string | null; username: string | null } | null;
-
-    if (!profile || !["gedu", "admin"].includes(profile.role)) {
-      return NextResponse.json(
-        { error: "Only gedus and admins can manage voice rooms" },
-        { status: 403 }
-      );
-    }
-
-    // 3. Parse optional name from body
+    // Parse optional name from body
     let roomName: string | undefined;
     try {
       const body = await request.json();
@@ -42,10 +22,10 @@ export async function POST(request: Request) {
     }
 
     const admin = createAdminClient();
-    const displayName = roomName || profile.display_name || profile.username || "Host";
+    const displayName = roomName || (profile.display_name as string | null) || (profile.username as string | null) || "Host";
     const dailyRoomName = `room-${user.id.slice(0, 8)}`;
 
-    // 4. Check if a voice_rooms row already exists for this creator
+    // Check if a voice_rooms row already exists for this creator
     const { data: existing } = await admin
       .from("voice_rooms")
       .select("*")
@@ -84,7 +64,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ room: updated });
     }
 
-    // 5. No row — create Daily.co room (if not already on Daily.co) + insert DB row
+    // No row — create Daily.co room (if not already on Daily.co) + insert DB row
     const existingDaily = await getDailyRoom(dailyRoomName);
     if (!existingDaily) {
       await createDailyRoom({ name: dailyRoomName });
@@ -118,33 +98,15 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    // 1. Auth check
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const result = await requireRole(["gedu", "admin"], {
+      forbiddenMessage: "Only gedus and admins can manage voice rooms",
+    });
+    if (result instanceof NextResponse) return result;
+    const { user, profile } = result;
 
-    if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const role = profile.role as string;
 
-    // 2. Role check — gedu or admin
-    const { data: patchProfile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const role = (patchProfile as { role: string } | null)?.role;
-    if (!role || !["gedu", "admin"].includes(role)) {
-      return NextResponse.json(
-        { error: "Only gedus and admins can manage voice rooms" },
-        { status: 403 }
-      );
-    }
-
-    // 3. Parse optional roomId from body (admin can close another creator's room)
+    // Parse optional roomId from body (admin can close another creator's room)
     let roomId: string | undefined;
     try {
       const body = await request.json();
@@ -153,7 +115,7 @@ export async function PATCH(request: Request) {
       // No body — close own room
     }
 
-    // 4. Close the room
+    // Close the room
     const admin = createAdminClient();
 
     let query = admin
