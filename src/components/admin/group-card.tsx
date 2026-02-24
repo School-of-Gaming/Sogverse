@@ -106,6 +106,27 @@ export function GroupCard({ group, groupLabel, gedus, onDelete, onReassignGedu }
 
   const hasGamers = group.gamers.length > 0;
 
+  // Compute group stats
+  const ages = group.gamers
+    .map((g) => (g.dateOfBirth ? computeAge(g.dateOfBirth) : null))
+    .filter((a): a is number => a !== null);
+  const ageRange = ages.length > 0
+    ? ages.length === 1
+      ? `${ages[0]}y`
+      : `${Math.min(...ages)}–${Math.max(...ages)}y`
+    : null;
+
+  const genderCounts = { boy: 0, girl: 0, non_binary: 0 };
+  for (const g of group.gamers) {
+    if (g.gender === "boy" || g.gender === "girl" || g.gender === "non_binary") {
+      genderCounts[g.gender]++;
+    }
+  }
+  const genderParts: string[] = [];
+  if (genderCounts.boy > 0) genderParts.push(`${genderCounts.boy} ${genderCounts.boy === 1 ? "boy" : "boys"}`);
+  if (genderCounts.girl > 0) genderParts.push(`${genderCounts.girl} ${genderCounts.girl === 1 ? "girl" : "girls"}`);
+  if (genderCounts.non_binary > 0) genderParts.push(`${genderCounts.non_binary} non-binary`);
+
   return (
     <>
       <Card
@@ -123,6 +144,14 @@ export function GroupCard({ group, groupLabel, gedus, onDelete, onReassignGedu }
             <p className="text-sm text-muted-foreground">
               <UserRound className="mr-1 inline h-3.5 w-3.5" />
               {group.geduDisplayName}
+              {hasGamers && (ageRange || genderParts.length > 0) && (
+                <span className="ml-2 text-xs">
+                  ({[
+                    ageRange && `age range ${ageRange}`,
+                    genderParts.length > 0 && genderParts.join(", "),
+                  ].filter(Boolean).join(" · ")})
+                </span>
+              )}
             </p>
           </div>
           {!group.isDeleted && (
