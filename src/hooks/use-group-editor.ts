@@ -39,6 +39,9 @@ export type GroupEditorAction =
   | { type: "MOVE_GAMER"; gamerId: string; fromGroupId: string; toGroupId: string }
   | { type: "RESET" };
 
+// Module-level counter — shared across all hook instances. This is fine
+// because temp IDs are ephemeral (mapped to real UUIDs by the RPC) and
+// the counter only increments, so IDs never collide.
 let tempIdCounter = 0;
 
 /** @visibleForTesting */

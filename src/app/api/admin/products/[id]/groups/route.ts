@@ -1,14 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { GroupsService } from "@/services/groups";
-
-interface BatchPayload {
-  addedGroups: Array<{ tempId: string; geduId: string }>;
-  updatedGroups: Array<{ groupId: string; geduId: string }>;
-  deletedGroupIds: string[];
-  enrollmentMoves: Array<{ gamerId: string; fromGroupId: string; toGroupId: string }>;
-}
+import { GroupsService, type BatchGroupChanges } from "@/services/groups";
 
 export async function POST(
   request: Request,
@@ -21,7 +14,7 @@ export async function POST(
     if (result instanceof NextResponse) return result;
 
     const { id: productId } = await params;
-    const body: BatchPayload = await request.json();
+    const body: BatchGroupChanges = await request.json();
     const { addedGroups, updatedGroups, deletedGroupIds, enrollmentMoves } = body;
 
     const admin = createAdminClient();
@@ -58,13 +51,11 @@ export async function POST(
       );
     }
 
-    const autoHidden = rpcResult?.autoHidden ?? false;
-
     // Return refreshed group list
     const service = new GroupsService(admin);
     const groups = await service.getProductGroups(productId);
 
-    return NextResponse.json({ groups, autoHidden });
+    return NextResponse.json({ groups });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

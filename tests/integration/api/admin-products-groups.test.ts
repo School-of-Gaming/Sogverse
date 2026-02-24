@@ -147,7 +147,6 @@ describe("POST /api/admin/products/[id]/groups", () => {
 
     expect(response.status).toBe(200);
     expect(data.groups).toEqual(refreshedGroups);
-    expect(data.autoHidden).toBe(false);
 
     // Verify RPC was called with correct params
     expect(mockAdminRpc).toHaveBeenCalledWith("commit_group_changes", {
@@ -157,25 +156,6 @@ describe("POST /api/admin/products/[id]/groups", () => {
       p_deleted_group_ids: validPayload.deletedGroupIds,
       p_enrollment_moves: validPayload.enrollmentMoves,
     });
-  });
-
-  it("returns autoHidden true when product is auto-hidden", async () => {
-    mockAuthenticated();
-    mockAdminFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "product-1" })),
-        }),
-      }),
-    });
-    mockAdminRpc.mockResolvedValue(mockSupabaseSuccess({ autoHidden: true }));
-    mockGetProductGroups.mockResolvedValue([]);
-
-    const response = await POST(createRequest(), { params });
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data.autoHidden).toBe(true);
   });
 
   // RPC error
