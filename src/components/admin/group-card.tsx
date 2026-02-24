@@ -15,6 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { GeduPickerDialog } from "./gedu-picker-dialog";
 import type { EffectiveGroup } from "@/hooks/use-group-editor";
 import type { Profile } from "@/types";
 
@@ -207,43 +208,17 @@ export function GroupCard({ group, groupLabel, gedus, onDelete, onReassignGedu }
       </Dialog>
 
       {/* Reassign gedu dialog */}
-      <Dialog open={showReassign} onOpenChange={setShowReassign}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reassign Gedu for {groupLabel}</DialogTitle>
-            <DialogDescription>
-              Select a different gedu for this group.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="my-4 space-y-2">
-            {gedus.map((g) => (
-              <button
-                key={g.id}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-md border p-3 text-left text-sm transition-colors hover:bg-accent",
-                  g.id === group.geduId && "border-primary bg-primary/5",
-                )}
-                onClick={() => {
-                  onReassignGedu(group.id, g.id, g.display_name);
-                  setShowReassign(false);
-                }}
-              >
-                <UserRound className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">{g.display_name}</p>
-                  <p className="text-xs text-muted-foreground">{g.email}</p>
-                </div>
-                {g.id === group.geduId && (
-                  <Badge variant="outline" className="ml-auto">Current</Badge>
-                )}
-              </button>
-            ))}
-            {gedus.length === 0 && (
-              <p className="text-sm text-muted-foreground">No gedus available.</p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <GeduPickerDialog
+        open={showReassign}
+        onOpenChange={setShowReassign}
+        title={`Reassign Gedu for ${groupLabel}`}
+        description="Select a different gedu for this group."
+        gedus={gedus}
+        highlightId={group.geduId}
+        onSelect={(geduId, displayName) =>
+          onReassignGedu(group.id, geduId, displayName)
+        }
+      />
     </>
   );
 }

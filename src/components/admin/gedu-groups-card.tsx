@@ -10,24 +10,17 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { Plus, Users, UserRound, AlertTriangle, Info } from "lucide-react";
+import { Plus, Users, AlertTriangle, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useProductGroups, useCommitGroupChanges } from "@/services/groups";
 import { useUsersByRole } from "@/services/users";
 import { useGroupEditor } from "@/hooks/use-group-editor";
 import { GroupCard } from "./group-card";
 import { CommitBar } from "./commit-bar";
-import type { Profile } from "@/types";
+import { GeduPickerDialog } from "./gedu-picker-dialog";
 
 // --- Visibility warning banner ---
 
@@ -68,56 +61,6 @@ export function VisibilityWarningBanner({ isVisible, groupCount }: VisibilityWar
       <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
       <p className="text-sm">{message}</p>
     </div>
-  );
-}
-
-// --- Add group dialog ---
-
-interface AddGroupDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  gedus: Pick<Profile, "id" | "display_name" | "email">[];
-  usedGeduIds: string[];
-  onSelect: (geduId: string, geduDisplayName: string) => void;
-}
-
-function AddGroupDialog({ open, onOpenChange, gedus, usedGeduIds, onSelect }: AddGroupDialogProps) {
-  const available = gedus.filter((g) => !usedGeduIds.includes(g.id));
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add Group</DialogTitle>
-          <DialogDescription>
-            Select a gedu to assign to the new group.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="my-4 space-y-2">
-          {available.map((g) => (
-            <button
-              key={g.id}
-              className="flex w-full items-center gap-3 rounded-md border p-3 text-left text-sm transition-colors hover:bg-accent"
-              onClick={() => {
-                onSelect(g.id, g.display_name);
-                onOpenChange(false);
-              }}
-            >
-              <UserRound className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium">{g.display_name}</p>
-                <p className="text-xs text-muted-foreground">{g.email}</p>
-              </div>
-            </button>
-          ))}
-          {available.length === 0 && (
-            <p className="text-sm text-muted-foreground">
-              All gedus are already assigned to this product.
-            </p>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -292,11 +235,13 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
         isPending={commitMutation.isPending}
       />
 
-      <AddGroupDialog
+      <GeduPickerDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
+        title="Add Group"
+        description="Select a gedu to assign to the new group."
         gedus={allGedus}
-        usedGeduIds={usedGeduIds}
+        excludeIds={usedGeduIds}
         onSelect={(geduId, geduDisplayName) =>
           dispatch({ type: "ADD_GROUP", geduId, geduDisplayName })
         }
