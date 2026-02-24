@@ -270,41 +270,66 @@ function computeEffectiveGroups(
 
 // --- Change summary ---
 
+export type ChangeSegment =
+  | { type: "text"; value: string }
+  | { type: "gamer"; value: string }
+  | { type: "gedu"; value: string };
+
+export type ChangeLine = ChangeSegment[];
+
 export interface ChangeSummary {
-  lines: string[];
+  lines: ChangeLine[];
   hasChanges: boolean;
 }
+
+// Helpers for building segment arrays
+const text = (value: string): ChangeSegment => ({ type: "text", value });
+const gamer = (value: string): ChangeSegment => ({ type: "gamer", value });
+const gedu = (value: string): ChangeSegment => ({ type: "gedu", value });
 
 function buildChangeSummary(
   state: GroupEditorState,
   serverGroups: ProductGroup[],
 ): ChangeSummary {
-  const lines: string[] = [];
+  const lines: ChangeLine[] = [];
 
   for (const g of state.addedGroups) {
-    lines.push(`Add group with ${g.geduDisplayName}`);
+    lines.push([text("Add group with "), gedu(g.geduDisplayName)]);
   }
   for (const g of state.updatedGroups) {
     const prev = serverGroups.find((sg) => sg.groupId === g.groupId);
     const from = prev?.geduDisplayName ?? "unknown";
-    lines.push(`Reassign ${from}'s group to ${g.geduDisplayName}`);
+    lines.push([
+      text("Reassign "), gedu(from), text("'s group to "), gedu(g.geduDisplayName),
+    ]);
   }
   for (const id of state.deletedGroupIds) {
     const sg = serverGroups.find((g) => g.groupId === id);
     const name = sg?.geduDisplayName ?? "unknown";
-    lines.push(`Delete ${name}'s group`);
+    lines.push([text("Delete "), gedu(name), text("'s group")]);
   }
 
-  // Build gamer lookup for move descriptions
+  // Build lookups for move descriptions
   const gamerLookup = new Map<string, string>();
+  const groupGeduLookup = new Map<string, string>();
   for (const sg of serverGroups) {
+    groupGeduLookup.set(sg.groupId, sg.geduDisplayName);
     for (const g of sg.gamers) {
       gamerLookup.set(g.gamerId, g.displayName);
     }
   }
+  for (const ag of state.addedGroups) {
+    groupGeduLookup.set(ag.tempId, ag.geduDisplayName);
+  }
   for (const m of state.enrollmentMoves) {
     const name = gamerLookup.get(m.gamerId) ?? "a gamer";
-    lines.push(`Move ${name} to another group`);
+    const from = groupGeduLookup.get(m.fromGroupId) ?? "unknown";
+    const to = groupGeduLookup.get(m.toGroupId) ?? "unknown";
+    lines.push([
+      text("Move "), gamer(name),
+      text(" from "), gedu(from), text("'s group"),
+      text(" to "), gedu(to), text("'s group"),
+    ]);
   }
 
   return { lines, hasChanges: lines.length > 0 };

@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import type { ChangeSummary } from "@/hooks/use-group-editor";
+import type { ChangeSummary, ChangeSegment } from "@/hooks/use-group-editor";
 
 interface ChangeSummaryDialogProps {
   open: boolean;
@@ -35,11 +35,21 @@ export function ChangeSummaryDialog({
             The following changes will be applied:
           </DialogDescription>
         </DialogHeader>
-        <ul className="my-4 space-y-1 text-sm">
-          {summary.lines.map((line, i) => (
+        <ul className="my-4 space-y-2 text-sm">
+          {summary.lines.map((segments, i) => (
             <li key={i} className="flex items-start gap-2">
               <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-              {line}
+              <span>
+                {segments.map((seg: ChangeSegment, j: number) => {
+                  if (seg.type === "gamer") {
+                    return <span key={j} className="font-medium text-blue-400">{seg.value}</span>;
+                  }
+                  if (seg.type === "gedu") {
+                    return <span key={j} className="font-medium text-purple-400">{seg.value}</span>;
+                  }
+                  return <span key={j}>{seg.value}</span>;
+                })}
+              </span>
             </li>
           ))}
         </ul>
