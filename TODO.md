@@ -224,11 +224,11 @@ Supabase's "Confirm email" setting is disabled to keep signup frictionless (user
 7. Update admin user detail page (`/admin/users/[id]`) to show verification badge (skip for gamer role — synthetic emails)
 8. Gate specific features behind `email_verified` via RLS policies or service-layer checks (TBD which features)
 
-**Scaffolding already in place:**
-- `src/app/api/auth/resend-verification/route.ts` — exists but uses `supabase.auth.resend()` which doesn't work with confirmation disabled. Needs rewrite to use custom token + SMTP.
-- `src/app/api/admin/users/[id]/auth/route.ts` — exists but returns `emailConfirmedAt` (useless). Needs rewrite to read `profiles.email_verified`.
-- Settings page (`src/app/(dashboard)/settings/page.tsx`) — has UI for verified/unverified status next to email field, but reads `user.email_confirmed_at` (always set). Needs to read `profile.email_verified` instead.
-- Admin user detail page (`src/app/(dashboard)/admin/users/[id]/page.tsx`) — has verification badge UI, but reads from the auth endpoint above. Needs to read `profile.email_verified` instead.
+**UI removed (was non-functional):** The verification UI and its backing API routes were removed because `email_confirmed_at` is always set (useless) and `supabase.auth.resend()` is a no-op with confirmation disabled. When implementing this feature, re-add:
+- Settings page (`src/app/(dashboard)/settings/page.tsx`) — verified/unverified badge next to email field, with "Resend verification" button for unverified users. Read `profile.email_verified` instead of `user.email_confirmed_at`.
+- Admin user detail page (`src/app/(dashboard)/admin/users/[id]/page.tsx`) — verification badge next to email in user summary card. Read `profile.email_verified` directly (no separate API call needed).
+- `src/app/api/auth/resend-verification/route.ts` — recreate using custom token + Brevo instead of `supabase.auth.resend()`.
+- `src/app/api/admin/users/[id]/auth/route.ts` — recreate to return `profile.email_verified` if needed (or just query profiles directly from the admin page).
 
 **Note:** Gamer accounts use synthetic emails (`{username}@gamer.sogverse.internal`) — skip verification for them entirely.
 
