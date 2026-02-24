@@ -32,7 +32,7 @@ interface GroupEditorState {
 
 // --- Actions ---
 
-type GroupEditorAction =
+export type GroupEditorAction =
   | { type: "ADD_GROUP"; geduId: string; geduDisplayName: string }
   | { type: "UPDATE_GROUP_GEDU"; groupId: string; geduId: string; geduDisplayName: string }
   | { type: "DELETE_GROUP"; groupId: string }
@@ -41,7 +41,8 @@ type GroupEditorAction =
 
 let tempIdCounter = 0;
 
-function reducer(state: GroupEditorState, action: GroupEditorAction): GroupEditorState {
+/** @visibleForTesting */
+export function reducer(state: GroupEditorState, action: GroupEditorAction): GroupEditorState {
   switch (action.type) {
     case "ADD_GROUP": {
       const tempId = `temp-${++tempIdCounter}`;
@@ -159,7 +160,8 @@ function reducer(state: GroupEditorState, action: GroupEditorAction): GroupEdito
   }
 }
 
-const initialState: GroupEditorState = {
+/** @visibleForTesting */
+export const initialState: GroupEditorState = {
   addedGroups: [],
   updatedGroups: [],
   deletedGroupIds: [],
@@ -179,7 +181,8 @@ export interface EffectiveGroup {
   gamers: Array<GroupGamer & { isMoved?: boolean }>;
 }
 
-function computeEffectiveGroups(
+/** @visibleForTesting */
+export function computeEffectiveGroups(
   serverGroups: ProductGroup[],
   state: GroupEditorState,
 ): EffectiveGroup[] {
@@ -285,7 +288,8 @@ const text = (value: string): ChangeSegment => ({ type: "text", value });
 const gamer = (value: string): ChangeSegment => ({ type: "gamer", value });
 const gedu = (value: string): ChangeSegment => ({ type: "gedu", value });
 
-function buildChangeSummary(
+/** @visibleForTesting */
+export function buildChangeSummary(
   state: GroupEditorState,
   serverGroups: ProductGroup[],
 ): ChangeSummary {
