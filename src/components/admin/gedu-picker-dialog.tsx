@@ -44,7 +44,6 @@ export function GeduPickerDialog({
   };
 
   const filtered = gedus.filter((g) => {
-    if (excludeIds?.includes(g.id)) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return (
@@ -52,10 +51,6 @@ export function GeduPickerDialog({
       (g.email?.toLowerCase().includes(q) ?? false)
     );
   });
-
-  const totalAvailable = excludeIds
-    ? gedus.filter((g) => !excludeIds.includes(g.id)).length
-    : gedus.length;
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
@@ -78,40 +73,49 @@ export function GeduPickerDialog({
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
             {search
-              ? `${filtered.length} of ${totalAvailable} gedus`
-              : `${totalAvailable} gedus`}
+              ? `${filtered.length} of ${gedus.length} gedus`
+              : `${gedus.length} gedus`}
           </p>
         </div>
 
         <SheetBody>
           <div className="space-y-2">
-            {filtered.map((g) => (
-              <button
-                key={g.id}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-md border p-3 text-left text-sm transition-colors hover:bg-accent",
-                  g.id === highlightId && "border-primary bg-primary/5",
-                )}
-                onClick={() => {
-                  onSelect(g.id, g.display_name);
-                  handleOpenChange(false);
-                }}
-              >
-                <UserRound className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{g.display_name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{g.email}</p>
-                </div>
-                {g.id === highlightId && (
-                  <Badge variant="outline" className="flex-shrink-0">
-                    Current
-                  </Badge>
-                )}
-              </button>
-            ))}
+            {filtered.map((g) => {
+              const isCurrent = g.id === highlightId;
+              const isAssigned = excludeIds?.includes(g.id) ?? false;
+              const isDisabled = isCurrent || isAssigned;
+              return (
+                <button
+                  key={g.id}
+                  disabled={isDisabled}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-md border p-3 text-left text-sm transition-colors",
+                    isDisabled
+                      ? "cursor-default opacity-50"
+                      : "hover:bg-accent",
+                    isCurrent && "border-primary bg-primary/5",
+                  )}
+                  onClick={() => {
+                    onSelect(g.id, g.display_name);
+                    handleOpenChange(false);
+                  }}
+                >
+                  <UserRound className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{g.display_name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{g.email}</p>
+                  </div>
+                  {(isCurrent || isAssigned) && (
+                    <Badge variant="outline" className="flex-shrink-0">
+                      {isCurrent ? "Current" : "Assigned"}
+                    </Badge>
+                  )}
+                </button>
+              );
+            })}
             {filtered.length === 0 && (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                {totalAvailable === 0
+                {gedus.length === 0
                   ? "No gedus available."
                   : "No gedus match your search."}
               </p>
