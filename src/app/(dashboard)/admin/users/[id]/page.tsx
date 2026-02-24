@@ -35,8 +35,6 @@ export default function AdminUserDetailPage() {
   const { data: balance } = useTokenBalance(userId, profile?.role === "customer");
   const { data: transactions } = useTokenTransactions(userId);
   const adjustMutation = useAdjustTokens();
-  const isGamer = profile?.role === "gamer";
-
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
