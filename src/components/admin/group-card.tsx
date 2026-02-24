@@ -140,7 +140,12 @@ export function GroupCard({ group, groupLabel, gedus, onDelete, onReassignGedu }
       >
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div className="space-y-0.5">
-            <CardTitle className="text-base">{groupLabel}</CardTitle>
+            <CardTitle className="text-base">
+              {groupLabel}
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
+                ({group.gamers.length} {group.gamers.length === 1 ? "gamer" : "gamers"})
+              </span>
+            </CardTitle>
             <p className="text-sm text-muted-foreground">
               <UserRound className="mr-1 inline h-3.5 w-3.5" />
               {group.geduDisplayName}
