@@ -134,6 +134,8 @@ The `npm run supabase:gen-types` script uses `--local` which requires Docker. Fo
 
 **Important:** The gen-types command may append a CLI upgrade warning to the output file. Always check and remove any trailing non-TypeScript text from `src/types/database.types.ts` after generation.
 
+**Important:** `database.types.ts` is purely auto-generated — do not hand-edit it. Convenience type aliases (e.g., `Profile`, `UserRole`) live in `src/types/index.ts`. After regenerating, check whether new tables or enums need aliases added to `index.ts`.
+
 ### Remote Database Migrations
 
 This project uses a remote Supabase instance (not local Docker). To push migrations:

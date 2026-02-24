@@ -1,7 +1,71 @@
-export * from "./database.types";
+// Re-export the raw generated types (Database, Json, etc.)
+// database.types.ts is auto-generated — do not hand-edit.
+// After running `supabase gen types`, check whether new tables/enums
+// need convenience aliases added below.
+export type { Database, Json } from "./database.types";
+export { Constants } from "./database.types";
 
 import type { User } from "@supabase/supabase-js";
-import type { Profile, UserRole } from "./database.types";
+import type { Database } from "./database.types";
+
+// ---------------------------------------------------------------------------
+// Convenience type aliases
+// Keep these in sync with the schema. When you add a new table or enum,
+// add its alias here so the rest of the codebase imports from "@/types".
+// ---------------------------------------------------------------------------
+
+// Enums
+export type UserRole = Database["public"]["Enums"]["user_role"];
+export type TokenTransactionType = Database["public"]["Enums"]["token_transaction_type"];
+export type GenderType = Database["public"]["Enums"]["gender_type"];
+export type VoiceRoomStatus = Database["public"]["Enums"]["voice_room_status"];
+
+// profiles
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
+export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+
+// customer_profiles
+export type CustomerProfile = Database["public"]["Tables"]["customer_profiles"]["Row"];
+export type CustomerProfileUpdate = Database["public"]["Tables"]["customer_profiles"]["Update"];
+
+// gamer_profiles
+export type GamerProfile = Database["public"]["Tables"]["gamer_profiles"]["Row"];
+export type GamerProfileUpdate = Database["public"]["Tables"]["gamer_profiles"]["Update"];
+
+// parent_gamer
+export type ParentGamer = Database["public"]["Tables"]["parent_gamer"]["Row"];
+export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["Insert"];
+
+// products
+export type Product = Database["public"]["Tables"]["products"]["Row"];
+export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
+export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
+
+// games
+export type Game = Database["public"]["Tables"]["games"]["Row"];
+export type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
+
+// token_transactions
+export type TokenTransaction = Database["public"]["Tables"]["token_transactions"]["Row"];
+
+// voice_rooms
+export type VoiceRoom = Database["public"]["Tables"]["voice_rooms"]["Row"];
+export type VoiceRoomInsert = Database["public"]["Tables"]["voice_rooms"]["Insert"];
+export type VoiceRoomUpdate = Database["public"]["Tables"]["voice_rooms"]["Update"];
+export type OpenVoiceRoom = Database["public"]["Functions"]["get_open_voice_rooms"]["Returns"][number];
+
+// product_groups
+export type ProductGroup = Database["public"]["Tables"]["product_groups"]["Row"];
+export type ProductGroupInsert = Database["public"]["Tables"]["product_groups"]["Insert"];
+
+// group_enrollments
+export type GroupEnrollment = Database["public"]["Tables"]["group_enrollments"]["Row"];
+export type GroupEnrollmentInsert = Database["public"]["Tables"]["group_enrollments"]["Insert"];
+
+// ---------------------------------------------------------------------------
+// App-level types (not generated)
+// ---------------------------------------------------------------------------
 
 export interface AuthUser extends User {
   profile?: Profile;

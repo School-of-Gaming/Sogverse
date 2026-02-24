@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { GeduPickerDialog } from "./gedu-picker-dialog";
 import type { EffectiveGroup } from "@/hooks/use-group-editor";
-import type { Profile } from "@/types";
+import type { Profile, GenderType } from "@/types";
 
 // --- Helpers ---
 
@@ -116,7 +116,7 @@ export function GroupCard({ group, groupLabel, gedus, onDelete, onReassignGedu }
       : `${Math.min(...ages)}–${Math.max(...ages)}y`
     : null;
 
-  const genderCounts = { boy: 0, girl: 0, non_binary: 0 };
+  const genderCounts: Record<GenderType, number> = { boy: 0, girl: 0, non_binary: 0 };
   for (const g of group.gamers) {
     if (g.gender === "boy" || g.gender === "girl" || g.gender === "non_binary") {
       genderCounts[g.gender]++;
