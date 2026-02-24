@@ -44,10 +44,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    const result2 = data?.[0];
+    const rpcResult = data?.[0];
     return NextResponse.json({
-      newBalance: result2?.new_balance,
-      transactionId: result2?.transaction_id,
+      newBalance: rpcResult?.new_balance,
+      transactionId: rpcResult?.transaction_id,
     });
   } catch {
     return NextResponse.json(

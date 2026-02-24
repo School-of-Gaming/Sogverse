@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       .replace(/>/g, "&gt;")
       .replace(/\n/g, "<br/>");
 
-    const result2 = await sendTransactionalEmail({
+    const emailResult = await sendTransactionalEmail({
       fromEmail,
       fromName,
       toEmail,
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       replyToEmail,
     });
 
-    return NextResponse.json({ messageId: result2.messageId });
+    return NextResponse.json({ messageId: emailResult.messageId });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Internal server error";

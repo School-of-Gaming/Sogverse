@@ -235,12 +235,14 @@ Supabase's "Confirm email" setting is disabled to keep signup frictionless (user
 
 ### ~~Split Profiles into Role-Specific Extension Tables~~ — DONE
 
-Created `customer_profiles`, `gamer_profiles`, `gedu_profiles` extension tables. Migrated role-specific columns out of `profiles`. Updated `adjust_token_balance()` RPC, RLS policies, service classes, and API routes.
+Created `customer_profiles` and `gamer_profiles` extension tables. Migrated role-specific columns out of `profiles`. Updated `adjust_token_balance()` RPC, RLS policies, service classes, and API routes.
 
 - [x] Create migration adding extension tables
 - [x] Migrate data and drop role-specific columns from `profiles`
 - [x] Update RPC, RLS, services, and routes
 - [x] Regenerate TypeScript types
+
+**Future:** Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
 
 ### Migrate Auth Email Templates to Brevo
 

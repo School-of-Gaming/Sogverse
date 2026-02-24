@@ -171,6 +171,10 @@ CREATE POLICY "Gamers can read own gamer_profile"
   TO authenticated
   USING (user_id = auth.uid());
 
+-- Gamers can update their own profile for now. In the future, customers (parents)
+-- will set date_of_birth and gender for their linked gamers. When that's implemented,
+-- add a "Parents can update linked gamer profiles" UPDATE policy using is_parent_of(user_id)
+-- (matching the SELECT pattern below) and consider removing or restricting this policy.
 CREATE POLICY "Gamers can update own gamer_profile"
   ON gamer_profiles
   FOR UPDATE
