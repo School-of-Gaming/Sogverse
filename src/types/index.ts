@@ -63,6 +63,21 @@ export type ProductGroupInsert = Database["public"]["Tables"]["product_groups"][
 export type GroupEnrollment = Database["public"]["Tables"]["group_enrollments"]["Row"];
 export type GroupEnrollmentInsert = Database["public"]["Tables"]["group_enrollments"]["Insert"];
 
+// get_product_groups_with_details RPC — the generated return type incorrectly
+// marks LEFT JOIN fields as non-nullable. This override reflects that groups
+// with no enrollments return null for all gamer-related columns.
+type _GroupDetailsGenerated = Database["public"]["Functions"]["get_product_groups_with_details"]["Returns"][number];
+export type ProductGroupWithDetails = Omit<
+  _GroupDetailsGenerated,
+  "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
+> & {
+  enrollment_id: string | null;
+  gamer_id: string | null;
+  gamer_display_name: string | null;
+  gamer_date_of_birth: string | null;
+  gamer_gender: Database["public"]["Enums"]["gender_type"] | null;
+};
+
 // ---------------------------------------------------------------------------
 // App-level types (not generated)
 // ---------------------------------------------------------------------------

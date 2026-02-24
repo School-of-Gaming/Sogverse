@@ -54,6 +54,8 @@ export class GroupsService {
         });
       }
 
+      // gamer fields are null for groups with no enrollments (LEFT JOIN).
+      // See ProductGroupWithDetails in @/types for the corrected type.
       if (row.gamer_id) {
         groupMap.get(row.group_id)!.gamers.push({
           gamerId: row.gamer_id,

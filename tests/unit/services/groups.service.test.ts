@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { GroupsService } from "@/services/groups/groups.service";
 import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
 
@@ -128,7 +128,8 @@ describe("GroupsService", () => {
   });
 
   describe("commitGroupChanges", () => {
-    let fetchSpy: ReturnType<typeof vi.spyOn>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let fetchSpy: any;
 
     beforeEach(() => {
       fetchSpy = vi.spyOn(globalThis, "fetch");
