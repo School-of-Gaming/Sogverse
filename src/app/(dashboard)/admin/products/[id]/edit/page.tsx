@@ -19,7 +19,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const handleSubmit = async (values: ProductFormValues) => {
     setSaving(true);
     await updateProduct.mutateAsync({ id, updates: values });
-    router.push("/admin/products");
+    router.push(`/admin/products/${id}`);
   };
 
   if (isLoading) {
@@ -50,7 +50,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="mx-auto max-w-lg space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/admin/products">
+          <Link href={`/admin/products/${id}`}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
@@ -64,7 +64,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/products">
+        <Link href={`/admin/products/${id}`}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>

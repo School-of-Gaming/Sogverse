@@ -6,8 +6,7 @@ import {
   Pencil,
   Trash,
   Search,
-  Eye,
-  EyeOff,
+  ChevronRight,
   Settings,
   Users,
   Package,
@@ -231,14 +230,14 @@ function DialogDemo() {
       <Dialog open={openDialog === "confirm"} onOpenChange={(open) => !open && setOpenDialog(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Deactivate Product</DialogTitle>
+            <DialogTitle>Hide Product</DialogTitle>
             <DialogDescription>
-              Are you sure you want to deactivate &ldquo;Sogverse Pro&rdquo;? It will no longer be visible to customers.
+              Are you sure you want to hide &ldquo;Sogverse Pro&rdquo;? It will no longer be visible to customers.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpenDialog(null)}>Cancel</Button>
-            <Button onClick={() => setOpenDialog(null)}>Deactivate</Button>
+            <Button onClick={() => setOpenDialog(null)}>Hide</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -687,13 +686,16 @@ export default function AdminUIComponentsPage() {
       {/* Section 9: Composite Patterns                                 */}
       {/* ============================================================ */}
       <Section title="Composite Patterns">
-        {/* -- Hoverable List Item (admin products) -- */}
-        <SubSection title="Hoverable List Item (admin/products)">
+        {/* -- Clickable List Row with Chevron (admin/products, admin/users) -- */}
+        <SubSection title="Clickable List Row with Chevron">
+          <p className="text-sm text-muted-foreground mb-3">
+            Rows link to a detail/manage page. ChevronRight signals clickability. Used in admin/products and admin/users.
+          </p>
           <div className="space-y-2">
             {["Sogverse Pro", "Starter Pack"].map((name, i) => (
               <div
                 key={name}
-                className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
+                className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
@@ -707,7 +709,7 @@ export default function AdminUIComponentsPage() {
                           variant="outline"
                           className="text-muted-foreground group-hover:text-accent-foreground/70"
                         >
-                          Inactive
+                          Hidden
                         </Badge>
                       )}
                     </div>
@@ -719,36 +721,7 @@ export default function AdminUIComponentsPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground"
-                    title={i === 0 ? "Deactivate" : "Activate"}
-                  >
-                    {i === 0 ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground"
-                    title="Edit"
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive group-hover:bg-destructive group-hover:text-destructive-foreground hover:!bg-destructive/80 hover:!text-destructive-foreground"
-                    title="Delete"
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" />
               </div>
             ))}
           </div>

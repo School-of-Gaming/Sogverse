@@ -22,8 +22,8 @@ describe("ProductsService", () => {
     service = new ProductsService(mockSupabase as any);
   });
 
-  describe("getActiveProducts", () => {
-    it("returns active products via direct query", async () => {
+  describe("getVisibleProducts", () => {
+    it("returns visible products via direct query", async () => {
       const mockProducts = [
         createMockProduct({ id: "1", name: "Product 1" }),
         createMockProduct({ id: "2", name: "Product 2" }),
@@ -34,7 +34,7 @@ describe("ProductsService", () => {
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
       mockSupabase.from.mockReturnValue({ select: mockSelect });
 
-      const result = await service.getActiveProducts();
+      const result = await service.getVisibleProducts();
 
       expect(mockSupabase.from).toHaveBeenCalledWith("products");
       expect(mockSelect).toHaveBeenCalledWith("*, games(name)");
@@ -47,7 +47,7 @@ describe("ProductsService", () => {
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
       mockSupabase.from.mockReturnValue({ select: mockSelect });
 
-      const result = await service.getActiveProducts();
+      const result = await service.getVisibleProducts();
 
       expect(result).toEqual([]);
     });
@@ -58,7 +58,7 @@ describe("ProductsService", () => {
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
       mockSupabase.from.mockReturnValue({ select: mockSelect });
 
-      await expect(service.getActiveProducts()).rejects.toThrow();
+      await expect(service.getVisibleProducts()).rejects.toThrow();
     });
   });
 
@@ -155,9 +155,9 @@ describe("ProductsService", () => {
     });
   });
 
-  describe("toggleProductStatus", () => {
-    it("toggles product active status", async () => {
-      const toggledProduct = createMockProduct({ is_active: false });
+  describe("toggleProductVisibility", () => {
+    it("toggles product visibility", async () => {
+      const toggledProduct = createMockProduct({ is_visible: false });
 
       const mockUpdate = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
@@ -169,10 +169,10 @@ describe("ProductsService", () => {
 
       mockSupabase.from.mockReturnValue({ update: mockUpdate });
 
-      const result = await service.toggleProductStatus("test-id", false);
+      const result = await service.toggleProductVisibility("test-id", false);
 
-      expect(mockUpdate).toHaveBeenCalledWith({ is_active: false });
-      expect(result.is_active).toBe(false);
+      expect(mockUpdate).toHaveBeenCalledWith({ is_visible: false });
+      expect(result.is_visible).toBe(false);
     });
   });
 });

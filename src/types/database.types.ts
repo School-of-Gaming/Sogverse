@@ -82,7 +82,7 @@ export type Database = {
           game_id: string
           id: string
           image_url: string
-          is_active: boolean | null
+          is_visible: boolean | null
           max_age: number
           min_age: number
           name: string
@@ -103,7 +103,7 @@ export type Database = {
           game_id: string
           id?: string
           image_url: string
-          is_active?: boolean | null
+          is_visible?: boolean | null
           max_age: number
           min_age: number
           name: string
@@ -124,7 +124,7 @@ export type Database = {
           game_id?: string
           id?: string
           image_url?: string
-          is_active?: boolean | null
+          is_visible?: boolean | null
           max_age?: number
           min_age?: number
           name?: string
@@ -338,36 +338,6 @@ export type Database = {
               transaction_id: string
             }[]
           }
-      get_active_products: {
-        Args: never
-        Returns: {
-          created_at: string | null
-          created_by: string
-          currency: string | null
-          day_of_week: number
-          description: string
-          duration_minutes: number
-          game_id: string
-          id: string
-          image_url: string
-          is_active: boolean | null
-          max_age: number
-          min_age: number
-          name: string
-          price: number
-          start_time: string
-          stripe_price_id: string | null
-          stripe_product_id: string | null
-          timezone: string
-          updated_at: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "products"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       get_my_gamers: {
         Args: never
         Returns: {
@@ -432,6 +402,36 @@ export type Database = {
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      get_visible_products: {
+        Args: never
+        Returns: {
+          created_at: string | null
+          created_by: string
+          currency: string | null
+          day_of_week: number
+          description: string
+          duration_minutes: number
+          game_id: string
+          id: string
+          image_url: string
+          is_visible: boolean | null
+          max_age: number
+          min_age: number
+          name: string
+          price: number
+          start_time: string
+          stripe_price_id: string | null
+          stripe_product_id: string | null
+          timezone: string
+          updated_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "products"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }

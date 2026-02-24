@@ -52,7 +52,7 @@ export function createMockProduct(overrides: Partial<Product> = {}): Product {
     image_url: "https://example.com/image.png",
     stripe_product_id: null,
     stripe_price_id: null,
-    is_active: true,
+    is_visible: true,
     created_by: "test-admin-id",
     game_id: "00000000-0000-0000-0000-000000000001",
     day_of_week: 0,

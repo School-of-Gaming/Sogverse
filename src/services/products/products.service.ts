@@ -9,11 +9,11 @@ export type ProductWithGame = Product & { games: { name: string } | null };
 export class ProductsService {
   constructor(private supabase: SupabaseClientType) {}
 
-  async getActiveProducts(): Promise<ProductWithGame[]> {
+  async getVisibleProducts(): Promise<ProductWithGame[]> {
     const { data, error } = await this.supabase
       .from("products")
       .select("*, games(name)")
-      .eq("is_active", true)
+      .eq("is_visible", true)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
@@ -78,8 +78,8 @@ export class ProductsService {
     if (error) throw error;
   }
 
-  async toggleProductStatus(id: string, isActive: boolean): Promise<Product> {
-    return this.updateProduct(id, { is_active: isActive });
+  async toggleProductVisibility(id: string, isVisible: boolean): Promise<Product> {
+    return this.updateProduct(id, { is_visible: isVisible });
   }
 
   async searchProducts(query: string): Promise<ProductWithGame[]> {

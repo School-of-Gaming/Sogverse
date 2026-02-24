@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, UserPlus } from "lucide-react";
+import { Search, UserPlus, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -136,9 +136,12 @@ export default function AdminUsersPage() {
                       </p>
                     </div>
                   </div>
-                  <Badge className={ROLE_BADGES[user.role].className}>
-                    {ROLE_BADGES[user.role].label}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={ROLE_BADGES[user.role].className}>
+                      {ROLE_BADGES[user.role].label}
+                    </Badge>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" />
+                  </div>
                 </Link>
               ))}
             </div>

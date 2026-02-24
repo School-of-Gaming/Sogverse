@@ -3,48 +3,23 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Plus, Search, Pencil, Trash, Eye, EyeOff, Copy } from "lucide-react";
+import { Plus, Search, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { useAllProducts, useToggleProductStatus, useDeleteProduct } from "@/services/products";
+import { useAllProducts } from "@/services/products";
 import { formatScheduleLocal } from "@/lib/utils";
-
-type ConfirmAction =
-  | { type: "toggle"; id: string; name: string; currentStatus: boolean }
-  | { type: "delete"; id: string; name: string };
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
   const { data: products, isLoading } = useAllProducts();
-  const toggleStatus = useToggleProductStatus();
-  const deleteProduct = useDeleteProduct();
 
   const filteredProducts = products?.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleConfirm = () => {
-    if (!confirmAction) return;
-    if (confirmAction.type === "toggle") {
-      toggleStatus.mutate({ id: confirmAction.id, isActive: !confirmAction.currentStatus });
-    } else {
-      deleteProduct.mutate(confirmAction.id);
-    }
-    setConfirmAction(null);
-  };
 
   return (
     <div className="space-y-6">
@@ -104,8 +79,9 @@ export default function AdminProductsPage() {
                 const gameName = product.games?.name;
 
                 return (
-                  <div
+                  <Link
                     key={product.id}
+                    href={`/admin/products/${product.id}`}
                     className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     <div className="flex items-center gap-4">
@@ -121,9 +97,9 @@ export default function AdminProductsPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <p className="font-medium">{product.name}</p>
-                          {!product.is_active && (
+                          {!product.is_visible && (
                             <Badge variant="outline" className="text-muted-foreground group-hover:text-accent-foreground/70">
-                              Inactive
+                              Hidden
                             </Badge>
                           )}
                         </div>
@@ -141,50 +117,8 @@ export default function AdminProductsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground"
-                        onClick={() => setConfirmAction({
-                          type: "toggle",
-                          id: product.id,
-                          name: product.name,
-                          currentStatus: product.is_active ?? true,
-                        })}
-                        title={product.is_active ? "Deactivate" : "Activate"}
-                      >
-                        {product.is_active ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Link href={`/admin/products/${product.id}/edit`}>
-                        <Button variant="ghost" size="icon" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground" title="Edit">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Link href={`/admin/products/add?clone=${product.id}`}>
-                        <Button variant="ghost" size="icon" className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground" title="Clone">
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive group-hover:bg-destructive group-hover:text-destructive-foreground hover:!bg-destructive/80 hover:!text-destructive-foreground"
-                        onClick={() => setConfirmAction({
-                          type: "delete",
-                          id: product.id,
-                          name: product.name,
-                        })}
-                        title="Delete"
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" />
+                  </Link>
                 );
               })}
             </div>
@@ -197,42 +131,6 @@ export default function AdminProductsPage() {
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={confirmAction !== null} onOpenChange={(open) => !open && setConfirmAction(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {confirmAction?.type === "delete"
-                ? "Delete Product"
-                : confirmAction?.type === "toggle" && confirmAction.currentStatus
-                  ? "Deactivate Product"
-                  : "Activate Product"}
-            </DialogTitle>
-            <DialogDescription>
-              {confirmAction?.type === "delete"
-                ? `Are you sure you want to delete "${confirmAction.name}"? This action cannot be undone.`
-                : confirmAction?.type === "toggle" && confirmAction.currentStatus
-                  ? `Are you sure you want to deactivate "${confirmAction.name}"? It will no longer be visible to customers.`
-                  : `Are you sure you want to activate "${confirmAction?.name}"? It will become visible to customers.`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmAction(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant={confirmAction?.type === "delete" ? "destructive" : "default"}
-              onClick={handleConfirm}
-            >
-              {confirmAction?.type === "delete"
-                ? "Delete"
-                : confirmAction?.type === "toggle" && confirmAction.currentStatus
-                  ? "Deactivate"
-                  : "Activate"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

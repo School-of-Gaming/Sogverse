@@ -6,11 +6,11 @@ import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useActiveProducts } from "@/services/products";
+import { useVisibleProducts } from "@/services/products";
 import { formatScheduleLocal } from "@/lib/utils";
 
 export default function ProductsPage() {
-  const { data: products, isLoading } = useActiveProducts();
+  const { data: products, isLoading } = useVisibleProducts();
 
   return (
     <div className="container mx-auto px-4 py-12">
