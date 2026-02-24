@@ -208,6 +208,7 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
                         : getGroupLabel(group.id)
                     }
                     gedus={allGedus}
+                    usedGeduIds={usedGeduIds}
                     onDelete={(id) => {
                       const g = effectiveGroups.find((eg) => eg.id === id);
                       if (g && g.gamers.length > 0) return;

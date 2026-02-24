@@ -80,6 +80,10 @@ The proxy (`src/proxy.ts`) owns session management: it refreshes tokens server-s
 ### UI Component Reference
 A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
+### Gedu Groups
+
+See `docs/gedu-groups-architecture.md` for the full architecture. All group/enrollment mutations must go through the `commit_group_changes` RPC — never modify `product_groups` or `group_enrollments` directly.
+
 ### Voice Chat (Daily.co)
 
 See `docs/voice-chat-architecture.md` for the full component map and data flow.

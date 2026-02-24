@@ -90,11 +90,12 @@ interface GroupCardProps {
   group: EffectiveGroup;
   groupLabel: string;
   gedus: Pick<Profile, "id" | "display_name" | "email">[];
+  usedGeduIds: string[];
   onDelete: (groupId: string) => void;
   onReassignGedu: (groupId: string, geduId: string, geduDisplayName: string) => void;
 }
 
-export function GroupCard({ group, groupLabel, gedus, onDelete, onReassignGedu }: GroupCardProps) {
+export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onReassignGedu }: GroupCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showReassign, setShowReassign] = useState(false);
 
@@ -248,6 +249,7 @@ export function GroupCard({ group, groupLabel, gedus, onDelete, onReassignGedu }
         title={`Reassign Gedu for ${groupLabel}`}
         description="Select a different gedu for this group."
         gedus={gedus}
+        excludeIds={usedGeduIds}
         highlightId={group.geduId}
         onSelect={(geduId, displayName) =>
           onReassignGedu(group.id, geduId, displayName)

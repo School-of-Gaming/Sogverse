@@ -99,7 +99,8 @@ BEGIN
   END LOOP;
 
   -- Step 2: Delete groups (RESTRICT FK will abort the entire transaction
-  -- if any group still has enrollments that weren't moved out in step 1)
+  -- if any group still has enrollments that weren't moved out in step 1).
+  -- Not scoped to p_product_id — this RPC is admin-only, and admins are trusted.
   IF array_length(p_deleted_group_ids, 1) > 0 THEN
     DELETE FROM product_groups WHERE id = ANY(p_deleted_group_ids);
   END IF;
