@@ -160,6 +160,11 @@ export function reducer(state: GroupEditorState, action: GroupEditorAction): Gro
 
     case "RESET":
       return { addedGroups: [], updatedGroups: [], deletedGroupIds: [], enrollmentMoves: [] };
+
+    default: {
+      const _exhaustive: never = action;
+      return _exhaustive;
+    }
   }
 }
 

@@ -121,7 +121,7 @@ describe("POST /api/admin/products/[id]/groups", () => {
 
   // RPC success
 
-  it("returns groups and autoHidden on successful commit", async () => {
+  it("returns refreshed groups on successful commit", async () => {
     mockAuthenticated();
 
     // Product exists
