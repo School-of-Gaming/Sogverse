@@ -208,7 +208,11 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
                         : getGroupLabel(group.id)
                     }
                     gedus={allGedus}
-                    onDelete={(id) => dispatch({ type: "DELETE_GROUP", groupId: id })}
+                    onDelete={(id) => {
+                      const g = effectiveGroups.find((eg) => eg.id === id);
+                      if (g && g.gamers.length > 0) return;
+                      dispatch({ type: "DELETE_GROUP", groupId: id });
+                    }}
                     onReassignGedu={(id, geduId, geduDisplayName) =>
                       dispatch({
                         type: "UPDATE_GROUP_GEDU",

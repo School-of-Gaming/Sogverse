@@ -102,13 +102,15 @@ function reducer(state: GroupEditorState, action: GroupEditorAction): GroupEdito
         };
       }
 
-      // Otherwise mark for deletion and clean up related updates/moves
+      // Otherwise mark for deletion and clean up related updates/moves.
+      // Keep moves OUT of the deleted group (gamers still land in their destination)
+      // but remove moves INTO it (destination no longer exists).
       return {
         ...state,
         deletedGroupIds: [...state.deletedGroupIds, action.groupId],
         updatedGroups: state.updatedGroups.filter((g) => g.groupId !== action.groupId),
         enrollmentMoves: state.enrollmentMoves.filter(
-          (m) => m.fromGroupId !== action.groupId && m.toGroupId !== action.groupId,
+          (m) => m.toGroupId !== action.groupId,
         ),
       };
     }
