@@ -68,6 +68,18 @@ Before deploying to production, squash all development migrations into a clean i
 
 ## Future Improvements
 
+### Add SEO Static Assets
+
+The `public/` folder is empty. Add standard SEO/social files before production launch:
+
+- [ ] `robots.txt` — block crawlers from authenticated routes (`/admin`, `/customer`, `/gamer`, `/gedu`)
+- [ ] `sitemap.xml` — index public pages for search engines
+- [ ] Open Graph image — social sharing preview for links shared on Twitter, Discord, etc.
+
+These can be static files in `public/` or generated via App Router conventions (`robots.ts`, `sitemap.ts`, `opengraph-image.png` in `src/app/`).
+
+**When:** Before production launch or when public-facing pages need SEO visibility.
+
 ### E2E Tests with Local Supabase
 
 Current E2E tests only cover unauthenticated flows (page renders, redirects). Authenticated tests (admin-only pages, role-based routing, CRUD operations) need real Supabase Auth + Postgres but shouldn't depend on the remote instance.
