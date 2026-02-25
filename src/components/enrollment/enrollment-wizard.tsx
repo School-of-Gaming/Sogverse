@@ -139,42 +139,60 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
     <Card>
       <CardHeader>
         <CardTitle>Enroll Your Gamer</CardTitle>
-        <CardDescription>
-          {product.token_cost} Sorgs will be deducted for the upcoming session
-        </CardDescription>
+        {hasEnoughTokens && (
+          <>
+            <CardDescription>
+              {product.token_cost} Sorgs will be deducted for the upcoming session
+            </CardDescription>
 
-        {/* Progress indicator */}
-        {effectiveStep !== "success" && (
-          <div className="flex items-center gap-2 pt-2">
-            {PROGRESS_STEPS.map((s, i) => (
-              <div key={s} className="flex items-center gap-2">
-                <div
-                  className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                    i <= currentProgressIndex
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {i < currentProgressIndex ? (
-                    <Check className="h-3 w-3" />
-                  ) : (
-                    i + 1
-                  )}
-                </div>
-                {i < PROGRESS_STEPS.length - 1 && (
-                  <div
-                    className={`h-0.5 w-8 ${
-                      i < currentProgressIndex ? "bg-primary" : "bg-muted"
-                    }`}
-                  />
-                )}
+            {/* Progress indicator */}
+            {effectiveStep !== "success" && (
+              <div className="flex items-center gap-2 pt-2">
+                {PROGRESS_STEPS.map((s, i) => (
+                  <div key={s} className="flex items-center gap-2">
+                    <div
+                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                        i <= currentProgressIndex
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {i < currentProgressIndex ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        i + 1
+                      )}
+                    </div>
+                    {i < PROGRESS_STEPS.length - 1 && (
+                      <div
+                        className={`h-0.5 w-8 ${
+                          i < currentProgressIndex ? "bg-primary" : "bg-muted"
+                        }`}
+                      />
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </CardHeader>
 
       <CardContent>
+        {!hasEnoughTokens && effectiveStep !== "success" ? (
+          <div className="flex flex-col items-center py-4 text-center">
+            <Coins className="h-12 w-12 text-warning" />
+            <h3 className="mt-4 text-lg font-medium">Insufficient Balance</h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              You need <strong>{product.token_cost} Sorgs</strong> to enroll
+              but only have <strong>{currentBalance}</strong>.
+            </p>
+            <Link href={ROUTES.sorg} className="mt-4">
+              <Button>Get More Sorgs</Button>
+            </Link>
+          </div>
+        ) : (
+        <>
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertDescription>{error}</AlertDescription>
@@ -354,23 +372,6 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
               </div>
             </div>
 
-            {!hasEnoughTokens && (
-              <Alert variant="warning">
-                <Coins className="h-4 w-4" />
-                <AlertDescription>
-                  You need {product.token_cost - currentBalance} more Sorg
-                  {product.token_cost - currentBalance !== 1 ? "s" : ""} to
-                  enroll.{" "}
-                  <Link
-                    href={ROUTES.customer.sorg}
-                    className="font-medium underline"
-                  >
-                    Get more Sorgs
-                  </Link>
-                </AlertDescription>
-              </Alert>
-            )}
-
             <Button
               className="w-full"
               disabled={!hasEnoughTokens || enrollGamer.isPending}
@@ -406,6 +407,8 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
               </Link>
             </div>
           </div>
+        )}
+        </>
         )}
       </CardContent>
     </Card>
