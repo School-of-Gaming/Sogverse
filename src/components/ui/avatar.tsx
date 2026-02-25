@@ -16,18 +16,4 @@ const Avatar = React.forwardRef<
 ));
 Avatar.displayName = "Avatar";
 
-const AvatarImage = React.forwardRef<
-  HTMLImageElement,
-  React.ImgHTMLAttributes<HTMLImageElement>
->(({ className, alt = "", ...props }, ref) => (
-  // eslint-disable-next-line @next/next/no-img-element
-  <img
-    ref={ref}
-    alt={alt}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-));
-AvatarImage.displayName = "AvatarImage";
-
-export { Avatar, AvatarImage };
+export { Avatar };

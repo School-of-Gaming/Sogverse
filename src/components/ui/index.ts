@@ -10,7 +10,7 @@ export {
   CardDescription,
   CardContent,
 } from "./card";
-export { Avatar, AvatarImage } from "./avatar";
+export { Avatar } from "./avatar";
 export { Badge, badgeVariants, type BadgeProps } from "./badge";
 export {
   Dialog,

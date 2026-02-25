@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, X, LogOut, Settings, Coins } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { useTokenBalance } from "@/services/tokens";
@@ -114,7 +114,6 @@ export function Header() {
                   className="flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.avatar_url || undefined} />
                     <Identicon id={profile?.id || user.id} size={32} />
                   </Avatar>
                 </button>

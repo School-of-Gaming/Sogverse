@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { useUpdateProfile } from "@/services/users";
@@ -75,7 +75,6 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={profile?.avatar_url || undefined} />
               <Identicon id={profile?.id || user?.id || ""} size={64} />
             </Avatar>
             <div>

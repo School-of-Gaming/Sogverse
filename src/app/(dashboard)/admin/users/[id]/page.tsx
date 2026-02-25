@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import {
   Dialog,
@@ -89,7 +89,6 @@ export default function AdminUserDetailPage() {
       <Card>
         <CardContent className="flex items-center gap-6 pt-6">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={profile.avatar_url || undefined} />
             <Identicon id={profile.id} size={64} />
           </Avatar>
           <div className="flex-1">

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { UserPlus, Gamepad2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useMyGamers } from "@/services/gamers";
 import { formatRelativeTime } from "@/lib/utils";
@@ -53,7 +53,6 @@ export default function CustomerGamersPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={gamer.avatar_url || undefined} />
                       <Identicon id={gamer.id} size={48} />
                     </Avatar>
                     <div>

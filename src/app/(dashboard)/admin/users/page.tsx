@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useUsers, useSearchUsers } from "@/services/users";
 import { ROLE_BADGES } from "@/lib/constants";
@@ -124,7 +124,6 @@ export default function AdminUsersPage() {
                 >
                   <div className="flex items-center gap-4">
                     <Avatar>
-                      <AvatarImage src={user.avatar_url || undefined} />
                       <Identicon id={user.id} size={40} />
                     </Avatar>
                     <div>

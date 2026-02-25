@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -522,7 +522,6 @@ export default function AdminUIComponentsPage() {
             ].map(({ id, name }) => (
               <div key={id} className="flex flex-col items-center gap-1.5">
                 <Avatar>
-                  <AvatarImage src={undefined} />
                   <Identicon id={id} />
                 </Avatar>
                 <span className="text-xs text-muted-foreground">{name}</span>
@@ -742,7 +741,6 @@ export default function AdminUIComponentsPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={undefined} />
                         <Identicon id={gamer.id} size={48} />
                       </Avatar>
                       <div>
