@@ -17,13 +17,17 @@ export function useAuthRedirect() {
   const redirect = searchParams.get("redirect");
   const [status, setStatus] = useState<string | null>(null);
 
-  // Only allow redirects to the checkout page — the sole post-auth redirect destination
-  const safeRedirect =
-    redirect?.startsWith(`${ROUTES.checkout}?`) ? redirect : null;
+  // Only allow redirects to known safe destinations (checkout, product detail pages)
+  const safeRedirect = (() => {
+    if (!redirect) return null;
+    if (redirect.startsWith(`${ROUTES.checkout}?`)) return redirect;
+    if (redirect.startsWith(`${ROUTES.products}/`)) return redirect;
+    return null;
+  })();
 
   const navigateAfterAuth = (fallbackPath: string) => {
     if (safeRedirect) {
-      setStatus("Redirecting to checkout...");
+      setStatus("Redirecting...");
     }
     window.location.href = safeRedirect || fallbackPath;
   };

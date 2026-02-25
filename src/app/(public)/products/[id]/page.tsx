@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, Users } from "lucide-react";
@@ -27,6 +27,8 @@ export default function ProductDetailPage() {
   const { data: product, isLoading } = useProduct(id);
   const { currency } = useCurrency();
   const { user, profile } = useAuth();
+  const pathname = usePathname();
+  const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
 
   if (isLoading) {
     return (
@@ -172,10 +174,10 @@ export default function ProductDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-3">
-                <Link href={ROUTES.login} className="w-full">
+                <Link href={`${ROUTES.login}${redirectParam}`} className="w-full">
                   <Button className="w-full">Log In to Enroll</Button>
                 </Link>
-                <Link href={ROUTES.register} className="w-full">
+                <Link href={`${ROUTES.register}${redirectParam}`} className="w-full">
                   <Button variant="outline" className="w-full">
                     Create Account
                   </Button>
