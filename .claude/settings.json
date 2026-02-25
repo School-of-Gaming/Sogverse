@@ -7,6 +7,7 @@
       "Bash(wc:*)",
       "Bash(sort:*)",
       "Bash(grep:*)",
+      "Bash(cat:*)",
       "Bash(npm run test:*)",
       "Bash(npm run test:e2e:*)",
       "Bash(npm run build:*)",
