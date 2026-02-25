@@ -38,7 +38,7 @@ function formatGenderShort(gender: string): string {
   switch (gender) {
     case "boy": return "Boy";
     case "girl": return "Girl";
-    case "non_binary": return "NB";
+    case "non_binary": return "Non-binary";
     default: return "";
   }
 }
