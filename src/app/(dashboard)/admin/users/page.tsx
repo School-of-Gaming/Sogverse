@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, UserPlus, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,14 +9,13 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { useUsers, useSearchUsers } from "@/services/users";
+import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
 import { ROLE_BADGES } from "@/lib/constants";
-import type { UserRole } from "@/types";
+import type { Profile, UserRole } from "@/types";
 
 const ROLE_FILTERS: { value: UserRole; label: string }[] = [
   { value: "admin", label: "Admin" },
   { value: "customer", label: "Customer" },
-  { value: "gamer", label: "Gamer" },
   { value: "gedu", label: "Gedu" },
 ];
 
@@ -25,13 +24,76 @@ export default function AdminUsersPage() {
   const [roleFilters, setRoleFilters] = useState<Set<UserRole>>(new Set());
   const { data: allUsers, isLoading: isLoadingAll } = useUsers();
   const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
+  const { data: parentGamerLinks } = useParentGamerLinks();
 
   const isSearchActive = searchQuery.length >= 2;
   const baseUsers = isSearchActive ? searchResults : allUsers;
-  const users = roleFilters.size > 0
-    ? baseUsers?.filter((u) => roleFilters.has(u.role))
-    : baseUsers;
   const isLoading = isSearchActive ? isSearching : isLoadingAll;
+
+  // Build maps from ALL users (not just search results) so gamer nesting always works
+  const allUsersById = useMemo(
+    () => new Map(allUsers?.map((u) => [u.id, u]) ?? []),
+    [allUsers]
+  );
+
+  // parentId → gamer Profile[], and set of all gamer IDs that have a parent
+  const { parentToGamers, gamerToParentIds } = useMemo(() => {
+    const map = new Map<string, Profile[]>();
+    const gamerParents = new Map<string, string[]>();
+
+    if (!parentGamerLinks || !allUsers) return { parentToGamers: map, gamerToParentIds: gamerParents };
+
+    for (const link of parentGamerLinks) {
+      const gamer = allUsersById.get(link.gamer_id);
+      if (!gamer) continue;
+
+      const existing = map.get(link.parent_id) || [];
+      existing.push(gamer);
+      map.set(link.parent_id, existing);
+
+      const parents = gamerParents.get(link.gamer_id) || [];
+      parents.push(link.parent_id);
+      gamerParents.set(link.gamer_id, parents);
+    }
+
+    return { parentToGamers: map, gamerToParentIds: gamerParents };
+  }, [parentGamerLinks, allUsers, allUsersById]);
+
+  // Build the display list: filter out gamers (they nest under parents),
+  // and when searching for a gamer, pull their parent into the results
+  const users = useMemo(() => {
+    if (!baseUsers) return undefined;
+
+    const result: Profile[] = [];
+    const added = new Set<string>();
+
+    for (const user of baseUsers) {
+      if (user.role === "gamer" && gamerToParentIds.has(user.id)) {
+        // Gamer with a parent — don't show standalone, but ensure parent is in the list
+        for (const parentId of gamerToParentIds.get(user.id)!) {
+          if (!added.has(parentId)) {
+            const parent = allUsersById.get(parentId);
+            if (parent) {
+              result.push(parent);
+              added.add(parentId);
+            }
+          }
+        }
+        continue;
+      }
+
+      if (!added.has(user.id)) {
+        result.push(user);
+        added.add(user.id);
+      }
+    }
+
+    if (roleFilters.size > 0) {
+      return result.filter((u) => roleFilters.has(u.role));
+    }
+
+    return result;
+  }, [baseUsers, gamerToParentIds, allUsersById, roleFilters]);
 
   function toggleRole(role: UserRole) {
     setRoleFilters((prev) => {
@@ -117,31 +179,11 @@ export default function AdminUsersPage() {
           ) : users && users.length > 0 ? (
             <div className="space-y-4">
               {users.map((user) => (
-                <Link
+                <UserRow
                   key={user.id}
-                  href={`/admin/users/${user.id}`}
-                  className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
-                >
-                  <div className="flex items-center gap-4">
-                    <Avatar>
-                      <Identicon id={user.id} size={40} />
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">
-                        {user.display_name || user.username || "Unnamed User"}
-                      </p>
-                      <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70">
-                        {user.email || user.username}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={ROLE_BADGES[user.role].className}>
-                      {ROLE_BADGES[user.role].label}
-                    </Badge>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" />
-                  </div>
-                </Link>
+                  user={user}
+                  linkedGamers={parentToGamers.get(user.id)}
+                />
               ))}
             </div>
           ) : (
@@ -153,6 +195,70 @@ export default function AdminUsersPage() {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function UserRow({ user, linkedGamers }: { user: Profile; linkedGamers?: Profile[] }) {
+  return (
+    <div className="rounded-lg border">
+      <Link
+        href={`/admin/users/${user.id}`}
+        className="group flex items-center justify-between p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
+      >
+        <div className="flex items-center gap-4">
+          <Avatar>
+            <Identicon id={user.id} size={40} />
+          </Avatar>
+          <div>
+            <p className="font-medium">
+              {user.display_name || user.username || "Unnamed User"}
+            </p>
+            <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70">
+              {user.email || user.username}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge className={ROLE_BADGES[user.role].className}>
+            {ROLE_BADGES[user.role].label}
+          </Badge>
+          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" />
+        </div>
+      </Link>
+
+      {user.role === "customer" && (!linkedGamers || linkedGamers.length === 0) && (
+        <div className="border-t bg-muted/30 py-3 pl-14 pr-4">
+          <p className="text-sm text-muted-foreground">No connected gamers</p>
+        </div>
+      )}
+
+      {linkedGamers && linkedGamers.length > 0 && (
+        <div className="border-t bg-muted/30">
+          {linkedGamers.map((gamer) => (
+            <Link
+              key={gamer.id}
+              href={`/admin/users/${gamer.id}`}
+              className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <div className="flex items-center gap-3">
+                <Avatar className="h-7 w-7">
+                  <Identicon id={gamer.id} size={28} />
+                </Avatar>
+                <p className="text-sm font-medium">
+                  {gamer.display_name || gamer.username || "Unnamed Gamer"}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className={`${ROLE_BADGES.gamer.className} text-[10px] px-2 py-0`}>
+                  {ROLE_BADGES.gamer.label}
+                </Badge>
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

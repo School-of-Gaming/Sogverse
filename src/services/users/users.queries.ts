@@ -12,6 +12,7 @@ const userKeys = {
   details: () => [...userKeys.all, "detail"] as const,
   detail: (id: string) => [...userKeys.details(), id] as const,
   byRole: (role: UserRole) => [...userKeys.all, "role", role] as const,
+  parentGamerLinks: () => [...userKeys.all, "parent-gamer-links"] as const,
 };
 
 export function useProfile(userId: string) {
@@ -68,6 +69,16 @@ export function useUpdateProfile() {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(userId) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },
+  });
+}
+
+export function useParentGamerLinks() {
+  const supabase = getClient();
+  const service = new UsersService(supabase);
+
+  return useQuery({
+    queryKey: userKeys.parentGamerLinks(),
+    queryFn: () => service.getAllParentGamerLinks(),
   });
 }
 

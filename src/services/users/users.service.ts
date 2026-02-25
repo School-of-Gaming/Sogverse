@@ -1,4 +1,4 @@
-import type { Profile, ProfileUpdate, UserRole } from "@/types";
+import type { Profile, ProfileUpdate, UserRole, ParentGamer } from "@/types";
 
 // Using generic type to avoid version-specific Supabase type incompatibilities
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -66,6 +66,15 @@ export class UsersService {
       .or(`email.ilike.%${query}%,username.ilike.%${query}%,display_name.ilike.%${query}%`)
       .order("created_at", { ascending: false })
       .limit(20);
+
+    if (error) throw error;
+    return data;
+  }
+
+  async getAllParentGamerLinks(): Promise<ParentGamer[]> {
+    const { data, error } = await this.supabase
+      .from("parent_gamer")
+      .select("*");
 
     if (error) throw error;
     return data;
