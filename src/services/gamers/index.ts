@@ -5,5 +5,4 @@ export {
   useLinkedGamers,
   useCreateGamer,
   useLinkGamer,
-  useUnlinkGamer,
 } from "./gamers.queries";

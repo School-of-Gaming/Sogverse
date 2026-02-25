@@ -76,16 +76,6 @@ export class GamerService {
     return data;
   }
 
-  async unlinkGamer(parentId: string, gamerId: string): Promise<void> {
-    const { error } = await this.supabase
-      .from("parent_gamer")
-      .delete()
-      .eq("parent_id", parentId)
-      .eq("gamer_id", gamerId);
-
-    if (error) throw error;
-  }
-
   async getParentGamerLinks(parentId: string): Promise<ParentGamer[]> {
     const { data, error } = await this.supabase
       .from("parent_gamer")

@@ -81,19 +81,3 @@ export function useLinkGamer() {
   });
 }
 
-export function useUnlinkGamer() {
-  const queryClient = useQueryClient();
-  const supabase = getClient();
-  const service = new GamerService(supabase);
-
-  return useMutation({
-    mutationFn: ({ parentId, gamerId }: { parentId: string; gamerId: string }) =>
-      service.unlinkGamer(parentId, gamerId),
-    onSuccess: (_, { parentId }) => {
-      queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });
-      queryClient.invalidateQueries({
-        queryKey: gamerKeys.linkedGamers(parentId),
-      });
-    },
-  });
-}

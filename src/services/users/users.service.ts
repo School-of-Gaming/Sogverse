@@ -71,12 +71,6 @@ export class UsersService {
     return data;
   }
 
-  async deleteUser(userId: string): Promise<void> {
-    // Note: This requires admin privileges and the admin client
-    const { error } = await this.supabase.auth.admin.deleteUser(userId);
-    if (error) throw error;
-  }
-
   async createGedu(email: string, password: string, displayName?: string): Promise<void> {
     const response = await fetch("/api/admin/create-gedu", {
       method: "POST",
