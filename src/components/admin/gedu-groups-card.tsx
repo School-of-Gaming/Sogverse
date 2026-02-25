@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { useProductGroups, useCommitGroupChanges } from "@/services/groups";
 import { useUsersByRole } from "@/services/users";
 import { useGroupEditor } from "@/hooks/use-group-editor";
-import { GroupCard } from "./group-card";
+import { GroupCard, EnrolledGamerChip } from "./group-card";
 import { CommitBar } from "./commit-bar";
 import { GeduPickerDialog } from "./gedu-picker-dialog";
 
@@ -64,16 +64,6 @@ export function VisibilityWarningBanner({ isVisible, groupCount }: VisibilityWar
   );
 }
 
-// --- Drag overlay ghost chip ---
-
-function DragGhostChip({ displayName }: { displayName: string }) {
-  return (
-    <div className="inline-flex items-center gap-1.5 rounded-full border border-primary bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary shadow-lg">
-      {displayName}
-    </div>
-  );
-}
-
 // --- Main component ---
 
 interface GeduGroupsCardProps {
@@ -89,7 +79,7 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
     useGroupEditor(serverGroups);
 
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [activeDrag, setActiveDrag] = useState<{ gamerId: string; displayName: string } | null>(null);
+  const [activeDrag, setActiveDrag] = useState<{ gamerId: string; fromGroupId: string } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -110,11 +100,11 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
   }
 
   const handleDragStart = (event: DragStartEvent) => {
-    const { gamerId, displayName } = event.active.data.current as {
+    const { gamerId, fromGroupId } = event.active.data.current as {
       gamerId: string;
-      displayName: string;
+      fromGroupId: string;
     };
-    setActiveDrag({ gamerId, displayName });
+    setActiveDrag({ gamerId, fromGroupId });
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -226,7 +216,20 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
                 ))}
               </div>
               <DragOverlay>
-                {activeDrag && <DragGhostChip displayName={activeDrag.displayName} />}
+                {activeDrag && (() => {
+                  const group = effectiveGroups.find((g) => g.id === activeDrag.fromGroupId);
+                  const gamer = group?.gamers.find((g) => g.gamerId === activeDrag.gamerId);
+                  if (!gamer) return null;
+                  return (
+                    <EnrolledGamerChip
+                      gamerId={gamer.gamerId}
+                      displayName={gamer.displayName}
+                      dateOfBirth={gamer.dateOfBirth}
+                      gender={gamer.gender}
+                      groupId={activeDrag.fromGroupId}
+                    />
+                  );
+                })()}
               </DragOverlay>
             </DndContext>
           )}
