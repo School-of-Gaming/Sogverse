@@ -45,6 +45,20 @@ export async function POST(request: Request) {
     const syntheticEmail = generateGamerEmail(username);
     const admin = createAdminClient();
 
+    // Check if username is already taken before attempting to create
+    const { data: existingUser } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "This username is already taken" },
+        { status: 409 }
+      );
+    }
+
     // Create auth user with admin client — no confirmation email sent
     const { data: authData, error: authError } =
       await admin.auth.admin.createUser({
@@ -55,6 +69,8 @@ export async function POST(request: Request) {
           display_name: displayName,
           role: "gamer",
           username,
+          date_of_birth: dateOfBirth,
+          gender,
         },
       });
 
@@ -82,19 +98,6 @@ export async function POST(request: Request) {
     if (profileError) {
       return NextResponse.json(
         { error: profileError.message },
-        { status: 500 }
-      );
-    }
-
-    // Set date_of_birth and gender on gamer_profiles
-    const { error: gamerProfileError } = await admin
-      .from("gamer_profiles")
-      .update({ date_of_birth: dateOfBirth, gender })
-      .eq("user_id", authData.user.id);
-
-    if (gamerProfileError) {
-      return NextResponse.json(
-        { error: gamerProfileError.message },
         { status: 500 }
       );
     }
