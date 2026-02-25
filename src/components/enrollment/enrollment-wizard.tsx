@@ -28,8 +28,10 @@ import { InlineGamerForm } from "./inline-gamer-form";
 
 type Step = "select-gamer" | "create-gamer" | "select-group" | "confirm" | "success";
 
-// Ordered steps for the progress indicator (create-gamer is treated as part of select-gamer)
-const PROGRESS_STEPS = ["select-gamer", "select-group", "confirm"] as const;
+// Ordered steps for the progress indicator (create-gamer is treated as part of select-gamer).
+// When there's only one group, the select-group step is skipped.
+const FULL_PROGRESS_STEPS = ["select-gamer", "select-group", "confirm"] as const;
+const SHORT_PROGRESS_STEPS = ["select-gamer", "confirm"] as const;
 
 interface EnrollmentWizardProps {
   product: ProductWithGame;
@@ -129,11 +131,14 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
     }
   };
 
+  const singleGroup = groups && groups.length === 1;
+  const progressSteps = singleGroup ? SHORT_PROGRESS_STEPS : FULL_PROGRESS_STEPS;
+
   // Which progress step is active (for indicator)
   const currentProgressIndex =
     effectiveStep === "create-gamer"
       ? 0
-      : PROGRESS_STEPS.indexOf(effectiveStep as (typeof PROGRESS_STEPS)[number]);
+      : (progressSteps as readonly string[]).indexOf(effectiveStep);
 
   return (
     <Card>
@@ -148,7 +153,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
             {/* Progress indicator */}
             {effectiveStep !== "success" && (
               <div className="flex items-center gap-2 pt-2">
-                {PROGRESS_STEPS.map((s, i) => (
+                {progressSteps.map((s, i) => (
                   <div key={s} className="flex items-center gap-2">
                     <div
                       className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
@@ -163,7 +168,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                         i + 1
                       )}
                     </div>
-                    {i < PROGRESS_STEPS.length - 1 && (
+                    {i < progressSteps.length - 1 && (
                       <div
                         className={`h-0.5 w-8 ${
                           i < currentProgressIndex ? "bg-primary" : "bg-muted"
