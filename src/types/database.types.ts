@@ -90,6 +90,42 @@ export type Database = {
         }
         Relationships: []
       }
+      group_enrollments: {
+        Row: {
+          created_at: string
+          gamer_id: string
+          group_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          gamer_id: string
+          group_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          gamer_id?: string
+          group_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_enrollments_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_enrollments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       parent_gamer: {
         Row: {
           created_at: string | null
@@ -125,6 +161,48 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_groups: {
+        Row: {
+          created_at: string
+          display_order: number
+          gedu_id: string
+          id: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          gedu_id: string
+          id?: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          gedu_id?: string
+          id?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_groups_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_groups_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -212,10 +290,9 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar_url: string | null
           created_at: string
           currency: string | null
-          display_name: string | null
+          display_name: string
           email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -223,10 +300,9 @@ export type Database = {
           username: string | null
         }
         Insert: {
-          avatar_url?: string | null
           created_at?: string
           currency?: string | null
-          display_name?: string | null
+          display_name: string
           email?: string | null
           id: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -234,10 +310,9 @@ export type Database = {
           username?: string | null
         }
         Update: {
-          avatar_url?: string | null
           created_at?: string
           currency?: string | null
-          display_name?: string | null
+          display_name?: string
           email?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
@@ -384,13 +459,22 @@ export type Database = {
               transaction_id: string
             }[]
           }
+      commit_group_changes: {
+        Args: {
+          p_added_groups?: Json
+          p_deleted_group_ids?: string[]
+          p_enrollment_moves?: Json
+          p_product_id: string
+          p_updated_groups?: Json
+        }
+        Returns: Json
+      }
       get_my_gamers: {
         Args: never
         Returns: {
-          avatar_url: string | null
           created_at: string
           currency: string | null
-          display_name: string | null
+          display_name: string
           email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -407,10 +491,9 @@ export type Database = {
       get_my_parents: {
         Args: never
         Returns: {
-          avatar_url: string | null
           created_at: string
           currency: string | null
-          display_name: string | null
+          display_name: string
           email: string | null
           id: string
           role: Database["public"]["Enums"]["user_role"]
@@ -435,6 +518,22 @@ export type Database = {
           name: string
           opened_at: string
           status: Database["public"]["Enums"]["voice_room_status"]
+        }[]
+      }
+      get_product_groups_with_details: {
+        Args: { p_product_id: string }
+        Returns: {
+          display_order: number
+          enrollment_id: string
+          gamer_date_of_birth: string
+          gamer_display_name: string
+          gamer_gender: Database["public"]["Enums"]["gender_type"]
+          gamer_id: string
+          gedu_display_name: string
+          gedu_email: string
+          gedu_id: string
+          group_id: string
+          product_id: string
         }[]
       }
       get_user_role: {
