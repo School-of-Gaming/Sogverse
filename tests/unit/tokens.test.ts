@@ -3,6 +3,7 @@ import {
   getPackageSavings,
   getPackagePrice,
   getTokenPackage,
+  tokensToCurrencyDisplay,
   TOKEN_BASE_RATE,
   TOKEN_PACKAGES,
 } from "@/lib/constants/tokens";
@@ -51,5 +52,26 @@ describe("getPackagePrice", () => {
     expect(getPackagePrice(starter, "usd")).toBe(1500);
     expect(getPackagePrice(starter, "gbp")).toBe(1200);
     expect(getPackagePrice(starter, "eur")).toBe(1400);
+  });
+});
+
+describe("tokensToCurrencyDisplay", () => {
+  it("converts tokens to USD display", () => {
+    // 2 tokens × 300 cents = 600 cents = $6.00
+    expect(tokensToCurrencyDisplay(2, "usd")).toBe("$6.00");
+  });
+
+  it("converts tokens to GBP display", () => {
+    // 2 tokens × 240 cents = 480 pence = £4.80
+    expect(tokensToCurrencyDisplay(2, "gbp")).toBe("£4.80");
+  });
+
+  it("converts tokens to EUR display", () => {
+    // 2 tokens × 280 cents = 560 cents = €5.60
+    expect(tokensToCurrencyDisplay(2, "eur")).toBe("€5.60");
+  });
+
+  it("returns zero for 0 tokens", () => {
+    expect(tokensToCurrencyDisplay(0, "usd")).toBe("$0.00");
   });
 });

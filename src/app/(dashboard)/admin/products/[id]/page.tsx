@@ -26,6 +26,8 @@ import {
 import { useProduct, useToggleProductVisibility, useDeleteProduct } from "@/services/products";
 import { useProductGroups } from "@/services/groups";
 import { GeduGroupsCard, VisibilityWarningBanner } from "@/components/admin/gedu-groups-card";
+import { useCurrency } from "@/hooks/use-currency";
+import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
 import { formatScheduleLocal } from "@/lib/utils";
 
 export default function ManageProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -33,6 +35,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
   const { data: groups = [] } = useProductGroups(id);
+  const { currency } = useCurrency();
   const toggleVisibility = useToggleProductVisibility();
   const deleteProduct = useDeleteProduct();
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -131,7 +134,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
               </span>
               <span>{product.duration_minutes} min</span>
               <span>Ages {product.min_age}–{product.max_age}</span>
-              <span className="font-semibold text-primary">XX Sorgs</span>
+              <span className="font-semibold text-primary">{product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency)})/session</span>
             </div>
             <p className="text-xs text-muted-foreground">
               Created{" "}

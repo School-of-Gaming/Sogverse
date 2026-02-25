@@ -86,7 +86,7 @@ describe("ProductsService", () => {
       const newProduct = {
         name: "New Product",
         description: "A new product",
-        price: 49.99,
+        token_cost: 3,
         image_url: "https://example.com/image.png",
         game_id: "00000000-0000-0000-0000-000000000001",
         day_of_week: 0,

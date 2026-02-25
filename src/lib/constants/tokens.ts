@@ -1,3 +1,4 @@
+import { formatCurrencyFromCents } from "@/lib/utils";
 import type { SupportedCurrency } from "./currency";
 
 /** Per-currency base rate in cents (used for admin monetary value display) */
@@ -53,6 +54,10 @@ export function getTokenPackage(id: string): TokenPackage | undefined {
 
 export function getPackagePrice(pkg: TokenPackage, currency: SupportedCurrency): number {
   return pkg.prices[currency];
+}
+
+export function tokensToCurrencyDisplay(tokens: number, currency: SupportedCurrency): string {
+  return formatCurrencyFromCents(tokens * TOKEN_BASE_RATE[currency], currency);
 }
 
 export function getPackageSavings(pkg: TokenPackage, currency: SupportedCurrency): number {

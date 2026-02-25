@@ -2,15 +2,17 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useVisibleProducts } from "@/services/products";
+import { useCurrency } from "@/hooks/use-currency";
+import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
 import { formatScheduleLocal } from "@/lib/utils";
 
 export default function ProductsPage() {
   const { data: products, isLoading } = useVisibleProducts();
+  const { currency } = useCurrency();
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -81,10 +83,14 @@ export default function ProductsPage() {
                     </div>
                   </CardHeader>
                   <CardFooter className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-primary">XX Sorgs</span>
-                    <Button>
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      Add to Cart
+                    <div>
+                      <span className="text-xl font-bold text-primary">{product.token_cost} Sorgs</span>
+                      <p className="text-xs text-muted-foreground">
+                        ≈ {tokensToCurrencyDisplay(product.token_cost, currency)} per session
+                      </p>
+                    </div>
+                    <Button disabled>
+                      Enroll
                     </Button>
                   </CardFooter>
                 </Card>

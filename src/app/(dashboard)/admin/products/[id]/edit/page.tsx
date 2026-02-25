@@ -95,7 +95,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           initialValues={{
             name: product.name,
             description: product.description,
-            price: product.price,
+            token_cost: product.token_cost,
             image_url: product.image_url,
             game_id: product.game_id,
             day_of_week: product.day_of_week,

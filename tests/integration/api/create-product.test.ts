@@ -54,7 +54,7 @@ function createRequest(body: Record<string, unknown>): Request {
 const validBody = {
   name: "Test Product",
   description: "A test product",
-  price: 29.99,
+  token_cost: 2,
   image_url: "https://example.com/image.png",
   game_id: "00000000-0000-0000-0000-000000000001",
   day_of_week: 2,
@@ -134,24 +134,44 @@ describe("POST /api/admin/create-product", () => {
     expect(data.error).toBe("Description is required");
   });
 
-  it("returns 400 when price is negative", async () => {
+  it("returns 400 when token_cost is negative", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest({ ...validBody, price: -5 }));
+    const response = await POST(createRequest({ ...validBody, token_cost: -5 }));
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe("Valid price is required");
+    expect(data.error).toBe("Token cost is required (must be a positive integer)");
   });
 
-  it("returns 400 when price is not a number", async () => {
+  it("returns 400 when token_cost is zero", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest({ ...validBody, price: "free" }));
+    const response = await POST(createRequest({ ...validBody, token_cost: 0 }));
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe("Valid price is required");
+    expect(data.error).toBe("Token cost is required (must be a positive integer)");
+  });
+
+  it("returns 400 when token_cost is not a number", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, token_cost: "free" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Token cost is required (must be a positive integer)");
+  });
+
+  it("returns 400 when token_cost is a decimal", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, token_cost: 2.5 }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Token cost is required (must be a positive integer)");
   });
 
   it("returns 400 when image_url is missing", async () => {
@@ -331,7 +351,7 @@ describe("POST /api/admin/create-product", () => {
     expect(insertCall.description).toBe("Padded Desc");
   });
 
-  it("accepts price of zero", async () => {
+  it("accepts token_cost of one", async () => {
     mockAuthenticatedWithRole("admin");
 
     const mockInsert = vi.fn().mockReturnValue({
@@ -341,7 +361,7 @@ describe("POST /api/admin/create-product", () => {
     });
     mockAdminFrom.mockReturnValue({ insert: mockInsert });
 
-    const response = await POST(createRequest({ ...validBody, price: 0 }));
+    const response = await POST(createRequest({ ...validBody, token_cost: 1 }));
 
     expect(response.status).toBe(200);
   });

@@ -49,7 +49,7 @@ export default function AddProductPage() {
     ? {
         name: `${cloneSource.name} (Copy)`,
         description: cloneSource.description,
-        price: cloneSource.price,
+        token_cost: cloneSource.token_cost,
         image_url: cloneSource.image_url,
         game_id: cloneSource.game_id,
         day_of_week: cloneSource.day_of_week,

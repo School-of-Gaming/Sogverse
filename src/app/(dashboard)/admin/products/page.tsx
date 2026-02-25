@@ -9,11 +9,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAllProducts } from "@/services/products";
+import { useCurrency } from "@/hooks/use-currency";
+import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
 import { formatScheduleLocal } from "@/lib/utils";
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: products, isLoading } = useAllProducts();
+  const { currency } = useCurrency();
 
   const filteredProducts = products?.filter(
     (product) =>
@@ -107,7 +110,7 @@ export default function AdminProductsPage() {
                           {product.description}
                         </p>
                         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground group-hover:text-accent-foreground/70">
-                          <span className="font-semibold text-primary group-hover:text-secondary">XX Sorgs</span>
+                          <span className="font-semibold text-primary group-hover:text-secondary">{product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency)})</span>
                           <span>
                             Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}
                           </span>

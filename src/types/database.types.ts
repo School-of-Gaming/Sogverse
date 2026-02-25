@@ -211,7 +211,6 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string
-          currency: string | null
           day_of_week: number
           description: string
           duration_minutes: number
@@ -222,17 +221,14 @@ export type Database = {
           max_age: number
           min_age: number
           name: string
-          price: number
           start_time: string
-          stripe_price_id: string | null
-          stripe_product_id: string | null
           timezone: string
+          token_cost: number
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           created_by: string
-          currency?: string | null
           day_of_week: number
           description: string
           duration_minutes: number
@@ -243,17 +239,14 @@ export type Database = {
           max_age: number
           min_age: number
           name: string
-          price: number
           start_time: string
-          stripe_price_id?: string | null
-          stripe_product_id?: string | null
           timezone?: string
+          token_cost: number
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           created_by?: string
-          currency?: string | null
           day_of_week?: number
           description?: string
           duration_minutes?: number
@@ -264,11 +257,9 @@ export type Database = {
           max_age?: number
           min_age?: number
           name?: string
-          price?: number
           start_time?: string
-          stripe_price_id?: string | null
-          stripe_product_id?: string | null
           timezone?: string
+          token_cost?: number
           updated_at?: string | null
         }
         Relationships: [
@@ -545,7 +536,6 @@ export type Database = {
         Returns: {
           created_at: string | null
           created_by: string
-          currency: string | null
           day_of_week: number
           description: string
           duration_minutes: number
@@ -556,11 +546,9 @@ export type Database = {
           max_age: number
           min_age: number
           name: string
-          price: number
           start_time: string
-          stripe_price_id: string | null
-          stripe_product_id: string | null
           timezone: string
+          token_cost: number
           updated_at: string | null
         }[]
         SetofOptions: {

@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
-    const price = typeof body.price === "number" ? body.price : NaN;
+    const tokenCost = typeof body.token_cost === "number" ? body.token_cost : NaN;
     const imageUrl =
       typeof body.image_url === "string" ? body.image_url.trim() : "";
     const gameId = typeof body.game_id === "string" ? body.game_id : "";
@@ -41,9 +41,9 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    if (isNaN(price) || price < 0) {
+    if (isNaN(tokenCost) || tokenCost < 1 || !Number.isInteger(tokenCost)) {
       return NextResponse.json(
-        { error: "Valid price is required" },
+        { error: "Token cost is required (must be a positive integer)" },
         { status: 400 }
       );
     }
@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       .insert({
         name,
         description,
-        price,
+        token_cost: tokenCost,
         image_url: imageUrl,
         created_by: user.id,
         game_id: gameId,

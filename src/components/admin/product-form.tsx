@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent } from "@/components/ui/card";
 import { useGames, useCreateGame } from "@/services/games";
+import { useCurrency } from "@/hooks/use-currency";
+import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
 import { cn, DAYS_OF_WEEK } from "@/lib/utils";
 
 const productSchema = z.object({
@@ -16,9 +18,10 @@ const productSchema = z.object({
     .min(1, "Product name is required")
     .max(100, "Product name must be at most 100 characters"),
   description: z.string().min(1, "Description is required"),
-  price: z
-    .number({ invalid_type_error: "Price must be a number" })
-    .min(0, "Price must be 0 or greater"),
+  tokenCost: z
+    .number({ invalid_type_error: "Sorg cost must be a number" })
+    .int("Sorg cost must be a whole number")
+    .min(1, "Sorg cost must be at least 1"),
   imageUrl: z.string().url("Must be a valid URL"),
   gameId: z.string().uuid("Game is required"),
   dayOfWeek: z.number().int().min(0).max(6),
@@ -34,7 +37,7 @@ const productSchema = z.object({
 export interface ProductFormValues {
   name: string;
   description: string;
-  price: number;
+  token_cost: number;
   image_url: string;
   game_id: string;
   day_of_week: number;
@@ -55,10 +58,11 @@ interface ProductFormProps {
 export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, pendingLabel }: ProductFormProps) {
   const { data: games, isLoading: gamesLoading } = useGames();
   const createGame = useCreateGame();
+  const { currency } = useCurrency();
 
   const [name, setName] = useState(initialValues?.name ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
-  const [price, setPrice] = useState(initialValues?.price != null ? String(initialValues.price) : "");
+  const [tokenCost, setTokenCost] = useState(initialValues?.token_cost != null ? String(initialValues.token_cost) : "");
   const [imageUrl, setImageUrl] = useState(initialValues?.image_url ?? "");
   const [gameId, setGameId] = useState(initialValues?.game_id ?? "");
   const [newGameName, setNewGameName] = useState("");
@@ -111,7 +115,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
       const validatedData = productSchema.parse({
         name,
         description,
-        price: price === "" ? undefined : Number(price),
+        tokenCost: tokenCost === "" ? undefined : Number(tokenCost),
         imageUrl,
         gameId,
         dayOfWeek: Number(dayOfWeek),
@@ -124,7 +128,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
       await onSubmit({
         name: validatedData.name,
         description: validatedData.description,
-        price: validatedData.price,
+        token_cost: validatedData.tokenCost,
         image_url: validatedData.imageUrl,
         game_id: validatedData.gameId,
         day_of_week: validatedData.dayOfWeek,
@@ -183,18 +187,21 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="price">Price</Label>
+          <Label htmlFor="tokenCost">Sorg Cost (per session)</Label>
           <Input
-            id="price"
+            id="tokenCost"
             type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
+            step="1"
+            min="1"
+            placeholder="1"
+            value={tokenCost}
+            onChange={(e) => setTokenCost(e.target.value)}
             disabled={isPending}
             required
           />
+          <p className="text-xs text-muted-foreground">
+            ≈ {tokensToCurrencyDisplay(Number(tokenCost) || 0, currency)} per session
+          </p>
         </div>
 
         <div className="space-y-2">
