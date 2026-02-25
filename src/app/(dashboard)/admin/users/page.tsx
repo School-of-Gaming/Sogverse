@@ -21,7 +21,7 @@ const ROLE_FILTERS: { value: UserRole; label: string }[] = [
 
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilters, setRoleFilters] = useState<Set<UserRole>>(new Set());
+  const [roleFilter, setRoleFilter] = useState<UserRole | null>(null);
   const { data: allUsers, isLoading: isLoadingAll } = useUsers();
   const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
   const { data: parentGamerLinks } = useParentGamerLinks();
@@ -88,21 +88,13 @@ export default function AdminUsersPage() {
       }
     }
 
-    if (roleFilters.size > 0) {
-      return result.filter((u) => roleFilters.has(u.role));
+    if (roleFilter) {
+      return result.filter((u) => u.role === roleFilter);
     }
 
     return result;
-  }, [baseUsers, gamerToParentIds, allUsersById, roleFilters]);
+  }, [baseUsers, gamerToParentIds, allUsersById, roleFilter]);
 
-  function toggleRole(role: UserRole) {
-    setRoleFilters((prev) => {
-      const next = new Set(prev);
-      if (next.has(role)) next.delete(role);
-      else next.add(role);
-      return next;
-    });
-  }
 
   return (
     <div className="space-y-6">
@@ -136,9 +128,9 @@ export default function AdminUsersPage() {
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground mr-1">Role:</span>
             <button
-              onClick={() => setRoleFilters(new Set())}
+              onClick={() => setRoleFilter(null)}
               className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                roleFilters.size === 0
+                roleFilter === null
                   ? "bg-info text-info-foreground"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
@@ -148,9 +140,9 @@ export default function AdminUsersPage() {
             {ROLE_FILTERS.map((rf) => (
               <button
                 key={rf.value}
-                onClick={() => toggleRole(rf.value)}
+                onClick={() => setRoleFilter(roleFilter === rf.value ? null : rf.value)}
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                  roleFilters.has(rf.value)
+                  roleFilter === rf.value
                     ? ROLE_BADGES[rf.value].className
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
@@ -188,7 +180,7 @@ export default function AdminUsersPage() {
             </div>
           ) : (
             <div className="py-8 text-center text-muted-foreground">
-              {searchQuery || roleFilters.size > 0
+              {searchQuery || roleFilter
                 ? "No users found matching your filters."
                 : "No users found."}
             </div>
