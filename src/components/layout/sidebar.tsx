@@ -10,7 +10,6 @@ import {
   Settings,
   Gamepad2,
   GraduationCap,
-  ShoppingBag,
   ClipboardList,
   Coins,
   Mic,
@@ -84,11 +83,6 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       href: ROUTES.customer.enrollments,
       label: "Enrollments",
       icon: <ClipboardList className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.customer.orders,
-      label: "Orders",
-      icon: <ShoppingBag className="h-5 w-5" />,
     },
     {
       href: ROUTES.settings,
