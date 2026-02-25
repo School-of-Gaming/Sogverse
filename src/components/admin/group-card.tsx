@@ -147,27 +147,29 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
         )}
       >
         <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <div className="space-y-0.5">
-            <CardTitle className="text-base">
-              {groupLabel}
-              <span className="ml-2 text-sm font-normal text-muted-foreground">
-                ({group.gamers.length} {group.gamers.length === 1 ? "gamer" : "gamers"})
-              </span>
-            </CardTitle>
-            <p className="flex items-center text-sm text-muted-foreground">
-              <Avatar className="mr-1.5 inline-flex h-5 w-5">
-                <Identicon id={group.geduId} size={20} />
-              </Avatar>
-              {group.geduDisplayName}
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <Identicon id={group.geduId} size={40} />
+            </Avatar>
+            <div className="space-y-0.5">
+              <CardTitle className="text-base">
+                {groupLabel}
+                <span className="ml-2 text-sm font-normal text-muted-foreground">
+                  ({group.gamers.length} {group.gamers.length === 1 ? "gamer" : "gamers"})
+                </span>
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {group.geduDisplayName}
+              </p>
               {hasGamers && (ageRange || genderParts.length > 0) && (
-                <span className="ml-2 text-xs">
-                  ({[
+                <p className="text-xs text-muted-foreground">
+                  {[
                     ageRange && `age range ${ageRange}`,
                     genderParts.length > 0 && genderParts.join(", "),
-                  ].filter(Boolean).join(" · ")})
-                </span>
+                  ].filter(Boolean).join(" · ")}
+                </p>
               )}
-            </p>
+            </div>
           </div>
           {!group.isDeleted && (
             <div className="flex gap-1">
