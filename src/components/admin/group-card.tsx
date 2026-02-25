@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { GripVertical, Trash2, UserRound, RefreshCw } from "lucide-react";
+import { GripVertical, Trash2, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
 import {
   Dialog,
   DialogContent,
@@ -34,8 +36,8 @@ function computeAge(dateOfBirth: string): number {
 
 function formatGenderShort(gender: string): string {
   switch (gender) {
-    case "boy": return "B";
-    case "girl": return "G";
+    case "boy": return "Boy";
+    case "girl": return "Girl";
     case "non_binary": return "NB";
     default: return "";
   }
@@ -60,7 +62,7 @@ export function EnrolledGamerChip({ gamerId, displayName, dateOfBirth, gender, g
 
   const age = dateOfBirth ? computeAge(dateOfBirth) : null;
   const genderLabel = gender ? formatGenderShort(gender) : null;
-  const detail = [age !== null ? `${age}y` : null, genderLabel].filter(Boolean).join("/");
+  const detail = [age !== null ? `${age}y` : null, genderLabel].filter(Boolean).join(" / ");
 
   return (
     <div
@@ -68,18 +70,23 @@ export function EnrolledGamerChip({ gamerId, displayName, dateOfBirth, gender, g
       {...listeners}
       {...attributes}
       className={cn(
-        "inline-flex cursor-grab items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+        "flex cursor-grab items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
         isDragging && "opacity-50",
         isMoved
           ? "border-primary/30 bg-primary/10 text-primary"
           : "border-border bg-muted text-foreground",
       )}
     >
-      <GripVertical className="h-3 w-3 text-muted-foreground" />
-      {displayName}
-      {detail && (
-        <span className="text-muted-foreground">({detail})</span>
-      )}
+      <Avatar className="h-7 w-7">
+        <Identicon id={gamerId} size={28} />
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <p className="truncate leading-tight">{displayName}</p>
+        {detail && (
+          <p className="text-[10px] leading-tight text-muted-foreground">{detail}</p>
+        )}
+      </div>
+      <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
     </div>
   );
 }
@@ -147,8 +154,10 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
                 ({group.gamers.length} {group.gamers.length === 1 ? "gamer" : "gamers"})
               </span>
             </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              <UserRound className="mr-1 inline h-3.5 w-3.5" />
+            <p className="flex items-center text-sm text-muted-foreground">
+              <Avatar className="mr-1.5 inline-flex h-5 w-5">
+                <Identicon id={group.geduId} size={20} />
+              </Avatar>
               {group.geduDisplayName}
               {hasGamers && (ageRange || genderParts.length > 0) && (
                 <span className="ml-2 text-xs">

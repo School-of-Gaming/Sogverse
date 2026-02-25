@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Search, UserRound } from "lucide-react";
+import { Search } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
 import {
   Sheet,
   SheetContent,
@@ -108,7 +110,9 @@ export function GeduPickerDialog({
                     handleOpenChange(false);
                   }}
                 >
-                  <UserRound className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <Identicon id={g.id} size={32} />
+                  </Avatar>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{g.display_name}</p>
                     <p className="truncate text-xs text-muted-foreground">{g.email}</p>
