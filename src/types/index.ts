@@ -63,6 +63,9 @@ export type ProductGroupInsert = Database["public"]["Tables"]["product_groups"][
 export type GroupEnrollment = Database["public"]["Tables"]["group_enrollments"]["Row"];
 export type GroupEnrollmentInsert = Database["public"]["Tables"]["group_enrollments"]["Insert"];
 
+// enrollment_charges
+export type EnrollmentCharge = Database["public"]["Tables"]["enrollment_charges"]["Row"];
+
 // get_product_groups_with_details RPC — the generated return type incorrectly
 // marks LEFT JOIN fields as non-nullable. This override reflects that groups
 // with no enrollments return null for all gamer-related columns.
@@ -103,7 +106,9 @@ export interface AuthState {
 export interface CreateGamerInput {
   username: string;
   password: string;
-  displayName?: string;
+  displayName: string;
+  dateOfBirth: string;
+  gender: "boy" | "girl" | "non_binary";
 }
 
 export interface LoginCredentials {

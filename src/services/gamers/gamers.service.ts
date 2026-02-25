@@ -62,6 +62,8 @@ export class GamerService {
         username: input.username,
         password: input.password,
         displayName: input.displayName,
+        dateOfBirth: input.dateOfBirth,
+        gender: input.gender,
       }),
     });
 

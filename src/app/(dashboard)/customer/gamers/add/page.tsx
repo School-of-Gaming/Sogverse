@@ -63,6 +63,8 @@ export default function AddGamerPage() {
           username: validatedData.username,
           password: validatedData.password,
           displayName: validatedData.displayName,
+          dateOfBirth: "2015-01-01",
+          gender: "boy" as const,
         },
       });
 

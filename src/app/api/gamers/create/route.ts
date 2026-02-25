@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     if (result instanceof NextResponse) return result;
     const { user } = result;
 
-    const { username, password, displayName } = await request.json();
+    const { username, password, displayName, dateOfBirth, gender } = await request.json();
 
     if (!username || !password) {
       return NextResponse.json(
@@ -23,6 +23,21 @@ export async function POST(request: Request) {
     if (!displayName || typeof displayName !== "string") {
       return NextResponse.json(
         { error: "Display name is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!dateOfBirth || typeof dateOfBirth !== "string") {
+      return NextResponse.json(
+        { error: "Date of birth is required" },
+        { status: 400 }
+      );
+    }
+
+    const validGenders = ["boy", "girl", "non_binary"];
+    if (!gender || !validGenders.includes(gender)) {
+      return NextResponse.json(
+        { error: "Gender is required (boy, girl, or non_binary)" },
         { status: 400 }
       );
     }
@@ -67,6 +82,19 @@ export async function POST(request: Request) {
     if (profileError) {
       return NextResponse.json(
         { error: profileError.message },
+        { status: 500 }
+      );
+    }
+
+    // Set date_of_birth and gender on gamer_profiles
+    const { error: gamerProfileError } = await admin
+      .from("gamer_profiles")
+      .update({ date_of_birth: dateOfBirth, gender })
+      .eq("user_id", authData.user.id);
+
+    if (gamerProfileError) {
+      return NextResponse.json(
+        { error: gamerProfileError.message },
         { status: 500 }
       );
     }
