@@ -19,6 +19,7 @@ import { useMyGamers } from "@/services/gamers";
 import {
   useEnrollmentGroups,
   useEnrollGamer,
+  useMyEnrollments,
   type EnrollmentGroup,
 } from "@/services/enrollments";
 import { useTokenBalance } from "@/services/tokens";
@@ -44,7 +45,15 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
     product.id,
   );
   const { data: balance } = useTokenBalance(user?.id ?? "");
+  const { data: myEnrollments } = useMyEnrollments();
   const enrollGamer = useEnrollGamer();
+
+  // Gamer IDs already actively enrolled in this product
+  const enrolledGamerIds = new Set(
+    myEnrollments
+      ?.filter((e) => e.productId === product.id && e.status === "active")
+      .map((e) => e.gamerId) ?? [],
+  );
 
   const [step, setStep] = useState<Step>("select-gamer");
   const [selectedGamerId, setSelectedGamerId] = useState<string | null>(null);
@@ -223,28 +232,41 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
             ) : (
               <>
                 <div className="space-y-2">
-                  {gamers?.map((gamer) => (
-                    <button
-                      key={gamer.id}
-                      onClick={() =>
-                        handleSelectGamer(
-                          gamer.id,
-                          gamer.display_name ?? gamer.username ?? "Gamer",
-                        )
-                      }
-                      className="flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:border-primary hover:bg-accent"
-                    >
-                      <Avatar className="h-10 w-10">
-                        <Identicon id={gamer.id} size={40} />
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{gamer.display_name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          @{gamer.username}
-                        </p>
-                      </div>
-                    </button>
-                  ))}
+                  {gamers?.map((gamer) => {
+                    const alreadyEnrolled = enrolledGamerIds.has(gamer.id);
+                    return (
+                      <button
+                        key={gamer.id}
+                        disabled={alreadyEnrolled}
+                        onClick={() =>
+                          handleSelectGamer(
+                            gamer.id,
+                            gamer.display_name ?? gamer.username ?? "Gamer",
+                          )
+                        }
+                        className={`flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors ${
+                          alreadyEnrolled
+                            ? "cursor-not-allowed opacity-50"
+                            : "hover:border-primary hover:bg-accent"
+                        }`}
+                      >
+                        <Avatar className="h-10 w-10">
+                          <Identicon id={gamer.id} size={40} />
+                        </Avatar>
+                        <div className="flex-1">
+                          <p className="font-medium">{gamer.display_name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            @{gamer.username}
+                          </p>
+                        </div>
+                        {alreadyEnrolled && (
+                          <span className="text-xs font-medium text-muted-foreground">
+                            Already enrolled
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <Button
