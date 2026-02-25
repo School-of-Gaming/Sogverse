@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Coins, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Coins, AlertTriangle, Users, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useProfile } from "@/services/users";
+import { useLinkedGamers, useLinkedParents } from "@/services/gamers";
 import { useTokenBalance, useTokenTransactions, useAdjustTokens } from "@/services/tokens";
 import { TransactionHistoryTable } from "@/components/tokens";
 import { ROLE_BADGES, TOKEN_BASE_RATE } from "@/lib/constants";
@@ -40,6 +41,9 @@ export default function AdminUserDetailPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const isCustomer = profile?.role === "customer";
+  const isGamer = profile?.role === "gamer";
+  const { data: linkedGamers } = useLinkedGamers(isCustomer ? userId : "");
+  const { data: linkedParents } = useLinkedParents(isGamer ? userId : "");
   const parsedAmount = parseInt(amount, 10);
   const isValidAmount = !isNaN(parsedAmount) && parsedAmount !== 0;
   const baseRate = TOKEN_BASE_RATE[currency];
@@ -111,6 +115,85 @@ export default function AdminUserDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Linked Accounts (customers → gamers, gamers → parents) */}
+      {(isCustomer || isGamer) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              {isCustomer ? "Linked Gamers" : "Linked Parents"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isCustomer && linkedGamers && linkedGamers.length > 0 && (
+              <div className="space-y-2">
+                {linkedGamers.map((gamer) => (
+                  <Link
+                    key={gamer.id}
+                    href={`/admin/users/${gamer.id}`}
+                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <Identicon id={gamer.id} size={32} />
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {gamer.display_name || gamer.username || "Unnamed Gamer"}
+                        </p>
+                        <p className="text-xs text-muted-foreground group-hover:text-accent-foreground/70">
+                          {gamer.username}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={ROLE_BADGES.gamer.className}>
+                        {ROLE_BADGES.gamer.label}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+            {isCustomer && (!linkedGamers || linkedGamers.length === 0) && (
+              <p className="text-sm text-muted-foreground">No connected gamers</p>
+            )}
+            {isGamer && linkedParents && linkedParents.length > 0 && (
+              <div className="space-y-2">
+                {linkedParents.map((parent) => (
+                  <Link
+                    key={parent.id}
+                    href={`/admin/users/${parent.id}`}
+                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <Identicon id={parent.id} size={32} />
+                      </Avatar>
+                      <div>
+                        <p className="text-sm font-medium">
+                          {parent.display_name || parent.username || "Unnamed User"}
+                        </p>
+                        <p className="text-xs text-muted-foreground group-hover:text-accent-foreground/70">
+                          {parent.email}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge className={ROLE_BADGES.customer.className}>
+                        {ROLE_BADGES.customer.label}
+                      </Badge>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Token Management (customers only) */}
       {isCustomer && (

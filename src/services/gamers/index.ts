@@ -3,6 +3,7 @@ export {
   useMyGamers,
   useMyParents,
   useLinkedGamers,
+  useLinkedParents,
   useCreateGamer,
   useLinkGamer,
 } from "./gamers.queries";

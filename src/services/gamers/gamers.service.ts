@@ -19,6 +19,18 @@ export class GamerService {
     return data.map((row: { gamer: unknown }) => row.gamer as Profile);
   }
 
+  async getLinkedParents(gamerId: string): Promise<Profile[]> {
+    const { data, error } = await this.supabase
+      .from("parent_gamer")
+      .select(`
+        parent:profiles!parent_gamer_parent_id_fkey (*)
+      `)
+      .eq("gamer_id", gamerId);
+
+    if (error) throw error;
+    return data.map((row: { parent: unknown }) => row.parent as Profile);
+  }
+
   async getMyGamers(): Promise<Profile[]> {
     const { data, error } = await this.supabase.rpc("get_my_gamers");
     if (error) throw error;

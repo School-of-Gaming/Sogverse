@@ -11,6 +11,8 @@ const gamerKeys = {
   myParents: () => [...gamerKeys.all, "my-parents"] as const,
   linkedGamers: (parentId: string) =>
     [...gamerKeys.all, "linked", parentId] as const,
+  linkedParents: (gamerId: string) =>
+    [...gamerKeys.all, "linked-parents", gamerId] as const,
   links: (parentId: string) => [...gamerKeys.all, "links", parentId] as const,
 };
 
@@ -42,6 +44,17 @@ export function useLinkedGamers(parentId: string) {
     queryKey: gamerKeys.linkedGamers(parentId),
     queryFn: () => service.getLinkedGamers(parentId),
     enabled: !!parentId,
+  });
+}
+
+export function useLinkedParents(gamerId: string) {
+  const supabase = getClient();
+  const service = new GamerService(supabase);
+
+  return useQuery({
+    queryKey: gamerKeys.linkedParents(gamerId),
+    queryFn: () => service.getLinkedParents(gamerId),
+    enabled: !!gamerId,
   });
 }
 
