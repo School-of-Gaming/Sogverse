@@ -57,7 +57,7 @@ export async function proxy(request: NextRequest) {
 
   // Check if route is public
   const isPublicRoute =
-    PUBLIC_ROUTES.some((route) => pathname === route) ||
+    PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)) ||
     pathname.startsWith("/api/");
 
   // Check if route is for authentication

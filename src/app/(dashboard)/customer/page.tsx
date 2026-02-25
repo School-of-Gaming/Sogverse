@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Coins, Gamepad2, ShoppingBag, UserPlus, Settings } from "lucide-react";
+import { Coins, Gamepad2, ShoppingBag, ShoppingCart, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
@@ -23,10 +23,10 @@ const quickActions = [
     href: ROUTES.customer.sorg,
   },
   {
-    title: "Add Gamer",
-    description: "Create a new gamer account for your child",
-    icon: UserPlus,
-    href: ROUTES.customer.gamersAdd,
+    title: "Browse Products",
+    description: "Explore products and enroll your gamers",
+    icon: ShoppingCart,
+    href: ROUTES.products,
   },
   {
     title: "Orders",
@@ -85,9 +85,9 @@ export default function CustomerDashboardPage() {
               1
             </div>
             <div>
-              <h3 className="font-medium">Create Gamer Accounts</h3>
+              <h3 className="font-medium">Get Sorgs</h3>
               <p className="text-sm text-muted-foreground">
-                Set up accounts for your children with their own usernames and passwords.
+                Purchase Sorg tokens to pay for your children&apos;s sessions.
               </p>
             </div>
           </div>
@@ -96,9 +96,9 @@ export default function CustomerDashboardPage() {
               2
             </div>
             <div>
-              <h3 className="font-medium">Explore Products</h3>
+              <h3 className="font-medium">Browse &amp; Enroll</h3>
               <p className="text-sm text-muted-foreground">
-                Browse our catalog of educational games and learning packs.
+                Find a product, create a gamer account, and enroll them in a group — all in one step.
               </p>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function CustomerDashboardPage() {
             <div>
               <h3 className="font-medium">Let Them Play!</h3>
               <p className="text-sm text-muted-foreground">
-                Your gamers can log in with their username and start learning through play.
+                Your gamers log in with their username and join their sessions each week.
               </p>
             </div>
           </div>
