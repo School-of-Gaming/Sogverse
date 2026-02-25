@@ -32,7 +32,7 @@ export async function POST(
 
     // Execute all changes atomically via RPC — if any step fails the
     // entire transaction rolls back, preventing inconsistent state.
-    const { data: rpcResult, error: rpcError } = await admin.rpc(
+    const { error: rpcError } = await admin.rpc(
       "commit_group_changes",
       {
         p_product_id: productId,
