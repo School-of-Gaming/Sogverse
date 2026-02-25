@@ -189,6 +189,10 @@ The `POST /api/admin/products/[id]/groups` route destructures the request body w
 
 While the commit mutation is pending, the admin can still add groups, move gamers, etc. On success, `RESET` clears all staged changes — including any made after clicking Commit. Those changes are silently lost (they were never sent to the server). Disable the groups section (Add Group button, drag-and-drop, reassign/delete actions) while `isPending` to prevent this.
 
+### Prevent gedu scheduling conflicts
+
+A gedu can currently be assigned to groups across multiple products with no check for time conflicts. If products have scheduled sessions that overlap, a gedu could be double-booked. Add schedule conflict detection when assigning a gedu to a group.
+
 ### Add keyboard support for drag-and-drop
 
 Only `PointerSensor` is configured in `GeduGroupsCard`. Keyboard-only users cannot move gamers between groups. Add `KeyboardSensor` from `@dnd-kit/core` alongside the existing sensor for accessibility.
