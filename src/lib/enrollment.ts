@@ -72,7 +72,7 @@ export function isWithinChargeWindow(
  * Determine whether an unenrollment qualifies for a token refund.
  *
  * Two-stage check:
- * 1. If the charged session has already started → no refund ("not_yet_charged")
+ * 1. If the charged session has already started → no refund ("session_past")
  * 2. If the charged session hasn't started but is within the cancellation window → no refund ("within_window")
  * 3. Otherwise → eligible for refund
  *
@@ -83,7 +83,7 @@ export function getRefundEligibility(
   windowHours: number = ENROLLMENT_CHARGE_WINDOW_HOURS,
   now: Date = new Date(),
   lastChargeSessionDate: string | null = null,
-): { eligible: boolean; nextSession: Date; refundAmount: number; reason?: "within_window" | "not_yet_charged" } {
+): { eligible: boolean; nextSession: Date; refundAmount: number; reason?: "within_window" | "session_past" } {
   const nextSession = getNextSessionStart(
     product.day_of_week,
     product.start_time,
@@ -95,7 +95,7 @@ export function getRefundEligibility(
   // If no charge exists or the charged session already happened, no refund is possible —
   // the customer either attended the session or was never charged.
   if (!lastChargeSessionDate) {
-    return { eligible: false, nextSession, refundAmount: 0, reason: "not_yet_charged" };
+    return { eligible: false, nextSession, refundAmount: 0, reason: "session_past" };
   }
 
   const { hours: h, minutes: m } = parseTime(product.start_time);
@@ -105,7 +105,7 @@ export function getRefundEligibility(
   );
 
   if (now.getTime() > sessionTimestamp.getTime()) {
-    return { eligible: false, nextSession, refundAmount: 0, reason: "not_yet_charged" };
+    return { eligible: false, nextSession, refundAmount: 0, reason: "session_past" };
   }
 
   // Stage 2: Session hasn't started yet — apply the cancellation window check.

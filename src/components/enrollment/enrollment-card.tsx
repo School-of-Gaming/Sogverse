@@ -61,13 +61,15 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
         <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start">
           {/* Product image */}
           <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-md bg-muted sm:h-28 sm:w-28">
-            <Image
-              src={enrollment.productImageUrl}
-              alt={enrollment.productName}
-              fill
-              unoptimized
-              className="object-cover"
-            />
+            {enrollment.productImageUrl && (
+              <Image
+                src={enrollment.productImageUrl}
+                alt={enrollment.productName}
+                fill
+                unoptimized
+                className="object-cover"
+              />
+            )}
           </div>
 
           {/* Details */}

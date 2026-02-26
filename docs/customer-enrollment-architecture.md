@@ -89,7 +89,7 @@ Customer unenrolls after the charged session has already started. The latest cha
 
 - `EnrollmentCard` shows "You won't be charged for the next session" (muted text)
 - `UnenrollDialog` shows "No refund needed — you won't be charged for the next session"
-- API route's `getRefundEligibility()` → `now > sessionTimestamp` → `eligible: false, refundAmount: 0, reason: "not_yet_charged"`
+- API route's `getRefundEligibility()` → `now > sessionTimestamp` → `eligible: false, refundAmount: 0, reason: "session_past"`
 - RPC is called with `p_refund = false` — status changes, no token adjustment
 - The cron hasn't charged for the next session yet, so the customer won't owe anything further
 
@@ -246,7 +246,7 @@ The constant lives in `src/lib/constants/enrollment.ts` (TypeScript) and is mirr
 
 `getRefundEligibility()` receives the `lastChargeSessionDate` (the session date the latest charge covers) and applies two checks in order:
 
-1. **Stage 1 — Has the charged session started?** Reconstruct the session timestamp via `wallClockToUtc(lastChargeSessionDate + start_time, timezone)`. If `now > sessionTimestamp`, the session has already started. No refund — the customer attended (or had the opportunity to attend). Return `reason: "not_yet_charged"`.
+1. **Stage 1 — Has the charged session started?** Reconstruct the session timestamp via `wallClockToUtc(lastChargeSessionDate + start_time, timezone)`. If `now > sessionTimestamp`, the session has already started. No refund — the customer attended (or had the opportunity to attend). Return `reason: "session_past"`.
 2. **Stage 2 — Is the session within the cancellation window?** If the charged session hasn't started, check whether the next session is within 24 hours. If so, no refund — return `reason: "within_window"`. Otherwise, the customer is eligible for a full refund.
 
 This prevents a scenario where a customer could repeatedly enroll, attend a session, unenroll for a refund, and re-enroll — getting free sessions indefinitely.

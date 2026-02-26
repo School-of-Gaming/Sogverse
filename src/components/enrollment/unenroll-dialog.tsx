@@ -19,7 +19,7 @@ import { ENROLLMENT_CHARGE_WINDOW_HOURS } from "@/lib/constants/enrollment";
 interface UnenrollDialogProps {
   enrollment: CustomerEnrollment;
   refundEligible: boolean;
-  refundDenialReason?: "within_window" | "not_yet_charged";
+  refundDenialReason?: "within_window" | "session_past";
   onClose: () => void;
 }
 

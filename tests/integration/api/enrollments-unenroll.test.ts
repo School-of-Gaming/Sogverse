@@ -293,7 +293,7 @@ describe("DELETE /api/enrollments/[id]", () => {
     mockGetRefundEligibility.mockReturnValue({
       eligible: false,
       refundAmount: 0,
-      reason: "not_yet_charged",
+      reason: "session_past",
       nextSession: new Date("2026-03-04T13:00:00Z"),
     });
     mockAdminRpc.mockResolvedValue({
@@ -324,7 +324,7 @@ describe("DELETE /api/enrollments/[id]", () => {
     mockGetRefundEligibility.mockReturnValue({
       eligible: false,
       refundAmount: 0,
-      reason: "not_yet_charged",
+      reason: "session_past",
       nextSession: new Date("2026-03-04T13:00:00Z"),
     });
     mockAdminRpc.mockResolvedValue({

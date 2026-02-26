@@ -229,7 +229,7 @@ describe("getRefundEligibility", () => {
     // Last charge session (Fri 15:00 UTC) already started → not_yet_charged
     expect(result.eligible).toBe(false);
     expect(result.refundAmount).toBe(0);
-    expect(result.reason).toBe("not_yet_charged");
+    expect(result.reason).toBe("session_past");
   });
 
   it("grants refund when last charge is for upcoming session and outside window", () => {
@@ -262,7 +262,7 @@ describe("getRefundEligibility", () => {
 
     expect(result.eligible).toBe(false);
     expect(result.refundAmount).toBe(0);
-    expect(result.reason).toBe("not_yet_charged");
+    expect(result.reason).toBe("session_past");
   });
 
   it("handles Postgres TIME format (HH:MM:SS) for start_time", () => {
