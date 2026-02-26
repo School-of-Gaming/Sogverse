@@ -70,7 +70,8 @@ export async function resetTokenState(
 
 /**
  * Resets enrollment-related test data. Deletes all test enrollments
- * (which cascades to enrollment_charges), then resets token state.
+ * (which cascades to enrollment_charges), then resets token state
+ * and product cost.
  */
 export async function resetEnrollmentState(
   admin: SupabaseClient<Database>
@@ -83,4 +84,10 @@ export async function resetEnrollmentState(
     .in("enrolled_by", [TEST_IDS.CUSTOMER, TEST_IDS.CUSTOMER_2]);
 
   await resetTokenState(admin);
+
+  // Reset product cost (some tests modify it)
+  await admin
+    .from("products")
+    .update({ token_cost: SEED.PRODUCT_TOKEN_COST })
+    .eq("id", TEST_IDS.PRODUCT);
 }

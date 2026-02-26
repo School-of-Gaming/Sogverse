@@ -123,6 +123,41 @@ describe("Unenrollment (unenroll_gamer RPC)", () => {
     expect(error!.message).toContain("not active");
   });
 
+  it("refund amount comes from products.token_cost, not historical charge", async () => {
+    // Enroll at original cost (2 Sorgs)
+    const enrollment = await enrollTestGamer(admin);
+
+    // Admin changes product price to 5 after enrollment
+    await admin
+      .from("products")
+      .update({ token_cost: 5 })
+      .eq("id", TEST_IDS.PRODUCT);
+
+    // Unenroll with refund — RPC should refund at NEW price (5), not charge amount (2)
+    const { data, error } = await admin.rpc("unenroll_gamer", {
+      p_customer_id: TEST_IDS.CUSTOMER,
+      p_enrollment_id: enrollment.enrollment_id,
+      p_refund: true,
+    });
+
+    expect(error).toBeNull();
+    const rows = data as { new_balance: number; refund_transaction_id: string }[];
+    // Balance: 20 - 2 (enroll) + 5 (refund at new price) = 23
+    expect(rows[0].new_balance).toBe(
+      SEED.CUSTOMER_TOKEN_BALANCE - SEED.PRODUCT_TOKEN_COST + 5
+    );
+    expect(rows[0].refund_transaction_id).toBeTruthy();
+
+    // Verify the refund transaction has the correct amount (5, not 2)
+    const { data: tx } = await admin
+      .from("token_transactions")
+      .select("amount")
+      .eq("id", rows[0].refund_transaction_id)
+      .single();
+
+    expect(tx!.amount).toBe(5);
+  });
+
   it("denies authenticated browser client from calling unenroll RPC (C3 fix)", async () => {
     const enrollment = await enrollTestGamer(admin);
 
