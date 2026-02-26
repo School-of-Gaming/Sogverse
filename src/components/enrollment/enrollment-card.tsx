@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Calendar, Clock, Users, Coins } from "lucide-react";
@@ -46,7 +46,9 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
 
   const isActive = enrollment.status === "active";
 
-  const msUntil = nextSession.getTime() - Date.now();
+  // eslint-disable-next-line react-hooks/purity -- intentional: snapshot time at mount
+  const now = useMemo(() => Date.now(), []);
+  const msUntil = nextSession.getTime() - now;
   const totalMinutes = Math.max(0, Math.floor(msUntil / 60_000));
   const countdown = formatCountdown(msUntil);
 

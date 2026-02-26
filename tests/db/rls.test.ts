@@ -487,6 +487,7 @@ describe("Row Level Security", () => {
         .insert({
           group_id: TEST_IDS.GROUP,
           gamer_id: TEST_IDS.GAMER,
+          enrolled_by: TEST_IDS.CUSTOMER,
         });
 
       expect(error).not.toBeNull();

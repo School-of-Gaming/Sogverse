@@ -15,7 +15,7 @@ async function enrollTestGamer(admin: SupabaseClient<Database>) {
     p_gamer_id: TEST_IDS.GAMER,
     p_group_id: TEST_IDS.GROUP,
     p_session_date: "2026-03-04",
-  } as Record<string, unknown>);
+  });
 
   if (error) throw new Error(`Enrollment setup failed: ${error.message}`);
   const rows = data as {
