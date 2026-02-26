@@ -19,12 +19,14 @@ import { ENROLLMENT_CHARGE_WINDOW_HOURS } from "@/lib/constants/enrollment";
 interface UnenrollDialogProps {
   enrollment: CustomerEnrollment;
   refundEligible: boolean;
+  refundDenialReason?: "within_window" | "not_yet_charged";
   onClose: () => void;
 }
 
 export function UnenrollDialog({
   enrollment,
   refundEligible,
+  refundDenialReason,
   onClose,
 }: UnenrollDialogProps) {
   const unenroll = useUnenrollGamer();
@@ -108,13 +110,17 @@ export function UnenrollDialog({
                     You will receive a refund of{" "}
                     <strong>{enrollment.productTokenCost} Sorgs</strong>.
                   </p>
-                ) : (
+                ) : refundDenialReason === "within_window" ? (
                   <p className="flex items-start gap-2 text-warning">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                     <span>
                       No refund will be issued — the next session is within{" "}
                       {ENROLLMENT_CHARGE_WINDOW_HOURS} hours.
                     </span>
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground">
+                    No refund needed — you won&apos;t be charged for the next session.
                   </p>
                 )}
               </div>

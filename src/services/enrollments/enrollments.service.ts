@@ -20,6 +20,7 @@ export interface CustomerEnrollment {
   productTimezone: string;
   productDurationMinutes: number;
   geduDisplayName: string;
+  lastChargeSessionDate: string | null;
 }
 
 export interface EnrollmentGroup {
@@ -97,6 +98,7 @@ export class EnrollmentsService {
       productTimezone: row.product_timezone,
       productDurationMinutes: row.product_duration_minutes,
       geduDisplayName: row.gedu_display_name,
+      lastChargeSessionDate: row.last_charge_session_date,
     }));
   }
 

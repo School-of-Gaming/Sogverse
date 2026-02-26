@@ -6,7 +6,7 @@ Customer-initiated enrollment system where parents enroll their gamers (children
 
 Customers browse products on the public products page, click into a product detail page, and follow a multi-step enrollment wizard: select a gamer (or create one inline), select a group, review the cost, and confirm. Enrollment immediately deducts Sorg tokens for the upcoming session. Each subsequent week, a `pg_cron` job charges the customer's balance 24 hours before the next session. If the balance is insufficient, the enrollment is automatically cancelled.
 
-Unenrollment is customer-initiated via the enrollments dashboard. If the next session is more than 24 hours away, the customer receives a full refund of the last charge. Within the 24-hour window, no refund is issued.
+Unenrollment is customer-initiated via the enrollments dashboard. A refund is only granted if the customer has been charged for an upcoming session that hasn't started yet AND the session is more than 24 hours away. If the charged session has already started, no refund is issued (the customer attended or had the opportunity to attend). If the session hasn't started but is within 24 hours, no refund is issued either.
 
 Admins cannot enroll or unenroll gamers — they can only move gamers between groups within a product via `commit_group_changes`. Moves use `UPDATE` (not DELETE+INSERT) to preserve enrollment metadata and charge history.
 
@@ -41,7 +41,7 @@ Utilities
 Database functions (SQL)
 ├── enroll_gamer_in_group()            — Atomic enroll: verify parent, deduct tokens, insert enrollment + charge
 ├── unenroll_gamer()                   — Atomic unenroll: mark inactive, optional refund, mark charge as refunded
-├── get_customer_enrollments()         — Customer's enrollments with product/gamer/gedu details
+├── get_customer_enrollments()         — Customer's enrollments with product/gamer/gedu details + last_charge_session_date
 ├── get_enrollment_groups()            — Customer-facing group list with gamer count and age stats
 ├── compute_next_session()             — SQL equivalent of getNextSessionStart() for cron use
 └── process_enrollment_charges()       — Cron entry point: charge active enrollments, auto-unenroll on failure
@@ -67,18 +67,30 @@ Database functions (SQL)
 2. `EnrollmentCard` shows "Refund available if you unenroll now" (green text)
 3. Customer clicks "Unenroll" → `UnenrollDialog` opens with refund confirmation
 4. Customer confirms → `useUnenrollGamer()` → `DELETE /api/enrollments/[id]`
-5. API route computes `getRefundEligibility()` → `eligible: true, refundAmount: token_cost`
-6. Calls `unenroll_gamer` RPC with `p_refund_amount = token_cost`
-7. RPC: sets `status='unenrolled'`, `unenrolled_at=NOW()`, credits tokens via `adjust_token_balance('enrollment_refund')`, marks latest `enrollment_charges` row as refunded
-8. Dialog shows success with refund amount and new balance
+5. API route queries the latest `enrollment_charges` row's `session_date` for this enrollment
+6. API route reconstructs the session timestamp via `wallClockToUtc(session_date + start_time, timezone)` and verifies `now < sessionTime` (session hasn't started)
+7. Passes `lastChargeSessionDate` to `getRefundEligibility()` → session hasn't started, outside 24h window → `eligible: true, refundAmount: token_cost`
+8. Calls `unenroll_gamer` RPC with `p_refund_amount = token_cost`
+9. RPC: sets `status='unenrolled'`, `unenrolled_at=NOW()`, credits tokens via `adjust_token_balance('enrollment_refund')`, marks latest `enrollment_charges` row as refunded
+10. Dialog shows success with refund amount and new balance
 
 ### 3. Unenroll — no refund (within 24h of next session)
 
 Same as flow 2, except:
 - `EnrollmentCard` shows "No refund — next session is within 24h" (amber warning)
-- `UnenrollDialog` shows "No refund will be issued"
-- API route computes `getRefundEligibility()` → `eligible: false, refundAmount: 0`
+- `UnenrollDialog` shows "No refund will be issued — the next session is within 24 hours"
+- API route's `getRefundEligibility()` → session hasn't started but within 24h window → `eligible: false, refundAmount: 0, reason: "within_window"`
 - RPC is called with `p_refund_amount = 0` — status changes but no token adjustment
+
+### 3a. Unenroll — no refund (session already attended)
+
+Customer unenrolls after the charged session has already started. The latest charge covered a session that has already happened — refunding it would mean the customer attended for free.
+
+- `EnrollmentCard` shows "You won't be charged for the next session" (muted text)
+- `UnenrollDialog` shows "No refund needed — you won't be charged for the next session"
+- API route's `getRefundEligibility()` → `now > sessionTimestamp` → `eligible: false, refundAmount: 0, reason: "not_yet_charged"`
+- RPC is called with `p_refund_amount = 0` — status changes, no token adjustment
+- The cron hasn't charged for the next session yet, so the customer won't owe anything further
 
 ### 4. Weekly charge (pg_cron)
 
@@ -146,7 +158,7 @@ enrollment_charges (
 |---|---|---|
 | `enroll_gamer_in_group(customer_id, gamer_id, group_id, token_cost, session_date)` | Atomic enrollment with first charge | `POST /api/enrollments` |
 | `unenroll_gamer(customer_id, enrollment_id, refund_amount)` | Unenroll with optional refund | `DELETE /api/enrollments/[id]` |
-| `get_customer_enrollments(customer_id)` | Customer's enrollment list with product/gamer/gedu details | `EnrollmentsService.getMyEnrollments()` |
+| `get_customer_enrollments(customer_id)` | Customer's enrollment list with product/gamer/gedu details + `last_charge_session_date` | `EnrollmentsService.getMyEnrollments()` |
 | `get_enrollment_groups(product_id)` | Visible product groups with gamer count and age stats | `EnrollmentsService.getEnrollmentGroups()` |
 | `compute_next_session(day_of_week, start_time, timezone)` | Next session in UTC (SQL equivalent of `getNextSessionStart()`) | `process_enrollment_charges()` |
 | `process_enrollment_charges()` | Hourly cron: charge active enrollments, auto-unenroll on failure | pg_cron |
@@ -168,6 +180,7 @@ enrollment_charges (
 | `00033_drop_old_adjust_token_balance.sql` | Cleanup of `adjust_token_balance` function overload |
 | `00034_handle_new_user_gamer_fields.sql` | Updated `handle_new_user` trigger for gamer DOB/gender NOT NULL |
 | `00035_enrollment_cron.sql` | `compute_next_session()`, `process_enrollment_charges()`, pg_cron schedule |
+| `00036_enrollment_last_charge_date.sql` | Added `last_charge_session_date` to `get_customer_enrollments` return type |
 
 ## Cron Job Details
 
@@ -224,9 +237,30 @@ Failed enrollments do not block processing of other enrollments.
 The charge window (`ENROLLMENT_CHARGE_WINDOW_HOURS = 24`) serves two purposes:
 
 1. **Cron charges:** The cron only charges for sessions whose start time is within the next 24 hours
-2. **Refund eligibility:** When a customer unenrolls, they get a refund only if the next session is more than 24 hours away
+2. **Refund eligibility:** When a customer unenrolls, refund eligibility uses a two-stage check (see below)
 
 The constant lives in `src/lib/constants/enrollment.ts` (TypeScript) and is mirrored as a local variable in `process_enrollment_charges()` (SQL). If the window changes, both must be updated.
+
+### Refund eligibility — two-stage check
+
+`getRefundEligibility()` receives the `lastChargeSessionDate` (the session date the latest charge covers) and applies two checks in order:
+
+1. **Stage 1 — Has the charged session started?** Reconstruct the session timestamp via `wallClockToUtc(lastChargeSessionDate + start_time, timezone)`. If `now > sessionTimestamp`, the session has already started. No refund — the customer attended (or had the opportunity to attend). Return `reason: "not_yet_charged"`.
+2. **Stage 2 — Is the session within the cancellation window?** If the charged session hasn't started, check whether the next session is within 24 hours. If so, no refund — return `reason: "within_window"`. Otherwise, the customer is eligible for a full refund.
+
+This prevents a scenario where a customer could repeatedly enroll, attend a session, unenroll for a refund, and re-enroll — getting free sessions indefinitely.
+
+### Three refund states
+
+| # | State | Condition | UI message |
+|---|-------|-----------|------------|
+| 1 | **Refund eligible** | Charged for upcoming session, outside 24h window | "Refund available" (green) |
+| 2 | **Within window** | Charged for upcoming session, inside 24h window | "No refund — session is within 24h" (amber) |
+| 3 | **Not yet charged** | Last charge's session already started; haven't been charged for next session yet | "You won't be charged for the next session" (muted) |
+
+### Known limitation — admin schedule changes
+
+If an admin changes a product's day after the cron has already charged for the original day, and the original session time passes, the system treats the session as "started" even though it was moved. This only happens if admins change the schedule within 24h of the original session (after the cron charged). Admins should make schedule changes more than 24h before sessions to avoid this edge case.
 
 ### First-week charge
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getRefundEligibility } from "@/lib/enrollment";
+import { ENROLLMENT_CHARGE_WINDOW_HOURS } from "@/lib/constants/enrollment";
 
 export async function DELETE(
   request: Request,
@@ -55,8 +56,23 @@ export async function DELETE(
       timezone: string;
     } }).products;
 
+    // Look up the latest charge to determine if the session has already been attended
+    const { data: latestCharge } = await admin
+      .from("enrollment_charges")
+      .select("session_date")
+      .eq("enrollment_id", enrollmentId)
+      .order("session_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
     // Determine refund eligibility
-    const { eligible, refundAmount } = getRefundEligibility(product);
+    const now = new Date();
+    const { eligible, refundAmount } = getRefundEligibility(
+      product,
+      ENROLLMENT_CHARGE_WINDOW_HOURS,
+      now,
+      latestCharge?.session_date ?? null,
+    );
 
     const { data, error } = await admin.rpc("unenroll_gamer", {
       p_customer_id: user.id,

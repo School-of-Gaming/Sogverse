@@ -6,6 +6,15 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Parse a time string into hours and minutes.
+ * Accepts both "HH:MM" and Postgres TIME format "HH:MM:SS".
+ */
+export function parseTime(time: string): { hours: number; minutes: number } {
+  const [hours, minutes] = time.split(":").map(Number);
+  return { hours, minutes };
+}
+
 export function formatCurrency(
   amount: number,
   currency: SupportedCurrency,
@@ -103,8 +112,7 @@ export function formatScheduleLocal(
   const refDate = new Date(now);
   refDate.setDate(refDate.getDate() + daysAhead);
 
-  // Parse HH:MM
-  const [hours, minutes] = startTime.split(":").map(Number);
+  const { hours, minutes } = parseTime(startTime);
 
   // Create a date string that represents the wall-clock time in the source timezone.
   // Format as ISO-like string and let the Intl API handle the conversion.

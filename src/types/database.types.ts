@@ -492,38 +492,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      adjust_token_balance:
-        | {
-            Args: {
-              p_admin_id?: string
-              p_amount: number
-              p_description?: string
-              p_stripe_session_id?: string
-              p_stripe_subscription_id?: string
-              p_type: Database["public"]["Enums"]["token_transaction_type"]
-              p_user_id: string
-            }
-            Returns: {
-              new_balance: number
-              transaction_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_admin_id?: string
-              p_amount: number
-              p_currency?: string
-              p_description?: string
-              p_stripe_session_id?: string
-              p_stripe_subscription_id?: string
-              p_type: Database["public"]["Enums"]["token_transaction_type"]
-              p_user_id: string
-            }
-            Returns: {
-              new_balance: number
-              transaction_id: string
-            }[]
-          }
+      adjust_token_balance: {
+        Args: {
+          p_admin_id?: string
+          p_amount: number
+          p_currency?: string
+          p_description?: string
+          p_stripe_session_id?: string
+          p_stripe_subscription_id?: string
+          p_type: Database["public"]["Enums"]["token_transaction_type"]
+          p_user_id: string
+        }
+        Returns: {
+          new_balance: number
+          transaction_id: string
+        }[]
+      }
       commit_group_changes: {
         Args: {
           p_added_groups?: Json
@@ -533,6 +517,14 @@ export type Database = {
           p_updated_groups?: Json
         }
         Returns: Json
+      }
+      compute_next_session: {
+        Args: {
+          p_day_of_week: number
+          p_start_time: string
+          p_timezone: string
+        }
+        Returns: string
       }
       enroll_gamer_in_group: {
         Args: {
@@ -557,6 +549,7 @@ export type Database = {
           gamer_id: string
           gedu_display_name: string
           group_id: string
+          last_charge_session_date: string
           last_charged_at: string
           product_day_of_week: number
           product_duration_minutes: number
@@ -680,6 +673,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
+      process_enrollment_charges: { Args: never; Returns: Json }
       unenroll_gamer: {
         Args: {
           p_customer_id: string

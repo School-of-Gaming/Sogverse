@@ -1,4 +1,5 @@
 import { ENROLLMENT_CHARGE_WINDOW_HOURS } from "@/lib/constants/enrollment";
+import { parseTime } from "@/lib/utils";
 
 /**
  * Compute the next occurrence of a weekly session in UTC.
@@ -15,7 +16,7 @@ export function getNextSessionStart(
   timezone: string,
   now: Date = new Date(),
 ): Date {
-  const [hours, minutes] = startTime.split(":").map(Number);
+  const { hours, minutes } = parseTime(startTime);
 
   // Our dayOfWeek: Monday=0 … Sunday=6
   // JS getDay(): Sunday=0 … Saturday=6
@@ -69,24 +70,51 @@ export function isWithinChargeWindow(
 
 /**
  * Determine whether an unenrollment qualifies for a token refund.
+ *
+ * Two-stage check:
+ * 1. If the charged session has already started → no refund ("not_yet_charged")
+ * 2. If the charged session hasn't started but is within the cancellation window → no refund ("within_window")
+ * 3. Otherwise → eligible for refund
+ *
+ * @param lastChargeSessionDate  ISO "YYYY-MM-DD" of the session the latest charge covers, or null if no charges exist
  */
 export function getRefundEligibility(
   product: { day_of_week: number; start_time: string; timezone: string; token_cost: number },
   windowHours: number = ENROLLMENT_CHARGE_WINDOW_HOURS,
   now: Date = new Date(),
-): { eligible: boolean; nextSession: Date; refundAmount: number } {
+  lastChargeSessionDate: string | null = null,
+): { eligible: boolean; nextSession: Date; refundAmount: number; reason?: "within_window" | "not_yet_charged" } {
   const nextSession = getNextSessionStart(
     product.day_of_week,
     product.start_time,
     product.timezone,
     now,
   );
+
+  // Stage 1: Check if the charged session has already started.
+  // If no charge exists or the charged session already happened, no refund is possible —
+  // the customer either attended the session or was never charged.
+  if (!lastChargeSessionDate) {
+    return { eligible: false, nextSession, refundAmount: 0, reason: "not_yet_charged" };
+  }
+
+  const { hours: h, minutes: m } = parseTime(product.start_time);
+  const sessionTimestamp = wallClockToUtc(
+    `${lastChargeSessionDate}T${pad(h)}:${pad(m)}:00`,
+    product.timezone,
+  );
+
+  if (now.getTime() > sessionTimestamp.getTime()) {
+    return { eligible: false, nextSession, refundAmount: 0, reason: "not_yet_charged" };
+  }
+
+  // Stage 2: Session hasn't started yet — apply the cancellation window check.
   const withinWindow = isWithinChargeWindow(nextSession, windowHours, now);
-  return {
-    eligible: !withinWindow,
-    nextSession,
-    refundAmount: withinWindow ? 0 : product.token_cost,
-  };
+  if (withinWindow) {
+    return { eligible: false, nextSession, refundAmount: 0, reason: "within_window" };
+  }
+
+  return { eligible: true, nextSession, refundAmount: product.token_cost };
 }
 
 // ---------------------------------------------------------------------------
@@ -130,7 +158,7 @@ function getWallClockDayOfWeek(date: Date, timezone: string): number {
  * Convert a wall-clock datetime string (no TZ offset) in a given IANA timezone to UTC.
  * Uses the same iterative approach as formatScheduleLocal in utils.ts.
  */
-function wallClockToUtc(wallStr: string, timezone: string): Date {
+export function wallClockToUtc(wallStr: string, timezone: string): Date {
   // Parse the target wall-clock values
   const [datePart, timePart] = wallStr.split("T");
   const [, , dayStr] = datePart.split("-");

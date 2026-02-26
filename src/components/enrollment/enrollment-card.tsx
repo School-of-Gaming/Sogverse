@@ -33,13 +33,16 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
     enrollment.productTimezone,
   );
 
-  const { eligible: refundEligible } = getRefundEligibility(
+  const { eligible: refundEligible, reason: refundDenialReason } = getRefundEligibility(
     {
       day_of_week: enrollment.productDayOfWeek,
       start_time: enrollment.productStartTime,
       timezone: enrollment.productTimezone,
       token_cost: enrollment.productTokenCost,
     },
+    undefined,
+    undefined,
+    enrollment.lastChargeSessionDate ?? null,
   );
 
   const isActive = enrollment.status === "active";
@@ -117,10 +120,14 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
                     <p className="text-xs text-success">
                       Refund available if you unenroll now
                     </p>
-                  ) : (
+                  ) : refundDenialReason === "within_window" ? (
                     <p className="flex items-center gap-1 text-xs text-warning">
                       <AlertTriangle className="h-3 w-3" />
                       No refund — next session is within {ENROLLMENT_CHARGE_WINDOW_HOURS}h
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      You won&apos;t be charged for the next session
                     </p>
                   )}
                 </div>
@@ -153,6 +160,7 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
         <UnenrollDialog
           enrollment={enrollment}
           refundEligible={refundEligible}
+          refundDenialReason={refundDenialReason}
           onClose={() => setShowUnenroll(false)}
         />
       )}

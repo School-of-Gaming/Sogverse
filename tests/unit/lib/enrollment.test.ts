@@ -182,31 +182,96 @@ describe("getRefundEligibility", () => {
     token_cost: 3,
   };
 
-  it("returns eligible with full refund when far from session", () => {
-    // Wednesday, session is Friday 15:00 → >24h away
+  it("returns eligible with full refund when charged for upcoming session and outside window", () => {
+    // Wednesday 12:00, last charge is for upcoming Friday 2026-02-27 → >24h away
     const now = new Date("2026-02-25T12:00:00Z");
-    const result = getRefundEligibility(product, 24, now);
+    const result = getRefundEligibility(product, 24, now, "2026-02-27");
 
     expect(result.eligible).toBe(true);
     expect(result.refundAmount).toBe(3);
+    expect(result.reason).toBeUndefined();
     expect(result.nextSession.toISOString()).toBe("2026-02-27T15:00:00.000Z");
   });
 
-  it("returns not eligible with zero refund when within window", () => {
-    // Friday 14:00, session is Friday 15:00 → 1h away (within 24h)
+  it("returns not eligible with within_window reason when inside window", () => {
+    // Friday 14:00, last charge is for today's session (2026-02-27) → 1h away (within 24h)
     const now = new Date("2026-02-27T14:00:00Z");
-    const result = getRefundEligibility(product, 24, now);
+    const result = getRefundEligibility(product, 24, now, "2026-02-27");
 
     expect(result.eligible).toBe(false);
     expect(result.refundAmount).toBe(0);
+    expect(result.reason).toBe("within_window");
   });
 
   it("returns not eligible at exact window boundary", () => {
-    // Thursday 15:00, session is Friday 15:00 → exactly 24h
+    // Thursday 15:00, last charge is for Friday 2026-02-27 → exactly 24h
     const now = new Date("2026-02-26T15:00:00Z");
-    const result = getRefundEligibility(product, 24, now);
+    const result = getRefundEligibility(product, 24, now, "2026-02-27");
 
     expect(result.eligible).toBe(false);
     expect(result.refundAmount).toBe(0);
+    expect(result.reason).toBe("within_window");
+  });
+
+  it("denies refund after session already attended (not_yet_charged)", () => {
+    // Product: Friday 15:00 UTC, costs 3 Sorgs
+    //
+    // Timeline:
+    //   1. Customer enrolled before Friday → charged 3 for Friday's session
+    //   2. Friday 15:00: session happens, gamer attends
+    //   3. Saturday 10:00: customer unenrolls (next Friday is 6 days away)
+    //
+    // The charge they paid was for Friday's session, which already happened.
+    // Refunding it means they attended for free.
+    const saturday = new Date("2026-02-28T10:00:00Z"); // day after Friday session
+    const result = getRefundEligibility(product, 24, saturday, "2026-02-27");
+
+    // Last charge session (Fri 15:00 UTC) already started → not_yet_charged
+    expect(result.eligible).toBe(false);
+    expect(result.refundAmount).toBe(0);
+    expect(result.reason).toBe("not_yet_charged");
+  });
+
+  it("grants refund when last charge is for upcoming session and outside window", () => {
+    // Wednesday 12:00 UTC, charged for upcoming Friday (2026-02-27)
+    // Session is Friday 15:00 UTC → more than 24h away → eligible
+    const now = new Date("2026-02-25T12:00:00Z");
+    const result = getRefundEligibility(product, 24, now, "2026-02-27");
+
+    expect(result.eligible).toBe(true);
+    expect(result.refundAmount).toBe(3);
+    expect(result.reason).toBeUndefined();
+  });
+
+  it("denies refund when last charge is for upcoming session but within window", () => {
+    // Friday 14:00 UTC, charged for today's session (2026-02-27)
+    // Session is Friday 15:00 UTC → 1h away → within 24h window
+    const now = new Date("2026-02-27T14:00:00Z");
+    const result = getRefundEligibility(product, 24, now, "2026-02-27");
+
+    expect(result.eligible).toBe(false);
+    expect(result.refundAmount).toBe(0);
+    expect(result.reason).toBe("within_window");
+  });
+
+  it("denies refund same day after session started", () => {
+    // Friday 16:00 UTC (session was at 15:00), last charge for today (2026-02-27)
+    // Session already started at 15:00 → not_yet_charged
+    const now = new Date("2026-02-27T16:00:00Z");
+    const result = getRefundEligibility(product, 24, now, "2026-02-27");
+
+    expect(result.eligible).toBe(false);
+    expect(result.refundAmount).toBe(0);
+    expect(result.reason).toBe("not_yet_charged");
+  });
+
+  it("handles Postgres TIME format (HH:MM:SS) for start_time", () => {
+    // Same as "grants refund" case but with "15:00:00" instead of "15:00"
+    const productWithSeconds = { ...product, start_time: "15:00:00" };
+    const now = new Date("2026-02-25T12:00:00Z");
+    const result = getRefundEligibility(productWithSeconds, 24, now, "2026-02-27");
+
+    expect(result.eligible).toBe(true);
+    expect(result.refundAmount).toBe(3);
   });
 });
