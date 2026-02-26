@@ -4,7 +4,7 @@
 -- =============================================================================
 -- 1. Change products default visibility to hidden
 -- =============================================================================
-ALTER TABLE products ALTER COLUMN is_visible SET DEFAULT false;
+ALTER TABLE products ALTER COLUMN is_active SET DEFAULT false;
 
 -- =============================================================================
 -- 2. Create product_groups table
@@ -62,7 +62,7 @@ CREATE POLICY "gedus_view_own_groups"
 CREATE POLICY "authenticated_view_visible_product_groups"
   ON product_groups FOR SELECT TO authenticated
   USING (
-    product_id IN (SELECT id FROM products WHERE is_visible = true)
+    product_id IN (SELECT id FROM products WHERE is_active = true)
   );
 
 -- =============================================================================
@@ -100,7 +100,7 @@ CREATE POLICY "authenticated_view_visible_group_enrollments"
     group_id IN (
       SELECT pg.id FROM product_groups pg
       JOIN products p ON p.id = pg.product_id
-      WHERE p.is_visible = true
+      WHERE p.is_active = true
     )
   );
 
