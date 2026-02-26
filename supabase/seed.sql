@@ -9,9 +9,6 @@
 -- =============================================================================
 
 -- All test users use this password: testpassword123
--- Supabase local auth stores bcrypt hashes with the $2a$ prefix.
--- This hash corresponds to 'testpassword123':
--- $2a$10$PznXOAYBEgjKztMnmKSbCe8sNBqDqEBjqCOdCJmmp.0aL3FHkmuSa
 
 -- =============================================================================
 -- 1. Test Users (auth.users → triggers handle_new_user → profiles + extensions)
@@ -20,19 +17,21 @@
 -- Admin
 INSERT INTO auth.users (
   id, instance_id, aud, role, email,
-  encrypted_password, email_confirmed_at, confirmation_sent_at,
-  raw_user_meta_data, created_at, updated_at
+  encrypted_password, email_confirmed_at, last_sign_in_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, email_change, email_change_token_new, recovery_token,
+  created_at, updated_at
 ) VALUES (
   '00000000-0000-0000-0000-000000000001',
   '00000000-0000-0000-0000-000000000000',
   'authenticated', 'authenticated', 'admin@test.local',
-  '$2a$10$PznXOAYBEgjKztMnmKSbCe8sNBqDqEBjqCOdCJmmp.0aL3FHkmuSa',
+  crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
+  '{"provider":"email","providers":["email"]}',
   jsonb_build_object('role', 'admin', 'display_name', 'Test Admin'),
+  '', '', '', '',
   NOW(), NOW()
 );
-
--- Also insert into auth.identities (required for sign-in to work)
 INSERT INTO auth.identities (
   id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
 ) VALUES (
@@ -46,15 +45,19 @@ INSERT INTO auth.identities (
 -- Customer 1
 INSERT INTO auth.users (
   id, instance_id, aud, role, email,
-  encrypted_password, email_confirmed_at, confirmation_sent_at,
-  raw_user_meta_data, created_at, updated_at
+  encrypted_password, email_confirmed_at, last_sign_in_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, email_change, email_change_token_new, recovery_token,
+  created_at, updated_at
 ) VALUES (
   '00000000-0000-0000-0000-000000000002',
   '00000000-0000-0000-0000-000000000000',
   'authenticated', 'authenticated', 'customer@test.local',
-  '$2a$10$PznXOAYBEgjKztMnmKSbCe8sNBqDqEBjqCOdCJmmp.0aL3FHkmuSa',
+  crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
+  '{"provider":"email","providers":["email"]}',
   jsonb_build_object('role', 'customer', 'display_name', 'Test Customer'),
+  '', '', '', '',
   NOW(), NOW()
 );
 INSERT INTO auth.identities (
@@ -70,15 +73,19 @@ INSERT INTO auth.identities (
 -- Gedu
 INSERT INTO auth.users (
   id, instance_id, aud, role, email,
-  encrypted_password, email_confirmed_at, confirmation_sent_at,
-  raw_user_meta_data, created_at, updated_at
+  encrypted_password, email_confirmed_at, last_sign_in_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, email_change, email_change_token_new, recovery_token,
+  created_at, updated_at
 ) VALUES (
   '00000000-0000-0000-0000-000000000003',
   '00000000-0000-0000-0000-000000000000',
   'authenticated', 'authenticated', 'gedu@test.local',
-  '$2a$10$PznXOAYBEgjKztMnmKSbCe8sNBqDqEBjqCOdCJmmp.0aL3FHkmuSa',
+  crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
+  '{"provider":"email","providers":["email"]}',
   jsonb_build_object('role', 'gedu', 'display_name', 'Test Gedu'),
+  '', '', '', '',
   NOW(), NOW()
 );
 INSERT INTO auth.identities (
@@ -94,15 +101,19 @@ INSERT INTO auth.identities (
 -- Gamer (synthetic email → handle_new_user sets role=gamer, email=NULL, username extracted)
 INSERT INTO auth.users (
   id, instance_id, aud, role, email,
-  encrypted_password, email_confirmed_at, confirmation_sent_at,
-  raw_user_meta_data, created_at, updated_at
+  encrypted_password, email_confirmed_at, last_sign_in_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, email_change, email_change_token_new, recovery_token,
+  created_at, updated_at
 ) VALUES (
   '00000000-0000-0000-0000-000000000004',
   '00000000-0000-0000-0000-000000000000',
   'authenticated', 'authenticated', 'testgamer@gamer.sogverse.internal',
-  '$2a$10$PznXOAYBEgjKztMnmKSbCe8sNBqDqEBjqCOdCJmmp.0aL3FHkmuSa',
+  crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
+  '{"provider":"email","providers":["email"]}',
   jsonb_build_object('display_name', 'Test Gamer'),
+  '', '', '', '',
   NOW(), NOW()
 );
 INSERT INTO auth.identities (
@@ -118,15 +129,19 @@ INSERT INTO auth.identities (
 -- Customer 2 (for cross-customer auth tests)
 INSERT INTO auth.users (
   id, instance_id, aud, role, email,
-  encrypted_password, email_confirmed_at, confirmation_sent_at,
-  raw_user_meta_data, created_at, updated_at
+  encrypted_password, email_confirmed_at, last_sign_in_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, email_change, email_change_token_new, recovery_token,
+  created_at, updated_at
 ) VALUES (
   '00000000-0000-0000-0000-000000000005',
   '00000000-0000-0000-0000-000000000000',
   'authenticated', 'authenticated', 'customer2@test.local',
-  '$2a$10$PznXOAYBEgjKztMnmKSbCe8sNBqDqEBjqCOdCJmmp.0aL3FHkmuSa',
+  crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
+  '{"provider":"email","providers":["email"]}',
   jsonb_build_object('role', 'customer', 'display_name', 'Test Customer 2'),
+  '', '', '', '',
   NOW(), NOW()
 );
 INSERT INTO auth.identities (
