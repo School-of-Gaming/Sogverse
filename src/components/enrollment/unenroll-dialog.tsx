@@ -95,7 +95,7 @@ export function UnenrollDialog({
             </DialogHeader>
 
             {/* Refund messaging */}
-            <div className="space-y-3 rounded-md border border-border p-4 text-sm">
+            <div className="mt-2 space-y-3 rounded-md border border-border p-4 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Product</span>
                 <span className="font-medium">{enrollment.productName}</span>
