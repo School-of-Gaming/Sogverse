@@ -6,7 +6,7 @@ import { ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Parent Dashboard",
-  description: "Manage your gamers and view your orders",
+  description: "Manage your gamers and enrollments",
 };
 
 const quickActions = [

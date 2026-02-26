@@ -287,5 +287,8 @@ The `/api/gamers/create` endpoint only checks `requireRole("customer")`. A custo
 ### Move weekly charging to application code
 The charging logic currently lives in a pg_cron SQL function (`process_enrollment_charges`). This works correctly — double-charging is prevented by the unique constraint, overdraft is prevented by the CHECK constraint — but the SQL is untestable in the normal Vitest pipeline, has no application-level logging or error alerting (Sentry, etc.), and failures are silent unless someone checks `cron.job_run_details`. Moving the orchestration to a Vercel Cron API route (e.g., `POST /api/cron/charge-enrollments`) would make the logic testable, debuggable, and observable alongside the rest of the codebase, while still using `adjust_token_balance()` for the atomic token deduction.
 
+### Cron failure alerting
+The cron job logs results to `cron.job_run_details` and emits `RAISE WARNING` to PostgreSQL logs on per-enrollment errors, but no one is proactively notified if the cron fails entirely or encounters errors. A scheduled health check (e.g., a Vercel Cron that queries `cron.job_run_details` for recent failures and alerts via email/Slack) would catch silent failures before they affect customers.
+
 ### Charge window constant sync
 The 24-hour window is defined in two places: TypeScript constant and SQL local variable. A single source of truth (e.g., a `settings` table row readable by both) would prevent drift.
