@@ -23,10 +23,10 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
 
-    // Look up the product via the group to get token_cost and schedule
+    // Look up the product via the group to get schedule info for session date
     const { data: group, error: groupError } = await admin
       .from("product_groups")
-      .select("product_id, products(token_cost, day_of_week, start_time, timezone)")
+      .select("product_id, products(day_of_week, start_time, timezone)")
       .eq("id", groupId)
       .single();
 
@@ -35,7 +35,6 @@ export async function POST(request: Request) {
     }
 
     const product = group.products as {
-      token_cost: number;
       day_of_week: number;
       start_time: string;
       timezone: string;
@@ -54,7 +53,6 @@ export async function POST(request: Request) {
       p_customer_id: user.id,
       p_gamer_id: gamerId,
       p_group_id: groupId,
-      p_token_cost: product.token_cost,
       p_session_date: sessionDate,
     });
 

@@ -56,7 +56,6 @@ function createRequest(body: Record<string, unknown>): Request {
 }
 
 function mockGroupLookup(product?: {
-  token_cost: number;
   day_of_week: number;
   start_time: string;
   timezone: string;
@@ -136,7 +135,6 @@ describe("POST /api/enrollments", () => {
   it("should enroll gamer and return enrollment details", async () => {
     mockAuthenticated();
     mockGroupLookup({
-      token_cost: 3,
       day_of_week: 4,
       start_time: "15:00",
       timezone: "UTC",
@@ -156,7 +154,6 @@ describe("POST /api/enrollments", () => {
       p_customer_id: "customer-123",
       p_gamer_id: "g-1",
       p_group_id: "gr-1",
-      p_token_cost: 3,
       p_session_date: "2026-03-01",
     });
   });
@@ -166,7 +163,6 @@ describe("POST /api/enrollments", () => {
   it("should return 400 for insufficient balance (CHECK constraint violation)", async () => {
     mockAuthenticated();
     mockGroupLookup({
-      token_cost: 3,
       day_of_week: 4,
       start_time: "15:00",
       timezone: "UTC",
@@ -188,7 +184,6 @@ describe("POST /api/enrollments", () => {
   it("should return 400 for duplicate enrollment", async () => {
     mockAuthenticated();
     mockGroupLookup({
-      token_cost: 3,
       day_of_week: 4,
       start_time: "15:00",
       timezone: "UTC",
