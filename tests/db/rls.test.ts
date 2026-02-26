@@ -5,6 +5,7 @@ import {
   createAdminTestClient,
   createAuthenticatedClient,
   resetTokenState,
+  resetEnrollmentState,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
@@ -486,6 +487,7 @@ describe("Row Level Security", () => {
         .insert({
           group_id: TEST_IDS.GROUP,
           gamer_id: TEST_IDS.GAMER,
+          enrolled_by: TEST_IDS.CUSTOMER,
         });
 
       expect(error).not.toBeNull();
@@ -506,6 +508,86 @@ describe("Row Level Security", () => {
         .single();
 
       expect(data).not.toBeNull();
+    });
+  });
+
+  // =========================================================================
+  // Enrollment Charges
+  // =========================================================================
+
+  describe("enrollment_charges", () => {
+    // These tests create enrollment data, so clean up afterward
+    afterAll(async () => {
+      await resetEnrollmentState(admin);
+    });
+
+    it("customer can read charges for own enrollments", async () => {
+      // Create an enrollment (via service-role) for customer 1
+      await resetEnrollmentState(admin);
+      const { data: enrollData } = await admin.rpc("enroll_gamer_in_group", {
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_group_id: TEST_IDS.GROUP,
+        p_session_date: "2026-03-04",
+      });
+
+      const rows = enrollData as { enrollment_id: string }[];
+      const enrollmentId = rows[0].enrollment_id;
+
+      const { data, error } = await customerClient
+        .from("enrollment_charges")
+        .select("enrollment_id, amount")
+        .eq("enrollment_id", enrollmentId);
+
+      expect(error).toBeNull();
+      expect(data!.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("customer cannot read charges for another customer's enrollments", async () => {
+      // Customer 2 should see no charges (enrollment belongs to customer 1)
+      const { data } = await customer2Client
+        .from("enrollment_charges")
+        .select("id");
+
+      expect(data).toEqual([]);
+    });
+
+    it("customer cannot insert an enrollment_charge directly", async () => {
+      const { error } = await customerClient
+        .from("enrollment_charges")
+        .insert({
+          enrollment_id: TEST_IDS.ENROLLMENT,
+          amount: 999,
+          transaction_id: "00000000-0000-0000-0000-000000000000",
+          session_date: "2026-03-04",
+        });
+
+      expect(error).not.toBeNull();
+    });
+
+    it("customer cannot delete enrollment_charges", async () => {
+      // Get any existing charge via admin
+      const { data: charges } = await admin
+        .from("enrollment_charges")
+        .select("id")
+        .limit(1);
+
+      if (charges && charges.length > 0) {
+        // Attempt to delete via customer client — RLS should block
+        await customerClient
+          .from("enrollment_charges")
+          .delete()
+          .eq("id", charges[0].id);
+
+        // Verify charge still exists
+        const { data: stillExists } = await admin
+          .from("enrollment_charges")
+          .select("id")
+          .eq("id", charges[0].id)
+          .single();
+
+        expect(stillExists).not.toBeNull();
+      }
     });
   });
 

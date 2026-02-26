@@ -50,8 +50,8 @@ export function createMockGamerExtProfile(
 ): GamerProfile {
   return {
     user_id: "test-gamer-id",
-    date_of_birth: null,
-    gender: null,
+    date_of_birth: "2015-01-01",
+    gender: "boy",
     ...overrides,
   };
 }

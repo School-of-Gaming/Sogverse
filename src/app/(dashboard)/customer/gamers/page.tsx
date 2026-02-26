@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { UserPlus, Gamepad2, Settings } from "lucide-react";
+import { Gamepad2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -21,10 +21,9 @@ export default function CustomerGamersPage() {
             View and manage your linked gamer accounts
           </p>
         </div>
-        <Link href="/customer/gamers/add">
+        <Link href="/products">
           <Button>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add Gamer
+            Browse Products
           </Button>
         </Link>
       </div>
@@ -85,12 +84,11 @@ export default function CustomerGamersPage() {
             <Gamepad2 className="h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-medium">No Gamers Yet</h3>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              Create a gamer account for your child to get started with educational gaming.
+              Enroll in a product to create your first gamer account.
             </p>
-            <Link href="/customer/gamers/add" className="mt-4">
+            <Link href="/products" className="mt-4">
               <Button>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add Your First Gamer
+                Browse Products
               </Button>
             </Link>
           </CardContent>

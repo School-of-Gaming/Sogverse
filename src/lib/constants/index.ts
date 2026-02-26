@@ -1,4 +1,5 @@
 export * from "./currency";
+export * from "./enrollment";
 export * from "./roles";
 export * from "./routes";
 export * from "./tokens";

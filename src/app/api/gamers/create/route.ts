@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     if (result instanceof NextResponse) return result;
     const { user } = result;
 
-    const { username, password, displayName } = await request.json();
+    const { username, password, displayName, dateOfBirth, gender } = await request.json();
 
     if (!username || !password) {
       return NextResponse.json(
@@ -27,8 +27,37 @@ export async function POST(request: Request) {
       );
     }
 
+    if (!dateOfBirth || typeof dateOfBirth !== "string") {
+      return NextResponse.json(
+        { error: "Date of birth is required" },
+        { status: 400 }
+      );
+    }
+
+    const validGenders = ["boy", "girl", "non_binary"];
+    if (!gender || !validGenders.includes(gender)) {
+      return NextResponse.json(
+        { error: "Gender is required (boy, girl, or non_binary)" },
+        { status: 400 }
+      );
+    }
+
     const syntheticEmail = generateGamerEmail(username);
     const admin = createAdminClient();
+
+    // Check if username is already taken before attempting to create
+    const { data: existingUser } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "This username is already taken" },
+        { status: 409 }
+      );
+    }
 
     // Create auth user with admin client — no confirmation email sent
     const { data: authData, error: authError } =
@@ -40,6 +69,8 @@ export async function POST(request: Request) {
           display_name: displayName,
           role: "gamer",
           username,
+          date_of_birth: dateOfBirth,
+          gender,
         },
       });
 

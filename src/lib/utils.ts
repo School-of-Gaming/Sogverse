@@ -6,16 +6,21 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Parse a time string into hours and minutes.
+ * Accepts both "HH:MM" and Postgres TIME format "HH:MM:SS".
+ */
+export function parseTime(time: string): { hours: number; minutes: number } {
+  const [hours, minutes] = time.split(":").map(Number);
+  return { hours, minutes };
+}
+
 export function formatCurrency(
   amount: number,
   currency: SupportedCurrency,
   locale?: string,
 ): string {
-  const resolvedLocale =
-    locale ??
-    (typeof navigator !== "undefined" ? navigator.language : undefined) ??
-    CURRENCY_CONFIG[currency].locale;
-  return new Intl.NumberFormat(resolvedLocale, {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(amount);
@@ -29,9 +34,9 @@ export function formatCurrencyFromCents(
   return formatCurrency(cents / 100, currency, locale);
 }
 
-export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
+export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions, locale?: string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     ...options,
   }).format(d);
@@ -65,6 +70,46 @@ export function isGamerEmail(email: string): boolean {
 
 export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+/**
+ * Convert a wall-clock datetime string (no TZ offset) in a given IANA timezone to UTC.
+ *
+ * Uses "en-US" locale with hour12:false to guarantee Arabic numerals when
+ * extracting parts via Intl.DateTimeFormat — this is internal timezone math,
+ * not user-facing formatting.
+ */
+export function wallClockToUtc(wallStr: string, timezone: string): Date {
+  const [datePart, timePart] = wallStr.split("T");
+  const [, , dayStr] = datePart.split("-");
+  const [hourStr, minuteStr] = timePart.split(":");
+  const targetDay = Number(dayStr);
+  const targetHour = Number(hourStr);
+  const targetMinute = Number(minuteStr);
+
+  const utcGuess = new Date(wallStr + "Z");
+
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(utcGuess);
+  const srcHour = Number(parts.find((p) => p.type === "hour")?.value);
+  const srcMin = Number(parts.find((p) => p.type === "minute")?.value);
+  const srcDay = Number(parts.find((p) => p.type === "day")?.value);
+
+  let offsetMinutes = (srcHour - targetHour) * 60 + (srcMin - targetMinute);
+  if (srcDay !== targetDay) {
+    offsetMinutes += srcDay > targetDay ? 24 * 60 : -24 * 60;
+  }
+
+  return new Date(utcGuess.getTime() - offsetMinutes * 60 * 1000);
 }
 
 /** Monday = 0, Sunday = 6 (matches DB day_of_week column) */
@@ -103,8 +148,7 @@ export function formatScheduleLocal(
   const refDate = new Date(now);
   refDate.setDate(refDate.getDate() + daysAhead);
 
-  // Parse HH:MM
-  const [hours, minutes] = startTime.split(":").map(Number);
+  const { hours, minutes } = parseTime(startTime);
 
   // Create a date string that represents the wall-clock time in the source timezone.
   // Format as ISO-like string and let the Intl API handle the conversion.
@@ -114,48 +158,16 @@ export function formatScheduleLocal(
   const h = String(hours).padStart(2, "0");
   const m = String(minutes).padStart(2, "0");
 
-  // Get the UTC offset for the source timezone on this date
-  const sourceDateStr = `${year}-${month}-${day}T${h}:${m}:00`;
+  const wallStr = `${year}-${month}-${day}T${h}:${m}:00`;
+  const utcDate = wallClockToUtc(wallStr, timezone);
 
-  // Use Intl to find the offset of the source timezone at this datetime
-  const sourceFormatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-
-  // Create a UTC date and iteratively find what UTC time corresponds to the wall-clock time
-  // in the source timezone. We use a simple approach: create a date assuming UTC,
-  // then check what the source TZ shows, and adjust.
-  let utcDate = new Date(sourceDateStr + "Z");
-  const parts = sourceFormatter.formatToParts(utcDate);
-  const srcHour = Number(parts.find((p) => p.type === "hour")?.value);
-  const srcMin = Number(parts.find((p) => p.type === "minute")?.value);
-  const srcDay = Number(parts.find((p) => p.type === "day")?.value);
-
-  // Offset in minutes: how far ahead the source TZ is from UTC
-  let offsetMinutes = (srcHour - hours) * 60 + (srcMin - minutes);
-  // Handle day boundary
-  if (srcDay !== refDate.getDate()) {
-    offsetMinutes += srcDay > refDate.getDate() ? 24 * 60 : -24 * 60;
-  }
-
-  // The actual UTC time for the wall-clock time in the source timezone
-  utcDate = new Date(utcDate.getTime() - offsetMinutes * 60 * 1000);
-
-  // Format in the viewer's local timezone
-  const localTimeFmt = new Intl.DateTimeFormat("en-US", {
+  // Format in the viewer's local timezone (undefined = browser locale)
+  const localTimeFmt = new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit",
-    hour12: true,
   });
-  const localDayFmt = new Intl.DateTimeFormat("en-US", { weekday: "long" });
-  const localTzFmt = new Intl.DateTimeFormat("en-US", {
+  const localDayFmt = new Intl.DateTimeFormat(undefined, { weekday: "long" });
+  const localTzFmt = new Intl.DateTimeFormat(undefined, {
     timeZoneName: "short",
   });
 

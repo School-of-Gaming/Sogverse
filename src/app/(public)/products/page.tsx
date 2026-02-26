@@ -89,9 +89,9 @@ export default function ProductsPage() {
                         ≈ {tokensToCurrencyDisplay(product.token_cost, currency)} per session
                       </p>
                     </div>
-                    <Button disabled>
-                      Enroll
-                    </Button>
+                    <Link href={`/products/${product.id}`}>
+                      <Button>View Details</Button>
+                    </Link>
                   </CardFooter>
                 </Card>
               );

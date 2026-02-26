@@ -214,8 +214,9 @@ INSERT INTO product_groups (id, product_id, gedu_id, display_order) VALUES (
 );
 
 -- Enroll gamer into the test group
-INSERT INTO group_enrollments (id, group_id, gamer_id) VALUES (
+INSERT INTO group_enrollments (id, group_id, gamer_id, enrolled_by) VALUES (
   '00000000-0000-0000-0000-000000000040',
   '00000000-0000-0000-0000-000000000030', -- Test Group
-  '00000000-0000-0000-0000-000000000004'  -- Test Gamer
+  '00000000-0000-0000-0000-000000000004', -- Test Gamer
+  '00000000-0000-0000-0000-000000000002'  -- Test Customer
 );

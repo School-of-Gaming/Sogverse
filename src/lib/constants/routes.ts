@@ -27,8 +27,7 @@ export const ROUTES = {
     sorg: "/customer/sorg",
     billing: "/customer/billing",
     gamers: "/customer/gamers",
-    gamersAdd: "/customer/gamers/add",
-    orders: "/customer/orders",
+    enrollments: "/customer/enrollments",
   },
   gamer: {
     dashboard: "/gamer",

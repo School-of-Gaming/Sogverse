@@ -46,20 +46,75 @@ export type Database = {
           },
         ]
       }
+      enrollment_charges: {
+        Row: {
+          amount: number
+          charged_at: string
+          enrollment_id: string
+          id: string
+          refund_transaction_id: string | null
+          refunded_at: string | null
+          session_date: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          charged_at?: string
+          enrollment_id: string
+          id?: string
+          refund_transaction_id?: string | null
+          refunded_at?: string | null
+          session_date: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          charged_at?: string
+          enrollment_id?: string
+          id?: string
+          refund_transaction_id?: string | null
+          refunded_at?: string | null
+          session_date?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollment_charges_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "group_enrollments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_charges_refund_transaction_id_fkey"
+            columns: ["refund_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "token_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollment_charges_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "token_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gamer_profiles: {
         Row: {
-          date_of_birth: string | null
-          gender: Database["public"]["Enums"]["gender_type"] | null
+          date_of_birth: string
+          gender: Database["public"]["Enums"]["gender_type"]
           user_id: string
         }
         Insert: {
-          date_of_birth?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
+          date_of_birth: string
+          gender: Database["public"]["Enums"]["gender_type"]
           user_id: string
         }
         Update: {
-          date_of_birth?: string | null
-          gender?: Database["public"]["Enums"]["gender_type"] | null
+          date_of_birth?: string
+          gender?: Database["public"]["Enums"]["gender_type"]
           user_id?: string
         }
         Relationships: [
@@ -93,23 +148,42 @@ export type Database = {
       group_enrollments: {
         Row: {
           created_at: string
+          enrolled_by: string
           gamer_id: string
           group_id: string
           id: string
+          last_charged_at: string | null
+          status: string
+          unenrolled_at: string | null
         }
         Insert: {
           created_at?: string
+          enrolled_by: string
           gamer_id: string
           group_id: string
           id?: string
+          last_charged_at?: string | null
+          status?: string
+          unenrolled_at?: string | null
         }
         Update: {
           created_at?: string
+          enrolled_by?: string
           gamer_id?: string
           group_id?: string
           id?: string
+          last_charged_at?: string | null
+          status?: string
+          unenrolled_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "group_enrollments_enrolled_by_fkey"
+            columns: ["enrolled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "group_enrollments_gamer_id_fkey"
             columns: ["gamer_id"]
@@ -418,38 +492,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      adjust_token_balance:
-        | {
-            Args: {
-              p_admin_id?: string
-              p_amount: number
-              p_description?: string
-              p_stripe_session_id?: string
-              p_stripe_subscription_id?: string
-              p_type: Database["public"]["Enums"]["token_transaction_type"]
-              p_user_id: string
-            }
-            Returns: {
-              new_balance: number
-              transaction_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_admin_id?: string
-              p_amount: number
-              p_currency?: string
-              p_description?: string
-              p_stripe_session_id?: string
-              p_stripe_subscription_id?: string
-              p_type: Database["public"]["Enums"]["token_transaction_type"]
-              p_user_id: string
-            }
-            Returns: {
-              new_balance: number
-              transaction_id: string
-            }[]
-          }
+      adjust_token_balance: {
+        Args: {
+          p_admin_id?: string
+          p_amount: number
+          p_currency?: string
+          p_description?: string
+          p_stripe_session_id?: string
+          p_stripe_subscription_id?: string
+          p_type: Database["public"]["Enums"]["token_transaction_type"]
+          p_user_id: string
+        }
+        Returns: {
+          new_balance: number
+          transaction_id: string
+        }[]
+      }
       commit_group_changes: {
         Args: {
           p_added_groups?: Json
@@ -459,6 +517,60 @@ export type Database = {
           p_updated_groups?: Json
         }
         Returns: Json
+      }
+      compute_next_session: {
+        Args: {
+          p_day_of_week: number
+          p_start_time: string
+          p_timezone: string
+        }
+        Returns: string
+      }
+      enroll_gamer_in_group: {
+        Args: {
+          p_customer_id: string
+          p_gamer_id: string
+          p_group_id: string
+          p_session_date: string
+        }
+        Returns: {
+          enrollment_id: string
+          new_balance: number
+          transaction_id: string
+        }[]
+      }
+      get_customer_enrollments: {
+        Args: { p_customer_id: string }
+        Returns: {
+          enrolled_at: string
+          enrollment_id: string
+          gamer_display_name: string
+          gamer_id: string
+          gedu_display_name: string
+          group_id: string
+          last_charge_session_date: string
+          last_charged_at: string
+          product_day_of_week: number
+          product_duration_minutes: number
+          product_id: string
+          product_image_url: string
+          product_name: string
+          product_start_time: string
+          product_timezone: string
+          product_token_cost: number
+          status: string
+          unenrolled_at: string
+        }[]
+      }
+      get_enrollment_groups: {
+        Args: { p_product_id: string }
+        Returns: {
+          gamer_count: number
+          gedu_display_name: string
+          group_id: string
+          max_gamer_age: number
+          min_gamer_age: number
+        }[]
       }
       get_my_gamers: {
         Args: never
@@ -560,10 +672,27 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
+      process_enrollment_charges: { Args: never; Returns: Json }
+      unenroll_gamer: {
+        Args: {
+          p_customer_id: string
+          p_enrollment_id: string
+          p_refund: boolean
+        }
+        Returns: {
+          new_balance: number
+          refund_transaction_id: string
+        }[]
+      }
     }
     Enums: {
       gender_type: "boy" | "girl" | "non_binary"
-      token_transaction_type: "purchase" | "subscription" | "admin_adjustment"
+      token_transaction_type:
+        | "purchase"
+        | "subscription"
+        | "admin_adjustment"
+        | "enrollment"
+        | "enrollment_refund"
       user_role: "admin" | "customer" | "gamer" | "gedu"
       voice_room_status: "open" | "closed"
     }
@@ -694,7 +823,13 @@ export const Constants = {
   public: {
     Enums: {
       gender_type: ["boy", "girl", "non_binary"],
-      token_transaction_type: ["purchase", "subscription", "admin_adjustment"],
+      token_transaction_type: [
+        "purchase",
+        "subscription",
+        "admin_adjustment",
+        "enrollment",
+        "enrollment_refund",
+      ],
       user_role: ["admin", "customer", "gamer", "gedu"],
       voice_room_status: ["open", "closed"],
     },

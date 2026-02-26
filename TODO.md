@@ -168,11 +168,25 @@ Affected tables and actions (11 issues):
 
 ### ~~Centralize Date and Currency Formatting for Localization~~ — DONE
 
-Multi-currency support (USD, GBP, EUR) implemented. `formatCurrency()` and `formatCurrencyFromCents()` in `lib/utils.ts` are locale-aware via `CURRENCY_CONFIG`. Local `formatPrice()`/`formatDate()` in `subscription-status-card.tsx` replaced with shared helpers. Inline `$` formatting in `token-purchase-section.tsx` and `admin/users/[id]/page.tsx` replaced with `formatCurrencyFromCents()`.
+Multi-currency support (USD, GBP, EUR) implemented. All user-facing formatting uses browser default locale (`undefined`) so US, UK, and Finnish users see familiar formats automatically. `formatCurrency()`, `formatCurrencyFromCents()`, and `formatDate()` accept an optional `locale` parameter as the last argument for callers that need to override, but default to browser locale when omitted. `parseTime()` helper centralizes Postgres TIME parsing (`"HH:MM"` / `"HH:MM:SS"`). Internal timezone computation is consolidated in `wallClockToUtc()` in `utils.ts`, which pins `"en-US"` with `hour12: false` for predictable numeric parsing — this will be replaced when we adopt `date-fns-tz`. User-facing time formatting in `formatScheduleLocal()` omits `hour12` so each locale gets its natural format (24h for Finland, 12h for US).
 
 - [x] Audit all date/currency formatting across the codebase
-- [x] Consolidate into `lib/utils.ts` helpers that accept locale parameters
-- [x] Replace all inline formatting with the shared helpers
+- [x] Consolidate into `lib/utils.ts` helpers that use browser locale by default
+- [x] Replace all inline formatting with shared helpers or `undefined` locale
+- [x] Add optional `locale` override parameter to formatting functions
+
+### Replace Intl.DateTimeFormat Timezone Hacking with `date-fns-tz`
+
+Internal timezone math uses `Intl.DateTimeFormat("en-US", { timeZone })` + `formatToParts` as a workaround to convert between timezones — formatting a date to a locale string, then parsing the numbers back out. This works but is fragile and confusing. The `"en-US"` locale is pinned solely to guarantee Arabic numerals. The shared `wallClockToUtc()` in `utils.ts` consolidates this logic (used by both `formatScheduleLocal()` and `enrollment.ts`).
+
+`date-fns-tz` provides clean APIs (`fromZonedTime`, `toZonedTime`) that do timezone conversion directly without the format-then-parse roundtrip. This would:
+- Replace `wallClockToUtc()` with a one-liner
+- Eliminate `getWallClockPart()` and `getWallClockDayOfWeek()` helpers in `enrollment.ts` entirely
+- Remove all internal `"en-US"` usages, leaving only browser-locale display formatting
+
+**Affected files:** `src/lib/utils.ts` (wallClockToUtc), `src/lib/enrollment.ts` (getWallClockPart, getWallClockDayOfWeek)
+
+**Why:** Cleaner code, less surface area for bugs (like the `"HH:MM:SS"` parsing issue), and a standard approach used across the industry. The current code works correctly but is unnecessarily complex.
 
 ### Transaction History Currency Mismatch After Currency Switch
 
