@@ -35,6 +35,7 @@ Service layer (src/services/enrollments/)
 └── index.ts                  — Barrel exports
 
 Utilities
+├── src/lib/utils.ts                   — wallClockToUtc() (shared timezone conversion)
 ├── src/lib/enrollment.ts              — getNextSessionStart(), isWithinChargeWindow(), getRefundEligibility()
 └── src/lib/constants/enrollment.ts    — ENROLLMENT_CHARGE_WINDOW_HOURS = 24
 
@@ -289,7 +290,7 @@ Both functions compute the same result — the next UTC occurrence of a weekly s
 4. Convert to UTC
 5. If the result is in the past (today but time already passed), add 7 days
 
-The TypeScript version uses `Intl.DateTimeFormat` for timezone conversions. The SQL version uses PostgreSQL's `AT TIME ZONE` operator. Both handle DST transitions natively through their respective timezone libraries.
+The TypeScript version uses `wallClockToUtc()` from `src/lib/utils.ts`, which converts wall-clock times to UTC via `Intl.DateTimeFormat`. The same function is used by `formatScheduleLocal()` for display formatting. The SQL version uses PostgreSQL's `AT TIME ZONE` operator. Both handle DST transitions natively through their respective timezone libraries.
 
 ## Role Permissions
 

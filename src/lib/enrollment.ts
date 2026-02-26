@@ -1,5 +1,5 @@
 import { ENROLLMENT_CHARGE_WINDOW_HOURS } from "@/lib/constants/enrollment";
-import { parseTime } from "@/lib/utils";
+import { parseTime, wallClockToUtc } from "@/lib/utils";
 
 /**
  * Compute the next occurrence of a weekly session in UTC.
@@ -154,44 +154,3 @@ function getWallClockDayOfWeek(date: Date, timezone: string): number {
   return map[weekday] ?? 0;
 }
 
-/**
- * Convert a wall-clock datetime string (no TZ offset) in a given IANA timezone to UTC.
- * Uses the same iterative approach as formatScheduleLocal in utils.ts.
- */
-export function wallClockToUtc(wallStr: string, timezone: string): Date {
-  // Parse the target wall-clock values
-  const [datePart, timePart] = wallStr.split("T");
-  const [, , dayStr] = datePart.split("-");
-  const [hourStr, minuteStr] = timePart.split(":");
-  const targetDay = Number(dayStr);
-  const targetHour = Number(hourStr);
-  const targetMinute = Number(minuteStr);
-
-  // Start with the naive UTC interpretation
-  const utcGuess = new Date(wallStr + "Z");
-
-  // See what the source timezone shows for this UTC instant
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-  const parts = fmt.formatToParts(utcGuess);
-  const srcHour = Number(parts.find((p) => p.type === "hour")?.value);
-  const srcMin = Number(parts.find((p) => p.type === "minute")?.value);
-  const srcDay = Number(parts.find((p) => p.type === "day")?.value);
-
-  // Compute offset: how far ahead the timezone is from UTC
-  let offsetMinutes = (srcHour - targetHour) * 60 + (srcMin - targetMinute);
-  if (srcDay !== targetDay) {
-    offsetMinutes += srcDay > targetDay ? 24 * 60 : -24 * 60;
-  }
-
-  // Subtract the offset to get the true UTC time
-  return new Date(utcGuess.getTime() - offsetMinutes * 60 * 1000);
-}
