@@ -133,7 +133,7 @@ Copy `.env.local.example` to `.env.local`:
 
 ## Database
 
-Development uses the remote Supabase instance. A local Supabase instance (via Docker) is used for database integration tests — see `docs/local-supabase.md`.
+Development uses the **remote** Supabase instance (configured in `.env.local`). A separate local Supabase instance (Docker) is used **only** for database integration tests (`npm run test:db`) — these run automatically in CI and optionally locally. See `docs/local-supabase.md`.
 
 Migrations in `supabase/migrations/`. Seed data for local tests in `supabase/seed.sql`. After schema changes, regenerate types from the **remote** project:
 ```bash

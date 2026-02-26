@@ -1,18 +1,28 @@
-# Local Supabase Setup
+# Database Testing with Local Supabase
 
-Local Supabase provides a Postgres instance for database integration tests and CI. Day-to-day development uses the remote Supabase instance as usual.
+Day-to-day development uses the **remote** Supabase instance (configured in `.env.local`). A separate **local** Supabase instance runs in Docker and is used exclusively for database integration tests (`npm run test:db`).
 
-## Prerequisites
+In CI (GitHub Actions), these tests run automatically — Docker is pre-installed on the runners. You only need Docker on your own machine if you want to run `npm run test:db` locally.
+
+## CI (no setup needed)
+
+The `test-db` CI job runs on every push:
+1. Spins up a local Supabase in Docker
+2. Applies all migrations + seed data
+3. Runs `npm run test:db`
+4. Tears down
+
+No configuration needed — it uses well-known local Supabase keys hardcoded in the workflow.
+
+## Running Tests Locally (optional — requires Docker)
+
+### Prerequisites
 
 - **Docker Desktop** (WSL2 backend on Windows) — [download](https://www.docker.com/products/docker-desktop/)
+  - ~4 GB install + ~3 GB for Supabase Docker images
 - **Supabase CLI** — already in devDependencies, or install via scoop: `scoop install supabase`
 
-Verify Docker is running:
-```bash
-docker --version
-```
-
-## First-Time Setup
+### First-Time Setup
 
 1. **Start local Supabase** (from project root):
    ```bash
@@ -26,22 +36,19 @@ docker --version
    ```
    The default keys work for all local Supabase instances — no changes needed.
 
-3. **Verify**:
+3. **Run tests**:
    ```bash
    npm run test:db
    ```
 
-## Running Database Tests
+### Useful Commands
 
 ```bash
-npm run test:db       # Run all DB tests
-npm run test:db:ui    # Run with Vitest UI
+supabase start          # Start all services
+supabase stop           # Stop (data persists between restarts)
+supabase db reset       # Wipe, re-apply all migrations, re-seed
+supabase status         # Show URLs and keys
 ```
-
-These tests use a separate vitest config (`vitest.config.db.mts`) that:
-- Uses `node` environment (no jsdom)
-- Runs tests sequentially (shared database)
-- Has a 15-second timeout (DB ops are slower than mocked tests)
 
 ## What Gets Tested
 
@@ -50,12 +57,18 @@ DB tests validate things that mocked tests can't catch:
 - **RPCs** — does `adjust_token_balance()` actually work atomically?
 - **CHECK constraints** — does overdraft prevention fire?
 - **UNIQUE constraints** — does idempotency work?
-
-These run in CI on every push, so migration bugs and RPC security issues are caught before merging.
+- **Security** — can one user access another user's data?
 
 ## Test Architecture
 
-Tests use **UUID isolation** — all test data uses deterministic UUIDs in the `00000000-...-0000000000xx` range. Tests only clean up their own rows.
+Tests use a separate vitest config (`vitest.config.db.mts`) that:
+- Uses `node` environment (no jsdom)
+- Runs tests sequentially (shared database)
+- Has a 15-second timeout (DB ops are slower than mocked tests)
+
+### UUID Isolation
+
+All test data uses deterministic UUIDs in the `00000000-...-0000000000xx` range. Tests only clean up their own rows — they never interfere with each other.
 
 ### Test Users (from seed.sql)
 
@@ -67,23 +80,14 @@ Tests use **UUID isolation** — all test data uses deterministic UUIDs in the `
 | `...004` | gamer | `testgamer@gamer.sogverse.internal` | `testpassword123` |
 | `...005` | customer | `customer2@test.local` | `testpassword123` |
 
-## Useful Commands
-
-```bash
-supabase start          # Start all services
-supabase stop           # Stop (data persists between restarts)
-supabase db reset       # Wipe, re-apply all migrations, re-seed
-supabase status         # Show URLs and keys
-```
-
 ## Migration Workflow
 
 1. Write migration in `supabase/migrations/`
-2. `supabase db reset` — verify it applies cleanly locally
-3. `npm run test:db` — verify DB tests still pass
+2. Test locally (if Docker is available): `supabase db reset && npm run test:db`
+3. Or just push — CI will validate the migration automatically
 4. Push to remote: `supabase db push -p "$SUPABASE_DB_PASSWORD"`
 
-## Troubleshooting
+## Troubleshooting (local only)
 
 ### Docker not running
 ```
