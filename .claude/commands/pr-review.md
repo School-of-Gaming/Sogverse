@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: PR review focusing on architecture, code quaility, testing, and security.
+description: PR review focusing on architecture, code quality, testing, and security.
 ---
 
 I want you to perform a thorough Pull Request review of the current feature branch against the 'dev' branch.
@@ -14,12 +14,13 @@ I want you to perform a thorough Pull Request review of the current feature bran
     * **Alignment**: Does this align with the existing architectural patterns?
     * **Abstractions**: Are implementation details exposed inappropriately (leaky abstractions)?
     * **Responsibility**: Do new modules follow the Single Responsibility Principle?
-    * **Tech Debt**: Are adding new tech debt to the project?
+    * **Tech Debt**: Are we adding new tech debt to the project?
 
 3.  **Code Quality**: 
-    * Look for logic errors, code smells, and potential bugs.
+    * Look for logic errors, code smells, style consistency, and potential bugs.
     * Identify redundant code or "copy-paste" patterns that increase the maintenance burden.
     * Check if there any unnecessarily large files or functions that could benefit from being broken up.
+    * Check for code readability and maintainability.
     * Verify that essential or complex logic has unit tests and integration tests where appropriate.
     * For critical database logic (monetary transactions, SECURITY DEFINER RPCs, RLS policies protecting sensitive data), verify there are DB tests in `tests/db/`.
     * Verify that critical pages and UI components and have e2e tests.
@@ -28,8 +29,14 @@ I want you to perform a thorough Pull Request review of the current feature bran
     * Identify security holes (especially Supabase RLS and monetary payments).
     * Look for performance regressions (like unnecessary client-side rendering or "waterfall" fetches).
 
-Please provide the review in a structured format:
-- **Architectural & Design Feedback**: High-level design and reusability thoughts.
-- **Critical**: Must-fix bugs, security issues, or major duplication.
-- **Suggested**: Improvements for readability/maintainability.
-- **Nitpick**: Minor style points.
+**Provide the review in this format:**
+1. Overall summary and feedback
+2. Sort and number the issues from most important to least important and place them into these categories:
+    * Critical
+    * Major
+    * Minor
+    * Trival / Nitpick
+3. Give the user the option go through the issues one by one
+    * Explain the issue
+    * Offer a potential fix
+    * Rate the fix as either **straightforward** (safe to apply without further discussion) or **needs discussion** (higher risk, multiple approaches, or behavioral changes worth talking through)
