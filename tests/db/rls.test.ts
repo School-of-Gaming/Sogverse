@@ -140,12 +140,20 @@ describe("Row Level Security", () => {
     });
 
     it("customer cannot delete a profile", async () => {
-      const { error } = await customerClient
+      // PostgREST silently returns 0 rows when RLS filters out the target
+      await customerClient
         .from("profiles")
         .delete()
         .eq("id", TEST_IDS.CUSTOMER);
 
-      expect(error).not.toBeNull();
+      // Verify the profile still exists
+      const { data } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("id", TEST_IDS.CUSTOMER)
+        .single();
+
+      expect(data).not.toBeNull();
     });
   });
 
@@ -175,12 +183,20 @@ describe("Row Level Security", () => {
     });
 
     it("customer cannot update own token_balance directly", async () => {
-      const { error } = await customerClient
+      // PostgREST silently returns 0 rows when RLS filters out the target
+      await customerClient
         .from("customer_profiles")
         .update({ token_balance: 999999 })
         .eq("user_id", TEST_IDS.CUSTOMER);
 
-      expect(error).not.toBeNull();
+      // Verify balance was not changed
+      const { data } = await admin
+        .from("customer_profiles")
+        .select("token_balance")
+        .eq("user_id", TEST_IDS.CUSTOMER)
+        .single();
+
+      expect(data!.token_balance).not.toBe(999999);
     });
   });
 
@@ -222,12 +238,20 @@ describe("Row Level Security", () => {
     });
 
     it("customer cannot delete a gamer_profile", async () => {
-      const { error } = await customerClient
+      // PostgREST silently returns 0 rows when RLS filters out the target
+      await customerClient
         .from("gamer_profiles")
         .delete()
         .eq("user_id", TEST_IDS.GAMER);
 
-      expect(error).not.toBeNull();
+      // Verify the gamer profile still exists
+      const { data } = await admin
+        .from("gamer_profiles")
+        .select("user_id")
+        .eq("user_id", TEST_IDS.GAMER)
+        .single();
+
+      expect(data).not.toBeNull();
     });
   });
 
@@ -468,12 +492,20 @@ describe("Row Level Security", () => {
     });
 
     it("gamer cannot delete own enrollment", async () => {
-      const { error } = await gamerClient
+      // PostgREST silently returns 0 rows when RLS filters out the target
+      await gamerClient
         .from("group_enrollments")
         .delete()
         .eq("id", TEST_IDS.ENROLLMENT);
 
-      expect(error).not.toBeNull();
+      // Verify the enrollment still exists
+      const { data } = await admin
+        .from("group_enrollments")
+        .select("id")
+        .eq("id", TEST_IDS.ENROLLMENT)
+        .single();
+
+      expect(data).not.toBeNull();
     });
   });
 
