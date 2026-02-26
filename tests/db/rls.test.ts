@@ -1,11 +1,18 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  resetTokenState,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 describe("Row Level Security", () => {
+  // Service-role client — bypasses RLS. Use only for setup/teardown.
   let admin: SupabaseClient<Database>;
+  // Authenticated clients — respect RLS policies.
+  let adminClient: SupabaseClient<Database>;
   let customerClient: SupabaseClient<Database>;
   let customer2Client: SupabaseClient<Database>;
   let gamerClient: SupabaseClient<Database>;
@@ -13,6 +20,10 @@ describe("Row Level Security", () => {
 
   beforeAll(async () => {
     admin = createAdminTestClient();
+    adminClient = await createAuthenticatedClient(
+      TEST_CREDENTIALS.ADMIN.email,
+      TEST_CREDENTIALS.ADMIN.password
+    );
     customerClient = await createAuthenticatedClient(
       TEST_CREDENTIALS.CUSTOMER.email,
       TEST_CREDENTIALS.CUSTOMER.password
@@ -29,6 +40,10 @@ describe("Row Level Security", () => {
       TEST_CREDENTIALS.GEDU.email,
       TEST_CREDENTIALS.GEDU.password
     );
+  });
+
+  afterAll(async () => {
+    await resetTokenState(admin);
   });
 
   // =========================================================================
@@ -87,7 +102,7 @@ describe("Row Level Security", () => {
     });
 
     it("admin can read all profiles", async () => {
-      const { data, error } = await admin
+      const { data, error } = await adminClient
         .from("profiles")
         .select("id")
         .in("id", [
@@ -112,6 +127,25 @@ describe("Row Level Security", () => {
       expect(error).toBeNull();
       expect(data!.role).toBe("gamer");
       expect(data!.username).toBe("testgamer");
+    });
+
+    it("customer cannot insert a profile", async () => {
+      const { error } = await customerClient.from("profiles").insert({
+        id: "00000000-0000-0000-0000-000000000099",
+        role: "customer",
+        display_name: "Injected",
+      });
+
+      expect(error).not.toBeNull();
+    });
+
+    it("customer cannot delete a profile", async () => {
+      const { error } = await customerClient
+        .from("profiles")
+        .delete()
+        .eq("id", TEST_IDS.CUSTOMER);
+
+      expect(error).not.toBeNull();
     });
   });
 
@@ -138,6 +172,15 @@ describe("Row Level Security", () => {
         .eq("user_id", TEST_IDS.CUSTOMER_2);
 
       expect(data).toEqual([]);
+    });
+
+    it("customer cannot update own token_balance directly", async () => {
+      const { error } = await customerClient
+        .from("customer_profiles")
+        .update({ token_balance: 999999 })
+        .eq("user_id", TEST_IDS.CUSTOMER);
+
+      expect(error).not.toBeNull();
     });
   });
 
@@ -177,6 +220,15 @@ describe("Row Level Security", () => {
 
       expect(data).toEqual([]);
     });
+
+    it("customer cannot delete a gamer_profile", async () => {
+      const { error } = await customerClient
+        .from("gamer_profiles")
+        .delete()
+        .eq("user_id", TEST_IDS.GAMER);
+
+      expect(error).not.toBeNull();
+    });
   });
 
   // =========================================================================
@@ -185,7 +237,7 @@ describe("Row Level Security", () => {
 
   describe("token_transactions", () => {
     it("customer can read own transactions", async () => {
-      // Create a transaction via admin so there's something to read
+      // Create a transaction via service-role so there's something to read
       await admin.rpc("adjust_token_balance", {
         p_user_id: TEST_IDS.CUSTOMER,
         p_amount: 1,
@@ -211,6 +263,19 @@ describe("Row Level Security", () => {
 
       expect(data).toEqual([]);
     });
+
+    it("customer cannot insert a token_transaction directly", async () => {
+      const { error } = await customerClient
+        .from("token_transactions")
+        .insert({
+          user_id: TEST_IDS.CUSTOMER,
+          amount: 999,
+          type: "purchase",
+          balance_after: 999,
+        });
+
+      expect(error).not.toBeNull();
+    });
   });
 
   // =========================================================================
@@ -231,8 +296,8 @@ describe("Row Level Security", () => {
     });
 
     it("non-admin cannot read hidden products", async () => {
-      // Create a hidden product via admin
-      const { data: hidden } = await admin
+      // Create a hidden product via service-role
+      await admin
         .from("products")
         .insert({
           id: "00000000-0000-0000-0000-000000000099",
@@ -266,6 +331,60 @@ describe("Row Level Security", () => {
         .delete()
         .eq("id", "00000000-0000-0000-0000-000000000099");
     });
+
+    it("customer cannot insert a product", async () => {
+      const { error } = await customerClient.from("products").insert({
+        name: "Injected",
+        description: "Should be denied",
+        image_url: "https://example.com/x.png",
+        created_by: TEST_IDS.CUSTOMER,
+        game_id: TEST_IDS.GAME,
+        day_of_week: 1,
+        start_time: "10:00",
+        timezone: "Europe/Helsinki",
+        duration_minutes: 60,
+        min_age: 6,
+        max_age: 12,
+        token_cost: 1,
+      });
+
+      expect(error).not.toBeNull();
+    });
+
+    it("admin can read hidden products", async () => {
+      // Create a hidden product via service-role
+      await admin.from("products").insert({
+        id: "00000000-0000-0000-0000-000000000098",
+        name: "Admin-Only Product",
+        description: "Hidden from non-admins",
+        image_url: "https://example.com/hidden2.png",
+        is_visible: false,
+        created_by: TEST_IDS.ADMIN,
+        game_id: TEST_IDS.GAME,
+        day_of_week: 2,
+        start_time: "11:00",
+        timezone: "Europe/Helsinki",
+        duration_minutes: 60,
+        min_age: 6,
+        max_age: 12,
+        token_cost: 1,
+      });
+
+      const { data, error } = await adminClient
+        .from("products")
+        .select("id")
+        .eq("id", "00000000-0000-0000-0000-000000000098")
+        .single();
+
+      expect(error).toBeNull();
+      expect(data!.id).toBe("00000000-0000-0000-0000-000000000098");
+
+      // Cleanup
+      await admin
+        .from("products")
+        .delete()
+        .eq("id", "00000000-0000-0000-0000-000000000098");
+    });
   });
 
   // =========================================================================
@@ -292,6 +411,69 @@ describe("Row Level Security", () => {
 
       expect(error).toBeNull();
       expect(data!.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("customer cannot insert a product_group", async () => {
+      const { error } = await customerClient.from("product_groups").insert({
+        product_id: TEST_IDS.PRODUCT,
+        gedu_id: TEST_IDS.GEDU,
+        display_order: 99,
+      });
+
+      expect(error).not.toBeNull();
+    });
+  });
+
+  describe("group_enrollments", () => {
+    it("gamer can read own enrollments", async () => {
+      const { data, error } = await gamerClient
+        .from("group_enrollments")
+        .select("id, group_id, gamer_id")
+        .eq("gamer_id", TEST_IDS.GAMER);
+
+      expect(error).toBeNull();
+      expect(data!.length).toBeGreaterThanOrEqual(1);
+      expect(data!.every((e) => e.gamer_id === TEST_IDS.GAMER)).toBe(true);
+    });
+
+    it("gedu can read enrollments for own groups", async () => {
+      const { data, error } = await geduClient
+        .from("group_enrollments")
+        .select("id, group_id, gamer_id")
+        .eq("group_id", TEST_IDS.GROUP);
+
+      expect(error).toBeNull();
+      expect(data!.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("customer can read enrollments for visible product groups", async () => {
+      const { data, error } = await customerClient
+        .from("group_enrollments")
+        .select("id, group_id")
+        .eq("group_id", TEST_IDS.GROUP);
+
+      expect(error).toBeNull();
+      expect(data!.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("customer cannot insert an enrollment", async () => {
+      const { error } = await customerClient
+        .from("group_enrollments")
+        .insert({
+          group_id: TEST_IDS.GROUP,
+          gamer_id: TEST_IDS.GAMER,
+        });
+
+      expect(error).not.toBeNull();
+    });
+
+    it("gamer cannot delete own enrollment", async () => {
+      const { error } = await gamerClient
+        .from("group_enrollments")
+        .delete()
+        .eq("id", TEST_IDS.ENROLLMENT);
+
+      expect(error).not.toBeNull();
     });
   });
 

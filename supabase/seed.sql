@@ -187,6 +187,7 @@ INSERT INTO games (id, name) VALUES (
 );
 
 -- Test product (Wednesday = 3, 15:00 Europe/Helsinki, token_cost=2, visible)
+-- Note: is_visible was renamed from is_active in migration 00021
 INSERT INTO products (id, name, description, image_url, is_visible, created_by, game_id, day_of_week, start_time, timezone, duration_minutes, min_age, max_age, token_cost) VALUES (
   '00000000-0000-0000-0000-000000000020',
   'Test Product',
@@ -210,4 +211,11 @@ INSERT INTO product_groups (id, product_id, gedu_id, display_order) VALUES (
   '00000000-0000-0000-0000-000000000020', -- Test Product
   '00000000-0000-0000-0000-000000000003', -- Test Gedu
   0
+);
+
+-- Enroll gamer into the test group
+INSERT INTO group_enrollments (id, group_id, gamer_id) VALUES (
+  '00000000-0000-0000-0000-000000000040',
+  '00000000-0000-0000-0000-000000000030', -- Test Group
+  '00000000-0000-0000-0000-000000000004'  -- Test Gamer
 );
