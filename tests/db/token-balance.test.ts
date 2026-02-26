@@ -7,8 +7,10 @@ import { TEST_IDS, SEED } from "./constants";
 describe("Token Balance (adjust_token_balance RPC)", () => {
   let admin: SupabaseClient<Database>;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     admin = createAdminTestClient();
+    // Reset to seed state in case a prior test file mutated the balance
+    await resetTokenState(admin);
   });
 
   afterAll(async () => {
