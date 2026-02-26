@@ -26,7 +26,7 @@ export function TransactionHistoryTable({ transactions }: TransactionHistoryTabl
           {transactions.map((tx) => (
             <tr key={tx.id} className="border-b border-border/50">
               <td className="py-2 pr-4 whitespace-nowrap">
-                {new Date(tx.created_at).toLocaleDateString("en-US", {
+                {new Date(tx.created_at).toLocaleDateString(undefined, {
                   month: "long",
                   day: "numeric",
                   year: "numeric",

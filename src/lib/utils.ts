@@ -20,11 +20,7 @@ export function formatCurrency(
   currency: SupportedCurrency,
   locale?: string,
 ): string {
-  const resolvedLocale =
-    locale ??
-    (typeof navigator !== "undefined" ? navigator.language : undefined) ??
-    CURRENCY_CONFIG[currency].locale;
-  return new Intl.NumberFormat(resolvedLocale, {
+  return new Intl.NumberFormat(locale, {
     style: "currency",
     currency: currency.toUpperCase(),
   }).format(amount);
@@ -38,9 +34,9 @@ export function formatCurrencyFromCents(
   return formatCurrency(cents / 100, currency, locale);
 }
 
-export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
+export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions, locale?: string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("en-US", {
+  return new Intl.DateTimeFormat(locale, {
     dateStyle: "medium",
     ...options,
   }).format(d);
@@ -156,14 +152,14 @@ export function formatScheduleLocal(
   // The actual UTC time for the wall-clock time in the source timezone
   utcDate = new Date(utcDate.getTime() - offsetMinutes * 60 * 1000);
 
-  // Format in the viewer's local timezone
-  const localTimeFmt = new Intl.DateTimeFormat("en-US", {
+  // Format in the viewer's local timezone (undefined = browser locale)
+  const localTimeFmt = new Intl.DateTimeFormat(undefined, {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   });
-  const localDayFmt = new Intl.DateTimeFormat("en-US", { weekday: "long" });
-  const localTzFmt = new Intl.DateTimeFormat("en-US", {
+  const localDayFmt = new Intl.DateTimeFormat(undefined, { weekday: "long" });
+  const localTzFmt = new Intl.DateTimeFormat(undefined, {
     timeZoneName: "short",
   });
 
