@@ -12,8 +12,11 @@ npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
+npm run test:db          # Vitest DB tests (requires local Supabase)
+npm run test:db:ui       # Vitest DB tests with UI
 npm run test:e2e         # Playwright E2E tests
 npm run test:e2e:ui      # Playwright with UI
+npm run db:reset         # Reset local Supabase (wipe + re-migrate + re-seed)
 npm run supabase:gen-types  # Regenerate database types from local Supabase
 ```
 
@@ -130,7 +133,9 @@ Copy `.env.local.example` to `.env.local`:
 
 ## Database
 
-Migrations in `supabase/migrations/`. After schema changes, regenerate types from the **remote** project:
+Development uses the **remote** Supabase instance (configured in `.env.local`). A separate local Supabase instance (Docker) is used **only** for database integration tests (`npm run test:db`) — these run automatically in CI and optionally locally. See `docs/local-supabase.md`.
+
+Migrations in `supabase/migrations/`. Seed data for local tests in `supabase/seed.sql`. After schema changes, regenerate types from the **remote** project:
 ```bash
 npx supabase gen types typescript --project-id $SUPABASE_PROJECT_REF > src/types/database.types.ts
 ```
@@ -141,8 +146,6 @@ The `npm run supabase:gen-types` script uses `--local` which requires Docker. Fo
 **Important:** `database.types.ts` is purely auto-generated — do not hand-edit it. Convenience type aliases (e.g., `Profile`, `UserRole`) live in `src/types/index.ts`. After regenerating, check whether new tables or enums need aliases added to `index.ts`.
 
 ### Remote Database Migrations
-
-This project uses a remote Supabase instance (not local Docker). To push migrations:
 
 1. **Link the project** (first time only):
    ```bash
@@ -177,6 +180,12 @@ tests/
 │   ├── api/                       #   API route handler tests
 │   ├── auth/                      #   Auth callback/signout flow tests
 │   └── proxy.test.ts              #   Proxy routing/session tests
+├── db/                            # Database tests against local Supabase
+│   ├── setup.ts                   #   Verify local Supabase connection
+│   ├── helpers.ts                 #   Admin/authenticated client factories, reset helpers
+│   ├── constants.ts               #   Deterministic test UUIDs matching seed.sql
+│   ├── token-balance.test.ts      #   adjust_token_balance RPC, CHECK constraints
+│   └── rls.test.ts                #   Row Level Security policy verification
 └── e2e/                           # Playwright browser tests
     └── *.spec.ts
 ```
@@ -187,12 +196,15 @@ tests/
 |---|---|---|
 | **unit** | Pure functions, service classes with injected mock dependencies, mapping/transform logic | `.test.ts`, Vitest |
 | **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
+| **db** | RPCs, constraints, RLS policies against real local Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
 | **e2e** | Playwright browser tests against running dev server | `.spec.ts`, Playwright |
 
 ### Running Tests
 ```bash
 npm run test             # All Vitest tests (unit + integration)
 npm run test:ui          # Vitest with browser UI
+npm run test:db          # Database tests (requires local Supabase — see docs/local-supabase.md)
+npm run test:db:ui       # Database tests with browser UI
 npm run test:e2e         # Playwright E2E tests (requires dev server)
 npm run test:e2e:ui      # Playwright with browser UI
 ```

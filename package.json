@@ -11,8 +11,11 @@
     "type-check": "tsc --noEmit",
     "test": "vitest --run",
     "test:ui": "vitest --ui",
+    "test:db": "vitest --run --config vitest.config.db.mts",
+    "test:db:ui": "vitest --ui --config vitest.config.db.mts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "db:reset": "supabase db reset",
     "supabase:gen-types": "supabase gen types typescript --local > src/types/database.types.ts"
   },
   "dependencies": {

@@ -100,6 +100,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER
 SET search_path = public;
 
 -- 8. Update adjust_token_balance() to use customer_profiles
+-- Drop the old 7-param version first (different param count = separate overload, not a replace)
+DROP FUNCTION IF EXISTS adjust_token_balance(UUID, INTEGER, token_transaction_type, TEXT, TEXT, TEXT, UUID);
 CREATE OR REPLACE FUNCTION adjust_token_balance(
   p_user_id UUID,
   p_amount INTEGER,
