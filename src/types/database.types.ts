@@ -677,7 +677,7 @@ export type Database = {
         Args: {
           p_customer_id: string
           p_enrollment_id: string
-          p_refund_amount: number
+          p_refund: boolean
         }
         Returns: {
           new_balance: number

@@ -71,8 +71,8 @@ Database functions (SQL)
 5. API route queries the latest `enrollment_charges` row's `session_date` for this enrollment
 6. API route reconstructs the session timestamp via `wallClockToUtc(session_date + start_time, timezone)` and verifies `now < sessionTime` (session hasn't started)
 7. Passes `lastChargeSessionDate` to `getRefundEligibility()` → session hasn't started, outside 24h window → `eligible: true, refundAmount: token_cost`
-8. Calls `unenroll_gamer` RPC with `p_refund_amount = token_cost`
-9. RPC: sets `status='unenrolled'`, `unenrolled_at=NOW()`, credits tokens via `adjust_token_balance('enrollment_refund')`, marks latest `enrollment_charges` row as refunded
+8. Calls `unenroll_gamer` RPC with `p_refund = true`
+9. RPC: looks up `products.token_cost` internally, sets `status='unenrolled'`, `unenrolled_at=NOW()`, credits tokens via `adjust_token_balance('enrollment_refund')`, marks latest `enrollment_charges` row as refunded
 10. Dialog shows success with refund amount and new balance
 
 ### 3. Unenroll — no refund (within 24h of next session)
@@ -81,7 +81,7 @@ Same as flow 2, except:
 - `EnrollmentCard` shows "No refund — next session is within 24h" (amber warning)
 - `UnenrollDialog` shows "No refund will be issued — the next session is within 24 hours"
 - API route's `getRefundEligibility()` → session hasn't started but within 24h window → `eligible: false, refundAmount: 0, reason: "within_window"`
-- RPC is called with `p_refund_amount = 0` — status changes but no token adjustment
+- RPC is called with `p_refund = false` — status changes but no token adjustment
 
 ### 3a. Unenroll — no refund (session already attended)
 
@@ -90,7 +90,7 @@ Customer unenrolls after the charged session has already started. The latest cha
 - `EnrollmentCard` shows "You won't be charged for the next session" (muted text)
 - `UnenrollDialog` shows "No refund needed — you won't be charged for the next session"
 - API route's `getRefundEligibility()` → `now > sessionTimestamp` → `eligible: false, refundAmount: 0, reason: "not_yet_charged"`
-- RPC is called with `p_refund_amount = 0` — status changes, no token adjustment
+- RPC is called with `p_refund = false` — status changes, no token adjustment
 - The cron hasn't charged for the next session yet, so the customer won't owe anything further
 
 ### 4. Weekly charge (pg_cron)

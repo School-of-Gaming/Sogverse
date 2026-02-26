@@ -227,7 +227,7 @@ describe("DELETE /api/enrollments/[id]", () => {
     expect(mockAdminRpc).toHaveBeenCalledWith("unenroll_gamer", {
       p_customer_id: "customer-123",
       p_enrollment_id: "enr-1",
-      p_refund_amount: 5,
+      p_refund: true,
     });
   });
 
@@ -257,7 +257,7 @@ describe("DELETE /api/enrollments/[id]", () => {
     expect(mockAdminRpc).toHaveBeenCalledWith("unenroll_gamer", {
       p_customer_id: "customer-123",
       p_enrollment_id: "enr-1",
-      p_refund_amount: 0,
+      p_refund: false,
     });
   });
 

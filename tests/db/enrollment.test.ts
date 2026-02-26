@@ -113,7 +113,7 @@ describe("Enrollment (enroll_gamer_in_group RPC)", () => {
     await admin.rpc("unenroll_gamer", {
       p_customer_id: TEST_IDS.CUSTOMER,
       p_enrollment_id: rows[0].enrollment_id,
-      p_refund_amount: 0,
+      p_refund: false,
     });
 
     // Re-enroll should succeed — only active enrollments block duplicates

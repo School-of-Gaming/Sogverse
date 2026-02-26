@@ -77,7 +77,7 @@ export async function DELETE(
     const { data, error } = await admin.rpc("unenroll_gamer", {
       p_customer_id: user.id,
       p_enrollment_id: enrollmentId,
-      p_refund_amount: refundAmount,
+      p_refund: eligible,
     });
 
     if (error) {

@@ -44,7 +44,7 @@ describe("Unenrollment (unenroll_gamer RPC)", () => {
     const { data, error } = await admin.rpc("unenroll_gamer", {
       p_customer_id: TEST_IDS.CUSTOMER,
       p_enrollment_id: enrollment.enrollment_id,
-      p_refund_amount: SEED.PRODUCT_TOKEN_COST,
+      p_refund: true,
     });
 
     expect(error).toBeNull();
@@ -80,7 +80,7 @@ describe("Unenrollment (unenroll_gamer RPC)", () => {
     const { data, error } = await admin.rpc("unenroll_gamer", {
       p_customer_id: TEST_IDS.CUSTOMER,
       p_enrollment_id: enrollment.enrollment_id,
-      p_refund_amount: 0,
+      p_refund: false,
     });
 
     expect(error).toBeNull();
@@ -95,7 +95,7 @@ describe("Unenrollment (unenroll_gamer RPC)", () => {
     const { error } = await admin.rpc("unenroll_gamer", {
       p_customer_id: TEST_IDS.CUSTOMER_2,
       p_enrollment_id: enrollment.enrollment_id,
-      p_refund_amount: 0,
+      p_refund: false,
     });
 
     expect(error).not.toBeNull();
@@ -109,14 +109,14 @@ describe("Unenrollment (unenroll_gamer RPC)", () => {
     await admin.rpc("unenroll_gamer", {
       p_customer_id: TEST_IDS.CUSTOMER,
       p_enrollment_id: enrollment.enrollment_id,
-      p_refund_amount: 0,
+      p_refund: false,
     });
 
     // Second unenroll fails
     const { error } = await admin.rpc("unenroll_gamer", {
       p_customer_id: TEST_IDS.CUSTOMER,
       p_enrollment_id: enrollment.enrollment_id,
-      p_refund_amount: 0,
+      p_refund: false,
     });
 
     expect(error).not.toBeNull();
@@ -134,7 +134,7 @@ describe("Unenrollment (unenroll_gamer RPC)", () => {
     const { error } = await customerClient.rpc("unenroll_gamer", {
       p_customer_id: TEST_IDS.CUSTOMER,
       p_enrollment_id: enrollment.enrollment_id,
-      p_refund_amount: 0,
+      p_refund: false,
     });
 
     expect(error).not.toBeNull();
