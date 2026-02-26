@@ -10,4 +10,8 @@
 -- browser and is protected by the auth.uid() check added in migration 00037.
 
 REVOKE EXECUTE ON FUNCTION enroll_gamer_in_group(UUID, UUID, UUID, DATE) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION enroll_gamer_in_group(UUID, UUID, UUID, DATE) FROM anon;
+REVOKE EXECUTE ON FUNCTION enroll_gamer_in_group(UUID, UUID, UUID, DATE) FROM public;
 REVOKE EXECUTE ON FUNCTION unenroll_gamer(UUID, UUID, INTEGER) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION unenroll_gamer(UUID, UUID, INTEGER) FROM anon;
+REVOKE EXECUTE ON FUNCTION unenroll_gamer(UUID, UUID, INTEGER) FROM public;

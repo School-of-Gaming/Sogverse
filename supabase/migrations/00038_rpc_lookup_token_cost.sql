@@ -87,4 +87,4 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION enroll_gamer_in_group(UUID, UUID, UUID, DATE) TO authenticated;
+-- No GRANT — access is revoked in 00039 (service-role only via API routes).

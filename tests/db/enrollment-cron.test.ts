@@ -169,11 +169,12 @@ describe("process_enrollment_charges (cron)", () => {
   });
 
   it("skips enrollments outside the charge window", async () => {
-    // Set product to 8 days from now — well outside the 24h window
-    const eightDaysLater = new Date(Date.now() + 8 * 24 * 60 * 60 * 1000);
-    const jsDay = eightDaysLater.getUTCDay();
+    // Set product to 4 days from now — outside the 24h window.
+    // (Don't use 8 days: 8 % 7 = 1, so compute_next_session returns tomorrow.)
+    const fourDaysLater = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000);
+    const jsDay = fourDaysLater.getUTCDay();
     const ourDay = jsDay === 0 ? 6 : jsDay - 1;
-    const h = String(eightDaysLater.getUTCHours()).padStart(2, "0");
+    const h = String(fourDaysLater.getUTCHours()).padStart(2, "0");
 
     await admin
       .from("products")

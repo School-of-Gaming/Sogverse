@@ -96,5 +96,9 @@ BEGIN
 END;
 $$;
 
--- Do NOT grant to authenticated — this RPC is service-role only (called via API routes).
--- The old grant from 00032 was revoked in 00039; the new signature inherits no grants.
+-- Revoke browser access — this RPC is service-role only (called via API routes).
+-- New functions get EXECUTE granted to PUBLIC by default in PostgreSQL,
+-- so we must explicitly revoke after creating the replacement function.
+REVOKE EXECUTE ON FUNCTION unenroll_gamer(UUID, UUID, BOOLEAN) FROM authenticated;
+REVOKE EXECUTE ON FUNCTION unenroll_gamer(UUID, UUID, BOOLEAN) FROM anon;
+REVOKE EXECUTE ON FUNCTION unenroll_gamer(UUID, UUID, BOOLEAN) FROM public;
