@@ -3,14 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Calendar, Clock, Users, Coins, AlertTriangle } from "lucide-react";
+import { Calendar, Clock, Users, Coins } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { CustomerEnrollment } from "@/services/enrollments";
-import { getNextSessionStart, getRefundEligibility } from "@/lib/enrollment";
+import { getNextSessionStart, getRefundEligibility, formatCountdown } from "@/lib/enrollment";
 import { formatScheduleLocal } from "@/lib/utils";
-import { ENROLLMENT_CHARGE_WINDOW_HOURS } from "@/lib/constants/enrollment";
 import { ROUTES } from "@/lib/constants";
 import { UnenrollDialog } from "./unenroll-dialog";
 
@@ -47,13 +46,9 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
 
   const isActive = enrollment.status === "active";
 
-  const nextSessionDisplay = nextSession.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+  const msUntil = nextSession.getTime() - Date.now();
+  const totalMinutes = Math.max(0, Math.floor(msUntil / 60_000));
+  const countdown = formatCountdown(msUntil);
 
   return (
     <>
@@ -114,25 +109,15 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
             {/* Active enrollment: next session + refund + unenroll */}
             {isActive && (
               <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                <div className="space-y-1">
-                  <p className="text-sm">
-                    Next session: <span className="font-medium">{nextSessionDisplay}</span>
-                  </p>
-                  {refundEligible ? (
-                    <p className="text-xs text-success">
-                      Refund available if you unenroll now
-                    </p>
-                  ) : refundDenialReason === "within_window" ? (
-                    <p className="flex items-center gap-1 text-xs text-warning">
-                      <AlertTriangle className="h-3 w-3" />
-                      No refund — next session is within {ENROLLMENT_CHARGE_WINDOW_HOURS}h
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      You won&apos;t be charged for the next session
-                    </p>
-                  )}
-                </div>
+                <p className="text-sm">
+                  Next session {nextSession.toLocaleDateString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })} <span className={totalMinutes < 720 ? "font-medium text-warning" : "text-muted-foreground"}>(starts in {countdown})</span>
+                </p>
                 <Button
                   variant="outline"
                   size="sm"

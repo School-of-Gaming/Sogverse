@@ -120,7 +120,7 @@ export function UnenrollDialog({
                   </p>
                 ) : (
                   <p className="text-muted-foreground">
-                    No refund needed — you won&apos;t be charged for the next session.
+                    You won&apos;t be charged for the next session.
                   </p>
                 )}
               </div>

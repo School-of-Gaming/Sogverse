@@ -3,6 +3,7 @@ import {
   getNextSessionStart,
   isWithinChargeWindow,
   getRefundEligibility,
+  formatCountdown,
 } from "@/lib/enrollment";
 
 // All tests use explicit `now` to be deterministic.
@@ -273,5 +274,44 @@ describe("getRefundEligibility", () => {
 
     expect(result.eligible).toBe(true);
     expect(result.refundAmount).toBe(3);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// formatCountdown
+// ---------------------------------------------------------------------------
+
+describe("formatCountdown", () => {
+  const mins = (n: number) => n * 60_000;
+  const hours = (n: number) => n * 60 * 60_000;
+  const days = (n: number) => n * 24 * 60 * 60_000;
+
+  it("shows days when 1+ days away", () => {
+    expect(formatCountdown(days(1))).toBe("1 day");
+    expect(formatCountdown(days(3))).toBe("3 days");
+    expect(formatCountdown(days(3) + hours(17))).toBe("3 days");
+  });
+
+  it("shows hours when 2–23 hours away", () => {
+    expect(formatCountdown(hours(2) + mins(1))).toBe("2 hours");
+    expect(formatCountdown(hours(5))).toBe("5 hours");
+    expect(formatCountdown(hours(23) + mins(59))).toBe("23 hours");
+  });
+
+  it("shows hours and minutes when 1–2 hours away", () => {
+    expect(formatCountdown(hours(1))).toBe("1 hour");
+    expect(formatCountdown(hours(1) + mins(30))).toBe("1 hour and 30 minutes");
+    expect(formatCountdown(hours(1) + mins(1))).toBe("1 hour and 1 minute");
+    expect(formatCountdown(mins(119))).toBe("1 hour and 59 minutes");
+  });
+
+  it("shows minutes when under 1 hour", () => {
+    expect(formatCountdown(mins(45))).toBe("45 minutes");
+    expect(formatCountdown(mins(1))).toBe("1 minute");
+    expect(formatCountdown(mins(0))).toBe("0 minutes");
+  });
+
+  it("clamps negative values to 0 minutes", () => {
+    expect(formatCountdown(-1000)).toBe("0 minutes");
   });
 });
