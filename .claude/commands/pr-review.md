@@ -21,6 +21,7 @@ I want you to perform a thorough Pull Request review of the current feature bran
     * Identify redundant code or "copy-paste" patterns that increase the maintenance burden.
     * Check if there any unnecessarily large files or functions that could benefit from being broken up.
     * Verify that essential or complex logic has unit tests and integration tests where appropriate.
+    * For critical database logic (monetary transactions, SECURITY DEFINER RPCs, RLS policies protecting sensitive data), verify there are DB tests in `tests/db/`.
     * Verify that critical pages and UI components and have e2e tests.
 
 4.  **Security & Performance**: 
