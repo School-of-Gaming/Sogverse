@@ -532,7 +532,6 @@ export type Database = {
           p_gamer_id: string
           p_group_id: string
           p_session_date: string
-          p_token_cost: number
         }
         Returns: {
           enrollment_id: string

@@ -201,7 +201,8 @@ RETURNS TABLE(
   product_start_time TIME,
   product_timezone TEXT,
   product_duration_minutes INTEGER,
-  gedu_display_name TEXT
+  gedu_display_name TEXT,
+  last_charge_session_date DATE
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -232,7 +233,13 @@ BEGIN
     p.start_time AS product_start_time,
     p.timezone AS product_timezone,
     p.duration_minutes AS product_duration_minutes,
-    gedu.display_name AS gedu_display_name
+    gedu.display_name AS gedu_display_name,
+    (SELECT ec.session_date
+       FROM enrollment_charges ec
+      WHERE ec.enrollment_id = ge.id
+      ORDER BY ec.session_date DESC
+      LIMIT 1
+    ) AS last_charge_session_date
   FROM group_enrollments ge
   JOIN product_groups pg ON pg.id = ge.group_id
   JOIN products p ON p.id = pg.product_id

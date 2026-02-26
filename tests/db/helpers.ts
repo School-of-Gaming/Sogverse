@@ -67,3 +67,20 @@ export async function resetTokenState(
     .update({ token_balance: 0 })
     .eq("user_id", TEST_IDS.CUSTOMER_2);
 }
+
+/**
+ * Resets enrollment-related test data. Deletes all test enrollments
+ * (which cascades to enrollment_charges), then resets token state.
+ */
+export async function resetEnrollmentState(
+  admin: SupabaseClient<Database>
+): Promise<void> {
+  // Delete enrollments first — CASCADE removes enrollment_charges,
+  // which frees the FK references to token_transactions.
+  await admin
+    .from("group_enrollments")
+    .delete()
+    .in("enrolled_by", [TEST_IDS.CUSTOMER, TEST_IDS.CUSTOMER_2]);
+
+  await resetTokenState(admin);
+}
