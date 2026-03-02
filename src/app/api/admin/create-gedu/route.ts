@@ -34,19 +34,36 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
 
+    // Step 1: Create auth user — trigger assigns customer role by default
     const { data, error } = await admin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
       user_metadata: {
         display_name: displayName,
-        role: "gedu",
       },
     });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
+
+    // Step 2: Promote to gedu — update profile role and swap extension table.
+    // The trigger can't assign gedu because GoTrue populates raw_app_meta_data
+    // after the INSERT (too late for the trigger to see it).
+    const userId = data.user.id;
+
+    const { error: roleError } = await admin
+      .from("profiles")
+      .update({ role: "gedu" })
+      .eq("id", userId);
+
+    if (roleError) {
+      return NextResponse.json({ error: roleError.message }, { status: 500 });
+    }
+
+    // Remove the customer_profiles row the trigger created
+    await admin.from("customer_profiles").delete().eq("user_id", userId);
 
     return NextResponse.json({ user: data.user });
   } catch {
