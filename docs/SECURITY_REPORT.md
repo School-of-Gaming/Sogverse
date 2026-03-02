@@ -13,13 +13,13 @@
 | 1 | Admin Account Creation via Metadata | **CRITICAL** | Easy | Broken Access Control | **FIXED** |
 | 2 | IDOR: Unauthorized Gamer Linking | **HIGH** | Easy | Broken Access Control | Open |
 | 3 | Cron Race Condition (Double Charge) | **HIGH** | Medium | Concurrency | Open |
-| 4 | Token Balance Race Condition | **HIGH** | Medium | Concurrency | Open |
+| 4 | Token Balance Race Condition | **HIGH** | Medium | Concurrency | **FIXED** |
 | 5 | JSONB DoS via Expensive Casts | **HIGH** | Easy | Denial of Service | Open |
 | 6 | Cron Function Public Access | **MEDIUM** | Easy | Broken Access Control | Open |
 | 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | Open |
 | 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | Open |
 | 9 | LIKE Wildcard Injection | **LOW** | Medium | Input Validation | Open |
-| 10 | `adjust_token_balance` Public RPC Access | **CRITICAL** | Easy | Broken Access Control | Open |
+| 10 | `adjust_token_balance` Public RPC Access | **CRITICAL** | Easy | Broken Access Control | **FIXED** |
 
 ---
 
@@ -250,11 +250,13 @@ SELECT ... FROM adjust_token_balance(...);
 
 ---
 
-### 4. Token Balance Race Condition
+### 4. Token Balance Race Condition — FIXED
 
 **Severity:** HIGH
 **Location:** `adjust_token_balance()` RPC
 **CWE:** CWE-367 (Time-of-check Time-of-use Race Condition)
+**Fixed in:** Migration `00043_revoke_adjust_token_balance_public_access.sql`
+**Fixed date:** 2026-03-02
 
 #### Description
 
@@ -330,6 +332,10 @@ BEGIN
 END;
 $$;
 ```
+
+#### Fix Applied
+
+Migration `00043_revoke_adjust_token_balance_public_access.sql` adds `SELECT ... FOR UPDATE` row locking before the balance update, serializing concurrent modifications. Combined with the Finding #10 fix (REVOKE public access) in the same migration.
 
 ---
 
@@ -427,11 +433,13 @@ END IF;
 
 ---
 
-### 10. `adjust_token_balance` Public RPC Access (Unlimited Token Minting)
+### 10. `adjust_token_balance` Public RPC Access (Unlimited Token Minting) — FIXED
 
 **Severity:** CRITICAL
 **Location:** `adjust_token_balance()` RPC, migration `00013_token_balance_and_transactions.sql:88`
 **CWE:** CWE-284 (Improper Access Control)
+**Fixed in:** Migration `00043_revoke_adjust_token_balance_public_access.sql`
+**Fixed date:** 2026-03-02
 
 #### Description
 
@@ -503,7 +511,11 @@ REVOKE EXECUTE ON FUNCTION adjust_token_balance FROM anon;
 REVOKE EXECUTE ON FUNCTION adjust_token_balance FROM public;
 ```
 
-This can be combined with the `SELECT ... FOR UPDATE` fix from Finding #4 in a single migration.
+#### Fix Applied
+
+Migration `00043_revoke_adjust_token_balance_public_access.sql` revokes `EXECUTE` from `authenticated`, `anon`, and `public`, and also adds `SELECT ... FOR UPDATE` row locking (Finding #4 fix) in a single migration.
+
+DB test `tests/db/token-balance.test.ts` verifies that authenticated users receive a "permission denied" error when calling the RPC directly.
 
 ---
 
@@ -718,10 +730,10 @@ const escapedQuery = escapeLikePattern(query);
 | Priority | Finding | Effort | Risk Reduction | Status |
 |----------|---------|--------|----------------|--------|
 | **P0** | Admin Account Creation | 1h | Eliminates complete system compromise | **FIXED** |
-| **P0** | `adjust_token_balance` Public Access | 15min | Prevents unlimited token minting | Open |
+| **P0** | `adjust_token_balance` Public Access | 15min | Prevents unlimited token minting | **FIXED** |
 | **P0** | IDOR Gamer Linking | 2h | Prevents account hijacking | Open |
 | **P1** | Cron Race Condition | 2h | Prevents financial harm | Open |
-| **P1** | Token Balance Race | 1h | Prevents overdrafts | Open |
+| **P1** | Token Balance Race | 1h | Prevents overdrafts | **FIXED** |
 | **P1** | JSONB DoS | 2h | Prevents resource exhaustion | Open |
 | **P2** | Cron Public Access | 15min | Prevents info disclosure | Open |
 | **P2** | Security Headers | 30min | Defense-in-depth | Open |

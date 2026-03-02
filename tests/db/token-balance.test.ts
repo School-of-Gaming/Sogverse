@@ -1,8 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAdminTestClient, resetTokenState } from "./helpers";
-import { TEST_IDS, SEED } from "./constants";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  resetTokenState,
+} from "./helpers";
+import { TEST_IDS, TEST_CREDENTIALS, SEED } from "./constants";
 
 describe("Token Balance (adjust_token_balance RPC)", () => {
   let admin: SupabaseClient<Database>;
@@ -118,5 +122,23 @@ describe("Token Balance (adjust_token_balance RPC)", () => {
 
     expect(error).not.toBeNull();
     expect(error!.message).toContain("User not found");
+  });
+
+  it("blocks authenticated users from calling directly", async () => {
+    const customer = await createAuthenticatedClient(
+      TEST_CREDENTIALS.CUSTOMER.email,
+      TEST_CREDENTIALS.CUSTOMER.password
+    );
+
+    const { error } = await customer.rpc("adjust_token_balance", {
+      p_user_id: TEST_IDS.CUSTOMER,
+      p_amount: 999999,
+      p_type: "purchase",
+      p_description: "Should be blocked",
+    });
+
+    expect(error).not.toBeNull();
+    // permission denied for function adjust_token_balance
+    expect(error!.message).toMatch(/permission denied/i);
   });
 });
