@@ -98,7 +98,7 @@ INSERT INTO auth.identities (
   NOW(), NOW(), NOW()
 );
 
--- Gamer (synthetic email domain → handle_new_user sets role=gamer, email=NULL, username extracted)
+-- Gamer (trigger assigns customer; promoted below in section 2)
 INSERT INTO auth.users (
   id, instance_id, aud, role, email,
   encrypted_password, email_confirmed_at, last_sign_in_at,
@@ -155,7 +155,7 @@ INSERT INTO auth.identities (
 );
 
 -- =============================================================================
--- 2. Promote admin/gedu roles (trigger defaults all non-gamer users to customer)
+-- 2. Promote non-customer roles (trigger defaults ALL users to customer)
 -- =============================================================================
 
 -- Promote admin: update role, remove customer_profiles row the trigger created
@@ -166,18 +166,19 @@ DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000
 UPDATE profiles SET role = 'gedu' WHERE id = '00000000-0000-0000-0000-000000000003';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000003';
 
+-- Promote gamer: update role/email/username, swap extension tables
+UPDATE profiles SET role = 'gamer', email = NULL, username = 'testgamer'
+WHERE id = '00000000-0000-0000-0000-000000000004';
+DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000004';
+INSERT INTO gamer_profiles (user_id, date_of_birth, gender)
+VALUES ('00000000-0000-0000-0000-000000000004', '2015-06-15', 'boy');
+
 -- =============================================================================
 -- 3. Patch extension tables (trigger creates them with defaults)
 -- =============================================================================
 
 -- Give customer 1 some tokens for testing
 UPDATE customer_profiles SET token_balance = 20 WHERE user_id = '00000000-0000-0000-0000-000000000002';
-
--- Set gamer profile details
-UPDATE gamer_profiles SET
-  date_of_birth = '2015-06-15',
-  gender = 'boy'
-WHERE user_id = '00000000-0000-0000-0000-000000000004';
 
 -- =============================================================================
 -- 4. Parent-Gamer Link

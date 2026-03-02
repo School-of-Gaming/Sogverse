@@ -4,11 +4,9 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 
 /**
- * Tests for the handle_new_user() trigger — specifically that privileged
- * roles (admin, gedu) cannot be obtained via raw_user_meta_data (which
- * anyone can set at signup). The trigger ignores the role field entirely
- * and defaults all non-gamer signups to customer. Privileged roles are
- * assigned by API routes after user creation.
+ * Tests for the handle_new_user() trigger — verifies that the trigger
+ * ALWAYS assigns customer role regardless of metadata or email domain.
+ * All other roles are promoted by server-side API routes after creation.
  */
 describe("handle_new_user() role assignment", () => {
   let admin: SupabaseClient<Database>;
@@ -85,6 +83,16 @@ describe("handle_new_user() role assignment", () => {
     expect(profile.role).toBe("customer");
   });
 
+  it("blocks gamer email domain from creating gamer account", async () => {
+    const user = await createTestUser({
+      email: "sneaky@gamer.sogverse.internal",
+      user_metadata: { display_name: "Sneaky Gamer" },
+    });
+
+    const profile = await getProfile(user.id);
+    expect(profile.role).toBe("customer");
+  });
+
   it("defaults to customer when no role metadata is provided", async () => {
     const user = await createTestUser({
       email: "norole@test.local",
@@ -95,29 +103,18 @@ describe("handle_new_user() role assignment", () => {
     expect(profile.role).toBe("customer");
   });
 
-  it("assigns gamer role via @gamer.sogverse.internal email domain", async () => {
+  it("creates customer_profiles extension row for every signup", async () => {
     const user = await createTestUser({
-      email: "triggertest@gamer.sogverse.internal",
-      user_metadata: {
-        display_name: "Trigger Gamer",
-        date_of_birth: "2015-01-01",
-        gender: "girl",
-      },
+      email: "extension@test.local",
+      user_metadata: { display_name: "Extension Test" },
     });
 
-    const profile = await getProfile(user.id);
-    expect(profile.role).toBe("gamer");
-    expect(profile.email).toBeNull();
-    expect(profile.username).toBe("triggertest");
-
-    // Verify gamer_profiles extension row was created
-    const { data: gamerProfile, error } = await admin
-      .from("gamer_profiles")
+    const { data, error } = await admin
+      .from("customer_profiles")
       .select("*")
       .eq("user_id", user.id)
       .single();
     expect(error).toBeNull();
-    expect(gamerProfile!.date_of_birth).toBe("2015-01-01");
-    expect(gamerProfile!.gender).toBe("girl");
+    expect(data!.token_balance).toBe(0);
   });
 });
