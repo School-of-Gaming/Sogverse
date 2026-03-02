@@ -25,6 +25,7 @@ const productSchema = z.object({
   imageUrl: z.string().url("Must be a valid URL"),
   gameId: z.string().uuid("Game is required"),
   dayOfWeek: z.number().int().min(0).max(6),
+  // eslint-disable-next-line security/detect-unsafe-regex -- anchored, fixed-length pattern; no ReDoS risk
   startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be a valid time"),
   durationMinutes: z.number().int().min(1, "Duration must be at least 1 minute"),
   minAge: z.number().int().min(0, "Min age must be 0 or greater"),
