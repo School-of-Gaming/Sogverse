@@ -59,19 +59,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create auth user with admin client — no confirmation email sent
+    // Step 1: Create auth user — trigger assigns customer role by default
     const { data: authData, error: authError } =
       await admin.auth.admin.createUser({
         email: syntheticEmail,
         password,
         email_confirm: true,
-        user_metadata: {
-          display_name: displayName,
-          role: "gamer",
-          username,
-          date_of_birth: dateOfBirth,
-          gender,
-        },
+        user_metadata: { display_name: displayName },
       });
 
     if (authError) {
@@ -85,35 +79,70 @@ export async function POST(request: Request) {
       );
     }
 
-    // Wait for the database trigger to create the profile
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const gamerId = authData.user.id;
 
-    // Fetch the created profile
-    const { data: gamerProfile, error: profileError } = await admin
+    // Step 2: Promote to gamer — update profile, swap extension tables
+    const { error: promoteError } = await admin
       .from("profiles")
-      .select("*")
-      .eq("id", authData.user.id)
-      .single();
+      .update({
+        role: "gamer",
+        email: null,
+        username,
+        display_name: displayName,
+      })
+      .eq("id", gamerId);
 
-    if (profileError) {
+    if (promoteError) {
       return NextResponse.json(
-        { error: profileError.message },
+        { error: promoteError.message },
         { status: 500 }
       );
     }
 
-    // Create parent-gamer link
+    await admin.from("customer_profiles").delete().eq("user_id", gamerId);
+
+    const { error: gamerProfileError } = await admin
+      .from("gamer_profiles")
+      .insert({
+        user_id: gamerId,
+        date_of_birth: dateOfBirth,
+        gender,
+      });
+
+    if (gamerProfileError) {
+      return NextResponse.json(
+        { error: gamerProfileError.message },
+        { status: 500 }
+      );
+    }
+
+    // Step 3: Link gamer to parent (validate_parent_gamer_roles trigger
+    // checks both roles, so this must happen after the promote)
     const { data: linkData, error: linkError } = await admin
       .from("parent_gamer")
       .insert({
         parent_id: user.id,
-        gamer_id: authData.user.id,
+        gamer_id: gamerId,
       })
       .select()
       .single();
 
     if (linkError) {
       return NextResponse.json({ error: linkError.message }, { status: 500 });
+    }
+
+    // Fetch the final gamer profile
+    const { data: gamerProfile, error: fetchError } = await admin
+      .from("profiles")
+      .select("*")
+      .eq("id", gamerId)
+      .single();
+
+    if (fetchError) {
+      return NextResponse.json(
+        { error: fetchError.message },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({ gamer: gamerProfile, link: linkData });
