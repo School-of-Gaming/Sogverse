@@ -19,6 +19,7 @@
 | 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | Open |
 | 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | Open |
 | 9 | LIKE Wildcard Injection | **LOW** | Medium | Input Validation | Open |
+| 10 | `adjust_token_balance` Public RPC Access | **CRITICAL** | Easy | Broken Access Control | Open |
 
 ---
 
@@ -426,6 +427,86 @@ END IF;
 
 ---
 
+### 10. `adjust_token_balance` Public RPC Access (Unlimited Token Minting)
+
+**Severity:** CRITICAL
+**Location:** `adjust_token_balance()` RPC, migration `00013_token_balance_and_transactions.sql:88`
+**CWE:** CWE-284 (Improper Access Control)
+
+#### Description
+
+The `adjust_token_balance()` RPC is `SECURITY DEFINER` (bypasses RLS) and was granted to `authenticated` in migration 00013. No subsequent migration revokes this grant, and the function contains no `auth.uid()` check. Any authenticated user — customer, gamer, or gedu — can call it directly via `supabase.rpc()` to credit arbitrary token amounts to any user.
+
+This is distinct from Finding #4 (race condition in the same function) and Finding #6 (public access on `process_enrollment_charges`). While Finding #6 leaks metrics, this finding allows **direct financial manipulation**.
+
+#### Root Cause
+
+```sql
+-- Migration 00013: grants public access
+GRANT EXECUTE ON FUNCTION adjust_token_balance TO authenticated;
+
+-- No REVOKE in any subsequent migration
+-- No auth.uid() check inside the function body
+-- Function is SECURITY DEFINER — bypasses all RLS
+```
+
+Migration 00037 added `auth.uid()` guards to `enroll_gamer_in_group`, `unenroll_gamer`, and `get_customer_enrollments`, but `adjust_token_balance` was not included in that hardening pass.
+
+#### Reproduction
+
+```bash
+# Any authenticated user can mint unlimited tokens for themselves (or anyone)
+curl -X POST "https://dbcozhkmfsczwgduizkg.supabase.co/rest/v1/rpc/adjust_token_balance" \
+  -H "Authorization: Bearer $ANY_USER_TOKEN" \
+  -H "apikey: $ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "p_user_id": "YOUR_USER_ID",
+    "p_amount": 999999,
+    "p_type": "purchase",
+    "p_description": "Free tokens"
+  }'
+
+# Or credit tokens to any other user
+curl -X POST "https://dbcozhkmfsczwgduizkg.supabase.co/rest/v1/rpc/adjust_token_balance" \
+  -H "Authorization: Bearer $ANY_USER_TOKEN" \
+  -H "apikey: $ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "p_user_id": "VICTIM_USER_ID",
+    "p_amount": -999999,
+    "p_type": "admin_adjustment",
+    "p_description": "Drain their balance"
+  }'
+```
+
+#### Impact
+
+- Any user can give themselves unlimited tokens (complete bypass of Stripe payment flow)
+- Any user can drain another user's token balance to zero or negative (constrained only by CHECK constraint)
+- Fake transaction records pollute the ledger with arbitrary types and descriptions
+- Direct financial loss — tokens have real monetary value via Stripe purchases
+- Complete undermining of the token economy
+
+#### Remediation
+
+Revoke the public grant. The function is only called from:
+1. Server-side API routes using the admin/service-role client (`auth.uid()` is NULL) — Stripe webhook, admin adjust-tokens
+2. Other `SECURITY DEFINER` RPCs (`enroll_gamer_in_group`, `unenroll_gamer`) — these call it internally, not via the PostgREST API
+
+Neither caller needs the `authenticated` grant.
+
+```sql
+-- Revoke public access
+REVOKE EXECUTE ON FUNCTION adjust_token_balance FROM authenticated;
+REVOKE EXECUTE ON FUNCTION adjust_token_balance FROM anon;
+REVOKE EXECUTE ON FUNCTION adjust_token_balance FROM public;
+```
+
+This can be combined with the `SELECT ... FOR UPDATE` fix from Finding #4 in a single migration.
+
+---
+
 ## Medium Severity Findings
 
 ### 6. Cron Function Public Access
@@ -637,6 +718,7 @@ const escapedQuery = escapeLikePattern(query);
 | Priority | Finding | Effort | Risk Reduction | Status |
 |----------|---------|--------|----------------|--------|
 | **P0** | Admin Account Creation | 1h | Eliminates complete system compromise | **FIXED** |
+| **P0** | `adjust_token_balance` Public Access | 15min | Prevents unlimited token minting | Open |
 | **P0** | IDOR Gamer Linking | 2h | Prevents account hijacking | Open |
 | **P1** | Cron Race Condition | 2h | Prevents financial harm | Open |
 | **P1** | Token Balance Race | 1h | Prevents overdrafts | Open |
