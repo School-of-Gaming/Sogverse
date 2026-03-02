@@ -621,5 +621,110 @@ describe("Row Level Security", () => {
       expect(error).toBeNull();
       expect(data!.length).toBeGreaterThanOrEqual(1);
     });
+
+    it("customer cannot insert a parent_gamer link", async () => {
+      const { error } = await customerClient
+        .from("parent_gamer")
+        .insert({
+          parent_id: TEST_IDS.CUSTOMER,
+          gamer_id: TEST_IDS.GAMER,
+        });
+
+      expect(error).not.toBeNull();
+      expect(error!.message).toContain("permission denied");
+    });
+
+    it("service-role client can insert a parent_gamer link", async () => {
+      // The /api/gamers/create route uses the service-role client to link
+      // parent → gamer. Verify this still works after revoking INSERT
+      // from authenticated.
+      const { error } = await admin.from("parent_gamer").insert({
+        parent_id: TEST_IDS.CUSTOMER_2,
+        gamer_id: TEST_IDS.GAMER,
+      });
+
+      expect(error).toBeNull();
+
+      // Cleanup
+      await admin
+        .from("parent_gamer")
+        .delete()
+        .eq("parent_id", TEST_IDS.CUSTOMER_2)
+        .eq("gamer_id", TEST_IDS.GAMER);
+    });
+
+    describe("delete and orphan trigger", () => {
+      const TEMP_GAMER_ID = "00000000-0000-0000-0000-000000000090";
+
+      beforeAll(async () => {
+        // Create a temporary gamer to avoid destroying seed data.
+        // admin.auth.admin.createUser fires handle_new_user → creates customer profile.
+        await admin.auth.admin.createUser({
+          id: TEMP_GAMER_ID,
+          email: "temp-gamer@gamer.sogverse.internal",
+          password: "testpassword123",
+          email_confirm: true,
+          user_metadata: { display_name: "Temp Gamer" },
+        });
+
+        // Promote to gamer (same pattern as seed.sql)
+        await admin
+          .from("profiles")
+          .update({ role: "gamer", email: null, username: "tempgamer" })
+          .eq("id", TEMP_GAMER_ID);
+        await admin
+          .from("customer_profiles")
+          .delete()
+          .eq("user_id", TEMP_GAMER_ID);
+        await admin.from("gamer_profiles").insert({
+          user_id: TEMP_GAMER_ID,
+          date_of_birth: "2016-01-01",
+          gender: "girl",
+        });
+
+        // Link customer → temp gamer (via admin client, bypasses RLS)
+        await admin.from("parent_gamer").insert({
+          parent_id: TEST_IDS.CUSTOMER,
+          gamer_id: TEMP_GAMER_ID,
+        });
+      });
+
+      afterAll(async () => {
+        // Clean up in case the orphan trigger didn't fire or a test failed.
+        // Ignore errors — rows may already be gone.
+        await admin
+          .from("parent_gamer")
+          .delete()
+          .eq("gamer_id", TEMP_GAMER_ID);
+        await admin.auth.admin.deleteUser(TEMP_GAMER_ID);
+      });
+
+      it("customer can delete own parent_gamer link", async () => {
+        const { error } = await customerClient
+          .from("parent_gamer")
+          .delete()
+          .eq("parent_id", TEST_IDS.CUSTOMER)
+          .eq("gamer_id", TEMP_GAMER_ID);
+
+        expect(error).toBeNull();
+
+        // Verify link is gone
+        const { data } = await admin
+          .from("parent_gamer")
+          .select("id")
+          .eq("parent_id", TEST_IDS.CUSTOMER)
+          .eq("gamer_id", TEMP_GAMER_ID);
+
+        expect(data).toEqual([]);
+      });
+
+      it("orphan trigger deletes gamer when last parent link is removed", async () => {
+        // The delete above removed the only link to TEMP_GAMER_ID.
+        // The handle_orphaned_gamer trigger should have deleted the auth user.
+        const { data } = await admin.auth.admin.getUserById(TEMP_GAMER_ID);
+
+        expect(data.user).toBeNull();
+      });
+    });
   });
 });

@@ -11,7 +11,7 @@
 | # | Vulnerability | Severity | Exploitability | Category | Status |
 |---|---------------|----------|----------------|----------|--------|
 | 1 | Admin Account Creation via Metadata | **CRITICAL** | Easy | Broken Access Control | **FIXED** |
-| 2 | IDOR: Unauthorized Gamer Linking | **HIGH** | Easy | Broken Access Control | Open |
+| 2 | IDOR: Unauthorized Gamer Linking | **HIGH** | Easy | Broken Access Control | **FIXED** |
 | 3 | Cron Race Condition (Double Charge) | **HIGH** | Medium | Concurrency | Open |
 | 4 | Token Balance Race Condition | **HIGH** | Medium | Concurrency | **FIXED** |
 | 5 | JSONB DoS via Expensive Casts | **HIGH** | Easy | Denial of Service | Open |
@@ -122,11 +122,13 @@ Additional defense layers:
 
 ---
 
-### 2. IDOR: Unauthorized Gamer Linking
+### 2. IDOR: Unauthorized Gamer Linking — FIXED
 
 **Severity:** HIGH
 **Location:** `parent_gamer` table RLS policy
 **CWE:** CWE-639 (Authorization Bypass Through User-Controlled Key)
+**Fixed in:** Migration `00044_fix_idor_parent_gamer_linking.sql`
+**Fixed date:** 2026-03-02
 
 #### Description
 
@@ -169,19 +171,19 @@ curl "https://dbcozhkmfsczwgduizkg.supabase.co/rest/v1/profiles?id=eq.$VICTIM_GA
 - Spend tokens on victim's enrollments
 - Remove victim from their legitimate parent's access
 
-#### Remediation
+#### Fix Applied
+
+Removed client-side INSERT access to `parent_gamer` entirely. The `customers_create_links` RLS policy was the sole INSERT path for authenticated users and lacked `gamer_id` authorization. All legitimate gamer linking already goes through the server-side `POST /api/gamers/create` route using the service role client (which bypasses RLS).
 
 ```sql
-CREATE POLICY "customers_create_links" ON parent_gamer FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    get_user_role() = 'customer'
-    AND parent_id = auth.uid()
-    AND gamer_id IN (SELECT id FROM profiles WHERE role = 'gamer')
-    -- Optionally prevent hijacking:
-    -- AND NOT EXISTS (SELECT 1 FROM parent_gamer WHERE gamer_id = NEW.gamer_id)
-  );
+-- Migration 00044: remove client-side INSERT access
+DROP POLICY IF EXISTS "customers_create_links" ON parent_gamer;
+REVOKE INSERT ON parent_gamer FROM authenticated;
 ```
+
+Dead client-side code (`GamerService.linkGamer()` and `useLinkGamer` hook) was also removed — neither was referenced by any component.
+
+When multi-parent linking is needed in the future, it will be implemented as a server-side API route with proper authorization (e.g., invite codes or existing parent approval).
 
 ---
 
@@ -731,7 +733,7 @@ const escapedQuery = escapeLikePattern(query);
 |----------|---------|--------|----------------|--------|
 | **P0** | Admin Account Creation | 1h | Eliminates complete system compromise | **FIXED** |
 | **P0** | `adjust_token_balance` Public Access | 15min | Prevents unlimited token minting | **FIXED** |
-| **P0** | IDOR Gamer Linking | 2h | Prevents account hijacking | Open |
+| **P0** | IDOR Gamer Linking | 2h | Prevents account hijacking | **FIXED** |
 | **P1** | Cron Race Condition | 2h | Prevents financial harm | Open |
 | **P1** | Token Balance Race | 1h | Prevents overdrafts | **FIXED** |
 | **P1** | JSONB DoS | 2h | Prevents resource exhaustion | Open |
@@ -756,10 +758,12 @@ After applying fixes, verify:
    # See: tests/db/handle-new-user.test.ts (6 passing tests)
    ```
 
-2. **IDOR Gamer Linking**
+2. **IDOR Gamer Linking** — **VERIFIED**
    ```bash
-   # Should fail with policy violation
+   # Authenticated customer INSERT into parent_gamer now returns "permission denied"
+   # All linking goes through server-side /api/gamers/create (service role client)
    curl -X POST ".../rest/v1/parent_gamer" -d '{"parent_id":"...","gamer_id":"..."}'
+   # Returns: 403 permission denied for table parent_gamer
    ```
 
 3. **Cron Race Condition**

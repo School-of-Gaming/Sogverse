@@ -260,6 +260,18 @@ Created `customer_profiles` and `gamer_profiles` extension tables. Migrated role
 
 **Future:** Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
 
+### Multi-Parent Gamer Linking
+
+Migration `00044_fix_idor_parent_gamer_linking.sql` removed client-side INSERT access to `parent_gamer` to fix the IDOR vulnerability (Security Report Finding #2). Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`.
+
+To support a second parent linking to an existing gamer:
+
+- [ ] Choose an authorization mechanism (invite code, existing parent approval, or admin-only)
+- [ ] Create a server-side API route (e.g., `POST /api/gamers/link`) that validates authorization before inserting into `parent_gamer` using the admin client
+- [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
+
+**Why:** The previous client-side INSERT policy only checked `parent_id = auth.uid()`, allowing any customer to link to any gamer. The fix correctly removed this, but a secure server-side path is needed if multiple parents per gamer is a requirement.
+
 ### Migrate Auth Email Templates to Brevo
 
 Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.

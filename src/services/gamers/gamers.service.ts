@@ -76,20 +76,6 @@ export class GamerService {
     return { gamer: data.gamer, link: data.link };
   }
 
-  async linkGamer(parentId: string, gamerId: string): Promise<ParentGamer> {
-    const { data, error } = await this.supabase
-      .from("parent_gamer")
-      .insert({
-        parent_id: parentId,
-        gamer_id: gamerId,
-      })
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
   async getParentGamerLinks(parentId: string): Promise<ParentGamer[]> {
     const { data, error } = await this.supabase
       .from("parent_gamer")
