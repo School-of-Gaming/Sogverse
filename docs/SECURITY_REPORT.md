@@ -16,7 +16,7 @@
 | 4 | Token Balance Race Condition | **HIGH** | Medium | Concurrency | **FIXED** |
 | 5 | JSONB DoS via Expensive Casts | **LOW** | Low | Denial of Service | Mitigated |
 | 6 | Cron Function Public Access | **MEDIUM** | Easy | Broken Access Control | **FIXED** |
-| 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | Open |
+| 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | Partial |
 | 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | Open |
 | 9 | LIKE Wildcard Injection | **LOW** | Medium | Input Validation | Open |
 | 10 | `adjust_token_balance` Public RPC Access | **CRITICAL** | Easy | Broken Access Control | **FIXED** |
@@ -581,11 +581,13 @@ This also mitigates Finding #3 — with no external callers, the race condition 
 
 ---
 
-### 7. Missing Security Headers
+### 7. Missing Security Headers — Partial
 
 **Severity:** MEDIUM
 **Location:** `next.config.ts`
 **CWE:** CWE-693 (Protection Mechanism Failure)
+**Partially fixed in:** `next.config.ts` `headers()` function
+**Fixed date:** 2026-03-04
 
 #### Description
 
@@ -600,44 +602,16 @@ This also mitigates Finding #3 — with no external callers, the race condition 
 - Referrer leakage: Full URLs sent to third parties
 - XSS surface: No CSP to limit script execution sources
 
-#### Remediation
+#### Fix Applied
 
-```typescript
-// next.config.ts
-import type { NextConfig } from "next";
+Five enforced security headers added to `next.config.ts` via the `headers()` function:
+- `X-Frame-Options: SAMEORIGIN`
+- `X-Content-Type-Options: nosniff`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `X-XSS-Protection: 1; mode=block`
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains`
 
-const nextConfig: NextConfig = {
-  async headers() {
-    return [
-      {
-        source: "/:path*",
-        headers: [
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "X-XSS-Protection", value: "1; mode=block" },
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co https://api.stripe.com https://*.daily.co",
-              "frame-src https://*.daily.co https://js.stripe.com https://hooks.stripe.com",
-              "frame-ancestors 'self'",
-            ].join("; "),
-          },
-          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
-        ],
-      },
-    ];
-  },
-};
-
-export default nextConfig;
-```
+A `Content-Security-Policy-Report-Only` header is also deployed to log violations without blocking anything. The allowlist covers Next.js (`'unsafe-inline'`, `'unsafe-eval'`), Tailwind CSS, Supabase, Daily.co, and Stripe. Once the allowlist is validated with zero console warnings in staging, promote to enforcing `Content-Security-Policy`.
 
 ---
 
@@ -754,7 +728,7 @@ const escapedQuery = escapeLikePattern(query);
 | **P1** | Token Balance Race | 1h | Prevents overdrafts | **FIXED** |
 | **P1** | JSONB DoS | 2h | Prevents resource exhaustion | **Mitigated** (via admin role check) |
 | **P2** | Cron Public Access | 15min | Prevents info disclosure | **FIXED** |
-| **P2** | Security Headers | 30min | Defense-in-depth | Open |
+| **P2** | Security Headers | 30min | Defense-in-depth | **Partial** |
 | **P2** | Signout CSRF | 15min | Eliminates forced logout attacks | Open |
 | **P3** | LIKE Wildcard | 30min | Prevents broad searches | Open |
 

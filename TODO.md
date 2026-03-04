@@ -66,6 +66,10 @@ Before deploying to production, squash all development migrations into a clean i
 - [ ] Test login flow (email and gamer username)
 - [ ] Verify RLS policies are working (users can only see their own data)
 
+## Pre-Production Security Checklist
+
+- [ ] Promote `Content-Security-Policy-Report-Only` to enforcing `Content-Security-Policy` once the allowlist is validated with zero console warnings in staging
+
 ## Future Improvements
 
 ### Add SEO Static Assets
