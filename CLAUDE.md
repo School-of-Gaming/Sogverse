@@ -41,25 +41,12 @@ Four user roles with separate dashboards:
 
 Proxy (`src/proxy.ts`) refreshes Supabase auth sessions and enforces role-based routing (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
 
-### Key Directory Structure
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── (auth)/            # Login, register, forgot-password
-│   ├── (dashboard)/       # Role-specific dashboards (admin, customer, gamer, gedu)
-│   ├── (public)/          # Public pages
-│   └── api/               # API routes
-├── components/
-│   ├── ui/                # Base components (button, card, input)
-│   └── [role]/            # Role-specific components
-├── services/              # Business logic with React Query hooks
-├── lib/
-│   ├── supabase/          # client.ts (browser), server.ts (RSC), admin.ts (privileged)
-│   └── constants/         # Roles, routes
-├── providers/             # AuthProvider, QueryProvider, ThemeProvider
-└── types/
-    └── database.types.ts  # Auto-generated from Supabase schema
-```
+### Key Conventions
+- App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
+- Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
+- Each service in `services/` exports a class + React Query hooks
+- Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `admin.ts` (privileged)
+- Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
 
 ### Supabase Clients
 - `createBrowserClient()` - Browser-side, singleton pattern. **Data queries only — never use for auth operations.**
@@ -89,47 +76,25 @@ See `docs/gedu-groups-architecture.md` for the full architecture. All group/enro
 
 ### Voice Chat (Daily.co)
 
-See `docs/voice-chat-architecture.md` for the full component map and data flow.
+See `docs/voice-chat-architecture.md` for the full architecture, component map, permissions, and data flow.
 
-- **`src/lib/daily.ts`** — Server-only wrapper for the Daily.co REST API. Never import client-side.
-- **`src/components/voice/VoiceRoomProvider.tsx`** — React context wrapping the Daily.co call object. Dynamically imports `@daily-co/daily-js` to avoid SSR issues. Both `VoiceRoomPanel` (gedu) and `VoiceRoomList` (gamer) wrap their inner component with `<VoiceRoomProvider>`.
-- **`src/components/voice/`** — Shared voice UI components (controls, participant list, video tile, mic level). These consume `useVoiceRoom()` from the provider.
-- **`src/services/voice/`** — Service class + React Query hooks following the same pattern as other services.
-- **`src/hooks/use-voice-room-realtime.ts`** — Supabase Realtime subscription that invalidates voice query cache on `voice_rooms` table changes.
-
-**Rule: Token issuance controls permissions.** Gamers get non-owner tokens (mic + camera enabled, but no moderation rights). Gedus/admins get owner tokens (mic + camera + moderation). This is enforced server-side in `POST /api/voice/token`. The `userName` field encodes `userId|role|displayName` for client-side role extraction.
-
-**Rule: Room lifecycle is managed via API routes, not direct DB writes from the client.** `POST /api/voice/room` creates/reopens rooms (gedu/admin), `PATCH /api/voice/room` closes them (admins can close any room by passing `roomId`). Both use the admin Supabase client server-side. The `voice_rooms` table has a `UNIQUE(creator_id)` constraint — each creator gets exactly one room row that toggles between open/closed.
-
-**Rule: The Realtime hook must only invalidate queries — never make Supabase data queries in the callback.** Same deadlock risk as `onAuthStateChange`. See the existing comment in `use-voice-room-realtime.ts`.
+**Rule: Realtime hooks must only invalidate queries — never make Supabase data queries in callbacks.** Same deadlock risk as `onAuthStateChange`.
 
 ### Sorg Token Purchasing (Stripe)
 
-See `docs/sorg-token-architecture.md` for the full component map, data flows, and fulfillment model.
+See `docs/sorg-token-architecture.md` for the full architecture, component map, data flows, and fulfillment model.
 
-- **`src/lib/constants/tokens.ts`** — `TOKEN_PACKAGES` array defining package IDs, token amounts, and prices. Server-side source of truth for Stripe session creation.
-- **`src/components/tokens/`** — `TokenPurchaseSection` (package cards + purchase flow), `TransactionHistoryTable` (ledger display).
-- **`src/services/tokens/`** — `TokensService` class + React Query hooks (`useTokenBalance`, `useTokenTransactions`, `useSubscription`, etc.).
-- **`src/app/api/checkout/`** — Checkout session creation, subscription management.
-- **`src/app/api/webhooks/stripe/route.ts`** — Handles all token crediting (`checkout.session.completed`, `invoice.paid`), status changes, and cancellations.
+**Rule: All token balance changes must go through the `adjust_token_balance()` RPC.** Never update `token_balance` directly.
 
-**Rule: All token balance changes must go through the `adjust_token_balance()` RPC.** This SECURITY DEFINER function atomically updates `profiles.token_balance` and inserts a `token_transactions` row, keeping the balance and ledger consistent. Never update `token_balance` directly.
+**Rule: Prices are defined server-side only.** The client sends a `packageId`, never a price.
 
-**Rule: Prices are defined server-side only.** The client sends a `packageId`, never a price. The server looks up the package in `TOKEN_PACKAGES` and passes the price to Stripe. This prevents client-side price manipulation.
+**Rule: The Stripe webhook is the sole fulfillment path for all token crediting.** Both handlers use idempotency checks + UNIQUE constraint on `stripe_session_id`.
 
-**Rule: The Stripe webhook is the sole fulfillment path for all token crediting.** `checkout.session.completed` credits tokens for initial purchases (one-time and first subscription payment). `invoice.paid` credits tokens for subscription renewals. Both use idempotency checks + UNIQUE constraint on `stripe_session_id`.
-
-**Rule: Only customers can purchase tokens.** The checkout API route enforces `role === "customer"`. Admins can manually adjust any user's balance via `POST /api/admin/adjust-tokens`.
+**Rule: Only customers can purchase tokens.** Admins can manually adjust via `POST /api/admin/adjust-tokens`.
 
 ## Environment Variables
 
-Copy `.env.local.example` to `.env.local`:
-- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Supabase public config
-- `SUPABASE_SERVICE_ROLE_KEY` - For admin operations (server-only)
-- `STRIPE_SECRET_KEY` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe config
-- `STRIPE_WEBHOOK_SECRET` - Stripe webhook signature verification (server-only)
-- `DAILY_API_KEY` - Daily.co REST API key (server-only)
-- `NEXT_PUBLIC_DAILY_DOMAIN` - Daily.co subdomain for room URLs
+All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — including `SUPABASE_DB_PASSWORD` and `SUPABASE_PROJECT_REF` used by CLI commands below.
 
 ## Database
 
@@ -186,32 +151,7 @@ The DB test `access-control.test.ts` enforces both rules — it queries PostgreS
 
 ## Testing
 
-### Directory Structure
-```
-tests/
-├── setup.ts                       # Global Vitest setup (browser client mocks)
-├── mocks/                         # Shared test data generators & helpers
-│   ├── auth.ts                    #   Mock auth users/profiles
-│   ├── supabase.ts                #   Mock Supabase query builders
-│   └── voice.ts                   #   Mock voice room data
-├── unit/                          # Pure functions, classes with injected mocks
-│   ├── services/                  #   Service classes (mock injected via constructor)
-│   ├── spatial/                   #   Pure spatial math functions
-│   ├── voice/                     #   Pure mapping/transform logic
-│   └── utils.test.ts              #   Utility functions (cn, formatCurrency, etc.)
-├── integration/                   # Route handlers, proxy, auth flows
-│   ├── api/                       #   API route handler tests
-│   ├── auth/                      #   Auth callback/signout flow tests
-│   └── proxy.test.ts              #   Proxy routing/session tests
-├── db/                            # Database tests against local Supabase
-│   ├── setup.ts                   #   Verify local Supabase connection
-│   ├── helpers.ts                 #   Admin/authenticated client factories, reset helpers
-│   ├── constants.ts               #   Deterministic test UUIDs matching seed.sql
-│   ├── token-balance.test.ts      #   adjust_token_balance RPC, CHECK constraints
-│   └── rls.test.ts                #   Row Level Security policy verification
-└── e2e/                           # Playwright browser tests
-    └── *.spec.ts
-```
+Tests are in `tests/` with four subdirectories: `unit/`, `integration/`, `db/`, and `e2e/`. Shared mock factories live in `tests/mocks/` — add new mocks there rather than duplicating across files.
 
 ### Classification Rules
 
@@ -221,19 +161,6 @@ tests/
 | **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
 | **db** | RPCs, constraints, RLS policies against real local Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
 | **e2e** | Playwright browser tests against running dev server | `.spec.ts`, Playwright |
-
-### Running Tests
-```bash
-npm run test             # All Vitest tests (unit + integration)
-npm run test:ui          # Vitest with browser UI
-npm run test:db          # Database tests (requires local Supabase — see docs/local-supabase.md)
-npm run test:db:ui       # Database tests with browser UI
-npm run test:e2e         # Playwright E2E tests (requires dev server)
-npm run test:e2e:ui      # Playwright with browser UI
-```
-
-### Shared Mocks
-Test helpers live in `tests/mocks/` and are imported by both unit and integration tests. Add new mock factories here rather than duplicating setup across test files.
 
 ## Code Style
 

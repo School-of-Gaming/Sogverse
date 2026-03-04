@@ -94,6 +94,8 @@ voice_rooms (
 
 **Helper function:** `get_open_voice_rooms()` (SECURITY DEFINER) joins `voice_rooms` with `profiles` to return creator display names and roles.
 
+**Token userName encoding:** The `userName` field in Daily.co tokens encodes `userId|role|displayName` for client-side role extraction without extra DB lookups.
+
 ## Role Permissions
 
 | Capability | Admin | Gedu | Gamer |
