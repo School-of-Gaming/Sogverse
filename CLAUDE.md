@@ -161,6 +161,14 @@ The `npm run supabase:gen-types` script uses `--local` which requires Docker. Fo
    The `-p` flag passes the database password inline, avoiding interactive prompts.
    The password is stored in `.env.local` as `SUPABASE_DB_PASSWORD`. Note: if the password contains `%`, double it to `%%` for shell escaping.
 
+### Function & Table Access Control
+
+**Rule: New PostgreSQL functions must be private by default.** After creating a function, add `REVOKE EXECUTE` from `authenticated`, `anon`, and `public` unless the function is intentionally called from the browser client. If the function IS public, add it to the allowlist in `tests/db/access-control.test.ts`.
+
+**Rule: All new tables must enable RLS.** Add `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and appropriate policies.
+
+The DB test `access-control.test.ts` enforces both rules — it queries PostgreSQL catalogs and fails if any non-allowlisted function is callable or any table lacks RLS.
+
 ## Testing
 
 ### Directory Structure
