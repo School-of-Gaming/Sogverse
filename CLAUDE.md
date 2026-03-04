@@ -143,11 +143,15 @@ This avoids a chicken-and-egg problem where tests reference functions that aren'
 
 ### Function & Table Access Control
 
-**Rule: New PostgreSQL functions must be private by default.** After creating a function, add `REVOKE EXECUTE` from `authenticated`, `anon`, and `public` unless the function is intentionally called from the browser client. If the function IS public, add it to the allowlist in `tests/db/access-control.test.ts`.
+**Rule: New PostgreSQL functions must be private by default.** After creating a function, add `REVOKE EXECUTE` from `authenticated`, `anon`, and `public` unless the function is intentionally called from the browser client. If the function IS public, add it to the allowlist in `tests/db/access-control.test.ts`. Extra care with `SECURITY DEFINER` functions — they bypass RLS, so a public grant is a privilege escalation vector.
 
 **Rule: All new tables must enable RLS.** Add `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and appropriate policies.
 
-The DB test `access-control.test.ts` enforces both rules — it queries PostgreSQL catalogs and fails if any non-allowlisted function is callable or any table lacks RLS.
+**Rule: RLS INSERT/UPDATE policies must authorize both the actor AND the target.** Checking only `column = auth.uid()` is insufficient — also verify the user is authorized to reference the target entity (prevents IDOR).
+
+**Rule: Use `SELECT ... FOR UPDATE` in functions that read-then-write financial data** (e.g., token balances). Without row locking, concurrent requests can cause corruption or overdrafts.
+
+The DB test `access-control.test.ts` enforces function and RLS rules — it queries PostgreSQL catalogs and fails if any non-allowlisted function is callable or any table lacks RLS.
 
 ## Testing
 

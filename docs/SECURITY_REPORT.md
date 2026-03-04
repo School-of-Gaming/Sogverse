@@ -731,6 +731,33 @@ After applying fixes, verify:
 
 ---
 
+## Remediation Summary
+
+**Remediation period:** 2026-03-02 to 2026-03-04
+
+### Final status
+
+- **8 of 10 findings fully fixed** (migrations 00042–00045, code changes to `next.config.ts`, `signout/route.ts`, `users.service.ts`)
+- **2 mitigated** (#3 cron race condition — no external callers remain; #5 JSONB DoS — admin role check blocks unauthenticated access)
+- **1 open item:** Promote `Content-Security-Policy-Report-Only` to enforcing `Content-Security-Policy` once staging shows zero violations (Finding #7)
+
+### Structural defenses added during remediation
+
+These go beyond individual fixes to prevent future classes of the same vulnerabilities:
+
+1. **Automated access control test** (`tests/db/access-control.test.ts`) — queries PostgreSQL catalogs on every CI run. Fails if any non-allowlisted function is callable by `authenticated`/`anon`, or if any table lacks RLS. New functions and tables are caught automatically.
+2. **CLAUDE.md rules** — codified the recurring patterns (SECURITY DEFINER access control, RLS IDOR prevention, SELECT FOR UPDATE for financial data) so they are enforced during AI-assisted development.
+3. **Private-by-default convention** — all new PostgreSQL functions get `REVOKE EXECUTE` from `authenticated`, `anon`, and `public` unless explicitly allowlisted.
+
+### If reopening this audit
+
+- Run `npm run test:db` — the access control tests will catch any regressions in function grants or missing RLS.
+- Check the CSP open item above.
+- Review any migrations added after `00048` for new SECURITY DEFINER functions or tables without RLS.
+- Run https://securityheaders.com against the production domain to verify headers are served correctly.
+
+---
+
 ## Appendix: Credential Reference
 
 | Item | Value |
