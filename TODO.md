@@ -60,10 +60,12 @@ This was tested during the staging squash and worked well:
    ```sql
    BEGIN;
    DELETE FROM supabase_migrations.schema_migrations;
-   INSERT INTO supabase_migrations.schema_migrations (version) VALUES
-     ('00001_...'), ('00002_...'), ...;
+   INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
+     ('00001', '00001_extensions_and_helpers'),
+     ('00002', '00002_profiles'), ...;
    COMMIT;
    ```
+   **Critical:** The `version` column must be ONLY the numeric prefix (e.g., `00001`), not the full filename stem. The CLI extracts just the numeric prefix from local filenames for matching. The `name` column can hold the full stem for readability.
    This does NOT touch the actual schema — only updates which versions the CLI considers "applied".
 8. **Regenerate types** from remote: `supabase gen types typescript --project-id $REF 2>/dev/null > src/types/database.types.ts`
 
@@ -72,6 +74,7 @@ This was tested during the staging squash and worked well:
 - Function overloads: only write the final signature
 - `products.is_visible` should be `DEFAULT false NOT NULL`, `products.timezone` should have no default (force explicit)
 - `cron.schedule()` is DML — will execute on `supabase db reset` and register the job (this is correct)
+- Migration tracking `version` must be numeric prefix only (`00001`), not full stem (`00001_extensions_and_helpers`) — the CLI can't match otherwise
 
 **Important:** Only squash BEFORE production has real users. After launch, keep all migrations for the audit trail.
 
