@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { GET } from "@/app/api/auth/signout/route";
+import { POST, GET } from "@/app/api/auth/signout/route";
 
 // --- Mocks ---
 
@@ -13,21 +13,26 @@ vi.mock("@/lib/supabase/server", () => ({
 
 // --- Tests ---
 
-describe("GET /api/auth/signout", () => {
+describe("POST /api/auth/signout", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("calls signOut and redirects to /", async () => {
+  it("calls signOut and returns success", async () => {
     mockSignOut.mockResolvedValue({ error: null });
 
-    const response = await GET(
-      new Request("http://localhost:3000/api/auth/signout")
-    );
+    const response = await POST();
 
     expect(mockSignOut).toHaveBeenCalledOnce();
-    expect(response.status).toBe(307);
-    const url = new URL(response.headers.get("location")!);
-    expect(url.pathname).toBe("/");
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ success: true });
+  });
+});
+
+describe("GET /api/auth/signout", () => {
+  it("returns 405 Method Not Allowed", async () => {
+    const response = await GET();
+
+    expect(response.status).toBe(405);
   });
 });
