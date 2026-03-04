@@ -492,6 +492,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _list_cron_jobs: {
+        Args: never
+        Returns: {
+          command: string
+          jobname: string
+          schedule: string
+        }[]
+      }
       _list_rpc_access: {
         Args: never
         Returns: {
