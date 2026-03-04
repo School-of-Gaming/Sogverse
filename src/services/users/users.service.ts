@@ -1,4 +1,5 @@
 import type { Profile, ProfileUpdate, UserRole, ParentGamer } from "@/types";
+import { escapeLikePattern } from "@/lib/utils";
 
 // Using generic type to avoid version-specific Supabase type incompatibilities
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,7 +64,7 @@ export class UsersService {
     const { data, error } = await this.supabase
       .from("profiles")
       .select("*")
-      .or(`email.ilike.%${query}%,username.ilike.%${query}%,display_name.ilike.%${query}%`)
+      .or(`email.ilike.%${escapeLikePattern(query)}%,username.ilike.%${escapeLikePattern(query)}%,display_name.ilike.%${escapeLikePattern(query)}%`)
       .order("created_at", { ascending: false })
       .limit(20);
 

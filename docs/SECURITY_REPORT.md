@@ -18,7 +18,7 @@
 | 6 | Cron Function Public Access | **MEDIUM** | Easy | Broken Access Control | **FIXED** |
 | 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | Partial |
 | 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | **FIXED** |
-| 9 | LIKE Wildcard Injection | **LOW** | Medium | Input Validation | Open |
+| 9 | LIKE Wildcard Injection | **LOW** | Medium | Input Validation | **FIXED** |
 | 10 | `adjust_token_balance` Public RPC Access | **CRITICAL** | Easy | Broken Access Control | **FIXED** |
 
 ---
@@ -640,46 +640,29 @@ Changed `/api/auth/signout` from GET to POST. GET now returns 405. The client us
 
 ## Low Severity Findings
 
-### 9. LIKE Wildcard Injection in Search
+### 9. LIKE Wildcard Injection in Search — FIXED
 
 **Severity:** LOW
-**Location:** `src/services/users/users.service.ts:66`, `src/services/products/products.service.ts:89`
+**Location:** `src/services/users/users.service.ts:66`
 **CWE:** CWE-1426 (Improper Validation of Syntactic Elements)
+**Fixed date:** 2026-03-04
 
 #### Description
 
-Search queries interpolate user input directly into ILIKE patterns without escaping SQL wildcards (`%`, `_`).
-
-#### Reproduction
-
-```javascript
-// User searches for: a%
-// Matches ANY email starting with 'a', bypassing exact match intent
-
-// In browser console:
-fetch('/api/users?search=%')
-  .then(r => r.json())
-  .then(console.log)  // Returns more results than expected
-```
+Search queries interpolated user input directly into ILIKE patterns without escaping SQL wildcards (`%`, `_`).
 
 #### Impact
 
 - Information disclosure (broad search results)
 - Not SQL injection (parameterized queries prevent this)
+- Only reachable by admins (admin users page)
 - Low business impact
 
-#### Remediation
+#### Fix Applied
 
-```typescript
-// Add wildcard escaping utility
-function escapeLikePattern(str: string): string {
-  return str.replace(/[%_\\]/g, '\\$&');
-}
+Added `escapeLikePattern()` utility to `src/lib/utils.ts` that escapes `%`, `_`, and `\` before interpolation into ILIKE patterns. Applied to `searchUsers()` in `users.service.ts`.
 
-// In search functions:
-const escapedQuery = escapeLikePattern(query);
-.or(`email.ilike.%${escapedQuery}%,username.ilike.%${escapedQuery}%,display_name.ilike.%${escapedQuery}%`)
-```
+The `searchProducts()` method in `products.service.ts` was dead code (never called by any component — the admin products page uses client-side filtering) and was removed entirely.
 
 ---
 
@@ -696,7 +679,7 @@ const escapedQuery = escapeLikePattern(query);
 | **P2** | Cron Public Access | 15min | Prevents info disclosure | **FIXED** |
 | **P2** | Security Headers | 30min | Defense-in-depth | **Partial** |
 | **P2** | Signout CSRF | 15min | Eliminates forced logout attacks | **FIXED** |
-| **P3** | LIKE Wildcard | 30min | Prevents broad searches | Open |
+| **P3** | LIKE Wildcard | 30min | Prevents broad searches | **FIXED** |
 
 ---
 

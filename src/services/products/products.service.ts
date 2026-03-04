@@ -82,14 +82,4 @@ export class ProductsService {
     return this.updateProduct(id, { is_visible: isVisible });
   }
 
-  async searchProducts(query: string): Promise<ProductWithGame[]> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select("*, games(name)")
-      .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return data;
-  }
 }

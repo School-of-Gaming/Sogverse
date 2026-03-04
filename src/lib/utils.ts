@@ -68,6 +68,10 @@ export function isGamerEmail(email: string): boolean {
   return email.endsWith("@gamer.sogverse.internal");
 }
 
+export function escapeLikePattern(str: string): string {
+  return str.replace(/[%_\\]/g, "\\$&");
+}
+
 export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }

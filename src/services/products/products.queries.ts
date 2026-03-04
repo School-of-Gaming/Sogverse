@@ -45,17 +45,6 @@ export function useProduct(id: string) {
   });
 }
 
-export function useSearchProducts(query: string) {
-  const supabase = getClient();
-  const service = new ProductsService(supabase);
-
-  return useQuery({
-    queryKey: productKeys.list(query),
-    queryFn: () => service.searchProducts(query),
-    enabled: query.length >= 2,
-  });
-}
-
 export function useCreateProduct() {
   const queryClient = useQueryClient();
   const supabase = getClient();

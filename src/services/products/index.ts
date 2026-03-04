@@ -4,7 +4,6 @@ export {
   useVisibleProducts,
   useAllProducts,
   useProduct,
-  useSearchProducts,
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
