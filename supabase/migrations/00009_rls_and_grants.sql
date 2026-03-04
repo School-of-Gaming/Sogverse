@@ -254,7 +254,9 @@ GRANT USAGE ON SCHEMA public TO anon, authenticated;
 GRANT SELECT ON profiles TO authenticated;
 GRANT UPDATE (display_name) ON profiles TO authenticated;
 
--- parent_gamer: SELECT + DELETE only (INSERT revoked — linking goes through service-role)
+-- parent_gamer: SELECT + DELETE only (INSERT revoked — linking goes through service-role).
+-- Explicit REVOKE needed because Supabase bootstraps default grants on public tables.
+REVOKE ALL ON parent_gamer FROM authenticated;
 GRANT SELECT, DELETE ON parent_gamer TO authenticated;
 
 -- products: full CRUD for admin RLS policies, SELECT for anon
