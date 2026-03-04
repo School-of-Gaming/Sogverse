@@ -12,10 +12,10 @@
 |---|---------------|----------|----------------|----------|--------|
 | 1 | Admin Account Creation via Metadata | **CRITICAL** | Easy | Broken Access Control | **FIXED** |
 | 2 | IDOR: Unauthorized Gamer Linking | **HIGH** | Easy | Broken Access Control | **FIXED** |
-| 3 | Cron Race Condition (Double Charge) | **HIGH** | Medium | Concurrency | Open |
+| 3 | Cron Race Condition (Double Charge) | **LOW** | Low | Concurrency | Mitigated |
 | 4 | Token Balance Race Condition | **HIGH** | Medium | Concurrency | **FIXED** |
 | 5 | JSONB DoS via Expensive Casts | **HIGH** | Easy | Denial of Service | Open |
-| 6 | Cron Function Public Access | **MEDIUM** | Easy | Broken Access Control | Open |
+| 6 | Cron Function Public Access | **MEDIUM** | Easy | Broken Access Control | **FIXED** |
 | 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | Open |
 | 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | Open |
 | 9 | LIKE Wildcard Injection | **LOW** | Medium | Input Validation | Open |
@@ -187,11 +187,12 @@ When multi-parent linking is needed in the future, it will be implemented as a s
 
 ---
 
-### 3. Cron Function Race Condition (Double Charge)
+### 3. Cron Function Race Condition (Double Charge) — Mitigated
 
-**Severity:** HIGH
+**Severity:** LOW (downgraded from HIGH after Finding #6 fix)
 **Location:** `process_enrollment_charges()` RPC
 **CWE:** CWE-367 (Time-of-check Time-of-use Race Condition)
+**Mitigated by:** Migration `00045_revoke_cron_function_public_access.sql` (Finding #6 fix)
 
 #### Description
 
@@ -233,7 +234,13 @@ curl -s "https://dbcozhkmfsczwgduizkg.supabase.co/rest/v1/token_transactions?sel
 - Customer balance deducted multiple times
 - Financial harm and accounting discrepancies
 
-#### Remediation
+#### Mitigation
+
+With Finding #6 fixed (migration 00045), `process_enrollment_charges()` is no longer callable via the PostgREST API. The only caller is pg_cron, which runs hourly and serially — concurrent invocations cannot occur under normal operation.
+
+The TOCTOU race window still exists in the function logic (EXISTS check at line 120 is not atomic with INSERT at line 139), but it is no longer externally exploitable. The original remediation (reorder to INSERT ... ON CONFLICT before token deduction) would require schema changes to `enrollment_charges.transaction_id` and is not worth the complexity given the eliminated attack surface.
+
+**Original remediation (preserved for reference):**
 
 ```sql
 -- Use INSERT ... ON CONFLICT to make the check atomic
@@ -523,11 +530,13 @@ DB test `tests/db/token-balance.test.ts` verifies that authenticated users recei
 
 ## Medium Severity Findings
 
-### 6. Cron Function Public Access
+### 6. Cron Function Public Access — FIXED
 
 **Severity:** MEDIUM
 **Location:** `process_enrollment_charges()` RPC
 **CWE:** CWE-284 (Improper Access Control)
+**Fixed in:** Migration `00045_revoke_cron_function_public_access.sql`
+**Fixed date:** 2026-03-04
 
 #### Description
 
@@ -553,15 +562,13 @@ curl -s -X POST "https://dbcozhkmfsczwgduizkg.supabase.co/rest/v1/rpc/process_en
 
 - Information disclosure (business metrics)
 - DoS by triggering cron repeatedly
+- Enables exploitation of Finding #3 (race condition) by external callers
 
-#### Remediation
+#### Fix Applied
 
-```sql
-REVOKE EXECUTE ON FUNCTION process_enrollment_charges() FROM authenticated;
-REVOKE EXECUTE ON FUNCTION process_enrollment_charges() FROM anon;
-REVOKE EXECUTE ON FUNCTION process_enrollment_charges() FROM public;
--- Only allow pg_net or cron scheduler to call this
-```
+Migration `00045_revoke_cron_function_public_access.sql` revokes `EXECUTE` from `authenticated`, `anon`, and `public` on both `process_enrollment_charges()` and `compute_next_session()`. Only pg_cron (running as the function owner) can invoke them.
+
+This also mitigates Finding #3 — with no external callers, the race condition requires concurrent pg_cron executions, which don't occur under normal operation.
 
 ---
 
@@ -734,10 +741,10 @@ const escapedQuery = escapeLikePattern(query);
 | **P0** | Admin Account Creation | 1h | Eliminates complete system compromise | **FIXED** |
 | **P0** | `adjust_token_balance` Public Access | 15min | Prevents unlimited token minting | **FIXED** |
 | **P0** | IDOR Gamer Linking | 2h | Prevents account hijacking | **FIXED** |
-| **P1** | Cron Race Condition | 2h | Prevents financial harm | Open |
+| **P1** | Cron Race Condition | 2h | Prevents financial harm | **Mitigated** (via #6 fix) |
 | **P1** | Token Balance Race | 1h | Prevents overdrafts | **FIXED** |
 | **P1** | JSONB DoS | 2h | Prevents resource exhaustion | Open |
-| **P2** | Cron Public Access | 15min | Prevents info disclosure | Open |
+| **P2** | Cron Public Access | 15min | Prevents info disclosure | **FIXED** |
 | **P2** | Security Headers | 30min | Defense-in-depth | Open |
 | **P2** | Signout CSRF | 15min | Eliminates forced logout attacks | Open |
 | **P3** | LIKE Wildcard | 30min | Prevents broad searches | Open |

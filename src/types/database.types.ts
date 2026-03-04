@@ -492,6 +492,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _list_rpc_access: {
+        Args: never
+        Returns: {
+          anon_access: boolean
+          authenticated_access: boolean
+          function_name: string
+        }[]
+      }
+      _list_tables_without_rls: {
+        Args: never
+        Returns: {
+          table_name: string
+        }[]
+      }
       adjust_token_balance: {
         Args: {
           p_admin_id?: string
