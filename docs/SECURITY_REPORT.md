@@ -17,7 +17,7 @@
 | 5 | JSONB DoS via Expensive Casts | **LOW** | Low | Denial of Service | Mitigated |
 | 6 | Cron Function Public Access | **MEDIUM** | Easy | Broken Access Control | **FIXED** |
 | 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | Partial |
-| 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | Open |
+| 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | **FIXED** |
 | 9 | LIKE Wildcard Injection | **LOW** | Medium | Input Validation | Open |
 | 10 | `adjust_token_balance` Public RPC Access | **CRITICAL** | Easy | Broken Access Control | **FIXED** |
 
@@ -615,25 +615,16 @@ A `Content-Security-Policy-Report-Only` header is also deployed to log violation
 
 ---
 
-### 8. GET-Based Signout CSRF
+### 8. GET-Based Signout CSRF — FIXED
 
 **Severity:** MEDIUM
 **Location:** `src/app/api/auth/signout/route.ts`
 **CWE:** CWE-352 (Cross-Site Request Forgery)
+**Fixed date:** 2026-03-04
 
 #### Description
 
 The `/api/auth/signout` endpoint uses HTTP GET, which has a side effect (signing out the user). SameSite=Lax cookies allow cookies on top-level GET navigations, enabling forced logout attacks.
-
-#### Reproduction
-
-```html
-<!-- Attacker creates malicious page -->
-<a href="https://sogverse-staging.sog.gg/api/auth/signout">Click for free gift!</a>
-
-<!-- Or auto-trigger -->
-<script>window.location.href = "https://sogverse-staging.sog.gg/api/auth/signout";</script>
-```
 
 #### Impact
 
@@ -641,34 +632,9 @@ The `/api/auth/signout` endpoint uses HTTP GET, which has a side effect (signing
 - Annoyance attacks on users
 - Could be combined with social engineering
 
-#### Remediation
+#### Fix Applied
 
-```typescript
-// src/app/api/auth/signout/route.ts
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-
-// Change from GET to POST
-export async function POST(request: Request) {
-  const { origin } = new URL(request.url());
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  return NextResponse.json({ success: true });
-}
-
-// Add GET handler that returns 405
-export async function GET() {
-  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
-}
-```
-
-```typescript
-// src/providers/auth-provider.tsx - Update signout handler
-const handleSignOut = async () => {
-  await fetch("/api/auth/signout", { method: "POST" });
-  window.location.href = "/";
-};
-```
+Changed `/api/auth/signout` from GET to POST. GET now returns 405. The client uses `fetch` with POST to clear cookies server-side, then `window.location.href = "/"` to wipe all client state. `SameSite=Lax` blocks cross-origin POST requests with cookies, eliminating the CSRF vector.
 
 ---
 
@@ -729,7 +695,7 @@ const escapedQuery = escapeLikePattern(query);
 | **P1** | JSONB DoS | 2h | Prevents resource exhaustion | **Mitigated** (via admin role check) |
 | **P2** | Cron Public Access | 15min | Prevents info disclosure | **FIXED** |
 | **P2** | Security Headers | 30min | Defense-in-depth | **Partial** |
-| **P2** | Signout CSRF | 15min | Eliminates forced logout attacks | Open |
+| **P2** | Signout CSRF | 15min | Eliminates forced logout attacks | **FIXED** |
 | **P3** | LIKE Wildcard | 30min | Prevents broad searches | Open |
 
 ---

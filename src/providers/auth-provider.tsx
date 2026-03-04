@@ -63,11 +63,11 @@ export function AuthProvider({
   };
 
   const signOut = async () => {
-    // Navigate immediately — don't update React state first or the user
-    // sees a broken layout flash. The full page navigation to the API route
-    // clears cookies server-side, then redirects. All client state (React,
-    // query cache, Supabase singleton) is wiped by the page reload.
-    window.location.href = "/api/auth/signout";
+    // POST clears cookies server-side. Full page navigation (not router.push)
+    // wipes all client state (React, query cache, Supabase singleton) — don't
+    // update React state first or the user sees a broken layout flash.
+    await fetch("/api/auth/signout", { method: "POST" });
+    window.location.href = "/";
   };
 
   useEffect(() => {
