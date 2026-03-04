@@ -14,7 +14,7 @@
 | 2 | IDOR: Unauthorized Gamer Linking | **HIGH** | Easy | Broken Access Control | **FIXED** |
 | 3 | Cron Race Condition (Double Charge) | **LOW** | Low | Concurrency | Mitigated |
 | 4 | Token Balance Race Condition | **HIGH** | Medium | Concurrency | **FIXED** |
-| 5 | JSONB DoS via Expensive Casts | **HIGH** | Easy | Denial of Service | Open |
+| 5 | JSONB DoS via Expensive Casts | **LOW** | Low | Denial of Service | Mitigated |
 | 6 | Cron Function Public Access | **MEDIUM** | Easy | Broken Access Control | **FIXED** |
 | 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | Open |
 | 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | Open |
@@ -348,11 +348,12 @@ Migration `00043_revoke_adjust_token_balance_public_access.sql` adds `SELECT ...
 
 ---
 
-### 5. JSONB DoS via Expensive Type Casts
+### 5. JSONB DoS via Expensive Type Casts — Mitigated
 
-**Severity:** HIGH
+**Severity:** LOW (downgraded from HIGH after migration 00029 admin role check)
 **Location:** `commit_group_changes()` RPC
 **CWE:** CWE-400 (Uncontrolled Resource Consumption)
+**Mitigated by:** Migration `00029_restrict_group_rpcs_to_admin.sql`
 
 #### Description
 
@@ -399,7 +400,15 @@ curl -X POST "https://dbcozhkmfsczwgduizkg.supabase.co/rest/v1/rpc/commit_group_
 - Database connection pool exhaustion
 - Affects all users sharing the same database instance
 
-#### Remediation
+#### Mitigation
+
+With migration 00029, `commit_group_changes()` now requires `get_user_role() = 'admin'` inside the function body. Only admin accounts (created manually via the Supabase dashboard) can call this RPC. The API route (`POST /api/admin/products/[id]/groups`) also enforces `requireRole("admin")` server-side.
+
+The UI builds payloads from discrete user interactions (clicking "add group", dragging gamers) — array sizes are bounded by the number of groups and gamers that exist for a product. Invalid UUIDs and oversized arrays can only be injected via crafted HTTP requests, which now require admin credentials.
+
+The JSONB validation gaps still exist in the function logic, but the attack surface is reduced to a compromised admin account. Normal UI usage cannot trigger the issue.
+
+#### Remediation (preserved for reference)
 
 Add input validation before type casting to fail fast:
 
@@ -743,7 +752,7 @@ const escapedQuery = escapeLikePattern(query);
 | **P0** | IDOR Gamer Linking | 2h | Prevents account hijacking | **FIXED** |
 | **P1** | Cron Race Condition | 2h | Prevents financial harm | **Mitigated** (via #6 fix) |
 | **P1** | Token Balance Race | 1h | Prevents overdrafts | **FIXED** |
-| **P1** | JSONB DoS | 2h | Prevents resource exhaustion | Open |
+| **P1** | JSONB DoS | 2h | Prevents resource exhaustion | **Mitigated** (via admin role check) |
 | **P2** | Cron Public Access | 15min | Prevents info disclosure | **FIXED** |
 | **P2** | Security Headers | 30min | Defense-in-depth | Open |
 | **P2** | Signout CSRF | 15min | Eliminates forced logout attacks | Open |
