@@ -40,6 +40,23 @@ AS $$
     AND NOT rowsecurity;
 $$;
 
+-- Returns all registered pg_cron jobs (name, schedule, command).
+CREATE OR REPLACE FUNCTION _list_cron_jobs()
+RETURNS TABLE (
+  jobname text,
+  schedule text,
+  command text
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+STABLE
+AS $$
+  SELECT j.jobname::text, j.schedule::text, j.command::text
+  FROM cron.job j;
+$$;
+
 -- Revoke from all roles — only service-role can call these.
 REVOKE EXECUTE ON FUNCTION _list_rpc_access() FROM authenticated, anon, public;
 REVOKE EXECUTE ON FUNCTION _list_tables_without_rls() FROM authenticated, anon, public;
+REVOKE EXECUTE ON FUNCTION _list_cron_jobs() FROM authenticated, anon, public;
