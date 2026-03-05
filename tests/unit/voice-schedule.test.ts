@@ -129,4 +129,21 @@ describe("computeSessionWindow", () => {
     // The session started at 12:00 UTC (14:00 Helsinki UTC+2)
     expect(result.nextSessionStart.toISOString()).toBe("2026-03-24T12:00:00.000Z");
   });
+
+  it("should detect active session that crosses midnight", () => {
+    // Tuesday 23:30 UTC, 90-minute session → ends Wednesday 01:00 UTC
+    const lateSchedule = {
+      day_of_week: 1, // Tuesday
+      start_time: "23:30",
+      timezone: "UTC",
+      duration_minutes: 90,
+    };
+
+    // Wednesday 00:15 UTC — 45 minutes into the session
+    const now = utcDate("2026-03-04T00:15:00Z");
+    const result = computeSessionWindow(lateSchedule, now);
+
+    expect(result.isOpen).toBe(true);
+    expect(result.nextSessionStart.toISOString()).toBe("2026-03-03T23:30:00.000Z");
+  });
 });

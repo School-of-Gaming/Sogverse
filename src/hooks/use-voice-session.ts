@@ -113,6 +113,9 @@ export function useVoiceSession(): UseVoiceSessionReturn {
       leave();
       joinedRoomNameRef.current = null;
       sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      // Defer state updates to the next microtick so leave()'s own state
+      // changes (joined=false) flush first. Without this, setting joinedRoomId
+      // in the same tick re-triggers this effect before leave() completes.
       Promise.resolve().then(() => {
         setSessionEndedMessage(`${roomName ?? "The session"} has ended.`);
         setJoinedRoomId(null);
