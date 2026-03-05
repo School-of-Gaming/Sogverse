@@ -165,7 +165,7 @@ export function LoginForm() {
         {/* View 1: Role Selection Grid */}
         <div
           className={cn(
-            "transition-opacity duration-[2000ms]",
+            "transition-opacity duration-700",
             selectedRole !== null
               ? "pointer-events-none opacity-0"
               : "opacity-100"
@@ -186,7 +186,7 @@ export function LoginForm() {
                       key={role}
                       onClick={() => { setSelectedRole(role); setDisplayRole(role); }}
                       className={cn(
-                        "flex flex-col items-center gap-2 rounded-lg border p-5 text-center transition-all duration-200",
+                        "flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-5 text-center transition-all duration-200",
                         config.accent,
                         config.glow,
                       )}
@@ -220,7 +220,7 @@ export function LoginForm() {
         {/* View 2: Login Form */}
         <div
           className={cn(
-            "transition-opacity duration-[2000ms]",
+            "transition-opacity duration-700",
             selectedRole === null
               ? "pointer-events-none opacity-0"
               : "opacity-100"
