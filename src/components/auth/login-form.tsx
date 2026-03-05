@@ -82,6 +82,7 @@ export function LoginForm() {
 
   const supabase = getClient();
   const isGamer = displayRole === "gamer";
+  const isGedu = displayRole === "gedu";
 
   const handleBack = () => {
     setSelectedRole(null);
@@ -328,6 +329,8 @@ export function LoginForm() {
                     <div className="text-center text-sm text-muted-foreground">
                       {isGamer ? (
                         <span>Need help? Ask your parent or guardian.</span>
+                      ) : isGedu ? (
+                        <span>Gedu accounts are created by an administrator.</span>
                       ) : (
                         <span>
                           Don&apos;t have an account?{" "}
