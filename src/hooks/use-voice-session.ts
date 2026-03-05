@@ -15,6 +15,7 @@ interface UseVoiceSessionReturn {
   isLoading: boolean;
   joined: boolean;
   joining: boolean;
+  joiningRoomId: string | null;
   joinedRoomId: string | null;
   sessionEndedMessage: string | null;
   error: string | null;
@@ -29,6 +30,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
   const { joined, joining, join, leave } = useVoiceRoom();
 
   const [actionPending, setActionPending] = useState(false);
+  const [joiningRoomId, setJoiningRoomId] = useState<string | null>(null);
   const [joinedRoomId, setJoinedRoomId] = useState<string | null>(null);
   const [sessionEndedMessage, setSessionEndedMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +55,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
     setError(null);
     setSessionEndedMessage(null);
     setActionPending(true);
+    setJoiningRoomId(targetRoom.id);
     try {
       const { token, roomUrl } = await getToken.mutateAsync(targetRoom.id);
       await join(roomUrl, token);
@@ -62,6 +65,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
       setError(err instanceof Error ? err.message : "Failed to join room");
     } finally {
       setActionPending(false);
+      setJoiningRoomId(null);
     }
   }, [getToken, join]);
 
@@ -126,6 +130,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
     isLoading: roomsLoading,
     joined,
     joining,
+    joiningRoomId,
     joinedRoomId,
     sessionEndedMessage,
     error,

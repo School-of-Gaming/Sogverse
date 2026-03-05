@@ -79,6 +79,7 @@ function VoiceRoomDashboardInner() {
                   room={room}
                   onJoin={session.joinRoom}
                   disabled={joining || session.actionPending}
+                  loading={session.joiningRoomId === room.id}
                 />
               ))}
             </div>
@@ -94,6 +95,7 @@ function VoiceRoomDashboardInner() {
                   room={room}
                   onJoin={session.joinRoom}
                   disabled={joining || session.actionPending}
+                  loading={session.joiningRoomId === room.id}
                 />
               ))}
             </div>
@@ -109,6 +111,7 @@ function VoiceRoomDashboardInner() {
                   room={room}
                   onJoin={session.joinRoom}
                   disabled={joining || session.actionPending}
+                  loading={session.joiningRoomId === room.id}
                 />
               ))}
             </div>

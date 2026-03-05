@@ -13,9 +13,10 @@ interface VoiceRoomCardProps {
   room: AvailableVoiceRoomWithWindow;
   onJoin: (room: AvailableVoiceRoomWithWindow) => void;
   disabled?: boolean;
+  loading?: boolean;
 }
 
-export function VoiceRoomCard({ room, onJoin, disabled }: VoiceRoomCardProps) {
+export function VoiceRoomCard({ room, onJoin, disabled, loading }: VoiceRoomCardProps) {
   const isAlwaysOpen = room.room_type !== "group";
 
   const schedule = useMemo(() => {
@@ -75,14 +76,14 @@ export function VoiceRoomCard({ room, onJoin, disabled }: VoiceRoomCardProps) {
             onClick={() => onJoin(room)}
             disabled={disabled}
             size="sm"
-            className="gap-1.5 shrink-0"
+            className="gap-1.5 shrink-0 w-[6.5rem]"
           >
-            {disabled ? (
+            {loading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <PhoneCall className="h-4 w-4" />
             )}
-            Join
+            {loading ? "Joining..." : "Join"}
           </Button>
         )}
       </CardContent>
