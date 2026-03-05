@@ -74,7 +74,7 @@ voice_rooms (
 
 **Realtime:** Table has `REPLICA IDENTITY FULL` so UPDATE/DELETE events are delivered through RLS.
 
-**RPC:** `get_available_voice_rooms()` (SECURITY DEFINER) returns role-filtered rooms with schedule data joined from products. Admins see all rooms, gedus see gedu lounge + own group rooms, gamers see enrolled group rooms only.
+**RPC:** `get_available_voice_rooms()` (SECURITY DEFINER) returns role-filtered rooms with schedule data joined from products. Admins see all rooms, gedus see gedu lounge + own group rooms, gamers see enrolled group rooms only. For gamers, the RPC also returns `enrolled_at` (from `group_enrollments.created_at`) so the client can determine whether a mid-session enrollment should display as "Upcoming" instead of "Live".
 
 ## Schedule-Driven Room Windows
 
@@ -106,12 +106,17 @@ The `computeSessionWindow()` utility (in `src/lib/voice-schedule.ts`) determines
    - Gedu → must be the group's assigned gedu (`product_groups.gedu_id`)
    - Gamer → must have an active enrollment in the group
 
-4. **Session window (group rooms only):**
+4. **Mid-session enrollment gate (gamers only):**
+   - If a gamer's `enrollment.created_at` is at or after the current session's start time, they cannot join — their enrollment starts next session.
+   - This prevents mid-session freeloading: the first charge covers the next session (via `getNextSessionStart()`), not the in-progress one.
+   - The same check is applied client-side (room shows as "Upcoming" instead of "Live") via `enrolled_at` returned from the `get_available_voice_rooms` RPC.
+
+5. **Session window (group rooms only):**
    - All roles must be within the session window (session start - before buffer to session end + after buffer)
    - No role bypasses — admins and gedus follow the same window as gamers
    - Buffer values are configurable in `src/lib/constants/voice.ts` (`SESSION_WINDOW_BEFORE_MINUTES`, `SESSION_WINDOW_AFTER_MINUTES`)
 
-5. **Token expiry = session window close:** For group rooms, the meeting token's `exp` is set to `windowClosesAt` for all roles. When it expires, Daily.co auto-disconnects the participant. For always-open rooms, the default 2.5-hour expiry applies.
+6. **Token expiry = session window close:** For group rooms, the meeting token's `exp` is set to `windowClosesAt` for all roles. When it expires, Daily.co auto-disconnects the participant. For always-open rooms, the default 2.5-hour expiry applies.
 
 ### RPC Permissions
 

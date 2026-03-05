@@ -34,9 +34,15 @@ export class VoiceService {
         duration_minutes: room.duration_minutes,
       });
 
+      // If the gamer enrolled after the current session started, treat as not open.
+      // They haven't paid for this session — their first paid session is next week.
+      const enrolledAfterStart = window.isOpen
+        && room.enrolled_at
+        && new Date(room.enrolled_at).getTime() >= window.nextSessionStart.getTime();
+
       return {
         ...room,
-        isOpen: window.isOpen,
+        isOpen: window.isOpen && !enrolledAfterStart,
         nextSessionStart: window.nextSessionStart,
         windowClosesAt: window.windowClosesAt,
       };

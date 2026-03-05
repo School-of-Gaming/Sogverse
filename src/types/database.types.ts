@@ -571,6 +571,7 @@ export type Database = {
           daily_room_name: string
           day_of_week: number
           duration_minutes: number
+          enrolled_at: string
           gedu_display_name: string
           gedu_id: string
           group_id: string

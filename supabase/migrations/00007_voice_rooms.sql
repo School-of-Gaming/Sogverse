@@ -65,7 +65,8 @@ RETURNS TABLE (
   timezone TEXT,
   duration_minutes INTEGER,
   gedu_display_name TEXT,
-  gedu_id UUID
+  gedu_id UUID,
+  enrolled_at TIMESTAMPTZ
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -87,7 +88,8 @@ BEGIN
         p.name AS product_name,
         p.day_of_week, p.start_time, p.timezone, p.duration_minutes,
         gedu_prof.display_name AS gedu_display_name,
-        pg.gedu_id
+        pg.gedu_id,
+        NULL::TIMESTAMPTZ AS enrolled_at
       FROM voice_rooms vr
       LEFT JOIN product_groups pg ON pg.id = vr.group_id
       LEFT JOIN products p ON p.id = pg.product_id
@@ -102,7 +104,8 @@ BEGIN
         p.name AS product_name,
         p.day_of_week, p.start_time, p.timezone, p.duration_minutes,
         gedu_prof.display_name AS gedu_display_name,
-        pg.gedu_id
+        pg.gedu_id,
+        NULL::TIMESTAMPTZ AS enrolled_at
       FROM voice_rooms vr
       LEFT JOIN product_groups pg ON pg.id = vr.group_id
       LEFT JOIN products p ON p.id = pg.product_id
@@ -119,18 +122,16 @@ BEGIN
         p.name AS product_name,
         p.day_of_week, p.start_time, p.timezone, p.duration_minutes,
         gedu_prof.display_name AS gedu_display_name,
-        pg.gedu_id
+        pg.gedu_id,
+        ge.created_at AS enrolled_at
       FROM voice_rooms vr
       JOIN product_groups pg ON pg.id = vr.group_id
       JOIN products p ON p.id = pg.product_id
       JOIN profiles gedu_prof ON gedu_prof.id = pg.gedu_id
+      JOIN group_enrollments ge ON ge.group_id = vr.group_id
+        AND ge.gamer_id = v_uid
+        AND ge.status = 'active'
       WHERE vr.room_type = 'group'
-        AND EXISTS (
-          SELECT 1 FROM group_enrollments ge
-           WHERE ge.group_id = vr.group_id
-             AND ge.gamer_id = v_uid
-             AND ge.status = 'active'
-        )
       ORDER BY p.day_of_week, p.start_time;
 
   END IF;

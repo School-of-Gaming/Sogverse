@@ -5,6 +5,12 @@ import {
   mockSupabaseError,
 } from "../../mocks/supabase";
 import { createMockAvailableVoiceRoom } from "../../mocks/voice";
+import { computeSessionWindow } from "@/lib/voice-schedule";
+
+vi.mock("@/lib/voice-schedule", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/voice-schedule")>();
+  return { ...original, computeSessionWindow: vi.fn(original.computeSessionWindow) };
+});
 
 describe("VoiceService", () => {
   let service: VoiceService;
@@ -56,6 +62,53 @@ describe("VoiceService", () => {
       );
 
       await expect(service.getAvailableRooms()).rejects.toThrow();
+    });
+
+    it("should mark room as not open when gamer enrolled after session started", async () => {
+      const sessionStart = new Date(Date.now() - 20 * 60_000); // 20 min ago
+      const enrolledAt = new Date(Date.now() - 5 * 60_000); // 5 min ago (after session start)
+
+      const room = createMockAvailableVoiceRoom({
+        id: "mid-session",
+        enrolled_at: enrolledAt.toISOString(),
+      });
+
+      mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess([room]));
+
+      vi.mocked(computeSessionWindow).mockReturnValue({
+        isOpen: true,
+        nextSessionStart: sessionStart,
+        windowOpensAt: new Date(sessionStart.getTime() - 300_000),
+        windowClosesAt: new Date(sessionStart.getTime() + 3600_000),
+      });
+
+      const result = await service.getAvailableRooms();
+
+      expect(result[0].isOpen).toBe(false);
+      expect(result[0].nextSessionStart).toEqual(sessionStart);
+    });
+
+    it("should keep room open when gamer enrolled before session started", async () => {
+      const sessionStart = new Date(Date.now() - 1 * 60_000); // 1 min ago
+      const enrolledAt = new Date(Date.now() - 2 * 60_000); // 2 min ago (before session start)
+
+      const room = createMockAvailableVoiceRoom({
+        id: "pre-session",
+        enrolled_at: enrolledAt.toISOString(),
+      });
+
+      mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess([room]));
+
+      vi.mocked(computeSessionWindow).mockReturnValue({
+        isOpen: true,
+        nextSessionStart: sessionStart,
+        windowOpensAt: new Date(sessionStart.getTime() - 300_000),
+        windowClosesAt: new Date(sessionStart.getTime() + 3600_000),
+      });
+
+      const result = await service.getAvailableRooms();
+
+      expect(result[0].isOpen).toBe(true);
     });
   });
 

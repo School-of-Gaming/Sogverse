@@ -32,6 +32,7 @@ export function createMockAvailableVoiceRoom(
     duration_minutes: 60,
     gedu_display_name: "Test Educator",
     gedu_id: "gedu-user-id",
+    enrolled_at: null,
     ...overrides,
   };
 }

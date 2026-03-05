@@ -57,6 +57,7 @@ export async function POST(request: Request) {
 
     // --- Group room membership checks ---
     let tokenExpUnix: number | undefined;
+    let gamerEnrolledAt: Date | undefined;
 
     if (roomType === "group") {
       const group = room.product_groups as {
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
         // Gamer must have an active enrollment
         const { data: enrollment } = await admin
           .from("group_enrollments")
-          .select("id")
+          .select("id, created_at")
           .eq("group_id", room.group_id!)
           .eq("gamer_id", user.id)
           .eq("status", "active")
@@ -102,6 +103,8 @@ export async function POST(request: Request) {
             { status: 403 },
           );
         }
+
+        gamerEnrolledAt = new Date(enrollment.created_at);
       }
       // Admin bypasses membership checks
 
@@ -112,6 +115,14 @@ export async function POST(request: Request) {
       if (!sessionWindow.isOpen) {
         return NextResponse.json(
           { error: "Room is not open yet" },
+          { status: 403 },
+        );
+      }
+
+      // Gamer enrolled after the current session started — not paid for this session
+      if (gamerEnrolledAt && gamerEnrolledAt.getTime() >= sessionWindow.nextSessionStart.getTime()) {
+        return NextResponse.json(
+          { error: "Your enrollment starts next session" },
           { status: 403 },
         );
       }

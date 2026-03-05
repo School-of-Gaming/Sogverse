@@ -58,7 +58,7 @@ export type VoiceRoomUpdate = Database["public"]["Tables"]["voice_rooms"]["Updat
 type _AvailableVoiceRoomGenerated = Database["public"]["Functions"]["get_available_voice_rooms"]["Returns"][number];
 export type AvailableVoiceRoom = Omit<
   _AvailableVoiceRoomGenerated,
-  "group_id" | "product_name" | "day_of_week" | "start_time" | "timezone" | "duration_minutes" | "gedu_display_name" | "gedu_id"
+  "group_id" | "product_name" | "day_of_week" | "start_time" | "timezone" | "duration_minutes" | "gedu_display_name" | "gedu_id" | "enrolled_at"
 > & {
   group_id: string | null;
   product_name: string | null;
@@ -68,6 +68,7 @@ export type AvailableVoiceRoom = Omit<
   duration_minutes: number | null;
   gedu_display_name: string | null;
   gedu_id: string | null;
+  enrolled_at: string | null;
 };
 
 // product_groups

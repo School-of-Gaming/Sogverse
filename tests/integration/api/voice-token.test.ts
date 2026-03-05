@@ -324,55 +324,8 @@ describe("POST /api/voice/token", () => {
   });
 
   describe("group room — gamer access", () => {
-    it("should allow enrolled gamer to join when session is open", async () => {
-      mockAuthenticatedWithProfile("gamer-user-id", {
-        role: "gamer",
-        display_name: "Gamer",
-        username: "gamer1",
-      });
-      mockRoomLookup(createGroupRoom());
-
-      // Mock enrollment check — need to handle chained from().select().eq().eq().eq().limit().maybeSingle()
-      let fromCallCount = 0;
-      mockAdminFrom.mockImplementation((table: string) => {
-        fromCallCount++;
-        if (table === "voice_rooms" || fromCallCount === 1) {
-          // Room lookup (already handled first time)
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue(mockSupabaseSuccess(createGroupRoom())),
-              }),
-            }),
-          };
-        }
-        // Enrollment check
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
-                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "enrollment-1" })),
-                  }),
-                }),
-              }),
-            }),
-          }),
-        };
-      });
-
-      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
-      expect(response.status).toBe(200);
-    });
-
-    it("should reject unenrolled gamer", async () => {
-      mockAuthenticatedWithProfile("gamer-user-id", {
-        role: "gamer",
-        display_name: "Gamer",
-        username: "gamer1",
-      });
-
+    /** Helper: mock both room lookup + enrollment query for gamer tests */
+    function mockGamerEnrollment(enrollment: { id: string; created_at: string } | null) {
       let fromCallCount = 0;
       mockAdminFrom.mockImplementation(() => {
         fromCallCount++;
@@ -391,7 +344,7 @@ describe("POST /api/voice/token", () => {
               eq: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
                   limit: vi.fn().mockReturnValue({
-                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess(null)),
+                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess(enrollment)),
                   }),
                 }),
               }),
@@ -399,6 +352,42 @@ describe("POST /api/voice/token", () => {
           }),
         };
       });
+    }
+
+    it("should allow enrolled gamer to join when session is open", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+      mockRoomLookup(createGroupRoom());
+
+      // Enrolled well before session start
+      const sessionStart = new Date();
+      mockComputeSessionWindow.mockReturnValue({
+        isOpen: true,
+        nextSessionStart: sessionStart,
+        windowOpensAt: new Date(sessionStart.getTime() - 300_000),
+        windowClosesAt: new Date(sessionStart.getTime() + 3600_000),
+      });
+
+      mockGamerEnrollment({
+        id: "enrollment-1",
+        created_at: new Date(sessionStart.getTime() - 7 * 24 * 3600_000).toISOString(),
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      expect(response.status).toBe(200);
+    });
+
+    it("should reject unenrolled gamer", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+
+      mockGamerEnrollment(null);
 
       const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
       const data = await response.json();
@@ -421,31 +410,9 @@ describe("POST /api/voice/token", () => {
         windowClosesAt: new Date(Date.now() + 90000_000),
       });
 
-      let fromCallCount = 0;
-      mockAdminFrom.mockImplementation(() => {
-        fromCallCount++;
-        if (fromCallCount === 1) {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue(mockSupabaseSuccess(createGroupRoom())),
-              }),
-            }),
-          };
-        }
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
-                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "enrollment-1" })),
-                  }),
-                }),
-              }),
-            }),
-          }),
-        };
+      mockGamerEnrollment({
+        id: "enrollment-1",
+        created_at: new Date(Date.now() - 7 * 24 * 3600_000).toISOString(),
       });
 
       const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
@@ -453,6 +420,61 @@ describe("POST /api/voice/token", () => {
 
       expect(response.status).toBe(403);
       expect(data.error).toBe("Room is not open yet");
+    });
+
+    it("should reject gamer who enrolled after session started (mid-session enrollment)", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+
+      // Session started 20 minutes ago
+      const sessionStart = new Date(Date.now() - 20 * 60_000);
+      mockComputeSessionWindow.mockReturnValue({
+        isOpen: true,
+        nextSessionStart: sessionStart,
+        windowOpensAt: new Date(sessionStart.getTime() - 300_000),
+        windowClosesAt: new Date(sessionStart.getTime() + 3600_000),
+      });
+
+      // Enrolled 5 minutes ago — after the session started
+      mockGamerEnrollment({
+        id: "enrollment-1",
+        created_at: new Date(Date.now() - 5 * 60_000).toISOString(),
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe("Your enrollment starts next session");
+    });
+
+    it("should allow gamer who enrolled just before session started", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+
+      // Session started 1 minute ago
+      const sessionStart = new Date(Date.now() - 60_000);
+      mockComputeSessionWindow.mockReturnValue({
+        isOpen: true,
+        nextSessionStart: sessionStart,
+        windowOpensAt: new Date(sessionStart.getTime() - 300_000),
+        windowClosesAt: new Date(sessionStart.getTime() + 3600_000),
+      });
+
+      // Enrolled 2 minutes ago — before the session started
+      mockGamerEnrollment({
+        id: "enrollment-1",
+        created_at: new Date(Date.now() - 2 * 60_000).toISOString(),
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      expect(response.status).toBe(200);
     });
   });
 
@@ -571,7 +593,10 @@ describe("POST /api/voice/token", () => {
               eq: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
                   limit: vi.fn().mockReturnValue({
-                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "enrollment-1" })),
+                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({
+                      id: "enrollment-1",
+                      created_at: new Date(Date.now() - 7 * 24 * 3600_000).toISOString(),
+                    })),
                   }),
                 }),
               }),
