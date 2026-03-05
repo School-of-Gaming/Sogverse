@@ -201,7 +201,7 @@ The fix has three layers:
 
 Layer 3 is the most important — it breaks the deadlock chain regardless of how `SIGNED_IN` is triggered.
 
-### 7. `src/components/auth/login-form.tsx` + `src/components/auth/gamer-login-form.tsx` — Full page nav after sign-in
+### 7. `src/components/auth/login-form.tsx` — Full page nav after sign-in
 
 Changed `router.push()` + `router.refresh()` to `window.location.href`. After removing `fetchProfile()` from `onAuthStateChange`, client-side navigation after sign-in left `profile` as null because:
 
