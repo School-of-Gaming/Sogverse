@@ -38,8 +38,14 @@ export function computeSessionWindow(
     now,
   );
 
-  // Check the previous occurrence (one week before the next)
-  const prevStart = new Date(nextStart.getTime() - 7 * 24 * 60 * 60_000);
+  // Check the previous occurrence using timezone-aware lookup (not raw UTC
+  // subtraction, which is off by ±1 hour across DST transitions).
+  const prevStart = getNextSessionStart(
+    schedule.day_of_week,
+    schedule.start_time,
+    schedule.timezone,
+    new Date(now.getTime() - 7 * 24 * 60 * 60_000),
+  );
 
   const prevWindowOpens = new Date(prevStart.getTime() - beforeMs);
   const prevWindowCloses = new Date(prevStart.getTime() + durationMs + afterMs);

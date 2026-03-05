@@ -105,4 +105,28 @@ describe("computeSessionWindow", () => {
     // Session: Tue 14:00 UTC, window opens at 13:55 UTC
     expect(result.windowOpensAt.toISOString()).toBe("2026-03-03T13:55:00.000Z");
   });
+
+  it("should detect active session correctly across a DST spring-forward", () => {
+    // Europe/Helsinki springs forward between March 28 and March 29, 2026.
+    // March 24 (Tue, UTC+2): 14:00 Helsinki = 12:00 UTC
+    // March 31 (Tue, UTC+3): 14:00 Helsinki = 11:00 UTC
+    //
+    // At 12:30 UTC on March 24, the session is live (14:30 Helsinki).
+    // getNextSessionStart returns March 31 11:00 UTC (next week, UTC+3).
+    // Subtracting 7 days in UTC gives March 24 11:00 UTC — wrong by 1 hour.
+    // The correct prevStart is March 24 12:00 UTC (14:00 Helsinki, UTC+2).
+    const helsinkiSchedule = {
+      day_of_week: 1, // Tuesday
+      start_time: "14:00",
+      timezone: "Europe/Helsinki",
+      duration_minutes: 60,
+    };
+
+    const now = utcDate("2026-03-24T12:30:00Z"); // 14:30 Helsinki, mid-session
+    const result = computeSessionWindow(helsinkiSchedule, now);
+
+    expect(result.isOpen).toBe(true);
+    // The session started at 12:00 UTC (14:00 Helsinki UTC+2)
+    expect(result.nextSessionStart.toISOString()).toBe("2026-03-24T12:00:00.000Z");
+  });
 });
