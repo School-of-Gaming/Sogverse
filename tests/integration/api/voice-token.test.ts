@@ -457,7 +457,7 @@ describe("POST /api/voice/token", () => {
   });
 
   describe("admin access", () => {
-    it("should allow admin to join any group room", async () => {
+    it("should allow admin to join any group room when session is open", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
         display_name: "Admin User",
@@ -476,6 +476,50 @@ describe("POST /api/voice/token", () => {
           userName: "admin-user-id|admin|Admin User",
         }),
       );
+    });
+
+    it("should reject admin outside session window", async () => {
+      mockAuthenticatedWithProfile("admin-user-id", {
+        role: "admin",
+        display_name: "Admin User",
+        username: "admin1",
+      });
+      mockRoomLookup(createGroupRoom());
+      mockComputeSessionWindow.mockReturnValue({
+        isOpen: false,
+        nextSessionStart: new Date(Date.now() + 86400_000),
+        windowOpensAt: new Date(Date.now() + 86100_000),
+        windowClosesAt: new Date(Date.now() + 90000_000),
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe("Room is not open yet");
+    });
+  });
+
+  describe("gedu session window", () => {
+    it("should reject assigned gedu outside session window", async () => {
+      mockAuthenticatedWithProfile("gedu-user-id", {
+        role: "gedu",
+        display_name: "Educator",
+        username: "edu1",
+      });
+      mockRoomLookup(createGroupRoom());
+      mockComputeSessionWindow.mockReturnValue({
+        isOpen: false,
+        nextSessionStart: new Date(Date.now() + 86400_000),
+        windowOpensAt: new Date(Date.now() + 86100_000),
+        windowClosesAt: new Date(Date.now() + 90000_000),
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe("Room is not open yet");
     });
   });
 

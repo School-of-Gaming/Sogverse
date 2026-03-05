@@ -105,23 +105,19 @@ export async function POST(request: Request) {
       }
       // Admin bypasses membership checks
 
-      // --- Session window check (group rooms only) ---
+      // --- Session window check (group rooms only, all roles) ---
       const schedule = group.products;
       const sessionWindow = computeSessionWindow(schedule);
 
-      // Gamers must be within the session window
-      if (role === "gamer" && !sessionWindow.isOpen) {
+      if (!sessionWindow.isOpen) {
         return NextResponse.json(
           { error: "Room is not open yet" },
           { status: 403 },
         );
       }
-      // Admin and gedu bypass session window check
 
-      // Token expiry = session window close for group rooms (auto-kick)
-      if (sessionWindow.isOpen) {
-        tokenExpUnix = Math.round(sessionWindow.windowClosesAt.getTime() / 1000);
-      }
+      // Token expiry = session window close (auto-kick for all roles)
+      tokenExpUnix = Math.round(sessionWindow.windowClosesAt.getTime() / 1000);
     }
 
     // --- Lazy Daily.co room creation ---

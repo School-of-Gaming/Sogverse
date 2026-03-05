@@ -94,7 +94,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
 
     const joinedRoom = roomsList.find((r) => r.id === joinedRoomId);
     if (!joinedRoom || joinedRoom.room_type !== "group") return;
-    if (!joinedRoom.day_of_week || !joinedRoom.start_time || !joinedRoom.timezone || !joinedRoom.duration_minutes) return;
+    if (joinedRoom.day_of_week == null || !joinedRoom.start_time || !joinedRoom.timezone || !joinedRoom.duration_minutes) return;
 
     const checkWindow = () => {
       const window = computeSessionWindow({

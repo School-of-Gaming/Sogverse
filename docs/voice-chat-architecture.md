@@ -80,7 +80,7 @@ voice_rooms (
 
 Voice rooms don't have an "open/closed" status column. Instead, each group room inherits its schedule from the linked product (`day_of_week`, `start_time`, `timezone`, `duration_minutes`).
 
-**Session window** = `[sessionStart - 5min, sessionEnd + 5min]`
+**Session window** = `[sessionStart - BEFORE, sessionEnd + AFTER]` (configurable in `src/lib/constants/voice.ts`)
 
 The `computeSessionWindow()` utility (in `src/lib/voice-schedule.ts`) determines if a room is currently open. It reuses `getNextSessionStart()` from `src/lib/enrollment.ts` and also checks the previous week's occurrence to handle "currently in session" state.
 
@@ -107,10 +107,11 @@ The `computeSessionWindow()` utility (in `src/lib/voice-schedule.ts`) determines
    - Gamer → must have an active enrollment in the group
 
 4. **Session window (group rooms only):**
-   - Gamer → must be within the session window
-   - Admin/Gedu → bypass (can join anytime)
+   - All roles must be within the session window (session start - before buffer to session end + after buffer)
+   - No role bypasses — admins and gedus follow the same window as gamers
+   - Buffer values are configurable in `src/lib/constants/voice.ts` (`SESSION_WINDOW_BEFORE_MINUTES`, `SESSION_WINDOW_AFTER_MINUTES`)
 
-5. **Token expiry = session window close:** For group rooms, the meeting token's `exp` is set to `windowClosesAt`. When it expires, Daily.co auto-disconnects the participant. For always-open rooms, the default 2.5-hour expiry applies.
+5. **Token expiry = session window close:** For group rooms, the meeting token's `exp` is set to `windowClosesAt` for all roles. When it expires, Daily.co auto-disconnects the participant. For always-open rooms, the default 2.5-hour expiry applies.
 
 ### RPC Permissions
 
@@ -121,7 +122,7 @@ The `computeSessionWindow()` utility (in `src/lib/voice-schedule.ts`) determines
 | See group rooms | All | Own groups | Enrolled groups |
 | Join admin lounge | Yes | No | No |
 | Join gedu lounge | Yes | Yes | No |
-| Join group room | Yes (anytime) | Own groups (anytime) | Enrolled + in window |
+| Join group room | In window | Own groups + in window | Enrolled + in window |
 | Camera & Mic | Yes | Yes | Yes |
 | Drag other avatars | Yes | Yes | Own only |
 | Enter broadcast zone | Yes | Yes | No |
