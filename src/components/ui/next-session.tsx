@@ -1,0 +1,48 @@
+"use client";
+
+import { useMemo } from "react";
+import { formatCountdown } from "@/lib/enrollment";
+
+/** Highlight threshold: sessions within 12 hours get warning color */
+const HIGHLIGHT_MINUTES = 720;
+
+interface NextSessionProps {
+  nextSessionStart: Date;
+}
+
+/**
+ * Displays "Next session Thu, Mar 5, 7:00 PM (starts in 3 hours)"
+ * with warning color when the session is within 12 hours.
+ */
+export function NextSession({ nextSessionStart }: NextSessionProps) {
+  // eslint-disable-next-line react-hooks/purity -- intentional: snapshot time at mount
+  const now = useMemo(() => Date.now(), []);
+  const msUntil = nextSessionStart.getTime() - now;
+  const totalMinutes = Math.max(0, Math.floor(msUntil / 60_000));
+  const countdown = msUntil > 0 ? formatCountdown(msUntil) : null;
+
+  return (
+    <p className="text-sm">
+      Next session{" "}
+      {nextSessionStart.toLocaleDateString(undefined, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })}
+      {countdown && (
+        <span
+          className={
+            totalMinutes < HIGHLIGHT_MINUTES
+              ? "font-medium text-warning"
+              : "text-muted-foreground"
+          }
+        >
+          {" "}
+          (starts in {countdown})
+        </span>
+      )}
+    </p>
+  );
+}

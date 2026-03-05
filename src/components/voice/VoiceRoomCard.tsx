@@ -5,9 +5,9 @@ import { Calendar, Clock, PhoneCall, Loader2, Radio } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { NextSession } from "@/components/ui/next-session";
 import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
 import { formatScheduleLocal } from "@/lib/utils";
-import { formatCountdown } from "@/lib/enrollment";
 
 interface VoiceRoomCardProps {
   room: AvailableVoiceRoomWithWindow;
@@ -22,15 +22,6 @@ export function VoiceRoomCard({ room, onJoin, disabled }: VoiceRoomCardProps) {
     if (isAlwaysOpen || room.day_of_week == null || !room.start_time || !room.timezone) return null;
     return formatScheduleLocal(room.day_of_week, room.start_time, room.timezone);
   }, [isAlwaysOpen, room.day_of_week, room.start_time, room.timezone]);
-
-  // eslint-disable-next-line react-hooks/purity -- intentional: snapshot time at mount
-  const now = useMemo(() => Date.now(), []);
-  const countdown = useMemo(() => {
-    if (isAlwaysOpen || !room.nextSessionStart) return null;
-    const ms = room.nextSessionStart.getTime() - now;
-    if (ms <= 0) return null;
-    return formatCountdown(ms);
-  }, [isAlwaysOpen, room.nextSessionStart, now]);
 
   return (
     <Card>
@@ -60,10 +51,10 @@ export function VoiceRoomCard({ room, onJoin, disabled }: VoiceRoomCardProps) {
           )}
 
           {!isAlwaysOpen && schedule && (
-            <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="mt-1 flex items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {schedule.localDay}
+                Every {schedule.localDay}
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
@@ -72,10 +63,10 @@ export function VoiceRoomCard({ room, onJoin, disabled }: VoiceRoomCardProps) {
             </div>
           )}
 
-          {!isAlwaysOpen && !room.isOpen && countdown && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Starts in {countdown}
-            </p>
+          {!isAlwaysOpen && !room.isOpen && room.nextSessionStart && (
+            <div className="mt-1">
+              <NextSession nextSessionStart={room.nextSessionStart} />
+            </div>
           )}
         </div>
 

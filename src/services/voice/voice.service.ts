@@ -22,7 +22,7 @@ export class VoiceService {
     const rooms: AvailableVoiceRoom[] = data || [];
 
     return rooms.map((room) => {
-      if (room.room_type !== "group" || !room.day_of_week || !room.start_time || !room.timezone || !room.duration_minutes) {
+      if (room.room_type !== "group" || room.day_of_week == null || !room.start_time || !room.timezone || !room.duration_minutes) {
         // Always-open rooms (admin_only, gedu_only)
         return { ...room, isOpen: true, nextSessionStart: null, windowClosesAt: null };
       }

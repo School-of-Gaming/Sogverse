@@ -1,14 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Calendar, Clock, Users, Coins } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { NextSession } from "@/components/ui/next-session";
 import type { CustomerEnrollment } from "@/services/enrollments";
-import { getNextSessionStart, getRefundEligibility, formatCountdown } from "@/lib/enrollment";
+import { getNextSessionStart, getRefundEligibility } from "@/lib/enrollment";
 import { formatScheduleLocal } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 import { UnenrollDialog } from "./unenroll-dialog";
@@ -45,12 +46,6 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
   );
 
   const isActive = enrollment.status === "active";
-
-  // eslint-disable-next-line react-hooks/purity -- intentional: snapshot time at mount
-  const now = useMemo(() => Date.now(), []);
-  const msUntil = nextSession.getTime() - now;
-  const totalMinutes = Math.max(0, Math.floor(msUntil / 60_000));
-  const countdown = formatCountdown(msUntil);
 
   return (
     <>
@@ -111,15 +106,7 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
             {/* Active enrollment: next session + refund + unenroll */}
             {isActive && (
               <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                <p className="text-sm">
-                  Next session {nextSession.toLocaleDateString(undefined, {
-                    weekday: "short",
-                    month: "short",
-                    day: "numeric",
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })} <span className={totalMinutes < 720 ? "font-medium text-warning" : "text-muted-foreground"}>(starts in {countdown})</span>
-                </p>
+                <NextSession nextSessionStart={nextSession} />
                 <Button
                   variant="outline"
                   size="sm"
