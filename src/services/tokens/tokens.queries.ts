@@ -33,14 +33,14 @@ export function useTokenTransactions(userId: string) {
   });
 }
 
-export function useSubscription(userId: string) {
+export function useSubscription(userId: string, enabled = true) {
   const supabase = getClient();
   const service = new TokensService(supabase);
 
   return useQuery({
     queryKey: tokenKeys.subscription(userId),
     queryFn: () => service.getSubscription(userId),
-    enabled: !!userId,
+    enabled: !!userId && enabled,
   });
 }
 

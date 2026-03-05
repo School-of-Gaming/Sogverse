@@ -160,7 +160,8 @@ function PackageCard({
 export function TokenPurchaseSection() {
   const { user, profile } = useAuth();
   const { currency } = useCurrency();
-  const { data: subscription } = useSubscription(profile?.id ?? "");
+  const isCustomer = profile?.role === "customer";
+  const { data: subscription } = useSubscription(profile?.id ?? "", isCustomer);
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
   const [loadingPackage, setLoadingPackage] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState(false);
