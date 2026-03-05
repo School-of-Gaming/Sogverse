@@ -38,6 +38,6 @@ export const ROLE_DASHBOARD_PATHS: Record<UserRole, string> = {
 export const ROLE_LOGIN_PATHS: Record<UserRole, string> = {
   admin: "/login",
   customer: "/login",
-  gamer: "/gamer-login",
+  gamer: "/login",
   gedu: "/login",
 };

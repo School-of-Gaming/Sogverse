@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="h-96 w-full max-w-md animate-pulse rounded-lg bg-card" />}>
+    <Suspense fallback={<div className="h-96 w-full max-w-lg animate-pulse rounded-lg bg-card" />}>
       <LoginForm />
     </Suspense>
   );

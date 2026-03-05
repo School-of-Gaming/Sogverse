@@ -9,7 +9,7 @@ import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.sorg, ROUTES.checkout, ROUTES.about];
 
 // Routes for authentication (login, register, etc.)
-const AUTH_ROUTES = [ROUTES.login, ROUTES.gamerLogin, ROUTES.register, ROUTES.forgotPassword];
+const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -8,7 +8,6 @@ export const ROUTES = {
   checkout: "/checkout",
   about: "/about",
   login: "/login",
-  gamerLogin: "/gamer-login",
   register: "/register",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
@@ -49,14 +48,12 @@ export const PUBLIC_ROUTES = [
   ROUTES.checkout,
   ROUTES.about,
   ROUTES.login,
-  ROUTES.gamerLogin,
   ROUTES.register,
   ROUTES.forgotPassword,
 ] as const;
 
 export const AUTH_ROUTES = [
   ROUTES.login,
-  ROUTES.gamerLogin,
   ROUTES.register,
   ROUTES.forgotPassword,
 ] as const;

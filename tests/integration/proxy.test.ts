@@ -89,7 +89,7 @@ describe("proxy", () => {
   // --- Auth routes (unauthenticated → allow) ---
 
   describe("auth routes (unauthenticated)", () => {
-    it.each(["/login", "/register", "/gamer-login", "/forgot-password"])(
+    it.each(["/login", "/register", "/forgot-password"])(
       "passes through %s when not logged in",
       async (path) => {
         mockNoUser();
@@ -123,9 +123,9 @@ describe("proxy", () => {
       expect(getRedirectUrl(response).pathname).toBe("/gedu");
     });
 
-    it("redirects gamer from /gamer-login to /gamer", async () => {
+    it("redirects gamer from /login to /gamer", async () => {
       mockUser("gamer");
-      const response = await proxy(createNextRequest("/gamer-login"));
+      const response = await proxy(createNextRequest("/login"));
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).pathname).toBe("/gamer");
     });
