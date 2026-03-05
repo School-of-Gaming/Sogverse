@@ -32,11 +32,6 @@ export function VoiceRoomCard({ room, onJoin, disabled, loading }: VoiceRoomCard
             <p className="font-medium truncate">
               {room.product_name ?? room.name}
             </p>
-            {isAlwaysOpen && (
-              <Badge variant="secondary" className="text-xs shrink-0">
-                Always Open
-              </Badge>
-            )}
             {!isAlwaysOpen && room.isOpen && (
               <Badge className="bg-success/10 text-success text-xs shrink-0">
                 <Radio className="mr-1 h-3 w-3" />
