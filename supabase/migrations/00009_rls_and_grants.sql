@@ -135,21 +135,32 @@ CREATE POLICY "public_view_games"
 
 CREATE POLICY "admin_full_access_voice_rooms"
   ON voice_rooms FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING ((SELECT get_user_role()) = 'admin')
+  WITH CHECK ((SELECT get_user_role()) = 'admin');
 
-CREATE POLICY "gedu_manage_own_voice_room"
-  ON voice_rooms FOR ALL TO authenticated
-  USING ((select get_user_role()) = 'gedu' AND creator_id = (select auth.uid()))
-  WITH CHECK ((select get_user_role()) = 'gedu' AND creator_id = (select auth.uid()));
-
-CREATE POLICY "gedu_view_all_voice_rooms"
+CREATE POLICY "gedu_view_voice_rooms"
   ON voice_rooms FOR SELECT TO authenticated
-  USING (get_user_role() = 'gedu');
+  USING (
+    (SELECT get_user_role()) = 'gedu'
+    AND (
+      room_type = 'gedu_only'
+      OR (room_type = 'group' AND group_id IN (
+        SELECT id FROM product_groups WHERE gedu_id = auth.uid()
+      ))
+    )
+  );
 
-CREATE POLICY "gamer_view_voice_rooms"
+CREATE POLICY "gamer_view_enrolled_voice_rooms"
   ON voice_rooms FOR SELECT TO authenticated
-  USING (get_user_role() = 'gamer');
+  USING (
+    (SELECT get_user_role()) = 'gamer'
+    AND room_type = 'group'
+    AND group_id IN (
+      SELECT ge.group_id FROM group_enrollments ge
+       WHERE ge.gamer_id = auth.uid()
+         AND ge.status = 'active'
+    )
+  );
 
 -- =============================================================================
 -- TOKEN_TRANSACTIONS POLICIES
@@ -267,8 +278,8 @@ GRANT INSERT, UPDATE, DELETE ON products TO authenticated;
 GRANT SELECT ON games TO anon, authenticated;
 GRANT INSERT, UPDATE, DELETE ON games TO authenticated;
 
--- voice_rooms: full CRUD for gedu/admin
-GRANT SELECT, INSERT, UPDATE, DELETE ON voice_rooms TO authenticated;
+-- voice_rooms: read-only for authenticated (writes go through admin client / migration seed)
+GRANT SELECT ON voice_rooms TO authenticated;
 
 -- token_transactions: read-only (writes go through adjust_token_balance RPC)
 GRANT SELECT ON token_transactions TO authenticated;
@@ -317,8 +328,8 @@ REVOKE EXECUTE ON FUNCTION get_visible_products() FROM public, anon, authenticat
 GRANT EXECUTE ON FUNCTION get_visible_products() TO anon, authenticated;
 
 -- Voice rooms: authenticated only
-REVOKE EXECUTE ON FUNCTION get_open_voice_rooms() FROM public, anon, authenticated;
-GRANT EXECUTE ON FUNCTION get_open_voice_rooms() TO authenticated;
+REVOKE EXECUTE ON FUNCTION get_available_voice_rooms() FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_available_voice_rooms() TO authenticated;
 
 -- Group management RPCs: authenticated only (admin-gated internally)
 REVOKE EXECUTE ON FUNCTION get_product_groups_with_details(UUID) FROM public, anon, authenticated;

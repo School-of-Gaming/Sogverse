@@ -1,23 +1,26 @@
 -- Voice rooms for real-time sessions via Daily.co
-
-CREATE TYPE voice_room_status AS ENUM ('open', 'closed');
+-- Each voice room is linked 1:1 to a product group (schedule-driven),
+-- or is a special always-open room (admin lounge, gedu lounge).
 
 CREATE TABLE voice_rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  creator_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  group_id UUID REFERENCES product_groups(id) ON DELETE CASCADE,
+  room_type TEXT NOT NULL DEFAULT 'group' CHECK (room_type IN ('group', 'admin_only', 'gedu_only')),
+  creator_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   daily_room_name TEXT UNIQUE NOT NULL,
-  status voice_room_status NOT NULL DEFAULT 'closed',
-  opened_at TIMESTAMPTZ,
-  closed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-
-  CONSTRAINT voice_rooms_one_per_creator UNIQUE (creator_id)
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_voice_rooms_status ON voice_rooms(status) WHERE status = 'open';
-CREATE INDEX idx_voice_rooms_creator_id ON voice_rooms(creator_id);
+-- Each product group maps to exactly one voice room
+CREATE UNIQUE INDEX idx_voice_rooms_group ON voice_rooms(group_id) WHERE group_id IS NOT NULL;
+
+-- Only one admin-only and one gedu-only room
+CREATE UNIQUE INDEX idx_voice_rooms_admin_only ON voice_rooms(room_type) WHERE room_type = 'admin_only';
+CREATE UNIQUE INDEX idx_voice_rooms_gedu_only ON voice_rooms(room_type) WHERE room_type = 'gedu_only';
+
+CREATE INDEX idx_voice_rooms_room_type ON voice_rooms(room_type);
 
 CREATE TRIGGER voice_rooms_updated_at
   BEFORE UPDATE ON voice_rooms
@@ -34,39 +37,103 @@ ALTER TABLE voice_rooms REPLICA IDENTITY FULL;
 ALTER PUBLICATION supabase_realtime ADD TABLE voice_rooms;
 
 -- =============================================================================
--- get_open_voice_rooms RPC
+-- Seed special rooms (Daily.co rooms are lazily created on first join)
 -- =============================================================================
 
-CREATE OR REPLACE FUNCTION get_open_voice_rooms()
+INSERT INTO voice_rooms (room_type, name, daily_room_name)
+VALUES
+  ('admin_only', 'Admin Lounge', 'admin-lounge'),
+  ('gedu_only',  'Gedu Lounge',  'gedu-lounge');
+
+-- =============================================================================
+-- get_available_voice_rooms RPC
+-- Role-aware: returns only rooms the caller is allowed to see.
+-- Schedule data is returned so the client can compute isOpen display state.
+-- Actual join authorization is enforced server-side in the token endpoint.
+-- =============================================================================
+
+CREATE OR REPLACE FUNCTION get_available_voice_rooms()
 RETURNS TABLE (
   id UUID,
-  creator_id UUID,
+  group_id UUID,
+  room_type TEXT,
   name TEXT,
   daily_room_name TEXT,
-  status voice_room_status,
-  opened_at TIMESTAMPTZ,
-  creator_display_name TEXT,
-  creator_role TEXT
+  product_name TEXT,
+  day_of_week SMALLINT,
+  start_time TIME,
+  timezone TEXT,
+  duration_minutes INTEGER,
+  gedu_display_name TEXT,
+  gedu_id UUID
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
 STABLE
 SET search_path = public
 AS $$
+DECLARE
+  v_role TEXT;
+  v_uid UUID;
 BEGIN
-  RETURN QUERY
-    SELECT
-      vr.id,
-      vr.creator_id,
-      vr.name,
-      vr.daily_room_name,
-      vr.status,
-      vr.opened_at,
-      p.display_name AS creator_display_name,
-      p.role::TEXT AS creator_role
-    FROM voice_rooms vr
-    JOIN profiles p ON p.id = vr.creator_id
-    WHERE vr.status = 'open'
-    ORDER BY vr.opened_at DESC;
+  v_uid := auth.uid();
+  v_role := get_user_role();
+
+  IF v_role = 'admin' THEN
+    -- Admin sees all rooms
+    RETURN QUERY
+      SELECT
+        vr.id, vr.group_id, vr.room_type, vr.name, vr.daily_room_name,
+        p.name AS product_name,
+        p.day_of_week, p.start_time, p.timezone, p.duration_minutes,
+        gedu_prof.display_name AS gedu_display_name,
+        pg.gedu_id
+      FROM voice_rooms vr
+      LEFT JOIN product_groups pg ON pg.id = vr.group_id
+      LEFT JOIN products p ON p.id = pg.product_id
+      LEFT JOIN profiles gedu_prof ON gedu_prof.id = pg.gedu_id
+      ORDER BY vr.room_type, p.day_of_week, p.start_time;
+
+  ELSIF v_role = 'gedu' THEN
+    -- Gedu sees gedu lounge + groups where they are the assigned gedu
+    RETURN QUERY
+      SELECT
+        vr.id, vr.group_id, vr.room_type, vr.name, vr.daily_room_name,
+        p.name AS product_name,
+        p.day_of_week, p.start_time, p.timezone, p.duration_minutes,
+        gedu_prof.display_name AS gedu_display_name,
+        pg.gedu_id
+      FROM voice_rooms vr
+      LEFT JOIN product_groups pg ON pg.id = vr.group_id
+      LEFT JOIN products p ON p.id = pg.product_id
+      LEFT JOIN profiles gedu_prof ON gedu_prof.id = pg.gedu_id
+      WHERE vr.room_type = 'gedu_only'
+         OR (vr.room_type = 'group' AND pg.gedu_id = v_uid)
+      ORDER BY vr.room_type, p.day_of_week, p.start_time;
+
+  ELSIF v_role = 'gamer' THEN
+    -- Gamer sees group rooms where they have an active enrollment
+    RETURN QUERY
+      SELECT
+        vr.id, vr.group_id, vr.room_type, vr.name, vr.daily_room_name,
+        p.name AS product_name,
+        p.day_of_week, p.start_time, p.timezone, p.duration_minutes,
+        gedu_prof.display_name AS gedu_display_name,
+        pg.gedu_id
+      FROM voice_rooms vr
+      JOIN product_groups pg ON pg.id = vr.group_id
+      JOIN products p ON p.id = pg.product_id
+      JOIN profiles gedu_prof ON gedu_prof.id = pg.gedu_id
+      WHERE vr.room_type = 'group'
+        AND EXISTS (
+          SELECT 1 FROM group_enrollments ge
+           WHERE ge.group_id = vr.group_id
+             AND ge.gamer_id = v_uid
+             AND ge.status = 'active'
+        )
+      ORDER BY p.day_of_week, p.start_time;
+
+  END IF;
+  -- Customers and other roles: return nothing (empty result set)
 END;
 $$;

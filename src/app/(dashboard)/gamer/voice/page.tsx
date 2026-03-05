@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { VoiceRoomList } from "@/components/gamer/VoiceRoomList";
+import { VoiceRoomDashboard } from "@/components/voice/VoiceRoomDashboard";
 
 export const metadata: Metadata = {
   title: "Voice Rooms",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function GamerVoicePage() {
-  return <VoiceRoomList />;
+  return <VoiceRoomDashboard />;
 }

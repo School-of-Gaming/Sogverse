@@ -18,7 +18,6 @@ import type { Database } from "./database.types";
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type TokenTransactionType = Database["public"]["Enums"]["token_transaction_type"];
 export type GenderType = Database["public"]["Enums"]["gender_type"];
-export type VoiceRoomStatus = Database["public"]["Enums"]["voice_room_status"];
 
 // profiles
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -53,7 +52,23 @@ export type TokenTransaction = Database["public"]["Tables"]["token_transactions"
 export type VoiceRoom = Database["public"]["Tables"]["voice_rooms"]["Row"];
 export type VoiceRoomInsert = Database["public"]["Tables"]["voice_rooms"]["Insert"];
 export type VoiceRoomUpdate = Database["public"]["Tables"]["voice_rooms"]["Update"];
-export type OpenVoiceRoom = Database["public"]["Functions"]["get_open_voice_rooms"]["Returns"][number];
+
+// get_available_voice_rooms RPC — the generated type marks nullable LEFT JOIN
+// fields as non-nullable. Override to reflect that special rooms have null schedule data.
+type _AvailableVoiceRoomGenerated = Database["public"]["Functions"]["get_available_voice_rooms"]["Returns"][number];
+export type AvailableVoiceRoom = Omit<
+  _AvailableVoiceRoomGenerated,
+  "group_id" | "product_name" | "day_of_week" | "start_time" | "timezone" | "duration_minutes" | "gedu_display_name" | "gedu_id"
+> & {
+  group_id: string | null;
+  product_name: string | null;
+  day_of_week: number | null;
+  start_time: string | null;
+  timezone: string | null;
+  duration_minutes: number | null;
+  gedu_display_name: string | null;
+  gedu_id: string | null;
+};
 
 // product_groups
 export type ProductGroup = Database["public"]["Tables"]["product_groups"]["Row"];

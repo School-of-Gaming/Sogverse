@@ -14,8 +14,8 @@ const mockAdminFrom = vi.fn();
 const mockAdminRpc = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
-    from: mockAdminFrom,
-    rpc: mockAdminRpc,
+    from: (...args: unknown[]) => mockAdminFrom(...args),
+    rpc: (...args: unknown[]) => mockAdminRpc(...args),
   })),
 }));
 
@@ -25,6 +25,13 @@ vi.mock("@/services/groups", () => ({
   GroupsService: vi.fn().mockImplementation(() => ({
     getProductGroups: mockGetProductGroups,
   })),
+}));
+
+const mockCreateDailyRoom = vi.fn();
+const mockDeleteDailyRoom = vi.fn();
+vi.mock("@/lib/daily", () => ({
+  createDailyRoom: (...args: unknown[]) => mockCreateDailyRoom(...args),
+  deleteDailyRoom: (...args: unknown[]) => mockDeleteDailyRoom(...args),
 }));
 
 // --- Helpers ---
@@ -52,6 +59,50 @@ function mockAuthenticated() {
   });
 }
 
+/** Set up mockAdminFrom to handle all the chained calls the route makes */
+function setupAdminFromMock(options?: { productExists?: boolean }) {
+  const productExists = options?.productExists ?? true;
+
+  mockAdminFrom.mockImplementation((table: string) => {
+    if (table === "products") {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(
+              productExists
+                ? mockSupabaseSuccess({ id: "product-1", name: "Test Product" })
+                : mockSupabaseError("Not found", "PGRST116"),
+            ),
+          }),
+        }),
+      };
+    }
+    if (table === "voice_rooms") {
+      return {
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue(mockSupabaseSuccess([])),
+        }),
+        insert: vi.fn().mockResolvedValue(mockSupabaseSuccess(null)),
+      };
+    }
+    if (table === "product_groups") {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue(mockSupabaseSuccess([])),
+        }),
+      };
+    }
+    // Fallback
+    return {
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(mockSupabaseSuccess(null)),
+        }),
+      }),
+    };
+  });
+}
+
 const validPayload = {
   addedGroups: [{ tempId: "temp-1", geduId: "gedu-1" }],
   updatedGroups: [{ groupId: "group-1", geduId: "gedu-2" }],
@@ -76,6 +127,8 @@ const params = Promise.resolve({ id: "product-1" });
 describe("POST /api/admin/products/[id]/groups", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCreateDailyRoom.mockResolvedValue({ name: "group-abcd1234" });
+    mockDeleteDailyRoom.mockResolvedValue(undefined);
   });
 
   // Auth
@@ -104,13 +157,7 @@ describe("POST /api/admin/products/[id]/groups", () => {
 
   it("returns 404 when product does not exist", async () => {
     mockAuthenticated();
-    mockAdminFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(mockSupabaseError("Not found", "PGRST116")),
-        }),
-      }),
-    });
+    setupAdminFromMock({ productExists: false });
 
     const response = await POST(createRequest(), { params });
     const data = await response.json();
@@ -123,15 +170,7 @@ describe("POST /api/admin/products/[id]/groups", () => {
 
   it("returns refreshed groups on successful commit", async () => {
     mockAuthenticated();
-
-    // Product exists
-    mockAdminFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "product-1" })),
-        }),
-      }),
-    });
+    setupAdminFromMock();
 
     // RPC succeeds
     mockAdminRpc.mockResolvedValue(
@@ -162,13 +201,7 @@ describe("POST /api/admin/products/[id]/groups", () => {
 
   it("returns 400 when RPC fails", async () => {
     mockAuthenticated();
-    mockAdminFrom.mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "product-1" })),
-        }),
-      }),
-    });
+    setupAdminFromMock();
     mockAdminRpc.mockResolvedValue(
       mockSupabaseError("Gamer is already enrolled in another group for this product"),
     );

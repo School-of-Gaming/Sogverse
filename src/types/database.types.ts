@@ -445,44 +445,48 @@ export type Database = {
       }
       voice_rooms: {
         Row: {
-          closed_at: string | null
           created_at: string
-          creator_id: string
+          creator_id: string | null
           daily_room_name: string
+          group_id: string | null
           id: string
           name: string
-          opened_at: string | null
-          status: Database["public"]["Enums"]["voice_room_status"]
+          room_type: string
           updated_at: string
         }
         Insert: {
-          closed_at?: string | null
           created_at?: string
-          creator_id: string
+          creator_id?: string | null
           daily_room_name: string
+          group_id?: string | null
           id?: string
           name: string
-          opened_at?: string | null
-          status?: Database["public"]["Enums"]["voice_room_status"]
+          room_type?: string
           updated_at?: string
         }
         Update: {
-          closed_at?: string | null
           created_at?: string
-          creator_id?: string
+          creator_id?: string | null
           daily_room_name?: string
+          group_id?: string | null
           id?: string
           name?: string
-          opened_at?: string | null
-          status?: Database["public"]["Enums"]["voice_room_status"]
+          room_type?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "voice_rooms_gedu_id_fkey"
+            foreignKeyName: "voice_rooms_creator_id_fkey"
             columns: ["creator_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_rooms_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -561,6 +565,23 @@ export type Database = {
           transaction_id: string
         }[]
       }
+      get_available_voice_rooms: {
+        Args: never
+        Returns: {
+          daily_room_name: string
+          day_of_week: number
+          duration_minutes: number
+          gedu_display_name: string
+          gedu_id: string
+          group_id: string
+          id: string
+          name: string
+          product_name: string
+          room_type: string
+          start_time: string
+          timezone: string
+        }[]
+      }
       get_customer_enrollments: {
         Args: { p_customer_id: string }
         Returns: {
@@ -631,19 +652,6 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
-      }
-      get_open_voice_rooms: {
-        Args: never
-        Returns: {
-          creator_display_name: string
-          creator_id: string
-          creator_role: string
-          daily_room_name: string
-          id: string
-          name: string
-          opened_at: string
-          status: Database["public"]["Enums"]["voice_room_status"]
-        }[]
       }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
@@ -716,7 +724,6 @@ export type Database = {
         | "enrollment"
         | "enrollment_refund"
       user_role: "admin" | "customer" | "gamer" | "gedu"
-      voice_room_status: "open" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -853,7 +860,6 @@ export const Constants = {
         "enrollment_refund",
       ],
       user_role: ["admin", "customer", "gamer", "gedu"],
-      voice_room_status: ["open", "closed"],
     },
   },
 } as const

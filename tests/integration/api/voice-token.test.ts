@@ -12,15 +12,26 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockAdminFrom = vi.fn();
+const mockAdminRpc = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
-    from: mockAdminFrom,
+    from: (...args: unknown[]) => mockAdminFrom(...args),
+    rpc: (...args: unknown[]) => mockAdminRpc(...args),
   })),
 }));
 
 const mockCreateMeetingToken = vi.fn();
+const mockGetDailyRoom = vi.fn();
+const mockCreateDailyRoom = vi.fn();
 vi.mock("@/lib/daily", () => ({
   createMeetingToken: (...args: unknown[]) => mockCreateMeetingToken(...args),
+  getDailyRoom: (...args: unknown[]) => mockGetDailyRoom(...args),
+  createDailyRoom: (...args: unknown[]) => mockCreateDailyRoom(...args),
+}));
+
+const mockComputeSessionWindow = vi.fn();
+vi.mock("@/lib/voice-schedule", () => ({
+  computeSessionWindow: (...args: unknown[]) => mockComputeSessionWindow(...args),
 }));
 
 // --- Helpers ---
@@ -35,14 +46,14 @@ function createTokenRequest(body: Record<string, unknown>): Request {
 
 function mockAuthenticatedWithProfile(
   userId: string,
-  profile: { role: string; display_name: string; username: string | null }
+  profile: { role: string; display_name: string; username: string | null },
 ) {
   if (profile.role === "customer") {
     mockRequireRole.mockResolvedValue(
       NextResponse.json(
         { error: "You do not have permission to join voice rooms" },
-        { status: 403 }
-      )
+        { status: 403 },
+      ),
     );
     return;
   }
@@ -54,7 +65,7 @@ function mockAuthenticatedWithProfile(
   });
 }
 
-function mockRoomLookup(room: ReturnType<typeof createMockVoiceRoom> | null) {
+function mockRoomLookup(room: Record<string, unknown> | null) {
   if (room) {
     mockAdminFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
@@ -77,6 +88,36 @@ function mockRoomLookup(room: ReturnType<typeof createMockVoiceRoom> | null) {
   }
 }
 
+function createGroupRoom(overrides: Record<string, unknown> = {}) {
+  return {
+    ...createMockVoiceRoom(),
+    room_type: "group",
+    group_id: "group-uuid-1234",
+    product_groups: {
+      gedu_id: "gedu-user-id",
+      product_id: "product-uuid-1234",
+      products: {
+        day_of_week: 1,
+        start_time: "14:00",
+        timezone: "Europe/Helsinki",
+        duration_minutes: 60,
+      },
+    },
+    ...overrides,
+  };
+}
+
+function createSpecialRoom(roomType: string) {
+  return {
+    ...createMockVoiceRoom({
+      group_id: null,
+      room_type: roomType,
+      daily_room_name: roomType === "admin_only" ? "admin-lounge" : "gedu-lounge",
+    }),
+    product_groups: null,
+  };
+}
+
 // --- Tests ---
 
 describe("POST /api/voice/token", () => {
@@ -86,6 +127,13 @@ describe("POST /api/voice/token", () => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_DAILY_DOMAIN = "testdomain";
     mockCreateMeetingToken.mockResolvedValue("mock-daily-token");
+    mockGetDailyRoom.mockResolvedValue({ name: "test-room" });
+    mockComputeSessionWindow.mockReturnValue({
+      isOpen: true,
+      nextSessionStart: new Date(),
+      windowOpensAt: new Date(),
+      windowClosesAt: new Date(Date.now() + 3600_000),
+    });
   });
 
   afterEach(() => {
@@ -94,7 +142,7 @@ describe("POST /api/voice/token", () => {
 
   it("should return 401 when not authenticated", async () => {
     mockRequireRole.mockResolvedValue(
-      NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
     );
 
     const response = await POST(createTokenRequest({ roomId: "room-1" }));
@@ -155,110 +203,269 @@ describe("POST /api/voice/token", () => {
       display_name: "Educator",
       username: "edu1",
     });
+    mockRoomLookup(createGroupRoom());
 
-    const room = createMockVoiceRoom({ creator_id: "gedu-user-id" });
-    mockRoomLookup(room);
-
-    const response = await POST(createTokenRequest({ roomId: room.id }));
+    const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
     const data = await response.json();
 
     expect(response.status).toBe(500);
     expect(data.error).toBe("Voice chat is not configured");
   });
 
-  describe("gedu token", () => {
-    it("should return owner token with camera for any open room", async () => {
-      const room = createMockVoiceRoom({ creator_id: "other-gedu-id" });
+  describe("admin_only room", () => {
+    it("should allow admin to join", async () => {
+      mockAuthenticatedWithProfile("admin-user-id", {
+        role: "admin",
+        display_name: "Admin",
+        username: "admin1",
+      });
+      mockRoomLookup(createSpecialRoom("admin_only"));
 
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      expect(response.status).toBe(200);
+    });
+
+    it("should reject gedu from admin-only room", async () => {
       mockAuthenticatedWithProfile("gedu-user-id", {
         role: "gedu",
-        display_name: "Test Educator",
-        username: "testgedu",
+        display_name: "Educator",
+        username: "edu1",
       });
-      mockRoomLookup(room);
+      mockRoomLookup(createSpecialRoom("admin_only"));
 
-      const response = await POST(createTokenRequest({ roomId: room.id }));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.token).toBe("mock-daily-token");
-      expect(data.role).toBe("gedu");
-      expect(data.roomUrl).toBe(
-        `https://testdomain.daily.co/${room.daily_room_name}`
-      );
-      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
-        expect.objectContaining({
-          isOwner: true,
-          enableCamera: true,
-          enableMic: true,
-          roomName: room.daily_room_name,
-        })
-      );
-    });
-  });
-
-  describe("gamer token", () => {
-    it("should return non-owner token with camera for open room", async () => {
-      const room = createMockVoiceRoom({
-        creator_id: "other-gedu-id",
-        status: "open" as any,
-      });
-
-      mockAuthenticatedWithProfile("gamer-user-id", {
-        role: "gamer",
-        display_name: "Test Gamer",
-        username: "testgamer",
-      });
-      mockRoomLookup(room);
-
-      const response = await POST(createTokenRequest({ roomId: room.id }));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.token).toBe("mock-daily-token");
-      expect(data.role).toBe("gamer");
-      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
-        expect.objectContaining({
-          isOwner: false,
-          enableCamera: true,
-          enableMic: true,
-        })
-      );
-    });
-
-    it("should return 403 when gamer tries to join a closed room", async () => {
-      const room = createMockVoiceRoom({
-        creator_id: "other-gedu-id",
-        status: "closed" as any,
-      });
-
-      mockAuthenticatedWithProfile("gamer-user-id", {
-        role: "gamer",
-        display_name: "Test Gamer",
-        username: "testgamer",
-      });
-      mockRoomLookup(room);
-
-      const response = await POST(createTokenRequest({ roomId: room.id }));
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
       const data = await response.json();
 
       expect(response.status).toBe(403);
-      expect(data.error).toBe("This room is not currently open");
+      expect(data.error).toBe("Only admins can join this room");
+    });
+
+    it("should reject gamer from admin-only room", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+      mockRoomLookup(createSpecialRoom("admin_only"));
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      expect(response.status).toBe(403);
     });
   });
 
-  describe("admin token", () => {
-    it("should return owner token with role encoded in userName", async () => {
-      const room = createMockVoiceRoom({ creator_id: "some-gedu-id" });
+  describe("gedu_only room", () => {
+    it("should allow gedu to join", async () => {
+      mockAuthenticatedWithProfile("gedu-user-id", {
+        role: "gedu",
+        display_name: "Educator",
+        username: "edu1",
+      });
+      mockRoomLookup(createSpecialRoom("gedu_only"));
 
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      expect(response.status).toBe(200);
+    });
+
+    it("should allow admin to join gedu-only room", async () => {
+      mockAuthenticatedWithProfile("admin-user-id", {
+        role: "admin",
+        display_name: "Admin",
+        username: "admin1",
+      });
+      mockRoomLookup(createSpecialRoom("gedu_only"));
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      expect(response.status).toBe(200);
+    });
+
+    it("should reject gamer from gedu-only room", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+      mockRoomLookup(createSpecialRoom("gedu_only"));
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe("Only educators and admins can join this room");
+    });
+  });
+
+  describe("group room — gedu access", () => {
+    it("should allow assigned gedu to join", async () => {
+      mockAuthenticatedWithProfile("gedu-user-id", {
+        role: "gedu",
+        display_name: "Educator",
+        username: "edu1",
+      });
+      mockRoomLookup(createGroupRoom());
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      expect(response.status).toBe(200);
+    });
+
+    it("should reject unassigned gedu", async () => {
+      mockAuthenticatedWithProfile("other-gedu-id", {
+        role: "gedu",
+        display_name: "Other Educator",
+        username: "edu2",
+      });
+      mockRoomLookup(createGroupRoom());
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe("You are not assigned to this group");
+    });
+  });
+
+  describe("group room — gamer access", () => {
+    it("should allow enrolled gamer to join when session is open", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+      mockRoomLookup(createGroupRoom());
+
+      // Mock enrollment check — need to handle chained from().select().eq().eq().eq().limit().maybeSingle()
+      let fromCallCount = 0;
+      mockAdminFrom.mockImplementation((table: string) => {
+        fromCallCount++;
+        if (table === "voice_rooms" || fromCallCount === 1) {
+          // Room lookup (already handled first time)
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue(mockSupabaseSuccess(createGroupRoom())),
+              }),
+            }),
+          };
+        }
+        // Enrollment check
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockReturnValue({
+                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "enrollment-1" })),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      expect(response.status).toBe(200);
+    });
+
+    it("should reject unenrolled gamer", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+
+      let fromCallCount = 0;
+      mockAdminFrom.mockImplementation(() => {
+        fromCallCount++;
+        if (fromCallCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue(mockSupabaseSuccess(createGroupRoom())),
+              }),
+            }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockReturnValue({
+                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess(null)),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe("You are not enrolled in this group");
+    });
+
+    it("should reject gamer outside session window", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+
+      mockComputeSessionWindow.mockReturnValue({
+        isOpen: false,
+        nextSessionStart: new Date(Date.now() + 86400_000),
+        windowOpensAt: new Date(Date.now() + 86100_000),
+        windowClosesAt: new Date(Date.now() + 90000_000),
+      });
+
+      let fromCallCount = 0;
+      mockAdminFrom.mockImplementation(() => {
+        fromCallCount++;
+        if (fromCallCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue(mockSupabaseSuccess(createGroupRoom())),
+              }),
+            }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockReturnValue({
+                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "enrollment-1" })),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(403);
+      expect(data.error).toBe("Room is not open yet");
+    });
+  });
+
+  describe("admin access", () => {
+    it("should allow admin to join any group room", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
         display_name: "Admin User",
         username: "admin1",
       });
-      mockRoomLookup(room);
+      mockRoomLookup(createGroupRoom());
 
-      const response = await POST(createTokenRequest({ roomId: room.id }));
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -266,11 +473,112 @@ describe("POST /api/voice/token", () => {
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
         expect.objectContaining({
           isOwner: true,
+          userName: "admin-user-id|admin|Admin User",
+        }),
+      );
+    });
+  });
+
+  describe("token properties", () => {
+    it("should create owner token for gedu", async () => {
+      mockAuthenticatedWithProfile("gedu-user-id", {
+        role: "gedu",
+        display_name: "Test Educator",
+        username: "testgedu",
+      });
+      mockRoomLookup(createGroupRoom());
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.token).toBe("mock-daily-token");
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isOwner: true,
           enableCamera: true,
           enableMic: true,
-          userName: "admin-user-id|admin|Admin User",
-        })
+        }),
       );
+    });
+
+    it("should create non-owner token for gamer", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Test Gamer",
+        username: "testgamer",
+      });
+
+      let fromCallCount = 0;
+      mockAdminFrom.mockImplementation(() => {
+        fromCallCount++;
+        if (fromCallCount === 1) {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue(mockSupabaseSuccess(createGroupRoom())),
+              }),
+            }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockReturnValue({
+                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "enrollment-1" })),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        };
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+
+      expect(response.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          isOwner: false,
+          enableCamera: true,
+          enableMic: true,
+        }),
+      );
+    });
+  });
+
+  describe("lazy Daily.co room creation", () => {
+    it("should create Daily.co room if it does not exist", async () => {
+      mockAuthenticatedWithProfile("admin-user-id", {
+        role: "admin",
+        display_name: "Admin",
+        username: "admin1",
+      });
+      mockRoomLookup(createSpecialRoom("admin_only"));
+      mockGetDailyRoom.mockResolvedValue(null);
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+
+      expect(response.status).toBe(200);
+      expect(mockGetDailyRoom).toHaveBeenCalledWith("admin-lounge");
+      expect(mockCreateDailyRoom).toHaveBeenCalledWith({ name: "admin-lounge" });
+    });
+
+    it("should skip Daily.co creation if room already exists", async () => {
+      mockAuthenticatedWithProfile("admin-user-id", {
+        role: "admin",
+        display_name: "Admin",
+        username: "admin1",
+      });
+      mockRoomLookup(createSpecialRoom("admin_only"));
+      mockGetDailyRoom.mockResolvedValue({ name: "admin-lounge" });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+
+      expect(response.status).toBe(200);
+      expect(mockCreateDailyRoom).not.toHaveBeenCalled();
     });
   });
 });

@@ -2,102 +2,54 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
-import { useMyVoiceRoom, useOpenRoom, useCloseRoom, useVoiceToken, useOpenVoiceRooms } from "@/services/voice";
+import { useAvailableVoiceRooms, useVoiceToken } from "@/services/voice";
+import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
 import { useVoiceRoomRealtime } from "@/hooks/use-voice-room-realtime";
-import { useAuth } from "@/providers";
-import type { OpenVoiceRoom, VoiceRoom } from "@/types";
-
-interface UseVoiceSessionOptions {
-  /** Whether the user can create/own their own room (admin/gedu) */
-  canCreate: boolean;
-  /** Whether to auto-reconnect to own open room on mount */
-  autoReconnect?: boolean;
-}
+import { computeSessionWindow } from "@/lib/voice-schedule";
 
 interface UseVoiceSessionReturn {
-  /** The user's own room (if canCreate) */
-  myRoom: VoiceRoom | null | undefined;
-  /** All open rooms */
-  openRooms: OpenVoiceRoom[];
-  /** Open rooms excluding the user's own */
-  otherRooms: OpenVoiceRoom[];
-  /** Whether the initial room data is loading */
+  rooms: AvailableVoiceRoomWithWindow[];
+  alwaysOpenRooms: AvailableVoiceRoomWithWindow[];
+  openGroupRooms: AvailableVoiceRoomWithWindow[];
+  upcomingRooms: AvailableVoiceRoomWithWindow[];
   isLoading: boolean;
-  /** Whether the user is in a call */
   joined: boolean;
-  /** Whether the user is currently connecting */
   joining: boolean;
-  /** Whether we're reconnecting to an existing session */
-  reconnecting: boolean;
-  /** The room ID that the user has joined */
   joinedRoomId: string | null;
-  /** Whether the joined room is the user's own room */
-  isOwnRoom: boolean;
-  /** Session ended message (for gamers) */
   sessionEndedMessage: string | null;
-  /** Error message */
   error: string | null;
-  /** Whether an action is in progress */
   actionPending: boolean;
-  /** Start own session (create room + join) */
-  startSession: () => Promise<void>;
-  /** Join another room */
-  joinRoom: (room: OpenVoiceRoom) => Promise<void>;
-  /** Leave the call without closing the room */
+  joinRoom: (room: AvailableVoiceRoomWithWindow) => Promise<void>;
   leaveSession: () => Promise<void>;
-  /** Leave and close the room */
-  endSession: () => Promise<void>;
 }
 
-export function useVoiceSession({
-  canCreate,
-  autoReconnect = true,
-}: UseVoiceSessionOptions): UseVoiceSessionReturn {
-  const { user } = useAuth();
-  const { data: myRoom, isLoading: myRoomLoading } = useMyVoiceRoom({ enabled: canCreate });
-  const { data: openRoomsList } = useOpenVoiceRooms();
-  const openRoomMutation = useOpenRoom();
-  const closeRoomMutation = useCloseRoom();
+export function useVoiceSession(): UseVoiceSessionReturn {
+  const { data: roomsList, isLoading: roomsLoading } = useAvailableVoiceRooms();
   const getToken = useVoiceToken();
   const { joined, joining, join, leave } = useVoiceRoom();
 
   const [actionPending, setActionPending] = useState(false);
-  const [reconnecting, setReconnecting] = useState(false);
   const [joinedRoomId, setJoinedRoomId] = useState<string | null>(null);
   const [sessionEndedMessage, setSessionEndedMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const joinedRoomNameRef = useRef<string | null>(null);
-  const hasCheckedForReconnect = useRef(false);
 
   useVoiceRoomRealtime();
 
-  const isLoading = canCreate ? myRoomLoading : (openRoomsList === undefined);
-  const openRooms = openRoomsList || [];
+  const rooms = roomsList || [];
 
-  const otherRooms = canCreate && user
-    ? openRooms.filter((r) => r.creator_id !== user.id)
-    : openRooms;
+  // Sort: always-open rooms first, then group rooms by soonest nextSessionStart
+  const alwaysOpenRooms = rooms.filter((r) => r.room_type !== "group");
+  const groupRooms = rooms.filter((r) => r.room_type === "group");
+  const openGroupRooms = groupRooms
+    .filter((r) => r.isOpen)
+    .sort((a, b) => (a.nextSessionStart?.getTime() ?? 0) - (b.nextSessionStart?.getTime() ?? 0));
+  const upcomingRooms = groupRooms
+    .filter((r) => !r.isOpen)
+    .sort((a, b) => (a.nextSessionStart?.getTime() ?? 0) - (b.nextSessionStart?.getTime() ?? 0));
 
-  const isOwnRoom = canCreate && myRoom?.id === joinedRoomId;
-
-  /** Start own session (create room + join) */
-  const startSession = useCallback(async () => {
-    setError(null);
-    setActionPending(true);
-    try {
-      const voiceRoom = await openRoomMutation.mutateAsync(undefined);
-      const { token, roomUrl } = await getToken.mutateAsync(voiceRoom.id);
-      await join(roomUrl, token);
-      setJoinedRoomId(voiceRoom.id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start session");
-    } finally {
-      setActionPending(false);
-    }
-  }, [openRoomMutation, getToken, join]);
-
-  /** Join another creator's room */
-  const joinRoom = useCallback(async (targetRoom: OpenVoiceRoom) => {
+  /** Join a room */
+  const joinRoom = useCallback(async (targetRoom: AvailableVoiceRoomWithWindow) => {
     setError(null);
     setSessionEndedMessage(null);
     setActionPending(true);
@@ -113,45 +65,19 @@ export function useVoiceSession({
     }
   }, [getToken, join]);
 
-  /** Leave the call without closing the room */
+  /** Leave the call */
   const leaveSession = useCallback(async () => {
     await leave();
     setJoinedRoomId(null);
     joinedRoomNameRef.current = null;
   }, [leave]);
 
-  /** Leave the call and close the room. Only valid when joined to own room. */
-  const endSession = useCallback(async () => {
-    if (!canCreate || !joinedRoomId) return;
-    setError(null);
-    try {
-      await leave();
-      await closeRoomMutation.mutateAsync(undefined);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to end session");
-    }
-    setJoinedRoomId(null);
-    joinedRoomNameRef.current = null;
-  }, [canCreate, joinedRoomId, leave, closeRoomMutation]);
-
-  // Auto-reconnect to own open room on mount
+  // Auto-leave when the joined room disappears from the available list
   useEffect(() => {
-    if (!canCreate || !autoReconnect) return;
-    if (hasCheckedForReconnect.current || myRoomLoading) return;
-    hasCheckedForReconnect.current = true;
+    if (!joined || !joinedRoomId || !roomsList) return;
 
-    if (myRoom?.status === "open" && !joined) {
-      setReconnecting(true);
-      startSession().finally(() => setReconnecting(false));
-    }
-  }, [canCreate, autoReconnect, myRoom, myRoomLoading, joined, startSession]);
-
-  // Auto-leave when the joined room gets closed
-  useEffect(() => {
-    if (!joined || !joinedRoomId || !openRoomsList) return;
-
-    const roomStillOpen = openRoomsList.some((r) => r.id === joinedRoomId);
-    if (!roomStillOpen) {
+    const roomStillAvailable = roomsList.some((r) => r.id === joinedRoomId);
+    if (!roomStillAvailable) {
       const roomName = joinedRoomNameRef.current;
       leave();
       joinedRoomNameRef.current = null;
@@ -160,24 +86,51 @@ export function useVoiceSession({
         setJoinedRoomId(null);
       });
     }
-  }, [joined, joinedRoomId, openRoomsList, leave]);
+  }, [joined, joinedRoomId, roomsList, leave]);
+
+  // Auto-leave when session window expires for group rooms
+  useEffect(() => {
+    if (!joined || !joinedRoomId || !roomsList) return;
+
+    const joinedRoom = roomsList.find((r) => r.id === joinedRoomId);
+    if (!joinedRoom || joinedRoom.room_type !== "group") return;
+    if (!joinedRoom.day_of_week || !joinedRoom.start_time || !joinedRoom.timezone || !joinedRoom.duration_minutes) return;
+
+    const checkWindow = () => {
+      const window = computeSessionWindow({
+        day_of_week: joinedRoom.day_of_week!,
+        start_time: joinedRoom.start_time!,
+        timezone: joinedRoom.timezone!,
+        duration_minutes: joinedRoom.duration_minutes!,
+      });
+
+      if (!window.isOpen) {
+        const roomName = joinedRoomNameRef.current;
+        leave();
+        joinedRoomNameRef.current = null;
+        setSessionEndedMessage(`${roomName ?? "The session"} has ended.`);
+        setJoinedRoomId(null);
+      }
+    };
+
+    // Check every 30 seconds
+    const interval = setInterval(checkWindow, 30_000);
+    return () => clearInterval(interval);
+  }, [joined, joinedRoomId, roomsList, leave]);
 
   return {
-    myRoom,
-    openRooms,
-    otherRooms,
-    isLoading,
+    rooms,
+    alwaysOpenRooms,
+    openGroupRooms,
+    upcomingRooms,
+    isLoading: roomsLoading,
     joined,
     joining,
-    reconnecting,
     joinedRoomId,
-    isOwnRoom,
     sessionEndedMessage,
     error,
     actionPending,
-    startSession,
     joinRoom,
     leaveSession,
-    endSession,
   };
 }

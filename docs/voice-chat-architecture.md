@@ -4,109 +4,167 @@ Daily.co-powered spatial voice (and optional video) chat for gedus, admins, and 
 
 ## Overview
 
-An admin or gedu opens a voice room, which creates a Daily.co room and a `voice_rooms` row in Supabase. All roles can browse and join open rooms. The spatial canvas lets participants drag avatars into zones (breakout rooms, broadcast) for zone-based audio isolation. When the host ends the session, participants are auto-disconnected via Supabase Realtime.
+Voice rooms are linked 1:1 to product groups — each group gets a dedicated room that opens/closes automatically based on the product's weekly schedule. Two always-open special rooms (Admin Lounge, Gedu Lounge) are seeded in the migration. Access control is enrollment-based: gamers can only see and join rooms for groups they're enrolled in, gedus see rooms for their assigned groups, and admins see everything.
+
+The spatial canvas lets participants drag avatars into zones (breakout rooms, broadcast) for zone-based audio isolation.
 
 ## Component Map
 
 ```
 Pages
-├── /admin/voice → VoiceRoomPanel (start/end session, browse/join rooms, spatial canvas)
-├── /gedu/voice  → VoiceRoomPanel (start/end session, browse/join rooms, spatial canvas)
-└── /gamer/voice → VoiceRoomList  (browse open rooms, join, spatial canvas)
+├── /admin/voice → VoiceRoomDashboard (all rooms visible)
+├── /gedu/voice  → VoiceRoomDashboard (gedu lounge + assigned group rooms)
+└── /gamer/voice → VoiceRoomDashboard (enrolled group rooms only)
 
 Shared voice components (src/components/voice/)
+├── VoiceRoomDashboard — Unified dashboard: room list or in-session spatial view
+├── VoiceRoomCard      — Card for each room (always-open, live, or upcoming)
 ├── VoiceRoomProvider  — React context: Daily.co call, spatial positions, audio routing
-├── SpatialVoiceRoom   — In-session layout: canvas + controls + leave/end buttons
+├── SpatialVoiceRoom   — In-session layout: canvas + controls + leave button
 ├── SpatialCanvas      — Renders zones + draggable avatars on a 21:9 canvas
 ├── DraggableAvatar    — Pointer-drag avatar with speaking glow (rAF + AnalyserNode)
 ├── VoiceAvatar        — Presentational avatar (identicon/video, mic status, name label)
 ├── Zone               — Renders a named zone rectangle on the canvas
 ├── VoiceControls      — Mic/camera toggle, mic level meter
-├── ParticipantList    — Avatars + audio/video/speaking indicators (legacy, non-spatial)
-├── VideoTile          — Renders a participant's camera feed (legacy, non-spatial)
 └── MicLevelIndicator  — Real-time mic input level bar (Web Audio API)
 
 Hooks
-├── src/hooks/use-voice-session.ts       — Shared session logic (join/leave/reconnect)
+├── src/hooks/use-voice-session.ts       — Session logic (room lists, join/leave, auto-leave)
 └── src/hooks/use-voice-room-realtime.ts — Supabase Realtime → query invalidation
 
 API routes (src/app/api/voice/)
-├── room/route.ts   — POST (open/create room), PATCH (close room)
-└── token/route.ts  — POST (issue Daily.co meeting token)
+└── token/route.ts  — POST (access control + Daily.co meeting token)
 
 Service layer (src/services/voice/)
-├── voice.service.ts  — VoiceService class (DB queries + API fetches)
-├── voice.queries.ts  — React Query hooks (useOpenVoiceRooms, useMyVoiceRoom, etc.)
+├── voice.service.ts  — VoiceService class (RPC + session window computation)
+├── voice.queries.ts  — React Query hooks (useAvailableVoiceRooms, useVoiceToken)
 └── index.ts          — Barrel exports
+
+Utilities
+├── src/lib/voice-schedule.ts   — computeSessionWindow() (shared server/client)
+├── src/lib/constants/voice.ts  — SESSION_WINDOW_BEFORE/AFTER, TOKEN_EXPIRY, etc.
+├── src/lib/daily.ts            — Daily.co REST API wrapper (server-only)
 
 Spatial config (src/lib/constants/)
 ├── spatial.ts        — Types, pure functions (zone detection, overlap, gain calc)
-├── spatial.config.ts — Canvas dimensions, zone rects, avatar size, colors
-└── voice.ts          — TOKEN_EXPIRY, MAX_PARTICIPANTS, POLL_INTERVAL
-
-Supporting
-├── src/lib/daily.ts  — Daily.co REST API wrapper (server-only)
+└── spatial.config.ts — Canvas dimensions, zone rects, avatar size, colors
 ```
-
-## Data Flow
-
-### Host (admin/gedu) starts a session
-1. `VoiceRoomPanel` calls `useVoiceSession({ canCreate: true })` → `startSession()`
-2. `useOpenRoom` mutation → `POST /api/voice/room` creates/reopens a Daily.co room + upserts `voice_rooms` row (status = open)
-3. `useVoiceToken` → `POST /api/voice/token` issues an owner token (camera + mic + moderation)
-4. `VoiceRoomProvider.join()` dynamically imports `@daily-co/daily-js`, creates a call object, joins, and places avatar in the general zone
-
-### Participant joins a session
-1. Room browser (in both `VoiceRoomList` and `VoiceRoomPanel`) polls open rooms via `useOpenVoiceRooms` (backed by `get_open_voice_rooms()` RPC)
-2. Supabase Realtime also invalidates the query on any `voice_rooms` change
-3. User clicks Join → `POST /api/voice/token` issues a token (owner for admin/gedu, non-owner for gamer)
-4. `VoiceRoomProvider.join()` connects to the Daily.co room, requests positions from existing participants via app message
-
-### Spatial audio routing
-1. Participants drag avatars on the canvas → `moveLocal`/`moveOther` broadcast position via Daily.co `sendAppMessage`
-2. `updateAudioRouting()` sets `<audio>` element volume per remote participant based on zone membership
-3. Same zone or broadcast zone = full volume; different zones = silent
-
-### Host ends a session
-1. `SpatialVoiceRoom` calls `endSession()` → `leave()` then `useCloseRoom` → `PATCH /api/voice/room`
-2. API route sets status = closed → Supabase Realtime fires
-3. Other participants detect the room disappeared from the open list → auto-calls `leave()`
 
 ## Database Schema
 
 ```sql
 voice_rooms (
   id              UUID PK,
-  creator_id      UUID FK → profiles(id) UNIQUE,  -- one room per creator
+  group_id        UUID FK → product_groups(id) ON DELETE CASCADE,  -- nullable for special rooms
+  room_type       TEXT ('group' | 'admin_only' | 'gedu_only'),
+  creator_id      UUID FK → profiles(id),  -- nullable
   name            TEXT,
   daily_room_name TEXT UNIQUE,
-  status          voice_room_status ('open' | 'closed'),
-  opened_at       TIMESTAMPTZ,
-  closed_at       TIMESTAMPTZ,
   created_at      TIMESTAMPTZ,
   updated_at      TIMESTAMPTZ
 )
 ```
 
-**RLS policies:** Admin has full access. Gedu has full access to own room + read access to all rooms. Gamer has read-only access. All policies use `get_user_role()` (SECURITY DEFINER) to avoid recursive RLS.
+**Key constraints:**
+- `UNIQUE(group_id) WHERE group_id IS NOT NULL` — 1:1 mapping between groups and rooms
+- `UNIQUE(room_type) WHERE room_type = 'admin_only'` — only one admin lounge
+- `UNIQUE(room_type) WHERE room_type = 'gedu_only'` — only one gedu lounge
+
+**RLS policies:** Admin has full access. Gedu can SELECT gedu lounge + rooms for their assigned groups. Gamer can SELECT rooms for groups where they have an active enrollment.
 
 **Realtime:** Table has `REPLICA IDENTITY FULL` so UPDATE/DELETE events are delivered through RLS.
 
-**Helper function:** `get_open_voice_rooms()` (SECURITY DEFINER) joins `voice_rooms` with `profiles` to return creator display names and roles.
+**RPC:** `get_available_voice_rooms()` (SECURITY DEFINER) returns role-filtered rooms with schedule data joined from products. Admins see all rooms, gedus see gedu lounge + own group rooms, gamers see enrolled group rooms only.
 
-**Token userName encoding:** The `userName` field in Daily.co tokens encodes `userId|role|displayName` for client-side role extraction without extra DB lookups.
+## Schedule-Driven Room Windows
 
-## Role Permissions
+Voice rooms don't have an "open/closed" status column. Instead, each group room inherits its schedule from the linked product (`day_of_week`, `start_time`, `timezone`, `duration_minutes`).
 
-| Capability | Admin | Gedu | Gamer |
+**Session window** = `[sessionStart - 5min, sessionEnd + 5min]`
+
+The `computeSessionWindow()` utility (in `src/lib/voice-schedule.ts`) determines if a room is currently open. It reuses `getNextSessionStart()` from `src/lib/enrollment.ts` and also checks the previous week's occurrence to handle "currently in session" state.
+
+**Client-side:** The service layer maps each room through `computeSessionWindow()` to get `isOpen`, `nextSessionStart`, and `windowClosesAt` for UI display (Live/Upcoming badges, countdown).
+
+**Server-side:** The token endpoint independently computes the session window and rejects with 403 if the room isn't open for the requesting user. This is the security boundary — client-side `isOpen` is display-only.
+
+**Always-open rooms** (admin_only, gedu_only) are always considered open and have no schedule.
+
+## Access Control Model
+
+### Token Endpoint (`POST /api/voice/token`)
+
+1. **Role gate:** `requireRole(["gedu", "gamer", "admin"])` — customers are blocked.
+
+2. **Room type checks:**
+   - `admin_only` → must be admin
+   - `gedu_only` → must be admin or gedu
+   - `group` → membership check (below)
+
+3. **Group room membership:**
+   - Admin → allowed (bypass all checks)
+   - Gedu → must be the group's assigned gedu (`product_groups.gedu_id`)
+   - Gamer → must have an active enrollment in the group
+
+4. **Session window (group rooms only):**
+   - Gamer → must be within the session window
+   - Admin/Gedu → bypass (can join anytime)
+
+5. **Token expiry = session window close:** For group rooms, the meeting token's `exp` is set to `windowClosesAt`. When it expires, Daily.co auto-disconnects the participant. For always-open rooms, the default 2.5-hour expiry applies.
+
+### RPC Permissions
+
+| What | Admin | Gedu | Gamer |
 |---|---|---|---|
-| Create/manage rooms | Own room | Own room | - |
-| Close any room | Yes (by roomId) | Own room only | - |
-| Join any open room | Yes (owner token) | Yes (owner token) | Yes (non-owner token) |
-| Camera | Yes | Yes | Yes |
-| Microphone | Yes | Yes | Yes |
+| See admin lounge | Yes | No | No |
+| See gedu lounge | Yes | Yes | No |
+| See group rooms | All | Own groups | Enrolled groups |
+| Join admin lounge | Yes | No | No |
+| Join gedu lounge | Yes | Yes | No |
+| Join group room | Yes (anytime) | Own groups (anytime) | Enrolled + in window |
+| Camera & Mic | Yes | Yes | Yes |
 | Drag other avatars | Yes | Yes | Own only |
-| Enter broadcast zone | Yes | Yes | No (ejected to nearest edge) |
+| Enter broadcast zone | Yes | Yes | No |
+
+## Daily.co Room Lifecycle
+
+### Group rooms
+- **Created** when a product group is added via `POST /api/admin/products/[id]/groups`. After the `commit_group_changes` RPC succeeds, the handler creates Daily.co rooms and inserts `voice_rooms` rows for new groups.
+- **Deleted** when a group is removed. Before the RPC, the handler looks up `daily_room_name` for groups being deleted. After the RPC succeeds (CASCADE deletes the `voice_rooms` row), it deletes the Daily.co room (best-effort).
+- **Naming:** `group-{groupId.slice(0, 8)}`
+
+### Special rooms (admin-lounge, gedu-lounge)
+- **Seeded** by the migration (`INSERT INTO voice_rooms`).
+- **Daily.co room lazily created** on first join — the token endpoint checks `getDailyRoom()` and calls `createDailyRoom()` if needed.
+
+### Self-healing
+The token endpoint lazily creates any missing Daily.co room before issuing a token. This covers edge cases where Daily.co room creation failed during group management.
+
+## Data Flow
+
+### Viewing rooms
+1. `VoiceRoomDashboard` renders `VoiceRoomDashboardInner` inside `VoiceRoomProvider`
+2. `useVoiceSession()` calls `useAvailableVoiceRooms()` → `get_available_voice_rooms` RPC
+3. Each room is mapped through `computeSessionWindow()` to compute `isOpen` and `nextSessionStart`
+4. Rooms are sorted: always-open first, then live group rooms, then upcoming group rooms
+5. Supabase Realtime on `voice_rooms` + `group_enrollments` invalidates the cache
+
+### Joining a room
+1. User clicks Join on a `VoiceRoomCard`
+2. `joinRoom()` → `POST /api/voice/token` with `roomId`
+3. Token endpoint validates role, membership, and session window
+4. Lazy-creates Daily.co room if needed
+5. Issues a meeting token with appropriate `isOwner` flag and `exp`
+6. `VoiceRoomProvider.join()` connects to the Daily.co room
+
+### Auto-leave triggers
+1. **Room disappears** from available list → auto-leave + "session ended" message
+2. **Session window expires** → periodic `computeSessionWindow()` check → graceful leave
+3. **Token expires** → Daily.co hard disconnect (backup if client-side check misses it)
+
+## Token userName Encoding
+
+The `userName` field in Daily.co tokens encodes `userId|role|displayName` for client-side role extraction without extra DB lookups.
 
 ## Environment Variables
 
@@ -117,25 +175,8 @@ voice_rooms (
 
 ## Future Improvements
 
-### Extract shared auth/role-check helper for API routes
-Both voice API routes (and other existing routes) repeat the same ~15-line pattern: `createClient()` → `getUser()` → query profile → check role → return 401/403. A shared helper like `getAuthenticatedProfile(allowedRoles: string[])` would reduce boilerplate and keep authorization logic consistent as more endpoints are added.
-
-### Use generated Profile type in API routes instead of manual type assertions
-The API routes cast profile query results with inline types (`as { role: string; display_name: string | null; ... }`). Importing the generated `Profile` type from `@/types` would be safer and stay in sync with schema changes automatically.
-
-### Clean up idle Daily.co rooms
-Closing a session marks the DB row as closed but leaves the Daily.co room alive (it gets reused on next open). If Daily.co plan limits become a concern, add either:
-- Delete-on-close (simple, but adds latency on next open)
-- A periodic cleanup job that deletes Daily.co rooms for long-closed sessions
-
 ### Add participant tracking to the database
-Currently participant presence is only tracked in Daily.co's runtime. Persisting join/leave events to a `voice_room_participants` table would enable:
-- Session history and analytics
-- Participant count displayed without joining the call
-- Billing/usage tracking per gamer
-
-### Customer (parent) subscription gate
-The token route has a `// Future: check parent subscription here` comment. Before going to production, gamers should only be able to join if their linked customer has an active subscription.
+Currently participant presence is only tracked in Daily.co's runtime. Persisting join/leave events to a `voice_room_participants` table would enable session history, analytics, and participant count display without joining the call.
 
 ### Extract VoiceRoomProvider into smaller hooks
-The provider (~600 lines) handles call lifecycle, audio playback, audio analysis, spatial positions, app messaging, and audio routing. Consider extracting `useSpatialPositions` and `useAudioAnalysis` as internal hooks to improve maintainability.
+The provider handles call lifecycle, audio playback, audio analysis, spatial positions, app messaging, and audio routing. Consider extracting `useSpatialPositions` and `useAudioAnalysis` as internal hooks.

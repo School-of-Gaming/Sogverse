@@ -15,7 +15,7 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "get_my_gamers",
   "get_my_parents",
   "get_visible_products",
-  "get_open_voice_rooms",
+  "get_available_voice_rooms",
   "get_product_groups_with_details",
   "get_customer_enrollments",
   "get_enrollment_groups",
