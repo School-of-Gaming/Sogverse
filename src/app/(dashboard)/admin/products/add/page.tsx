@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Package } from "lucide-react";
@@ -15,10 +16,11 @@ export default function AddProductPage() {
   const { data: cloneSource, isLoading: cloneLoading } = useProduct(cloneId ?? "");
 
   const createProduct = useCreateProduct();
+  const [isNavigating, startTransition] = useTransition();
 
   const handleSubmit = async (values: ProductFormValues) => {
     const created = await createProduct.mutateAsync(values);
-    router.push(`/admin/products/${created.id}`);
+    startTransition(() => router.push(`/admin/products/${created.id}`));
   };
 
   if (cloneId && cloneLoading) {
@@ -97,7 +99,7 @@ export default function AddProductPage() {
         <ProductForm
           initialValues={initialValues}
           onSubmit={handleSubmit}
-          isPending={createProduct.isPending}
+          isPending={createProduct.isPending || isNavigating}
           submitLabel="Create Product"
           pendingLabel="Creating..."
         />

@@ -58,6 +58,7 @@ export function RegisterForm() {
 
       if (signUpError) {
         setError(signUpError.message);
+        setIsLoading(false);
         return;
       }
 
@@ -65,6 +66,7 @@ export function RegisterForm() {
         // Check if email confirmation is required
         if (data.user.identities?.length === 0) {
           setError("An account with this email already exists");
+          setIsLoading(false);
           return;
         }
 
@@ -77,7 +79,6 @@ export function RegisterForm() {
       } else {
         setError("An unexpected error occurred");
       }
-    } finally {
       setIsLoading(false);
     }
   };

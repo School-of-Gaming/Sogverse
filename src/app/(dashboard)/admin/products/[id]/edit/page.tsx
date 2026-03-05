@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Package } from "lucide-react";
@@ -14,12 +14,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
   const updateProduct = useUpdateProduct();
-  const [saving, setSaving] = useState(false);
+  const [isNavigating, startTransition] = useTransition();
 
   const handleSubmit = async (values: ProductFormValues) => {
-    setSaving(true);
     await updateProduct.mutateAsync({ id, updates: values });
-    router.push(`/admin/products/${id}`);
+    startTransition(() => router.push(`/admin/products/${id}`));
   };
 
   if (isLoading) {
@@ -105,7 +104,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             max_age: product.max_age,
           }}
           onSubmit={handleSubmit}
-          isPending={saving}
+          isPending={updateProduct.isPending || isNavigating}
           submitLabel="Save Changes"
           pendingLabel="Saving..."
         />

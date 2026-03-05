@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -38,6 +38,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
   const { currency } = useCurrency();
   const toggleVisibility = useToggleProductVisibility();
   const deleteProduct = useDeleteProduct();
+  const [isNavigating, startTransition] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmVisibility, setConfirmVisibility] = useState(false);
   const [visibilityError, setVisibilityError] = useState("");
@@ -86,7 +87,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
 
   const handleDelete = () => {
     deleteProduct.mutate(product.id, {
-      onSuccess: () => router.push("/admin/products"),
+      onSuccess: () => startTransition(() => router.push("/admin/products")),
     });
     setConfirmDelete(false);
   };
@@ -180,9 +181,10 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
           <Button
             variant="destructive"
             onClick={() => setConfirmDelete(true)}
+            disabled={deleteProduct.isPending || isNavigating}
           >
             <Trash className="mr-2 h-4 w-4" />
-            Delete
+            {deleteProduct.isPending || isNavigating ? "Deleting..." : "Delete"}
           </Button>
         </CardContent>
       </Card>
