@@ -81,7 +81,7 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const supabase = getClient();
-  const isGamer = selectedRole === "gamer";
+  const isGamer = displayRole === "gamer";
 
   const handleBack = () => {
     setSelectedRole(null);
@@ -165,10 +165,10 @@ export function LoginForm() {
         {/* View 1: Role Selection Grid */}
         <div
           className={cn(
-            "transition-all duration-[2000ms]",
+            "transition-opacity duration-[2000ms]",
             selectedRole !== null
-              ? "pointer-events-none scale-95 opacity-0"
-              : "scale-100 opacity-100"
+              ? "pointer-events-none opacity-0"
+              : "opacity-100"
           )}
         >
           <div className="space-y-6">
@@ -220,10 +220,10 @@ export function LoginForm() {
         {/* View 2: Login Form */}
         <div
           className={cn(
-            "transition-all duration-[2000ms]",
+            "transition-opacity duration-[2000ms]",
             selectedRole === null
-              ? "pointer-events-none scale-95 opacity-0"
-              : "scale-100 opacity-100"
+              ? "pointer-events-none opacity-0"
+              : "opacity-100"
           )}
         >
           {(() => {
@@ -298,14 +298,16 @@ export function LoginForm() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="password">Password</Label>
-                        {!isGamer && (
-                          <Link
-                            href={ROUTES.forgotPassword}
-                            className="text-sm text-primary hover:underline"
-                          >
-                            Forgot password?
-                          </Link>
-                        )}
+                        <Link
+                          href={ROUTES.forgotPassword}
+                          className={cn(
+                            "text-sm text-primary hover:underline",
+                            isGamer && "invisible"
+                          )}
+                          tabIndex={isGamer ? -1 : undefined}
+                        >
+                          Forgot password?
+                        </Link>
                       </div>
                       <Input
                         id="password"
@@ -323,21 +325,21 @@ export function LoginForm() {
                     <Button type="submit" className="w-full" disabled={isLoading}>
                       {status ?? (isLoading ? "Signing in..." : isGamer ? "Start Playing!" : "Sign In")}
                     </Button>
-                    {isGamer ? (
-                      <p className="text-center text-sm text-muted-foreground">
-                        Need help? Ask your parent or guardian.
-                      </p>
-                    ) : (
-                      <div className="text-center text-sm text-muted-foreground">
-                        Don&apos;t have an account?{" "}
-                        <Link
-                          href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
-                          className="text-primary hover:underline"
-                        >
-                          Sign up
-                        </Link>
-                      </div>
-                    )}
+                    <div className="text-center text-sm text-muted-foreground">
+                      {isGamer ? (
+                        <span>Need help? Ask your parent or guardian.</span>
+                      ) : (
+                        <span>
+                          Don&apos;t have an account?{" "}
+                          <Link
+                            href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
+                            className="text-primary hover:underline"
+                          >
+                            Sign up
+                          </Link>
+                        </span>
+                      )}
+                    </div>
                   </CardFooter>
                 </form>
               </Card>
