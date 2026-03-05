@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Users, Gamepad2, GraduationCap, Shield, ArrowLeft } from "lucide-react";
+import { Users, Gamepad2, GraduationCap, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { generateGamerEmail, cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
-type LoginRole = "customer" | "gamer" | "gedu" | "admin";
+type LoginRole = "customer" | "gamer" | "gedu";
 
 const emailLoginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -37,10 +37,18 @@ const ROLE_CONFIG: Record<LoginRole, {
   customer: {
     icon: Users,
     title: "Parent",
-    subtitle: "Manage your family",
+    subtitle: "Manage your gamers",
     description: "Sign in to manage purchases and gamer accounts",
     accent: "text-primary border-primary/30 bg-primary/5",
     glow: "hover:shadow-[0_0_20px_rgba(250,169,1,0.15)] hover:border-primary/60",
+  },
+  gedu: {
+    icon: GraduationCap,
+    title: "Gedu",
+    subtitle: "Teach & inspire",
+    description: "Sign in to access your teaching tools",
+    accent: "text-primary border-primary/30 bg-gradient-to-r from-primary/5 to-secondary/5",
+    glow: "hover:shadow-[0_0_20px_rgba(200,80,120,0.15)] hover:border-secondary/40",
   },
   gamer: {
     icon: Gamepad2,
@@ -49,22 +57,6 @@ const ROLE_CONFIG: Record<LoginRole, {
     description: "Sign in with your username to start playing",
     accent: "text-secondary border-secondary/30 bg-secondary/5",
     glow: "hover:shadow-[0_0_20px_rgba(143,0,226,0.15)] hover:border-secondary/60",
-  },
-  gedu: {
-    icon: GraduationCap,
-    title: "Game Educator",
-    subtitle: "Teach & inspire",
-    description: "Sign in to access your teaching tools",
-    accent: "text-primary border-primary/30 bg-primary/5",
-    glow: "hover:shadow-[0_0_20px_rgba(250,169,1,0.15)] hover:border-primary/60",
-  },
-  admin: {
-    icon: Shield,
-    title: "Admin",
-    subtitle: "System management",
-    description: "Sign in to the admin dashboard",
-    accent: "text-muted-foreground border-muted-foreground/30 bg-muted/5",
-    glow: "hover:shadow-[0_0_20px_rgba(128,128,128,0.1)] hover:border-muted-foreground/40",
   },
 };
 
@@ -185,7 +177,7 @@ export function LoginForm() {
               <p className="text-muted-foreground">Choose how you&apos;d like to sign in</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               {(Object.entries(ROLE_CONFIG) as [LoginRole, typeof ROLE_CONFIG[LoginRole]][]).map(
                 ([role, config]) => {
                   const Icon = config.icon;
