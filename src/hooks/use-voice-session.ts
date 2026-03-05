@@ -7,6 +7,8 @@ import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
 import { useVoiceRoomRealtime } from "@/hooks/use-voice-room-realtime";
 import { computeSessionWindow } from "@/lib/voice-schedule";
 
+const SESSION_STORAGE_KEY = "voice-joined-room-id";
+
 interface UseVoiceSessionReturn {
   rooms: AvailableVoiceRoomWithWindow[];
   alwaysOpenRooms: AvailableVoiceRoomWithWindow[];
@@ -15,6 +17,7 @@ interface UseVoiceSessionReturn {
   isLoading: boolean;
   joined: boolean;
   joining: boolean;
+  reconnecting: boolean;
   joiningRoomId: string | null;
   joinedRoomId: string | null;
   sessionEndedMessage: string | null;
@@ -32,9 +35,11 @@ export function useVoiceSession(): UseVoiceSessionReturn {
   const [actionPending, setActionPending] = useState(false);
   const [joiningRoomId, setJoiningRoomId] = useState<string | null>(null);
   const [joinedRoomId, setJoinedRoomId] = useState<string | null>(null);
+  const [reconnecting, setReconnecting] = useState(false);
   const [sessionEndedMessage, setSessionEndedMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const joinedRoomNameRef = useRef<string | null>(null);
+  const hasAttemptedReconnect = useRef(false);
 
   useVoiceRoomRealtime();
 
@@ -61,6 +66,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
       await join(roomUrl, token);
       setJoinedRoomId(targetRoom.id);
       joinedRoomNameRef.current = targetRoom.name;
+      sessionStorage.setItem(SESSION_STORAGE_KEY, targetRoom.id);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to join room");
     } finally {
@@ -74,7 +80,28 @@ export function useVoiceSession(): UseVoiceSessionReturn {
     await leave();
     setJoinedRoomId(null);
     joinedRoomNameRef.current = null;
+    sessionStorage.removeItem(SESSION_STORAGE_KEY);
   }, [leave]);
+
+  // Auto-reconnect on page reload — server validates whether the room is still joinable
+  useEffect(() => {
+    if (hasAttemptedReconnect.current || joined || joining) return;
+    hasAttemptedReconnect.current = true;
+
+    const savedRoomId = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!savedRoomId) return;
+
+    setReconnecting(true);
+    getToken.mutateAsync(savedRoomId)
+      .then(({ token, roomUrl }) => join(roomUrl, token).then(() => ({ roomUrl })))
+      .then(() => {
+        setJoinedRoomId(savedRoomId);
+      })
+      .catch(() => {
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      })
+      .finally(() => setReconnecting(false));
+  }, [joined, joining, getToken, join]);
 
   // Auto-leave when the joined room disappears from the available list
   useEffect(() => {
@@ -85,6 +112,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
       const roomName = joinedRoomNameRef.current;
       leave();
       joinedRoomNameRef.current = null;
+      sessionStorage.removeItem(SESSION_STORAGE_KEY);
       Promise.resolve().then(() => {
         setSessionEndedMessage(`${roomName ?? "The session"} has ended.`);
         setJoinedRoomId(null);
@@ -112,6 +140,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
         const roomName = joinedRoomNameRef.current;
         leave();
         joinedRoomNameRef.current = null;
+        sessionStorage.removeItem(SESSION_STORAGE_KEY);
         setSessionEndedMessage(`${roomName ?? "The session"} has ended.`);
         setJoinedRoomId(null);
       }
@@ -130,6 +159,7 @@ export function useVoiceSession(): UseVoiceSessionReturn {
     isLoading: roomsLoading,
     joined,
     joining,
+    reconnecting,
     joiningRoomId,
     joinedRoomId,
     sessionEndedMessage,

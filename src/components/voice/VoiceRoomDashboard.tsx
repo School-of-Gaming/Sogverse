@@ -11,11 +11,14 @@ function VoiceRoomDashboardInner() {
   const { joining } = useVoiceRoom();
   const session = useVoiceSession();
 
-  if (session.isLoading) {
+  if (session.isLoading || session.reconnecting) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
+        <CardContent className="flex items-center justify-center gap-2 py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          {session.reconnecting && (
+            <p className="text-sm text-muted-foreground">Reconnecting...</p>
+          )}
         </CardContent>
       </Card>
     );
