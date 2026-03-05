@@ -57,7 +57,6 @@ voice_rooms (
   id              UUID PK,
   group_id        UUID FK → product_groups(id) ON DELETE CASCADE,  -- nullable for special rooms
   room_type       TEXT ('group' | 'admin_only' | 'gedu_only'),
-  creator_id      UUID FK → profiles(id),  -- nullable
   name            TEXT,
   daily_room_name TEXT UNIQUE,
   created_at      TIMESTAMPTZ,

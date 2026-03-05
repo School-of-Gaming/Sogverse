@@ -446,7 +446,6 @@ export type Database = {
       voice_rooms: {
         Row: {
           created_at: string
-          creator_id: string | null
           daily_room_name: string
           group_id: string | null
           id: string
@@ -456,7 +455,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          creator_id?: string | null
           daily_room_name: string
           group_id?: string | null
           id?: string
@@ -466,7 +464,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          creator_id?: string | null
           daily_room_name?: string
           group_id?: string | null
           id?: string
@@ -475,13 +472,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "voice_rooms_creator_id_fkey"
-            columns: ["creator_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "voice_rooms_group_id_fkey"
             columns: ["group_id"]

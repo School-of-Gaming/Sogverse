@@ -7,7 +7,6 @@ export function createMockVoiceRoom(
     id: "room-uuid-1234",
     group_id: "group-uuid-1234",
     room_type: "group",
-    creator_id: null,
     name: "Test Room",
     daily_room_name: "group-abcd1234",
     created_at: new Date().toISOString(),

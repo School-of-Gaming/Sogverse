@@ -6,7 +6,6 @@ CREATE TABLE voice_rooms (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   group_id UUID REFERENCES product_groups(id) ON DELETE CASCADE,
   room_type TEXT NOT NULL DEFAULT 'group' CHECK (room_type IN ('group', 'admin_only', 'gedu_only')),
-  creator_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   daily_room_name TEXT UNIQUE NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
