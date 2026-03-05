@@ -79,6 +79,9 @@ export function LoginForm() {
   })();
 
   const [selectedRole, setSelectedRole] = useState<LoginRole | null>(initialRole);
+  // Tracks the last selected role so the form keeps showing it during the fade-out
+  // instead of snapping to a fallback.
+  const [displayRole, setDisplayRole] = useState<LoginRole>(initialRole ?? "customer");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -164,14 +167,15 @@ export function LoginForm() {
 
   return (
     <div className="w-full max-w-lg">
-      {/* Container with fixed height for smooth transitions */}
-      <div className="relative">
+      {/* Grid overlay: both views share the same cell so the container
+           height is always the taller of the two — no layout shift. */}
+      <div className="grid [&>*]:col-start-1 [&>*]:row-start-1">
         {/* View 1: Role Selection Grid */}
         <div
           className={cn(
-            "transition-all duration-300",
+            "transition-all duration-[2000ms]",
             selectedRole !== null
-              ? "pointer-events-none absolute inset-0 scale-95 opacity-0"
+              ? "pointer-events-none scale-95 opacity-0"
               : "scale-100 opacity-100"
           )}
         >
@@ -188,7 +192,7 @@ export function LoginForm() {
                   return (
                     <button
                       key={role}
-                      onClick={() => setSelectedRole(role)}
+                      onClick={() => { setSelectedRole(role); setDisplayRole(role); }}
                       className={cn(
                         "flex flex-col items-center gap-2 rounded-lg border p-5 text-center transition-all duration-200",
                         config.accent,
@@ -224,14 +228,16 @@ export function LoginForm() {
         {/* View 2: Login Form */}
         <div
           className={cn(
-            "transition-all duration-300",
+            "transition-all duration-[2000ms]",
             selectedRole === null
-              ? "pointer-events-none absolute inset-0 scale-95 opacity-0"
+              ? "pointer-events-none scale-95 opacity-0"
               : "scale-100 opacity-100"
           )}
         >
-          {selectedRole && (() => {
-            const config = ROLE_CONFIG[selectedRole];
+          {(() => {
+            // Always render form content (using "customer" as default) so it
+            // contributes height to the grid cell and prevents layout shift.
+            const config = ROLE_CONFIG[displayRole];
             const Icon = config.icon;
             return (
               <Card className="w-full">
