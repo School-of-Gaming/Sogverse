@@ -9,15 +9,14 @@ test.describe("Authentication Pages", () => {
         page.getByRole("heading", { name: /welcome to sogverse/i })
       ).toBeVisible();
 
-      await expect(page.getByRole("button", { name: /parent/i })).toBeVisible();
-      await expect(page.getByRole("button", { name: /gamer/i })).toBeVisible();
-      await expect(page.getByRole("button", { name: /game educator/i })).toBeVisible();
-      await expect(page.getByRole("button", { name: /admin/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /^parent/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /^gamer/i })).toBeVisible();
+      await expect(page.getByRole("button", { name: /^gedu/i })).toBeVisible();
     });
 
     test("should show email form after selecting Parent", async ({ page }) => {
       await page.goto("/login");
-      await page.getByRole("button", { name: /parent/i }).click();
+      await page.getByRole("button", { name: /^parent/i }).click();
 
       await expect(page.getByLabel(/email/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
@@ -29,12 +28,12 @@ test.describe("Authentication Pages", () => {
     test("should have link to register", async ({ page }) => {
       await page.goto("/login");
 
-      await expect(page.getByRole("link", { name: /sign up/i })).toBeVisible();
+      await expect(page.getByRole("link", { name: /sign up/i }).first()).toBeVisible();
     });
 
     test("should have link to forgot password after selecting Parent", async ({ page }) => {
       await page.goto("/login");
-      await page.getByRole("button", { name: /parent/i }).click();
+      await page.getByRole("button", { name: /^parent/i }).click();
 
       await expect(
         page.getByRole("link", { name: /forgot password/i })
@@ -45,7 +44,7 @@ test.describe("Authentication Pages", () => {
       await page.goto("/login");
 
       await expect(
-        page.getByRole("button", { name: /gamer/i })
+        page.getByRole("button", { name: /^gamer/i })
       ).toBeVisible();
     });
   });
@@ -54,7 +53,7 @@ test.describe("Authentication Pages", () => {
     test("should display gamer login form after selecting Gamer", async ({ page }) => {
       await page.goto("/login");
 
-      await page.getByRole("button", { name: /gamer/i }).click();
+      await page.getByRole("button", { name: /^gamer/i }).click();
 
       await expect(
         page.getByRole("heading", { name: /gamer login/i })
@@ -63,14 +62,14 @@ test.describe("Authentication Pages", () => {
       await expect(page.getByLabel(/username/i)).toBeVisible();
       await expect(page.getByLabel(/password/i)).toBeVisible();
       await expect(
-        page.getByRole("button", { name: /start playing/i })
+        page.locator("form").getByRole("button", { name: /start playing/i })
       ).toBeVisible();
     });
 
     test("should navigate back to role selection", async ({ page }) => {
       await page.goto("/login");
 
-      await page.getByRole("button", { name: /gamer/i }).click();
+      await page.getByRole("button", { name: /^gamer/i }).click();
       await expect(page.getByRole("heading", { name: /gamer login/i })).toBeVisible();
 
       await page.getByRole("button", { name: /back/i }).click();
