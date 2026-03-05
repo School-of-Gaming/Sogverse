@@ -107,6 +107,7 @@ export function RegisterForm() {
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={isLoading}
               required
+              autoComplete="name"
             />
           </div>
           <div className="space-y-2">
@@ -119,6 +120,7 @@ export function RegisterForm() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
               required
+              autoComplete="username"
             />
           </div>
           <div className="space-y-2">
