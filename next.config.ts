@@ -25,7 +25,8 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self'",
-              "connect-src 'self' https://*.supabase.co https://*.daily.co",
+              // wss: Supabase Realtime, Daily.co signaling
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co",
               "frame-src 'self' https://*.daily.co https://*.stripe.com",
               "frame-ancestors 'self'",
             ].join("; "),
