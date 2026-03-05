@@ -127,7 +127,9 @@ export async function POST(request: Request) {
         );
       }
 
-      // Token expiry = session window close (auto-kick for all roles)
+      // IMPORTANT: Token expiry is the hard server-side boundary that ejects
+      // users when the session ends. The client also auto-leaves, but that's
+      // bypassable. Never remove this or fall back to the default 2.5h expiry.
       tokenExpUnix = Math.round(sessionWindow.windowClosesAt.getTime() / 1000);
     }
 
