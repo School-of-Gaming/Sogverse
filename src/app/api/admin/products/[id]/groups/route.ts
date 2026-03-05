@@ -46,9 +46,10 @@ export async function POST(
       }
     }
 
-    // Execute all changes atomically via RPC — if any step fails the
-    // entire transaction rolls back, preventing inconsistent state.
-    const { error: rpcError } = await admin.rpc(
+    // Execute all changes atomically via RPC — groups + voice rooms are
+    // created together in the same transaction, so a group can never exist
+    // without its linked voice room.
+    const { data: rpcResult, error: rpcError } = await admin.rpc(
       "commit_group_changes",
       {
         p_product_id: productId,
@@ -66,45 +67,16 @@ export async function POST(
       );
     }
 
-    // After RPC: Create voice rooms for new groups that don't have one yet
-    const { data: allGroups } = await admin
-      .from("product_groups")
-      .select("id")
-      .eq("product_id", productId);
-
-    if (allGroups) {
-      const { data: existingVoiceRooms } = await admin
-        .from("voice_rooms")
-        .select("group_id")
-        .in("group_id", allGroups.map((g) => g.id));
-
-      const existingGroupIds = new Set(
-        existingVoiceRooms?.map((vr) => vr.group_id) ?? [],
-      );
-
-      // Get product name for the voice room name
-      const { data: prod } = await admin
-        .from("products")
-        .select("name")
-        .eq("id", productId)
-        .single();
-
-      for (const group of allGroups) {
-        if (!existingGroupIds.has(group.id)) {
-          const dailyRoomName = `group-${group.id.slice(0, 8)}`;
-          try {
-            await createDailyRoom({ name: dailyRoomName });
-          } catch (err) {
-            // Non-fatal: token endpoint will lazily create the Daily.co room
-            console.error(`Failed to create Daily.co room ${dailyRoomName}:`, err);
-          }
-          await admin.from("voice_rooms").insert({
-            group_id: group.id,
-            room_type: "group",
-            name: prod?.name ?? "Voice Room",
-            daily_room_name: dailyRoomName,
-          });
-        }
+    // Best-effort: pre-create Daily.co rooms for new groups so the first
+    // join is fast. If this fails, the token endpoint will lazily create them.
+    const rpcJson = rpcResult as { tempMap?: Record<string, string> } | null;
+    const tempMap = rpcJson?.tempMap ?? {};
+    for (const realId of Object.values(tempMap)) {
+      const dailyRoomName = `group-${realId.slice(0, 8)}`;
+      try {
+        await createDailyRoom({ name: dailyRoomName });
+      } catch (err) {
+        console.error(`Failed to pre-create Daily.co room ${dailyRoomName}:`, err);
       }
     }
 
@@ -122,7 +94,8 @@ export async function POST(
     const groups = await service.getProductGroups(productId);
 
     return NextResponse.json({ groups });
-  } catch {
+  } catch (err) {
+    console.error("groups route error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

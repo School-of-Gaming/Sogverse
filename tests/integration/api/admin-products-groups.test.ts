@@ -78,17 +78,10 @@ function setupAdminFromMock(options?: { productExists?: boolean }) {
       };
     }
     if (table === "voice_rooms") {
+      // Pre-RPC: look up daily_room_names for groups being deleted
       return {
         select: vi.fn().mockReturnValue({
           in: vi.fn().mockResolvedValue(mockSupabaseSuccess([])),
-        }),
-        insert: vi.fn().mockResolvedValue(mockSupabaseSuccess(null)),
-      };
-    }
-    if (table === "product_groups") {
-      return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockResolvedValue(mockSupabaseSuccess([])),
         }),
       };
     }
@@ -172,9 +165,12 @@ describe("POST /api/admin/products/[id]/groups", () => {
     mockAuthenticated();
     setupAdminFromMock();
 
-    // RPC succeeds
+    // RPC succeeds — tempMap maps temp IDs to real group UUIDs
     mockAdminRpc.mockResolvedValue(
-      mockSupabaseSuccess({ autoHidden: false }),
+      mockSupabaseSuccess({
+        autoHidden: false,
+        tempMap: { "temp-1": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" },
+      }),
     );
 
     // Refresh groups
@@ -195,6 +191,88 @@ describe("POST /api/admin/products/[id]/groups", () => {
       p_deleted_group_ids: validPayload.deletedGroupIds,
       p_enrollment_moves: validPayload.enrollmentMoves,
     });
+  });
+
+  it("pre-creates Daily.co rooms for new groups from tempMap", async () => {
+    mockAuthenticated();
+    setupAdminFromMock();
+
+    mockAdminRpc.mockResolvedValue(
+      mockSupabaseSuccess({
+        autoHidden: false,
+        tempMap: {
+          "temp-1": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+          "temp-2": "11111111-2222-3333-4444-555555555555",
+        },
+      }),
+    );
+    mockGetProductGroups.mockResolvedValue([]);
+
+    await POST(createRequest(), { params });
+
+    expect(mockCreateDailyRoom).toHaveBeenCalledTimes(2);
+    expect(mockCreateDailyRoom).toHaveBeenCalledWith({ name: "group-aaaaaaaa" });
+    expect(mockCreateDailyRoom).toHaveBeenCalledWith({ name: "group-11111111" });
+  });
+
+  it("succeeds even when Daily.co pre-creation fails", async () => {
+    mockAuthenticated();
+    setupAdminFromMock();
+
+    mockAdminRpc.mockResolvedValue(
+      mockSupabaseSuccess({
+        autoHidden: false,
+        tempMap: { "temp-1": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee" },
+      }),
+    );
+    mockCreateDailyRoom.mockRejectedValue(new Error("Daily.co API down"));
+    mockGetProductGroups.mockResolvedValue([]);
+
+    const response = await POST(createRequest(), { params });
+
+    expect(response.status).toBe(200);
+  });
+
+  it("deletes Daily.co rooms for deleted groups", async () => {
+    mockAuthenticated();
+
+    // voice_rooms query returns room names for deleted groups
+    mockAdminFrom.mockImplementation((table: string) => {
+      if (table === "products") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue(
+                mockSupabaseSuccess({ id: "product-1", name: "Test Product" }),
+              ),
+            }),
+          }),
+        };
+      }
+      if (table === "voice_rooms") {
+        return {
+          select: vi.fn().mockReturnValue({
+            in: vi.fn().mockResolvedValue(
+              mockSupabaseSuccess([{ daily_room_name: "group-abcd1234" }]),
+            ),
+          }),
+        };
+      }
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockResolvedValue(mockSupabaseSuccess([])),
+        }),
+      };
+    });
+
+    mockAdminRpc.mockResolvedValue(
+      mockSupabaseSuccess({ autoHidden: false, tempMap: {} }),
+    );
+    mockGetProductGroups.mockResolvedValue([]);
+
+    await POST(createRequest(), { params });
+
+    expect(mockDeleteDailyRoom).toHaveBeenCalledWith("group-abcd1234");
   });
 
   // RPC error
