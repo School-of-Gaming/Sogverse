@@ -126,12 +126,8 @@ Both RPCs check `get_user_role() = 'admin'` and raise `42501` (insufficient priv
 
 | Migration | Description |
 |---|---|
-| `00024_product_groups.sql` | Creates tables, RLS policies, grants, initial `get_product_groups_with_details` RPC |
-| `00025_display_name_not_null.sql` | Backfills NULL `display_name`, adds NOT NULL constraint, simplifies `get_open_voice_rooms` |
-| `00026_group_rpc_gamer_details.sql` | Adds `gamer_date_of_birth` and `gamer_gender` to the RPC |
-| `00027_commit_group_changes_rpc.sql` | Creates the `commit_group_changes` RPC |
-| `00028_unique_gamer_per_product.sql` | Trigger-based one-enrollment-per-gamer-per-product constraint |
-| `00029_restrict_group_rpcs_to_admin.sql` | Adds `get_user_role()` admin checks to both RPCs |
+| `00007_groups_and_enrollments.sql` | `product_groups`, `group_enrollments`, `enrollment_charges` tables, `commit_group_changes` RPC (admin-gated), `get_product_groups_with_details` RPC, `check_unique_gamer_per_product` trigger |
+| `00009_rls_and_grants.sql` | All RLS policies and table/function grants for groups |
 
 ## Client-Side State Management
 

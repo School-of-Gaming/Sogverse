@@ -1,15 +1,13 @@
--- Migration: Weekly enrollment charge cron
--- Description: Adds compute_next_session() and process_enrollment_charges() SQL
---              functions, and schedules an hourly pg_cron job to charge active
---              enrollments for upcoming sessions.
+-- Cron: weekly enrollment charge processing
 
 -- =============================================================================
--- 1. compute_next_session — mirrors getNextSessionStart() in src/lib/enrollment.ts
+-- compute_next_session — mirrors getNextSessionStart() in src/lib/enrollment.ts
 -- =============================================================================
+
 -- Returns the next UTC occurrence of a recurring weekly session.
 --
--- Day-of-week convention: Monday=0 … Sunday=6 (same as DAYS_OF_WEEK in utils.ts).
--- PostgreSQL ISODOW: Monday=1 … Sunday=7, so we convert with (ISODOW - 1).
+-- Day-of-week convention: Monday=0 ... Sunday=6 (same as DAYS_OF_WEEK in utils.ts).
+-- PostgreSQL ISODOW: Monday=1 ... Sunday=7, so we convert with (ISODOW - 1).
 --
 -- Logic:
 --   1. Get "now" in the product's timezone
@@ -37,7 +35,7 @@ BEGIN
   -- Current time in the product's timezone (wall-clock, no TZ offset)
   v_local_now := v_now AT TIME ZONE p_timezone;
 
-  -- Today's day-of-week in our convention: (ISODOW - 1) → Monday=0..Sunday=6
+  -- Today's day-of-week in our convention: (ISODOW - 1) -> Monday=0..Sunday=6
   v_today_dow := EXTRACT(ISODOW FROM v_local_now)::INTEGER - 1;
 
   -- Days from today to the target weekday (0 means "today")
@@ -59,14 +57,22 @@ END;
 $$;
 
 -- =============================================================================
--- 2. process_enrollment_charges — weekly cron entry point
+-- process_enrollment_charges — hourly cron entry point
 -- =============================================================================
+
 -- Iterates all active enrollments. For each one whose next session falls within
 -- the charge window (24 hours before session start), and which hasn't already
 -- been charged for that session_date, deducts tokens via adjust_token_balance().
 --
 -- On check_violation (insufficient balance) the enrollment is auto-unenrolled.
 -- Returns a JSONB summary: { charged, unenrolled, errors, processed_at }.
+--
+-- Hourly cron at :00. For a product with a 12:30 session, the charge window
+-- opens at 12:30 the day before, and the first cron run inside that window
+-- is at 13:00 the day before. Maximum charge latency: ~1 hour.
+--
+-- Monitor via: SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 20;
+-- Unschedule via: SELECT cron.unschedule('process-enrollment-charges');
 CREATE OR REPLACE FUNCTION process_enrollment_charges()
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -172,16 +178,8 @@ END;
 $$;
 
 -- =============================================================================
--- 3. Enable pg_cron and schedule hourly job
+-- Schedule hourly cron job
 -- =============================================================================
--- pg_cron is available on Supabase but must be explicitly enabled.
--- Runs at the top of every hour (:00). For a product with a 12:30 session,
--- the charge window opens at 12:30 the day before, and the first cron run
--- inside that window is at 13:00 the day before. Maximum charge latency: ~1 hour.
---
--- Monitor via: SELECT * FROM cron.job_run_details ORDER BY start_time DESC LIMIT 20;
--- Unschedule via: SELECT cron.unschedule('process-enrollment-charges');
-CREATE EXTENSION IF NOT EXISTS pg_cron;
 
 SELECT cron.schedule(
   'process-enrollment-charges',

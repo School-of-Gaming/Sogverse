@@ -41,22 +41,42 @@ Go to: Repository → Settings → Secrets and variables → Actions
 
 ## Pre-Production Database Cleanup
 
-Before deploying to production, squash all development migrations into a clean initial schema:
+Before deploying to production, squash migrations again into a clean set for the prod DB:
 
-- [ ] Consolidate migrations into single `00001_initial_schema.sql`:
-  ```bash
-  # 1. Delete all files in supabase/migrations/
-  # 2. Create clean 00001_initial_schema.sql with final schema
-  # 3. Reset staging database to verify it works:
-  #    - Clear migration history in Supabase Dashboard (SQL Editor):
-  #      DELETE FROM supabase_migrations.schema_migrations;
-  #    - Push fresh: npx supabase db push
-  # 4. Commit the consolidated migration
-  ```
+- [x] **Staging squash (done):** Squashed 48 dev migrations into 10 domain-organized files. Verified via CI DB tests + `pg_dump` schema diff.
+- [ ] **Production squash:** Repeat the process below for the final production release.
 
-**Why:** During development, we accumulate fix/repair migrations (00005, 00006, 00007, etc.). These clutter the history and make it hard to understand the final schema. Squashing gives production a clean starting point.
+### Migration Squash Process
 
-**Important:** Only do this BEFORE production has real users. After launch, you must keep all migrations for the audit trail.
+This was tested during the staging squash and worked well:
+
+1. **Create branch** (`squash-migrations` or similar)
+2. **Delete all migration files** from `supabase/migrations/`
+3. **Write new squashed files** — manually synthesize from the originals, writing only the final state of each object. Don't use `pg_dump` (it can't capture `cron.schedule()`, `ALTER PUBLICATION`, `REPLICA IDENTITY FULL`, or inline comments)
+4. **Preserve non-obvious comments** — keep comments that explain "why" (e.g., RLS recursion workaround, row locking rationale). Drop obvious ones.
+5. **Push branch and let CI run** — `supabase start` in CI applies migrations to a fresh local Postgres and runs all DB tests. Fix failures and iterate.
+6. **Schema diff for extra confidence** — dump the remote schema with `pg_dump --schema-only --schema=public --no-owner`, dump the local CI schema the same way (upload as CI artifact), and diff them. Expected differences: column ordering, comment text, policy/constraint names.
+7. **Update remote tracking table** via psql:
+   ```sql
+   BEGIN;
+   DELETE FROM supabase_migrations.schema_migrations;
+   INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
+     ('00001', '00001_extensions_and_helpers'),
+     ('00002', '00002_profiles'), ...;
+   COMMIT;
+   ```
+   **Critical:** The `version` column must be ONLY the numeric prefix (e.g., `00001`), not the full filename stem. The CLI extracts just the numeric prefix from local filenames for matching. The `name` column can hold the full stem for readability.
+   This does NOT touch the actual schema — only updates which versions the CLI considers "applied".
+8. **Regenerate types** from remote: `supabase gen types typescript --project-id $REF 2>/dev/null > src/types/database.types.ts`
+
+**Key pitfalls from staging squash:**
+- Supabase local Docker bootstraps default ALL grants on public tables — need explicit `REVOKE ALL` before restrictive `GRANT` (e.g., `parent_gamer`)
+- Function overloads: only write the final signature
+- `products.is_visible` should be `DEFAULT false NOT NULL`, `products.timezone` should have no default (force explicit)
+- `cron.schedule()` is DML — will execute on `supabase db reset` and register the job (this is correct)
+- Migration tracking `version` must be numeric prefix only (`00001`), not full stem (`00001_extensions_and_helpers`) — the CLI can't match otherwise
+
+**Important:** Only squash BEFORE production has real users. After launch, keep all migrations for the audit trail.
 
 ## Post-Deployment Verification
 
@@ -266,7 +286,7 @@ Created `customer_profiles` and `gamer_profiles` extension tables. Migrated role
 
 ### Multi-Parent Gamer Linking
 
-Migration `00044_fix_idor_parent_gamer_linking.sql` removed client-side INSERT access to `parent_gamer` to fix the IDOR vulnerability (Security Report Finding #2). Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`.
+The IDOR fix (Security Report Finding #2) removed client-side INSERT access to `parent_gamer`. Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`.
 
 To support a second parent linking to an existing gamer:
 

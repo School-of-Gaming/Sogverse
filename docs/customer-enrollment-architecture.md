@@ -177,11 +177,9 @@ enrollment_charges (
 
 | Migration | Description |
 |---|---|
-| `00032_customer_enrollment.sql` | Enrollment columns on `group_enrollments`, `enrollment_charges` table, all enrollment RPCs, updated `commit_group_changes` to use UPDATE-based moves, updated `check_unique_gamer_per_product` to check active only |
-| `00033_drop_old_adjust_token_balance.sql` | Cleanup of `adjust_token_balance` function overload |
-| `00034_handle_new_user_gamer_fields.sql` | Updated `handle_new_user` trigger for gamer DOB/gender NOT NULL |
-| `00035_enrollment_cron.sql` | `compute_next_session()`, `process_enrollment_charges()`, pg_cron schedule |
-| `00036_enrollment_last_charge_date.sql` | Added `last_charge_session_date` to `get_customer_enrollments` return type |
+| `00007_groups_and_enrollments.sql` | `group_enrollments`, `enrollment_charges` tables, `enroll_gamer_in_group`, `unenroll_gamer`, `get_customer_enrollments`, `get_enrollment_groups` RPCs, updated `commit_group_changes` with UPDATE-based moves |
+| `00008_cron.sql` | `compute_next_session()`, `process_enrollment_charges()`, pg_cron schedule |
+| `00009_rls_and_grants.sql` | All RLS policies and table/function grants for enrollments |
 
 ## Cron Job Details
 
@@ -273,7 +271,7 @@ The `UNIQUE INDEX` on `enrollment_charges(enrollment_id, session_date)` is the d
 
 ## `commit_group_changes` — UPDATE-based moves
 
-The admin `commit_group_changes` RPC was updated in migration 00032 to use `UPDATE group_enrollments SET group_id = ...` instead of DELETE+INSERT. This preserves:
+The admin `commit_group_changes` RPC uses `UPDATE group_enrollments SET group_id = ...` instead of DELETE+INSERT. This preserves:
 - The enrollment UUID (`id`) — no `ON DELETE CASCADE` on linked `enrollment_charges`
 - All enrollment metadata (`enrolled_by`, `status`, `last_charged_at`, `unenrolled_at`)
 - All linked `enrollment_charges` rows (charge history stays intact)

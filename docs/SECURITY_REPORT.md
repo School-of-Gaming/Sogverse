@@ -4,6 +4,8 @@
 **Target:** sogverse-staging.sog.gg
 **Supabase Project:** dbcozhkmfsczwgduizkg.supabase.co
 
+> **Note:** Migration files referenced below (00001–00048) were squashed into 10 domain-organized files in March 2026. All fixes described here are included in the current migrations under `supabase/migrations/`. See `00009_rls_and_grants.sql` for centralized RLS/grant policies.
+
 ---
 
 ## Executive Summary
@@ -753,7 +755,7 @@ These go beyond individual fixes to prevent future classes of the same vulnerabi
 
 - Run `npm run test:db` — the access control tests will catch any regressions in function grants or missing RLS.
 - Check the CSP open item above.
-- Review any migrations added after `00048` for new SECURITY DEFINER functions or tables without RLS.
+- Review any migrations added after `00010_access_control_helpers` for new SECURITY DEFINER functions or tables without RLS.
 - Run https://securityheaders.com against the production domain to verify headers are served correctly.
 
 ---

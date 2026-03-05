@@ -62,6 +62,27 @@ async function enrollWithPastCharge(admin: SupabaseClient<Database>) {
   return rows[0];
 }
 
+describe("cron job registration", () => {
+  let admin: SupabaseClient<Database>;
+
+  beforeAll(() => {
+    admin = createAdminTestClient();
+  });
+
+  it("process-enrollment-charges job is scheduled hourly", async () => {
+    const { data, error } = await admin.rpc("_list_cron_jobs");
+
+    expect(error).toBeNull();
+
+    const jobs = data as { jobname: string; schedule: string; command: string }[];
+    const chargeJob = jobs.find((j) => j.jobname === "process-enrollment-charges");
+
+    expect(chargeJob).toBeDefined();
+    expect(chargeJob!.schedule).toBe("0 * * * *");
+    expect(chargeJob!.command).toContain("process_enrollment_charges");
+  });
+});
+
 describe("process_enrollment_charges (cron)", () => {
   let admin: SupabaseClient<Database>;
 
