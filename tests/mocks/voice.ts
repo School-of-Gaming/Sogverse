@@ -9,8 +9,8 @@ export function createMockVoiceRoom(
     room_type: "group",
     name: "Test Room",
     daily_room_name: "group-abcd1234",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
 }

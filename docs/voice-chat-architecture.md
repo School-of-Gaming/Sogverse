@@ -183,5 +183,8 @@ The `userName` field in Daily.co tokens encodes `userId|role|displayName` for cl
 ### Add participant tracking to the database
 Currently participant presence is only tracked in Daily.co's runtime. Persisting join/leave events to a `voice_room_participants` table would enable session history, analytics, and participant count display without joining the call.
 
+### Live countdown for upcoming sessions
+The `NextSession` component computes "Next session in X days/hours" once on render. When a session is minutes away, a live-updating countdown (re-computing every ~30s) would give better feedback that the room is about to open.
+
 ### Extract VoiceRoomProvider into smaller hooks
 The provider handles call lifecycle, audio playback, audio analysis, spatial positions, app messaging, and audio routing. Consider extracting `useSpatialPositions` and `useAudioAnalysis` as internal hooks.
