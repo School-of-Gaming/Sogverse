@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { VoiceService } from "./voice.service";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
@@ -8,61 +8,17 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
 export const voiceKeys = {
   all: ["voice"] as const,
   rooms: () => [...voiceKeys.all, "rooms"] as const,
-  openRooms: () => [...voiceKeys.rooms(), "open"] as const,
-  myRoom: () => [...voiceKeys.all, "myRoom"] as const,
 };
 
-/** List open voice rooms — for any dashboard's room browser */
-export function useOpenVoiceRooms() {
+/** List available voice rooms with computed session windows — polls every 30s */
+export function useAvailableVoiceRooms() {
   const supabase = getClient();
   const service = new VoiceService(supabase);
 
   return useQuery({
-    queryKey: voiceKeys.openRooms(),
-    queryFn: () => service.getOpenRooms(),
+    queryKey: voiceKeys.rooms(),
+    queryFn: () => service.getAvailableRooms(),
     refetchInterval: VOICE_CONFIG.REALTIME_POLL_INTERVAL_MS,
-  });
-}
-
-/** Get the current user's own voice room */
-export function useMyVoiceRoom(options?: { enabled?: boolean }) {
-  const supabase = getClient();
-  const service = new VoiceService(supabase);
-
-  return useQuery({
-    queryKey: voiceKeys.myRoom(),
-    queryFn: () => service.getMyRoom(),
-    enabled: options?.enabled ?? true,
-  });
-}
-
-/** Open a voice room (gedu/admin) */
-export function useOpenRoom() {
-  const queryClient = useQueryClient();
-  const supabase = getClient();
-  const service = new VoiceService(supabase);
-
-  return useMutation({
-    mutationFn: (name?: string) => service.openRoom(name),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: voiceKeys.myRoom() });
-      queryClient.invalidateQueries({ queryKey: voiceKeys.openRooms() });
-    },
-  });
-}
-
-/** Close a voice room (gedu/admin). Optionally pass roomId for admin closing another room. */
-export function useCloseRoom() {
-  const queryClient = useQueryClient();
-  const supabase = getClient();
-  const service = new VoiceService(supabase);
-
-  return useMutation({
-    mutationFn: (roomId?: string) => service.closeRoom(roomId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: voiceKeys.myRoom() });
-      queryClient.invalidateQueries({ queryKey: voiceKeys.openRooms() });
-    },
   });
 }
 

@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createMeetingToken } from "@/lib/daily";
+import { createMeetingToken, getDailyRoom, createDailyRoom } from "@/lib/daily";
+import { computeSessionWindow } from "@/lib/voice-schedule";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
     if (!roomId) {
       return NextResponse.json(
         { error: "roomId is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
     const { data: room, error: roomError } = await admin
       .from("voice_rooms")
-      .select("*")
+      .select("*, product_groups(gedu_id, product_id, products(day_of_week, start_time, timezone, duration_minutes))")
       .eq("id", roomId)
       .single();
 
@@ -37,12 +39,107 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 
-    // Room must be open
-    if (room.status !== "open") {
+    // --- Room type access control ---
+    const roomType = room.room_type as string;
+
+    if (roomType === "admin_only" && role !== "admin") {
       return NextResponse.json(
-        { error: "This room is not currently open" },
-        { status: 403 }
+        { error: "Only admins can join this room" },
+        { status: 403 },
       );
+    }
+
+    if (roomType === "gedu_only" && role !== "admin" && role !== "gedu") {
+      return NextResponse.json(
+        { error: "Only educators and admins can join this room" },
+        { status: 403 },
+      );
+    }
+
+    // --- Group room membership checks ---
+    let tokenExpUnix: number | undefined;
+    let gamerEnrolledAt: Date | undefined;
+
+    if (roomType === "group") {
+      const group = room.product_groups as {
+        gedu_id: string;
+        product_id: string;
+        products: {
+          day_of_week: number;
+          start_time: string;
+          timezone: string;
+          duration_minutes: number;
+        };
+      } | null;
+
+      if (!group) {
+        return NextResponse.json(
+          { error: "Room group configuration is invalid" },
+          { status: 500 },
+        );
+      }
+
+      if (role === "gedu") {
+        // Gedu must be the group's assigned educator
+        if (group.gedu_id !== user.id) {
+          return NextResponse.json(
+            { error: "You are not assigned to this group" },
+            { status: 403 },
+          );
+        }
+      } else if (role === "gamer") {
+        // Gamer must have an active enrollment
+        const { data: enrollment } = await admin
+          .from("group_enrollments")
+          .select("id, created_at")
+          .eq("group_id", room.group_id!)
+          .eq("gamer_id", user.id)
+          .eq("status", "active")
+          .limit(1)
+          .maybeSingle();
+
+        if (!enrollment) {
+          return NextResponse.json(
+            { error: "You are not enrolled in this group" },
+            { status: 403 },
+          );
+        }
+
+        gamerEnrolledAt = new Date(enrollment.created_at);
+      }
+      // Admin bypasses membership checks
+
+      // --- Session window check (group rooms only, all roles) ---
+      const schedule = group.products;
+      const sessionWindow = computeSessionWindow(schedule);
+
+      if (!sessionWindow.isOpen) {
+        return NextResponse.json(
+          { error: "Room is not open yet" },
+          { status: 403 },
+        );
+      }
+
+      // Gamer enrolled after the current session started — not paid for this session
+      if (gamerEnrolledAt && gamerEnrolledAt.getTime() >= sessionWindow.nextSessionStart.getTime()) {
+        return NextResponse.json(
+          { error: "Your enrollment starts next session" },
+          { status: 403 },
+        );
+      }
+
+      // Token expiry is the hard server-side ejection boundary. The client
+      // also auto-leaves via computeSessionWindow(), but the grace period
+      // ensures the client's 30s interval fires first for a clean UX.
+      // See TOKEN_EXPIRY_GRACE_SECONDS for why this offset exists.
+      tokenExpUnix = Math.round(sessionWindow.windowClosesAt.getTime() / 1000)
+        + VOICE_CONFIG.TOKEN_EXPIRY_GRACE_SECONDS;
+    }
+
+    // --- Lazy Daily.co room creation ---
+    const dailyRoom = await getDailyRoom(room.daily_room_name);
+    if (!dailyRoom) {
+      await createDailyRoom({ name: room.daily_room_name });
     }
 
     // Build token — encode userId|role|displayName
@@ -53,7 +150,7 @@ export async function POST(request: Request) {
       console.error("Missing NEXT_PUBLIC_DAILY_DOMAIN environment variable");
       return NextResponse.json(
         { error: "Voice chat is not configured" },
-        { status: 500 }
+        { status: 500 },
       );
     }
     const roomUrl = `https://${domain}.daily.co/${room.daily_room_name}`;
@@ -67,6 +164,7 @@ export async function POST(request: Request) {
       enableCamera: true,
       enableMic: true,
       userName,
+      expUnix: tokenExpUnix,
     });
 
     return NextResponse.json({ token, roomUrl, role });
@@ -74,7 +172,7 @@ export async function POST(request: Request) {
     console.error("Voice token error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

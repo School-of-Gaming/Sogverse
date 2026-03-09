@@ -1,73 +1,52 @@
-import type { VoiceRoom, OpenVoiceRoom } from "@/types";
+import type { AvailableVoiceRoom } from "@/types";
+import { computeSessionWindow } from "@/lib/voice-schedule";
 
 // Using generic type to avoid version-specific Supabase type incompatibilities
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClientType = any;
 
+export interface AvailableVoiceRoomWithWindow extends AvailableVoiceRoom {
+  isOpen: boolean;
+  nextSessionStart: Date | null;
+  windowClosesAt: Date | null;
+}
+
 export class VoiceService {
   constructor(private supabase: SupabaseClientType) {}
 
-  /** Get all currently open voice rooms */
-  async getOpenRooms(): Promise<OpenVoiceRoom[]> {
-    const { data, error } = await this.supabase.rpc("get_open_voice_rooms");
+  /** Get all voice rooms available to the current user, with computed session window */
+  async getAvailableRooms(): Promise<AvailableVoiceRoomWithWindow[]> {
+    const { data, error } = await this.supabase.rpc("get_available_voice_rooms");
     if (error) throw error;
-    return data || [];
-  }
 
-  /** Get the current user's voice room (creator's own room) */
-  async getMyRoom(): Promise<VoiceRoom | null> {
-    const {
-      data: { user },
-    } = await this.supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
+    const rooms: AvailableVoiceRoom[] = data || [];
 
-    const { data, error } = await this.supabase
-      .from("voice_rooms")
-      .select("*")
-      .eq("creator_id", user.id)
-      .single();
+    return rooms.map((room) => {
+      if (room.room_type !== "group" || room.day_of_week == null || !room.start_time || !room.timezone || !room.duration_minutes) {
+        // Always-open rooms (admin_only, gedu_only)
+        return { ...room, isOpen: true, nextSessionStart: null, windowClosesAt: null };
+      }
 
-    if (error && error.code === "PGRST116") {
-      // No rows returned — user hasn't created a room yet
-      return null;
-    }
-    if (error) throw error;
-    return data;
-  }
+      const window = computeSessionWindow({
+        day_of_week: room.day_of_week,
+        start_time: room.start_time,
+        timezone: room.timezone,
+        duration_minutes: room.duration_minutes,
+      });
 
-  /** Open a voice room (creates if needed) */
-  async openRoom(name?: string): Promise<VoiceRoom> {
-    const response = await fetch("/api/voice/room", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
+      // If the gamer enrolled after the current session started, treat as not open.
+      // They haven't paid for this session — their first paid session is next week.
+      const enrolledAfterStart = window.isOpen
+        && room.enrolled_at
+        && new Date(room.enrolled_at).getTime() >= window.nextSessionStart.getTime();
+
+      return {
+        ...room,
+        isOpen: window.isOpen && !enrolledAfterStart,
+        nextSessionStart: window.nextSessionStart,
+        windowClosesAt: window.windowClosesAt,
+      };
     });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || "Failed to open room");
-    }
-
-    const { room } = await response.json();
-    return room;
-  }
-
-  /** Close a voice room. Optionally pass roomId for admin closing another creator's room. */
-  async closeRoom(roomId?: string): Promise<VoiceRoom> {
-    const response = await fetch("/api/voice/room", {
-      method: "PATCH",
-      ...(roomId
-        ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ roomId }) }
-        : {}),
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || "Failed to close room");
-    }
-
-    const { room } = await response.json();
-    return room;
   }
 
   /** Get a Daily.co meeting token for a room */

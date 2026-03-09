@@ -77,6 +77,8 @@ interface CreateTokenOptions {
   enableCamera: boolean;
   enableMic: boolean;
   userName?: string;
+  /** Custom token expiry as a Unix timestamp (seconds). Defaults to now + TOKEN_EXPIRY_SECONDS. */
+  expUnix?: number;
 }
 
 interface DailyToken {
@@ -84,7 +86,7 @@ interface DailyToken {
 }
 
 export async function createMeetingToken(options: CreateTokenOptions): Promise<string> {
-  const exp = Math.round(Date.now() / 1000) + VOICE_CONFIG.TOKEN_EXPIRY_SECONDS;
+  const exp = options.expUnix ?? Math.round(Date.now() / 1000) + VOICE_CONFIG.TOKEN_EXPIRY_SECONDS;
 
   const result: DailyToken = await dailyFetch("/meeting-tokens", {
     method: "POST",

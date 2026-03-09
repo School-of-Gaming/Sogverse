@@ -4,7 +4,13 @@ import {
   mockSupabaseSuccess,
   mockSupabaseError,
 } from "../../mocks/supabase";
-import { createMockVoiceRoom, createMockOpenVoiceRoom } from "../../mocks/voice";
+import { createMockAvailableVoiceRoom } from "../../mocks/voice";
+import { computeSessionWindow } from "@/lib/voice-schedule";
+
+vi.mock("@/lib/voice-schedule", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/voice-schedule")>();
+  return { ...original, computeSessionWindow: vi.fn(original.computeSessionWindow) };
+});
 
 describe("VoiceService", () => {
   let service: VoiceService;
@@ -14,9 +20,6 @@ describe("VoiceService", () => {
     return {
       from: vi.fn(),
       rpc: vi.fn(),
-      auth: {
-        getUser: vi.fn(),
-      },
     };
   }
 
@@ -25,194 +28,87 @@ describe("VoiceService", () => {
     service = new VoiceService(mockSupabase as any);
   });
 
-  describe("getOpenRooms", () => {
-    it("should return open rooms from RPC", async () => {
+  describe("getAvailableRooms", () => {
+    it("should return rooms from RPC with computed session window", async () => {
       const mockRooms = [
-        createMockOpenVoiceRoom({ id: "1", name: "Room 1" }),
-        createMockOpenVoiceRoom({ id: "2", name: "Room 2" }),
+        createMockAvailableVoiceRoom({ id: "1", name: "Room 1", room_type: "gedu_only", group_id: null, day_of_week: null, start_time: null, timezone: null, duration_minutes: null }),
+        createMockAvailableVoiceRoom({ id: "2", name: "Room 2" }),
       ];
 
       mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess(mockRooms));
 
-      const result = await service.getOpenRooms();
+      const result = await service.getAvailableRooms();
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith("get_open_voice_rooms");
-      expect(result).toEqual(mockRooms);
+      expect(mockSupabase.rpc).toHaveBeenCalledWith("get_available_voice_rooms");
+      expect(result).toHaveLength(2);
+      // Always-open room should have isOpen: true
+      expect(result[0].isOpen).toBe(true);
+      expect(result[0].nextSessionStart).toBeNull();
+      // Group room should have computed window
+      expect(typeof result[1].isOpen).toBe("boolean");
     });
 
     it("should return empty array when no rooms", async () => {
       mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess(null));
 
-      const result = await service.getOpenRooms();
+      const result = await service.getAvailableRooms();
 
       expect(result).toEqual([]);
     });
 
     it("should throw on error", async () => {
       mockSupabase.rpc.mockResolvedValue(
-        mockSupabaseError("Database error")
+        mockSupabaseError("Database error"),
       );
 
-      await expect(service.getOpenRooms()).rejects.toThrow();
-    });
-  });
-
-  describe("getMyRoom", () => {
-    it("should return the gedu's room", async () => {
-      const mockRoom = createMockVoiceRoom();
-
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: "gedu-user-id" } },
-      });
-
-      const mockSelect = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(mockSupabaseSuccess(mockRoom)),
-        }),
-      });
-      mockSupabase.from.mockReturnValue({ select: mockSelect });
-
-      const result = await service.getMyRoom();
-
-      expect(mockSupabase.from).toHaveBeenCalledWith("voice_rooms");
-      expect(result).toEqual(mockRoom);
+      await expect(service.getAvailableRooms()).rejects.toThrow();
     });
 
-    it("should return null when no room exists (PGRST116)", async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: "gedu-user-id" } },
+    it("should mark room as not open when gamer enrolled after session started", async () => {
+      const sessionStart = new Date(Date.now() - 20 * 60_000); // 20 min ago
+      const enrolledAt = new Date(Date.now() - 5 * 60_000); // 5 min ago (after session start)
+
+      const room = createMockAvailableVoiceRoom({
+        id: "mid-session",
+        enrolled_at: enrolledAt.toISOString(),
       });
 
-      const mockSelect = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(
-            mockSupabaseError("No rows returned", "PGRST116")
-          ),
-        }),
+      mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess([room]));
+
+      vi.mocked(computeSessionWindow).mockReturnValue({
+        isOpen: true,
+        nextSessionStart: sessionStart,
+        windowOpensAt: new Date(sessionStart.getTime() - 300_000),
+        windowClosesAt: new Date(sessionStart.getTime() + 3600_000),
       });
-      mockSupabase.from.mockReturnValue({ select: mockSelect });
 
-      const result = await service.getMyRoom();
+      const result = await service.getAvailableRooms();
 
-      expect(result).toBeNull();
+      expect(result[0].isOpen).toBe(false);
+      expect(result[0].nextSessionStart).toEqual(sessionStart);
     });
 
-    it("should throw on non-PGRST116 errors", async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: { id: "gedu-user-id" } },
+    it("should keep room open when gamer enrolled before session started", async () => {
+      const sessionStart = new Date(Date.now() - 1 * 60_000); // 1 min ago
+      const enrolledAt = new Date(Date.now() - 2 * 60_000); // 2 min ago (before session start)
+
+      const room = createMockAvailableVoiceRoom({
+        id: "pre-session",
+        enrolled_at: enrolledAt.toISOString(),
       });
 
-      const mockSelect = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(
-            mockSupabaseError("Connection failed")
-          ),
-        }),
-      });
-      mockSupabase.from.mockReturnValue({ select: mockSelect });
+      mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess([room]));
 
-      await expect(service.getMyRoom()).rejects.toThrow();
-    });
-
-    it("should throw when not authenticated", async () => {
-      mockSupabase.auth.getUser.mockResolvedValue({
-        data: { user: null },
+      vi.mocked(computeSessionWindow).mockReturnValue({
+        isOpen: true,
+        nextSessionStart: sessionStart,
+        windowOpensAt: new Date(sessionStart.getTime() - 300_000),
+        windowClosesAt: new Date(sessionStart.getTime() + 3600_000),
       });
 
-      await expect(service.getMyRoom()).rejects.toThrow("Not authenticated");
-    });
-  });
+      const result = await service.getAvailableRooms();
 
-  describe("openRoom", () => {
-    it("should POST to /api/voice/room and return the room", async () => {
-      const mockRoom = createMockVoiceRoom();
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ room: mockRoom }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
-
-      const result = await service.openRoom("My Room");
-
-      expect(fetchSpy).toHaveBeenCalledWith("/api/voice/room", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: "My Room" }),
-      });
-      expect(result).toEqual(mockRoom);
-
-      fetchSpy.mockRestore();
-    });
-
-    it("should throw on error response", async () => {
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ error: "Only gedus can manage voice rooms" }), {
-          status: 403,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
-
-      await expect(service.openRoom()).rejects.toThrow(
-        "Only gedus can manage voice rooms"
-      );
-
-      fetchSpy.mockRestore();
-    });
-  });
-
-  describe("closeRoom", () => {
-    it("should PATCH /api/voice/room without body when no roomId", async () => {
-      const mockRoom = createMockVoiceRoom({ status: "closed" as any });
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ room: mockRoom }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
-
-      const result = await service.closeRoom();
-
-      expect(fetchSpy).toHaveBeenCalledWith("/api/voice/room", {
-        method: "PATCH",
-      });
-      expect(result).toEqual(mockRoom);
-
-      fetchSpy.mockRestore();
-    });
-
-    it("should PATCH /api/voice/room with roomId for admin", async () => {
-      const mockRoom = createMockVoiceRoom({ status: "closed" as any });
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ room: mockRoom }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
-
-      const result = await service.closeRoom("specific-room-id");
-
-      expect(fetchSpy).toHaveBeenCalledWith("/api/voice/room", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId: "specific-room-id" }),
-      });
-      expect(result).toEqual(mockRoom);
-
-      fetchSpy.mockRestore();
-    });
-
-    it("should throw on error response", async () => {
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ error: "Failed to close room" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        })
-      );
-
-      await expect(service.closeRoom()).rejects.toThrow("Failed to close room");
-
-      fetchSpy.mockRestore();
+      expect(result[0].isOpen).toBe(true);
     });
   });
 
@@ -220,13 +116,14 @@ describe("VoiceService", () => {
     it("should POST to /api/voice/token and return token + roomUrl", async () => {
       const mockResponse = {
         token: "daily-token-abc",
-        roomUrl: "https://test.daily.co/gedu-abc12345",
+        roomUrl: "https://test.daily.co/group-abcd1234",
+        role: "gedu",
       };
       const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
         new Response(JSON.stringify(mockResponse), {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        })
+        }),
       );
 
       const result = await service.getToken("room-uuid-1234");
@@ -246,7 +143,7 @@ describe("VoiceService", () => {
         new Response(JSON.stringify({ error: "Room not found" }), {
           status: 404,
           headers: { "Content-Type": "application/json" },
-        })
+        }),
       );
 
       await expect(service.getToken("bad-id")).rejects.toThrow("Room not found");

@@ -173,7 +173,7 @@ All 14 API route handlers cast the Supabase profile query result with hand-writt
 
 Every table has a separate `admin_full_access_*` permissive policy alongside role-specific permissive policies for the same action. PostgreSQL evaluates ALL permissive policies per query, which is suboptimal at scale. Merge overlapping policies into single combined policies with OR conditions.
 
-Affected tables and actions (11 issues):
+Affected tables and actions (8 issues):
 - [ ] `parent_gamer` — SELECT: `{admin_full_access, customers_view_own_links, gamers_view_parent_links}`
 - [ ] `parent_gamer` — INSERT: `{admin_full_access, customers_create_links}`
 - [ ] `parent_gamer` — DELETE: `{admin_full_access, customers_delete_own_links}`
@@ -181,14 +181,26 @@ Affected tables and actions (11 issues):
 - [ ] `profiles` — UPDATE: `{admin_full_access, users_update_own_profile}`
 - [ ] `products` — SELECT: `{admin_full_access, public_view_active_products}`
 - [ ] `token_transactions` — SELECT: `{admin_full_access, Users can read own transactions}`
-- [ ] `voice_rooms` — SELECT: `{admin_full_access, gamer_view, gedu_manage_own, gedu_view_all}`
-- [ ] `voice_rooms` — INSERT: `{admin_full_access, gedu_manage_own}`
-- [ ] `voice_rooms` — UPDATE: `{admin_full_access, gedu_manage_own}`
-- [ ] `voice_rooms` — DELETE: `{admin_full_access, gedu_manage_own}`
+- [ ] `voice_rooms` — SELECT: `{admin_full_access, gedu_view_voice_rooms, gamer_view_enrolled_voice_rooms}`
 
 **Approach:** For each table/action, merge into a single policy using OR (e.g. `is_admin() OR id = auth.uid()`). Test thoroughly — incorrect merges can break RLS.
 
 **When:** Before production launch or when table sizes grow large enough for this to matter.
+
+### Tighten Table-Level GRANTs to Match Actual Write Paths
+
+Four tables grant full `SELECT, INSERT, UPDATE, DELETE` to `authenticated` even though non-admin writes are blocked by RLS and all mutations go through `SECURITY DEFINER` RPCs or the admin client (service-role key), both of which bypass GRANTs entirely:
+
+- [ ] `product_groups` — writes go through `commit_group_changes` RPC → narrow to `GRANT SELECT`
+- [ ] `group_enrollments` — writes go through `enroll_gamer_in_group` / `unenroll_gamer` RPCs → narrow to `GRANT SELECT`
+- [ ] `products` — writes go through admin client (service-role) → narrow to `GRANT SELECT`
+- [ ] `games` — writes go through admin client (service-role) → narrow to `GRANT SELECT`
+
+Currently safe — RLS admin-only `FOR ALL` policies block non-admin writes. But the broad GRANTs mean a future accidental permissive RLS policy would immediately open writes to all authenticated users. Narrowing to `SELECT` adds a second layer of protection.
+
+Also add a DB test in `access-control.test.ts` that asserts table-level privileges match an allowlist (similar to the existing RPC grant test), so overly broad GRANTs are caught automatically.
+
+**When:** Before production launch. Low urgency — defense in depth, not an active vulnerability.
 
 ### ~~Centralize Date and Currency Formatting for Localization~~ — DONE
 

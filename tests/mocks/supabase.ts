@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 import type { Profile, CustomerProfile, GamerProfile, Product, UserRole } from "@/types";
 
 // Mock data generators
@@ -10,8 +9,8 @@ export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
     role: "customer" as UserRole,
     display_name: "Test User",
     currency: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
 }
@@ -26,8 +25,8 @@ export function createMockGamerProfile(
     role: "gamer" as UserRole,
     display_name: "Test Gamer",
     currency: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
 }
@@ -72,8 +71,8 @@ export function createMockProduct(overrides: Partial<Product> = {}): Product {
     duration_minutes: 60,
     min_age: 7,
     max_age: 12,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
 }
@@ -90,7 +89,3 @@ export function mockSupabaseError(message: string, code?: string) {
   };
 }
 
-// Reset all mocks
-export function resetSupabaseMocks(mockClient: ReturnType<typeof vi.fn>) {
-  vi.clearAllMocks();
-}
