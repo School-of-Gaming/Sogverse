@@ -28,7 +28,7 @@ function mockUnauthenticated() {
   );
 }
 
-function mockForbiddenRole(role: string) {
+function mockForbiddenRole() {
   mockRequireRole.mockResolvedValue(
     NextResponse.json(
       { error: "Only customers can update gamer accounts" },
@@ -158,28 +158,13 @@ describe("PATCH /api/gamers/[id]", () => {
     expect(response.status).toBe(401);
   });
 
-  it("should return 403 when caller is admin role", async () => {
-    mockForbiddenRole("admin");
+  it("should enforce customer role and return 403 for non-customers", async () => {
+    mockForbiddenRole();
 
     const [req, ctx] = createRequest("gamer-1", { displayName: "New Name" });
     const response = await PATCH(req, ctx);
     expect(response.status).toBe(403);
-  });
-
-  it("should return 403 when caller is gamer role", async () => {
-    mockForbiddenRole("gamer");
-
-    const [req, ctx] = createRequest("gamer-1", { displayName: "New Name" });
-    const response = await PATCH(req, ctx);
-    expect(response.status).toBe(403);
-  });
-
-  it("should return 403 when caller is gedu role", async () => {
-    mockForbiddenRole("gedu");
-
-    const [req, ctx] = createRequest("gamer-1", { displayName: "New Name" });
-    const response = await PATCH(req, ctx);
-    expect(response.status).toBe(403);
+    expect(mockRequireRole).toHaveBeenCalledWith("customer", expect.any(Object));
   });
 
   // -- Input validation --

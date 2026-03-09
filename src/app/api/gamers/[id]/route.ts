@@ -76,7 +76,7 @@ export async function PATCH(
     }
 
     // 5. Apply updates via admin client
-    if (displayName) {
+    if (displayName !== undefined) {
       const trimmed = displayName.trim();
 
       const { error: profileError } = await admin
@@ -91,6 +91,8 @@ export async function PATCH(
         );
       }
 
+      // Best-effort: sync display name to auth metadata for Supabase dashboard visibility.
+      // The profiles table is the source of truth — if this fails, the app is unaffected.
       const { error: authError } = await admin.auth.admin.updateUserById(
         gamerId,
         { user_metadata: { display_name: trimmed } },
@@ -104,7 +106,7 @@ export async function PATCH(
       }
     }
 
-    if (password) {
+    if (password !== undefined) {
       const { error: pwError } = await admin.auth.admin.updateUserById(
         gamerId,
         { password },
