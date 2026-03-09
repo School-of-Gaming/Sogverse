@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { Mic, MicOff, Video, VideoOff, Crown, Lock, Volume2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useVoiceRoom, type VoiceParticipant, type LockState } from "./VoiceRoomProvider";
+import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { cn } from "@/lib/utils";
 
 export function ParticipantList() {
@@ -72,22 +74,27 @@ function ParticipantRow({
   onMute,
   onLock,
 }: ParticipantRowProps) {
+  const avatarRef = useRef<HTMLDivElement>(null);
+
   // Show moderator controls for non-local, non-owner participants
   const showModControls = isLocalOwner && !p.isLocal && !p.isOwner;
+
+  useSpeakingGlow(avatarRef, p.sessionId, p.audioOn);
 
   return (
     <div className="space-y-1.5">
       <div
         className={cn(
-          "flex items-center gap-3 rounded-lg border p-2 transition-colors transition-shadow",
+          "flex items-center gap-3 rounded-lg border p-2 transition-colors",
           p.isLocal && "bg-accent/50",
-          p.isSpeaking && p.audioOn && "ring-2 ring-success",
         )}
       >
         {/* Avatar */}
-        <Avatar className="h-8 w-8">
-          <Identicon id={p.userId} size={32} />
-        </Avatar>
+        <div ref={avatarRef} className="shrink-0 rounded-md">
+          <Avatar className="h-8 w-8">
+            <Identicon id={p.userId} size={32} />
+          </Avatar>
+        </div>
 
         {/* Name + badges */}
         <div className="flex min-w-0 flex-1 items-center gap-2">

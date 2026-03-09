@@ -12,7 +12,7 @@ import {
   resolveOverlap,
   ejectFromBroadcastZone,
 } from "@/lib/constants/spatial";
-import { computeGlowStyle } from "@/lib/constants/spatial.config";
+import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 
 interface DraggableAvatarProps {
   participant: VoiceParticipant;
@@ -21,7 +21,7 @@ interface DraggableAvatarProps {
 }
 
 export const DraggableAvatar = memo(function DraggableAvatar({ participant, position, canDrag }: DraggableAvatarProps) {
-  const { callObject, moveLocal, moveOther, getAnalyser, positions } = useVoiceRoom();
+  const { callObject, moveLocal, moveOther, positions } = useVoiceRoom();
   const [dragging, setDragging] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -66,45 +66,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
     }
   }, [callObject, participant.sessionId, participant.videoOn]);
 
-  // Animate speaking glow based on real-time audio level (DOM manipulation, no React re-renders).
-  // Skip the rAF loop entirely when the participant is muted to save CPU.
-  useEffect(() => {
-    const frame = frameRef.current;
-    if (!frame) return;
-
-    if (!participant.audioOn) {
-      frame.style.boxShadow = "";
-      frame.style.borderColor = "";
-      return;
-    }
-
-    const dataArray = new Uint8Array(256);
-    let rafId = 0;
-
-    const tick = () => {
-      const analyser = getAnalyser(participant.sessionId);
-      if (analyser) {
-        analyser.getByteTimeDomainData(dataArray);
-        let sum = 0;
-        for (let i = 0; i < dataArray.length; i++) {
-          const v = (dataArray[i] - 128) / 128;
-          sum += v * v;
-        }
-        const rms = Math.sqrt(sum / dataArray.length);
-        const level = Math.min(1, rms * 3);
-        const glow = computeGlowStyle(level);
-        frame.style.boxShadow = (glow.boxShadow as string) ?? "";
-        frame.style.borderColor = (glow.borderColor as string) ?? "";
-      } else {
-        frame.style.boxShadow = "";
-        frame.style.borderColor = "";
-      }
-      rafId = requestAnimationFrame(tick);
-    };
-
-    rafId = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafId);
-  }, [getAnalyser, participant.sessionId, participant.audioOn]);
+  useSpeakingGlow(frameRef, participant.sessionId, participant.audioOn);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
