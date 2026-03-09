@@ -173,7 +173,7 @@ All 14 API route handlers cast the Supabase profile query result with hand-writt
 
 Every table has a separate `admin_full_access_*` permissive policy alongside role-specific permissive policies for the same action. PostgreSQL evaluates ALL permissive policies per query, which is suboptimal at scale. Merge overlapping policies into single combined policies with OR conditions.
 
-Affected tables and actions (11 issues):
+Affected tables and actions (8 issues):
 - [ ] `parent_gamer` — SELECT: `{admin_full_access, customers_view_own_links, gamers_view_parent_links}`
 - [ ] `parent_gamer` — INSERT: `{admin_full_access, customers_create_links}`
 - [ ] `parent_gamer` — DELETE: `{admin_full_access, customers_delete_own_links}`
@@ -181,10 +181,7 @@ Affected tables and actions (11 issues):
 - [ ] `profiles` — UPDATE: `{admin_full_access, users_update_own_profile}`
 - [ ] `products` — SELECT: `{admin_full_access, public_view_active_products}`
 - [ ] `token_transactions` — SELECT: `{admin_full_access, Users can read own transactions}`
-- [ ] `voice_rooms` — SELECT: `{admin_full_access, gamer_view, gedu_manage_own, gedu_view_all}`
-- [ ] `voice_rooms` — INSERT: `{admin_full_access, gedu_manage_own}`
-- [ ] `voice_rooms` — UPDATE: `{admin_full_access, gedu_manage_own}`
-- [ ] `voice_rooms` — DELETE: `{admin_full_access, gedu_manage_own}`
+- [ ] `voice_rooms` — SELECT: `{admin_full_access, gedu_view_voice_rooms, gamer_view_enrolled_voice_rooms}`
 
 **Approach:** For each table/action, merge into a single policy using OR (e.g. `is_admin() OR id = auth.uid()`). Test thoroughly — incorrect merges can break RLS.
 
