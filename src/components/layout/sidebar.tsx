@@ -10,7 +10,6 @@ import {
   Settings,
   Gamepad2,
   GraduationCap,
-  ClipboardList,
   Coins,
   Mic,
   FlaskConical,
@@ -79,12 +78,7 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       label: "My Gamers",
       icon: <Gamepad2 className="h-5 w-5" />,
     },
-    {
-      href: ROUTES.customer.enrollments,
-      label: "Enrollments",
-      icon: <ClipboardList className="h-5 w-5" />,
-    },
-    {
+{
       href: ROUTES.settings,
       label: "Settings",
       icon: <Settings className="h-5 w-5" />,

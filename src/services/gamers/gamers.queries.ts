@@ -3,9 +3,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { GamerService } from "./gamers.service";
+import { enrollmentKeys } from "@/services/enrollments";
 import type { CreateGamerInput } from "@/types";
 
-const gamerKeys = {
+export const gamerKeys = {
   all: ["gamers"] as const,
   myGamers: () => [...gamerKeys.all, "my-gamers"] as const,
   myParents: () => [...gamerKeys.all, "my-parents"] as const,
@@ -77,4 +78,24 @@ export function useCreateGamer() {
   });
 }
 
+export function useUpdateGamer() {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new GamerService(supabase);
 
+  return useMutation({
+    mutationFn: ({
+      gamerId,
+      updates,
+    }: {
+      gamerId: string;
+      updates: { displayName?: string; password?: string };
+    }) => service.updateGamer(gamerId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });
+      queryClient.invalidateQueries({
+        queryKey: enrollmentKeys.myEnrollments(),
+      });
+    },
+  });
+}

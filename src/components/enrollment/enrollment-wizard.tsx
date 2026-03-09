@@ -426,8 +426,8 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
               </p>
             )}
             <div className="mt-6 flex gap-3">
-              <Link href={ROUTES.customer.enrollments}>
-                <Button variant="outline">View My Enrollments</Button>
+              <Link href={ROUTES.customer.gamers}>
+                <Button variant="outline">View My Gamers</Button>
               </Link>
               <Link href={ROUTES.products}>
                 <Button>Browse Products</Button>
