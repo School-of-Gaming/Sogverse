@@ -63,12 +63,13 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
     }
   }, [callObjectRef, positionsRef]);
 
-  /** Manage GainNode-based audio pipeline for remote participants */
+  /** Manage audio pipeline for remote participants.
+   *  Uses <audio> elements for reliable WebRTC playback, piped through
+   *  createMediaElementSource for GainNode volume control + AnalyserNode visualization. */
   const manageAudioNodes = useCallback(async (co: DailyCall) => {
     const ctx = audioContextRef.current;
     if (!ctx) return;
 
-    // Fix for one-way audio bug: ensure AudioContext is running before wiring nodes
     await ensureAudioContextResumed(ctx);
 
     const pMap = co.participants();
@@ -88,15 +89,24 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
         audioTrackIdsRef.current.set(p.session_id, trackId);
         changed = true;
 
-        // Clean up previous nodes
+        // Clean up previous nodes + element
         const existing = audioNodesRef.current.get(p.session_id);
         if (existing) {
           existing.source.disconnect();
+          existing.element.srcObject = null;
+          existing.element.remove();
         }
 
-        // Build pipeline: Source → Analyser → Gain → Destination
-        const stream = new MediaStream([audioTrack.persistentTrack]);
-        const source = ctx.createMediaStreamSource(stream);
+        // Create <audio> element for reliable WebRTC track playback
+        const element = new Audio();
+        element.srcObject = new MediaStream([audioTrack.persistentTrack]);
+        element.autoplay = true;
+        // play() may reject if autoplay is blocked; the element still
+        // serves as the source for createMediaElementSource either way.
+        element.play().catch(() => {});
+
+        // Pipe element through Web Audio: Element → Analyser → Gain → Destination
+        const source = ctx.createMediaElementSource(element);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
         const gain = ctx.createGain();
@@ -105,7 +115,7 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
         analyser.connect(gain);
         gain.connect(ctx.destination);
 
-        audioNodesRef.current.set(p.session_id, { source, analyser, gain });
+        audioNodesRef.current.set(p.session_id, { element, source, analyser, gain });
       }
     }
 
@@ -118,6 +128,8 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
         const nodes = audioNodesRef.current.get(sessionId);
         if (nodes) {
           nodes.source.disconnect();
+          nodes.element.srcObject = null;
+          nodes.element.remove();
         }
         audioNodesRef.current.delete(sessionId);
       }
@@ -163,10 +175,12 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
     return audioNodesRef.current.get(sessionId)?.analyser ?? null;
   }, [callObjectRef]);
 
-  /** Clean up all audio nodes */
+  /** Clean up all audio nodes and elements */
   const cleanupAudioNodes = useCallback(() => {
     for (const [, nodes] of audioNodesRef.current) {
       nodes.source.disconnect();
+      nodes.element.srcObject = null;
+      nodes.element.remove();
     }
     audioNodesRef.current.clear();
     audioTrackIdsRef.current.clear();

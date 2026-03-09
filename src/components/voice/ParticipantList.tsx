@@ -112,6 +112,25 @@ function ParticipantRow({
           )}
         </div>
 
+        {/* Volume slider (remote participants only) */}
+        {!p.isLocal && (
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <input
+              type="range"
+              min={10}
+              max={200}
+              value={Math.round(volume * 100)}
+              onChange={(e) => onVolumeChange(Number(e.target.value) / 100)}
+              className="h-1.5 min-w-0 flex-1 cursor-pointer accent-primary"
+              title={`Volume: ${Math.round(volume * 100)}%`}
+            />
+            <span className="w-8 shrink-0 text-right text-xs text-muted-foreground">
+              {Math.round(volume * 100)}%
+            </span>
+          </div>
+        )}
+
         {/* Status indicators */}
         <div className="flex items-center gap-1.5">
           {p.videoOn && (
@@ -140,25 +159,6 @@ function ParticipantRow({
           </div>
         </div>
       </div>
-
-      {/* Volume slider (remote participants only) */}
-      {!p.isLocal && (
-        <div className="flex items-center gap-2 px-2">
-          <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <input
-            type="range"
-            min={10}
-            max={200}
-            value={Math.round(volume * 100)}
-            onChange={(e) => onVolumeChange(Number(e.target.value) / 100)}
-            className="h-1.5 w-full cursor-pointer accent-primary"
-            title={`Volume: ${Math.round(volume * 100)}%`}
-          />
-          <span className="w-10 text-right text-xs text-muted-foreground">
-            {Math.round(volume * 100)}%
-          </span>
-        </div>
-      )}
 
       {/* Moderator controls */}
       {showModControls && (

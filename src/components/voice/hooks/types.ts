@@ -27,7 +27,8 @@ export interface LockState {
 // ---------- Audio ----------
 
 export interface AudioNodes {
-  source: MediaStreamAudioSourceNode;
+  element: HTMLAudioElement;
+  source: MediaElementAudioSourceNode;
   analyser: AnalyserNode;
   gain: GainNode;
 }
