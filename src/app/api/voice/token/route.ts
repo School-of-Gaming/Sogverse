@@ -49,12 +49,13 @@ export async function POST(request: Request) {
       );
     }
 
-    if (roomType === "gedu_only" && role !== "admin" && role !== "gedu") {
-      return NextResponse.json(
-        { error: "Only educators and admins can join this room" },
-        { status: 403 },
-      );
-    }
+    // TODO: revert — temporarily allowing gamers into gedu lounge for testing
+    // if (roomType === "gedu_only" && role !== "admin" && role !== "gedu") {
+    //   return NextResponse.json(
+    //     { error: "Only educators and admins can join this room" },
+    //     { status: 403 },
+    //   );
+    // }
 
     // --- Group room membership checks ---
     let tokenExpUnix: number | undefined;

@@ -107,7 +107,9 @@ export function useVoiceSession(): UseVoiceSessionReturn {
   useEffect(() => {
     if (!joined || !joinedRoomId || !roomsList) return;
 
-    const roomStillAvailable = roomsList.some((r) => r.id === joinedRoomId);
+    // TODO: revert — skip auto-leave for debug gedu lounge room
+    const DEBUG_GEDU_LOUNGE_ID = "c8e7d686-d034-4113-bf79-d314b87fb84c";
+    const roomStillAvailable = roomsList.some((r) => r.id === joinedRoomId) || joinedRoomId === DEBUG_GEDU_LOUNGE_ID;
     if (!roomStillAvailable) {
       const roomName = joinedRoomNameRef.current;
       leave();
