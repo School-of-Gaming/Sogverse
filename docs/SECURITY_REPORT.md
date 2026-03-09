@@ -18,7 +18,7 @@
 | 4 | Token Balance Race Condition | **HIGH** | Medium | Concurrency | **FIXED** |
 | 5 | JSONB DoS via Expensive Casts | **LOW** | Low | Denial of Service | Mitigated |
 | 6 | Cron Function Public Access | **MEDIUM** | Easy | Broken Access Control | **FIXED** |
-| 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | Partial |
+| 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | **FIXED** |
 | 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | **FIXED** |
 | 9 | LIKE Wildcard Injection | **LOW** | Medium | Input Validation | **FIXED** |
 | 10 | `adjust_token_balance` Public RPC Access | **CRITICAL** | Easy | Broken Access Control | **FIXED** |
@@ -613,7 +613,7 @@ Five enforced security headers added to `next.config.ts` via the `headers()` fun
 - `X-XSS-Protection: 1; mode=block`
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains`
 
-A `Content-Security-Policy-Report-Only` header is also deployed to log violations without blocking anything. The allowlist covers Next.js (`'unsafe-inline'`, `'unsafe-eval'`), Tailwind CSS, Supabase, Daily.co, and Stripe. Once the allowlist is validated with zero console warnings in staging, promote to enforcing `Content-Security-Policy`.
+A `Content-Security-Policy` header is enforced with an allowlist covering Next.js (`'unsafe-inline'`, `'unsafe-eval'`), Tailwind CSS, Supabase, Daily.co, and Stripe.
 
 ---
 
@@ -679,7 +679,7 @@ The `searchProducts()` method in `products.service.ts` was dead code (never call
 | **P1** | Token Balance Race | 1h | Prevents overdrafts | **FIXED** |
 | **P1** | JSONB DoS | 2h | Prevents resource exhaustion | **Mitigated** (via admin role check) |
 | **P2** | Cron Public Access | 15min | Prevents info disclosure | **FIXED** |
-| **P2** | Security Headers | 30min | Defense-in-depth | **Partial** |
+| **P2** | Security Headers | 30min | Defense-in-depth | **FIXED** |
 | **P2** | Signout CSRF | 15min | Eliminates forced logout attacks | **FIXED** |
 | **P3** | LIKE Wildcard | 30min | Prevents broad searches | **FIXED** |
 
@@ -739,9 +739,9 @@ After applying fixes, verify:
 
 ### Final status
 
-- **8 of 10 findings fully fixed** (migrations 00042–00045, code changes to `next.config.ts`, `signout/route.ts`, `users.service.ts`)
+- **9 of 10 findings fully fixed** (migrations 00042–00045, code changes to `next.config.ts`, `signout/route.ts`, `users.service.ts`)
 - **2 mitigated** (#3 cron race condition — no external callers remain; #5 JSONB DoS — admin role check blocks unauthenticated access)
-- **1 open item:** Promote `Content-Security-Policy-Report-Only` to enforcing `Content-Security-Policy` once staging shows zero violations (Finding #7)
+- **All findings resolved** — CSP promoted to enforcing `Content-Security-Policy` (Finding #7)
 
 ### Structural defenses added during remediation
 
@@ -754,7 +754,6 @@ These go beyond individual fixes to prevent future classes of the same vulnerabi
 ### If reopening this audit
 
 - Run `npm run test:db` — the access control tests will catch any regressions in function grants or missing RLS.
-- Check the CSP open item above.
 - Review any migrations added after `00010_access_control_helpers` for new SECURITY DEFINER functions or tables without RLS.
 - Run https://securityheaders.com against the production domain to verify headers are served correctly.
 

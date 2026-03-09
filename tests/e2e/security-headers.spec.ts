@@ -12,7 +12,7 @@ test.describe("Security Headers", () => {
     expect(headers["strict-transport-security"]).toBe(
       "max-age=31536000; includeSubDomains"
     );
-    expect(headers["content-security-policy-report-only"]).toContain(
+    expect(headers["content-security-policy"]).toContain(
       "default-src 'self'"
     );
   });

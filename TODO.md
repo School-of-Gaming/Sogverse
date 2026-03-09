@@ -88,7 +88,7 @@ This was tested during the staging squash and worked well:
 
 ## Pre-Production Security Checklist
 
-- [ ] Promote `Content-Security-Policy-Report-Only` to enforcing `Content-Security-Policy` once the allowlist is validated with zero console warnings in staging
+- [x] Promote `Content-Security-Policy-Report-Only` to enforcing `Content-Security-Policy` once the allowlist is validated with zero console warnings in staging
 
 ## Future Improvements
 
