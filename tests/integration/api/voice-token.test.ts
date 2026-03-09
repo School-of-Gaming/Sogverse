@@ -327,10 +327,8 @@ describe("POST /api/voice/token", () => {
   describe("group room — gamer access", () => {
     /** Helper: mock both room lookup + enrollment query for gamer tests */
     function mockGamerEnrollment(enrollment: { id: string; created_at: string } | null) {
-      let fromCallCount = 0;
-      mockAdminFrom.mockImplementation(() => {
-        fromCallCount++;
-        if (fromCallCount === 1) {
+      mockAdminFrom.mockImplementation((table: string) => {
+        if (table === "voice_rooms") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -339,19 +337,22 @@ describe("POST /api/voice/token", () => {
             }),
           };
         }
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
+        if (table === "group_enrollments") {
+          return {
+            select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
-                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess(enrollment)),
+                  eq: vi.fn().mockReturnValue({
+                    limit: vi.fn().mockReturnValue({
+                      maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess(enrollment)),
+                    }),
                   }),
                 }),
               }),
             }),
-          }),
-        };
+          };
+        }
+        return {};
       });
     }
 
@@ -576,10 +577,8 @@ describe("POST /api/voice/token", () => {
         username: "testgamer",
       });
 
-      let fromCallCount = 0;
-      mockAdminFrom.mockImplementation(() => {
-        fromCallCount++;
-        if (fromCallCount === 1) {
+      mockAdminFrom.mockImplementation((table: string) => {
+        if (table === "voice_rooms") {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -588,22 +587,25 @@ describe("POST /api/voice/token", () => {
             }),
           };
         }
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
+        if (table === "group_enrollments") {
+          return {
+            select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
-                  limit: vi.fn().mockReturnValue({
-                    maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({
-                      id: "enrollment-1",
-                      created_at: new Date(Date.now() - 7 * 24 * 3600_000).toISOString(),
-                    })),
+                  eq: vi.fn().mockReturnValue({
+                    limit: vi.fn().mockReturnValue({
+                      maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({
+                        id: "enrollment-1",
+                        created_at: new Date(Date.now() - 7 * 24 * 3600_000).toISOString(),
+                      })),
+                    }),
                   }),
                 }),
               }),
             }),
-          }),
-        };
+          };
+        }
+        return {};
       });
 
       const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));

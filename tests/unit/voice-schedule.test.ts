@@ -130,6 +130,30 @@ describe("computeSessionWindow", () => {
     expect(result.nextSessionStart.toISOString()).toBe("2026-03-24T12:00:00.000Z");
   });
 
+  it("should detect active session correctly across a DST fall-back", () => {
+    // Europe/Helsinki falls back on the last Sunday of October 2026 (Oct 25).
+    // Oct 20 (Tue, UTC+3): 14:00 Helsinki = 11:00 UTC
+    // Oct 27 (Tue, UTC+2): 14:00 Helsinki = 12:00 UTC
+    //
+    // At 11:30 UTC on Oct 20, the session is live (14:30 Helsinki, EEST).
+    // getNextSessionStart returns Oct 27 12:00 UTC (next week, UTC+2).
+    // Subtracting 7 days in UTC gives Oct 20 12:00 UTC — wrong by 1 hour.
+    // The correct prevStart is Oct 20 11:00 UTC (14:00 Helsinki, UTC+3).
+    const helsinkiSchedule = {
+      day_of_week: 1, // Tuesday
+      start_time: "14:00",
+      timezone: "Europe/Helsinki",
+      duration_minutes: 60,
+    };
+
+    const now = utcDate("2026-10-20T11:30:00Z"); // 14:30 Helsinki, mid-session
+    const result = computeSessionWindow(helsinkiSchedule, now);
+
+    expect(result.isOpen).toBe(true);
+    // The session started at 11:00 UTC (14:00 Helsinki UTC+3 / EEST)
+    expect(result.nextSessionStart.toISOString()).toBe("2026-10-20T11:00:00.000Z");
+  });
+
   it("should detect active session that crosses midnight", () => {
     // Tuesday 23:30 UTC, 90-minute session → ends Wednesday 01:00 UTC
     const lateSchedule = {
