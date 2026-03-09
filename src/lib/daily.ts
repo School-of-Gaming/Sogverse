@@ -53,7 +53,7 @@ export async function createDailyRoom(config: CreateRoomConfig): Promise<DailyRo
       properties: {
         max_participants: config.maxParticipants ?? VOICE_CONFIG.MAX_PARTICIPANTS,
         enable_chat: false,
-        enable_screenshare: false,
+        enable_screenshare: true,
       },
     }),
   });
@@ -73,9 +73,8 @@ export async function deleteDailyRoom(name: string): Promise<void> {
 
 interface CreateTokenOptions {
   roomName: string;
+  /** Owners can moderate (mute, lock, screen share). Non-owners cannot. */
   isOwner: boolean;
-  enableCamera: boolean;
-  enableMic: boolean;
   userName?: string;
   /** Custom token expiry as a Unix timestamp (seconds). Defaults to now + TOKEN_EXPIRY_SECONDS. */
   expUnix?: number;
@@ -94,8 +93,9 @@ export async function createMeetingToken(options: CreateTokenOptions): Promise<s
       properties: {
         room_name: options.roomName,
         is_owner: options.isOwner,
-        start_video_off: !options.enableCamera,
-        start_audio_off: !options.enableMic,
+        enable_screenshare: options.isOwner,
+        start_video_off: true,
+        start_audio_off: false,
         user_name: options.userName,
         exp,
       },

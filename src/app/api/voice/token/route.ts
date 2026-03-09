@@ -155,14 +155,12 @@ export async function POST(request: Request) {
     }
     const roomUrl = `https://${domain}.daily.co/${room.daily_room_name}`;
 
-    // Gamers are non-owners (no moderation); admins/gedus are owners
+    // Gamers are non-owners (no moderation, no screen share); admins/gedus are owners
     const isOwner = role !== "gamer";
 
     const token = await createMeetingToken({
       roomName: room.daily_room_name,
       isOwner,
-      enableCamera: true,
-      enableMic: true,
       userName,
       expUnix: tokenExpUnix,
     });

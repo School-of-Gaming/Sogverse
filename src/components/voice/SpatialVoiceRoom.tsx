@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { VoiceControls } from "./VoiceControls";
 import { SpatialCanvas } from "./SpatialCanvas";
+import { ScreenShareDisplay } from "./ScreenShareDisplay";
+import { ParticipantList } from "./ParticipantList";
 import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
 
 interface SpatialVoiceRoomProps {
@@ -21,7 +23,7 @@ export function SpatialVoiceRoom({
   onLeave,
   leaveLabel = "Leave",
 }: SpatialVoiceRoomProps) {
-  const { participants, joining } = useVoiceRoom();
+  const { participants, joining, screenSharerSessionId } = useVoiceRoom();
   const [leaving, setLeaving] = useState(false);
 
   const handleLeave = async () => {
@@ -57,6 +59,9 @@ export function SpatialVoiceRoom({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* Screen share display (above canvas when active) */}
+          {screenSharerSessionId && <ScreenShareDisplay />}
+
           <SpatialCanvas />
 
           <div className="flex items-center justify-between">
@@ -79,6 +84,9 @@ export function SpatialVoiceRoom({
           </div>
         </CardContent>
       </Card>
+
+      {/* Participant list (always visible below the voice room card) */}
+      <ParticipantList />
     </div>
   );
 }

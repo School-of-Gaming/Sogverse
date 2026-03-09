@@ -1,6 +1,6 @@
 # Voice Chat Architecture
 
-Daily.co-powered spatial voice (and optional video) chat for gedus, admins, and gamers.
+Daily.co-powered spatial voice (and optional video) chat for gedus, admins, and gamers, with screen sharing, per-participant volume control, and moderator controls.
 
 ## Overview
 
@@ -17,18 +17,27 @@ Pages
 └── /gamer/voice → VoiceRoomDashboard (enrolled group rooms only)
 
 Shared voice components (src/components/voice/)
-├── VoiceRoomDashboard — Unified dashboard: room list or in-session spatial view
-├── VoiceRoomCard      — Card for each room (always-open, live, or upcoming)
-├── VoiceRoomProvider  — React context: Daily.co call, spatial positions, audio routing
-├── SpatialVoiceRoom   — In-session layout: canvas + controls + leave button
-├── SpatialCanvas      — Renders zones + draggable avatars on a 21:9 canvas
-├── DraggableAvatar    — Pointer-drag avatar with speaking glow (rAF + AnalyserNode)
-├── VoiceAvatar        — Presentational avatar (identicon/video, mic status, name label)
-├── Zone               — Renders a named zone rectangle on the canvas
-├── VoiceControls      — Mic/camera toggle, mic level meter
-└── MicLevelIndicator  — Real-time mic input level bar (Web Audio API)
+├── VoiceRoomDashboard  — Unified dashboard: room list or in-session spatial view
+├── VoiceRoomCard       — Card for each room (always-open, live, or upcoming)
+├── VoiceRoomProvider   — React context orchestrator (composes internal hooks)
+├── SpatialVoiceRoom    — In-session layout: screen share + canvas + controls + participants
+├── SpatialCanvas       — Renders zones + draggable avatars on a 21:9 canvas
+├── DraggableAvatar     — Pointer-drag avatar with speaking glow (rAF + AnalyserNode)
+├── VoiceAvatar         — Presentational avatar (identicon/video, mic status, name label)
+├── Zone                — Renders a named zone rectangle on the canvas
+├── VoiceControls       — Mic/camera/screen-share toggles, lock indicators, mic level
+├── ScreenShareDisplay  — Renders screen share video with sharer badge and stop button
+├── ParticipantList     — Always-visible list: speaking indicator, volume slider, mod controls
+└── MicLevelIndicator   — Real-time mic input level bar (Web Audio API)
 
-Hooks
+Internal hooks (src/components/voice/hooks/)
+├── types.ts                  — Shared types (VoiceParticipant, LockState, AppMessage, etc.)
+├── use-audio-pipeline.ts     — GainNode playback, volume multipliers, AnalyserNodes, routing
+├── use-spatial-positions.ts  — Position tracking, zone detection, move, spatial app messages
+├── use-screen-share.ts       — Screen sharer detection, start/stop, auto-replace
+└── use-moderator-controls.ts — Mute, lock/unlock, lock state sync, moderator app messages
+
+Global hooks
 ├── src/hooks/use-voice-session.ts       — Session logic (room lists, join/leave, auto-leave)
 └── src/hooks/use-voice-room-realtime.ts — Supabase Realtime → query invalidation
 
@@ -128,8 +137,11 @@ The `computeSessionWindow()` utility (in `src/lib/voice-schedule.ts`) determines
 | Join gedu lounge | Yes | Yes | No |
 | Join group room | In window | Own groups + in window | Enrolled + in window |
 | Camera & Mic | Yes | Yes | Yes |
+| Screen share | Yes | Yes | No |
 | Drag other avatars | Yes | Yes | Own only |
 | Enter broadcast zone | Yes | Yes | No |
+| Mute participants | Yes | Yes | No |
+| Lock participant mic/cam | Yes | Yes | No |
 
 ## Daily.co Room Lifecycle
 
@@ -145,6 +157,59 @@ The `computeSessionWindow()` utility (in `src/lib/voice-schedule.ts`) determines
 ### Self-healing
 The token endpoint lazily creates any missing Daily.co room before issuing a token. This covers edge cases where Daily.co room creation failed during group management.
 
+## Screen Sharing
+
+### Permissions (three-layer security model)
+1. **Daily.co room level:** `enable_screenshare: true` — room allows screen sharing (all rooms).
+2. **Daily.co token level:** `enable_screenshare` derived from `is_owner` — only owners (admin/gedu) get tokens that allow screen sharing. Gamers get `enable_screenshare: false`; Daily.co rejects `startScreenShare()` calls from their client.
+3. **Client-side:** Screen share button only shown when `canScreenShare` (i.e., non-gamer role). Defense-in-depth; Layer 2 is the real enforcement.
+
+### One-at-a-time with auto-replace
+Only one participant can share at a time. If a second owner starts sharing while someone else is already sharing, the `startScreenShare()` function first stops the existing sharer via `updateParticipant(sharerSid, { setScreenShare: false })` (requires owner token), then starts the new share.
+
+### Track handling
+Screen share video is detected via `p.tracks.screenVideo?.state === "playable"` in `mapParticipant()`. The `ScreenShareDisplay` component renders the track in a `<video>` element above the spatial canvas when active.
+
+## Audio Pipeline
+
+### GainNode-based playback
+Audio playback uses the Web Audio API GainNode chain (not `<audio>` elements) for clean volume control:
+
+```
+Track → MediaStreamAudioSourceNode → AnalyserNode → GainNode → AudioContext.destination
+```
+
+The AnalyserNode is a pass-through that also powers the speaking-glow visualization on avatars.
+
+### AudioContext lifecycle
+Browsers create AudioContext in a suspended state until a user gesture resumes it. `manageAudioNodes()` always `await ctx.resume()` before connecting any node to the destination. Without this, nodes would connect to a still-suspended context and produce no audio output.
+
+### Zone-based routing
+`updateAudioRouting()` sets each participant's GainNode value to `calculateGain(localZone, remoteZone) * volumeMultiplier`. Same-zone = 1.0, broadcast zone = 1.0, different zones = 0.0.
+
+### Volume multipliers
+Each remote participant has a local-only volume multiplier (0.1–2.0, default 1.0) stored in `volumeMultipliersRef`. The `ParticipantList` shows a slider per remote participant. Changes are applied immediately to the GainNode — no network traffic.
+
+## Moderator Controls
+
+### Security model (three layers)
+
+1. **Daily.co token (`is_owner`):** Only owners can call `updateParticipant()` to remotely mute or change `canSend` permissions. Gamers have `is_owner: false`; Daily.co rejects their `updateParticipant()` calls.
+2. **Daily.co `updateParticipant` (server-enforced):** `canSend` permissions revoke a participant's ability to send audio/video at the infrastructure level. A locked participant physically cannot send that track type regardless of client manipulation.
+3. **Client-side (cosmetic, defense-in-depth):** App messages communicate lock state for UI indicators. Bypassable, but Layer 2 prevents the actual action.
+
+### Mute vs Lock
+
+- **Mute** (`muteParticipant`): One-time force-off via `updateParticipant(sid, { setAudio: false })`. The participant can re-enable their mic afterward.
+- **Lock** (`lockParticipant`): Persistent restriction via `updateParticipant(sid, { setAudio: false, updatePermissions: { canSend: [...] } })`. Revokes the `canSend` permission for that track type. The participant's toggle is disabled and they physically cannot send the track. Unlock restores the permission.
+
+### Lock state sync
+Lock states are synced via app messages (`moderatorLock`). For late joiners, lock states are included in the `positionSync` reply alongside spatial positions.
+
+### UI
+- **VoiceControls:** Lock indicator (lock icon) overlays mic/camera buttons when locally locked. Buttons are disabled.
+- **ParticipantList:** Shows mute/lock buttons for non-owner, non-local participants (visible to owners only). Lock badges shown on locked participants.
+
 ## Data Flow
 
 ### Viewing rooms
@@ -159,7 +224,7 @@ The token endpoint lazily creates any missing Daily.co room before issuing a tok
 2. `joinRoom()` → `POST /api/voice/token` with `roomId`
 3. Token endpoint validates role, membership, and session window
 4. Lazy-creates Daily.co room if needed
-5. Issues a meeting token with appropriate `isOwner` flag and `exp`
+5. Issues a meeting token with `isOwner` (which also controls `enable_screenshare`) and `exp`
 6. `VoiceRoomProvider.join()` connects to the Daily.co room
 
 ### Auto-leave triggers
@@ -180,14 +245,14 @@ The `userName` field in Daily.co tokens encodes `userId|role|displayName` for cl
 
 ## Future Improvements
 
+### Persistent lock state across rejoins
+Currently lock state is ephemeral — if a locked gamer disconnects and rejoins, they get a fresh token with full permissions. A server-side lock store (e.g., in Supabase or Redis) + restricted token issuance would make locks survive reconnects.
+
 ### Add participant tracking to the database
 Currently participant presence is only tracked in Daily.co's runtime. Persisting join/leave events to a `voice_room_participants` table would enable session history, analytics, and participant count display without joining the call.
 
 ### Live countdown for upcoming sessions
 The `NextSession` component computes "Next session in X days/hours" once on render. When a session is minutes away, a live-updating countdown (re-computing every ~30s) would give better feedback that the room is about to open.
-
-### Extract VoiceRoomProvider into smaller hooks
-The provider handles call lifecycle, audio playback, audio analysis, spatial positions, app messaging, and audio routing. Consider extracting `useSpatialPositions` and `useAudioAnalysis` as internal hooks.
 
 ### Sanitize pipe delimiter from display names in token userName
 The token endpoint encodes `userId|role|displayName` as a pipe-delimited string in Daily.co's `user_name` field. If a user's `display_name` contains `|`, the client-side parser (`mapParticipant`) handles it correctly by re-joining slots 2+. However, a user could set their display name to e.g. `fakeId|admin|Admin` and the parser would extract a spoofed `role` and `userId`. This is cosmetic-only — the Daily.co token's `is_owner` flag (set server-side) is the real authority for drag permissions and `moveUser` validation — but it could cause incorrect role badges or identicons. Fix by stripping `|` from `displayName` before encoding, or switching to JSON encoding.

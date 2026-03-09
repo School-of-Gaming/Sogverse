@@ -562,11 +562,7 @@ describe("POST /api/voice/token", () => {
       expect(response.status).toBe(200);
       expect(data.token).toBe("mock-daily-token");
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
-        expect.objectContaining({
-          isOwner: true,
-          enableCamera: true,
-          enableMic: true,
-        }),
+        expect.objectContaining({ isOwner: true }),
       );
     });
 
@@ -612,11 +608,85 @@ describe("POST /api/voice/token", () => {
 
       expect(response.status).toBe(200);
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
-        expect.objectContaining({
-          isOwner: false,
-          enableCamera: true,
-          enableMic: true,
-        }),
+        expect.objectContaining({ isOwner: false }),
+      );
+    });
+
+    it("should grant screen share (via isOwner) for admin", async () => {
+      mockAuthenticatedWithProfile("admin-user-id", {
+        role: "admin",
+        display_name: "Admin",
+        username: "admin1",
+      });
+      mockRoomLookup(createSpecialRoom("admin_only"));
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+
+      expect(response.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: true }),
+      );
+    });
+
+    it("should grant screen share (via isOwner) for gedu", async () => {
+      mockAuthenticatedWithProfile("gedu-user-id", {
+        role: "gedu",
+        display_name: "Educator",
+        username: "edu1",
+      });
+      mockRoomLookup(createGroupRoom());
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+
+      expect(response.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: true }),
+      );
+    });
+
+    it("should deny screen share (via non-owner) for gamer", async () => {
+      mockAuthenticatedWithProfile("gamer-user-id", {
+        role: "gamer",
+        display_name: "Gamer",
+        username: "gamer1",
+      });
+
+      mockAdminFrom.mockImplementation((table: string) => {
+        if (table === "voice_rooms") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue(mockSupabaseSuccess(createGroupRoom())),
+              }),
+            }),
+          };
+        }
+        if (table === "group_enrollments") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                eq: vi.fn().mockReturnValue({
+                  eq: vi.fn().mockReturnValue({
+                    limit: vi.fn().mockReturnValue({
+                      maybeSingle: vi.fn().mockResolvedValue(mockSupabaseSuccess({
+                        id: "enrollment-1",
+                        created_at: new Date(Date.now() - 7 * 24 * 3600_000).toISOString(),
+                      })),
+                    }),
+                  }),
+                }),
+              }),
+            }),
+          };
+        }
+        return {};
+      });
+
+      const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+
+      expect(response.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ isOwner: false }),
       );
     });
 
