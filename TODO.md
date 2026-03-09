@@ -296,7 +296,25 @@ To support a second parent linking to an existing gamer:
 
 **Why:** The previous client-side INSERT policy only checked `parent_id = auth.uid()`, allowing any customer to link to any gamer. The fix correctly removed this, but a secure server-side path is needed if multiple parents per gamer is a requirement.
 
-### Migrate Auth Email Templates to Brevo
+### Code-Owned Password Reset Email via Brevo API
+
+Password reset emails are currently sent by Supabase's built-in SMTP relay using a template configured in the Supabase dashboard. This means the template must be maintained separately in each Supabase project (staging, production). Move email delivery to code so the template is version-controlled and consistent across environments.
+
+**Approach:** Use `auth.admin.generateLink({ type: 'recovery', email })` to generate the reset link server-side (Supabase still creates and validates the token), then send the email via the existing Brevo API wrapper (`src/lib/brevo.ts`). Auth security is unaffected — Supabase still owns token generation, validation, and session exchange.
+
+- [ ] Create `POST /api/auth/forgot-password` route — calls `generateLink()` on the admin client, sends email via `sendTransactionalEmail()`
+- [ ] Create HTML email template function (e.g., `src/lib/email-templates/password-reset.ts`) with branded markup and the reset link
+- [ ] Update `forgot-password-form.tsx` to call the new API route instead of `supabase.auth.resetPasswordForEmail()`
+- [ ] Return a generic success response regardless of whether the email exists (prevent user enumeration)
+- [ ] Disable the built-in recovery email template in Supabase dashboard (optional — it won't fire if `resetPasswordForEmail()` is no longer called)
+
+**What stays the same:** `/api/auth/callback` route, `reset-password-form.tsx`, token validation, session exchange — the entire post-click flow is unchanged.
+
+**Affected files:** `src/app/api/auth/forgot-password/route.ts` (new), `src/lib/email-templates/password-reset.ts` (new), `src/components/auth/forgot-password-form.tsx`, `src/services/auth/auth.service.ts`
+
+**Dependencies:** None — Brevo API wrapper and admin client already exist.
+
+### Migrate Auth Email Templates to Brevo Visual Editor
 
 Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.
 
