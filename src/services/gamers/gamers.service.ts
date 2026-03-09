@@ -76,6 +76,25 @@ export class GamerService {
     return { gamer: data.gamer, link: data.link };
   }
 
+  async updateGamer(
+    gamerId: string,
+    updates: { displayName?: string; password?: string },
+  ): Promise<Profile> {
+    const response = await fetch(`/api/gamers/${gamerId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updates),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to update gamer");
+    }
+
+    return data.gamer;
+  }
+
   async getParentGamerLinks(parentId: string): Promise<ParentGamer[]> {
     const { data, error } = await this.supabase
       .from("parent_gamer")

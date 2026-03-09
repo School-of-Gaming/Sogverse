@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Coins, Gamepad2, ClipboardList, ShoppingCart, Settings } from "lucide-react";
+import { Coins, Gamepad2, ShoppingCart, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 const quickActions = [
   {
     title: "My Gamers",
-    description: "View and manage your linked gamer accounts",
+    description: "View and manage your gamers and their enrollments",
     icon: Gamepad2,
     href: ROUTES.customer.gamers,
   },
@@ -27,12 +27,6 @@ const quickActions = [
     description: "Explore products and enroll your gamers",
     icon: ShoppingCart,
     href: ROUTES.products,
-  },
-  {
-    title: "My Enrollments",
-    description: "View and manage your gamer enrollments",
-    icon: ClipboardList,
-    href: ROUTES.customer.enrollments,
   },
   {
     title: "Settings",

@@ -79,9 +79,6 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
                 >
                   {enrollment.productName}
                 </Link>
-                <p className="text-sm text-muted-foreground">
-                  Gamer: <span className="font-medium text-foreground">{enrollment.gamerDisplayName}</span>
-                </p>
               </div>
               <Badge variant={isActive ? "default" : "secondary"}>
                 {isActive ? "Enrolled" : "Unenrolled"}
