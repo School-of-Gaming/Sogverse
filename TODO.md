@@ -190,6 +190,21 @@ Affected tables and actions (11 issues):
 
 **When:** Before production launch or when table sizes grow large enough for this to matter.
 
+### Tighten Table-Level GRANTs to Match Actual Write Paths
+
+Four tables grant full `SELECT, INSERT, UPDATE, DELETE` to `authenticated` even though non-admin writes are blocked by RLS and all mutations go through `SECURITY DEFINER` RPCs or the admin client (service-role key), both of which bypass GRANTs entirely:
+
+- [ ] `product_groups` — writes go through `commit_group_changes` RPC → narrow to `GRANT SELECT`
+- [ ] `group_enrollments` — writes go through `enroll_gamer_in_group` / `unenroll_gamer` RPCs → narrow to `GRANT SELECT`
+- [ ] `products` — writes go through admin client (service-role) → narrow to `GRANT SELECT`
+- [ ] `games` — writes go through admin client (service-role) → narrow to `GRANT SELECT`
+
+Currently safe — RLS admin-only `FOR ALL` policies block non-admin writes. But the broad GRANTs mean a future accidental permissive RLS policy would immediately open writes to all authenticated users. Narrowing to `SELECT` adds a second layer of protection.
+
+Also add a DB test in `access-control.test.ts` that asserts table-level privileges match an allowlist (similar to the existing RPC grant test), so overly broad GRANTs are caught automatically.
+
+**When:** Before production launch. Low urgency — defense in depth, not an active vulnerability.
+
 ### ~~Centralize Date and Currency Formatting for Localization~~ — DONE
 
 Multi-currency support (USD, GBP, EUR) implemented. All user-facing formatting uses browser default locale (`undefined`) so US, UK, and Finnish users see familiar formats automatically. `formatCurrency()`, `formatCurrencyFromCents()`, and `formatDate()` accept an optional `locale` parameter as the last argument for callers that need to override, but default to browser locale when omitted. `parseTime()` helper centralizes Postgres TIME parsing (`"HH:MM"` / `"HH:MM:SS"`). Internal timezone computation is consolidated in `wallClockToUtc()` in `utils.ts`, which pins `"en-US"` with `hour12: false` for predictable numeric parsing — this will be replaced when we adopt `date-fns-tz`. User-facing time formatting in `formatScheduleLocal()` omits `hour12` so each locale gets its natural format (24h for Finland, 12h for US).

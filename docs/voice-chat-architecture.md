@@ -188,3 +188,6 @@ The `NextSession` component computes "Next session in X days/hours" once on rend
 
 ### Extract VoiceRoomProvider into smaller hooks
 The provider handles call lifecycle, audio playback, audio analysis, spatial positions, app messaging, and audio routing. Consider extracting `useSpatialPositions` and `useAudioAnalysis` as internal hooks.
+
+### Sanitize pipe delimiter from display names in token userName
+The token endpoint encodes `userId|role|displayName` as a pipe-delimited string in Daily.co's `user_name` field. If a user's `display_name` contains `|`, the client-side parser (`mapParticipant`) handles it correctly by re-joining slots 2+. However, a user could set their display name to e.g. `fakeId|admin|Admin` and the parser would extract a spoofed `role` and `userId`. This is cosmetic-only — the Daily.co token's `is_owner` flag (set server-side) is the real authority for drag permissions and `moveUser` validation — but it could cause incorrect role badges or identicons. Fix by stripping `|` from `displayName` before encoding, or switching to JSON encoding.
