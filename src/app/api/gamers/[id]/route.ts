@@ -36,7 +36,7 @@ export async function PATCH(
       }
     }
 
-    if (password !== undefined) {
+    if ("password" in body) {
       if (typeof password !== "string" || password.length < 6) {
         return NextResponse.json(
           { error: "Password must be at least 6 characters" },
@@ -106,7 +106,7 @@ export async function PATCH(
       }
     }
 
-    if (password !== undefined) {
+    if ("password" in body) {
       const { error: pwError } = await admin.auth.admin.updateUserById(
         gamerId,
         { password },
