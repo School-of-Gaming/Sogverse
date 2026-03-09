@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { formatCountdown } from "@/lib/enrollment";
 
 /** Highlight threshold: sessions within 12 hours get warning color */
@@ -15,8 +14,8 @@ interface NextSessionProps {
  * with warning color when the session is within 12 hours.
  */
 export function NextSession({ nextSessionStart }: NextSessionProps) {
-  // eslint-disable-next-line react-hooks/purity -- intentional: snapshot time at mount
-  const now = useMemo(() => Date.now(), []);
+  // eslint-disable-next-line react-hooks/purity -- recomputes on parent re-render (e.g. voice page polls every 30s)
+  const now = Date.now();
   const msUntil = nextSessionStart.getTime() - now;
   const totalMinutes = Math.max(0, Math.floor(msUntil / 60_000));
   const countdown = msUntil > 0 ? formatCountdown(msUntil) : null;
