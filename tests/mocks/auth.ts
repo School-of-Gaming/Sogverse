@@ -9,8 +9,8 @@ export function createMockUser(overrides: Partial<User> = {}): User {
     app_metadata: {},
     user_metadata: {},
     identities: [],
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   } as User;
 }
@@ -22,7 +22,7 @@ export function createMockSession(overrides: Partial<Session> = {}): Session {
     refresh_token: "mock-refresh-token",
     token_type: "bearer",
     expires_in: 3600,
-    expires_at: Math.floor(Date.now() / 1000) + 3600,
+    expires_at: 1767228000, // 2026-01-01T01:00:00Z
     user,
     ...overrides,
   } as Session;

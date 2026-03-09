@@ -1,9 +1,7 @@
 export { VoiceService } from "./voice.service";
+export type { AvailableVoiceRoomWithWindow } from "./voice.service";
 export {
   voiceKeys,
-  useOpenVoiceRooms,
-  useMyVoiceRoom,
-  useOpenRoom,
-  useCloseRoom,
+  useAvailableVoiceRooms,
   useVoiceToken,
 } from "./voice.queries";

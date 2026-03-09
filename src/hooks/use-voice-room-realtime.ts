@@ -6,7 +6,7 @@ import { getClient } from "@/lib/supabase/client";
 import { voiceKeys } from "@/services/voice";
 
 /**
- * Subscribe to Supabase Realtime changes on the voice_rooms table.
+ * Subscribe to Supabase Realtime changes on voice_rooms and group_enrollments.
  * On any change, invalidates React Query cache so UI updates live.
  *
  * IMPORTANT: Only invalidates queries — no Supabase data queries in the callback
@@ -17,8 +17,6 @@ export function useVoiceRoomRealtime() {
 
   useEffect(() => {
     const supabase = getClient();
-    // Unique channel name per effect run — avoids stale state after
-    // strict mode cleanup or hot module reload
     const channelName = `voice_rooms_${crypto.randomUUID()}`;
 
     const channel = supabase
@@ -27,10 +25,15 @@ export function useVoiceRoomRealtime() {
         "postgres_changes",
         { event: "*", schema: "public", table: "voice_rooms" },
         () => {
-          // Safe: only cache invalidation, no Supabase data queries
           queryClient.invalidateQueries({ queryKey: voiceKeys.rooms() });
-          queryClient.invalidateQueries({ queryKey: voiceKeys.myRoom() });
-        }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "group_enrollments" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: voiceKeys.rooms() });
+        },
       )
       .subscribe();
 

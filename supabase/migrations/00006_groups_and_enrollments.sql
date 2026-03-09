@@ -167,6 +167,7 @@ DECLARE
   v_group_count INTEGER;
   v_auto_hidden BOOLEAN := false;
   v_temp_map JSONB := '{}';
+  v_product_name TEXT;
 BEGIN
   IF (SELECT get_user_role()) <> 'admin' THEN
     RAISE EXCEPTION 'Forbidden' USING ERRCODE = '42501';
@@ -176,12 +177,14 @@ BEGIN
     RAISE EXCEPTION 'Product not found';
   END IF;
 
+  SELECT name INTO v_product_name FROM products WHERE id = p_product_id;
+
   SELECT COALESCE(MAX(display_order), -1) + 1
     INTO v_next_order
     FROM product_groups
    WHERE product_id = p_product_id;
 
-  -- Step 1: Insert new groups, building tempId -> realId map
+  -- Step 1: Insert new groups + linked voice rooms, building tempId -> realId map
   FOR v_group IN SELECT * FROM jsonb_array_elements(p_added_groups) LOOP
     INSERT INTO product_groups (product_id, gedu_id, display_order)
     VALUES (p_product_id, (v_group->>'geduId')::UUID, v_next_order)
@@ -189,6 +192,10 @@ BEGIN
 
     v_next_order := v_next_order + 1;
     v_temp_map := v_temp_map || jsonb_build_object(v_group->>'tempId', v_new_id::TEXT);
+
+    -- Create linked voice room atomically with the group
+    INSERT INTO voice_rooms (group_id, room_type, name, daily_room_name)
+    VALUES (v_new_id, 'group', v_product_name, 'group-' || left(v_new_id::text, 8));
   END LOOP;
 
   -- Step 2: Update existing groups (change gedu assignment)
@@ -234,7 +241,7 @@ BEGIN
     END IF;
   END IF;
 
-  RETURN jsonb_build_object('autoHidden', v_auto_hidden);
+  RETURN jsonb_build_object('autoHidden', v_auto_hidden, 'tempMap', v_temp_map);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { VoiceRoomPanel } from "@/components/gedu/VoiceRoomPanel";
+import { VoiceRoomDashboard } from "@/components/voice/VoiceRoomDashboard";
 
 export const metadata: Metadata = {
   title: "Voice Rooms",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminVoicePage() {
-  return <VoiceRoomPanel />;
+  return <VoiceRoomDashboard />;
 }
