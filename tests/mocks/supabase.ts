@@ -1,4 +1,3 @@
-import { vi } from "vitest";
 import type { Profile, CustomerProfile, GamerProfile, Product, UserRole } from "@/types";
 
 // Mock data generators
@@ -90,7 +89,3 @@ export function mockSupabaseError(message: string, code?: string) {
   };
 }
 
-// Reset all mocks
-export function resetSupabaseMocks(mockClient: ReturnType<typeof vi.fn>) {
-  vi.clearAllMocks();
-}
