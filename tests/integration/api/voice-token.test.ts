@@ -3,6 +3,7 @@ import { POST } from "@/app/api/voice/token/route";
 import { NextResponse } from "next/server";
 import { mockSupabaseSuccess } from "../../mocks/supabase";
 import { createMockVoiceRoom } from "../../mocks/voice";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 // --- Mocks ---
 
@@ -614,6 +615,46 @@ describe("POST /api/voice/token", () => {
           enableCamera: true,
           enableMic: true,
         }),
+      );
+    });
+
+    it("should set group room token expiry to windowClosesAt + grace period", async () => {
+      mockAuthenticatedWithProfile("gedu-user-id", {
+        role: "gedu",
+        display_name: "Educator",
+        username: "edu1",
+      });
+      mockRoomLookup(createGroupRoom());
+
+      const windowClosesAt = new Date("2026-03-03T15:05:00.000Z");
+      mockComputeSessionWindow.mockReturnValue({
+        isOpen: true,
+        nextSessionStart: new Date("2026-03-03T14:00:00.000Z"),
+        windowOpensAt: new Date("2026-03-03T13:55:00.000Z"),
+        windowClosesAt,
+      });
+
+      await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+
+      const expectedExp = Math.round(windowClosesAt.getTime() / 1000)
+        + VOICE_CONFIG.TOKEN_EXPIRY_GRACE_SECONDS;
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ expUnix: expectedExp }),
+      );
+    });
+
+    it("should not set expUnix for always-open rooms", async () => {
+      mockAuthenticatedWithProfile("admin-user-id", {
+        role: "admin",
+        display_name: "Admin",
+        username: "admin1",
+      });
+      mockRoomLookup(createSpecialRoom("admin_only"));
+
+      await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
+
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ expUnix: undefined }),
       );
     });
   });

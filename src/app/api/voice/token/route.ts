@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createMeetingToken, getDailyRoom, createDailyRoom } from "@/lib/daily";
 import { computeSessionWindow } from "@/lib/voice-schedule";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 export async function POST(request: Request) {
   try {
@@ -127,10 +128,12 @@ export async function POST(request: Request) {
         );
       }
 
-      // IMPORTANT: Token expiry is the hard server-side boundary that ejects
-      // users when the session ends. The client also auto-leaves, but that's
-      // bypassable. Never remove this or fall back to the default 2.5h expiry.
-      tokenExpUnix = Math.round(sessionWindow.windowClosesAt.getTime() / 1000);
+      // Token expiry is the hard server-side ejection boundary. The client
+      // also auto-leaves via computeSessionWindow(), but the grace period
+      // ensures the client's 30s interval fires first for a clean UX.
+      // See TOKEN_EXPIRY_GRACE_SECONDS for why this offset exists.
+      tokenExpUnix = Math.round(sessionWindow.windowClosesAt.getTime() / 1000)
+        + VOICE_CONFIG.TOKEN_EXPIRY_GRACE_SECONDS;
     }
 
     // --- Lazy Daily.co room creation ---
