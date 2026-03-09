@@ -7,7 +7,8 @@ import { useTokenBalance } from "@/services/tokens";
 
 export function TokenBalanceCard() {
   const { profile } = useAuth();
-  const { data: balance, isLoading } = useTokenBalance(profile?.id ?? "");
+  const isCustomer = profile?.role === "customer";
+  const { data: balance, isLoading } = useTokenBalance(profile?.id ?? "", isCustomer);
 
   return (
     <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
