@@ -172,23 +172,24 @@ Screen share video is detected via `p.tracks.screenVideo?.state === "playable"` 
 
 ## Audio Pipeline
 
-### GainNode-based playback
-Audio playback uses the Web Audio API GainNode chain (not `<audio>` elements) for clean volume control:
+### Audio element + Web Audio hybrid
+Audio playback uses `<audio>` elements for reliable WebRTC track output, piped through `createMediaElementSource` for zone-based muting and speaking-glow visualization:
 
 ```
-Track → MediaStreamAudioSourceNode → AnalyserNode → GainNode → AudioContext.destination
+<audio>.srcObject = MediaStream([track])
+createMediaElementSource(element) → AnalyserNode → GainNode → AudioContext.destination
 ```
 
-The AnalyserNode is a pass-through that also powers the speaking-glow visualization on avatars.
+The AnalyserNode is a pass-through that powers the speaking-glow visualization on avatars and the participant list (via the shared `useSpeakingGlow` hook).
 
 ### AudioContext lifecycle
 Browsers create AudioContext in a suspended state until a user gesture resumes it. `manageAudioNodes()` always `await ctx.resume()` before connecting any node to the destination. Without this, nodes would connect to a still-suspended context and produce no audio output.
 
 ### Zone-based routing
-`updateAudioRouting()` sets each participant's GainNode value to `calculateGain(localZone, remoteZone) * volumeMultiplier`. Same-zone = 1.0, broadcast zone = 1.0, different zones = 0.0.
+`updateAudioRouting()` sets each participant's GainNode value to `calculateGain(localZone, remoteZone)`. Same-zone = 1.0, broadcast zone = 1.0, different zones = 0.0.
 
 ### Volume multipliers
-Each remote participant has a local-only volume multiplier (0.1–2.0, default 1.0) stored in `volumeMultipliersRef`. The `ParticipantList` shows a slider per remote participant. Changes are applied immediately to the GainNode — no network traffic.
+Each remote participant has a local-only volume multiplier (0.1–2.0, default 1.0) controlled via a slider in the `ParticipantList`. Volume is applied via `element.volume` (0–1 range). Due to a Chrome limitation with WebRTC MediaStream sources, amplification above 100% is not currently possible — see `docs/chrome-webrtc-volume-bug.md` for details and unexplored approaches.
 
 ## Moderator Controls
 
