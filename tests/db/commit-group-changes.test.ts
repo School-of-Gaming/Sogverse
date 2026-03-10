@@ -132,6 +132,59 @@ describe("commit_group_changes RPC", () => {
     expect(after).toHaveLength(0);
   });
 
+  it("deletes a group that has unenrolled enrollments", async () => {
+    // Create a group, add an enrollment, then unenroll it
+    const { data } = await adminAuth.rpc("commit_group_changes", {
+      p_product_id: TEST_IDS.PRODUCT,
+      p_added_groups: [{ tempId: "t1", geduId: NEW_GROUP_GEDU }],
+      p_updated_groups: [],
+      p_deleted_group_ids: [],
+      p_enrollment_moves: [],
+    });
+
+    const result = data as { autoHidden: boolean; tempMap: Record<string, string> };
+    const groupId = result.tempMap.t1;
+
+    // Insert an enrollment directly via admin client, then mark it unenrolled
+    await admin.from("group_enrollments").insert({
+      group_id: groupId,
+      gamer_id: TEST_IDS.GAMER,
+      enrolled_by: TEST_IDS.CUSTOMER,
+      status: "unenrolled",
+      unenrolled_at: new Date().toISOString(),
+    });
+
+    // Verify the unenrolled enrollment exists
+    const { data: enrollments } = await admin
+      .from("group_enrollments")
+      .select("id")
+      .eq("group_id", groupId);
+    expect(enrollments).toHaveLength(1);
+
+    // Delete the group — should succeed despite the unenrolled enrollment
+    const { error: deleteError } = await adminAuth.rpc("commit_group_changes", {
+      p_product_id: TEST_IDS.PRODUCT,
+      p_added_groups: [],
+      p_updated_groups: [],
+      p_deleted_group_ids: [groupId],
+      p_enrollment_moves: [],
+    });
+    expect(deleteError).toBeNull();
+
+    // Group and enrollment should both be gone
+    const { data: groupAfter } = await admin
+      .from("product_groups")
+      .select("id")
+      .eq("id", groupId);
+    expect(groupAfter).toHaveLength(0);
+
+    const { data: enrollmentsAfter } = await admin
+      .from("group_enrollments")
+      .select("id")
+      .eq("group_id", groupId);
+    expect(enrollmentsAfter).toHaveLength(0);
+  });
+
   it("rejects non-admin callers", async () => {
     const geduClient = await createAuthenticatedClient(
       TEST_CREDENTIALS.GEDU.email,

@@ -220,8 +220,12 @@ BEGIN
        AND gamer_id = (v_move->>'gamerId')::UUID;
   END LOOP;
 
-  -- Step 4: Delete groups (RESTRICT FK will abort if any group still has enrollments)
+  -- Step 4: Delete groups (clean up unenrolled enrollments first so the FK allows it)
   IF array_length(p_deleted_group_ids, 1) > 0 THEN
+    DELETE FROM group_enrollments
+     WHERE group_id = ANY(p_deleted_group_ids)
+       AND status = 'unenrolled';
+
     DELETE FROM product_groups WHERE id = ANY(p_deleted_group_ids);
   END IF;
 

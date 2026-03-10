@@ -325,3 +325,6 @@ The cron job logs results to `cron.job_run_details` and emits `RAISE WARNING` to
 
 ### Charge window constant sync
 The 24-hour window is defined in two places: TypeScript constant and SQL local variable. A single source of truth (e.g., a `settings` table row readable by both) would prevent drift.
+
+### Preserve enrollment history when groups are deleted
+When an admin deletes a gedu group, unenrolled `group_enrollments` rows (and their linked `enrollment_charges`) are deleted to unblock the `ON DELETE RESTRICT` FK. This means parents lose visibility of past enrollments for that group in their dashboard. A future improvement could decouple enrollment history from the group lifecycle — e.g., by changing the FK to `SET NULL` and updating `get_customer_enrollments` to `LEFT JOIN` on `product_groups`, showing a "Group removed" placeholder for orphaned enrollments.
