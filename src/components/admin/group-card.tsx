@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { GripVertical, Trash2, RefreshCw } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,40 @@ function formatGenderShort(gender: string): string {
 
 // --- Draggable gamer chip ---
 
+// Memoized visual content — dnd-kit context changes re-render the wrapper
+// (useDraggable subscribes to DndContext) but this inner component skips
+// reconciliation since its primitive props don't change during drag.
+const GamerChipContent = memo(function GamerChipContent({
+  gamerId,
+  displayName,
+  dateOfBirth,
+  gender,
+}: {
+  gamerId: string;
+  displayName: string;
+  dateOfBirth: string | null;
+  gender: string | null;
+}) {
+  const age = dateOfBirth ? computeAge(dateOfBirth) : null;
+  const genderLabel = gender ? formatGenderShort(gender) : null;
+  const detail = [age !== null ? `${age}y` : null, genderLabel].filter(Boolean).join(" / ");
+
+  return (
+    <>
+      <Avatar className="h-7 w-7">
+        <Identicon id={gamerId} size={28} />
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <p className="truncate leading-tight">{displayName}</p>
+        {detail && (
+          <p className="text-[10px] leading-tight text-muted-foreground">{detail}</p>
+        )}
+      </div>
+      <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+    </>
+  );
+});
+
 interface EnrolledGamerChipProps {
   gamerId: string;
   displayName: string;
@@ -60,10 +94,6 @@ export function EnrolledGamerChip({ gamerId, displayName, dateOfBirth, gender, g
     data: { gamerId, displayName, fromGroupId: groupId },
   });
 
-  const age = dateOfBirth ? computeAge(dateOfBirth) : null;
-  const genderLabel = gender ? formatGenderShort(gender) : null;
-  const detail = [age !== null ? `${age}y` : null, genderLabel].filter(Boolean).join(" / ");
-
   return (
     <div
       ref={setNodeRef}
@@ -77,16 +107,12 @@ export function EnrolledGamerChip({ gamerId, displayName, dateOfBirth, gender, g
           : "border-border bg-muted text-foreground",
       )}
     >
-      <Avatar className="h-7 w-7">
-        <Identicon id={gamerId} size={28} />
-      </Avatar>
-      <div className="min-w-0 flex-1">
-        <p className="truncate leading-tight">{displayName}</p>
-        {detail && (
-          <p className="text-[10px] leading-tight text-muted-foreground">{detail}</p>
-        )}
-      </div>
-      <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
+      <GamerChipContent
+        gamerId={gamerId}
+        displayName={displayName}
+        dateOfBirth={dateOfBirth}
+        gender={gender}
+      />
     </div>
   );
 }
@@ -226,46 +252,50 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
         </CardContent>
       </Card>
 
-      {/* Delete confirmation */}
-      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete {groupLabel}?</DialogTitle>
-            <DialogDescription>
-              This will remove the group and its gedu assignment. This change
-              won&apos;t take effect until you commit.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirmDelete(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                onDelete(group.id);
-                setConfirmDelete(false);
-              }}
-            >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Delete confirmation — only mounted when open to avoid reconciliation during drag */}
+      {confirmDelete && (
+        <Dialog open onOpenChange={setConfirmDelete}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete {groupLabel}?</DialogTitle>
+              <DialogDescription>
+                This will remove the group and its gedu assignment. This change
+                won&apos;t take effect until you commit.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setConfirmDelete(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  onDelete(group.id);
+                  setConfirmDelete(false);
+                }}
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
-      {/* Reassign gedu dialog */}
-      <GeduPickerDialog
-        open={showReassign}
-        onOpenChange={setShowReassign}
-        title={`Reassign Gedu for ${groupLabel}`}
-        description="Select a different gedu for this group."
-        gedus={gedus}
-        excludeIds={usedGeduIds}
-        highlightId={group.geduId}
-        onSelect={(geduId, displayName) =>
-          onReassignGedu(group.id, geduId, displayName)
-        }
-      />
+      {/* Reassign gedu — only mounted when open to avoid reconciliation during drag */}
+      {showReassign && (
+        <GeduPickerDialog
+          open
+          onOpenChange={setShowReassign}
+          title={`Reassign Gedu for ${groupLabel}`}
+          description="Select a different gedu for this group."
+          gedus={gedus}
+          excludeIds={usedGeduIds}
+          highlightId={group.geduId}
+          onSelect={(geduId, displayName) =>
+            onReassignGedu(group.id, geduId, displayName)
+          }
+        />
+      )}
     </>
   );
 }

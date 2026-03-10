@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
-  type DragStartEvent,
   type DragEndEvent,
   PointerSensor,
   useSensor,
   useSensors,
+  useDndContext,
 } from "@dnd-kit/core";
 import { Plus, Users, AlertTriangle, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useProductGroups, useCommitGroupChanges } from "@/services/groups";
 import { useUsersByRole } from "@/services/users";
-import { useGroupEditor } from "@/hooks/use-group-editor";
+import { useGroupEditor, type EffectiveGroup } from "@/hooks/use-group-editor";
 import { GroupCard, EnrolledGamerChip } from "./group-card";
 import { CommitBar } from "./commit-bar";
 import { GeduPickerDialog } from "./gedu-picker-dialog";
@@ -64,6 +64,39 @@ export function VisibilityWarningBanner({ isVisible, groupCount }: VisibilityWar
   );
 }
 
+// --- Drag overlay (reads active drag from DndContext, avoids parent state) ---
+
+function DragOverlayContent({ effectiveGroups }: { effectiveGroups: EffectiveGroup[] }) {
+  const { active } = useDndContext();
+
+  // Resolve gamer data once per drag (active.id is stable for the drag
+  // lifetime), not on every pointer-move context update.
+  const overlayChip = useMemo(() => {
+    if (!active) return null;
+    const { gamerId, fromGroupId } = active.data.current as {
+      gamerId: string;
+      fromGroupId: string;
+    };
+    const group = effectiveGroups.find((g) => g.id === fromGroupId);
+    const gamer = group?.gamers.find((g) => g.gamerId === gamerId);
+    if (!gamer) return null;
+    return { gamer, fromGroupId };
+  }, [active?.id, effectiveGroups]);
+
+  if (!overlayChip) return null;
+
+  const { gamer, fromGroupId } = overlayChip;
+  return (
+    <EnrolledGamerChip
+      gamerId={gamer.gamerId}
+      displayName={gamer.displayName}
+      dateOfBirth={gamer.dateOfBirth}
+      gender={gamer.gender}
+      groupId={fromGroupId}
+    />
+  );
+}
+
 // --- Main component ---
 
 interface GeduGroupsCardProps {
@@ -79,7 +112,6 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
     useGroupEditor(serverGroups);
 
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [activeDrag, setActiveDrag] = useState<{ gamerId: string; fromGroupId: string } | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -99,16 +131,7 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
     return `Group ${idx + 1}`;
   }
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const { gamerId, fromGroupId } = event.active.data.current as {
-      gamerId: string;
-      fromGroupId: string;
-    };
-    setActiveDrag({ gamerId, fromGroupId });
-  };
-
   const handleDragEnd = (event: DragEndEvent) => {
-    setActiveDrag(null);
     const { over, active } = event;
     if (!over) return;
 
@@ -184,7 +207,6 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
           ) : (
             <DndContext
               sensors={sensors}
-              onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
             >
               <div className="space-y-3">
@@ -216,20 +238,7 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
                 ))}
               </div>
               <DragOverlay>
-                {activeDrag && (() => {
-                  const group = effectiveGroups.find((g) => g.id === activeDrag.fromGroupId);
-                  const gamer = group?.gamers.find((g) => g.gamerId === activeDrag.gamerId);
-                  if (!gamer) return null;
-                  return (
-                    <EnrolledGamerChip
-                      gamerId={gamer.gamerId}
-                      displayName={gamer.displayName}
-                      dateOfBirth={gamer.dateOfBirth}
-                      gender={gamer.gender}
-                      groupId={activeDrag.fromGroupId}
-                    />
-                  );
-                })()}
+                <DragOverlayContent effectiveGroups={effectiveGroups} />
               </DragOverlay>
             </DndContext>
           )}
