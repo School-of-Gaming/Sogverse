@@ -168,7 +168,6 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
   const cleanupAudioNodes = useCallback(() => {
     for (const [, nodes] of audioNodesRef.current) {
       nodes.source.disconnect();
-      nodes.element.srcObject = null;
       nodes.element.remove();
     }
     audioNodesRef.current.clear();
