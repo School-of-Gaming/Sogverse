@@ -6,7 +6,6 @@ import {
   Pencil,
   Trash,
   Search,
-  ChevronRight,
   Settings,
   Users,
   Package,
@@ -46,7 +45,9 @@ import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow } from "@/components/voice/ParticipantRow";
 import { TokenBalanceCard } from "@/components/customer";
+import { ProductRow } from "@/components/admin/product-row";
 import { useAuth } from "@/providers";
+import { useCurrency } from "@/hooks/use-currency";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
 import { computeGlowStyle } from "@/lib/constants/spatial.config";
 
@@ -413,6 +414,62 @@ function ParticipantCardDemo() {
         })}
       </CardContent>
     </Card>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Product Row Demo                                                   */
+/* ------------------------------------------------------------------ */
+
+const DEMO_PRODUCTS = [
+  {
+    id: "prod-1",
+    name: "Sogverse Pro",
+    description: "Weekly game-based social skills sessions with a certified educator",
+    image_url: "https://upload.wikimedia.org/wikipedia/en/thumb/b/b6/Minecraft_2024_cover_art.png/250px-Minecraft_2024_cover_art.png",
+    is_visible: true,
+    token_cost: 50,
+    day_of_week: 3,
+    start_time: "15:00",
+    timezone: "America/New_York",
+    duration_minutes: 60,
+    min_age: 8,
+    max_age: 14,
+    game_id: "game-1",
+    created_by: "admin",
+    created_at: null,
+    updated_at: null,
+    games: { name: "Minecraft" },
+  },
+  {
+    id: "prod-2",
+    name: "Starter Pack",
+    description: "Intro sessions for younger gamers — small group, shorter format",
+    image_url: "https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Fortnite_Save_The_World.jpg/250px-Fortnite_Save_The_World.jpg",
+    is_visible: false,
+    token_cost: 25,
+    day_of_week: 6,
+    start_time: "10:00",
+    timezone: "America/New_York",
+    duration_minutes: 45,
+    min_age: 6,
+    max_age: 10,
+    game_id: "game-2",
+    created_by: "admin",
+    created_at: null,
+    updated_at: null,
+    games: { name: "Roblox" },
+  },
+] as const;
+
+function ProductRowDemo() {
+  const { currency } = useCurrency();
+  return (
+    <div className="space-y-2">
+      {DEMO_PRODUCTS.map((product) => (
+        <ProductRow key={product.id} product={product} currency={currency} />
+      ))}
+    </div>
   );
 }
 
@@ -837,45 +894,12 @@ export default function AdminUIComponentsPage() {
       {/* Section 10: Composite Patterns                                */}
       {/* ============================================================ */}
       <Section title="Composite Patterns">
-        {/* -- Clickable List Row with Chevron (admin/products, admin/users) -- */}
-        <SubSection title="Clickable List Row with Chevron">
+        {/* -- Product Row (admin/products) -- */}
+        <SubSection title="Product Row (admin/products)">
           <p className="text-sm text-muted-foreground mb-3">
-            Rows link to a detail/manage page. ChevronRight signals clickability. Used in admin/products and admin/users.
+            Reusable product list row with image, schedule, price, and metadata. ChevronRight signals clickability. Used in admin/products.
           </p>
-          <div className="space-y-2">
-            {["Sogverse Pro", "Starter Pack"].map((name, i) => (
-              <div
-                key={name}
-                className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
-                    <span className="text-2xl">{i === 0 ? "🎮" : "📦"}</span>
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium">{name}</p>
-                      {i === 1 && (
-                        <Badge
-                          variant="outline"
-                          className="text-muted-foreground group-hover:text-accent-foreground/70"
-                        >
-                          Hidden
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70 line-clamp-1">
-                      Sample product description
-                    </p>
-                    <p className="text-sm font-semibold text-primary group-hover:text-secondary">
-                      {i === 0 ? "$49.99" : "$9.99"}
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" />
-              </div>
-            ))}
-          </div>
+          <ProductRowDemo />
         </SubSection>
 
         {/* -- Hoverable Card (customer gamers) -- */}
