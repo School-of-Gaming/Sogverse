@@ -32,7 +32,7 @@ Shared voice components (src/components/voice/)
 
 Internal hooks (src/components/voice/hooks/)
 ├── types.ts                  — Shared types (VoiceParticipant, LockState, AppMessage, etc.)
-├── use-audio-pipeline.ts     — GainNode playback, volume multipliers, AnalyserNodes, routing
+├── use-audio-pipeline.ts     — Audio element playback, volume multipliers, AnalyserNodes, routing
 ├── use-spatial-positions.ts  — Position tracking, zone detection, move, spatial app messages
 ├── use-screen-share.ts       — Screen sharer detection, start/stop, auto-replace
 └── use-moderator-controls.ts — Mute, lock/unlock, lock state sync, moderator app messages
