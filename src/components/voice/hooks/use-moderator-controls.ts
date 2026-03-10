@@ -140,6 +140,7 @@ export function useModeratorControls({
     localLocks,
     localLocksRef,
     lockStates,
+    lockStateRef,
     muteParticipant,
     lockParticipant,
     onAppMessage,

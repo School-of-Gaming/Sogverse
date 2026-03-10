@@ -119,7 +119,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         posObj[sid] = pos;
       }
       const locksObj: Record<string, { audio: boolean; video: boolean }> = {};
-      for (const [sid, lock] of moderator.lockStates) {
+      for (const [sid, lock] of moderator.lockStateRef.current) {
         locksObj[sid] = lock;
       }
       const reply: AppMessage = { type: "positionSync", positions: posObj, locks: locksObj };
