@@ -30,7 +30,11 @@ export function useScreenShare({ callObjectRef, localRole, localSessionId }: Use
       }
     }
 
-    await co.startScreenShare();
+    try {
+      await co.startScreenShare();
+    } catch {
+      // User cancelled the browser screen-share picker
+    }
   }, [callObjectRef, screenSharerSessionId]);
 
   const stopScreenShare = useCallback(() => {

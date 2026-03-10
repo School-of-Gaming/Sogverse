@@ -103,7 +103,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     screenShare.detectScreenSharer(list);
     void audio.manageAudioNodes(co);
     audio.manageLocalAnalyser(co);
-  }, [screenShare, audio]);
+  }, [screenShare.detectScreenSharer, audio.manageAudioNodes, audio.manageLocalAnalyser]);
 
   // --- App message dispatch ---
 
