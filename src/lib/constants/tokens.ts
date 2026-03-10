@@ -56,8 +56,8 @@ export function getPackagePrice(pkg: TokenPackage, currency: SupportedCurrency):
   return pkg.prices[currency];
 }
 
-export function tokensToCurrencyDisplay(tokens: number, currency: SupportedCurrency): string {
-  return formatCurrencyFromCents(tokens * TOKEN_BASE_RATE[currency], currency);
+export function tokensToCurrencyDisplay(tokens: number, currency: SupportedCurrency, locale: string): string {
+  return formatCurrencyFromCents(tokens * TOKEN_BASE_RATE[currency], currency, locale);
 }
 
 export function getPackageSavings(pkg: TokenPackage, currency: SupportedCurrency): number {

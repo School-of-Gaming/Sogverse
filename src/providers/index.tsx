@@ -12,18 +12,20 @@ interface ProvidersProps {
   children: ReactNode;
   initialUser?: User | null;
   initialProfile?: Profile | null;
+  initialLocale: string;
 }
 
 export function Providers({
   children,
   initialUser,
   initialProfile,
+  initialLocale,
 }: ProvidersProps) {
   return (
     <ThemeProvider>
       <QueryProvider>
         <AuthProvider initialUser={initialUser} initialProfile={initialProfile}>
-          <CurrencyProvider>
+          <CurrencyProvider initialLocale={initialLocale}>
             {children}
           </CurrencyProvider>
         </AuthProvider>

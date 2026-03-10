@@ -29,7 +29,7 @@ describe("formatCurrency", () => {
   it("falls back to CURRENCY_CONFIG locale when navigator is unavailable", () => {
     // In test/server environments there's no navigator, so it should
     // fall back to the hardcoded locale from CURRENCY_CONFIG
-    const result = formatCurrency(100, "gbp");
+    const result = formatCurrency(100, "gbp", "en-GB");
     expect(result).toContain("£");
     expect(result).toContain("100");
   });
@@ -37,7 +37,7 @@ describe("formatCurrency", () => {
 
 describe("formatCurrencyFromCents", () => {
   it("divides cents by 100 before formatting", () => {
-    const result = formatCurrencyFromCents(1500, "usd");
+    const result = formatCurrencyFromCents(1500, "usd", "en-US");
     expect(result).toContain("$");
     expect(result).toContain("15");
   });
@@ -45,7 +45,7 @@ describe("formatCurrencyFromCents", () => {
 
 describe("formatDate", () => {
   it("formats date strings", () => {
-    const result = formatDate("2024-01-15T10:00:00Z");
+    const result = formatDate("2024-01-15T10:00:00Z", "en-US");
     expect(result).toContain("Jan");
     expect(result).toContain("15");
     expect(result).toContain("2024");
@@ -53,7 +53,7 @@ describe("formatDate", () => {
 
   it("formats Date objects", () => {
     const date = new Date("2024-06-20");
-    const result = formatDate(date);
+    const result = formatDate(date, "en-US");
     expect(result).toContain("Jun");
     expect(result).toContain("20");
   });
@@ -155,7 +155,7 @@ describe("formatScheduleLocal", () => {
 
   it("returns a valid day name, formatted time, and timezone abbreviation", () => {
     pinLocalTimezone("Europe/Helsinki");
-    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki");
+    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki", "en-US");
 
     // Should return recognizable values regardless of local TZ
     expect(typeof result.localDay).toBe("string");
@@ -166,7 +166,7 @@ describe("formatScheduleLocal", () => {
 
   it("handles HH:MM:SS format (DB returns seconds)", () => {
     pinLocalTimezone("Europe/Helsinki");
-    const result = formatScheduleLocal(2, "17:30:00", "Europe/Helsinki");
+    const result = formatScheduleLocal(2, "17:30:00", "Europe/Helsinki", "en-US");
 
     expect(result.localTime).toMatch(/\d{1,2}:\d{2}/);
   });
@@ -176,7 +176,7 @@ describe("formatScheduleLocal", () => {
 
     // 16:00 Helsinki viewed from New York should NOT be 4:00 PM —
     // we just verify that timezone conversion actually happened.
-    const result = formatScheduleLocal(2, "16:00", "Europe/Helsinki");
+    const result = formatScheduleLocal(2, "16:00", "Europe/Helsinki", "en-US");
 
     expect(result.localTime).not.toMatch(/4:00\s*PM/);
     expect(result.tzAbbrev).toMatch(/E[SD]T/);
@@ -186,7 +186,7 @@ describe("formatScheduleLocal", () => {
     // Pin local TZ to Helsinki
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki");
+    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki", "en-US");
 
     expect(result.localTime).toMatch(/4:00\s*PM/);
   });
@@ -194,7 +194,7 @@ describe("formatScheduleLocal", () => {
   it("maps dayOfWeek=0 to Monday", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(0, "12:00", "Europe/Helsinki");
+    const result = formatScheduleLocal(0, "12:00", "Europe/Helsinki", "en-US");
 
     expect(result.localDay).toBe("Monday");
   });
@@ -202,7 +202,7 @@ describe("formatScheduleLocal", () => {
   it("maps dayOfWeek=6 to Sunday", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(6, "12:00", "Europe/Helsinki");
+    const result = formatScheduleLocal(6, "12:00", "Europe/Helsinki", "en-US");
 
     expect(result.localDay).toBe("Sunday");
   });
@@ -210,7 +210,7 @@ describe("formatScheduleLocal", () => {
   it("maps dayOfWeek=4 to Friday", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(4, "12:00", "Europe/Helsinki");
+    const result = formatScheduleLocal(4, "12:00", "Europe/Helsinki", "en-US");
 
     expect(result.localDay).toBe("Friday");
   });
@@ -220,7 +220,7 @@ describe("formatScheduleLocal", () => {
     pinLocalTimezone("Pacific/Honolulu"); // UTC-10
 
     // Monday 01:00 Helsinki is 12-13 hours behind in Honolulu → previous day
-    const result = formatScheduleLocal(0, "01:00", "Europe/Helsinki");
+    const result = formatScheduleLocal(0, "01:00", "Europe/Helsinki", "en-US");
 
     expect(result.localDay).not.toBe("Monday");
   });
@@ -228,7 +228,7 @@ describe("formatScheduleLocal", () => {
   it("handles midnight start time", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(3, "00:00", "Europe/Helsinki");
+    const result = formatScheduleLocal(3, "00:00", "Europe/Helsinki", "en-US");
 
     expect(result.localTime).toMatch(/12:00\s*AM/);
     expect(result.localDay).toBe("Thursday");
@@ -237,7 +237,7 @@ describe("formatScheduleLocal", () => {
   it("handles end-of-day start time", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(1, "23:30", "Europe/Helsinki");
+    const result = formatScheduleLocal(1, "23:30", "Europe/Helsinki", "en-US");
 
     expect(result.localTime).toMatch(/11:30\s*PM/);
     expect(result.localDay).toBe("Tuesday");

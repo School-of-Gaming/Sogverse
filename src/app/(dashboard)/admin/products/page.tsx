@@ -13,7 +13,7 @@ import { ProductRow } from "@/components/admin/product-row";
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: products, isLoading } = useAllProducts();
-  const { currency } = useCurrency();
+  const { currency, locale } = useCurrency();
 
   const filteredProducts = products?.filter(
     (product) =>
@@ -75,7 +75,7 @@ export default function AdminProductsPage() {
                   key={product.id}
                   href={`/admin/products/${product.id}`}
                 >
-                  <ProductRow product={product} currency={currency} />
+                  <ProductRow product={product} currency={currency} locale={locale} />
                 </Link>
               ))}
             </div>

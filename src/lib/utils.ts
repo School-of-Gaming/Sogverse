@@ -18,7 +18,7 @@ export function parseTime(time: string): { hours: number; minutes: number } {
 export function formatCurrency(
   amount: number,
   currency: SupportedCurrency,
-  locale?: string,
+  locale: string,
 ): string {
   return new Intl.NumberFormat(locale, {
     style: "currency",
@@ -29,20 +29,19 @@ export function formatCurrency(
 export function formatCurrencyFromCents(
   cents: number,
   currency: SupportedCurrency,
-  locale?: string,
+  locale: string,
 ): string {
   return formatCurrency(cents / 100, currency, locale);
 }
 
-export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions, locale?: string): string {
+export function formatDate(date: Date | string, locale: string, options?: Intl.DateTimeFormatOptions): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat(locale, {
-    dateStyle: "medium",
-    ...options,
-  }).format(d);
+  // dateStyle is mutually exclusive with component options (month, day, etc.)
+  // in Intl.DateTimeFormat — only apply the default when no options are given.
+  return new Intl.DateTimeFormat(locale, options ?? { dateStyle: "medium" }).format(d);
 }
 
-export function formatRelativeTime(date: Date | string): string {
+export function formatRelativeTime(date: Date | string, locale: string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000);
@@ -52,7 +51,7 @@ export function formatRelativeTime(date: Date | string): string {
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
 
-  return formatDate(d);
+  return formatDate(d, locale);
 }
 
 export function generateGamerEmail(username: string): string {
@@ -139,6 +138,7 @@ export function formatScheduleLocal(
   dayOfWeek: number,
   startTime: string,
   timezone: string,
+  locale: string,
 ): { localDay: string; localTime: string; tzAbbrev: string } {
   // Build a concrete Date for the next occurrence of this weekday in the source TZ.
   // JS getDay(): 0=Sun, 1=Mon … 6=Sat.  Our dayOfWeek: 0=Mon … 6=Sun.
@@ -165,13 +165,12 @@ export function formatScheduleLocal(
   const wallStr = `${year}-${month}-${day}T${h}:${m}:00`;
   const utcDate = wallClockToUtc(wallStr, timezone);
 
-  // Format in the viewer's local timezone (undefined = browser locale)
-  const localTimeFmt = new Intl.DateTimeFormat(undefined, {
+  const localTimeFmt = new Intl.DateTimeFormat(locale, {
     hour: "numeric",
     minute: "2-digit",
   });
-  const localDayFmt = new Intl.DateTimeFormat(undefined, { weekday: "long" });
-  const localTzFmt = new Intl.DateTimeFormat(undefined, {
+  const localDayFmt = new Intl.DateTimeFormat(locale, { weekday: "long" });
+  const localTzFmt = new Intl.DateTimeFormat(locale, {
     timeZoneName: "short",
   });
 

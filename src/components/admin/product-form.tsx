@@ -59,7 +59,7 @@ interface ProductFormProps {
 export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, pendingLabel }: ProductFormProps) {
   const { data: games, isLoading: gamesLoading } = useGames();
   const createGame = useCreateGame();
-  const { currency } = useCurrency();
+  const { currency, locale } = useCurrency();
 
   const [name, setName] = useState(initialValues?.name ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
@@ -201,7 +201,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
             required
           />
           <p className="text-xs text-muted-foreground">
-            ≈ {tokensToCurrencyDisplay(Number(tokenCost) || 0, currency)} per session
+            ≈ {tokensToCurrencyDisplay(Number(tokenCost) || 0, currency, locale)} per session
           </p>
         </div>
 

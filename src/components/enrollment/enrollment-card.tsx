@@ -10,7 +10,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { NextSession } from "@/components/ui/next-session";
 import type { CustomerEnrollment } from "@/services/enrollments";
 import { getNextSessionStart, getRefundEligibility } from "@/lib/enrollment";
-import { formatScheduleLocal } from "@/lib/utils";
+import { formatScheduleLocal, formatDate } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import { ROUTES } from "@/lib/constants";
 import { UnenrollDialog } from "./unenroll-dialog";
 
@@ -20,11 +21,13 @@ interface EnrollmentCardProps {
 
 export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
   const [showUnenroll, setShowUnenroll] = useState(false);
+  const { locale } = useCurrency();
 
   const schedule = formatScheduleLocal(
     enrollment.productDayOfWeek,
     enrollment.productStartTime,
     enrollment.productTimezone,
+    locale,
   );
 
   const nextSession = getNextSessionStart(
@@ -80,7 +83,6 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
               </Badge>
             </div>
 
-            {/* Schedule info */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
@@ -103,7 +105,7 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
             {/* Active enrollment: next session + refund + unenroll */}
             {isActive && (
               <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-                <NextSession nextSessionStart={nextSession} />
+                <NextSession nextSessionStart={nextSession} locale={locale} />
                 <Button
                   variant="outline"
                   size="sm"
@@ -118,7 +120,7 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
             {!isActive && enrollment.unenrolledAt && (
               <p className="text-xs text-muted-foreground">
                 Unenrolled on{" "}
-                {new Date(enrollment.unenrolledAt).toLocaleDateString(undefined, {
+                {formatDate(enrollment.unenrolledAt, locale, {
                   month: "short",
                   day: "numeric",
                   year: "numeric",

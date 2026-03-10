@@ -7,13 +7,14 @@ const HIGHLIGHT_MINUTES = 720;
 
 interface NextSessionProps {
   nextSessionStart: Date;
+  locale: string;
 }
 
 /**
  * Displays "Next session Thu, Mar 5, 7:00 PM (starts in 3 hours)"
  * with warning color when the session is within 12 hours.
  */
-export function NextSession({ nextSessionStart }: NextSessionProps) {
+export function NextSession({ nextSessionStart, locale }: NextSessionProps) {
   // eslint-disable-next-line react-hooks/purity -- recomputes on parent re-render (e.g. voice page polls every 30s)
   const now = Date.now();
   const msUntil = nextSessionStart.getTime() - now;
@@ -23,7 +24,7 @@ export function NextSession({ nextSessionStart }: NextSessionProps) {
   return (
     <p className="text-sm">
       Next session{" "}
-      {nextSessionStart.toLocaleDateString(undefined, {
+      {nextSessionStart.toLocaleDateString(locale, {
         weekday: "short",
         month: "short",
         day: "numeric",

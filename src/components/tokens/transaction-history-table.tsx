@@ -1,11 +1,12 @@
-import { cn } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import type { TokenTransaction } from "@/types";
 
 interface TransactionHistoryTableProps {
   transactions: TokenTransaction[] | undefined;
+  locale: string;
 }
 
-export function TransactionHistoryTable({ transactions }: TransactionHistoryTableProps) {
+export function TransactionHistoryTable({ transactions, locale }: TransactionHistoryTableProps) {
   if (!transactions || transactions.length === 0) {
     return <p className="text-sm text-muted-foreground">No transactions yet.</p>;
   }
@@ -26,7 +27,7 @@ export function TransactionHistoryTable({ transactions }: TransactionHistoryTabl
           {transactions.map((tx) => (
             <tr key={tx.id} className="border-b border-border/50">
               <td className="py-2 pr-4 whitespace-nowrap">
-                {new Date(tx.created_at).toLocaleDateString(undefined, {
+                {formatDate(tx.created_at, locale, {
                   month: "long",
                   day: "numeric",
                   year: "numeric",

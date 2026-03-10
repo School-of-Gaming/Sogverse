@@ -58,27 +58,27 @@ describe("getPackagePrice", () => {
 describe("tokensToCurrencyDisplay", () => {
   it("converts tokens to USD display", () => {
     // 2 tokens × 300 cents = 600 cents = $6.00
-    const result = tokensToCurrencyDisplay(2, "usd");
+    const result = tokensToCurrencyDisplay(2, "usd", "en-US");
     expect(result).toContain("$");
     expect(result).toContain("6");
   });
 
   it("converts tokens to GBP display", () => {
     // 2 tokens × 240 cents = 480 pence = £4.80
-    const result = tokensToCurrencyDisplay(2, "gbp");
+    const result = tokensToCurrencyDisplay(2, "gbp", "en-US");
     expect(result).toContain("£");
     expect(result).toContain("4");
   });
 
   it("converts tokens to EUR display", () => {
     // 2 tokens × 280 cents = 560 cents = €5.60
-    const result = tokensToCurrencyDisplay(2, "eur");
+    const result = tokensToCurrencyDisplay(2, "eur", "en-US");
     expect(result).toContain("€");
     expect(result).toContain("5");
   });
 
   it("returns zero for 0 tokens", () => {
-    const result = tokensToCurrencyDisplay(0, "usd");
+    const result = tokensToCurrencyDisplay(0, "usd", "en-US");
     expect(result).toContain("$");
     expect(result).toContain("0");
   });

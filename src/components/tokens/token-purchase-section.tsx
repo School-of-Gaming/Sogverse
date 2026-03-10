@@ -59,6 +59,7 @@ function PackageCard({
   pkg,
   icon: Icon,
   currency,
+  locale,
   onBuy,
   onResume,
   isLoading,
@@ -69,6 +70,7 @@ function PackageCard({
   pkg: TokenPackage;
   icon: React.ElementType;
   currency: SupportedCurrency;
+  locale: string;
   onBuy: (packageId: string) => void;
   onResume: () => void;
   isLoading: boolean;
@@ -78,7 +80,7 @@ function PackageCard({
 }) {
   const price = getPackagePrice(pkg, currency);
   const savings = getPackageSavings(pkg, currency);
-  const priceFormatted = formatCurrencyFromCents(price, currency);
+  const priceFormatted = formatCurrencyFromCents(price, currency, locale);
   const isSubscription = pkg.type === "subscription";
   const isCurrentPlan = isSubscription && hasActiveSubscription;
   // Active + renewing: fully locked. Active + canceling: show resume action.
@@ -97,7 +99,7 @@ function PackageCard({
       ) : savings > 0 ? (
         <div className="absolute -top-3 right-4">
           <Badge className="bg-green-600 text-white hover:bg-green-600">
-            Save {formatCurrencyFromCents(savings, currency)}{isSubscription ? "/mo" : ""}
+            Save {formatCurrencyFromCents(savings, currency, locale)}{isSubscription ? "/mo" : ""}
           </Badge>
         </div>
       ) : null}
@@ -159,7 +161,7 @@ function PackageCard({
 
 export function TokenPurchaseSection() {
   const { user, profile } = useAuth();
-  const { currency } = useCurrency();
+  const { currency, locale } = useCurrency();
   const isCustomer = profile?.role === "customer";
   const { data: subscription } = useSubscription(profile?.id ?? "", isCustomer);
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
@@ -223,6 +225,7 @@ export function TokenPurchaseSection() {
             pkg={pkg}
             icon={PACKAGE_ICONS[pkg.id] ?? Coins}
             currency={currency}
+            locale={locale}
             onBuy={handleBuy}
             onResume={() => resumeMutation.mutate()}
             isLoading={loadingPackage === pkg.id}

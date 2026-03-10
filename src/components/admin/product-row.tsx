@@ -9,13 +9,15 @@ import type { SupportedCurrency } from "@/lib/constants/currency";
 interface ProductRowProps {
   product: ProductWithGame;
   currency: SupportedCurrency;
+  locale: string;
 }
 
-export function ProductRow({ product, currency }: ProductRowProps) {
+export function ProductRow({ product, currency, locale }: ProductRowProps) {
   const schedule = formatScheduleLocal(
     product.day_of_week,
     product.start_time,
     product.timezone,
+    locale,
   );
   const gameName = product.games?.name;
 
@@ -48,7 +50,7 @@ export function ProductRow({ product, currency }: ProductRowProps) {
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground group-hover:text-accent-foreground/70">
             <span className="font-semibold text-primary group-hover:text-secondary">
-              {product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency)})
+              {product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})
             </span>
             <span>
               Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}

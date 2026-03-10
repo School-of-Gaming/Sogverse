@@ -11,6 +11,7 @@ import { useMyGamers } from "@/services/gamers";
 import { useMyEnrollments } from "@/services/enrollments";
 import { EnrollmentCard } from "@/components/enrollment/enrollment-card";
 import { formatRelativeTime } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 import { ROUTES } from "@/lib/constants";
 import type { CustomerEnrollment } from "@/services/enrollments";
 
@@ -55,6 +56,7 @@ function GamerInactiveEnrollments({ enrollments }: { enrollments: CustomerEnroll
 export default function CustomerGamersPage() {
   const { data: gamers, isLoading: gamersLoading } = useMyGamers();
   const { data: enrollments, isLoading: enrollmentsLoading } = useMyEnrollments();
+  const { locale } = useCurrency();
 
   const isLoading = gamersLoading || enrollmentsLoading;
 
@@ -137,7 +139,7 @@ export default function CustomerGamersPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">
-                          Joined {formatRelativeTime(gamer.created_at ?? new Date().toISOString())}
+                          Joined {formatRelativeTime(gamer.created_at ?? new Date().toISOString(), locale)}
                         </span>
                         <Link href={`${ROUTES.customer.gamers}/${gamer.id}`}>
                           <Button variant="outline" size="sm">

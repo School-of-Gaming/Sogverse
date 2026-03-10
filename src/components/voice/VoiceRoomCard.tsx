@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { NextSession } from "@/components/ui/next-session";
 import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
 import { formatScheduleLocal } from "@/lib/utils";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface VoiceRoomCardProps {
   room: AvailableVoiceRoomWithWindow;
@@ -18,11 +19,12 @@ interface VoiceRoomCardProps {
 
 export function VoiceRoomCard({ room, onJoin, disabled, loading }: VoiceRoomCardProps) {
   const isAlwaysOpen = room.room_type !== "group";
+  const { locale } = useCurrency();
 
   const schedule = useMemo(() => {
     if (isAlwaysOpen || room.day_of_week == null || !room.start_time || !room.timezone) return null;
-    return formatScheduleLocal(room.day_of_week, room.start_time, room.timezone);
-  }, [isAlwaysOpen, room.day_of_week, room.start_time, room.timezone]);
+    return formatScheduleLocal(room.day_of_week, room.start_time, room.timezone, locale);
+  }, [isAlwaysOpen, room.day_of_week, room.start_time, room.timezone, locale]);
 
   return (
     <Card>
@@ -61,7 +63,7 @@ export function VoiceRoomCard({ room, onJoin, disabled, loading }: VoiceRoomCard
 
           {!isAlwaysOpen && !room.isOpen && room.nextSessionStart && (
             <div className="mt-1">
-              <NextSession nextSessionStart={room.nextSessionStart} />
+              <NextSession nextSessionStart={room.nextSessionStart} locale={locale} />
             </div>
           )}
         </div>

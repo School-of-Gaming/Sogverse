@@ -12,7 +12,7 @@ import { formatScheduleLocal } from "@/lib/utils";
 
 export default function ProductsPage() {
   const { data: products, isLoading } = useVisibleProducts();
-  const { currency } = useCurrency();
+  const { currency, locale } = useCurrency();
 
   return (
     <div className="container mx-auto px-4 py-12">
@@ -49,6 +49,7 @@ export default function ProductsPage() {
                 product.day_of_week,
                 product.start_time,
                 product.timezone,
+                locale,
               );
               const gameName = product.games?.name;
 
@@ -86,7 +87,7 @@ export default function ProductsPage() {
                     <div>
                       <span className="text-xl font-bold text-primary">{product.token_cost} Sorgs</span>
                       <p className="text-xs text-muted-foreground">
-                        ≈ {tokensToCurrencyDisplay(product.token_cost, currency)} per session
+                        ≈ {tokensToCurrencyDisplay(product.token_cost, currency, locale)} per session
                       </p>
                     </div>
                     <Link href={`/products/${product.id}`}>

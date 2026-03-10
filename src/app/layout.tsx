@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Inter, Press_Start_2P } from "next/font/google";
 import { Providers } from "@/providers";
 import { Header } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
+import { parseAcceptLanguage, DEFAULT_LOCALE } from "@/lib/locale";
 import "./globals.css";
 
 const inter = Inter({
@@ -32,6 +34,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const userWithProfile = await getUserWithProfile();
+  const headersList = await headers();
+  const locale = parseAcceptLanguage(headersList.get("accept-language")) ?? DEFAULT_LOCALE;
 
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
@@ -41,6 +45,7 @@ export default async function RootLayout({
         <Providers
           initialUser={userWithProfile?.user ?? null}
           initialProfile={userWithProfile?.profile ?? null}
+          initialLocale={locale}
         >
           <div className="flex h-screen flex-col">
             <Header />

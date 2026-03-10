@@ -28,14 +28,14 @@ import { useProductGroups } from "@/services/groups";
 import { GeduGroupsCard, VisibilityWarningBanner } from "@/components/admin/gedu-groups-card";
 import { useCurrency } from "@/hooks/use-currency";
 import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
-import { formatScheduleLocal } from "@/lib/utils";
+import { formatScheduleLocal, formatDate } from "@/lib/utils";
 
 export default function ManageProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
   const { data: groups = [] } = useProductGroups(id);
-  const { currency } = useCurrency();
+  const { currency, locale } = useCurrency();
   const toggleVisibility = useToggleProductVisibility();
   const deleteProduct = useDeleteProduct();
   const [isNavigating, startTransition] = useTransition();
@@ -71,6 +71,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
     product.day_of_week,
     product.start_time,
     product.timezone,
+    locale,
   );
   const gameName = product.games?.name;
   const isVisible = product.is_visible ?? true;
@@ -135,12 +136,12 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
               </span>
               <span>{product.duration_minutes} min</span>
               <span>Ages {product.min_age}–{product.max_age}</span>
-              <span className="font-semibold text-primary">{product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency)})/session</span>
+              <span className="font-semibold text-primary">{product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})/session</span>
             </div>
             <p className="text-xs text-muted-foreground">
               Created{" "}
               {product.created_at
-                ? new Date(product.created_at).toLocaleDateString()
+                ? formatDate(product.created_at, locale)
                 : "Unknown"}
             </p>
           </div>

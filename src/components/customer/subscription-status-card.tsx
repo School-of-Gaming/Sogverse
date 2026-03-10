@@ -24,15 +24,15 @@ import { isSupportedCurrency, type SupportedCurrency } from "@/lib/constants/cur
 
 const SUB_PACKAGE = TOKEN_PACKAGES.find((pkg) => pkg.type === "subscription");
 
-function formatPeriodDate(timestamp: number) {
-  return formatDate(new Date(timestamp * 1000), {
+function formatPeriodDate(timestamp: number, locale: string) {
+  return formatDate(new Date(timestamp * 1000), locale, {
     dateStyle: "long",
   });
 }
 
 export function SubscriptionStatusCard() {
   const { profile } = useAuth();
-  const { currency: displayCurrency } = useCurrency();
+  const { currency: displayCurrency, locale } = useCurrency();
   const { data: subscription } = useSubscription(profile?.id ?? "");
   const { data: details } = useSubscriptionDetails(profile?.id ?? "");
   const cancelMutation = useCancelSubscription(profile?.id ?? "");
@@ -91,16 +91,16 @@ export function SubscriptionStatusCard() {
               <p className="font-medium">
                 {SUB_PACKAGE ? `${SUB_PACKAGE.tokens} Sorgs/month` : "Subscription"}
                 {details?.amount && (
-                  <span className="text-muted-foreground"> — {formatCurrencyFromCents(details.amount, billingCurrency)}/mo</span>
+                  <span className="text-muted-foreground"> — {formatCurrencyFromCents(details.amount, billingCurrency, locale)}/mo</span>
                 )}
               </p>
               <p className="text-sm text-muted-foreground">
                 {isActive && details?.currentPeriodEnd && (
-                  <>Next payment: {formatPeriodDate(details.currentPeriodEnd)}</>
+                  <>Next payment: {formatPeriodDate(details.currentPeriodEnd, locale)}</>
                 )}
                 {isActive && !details?.currentPeriodEnd && "Active — renews monthly"}
                 {isCanceling && details?.currentPeriodEnd && (
-                  <>Canceled — access until {formatPeriodDate(details.currentPeriodEnd)}</>
+                  <>Canceled — access until {formatPeriodDate(details.currentPeriodEnd, locale)}</>
                 )}
                 {isCanceling && !details?.currentPeriodEnd && "Canceled — access until end of billing period"}
                 {isPastDue && "Past due — update payment to continue"}
@@ -141,7 +141,7 @@ export function SubscriptionStatusCard() {
             <DialogTitle>Cancel {SUB_PACKAGE?.name ?? "Subscription"}?</DialogTitle>
             <DialogDescription>
               Are you sure you want to cancel your {SUB_PACKAGE?.name ?? "subscription"}?
-              {details?.amount && <> You&apos;ll lose the monthly rate of {formatCurrencyFromCents(details.amount, billingCurrency)}/mo.</>}
+              {details?.amount && <> You&apos;ll lose the monthly rate of {formatCurrencyFromCents(details.amount, billingCurrency, locale)}/mo.</>}
               {" "}Your current Sorgs will remain in your account, and you&apos;ll keep
               access until the end of your billing period.
             </DialogDescription>

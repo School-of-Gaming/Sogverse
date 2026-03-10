@@ -463,11 +463,11 @@ const DEMO_PRODUCTS = [
 ] as const;
 
 function ProductRowDemo() {
-  const { currency } = useCurrency();
+  const { currency, locale } = useCurrency();
   return (
     <div className="space-y-2">
       {DEMO_PRODUCTS.map((product) => (
-        <ProductRow key={product.id} product={product} currency={currency} />
+        <ProductRow key={product.id} product={product} currency={currency} locale={locale} />
       ))}
     </div>
   );

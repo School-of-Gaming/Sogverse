@@ -25,7 +25,7 @@ export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
   const { data: product, isLoading } = useProduct(id);
-  const { currency } = useCurrency();
+  const { currency, locale } = useCurrency();
   const { user, profile } = useAuth();
   const pathname = usePathname();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
@@ -75,6 +75,7 @@ export default function ProductDetailPage() {
     product.day_of_week,
     product.start_time,
     product.timezone,
+    locale,
   );
   const isCustomer = profile?.role === "customer";
 
@@ -144,7 +145,7 @@ export default function ProductDetailPage() {
             </span>
             <span className="text-sm text-muted-foreground"> per session</span>
             <p className="text-xs text-muted-foreground">
-              ≈ {tokensToCurrencyDisplay(product.token_cost, currency)}
+              ≈ {tokensToCurrencyDisplay(product.token_cost, currency, locale)}
             </p>
           </div>
         </div>
