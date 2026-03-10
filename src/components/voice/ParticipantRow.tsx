@@ -20,7 +20,8 @@ export interface ParticipantRowProps {
   participant: ParticipantRowData;
   volume: number;
   lockState: { audio: boolean; video: boolean };
-  showModControls: boolean;
+  /** Whether the viewer is a moderator (reserves column space on all rows). */
+  isModView: boolean;
   avatarRef?: Ref<HTMLDivElement>;
   onVolumeChange?: (volume: number) => void;
   onMute?: (track: "audio" | "video") => void;
@@ -31,12 +32,14 @@ export function ParticipantRow({
   participant: p,
   volume,
   lockState,
-  showModControls,
+  isModView,
   avatarRef,
   onVolumeChange,
   onMute,
   onLock,
 }: ParticipantRowProps) {
+  const showModButtons = isModView && !p.isLocal && !p.isOwner;
+
   return (
     <div
       className={cn(
@@ -51,8 +54,8 @@ export function ParticipantRow({
         </Avatar>
       </div>
 
-      {/* Name + badges */}
-      <div className="flex min-w-0 flex-1 items-center gap-2">
+      {/* Name + badges — flex-[3] gives ~60% of flexible space */}
+      <div className="flex min-w-0 flex-[3] items-center gap-2">
         <span className="truncate text-sm font-medium">
           {p.userName}
           {p.isLocal && (
@@ -60,35 +63,22 @@ export function ParticipantRow({
           )}
         </span>
         {p.isOwner && (
-          <Badge variant="secondary" className="gap-1 text-xs">
+          <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
             <Crown className="h-3 w-3" />
             Host
           </Badge>
         )}
       </div>
 
-      {/* Volume slider (remote participants only) */}
-      {!p.isLocal && (
-        <div className="flex min-w-0 flex-1 items-center gap-1.5">
-          <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <input
-            type="range"
-            min={VOICE_CONFIG.MIN_VOLUME * 100}
-            max={VOICE_CONFIG.MAX_VOLUME * 100}
-            value={Math.round(volume * 100)}
-            onChange={(e) => onVolumeChange?.(Number(e.target.value) / 100)}
-            className="h-1.5 min-w-0 flex-1 cursor-pointer accent-primary"
-            title={`Volume: ${Math.round(volume * 100)}%`}
-          />
-          <span className="w-8 shrink-0 text-right text-xs text-muted-foreground">
-            {Math.round(volume * 100)}%
-          </span>
-        </div>
-      )}
-
-      {/* Moderator controls */}
-      {showModControls && (
-        <div className="flex items-center gap-1">
+      {/* Moderator controls — invisible placeholder keeps alignment on non-target rows */}
+      {isModView && (
+        <div
+          className={cn(
+            "flex shrink-0 items-center gap-1",
+            !showModButtons && "invisible",
+          )}
+          aria-hidden={!showModButtons || undefined}
+        >
           <Button
             variant="ghost"
             size="sm"
@@ -119,7 +109,11 @@ export function ParticipantRow({
             title={lockState.audio ? "Unlock microphone" : "Lock microphone"}
           >
             <Lock className="h-3 w-3" />
-            {lockState.audio ? "Unlock mic" : "Lock mic"}
+            {/* Grid-stack: invisible longest label reserves stable width */}
+            <span className="inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
+              <span className="invisible">Unlock mic</span>
+              <span>{lockState.audio ? "Unlock mic" : "Lock mic"}</span>
+            </span>
           </Button>
           <Button
             variant={lockState.video ? "destructive" : "ghost"}
@@ -129,27 +123,52 @@ export function ParticipantRow({
             title={lockState.video ? "Unlock camera" : "Lock camera"}
           >
             <Lock className="h-3 w-3" />
-            {lockState.video ? "Unlock cam" : "Lock cam"}
+            <span className="inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
+              <span className="invisible">Unlock cam</span>
+              <span>{lockState.video ? "Unlock cam" : "Lock cam"}</span>
+            </span>
           </Button>
         </div>
       )}
 
-      {/* Status indicators */}
-      <div className="flex items-center gap-1.5">
-        {p.videoOn && (
-          <div className="relative">
+      {/* Volume slider — always rendered (flex-[2]) for stable layout, empty for local */}
+      <div className="flex min-w-0 flex-[2] items-center gap-1.5">
+        {!p.isLocal && (
+          <>
+            <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <input
+              type="range"
+              min={VOICE_CONFIG.MIN_VOLUME * 100}
+              max={VOICE_CONFIG.MAX_VOLUME * 100}
+              value={Math.round(volume * 100)}
+              onChange={(e) => onVolumeChange?.(Number(e.target.value) / 100)}
+              className="h-1.5 min-w-0 flex-1 cursor-pointer accent-primary"
+              title={`Volume: ${Math.round(volume * 100)}%`}
+            />
+            <span className="w-8 shrink-0 text-right text-xs text-muted-foreground">
+              {Math.round(volume * 100)}%
+            </span>
+          </>
+        )}
+      </div>
+
+      {/* Status indicators — always show both icons for stable layout */}
+      <div className="flex shrink-0 items-center gap-1.5">
+        <div className="relative">
+          {p.videoOn ? (
             <Video className="h-3.5 w-3.5 text-muted-foreground" />
-            {lockState.video && (
-              <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
-            )}
-          </div>
-        )}
-        {!p.videoOn && lockState.video && (
-          <div className="relative">
-            <VideoOff className="h-3.5 w-3.5 text-destructive" />
+          ) : (
+            <VideoOff
+              className={cn(
+                "h-3.5 w-3.5",
+                lockState.video ? "text-destructive" : "text-muted-foreground",
+              )}
+            />
+          )}
+          {lockState.video && (
             <Lock className="absolute -right-1 -top-1 h-2.5 w-2.5 text-destructive" />
-          </div>
-        )}
+          )}
+        </div>
         <div className="relative">
           {p.audioOn ? (
             <Mic className="h-3.5 w-3.5 text-success" />

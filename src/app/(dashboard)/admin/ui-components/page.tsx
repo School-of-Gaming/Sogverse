@@ -307,6 +307,22 @@ const DEMO_PARTICIPANTS = [
     audioOn: false,
     videoOn: false,
   },
+  {
+    userId: "a3b7c912-45de-4f01-b8a2-9c6d3e7f1234",
+    userName: "xXx_DarkPhoenixRising_Legend_xXx",
+    isLocal: false,
+    isOwner: true,
+    audioOn: true,
+    videoOn: true,
+  },
+  {
+    userId: "d5e8f234-67ab-4c12-9d3e-a1b2c3d4e5f6",
+    userName: "TheUltimateGalaxyDestroyer9000",
+    isLocal: false,
+    isOwner: false,
+    audioOn: true,
+    videoOn: false,
+  },
 ];
 
 /** Simulate speaking glow on a ref using a sine wave. Different phase offsets
@@ -354,11 +370,15 @@ function ParticipantCardDemo() {
   const ref0 = useRef<HTMLDivElement>(null);
   const ref1 = useRef<HTMLDivElement>(null);
   const ref2 = useRef<HTMLDivElement>(null);
-  const avatarRefs = [ref0, ref1, ref2];
+  const ref3 = useRef<HTMLDivElement>(null);
+  const ref4 = useRef<HTMLDivElement>(null);
+  const avatarRefs = [ref0, ref1, ref2, ref3, ref4];
 
   useSimulatedGlow(ref0, DEMO_PARTICIPANTS[0].audioOn, 0);
   useSimulatedGlow(ref1, DEMO_PARTICIPANTS[1].audioOn, 2.1);
   useSimulatedGlow(ref2, DEMO_PARTICIPANTS[2].audioOn, 4.2);
+  useSimulatedGlow(ref3, DEMO_PARTICIPANTS[3].audioOn, 6.3);
+  useSimulatedGlow(ref4, DEMO_PARTICIPANTS[4].audioOn, 1.4);
 
   return (
     <Card>
@@ -371,15 +391,13 @@ function ParticipantCardDemo() {
         {DEMO_PARTICIPANTS.map((p, i) => {
           const volume = volumes[p.userId] ?? 1.0;
           const lockState = locks[p.userId] ?? { audio: false, video: false };
-          const showModControls = !p.isLocal && !p.isOwner;
-
           return (
             <ParticipantRow
               key={p.userId}
               participant={p}
               volume={volume}
               lockState={lockState}
-              showModControls={showModControls}
+              isModView
               avatarRef={avatarRefs[i]}
               onVolumeChange={(vol) =>
                 setVolumes((prev) => ({ ...prev, [p.userId]: vol }))

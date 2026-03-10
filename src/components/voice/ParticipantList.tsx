@@ -72,14 +72,12 @@ function ParticipantRowWithGlow({
   const avatarRef = useRef<HTMLDivElement>(null);
   useSpeakingGlow(avatarRef, participant.sessionId, participant.audioOn);
 
-  const showModControls = isLocalOwner && !participant.isLocal && !participant.isOwner;
-
   return (
     <ParticipantRow
       participant={participant}
       volume={volume}
       lockState={lockState}
-      showModControls={showModControls}
+      isModView={isLocalOwner}
       avatarRef={avatarRef}
       onVolumeChange={onVolumeChange}
       onMute={onMute}
