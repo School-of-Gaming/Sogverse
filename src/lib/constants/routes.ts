@@ -1,5 +1,3 @@
-import { UserRole } from "./roles";
-
 /** Centralized route paths — import and reference instead of hardcoding string literals. */
 export const ROUTES = {
   home: "/",
@@ -58,40 +56,4 @@ export const AUTH_ROUTES = [
   ROUTES.forgotPassword,
 ] as const;
 
-export const PROTECTED_ROUTES = {
-  admin: [ROUTES.admin.dashboard],
-  customer: [ROUTES.customer.dashboard],
-  gamer: [ROUTES.gamer.dashboard],
-  gedu: [ROUTES.gedu.dashboard],
-  shared: [ROUTES.feedback, ROUTES.settings],
-} as const;
 
-export function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
-}
-
-export function isAuthRoute(pathname: string): boolean {
-  return AUTH_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
-}
-
-export function getRequiredRole(pathname: string): UserRole | null {
-  if (pathname.startsWith(ROUTES.admin.dashboard)) return "admin";
-  if (pathname.startsWith(ROUTES.customer.dashboard)) return "customer";
-  if (pathname.startsWith(ROUTES.gamer.dashboard)) return "gamer";
-  if (pathname.startsWith(ROUTES.gedu.dashboard)) return "gedu";
-  return null;
-}
-
-export function canAccessRoute(pathname: string, userRole: UserRole): boolean {
-  const requiredRole = getRequiredRole(pathname);
-
-  if (!requiredRole) return true;
-  if (pathname.startsWith(ROUTES.feedback)) return true;
-  if (pathname.startsWith(ROUTES.settings)) return true;
-
-  return requiredRole === userRole;
-}
