@@ -662,16 +662,16 @@ describe("Row Level Security", () => {
 
   describe("submit_feedback RPC", () => {
     afterEach(async () => {
-      // Clean up any feedback created during tests
+      // Clean up rows created by RPC tests — use CUSTOMER_2 to avoid colliding with seed data
       await admin
         .from("feedback_submissions")
         .delete()
-        .eq("user_id", TEST_IDS.CUSTOMER);
+        .eq("user_id", TEST_IDS.CUSTOMER_2);
     });
 
     it("inserts feedback and returns true via admin client", async () => {
       const { data, error } = await admin.rpc("submit_feedback", {
-        p_user_id: TEST_IDS.CUSTOMER,
+        p_user_id: TEST_IDS.CUSTOMER_2,
         p_message: "Test feedback from RPC",
       });
 
@@ -682,24 +682,24 @@ describe("Row Level Security", () => {
       const { data: rows } = await admin
         .from("feedback_submissions")
         .select("message")
-        .eq("user_id", TEST_IDS.CUSTOMER);
+        .eq("user_id", TEST_IDS.CUSTOMER_2)
+        .eq("message", "Test feedback from RPC");
 
       expect(rows).toHaveLength(1);
-      expect(rows![0].message).toBe("Test feedback from RPC");
     });
 
     it("returns false when rate limit is reached (6 per hour)", async () => {
       // Insert 6 submissions to hit the limit
       for (let i = 0; i < 6; i++) {
         await admin.rpc("submit_feedback", {
-          p_user_id: TEST_IDS.CUSTOMER,
+          p_user_id: TEST_IDS.CUSTOMER_2,
           p_message: `Rate limit test ${i}`,
         });
       }
 
       // 7th should be rejected
       const { data, error } = await admin.rpc("submit_feedback", {
-        p_user_id: TEST_IDS.CUSTOMER,
+        p_user_id: TEST_IDS.CUSTOMER_2,
         p_message: "Should be rate limited",
       });
 
@@ -710,7 +710,7 @@ describe("Row Level Security", () => {
       const { data: rows } = await admin
         .from("feedback_submissions")
         .select("id")
-        .eq("user_id", TEST_IDS.CUSTOMER);
+        .eq("user_id", TEST_IDS.CUSTOMER_2);
 
       expect(rows).toHaveLength(6);
     });
