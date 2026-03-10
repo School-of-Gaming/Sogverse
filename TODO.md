@@ -272,7 +272,9 @@ Supabase's "Confirm email" setting is disabled to keep signup frictionless (user
 
 **Goal:** Track which customers have actually verified their email, without blocking signup or payments. Gate certain actions behind verification later.
 
-**Approach — custom token + SMTP email:**
+**Why not Supabase's built-in confirmation?** Supabase's `enable_confirmations` is binary — either it blocks sign-in until the email is verified, or it auto-confirms and never sends a verification email. There is no "send verification but allow unverified sign-in" option ([GitHub Issue #5113](https://github.com/supabase/supabase/issues/5113)). `config.toml` must stay at `enable_confirmations = false` across staging and production (pushed via `supabase config push`).
+
+**Approach — custom token + Brevo API:**
 
 1. Add `email_verified BOOLEAN DEFAULT false` column to `profiles` table
 2. Add `email_verification_token TEXT` and `email_verification_expires_at TIMESTAMPTZ` columns (or encode everything in a signed JWT to avoid extra columns)
