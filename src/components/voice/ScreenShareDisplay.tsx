@@ -6,7 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 
-export function ScreenShareDisplay() {
+interface ScreenShareDisplayProps {
+  /** Keep rendering with this session ID during exit animation */
+  sharerSessionIdOverride?: string | null;
+}
+
+export function ScreenShareDisplay({
+  sharerSessionIdOverride,
+}: ScreenShareDisplayProps) {
   const {
     callObject,
     participants,
@@ -16,15 +23,18 @@ export function ScreenShareDisplay() {
   } = useVoiceRoom();
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const sharer = participants.find((p) => p.sessionId === screenSharerSessionId);
+  // Use the override (stale value) during exit animation so content doesn't vanish
+  const effectiveSharerSessionId = screenSharerSessionId ?? sharerSessionIdOverride ?? null;
+
+  const sharer = participants.find((p) => p.sessionId === effectiveSharerSessionId);
 
   // Attach the screen share video track to the <video> element
   useEffect(() => {
-    if (!callObject || !screenSharerSessionId || !videoRef.current) return;
+    if (!callObject || !effectiveSharerSessionId || !videoRef.current) return;
 
     const pMap = callObject.participants();
     const sharerParticipant = Object.values(pMap).find(
-      (p) => p.session_id === screenSharerSessionId,
+      (p) => p.session_id === effectiveSharerSessionId,
     );
 
     const screenTrack = sharerParticipant?.tracks.screenVideo;
@@ -36,9 +46,9 @@ export function ScreenShareDisplay() {
     return () => {
       videoEl.srcObject = null;
     };
-  }, [callObject, screenSharerSessionId, participants]);
+  }, [callObject, effectiveSharerSessionId, participants]);
 
-  if (!screenSharerSessionId || !sharer) return null;
+  if (!effectiveSharerSessionId || !sharer) return null;
 
   return (
     <div className="relative overflow-hidden rounded-lg border bg-black">

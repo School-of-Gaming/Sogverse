@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Mic, Radio, Loader2, PhoneOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ interface SpatialVoiceRoomProps {
   leaveLabel?: string;
 }
 
+const SCREEN_SHARE_ANIMATION_MS = 700;
+
 export function SpatialVoiceRoom({
   room,
   onLeave,
@@ -25,6 +28,39 @@ export function SpatialVoiceRoom({
 }: SpatialVoiceRoomProps) {
   const { participants, joining, screenSharerSessionId } = useVoiceRoom();
   const [leaving, setLeaving] = useState(false);
+
+  // Animate screen share in/out: delay unmount so exit animation can play.
+  // Keep the last non-null session ID so ScreenShareDisplay can still render
+  // its content during the exit animation (it reads from context which goes
+  // null immediately, so we override via prop).
+  const [screenShareMounted, setScreenShareMounted] = useState(false);
+  const [screenShareVisible, setScreenShareVisible] = useState(false);
+  const staleSharerRef = useRef<string | null>(null);
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  if (screenSharerSessionId) {
+    staleSharerRef.current = screenSharerSessionId;
+  }
+
+  useEffect(() => {
+    if (screenSharerSessionId) {
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+      setScreenShareMounted(true);
+      // Trigger enter animation on the next frame so the DOM has the 0-height state first
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setScreenShareVisible(true));
+      });
+    } else {
+      setScreenShareVisible(false);
+      exitTimerRef.current = setTimeout(() => {
+        setScreenShareMounted(false);
+        staleSharerRef.current = null;
+      }, SCREEN_SHARE_ANIMATION_MS);
+    }
+    return () => {
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    };
+  }, [screenSharerSessionId]);
 
   const handleLeave = async () => {
     setLeaving(true);
@@ -59,8 +95,24 @@ export function SpatialVoiceRoom({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Screen share display (above canvas when active) */}
-          {screenSharerSessionId && <ScreenShareDisplay />}
+          {/* Screen share display (above canvas when active) — animated in/out */}
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows,opacity] ease-in-out",
+              screenShareVisible
+                ? "grid-rows-[1fr] opacity-100"
+                : "grid-rows-[0fr] opacity-0",
+            )}
+            style={{ transitionDuration: `${SCREEN_SHARE_ANIMATION_MS}ms` }}
+          >
+            <div className="overflow-hidden">
+              {screenShareMounted && (
+                <ScreenShareDisplay
+                  sharerSessionIdOverride={staleSharerRef.current}
+                />
+              )}
+            </div>
+          </div>
 
           <SpatialCanvas />
 
