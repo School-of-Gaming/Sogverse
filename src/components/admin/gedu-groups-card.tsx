@@ -81,6 +81,7 @@ function DragOverlayContent({ effectiveGroups }: { effectiveGroups: EffectiveGro
     const gamer = group?.gamers.find((g) => g.gamerId === gamerId);
     if (!gamer) return null;
     return { gamer, fromGroupId };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on active?.id, not `active` (dnd-kit changes the object ref on every pointer move)
   }, [active?.id, effectiveGroups]);
 
   if (!overlayChip) return null;

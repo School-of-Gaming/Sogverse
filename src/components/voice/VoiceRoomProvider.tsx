@@ -103,6 +103,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     screenShare.detectScreenSharer(list);
     void audio.manageAudioNodes(co);
     audio.manageLocalAnalyser(co);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- individual methods are stable useCallback refs; adding the parent objects would re-create this callback on every render
   }, [screenShare.detectScreenSharer, audio.manageAudioNodes, audio.manageLocalAnalyser]);
 
   // --- App message dispatch ---
