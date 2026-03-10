@@ -145,14 +145,19 @@ describe("commit_group_changes RPC", () => {
     const result = data as { autoHidden: boolean; tempMap: Record<string, string> };
     const groupId = result.tempMap.t1;
 
-    // Insert an enrollment directly via admin client, then mark it unenrolled
-    await admin.from("group_enrollments").insert({
-      group_id: groupId,
-      gamer_id: TEST_IDS.GAMER,
-      enrolled_by: TEST_IDS.CUSTOMER,
-      status: "unenrolled",
-      unenrolled_at: new Date().toISOString(),
-    });
+    // Insert an unenrolled enrollment directly via admin client.
+    // Use CUSTOMER_2 as gamer — TEST_IDS.GAMER is already actively enrolled
+    // in this product (seed data), and the trigger blocks a second enrollment.
+    const { error: insertError } = await admin
+      .from("group_enrollments")
+      .insert({
+        group_id: groupId,
+        gamer_id: TEST_IDS.CUSTOMER_2,
+        enrolled_by: TEST_IDS.CUSTOMER,
+        status: "unenrolled",
+        unenrolled_at: new Date().toISOString(),
+      });
+    expect(insertError).toBeNull();
 
     // Verify the unenrolled enrollment exists
     const { data: enrollments } = await admin
