@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
+import { ParticipantRow } from "@/components/voice/ParticipantRow";
 import { TokenBalanceCard } from "@/components/customer";
 import { useAuth } from "@/providers";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
@@ -274,6 +275,126 @@ function DialogDemo() {
         </DialogContent>
       </Dialog>
     </Section>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Participant Card Demo                                              */
+/* ------------------------------------------------------------------ */
+
+const DEMO_PARTICIPANTS = [
+  {
+    userId: "4babfc78-d197-496e-860d-48f1207f5bc6",
+    userName: "ShadowFox99",
+    isLocal: true,
+    isOwner: true,
+    audioOn: true,
+    videoOn: false,
+  },
+  {
+    userId: "1a54d62e-828f-4a42-89f1-cc36185351b0",
+    userName: "JääKarhu",
+    isLocal: false,
+    isOwner: false,
+    audioOn: true,
+    videoOn: true,
+  },
+  {
+    userId: "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47",
+    userName: "NovaBlitz",
+    isLocal: false,
+    isOwner: false,
+    audioOn: false,
+    videoOn: false,
+  },
+];
+
+/** Simulate speaking glow on a ref using a sine wave. Different phase offsets
+ *  per participant so they don't pulse in sync. */
+function useSimulatedGlow(
+  ref: React.RefObject<HTMLDivElement | null>,
+  audioOn: boolean,
+  phaseOffset: number,
+) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !audioOn) {
+      if (el) {
+        el.style.boxShadow = "";
+        el.style.borderColor = "";
+      }
+      return;
+    }
+
+    let rafId = 0;
+    const tick = () => {
+      // Simulate speech-like bursts: fast sine modulated by a slower envelope
+      const t = performance.now() / 1000;
+      const envelope = Math.max(0, Math.sin(t * 1.2 + phaseOffset));
+      const burst = Math.abs(Math.sin(t * 5 + phaseOffset));
+      const level = envelope * burst;
+      const glow = computeGlowStyle(level);
+      el.style.boxShadow = (glow.boxShadow as string) ?? "";
+      el.style.borderColor = (glow.borderColor as string) ?? "";
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [ref, audioOn, phaseOffset]);
+}
+
+function ParticipantCardDemo() {
+  const [volumes, setVolumes] = useState<Record<string, number>>({});
+  const [locks, setLocks] = useState<Record<string, { audio: boolean; video: boolean }>>({
+    "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47": { audio: true, video: false },
+  });
+
+  // Refs for simulated speaking glow (one per participant)
+  const ref0 = useRef<HTMLDivElement>(null);
+  const ref1 = useRef<HTMLDivElement>(null);
+  const ref2 = useRef<HTMLDivElement>(null);
+  const avatarRefs = [ref0, ref1, ref2];
+
+  useSimulatedGlow(ref0, DEMO_PARTICIPANTS[0].audioOn, 0);
+  useSimulatedGlow(ref1, DEMO_PARTICIPANTS[1].audioOn, 2.1);
+  useSimulatedGlow(ref2, DEMO_PARTICIPANTS[2].audioOn, 4.2);
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm font-medium">
+          Participants ({DEMO_PARTICIPANTS.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {DEMO_PARTICIPANTS.map((p, i) => {
+          const volume = volumes[p.userId] ?? 1.0;
+          const lockState = locks[p.userId] ?? { audio: false, video: false };
+          const showModControls = !p.isLocal && !p.isOwner;
+
+          return (
+            <ParticipantRow
+              key={p.userId}
+              participant={p}
+              volume={volume}
+              lockState={lockState}
+              showModControls={showModControls}
+              avatarRef={avatarRefs[i]}
+              onVolumeChange={(vol) =>
+                setVolumes((prev) => ({ ...prev, [p.userId]: vol }))
+              }
+              onLock={(track, locked) =>
+                setLocks((prev) => ({
+                  ...prev,
+                  [p.userId]: { ...lockState, [track]: locked },
+                }))
+              }
+            />
+          );
+        })}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -682,7 +803,20 @@ export default function AdminUIComponentsPage() {
       <DialogDemo />
 
       {/* ============================================================ */}
-      {/* Section 9: Composite Patterns                                 */}
+      {/* Section 9: Participant Card                                   */}
+      {/* ============================================================ */}
+      <Section title="Participant Card">
+        <SubSection title="Voice Room Participant List">
+          <p className="text-sm text-muted-foreground mb-3">
+            Shows avatar, name, volume slider, moderator controls (for non-owner remote participants), and status indicators.
+            Lock buttons toggle between ghost/destructive variants. Used in voice room sidebar.
+          </p>
+          <ParticipantCardDemo />
+        </SubSection>
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 10: Composite Patterns                                */}
       {/* ============================================================ */}
       <Section title="Composite Patterns">
         {/* -- Clickable List Row with Chevron (admin/products, admin/users) -- */}
