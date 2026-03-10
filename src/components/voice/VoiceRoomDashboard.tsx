@@ -1,41 +1,15 @@
 "use client";
 
-import { Mic, Loader2, PhoneCall } from "lucide-react";
+import { Mic, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
 import { VoiceRoomCard } from "@/components/voice/VoiceRoomCard";
 import { useVoiceSession } from "@/hooks/use-voice-session";
-import { useAuth } from "@/providers/auth-provider";
-import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
-
-// TODO: revert — hardcoded gedu lounge room for gamer debug access
-const DEBUG_GEDU_LOUNGE: AvailableVoiceRoomWithWindow = {
-  id: "c8e7d686-d034-4113-bf79-d314b87fb84c",
-  group_id: null,
-  room_type: "gedu_only",
-  name: "Gedu Lounge",
-  daily_room_name: "gedu-lounge",
-  product_name: null,
-  day_of_week: null,
-  start_time: null,
-  timezone: null,
-  duration_minutes: null,
-  gedu_display_name: null,
-  gedu_id: null,
-  enrolled_at: null,
-  isOpen: true,
-  nextSessionStart: null,
-  windowClosesAt: null,
-};
 
 function VoiceRoomDashboardInner() {
   const { joining } = useVoiceRoom();
   const session = useVoiceSession();
-  const { profile } = useAuth();
-  // TODO: revert — let gamers join gedu lounge for testing
-  const showDebugLounge = profile?.role === "gamer";
 
   if (session.isLoading || session.reconnecting) {
     return (
@@ -88,28 +62,7 @@ function VoiceRoomDashboardInner() {
         <p className="text-sm text-destructive">{session.error}</p>
       )}
 
-      {/* TODO: revert — debug button for gamers to join gedu lounge */}
-      {showDebugLounge && (
-        <Card className="border-dashed border-yellow-500/50">
-          <CardContent className="flex items-center justify-between py-4">
-            <div>
-              <p className="font-medium">Gedu Lounge <span className="text-xs text-yellow-500">(debug)</span></p>
-              <p className="text-sm text-muted-foreground">Temporary debug access</p>
-            </div>
-            <Button
-              onClick={() => session.joinRoom(DEBUG_GEDU_LOUNGE)}
-              disabled={joining || session.actionPending}
-              size="sm"
-              className="gap-1.5 shrink-0"
-            >
-              <PhoneCall className="h-4 w-4" />
-              Join
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {!hasRooms && !showDebugLounge ? (
+      {!hasRooms ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Mic className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
