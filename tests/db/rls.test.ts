@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import {
@@ -653,6 +653,76 @@ describe("Row Level Security", () => {
 
       expect(error).toBeNull();
       expect(data).toHaveLength(2);
+    });
+  });
+
+  // =========================================================================
+  // submit_feedback RPC
+  // =========================================================================
+
+  describe("submit_feedback RPC", () => {
+    afterEach(async () => {
+      // Clean up any feedback created during tests
+      await admin
+        .from("feedback_submissions")
+        .delete()
+        .eq("user_id", TEST_IDS.CUSTOMER);
+    });
+
+    it("inserts feedback and returns true via admin client", async () => {
+      const { data, error } = await admin.rpc("submit_feedback", {
+        p_user_id: TEST_IDS.CUSTOMER,
+        p_message: "Test feedback from RPC",
+      });
+
+      expect(error).toBeNull();
+      expect(data).toBe(true);
+
+      // Verify the row was inserted
+      const { data: rows } = await admin
+        .from("feedback_submissions")
+        .select("message")
+        .eq("user_id", TEST_IDS.CUSTOMER);
+
+      expect(rows).toHaveLength(1);
+      expect(rows![0].message).toBe("Test feedback from RPC");
+    });
+
+    it("returns false when rate limit is reached (6 per hour)", async () => {
+      // Insert 6 submissions to hit the limit
+      for (let i = 0; i < 6; i++) {
+        await admin.rpc("submit_feedback", {
+          p_user_id: TEST_IDS.CUSTOMER,
+          p_message: `Rate limit test ${i}`,
+        });
+      }
+
+      // 7th should be rejected
+      const { data, error } = await admin.rpc("submit_feedback", {
+        p_user_id: TEST_IDS.CUSTOMER,
+        p_message: "Should be rate limited",
+      });
+
+      expect(error).toBeNull();
+      expect(data).toBe(false);
+
+      // Verify only 6 rows exist
+      const { data: rows } = await admin
+        .from("feedback_submissions")
+        .select("id")
+        .eq("user_id", TEST_IDS.CUSTOMER);
+
+      expect(rows).toHaveLength(6);
+    });
+
+    it("authenticated users cannot call submit_feedback directly", async () => {
+      const { error } = await customerClient.rpc("submit_feedback", {
+        p_user_id: TEST_IDS.CUSTOMER,
+        p_message: "Should be denied",
+      });
+
+      expect(error).not.toBeNull();
+      expect(error!.message).toMatch(/permission denied/i);
     });
   });
 

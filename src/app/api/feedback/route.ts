@@ -10,9 +10,6 @@ const feedbackSchema = z.object({
   message: z.string().min(10, "Message must be at least 10 characters").max(2000, "Message must be at most 2000 characters"),
 });
 
-const RATE_LIMIT_WINDOW_HOURS = 1;
-const RATE_LIMIT_MAX = 6;
-
 export async function POST(request: Request) {
   try {
     const result = await requireRole(["admin", "customer", "gamer", "gedu"], {
@@ -35,34 +32,22 @@ export async function POST(request: Request) {
 
     const adminClient = createAdminClient();
 
-    // Rate limit: count submissions in the last hour
-    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_HOURS * 60 * 60 * 1000).toISOString();
-    const { count, error: countError } = await adminClient
-      .from("feedback_submissions")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .gte("created_at", windowStart);
+    // Atomic rate-limit check + insert via RPC (prevents concurrent bypass)
+    const { data: accepted, error: rpcError } = await adminClient.rpc("submit_feedback", {
+      p_user_id: user.id,
+      p_message: parsed.data.message,
+    });
 
-    if (countError) {
-      console.error("Failed to check rate limit:", countError);
+    if (rpcError) {
+      console.error("Failed to submit feedback:", rpcError);
       return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 
-    if ((count ?? 0) >= RATE_LIMIT_MAX) {
+    if (!accepted) {
       return NextResponse.json(
         { error: "Too many feedback submissions. Please try again later." },
         { status: 429 }
       );
-    }
-
-    // Insert submission
-    const { error: insertError } = await adminClient
-      .from("feedback_submissions")
-      .insert({ user_id: user.id, message: parsed.data.message });
-
-    if (insertError) {
-      console.error("Failed to insert feedback:", insertError);
-      return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 
     // Get all admin emails

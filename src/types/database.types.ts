@@ -723,6 +723,10 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
       process_enrollment_charges: { Args: never; Returns: Json }
+      submit_feedback: {
+        Args: { p_message: string; p_user_id: string }
+        Returns: boolean
+      }
       unenroll_gamer: {
         Args: {
           p_customer_id: string

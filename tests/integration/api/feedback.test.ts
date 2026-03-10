@@ -53,18 +53,9 @@ function mockAuthenticatedAs(role: string, overrides?: Record<string, unknown>) 
 }
 
 /** Sets up the admin client mock chain for the standard happy path. */
-function setupHappyPath(rateCount = 0) {
+function setupHappyPath(accepted = true) {
+  mockRpc.mockResolvedValue({ data: accepted, error: null });
   mockFrom.mockImplementation((table: string) => {
-    if (table === "feedback_submissions") {
-      return {
-        select: () => ({
-          eq: () => ({
-            gte: () => Promise.resolve({ count: rateCount, error: null }),
-          }),
-        }),
-        insert: () => Promise.resolve({ error: null }),
-      };
-    }
     if (table === "profiles") {
       return {
         select: () => ({
@@ -80,17 +71,8 @@ function setupHappyPath(rateCount = 0) {
 }
 
 function setupGamerParentLookup(parentEmail: string) {
+  mockRpc.mockResolvedValue({ data: true, error: null });
   mockFrom.mockImplementation((table: string) => {
-    if (table === "feedback_submissions") {
-      return {
-        select: () => ({
-          eq: () => ({
-            gte: () => Promise.resolve({ count: 0, error: null }),
-          }),
-        }),
-        insert: () => Promise.resolve({ error: null }),
-      };
-    }
     if (table === "parent_gamer") {
       return {
         select: () => ({
@@ -189,7 +171,7 @@ describe("POST /api/feedback", () => {
 
   it("should return 429 when rate limited", async () => {
     mockAuthenticatedAs("customer");
-    setupHappyPath(6); // At the limit
+    setupHappyPath(false); // RPC returns false = rate limited
 
     const response = await POST(createRequest(validBody));
     const data = await response.json();
@@ -202,7 +184,7 @@ describe("POST /api/feedback", () => {
 
   it("should send feedback and return success for customer", async () => {
     mockAuthenticatedAs("customer");
-    setupHappyPath(0);
+    setupHappyPath();
 
     const response = await POST(createRequest(validBody));
     const data = await response.json();
@@ -220,7 +202,7 @@ describe("POST /api/feedback", () => {
 
   it("should use profile email as replyTo for customer/gedu/admin", async () => {
     mockAuthenticatedAs("gedu");
-    setupHappyPath(0);
+    setupHappyPath();
 
     await POST(createRequest(validBody));
 
@@ -249,7 +231,7 @@ describe("POST /api/feedback", () => {
 
   it("should HTML-escape message content", async () => {
     mockAuthenticatedAs("customer");
-    setupHappyPath(0);
+    setupHappyPath();
 
     await POST(
       createRequest({ message: '<script>alert("xss")</script> is bad' })
@@ -267,14 +249,15 @@ describe("POST /api/feedback", () => {
     );
   });
 
-  it("should allow 5 submissions (under limit)", async () => {
+  it("should call submit_feedback RPC with correct params", async () => {
     mockAuthenticatedAs("customer");
-    setupHappyPath(5); // 5 is under the limit of 6
+    setupHappyPath();
 
-    const response = await POST(createRequest(validBody));
-    const data = await response.json();
+    await POST(createRequest(validBody));
 
-    expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
+    expect(mockRpc).toHaveBeenCalledWith("submit_feedback", {
+      p_user_id: "user-123",
+      p_message: validBody.message,
+    });
   });
 });
