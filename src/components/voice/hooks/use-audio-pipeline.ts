@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
 import type { SpatialPosition } from "@/lib/constants/spatial";
-import { calculateGain } from "@/lib/constants/spatial";
+import { canHearZone } from "@/lib/constants/spatial";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
 import type { AudioNodes } from "./types";
 
 interface UseAudioPipelineParams {
@@ -24,10 +25,8 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
   const volumeMultipliersRef = useRef<Map<string, number>>(new Map());
   const [volumeMultipliers, setVolumeMultipliers] = useState<Map<string, number>>(new Map());
 
-  /** Update audio routing — uses element.volume for volume control and
-   *  GainNode for zone-based muting. Chrome's createMediaElementSource with
-   *  MediaStream srcObject doesn't let GainNode amplify above 1.0, so
-   *  element.volume is the primary volume control (0–100%). */
+  /** Update audio routing — element.volume handles both zone muting and
+   *  user volume control. See docs/chrome-webrtc-volume-bug.md. */
   const updateAudioRouting = useCallback(() => {
     const co = callObjectRef.current;
     if (!co) return;
@@ -41,40 +40,24 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
     for (const [sessionId, nodes] of audioNodesRef.current) {
       const remotePos = positionsRef.current.get(sessionId);
       const rZone = remotePos?.zone ?? "general";
-      const zoneGain = calculateGain(lZone, rZone);
       const multiplier = volumeMultipliersRef.current.get(sessionId) ?? 1.0;
-      // GainNode handles zone muting (0 for different zones)
-      nodes.gain.gain.value = zoneGain;
-      // element.volume handles user volume control (0–1 range)
-      nodes.element.volume = Math.min(1.0, multiplier);
+      nodes.element.volume = canHearZone(lZone, rZone) ? multiplier : 0;
     }
   }, [callObjectRef, positionsRef]);
 
-  /** Set volume multiplier for a remote participant (0.1–2.0) */
+  /** Set volume multiplier for a remote participant (0.1–1.0) */
   const setParticipantVolume = useCallback((sessionId: string, volume: number) => {
-    const clamped = Math.max(0.1, Math.min(2.0, volume));
+    const clamped = Math.max(VOICE_CONFIG.MIN_VOLUME, Math.min(VOICE_CONFIG.MAX_VOLUME, volume));
     volumeMultipliersRef.current.set(sessionId, clamped);
     setVolumeMultipliers(new Map(volumeMultipliersRef.current));
-
-    const nodes = audioNodesRef.current.get(sessionId);
-    if (nodes) {
-      const co = callObjectRef.current;
-      const localSessionId = co?.participants().local?.session_id;
-      const localPos = localSessionId ? positionsRef.current.get(localSessionId) : undefined;
-      const lZone = localPos?.zone ?? "general";
-      const remotePos = positionsRef.current.get(sessionId);
-      const rZone = remotePos?.zone ?? "general";
-      nodes.gain.gain.value = calculateGain(lZone, rZone);
-      nodes.element.volume = Math.min(1.0, clamped);
-    }
-  }, [callObjectRef, positionsRef]);
+    updateAudioRouting();
+  }, [updateAudioRouting]);
 
   /** Manage audio pipeline for remote participants.
-   *  Uses <audio> elements for reliable WebRTC playback, piped through
-   *  createMediaElementSource for zone-based GainNode muting and AnalyserNode
-   *  visualization. Volume control uses element.volume (0–100%).
-   *  Note: Chrome prevents GainNode amplification above 1.0 on MediaStream-backed
-   *  elements, so element.volume is the primary volume control. */
+   *  <audio> elements handle WebRTC playback and all audible control (volume,
+   *  zone muting) via element.volume. The Web Audio graph exists solely for
+   *  speaking-glow visualization — Chrome bypasses it for output on
+   *  MediaStream-backed elements. See docs/chrome-webrtc-volume-bug.md. */
   const manageAudioNodes = useCallback(async (co: DailyCall) => {
     const ctx = audioContextRef.current;
     if (!ctx) return;
@@ -112,18 +95,16 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
         element.autoplay = true;
         element.play().catch(() => {});
 
-        // Pipe element through Web Audio for zone muting + speaking glow:
-        //   Element → Analyser → Gain → ctx.destination
+        // Web Audio graph for speaking glow visualization only.
+        // Must terminate at ctx.destination for AnalyserNode to process data.
         const source = ctx.createMediaElementSource(element);
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
-        const gain = ctx.createGain();
 
         source.connect(analyser);
-        analyser.connect(gain);
-        gain.connect(ctx.destination);
+        analyser.connect(ctx.destination);
 
-        audioNodesRef.current.set(p.session_id, { element, source, analyser, gain });
+        audioNodesRef.current.set(p.session_id, { element, source, analyser });
       }
     }
 

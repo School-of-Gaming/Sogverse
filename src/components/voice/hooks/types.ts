@@ -30,7 +30,6 @@ export interface AudioNodes {
   element: HTMLAudioElement;
   source: MediaElementAudioSourceNode;
   analyser: AnalyserNode;
-  gain: GainNode;
 }
 
 // ---------- App Messages ----------

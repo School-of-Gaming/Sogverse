@@ -21,4 +21,8 @@ export const VOICE_CONFIG = {
    * client bugs.
    */
   TOKEN_EXPIRY_GRACE_SECONDS: 60,
+  /** Minimum per-participant volume (10%) */
+  MIN_VOLUME: 0.1,
+  /** Maximum per-participant volume (100%) */
+  MAX_VOLUME: 1.0,
 } as const;

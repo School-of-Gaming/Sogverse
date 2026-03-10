@@ -2,6 +2,7 @@
   "permissions": {
     "allow": [
       "WebSearch",
+      "WebFetch",
       "Bash(ls:*)",
       "Bash(find:*)",
       "Bash(wc:*)",
@@ -15,10 +16,6 @@
       "Bash(npm run type-check:*)",
       "Bash(npx playwright test)",
       "Bash(npx vitest:*)",
-      "WebFetch(domain:supabase.com)",
-      "WebFetch(domain:docs.daily.co)",
-      "WebFetch(domain:www.daily.co)",
-      "WebFetch(domain:github.com)",
       "Bash(npx next lint:*)",
       "Bash(npx tsc:*)",
       "Bash(npx eslint:*)",

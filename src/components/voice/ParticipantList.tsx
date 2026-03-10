@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useVoiceRoom, type VoiceParticipant, type LockState } from "./VoiceRoomProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { cn } from "@/lib/utils";
 
 export function ParticipantList() {
@@ -118,8 +119,8 @@ function ParticipantRow({
             <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
             <input
               type="range"
-              min={10}
-              max={200}
+              min={VOICE_CONFIG.MIN_VOLUME * 100}
+              max={VOICE_CONFIG.MAX_VOLUME * 100}
               value={Math.round(volume * 100)}
               onChange={(e) => onVolumeChange(Number(e.target.value) / 100)}
               className="h-1.5 min-w-0 flex-1 cursor-pointer accent-primary"

@@ -56,14 +56,14 @@ export function getZoneAtPosition(x: number, y: number): ZoneId {
   return "general";
 }
 
-/** Calculate audio gain based on zone-based isolation */
-export function calculateGain(localZone: ZoneId, remoteZone: ZoneId): number {
+/** Can the local user hear the remote user based on their zones? */
+export function canHearZone(localZone: ZoneId, remoteZone: ZoneId): boolean {
   // Broadcast zone: speaker heard by everyone, listener hears everyone
-  if (remoteZone === "broadcast" || localZone === "broadcast") return 1;
-  // Same zone: full volume
-  if (localZone === remoteZone) return 1;
+  if (remoteZone === "broadcast" || localZone === "broadcast") return true;
+  // Same zone: audible
+  if (localZone === remoteZone) return true;
   // Different zones: silent
-  return 0;
+  return false;
 }
 
 /** Minimum separation (per axis) to keep avatars at most ~25% overlapping. */
