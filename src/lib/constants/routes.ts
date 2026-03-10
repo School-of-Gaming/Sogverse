@@ -11,6 +11,7 @@ export const ROUTES = {
   register: "/register",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
+  feedback: "/feedback",
   settings: "/settings",
   admin: {
     dashboard: "/admin",
@@ -62,7 +63,7 @@ export const PROTECTED_ROUTES = {
   customer: [ROUTES.customer.dashboard],
   gamer: [ROUTES.gamer.dashboard],
   gedu: [ROUTES.gedu.dashboard],
-  shared: [ROUTES.settings],
+  shared: [ROUTES.feedback, ROUTES.settings],
 } as const;
 
 export function isPublicRoute(pathname: string): boolean {
@@ -89,6 +90,7 @@ export function canAccessRoute(pathname: string, userRole: UserRole): boolean {
   const requiredRole = getRequiredRole(pathname);
 
   if (!requiredRole) return true;
+  if (pathname.startsWith(ROUTES.feedback)) return true;
   if (pathname.startsWith(ROUTES.settings)) return true;
 
   return requiredRole === userRole;

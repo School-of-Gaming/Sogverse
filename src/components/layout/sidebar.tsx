@@ -13,6 +13,7 @@ import {
   Coins,
   Mic,
   FlaskConical,
+  MessageSquare,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -57,6 +58,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       icon: <FlaskConical className="h-5 w-5" />,
     },
     {
+      href: ROUTES.feedback,
+      label: "Feedback",
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+    {
       href: ROUTES.settings,
       label: "Settings",
       icon: <Settings className="h-5 w-5" />,
@@ -78,7 +84,12 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       label: "My Gamers",
       icon: <Gamepad2 className="h-5 w-5" />,
     },
-{
+    {
+      href: ROUTES.feedback,
+      label: "Feedback",
+      icon: <MessageSquare className="h-5 w-5" />,
+    },
+    {
       href: ROUTES.settings,
       label: "Settings",
       icon: <Settings className="h-5 w-5" />,
@@ -99,6 +110,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       href: ROUTES.gamer.voice,
       label: "Voice Rooms",
       icon: <Mic className="h-5 w-5" />,
+    },
+    {
+      href: ROUTES.feedback,
+      label: "Feedback",
+      icon: <MessageSquare className="h-5 w-5" />,
     },
     {
       href: ROUTES.settings,
@@ -126,6 +142,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       href: ROUTES.gedu.voice,
       label: "Voice Rooms",
       icon: <Mic className="h-5 w-5" />,
+    },
+    {
+      href: ROUTES.feedback,
+      label: "Feedback",
+      icon: <MessageSquare className="h-5 w-5" />,
     },
     {
       href: ROUTES.settings,

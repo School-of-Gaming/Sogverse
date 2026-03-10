@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers";
+import { SENDER_EMAIL } from "@/lib/constants";
 
 type EmailProvider = "brevo" | "klaviyo";
 
@@ -20,8 +21,6 @@ interface EmailResult {
   type: "success" | "error";
   message: string;
 }
-
-const FROM_EMAIL = "sogverse@sog.gg";
 
 export default function TestingPage() {
   const { profile } = useAuth();
@@ -45,7 +44,7 @@ export default function TestingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           provider,
-          fromEmail: FROM_EMAIL,
+          fromEmail: SENDER_EMAIL,
           fromName,
           toEmail,
           subject,
@@ -115,7 +114,7 @@ export default function TestingPage() {
                 <Input
                   id="fromEmail"
                   type="email"
-                  value={FROM_EMAIL}
+                  value={SENDER_EMAIL}
                   disabled
                 />
               </div>

@@ -591,6 +591,71 @@ describe("Row Level Security", () => {
     });
   });
 
+  // =========================================================================
+  // Feedback Submissions
+  // =========================================================================
+
+  describe("feedback_submissions", () => {
+    const FEEDBACK_ID_1 = "00000000-0000-0000-0000-000000000050";
+    const FEEDBACK_ID_2 = "00000000-0000-0000-0000-000000000051";
+
+    beforeAll(async () => {
+      // Insert test feedback via admin client (bypasses RLS)
+      await admin.from("feedback_submissions").insert([
+        { id: FEEDBACK_ID_1, user_id: TEST_IDS.CUSTOMER, message: "Feedback from customer 1" },
+        { id: FEEDBACK_ID_2, user_id: TEST_IDS.CUSTOMER_2, message: "Feedback from customer 2" },
+      ]);
+    });
+
+    afterAll(async () => {
+      await admin
+        .from("feedback_submissions")
+        .delete()
+        .in("id", [FEEDBACK_ID_1, FEEDBACK_ID_2]);
+    });
+
+    it("customer can read own feedback submissions", async () => {
+      const { data, error } = await customerClient
+        .from("feedback_submissions")
+        .select("id, message")
+        .eq("user_id", TEST_IDS.CUSTOMER);
+
+      expect(error).toBeNull();
+      expect(data!.length).toBeGreaterThanOrEqual(1);
+      expect(data!.some((f) => f.id === FEEDBACK_ID_1)).toBe(true);
+    });
+
+    it("customer cannot read another customer's feedback", async () => {
+      const { data } = await customerClient
+        .from("feedback_submissions")
+        .select("id")
+        .eq("user_id", TEST_IDS.CUSTOMER_2);
+
+      expect(data).toEqual([]);
+    });
+
+    it("customer cannot insert a feedback_submission directly", async () => {
+      const { error } = await customerClient
+        .from("feedback_submissions")
+        .insert({
+          user_id: TEST_IDS.CUSTOMER,
+          message: "Should be denied by grant revocation",
+        });
+
+      expect(error).not.toBeNull();
+    });
+
+    it("admin can read all feedback submissions", async () => {
+      const { data, error } = await adminClient
+        .from("feedback_submissions")
+        .select("id")
+        .in("id", [FEEDBACK_ID_1, FEEDBACK_ID_2]);
+
+      expect(error).toBeNull();
+      expect(data).toHaveLength(2);
+    });
+  });
+
   describe("parent_gamer", () => {
     it("customer can read own parent-gamer links", async () => {
       const { data, error } = await customerClient

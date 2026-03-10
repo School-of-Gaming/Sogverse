@@ -32,7 +32,7 @@ async function brevoFetch(path: string, options?: RequestInit) {
 interface SendEmailOptions {
   fromEmail: string;
   fromName: string;
-  toEmail: string;
+  toEmail: string | string[];
   subject: string;
   htmlContent: string;
   replyToEmail?: string;
@@ -47,7 +47,9 @@ export async function sendTransactionalEmail(options: SendEmailOptions): Promise
     method: "POST",
     body: JSON.stringify({
       sender: { email: options.fromEmail, name: options.fromName },
-      to: [{ email: options.toEmail }],
+      to: (Array.isArray(options.toEmail) ? options.toEmail : [options.toEmail]).map(
+        (email) => ({ email })
+      ),
       subject: options.subject,
       htmlContent: options.htmlContent,
       ...(options.replyToEmail && { replyTo: { email: options.replyToEmail } }),

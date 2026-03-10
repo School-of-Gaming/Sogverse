@@ -104,8 +104,8 @@ export async function proxy(request: NextRequest) {
   // Check role-based access
   const userRole = (profileData as { role: UserRole }).role;
 
-  // Settings is accessible to all authenticated users
-  if (pathname.startsWith(ROUTES.settings)) {
+  // Shared routes (feedback, settings) are accessible to all authenticated users
+  if (pathname.startsWith(ROUTES.feedback) || pathname.startsWith(ROUTES.settings)) {
     return supabaseResponse;
   }
 

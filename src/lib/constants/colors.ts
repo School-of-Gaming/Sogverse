@@ -1,0 +1,14 @@
+// Hex equivalents of globals.css CSS custom properties.
+// Email templates can't use CSS variables, so we maintain hex values here.
+// If you change a color in globals.css, update the matching value here.
+
+export const BRAND = { primary: "#FAA901", secondary: "#8F00E2" } as const;
+
+export const DARK_THEME = {
+  bg: "#121212",         // --background: 0 0% 7%
+  card: "#1a1a1a",       // --card: 0 0% 10%
+  foreground: "#ededed", // --foreground: 0 0% 93%
+  border: "#333333",     // --border: 0 0% 20%
+  mutedFg: "#a6a6a6",    // --muted-foreground: 0 0% 65%
+  footerText: "#555555",
+} as const;

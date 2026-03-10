@@ -241,3 +241,10 @@ INSERT INTO group_enrollments (id, group_id, gamer_id, enrolled_by) VALUES (
   '00000000-0000-0000-0000-000000000004', -- Test Gamer
   '00000000-0000-0000-0000-000000000002'  -- Test Customer
 );
+
+-- =============================================================================
+-- 6. Feedback Submissions
+-- =============================================================================
+
+INSERT INTO feedback_submissions (user_id, message) VALUES
+  ('00000000-0000-0000-0000-000000000002', 'Test feedback from customer');

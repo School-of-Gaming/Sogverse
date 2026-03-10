@@ -45,6 +45,9 @@ export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 export type Game = Database["public"]["Tables"]["games"]["Row"];
 export type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
 
+// feedback_submissions
+export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissions"]["Row"];
+
 // token_transactions
 export type TokenTransaction = Database["public"]["Tables"]["token_transactions"]["Row"];
 
