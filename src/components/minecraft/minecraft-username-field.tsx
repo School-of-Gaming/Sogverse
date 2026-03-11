@@ -11,12 +11,14 @@ interface MinecraftUsernameFieldProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
+  optional?: boolean;
 }
 
 export function MinecraftUsernameField({
   value,
   onChange,
   disabled,
+  optional,
 }: MinecraftUsernameFieldProps) {
   const verify = useVerifyMinecraft();
   const [verifiedName, setVerifiedName] = useState<string | null>(null);
@@ -58,7 +60,10 @@ export function MinecraftUsernameField({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="minecraftUsername">Minecraft Java Username</Label>
+      <Label htmlFor="minecraftUsername">
+        Minecraft Java Username
+        {optional && <span className="ml-1 text-muted-foreground font-normal">(optional)</span>}
+      </Label>
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Input

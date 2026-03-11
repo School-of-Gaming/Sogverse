@@ -248,6 +248,7 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
         value={minecraftUsername}
         onChange={setMinecraftUsername}
         disabled={createGamer.isPending}
+        optional
       />
 
       <div className="flex gap-2 pt-2">
