@@ -189,7 +189,7 @@ describe("POST /api/admin/send-test-email", () => {
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith({
       fromEmail: "noreply@example.com",
       fromName: "Sogverse",
-      toEmail: "test@example.com",
+      toEmail: ["test@example.com"],
       subject: "Test Subject",
       htmlContent: "Hello world",
       replyToEmail: undefined,
