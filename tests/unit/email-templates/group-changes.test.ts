@@ -85,7 +85,7 @@ describe("group-changes email templates", () => {
       expect(html).toContain("Kid");
       expect(html).toContain("Alice");
       expect(html).toContain("Bob");
-      expect(html).toContain("educator has changed");
+      expect(html).toContain("Gedu has changed");
     });
 
     it("escapes all names", () => {

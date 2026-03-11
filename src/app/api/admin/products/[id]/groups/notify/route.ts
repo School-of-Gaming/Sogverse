@@ -12,6 +12,7 @@ import {
   buildGamerMovedParentEmail,
   buildGamerMovedOldGeduEmail,
   buildGamerMovedNewGeduEmail,
+  groupChangeSubjects,
 } from "@/lib/email-templates/group-changes";
 import type { NotifyPayload } from "@/hooks/use-group-editor";
 
@@ -194,7 +195,7 @@ export async function POST(
       if (!gedu) continue;
       jobs.push({
         toEmail: gedu.email,
-        subject: `You've been assigned to a new group – ${productName}`,
+        subject: groupChangeSubjects.groupAdded(productName),
         htmlContent: buildGroupAddedEmail({ geduName: gedu.displayName, productName }),
         cc: adminEmails.filter((e) => e !== gedu.email),
         description: `Group added → ${gedu.email}`,
@@ -207,7 +208,7 @@ export async function POST(
       if (!gedu) continue;
       jobs.push({
         toEmail: gedu.email,
-        subject: `Your group has been removed – ${productName}`,
+        subject: groupChangeSubjects.groupDeleted(productName),
         htmlContent: buildGroupDeletedEmail({ geduName: gedu.displayName, productName }),
         cc: adminEmails.filter((e) => e !== gedu.email),
         description: `Group deleted → ${gedu.email}`,
@@ -223,7 +224,7 @@ export async function POST(
       // Old gedu
       jobs.push({
         toEmail: oldGedu.email,
-        subject: `Your group has been reassigned – ${productName}`,
+        subject: groupChangeSubjects.groupReassignedOldGedu(productName),
         htmlContent: buildGroupReassignedOldGeduEmail({
           oldGeduName: oldGedu.displayName,
           newGeduName: newGedu.displayName,
@@ -236,7 +237,7 @@ export async function POST(
       // New gedu
       jobs.push({
         toEmail: newGedu.email,
-        subject: `You've been assigned to a group – ${productName}`,
+        subject: groupChangeSubjects.groupReassignedNewGedu(productName),
         htmlContent: buildGroupReassignedNewGeduEmail({
           oldGeduName: oldGedu.displayName,
           newGeduName: newGedu.displayName,
@@ -255,7 +256,7 @@ export async function POST(
           if (!parent || !gamer) continue;
           jobs.push({
             toEmail: parent.email,
-            subject: `Educator change for ${gamer.displayName} – ${productName}`,
+            subject: groupChangeSubjects.groupReassignedParent(gamer.displayName, productName),
             htmlContent: buildGroupReassignedParentEmail({
               parentName: parent.displayName,
               gamerName: gamer.displayName,
@@ -284,7 +285,7 @@ export async function POST(
         if (parent) {
           jobs.push({
             toEmail: parent.email,
-            subject: `${gamer.displayName} has been moved to a new group – ${productName}`,
+            subject: groupChangeSubjects.gamerMovedParent(gamer.displayName, productName),
             htmlContent: buildGamerMovedParentEmail({
               parentName: parent.displayName,
               gamerName: gamer.displayName,
@@ -301,7 +302,7 @@ export async function POST(
       // Old gedu
       jobs.push({
         toEmail: oldGedu.email,
-        subject: `${gamer.displayName} has been moved from your group – ${productName}`,
+        subject: groupChangeSubjects.gamerMovedOldGedu(gamer.displayName, productName),
         htmlContent: buildGamerMovedOldGeduEmail({
           geduName: oldGedu.displayName,
           gamerName: gamer.displayName,
@@ -315,7 +316,7 @@ export async function POST(
       // New gedu
       jobs.push({
         toEmail: newGedu.email,
-        subject: `${gamer.displayName} has been moved to your group – ${productName}`,
+        subject: groupChangeSubjects.gamerMovedNewGedu(gamer.displayName, productName),
         htmlContent: buildGamerMovedNewGeduEmail({
           geduName: newGedu.displayName,
           gamerName: gamer.displayName,

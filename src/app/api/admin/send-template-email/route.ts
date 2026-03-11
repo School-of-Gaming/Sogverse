@@ -12,6 +12,7 @@ import {
   buildGamerMovedParentEmail,
   buildGamerMovedOldGeduEmail,
   buildGamerMovedNewGeduEmail,
+  groupChangeSubjects,
 } from "@/lib/email-templates/group-changes";
 import { z } from "zod";
 
@@ -63,7 +64,7 @@ const gamerMovedNewGeduSchema = z.object({
 interface TemplateEntry {
   schema: z.ZodType;
   build: (params: Record<string, string>) => string;
-  subject: string;
+  subject: (params: Record<string, string>) => string;
   fromName: string;
 }
 
@@ -71,55 +72,55 @@ const templates: Record<string, TemplateEntry> = {
   feedback: {
     schema: feedbackSchema,
     build: (p) => buildFeedbackEmail(p as z.infer<typeof feedbackSchema>),
-    subject: "New Feedback Received",
+    subject: () => "New Feedback Received",
     fromName: SENDER_NAME_FEEDBACK,
   },
   groupAdded: {
     schema: geduProductSchema,
     build: (p) => buildGroupAddedEmail(p as z.infer<typeof geduProductSchema>),
-    subject: "You've been assigned to a new group",
+    subject: (p) => groupChangeSubjects.groupAdded(p.productName),
     fromName: SENDER_NAME_ENROLLMENT,
   },
   groupDeleted: {
     schema: geduProductSchema,
     build: (p) => buildGroupDeletedEmail(p as z.infer<typeof geduProductSchema>),
-    subject: "Your group has been removed",
+    subject: (p) => groupChangeSubjects.groupDeleted(p.productName),
     fromName: SENDER_NAME_ENROLLMENT,
   },
   groupReassignedOldGedu: {
     schema: reassignSchema,
     build: (p) => buildGroupReassignedOldGeduEmail(p as z.infer<typeof reassignSchema>),
-    subject: "Your group has been reassigned",
+    subject: (p) => groupChangeSubjects.groupReassignedOldGedu(p.productName),
     fromName: SENDER_NAME_ENROLLMENT,
   },
   groupReassignedNewGedu: {
     schema: reassignSchema,
     build: (p) => buildGroupReassignedNewGeduEmail(p as z.infer<typeof reassignSchema>),
-    subject: "You've been assigned to a group",
+    subject: (p) => groupChangeSubjects.groupReassignedNewGedu(p.productName),
     fromName: SENDER_NAME_ENROLLMENT,
   },
   groupReassignedParent: {
     schema: parentGamerReassignSchema,
     build: (p) => buildGroupReassignedParentEmail(p as z.infer<typeof parentGamerReassignSchema>),
-    subject: "Your child's educator has changed",
+    subject: (p) => groupChangeSubjects.groupReassignedParent(p.gamerName, p.productName),
     fromName: SENDER_NAME_ENROLLMENT,
   },
   gamerMovedParent: {
     schema: parentGamerReassignSchema,
     build: (p) => buildGamerMovedParentEmail(p as z.infer<typeof parentGamerReassignSchema>),
-    subject: "Your child has been moved to a new group",
+    subject: (p) => groupChangeSubjects.gamerMovedParent(p.gamerName, p.productName),
     fromName: SENDER_NAME_ENROLLMENT,
   },
   gamerMovedOldGedu: {
     schema: gamerMovedOldGeduSchema,
     build: (p) => buildGamerMovedOldGeduEmail(p as z.infer<typeof gamerMovedOldGeduSchema>),
-    subject: "A gamer has been moved from your group",
+    subject: (p) => groupChangeSubjects.gamerMovedOldGedu(p.gamerName, p.productName),
     fromName: SENDER_NAME_ENROLLMENT,
   },
   gamerMovedNewGedu: {
     schema: gamerMovedNewGeduSchema,
     build: (p) => buildGamerMovedNewGeduEmail(p as z.infer<typeof gamerMovedNewGeduSchema>),
-    subject: "A gamer has been moved to your group",
+    subject: (p) => groupChangeSubjects.gamerMovedNewGedu(p.gamerName, p.productName),
     fromName: SENDER_NAME_ENROLLMENT,
   },
 };
@@ -166,13 +167,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const htmlContent = tmpl.build(paramsParsed.data as Record<string, string>);
+    const validatedParams = paramsParsed.data as Record<string, string>;
+    const htmlContent = tmpl.build(validatedParams);
 
     const emailResult = await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
       fromName: tmpl.fromName,
       toEmail,
-      subject: tmpl.subject,
+      subject: tmpl.subject(validatedParams),
       htmlContent,
     });
 
