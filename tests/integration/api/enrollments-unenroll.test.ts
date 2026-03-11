@@ -23,8 +23,9 @@ vi.mock("@/lib/enrollment", () => ({
   getRefundEligibility: (...args: unknown[]) => mockGetRefundEligibility(...args),
 }));
 
+const mockSendUnenrollmentNotifications = vi.fn().mockResolvedValue(undefined);
 vi.mock("@/lib/enrollment-notifications", () => ({
-  sendUnenrollmentNotifications: vi.fn().mockResolvedValue(undefined),
+  sendUnenrollmentNotifications: (...args: unknown[]) => mockSendUnenrollmentNotifications(...args),
 }));
 
 // --- Helpers ---
@@ -240,6 +241,11 @@ describe("DELETE /api/enrollments/[id]", () => {
       p_customer_id: "customer-123",
       p_enrollment_id: "enr-1",
       p_refund: true,
+    });
+    expect(mockSendUnenrollmentNotifications).toHaveBeenCalledWith({
+      customerId: "customer-123",
+      gamerId: "gamer-1",
+      groupId: "group-1",
     });
   });
 
