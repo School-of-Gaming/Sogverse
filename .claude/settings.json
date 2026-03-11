@@ -15,6 +15,7 @@
       "Bash(npm run lint:*)",
       "Bash(npm run type-check:*)",
       "Bash(npx playwright test)",
+      "Bash(npx playwright:*)",
       "Bash(npx vitest:*)",
       "Bash(npx next lint:*)",
       "Bash(npx tsc:*)",
