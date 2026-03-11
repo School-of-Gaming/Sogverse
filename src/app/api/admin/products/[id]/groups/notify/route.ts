@@ -348,29 +348,28 @@ export async function POST(
           jobs: jobs.map((j) => ({ description: j.description, recipient: j.toEmail })),
         });
 
-        for (let i = 0; i < jobs.length; i++) {
-          const job = jobs[i];
-
-          try {
-            await sendTransactionalEmail({
-              fromEmail: FROM_EMAIL,
-              fromName: FROM_NAME,
-              toEmail: job.toEmail,
-              subject: job.subject,
-              htmlContent: job.htmlContent,
-              cc: job.cc,
-              bcc: job.bcc,
-            });
-            sent++;
-            emit({ type: "sent", index: i });
-          } catch (err) {
-            failed++;
-            const msg = `Failed to send to ${job.toEmail}: ${(err as Error).message}`;
-            errors.push(msg);
-            console.error(msg);
-            emit({ type: "failed", index: i, error: msg });
-          }
-        }
+        // Fire all sends in parallel; emit status per job as each settles
+        const promises = jobs.map((job, i) =>
+          sendTransactionalEmail({
+            fromEmail: FROM_EMAIL,
+            fromName: FROM_NAME,
+            toEmail: job.toEmail,
+            subject: job.subject,
+            htmlContent: job.htmlContent,
+            cc: job.cc,
+            bcc: job.bcc,
+          }).then(
+            () => { sent++; emit({ type: "sent", index: i }); },
+            (err) => {
+              failed++;
+              const msg = `Failed to send to ${job.toEmail}: ${(err as Error).message}`;
+              errors.push(msg);
+              console.error(msg);
+              emit({ type: "failed", index: i, error: msg });
+            },
+          ),
+        );
+        await Promise.all(promises);
 
         emit({ type: "complete", sent, failed, errors });
         controller.close();

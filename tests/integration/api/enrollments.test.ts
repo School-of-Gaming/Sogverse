@@ -22,6 +22,11 @@ vi.mock("@/lib/enrollment", () => ({
   getNextSessionStart: vi.fn(() => new Date("2026-03-01T15:00:00Z")),
 }));
 
+const mockSendEnrollmentNotifications = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/lib/enrollment-notifications", () => ({
+  sendEnrollmentNotifications: (...args: unknown[]) => mockSendEnrollmentNotifications(...args),
+}));
+
 // --- Helpers ---
 
 function mockUnauthenticated() {
@@ -155,6 +160,11 @@ describe("POST /api/enrollments", () => {
       p_gamer_id: "g-1",
       p_group_id: "gr-1",
       p_session_date: "2026-03-01",
+    });
+    expect(mockSendEnrollmentNotifications).toHaveBeenCalledWith({
+      customerId: "customer-123",
+      gamerId: "g-1",
+      groupId: "gr-1",
     });
   });
 

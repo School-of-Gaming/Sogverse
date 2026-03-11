@@ -1,24 +1,5 @@
-import { BRAND, DARK_THEME } from "@/lib/constants/colors";
 import { wrapInLayout } from "./layout";
-import { escapeHtml } from "./utils";
-
-// --- Shared helpers ---
-
-function paragraph(text: string): string {
-  return `<p style="margin:0 0 16px;color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">${text}</p>`;
-}
-
-function heading(text: string): string {
-  return `<h2 style="margin:0 0 16px;font-size:18px;font-weight:bold;color:${DARK_THEME.foreground};">${text}</h2>`;
-}
-
-function styledName(name: string): string {
-  return `<span style="color:${BRAND.primary};">${escapeHtml(name)}</span>`;
-}
-
-function styledProductName(name: string): string {
-  return `<strong style="color:${BRAND.secondary};">${escapeHtml(name)}</strong>`;
-}
+import { heading, paragraph, styledName, styledProductName } from "./utils";
 
 // --- Subjects ---
 

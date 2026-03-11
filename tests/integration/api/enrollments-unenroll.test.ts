@@ -23,6 +23,11 @@ vi.mock("@/lib/enrollment", () => ({
   getRefundEligibility: (...args: unknown[]) => mockGetRefundEligibility(...args),
 }));
 
+const mockSendUnenrollmentNotifications = vi.fn().mockResolvedValue(undefined);
+vi.mock("@/lib/enrollment-notifications", () => ({
+  sendUnenrollmentNotifications: (...args: unknown[]) => mockSendUnenrollmentNotifications(...args),
+}));
+
 // --- Helpers ---
 
 function mockUnauthenticated() {
@@ -80,6 +85,8 @@ function buildChargeChain(sessionDate: string | null) {
 /** Build a mock chain for group_enrollments query */
 function buildEnrollmentChain(enrollment?: {
   id: string;
+  gamer_id: string;
+  group_id: string;
   enrolled_by: string;
   status: string;
   product_groups: { products: typeof MOCK_PRODUCT };
@@ -101,6 +108,8 @@ function buildEnrollmentChain(enrollment?: {
 function mockEnrollmentLookup(
   enrollment?: {
     id: string;
+    gamer_id: string;
+    group_id: string;
     enrolled_by: string;
     status: string;
     product_groups: { products: typeof MOCK_PRODUCT };
@@ -121,6 +130,8 @@ function mockActiveEnrollment(enrolledBy = "customer-123", sessionDate: string |
   mockEnrollmentLookup(
     {
       id: "enr-1",
+      gamer_id: "gamer-1",
+      group_id: "group-1",
       enrolled_by: enrolledBy,
       status: "active",
       product_groups: { products: MOCK_PRODUCT },
@@ -188,6 +199,8 @@ describe("DELETE /api/enrollments/[id]", () => {
     mockAuthenticated();
     mockEnrollmentLookup({
       id: "enr-1",
+      gamer_id: "gamer-1",
+      group_id: "group-1",
       enrolled_by: "customer-123",
       status: "unenrolled",
       product_groups: { products: MOCK_PRODUCT },
@@ -228,6 +241,11 @@ describe("DELETE /api/enrollments/[id]", () => {
       p_customer_id: "customer-123",
       p_enrollment_id: "enr-1",
       p_refund: true,
+    });
+    expect(mockSendUnenrollmentNotifications).toHaveBeenCalledWith({
+      customerId: "customer-123",
+      gamerId: "gamer-1",
+      groupId: "group-1",
     });
   });
 

@@ -25,15 +25,52 @@ interface EmailResult {
 
 // --- Template definitions (mirrors the API route's registry) ---
 
-interface TemplateField {
+interface TextField {
   key: string;
   label: string;
   placeholder: string;
 }
 
+interface SelectField {
+  key: string;
+  label: string;
+  type: "select";
+  options: { label: string; value: string }[];
+}
+
+type TemplateField = TextField | SelectField;
+
 interface TemplateDef {
   label: string;
   fields: TemplateField[];
+  /** Map a select field value to multiple params (e.g. minecraft status → username + uuid). */
+  resolveParams?: (params: Record<string, string>) => Record<string, string | null>;
+}
+
+const MINECRAFT_STATUS_OPTIONS = [
+  { label: "Verified (username + uuid)", value: "verified" },
+  { label: "Unverified (username only)", value: "unverified" },
+  { label: "Not provided", value: "none" },
+];
+
+function resolveMinecraftStatus(params: Record<string, string>): Record<string, string | null> {
+  const resolved: Record<string, string | null> = { ...params };
+  const status = params.minecraftStatus ?? "verified";
+  delete resolved.minecraftStatus;
+  switch (status) {
+    case "verified":
+      resolved.minecraftUsername = "Notch";
+      resolved.minecraftUuid = "069a79f4-44e9-4726-a5be-fca90e38aaf5";
+      break;
+    case "unverified":
+      resolved.minecraftUsername = "PlayerOne";
+      resolved.minecraftUuid = null;
+      break;
+    default:
+      resolved.minecraftUsername = null;
+      resolved.minecraftUuid = null;
+  }
+  return resolved;
 }
 
 const templateDefs: Record<string, TemplateDef> = {
@@ -115,6 +152,46 @@ const templateDefs: Record<string, TemplateDef> = {
       { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
     ],
   },
+  enrollmentParent: {
+    label: "Enrollment (Parent)",
+    fields: [
+      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
+      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
+      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
+    ],
+    resolveParams: resolveMinecraftStatus,
+  },
+  enrollmentGedu: {
+    label: "Enrollment (Gedu)",
+    fields: [
+      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
+      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
+    ],
+    resolveParams: resolveMinecraftStatus,
+  },
+  unenrollmentParent: {
+    label: "Unenrollment (Parent)",
+    fields: [
+      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
+      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
+      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+    ],
+  },
+  unenrollmentGedu: {
+    label: "Unenrollment (Gedu)",
+    fields: [
+      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
+      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
+      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
+      { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
+    ],
+    resolveParams: resolveMinecraftStatus,
+  },
 };
 
 const selectClass =
@@ -189,12 +266,15 @@ export default function TestingPage() {
             mode: "template",
             template: templateName,
             toEmail,
-            params: Object.fromEntries(
-              selectedTemplate.fields.map((f) => [
-                f.key,
-                templateParams[f.key] || f.placeholder,
-              ]),
-            ),
+            params: (() => {
+              const raw = Object.fromEntries(
+                selectedTemplate.fields.map((f) => [
+                  f.key,
+                  templateParams[f.key] || ("placeholder" in f ? f.placeholder : f.options[0].value),
+                ]),
+              );
+              return selectedTemplate.resolveParams ? selectedTemplate.resolveParams(raw) : raw;
+            })(),
           }),
         });
       }
@@ -309,12 +389,27 @@ export default function TestingPage() {
                         <Label htmlFor={`param-${field.key}`} className="text-sm">
                           {field.label}
                         </Label>
-                        <Input
-                          id={`param-${field.key}`}
-                          value={templateParams[field.key] ?? ""}
-                          onChange={(e) => updateParam(field.key, e.target.value)}
-                          placeholder={field.placeholder}
-                        />
+                        {"type" in field && field.type === "select" ? (
+                          <select
+                            id={`param-${field.key}`}
+                            value={templateParams[field.key] ?? field.options[0].value}
+                            onChange={(e) => updateParam(field.key, e.target.value)}
+                            className={selectClass}
+                          >
+                            {field.options.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Input
+                            id={`param-${field.key}`}
+                            value={templateParams[field.key] ?? ""}
+                            onChange={(e) => updateParam(field.key, e.target.value)}
+                            placeholder={"placeholder" in field ? field.placeholder : ""}
+                          />
+                        )}
                       </div>
                     ))}
                   </div>

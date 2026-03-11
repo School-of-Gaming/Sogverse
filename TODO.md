@@ -90,6 +90,10 @@ This was tested during the staging squash and worked well:
 
 - [x] Promote `Content-Security-Policy-Report-Only` to enforcing `Content-Security-Policy` once the allowlist is validated with zero console warnings in staging
 
+## Cleanup
+
+- [ ] Remove `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` from `.github/workflows/ci.yml` after June 2, 2026 (Node.js 24 becomes the default runner)
+
 ## Future Improvements
 
 ### Add Display Name Length Limit
