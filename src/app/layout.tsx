@@ -38,9 +38,9 @@ export default async function RootLayout({
   const locale = parseAcceptLanguage(headersList.get("accept-language")) ?? DEFAULT_LOCALE;
 
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" className="dark overflow-hidden" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${pressStart2P.variable} antialiased min-h-screen bg-background text-foreground`}
+        className={`${inter.variable} ${pressStart2P.variable} antialiased bg-background text-foreground`}
       >
         <Providers
           initialUser={userWithProfile?.user ?? null}
@@ -49,7 +49,7 @@ export default async function RootLayout({
         >
           <div className="flex h-screen flex-col">
             <Header />
-            <main className="flex-1 min-h-0 overflow-auto">
+            <main className="flex-1 min-h-0 overflow-auto flex flex-col">
               {children}
             </main>
           </div>
