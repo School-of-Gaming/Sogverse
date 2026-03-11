@@ -331,6 +331,10 @@ export function buildChangeSummary(
   for (const ag of state.addedGroups) {
     groupGeduLookup.set(ag.tempId, ag.geduDisplayName);
   }
+  // Override with reassigned gedu names so move descriptions reflect the new owner
+  for (const ug of state.updatedGroups) {
+    groupGeduLookup.set(ug.groupId, ug.geduDisplayName);
+  }
   for (const m of state.enrollmentMoves) {
     const name = gamerLookup.get(m.gamerId) ?? "a gamer";
     const from = groupGeduLookup.get(m.fromGroupId) ?? "unknown";

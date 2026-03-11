@@ -440,6 +440,40 @@ describe("buildChangeSummary", () => {
     expect(summary.lines[0]).toContainEqual({ type: "gedu", value: "Bob" });
   });
 
+  it("uses new gedu name in move when target group is also reassigned", () => {
+    const server = [
+      makeServerGroup({
+        groupId: "g1",
+        geduDisplayName: "Alice",
+        gamers: [
+          { gamerId: "gamer-1", displayName: "Kid A", enrollmentId: "e1", dateOfBirth: null, gender: null },
+        ],
+      }),
+      makeServerGroup({
+        groupId: "g2",
+        displayOrder: 1,
+        geduId: "gedu-2",
+        geduDisplayName: "Bob",
+        gamers: [],
+      }),
+    ];
+    const state = dispatch([
+      { type: "UPDATE_GROUP_GEDU", groupId: "g2", geduId: "gedu-3", geduDisplayName: "Charlie" },
+      { type: "MOVE_GAMER", gamerId: "gamer-1", fromGroupId: "g1", toGroupId: "g2" },
+    ]);
+
+    const summary = buildChangeSummary(state, server);
+
+    const moveLine = summary.lines.find((line) =>
+      line.some((seg) => seg.type === "text" && seg.value === "Move "),
+    );
+    expect(moveLine).toBeDefined();
+    // The target group was reassigned from Bob to Charlie, so the move should say Charlie
+    expect(moveLine).toContainEqual({ type: "gedu", value: "Alice" });
+    expect(moveLine).toContainEqual({ type: "gedu", value: "Charlie" });
+    expect(moveLine).not.toContainEqual({ type: "gedu", value: "Bob" });
+  });
+
   it("warns when all groups are deleted", () => {
     const server = [makeServerGroup({ groupId: "g1" })];
     const state = dispatch([{ type: "DELETE_GROUP", groupId: "g1" }]);
