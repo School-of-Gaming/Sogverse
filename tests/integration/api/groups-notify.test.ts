@@ -59,18 +59,26 @@ const emptyPayload = {
 };
 
 // Chainable mock for Supabase query builder
-function chainable(result: { data: unknown; error?: unknown }) {
-  const chain: Record<string, unknown> = {};
-  const methods = ["select", "eq", "in", "single", "not"];
+interface Chain {
+  select: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  in: ReturnType<typeof vi.fn>;
+  single: ReturnType<typeof vi.fn>;
+  not: ReturnType<typeof vi.fn>;
+  then: (resolve: (v: unknown) => void) => void;
+  [key: string]: unknown;
+}
+
+function chainable(result: { data: unknown; error?: unknown }): Chain {
+  const chain = {} as Chain;
+  const methods = ["select", "eq", "in", "single", "not"] as const;
   for (const m of methods) {
     chain[m] = vi.fn().mockReturnValue(chain);
   }
   // Terminal: make it thenable so `await` resolves to the result
   chain.then = (resolve: (v: unknown) => void) => resolve(result);
-  return chain as ReturnType<typeof chainable>;
+  return chain;
 }
-
-type Chain = ReturnType<typeof chainable>;
 
 function setupMockFrom() {
   mockFrom.mockImplementation((table: string) => {
@@ -243,9 +251,9 @@ describe("POST /api/admin/products/[id]/groups/notify", () => {
 
     // Verify every group_enrollments query included status = 'active' filter
     for (const chain of enrollmentChains) {
-      const eqCalls = (chain.eq as ReturnType<typeof vi.fn>).mock.calls;
+      const eqCalls = chain.eq.mock.calls;
       const hasStatusFilter = eqCalls.some(
-        ([col, val]: [string, string]) => col === "status" && val === "active"
+        (args: unknown[]) => args[0] === "status" && args[1] === "active"
       );
       expect(hasStatusFilter, "group_enrollments query must filter by status = 'active'").toBe(true);
     }
@@ -295,9 +303,9 @@ describe("POST /api/admin/products/[id]/groups/notify", () => {
 
     // Verify every group_enrollments query included status = 'active' filter
     for (const chain of enrollmentChains) {
-      const eqCalls = (chain.eq as ReturnType<typeof vi.fn>).mock.calls;
+      const eqCalls = chain.eq.mock.calls;
       const hasStatusFilter = eqCalls.some(
-        ([col, val]: [string, string]) => col === "status" && val === "active"
+        (args: unknown[]) => args[0] === "status" && args[1] === "active"
       );
       expect(hasStatusFilter, "group_enrollments query must filter by status = 'active'").toBe(true);
     }
