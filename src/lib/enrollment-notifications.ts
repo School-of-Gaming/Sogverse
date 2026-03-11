@@ -100,7 +100,7 @@ export async function sendEnrollmentNotifications(ctx: EnrollmentNotificationCon
         minecraftUsername: data.minecraftUsername,
         minecraftUuid: data.minecraftUuid,
       }),
-      bcc: data.adminEmails.filter((e) => e !== data.parentEmail),
+      bcc: data.adminEmails,
     });
 
     // Gedu email (CC admins — visible as collaborators)
@@ -116,7 +116,7 @@ export async function sendEnrollmentNotifications(ctx: EnrollmentNotificationCon
         minecraftUsername: data.minecraftUsername,
         minecraftUuid: data.minecraftUuid,
       }),
-      cc: data.adminEmails.filter((e) => e !== data.geduEmail),
+      cc: data.adminEmails,
     });
   } catch (err) {
     console.error("Failed to send enrollment notifications:", err);
@@ -139,7 +139,7 @@ export async function sendUnenrollmentNotifications(ctx: EnrollmentNotificationC
         geduName: data.geduName,
         productName: data.productName,
       }),
-      bcc: data.adminEmails.filter((e) => e !== data.parentEmail),
+      bcc: data.adminEmails,
     });
 
     // Gedu email (CC admins)
@@ -155,7 +155,7 @@ export async function sendUnenrollmentNotifications(ctx: EnrollmentNotificationC
         minecraftUsername: data.minecraftUsername,
         minecraftUuid: data.minecraftUuid,
       }),
-      cc: data.adminEmails.filter((e) => e !== data.geduEmail),
+      cc: data.adminEmails,
     });
   } catch (err) {
     console.error("Failed to send unenrollment notifications:", err);

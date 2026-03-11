@@ -138,30 +138,6 @@ describe("sendEnrollmentNotifications", () => {
     expect(geduCall.bcc).toBeUndefined();
   });
 
-  it("excludes parent from BCC when parent is admin", async () => {
-    setupMockData({
-      parentEmail: "admin1@test.com",
-      adminEmails: ["admin1@test.com", "admin2@test.com"],
-    });
-
-    await sendEnrollmentNotifications(MOCK_CTX);
-
-    const parentCall = mockSendTransactionalEmail.mock.calls[0][0];
-    expect(parentCall.bcc).toEqual(["admin2@test.com"]);
-  });
-
-  it("excludes gedu from CC when gedu is admin", async () => {
-    setupMockData({
-      geduEmail: "admin1@test.com",
-      adminEmails: ["admin1@test.com", "admin2@test.com"],
-    });
-
-    await sendEnrollmentNotifications(MOCK_CTX);
-
-    const geduCall = mockSendTransactionalEmail.mock.calls[1][0];
-    expect(geduCall.cc).toEqual(["admin2@test.com"]);
-  });
-
   it("logs error and does not throw when data fetch fails", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockFrom.mockImplementation(() => ({
