@@ -36,6 +36,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const dobDate = new Date(dateOfBirth + "T00:00:00");
+    if (isNaN(dobDate.getTime()) || dobDate > new Date()) {
+      return NextResponse.json(
+        { error: "Date of birth cannot be in the future" },
+        { status: 400 }
+      );
+    }
+
     const validGenders = ["boy", "girl", "non_binary"];
     if (!gender || !validGenders.includes(gender)) {
       return NextResponse.json(

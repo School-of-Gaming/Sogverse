@@ -23,7 +23,13 @@ const gamerSchema = z
       ),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string(),
-    dateOfBirth: z.string().min(1, "Date of birth is required"),
+    dateOfBirth: z
+      .string()
+      .min(1, "Date of birth is required")
+      .refine(
+        (val) => new Date(val + "T00:00:00") <= new Date(),
+        "Date of birth cannot be in the future",
+      ),
     gender: z.enum(["boy", "girl", "non_binary"], {
       required_error: "Gender is required",
     }),
@@ -58,7 +64,11 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState(() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() - 10);
+    return d.toISOString().split("T")[0];
+  });
   const [gender, setGender] = useState<"boy" | "girl" | "non_binary" | "">("");
   const [minecraftUsername, setMinecraftUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -196,6 +206,7 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
           type="date"
           value={dateOfBirth}
           onChange={(e) => setDateOfBirth(e.target.value)}
+          max={new Date().toISOString().split("T")[0]}
           disabled={createGamer.isPending}
           required
         />
