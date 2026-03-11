@@ -179,7 +179,7 @@ export async function POST(
       }
     }
 
-    // Fetch admin emails for CC/BCC
+    // Fetch admin emails for CC/BCC (includes the acting admin so they get a receipt)
     const { data: adminProfiles } = await admin
       .from("profiles")
       .select("email")
@@ -189,6 +189,8 @@ export async function POST(
       .filter((e: string | null): e is string => !!e);
 
     // --- Build email jobs ---
+    // Gedu emails use CC so admins are visible as collaborators.
+    // Parent emails use BCC so admins stay hidden from families.
     const jobs: EmailJob[] = [];
 
     // Group added
