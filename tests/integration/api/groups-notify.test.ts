@@ -132,7 +132,7 @@ describe("POST /api/admin/products/[id]/groups/notify", () => {
     expect(data.error).toBe("Product not found");
   });
 
-  it("returns complete SSE event with 0 sent for empty payload", async () => {
+  it("returns plan and complete SSE events with 0 sent for empty payload", async () => {
     mockAdmin();
 
     const [req, ctx] = createRequest("product-1", emptyPayload);
@@ -141,32 +141,31 @@ describe("POST /api/admin/products/[id]/groups/notify", () => {
     expect(response.headers.get("Content-Type")).toBe("text/event-stream");
 
     const events = await readStream(response);
-    expect(events).toHaveLength(1);
+    const parsed = events.map((e) => JSON.parse(e));
 
-    const complete = JSON.parse(events[0]);
-    expect(complete.type).toBe("complete");
+    const planEvent = parsed.find((e) => e.type === "plan");
+    const complete = parsed.find((e) => e.type === "complete");
+
+    expect(planEvent).toBeDefined();
+    expect(planEvent.jobs).toHaveLength(0);
+    expect(complete).toBeDefined();
     expect(complete.sent).toBe(0);
     expect(complete.failed).toBe(0);
   });
 
-  it("sends emails and streams progress for added groups", async () => {
+  it("sends plan event then sent events for added groups", async () => {
     mockAdmin();
 
-    // Track which table queries happen
-    const profileCalls: unknown[][] = [];
     mockFrom.mockImplementation((table: string) => {
       if (table === "products") {
         return chainable({ data: { name: "Minecraft 101" } });
       }
       if (table === "profiles") {
-        // Return different results based on the call
-        const call = chainable({
+        return chainable({
           data: [
             { id: "gedu-1", display_name: "Alice", email: "alice@test.com", role: "gedu" },
           ],
         });
-        profileCalls.push([table]);
-        return call;
       }
       return chainable({ data: [] });
     });
@@ -186,13 +185,18 @@ describe("POST /api/admin/products/[id]/groups/notify", () => {
     const events = await readStream(response);
     const parsed = events.map((e) => JSON.parse(e));
 
-    // Should have progress, sent, and complete events
-    const progressEvents = parsed.filter((e) => e.type === "progress");
+    // Should have plan, sent, and complete events
+    const planEvent = parsed.find((e) => e.type === "plan");
+    const sentEvents = parsed.filter((e) => e.type === "sent");
     const completeEvent = parsed.find((e) => e.type === "complete");
 
-    expect(progressEvents.length).toBeGreaterThanOrEqual(1);
+    expect(planEvent).toBeDefined();
+    expect(planEvent.jobs.length).toBeGreaterThanOrEqual(1);
+    expect(planEvent.jobs[0].recipient).toBe("alice@test.com");
+    expect(sentEvents.length).toBeGreaterThanOrEqual(1);
+    expect(sentEvents[0].index).toBe(0);
     expect(completeEvent).toBeDefined();
-    expect(completeEvent.sent).toBeGreaterThanOrEqual(0);
+    expect(completeEvent.sent).toBeGreaterThanOrEqual(1);
   });
 
   it("only notifies parents of actively enrolled gamers in reassigned groups", async () => {

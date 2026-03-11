@@ -331,42 +331,23 @@ export async function POST(
     }
 
     // --- Stream SSE ---
-    const total = jobs.length;
-
-    if (total === 0) {
-      return new Response(
-        `data: ${JSON.stringify({ type: "complete", sent: 0, failed: 0, errors: [] })}\n\n`,
-        {
-          headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache",
-            Connection: "keep-alive",
-          },
-        },
-      );
-    }
-
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
+        const emit = (data: Record<string, unknown>) =>
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
         let sent = 0;
         let failed = 0;
         const errors: string[] = [];
 
+        // Plan event: list all jobs upfront
+        emit({
+          type: "plan",
+          jobs: jobs.map((j) => ({ description: j.description, recipient: j.toEmail })),
+        });
+
         for (let i = 0; i < jobs.length; i++) {
           const job = jobs[i];
-
-          // Progress event
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: "progress",
-                current: i + 1,
-                total,
-                message: `Notifying ${job.toEmail}...`,
-              })}\n\n`,
-            ),
-          );
 
           try {
             await sendTransactionalEmail({
@@ -379,43 +360,17 @@ export async function POST(
               bcc: job.bcc,
             });
             sent++;
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  type: "sent",
-                  current: i + 1,
-                  total,
-                  recipient: job.toEmail,
-                  description: job.description,
-                })}\n\n`,
-              ),
-            );
+            emit({ type: "sent", index: i });
           } catch (err) {
             failed++;
             const msg = `Failed to send to ${job.toEmail}: ${(err as Error).message}`;
             errors.push(msg);
             console.error(msg);
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({
-                  type: "failed",
-                  current: i + 1,
-                  total,
-                  recipient: job.toEmail,
-                  description: `Failed: ${job.description}`,
-                })}\n\n`,
-              ),
-            );
+            emit({ type: "failed", index: i, error: msg });
           }
         }
 
-        // Complete event
-        controller.enqueue(
-          encoder.encode(
-            `data: ${JSON.stringify({ type: "complete", sent, failed, errors })}\n\n`,
-          ),
-        );
-
+        emit({ type: "complete", sent, failed, errors });
         controller.close();
       },
     });
