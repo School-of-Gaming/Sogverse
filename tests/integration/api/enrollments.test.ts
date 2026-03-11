@@ -22,6 +22,10 @@ vi.mock("@/lib/enrollment", () => ({
   getNextSessionStart: vi.fn(() => new Date("2026-03-01T15:00:00Z")),
 }));
 
+vi.mock("@/lib/enrollment-notifications", () => ({
+  sendEnrollmentNotifications: vi.fn().mockResolvedValue(undefined),
+}));
+
 // --- Helpers ---
 
 function mockUnauthenticated() {

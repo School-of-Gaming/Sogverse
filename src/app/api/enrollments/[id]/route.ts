@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getRefundEligibility } from "@/lib/enrollment";
 import { ENROLLMENT_CHARGE_WINDOW_HOURS } from "@/lib/constants/enrollment";
+import { sendUnenrollmentNotifications } from "@/lib/enrollment-notifications";
 
 export async function DELETE(
   request: Request,
@@ -28,6 +29,8 @@ export async function DELETE(
       .from("group_enrollments")
       .select(`
         id,
+        gamer_id,
+        group_id,
         enrolled_by,
         status,
         product_groups(
@@ -85,6 +88,13 @@ export async function DELETE(
     }
 
     const rpcResult = data?.[0];
+
+    sendUnenrollmentNotifications({
+      customerId: user.id,
+      gamerId: enrollment.gamer_id,
+      groupId: enrollment.group_id,
+    }).catch((err) => console.error("Unenrollment notification error:", err));
+
     return NextResponse.json({
       refunded: eligible,
       refundAmount,

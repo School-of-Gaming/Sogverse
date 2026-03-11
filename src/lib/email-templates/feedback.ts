@@ -1,6 +1,6 @@
 import { DARK_THEME } from "@/lib/constants/colors";
 import { wrapInLayout } from "./layout";
-import { escapeHtml } from "./utils";
+import { escapeHtml, heading } from "./utils";
 
 interface FeedbackEmailOptions {
   userName: string;
@@ -32,9 +32,7 @@ export function buildFeedbackEmail(opts: FeedbackEmailOptions): string {
   const content = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td style="font-size:18px;font-weight:bold;color:${DARK_THEME.foreground};padding-bottom:16px;">
-          New Feedback Received
-        </td>
+        <td>${heading("New Feedback Received")}</td>
       </tr>
       <tr>
         <td style="padding-bottom:16px;">
