@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { z } from "zod";
+import { Info } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -93,13 +95,24 @@ export function RegisterForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          <Alert variant="info">
+            <Info className="h-4 w-4 shrink-0" />
+            <div>
+              <AlertTitle>This is a parent account</AlertTitle>
+              <AlertDescription>
+                This account is for you, the parent. Your child&apos;s gamer
+                account is separate and will be created later when you enroll
+                them in a product.
+              </AlertDescription>
+            </div>
+          </Alert>
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
+            <Label htmlFor="displayName">Parent&apos;s Display Name</Label>
             <Input
               id="displayName"
               type="text"

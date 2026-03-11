@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Info } from "lucide-react";
 import { z } from "zod";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -127,8 +128,21 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
         </div>
       )}
 
+      <Alert variant="info">
+        <Info className="h-4 w-4 shrink-0" />
+        <div>
+          <AlertTitle>Share these credentials with your child</AlertTitle>
+          <AlertDescription>
+            Your child will use the username and password below to log in to
+            their own gamer account. This is safer than sharing your parent
+            password — gamer accounts can only access their games and profile,
+            not your billing or account settings.
+          </AlertDescription>
+        </div>
+      </Alert>
+
       <div className="space-y-2">
-        <Label htmlFor="gamer-displayName">Display Name</Label>
+        <Label htmlFor="gamer-displayName">Gamer&apos;s Display Name</Label>
         <Input
           id="gamer-displayName"
           type="text"
