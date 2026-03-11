@@ -76,6 +76,7 @@ export function MinecraftUsernameField({
           type="button"
           variant="outline"
           size="default"
+          className="w-28"
           onClick={handleVerify}
           disabled={disabled || !value.trim() || !isValid || verify.isPending}
         >
@@ -89,36 +90,40 @@ export function MinecraftUsernameField({
           )}
         </Button>
       </div>
-      {isVerified && verifiedName && (
-        <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`https://mc-heads.net/avatar/${verifiedName}`}
-            alt={`${verifiedName}'s Minecraft skin`}
-            width={32}
-            height={32}
-            className="rounded"
-          />
-          <span className="text-sm text-success">
-            Verified: {verifiedName}
-          </span>
+      <div
+        className="grid overflow-hidden transition-[grid-template-rows,opacity] duration-700 ease-in-out"
+        style={{
+          gridTemplateRows: isVerified && verifiedName ? "1fr" : "0fr",
+          opacity: isVerified && verifiedName ? 1 : 0,
+        }}
+      >
+        <div className="min-h-0">
+          <div className="flex flex-col items-center gap-2 pt-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={verifiedName ? `https://mc-heads.net/body/${verifiedName}` : undefined}
+              alt={verifiedName ? `${verifiedName}'s Minecraft skin` : ""}
+              height={64}
+              className="rounded"
+            />
+            <p className="text-xs text-muted-foreground">
+              Thanks to{" "}
+              <a
+                href="https://mc-heads.net"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground"
+              >
+                MCHeads
+              </a>
+              {" "}for providing Minecraft avatars.
+            </p>
+          </div>
         </div>
-      )}
+      </div>
       {verifyError && (
         <p className="text-sm text-muted-foreground">{verifyError}</p>
       )}
-      <p className="text-xs text-muted-foreground">
-        Thanks to{" "}
-        <a
-          href="https://mc-heads.net"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-foreground"
-        >
-          MCHeads
-        </a>
-        {" "}for providing Minecraft avatars.
-      </p>
     </div>
   );
 }
