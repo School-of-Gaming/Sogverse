@@ -107,6 +107,7 @@ export async function POST(
         .from("group_enrollments")
         .select("gamer_id, enrolled_by, product_groups!inner(product_id)")
         .eq("product_groups.product_id", productId)
+        .eq("status", "active")
         .in("gamer_id", Array.from(gamerIds));
       for (const e of enrollments ?? []) {
         if (e.enrolled_by) {
@@ -125,6 +126,7 @@ export async function POST(
       const { data: enrollments } = await admin
         .from("group_enrollments")
         .select("gamer_id, enrolled_by, group_id")
+        .eq("status", "active")
         .in("group_id", reassignedGroupIds);
 
       for (const e of enrollments ?? []) {
@@ -384,6 +386,7 @@ export async function POST(
                   current: i + 1,
                   total,
                   recipient: job.toEmail,
+                  description: job.description,
                 })}\n\n`,
               ),
             );
@@ -392,6 +395,17 @@ export async function POST(
             const msg = `Failed to send to ${job.toEmail}: ${(err as Error).message}`;
             errors.push(msg);
             console.error(msg);
+            controller.enqueue(
+              encoder.encode(
+                `data: ${JSON.stringify({
+                  type: "failed",
+                  current: i + 1,
+                  total,
+                  recipient: job.toEmail,
+                  description: `Failed: ${job.description}`,
+                })}\n\n`,
+              ),
+            );
           }
         }
 

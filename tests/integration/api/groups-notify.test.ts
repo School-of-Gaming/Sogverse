@@ -67,8 +67,10 @@ function chainable(result: { data: unknown; error?: unknown }) {
   }
   // Terminal: make it thenable so `await` resolves to the result
   chain.then = (resolve: (v: unknown) => void) => resolve(result);
-  return chain;
+  return chain as ReturnType<typeof chainable>;
 }
+
+type Chain = ReturnType<typeof chainable>;
 
 function setupMockFrom() {
   mockFrom.mockImplementation((table: string) => {
@@ -191,6 +193,110 @@ describe("POST /api/admin/products/[id]/groups/notify", () => {
     expect(progressEvents.length).toBeGreaterThanOrEqual(1);
     expect(completeEvent).toBeDefined();
     expect(completeEvent.sent).toBeGreaterThanOrEqual(0);
+  });
+
+  it("only notifies parents of actively enrolled gamers in reassigned groups", async () => {
+    mockAdmin();
+
+    const enrollmentChains: Chain[] = [];
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "products") {
+        return chainable({ data: { name: "Minecraft 101" } });
+      }
+      if (table === "profiles") {
+        return chainable({
+          data: [
+            { id: "old-gedu", display_name: "Alice", email: "alice@test.com" },
+            { id: "new-gedu", display_name: "Bob", email: "bob@test.com" },
+            { id: "parent-1", display_name: "Parent One", email: "parent1@test.com" },
+          ],
+        });
+      }
+      if (table === "group_enrollments") {
+        // Return one active enrollment — the route should filter by status
+        const c = chainable({
+          data: [
+            { gamer_id: "gamer-1", enrolled_by: "parent-1", group_id: "group-1" },
+          ],
+        });
+        enrollmentChains.push(c);
+        return c;
+      }
+      return chainable({ data: [] });
+    });
+
+    const payload = {
+      addedGroups: [],
+      updatedGroups: [{ groupId: "group-1", oldGeduId: "old-gedu", newGeduId: "new-gedu" }],
+      deletedGroups: [],
+      enrollmentMoves: [],
+    };
+
+    const [req, ctx] = createRequest("product-1", payload);
+    const response = await POST(req, ctx);
+    await readStream(response);
+
+    // Verify every group_enrollments query included status = 'active' filter
+    for (const chain of enrollmentChains) {
+      const eqCalls = (chain.eq as ReturnType<typeof vi.fn>).mock.calls;
+      const hasStatusFilter = eqCalls.some(
+        ([col, val]: [string, string]) => col === "status" && val === "active"
+      );
+      expect(hasStatusFilter, "group_enrollments query must filter by status = 'active'").toBe(true);
+    }
+  });
+
+  it("only notifies parents of actively enrolled moved gamers", async () => {
+    mockAdmin();
+
+    const enrollmentChains: Chain[] = [];
+
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "products") {
+        return chainable({ data: { name: "Minecraft 101" } });
+      }
+      if (table === "profiles") {
+        return chainable({
+          data: [
+            { id: "old-gedu", display_name: "Alice", email: "alice@test.com" },
+            { id: "new-gedu", display_name: "Bob", email: "bob@test.com" },
+            { id: "gamer-1", display_name: "Kid" },
+            { id: "parent-1", display_name: "Parent One", email: "parent1@test.com" },
+          ],
+        });
+      }
+      if (table === "group_enrollments") {
+        const c = chainable({
+          data: [
+            { gamer_id: "gamer-1", enrolled_by: "parent-1" },
+          ],
+        });
+        enrollmentChains.push(c);
+        return c;
+      }
+      return chainable({ data: [] });
+    });
+
+    const payload = {
+      addedGroups: [],
+      updatedGroups: [],
+      deletedGroups: [],
+      enrollmentMoves: [{ gamerId: "gamer-1", fromGeduId: "old-gedu", toGeduId: "new-gedu" }],
+    };
+
+    const [req, ctx] = createRequest("product-1", payload);
+    const response = await POST(req, ctx);
+    await readStream(response);
+
+    // Verify every group_enrollments query included status = 'active' filter
+    for (const chain of enrollmentChains) {
+      const eqCalls = (chain.eq as ReturnType<typeof vi.fn>).mock.calls;
+      const hasStatusFilter = eqCalls.some(
+        ([col, val]: [string, string]) => col === "status" && val === "active"
+      );
+      expect(hasStatusFilter, "group_enrollments query must filter by status = 'active'").toBe(true);
+    }
   });
 
   it("continues sending when individual emails fail", async () => {

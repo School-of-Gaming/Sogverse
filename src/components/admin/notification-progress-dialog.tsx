@@ -20,12 +20,19 @@ interface NotificationProgressDialogProps {
   payload: NotifyPayload | null;
 }
 
+interface LogEntry {
+  type: "sent" | "failed";
+  recipient: string;
+  description: string;
+}
+
 interface ProgressState {
   status: "sending" | "complete" | "error";
   current: number;
   total: number;
   message: string;
   errors: string[];
+  log: LogEntry[];
 }
 
 export function NotificationProgressDialog({
@@ -40,13 +47,15 @@ export function NotificationProgressDialog({
     total: 0,
     message: "Starting...",
     errors: [],
+    log: [],
   });
   const abortRef = useRef<AbortController | null>(null);
+  const logEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!open || !payload) return;
 
-    setProgress({ status: "sending", current: 0, total: 0, message: "Starting...", errors: [] });
+    setProgress({ status: "sending", current: 0, total: 0, message: "Starting...", errors: [], log: [] });
 
     const controller = new AbortController();
     abortRef.current = controller;
@@ -105,9 +114,24 @@ export function NotificationProgressDialog({
                   ...p,
                   current: event.current,
                   total: event.total,
+                  log: [...p.log, {
+                    type: "sent",
+                    recipient: event.recipient,
+                    description: event.description ?? "",
+                  }],
+                }));
+              } else if (event.type === "failed") {
+                setProgress((p) => ({
+                  ...p,
+                  log: [...p.log, {
+                    type: "failed",
+                    recipient: event.recipient,
+                    description: event.description ?? "",
+                  }],
                 }));
               } else if (event.type === "complete") {
-                setProgress({
+                setProgress((p) => ({
+                  ...p,
                   status: "complete",
                   current: event.sent,
                   total: event.sent + event.failed,
@@ -115,7 +139,7 @@ export function NotificationProgressDialog({
                     ? `${event.sent} sent, ${event.failed} failed`
                     : `${event.sent} notification${event.sent !== 1 ? "s" : ""} sent`,
                   errors: event.errors ?? [],
-                });
+                }));
               }
             } catch {
               // Ignore malformed SSE lines
@@ -136,6 +160,11 @@ export function NotificationProgressDialog({
       controller.abort();
     };
   }, [open, payload, productId]);
+
+  // Auto-scroll the log when new entries appear
+  useEffect(() => {
+    logEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [progress.log.length]);
 
   const isDone = progress.status === "complete" || progress.status === "error";
   const percent = progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0;
@@ -180,6 +209,25 @@ export function NotificationProgressDialog({
             )}
             <span className="text-muted-foreground">{progress.message}</span>
           </div>
+
+          {/* Notification log */}
+          {progress.log.length > 0 && (
+            <div className="max-h-40 overflow-auto rounded border border-border bg-muted/50 p-3 text-xs font-mono space-y-1">
+              {progress.log.map((entry, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  {entry.type === "sent" ? (
+                    <CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0 text-green-500" />
+                  ) : (
+                    <AlertCircle className="h-3 w-3 mt-0.5 shrink-0 text-destructive" />
+                  )}
+                  <span className="text-muted-foreground">
+                    {entry.description || entry.recipient}
+                  </span>
+                </div>
+              ))}
+              <div ref={logEndRef} />
+            </div>
+          )}
 
           {/* Error details */}
           {progress.errors.length > 0 && (
