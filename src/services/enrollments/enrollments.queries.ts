@@ -53,11 +53,16 @@ export function useUnenrollGamer() {
   const supabase = getClient();
   const service = new EnrollmentsService(supabase);
 
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: (enrollmentId: string) => service.unenrollGamer(enrollmentId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
-      queryClient.invalidateQueries({ queryKey: tokenKeys.all });
-    },
+    // No onSuccess — invalidation is deferred until the success dialog is dismissed,
+    // otherwise the enrollment card unmounts (active → inactive) and kills the dialog.
   });
+
+  const invalidateEnrollments = () => {
+    queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
+    queryClient.invalidateQueries({ queryKey: tokenKeys.all });
+  };
+
+  return { ...mutation, invalidateEnrollments };
 }

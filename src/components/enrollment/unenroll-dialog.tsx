@@ -29,13 +29,18 @@ export function UnenrollDialog({
   refundDenialReason,
   onClose,
 }: UnenrollDialogProps) {
-  const unenroll = useUnenrollGamer();
+  const { invalidateEnrollments, ...unenroll } = useUnenrollGamer();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{
     refunded: boolean;
     refundAmount: number;
     newBalance: number;
   } | null>(null);
+
+  const handleClose = () => {
+    if (success) invalidateEnrollments();
+    onClose();
+  };
 
   const handleUnenroll = async () => {
     setError(null);
@@ -48,7 +53,7 @@ export function UnenrollDialog({
   };
 
   return (
-    <Dialog open onOpenChange={(open) => !open && onClose()}>
+    <Dialog open onOpenChange={(open) => !open && handleClose()}>
       <DialogContent>
         {success ? (
           <>
@@ -63,7 +68,7 @@ export function UnenrollDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-2 rounded-md border border-border p-4 text-sm">
+            <div className="mt-2 space-y-3 rounded-md border border-border p-4 text-sm">
               {success.refunded ? (
                 <p>
                   <span className="font-medium text-success">
@@ -80,7 +85,7 @@ export function UnenrollDialog({
             </div>
 
             <DialogFooter>
-              <Button onClick={onClose}>Done</Button>
+              <Button onClick={handleClose}>Done</Button>
             </DialogFooter>
           </>
         ) : (
@@ -135,7 +140,7 @@ export function UnenrollDialog({
             <DialogFooter>
               <Button
                 variant="ghost"
-                onClick={onClose}
+                onClick={handleClose}
                 disabled={unenroll.isPending}
               >
                 Cancel
