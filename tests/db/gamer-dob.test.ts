@@ -32,7 +32,7 @@ describe("gamer_profiles date_of_birth constraint", () => {
     });
 
     expect(error).not.toBeNull();
-    expect(error!.message).toContain("gamer_dob_not_future");
+    expect(error!.message).toContain("gamer_profiles_date_of_birth_check");
   });
 
   it("should reject a future date_of_birth on UPDATE", async () => {
@@ -46,7 +46,7 @@ describe("gamer_profiles date_of_birth constraint", () => {
       .eq("user_id", TEST_IDS.GAMER);
 
     expect(error).not.toBeNull();
-    expect(error!.message).toContain("gamer_dob_not_future");
+    expect(error!.message).toContain("gamer_profiles_date_of_birth_check");
   });
 
   it("should accept today as date_of_birth", async () => {
