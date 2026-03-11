@@ -1,4 +1,4 @@
-import type { Profile, ParentGamer, CreateGamerInput } from "@/types";
+import type { Profile, ParentGamer, CreateGamerInput, GamerProfile } from "@/types";
 
 // Using generic type to avoid version-specific Supabase type incompatibilities
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -51,6 +51,45 @@ export class GamerService {
     return data || false;
   }
 
+  async getGamerProfile(gamerId: string): Promise<GamerProfile> {
+    const { data, error } = await this.supabase
+      .from("gamer_profiles")
+      .select("*")
+      .eq("user_id", gamerId)
+      .single();
+
+    if (error) throw error;
+    return data as GamerProfile;
+  }
+
+  async verifyMinecraftUsername(
+    username: string,
+  ): Promise<{ username: string; uuid: string }> {
+    const response = await fetch(
+      `/api/minecraft/verify?username=${encodeURIComponent(username)}`,
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Verification failed");
+    }
+    return data;
+  }
+
+  async updateMyMinecraft(
+    minecraftUsername: string | null,
+  ): Promise<void> {
+    const response = await fetch("/api/gamer/minecraft", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ minecraftUsername }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Failed to update Minecraft username");
+    }
+  }
+
   async createGamerAccount(
     _parentId: string,
     input: CreateGamerInput
@@ -64,6 +103,7 @@ export class GamerService {
         displayName: input.displayName,
         dateOfBirth: input.dateOfBirth,
         gender: input.gender,
+        minecraftUsername: input.minecraftUsername,
       }),
     });
 
@@ -78,7 +118,7 @@ export class GamerService {
 
   async updateGamer(
     gamerId: string,
-    updates: { displayName?: string; password?: string },
+    updates: { displayName?: string; password?: string; minecraftUsername?: string | null },
   ): Promise<Profile> {
     const response = await fetch(`/api/gamers/${gamerId}`, {
       method: "PATCH",

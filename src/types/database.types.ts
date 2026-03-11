@@ -134,16 +134,22 @@ export type Database = {
         Row: {
           date_of_birth: string
           gender: Database["public"]["Enums"]["gender_type"]
+          minecraft_username: string | null
+          minecraft_uuid: string | null
           user_id: string
         }
         Insert: {
           date_of_birth: string
           gender: Database["public"]["Enums"]["gender_type"]
+          minecraft_username?: string | null
+          minecraft_uuid?: string | null
           user_id: string
         }
         Update: {
           date_of_birth?: string
           gender?: Database["public"]["Enums"]["gender_type"]
+          minecraft_username?: string | null
+          minecraft_uuid?: string | null
           user_id?: string
         }
         Relationships: [

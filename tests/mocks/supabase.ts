@@ -51,6 +51,8 @@ export function createMockGamerExtProfile(
     user_id: "test-gamer-id",
     date_of_birth: "2015-01-01",
     gender: "boy",
+    minecraft_username: null,
+    minecraft_uuid: null,
     ...overrides,
   };
 }

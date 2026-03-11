@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
 
 export async function PATCH(
   request: Request,
@@ -19,10 +20,11 @@ export async function PATCH(
     // 2. Validate input
     const body = await request.json();
     const { displayName, password } = body;
+    const hasMinecraft = "minecraftUsername" in body;
 
-    if (!displayName && !password) {
+    if (!displayName && !password && !hasMinecraft) {
       return NextResponse.json(
-        { error: "At least one of displayName or password is required" },
+        { error: "At least one of displayName, password, or minecraftUsername is required" },
         { status: 400 },
       );
     }
@@ -40,6 +42,18 @@ export async function PATCH(
       if (typeof password !== "string" || password.length < 6) {
         return NextResponse.json(
           { error: "Password must be at least 6 characters" },
+          { status: 400 },
+        );
+      }
+    }
+
+    if (hasMinecraft && body.minecraftUsername !== null) {
+      if (
+        typeof body.minecraftUsername !== "string" ||
+        !isValidMinecraftUsername(body.minecraftUsername)
+      ) {
+        return NextResponse.json(
+          { error: "Invalid Minecraft username. Must be 3-16 characters: letters, numbers, underscores." },
           { status: 400 },
         );
       }
@@ -117,7 +131,31 @@ export async function PATCH(
       }
     }
 
-    // 6. Return updated profile
+    // 6. Update Minecraft username if provided
+    if (hasMinecraft) {
+      let mcUpdate: { minecraft_username: string | null; minecraft_uuid: string | null };
+
+      if (body.minecraftUsername === null) {
+        mcUpdate = { minecraft_username: null, minecraft_uuid: null };
+      } else {
+        const mojang = await lookupMinecraftUser(body.minecraftUsername);
+        mcUpdate = {
+          minecraft_username: body.minecraftUsername,
+          minecraft_uuid: mojang?.uuid ?? null,
+        };
+      }
+
+      const { error: mcError } = await admin
+        .from("gamer_profiles")
+        .update(mcUpdate)
+        .eq("user_id", gamerId);
+
+      if (mcError) {
+        return NextResponse.json({ error: mcError.message }, { status: 500 });
+      }
+    }
+
+    // 7. Return updated profile
     const { data: updatedProfile, error: fetchError } = await admin
       .from("profiles")
       .select("*")

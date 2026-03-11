@@ -128,6 +128,7 @@ export interface CreateGamerInput {
   displayName: string;
   dateOfBirth: string;
   gender: "boy" | "girl" | "non_binary";
+  minecraftUsername?: string;
 }
 
 export interface LoginCredentials {

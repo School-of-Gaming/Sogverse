@@ -3,19 +3,21 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, Lock } from "lucide-react";
+import { ArrowLeft, User, Lock, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { useMyGamers, useUpdateGamer } from "@/services/gamers";
+import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
 import { ROUTES } from "@/lib/constants";
 
 export default function GamerDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: gamers, isLoading } = useMyGamers();
+  const { data: gamerProfile } = useGamerProfile(id);
   const updateGamer = useUpdateGamer();
 
   const gamer = gamers?.find((g) => g.id === id);
@@ -23,6 +25,13 @@ export default function GamerDetailsPage() {
   // Profile form state
   const [displayName, setDisplayName] = useState("");
   const [profileInitialized, setProfileInitialized] = useState(false);
+
+  // Minecraft form state
+  const [minecraftUsername, setMinecraftUsername] = useState("");
+  const [mcInitialized, setMcInitialized] = useState(false);
+  const [isSavingMc, setIsSavingMc] = useState(false);
+  const [mcSuccess, setMcSuccess] = useState<string | null>(null);
+  const [mcError, setMcError] = useState<string | null>(null);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -38,6 +47,12 @@ export default function GamerDetailsPage() {
   if (gamer && !profileInitialized) {
     setDisplayName(gamer.display_name ?? "");
     setProfileInitialized(true);
+  }
+
+  // Initialize minecraft username once gamer profile loads
+  if (gamerProfile && !mcInitialized) {
+    setMinecraftUsername(gamerProfile.minecraft_username ?? "");
+    setMcInitialized(true);
   }
 
   const handleSaveProfile = async () => {
@@ -102,6 +117,37 @@ export default function GamerDetailsPage() {
       setPasswordError(message);
     } finally {
       setIsSavingPassword(false);
+    }
+  };
+
+  const handleSaveMc = async () => {
+    if (!gamer) return;
+
+    setIsSavingMc(true);
+    setMcSuccess(null);
+    setMcError(null);
+
+    try {
+      const mcValue = minecraftUsername.trim() || null;
+      await updateGamer.mutateAsync({
+        gamerId: gamer.id,
+        updates: { minecraftUsername: mcValue },
+      });
+      setMcSuccess(
+        mcValue
+          ? "Minecraft username saved!"
+          : "Minecraft username cleared.",
+      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String((error as { message: unknown }).message)
+            : "Failed to update Minecraft username";
+      setMcError(message);
+    } finally {
+      setIsSavingMc(false);
     }
   };
 
@@ -230,6 +276,47 @@ export default function GamerDetailsPage() {
               disabled={isSavingProfile || displayName.trim().length < 2}
             >
               {isSavingProfile ? "Saving..." : "Save Changes"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Minecraft Account */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Gamepad2 className="h-5 w-5" />
+            <CardTitle>Minecraft Account</CardTitle>
+          </div>
+          <CardDescription>
+            Link this gamer&apos;s Minecraft Java username
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {mcSuccess && (
+            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
+              {mcSuccess}
+            </div>
+          )}
+
+          {mcError && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {mcError}
+            </div>
+          )}
+
+          <form onSubmit={(e) => { e.preventDefault(); handleSaveMc(); }} className="space-y-6">
+            <MinecraftUsernameField
+              value={minecraftUsername}
+              onChange={setMinecraftUsername}
+              disabled={isSavingMc}
+            />
+
+            <Button
+              type="submit"
+              disabled={isSavingMc}
+            >
+              {isSavingMc ? "Saving..." : "Save Minecraft Username"}
             </Button>
           </form>
         </CardContent>

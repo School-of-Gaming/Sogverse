@@ -7,4 +7,7 @@ export {
   useLinkedParents,
   useCreateGamer,
   useUpdateGamer,
+  useGamerProfile,
+  useVerifyMinecraft,
+  useUpdateMyMinecraft,
 } from "./gamers.queries";

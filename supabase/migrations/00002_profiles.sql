@@ -59,7 +59,9 @@ ALTER TABLE customer_profiles ENABLE ROW LEVEL SECURITY;
 CREATE TABLE gamer_profiles (
   user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
   date_of_birth DATE NOT NULL,
-  gender gender_type NOT NULL
+  gender gender_type NOT NULL,
+  minecraft_username TEXT,
+  minecraft_uuid TEXT
 );
 
 ALTER TABLE gamer_profiles ENABLE ROW LEVEL SECURITY;

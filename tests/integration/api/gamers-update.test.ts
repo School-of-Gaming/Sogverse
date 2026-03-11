@@ -20,6 +20,14 @@ vi.mock("@/lib/supabase/admin", () => ({
   })),
 }));
 
+const mockLookupMinecraftUser = vi.fn();
+const mockIsValidMinecraftUsername = vi.fn();
+vi.mock("@/lib/mojang", () => ({
+  lookupMinecraftUser: (...args: unknown[]) => mockLookupMinecraftUser(...args),
+  isValidMinecraftUsername: (...args: unknown[]) =>
+    mockIsValidMinecraftUsername(...args),
+}));
+
 // --- Helpers ---
 
 function mockUnauthenticated() {
@@ -146,6 +154,9 @@ function mockAdminSuccess(
 describe("PATCH /api/gamers/[id]", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockIsValidMinecraftUsername.mockImplementation(
+      (u: string) => /^[a-zA-Z0-9_]{3,16}$/.test(u),
+    );
   });
 
   // -- Auth & authorization --
@@ -178,6 +189,7 @@ describe("PATCH /api/gamers/[id]", () => {
 
     expect(response.status).toBe(400);
     expect(data.error).toContain("At least one");
+    expect(data.error).toContain("minecraftUsername");
   });
 
   it("should return 400 when displayName is too short", async () => {
@@ -308,5 +320,84 @@ describe("PATCH /api/gamers/[id]", () => {
     expect(data.gamer.display_name).toBe("New Name");
     // Should have been called twice: once for display_name metadata, once for password
     expect(mockAdminAuthAdmin.updateUserById).toHaveBeenCalledTimes(2);
+  });
+
+  // -- Minecraft username --
+
+  it("should accept minecraftUsername as sole update field", async () => {
+    mockAuthenticated("customer-123");
+    mockParentGamerLookup(true);
+    mockLookupMinecraftUser.mockResolvedValue({
+      username: "Notch",
+      uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+    });
+
+    // Admin calls: role check → gamer_profiles update → profiles final fetch
+    const roleCheck = mockTargetProfile("gamer");
+    const mcUpdate = mockProfileUpdate(); // reuse mock shape for gamer_profiles update
+    const fetch = mockProfileFetch({
+      id: "gamer-1",
+      display_name: "Existing",
+      role: "gamer",
+    });
+
+    let callCount = 0;
+    mockAdminFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return roleCheck;
+      if (callCount === 2) return mcUpdate;
+      return fetch;
+    });
+
+    const [req, ctx] = createRequest("gamer-1", {
+      minecraftUsername: "notch",
+    });
+    const response = await PATCH(req, ctx);
+
+    expect(response.status).toBe(200);
+    expect(mockLookupMinecraftUser).toHaveBeenCalledWith("notch");
+  });
+
+  it("should clear minecraft fields when minecraftUsername is null", async () => {
+    mockAuthenticated("customer-123");
+    mockParentGamerLookup(true);
+
+    const roleCheck = mockTargetProfile("gamer");
+    const mcUpdate = mockProfileUpdate();
+    const fetch = mockProfileFetch({
+      id: "gamer-1",
+      display_name: "Existing",
+      role: "gamer",
+    });
+
+    let callCount = 0;
+    mockAdminFrom.mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) return roleCheck;
+      if (callCount === 2) return mcUpdate;
+      return fetch;
+    });
+
+    const [req, ctx] = createRequest("gamer-1", {
+      minecraftUsername: null,
+    });
+    const response = await PATCH(req, ctx);
+
+    expect(response.status).toBe(200);
+    // Should NOT call Mojang API when clearing
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+  });
+
+  it("should return 400 for invalid minecraft username format", async () => {
+    mockAuthenticated("customer-123");
+
+    const [req, ctx] = createRequest("gamer-1", {
+      minecraftUsername: "ab",
+    });
+    const response = await PATCH(req, ctx);
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Invalid Minecraft username");
   });
 });

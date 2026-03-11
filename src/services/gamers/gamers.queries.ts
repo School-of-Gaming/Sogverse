@@ -15,6 +15,8 @@ export const gamerKeys = {
   linkedParents: (gamerId: string) =>
     [...gamerKeys.all, "linked-parents", gamerId] as const,
   links: (parentId: string) => [...gamerKeys.all, "links", parentId] as const,
+  gamerProfile: (gamerId: string) =>
+    [...gamerKeys.all, "gamer-profile", gamerId] as const,
 };
 
 export function useMyGamers() {
@@ -89,13 +91,50 @@ export function useUpdateGamer() {
       updates,
     }: {
       gamerId: string;
-      updates: { displayName?: string; password?: string };
+      updates: { displayName?: string; password?: string; minecraftUsername?: string | null };
     }) => service.updateGamer(gamerId, updates),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });
       queryClient.invalidateQueries({
         queryKey: enrollmentKeys.myEnrollments(),
       });
+      queryClient.invalidateQueries({
+        queryKey: gamerKeys.gamerProfile(variables.gamerId),
+      });
+    },
+  });
+}
+
+export function useGamerProfile(gamerId: string) {
+  const supabase = getClient();
+  const service = new GamerService(supabase);
+
+  return useQuery({
+    queryKey: gamerKeys.gamerProfile(gamerId),
+    queryFn: () => service.getGamerProfile(gamerId),
+    enabled: !!gamerId,
+  });
+}
+
+export function useVerifyMinecraft() {
+  const supabase = getClient();
+  const service = new GamerService(supabase);
+
+  return useMutation({
+    mutationFn: (username: string) => service.verifyMinecraftUsername(username),
+  });
+}
+
+export function useUpdateMyMinecraft() {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new GamerService(supabase);
+
+  return useMutation({
+    mutationFn: (minecraftUsername: string | null) =>
+      service.updateMyMinecraft(minecraftUsername),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: gamerKeys.all });
     },
   });
 }

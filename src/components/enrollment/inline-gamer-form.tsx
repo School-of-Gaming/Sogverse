@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { useAuth } from "@/providers";
 import { useCreateGamer } from "@/services/gamers";
 
@@ -59,6 +60,7 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [gender, setGender] = useState<"boy" | "girl" | "non_binary" | "">("");
+  const [minecraftUsername, setMinecraftUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,6 +93,7 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
           displayName: validated.displayName,
           dateOfBirth: validated.dateOfBirth,
           gender: validated.gender,
+          minecraftUsername: minecraftUsername.trim() || undefined,
         },
       });
 
@@ -229,6 +232,12 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
           ))}
         </div>
       </div>
+
+      <MinecraftUsernameField
+        value={minecraftUsername}
+        onChange={setMinecraftUsername}
+        disabled={createGamer.isPending}
+      />
 
       <div className="flex gap-2 pt-2">
         <Button

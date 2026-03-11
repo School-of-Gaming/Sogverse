@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateGamerEmail } from "@/lib/utils";
+import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +12,8 @@ export async function POST(request: Request) {
     if (result instanceof NextResponse) return result;
     const { user } = result;
 
-    const { username, password, displayName, dateOfBirth, gender } = await request.json();
+    const body = await request.json();
+    const { username, password, displayName, dateOfBirth, gender, minecraftUsername } = body;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -40,6 +42,15 @@ export async function POST(request: Request) {
         { error: "Gender is required (boy, girl, or non_binary)" },
         { status: 400 }
       );
+    }
+
+    if (minecraftUsername !== undefined && minecraftUsername !== null) {
+      if (typeof minecraftUsername !== "string" || !isValidMinecraftUsername(minecraftUsername)) {
+        return NextResponse.json(
+          { error: "Invalid Minecraft username. Must be 3-16 characters: letters, numbers, underscores." },
+          { status: 400 }
+        );
+      }
     }
 
     const syntheticEmail = generateGamerEmail(username);
@@ -101,12 +112,23 @@ export async function POST(request: Request) {
 
     await admin.from("customer_profiles").delete().eq("user_id", gamerId);
 
+    // Resolve Minecraft UUID if username provided
+    let mcData: { minecraft_username?: string; minecraft_uuid?: string | null } = {};
+    if (minecraftUsername) {
+      const mojang = await lookupMinecraftUser(minecraftUsername);
+      mcData = {
+        minecraft_username: minecraftUsername,
+        minecraft_uuid: mojang?.uuid ?? null,
+      };
+    }
+
     const { error: gamerProfileError } = await admin
       .from("gamer_profiles")
       .insert({
         user_id: gamerId,
         date_of_birth: dateOfBirth,
         gender,
+        ...mcData,
       });
 
     if (gamerProfileError) {
