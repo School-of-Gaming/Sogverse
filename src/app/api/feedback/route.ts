@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { buildFeedbackEmail } from "@/lib/email-templates/feedback";
-import { SENDER_EMAIL, SENDER_NAME } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME_FEEDBACK } from "@/lib/constants";
 import { z } from "zod";
 
 const feedbackSchema = z.object({
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
 
     await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
-      fromName: `${SENDER_NAME} Feedback`,
+      fromName: SENDER_NAME_FEEDBACK,
       toEmail: adminEmails,
       subject: `Feedback from ${displayName} (${role})`,
       htmlContent,

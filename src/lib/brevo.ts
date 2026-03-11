@@ -36,6 +36,8 @@ interface SendEmailOptions {
   subject: string;
   htmlContent: string;
   replyToEmail?: string;
+  cc?: string[];
+  bcc?: string[];
 }
 
 interface SendEmailResponse {
@@ -53,6 +55,8 @@ export async function sendTransactionalEmail(options: SendEmailOptions): Promise
       subject: options.subject,
       htmlContent: options.htmlContent,
       ...(options.replyToEmail && { replyTo: { email: options.replyToEmail } }),
+      ...(options.cc?.length && { cc: options.cc.map((email) => ({ email })) }),
+      ...(options.bcc?.length && { bcc: options.bcc.map((email) => ({ email })) }),
     }),
   });
 }

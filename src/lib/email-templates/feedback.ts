@@ -1,5 +1,6 @@
 import { DARK_THEME } from "@/lib/constants/colors";
 import { wrapInLayout } from "./layout";
+import { escapeHtml } from "./utils";
 
 interface FeedbackEmailOptions {
   userName: string;
@@ -9,15 +10,6 @@ interface FeedbackEmailOptions {
   sentAt: string;
   isGamer?: boolean;
   parentEmail?: string;
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 /**

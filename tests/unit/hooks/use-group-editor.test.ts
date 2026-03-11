@@ -4,6 +4,7 @@ import {
   initialState,
   computeEffectiveGroups,
   buildChangeSummary,
+  buildNotifyPayload,
   type GroupEditorAction,
 } from "@/hooks/use-group-editor";
 import type { ProductGroup } from "@/services/groups";
@@ -499,5 +500,121 @@ describe("buildChangeSummary", () => {
       line.some((seg) => seg.type === "warning"),
     );
     expect(warningLine).toBeUndefined();
+  });
+});
+
+// --- buildNotifyPayload ---
+
+describe("buildNotifyPayload", () => {
+  it("builds payload for added groups", () => {
+    const state = dispatch([
+      { type: "ADD_GROUP", geduId: "gedu-1", geduDisplayName: "Alice" },
+    ]);
+
+    const payload = buildNotifyPayload(state, []);
+
+    expect(payload.addedGroups).toEqual([{ geduId: "gedu-1" }]);
+    expect(payload.updatedGroups).toHaveLength(0);
+    expect(payload.deletedGroups).toHaveLength(0);
+    expect(payload.enrollmentMoves).toHaveLength(0);
+  });
+
+  it("builds payload for deleted groups with server geduId", () => {
+    const server = [makeServerGroup({ groupId: "g1", geduId: "gedu-1" })];
+    const state = dispatch([{ type: "DELETE_GROUP", groupId: "g1" }]);
+
+    const payload = buildNotifyPayload(state, server);
+
+    expect(payload.deletedGroups).toEqual([{ geduId: "gedu-1" }]);
+  });
+
+  it("builds payload for updated groups with old and new geduId", () => {
+    const server = [makeServerGroup({ groupId: "g1", geduId: "gedu-1" })];
+    const state = dispatch([
+      { type: "UPDATE_GROUP_GEDU", groupId: "g1", geduId: "gedu-2", geduDisplayName: "Bob" },
+    ]);
+
+    const payload = buildNotifyPayload(state, server);
+
+    expect(payload.updatedGroups).toEqual([
+      { groupId: "g1", oldGeduId: "gedu-1", newGeduId: "gedu-2" },
+    ]);
+  });
+
+  it("builds enrollment moves with pre-reassignment geduIds", () => {
+    const server = [
+      makeServerGroup({ groupId: "g1", geduId: "gedu-1", geduDisplayName: "Alice" }),
+      makeServerGroup({ groupId: "g2", geduId: "gedu-2", geduDisplayName: "Bob", displayOrder: 1 }),
+    ];
+    const state = dispatch([
+      { type: "MOVE_GAMER", gamerId: "gamer-1", fromGroupId: "g1", toGroupId: "g2" },
+    ]);
+
+    const payload = buildNotifyPayload(state, server);
+
+    expect(payload.enrollmentMoves).toEqual([
+      { gamerId: "gamer-1", fromGeduId: "gedu-1", toGeduId: "gedu-2" },
+    ]);
+  });
+
+  it("resolves toGeduId from reassigned group (pre-reassignment is NOT used for to)", () => {
+    const server = [
+      makeServerGroup({ groupId: "g1", geduId: "gedu-1", geduDisplayName: "Alice" }),
+      makeServerGroup({ groupId: "g2", geduId: "gedu-2", geduDisplayName: "Bob", displayOrder: 1 }),
+    ];
+    const state = dispatch([
+      { type: "UPDATE_GROUP_GEDU", groupId: "g2", geduId: "gedu-3", geduDisplayName: "Carol" },
+      { type: "MOVE_GAMER", gamerId: "gamer-1", fromGroupId: "g1", toGroupId: "g2" },
+    ]);
+
+    const payload = buildNotifyPayload(state, server);
+
+    // toGeduId should be the new gedu (Carol), not the old one (Bob)
+    expect(payload.enrollmentMoves[0].toGeduId).toBe("gedu-3");
+    expect(payload.enrollmentMoves[0].fromGeduId).toBe("gedu-1");
+  });
+
+  it("resolves toGeduId from added group", () => {
+    const server = [
+      makeServerGroup({ groupId: "g1", geduId: "gedu-1", geduDisplayName: "Alice" }),
+    ];
+    const afterAdd = dispatch([
+      { type: "ADD_GROUP", geduId: "gedu-2", geduDisplayName: "Bob" },
+    ]);
+    const tempId = afterAdd.addedGroups[0].tempId;
+    const state = reducer(afterAdd, {
+      type: "MOVE_GAMER",
+      gamerId: "gamer-1",
+      fromGroupId: "g1",
+      toGroupId: tempId,
+    });
+
+    const payload = buildNotifyPayload(state, server);
+
+    expect(payload.enrollmentMoves[0].toGeduId).toBe("gedu-2");
+    expect(payload.enrollmentMoves[0].fromGeduId).toBe("gedu-1");
+  });
+
+  it("builds combined payload with all change types", () => {
+    const server = [
+      makeServerGroup({ groupId: "g1", geduId: "gedu-1", geduDisplayName: "Alice", gamers: [
+        { gamerId: "gamer-1", displayName: "Kid", enrollmentId: "e1", dateOfBirth: null, gender: null },
+      ] }),
+      makeServerGroup({ groupId: "g2", geduId: "gedu-2", geduDisplayName: "Bob", displayOrder: 1 }),
+    ];
+    const state = dispatch([
+      { type: "ADD_GROUP", geduId: "gedu-3", geduDisplayName: "Carol" },
+      { type: "UPDATE_GROUP_GEDU", groupId: "g2", geduId: "gedu-4", geduDisplayName: "Dave" },
+      { type: "DELETE_GROUP", groupId: "g1" },
+      { type: "MOVE_GAMER", gamerId: "gamer-1", fromGroupId: "g1", toGroupId: "g2" },
+    ]);
+
+    const payload = buildNotifyPayload(state, server);
+
+    expect(payload.addedGroups).toHaveLength(1);
+    expect(payload.updatedGroups).toHaveLength(1);
+    expect(payload.deletedGroups).toHaveLength(1);
+    expect(payload.enrollmentMoves).toHaveLength(1);
+    expect(payload.enrollmentMoves[0].toGeduId).toBe("gedu-4");
   });
 });

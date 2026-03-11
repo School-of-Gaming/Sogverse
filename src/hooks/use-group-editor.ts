@@ -355,6 +355,66 @@ export function buildChangeSummary(
   return { lines, hasChanges: lines.length > 0 };
 }
 
+// --- Notify payload ---
+
+export interface NotifyPayload {
+  addedGroups: Array<{ geduId: string }>;
+  updatedGroups: Array<{ groupId: string; oldGeduId: string; newGeduId: string }>;
+  deletedGroups: Array<{ geduId: string }>;
+  enrollmentMoves: Array<{ gamerId: string; fromGeduId: string; toGeduId: string }>;
+}
+
+/** @visibleForTesting */
+export function buildNotifyPayload(
+  state: GroupEditorState,
+  serverGroups: ProductGroup[],
+): NotifyPayload {
+  // Lookup: groupId → original geduId from server
+  const serverGeduLookup = new Map<string, string>();
+  for (const sg of serverGroups) {
+    serverGeduLookup.set(sg.groupId, sg.geduId);
+  }
+  // Lookup: tempId → geduId for added groups
+  const addedGeduLookup = new Map<string, string>();
+  for (const ag of state.addedGroups) {
+    addedGeduLookup.set(ag.tempId, ag.geduId);
+  }
+  // Lookup: groupId → new geduId for reassigned groups
+  const reassignedGeduLookup = new Map<string, string>();
+  for (const ug of state.updatedGroups) {
+    reassignedGeduLookup.set(ug.groupId, ug.geduId);
+  }
+
+  const addedGroups = state.addedGroups.map((ag) => ({
+    geduId: ag.geduId,
+  }));
+
+  const updatedGroups = state.updatedGroups.map((ug) => ({
+    groupId: ug.groupId,
+    oldGeduId: serverGeduLookup.get(ug.groupId) ?? ug.geduId,
+    newGeduId: ug.geduId,
+  }));
+
+  const deletedGroups = state.deletedGroupIds.map((id) => ({
+    geduId: serverGeduLookup.get(id) ?? "",
+  }));
+
+  const enrollmentMoves = state.enrollmentMoves.map((m) => {
+    // fromGeduId is always the original server gedu for the from-group
+    const fromGeduId = serverGeduLookup.get(m.fromGroupId) ?? "";
+
+    // toGeduId: check reassigned → added → server
+    const toGeduId = reassignedGeduLookup.get(m.toGroupId)
+      ?? addedGeduLookup.get(m.toGroupId)
+      ?? serverGeduLookup.get(m.toGroupId)
+      ?? "";
+
+    return { gamerId: m.gamerId, fromGeduId, toGeduId };
+  });
+
+  return { addedGroups, updatedGroups, deletedGroups, enrollmentMoves };
+}
+
 // --- Hook ---
 
 export function useGroupEditor(serverGroups: ProductGroup[]) {
@@ -384,11 +444,17 @@ export function useGroupEditor(serverGroups: ProductGroup[]) {
     [state],
   );
 
+  const notifyPayload = useMemo(
+    () => buildNotifyPayload(state, serverGroups),
+    [state, serverGroups],
+  );
+
   return {
     state,
     dispatch,
     effectiveGroups,
     changeSummary,
     batchPayload,
+    notifyPayload,
   };
 }

@@ -111,6 +111,69 @@ describe("sendTransactionalEmail", () => {
     );
   });
 
+  it("should include cc when provided", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ messageId: "msg-cc" }),
+    });
+
+    await sendTransactionalEmail({
+      ...baseOptions,
+      cc: ["cc1@example.com", "cc2@example.com"],
+    });
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.cc).toEqual([
+      { email: "cc1@example.com" },
+      { email: "cc2@example.com" },
+    ]);
+  });
+
+  it("should include bcc when provided", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ messageId: "msg-bcc" }),
+    });
+
+    await sendTransactionalEmail({
+      ...baseOptions,
+      bcc: ["bcc@example.com"],
+    });
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.bcc).toEqual([{ email: "bcc@example.com" }]);
+  });
+
+  it("should not include cc/bcc when arrays are empty", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ messageId: "msg-empty" }),
+    });
+
+    await sendTransactionalEmail({
+      ...baseOptions,
+      cc: [],
+      bcc: [],
+    });
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.cc).toBeUndefined();
+    expect(body.bcc).toBeUndefined();
+  });
+
+  it("should not include cc/bcc when omitted", async () => {
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ messageId: "msg-none" }),
+    });
+
+    await sendTransactionalEmail(baseOptions);
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.cc).toBeUndefined();
+    expect(body.bcc).toBeUndefined();
+  });
+
   it("should throw when BREVO_API_KEY is missing", async () => {
     vi.unstubAllEnvs();
     // Ensure the env var is truly absent

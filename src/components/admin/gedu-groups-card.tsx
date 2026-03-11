@@ -17,10 +17,11 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useProductGroups, useCommitGroupChanges } from "@/services/groups";
 import { useUsersByRole } from "@/services/users";
-import { useGroupEditor, type EffectiveGroup } from "@/hooks/use-group-editor";
+import { useGroupEditor, type EffectiveGroup, type NotifyPayload } from "@/hooks/use-group-editor";
 import { GroupCard, EnrolledGamerChip } from "./group-card";
 import { CommitBar } from "./commit-bar";
 import { GeduPickerDialog } from "./gedu-picker-dialog";
+import { NotificationProgressDialog } from "./notification-progress-dialog";
 
 // --- Visibility warning banner ---
 
@@ -109,10 +110,12 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
   const { data: allGedus = [] } = useUsersByRole("gedu");
   const commitMutation = useCommitGroupChanges(productId);
 
-  const { dispatch, effectiveGroups, changeSummary, batchPayload } =
+  const { dispatch, effectiveGroups, changeSummary, batchPayload, notifyPayload } =
     useGroupEditor(serverGroups);
 
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showNotifyDialog, setShowNotifyDialog] = useState(false);
+  const [pendingNotifyPayload, setPendingNotifyPayload] = useState<NotifyPayload | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -154,8 +157,22 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
   };
 
   const handleCommit = () => {
+    // Capture pre-commit notify payload before the state resets
+    const capturedPayload = notifyPayload;
     commitMutation.mutate(batchPayload, {
-      onSuccess: () => dispatch({ type: "RESET" }),
+      onSuccess: () => {
+        dispatch({ type: "RESET" });
+        // Only open notify dialog if there are notifications to send
+        const hasNotifications =
+          capturedPayload.addedGroups.length > 0 ||
+          capturedPayload.updatedGroups.length > 0 ||
+          capturedPayload.deletedGroups.length > 0 ||
+          capturedPayload.enrollmentMoves.length > 0;
+        if (hasNotifications) {
+          setPendingNotifyPayload(capturedPayload);
+          setShowNotifyDialog(true);
+        }
+      },
     });
   };
 
@@ -263,6 +280,13 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
         onSelect={(geduId, geduDisplayName) =>
           dispatch({ type: "ADD_GROUP", geduId, geduDisplayName })
         }
+      />
+
+      <NotificationProgressDialog
+        open={showNotifyDialog}
+        onOpenChange={setShowNotifyDialog}
+        productId={productId}
+        payload={pendingNotifyPayload}
       />
     </>
   );
