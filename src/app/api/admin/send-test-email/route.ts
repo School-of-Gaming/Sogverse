@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME, SENDER_NAME_FEEDBACK, SENDER_NAME_ENROLLMENT } from "@/lib/constants";
+import { SENDER_EMAIL, SENDER_NAME_FEEDBACK, SENDER_NAME_ENROLLMENT } from "@/lib/constants";
 import { buildFeedbackEmail } from "@/lib/email-templates/feedback";
 import {
   buildGroupAddedEmail,
