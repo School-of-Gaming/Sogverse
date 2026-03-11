@@ -125,9 +125,14 @@ const templates: Record<string, TemplateEntry> = {
   },
 };
 
+/** Parse a comma-separated list of emails into a trimmed array */
+function parseEmails(input: string): string[] {
+  return input.split(",").map((e) => e.trim()).filter(Boolean);
+}
+
 const requestSchema = z.object({
   template: z.string(),
-  toEmail: z.string().email(),
+  toEmail: z.string().min(1),
   params: z.record(z.string()),
 });
 
@@ -148,7 +153,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const { template: templateName, toEmail, params } = parsed.data;
+    const { template: templateName, toEmail: toEmailRaw, params } = parsed.data;
+
+    const toEmails = parseEmails(toEmailRaw);
+    const emailSchema = z.string().email();
+    for (const email of toEmails) {
+      if (!emailSchema.safeParse(email).success) {
+        return NextResponse.json(
+          { error: `Invalid email: ${email}` },
+          { status: 400 },
+        );
+      }
+    }
 
     const tmpl = templates[templateName];
     if (!tmpl) {
@@ -173,7 +189,7 @@ export async function POST(request: Request) {
     const emailResult = await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
       fromName: tmpl.fromName,
-      toEmail,
+      toEmail: toEmails,
       subject: tmpl.subject(validatedParams),
       htmlContent,
     });

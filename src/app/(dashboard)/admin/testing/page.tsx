@@ -270,11 +270,11 @@ export default function TestingPage() {
               <Label htmlFor="toEmail">To Email</Label>
               <Input
                 id="toEmail"
-                type="email"
+                type="text"
                 required
                 value={toEmail}
                 onChange={(e) => setToEmail(e.target.value)}
-                placeholder="recipient@example.com"
+                placeholder="recipient@example.com, another@example.com"
               />
             </div>
 

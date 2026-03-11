@@ -3,11 +3,16 @@ import { requireRole } from "@/lib/auth";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { z } from "zod";
 
+/** Parse a comma-separated list of emails into a trimmed array */
+function parseEmails(input: string): string[] {
+  return input.split(",").map((e) => e.trim()).filter(Boolean);
+}
+
 const sendTestEmailSchema = z.object({
   provider: z.literal("brevo"),
   fromEmail: z.string().email(),
   fromName: z.string().min(1),
-  toEmail: z.string().email(),
+  toEmail: z.string().min(1),
   subject: z.string().min(1),
   body: z.string().min(1),
   replyToEmail: z.string().email().optional(),
@@ -31,7 +36,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const { fromEmail, fromName, toEmail, subject, body: textBody, replyToEmail } = parsed.data;
+    const { fromEmail, fromName, toEmail: toEmailRaw, subject, body: textBody, replyToEmail } = parsed.data;
+
+    const toEmails = parseEmails(toEmailRaw);
+    const emailSchema = z.string().email();
+    for (const email of toEmails) {
+      if (!emailSchema.safeParse(email).success) {
+        return NextResponse.json(
+          { error: `Invalid email: ${email}` },
+          { status: 400 },
+        );
+      }
+    }
 
     // Convert plain-text body to minimal HTML
     const htmlContent = textBody
@@ -43,7 +59,7 @@ export async function POST(request: Request) {
     const emailResult = await sendTransactionalEmail({
       fromEmail,
       fromName,
-      toEmail,
+      toEmail: toEmails,
       subject,
       htmlContent,
       replyToEmail,
