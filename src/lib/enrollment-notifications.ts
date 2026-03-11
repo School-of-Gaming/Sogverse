@@ -86,38 +86,45 @@ export async function sendEnrollmentNotifications(ctx: EnrollmentNotificationCon
   try {
     const data = await fetchNotificationData(ctx);
 
-    // Parent email (BCC admins — hidden from parent)
-    await sendTransactionalEmail({
-      fromEmail: SENDER_EMAIL,
-      fromName: SENDER_NAME_ENROLLMENT,
-      toEmail: data.parentEmail,
-      subject: enrollmentChangeSubjects.enrollmentParent(data.gamerName, data.productName),
-      htmlContent: buildEnrollmentParentEmail({
-        parentName: data.parentName,
-        gamerName: data.gamerName,
-        geduName: data.geduName,
-        productName: data.productName,
-        minecraftUsername: data.minecraftUsername,
-        minecraftUuid: data.minecraftUuid,
+    const results = await Promise.allSettled([
+      // Parent email (BCC admins — hidden from parent)
+      sendTransactionalEmail({
+        fromEmail: SENDER_EMAIL,
+        fromName: SENDER_NAME_ENROLLMENT,
+        toEmail: data.parentEmail,
+        subject: enrollmentChangeSubjects.enrollmentParent(data.gamerName, data.productName),
+        htmlContent: buildEnrollmentParentEmail({
+          parentName: data.parentName,
+          gamerName: data.gamerName,
+          geduName: data.geduName,
+          productName: data.productName,
+          minecraftUsername: data.minecraftUsername,
+          minecraftUuid: data.minecraftUuid,
+        }),
+        bcc: data.adminEmails,
       }),
-      bcc: data.adminEmails,
-    });
+      // Gedu email (CC admins — visible as collaborators)
+      sendTransactionalEmail({
+        fromEmail: SENDER_EMAIL,
+        fromName: SENDER_NAME_ENROLLMENT,
+        toEmail: data.geduEmail,
+        subject: enrollmentChangeSubjects.enrollmentGedu(data.gamerName, data.productName),
+        htmlContent: buildEnrollmentGeduEmail({
+          geduName: data.geduName,
+          gamerName: data.gamerName,
+          productName: data.productName,
+          minecraftUsername: data.minecraftUsername,
+          minecraftUuid: data.minecraftUuid,
+        }),
+        cc: data.adminEmails,
+      }),
+    ]);
 
-    // Gedu email (CC admins — visible as collaborators)
-    await sendTransactionalEmail({
-      fromEmail: SENDER_EMAIL,
-      fromName: SENDER_NAME_ENROLLMENT,
-      toEmail: data.geduEmail,
-      subject: enrollmentChangeSubjects.enrollmentGedu(data.gamerName, data.productName),
-      htmlContent: buildEnrollmentGeduEmail({
-        geduName: data.geduName,
-        gamerName: data.gamerName,
-        productName: data.productName,
-        minecraftUsername: data.minecraftUsername,
-        minecraftUuid: data.minecraftUuid,
-      }),
-      cc: data.adminEmails,
-    });
+    for (const r of results) {
+      if (r.status === "rejected") {
+        console.error("Failed to send enrollment notification:", r.reason);
+      }
+    }
   } catch (err) {
     console.error("Failed to send enrollment notifications:", err);
   }
@@ -127,36 +134,43 @@ export async function sendUnenrollmentNotifications(ctx: EnrollmentNotificationC
   try {
     const data = await fetchNotificationData(ctx);
 
-    // Parent email (BCC admins)
-    await sendTransactionalEmail({
-      fromEmail: SENDER_EMAIL,
-      fromName: SENDER_NAME_ENROLLMENT,
-      toEmail: data.parentEmail,
-      subject: enrollmentChangeSubjects.unenrollmentParent(data.gamerName, data.productName),
-      htmlContent: buildUnenrollmentParentEmail({
-        parentName: data.parentName,
-        gamerName: data.gamerName,
-        geduName: data.geduName,
-        productName: data.productName,
+    const results = await Promise.allSettled([
+      // Parent email (BCC admins)
+      sendTransactionalEmail({
+        fromEmail: SENDER_EMAIL,
+        fromName: SENDER_NAME_ENROLLMENT,
+        toEmail: data.parentEmail,
+        subject: enrollmentChangeSubjects.unenrollmentParent(data.gamerName, data.productName),
+        htmlContent: buildUnenrollmentParentEmail({
+          parentName: data.parentName,
+          gamerName: data.gamerName,
+          geduName: data.geduName,
+          productName: data.productName,
+        }),
+        bcc: data.adminEmails,
       }),
-      bcc: data.adminEmails,
-    });
+      // Gedu email (CC admins)
+      sendTransactionalEmail({
+        fromEmail: SENDER_EMAIL,
+        fromName: SENDER_NAME_ENROLLMENT,
+        toEmail: data.geduEmail,
+        subject: enrollmentChangeSubjects.unenrollmentGedu(data.gamerName, data.productName),
+        htmlContent: buildUnenrollmentGeduEmail({
+          geduName: data.geduName,
+          gamerName: data.gamerName,
+          productName: data.productName,
+          minecraftUsername: data.minecraftUsername,
+          minecraftUuid: data.minecraftUuid,
+        }),
+        cc: data.adminEmails,
+      }),
+    ]);
 
-    // Gedu email (CC admins)
-    await sendTransactionalEmail({
-      fromEmail: SENDER_EMAIL,
-      fromName: SENDER_NAME_ENROLLMENT,
-      toEmail: data.geduEmail,
-      subject: enrollmentChangeSubjects.unenrollmentGedu(data.gamerName, data.productName),
-      htmlContent: buildUnenrollmentGeduEmail({
-        geduName: data.geduName,
-        gamerName: data.gamerName,
-        productName: data.productName,
-        minecraftUsername: data.minecraftUsername,
-        minecraftUuid: data.minecraftUuid,
-      }),
-      cc: data.adminEmails,
-    });
+    for (const r of results) {
+      if (r.status === "rejected") {
+        console.error("Failed to send unenrollment notification:", r.reason);
+      }
+    }
   } catch (err) {
     console.error("Failed to send unenrollment notifications:", err);
   }

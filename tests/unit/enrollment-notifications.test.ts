@@ -162,10 +162,13 @@ describe("sendEnrollmentNotifications", () => {
     mockSendTransactionalEmail.mockRejectedValueOnce(new Error("Brevo error"));
 
     await expect(sendEnrollmentNotifications(MOCK_CTX)).resolves.toBeUndefined();
+    // With Promise.allSettled, per-email failures are logged individually
     expect(consoleSpy).toHaveBeenCalledWith(
-      "Failed to send enrollment notifications:",
+      "Failed to send enrollment notification:",
       expect.any(Error),
     );
+    // The other email should still be sent
+    expect(mockSendTransactionalEmail).toHaveBeenCalledTimes(2);
     consoleSpy.mockRestore();
   });
 });
