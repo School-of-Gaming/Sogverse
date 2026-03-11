@@ -49,6 +49,7 @@ function createRequest(body: Record<string, unknown>): Request {
 }
 
 const validBody = {
+  mode: "custom",
   provider: "brevo",
   fromEmail: "noreply@example.com",
   fromName: "Sogverse",
@@ -187,7 +188,7 @@ describe("POST /api/admin/send-test-email", () => {
     expect(response.status).toBe(200);
     expect(data.messageId).toBe("msg-123");
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith({
-      fromEmail: "noreply@example.com",
+      fromEmail: "sogverse@sog.gg",
       fromName: "Sogverse",
       toEmail: ["test@example.com"],
       subject: "Test Subject",
@@ -219,7 +220,7 @@ describe("POST /api/admin/send-test-email", () => {
 
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        htmlContent: "&lt;script&gt;alert('xss')&lt;/script&gt;",
+        htmlContent: "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;",
       })
     );
   });
@@ -249,5 +250,65 @@ describe("POST /api/admin/send-test-email", () => {
 
     expect(response.status).toBe(500);
     expect(data.error).toBe("Brevo API error: 500 Internal Server Error");
+  });
+
+  // -- Template mode --
+
+  const validTemplateBody = {
+    mode: "template",
+    toEmail: "test@example.com",
+    template: "groupAdded",
+    params: { geduName: "Alice", productName: "Minecraft 101" },
+  };
+
+  it("should send a template email and return messageId", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest(validTemplateBody));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.messageId).toBe("msg-123");
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toEmail: ["test@example.com"],
+        subject: expect.stringContaining("Minecraft 101"),
+      }),
+    );
+  });
+
+  it("should return 400 for unknown template", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(
+      createRequest({ ...validTemplateBody, template: "nonexistent" }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Unknown template");
+  });
+
+  it("should return 400 for invalid template params", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(
+      createRequest({ ...validTemplateBody, params: { geduName: "" } }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("params");
+  });
+
+  it("should return 400 for missing mode field", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(
+      createRequest({ toEmail: "test@example.com", template: "groupAdded", params: {} }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
   });
 });

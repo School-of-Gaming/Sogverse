@@ -171,6 +171,7 @@ export default function TestingPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            mode: "custom",
             provider,
             fromEmail: SENDER_EMAIL,
             fromName,
@@ -181,10 +182,11 @@ export default function TestingPage() {
           }),
         });
       } else {
-        response = await fetch("/api/admin/send-template-email", {
+        response = await fetch("/api/admin/send-test-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            mode: "template",
             template: templateName,
             toEmail,
             params: Object.fromEntries(

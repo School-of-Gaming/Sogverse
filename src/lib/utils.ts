@@ -75,6 +75,11 @@ export function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
+/** Parse a comma-separated list of emails into a trimmed array. */
+export function parseEmails(input: string): string[] {
+  return input.split(",").map((e) => e.trim()).filter(Boolean);
+}
+
 /**
  * Convert a wall-clock datetime string (no TZ offset) in a given IANA timezone to UTC.
  *
