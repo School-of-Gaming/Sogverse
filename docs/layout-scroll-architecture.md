@@ -7,31 +7,28 @@ The app uses a single-page layout where all scrolling is managed by inner contai
 ```
 <html>                overflow-hidden (no document-level scroll)
   <body>
-    <div>             flex h-screen flex-col (viewport boundary)
-      <Header />      fixed top-0 z-50 (out of flex flow, overlaps <main>)
-      <main>          flex-1 min-h-0 overflow-auto pt-16
-        {children}    ← public pages scroll here
-        OR
-        <Dashboard>   flex h-full overflow-hidden
-          <Sidebar>   h-full flex-col (pinned, never scrolls)
-          <main>      flex-1 overflow-auto
-            {page}    ← dashboard pages scroll here
+    <Header />        fixed top-0 z-50 (overlaps <main>, enables backdrop-blur)
+    <main>            h-screen overflow-auto pt-16
+      {children}      ← public pages scroll here
+      OR
+      <Dashboard>     flex h-full overflow-hidden
+        <Sidebar>     h-full flex-col (pinned, never scrolls)
+        <main>        flex-1 overflow-auto
+          {page}      ← dashboard pages scroll here
 ```
 
 ### Scroll containers
 
 | Page type | Scroll container | Element |
 |-----------|-----------------|---------|
-| Public pages | Root `<main>` | `layout.tsx` → `<main className="flex-1 min-h-0 overflow-auto pt-16">` |
+| Public pages | Root `<main>` | `layout.tsx` → `<main className="h-screen overflow-auto pt-16">` |
 | Dashboard pages | Dashboard `<main>` | `dashboard-layout.tsx` → `<main className="flex-1 overflow-auto">` |
 
 ### Header positioning
 
 The header uses `position: fixed` (not `sticky`) so that it overlaps the root `<main>`. This allows page content to scroll behind the header, making the `backdrop-blur` glass effect visible. The `pt-16` on `<main>` prevents content from being hidden behind the 64px header.
 
-Because `fixed` takes the header out of flex flow, `<main>` with `flex-1` fills the entire `h-screen` container. The `pt-16` padding reduces the content area to `viewport - 64px`, matching the expected layout.
-
-For dashboard pages, the dashboard wrapper uses `h-full` which resolves to `<main>`'s content box height (total height minus `pt-16` padding), so the dashboard fills the space below the header exactly.
+`<main>` uses `h-screen` (100vh) to fill the viewport, with `pt-16` padding to keep content below the header. For dashboard pages, the dashboard wrapper uses `h-full` which resolves to `<main>`'s content box height (total height minus `pt-16` padding), so the dashboard fills the space below the header exactly.
 
 ### Why `overflow-hidden` on `<html>`
 

@@ -47,12 +47,10 @@ export default async function RootLayout({
           initialProfile={userWithProfile?.profile ?? null}
           initialLocale={locale}
         >
-          <div className="flex h-screen flex-col">
-            <Header />
-            <main className="flex-1 min-h-0 overflow-auto pt-16">
-              {children}
-            </main>
-          </div>
+          <Header />
+          <main className="h-screen overflow-auto pt-16">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>
