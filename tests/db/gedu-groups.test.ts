@@ -1,15 +1,23 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { createAuthenticatedClient } from "./helpers";
+import {
+  createAdminTestClient,
+  createAuthenticatedClient,
+  seedEnrollment,
+  resetEnrollmentState,
+} from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS, SEED } from "./constants";
 
 describe("get_gedu_groups RPC", () => {
+  let admin: SupabaseClient<Database>;
   let geduClient: SupabaseClient<Database>;
   let gamerClient: SupabaseClient<Database>;
   let customerClient: SupabaseClient<Database>;
 
   beforeAll(async () => {
+    admin = createAdminTestClient();
+    await seedEnrollment(admin);
     geduClient = await createAuthenticatedClient(
       TEST_CREDENTIALS.GEDU.email,
       TEST_CREDENTIALS.GEDU.password,
@@ -49,6 +57,10 @@ describe("get_gedu_groups RPC", () => {
     );
     expect(gamerRow).toBeDefined();
     expect(gamerRow!.enrollment_id).toBe(TEST_IDS.ENROLLMENT);
+  });
+
+  afterAll(async () => {
+    await resetEnrollmentState(admin);
   });
 
   it("rejects non-gedu roles", async () => {
