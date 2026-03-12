@@ -1094,8 +1094,7 @@ export default function AdminUIComponentsPage() {
           <GroupCardDemo />
         </SubSection>
 
-
-{/* -- Loading Skeleton -- */}
+        {/* -- Loading Skeleton -- */}
         <SubSection title="Loading Skeleton">
           <div className="space-y-4">
             {[1, 2].map((i) => (
