@@ -7,7 +7,13 @@ RETURNS TABLE (
   group_id UUID,
   product_id UUID,
   product_name TEXT,
+  product_description TEXT,
   product_image_url TEXT,
+  product_padlet_url TEXT,
+  product_min_age INTEGER,
+  product_max_age INTEGER,
+  game_id UUID,
+  game_name TEXT,
   day_of_week SMALLINT,
   start_time TIME,
   timezone TEXT,
@@ -36,7 +42,13 @@ BEGIN
       pg.id AS group_id,
       pg.product_id,
       p.name AS product_name,
+      p.description AS product_description,
       p.image_url AS product_image_url,
+      p.padlet_url AS product_padlet_url,
+      p.min_age AS product_min_age,
+      p.max_age AS product_max_age,
+      g.id AS game_id,
+      g.name AS game_name,
       p.day_of_week,
       p.start_time,
       p.timezone,
@@ -50,6 +62,7 @@ BEGIN
       ge.id AS enrollment_id
     FROM product_groups pg
     JOIN products p ON p.id = pg.product_id
+    JOIN games g ON g.id = p.game_id
     JOIN profiles gedu_prof ON gedu_prof.id = pg.gedu_id
     LEFT JOIN group_enrollments ge ON ge.group_id = pg.id AND ge.status = 'active'
     LEFT JOIN profiles gamer_prof ON gamer_prof.id = ge.gamer_id

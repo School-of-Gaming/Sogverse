@@ -2,12 +2,13 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Clock, Radio, Timer, Globe, Users } from "lucide-react";
+import { ArrowLeft, Radio, Users } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { JoinButton } from "@/components/ui/join-button";
 import { GroupVoiceStatus } from "@/components/ui/group-card";
+import { PadletLink } from "@/components/ui/padlet-link";
 import { useGeduGroupsPage } from "@/hooks/use-gedu-groups-page";
 import { formatScheduleLocal } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
@@ -95,6 +96,9 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-bold">{group.productName}</h1>
+            <Badge className="shrink-0">
+              {group.gameName}
+            </Badge>
             {group.voiceIsOpen && (
               <Badge className="bg-success/10 text-success text-xs shrink-0">
                 <Radio className="mr-1 h-3 w-3" />
@@ -110,6 +114,18 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
               />
             </div>
           )}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {schedule && (
+              <>Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}</>
+            )}
+            {schedule && group.durationMinutes && " · "}
+            {group.durationMinutes && <>{group.durationMinutes} min</>}
+            {(schedule || group.durationMinutes) && group.productMinAge != null && " · "}
+            {group.productMinAge != null && <>Ages {group.productMinAge}–{group.productMaxAge}</>}
+          </p>
+          {group.productPadletUrl && (
+            <PadletLink href={group.productPadletUrl} />
+          )}
         </div>
         {group.voiceRoomId && (
           <JoinButton
@@ -118,41 +134,6 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
           />
         )}
       </div>
-
-      {/* Schedule */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Schedule</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {schedule && (
-              <>
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>Every {schedule.localDay}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>{schedule.localTime} {schedule.tzAbbrev}</span>
-                </div>
-              </>
-            )}
-            {group.durationMinutes && (
-              <div className="flex items-center gap-2 text-sm">
-                <Timer className="h-4 w-4 text-muted-foreground" />
-                <span>{group.durationMinutes} minutes</span>
-              </div>
-            )}
-            {group.timezone && (
-              <div className="flex items-center gap-2 text-sm">
-                <Globe className="h-4 w-4 text-muted-foreground" />
-                <span>{group.timezone}</span>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Gamers Roster */}
       <Card>

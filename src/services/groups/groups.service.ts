@@ -32,7 +32,13 @@ export interface GeduGroup {
   groupId: string;
   productId: string;
   productName: string;
+  productDescription: string;
   productImageUrl: string | null;
+  productPadletUrl: string | null;
+  productMinAge: number;
+  productMaxAge: number;
+  gameId: string;
+  gameName: string;
   geduName: string;
   dayOfWeek: number;
   startTime: string;
@@ -107,7 +113,13 @@ export class GroupsService {
           groupId: row.group_id,
           productId: row.product_id,
           productName: row.product_name,
+          productDescription: row.product_description,
           productImageUrl: row.product_image_url,
+          productPadletUrl: row.product_padlet_url,
+          productMinAge: row.product_min_age,
+          productMaxAge: row.product_max_age,
+          gameId: row.game_id,
+          gameName: row.game_name,
           geduName: row.gedu_display_name,
           dayOfWeek: row.day_of_week,
           startTime: row.start_time,

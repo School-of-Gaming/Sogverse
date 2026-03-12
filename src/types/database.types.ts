@@ -652,15 +652,21 @@ export type Database = {
           display_order: number
           duration_minutes: number
           enrollment_id: string
+          game_id: string
+          game_name: string
           gamer_date_of_birth: string
           gamer_display_name: string
           gamer_gender: string
           gamer_id: string
           gedu_display_name: string
           group_id: string
+          product_description: string
           product_id: string
           product_image_url: string
+          product_max_age: number
+          product_min_age: number
           product_name: string
+          product_padlet_url: string
           start_time: string
           timezone: string
         }[]
