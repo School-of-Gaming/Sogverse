@@ -11,7 +11,7 @@ export interface GeduGroupWithVoice extends GeduGroup {
   voiceRoomId: string | null;
   voiceRoomDailyName: string | null;
   voiceIsOpen: boolean;
-  voiceNextSessionStart: Date | null;
+  voiceNextSessionStart: Date;
 }
 
 export function useGeduGroupsPage() {
@@ -40,20 +40,15 @@ export function useGeduGroupsPage() {
     const enrichedGroups: GeduGroupWithVoice[] = groups.map((group) => {
       const room = roomByGroupId.get(group.groupId);
 
-      // Compute voice status from the group's own schedule data
-      let voiceIsOpen = false;
-      let voiceNextSessionStart: Date | null = null;
-
-      if (group.dayOfWeek != null && group.startTime && group.timezone && group.durationMinutes) {
-        const window = computeSessionWindow({
-          day_of_week: group.dayOfWeek,
-          start_time: group.startTime,
-          timezone: group.timezone,
-          duration_minutes: group.durationMinutes,
-        });
-        voiceIsOpen = window.isOpen;
-        voiceNextSessionStart = window.nextSessionStart;
-      }
+      // Schedule fields are NOT NULL in the products table, so always present
+      const window = computeSessionWindow({
+        day_of_week: group.dayOfWeek,
+        start_time: group.startTime,
+        timezone: group.timezone,
+        duration_minutes: group.durationMinutes,
+      });
+      const voiceIsOpen = window.isOpen;
+      const voiceNextSessionStart = window.nextSessionStart;
 
       return {
         ...group,

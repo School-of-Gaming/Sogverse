@@ -20,7 +20,7 @@ const HIGHLIGHT_MINUTES = 720;
 const TICK_MS = 60_000;
 
 interface GroupVoiceStatusProps {
-  nextSessionStart?: Date | null;
+  nextSessionStart: Date;
   locale?: string;
 }
 
@@ -35,14 +35,13 @@ export function GroupVoiceStatus({
   const [now, setNow] = useState(Date.now);
 
   useEffect(() => {
-    if (!nextSessionStart) return;
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
-  }, [nextSessionStart]);
+  }, []);
 
-  const msUntil = nextSessionStart ? nextSessionStart.getTime() - now : 0;
+  const msUntil = nextSessionStart.getTime() - now;
 
-  if (nextSessionStart && msUntil > 0) {
+  if (msUntil > 0) {
     const totalMinutes = Math.floor(msUntil / TICK_MS);
     const dateStr = nextSessionStart.toLocaleDateString(locale, {
       weekday: "short", month: "short", day: "numeric",
@@ -73,7 +72,7 @@ interface GroupCardProps {
   gamerCount: number;
   schedule: { localDay: string; localTime: string; tzAbbrev: string };
   voiceIsOpen: boolean;
-  voiceNextSessionStart?: Date | null;
+  voiceNextSessionStart: Date;
   locale?: string;
   /** Where the Join button navigates (e.g. /gedu/voice/[id]). */
   joinHref: string;

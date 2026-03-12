@@ -491,13 +491,14 @@ function GroupCardDemo() {
   const MIN = 60_000;
 
   // [voiceIsOpen, countdown offset] per demo card
-  const states: [boolean, number | null][] = [
-    [true,  null],              // Live — session in progress
-    [true,  3 * MIN],           // Live — in buffer window, starts in 3 min
-    [false, 12 * MIN],          // < 1 hour (warning)
+  // Negative offset = session started in the past → shows "Session in progress"
+  const states: [boolean, number][] = [
+    [true,  -30 * MIN],           // Live — session in progress (started 30 min ago)
+    [true,  3 * MIN],             // Live — in buffer window, starts in 3 min
+    [false, 12 * MIN],            // < 1 hour (warning)
     [false, 1 * HOUR + 30 * MIN], // 1–2 hours (warning)
-    [false, 5 * HOUR],          // Hours away (muted)
-    [false, 2 * 24 * HOUR],     // Days away (muted)
+    [false, 5 * HOUR],            // Hours away (muted)
+    [false, 2 * 24 * HOUR],       // Days away (muted)
   ];
 
   return (
@@ -512,7 +513,7 @@ function GroupCardDemo() {
             gamerCount={g.gamers}
             schedule={formatScheduleLocal(g.day, g.time, g.tz, locale)}
             voiceIsOpen={live}
-            voiceNextSessionStart={offset != null ? new Date(now + offset) : undefined}
+            voiceNextSessionStart={new Date(now + offset)}
             joinHref="#"
             detailHref="#"
           />
