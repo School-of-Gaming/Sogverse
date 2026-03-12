@@ -20,6 +20,27 @@ export interface ProductGroup {
   gamers: GroupGamer[];
 }
 
+export interface GeduGroupGamer {
+  gamerId: string;
+  displayName: string;
+  enrollmentId: string;
+  dateOfBirth: string | null;
+  gender: string | null;
+}
+
+export interface GeduGroup {
+  groupId: string;
+  productId: string;
+  productName: string;
+  productImageUrl: string | null;
+  dayOfWeek: number;
+  startTime: string;
+  timezone: string;
+  durationMinutes: number;
+  displayOrder: number;
+  gamers: GeduGroupGamer[];
+}
+
 export interface BatchGroupChanges {
   addedGroups: Array<{ tempId: string; geduId: string }>;
   updatedGroups: Array<{ groupId: string; geduId: string }>;
@@ -56,6 +77,45 @@ export class GroupsService {
 
       // gamer fields are null for groups with no enrollments (LEFT JOIN).
       // See ProductGroupWithDetails in @/types for the corrected type.
+      if (row.gamer_id) {
+        groupMap.get(row.group_id)!.gamers.push({
+          gamerId: row.gamer_id,
+          displayName: row.gamer_display_name,
+          enrollmentId: row.enrollment_id,
+          dateOfBirth: row.gamer_date_of_birth,
+          gender: row.gamer_gender,
+        });
+      }
+    }
+
+    return Array.from(groupMap.values()).sort(
+      (a, b) => a.displayOrder - b.displayOrder,
+    );
+  }
+
+  async getGeduGroups(): Promise<GeduGroup[]> {
+    const { data, error } = await this.supabase.rpc("get_gedu_groups");
+
+    if (error) throw error;
+
+    const groupMap = new Map<string, GeduGroup>();
+
+    for (const row of data || []) {
+      if (!groupMap.has(row.group_id)) {
+        groupMap.set(row.group_id, {
+          groupId: row.group_id,
+          productId: row.product_id,
+          productName: row.product_name,
+          productImageUrl: row.product_image_url,
+          dayOfWeek: row.day_of_week,
+          startTime: row.start_time,
+          timezone: row.timezone,
+          durationMinutes: row.duration_minutes,
+          displayOrder: row.display_order,
+          gamers: [],
+        });
+      }
+
       if (row.gamer_id) {
         groupMap.get(row.group_id)!.gamers.push({
           gamerId: row.gamer_id,

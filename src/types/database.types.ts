@@ -645,6 +645,25 @@ export type Database = {
           min_gamer_age: number
         }[]
       }
+      get_gedu_groups: {
+        Args: never
+        Returns: {
+          day_of_week: number
+          display_order: number
+          duration_minutes: number
+          enrollment_id: string
+          gamer_date_of_birth: string
+          gamer_display_name: string
+          gamer_gender: string
+          gamer_id: string
+          group_id: string
+          product_id: string
+          product_image_url: string
+          product_name: string
+          start_time: string
+          timezone: string
+        }[]
+      }
       get_my_gamers: {
         Args: never
         Returns: {

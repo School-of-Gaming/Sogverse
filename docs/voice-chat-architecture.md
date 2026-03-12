@@ -12,11 +12,12 @@ The spatial canvas lets participants drag avatars into zones (breakout rooms, br
 
 ```
 Pages
-├── /admin/voice → VoiceRoomDashboard (all rooms visible)
-├── /gedu/voice  → VoiceRoomDashboard (gedu lounge + assigned group rooms)
-└── /gamer/voice → VoiceRoomDashboard (enrolled group rooms only)
+├── /admin/voice    → VoiceRoomDashboard (all rooms visible)
+├── /gedu/voice/[id] → VoiceSessionPage (accessed from Groups page, not a room list)
+└── /gamer/voice    → VoiceRoomDashboard (enrolled group rooms only)
 
 Shared voice components (src/components/voice/)
+├── VoiceSessionPage    — Standalone voice page: auto-joins by room ID, role-agnostic (backHref pattern)
 ├── VoiceRoomDashboard  — Unified dashboard: room list or in-session spatial view
 ├── VoiceRoomCard       — Card for each room (always-open, live, or upcoming)
 ├── VoiceRoomProvider   — React context orchestrator (composes internal hooks)

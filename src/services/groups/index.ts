@@ -1,3 +1,3 @@
 export { GroupsService } from "./groups.service";
-export type { ProductGroup, GroupGamer, BatchGroupChanges } from "./groups.service";
-export { useProductGroups, useCommitGroupChanges } from "./groups.queries";
+export type { ProductGroup, GroupGamer, BatchGroupChanges, GeduGroup, GeduGroupGamer } from "./groups.service";
+export { groupKeys, useProductGroups, useGeduGroups, useCommitGroupChanges } from "./groups.queries";

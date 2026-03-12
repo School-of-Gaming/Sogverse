@@ -20,6 +20,7 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "get_customer_enrollments",
   "get_enrollment_groups",
   "commit_group_changes",
+  "get_gedu_groups",
 ]);
 
 /**

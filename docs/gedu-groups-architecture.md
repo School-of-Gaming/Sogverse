@@ -108,14 +108,15 @@ group_enrollments (
 
 A gamer can only be enrolled in one group per product. Since this spans two tables (`group_enrollments` → `product_groups`), it is enforced by a `BEFORE INSERT` trigger (`enforce_unique_gamer_per_product`) rather than a native constraint.
 
-### RPCs (SECURITY DEFINER, admin-only)
+### RPCs (SECURITY DEFINER)
 
-| Function | Purpose |
-|---|---|
-| `get_product_groups_with_details(p_product_id)` | Returns flat rows joining groups, gedus, enrollments, and gamer profiles (date of birth, gender) |
-| `commit_group_changes(p_product_id, ...)` | Atomic batch mutation of groups and enrollments, returns `{ autoHidden }` |
+| Function | Role Gate | Purpose |
+|---|---|---|
+| `get_product_groups_with_details(p_product_id)` | admin | Returns flat rows joining groups, gedus, enrollments, and gamer profiles (date of birth, gender) |
+| `commit_group_changes(p_product_id, ...)` | admin | Atomic batch mutation of groups and enrollments, returns `{ autoHidden }` |
+| `get_gedu_groups()` | gedu | Returns all groups for the calling gedu with product info + enrolled gamers (flat rows, client reshapes) |
 
-Both RPCs check `get_user_role() = 'admin'` and raise `42501` (insufficient privilege) otherwise.
+Admin RPCs check `get_user_role() = 'admin'` and raise `42501`. The gedu RPC checks `get_user_role() = 'gedu'`.
 
 ### RLS Policies
 
@@ -128,6 +129,7 @@ Both RPCs check `get_user_role() = 'admin'` and raise `42501` (insufficient priv
 |---|---|
 | `00007_groups_and_enrollments.sql` | `product_groups`, `group_enrollments`, `enrollment_charges` tables, `commit_group_changes` RPC (admin-gated), `get_product_groups_with_details` RPC, `check_unique_gamer_per_product` trigger |
 | `00009_rls_and_grants.sql` | All RLS policies and table/function grants for groups |
+| `00012_gedu_groups_rpc.sql` | `get_gedu_groups` RPC (gedu-gated, SECURITY DEFINER) |
 
 ## Client-Side State Management
 
@@ -164,6 +166,34 @@ New groups receive `temp-N` IDs (module-level counter). These are sent to the RP
 | View groups (visible products) | Yes | Yes | Yes | Yes |
 | Manage groups (CRUD) | Yes | - | - | - |
 | Manage enrollments | Yes | - | - | - |
+
+## Gedu-Facing View
+
+Gedus access their groups through `/gedu/groups` (list) and `/gedu/groups/[id]` (detail). Voice sessions open in a separate route (`/gedu/voice/[id]`) so the gedu can browse groups in one tab while in a call in another.
+
+### Pages and Components
+
+```
+/gedu/groups       → GeduGroupsPageContent (lounge card + group cards grid)
+/gedu/groups/[id]  → GeduGroupDetailContent (schedule, gamer roster, voice join)
+/gedu/voice/[id]   → VoiceSessionPage (shared, role-agnostic voice room wrapper)
+```
+
+Components live in `src/components/gedu/` (groups-specific) and `src/components/voice/VoiceSessionPage.tsx` (shared).
+
+### Data Flow
+
+1. `useGeduGroupsPage()` composes two parallel queries:
+   - `useGeduGroups()` → `get_gedu_groups()` RPC — returns groups with product info + enrolled gamers
+   - `useAvailableVoiceRooms()` → `get_available_voice_rooms()` RPC — returns voice room status
+2. Client-side join by `group_id` produces `GeduGroupWithVoice[]` — each group enriched with voice room ID and open/upcoming status
+3. Voice status is display-only: badges + links to `/gedu/voice/[roomId]`. No `VoiceRoomProvider` on the groups pages.
+
+### Security Model
+
+- `get_gedu_groups()` is `SECURITY DEFINER`, gated on `get_user_role() = 'gedu'`. Non-gedu roles get `42501`.
+- Voice join authorization is handled by the existing `POST /api/voice/token` endpoint — the groups page only links to the voice route.
+- `VoiceSessionPage` auto-joins on mount via the token endpoint, which independently validates role, membership, and session window.
 
 ## Future Improvements
 

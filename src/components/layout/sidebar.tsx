@@ -9,7 +9,6 @@ import {
   Palette,
   Settings,
   Gamepad2,
-  GraduationCap,
   Coins,
   Mic,
   FlaskConical,
@@ -129,19 +128,9 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
-      href: ROUTES.gedu.students,
-      label: "Students",
+      href: ROUTES.gedu.groups,
+      label: "Groups",
       icon: <Users className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.gedu.courses,
-      label: "Courses",
-      icon: <GraduationCap className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.gedu.voice,
-      label: "Voice Rooms",
-      icon: <Mic className="h-5 w-5" />,
     },
     {
       href: ROUTES.feedback,
