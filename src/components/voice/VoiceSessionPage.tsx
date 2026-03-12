@@ -18,6 +18,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
   const { data: rooms } = useAvailableVoiceRooms();
   const getToken = useVoiceToken();
   const [error, setError] = useState<string | null>(null);
+  const [leaving, setLeaving] = useState(false);
   const hasAttemptedJoin = useRef(false);
 
   const room: AvailableVoiceRoomWithWindow | null =
@@ -38,6 +39,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
   }, []);
 
   const handleLeave = useCallback(async () => {
+    setLeaving(true);
     await leave();
     window.location.href = backHref;
   }, [leave, backHref]);
@@ -57,6 +59,17 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  if (leaving) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center gap-2 py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Disconnecting...</p>
+        </CardContent>
+      </Card>
     );
   }
 
