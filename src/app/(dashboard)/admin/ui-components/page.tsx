@@ -48,6 +48,7 @@ import { TokenBalanceCard } from "@/components/customer";
 import { ProductRow } from "@/components/admin/product-row";
 import { LoungeCard } from "@/components/ui/lounge-card";
 import { GroupCard } from "@/components/ui/group-card";
+import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useCurrency } from "@/hooks/use-currency";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
@@ -465,6 +466,49 @@ const DEMO_PRODUCTS = [
     games: { name: "Roblox" },
   },
 ] as const;
+
+// Demo products: day_of_week (0=Mon–6=Sun), start_time, timezone (IANA)
+const DEMO_GROUPS = [
+  { name: "Thursday Minecraft Club", gedu: "Rachel Morgan", gamers: 4, day: 3, time: "17:30", tz: "Europe/Helsinki" },
+  { name: "Weekend Warriors",       gedu: "Taylor Kim",    gamers: 2, day: 6, time: "15:00", tz: "America/New_York" },
+  { name: "Saturday Adventure Club", gedu: "Jordan Lee",    gamers: 6, day: 5, time: "10:00", tz: "America/New_York" },
+  { name: "Wednesday Roblox Group",  gedu: "Sam Rivera",    gamers: 5, day: 2, time: "17:00", tz: "America/New_York" },
+  { name: "Monday Builders",         gedu: "Alex Chen",     gamers: 3, day: 0, time: "16:00", tz: "America/New_York" },
+] as const;
+
+/** Defers time-dependent values to after mount so SSR and client render match. */
+function GroupCardDemo() {
+  const { locale } = useCurrency();
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
+
+  const now = Date.now();
+  const HOUR = 60 * 60_000;
+  const MIN = 60_000;
+  // Fake countdown offsets for each demo card
+  const offsets = [0, 12 * MIN, 1 * HOUR + 30 * MIN, 5 * HOUR, 2 * 24 * HOUR];
+
+  return (
+    <div className="space-y-3">
+      {DEMO_GROUPS.map((g, i) => (
+        <GroupCard
+          key={g.name}
+          productName={g.name}
+          geduName={g.gedu}
+          gamerCount={g.gamers}
+          schedule={formatScheduleLocal(g.day, g.time, g.tz, locale)}
+          voiceIsOpen={i === 0}
+          voiceNextSessionStart={i > 0 ? new Date(now + offsets[i]) : undefined}
+          joinHref="#"
+          detailHref="#"
+        />
+      ))}
+    </div>
+  );
+}
 
 function ProductRowDemo() {
   const { currency, locale } = useCurrency();
@@ -1034,37 +1078,7 @@ export default function AdminUIComponentsPage() {
           <p className="text-sm text-muted-foreground mb-3">
             Shared group card used across all roles. Shows product name, gamer count, schedule, and voice status. Self-updating countdown ticks every 60s. Clicking the card navigates to a detail page; the Join button navigates to the voice session.
           </p>
-          <div className="space-y-3">
-            <GroupCard
-              productName="Thursday Minecraft Club"
-              geduName="Rachel Morgan"
-              gamerCount={4}
-              schedule={{ localDay: "Thursday", localTime: "5:30 PM", tzAbbrev: "GMT+2" }}
-              voiceIsOpen
-              joinHref="#"
-              detailHref="#"
-            />
-            <GroupCard
-              productName="Wednesday Roblox Group"
-              geduName="Alex Chen"
-              gamerCount={2}
-              schedule={{ localDay: "Wednesday", localTime: "5:00 PM", tzAbbrev: "EST" }}
-              voiceIsOpen={false}
-              voiceNextSessionStart={new Date(Date.now() + 3 * 60 * 60_000)}
-              joinHref="#"
-              detailHref="#"
-            />
-            <GroupCard
-              productName="Weekend Warriors"
-              geduName="Sam Rivera"
-              gamerCount={6}
-              schedule={{ localDay: "Saturday", localTime: "10:00 AM", tzAbbrev: "EST" }}
-              voiceIsOpen={false}
-              voiceNextSessionStart={new Date(Date.now() + 45 * 60_000)}
-              joinHref="#"
-              detailHref="#"
-            />
-          </div>
+          <GroupCardDemo />
         </SubSection>
 
 
