@@ -31,7 +31,7 @@ export default function HomePage() {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-primary/10 via-background to-background">
+      <section className="relative -mt-16 pt-16 overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))]">
         <div className="container mx-auto px-4 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
@@ -58,9 +58,6 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        {/* Decorative elements */}
-        <div className="absolute -top-24 right-0 -z-10 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -bottom-24 left-0 -z-10 h-96 w-96 rounded-full bg-secondary/20 blur-3xl" />
       </section>
 
       {/* Features Section */}
