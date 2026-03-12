@@ -12,23 +12,12 @@ import { JoinButton } from "@/components/ui/join-button";
 import { GroupVoiceStatus } from "@/components/ui/group-card";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { useGeduGroupsPage } from "@/hooks/use-gedu-groups-page";
-import { formatScheduleLocal } from "@/lib/utils";
+import { computeAge, formatScheduleLocal } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
 import { ROUTES } from "@/lib/constants";
 
 interface GeduGroupDetailContentProps {
   groupId: string;
-}
-
-function computeAge(dateOfBirth: string): number {
-  const dob = new Date(dateOfBirth);
-  const now = new Date();
-  let age = now.getFullYear() - dob.getFullYear();
-  const monthDiff = now.getMonth() - dob.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) {
-    age--;
-  }
-  return age;
 }
 
 export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps) {

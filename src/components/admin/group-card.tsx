@@ -16,23 +16,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { cn, computeAge } from "@/lib/utils";
 import { GeduPickerDialog } from "./gedu-picker-dialog";
 import type { EffectiveGroup } from "@/hooks/use-group-editor";
 import type { Profile, GenderType } from "@/types";
 
 // --- Helpers ---
-
-function computeAge(dateOfBirth: string): number {
-  const today = new Date();
-  const dob = new Date(dateOfBirth);
-  let age = today.getFullYear() - dob.getFullYear();
-  const monthDiff = today.getMonth() - dob.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-    age--;
-  }
-  return age;
-}
 
 function formatGenderShort(gender: string): string {
   switch (gender) {
