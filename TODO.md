@@ -343,6 +343,16 @@ Password reset emails are currently sent by Supabase's built-in SMTP relay using
 
 **Dependencies:** None — Brevo API wrapper and admin client already exist.
 
+### Use Identicon Avatars in Email Templates
+
+The identicon generator (`src/lib/identicon.ts`) creates unique SVG avatars from user IDs. These could be embedded in email templates to make them more personal and visually recognizable — e.g., showing a gamer's identicon next to their name in enrollment/unenrollment emails, or in group change notifications.
+
+- [ ] Investigate rendering identicons as inline SVG or data URIs for email client compatibility
+- [ ] Add identicon next to gamer names in enrollment confirmation emails
+- [ ] Add identicon next to gamer names in group change notification emails
+
+**Caveat:** Email client SVG support is inconsistent (Gmail strips `<svg>` tags). May need to render identicons as PNG via a server-side route (e.g., `GET /api/identicon/[id].png`) and reference via `<img>` tag, or use inline `data:image/svg+xml` URIs.
+
 ### Migrate Auth Email Templates to Brevo Visual Editor
 
 Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.
