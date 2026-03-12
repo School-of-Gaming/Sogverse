@@ -453,6 +453,7 @@ describe("Row Level Security", () => {
   describe("group_enrollments", () => {
     // Enrollment is not seeded — create it here for read-only assertions
     beforeAll(async () => {
+      await resetEnrollmentState(admin);
       await seedEnrollment(admin);
     });
 

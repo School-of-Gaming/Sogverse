@@ -17,6 +17,7 @@ describe("get_gedu_groups RPC", () => {
 
   beforeAll(async () => {
     admin = createAdminTestClient();
+    await resetEnrollmentState(admin);
     await seedEnrollment(admin);
     geduClient = await createAuthenticatedClient(
       TEST_CREDENTIALS.GEDU.email,
