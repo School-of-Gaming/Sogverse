@@ -34,11 +34,7 @@ test.describe("Home Page", () => {
   test("should navigate to register page", async ({ page }) => {
     await page.goto("/");
 
-    // JS click: overflow-hidden on <html> shifts the scroll container to <main>,
-    // which changes CSS stacking so Playwright's coordinate-based click hits the
-    // wrong element. JS dispatch targets the DOM node directly.
-    // See docs/layout-scroll-architecture.md § "Playwright and overflow-hidden".
-    await page.getByRole("link", { name: /get started/i }).first().dispatchEvent("click");
+    await page.getByRole("link", { name: /get started/i }).first().click();
 
     await expect(page).toHaveURL("/register");
   });
@@ -46,8 +42,7 @@ test.describe("Home Page", () => {
   test("should navigate to products page", async ({ page }) => {
     await page.goto("/");
 
-    // JS click: see comment in "should navigate to register page" above
-    await page.getByRole("link", { name: /view products/i }).dispatchEvent("click");
+    await page.getByRole("link", { name: /view products/i }).click();
 
     await expect(page).toHaveURL("/products");
   });
