@@ -30,7 +30,7 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
   );
 
   const schedule = useMemo(() => {
-    if (!group || group.dayOfWeek == null || !group.startTime || !group.timezone) return null;
+    if (!group) return null;
     return formatScheduleLocal(group.dayOfWeek, group.startTime, group.timezone, locale);
   }, [group, locale]);
 

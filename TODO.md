@@ -185,6 +185,16 @@ All 8 service classes use `type SupabaseClientType = any` for the injected Supab
 
 **Why:** The `any` was added to avoid Supabase client version incompatibilities. Verify these are resolved before applying. The main benefit is compile-time safety on RPC field mappings — currently only caught at runtime.
 
+### Enable Type-Aware ESLint with `no-unnecessary-condition`
+
+Enable `@typescript-eslint/no-unnecessary-condition` to catch null/undefined checks on non-nullable types at lint time. Requires type-aware linting (`parserOptions.project` in ESLint config), which will roughly double lint time (~13s → ~30-40s).
+
+- [ ] Add `parserOptions.project: "./tsconfig.json"` to ESLint config
+- [ ] Enable `@typescript-eslint/no-unnecessary-condition: "warn"`
+- [ ] Fix existing violations across the codebase
+
+**Why:** Found unnecessary null checks on non-nullable types during PR review (e.g., checking `dayOfWeek == null` when typed as `number`). These are dead code that obscure the actual type contract.
+
 ### Use Generated Types in API Routes
 
 All 14 API route handlers cast the Supabase profile query result with hand-written inline types (e.g. `profile as { role: string; stripe_customer_id: string | null } | null`) instead of using the generated `Profile` type from `@/types`. If a column is renamed or its type changes, these casts will silently become wrong.
