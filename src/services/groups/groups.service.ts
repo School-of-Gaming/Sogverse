@@ -2,12 +2,13 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClientType = any;
 
+/** Enrolled gamer fields from the get_product_groups_with_details RPC (admin). */
 export interface GroupGamer {
   gamerId: string;
   displayName: string;
   enrollmentId: string;
-  dateOfBirth: string | null;
-  gender: string | null;
+  dateOfBirth: string;
+  gender: string;
 }
 
 export interface ProductGroup {
@@ -20,12 +21,13 @@ export interface ProductGroup {
   gamers: GroupGamer[];
 }
 
+/** Enrolled gamer fields from the get_gedu_groups RPC (gedu). */
 export interface GeduGroupGamer {
   gamerId: string;
   displayName: string;
   enrollmentId: string;
-  dateOfBirth: string | null;
-  gender: string | null;
+  dateOfBirth: string;
+  gender: string;
 }
 
 export interface GeduGroup {

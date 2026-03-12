@@ -56,12 +56,10 @@ const GamerChipContent = memo(function GamerChipContent({
 }: {
   gamerId: string;
   displayName: string;
-  dateOfBirth: string | null;
-  gender: string | null;
+  dateOfBirth: string;
+  gender: string;
 }) {
-  const age = dateOfBirth ? computeAge(dateOfBirth) : null;
-  const genderLabel = gender ? formatGenderShort(gender) : null;
-  const detail = [age !== null ? `${age}y` : null, genderLabel].filter(Boolean).join(" / ");
+  const detail = `${computeAge(dateOfBirth)}y / ${formatGenderShort(gender)}`;
 
   return (
     <>
@@ -82,8 +80,8 @@ const GamerChipContent = memo(function GamerChipContent({
 interface EnrolledGamerChipProps {
   gamerId: string;
   displayName: string;
-  dateOfBirth: string | null;
-  gender: string | null;
+  dateOfBirth: string;
+  gender: string;
   groupId: string;
   isMoved?: boolean;
 }
@@ -141,9 +139,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
   const hasGamers = group.gamers.length > 0;
 
   // Compute group stats
-  const ages = group.gamers
-    .map((g) => (g.dateOfBirth ? computeAge(g.dateOfBirth) : null))
-    .filter((a): a is number => a !== null);
+  const ages = group.gamers.map((g) => computeAge(g.dateOfBirth));
   const ageRange = ages.length > 0
     ? ages.length === 1
       ? `${ages[0]}y`

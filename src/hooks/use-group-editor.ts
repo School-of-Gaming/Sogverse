@@ -230,8 +230,8 @@ export function computeEffectiveGroups(
           gamerId: move.gamerId,
           displayName: gamer?.displayName ?? "Unknown",
           enrollmentId: "",
-          dateOfBirth: gamer?.dateOfBirth ?? null,
-          gender: gamer?.gender ?? null,
+          dateOfBirth: gamer?.dateOfBirth ?? "",
+          gender: gamer?.gender ?? "",
           isMoved: true,
         });
       }
@@ -265,8 +265,8 @@ export function computeEffectiveGroups(
           gamerId: m.gamerId,
           displayName: gamer?.displayName ?? "Unknown",
           enrollmentId: "",
-          dateOfBirth: gamer?.dateOfBirth ?? null,
-          gender: gamer?.gender ?? null,
+          dateOfBirth: gamer?.dateOfBirth ?? "",
+          gender: gamer?.gender ?? "",
           isMoved: true,
         };
       }),

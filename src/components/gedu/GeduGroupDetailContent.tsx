@@ -158,12 +158,8 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
                   <div>
                     <p className="text-sm font-medium">{gamer.displayName}</p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {gamer.dateOfBirth && (
-                        <span>Age {computeAge(gamer.dateOfBirth)}</span>
-                      )}
-                      {gamer.gender && (
-                        <span className="capitalize">{gamer.gender.replace("_", " ")}</span>
-                      )}
+                      <span>Age {computeAge(gamer.dateOfBirth)}</span>
+                      <span className="capitalize">{gamer.gender.replace("_", " ")}</span>
                     </div>
                   </div>
                 </div>
