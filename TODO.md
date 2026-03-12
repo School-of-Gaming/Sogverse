@@ -107,15 +107,22 @@ This was tested during the staging squash and worked well:
 
 **Affected files:** `supabase/migrations/` (new), `src/app/api/gamers/[id]/route.ts`, `src/app/(dashboard)/customer/gamers/[id]/page.tsx`, `src/app/api/voice/token/route.ts`
 
-### Add SEO Static Assets
+### Add Open Graph Metadata & SEO Assets
 
-The `public/` folder is empty. Add standard SEO/social files before production launch:
+Link previews on WhatsApp, Discord, Slack, Facebook, LinkedIn, and Twitter/X are driven by Open Graph (OG) tags. Currently no OG tags are set, so shared links show only the page title and URL — no preview image or styled card. Use [opengraph.xyz](https://opengraph.xyz) to test how previews render.
 
-- [ ] `robots.txt` — block crawlers from authenticated routes (`/admin`, `/customer`, `/gamer`, `/gedu`)
-- [ ] `sitemap.xml` — index public pages for search engines
-- [ ] Open Graph image — social sharing preview for links shared on Twitter, Discord, etc.
+**Open Graph metadata (root layout):**
+- [ ] Add `openGraph` to the root layout metadata — `og:title`, `og:description`, `og:image`, `og:url`, `og:site_name`
+- [ ] Add `twitter` card metadata — `twitter:card` (`summary_large_image`), `twitter:title`, `twitter:description`, `twitter:image`
+- [ ] Create an OG image (1200x630px) — branded banner with logo, "School of Gaming" tagline, yellow/purple brand colors. Place as `src/app/opengraph-image.png` (Next.js serves it automatically) or in `public/`
 
-These can be static files in `public/` or generated via App Router conventions (`robots.ts`, `sitemap.ts`, `opengraph-image.png` in `src/app/`).
+**SEO static assets:**
+- [ ] `robots.txt` — block crawlers from authenticated routes (`/admin`, `/customer`, `/gamer`, `/gedu`). Use `src/app/robots.ts` for App Router convention.
+- [ ] `sitemap.xml` — index public pages for search engines. Use `src/app/sitemap.ts` for App Router convention.
+
+**Already done:**
+- [x] Favicon — `src/app/icon.svg` (Next.js file-based metadata convention)
+- [x] Apple touch icon — `src/app/apple-icon.png`
 
 **When:** Before production launch or when public-facing pages need SEO visibility.
 
