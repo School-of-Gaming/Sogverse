@@ -62,7 +62,7 @@ The gedu uses `get_gedu_groups()` which filters by `pg.gedu_id = auth.uid()`. Ot
 | Customer/Parent | `ge.gamer_id IN (SELECT gamer_id FROM gamer_links WHERE customer_id = auth.uid())` | Groups containing the customer's linked gamers |
 | Gamer | `ge.gamer_id = auth.uid()` | Groups the gamer is enrolled in |
 
-The RPC should return the same columns as `get_gedu_groups()` (including `gedu_display_name`) since the shared `GroupCard` expects all of them.
+The RPC should return the same columns as `get_gedu_groups()` (including `gedu_display_name` and `voice_room_id`) since the shared `GroupCard` expects all of them. JOIN `voice_rooms` in the RPC so `voice_room_id` is always available — don't cross-reference with `useAvailableVoiceRooms()` client-side.
 
 ### 2. Add service + query hook
 
@@ -74,11 +74,10 @@ Follow the pattern in `src/services/groups/`:
 ### 3. Create the composition hook
 
 Follow `src/hooks/use-gedu-groups-page.ts`:
-- Compose your new groups query + `useAvailableVoiceRooms()`
-- Join by `group_id` to enrich groups with voice status
-- Run `computeSessionWindow()` for each group
+- Compose your new groups query + `useLoungeRoomId("admin_only")` (or whichever lounge type)
+- The RPC should return `voice_room_id` directly (JOIN `voice_rooms` in the RPC) — no client-side cross-referencing needed
+- Run `computeSessionWindow()` for each group to get `voiceIsOpen` and `voiceNextSessionStart`
 - Sort: live groups first, then upcoming by soonest `nextSessionStart`
-- Extract lounge rooms (admin has `admin_only` type, gedu has `gedu_only` type)
 
 ### 4. Create the page components
 
@@ -140,7 +139,7 @@ Once all roles access voice rooms through their groups page (not the old voice r
 - Old voice room list pages (e.g., `/gedu/voice/page.tsx` if it still exists)
 
 ### Files to check for dead imports
-- `src/services/voice/` — `useAvailableVoiceRooms()` is still used by the composition hooks; keep it. But check if `VoiceRoomDashboard`-specific exports can be removed.
+- `src/services/voice/` — `useAvailableVoiceRooms()` may still be used by legacy voice pages; check before removing. `useLoungeRoomId()` is the replacement for lounge room lookups.
 - `src/components/voice/index.ts` — remove barrel exports for deleted components
 
 ### Verification
