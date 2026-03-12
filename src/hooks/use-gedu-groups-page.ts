@@ -64,7 +64,15 @@ export function useGeduGroupsPage() {
       };
     });
 
-    return { groups: enrichedGroups, loungeRoom };
+    // Sort: live groups first, then upcoming by soonest session start
+    const liveGroups = enrichedGroups
+      .filter((g) => g.voiceIsOpen)
+      .sort((a, b) => (a.voiceNextSessionStart?.getTime() ?? 0) - (b.voiceNextSessionStart?.getTime() ?? 0));
+    const upcomingGroups = enrichedGroups
+      .filter((g) => !g.voiceIsOpen)
+      .sort((a, b) => (a.voiceNextSessionStart?.getTime() ?? 0) - (b.voiceNextSessionStart?.getTime() ?? 0));
+
+    return { groups: [...liveGroups, ...upcomingGroups], loungeRoom };
   }, [groups, rooms]);
 
   return {

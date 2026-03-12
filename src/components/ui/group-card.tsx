@@ -60,7 +60,7 @@ export function GroupVoiceStatus({
     );
   }
 
-  return <p className="text-sm font-medium text-secondary">Session in progress</p>;
+  return <p className="text-sm font-medium text-primary">Session in progress</p>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -100,7 +100,10 @@ export function GroupCard({
 
   return (
     <Card
-      className="group cursor-pointer transition-colors hover:bg-accent/50"
+      className={cn(
+        "group cursor-pointer transition-colors",
+        voiceIsOpen && "border-primary/30 bg-gradient-to-r from-primary/5 to-transparent",
+      )}
       onClick={() => router.push(detailHref)}
     >
       <CardContent className="flex items-center gap-4 py-4">
