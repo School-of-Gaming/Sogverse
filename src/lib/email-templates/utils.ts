@@ -19,9 +19,13 @@ export function heading(text: string): string {
 }
 
 export function styledName(name: string): string {
-  return `<span style="color:${BRAND.primary};">${escapeHtml(name)}</span>`;
+  // Class targets the Gmail-specific background-clip:text rule in layout.ts <style> block.
+  // Inline style is the default for all other email clients.
+  return `<span class="brand-primary" style="color:${BRAND.primary};">${escapeHtml(name)}</span>`;
 }
 
 export function styledProductName(name: string): string {
-  return `<strong style="color:${BRAND.secondary};">${escapeHtml(name)}</strong>`;
+  // Class targets the Gmail-specific background-clip:text rule in layout.ts <style> block.
+  // Inline style is the default for all other email clients.
+  return `<strong class="brand-secondary" style="color:${BRAND.secondary};">${escapeHtml(name)}</strong>`;
 }
