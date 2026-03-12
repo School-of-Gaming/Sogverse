@@ -26,6 +26,7 @@ describe("GroupsService.getGeduGroups()", () => {
         timezone: "America/New_York",
         duration_minutes: 60,
         display_order: 0,
+        gedu_display_name: "Ms. Smith",
         gamer_id: "gamer1",
         gamer_display_name: "Alice",
         gamer_date_of_birth: "2015-01-01",
@@ -48,6 +49,7 @@ describe("GroupsService.getGeduGroups()", () => {
         timezone: "America/New_York",
         duration_minutes: 60,
         display_order: 0,
+        gedu_display_name: "Ms. Smith",
         gamer_id: "gamer2",
         gamer_display_name: "Bob",
         gamer_date_of_birth: "2014-06-15",
@@ -70,6 +72,7 @@ describe("GroupsService.getGeduGroups()", () => {
         timezone: "Europe/London",
         duration_minutes: 45,
         display_order: 1,
+        gedu_display_name: "Mr. Jones",
         gamer_id: null,
         gamer_display_name: null,
         gamer_date_of_birth: null,
@@ -87,6 +90,7 @@ describe("GroupsService.getGeduGroups()", () => {
     // First group (display_order 0)
     expect(groups[0].groupId).toBe("g1");
     expect(groups[0].productName).toBe("Product A");
+    expect(groups[0].geduName).toBe("Ms. Smith");
     expect(groups[0].gamers).toHaveLength(2);
     expect(groups[0].gamers[0].gamerId).toBe("gamer1");
     expect(groups[0].gamers[1].gamerId).toBe("gamer2");
@@ -95,6 +99,7 @@ describe("GroupsService.getGeduGroups()", () => {
     expect(groups[1].groupId).toBe("g2");
     expect(groups[1].productName).toBe("Product B");
     expect(groups[1].productImageUrl).toBe("https://example.com/img.png");
+    expect(groups[1].geduName).toBe("Mr. Jones");
     expect(groups[1].gamers).toHaveLength(0);
   });
 
@@ -124,6 +129,7 @@ describe("GroupsService.getGeduGroups()", () => {
         timezone: "UTC",
         duration_minutes: 30,
         display_order: 5,
+        gedu_display_name: "Gedu B",
         gamer_id: null,
         gamer_display_name: null,
         gamer_date_of_birth: null,
@@ -146,6 +152,7 @@ describe("GroupsService.getGeduGroups()", () => {
         timezone: "UTC",
         duration_minutes: 30,
         display_order: 1,
+        gedu_display_name: "Gedu A",
         gamer_id: null,
         gamer_display_name: null,
         gamer_date_of_birth: null,

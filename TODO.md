@@ -174,6 +174,17 @@ Extracted `requireRole()` helper to `src/lib/auth.ts`. All 14 API route handlers
 - [x] Create a shared `requireRole()` helper in `src/lib/auth.ts`
 - [x] Replace the boilerplate in all 14 route handlers with a one-liner call to the helper
 
+### Replace `SupabaseClientType = any` with Real Types in Service Classes
+
+All 8 service classes use `type SupabaseClientType = any` for the injected Supabase client, erasing type safety on all `.rpc()` and `.from()` calls. If an RPC column is renamed or added, the service mapping code silently produces `undefined` instead of a compile error.
+
+- [ ] Replace `type SupabaseClientType = any` with `SupabaseClient<Database>` in all service constructors
+- [ ] Verify that `.rpc()` and `.from()` calls type-check against the generated `database.types.ts`
+
+**Affected files:** `src/services/{groups,voice,users,tokens,products,games,enrollments,auth,gamers}/*.service.ts`
+
+**Why:** The `any` was added to avoid Supabase client version incompatibilities. Verify these are resolved before applying. The main benefit is compile-time safety on RPC field mappings — currently only caught at runtime.
+
 ### Use Generated Types in API Routes
 
 All 14 API route handlers cast the Supabase profile query result with hand-written inline types (e.g. `profile as { role: string; stripe_customer_id: string | null } | null`) instead of using the generated `Profile` type from `@/types`. If a column is renamed or its type changes, these casts will silently become wrong.
