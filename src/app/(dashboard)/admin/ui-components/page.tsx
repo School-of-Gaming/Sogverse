@@ -48,7 +48,6 @@ import { TokenBalanceCard } from "@/components/customer";
 import { ProductRow } from "@/components/admin/product-row";
 import { LoungeCard } from "@/components/ui/lounge-card";
 import { GroupCard } from "@/components/ui/group-card";
-import { GroupVoiceStatus } from "@/components/ui/group-voice-status";
 import { useAuth } from "@/providers";
 import { useCurrency } from "@/hooks/use-currency";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
@@ -1037,15 +1036,17 @@ export default function AdminUIComponentsPage() {
           </p>
           <div className="space-y-3">
             <GroupCard
-              productName="Sogverse Pro"
+              productName="Thursday Minecraft Club"
+              geduName="Rachel Morgan"
               gamerCount={4}
-              schedule={{ localDay: "Monday", localTime: "3:00 PM", tzAbbrev: "EST" }}
+              schedule={{ localDay: "Thursday", localTime: "5:30 PM", tzAbbrev: "GMT+2" }}
               voiceIsOpen
               joinHref="#"
               detailHref="#"
             />
             <GroupCard
-              productName="Starter Pack"
+              productName="Wednesday Roblox Group"
+              geduName="Alex Chen"
               gamerCount={2}
               schedule={{ localDay: "Wednesday", localTime: "5:00 PM", tzAbbrev: "EST" }}
               voiceIsOpen={false}
@@ -1055,6 +1056,7 @@ export default function AdminUIComponentsPage() {
             />
             <GroupCard
               productName="Weekend Warriors"
+              geduName="Sam Rivera"
               gamerCount={6}
               schedule={{ localDay: "Saturday", localTime: "10:00 AM", tzAbbrev: "EST" }}
               voiceIsOpen={false}
@@ -1062,52 +1064,11 @@ export default function AdminUIComponentsPage() {
               joinHref="#"
               detailHref="#"
             />
-            <GroupCard
-              productName="Adventure Club"
-              gamerCount={0}
-              schedule={null}
-              voiceIsOpen={false}
-              joinHref="#"
-              detailHref="#"
-            />
           </div>
         </SubSection>
 
-        {/* -- Group Voice Status (inline) -- */}
-        <SubSection title="Group Voice Status (inline primitive)">
-          <p className="text-sm text-muted-foreground mb-3">
-            The inline voice status primitive used inside GroupCard. Shown here standalone for reference.
-          </p>
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground w-20">Live</span>
-              <GroupVoiceStatus isOpen joinHref="#" />
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground w-20">Upcoming</span>
-              <GroupVoiceStatus
-                isOpen={false}
-                nextSessionStart={new Date(Date.now() + 3 * 60 * 60_000)}
-                joinHref="#"
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground w-20">Soon</span>
-              <GroupVoiceStatus
-                isOpen={false}
-                nextSessionStart={new Date(Date.now() + 45 * 60_000)}
-                joinHref="#"
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground w-20">Offline</span>
-              <GroupVoiceStatus isOpen={false} joinHref="#" />
-              <span className="text-xs text-muted-foreground italic">renders nothing</span>
-            </div>
-          </div>
-        </SubSection>
 
-        {/* -- Loading Skeleton -- */}
+{/* -- Loading Skeleton -- */}
         <SubSection title="Loading Skeleton">
           <div className="space-y-4">
             {[1, 2].map((i) => (

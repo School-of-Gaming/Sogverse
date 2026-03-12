@@ -33,6 +33,7 @@ export interface GeduGroup {
   productId: string;
   productName: string;
   productImageUrl: string | null;
+  geduName: string;
   dayOfWeek: number;
   startTime: string;
   timezone: string;
@@ -107,6 +108,7 @@ export class GroupsService {
           productId: row.product_id,
           productName: row.product_name,
           productImageUrl: row.product_image_url,
+          geduName: row.gedu_display_name,
           dayOfWeek: row.day_of_week,
           startTime: row.start_time,
           timezone: row.timezone,

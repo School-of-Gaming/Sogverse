@@ -64,18 +64,20 @@ export function GeduGroupsPageContent() {
 
 /** Thin adapter mapping GeduGroupWithVoice to the shared GroupCard props. */
 function GeduGroupCardAdapter({ group, locale }: { group: import("@/hooks/use-gedu-groups-page").GeduGroupWithVoice; locale: string }) {
-  const schedule = useMemo(() => {
-    if (group.dayOfWeek == null || !group.startTime || !group.timezone) return null;
-    return formatScheduleLocal(group.dayOfWeek, group.startTime, group.timezone, locale);
-  }, [group.dayOfWeek, group.startTime, group.timezone, locale]);
+  const schedule = useMemo(
+    () => formatScheduleLocal(group.dayOfWeek, group.startTime, group.timezone, locale),
+    [group.dayOfWeek, group.startTime, group.timezone, locale],
+  );
 
   return (
     <GroupCard
       productName={group.productName}
+      geduName={group.geduName}
       gamerCount={group.gamers.length}
       schedule={schedule}
       voiceIsOpen={group.voiceIsOpen}
       voiceNextSessionStart={group.voiceNextSessionStart}
+      locale={locale}
       joinHref={group.voiceRoomId ? ROUTES.gedu.voice(group.voiceRoomId) : ""}
       detailHref={`/gedu/groups/${group.groupId}`}
     />

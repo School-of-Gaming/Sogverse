@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Calendar, Clock, Timer, Globe, Users } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { GroupVoiceStatus } from "@/components/ui/group-voice-status";
+import { GroupVoiceStatus } from "@/components/ui/group-card";
 import { useGeduGroupsPage } from "@/hooks/use-gedu-groups-page";
 import { formatScheduleLocal } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
@@ -96,6 +96,7 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
               isOpen={group.voiceIsOpen}
               nextSessionStart={group.voiceNextSessionStart}
               joinHref={ROUTES.gedu.voice(group.voiceRoomId)}
+              locale={locale}
             />
           </div>
         )}
