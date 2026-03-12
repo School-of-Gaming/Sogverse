@@ -66,9 +66,16 @@ Tests use a separate vitest config (`vitest.config.db.mts`) that:
 - Runs tests sequentially (shared database)
 - Has a 15-second timeout (DB ops are slower than mocked tests)
 
-### UUID Isolation
+### Test Data Strategy
 
-All test data uses deterministic UUIDs in the `00000000-...-0000000000xx` range. Tests only clean up their own rows — they never interfere with each other.
+Seed entities use deterministic UUIDs in the `00000000-...-0000000000xx` range (defined in `tests/db/constants.ts`). Mutation tests create ephemeral rows (via RPCs like `enroll_gamer_in_group`) that get database-generated UUIDs — these are cleaned up between tests by reset helpers.
+
+**Seed data is reference-only** — `seed.sql` creates immutable entities (users, products, groups, games, voice rooms) but no mutable state like enrollments or charges. This prevents cross-file interference: tests run sequentially in a single fork, so one file's mutations could corrupt another file's assumptions.
+
+**Tests own their mutable state** via helpers in `tests/db/helpers.ts`:
+- `seedEnrollment(admin)` — creates the test enrollment via direct INSERT (no token deduction). Used by read-only tests (RLS, gedu-groups) in `beforeAll`.
+- `resetEnrollmentState(admin)` — deletes all test enrollments (cascades to charges), resets token balances and product cost. Used by mutation tests (enrollment, unenrollment, cron) in `beforeEach`.
+- `resetTokenState(admin)` — resets token balances only.
 
 ### Test Users (from seed.sql)
 
@@ -79,6 +86,18 @@ All test data uses deterministic UUIDs in the `00000000-...-0000000000xx` range.
 | `...003` | gedu | `gedu@test.local` | `testpassword123` |
 | `...004` | gamer | `testgamer@gamer.sogverse.internal` | `testpassword123` |
 | `...005` | customer | `customer2@test.local` | `testpassword123` |
+
+### Other Seed Entities
+
+| Entity | UUID suffix | Notes |
+|---|---|---|
+| Game | `...010` | "Test Game" |
+| Product | `...020` | "Test Product" — Wed 15:00 Helsinki, cost=2 |
+| Group | `...030` | Gedu assigned to Test Product |
+| Voice room | (auto) | Linked to Test Group |
+| Parent-gamer link | `...100` | Customer 1 → Gamer |
+
+Enrollments, charges, and token transactions are **not seeded** — tests create them as needed.
 
 ## Migration Workflow
 

@@ -37,10 +37,24 @@ export async function createAuthenticatedClient(
 }
 
 /**
- * Resets test data between runs. Only touches rows created by tests —
- * seed data is restored to its original state.
- *
- * Call this in afterEach/afterAll for tests that mutate shared state.
+ * Creates the seed enrollment via direct INSERT (no token deduction).
+ * Use this in test files that need an enrollment to exist for read-only
+ * assertions. Idempotent — safe to call even if the enrollment already exists.
+ */
+export async function seedEnrollment(
+  admin: SupabaseClient<Database>
+): Promise<void> {
+  await admin.from("group_enrollments").upsert({
+    id: TEST_IDS.ENROLLMENT,
+    group_id: TEST_IDS.GROUP,
+    gamer_id: TEST_IDS.GAMER,
+    enrolled_by: TEST_IDS.CUSTOMER,
+    status: "active",
+  });
+}
+
+/**
+ * Resets token-related test data between runs.
  */
 export async function resetTokenState(
   admin: SupabaseClient<Database>

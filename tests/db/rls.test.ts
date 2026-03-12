@@ -6,6 +6,7 @@ import {
   createAuthenticatedClient,
   resetTokenState,
   resetEnrollmentState,
+  seedEnrollment,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
@@ -450,6 +451,15 @@ describe("Row Level Security", () => {
   });
 
   describe("group_enrollments", () => {
+    // Enrollment is not seeded — create it here for read-only assertions
+    beforeAll(async () => {
+      await seedEnrollment(admin);
+    });
+
+    afterAll(async () => {
+      await resetEnrollmentState(admin);
+    });
+
     it("gamer can read own enrollments", async () => {
       const { data, error } = await gamerClient
         .from("group_enrollments")
