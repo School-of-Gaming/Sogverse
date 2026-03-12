@@ -1,4 +1,4 @@
-import { DARK_THEME } from "@/lib/constants/colors";
+import { DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { wrapInLayout } from "./layout";
 import { escapeHtml, heading, paragraph, styledName, styledProductName } from "./utils";
 
@@ -11,11 +11,11 @@ function minecraftSkinImage(username: string): string {
 
 function minecraftStatusSnippet(username: string | null, uuid: string | null): string {
   if (username && uuid) {
-    return paragraph(`Minecraft Username: <span style="color:#4ade80;">${escapeHtml(username)} (verified)</span>`) +
+    return paragraph(`Minecraft Username: <span style="color:${STATUS.success};">${escapeHtml(username)} (verified)</span>`) +
       minecraftSkinImage(username);
   }
   if (username) {
-    return paragraph(`Minecraft Username: <span style="color:#fbbf24;">${escapeHtml(username)} (not yet verified)</span>`);
+    return paragraph(`Minecraft Username: <span style="color:${STATUS.warning};">${escapeHtml(username)} (not yet verified)</span>`);
   }
   return paragraph(`Minecraft Username: <span style="color:${DARK_THEME.mutedFg};">Not provided</span>`);
 }
