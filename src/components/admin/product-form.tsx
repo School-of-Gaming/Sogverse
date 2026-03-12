@@ -23,6 +23,7 @@ const productSchema = z.object({
     .int("Sorg cost must be a whole number")
     .min(1, "Sorg cost must be at least 1"),
   imageUrl: z.string().url("Must be a valid URL"),
+  padletUrl: z.union([z.string().url("Must be a valid URL"), z.literal("")]).optional(),
   gameId: z.string().uuid("Game is required"),
   dayOfWeek: z.number().int().min(0).max(6),
   // eslint-disable-next-line security/detect-unsafe-regex -- anchored, fixed-length pattern; no ReDoS risk
@@ -40,6 +41,7 @@ export interface ProductFormValues {
   description: string;
   token_cost: number;
   image_url: string;
+  padlet_url: string | null;
   game_id: string;
   day_of_week: number;
   start_time: string;
@@ -65,6 +67,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const [description, setDescription] = useState(initialValues?.description ?? "");
   const [tokenCost, setTokenCost] = useState(initialValues?.token_cost != null ? String(initialValues.token_cost) : "");
   const [imageUrl, setImageUrl] = useState(initialValues?.image_url ?? "");
+  const [padletUrl, setPadletUrl] = useState(initialValues?.padlet_url ?? "");
   const [gameId, setGameId] = useState(initialValues?.game_id ?? "");
   const [newGameName, setNewGameName] = useState("");
   const [showNewGame, setShowNewGame] = useState(false);
@@ -118,6 +121,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         description,
         tokenCost: tokenCost === "" ? undefined : Number(tokenCost),
         imageUrl,
+        padletUrl,
         gameId,
         dayOfWeek: Number(dayOfWeek),
         startTime,
@@ -131,6 +135,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         description: validatedData.description,
         token_cost: validatedData.tokenCost,
         image_url: validatedData.imageUrl,
+        padlet_url: validatedData.padletUrl || null,
         game_id: validatedData.gameId,
         day_of_week: validatedData.dayOfWeek,
         start_time: validatedData.startTime,
@@ -184,6 +189,18 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
             rows={3}
             required
             className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="padletUrl">Padlet URL</Label>
+          <Input
+            id="padletUrl"
+            type="url"
+            placeholder="https://padlet.com/..."
+            value={padletUrl}
+            onChange={(e) => setPadletUrl(e.target.value)}
+            disabled={isPending}
           />
         </div>
 

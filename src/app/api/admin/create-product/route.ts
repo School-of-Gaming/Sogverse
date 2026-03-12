@@ -28,6 +28,8 @@ export async function POST(request: Request) {
       typeof body.duration_minutes === "number" ? body.duration_minutes : 0;
     const minAge = typeof body.min_age === "number" ? body.min_age : -1;
     const maxAge = typeof body.max_age === "number" ? body.max_age : -1;
+    const padletUrl =
+      typeof body.padlet_url === "string" ? body.padlet_url.trim() : "";
 
     if (!name) {
       return NextResponse.json(
@@ -90,6 +92,16 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    if (padletUrl) {
+      try {
+        new URL(padletUrl);
+      } catch {
+        return NextResponse.json(
+          { error: "Padlet URL must be a valid URL" },
+          { status: 400 }
+        );
+      }
+    }
 
     const admin = createAdminClient();
 
@@ -100,6 +112,7 @@ export async function POST(request: Request) {
         description,
         token_cost: tokenCost,
         image_url: imageUrl,
+        padlet_url: padletUrl || null,
         created_by: user.id,
         game_id: gameId,
         day_of_week: dayOfWeek,

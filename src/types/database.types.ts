@@ -330,6 +330,7 @@ export type Database = {
           max_age: number
           min_age: number
           name: string
+          padlet_url: string | null
           start_time: string
           timezone: string
           token_cost: number
@@ -348,6 +349,7 @@ export type Database = {
           max_age: number
           min_age: number
           name: string
+          padlet_url?: string | null
           start_time: string
           timezone?: string
           token_cost: number
@@ -366,6 +368,7 @@ export type Database = {
           max_age?: number
           min_age?: number
           name?: string
+          padlet_url?: string | null
           start_time?: string
           timezone?: string
           token_cost?: number
@@ -624,6 +627,7 @@ export type Database = {
           product_id: string
           product_image_url: string
           product_name: string
+          product_padlet_url: string
           product_start_time: string
           product_timezone: string
           product_token_cost: number
@@ -714,6 +718,7 @@ export type Database = {
           max_age: number
           min_age: number
           name: string
+          padlet_url: string | null
           start_time: string
           timezone: string
           token_cost: number

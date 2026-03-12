@@ -25,6 +25,7 @@ CREATE TABLE products (
   name TEXT NOT NULL,
   description TEXT NOT NULL,
   image_url TEXT NOT NULL,
+  padlet_url TEXT,
   is_visible BOOLEAN NOT NULL DEFAULT false,
   created_by UUID NOT NULL REFERENCES profiles(id),
   game_id UUID NOT NULL REFERENCES games(id),

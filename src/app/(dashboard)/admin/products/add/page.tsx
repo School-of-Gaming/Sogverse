@@ -53,6 +53,7 @@ export default function AddProductPage() {
         description: cloneSource.description,
         token_cost: cloneSource.token_cost,
         image_url: cloneSource.image_url,
+        padlet_url: cloneSource.padlet_url,
         game_id: cloneSource.game_id,
         day_of_week: cloneSource.day_of_week,
         start_time: cloneSource.start_time,

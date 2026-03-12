@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
+  ExternalLink,
   Pencil,
   Copy,
   Trash,
@@ -138,6 +139,17 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
               <span>Ages {product.min_age}–{product.max_age}</span>
               <span className="font-semibold text-primary">{product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})/session</span>
             </div>
+            {product.padlet_url && (
+              <a
+                href={product.padlet_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Padlet
+              </a>
+            )}
             <p className="text-xs text-muted-foreground">
               Created{" "}
               {product.created_at

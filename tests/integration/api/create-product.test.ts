@@ -366,6 +366,50 @@ describe("POST /api/admin/create-product", () => {
     expect(response.status).toBe(200);
   });
 
+  // padlet_url handling
+
+  it("includes padlet_url in insert when provided", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const mockInsert = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "new-id" })),
+      }),
+    });
+    mockAdminFrom.mockReturnValue({ insert: mockInsert });
+
+    await POST(createRequest({ ...validBody, padlet_url: "https://padlet.com/test" }));
+
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.padlet_url).toBe("https://padlet.com/test");
+  });
+
+  it("sets padlet_url to null when omitted", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const mockInsert = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue(mockSupabaseSuccess({ id: "new-id" })),
+      }),
+    });
+    mockAdminFrom.mockReturnValue({ insert: mockInsert });
+
+    await POST(createRequest(validBody));
+
+    const insertCall = mockInsert.mock.calls[0][0];
+    expect(insertCall.padlet_url).toBeNull();
+  });
+
+  it("returns 400 for invalid padlet_url", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({ ...validBody, padlet_url: "not-a-url" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Padlet URL must be a valid URL");
+  });
+
   // DB error handling
 
   it("returns 400 when database insert fails", async () => {

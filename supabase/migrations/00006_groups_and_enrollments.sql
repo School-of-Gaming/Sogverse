@@ -447,6 +447,7 @@ RETURNS TABLE(
   product_start_time TIME,
   product_timezone TEXT,
   product_duration_minutes INTEGER,
+  product_padlet_url TEXT,
   gedu_display_name TEXT,
   last_charge_session_date DATE
 )
@@ -480,6 +481,7 @@ BEGIN
     p.start_time AS product_start_time,
     p.timezone AS product_timezone,
     p.duration_minutes AS product_duration_minutes,
+    p.padlet_url AS product_padlet_url,
     gedu.display_name AS gedu_display_name,
     (SELECT ec.session_date
        FROM enrollment_charges ec
