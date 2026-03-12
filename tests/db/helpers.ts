@@ -99,6 +99,15 @@ export async function resetEnrollmentState(
 
   await resetTokenState(admin);
 
+  // Restore the seeded enrollment (deleted above since enrolled_by = CUSTOMER)
+  await admin.from("group_enrollments").upsert({
+    id: TEST_IDS.ENROLLMENT,
+    group_id: TEST_IDS.GROUP,
+    gamer_id: TEST_IDS.GAMER,
+    enrolled_by: TEST_IDS.CUSTOMER,
+    status: "active",
+  });
+
   // Reset product cost (some tests modify it)
   await admin
     .from("products")
