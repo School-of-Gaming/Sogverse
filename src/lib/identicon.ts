@@ -1,4 +1,6 @@
-const COLORS = ["#FAA901", "#8F00E2", "#FFFFFF"];
+import { BRAND } from "@/lib/constants/colors";
+
+const COLORS = [BRAND.primary, BRAND.secondary, "#FFFFFF"];
 
 export interface IdenticonData {
   grid: boolean[][];
