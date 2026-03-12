@@ -33,7 +33,6 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
   const { groups, isLoading, error } = useGeduGroupsPage();
   const { locale } = useCurrency();
 
-
   const group = useMemo(
     () => groups.find((g) => g.groupId === groupId) ?? null,
     [groups, groupId],

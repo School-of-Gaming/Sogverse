@@ -60,15 +60,15 @@ describe("get_gedu_groups RPC", () => {
     expect(gamerRow!.enrollment_id).toBe(TEST_IDS.ENROLLMENT);
   });
 
-  afterAll(async () => {
-    await resetEnrollmentState(admin);
-  });
-
   it("rejects non-gedu roles", async () => {
     const { error: gamerError } = await gamerClient.rpc("get_gedu_groups");
     expect(gamerError).not.toBeNull();
 
     const { error: customerError } = await customerClient.rpc("get_gedu_groups");
     expect(customerError).not.toBeNull();
+  });
+
+  afterAll(async () => {
+    await resetEnrollmentState(admin);
   });
 });
