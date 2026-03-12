@@ -1,4 +1,4 @@
-import { BRAND, DARK_THEME } from "@/lib/constants/colors";
+import { BRAND, DARK_THEME, GRADIENT } from "@/lib/constants/colors";
 
 interface LayoutOptions {
   title: string;
@@ -17,8 +17,9 @@ export function wrapInLayout({ title, content }: LayoutOptions): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title}</title>
 </head>
-<body style="margin:0;padding:0;background-color:${DARK_THEME.bg};font-family:Arial,Helvetica,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${DARK_THEME.bg};">
+<body style="margin:0;padding:0;background-color:${DARK_THEME.bg};background-image:linear-gradient(to bottom,transparent 0%,${DARK_THEME.bg} 70%),linear-gradient(to right,${GRADIENT.primaryGlow},${DARK_THEME.bg} 50%,${GRADIENT.secondaryGlow});font-family:Arial,Helvetica,sans-serif;">
+  <!-- Hero-style gradient on both body (for clients that respect it) and table (for Gmail which strips body styles) -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${DARK_THEME.bg};background-image:linear-gradient(to bottom,transparent 0%,${DARK_THEME.bg} 70%),linear-gradient(to right,${GRADIENT.primaryGlow},${DARK_THEME.bg} 50%,${GRADIENT.secondaryGlow});">
     <tr>
       <td align="center" style="padding:40px 20px;">
         <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
@@ -31,17 +32,9 @@ export function wrapInLayout({ title, content }: LayoutOptions): string {
           <!-- Card -->
           <tr>
             <td style="background-color:${DARK_THEME.card};border:1px solid ${DARK_THEME.border};border-radius:12px;padding:32px;">
-              <!-- Purple gradient divider -->
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="height:3px;background:linear-gradient(90deg,${BRAND.secondary},${BRAND.primary});border-radius:2px;margin-bottom:24px;"></td>
-                </tr>
-                <tr>
-                  <td style="padding-top:24px;color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
-                    ${content}
-                  </td>
-                </tr>
-              </table>
+              <div style="color:${DARK_THEME.foreground};font-size:14px;line-height:1.6;">
+                ${content}
+              </div>
             </td>
           </tr>
           <!-- Footer -->
