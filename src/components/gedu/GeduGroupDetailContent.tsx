@@ -6,6 +6,8 @@ import { ArrowLeft, Radio, Users } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
 import { JoinButton } from "@/components/ui/join-button";
 import { GroupVoiceStatus } from "@/components/ui/group-card";
 import { PadletLink } from "@/components/ui/padlet-link";
@@ -154,11 +156,16 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
                   key={gamer.gamerId}
                   className="flex items-center justify-between py-3 first:pt-0 last:pb-0"
                 >
-                  <div>
-                    <p className="text-sm font-medium">{gamer.displayName}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>Age {computeAge(gamer.dateOfBirth)}</span>
-                      <span className="capitalize">{gamer.gender.replace("_", " ")}</span>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <Identicon id={gamer.gamerId} size={32} />
+                    </Avatar>
+                    <div>
+                      <p className="text-sm font-medium">{gamer.displayName}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>Age {computeAge(gamer.dateOfBirth)}</span>
+                        <span className="capitalize">{gamer.gender.replace("_", " ")}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
