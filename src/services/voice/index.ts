@@ -4,4 +4,5 @@ export {
   voiceKeys,
   useAvailableVoiceRooms,
   useVoiceToken,
+  useLoungeRoomId,
 } from "./voice.queries";

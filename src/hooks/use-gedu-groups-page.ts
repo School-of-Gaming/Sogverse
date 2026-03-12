@@ -3,76 +3,52 @@
 import { useMemo } from "react";
 import { useGeduGroups } from "@/services/groups";
 import type { GeduGroup } from "@/services/groups";
-import { useAvailableVoiceRooms } from "@/services/voice";
-import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
+import { useLoungeRoomId } from "@/services/voice";
 import { computeSessionWindow } from "@/lib/voice-schedule";
 
 export interface GeduGroupWithVoice extends GeduGroup {
-  voiceRoomId: string | null;
-  voiceRoomDailyName: string | null;
   voiceIsOpen: boolean;
   voiceNextSessionStart: Date;
 }
 
 export function useGeduGroupsPage() {
   const { data: groups, isLoading: groupsLoading, error: groupsError } = useGeduGroups();
-  const { data: rooms, isLoading: roomsLoading } = useAvailableVoiceRooms();
+  const { data: loungeRoomId, isLoading: loungeLoading } = useLoungeRoomId("gedu_only");
 
-  const isLoading = groupsLoading || roomsLoading;
+  const isLoading = groupsLoading || loungeLoading;
 
-  const result = useMemo(() => {
-    if (!groups) return { groups: [] as GeduGroupWithVoice[], loungeRoom: null as AvailableVoiceRoomWithWindow | null };
+  const enrichedGroups = useMemo(() => {
+    if (!groups) return [] as GeduGroupWithVoice[];
 
-    // Build a map of group_id → voice room
-    const roomByGroupId = new Map<string, AvailableVoiceRoomWithWindow>();
-    let loungeRoom: AvailableVoiceRoomWithWindow | null = null;
-
-    if (rooms) {
-      for (const room of rooms) {
-        if (room.room_type === "gedu_only") {
-          loungeRoom = room;
-        } else if (room.group_id) {
-          roomByGroupId.set(room.group_id, room);
-        }
-      }
-    }
-
-    const enrichedGroups: GeduGroupWithVoice[] = groups.map((group) => {
-      const room = roomByGroupId.get(group.groupId);
-
-      // Schedule fields are NOT NULL in the products table, so always present
+    const mapped: GeduGroupWithVoice[] = groups.map((group) => {
       const window = computeSessionWindow({
         day_of_week: group.dayOfWeek,
         start_time: group.startTime,
         timezone: group.timezone,
         duration_minutes: group.durationMinutes,
       });
-      const voiceIsOpen = window.isOpen;
-      const voiceNextSessionStart = window.nextSessionStart;
 
       return {
         ...group,
-        voiceRoomId: room?.id ?? null,
-        voiceRoomDailyName: room?.daily_room_name ?? null,
-        voiceIsOpen,
-        voiceNextSessionStart,
+        voiceIsOpen: window.isOpen,
+        voiceNextSessionStart: window.nextSessionStart,
       };
     });
 
     // Sort: live groups first, then upcoming by soonest session start
-    const liveGroups = enrichedGroups
+    const liveGroups = mapped
       .filter((g) => g.voiceIsOpen)
-      .sort((a, b) => (a.voiceNextSessionStart?.getTime() ?? 0) - (b.voiceNextSessionStart?.getTime() ?? 0));
-    const upcomingGroups = enrichedGroups
+      .sort((a, b) => a.voiceNextSessionStart.getTime() - b.voiceNextSessionStart.getTime());
+    const upcomingGroups = mapped
       .filter((g) => !g.voiceIsOpen)
-      .sort((a, b) => (a.voiceNextSessionStart?.getTime() ?? 0) - (b.voiceNextSessionStart?.getTime() ?? 0));
+      .sort((a, b) => a.voiceNextSessionStart.getTime() - b.voiceNextSessionStart.getTime());
 
-    return { groups: [...liveGroups, ...upcomingGroups], loungeRoom };
-  }, [groups, rooms]);
+    return [...liveGroups, ...upcomingGroups];
+  }, [groups]);
 
   return {
-    groups: result.groups,
-    loungeRoom: result.loungeRoom,
+    groups: enrichedGroups,
+    loungeRoomId: loungeRoomId ?? null,
     isLoading,
     error: groupsError,
   };

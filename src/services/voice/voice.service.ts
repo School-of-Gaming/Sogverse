@@ -49,6 +49,18 @@ export class VoiceService {
     });
   }
 
+  /** Get the voice room ID for a lounge by room_type (e.g. 'gedu_only', 'admin_only'). */
+  async getLoungeRoomId(roomType: string): Promise<string | null> {
+    const { data, error } = await this.supabase
+      .from("voice_rooms")
+      .select("id")
+      .eq("room_type", roomType)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data?.id ?? null;
+  }
+
   /** Get a Daily.co meeting token for a room */
   async getToken(roomId: string): Promise<{ token: string; roomUrl: string; role: string }> {
     const response = await fetch("/api/voice/token", {

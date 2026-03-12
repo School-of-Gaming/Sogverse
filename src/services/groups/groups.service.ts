@@ -47,6 +47,7 @@ export interface GeduGroup {
   timezone: string;
   durationMinutes: number;
   displayOrder: number;
+  voiceRoomId: string;
   gamers: GeduGroupGamer[];
 }
 
@@ -128,6 +129,7 @@ export class GroupsService {
           timezone: row.timezone,
           durationMinutes: row.duration_minutes,
           displayOrder: row.display_order,
+          voiceRoomId: row.voice_room_id,
           gamers: [],
         });
       }

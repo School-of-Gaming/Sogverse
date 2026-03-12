@@ -27,6 +27,7 @@ describe("GroupsService.getGeduGroups()", () => {
         duration_minutes: 60,
         display_order: 0,
         gedu_display_name: "Ms. Smith",
+        voice_room_id: "vr-1",
         gamer_id: "gamer1",
         gamer_display_name: "Alice",
         gamer_date_of_birth: "2015-01-01",
@@ -50,6 +51,7 @@ describe("GroupsService.getGeduGroups()", () => {
         duration_minutes: 60,
         display_order: 0,
         gedu_display_name: "Ms. Smith",
+        voice_room_id: "vr-1",
         gamer_id: "gamer2",
         gamer_display_name: "Bob",
         gamer_date_of_birth: "2014-06-15",
@@ -73,6 +75,7 @@ describe("GroupsService.getGeduGroups()", () => {
         duration_minutes: 45,
         display_order: 1,
         gedu_display_name: "Mr. Jones",
+        voice_room_id: "vr-2",
         gamer_id: null,
         gamer_display_name: null,
         gamer_date_of_birth: null,
@@ -94,6 +97,7 @@ describe("GroupsService.getGeduGroups()", () => {
     expect(groups[0].gamers).toHaveLength(2);
     expect(groups[0].gamers[0].gamerId).toBe("gamer1");
     expect(groups[0].gamers[1].gamerId).toBe("gamer2");
+    expect(groups[0].voiceRoomId).toBe("vr-1");
 
     // Second group (display_order 1, no gamers)
     expect(groups[1].groupId).toBe("g2");
@@ -101,6 +105,7 @@ describe("GroupsService.getGeduGroups()", () => {
     expect(groups[1].productImageUrl).toBe("https://example.com/img.png");
     expect(groups[1].geduName).toBe("Mr. Jones");
     expect(groups[1].gamers).toHaveLength(0);
+    expect(groups[1].voiceRoomId).toBe("vr-2");
   });
 
   it("returns empty array when RPC returns no data", async () => {
@@ -130,6 +135,7 @@ describe("GroupsService.getGeduGroups()", () => {
         duration_minutes: 30,
         display_order: 5,
         gedu_display_name: "Gedu B",
+        voice_room_id: "vr-2",
         gamer_id: null,
         gamer_display_name: null,
         gamer_date_of_birth: null,
@@ -153,6 +159,7 @@ describe("GroupsService.getGeduGroups()", () => {
         duration_minutes: 30,
         display_order: 1,
         gedu_display_name: "Gedu A",
+        voice_room_id: "vr-1",
         gamer_id: null,
         gamer_display_name: null,
         gamer_date_of_birth: null,

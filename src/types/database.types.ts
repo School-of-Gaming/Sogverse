@@ -669,6 +669,7 @@ export type Database = {
           product_padlet_url: string
           start_time: string
           timezone: string
+          voice_room_id: string
         }[]
       }
       get_my_gamers: {

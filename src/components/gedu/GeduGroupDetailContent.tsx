@@ -96,14 +96,12 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
               </Badge>
             )}
           </div>
-          {group.voiceRoomId && (
-            <div className="mt-1">
-              <GroupVoiceStatus
-                nextSessionStart={group.voiceNextSessionStart}
-                locale={locale}
-              />
-            </div>
-          )}
+          <div className="mt-1">
+            <GroupVoiceStatus
+              nextSessionStart={group.voiceNextSessionStart}
+              locale={locale}
+            />
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {schedule && (
               <>Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}</>
@@ -117,12 +115,10 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
             <PadletLink href={group.productPadletUrl} />
           )}
         </div>
-        {group.voiceRoomId && (
-          <JoinButton
-            href={ROUTES.gedu.voice(group.voiceRoomId)}
-            disabled={!group.voiceIsOpen}
-          />
-        )}
+        <JoinButton
+          href={ROUTES.gedu.voice(group.voiceRoomId)}
+          disabled={!group.voiceIsOpen}
+        />
       </div>
 
       {/* Gamers Roster */}

@@ -20,6 +20,7 @@ RETURNS TABLE (
   duration_minutes INTEGER,
   display_order INTEGER,
   gedu_display_name TEXT,
+  voice_room_id UUID,
   gamer_id UUID,
   gamer_display_name TEXT,
   gamer_date_of_birth DATE,
@@ -55,6 +56,7 @@ BEGIN
       p.duration_minutes,
       pg.display_order,
       gedu_prof.display_name AS gedu_display_name,
+      vr.id AS voice_room_id,
       ge.gamer_id,
       gamer_prof.display_name AS gamer_display_name,
       gamer_gp.date_of_birth AS gamer_date_of_birth,
@@ -64,6 +66,7 @@ BEGIN
     JOIN products p ON p.id = pg.product_id
     JOIN games g ON g.id = p.game_id
     JOIN profiles gedu_prof ON gedu_prof.id = pg.gedu_id
+    LEFT JOIN voice_rooms vr ON vr.group_id = pg.id
     LEFT JOIN group_enrollments ge ON ge.group_id = pg.id AND ge.status = 'active'
     LEFT JOIN profiles gamer_prof ON gamer_prof.id = ge.gamer_id
     LEFT JOIN gamer_profiles gamer_gp ON gamer_gp.user_id = ge.gamer_id

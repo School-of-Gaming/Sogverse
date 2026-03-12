@@ -45,6 +45,7 @@ describe("get_gedu_groups RPC", () => {
     expect(seededRow).toBeDefined();
     expect(seededRow!.product_id).toBe(TEST_IDS.PRODUCT);
     expect(seededRow!.product_name).toBe(SEED.PRODUCT_NAME);
+    expect(seededRow!.voice_room_id).toBeDefined();
   });
 
   it("includes enrolled gamers in the result", async () => {

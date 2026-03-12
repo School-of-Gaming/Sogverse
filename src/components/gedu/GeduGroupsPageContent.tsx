@@ -11,7 +11,7 @@ import { formatScheduleLocal } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
 
 export function GeduGroupsPageContent() {
-  const { groups, loungeRoom, isLoading, error } = useGeduGroupsPage();
+  const { groups, loungeRoomId, isLoading, error } = useGeduGroupsPage();
   const { locale } = useCurrency();
 
   return (
@@ -26,7 +26,7 @@ export function GeduGroupsPageContent() {
       <LoungeCard
         name="Gedu Lounge"
         description="Connect with other educators anytime"
-        joinHref={loungeRoom ? ROUTES.gedu.voice(loungeRoom.id) : null}
+        joinHref={loungeRoomId ? ROUTES.gedu.voice(loungeRoomId) : null}
       />
 
       <div className="space-y-3">
@@ -78,7 +78,7 @@ function GeduGroupCardAdapter({ group, locale }: { group: import("@/hooks/use-ge
       voiceIsOpen={group.voiceIsOpen}
       voiceNextSessionStart={group.voiceNextSessionStart}
       locale={locale}
-      joinHref={group.voiceRoomId ? ROUTES.gedu.voice(group.voiceRoomId) : ""}
+      joinHref={ROUTES.gedu.voice(group.voiceRoomId)}
       detailHref={`/gedu/groups/${group.groupId}`}
     />
   );
