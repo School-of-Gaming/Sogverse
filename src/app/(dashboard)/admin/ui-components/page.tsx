@@ -470,7 +470,8 @@ const DEMO_PRODUCTS = [
 // Demo products: day_of_week (0=Mon–6=Sun), start_time, timezone (IANA)
 const DEMO_GROUPS = [
   { name: "Thursday Minecraft Club", gedu: "Rachel Morgan", gamers: 4, day: 3, time: "17:30", tz: "Europe/Helsinki" },
-  { name: "Weekend Warriors",       gedu: "Taylor Kim",    gamers: 2, day: 6, time: "15:00", tz: "America/New_York" },
+  { name: "Friday Creative Lab",     gedu: "Morgan Ellis",  gamers: 3, day: 4, time: "16:00", tz: "America/New_York" },
+  { name: "Weekend Warriors",        gedu: "Taylor Kim",    gamers: 2, day: 6, time: "15:00", tz: "America/New_York" },
   { name: "Saturday Adventure Club", gedu: "Jordan Lee",    gamers: 6, day: 5, time: "10:00", tz: "America/New_York" },
   { name: "Wednesday Roblox Group",  gedu: "Sam Rivera",    gamers: 5, day: 2, time: "17:00", tz: "America/New_York" },
   { name: "Monday Builders",         gedu: "Alex Chen",     gamers: 3, day: 0, time: "16:00", tz: "America/New_York" },
@@ -484,28 +485,39 @@ function GroupCardDemo() {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) return null;
-
+  // eslint-disable-next-line react-hooks/purity -- demo-only; called once after mount guard
   const now = Date.now();
   const HOUR = 60 * 60_000;
   const MIN = 60_000;
-  // Fake countdown offsets for each demo card
-  const offsets = [0, 12 * MIN, 1 * HOUR + 30 * MIN, 5 * HOUR, 2 * 24 * HOUR];
+
+  // [voiceIsOpen, countdown offset] per demo card
+  const states: [boolean, number | null][] = [
+    [true,  null],              // Live — session in progress
+    [true,  3 * MIN],           // Live — in buffer window, starts in 3 min
+    [false, 12 * MIN],          // < 1 hour (warning)
+    [false, 1 * HOUR + 30 * MIN], // 1–2 hours (warning)
+    [false, 5 * HOUR],          // Hours away (muted)
+    [false, 2 * 24 * HOUR],     // Days away (muted)
+  ];
 
   return (
     <div className="space-y-3">
-      {DEMO_GROUPS.map((g, i) => (
-        <GroupCard
-          key={g.name}
-          productName={g.name}
-          geduName={g.gedu}
-          gamerCount={g.gamers}
-          schedule={formatScheduleLocal(g.day, g.time, g.tz, locale)}
-          voiceIsOpen={i === 0}
-          voiceNextSessionStart={i > 0 ? new Date(now + offsets[i]) : undefined}
-          joinHref="#"
-          detailHref="#"
-        />
-      ))}
+      {DEMO_GROUPS.map((g, i) => {
+        const [live, offset] = states[i];
+        return (
+          <GroupCard
+            key={g.name}
+            productName={g.name}
+            geduName={g.gedu}
+            gamerCount={g.gamers}
+            schedule={formatScheduleLocal(g.day, g.time, g.tz, locale)}
+            voiceIsOpen={live}
+            voiceNextSessionStart={offset != null ? new Date(now + offset) : undefined}
+            joinHref="#"
+            detailHref="#"
+          />
+        );
+      })}
     </div>
   );
 }

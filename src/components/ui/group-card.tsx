@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Calendar, Clock, PhoneCall, Radio, Users } from "lucide-react";
+import { Calendar, Clock, Radio, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { JoinButton } from "@/components/ui/join-button";
 import { cn } from "@/lib/utils";
 import { formatCountdown } from "@/lib/enrollment";
 
@@ -21,82 +20,47 @@ const HIGHLIGHT_MINUTES = 720;
 const TICK_MS = 60_000;
 
 interface GroupVoiceStatusProps {
-  isOpen: boolean;
   nextSessionStart?: Date | null;
-  joinHref: string;
   locale?: string;
 }
 
 /**
- * Voice status display: Live badge + Join button when open,
- * a self-updating "Next session" line when upcoming, or nothing when offline.
- * Used inside GroupCard and on group detail pages.
+ * Self-updating status text line for a voice session.
+ * Shows a countdown when upcoming, or "Session in progress" when live.
  */
 export function GroupVoiceStatus({
-  isOpen,
   nextSessionStart,
-  joinHref,
   locale,
 }: GroupVoiceStatusProps) {
   const [now, setNow] = useState(Date.now);
 
-  // Self-updating tick keeps countdown accurate while the page is open
   useEffect(() => {
-    if (isOpen || !nextSessionStart) return;
+    if (!nextSessionStart) return;
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
-  }, [isOpen, nextSessionStart]);
+  }, [nextSessionStart]);
 
-  if (isOpen) {
-    return (
-      <div className="flex items-center gap-2">
-        <Badge className="bg-success/10 text-success text-xs shrink-0">
-          <Radio className="mr-1 h-3 w-3" />
-          Live
-        </Badge>
-        <Link
-          href={joinHref}
-          className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <PhoneCall className="h-4 w-4" />
-          Join
-        </Link>
-      </div>
-    );
-  }
+  const msUntil = nextSessionStart ? nextSessionStart.getTime() - now : 0;
 
-  if (nextSessionStart) {
-    const msUntil = nextSessionStart.getTime() - now;
-    if (msUntil <= 0) return null;
+  if (nextSessionStart && msUntil > 0) {
     const totalMinutes = Math.floor(msUntil / TICK_MS);
-    const countdown = formatCountdown(msUntil);
-
     const dateStr = nextSessionStart.toLocaleDateString(locale, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
+      weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit",
     });
-
     return (
       <p className="text-sm">
         Next session {dateStr}{" "}
-        <span
-          className={cn(
-            totalMinutes < HIGHLIGHT_MINUTES
-              ? "font-medium text-warning"
-              : "text-muted-foreground",
-          )}
-        >
-          (starts in {countdown})
+        <span className={cn(
+          totalMinutes < HIGHLIGHT_MINUTES ? "font-medium text-warning" : "text-muted-foreground",
+        )}>
+          (starts in {formatCountdown(msUntil)})
         </span>
       </p>
     );
   }
 
-  return null;
+  return <p className="text-sm font-medium text-secondary">Session in progress</p>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -168,27 +132,16 @@ export function GroupCard({
             </span>
           </div>
 
-          {!voiceIsOpen && voiceNextSessionStart && (
-            <div className="mt-1">
-              <GroupVoiceStatus
-                isOpen={false}
-                nextSessionStart={voiceNextSessionStart}
-                joinHref=""
-                locale={locale}
-              />
-            </div>
-          )}
+          <div className="mt-1">
+            <GroupVoiceStatus
+              nextSessionStart={voiceNextSessionStart}
+              locale={locale}
+            />
+          </div>
         </div>
 
         {voiceIsOpen && (
-          <Link
-            href={joinHref}
-            className={cn(buttonVariants({ size: "sm" }), "gap-1.5 shrink-0")}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <PhoneCall className="h-4 w-4" />
-            Join
-          </Link>
+          <JoinButton href={joinHref} stopPropagation />
         )}
       </CardContent>
     </Card>

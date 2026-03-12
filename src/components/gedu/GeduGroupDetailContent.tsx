@@ -2,9 +2,11 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Clock, Timer, Globe, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Radio, Timer, Globe, Users } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { JoinButton } from "@/components/ui/join-button";
 import { GroupVoiceStatus } from "@/components/ui/group-card";
 import { useGeduGroupsPage } from "@/hooks/use-gedu-groups-page";
 import { formatScheduleLocal } from "@/lib/utils";
@@ -29,6 +31,7 @@ function computeAge(dateOfBirth: string): number {
 export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps) {
   const { groups, isLoading, error } = useGeduGroupsPage();
   const { locale } = useCurrency();
+
 
   const group = useMemo(
     () => groups.find((g) => g.groupId === groupId) ?? null,
@@ -88,17 +91,31 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
       </Link>
 
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">{group.productName}</h1>
-        {group.voiceRoomId && (
-          <div className="mt-2">
-            <GroupVoiceStatus
-              isOpen={group.voiceIsOpen}
-              nextSessionStart={group.voiceNextSessionStart}
-              joinHref={ROUTES.gedu.voice(group.voiceRoomId)}
-              locale={locale}
-            />
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold">{group.productName}</h1>
+            {group.voiceIsOpen && (
+              <Badge className="bg-success/10 text-success text-xs shrink-0">
+                <Radio className="mr-1 h-3 w-3" />
+                Live
+              </Badge>
+            )}
           </div>
+          {group.voiceRoomId && (
+            <div className="mt-1">
+              <GroupVoiceStatus
+                nextSessionStart={group.voiceNextSessionStart}
+                locale={locale}
+              />
+            </div>
+          )}
+        </div>
+        {group.voiceRoomId && (
+          <JoinButton
+            href={ROUTES.gedu.voice(group.voiceRoomId)}
+            disabled={!group.voiceIsOpen}
+          />
         )}
       </div>
 

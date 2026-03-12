@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { Loader2, Mic, PhoneCall } from "lucide-react";
+import { Mic } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { JoinButton } from "@/components/ui/join-button";
 
 interface LoungeCardProps {
   name: string;
@@ -34,19 +32,7 @@ export function LoungeCard({ name, description, joinHref }: LoungeCardProps) {
             {description}
           </p>
         </div>
-        {joinHref ? (
-          <Link
-            href={joinHref}
-            className={cn(buttonVariants({ size: "sm" }), "w-20 justify-center gap-1.5 shrink-0")}
-          >
-            <PhoneCall className="h-4 w-4" />
-            Join
-          </Link>
-        ) : (
-          <div className={cn(buttonVariants({ size: "sm" }), "w-20 justify-center shrink-0 opacity-50 pointer-events-none")}>
-            <Loader2 className="h-4 w-4 animate-spin" />
-          </div>
-        )}
+        <JoinButton href={joinHref ?? ""} loading={!joinHref} />
       </CardContent>
     </Card>
   );
