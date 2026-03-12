@@ -7,6 +7,7 @@ import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomPro
 import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
 import { useAvailableVoiceRooms, useVoiceToken } from "@/services/voice";
 import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
+import { computeSessionWindow } from "@/lib/voice-schedule";
 
 interface VoiceSessionPageProps {
   roomId: string;
@@ -19,6 +20,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
   const getToken = useVoiceToken();
   const [error, setError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const [sessionEnded, setSessionEnded] = useState(false);
   const hasAttemptedJoin = useRef(false);
 
   const room: AvailableVoiceRoomWithWindow | null =
@@ -44,6 +46,28 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
     window.location.href = backHref;
   }, [leave, backHref]);
 
+  // Auto-leave when session window closes (group rooms only)
+  useEffect(() => {
+    if (!joined || !room || room.room_type !== "group") return;
+    if (room.day_of_week == null || !room.start_time || !room.timezone || !room.duration_minutes) return;
+
+    const check = () => {
+      const window = computeSessionWindow({
+        day_of_week: room.day_of_week!,
+        start_time: room.start_time!,
+        timezone: room.timezone!,
+        duration_minutes: room.duration_minutes!,
+      });
+      if (!window.isOpen) {
+        setSessionEnded(true);
+        leave();
+      }
+    };
+
+    const id = setInterval(check, 30_000);
+    return () => clearInterval(id);
+  }, [joined, room, leave]);
+
   if (error) {
     return (
       <div className="space-y-4">
@@ -59,6 +83,22 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
           </CardContent>
         </Card>
       </div>
+    );
+  }
+
+  if (sessionEnded) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <p className="text-sm font-medium">Session has ended</p>
+          <a
+            href={backHref}
+            className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground"
+          >
+            Back to Groups
+          </a>
+        </CardContent>
+      </Card>
     );
   }
 
