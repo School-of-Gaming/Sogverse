@@ -2,13 +2,12 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowLeft, Calendar, Clock, Timer, Globe, Users, PhoneCall, Radio } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, Timer, Globe, Users } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { GroupVoiceStatus } from "@/components/ui/group-voice-status";
 import { useGeduGroupsPage } from "@/hooks/use-gedu-groups-page";
-import { cn, formatScheduleLocal } from "@/lib/utils";
+import { formatScheduleLocal } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
 import { ROUTES } from "@/lib/constants";
 
@@ -89,24 +88,16 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
       </Link>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">{group.productName}</h1>
-          {group.voiceIsOpen && group.voiceRoomId && (
-            <Badge className="mt-2 bg-success/10 text-success">
-              <Radio className="mr-1 h-3 w-3" />
-              Live Now
-            </Badge>
-          )}
-        </div>
-        {group.voiceIsOpen && group.voiceRoomId && (
-          <Link
-            href={ROUTES.gedu.voice(group.voiceRoomId)}
-            className={cn(buttonVariants(), "gap-1.5 shrink-0")}
-          >
-            <PhoneCall className="h-4 w-4" />
-            Join Voice
-          </Link>
+      <div>
+        <h1 className="text-3xl font-bold">{group.productName}</h1>
+        {group.voiceRoomId && (
+          <div className="mt-2">
+            <GroupVoiceStatus
+              isOpen={group.voiceIsOpen}
+              nextSessionStart={group.voiceNextSessionStart}
+              joinHref={ROUTES.gedu.voice(group.voiceRoomId)}
+            />
+          </div>
         )}
       </div>
 

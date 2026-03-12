@@ -215,6 +215,10 @@ The `POST /api/admin/products/[id]/groups` route destructures the request body w
 
 While the commit mutation is pending, the admin can still add groups, move gamers, etc. On success, `RESET` clears all staged changes — including any made after clicking Commit. Those changes are silently lost (they were never sent to the server). Disable the groups section (Add Group button, drag-and-drop, reassign/delete actions) while `isPending` to prevent this.
 
+### Reuse VoiceSessionPage for admin and gamer voice routes
+
+`src/components/voice/VoiceSessionPage.tsx` is role-agnostic — it takes a `roomId` and `backHref` prop, fetches a token, and renders the spatial voice room. Currently only used by `/gedu/voice/[id]`. To adopt for other roles, create a thin page wrapper (e.g., `src/app/(dashboard)/admin/voice/[id]/page.tsx`) that passes the appropriate `backHref`.
+
 ### Prevent gedu scheduling conflicts
 
 A gedu can currently be assigned to groups across multiple products with no check for time conflicts. If products have scheduled sessions that overlap, a gedu could be double-booked. Add schedule conflict detection when assigning a gedu to a group.

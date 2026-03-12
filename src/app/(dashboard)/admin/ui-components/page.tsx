@@ -46,6 +46,9 @@ import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow } from "@/components/voice/ParticipantRow";
 import { TokenBalanceCard } from "@/components/customer";
 import { ProductRow } from "@/components/admin/product-row";
+import { LoungeCard } from "@/components/ui/lounge-card";
+import { GroupCard } from "@/components/ui/group-card";
+import { GroupVoiceStatus } from "@/components/ui/group-voice-status";
 import { useAuth } from "@/providers";
 import { useCurrency } from "@/hooks/use-currency";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
@@ -1006,6 +1009,102 @@ export default function AdminUIComponentsPage() {
         {/* -- Token Balance Card -- */}
         <SubSection title="Token Balance Card (customer/sorg)">
           <TokenBalanceCard />
+        </SubSection>
+
+        {/* -- Lounge Card -- */}
+        <SubSection title="Lounge Card (shared)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Banner card for always-open voice lounges. Used on gedu and admin group pages. The join button shows a loading spinner when the href is not yet available.
+          </p>
+          <div className="space-y-3">
+            <LoungeCard
+              name="Gedu Lounge"
+              description="Connect with other educators anytime"
+              joinHref="#"
+            />
+            <LoungeCard
+              name="Admin Lounge"
+              description="Private admin voice channel"
+              joinHref={null}
+            />
+          </div>
+        </SubSection>
+
+        {/* -- Group Card -- */}
+        <SubSection title="Group Card (shared)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Shared group card used across all roles. Shows product name, gamer count, schedule, and voice status. Self-updating countdown ticks every 60s. Clicking the card navigates to a detail page; the Join button navigates to the voice session.
+          </p>
+          <div className="space-y-3">
+            <GroupCard
+              productName="Sogverse Pro"
+              gamerCount={4}
+              schedule={{ localDay: "Monday", localTime: "3:00 PM", tzAbbrev: "EST" }}
+              voiceIsOpen
+              joinHref="#"
+              detailHref="#"
+            />
+            <GroupCard
+              productName="Starter Pack"
+              gamerCount={2}
+              schedule={{ localDay: "Wednesday", localTime: "5:00 PM", tzAbbrev: "EST" }}
+              voiceIsOpen={false}
+              voiceNextSessionStart={new Date(Date.now() + 3 * 60 * 60_000)}
+              joinHref="#"
+              detailHref="#"
+            />
+            <GroupCard
+              productName="Weekend Warriors"
+              gamerCount={6}
+              schedule={{ localDay: "Saturday", localTime: "10:00 AM", tzAbbrev: "EST" }}
+              voiceIsOpen={false}
+              voiceNextSessionStart={new Date(Date.now() + 45 * 60_000)}
+              joinHref="#"
+              detailHref="#"
+            />
+            <GroupCard
+              productName="Adventure Club"
+              gamerCount={0}
+              schedule={null}
+              voiceIsOpen={false}
+              joinHref="#"
+              detailHref="#"
+            />
+          </div>
+        </SubSection>
+
+        {/* -- Group Voice Status (inline) -- */}
+        <SubSection title="Group Voice Status (inline primitive)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The inline voice status primitive used inside GroupCard. Shown here standalone for reference.
+          </p>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground w-20">Live</span>
+              <GroupVoiceStatus isOpen joinHref="#" />
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground w-20">Upcoming</span>
+              <GroupVoiceStatus
+                isOpen={false}
+                nextSessionStart={new Date(Date.now() + 3 * 60 * 60_000)}
+                joinHref="#"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground w-20">Soon</span>
+              <GroupVoiceStatus
+                isOpen={false}
+                nextSessionStart={new Date(Date.now() + 45 * 60_000)}
+                joinHref="#"
+              />
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground w-20">Offline</span>
+              <GroupVoiceStatus isOpen={false} joinHref="#" />
+              <span className="text-xs text-muted-foreground italic">renders nothing</span>
+            </div>
+          </div>
         </SubSection>
 
         {/* -- Loading Skeleton -- */}
