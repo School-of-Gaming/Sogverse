@@ -185,7 +185,7 @@ export function LoginForm() {
                       key={role}
                       onClick={() => { setSelectedRole(role); setDisplayRole(role); }}
                       className={cn(
-                        "flex cursor-pointer flex-col items-center gap-2 rounded-lg border p-5 text-center transition-all duration-200",
+                        "flex flex-col items-center gap-2 rounded-lg border p-5 text-center transition-all duration-200",
                         config.accent,
                         config.glow,
                       )}

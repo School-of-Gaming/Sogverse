@@ -103,7 +103,15 @@ export function GroupCard({
         "group cursor-pointer transition-colors hover:bg-muted/50",
         voiceIsOpen && "border-primary/30 bg-gradient-to-r from-primary/5 to-transparent",
       )}
+      role="button"
+      tabIndex={0}
       onClick={() => router.push(detailHref)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          router.push(detailHref);
+        }
+      }}
     >
       <CardContent className="flex items-center gap-4 py-4">
         <div className="flex-1 min-w-0">

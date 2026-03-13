@@ -142,7 +142,7 @@ export function ParticipantRow({
               max={VOICE_CONFIG.MAX_VOLUME * 100}
               value={Math.round(volume * 100)}
               onChange={(e) => onVolumeChange?.(Number(e.target.value) / 100)}
-              className="h-1.5 min-w-0 flex-1 cursor-pointer accent-primary"
+              className="h-1.5 min-w-0 flex-1 accent-primary"
               title={`Volume: ${Math.round(volume * 100)}%`}
             />
             <span className="w-8 shrink-0 text-right text-xs text-muted-foreground">
