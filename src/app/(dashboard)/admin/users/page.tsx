@@ -196,7 +196,7 @@ function UserRow({ user, linkedGamers }: { user: Profile; linkedGamers?: Profile
     <div className="rounded-lg border">
       <Link
         href={`/admin/users/${user.id}`}
-        className="group flex items-center justify-between p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
+        className="group flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
       >
         <div className="flex items-center gap-4">
           <Avatar>
@@ -206,7 +206,7 @@ function UserRow({ user, linkedGamers }: { user: Profile; linkedGamers?: Profile
             <p className="font-medium">
               {user.display_name || user.username || "Unnamed User"}
             </p>
-            <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70">
+            <p className="text-sm text-muted-foreground">
               {user.email || user.username}
             </p>
           </div>
@@ -215,7 +215,7 @@ function UserRow({ user, linkedGamers }: { user: Profile; linkedGamers?: Profile
           <Badge className={ROLE_BADGES[user.role].className}>
             {ROLE_BADGES[user.role].label}
           </Badge>
-          <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" />
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
         </div>
       </Link>
 
@@ -231,7 +231,7 @@ function UserRow({ user, linkedGamers }: { user: Profile; linkedGamers?: Profile
             <Link
               key={gamer.id}
               href={`/admin/users/${gamer.id}`}
-              className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-muted/50"
             >
               <div className="flex items-center gap-3">
                 <Avatar className="h-7 w-7">
@@ -245,7 +245,7 @@ function UserRow({ user, linkedGamers }: { user: Profile; linkedGamers?: Profile
                 <Badge className={`${ROLE_BADGES.gamer.className} text-[10px] px-2 py-0`}>
                   {ROLE_BADGES.gamer.label}
                 </Badge>
-                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
             </Link>
           ))}

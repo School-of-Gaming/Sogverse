@@ -100,7 +100,7 @@ export function GroupCard({
   return (
     <Card
       className={cn(
-        "group cursor-pointer transition-colors",
+        "group cursor-pointer transition-colors hover:bg-muted/50",
         voiceIsOpen && "border-primary/30 bg-gradient-to-r from-primary/5 to-transparent",
       )}
       onClick={() => router.push(detailHref)}

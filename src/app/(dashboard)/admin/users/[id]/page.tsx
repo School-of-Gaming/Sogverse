@@ -132,7 +132,7 @@ export default function AdminUserDetailPage() {
                   <Link
                     key={gamer.id}
                     href={`/admin/users/${gamer.id}`}
-                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
+                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
@@ -142,7 +142,7 @@ export default function AdminUserDetailPage() {
                         <p className="text-sm font-medium">
                           {gamer.display_name || gamer.username || "Unnamed Gamer"}
                         </p>
-                        <p className="text-xs text-muted-foreground group-hover:text-accent-foreground/70">
+                        <p className="text-xs text-muted-foreground ">
                           {gamer.username}
                         </p>
                       </div>
@@ -151,7 +151,7 @@ export default function AdminUserDetailPage() {
                       <Badge className={ROLE_BADGES.gamer.className}>
                         {ROLE_BADGES.gamer.label}
                       </Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </Link>
                 ))}
@@ -166,7 +166,7 @@ export default function AdminUserDetailPage() {
                   <Link
                     key={parent.id}
                     href={`/admin/users/${parent.id}`}
-                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
+                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
@@ -176,7 +176,7 @@ export default function AdminUserDetailPage() {
                         <p className="text-sm font-medium">
                           {parent.display_name || parent.username || "Unnamed User"}
                         </p>
-                        <p className="text-xs text-muted-foreground group-hover:text-accent-foreground/70">
+                        <p className="text-xs text-muted-foreground ">
                           {parent.email}
                         </p>
                       </div>
@@ -185,7 +185,7 @@ export default function AdminUserDetailPage() {
                       <Badge className={ROLE_BADGES.customer.className}>
                         {ROLE_BADGES.customer.label}
                       </Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </Link>
                 ))}
