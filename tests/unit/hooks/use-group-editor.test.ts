@@ -267,7 +267,7 @@ describe("computeEffectiveGroups", () => {
       makeServerGroup({
         groupId: "g1",
         gamers: [
-          { gamerId: "gamer-1", displayName: "Kid", enrollmentId: "e1", dateOfBirth: null, gender: null },
+          { gamerId: "gamer-1", displayName: "Kid", enrollmentId: "e1", dateOfBirth: "2015-01-01", gender: "boy" },
         ],
       }),
     ];
@@ -284,7 +284,7 @@ describe("computeEffectiveGroups", () => {
       makeServerGroup({
         groupId: "g1",
         gamers: [
-          { gamerId: "gamer-1", displayName: "Kid A", enrollmentId: "e1", dateOfBirth: null, gender: null },
+          { gamerId: "gamer-1", displayName: "Kid A", enrollmentId: "e1", dateOfBirth: "2015-01-01", gender: "boy" },
         ],
       }),
       makeServerGroup({
@@ -293,7 +293,7 @@ describe("computeEffectiveGroups", () => {
         geduId: "gedu-2",
         geduDisplayName: "Bob",
         gamers: [
-          { gamerId: "gamer-2", displayName: "Kid B", enrollmentId: "e2", dateOfBirth: null, gender: null },
+          { gamerId: "gamer-2", displayName: "Kid B", enrollmentId: "e2", dateOfBirth: "2015-01-01", gender: "boy" },
         ],
       }),
     ];
@@ -320,7 +320,7 @@ describe("computeEffectiveGroups", () => {
       makeServerGroup({
         groupId: "g1",
         gamers: [
-          { gamerId: "gamer-1", displayName: "Kid A", enrollmentId: "e1", dateOfBirth: null, gender: null },
+          { gamerId: "gamer-1", displayName: "Kid A", enrollmentId: "e1", dateOfBirth: "2015-01-01", gender: "boy" },
         ],
       }),
     ];
@@ -418,7 +418,7 @@ describe("buildChangeSummary", () => {
         groupId: "g1",
         geduDisplayName: "Alice",
         gamers: [
-          { gamerId: "gamer-1", displayName: "Kid A", enrollmentId: "e1", dateOfBirth: null, gender: null },
+          { gamerId: "gamer-1", displayName: "Kid A", enrollmentId: "e1", dateOfBirth: "2015-01-01", gender: "boy" },
         ],
       }),
       makeServerGroup({
@@ -447,7 +447,7 @@ describe("buildChangeSummary", () => {
         groupId: "g1",
         geduDisplayName: "Alice",
         gamers: [
-          { gamerId: "gamer-1", displayName: "Kid A", enrollmentId: "e1", dateOfBirth: null, gender: null },
+          { gamerId: "gamer-1", displayName: "Kid A", enrollmentId: "e1", dateOfBirth: "2015-01-01", gender: "boy" },
         ],
       }),
       makeServerGroup({
@@ -598,7 +598,7 @@ describe("buildNotifyPayload", () => {
   it("builds combined payload with all change types", () => {
     const server = [
       makeServerGroup({ groupId: "g1", geduId: "gedu-1", geduDisplayName: "Alice", gamers: [
-        { gamerId: "gamer-1", displayName: "Kid", enrollmentId: "e1", dateOfBirth: null, gender: null },
+        { gamerId: "gamer-1", displayName: "Kid", enrollmentId: "e1", dateOfBirth: "2015-01-01", gender: "boy" },
       ] }),
       makeServerGroup({ groupId: "g2", geduId: "gedu-2", geduDisplayName: "Bob", displayOrder: 1 }),
     ];

@@ -46,6 +46,9 @@ import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow } from "@/components/voice/ParticipantRow";
 import { TokenBalanceCard } from "@/components/customer";
 import { ProductRow } from "@/components/admin/product-row";
+import { LoungeCard } from "@/components/ui/lounge-card";
+import { GroupCard } from "@/components/ui/group-card";
+import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useCurrency } from "@/hooks/use-currency";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
@@ -463,6 +466,62 @@ const DEMO_PRODUCTS = [
     games: { name: "Roblox" },
   },
 ] as const;
+
+// Demo products: day_of_week (0=Mon–6=Sun), start_time, timezone (IANA)
+const DEMO_GROUPS = [
+  { name: "Thursday Minecraft Club", gedu: "Rachel Morgan", gamers: 4, day: 3, time: "17:30", tz: "Europe/Helsinki" },
+  { name: "Friday Creative Lab",     gedu: "Morgan Ellis",  gamers: 3, day: 4, time: "16:00", tz: "America/New_York" },
+  { name: "Weekend Warriors",        gedu: "Taylor Kim",    gamers: 2, day: 6, time: "15:00", tz: "America/New_York" },
+  { name: "Saturday Adventure Club", gedu: "Jordan Lee",    gamers: 6, day: 5, time: "10:00", tz: "America/New_York" },
+  { name: "Wednesday Roblox Group",  gedu: "Sam Rivera",    gamers: 5, day: 2, time: "17:00", tz: "America/New_York" },
+  { name: "Monday Builders",         gedu: "Alex Chen",     gamers: 3, day: 0, time: "16:00", tz: "America/New_York" },
+] as const;
+
+/** Defers time-dependent values to after mount so SSR and client render match. */
+function GroupCardDemo() {
+  const { locale } = useCurrency();
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
+  // eslint-disable-next-line react-hooks/purity -- demo-only; called once after mount guard
+  const now = Date.now();
+  const HOUR = 60 * 60_000;
+  const MIN = 60_000;
+
+  // [voiceIsOpen, countdown offset] per demo card
+  // Negative offset = session started in the past → shows "Session in progress"
+  const states: [boolean, number][] = [
+    [true,  -30 * MIN],           // Live — session in progress (started 30 min ago)
+    [true,  3 * MIN],             // Live — in buffer window, starts in 3 min
+    [false, 12 * MIN],            // < 1 hour (warning)
+    [false, 1 * HOUR + 30 * MIN], // 1–2 hours (warning)
+    [false, 5 * HOUR],            // Hours away (muted)
+    [false, 2 * 24 * HOUR],       // Days away (muted)
+  ];
+
+  return (
+    <div className="space-y-3">
+      {DEMO_GROUPS.map((g, i) => {
+        const [live, offset] = states[i];
+        return (
+          <GroupCard
+            key={g.name}
+            productName={g.name}
+            geduName={g.gedu}
+            gamerCount={g.gamers}
+            schedule={formatScheduleLocal(g.day, g.time, g.tz, locale)}
+            voiceIsOpen={live}
+            voiceNextSessionStart={new Date(now + offset)}
+            joinHref="#"
+            detailHref="#"
+          />
+        );
+      })}
+    </div>
+  );
+}
 
 function ProductRowDemo() {
   const { currency, locale } = useCurrency();
@@ -1006,6 +1065,33 @@ export default function AdminUIComponentsPage() {
         {/* -- Token Balance Card -- */}
         <SubSection title="Token Balance Card (customer/sorg)">
           <TokenBalanceCard />
+        </SubSection>
+
+        {/* -- Lounge Card -- */}
+        <SubSection title="Lounge Card (shared)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Banner card for always-open voice lounges. Used on gedu and admin group pages. The join button shows a loading spinner when the href is not yet available.
+          </p>
+          <div className="space-y-3">
+            <LoungeCard
+              name="Gedu Lounge"
+              description="Connect with other educators anytime"
+              joinHref="#"
+            />
+            <LoungeCard
+              name="Admin Lounge"
+              description="Private admin voice channel"
+              joinHref={null}
+            />
+          </div>
+        </SubSection>
+
+        {/* -- Group Card -- */}
+        <SubSection title="Group Card (shared)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Shared group card used across all roles. Shows product name, gamer count, schedule, and voice status. Self-updating countdown ticks every 60s. Clicking the card navigates to a detail page; the Join button navigates to the voice session.
+          </p>
+          <GroupCardDemo />
         </SubSection>
 
         {/* -- Loading Skeleton -- */}

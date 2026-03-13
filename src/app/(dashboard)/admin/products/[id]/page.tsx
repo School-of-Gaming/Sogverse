@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   Eye,
   EyeOff,
-  ExternalLink,
   Pencil,
   Copy,
   Trash,
@@ -16,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { PadletLink } from "@/components/ui/padlet-link";
 import {
   Dialog,
   DialogContent,
@@ -140,15 +140,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
               <span className="font-semibold text-primary">{product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})/session</span>
             </div>
             {product.padlet_url && (
-              <a
-                href={product.padlet_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-              >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Padlet
-              </a>
+              <PadletLink href={product.padlet_url} />
             )}
             <p className="text-xs text-muted-foreground">
               Created{" "}

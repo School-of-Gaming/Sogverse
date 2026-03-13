@@ -16,23 +16,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { cn, computeAge } from "@/lib/utils";
 import { GeduPickerDialog } from "./gedu-picker-dialog";
 import type { EffectiveGroup } from "@/hooks/use-group-editor";
 import type { Profile, GenderType } from "@/types";
 
 // --- Helpers ---
-
-function computeAge(dateOfBirth: string): number {
-  const today = new Date();
-  const dob = new Date(dateOfBirth);
-  let age = today.getFullYear() - dob.getFullYear();
-  const monthDiff = today.getMonth() - dob.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-    age--;
-  }
-  return age;
-}
 
 function formatGenderShort(gender: string): string {
   switch (gender) {
@@ -56,12 +45,10 @@ const GamerChipContent = memo(function GamerChipContent({
 }: {
   gamerId: string;
   displayName: string;
-  dateOfBirth: string | null;
-  gender: string | null;
+  dateOfBirth: string;
+  gender: string;
 }) {
-  const age = dateOfBirth ? computeAge(dateOfBirth) : null;
-  const genderLabel = gender ? formatGenderShort(gender) : null;
-  const detail = [age !== null ? `${age}y` : null, genderLabel].filter(Boolean).join(" / ");
+  const detail = `${computeAge(dateOfBirth)}y / ${formatGenderShort(gender)}`;
 
   return (
     <>
@@ -82,8 +69,8 @@ const GamerChipContent = memo(function GamerChipContent({
 interface EnrolledGamerChipProps {
   gamerId: string;
   displayName: string;
-  dateOfBirth: string | null;
-  gender: string | null;
+  dateOfBirth: string;
+  gender: string;
   groupId: string;
   isMoved?: boolean;
 }
@@ -141,9 +128,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
   const hasGamers = group.gamers.length > 0;
 
   // Compute group stats
-  const ages = group.gamers
-    .map((g) => (g.dateOfBirth ? computeAge(g.dateOfBirth) : null))
-    .filter((a): a is number => a !== null);
+  const ages = group.gamers.map((g) => computeAge(g.dateOfBirth));
   const ageRange = ages.length > 0
     ? ages.length === 1
       ? `${ages[0]}y`

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { useAuth } from "@/providers";
 import { useCreateGamer } from "@/services/gamers";
+import { computeAge } from "@/lib/utils";
 
 const gamerSchema = z
   .object({
@@ -40,15 +41,10 @@ const gamerSchema = z
     path: ["confirmPassword"],
   });
 
-function computeAge(dateOfBirth: string): number | null {
+function computeAgeFromInput(dateOfBirth: string): number | null {
   const dob = new Date(dateOfBirth);
   if (isNaN(dob.getTime())) return null;
-  const today = new Date();
-  let age = today.getFullYear() - dob.getFullYear();
-  const monthDiff = today.getMonth() - dob.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-    age--;
-  }
+  const age = computeAge(dateOfBirth);
   return age >= 0 ? age : null;
 }
 
@@ -75,7 +71,7 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const age = computeAge(dateOfBirth);
+  const age = computeAgeFromInput(dateOfBirth);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

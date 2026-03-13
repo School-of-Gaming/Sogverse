@@ -1,40 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Users, GraduationCap, BookOpen, TrendingUp } from "lucide-react";
+import { Users, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
   title: "Educator Dashboard",
-  description: "Manage your students and courses",
+  description: "Manage your groups and students",
 };
 
 const stats = [
   {
-    title: "Students",
-    value: "0",
-    description: "Active students",
+    title: "Groups",
+    value: "--",
+    description: "Assigned groups",
     icon: Users,
-    href: "/gedu/students",
-  },
-  {
-    title: "Courses",
-    value: "0",
-    description: "Active courses",
-    icon: BookOpen,
-    href: "/gedu/courses",
+    href: "/gedu/groups",
   },
   {
     title: "Completion Rate",
     value: "0%",
     description: "Average completion",
     icon: TrendingUp,
-    href: "#",
-  },
-  {
-    title: "Certifications",
-    value: "0",
-    description: "Issued this month",
-    icon: GraduationCap,
     href: "#",
   },
 ];
@@ -45,11 +31,11 @@ export default function GeduDashboardPage() {
       <div>
         <h1 className="text-3xl font-bold">Educator Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome to your game educator portal. Manage students, courses, and track progress.
+          Welcome to your game educator portal. View your groups, students, and voice sessions.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2">
         {stats.map((stat) => (
           <Link key={stat.title} href={stat.href}>
             <Card className="group transition-colors hover:bg-accent hover:text-accent-foreground">
@@ -78,21 +64,12 @@ export default function GeduDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Link
-              href="/gedu/students"
+              href="/gedu/groups"
               className="group block rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              <h3 className="font-medium">View Students</h3>
+              <h3 className="font-medium">View Groups</h3>
               <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70">
-                Monitor student progress and achievements
-              </p>
-            </Link>
-            <Link
-              href="/gedu/courses"
-              className="group block rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <h3 className="font-medium">Manage Courses</h3>
-              <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70">
-                Create and manage learning content
+                See your assigned groups, students, and voice sessions
               </p>
             </Link>
           </CardContent>
@@ -110,16 +87,6 @@ export default function GeduDashboardPage() {
           </CardContent>
         </Card>
       </div>
-
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="py-4">
-          <p className="text-sm">
-            <strong>Note:</strong> The educator features are currently in development.
-            More functionality will be added soon, including course creation, student
-            management, and progress tracking.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -2,12 +2,13 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SupabaseClientType = any;
 
+/** Enrolled gamer fields from the get_product_groups_with_details RPC (admin). */
 export interface GroupGamer {
   gamerId: string;
   displayName: string;
   enrollmentId: string;
-  dateOfBirth: string | null;
-  gender: string | null;
+  dateOfBirth: string;
+  gender: string;
 }
 
 export interface ProductGroup {
@@ -18,6 +19,36 @@ export interface ProductGroup {
   geduDisplayName: string;
   geduEmail: string;
   gamers: GroupGamer[];
+}
+
+/** Enrolled gamer fields from the get_gedu_groups RPC (gedu). */
+export interface GeduGroupGamer {
+  gamerId: string;
+  displayName: string;
+  enrollmentId: string;
+  dateOfBirth: string;
+  gender: string;
+}
+
+export interface GeduGroup {
+  groupId: string;
+  productId: string;
+  productName: string;
+  productDescription: string;
+  productImageUrl: string | null;
+  productPadletUrl: string | null;
+  productMinAge: number;
+  productMaxAge: number;
+  gameId: string;
+  gameName: string;
+  geduName: string;
+  dayOfWeek: number;
+  startTime: string;
+  timezone: string;
+  durationMinutes: number;
+  displayOrder: number;
+  voiceRoomId: string;
+  gamers: GeduGroupGamer[];
 }
 
 export interface BatchGroupChanges {
@@ -56,6 +87,53 @@ export class GroupsService {
 
       // gamer fields are null for groups with no enrollments (LEFT JOIN).
       // See ProductGroupWithDetails in @/types for the corrected type.
+      if (row.gamer_id) {
+        groupMap.get(row.group_id)!.gamers.push({
+          gamerId: row.gamer_id,
+          displayName: row.gamer_display_name,
+          enrollmentId: row.enrollment_id,
+          dateOfBirth: row.gamer_date_of_birth,
+          gender: row.gamer_gender,
+        });
+      }
+    }
+
+    return Array.from(groupMap.values()).sort(
+      (a, b) => a.displayOrder - b.displayOrder,
+    );
+  }
+
+  async getGeduGroups(): Promise<GeduGroup[]> {
+    const { data, error } = await this.supabase.rpc("get_gedu_groups");
+
+    if (error) throw error;
+
+    const groupMap = new Map<string, GeduGroup>();
+
+    for (const row of data || []) {
+      if (!groupMap.has(row.group_id)) {
+        groupMap.set(row.group_id, {
+          groupId: row.group_id,
+          productId: row.product_id,
+          productName: row.product_name,
+          productDescription: row.product_description,
+          productImageUrl: row.product_image_url,
+          productPadletUrl: row.product_padlet_url,
+          productMinAge: row.product_min_age,
+          productMaxAge: row.product_max_age,
+          gameId: row.game_id,
+          gameName: row.game_name,
+          geduName: row.gedu_display_name,
+          dayOfWeek: row.day_of_week,
+          startTime: row.start_time,
+          timezone: row.timezone,
+          durationMinutes: row.duration_minutes,
+          displayOrder: row.display_order,
+          voiceRoomId: row.voice_room_id,
+          gamers: [],
+        });
+      }
+
       if (row.gamer_id) {
         groupMap.get(row.group_id)!.gamers.push({
           gamerId: row.gamer_id,

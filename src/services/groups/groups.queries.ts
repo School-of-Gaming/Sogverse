@@ -4,9 +4,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { GroupsService, type BatchGroupChanges } from "./groups.service";
 
-const groupKeys = {
+export const groupKeys = {
   all: ["groups"] as const,
   byProduct: (productId: string) => [...groupKeys.all, "product", productId] as const,
+  gedu: () => [...groupKeys.all, "gedu"] as const,
 };
 
 export function useProductGroups(productId: string) {
@@ -17,6 +18,16 @@ export function useProductGroups(productId: string) {
     queryKey: groupKeys.byProduct(productId),
     queryFn: () => service.getProductGroups(productId),
     enabled: !!productId,
+  });
+}
+
+export function useGeduGroups() {
+  const supabase = getClient();
+  const service = new GroupsService(supabase);
+
+  return useQuery({
+    queryKey: groupKeys.gedu(),
+    queryFn: () => service.getGeduGroups(),
   });
 }
 

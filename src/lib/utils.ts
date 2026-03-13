@@ -120,6 +120,18 @@ export function wallClockToUtc(wallStr: string, timezone: string): Date {
   return new Date(utcGuess.getTime() - offsetMinutes * 60 * 1000);
 }
 
+/** Compute age in whole years from a date-of-birth string (YYYY-MM-DD). */
+export function computeAge(dateOfBirth: string): number {
+  const dob = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const monthDiff = today.getMonth() - dob.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 /** Monday = 0, Sunday = 6 (matches DB day_of_week column) */
 export const DAYS_OF_WEEK = [
   "Monday",
