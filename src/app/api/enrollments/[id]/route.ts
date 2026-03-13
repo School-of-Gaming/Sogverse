@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getRefundEligibility } from "@/lib/enrollment";
@@ -84,11 +84,17 @@ export async function DELETE(
 
     const rpcResult = data[0];
 
-    sendUnenrollmentNotifications({
-      customerId: user.id,
-      gamerId: enrollment.gamer_id,
-      groupId: enrollment.group_id,
-    }).catch((err) => console.error("Unenrollment notification error:", err));
+    after(async () => {
+      try {
+        await sendUnenrollmentNotifications({
+          customerId: user.id,
+          gamerId: enrollment.gamer_id,
+          groupId: enrollment.group_id,
+        });
+      } catch (err) {
+        console.error("Unenrollment notification error:", err);
+      }
+    });
 
     return NextResponse.json({
       refunded: eligible,

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getNextSessionStart } from "@/lib/enrollment";
@@ -66,11 +66,13 @@ export async function POST(request: Request) {
 
     const rpcResult = data[0];
 
-    sendEnrollmentNotifications({
-      customerId: user.id,
-      gamerId,
-      groupId,
-    }).catch((err) => console.error("Enrollment notification error:", err));
+    after(async () => {
+      try {
+        await sendEnrollmentNotifications({ customerId: user.id, gamerId, groupId });
+      } catch (err) {
+        console.error("Enrollment notification error:", err);
+      }
+    });
 
     return NextResponse.json({
       enrollmentId: rpcResult.enrollment_id,
