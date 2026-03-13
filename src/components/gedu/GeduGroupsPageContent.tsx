@@ -79,7 +79,7 @@ function GeduGroupCardAdapter({ group, locale }: { group: import("@/hooks/use-ge
       voiceNextSessionStart={group.voiceNextSessionStart}
       locale={locale}
       joinHref={ROUTES.gedu.voice(group.voiceRoomId)}
-      detailHref={`/gedu/groups/${group.groupId}`}
+      detailHref={ROUTES.gedu.group(group.groupId)}
     />
   );
 }

@@ -46,17 +46,20 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
     window.location.href = backHref;
   }, [leave, backHref]);
 
-  // Auto-leave when session window closes (group rooms only)
+  // Auto-leave when session window closes (group rooms only).
+  // Schedule fields (day_of_week, start_time, etc.) are typed as nullable because
+  // AvailableVoiceRoom covers both lounges and groups, but group rooms always have
+  // non-null schedule data — the RPC LEFT JOINs to products, and the WHERE clause
+  // ensures product_groups matched. The `as` casts are safe after the room_type guard.
   useEffect(() => {
     if (!joined || !room || room.room_type !== "group") return;
-    if (room.day_of_week == null || !room.start_time || !room.timezone || !room.duration_minutes) return;
 
     const check = () => {
       const window = computeSessionWindow({
-        day_of_week: room.day_of_week!,
-        start_time: room.start_time!,
-        timezone: room.timezone!,
-        duration_minutes: room.duration_minutes!,
+        day_of_week: room.day_of_week as number,
+        start_time: room.start_time as string,
+        timezone: room.timezone as string,
+        duration_minutes: room.duration_minutes as number,
       });
       if (!window.isOpen) {
         setSessionEnded(true);
@@ -78,7 +81,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
               href={backHref}
               className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground"
             >
-              Back to Groups
+              Back
             </a>
           </CardContent>
         </Card>
@@ -95,7 +98,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
             href={backHref}
             className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground"
           >
-            Back to Groups
+            Back
           </a>
         </CardContent>
       </Card>
