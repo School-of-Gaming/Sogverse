@@ -78,6 +78,7 @@ Follow `src/hooks/use-gedu-groups-page.ts`:
 - The RPC should return `voice_room_id` directly (JOIN `voice_rooms` in the RPC) — no client-side cross-referencing needed
 - Run `computeSessionWindow()` for each group to get `voiceIsOpen` and `voiceNextSessionStart`
 - Sort: live groups first, then upcoming by soonest `nextSessionStart`
+- **Important: the 30-second session tick.** `computeSessionWindow()` is time-based, but `useMemo` only recomputes when its dependencies change. Without a periodic tick, `voiceIsOpen` freezes at whatever value it had when the query data last loaded — so the Live badge and Join button won't update when a session window opens or closes. `use-gedu-groups-page.ts` solves this with a `SESSION_TICK_MS` timer that ticks a `now` state every 30 seconds and passes it to `computeSessionWindow(schedule, now)`. Most roles will have nearly identical groups list and detail pages, so when adding the next role, extract `use-gedu-groups-page.ts` into a shared, role-agnostic hook that accepts the groups query result and lounge type — rather than duplicating the composition hook per role.
 
 ### 4. Create the page components
 

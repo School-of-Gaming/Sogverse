@@ -1,10 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useGeduGroups } from "@/services/groups";
 import type { GeduGroup } from "@/services/groups";
 import { useLoungeRoomId } from "@/services/voice";
 import { computeSessionWindow } from "@/lib/voice-schedule";
+
+/** Re-evaluate session windows every 30 seconds so the Live badge and Join button update in real-time. */
+const SESSION_TICK_MS = 30_000;
 
 export interface GeduGroupWithVoice extends GeduGroup {
   voiceIsOpen: boolean;
@@ -17,16 +20,26 @@ export function useGeduGroupsPage() {
 
   const isLoading = groupsLoading || loungeLoading;
 
+  // Tick every 30s so computeSessionWindow() picks up window open/close transitions
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), SESSION_TICK_MS);
+    return () => clearInterval(id);
+  }, []);
+
   const enrichedGroups = useMemo(() => {
     if (!groups) return [] as GeduGroupWithVoice[];
 
     const mapped: GeduGroupWithVoice[] = groups.map((group) => {
-      const window = computeSessionWindow({
-        day_of_week: group.dayOfWeek,
-        start_time: group.startTime,
-        timezone: group.timezone,
-        duration_minutes: group.durationMinutes,
-      });
+      const window = computeSessionWindow(
+        {
+          day_of_week: group.dayOfWeek,
+          start_time: group.startTime,
+          timezone: group.timezone,
+          duration_minutes: group.durationMinutes,
+        },
+        now,
+      );
 
       return {
         ...group,
@@ -44,7 +57,7 @@ export function useGeduGroupsPage() {
       .sort((a, b) => a.voiceNextSessionStart.getTime() - b.voiceNextSessionStart.getTime());
 
     return [...liveGroups, ...upcomingGroups];
-  }, [groups]);
+  }, [groups, now]);
 
   return {
     groups: enrichedGroups,
