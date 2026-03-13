@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       .select("email")
       .eq("role", "admin");
 
-    if (adminsError || !admins?.length) {
+    if (adminsError || !admins.length) {
       console.error("Failed to fetch admin emails:", adminsError);
       return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }

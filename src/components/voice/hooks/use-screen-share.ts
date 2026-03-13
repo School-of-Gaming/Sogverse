@@ -24,7 +24,7 @@ export function useScreenShare({ callObjectRef, localRole, localSessionId }: Use
     if (!co) return;
 
     if (screenSharerSessionId) {
-      const localSid = co.participants().local?.session_id;
+      const localSid = co.participants().local.session_id;
       if (screenSharerSessionId !== localSid) {
         co.updateParticipant(screenSharerSessionId, { setScreenShare: false });
       }

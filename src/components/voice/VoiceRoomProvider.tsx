@@ -33,7 +33,7 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): Vo
   const raw = p.user_name || "";
   const parts = raw.split("|");
   const userId = parts[0] || p.session_id;
-  const role = (parts[1] as UserRole) || "gamer";
+  const role = parts[1] as UserRole;
   const userName = parts.slice(2).join("|") || "Unknown";
 
   return {
@@ -41,12 +41,12 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): Vo
     userId,
     role,
     userName,
-    audioOn: !p.audio ? false : p.tracks.audio?.state === "playable",
-    videoOn: !p.video ? false : p.tracks.video?.state === "playable",
-    screenShareOn: p.tracks.screenVideo?.state === "playable",
+    audioOn: !p.audio ? false : p.tracks.audio.state === "playable",
+    videoOn: !p.video ? false : p.tracks.video.state === "playable",
+    screenShareOn: p.tracks.screenVideo.state === "playable",
     isLocal: p.local,
-    isOwner: p.owner ?? false,
-    isSpeaking: p.session_id === activeSpeakerId && Boolean(p.audio) && p.tracks.audio?.state === "playable",
+    isOwner: p.owner,
+    isSpeaking: p.session_id === activeSpeakerId && Boolean(p.audio) && p.tracks.audio.state === "playable",
   };
 }
 
@@ -95,10 +95,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     setParticipants(list);
 
     const local = pMap.local;
-    if (local) {
-      setMicOn(local.tracks.audio?.state === "playable");
-      setCameraOn(local.tracks.video?.state === "playable");
-    }
+    setMicOn(local.tracks.audio.state === "playable");
+    setCameraOn(local.tracks.video.state === "playable");
 
     screenShare.detectScreenSharer(list);
     void audio.manageAudioNodes(co);
@@ -167,11 +165,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         setCameraAllowed(true);
 
         const local = co.participants().local;
-        if (local) {
-          const mapped = mapParticipant(local, null);
-          setLocalRole(mapped.role);
-          spatial.onJoined(local.session_id);
-        }
+        const mapped = mapParticipant(local, null);
+        setLocalRole(mapped.role);
+        spatial.onJoined(local.session_id);
       };
 
       const handleParticipantUpdate = () => updateParticipants(co);

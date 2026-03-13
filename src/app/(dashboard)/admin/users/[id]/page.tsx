@@ -249,7 +249,7 @@ export default function AdminUserDetailPage() {
 
               {adjustMutation.isError && (
                 <p className="text-sm text-destructive">
-                  {adjustMutation.error?.message || "Failed to adjust balance"}
+                  {adjustMutation.error.message || "Failed to adjust balance"}
                 </p>
               )}
             </CardContent>

@@ -20,7 +20,7 @@ interface UseSpatialPositionsParams {
 
 function mapRole(p: DailyParticipant): UserRole {
   const raw = p.user_name || "";
-  return (raw.split("|")[1] as UserRole) || "gamer";
+  return raw.split("|")[1] as UserRole;
 }
 
 export function useSpatialPositions({
@@ -55,8 +55,7 @@ export function useSpatialPositions({
     const co = callObjectRef.current;
     if (!co) return;
 
-    const sessionId = co.participants().local?.session_id;
-    if (!sessionId) return;
+    const sessionId = co.participants().local.session_id;
 
     const zone = getZoneAtPosition(x, y);
     const position: SpatialPosition = { x, y, zone };
@@ -116,13 +115,13 @@ export function useSpatialPositions({
   ) => {
     switch (msg.type) {
       case "positionSync": {
-        const localSid = co.participants().local?.session_id;
+        const localSid = co.participants().local.session_id;
         for (const [sid, pos] of Object.entries(msg.positions)) {
           if (sid !== localSid) {
             positionsRef.current.set(sid, pos);
           }
         }
-        if (msg.locks && onLockStatesReceived) {
+        if (onLockStatesReceived) {
           onLockStatesReceived(msg.locks);
         }
         scheduleFlush();
@@ -130,7 +129,7 @@ export function useSpatialPositions({
         break;
       }
       case "posUpdate": {
-        const localSid = co.participants().local?.session_id;
+        const localSid = co.participants().local.session_id;
         if (msg.sessionId !== localSid) {
           positionsRef.current.set(msg.sessionId, msg.position);
           scheduleFlush();
@@ -142,10 +141,10 @@ export function useSpatialPositions({
         const sender = Object.values(co.participants()).find((p) => p.session_id === fromId);
         if (!sender?.owner) break;
 
-        const localSid = co.participants().local?.session_id;
+        const localSid = co.participants().local.session_id;
         if (msg.targetSessionId === localSid) {
           const local = co.participants().local;
-          const role = local ? mapRole(local) : "gamer";
+          const role = mapRole(local);
 
           let finalPos = msg.position;
           if (role === "gamer" && msg.position.zone === "broadcast") {

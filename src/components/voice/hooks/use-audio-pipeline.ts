@@ -31,8 +31,7 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
     const co = callObjectRef.current;
     if (!co) return;
 
-    const localSessionId = co.participants().local?.session_id;
-    if (!localSessionId) return;
+    const localSessionId = co.participants().local.session_id;
 
     const localPos = positionsRef.current.get(localSessionId);
     const lZone = localPos?.zone ?? "general";
@@ -73,7 +72,7 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
       activeSessionIds.add(p.session_id);
 
       const audioTrack = p.tracks.audio;
-      if (audioTrack?.state === "playable" && audioTrack.persistentTrack) {
+      if (audioTrack.state === "playable" && audioTrack.persistentTrack) {
         const trackId = audioTrack.persistentTrack.id;
         const prevTrackId = audioTrackIdsRef.current.get(p.session_id);
 
@@ -135,9 +134,9 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
     if (!ctx) return;
 
     const local = co.participants().local;
-    const audioTrack = local?.tracks?.audio;
-    if (audioTrack?.state === "playable" && audioTrack.persistentTrack) {
-      const existingTrack = localAnalyserRef.current?.source.mediaStream?.getAudioTracks()[0];
+    const audioTrack = local.tracks.audio;
+    if (audioTrack.state === "playable" && audioTrack.persistentTrack) {
+      const existingTrack = localAnalyserRef.current?.source.mediaStream.getAudioTracks()[0];
       if (existingTrack !== audioTrack.persistentTrack) {
         if (localAnalyserRef.current) {
           localAnalyserRef.current.source.disconnect();
@@ -156,7 +155,7 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
   const getAnalyser = useCallback((sessionId: string): AnalyserNode | null => {
     const co = callObjectRef.current;
     if (co) {
-      const localSid = co.participants().local?.session_id;
+      const localSid = co.participants().local.session_id;
       if (sessionId === localSid && localAnalyserRef.current) {
         return localAnalyserRef.current.analyser;
       }

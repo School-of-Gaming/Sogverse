@@ -90,7 +90,7 @@ export function useModeratorControls({
         flushLockStates();
 
         // If we are the target and being locked, force our track off
-        const localSid = co.participants().local?.session_id;
+        const localSid = co.participants().local.session_id;
         if (msg.targetSessionId === localSid) {
           localLocksRef.current = updated;
           setLocalLocks(updated);
@@ -112,7 +112,7 @@ export function useModeratorControls({
   /** Merge lock states received from positionSync (late-joiner sync) */
   const onLockStatesReceived = useCallback((locks: Record<string, LockState>) => {
     const co = callObjectRef.current;
-    const localSid = co?.participants().local?.session_id;
+    const localSid = co?.participants().local.session_id;
 
     for (const [sid, lock] of Object.entries(locks)) {
       lockStateRef.current.set(sid, lock);

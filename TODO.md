@@ -209,15 +209,13 @@ All 8 service classes use `type SupabaseClientType = any` for the injected Supab
 
 **Why:** The `any` was added to avoid Supabase client version incompatibilities. Verify these are resolved before applying. The main benefit is compile-time safety on RPC field mappings — currently only caught at runtime.
 
-### Enable Type-Aware ESLint with `no-unnecessary-condition`
+### ~~Enable Type-Aware ESLint with `no-unnecessary-condition`~~ — DONE
 
-Enable `@typescript-eslint/no-unnecessary-condition` to catch null/undefined checks on non-nullable types at lint time. Requires type-aware linting (`parserOptions.project` in ESLint config), which will roughly double lint time (~13s → ~30-40s).
+Enabled type-aware linting with `@typescript-eslint/no-unnecessary-condition` set to `"error"`. Fixed all 85 violations: removed dead null checks, added `joined` guards to voice components (instead of defensive `?.` chains), fixed inaccurate type casts, and aligned Supabase error handling with the discriminated union pattern (check `error`, not `!data`). One suppression remains for `.maybeSingle()` which has a genuine Supabase type gap (returns null data without error, but types don't model it).
 
-- [ ] Add `parserOptions.project: "./tsconfig.json"` to ESLint config
-- [ ] Enable `@typescript-eslint/no-unnecessary-condition: "warn"`
-- [ ] Fix existing violations across the codebase
-
-**Why:** Found unnecessary null checks on non-nullable types during PR review (e.g., checking `dayOfWeek == null` when typed as `number`). These are dead code that obscure the actual type contract.
+- [x] Add `parserOptions.project` to ESLint config (with `tsconfigRootDir: import.meta.dirname`)
+- [x] Enable `@typescript-eslint/no-unnecessary-condition: "error"`
+- [x] Fix existing violations across the codebase
 
 ### Use Generated Types in API Routes
 

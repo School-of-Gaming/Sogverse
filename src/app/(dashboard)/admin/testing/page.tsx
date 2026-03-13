@@ -55,7 +55,7 @@ const MINECRAFT_STATUS_OPTIONS = [
 
 function resolveMinecraftStatus(params: Record<string, string>): Record<string, string | null> {
   const resolved: Record<string, string | null> = { ...params };
-  const status = params.minecraftStatus ?? "verified";
+  const status = params.minecraftStatus;
   delete resolved.minecraftStatus;
   switch (status) {
     case "verified":
@@ -379,8 +379,7 @@ export default function TestingPage() {
                   </select>
                 </div>
 
-                {selectedTemplate && (
-                  <div className="space-y-3 rounded-md border border-border p-4">
+                <div className="space-y-3 rounded-md border border-border p-4">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       Template Parameters
                     </p>
@@ -389,7 +388,7 @@ export default function TestingPage() {
                         <Label htmlFor={`param-${field.key}`} className="text-sm">
                           {field.label}
                         </Label>
-                        {"type" in field && field.type === "select" ? (
+                        {"type" in field ? (
                           <select
                             id={`param-${field.key}`}
                             value={templateParams[field.key] ?? field.options[0].value}
@@ -413,7 +412,6 @@ export default function TestingPage() {
                       </div>
                     ))}
                   </div>
-                )}
               </>
             )}
 

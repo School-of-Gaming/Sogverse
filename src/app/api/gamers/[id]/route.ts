@@ -67,6 +67,7 @@ export async function PATCH(
       .eq("gamer_id", gamerId)
       .maybeSingle();
 
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- maybeSingle() returns null at runtime when no rows match
     if (linkError || !link) {
       return NextResponse.json(
         { error: "Not authorized to manage this gamer" },
@@ -82,7 +83,7 @@ export async function PATCH(
       .eq("id", gamerId)
       .single();
 
-    if (targetError || !targetProfile || targetProfile.role !== "gamer") {
+    if (targetError || targetProfile.role !== "gamer") {
       return NextResponse.json(
         { error: "Not authorized to manage this account" },
         { status: 403 },

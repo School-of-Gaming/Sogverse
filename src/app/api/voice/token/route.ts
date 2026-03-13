@@ -35,7 +35,7 @@ export async function POST(request: Request) {
       .eq("id", roomId)
       .single();
 
-    if (roomError || !room) {
+    if (roomError) {
       return NextResponse.json({ error: "Room not found" }, { status: 404 });
     }
 

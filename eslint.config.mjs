@@ -8,13 +8,20 @@ const eslintConfig = defineConfig([
   ...nextTs,
   security.configs.recommended,
   {
+    languageOptions: {
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     rules: {
       "@typescript-eslint/no-unused-vars": [
-        "warn",
+        "error",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
       // Too many false positives on standard bracket notation in TypeScript
       "security/detect-object-injection": "off",
+      "@typescript-eslint/no-unnecessary-condition": "error",
     },
   },
   // Override default ignores of eslint-config-next.

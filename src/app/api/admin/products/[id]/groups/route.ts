@@ -21,20 +21,20 @@ export async function POST(
     const admin = createAdminClient();
 
     // Verify product exists (return a clean 404 before hitting the RPC)
-    const { data: product, error: productError } = await admin
+    const { error: productError } = await admin
       .from("products")
       .select("id")
       .eq("id", productId)
       .single();
 
-    if (productError || !product) {
+    if (productError) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
     // Before RPC: look up daily_room_name for groups being deleted
     // (needed because CASCADE will remove the voice_rooms rows)
     const deletedRoomNames: string[] = [];
-    if (deletedGroupIds && deletedGroupIds.length > 0) {
+    if (deletedGroupIds.length > 0) {
       const { data: roomsToDelete } = await admin
         .from("voice_rooms")
         .select("daily_room_name")

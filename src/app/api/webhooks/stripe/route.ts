@@ -97,8 +97,8 @@ export async function POST(request: Request) {
         const subscription = await stripe.subscriptions.retrieve(
           invoice.subscription as string
         );
-        const userId = subscription.metadata?.userId;
-        const tokenAmount = Number(subscription.metadata?.tokenAmount);
+        const userId = subscription.metadata.userId;
+        const tokenAmount = Number(subscription.metadata.tokenAmount);
 
         if (!userId || !tokenAmount) break;
 
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
 
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata?.userId;
+        const userId = subscription.metadata.userId;
         if (!userId) break;
 
         // Stripe keeps status "active" when cancel_at_period_end is true.
@@ -165,7 +165,7 @@ export async function POST(request: Request) {
 
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
-        const userId = subscription.metadata?.userId;
+        const userId = subscription.metadata.userId;
         if (!userId) break;
 
         await admin

@@ -241,7 +241,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                         onClick={() =>
                           handleSelectGamer(
                             gamer.id,
-                            gamer.display_name ?? gamer.username ?? "Gamer",
+                            gamer.display_name,
                           )
                         }
                         className={`flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors ${

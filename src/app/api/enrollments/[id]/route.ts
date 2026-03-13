@@ -40,7 +40,7 @@ export async function DELETE(
       .eq("id", enrollmentId)
       .single();
 
-    if (enrollmentError || !enrollment) {
+    if (enrollmentError) {
       return NextResponse.json({ error: "Enrollment not found" }, { status: 404 });
     }
 
@@ -87,7 +87,7 @@ export async function DELETE(
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    const rpcResult = data?.[0];
+    const rpcResult = data[0];
 
     sendUnenrollmentNotifications({
       customerId: user.id,
@@ -98,7 +98,7 @@ export async function DELETE(
     return NextResponse.json({
       refunded: eligible,
       refundAmount,
-      newBalance: rpcResult?.new_balance,
+      newBalance: rpcResult.new_balance,
     });
   } catch {
     return NextResponse.json(

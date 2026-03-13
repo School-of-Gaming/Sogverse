@@ -44,7 +44,7 @@ export default async function RootLayout({
       >
         <Providers
           initialUser={userWithProfile?.user ?? null}
-          initialProfile={userWithProfile?.profile ?? null}
+          initialProfile={userWithProfile?.profile}
           initialLocale={locale}
         >
           <Header />

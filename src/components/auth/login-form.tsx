@@ -123,30 +123,28 @@ export function LoginForm() {
         return;
       }
 
-      if (data.user) {
-        if (isGamer) {
-          // Gamer always goes to gamer dashboard — no profile lookup needed
-          window.location.href = ROUTES.gamer.dashboard;
-          return;
-        }
-
-        // For other roles, fetch profile to determine dashboard
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", data.user.id)
-          .single();
-
-        const role = (profile as { role: UserRole } | null)?.role;
-        const dashboardPath = role
-          ? ROLE_DASHBOARD_PATHS[role]
-          : ROUTES.customer.dashboard;
-
-        // Full page navigation so the root layout re-runs server-side
-        // and hydrates AuthProvider with the correct initialProfile.
-        navigateAfterAuth(dashboardPath);
+      if (isGamer) {
+        // Gamer always goes to gamer dashboard — no profile lookup needed
+        window.location.href = ROUTES.gamer.dashboard;
         return;
       }
+
+      // For other roles, fetch profile to determine dashboard
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
+      const role = (profile as { role: UserRole } | null)?.role;
+      const dashboardPath = role
+        ? ROLE_DASHBOARD_PATHS[role]
+        : ROUTES.customer.dashboard;
+
+      // Full page navigation so the root layout re-runs server-side
+      // and hydrates AuthProvider with the correct initialProfile.
+      navigateAfterAuth(dashboardPath);
+      return;
     } catch (err) {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);

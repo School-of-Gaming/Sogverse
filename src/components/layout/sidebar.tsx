@@ -152,7 +152,7 @@ export function Sidebar() {
 
   if (!profile?.role) return null;
 
-  const navItems = navItemsByRole[profile.role] || [];
+  const navItems = navItemsByRole[profile.role];
 
   return (
     <aside

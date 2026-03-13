@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       .eq("id", groupId)
       .single();
 
-    if (groupError || !group) {
+    if (groupError) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    const rpcResult = data?.[0];
+    const rpcResult = data[0];
 
     sendEnrollmentNotifications({
       customerId: user.id,
@@ -77,8 +77,8 @@ export async function POST(request: Request) {
     }).catch((err) => console.error("Enrollment notification error:", err));
 
     return NextResponse.json({
-      enrollmentId: rpcResult?.enrollment_id,
-      newBalance: rpcResult?.new_balance,
+      enrollmentId: rpcResult.enrollment_id,
+      newBalance: rpcResult.new_balance,
     });
   } catch {
     return NextResponse.json(

@@ -91,13 +91,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: authError.message }, { status: 400 });
     }
 
-    if (!authData.user) {
-      return NextResponse.json(
-        { error: "Failed to create gamer account" },
-        { status: 500 }
-      );
-    }
-
     const gamerId = authData.user.id;
 
     // Step 2: Promote to gamer — update profile, swap extension tables

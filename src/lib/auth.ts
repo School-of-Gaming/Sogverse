@@ -35,7 +35,7 @@ export async function requireRole(
     .eq("id", user.id)
     .single();
 
-  if (profileError || !profile) {
+  if (profileError) {
     return NextResponse.json(
       { error: "Failed to load user profile" },
       { status: 500 },

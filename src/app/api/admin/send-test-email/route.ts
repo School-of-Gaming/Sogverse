@@ -109,7 +109,7 @@ interface TemplateEntry {
   fromName: string;
 }
 
-const templates: Record<string, TemplateEntry> = {
+const templates: Partial<Record<string, TemplateEntry>> = {
   feedback: {
     schema: feedbackParamsSchema,
     build: (p) => buildFeedbackEmail(p as z.infer<typeof feedbackParamsSchema>),

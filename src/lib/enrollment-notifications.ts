@@ -44,14 +44,14 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
       .eq("role", "admin"),
   ]);
 
-  if (parentResult.error || !parentResult.data) {
-    throw new Error(`Failed to fetch parent profile: ${parentResult.error?.message}`);
+  if (parentResult.error) {
+    throw new Error(`Failed to fetch parent profile: ${parentResult.error.message}`);
   }
-  if (gamerResult.error || !gamerResult.data) {
-    throw new Error(`Failed to fetch gamer profile: ${gamerResult.error?.message}`);
+  if (gamerResult.error) {
+    throw new Error(`Failed to fetch gamer profile: ${gamerResult.error.message}`);
   }
-  if (groupResult.error || !groupResult.data) {
-    throw new Error(`Failed to fetch group data: ${groupResult.error?.message}`);
+  if (groupResult.error) {
+    throw new Error(`Failed to fetch group data: ${groupResult.error.message}`);
   }
 
   const parent = parentResult.data as { display_name: string; email: string };

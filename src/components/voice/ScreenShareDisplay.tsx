@@ -16,6 +16,7 @@ export function ScreenShareDisplay({
 }: ScreenShareDisplayProps) {
   const {
     callObject,
+    joined,
     participants,
     screenSharerSessionId,
     isScreenSharing,
@@ -30,7 +31,7 @@ export function ScreenShareDisplay({
 
   // Attach the screen share video track to the <video> element
   useEffect(() => {
-    if (!callObject || !effectiveSharerSessionId || !videoRef.current) return;
+    if (!callObject || !joined || !effectiveSharerSessionId || !videoRef.current) return;
 
     const pMap = callObject.participants();
     const sharerParticipant = Object.values(pMap).find(
@@ -46,7 +47,7 @@ export function ScreenShareDisplay({
     return () => {
       videoEl.srcObject = null;
     };
-  }, [callObject, effectiveSharerSessionId, participants]);
+  }, [callObject, joined, effectiveSharerSessionId, participants]);
 
   if (!effectiveSharerSessionId || !sharer) return null;
 

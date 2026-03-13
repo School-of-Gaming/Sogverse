@@ -18,7 +18,7 @@ export default function AdminProductsPage() {
   const filteredProducts = products?.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      product.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (

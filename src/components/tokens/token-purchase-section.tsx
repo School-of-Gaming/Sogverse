@@ -223,7 +223,7 @@ export function TokenPurchaseSection() {
           <PackageCard
             key={pkg.id}
             pkg={pkg}
-            icon={PACKAGE_ICONS[pkg.id] ?? Coins}
+            icon={PACKAGE_ICONS[pkg.id]}
             currency={currency}
             locale={locale}
             onBuy={handleBuy}

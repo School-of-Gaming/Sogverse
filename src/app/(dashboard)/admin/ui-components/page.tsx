@@ -354,8 +354,8 @@ function useSimulatedGlow(
       const burst = Math.abs(Math.sin(t * 5 + phaseOffset));
       const level = envelope * burst;
       const glow = computeGlowStyle(level);
-      el.style.boxShadow = (glow.boxShadow as string) ?? "";
-      el.style.borderColor = (glow.borderColor as string) ?? "";
+      el.style.boxShadow = glow.boxShadow ?? "";
+      el.style.borderColor = glow.borderColor ?? "";
       rafId = requestAnimationFrame(tick);
     };
 

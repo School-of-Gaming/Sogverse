@@ -139,7 +139,7 @@ export default function CustomerGamersPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground">
-                          Joined {formatRelativeTime(gamer.created_at ?? new Date().toISOString(), locale)}
+                          Joined {formatRelativeTime(gamer.created_at, locale)}
                         </span>
                         <Link href={`${ROUTES.customer.gamers}/${gamer.id}`}>
                           <Button variant="outline" size="sm">

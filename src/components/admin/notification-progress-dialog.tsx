@@ -81,12 +81,10 @@ export function NotificationProgressDialog({
 
         const decoder = new TextDecoder();
         let buffer = "";
+        let chunk = await reader.read();
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true });
+        while (!chunk.done) {
+          buffer += decoder.decode(chunk.value, { stream: true });
 
           const lines = buffer.split("\n");
           buffer = lines.pop() ?? "";
@@ -140,6 +138,7 @@ export function NotificationProgressDialog({
               // Ignore malformed SSE lines
             }
           }
+          chunk = await reader.read();
         }
       } catch (err) {
         if ((err as Error).name === "AbortError") return;

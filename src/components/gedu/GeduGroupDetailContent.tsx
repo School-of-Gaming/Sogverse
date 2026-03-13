@@ -108,8 +108,8 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
             )}
             {schedule && group.durationMinutes && " · "}
             {group.durationMinutes && <>{group.durationMinutes} min</>}
-            {(schedule || group.durationMinutes) && group.productMinAge != null && " · "}
-            {group.productMinAge != null && <>Ages {group.productMinAge}–{group.productMaxAge}</>}
+            {(schedule || group.durationMinutes) && " · "}
+            <>Ages {group.productMinAge}–{group.productMaxAge}</>
           </p>
           {group.productPadletUrl && (
             <PadletLink href={group.productPadletUrl} />

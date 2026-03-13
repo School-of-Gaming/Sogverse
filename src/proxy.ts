@@ -65,13 +65,13 @@ export async function proxy(request: NextRequest) {
 
   // If user is logged in and trying to access auth routes, redirect to their dashboard
   if (user && isAuthRoute) {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
 
-    if (profile) {
+    if (!profileError) {
       const profileRole = (profile as { role: UserRole }).role;
       const dashboardPath = ROLE_DASHBOARD_PATHS[profileRole] || ROUTES.customer.dashboard;
       return redirect(new URL(dashboardPath, request.url));
@@ -91,13 +91,13 @@ export async function proxy(request: NextRequest) {
   }
 
   // Get user profile for role-based access control
-  const { data: profileData } = await supabase
+  const { data: profileData, error: profileError } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
 
-  if (!profileData) {
+  if (profileError) {
     return redirect(new URL(ROUTES.login, request.url));
   }
 

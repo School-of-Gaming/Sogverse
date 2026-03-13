@@ -4,18 +4,17 @@ import { useEffect, useRef } from "react";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 
 export function MicLevelIndicator() {
-  const { callObject, micOn } = useVoiceRoom();
+  const { callObject, joined, micOn } = useVoiceRoom();
   const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const bar = barRef.current;
-    if (!callObject || !micOn || !bar) {
+    if (!callObject || !joined || !micOn || !bar) {
       if (bar) bar.style.width = "0%";
       return;
     }
 
-    const localTrack =
-      callObject.participants()?.local?.tracks?.audio?.persistentTrack;
+    const localTrack = callObject.participants().local.tracks.audio.persistentTrack;
     if (!localTrack) return;
 
     const audioContext = new AudioContext();
@@ -53,7 +52,7 @@ export function MicLevelIndicator() {
       source.disconnect();
       audioContext.close();
     };
-  }, [callObject, micOn]);
+  }, [callObject, joined, micOn]);
 
   if (!micOn) return null;
 

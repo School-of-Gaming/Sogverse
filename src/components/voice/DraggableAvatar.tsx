@@ -21,7 +21,7 @@ interface DraggableAvatarProps {
 }
 
 export const DraggableAvatar = memo(function DraggableAvatar({ participant, position, canDrag }: DraggableAvatarProps) {
-  const { callObject, moveLocal, moveOther, positions } = useVoiceRoom();
+  const { callObject, joined, moveLocal, moveOther, positions } = useVoiceRoom();
   const [dragging, setDragging] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,7 +46,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
   // Attach video track when available
   useEffect(() => {
     const videoEl = videoRef.current;
-    if (!callObject || !videoEl || !participant.videoOn) {
+    if (!callObject || !joined || !videoEl || !participant.videoOn) {
       if (videoEl) videoEl.srcObject = null;
       return;
     }
@@ -56,7 +56,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
     if (!dailyP) return;
 
     const videoTrack = dailyP.tracks.video;
-    if (videoTrack?.state === "playable" && videoTrack.persistentTrack) {
+    if (videoTrack.state === "playable" && videoTrack.persistentTrack) {
       const existing = videoEl.srcObject instanceof MediaStream
         ? videoEl.srcObject.getVideoTracks()[0]
         : null;
@@ -64,7 +64,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
         videoEl.srcObject = new MediaStream([videoTrack.persistentTrack]);
       }
     }
-  }, [callObject, participant.sessionId, participant.videoOn]);
+  }, [callObject, joined, participant.sessionId, participant.videoOn]);
 
   useSpeakingGlow(frameRef, participant.sessionId, participant.audioOn);
 

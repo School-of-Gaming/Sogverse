@@ -39,8 +39,8 @@ export function useSpeakingGlow(
         const rms = Math.sqrt(sum / dataArray.length);
         const level = Math.min(1, rms * 3);
         const glow = computeGlowStyle(level);
-        el.style.boxShadow = (glow.boxShadow as string) ?? "";
-        el.style.borderColor = (glow.borderColor as string) ?? "";
+        el.style.boxShadow = glow.boxShadow ?? "";
+        el.style.borderColor = glow.borderColor ?? "";
       } else {
         el.style.boxShadow = "";
         el.style.borderColor = "";

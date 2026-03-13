@@ -45,7 +45,7 @@ export default function GamerDetailsPage() {
 
   // Initialize display name once gamer data loads
   if (gamer && !profileInitialized) {
-    setDisplayName(gamer.display_name ?? "");
+    setDisplayName(gamer.display_name);
     setProfileInitialized(true);
   }
 

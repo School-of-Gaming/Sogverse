@@ -14,7 +14,7 @@ interface VideoTileProps {
  * Typically used for the gedu's camera.
  */
 export function VideoTile({ sessionId, className }: VideoTileProps) {
-  const { callObject, participants } = useVoiceRoom();
+  const { callObject, joined, participants } = useVoiceRoom();
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const participant = participants.find((p) => p.sessionId === sessionId);
@@ -22,7 +22,7 @@ export function VideoTile({ sessionId, className }: VideoTileProps) {
 
   useEffect(() => {
     const videoEl = videoRef.current;
-    if (!callObject || !videoEl || !hasVideo) {
+    if (!callObject || !joined || !videoEl || !hasVideo) {
       if (videoEl) videoEl.srcObject = null;
       return;
     }
@@ -35,7 +35,7 @@ export function VideoTile({ sessionId, className }: VideoTileProps) {
     if (!dailyParticipant) return;
 
     const videoTrack = dailyParticipant.tracks.video;
-    if (videoTrack?.state === "playable" && videoTrack.persistentTrack) {
+    if (videoTrack.state === "playable" && videoTrack.persistentTrack) {
       // Only update srcObject if the track actually changed
       const existing = videoEl.srcObject instanceof MediaStream
         ? videoEl.srcObject.getVideoTracks()[0]
@@ -46,9 +46,9 @@ export function VideoTile({ sessionId, className }: VideoTileProps) {
     }
 
     return () => {
-      if (videoEl) videoEl.srcObject = null;
+      videoEl.srcObject = null;
     };
-  }, [callObject, sessionId, hasVideo]);
+  }, [callObject, joined, sessionId, hasVideo]);
 
   if (!hasVideo) return null;
 
