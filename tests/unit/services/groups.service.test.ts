@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GroupsService } from "@/services/groups/groups.service";
 import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
 
@@ -124,74 +124,6 @@ describe("GroupsService", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0].gamers).toHaveLength(0);
-    });
-  });
-
-  describe("commitGroupChanges", () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let fetchSpy: any;
-
-    beforeEach(() => {
-      fetchSpy = vi.spyOn(globalThis, "fetch");
-    });
-
-    afterEach(() => {
-      fetchSpy.mockRestore();
-    });
-
-    const changes = {
-      addedGroups: [{ tempId: "temp-1", geduId: "gedu-1" }],
-      updatedGroups: [],
-      deletedGroupIds: [],
-      enrollmentMoves: [],
-    };
-
-    it("sends POST request with changes and returns groups", async () => {
-      const mockGroups = [{ groupId: "g1", geduId: "gedu-1" }];
-      fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ groups: mockGroups }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-
-      const result = await service.commitGroupChanges("product-1", changes);
-
-      expect(fetchSpy).toHaveBeenCalledWith(
-        "/api/admin/products/product-1/groups",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(changes),
-        },
-      );
-      expect(result).toEqual(mockGroups);
-    });
-
-    it("throws with server error message on non-ok response", async () => {
-      fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({ error: "Product not found" }), {
-          status: 404,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-
-      await expect(
-        service.commitGroupChanges("product-1", changes),
-      ).rejects.toThrow("Product not found");
-    });
-
-    it("throws fallback message when server returns no error field", async () => {
-      fetchSpy.mockResolvedValue(
-        new Response(JSON.stringify({}), {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
-
-      await expect(
-        service.commitGroupChanges("product-1", changes),
-      ).rejects.toThrow("Failed to commit group changes");
     });
   });
 });

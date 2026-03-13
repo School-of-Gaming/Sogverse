@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { GroupsService, type BatchGroupChanges } from "./groups.service";
+import { GroupsService } from "./groups.service";
 
 export const groupKeys = {
   all: ["groups"] as const,
@@ -28,21 +28,5 @@ export function useGeduGroups() {
   return useQuery({
     queryKey: groupKeys.gedu(),
     queryFn: () => service.getGeduGroups(),
-  });
-}
-
-export function useCommitGroupChanges(productId: string) {
-  const queryClient = useQueryClient();
-  const supabase = getClient();
-  const service = new GroupsService(supabase);
-
-  return useMutation({
-    mutationFn: (changes: BatchGroupChanges) =>
-      service.commitGroupChanges(productId, changes),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: groupKeys.byProduct(productId) });
-      // Auto-hide may change product visibility, so refresh product caches
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-    },
   });
 }

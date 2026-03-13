@@ -11,17 +11,18 @@ import {
   useDndContext,
 } from "@dnd-kit/core";
 import { Plus, Users, AlertTriangle, Info } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useProductGroups, useCommitGroupChanges } from "@/services/groups";
+import { useProductGroups, groupKeys } from "@/services/groups";
 import { useUsersByRole } from "@/services/users";
-import { useGroupEditor, type EffectiveGroup, type NotifyPayload } from "@/hooks/use-group-editor";
+import { useGroupEditor, type EffectiveGroup } from "@/hooks/use-group-editor";
 import { GroupCard, EnrolledGamerChip } from "./group-card";
 import { CommitBar } from "./commit-bar";
 import { GeduPickerDialog } from "./gedu-picker-dialog";
-import { NotificationProgressDialog } from "./notification-progress-dialog";
+import { CommitFlowDialog } from "./commit-flow-dialog";
 
 // --- Visibility warning banner ---
 
@@ -106,16 +107,15 @@ interface GeduGroupsCardProps {
 }
 
 export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
+  const queryClient = useQueryClient();
   const { data: serverGroups = [], isLoading } = useProductGroups(productId);
   const { data: allGedus = [] } = useUsersByRole("gedu");
-  const commitMutation = useCommitGroupChanges(productId);
 
   const { dispatch, effectiveGroups, changeSummary, batchPayload, notifyPayload } =
     useGroupEditor(serverGroups);
 
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [showNotifyDialog, setShowNotifyDialog] = useState(false);
-  const [pendingNotifyPayload, setPendingNotifyPayload] = useState<NotifyPayload | null>(null);
+  const [commitDialogOpen, setCommitDialogOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -156,24 +156,10 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
     });
   };
 
-  const handleCommit = () => {
-    // Capture pre-commit notify payload before the state resets
-    const capturedPayload = notifyPayload;
-    commitMutation.mutate(batchPayload, {
-      onSuccess: () => {
-        dispatch({ type: "RESET" });
-        // Only open notify dialog if there are notifications to send
-        const hasNotifications =
-          capturedPayload.addedGroups.length > 0 ||
-          capturedPayload.updatedGroups.length > 0 ||
-          capturedPayload.deletedGroups.length > 0 ||
-          capturedPayload.enrollmentMoves.length > 0;
-        if (hasNotifications) {
-          setPendingNotifyPayload(capturedPayload);
-          setShowNotifyDialog(true);
-        }
-      },
-    });
+  const handleComplete = () => {
+    dispatch({ type: "RESET" });
+    queryClient.invalidateQueries({ queryKey: groupKeys.byProduct(productId) });
+    queryClient.invalidateQueries({ queryKey: ["products"] });
   };
 
   if (isLoading) {
@@ -265,9 +251,8 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
 
       <CommitBar
         summary={changeSummary}
-        onCommit={handleCommit}
+        onReview={() => setCommitDialogOpen(true)}
         onDiscard={() => dispatch({ type: "RESET" })}
-        isPending={commitMutation.isPending}
       />
 
       <GeduPickerDialog
@@ -282,11 +267,14 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
         }
       />
 
-      <NotificationProgressDialog
-        open={showNotifyDialog}
-        onOpenChange={setShowNotifyDialog}
+      <CommitFlowDialog
+        open={commitDialogOpen}
+        onOpenChange={setCommitDialogOpen}
+        summary={changeSummary}
         productId={productId}
-        payload={pendingNotifyPayload}
+        batchPayload={batchPayload}
+        notifyPayload={notifyPayload}
+        onComplete={handleComplete}
       />
     </>
   );

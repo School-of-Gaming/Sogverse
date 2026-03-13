@@ -149,22 +149,4 @@ export class GroupsService {
     );
   }
 
-  async commitGroupChanges(
-    productId: string,
-    changes: BatchGroupChanges,
-  ): Promise<ProductGroup[]> {
-    const response = await fetch(`/api/admin/products/${productId}/groups`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(changes),
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || "Failed to commit group changes");
-    }
-
-    const { groups } = await response.json();
-    return groups;
-  }
 }

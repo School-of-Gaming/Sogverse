@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createDailyRoom, deleteDailyRoom } from "@/lib/daily";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL, SENDER_NAME_ENROLLMENT } from "@/lib/constants";
 import {
@@ -14,6 +15,7 @@ import {
   buildGamerMovedNewGeduEmail,
   groupChangeSubjects,
 } from "@/lib/email-templates/group-changes";
+import type { BatchGroupChanges } from "@/services/groups";
 import type { NotifyPayload } from "@/hooks/use-group-editor";
 
 const FROM_EMAIL = SENDER_EMAIL;
@@ -28,25 +30,30 @@ interface EmailJob {
   description: string;
 }
 
+interface ApplyBody {
+  batch: BatchGroupChanges;
+  notify: NotifyPayload;
+}
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const result = await requireRole("admin", {
-      forbiddenMessage: "Only admins can send group notifications",
+      forbiddenMessage: "Only admins can manage product groups",
     });
     if (result instanceof NextResponse) return result;
 
     const { id: productId } = await params;
-    const payload: NotifyPayload = await request.json();
+    const { batch, notify }: ApplyBody = await request.json();
 
     const admin = createAdminClient();
 
-    // Fetch product name
+    // Verify product exists and get name (needed for email templates)
     const { data: product } = await admin
       .from("products")
-      .select("name")
+      .select("id, name")
       .eq("id", productId)
       .single();
 
@@ -56,27 +63,25 @@ export async function POST(
 
     const productName = product.name;
 
-    // Collect all unique user IDs we need to look up
+    // --- Resolve profiles for email jobs (before streaming) ---
+
     const geduIds = new Set<string>();
     const gamerIds = new Set<string>();
 
-    for (const g of payload.addedGroups) geduIds.add(g.geduId);
-    for (const g of payload.deletedGroups) geduIds.add(g.geduId);
-    for (const g of payload.updatedGroups) {
+    for (const g of notify.addedGroups) geduIds.add(g.geduId);
+    for (const g of notify.deletedGroups) geduIds.add(g.geduId);
+    for (const g of notify.updatedGroups) {
       geduIds.add(g.oldGeduId);
       geduIds.add(g.newGeduId);
     }
-    for (const m of payload.enrollmentMoves) {
+    for (const m of notify.enrollmentMoves) {
       geduIds.add(m.fromGeduId);
       geduIds.add(m.toGeduId);
       gamerIds.add(m.gamerId);
     }
-
-    // Remove empty strings
     geduIds.delete("");
     gamerIds.delete("");
 
-    // Batch-fetch gedu profiles
     const geduProfiles = new Map<string, { displayName: string; email: string }>();
     if (geduIds.size > 0) {
       const { data: gedus } = await admin
@@ -90,9 +95,8 @@ export async function POST(
       }
     }
 
-    // Batch-fetch gamer profiles + their enrolled_by parent IDs
     const gamerProfiles = new Map<string, { displayName: string }>();
-    const gamerParentIds = new Map<string, string>(); // gamerId → parentId
+    const gamerParentIds = new Map<string, string>();
     if (gamerIds.size > 0) {
       const { data: gamers } = await admin
         .from("profiles")
@@ -102,7 +106,6 @@ export async function POST(
         gamerProfiles.set(g.id, { displayName: g.display_name });
       }
 
-      // Look up enrolled_by from group_enrollments for these gamers in this product
       const { data: enrollments } = await admin
         .from("group_enrollments")
         .select("gamer_id, enrolled_by, product_groups!inner(product_id)")
@@ -116,10 +119,8 @@ export async function POST(
       }
     }
 
-    // For reassigned groups: fetch parent IDs for gamers currently in those groups
-    // (excluding gamers being moved out)
-    const movedGamerIds = new Set(payload.enrollmentMoves.map((m) => m.gamerId));
-    const reassignedGroupIds = payload.updatedGroups.map((g) => g.groupId).filter(Boolean);
+    const movedGamerIds = new Set(notify.enrollmentMoves.map((m) => m.gamerId));
+    const reassignedGroupIds = notify.updatedGroups.map((g) => g.groupId).filter(Boolean);
     const reassignmentParentMap = new Map<string, Map<string, { gamerId: string; parentId: string }>>();
 
     if (reassignedGroupIds.length > 0) {
@@ -141,7 +142,6 @@ export async function POST(
         }
       }
 
-      // Fetch gamer display names for reassignment notifications
       const reassignmentGamerIds = new Set<string>();
       for (const map of reassignmentParentMap.values()) {
         for (const { gamerId } of map.values()) {
@@ -159,7 +159,6 @@ export async function POST(
       }
     }
 
-    // Fetch all parent profiles we need
     const allParentIds = new Set<string>();
     for (const parentId of gamerParentIds.values()) allParentIds.add(parentId);
     for (const map of reassignmentParentMap.values()) {
@@ -179,7 +178,6 @@ export async function POST(
       }
     }
 
-    // Fetch admin emails for CC/BCC (includes the acting admin so they get a receipt)
     const { data: adminProfiles } = await admin
       .from("profiles")
       .select("email")
@@ -189,15 +187,12 @@ export async function POST(
       .filter((e: string | null): e is string => !!e);
 
     // --- Build email jobs ---
-    // Gedu emails use CC so admins are visible as collaborators.
-    // Parent emails use BCC so admins stay hidden from families.
-    const jobs: EmailJob[] = [];
+    const emailJobs: EmailJob[] = [];
 
-    // Group added
-    for (const g of payload.addedGroups) {
+    for (const g of notify.addedGroups) {
       const gedu = geduProfiles.get(g.geduId);
       if (!gedu) continue;
-      jobs.push({
+      emailJobs.push({
         toEmail: gedu.email,
         subject: groupChangeSubjects.groupAdded(productName),
         htmlContent: buildGroupAddedEmail({ geduName: gedu.displayName, productName }),
@@ -206,11 +201,10 @@ export async function POST(
       });
     }
 
-    // Group deleted
-    for (const g of payload.deletedGroups) {
+    for (const g of notify.deletedGroups) {
       const gedu = geduProfiles.get(g.geduId);
       if (!gedu) continue;
-      jobs.push({
+      emailJobs.push({
         toEmail: gedu.email,
         subject: groupChangeSubjects.groupDeleted(productName),
         htmlContent: buildGroupDeletedEmail({ geduName: gedu.displayName, productName }),
@@ -219,14 +213,12 @@ export async function POST(
       });
     }
 
-    // Group reassigned
-    for (const g of payload.updatedGroups) {
+    for (const g of notify.updatedGroups) {
       const oldGedu = geduProfiles.get(g.oldGeduId);
       const newGedu = geduProfiles.get(g.newGeduId);
       if (!oldGedu || !newGedu) continue;
 
-      // Old gedu
-      jobs.push({
+      emailJobs.push({
         toEmail: oldGedu.email,
         subject: groupChangeSubjects.groupReassignedOldGedu(productName),
         htmlContent: buildGroupReassignedOldGeduEmail({
@@ -238,8 +230,7 @@ export async function POST(
         description: `Reassigned (old gedu) → ${oldGedu.email}`,
       });
 
-      // New gedu
-      jobs.push({
+      emailJobs.push({
         toEmail: newGedu.email,
         subject: groupChangeSubjects.groupReassignedNewGedu(productName),
         htmlContent: buildGroupReassignedNewGeduEmail({
@@ -251,14 +242,13 @@ export async function POST(
         description: `Reassigned (new gedu) → ${newGedu.email}`,
       });
 
-      // Parents of gamers in the reassigned group (excluding moved gamers)
       const groupEnrollments = reassignmentParentMap.get(g.groupId);
       if (groupEnrollments) {
         for (const { gamerId, parentId } of groupEnrollments.values()) {
           const parent = parentProfiles.get(parentId);
           const gamer = gamerProfiles.get(gamerId);
           if (!parent || !gamer) continue;
-          jobs.push({
+          emailJobs.push({
             toEmail: parent.email,
             subject: groupChangeSubjects.groupReassignedParent(gamer.displayName, productName),
             htmlContent: buildGroupReassignedParentEmail({
@@ -275,19 +265,17 @@ export async function POST(
       }
     }
 
-    // Gamer moved
-    for (const m of payload.enrollmentMoves) {
+    for (const m of notify.enrollmentMoves) {
       const oldGedu = geduProfiles.get(m.fromGeduId);
       const newGedu = geduProfiles.get(m.toGeduId);
       const gamer = gamerProfiles.get(m.gamerId);
       if (!oldGedu || !newGedu || !gamer) continue;
 
-      // Parent
       const parentId = gamerParentIds.get(m.gamerId);
       if (parentId) {
         const parent = parentProfiles.get(parentId);
         if (parent) {
-          jobs.push({
+          emailJobs.push({
             toEmail: parent.email,
             subject: groupChangeSubjects.gamerMovedParent(gamer.displayName, productName),
             htmlContent: buildGamerMovedParentEmail({
@@ -303,8 +291,7 @@ export async function POST(
         }
       }
 
-      // Old gedu
-      jobs.push({
+      emailJobs.push({
         toEmail: oldGedu.email,
         subject: groupChangeSubjects.gamerMovedOldGedu(gamer.displayName, productName),
         htmlContent: buildGamerMovedOldGeduEmail({
@@ -317,8 +304,7 @@ export async function POST(
         description: `Gamer moved (old gedu) → ${oldGedu.email}`,
       });
 
-      // New gedu
-      jobs.push({
+      emailJobs.push({
         toEmail: newGedu.email,
         subject: groupChangeSubjects.gamerMovedNewGedu(gamer.displayName, productName),
         htmlContent: buildGamerMovedNewGeduEmail({
@@ -332,24 +318,91 @@ export async function POST(
       });
     }
 
+    // --- Prepare DB commit data ---
+    const { addedGroups, updatedGroups, deletedGroupIds, enrollmentMoves } = batch;
+
+    let deletedRoomNames: string[] = [];
+    if (deletedGroupIds.length > 0) {
+      const { data: roomsToDelete } = await admin
+        .from("voice_rooms")
+        .select("daily_room_name")
+        .in("group_id", deletedGroupIds);
+      if (roomsToDelete) {
+        deletedRoomNames = roomsToDelete.map((r) => r.daily_room_name);
+      }
+    }
+
     // --- Stream SSE ---
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
         const emit = (data: Record<string, unknown>) =>
           controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
-        let sent = 0;
-        let failed = 0;
-        const errors: string[] = [];
 
-        // Plan event: list all jobs upfront
+        // Plan: step 0 = DB save, steps 1..N = email jobs
         emit({
           type: "plan",
-          jobs: jobs.map((j) => ({ description: j.description, recipient: j.toEmail })),
+          steps: [
+            { description: "Save group changes" },
+            ...emailJobs.map((j) => ({ description: j.description })),
+          ],
         });
 
-        // Fire all sends in parallel; emit status per job as each settles
-        const promises = jobs.map((job, i) =>
+        // Step 0: DB commit
+        try {
+          const { data: rpcResult, error: rpcError } = await admin.rpc(
+            "commit_group_changes",
+            {
+              p_product_id: productId,
+              p_added_groups: addedGroups,
+              p_updated_groups: updatedGroups,
+              p_deleted_group_ids: deletedGroupIds,
+              p_enrollment_moves: enrollmentMoves,
+            },
+          );
+
+          if (rpcError) {
+            emit({ type: "step_error", index: 0, error: rpcError.message });
+            emit({ type: "complete", success: false, error: rpcError.message });
+            controller.close();
+            return;
+          }
+
+          // Best-effort: pre-create Daily.co rooms for new groups
+          const rpcJson = rpcResult as { tempMap?: Record<string, string> } | null;
+          const tempMap = rpcJson?.tempMap ?? {};
+          for (const realId of Object.values(tempMap)) {
+            const dailyRoomName = `group-${realId.slice(0, 8)}`;
+            try {
+              await createDailyRoom({ name: dailyRoomName });
+            } catch (err) {
+              console.error(`Failed to pre-create Daily.co room ${dailyRoomName}:`, err);
+            }
+          }
+
+          // Best-effort: delete Daily.co rooms for deleted groups
+          for (const roomName of deletedRoomNames) {
+            try {
+              await deleteDailyRoom(roomName);
+            } catch (err) {
+              console.error(`Failed to delete Daily.co room ${roomName}:`, err);
+            }
+          }
+
+          emit({ type: "step_done", index: 0 });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Failed to save";
+          emit({ type: "step_error", index: 0, error: msg });
+          emit({ type: "complete", success: false, error: msg });
+          controller.close();
+          return;
+        }
+
+        // Steps 1..N: send emails
+        let sent = 0;
+        let failed = 0;
+
+        const promises = emailJobs.map((job, i) =>
           sendTransactionalEmail({
             fromEmail: FROM_EMAIL,
             fromName: FROM_NAME,
@@ -359,19 +412,18 @@ export async function POST(
             cc: job.cc,
             bcc: job.bcc,
           }).then(
-            () => { sent++; emit({ type: "sent", index: i }); },
+            () => { sent++; emit({ type: "step_done", index: i + 1 }); },
             (err) => {
               failed++;
               const msg = `Failed to send to ${job.toEmail}: ${(err as Error).message}`;
-              errors.push(msg);
               console.error(msg);
-              emit({ type: "failed", index: i, error: msg });
+              emit({ type: "step_error", index: i + 1, error: msg });
             },
           ),
         );
         await Promise.all(promises);
 
-        emit({ type: "complete", sent, failed, errors });
+        emit({ type: "complete", success: true, sent, failed });
         controller.close();
       },
     });
@@ -384,7 +436,7 @@ export async function POST(
       },
     });
   } catch (err) {
-    console.error("groups notify route error:", err);
+    console.error("groups apply route error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
