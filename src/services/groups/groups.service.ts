@@ -1,6 +1,5 @@
-// Using generic type to avoid version-specific Supabase type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types";
 
 /** Enrolled gamer fields from the get_product_groups_with_details RPC (admin). */
 export interface GroupGamer {
@@ -59,7 +58,7 @@ export interface BatchGroupChanges {
 }
 
 export class GroupsService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getProductGroups(productId: string): Promise<ProductGroup[]> {
     const { data, error } = await this.supabase.rpc(
@@ -72,7 +71,7 @@ export class GroupsService {
     // Reshape flat rows into nested groups
     const groupMap = new Map<string, ProductGroup>();
 
-    for (const row of data || []) {
+    for (const row of data) {
       if (!groupMap.has(row.group_id)) {
         groupMap.set(row.group_id, {
           groupId: row.group_id,
@@ -110,7 +109,7 @@ export class GroupsService {
 
     const groupMap = new Map<string, GeduGroup>();
 
-    for (const row of data || []) {
+    for (const row of data) {
       if (!groupMap.has(row.group_id)) {
         groupMap.set(row.group_id, {
           groupId: row.group_id,

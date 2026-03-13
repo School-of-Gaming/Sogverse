@@ -153,3 +153,15 @@ export function useAuth() {
   }
   return context;
 }
+
+/**
+ * Like useAuth(), but asserts that user and profile are non-null.
+ * Use in dashboard components where routing guarantees authentication.
+ */
+export function useRequiredAuth() {
+  const { user, profile, ...rest } = useAuth();
+  if (!user || !profile) {
+    throw new Error("useRequiredAuth must be used in an authenticated context");
+  }
+  return { user, profile, ...rest };
+}

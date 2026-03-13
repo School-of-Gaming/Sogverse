@@ -49,7 +49,7 @@ describe("VoiceService", () => {
     });
 
     it("should return empty array when no rooms", async () => {
-      mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess(null));
+      mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess([]));
 
       const result = await service.getAvailableRooms();
 

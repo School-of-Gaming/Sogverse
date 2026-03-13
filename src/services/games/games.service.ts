@@ -1,11 +1,8 @@
-import type { Game } from "@/types";
-
-// Using generic type to avoid version-specific Supabase type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Game, Database } from "@/types";
 
 export class GamesService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getAllGames(): Promise<Game[]> {
     const { data, error } = await this.supabase

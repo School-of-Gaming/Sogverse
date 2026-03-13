@@ -42,7 +42,7 @@ describe("ProductsService", () => {
     });
 
     it("returns empty array when no products", async () => {
-      const mockOrder = vi.fn().mockResolvedValue(mockSupabaseSuccess(null));
+      const mockOrder = vi.fn().mockResolvedValue(mockSupabaseSuccess([]));
       const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
       mockSupabase.from.mockReturnValue({ select: mockSelect });

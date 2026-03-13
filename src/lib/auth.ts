@@ -29,10 +29,12 @@ export async function requireRole(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Dynamic select string — the type parser can't infer the shape at compile time.
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select(options?.select ?? "role")
     .eq("id", user.id)
+    .returns<Record<string, unknown>>()
     .single();
 
   if (profileError) {
@@ -50,5 +52,5 @@ export async function requireRole(
     );
   }
 
-  return { user, profile: profile as Record<string, unknown>, supabase };
+  return { user, profile, supabase };
 }

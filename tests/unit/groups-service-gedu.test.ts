@@ -1,10 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { GroupsService } from "@/services/groups/groups.service";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types";
 
 function makeMockClient(rows: Record<string, unknown>[]) {
   return {
     rpc: vi.fn().mockResolvedValue({ data: rows, error: null }),
-  };
+  } as unknown as SupabaseClient<Database>;
 }
 
 describe("GroupsService.getGeduGroups()", () => {

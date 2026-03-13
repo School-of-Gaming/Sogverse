@@ -1,13 +1,10 @@
-import type { Product, ProductInsert, ProductUpdate } from "@/types";
-
-// Using generic type to avoid version-specific Supabase type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Product, ProductInsert, ProductUpdate, Database } from "@/types";
 
 export type ProductWithGame = Product & { games: { name: string } | null };
 
 export class ProductsService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getVisibleProducts(): Promise<ProductWithGame[]> {
     const { data, error } = await this.supabase
@@ -17,7 +14,7 @@ export class ProductsService {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data || [];
+    return data;
   }
 
   async getAllProducts(): Promise<ProductWithGame[]> {

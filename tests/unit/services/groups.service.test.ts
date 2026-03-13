@@ -77,8 +77,8 @@ describe("GroupsService", () => {
       expect(result[1].gamers).toHaveLength(0);
     });
 
-    it("returns empty array when RPC returns null", async () => {
-      mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess(null));
+    it("returns empty array when RPC returns empty", async () => {
+      mockSupabase.rpc.mockResolvedValue(mockSupabaseSuccess([]));
 
       const result = await service.getProductGroups("p1");
 

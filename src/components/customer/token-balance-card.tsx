@@ -2,13 +2,13 @@
 
 import { Coins } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/providers";
+import { useRequiredAuth } from "@/providers";
 import { useTokenBalance } from "@/services/tokens";
 
 export function TokenBalanceCard() {
-  const { profile } = useAuth();
-  const isCustomer = profile?.role === "customer";
-  const { data: balance, isLoading } = useTokenBalance(profile?.id ?? "", isCustomer);
+  const { profile } = useRequiredAuth();
+  const isCustomer = profile.role === "customer";
+  const { data: balance, isLoading } = useTokenBalance(profile.id, isCustomer);
 
   return (
     <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">

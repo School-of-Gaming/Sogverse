@@ -1,10 +1,8 @@
-import type { TokenTransaction } from "@/types";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { TokenTransaction, Database } from "@/types";
 
 export class TokensService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getBalance(userId: string): Promise<number> {
     const { data, error } = await this.supabase

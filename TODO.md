@@ -198,16 +198,14 @@ Extracted `requireRole()` helper to `src/lib/auth.ts`. All 14 API route handlers
 - [x] Create a shared `requireRole()` helper in `src/lib/auth.ts`
 - [x] Replace the boilerplate in all 14 route handlers with a one-liner call to the helper
 
-### Replace `SupabaseClientType = any` with Real Types in Service Classes
+### ~~Replace `SupabaseClientType = any` with Real Types in Service Classes~~ — DONE
 
-All 8 service classes use `type SupabaseClientType = any` for the injected Supabase client, erasing type safety on all `.rpc()` and `.from()` calls. If an RPC column is renamed or added, the service mapping code silently produces `undefined` instead of a compile error.
+Replaced `SupabaseClientType = any` with `SupabaseClient<Database>` in all 9 service classes. Updated `@supabase/ssr` from 0.5.2 to 0.9.0 and `@supabase/supabase-js` from 2.95.0 to 2.99.1 to align type signatures — the version mismatch was the original reason for `any`. Regenerated `database.types.ts` to include `__InternalSupabase` metadata required by the newer PostgREST type parser. Removed `|| []` / `|| false` defensive fallbacks (now caught by `no-unnecessary-condition`), fixed test mocks returning `null` instead of `[]` (incorrect Supabase contract), added `useRequiredAuth()` hook for dashboard components where auth is guaranteed, and updated the `lock` function signature to match the new generic `LockFunc` type.
 
-- [ ] Replace `type SupabaseClientType = any` with `SupabaseClient<Database>` in all service constructors
-- [ ] Verify that `.rpc()` and `.from()` calls type-check against the generated `database.types.ts`
-
-**Affected files:** `src/services/{groups,voice,users,tokens,products,games,enrollments,auth,gamers}/*.service.ts`
-
-**Why:** The `any` was added to avoid Supabase client version incompatibilities. Verify these are resolved before applying. The main benefit is compile-time safety on RPC field mappings — currently only caught at runtime.
+- [x] Replace `type SupabaseClientType = any` with `SupabaseClient<Database>` in all service constructors
+- [x] Verify that `.rpc()` and `.from()` calls type-check against the generated `database.types.ts`
+- [x] Update `@supabase/ssr` and `@supabase/supabase-js` to align type signatures
+- [x] Add `useRequiredAuth()` hook for non-null auth context in dashboard components
 
 ### ~~Enable Type-Aware ESLint with `no-unnecessary-condition`~~ — DONE
 

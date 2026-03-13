@@ -14,7 +14,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { useAuth } from "@/providers";
+import { useRequiredAuth } from "@/providers";
 import { useMyGamers } from "@/services/gamers";
 import {
   useEnrollmentGroups,
@@ -39,12 +39,12 @@ interface EnrollmentWizardProps {
 }
 
 export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
-  const { user } = useAuth();
+  const { user } = useRequiredAuth();
   const { data: gamers, isLoading: gamersLoading } = useMyGamers();
   const { data: groups, isLoading: groupsLoading } = useEnrollmentGroups(
     product.id,
   );
-  const { data: balance } = useTokenBalance(user?.id ?? "");
+  const { data: balance } = useTokenBalance(user.id);
   const { data: myEnrollments } = useMyEnrollments();
   const enrollGamer = useEnrollGamer();
 

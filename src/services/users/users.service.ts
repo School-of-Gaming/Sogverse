@@ -1,12 +1,9 @@
-import type { Profile, ProfileUpdate, UserRole, ParentGamer } from "@/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Profile, ProfileUpdate, UserRole, ParentGamer, Database } from "@/types";
 import { escapeLikePattern } from "@/lib/utils";
 
-// Using generic type to avoid version-specific Supabase type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
-
 export class UsersService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getProfile(userId: string): Promise<Profile> {
     const { data, error } = await this.supabase

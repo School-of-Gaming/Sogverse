@@ -44,11 +44,11 @@ export function createClient() {
         // Bypass Navigator.locks API which can get stuck during token refresh,
         // causing all Supabase requests to hang until a full page reload.
         // Safe for single-tab usage; the proxy handles session refresh server-side.
-        lock: async (
+        lock: async <R>(
           _name: string,
           _acquireTimeout: number,
-          fn: () => Promise<unknown>
-        ) => {
+          fn: () => Promise<R>
+        ): Promise<R> => {
           return await fn();
         },
       },

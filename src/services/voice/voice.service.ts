@@ -1,9 +1,6 @@
-import type { AvailableVoiceRoom } from "@/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { AvailableVoiceRoom, Database } from "@/types";
 import { computeSessionWindow } from "@/lib/voice-schedule";
-
-// Using generic type to avoid version-specific Supabase type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
 
 export interface AvailableVoiceRoomWithWindow extends AvailableVoiceRoom {
   isOpen: boolean;
@@ -12,14 +9,14 @@ export interface AvailableVoiceRoomWithWindow extends AvailableVoiceRoom {
 }
 
 export class VoiceService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   /** Get all voice rooms available to the current user, with computed session window */
   async getAvailableRooms(): Promise<AvailableVoiceRoomWithWindow[]> {
     const { data, error } = await this.supabase.rpc("get_available_voice_rooms");
     if (error) throw error;
 
-    const rooms: AvailableVoiceRoom[] = data || [];
+    const rooms: AvailableVoiceRoom[] = data;
 
     return rooms.map((room) => {
       if (room.room_type !== "group" || room.day_of_week == null || !room.start_time || !room.timezone || !room.duration_minutes) {

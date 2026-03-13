@@ -67,7 +67,6 @@ export async function PATCH(
       .eq("gamer_id", gamerId)
       .maybeSingle();
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- maybeSingle() returns null at runtime when no rows match
     if (linkError || !link) {
       return NextResponse.json(
         { error: "Not authorized to manage this gamer" },

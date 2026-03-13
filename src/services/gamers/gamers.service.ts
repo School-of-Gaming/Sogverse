@@ -1,11 +1,8 @@
-import type { Profile, ParentGamer, CreateGamerInput, GamerProfile } from "@/types";
-
-// Using generic type to avoid version-specific Supabase type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Profile, ParentGamer, CreateGamerInput, GamerProfile, Database } from "@/types";
 
 export class GamerService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getLinkedGamers(parentId: string): Promise<Profile[]> {
     const { data, error } = await this.supabase
@@ -34,13 +31,13 @@ export class GamerService {
   async getMyGamers(): Promise<Profile[]> {
     const { data, error } = await this.supabase.rpc("get_my_gamers");
     if (error) throw error;
-    return data || [];
+    return data;
   }
 
   async getMyParents(): Promise<Profile[]> {
     const { data, error } = await this.supabase.rpc("get_my_parents");
     if (error) throw error;
-    return data || [];
+    return data;
   }
 
   async isParentOf(gamerId: string): Promise<boolean> {
@@ -48,7 +45,7 @@ export class GamerService {
       gamer_uuid: gamerId,
     });
     if (error) return false;
-    return data || false;
+    return data;
   }
 
   async getGamerProfile(gamerId: string): Promise<GamerProfile> {

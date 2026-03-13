@@ -1,12 +1,9 @@
-import type { Profile, UserRole } from "@/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Profile, UserRole, Database } from "@/types";
 import { generateGamerEmail } from "@/lib/utils";
 
-// Using generic type to avoid version-specific Supabase type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
-
 export class AuthService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async signInWithEmail(email: string, password: string) {
     const { data, error } = await this.supabase.auth.signInWithPassword({
@@ -74,9 +71,8 @@ export class AuthService {
     return data.user;
   }
 
-  async getProfile(): Promise<Profile | null> {
+  async getProfile(): Promise<Profile> {
     const user = await this.getUser();
-    if (!user) return null;
 
     const { data, error } = await this.supabase
       .from("profiles")

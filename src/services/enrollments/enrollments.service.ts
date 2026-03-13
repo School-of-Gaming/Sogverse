@@ -1,6 +1,5 @@
-// Using generic type to avoid version-specific Supabase type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types";
 
 export interface CustomerEnrollment {
   enrollmentId: string;
@@ -32,7 +31,7 @@ export interface EnrollmentGroup {
 }
 
 export class EnrollmentsService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async enrollGamer(
     gamerId: string,
@@ -80,7 +79,7 @@ export class EnrollmentsService {
 
     if (error) throw error;
 
-    return (data || []).map((row: Record<string, unknown>) => ({
+    return data.map((row) => ({
       enrollmentId: row.enrollment_id,
       groupId: row.group_id,
       gamerId: row.gamer_id,
@@ -109,10 +108,12 @@ export class EnrollmentsService {
 
     if (error) throw error;
 
-    return (data || []).map((row: Record<string, unknown>) => ({
-      groupId: row.group_id as string,
-      geduDisplayName: row.gedu_display_name as string,
-      gamerCount: row.gamer_count as number,
+    return data.map((row) => ({
+      groupId: row.group_id,
+      geduDisplayName: row.gedu_display_name,
+      gamerCount: row.gamer_count,
+      // Generated types mark these as non-null, but MIN/MAX over a LEFT JOIN
+      // returns null for groups with zero enrollments.
       minGamerAge: row.min_gamer_age as number | null,
       maxGamerAge: row.max_gamer_age as number | null,
     }));

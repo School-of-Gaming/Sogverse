@@ -14,7 +14,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useAuth } from "@/providers";
+import { useRequiredAuth } from "@/providers";
 import { useSubscription, useSubscriptionDetails, useCancelSubscription, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
 import { TOKEN_PACKAGES } from "@/lib/constants/tokens";
 import { ROUTES } from "@/lib/constants";
@@ -31,12 +31,12 @@ function formatPeriodDate(timestamp: number, locale: string) {
 }
 
 export function SubscriptionStatusCard() {
-  const { profile } = useAuth();
+  const { profile } = useRequiredAuth();
   const { currency: displayCurrency, locale } = useCurrency();
-  const { data: subscription } = useSubscription(profile?.id ?? "");
-  const { data: details } = useSubscriptionDetails(profile?.id ?? "");
-  const cancelMutation = useCancelSubscription(profile?.id ?? "");
-  const resumeMutation = useResumeSubscription(profile?.id ?? "");
+  const { data: subscription } = useSubscription(profile.id);
+  const { data: details } = useSubscriptionDetails(profile.id);
+  const cancelMutation = useCancelSubscription(profile.id);
+  const resumeMutation = useResumeSubscription(profile.id);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const subState = getSubscriptionState(subscription);

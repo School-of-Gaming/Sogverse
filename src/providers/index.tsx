@@ -34,7 +34,7 @@ export function Providers({
   );
 }
 
-export { useAuth } from "./auth-provider";
+export { useAuth, useRequiredAuth } from "./auth-provider";
 export { QueryProvider } from "./query-provider";
 export { ThemeProvider } from "./theme-provider";
 export { AuthProvider } from "./auth-provider";
