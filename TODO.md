@@ -116,6 +116,22 @@ Link previews on WhatsApp, Discord, Slack, Facebook, LinkedIn, and Twitter/X are
 - [ ] Add `twitter` card metadata — `twitter:card` (`summary_large_image`), `twitter:title`, `twitter:description`, `twitter:image`
 - [ ] Create an OG image (1200x630px) — branded banner with logo, "School of Gaming" tagline, yellow/purple brand colors. Place as `src/app/opengraph-image.png` (Next.js serves it automatically) or in `public/`
 
+**Per-page OG overrides (public & auth pages):**
+
+All 17 pages already export a `description` in their `metadata`, but none set `openGraph`. Pages that are shareable via link should override `openGraph` so previews show page-specific titles, descriptions, and (optionally) images instead of the root layout defaults.
+
+Priority pages (public-facing, most likely to be shared):
+- [ ] `/about` — "Learn about Sogverse and our mission to make learning fun"
+- [ ] `/sorg` — "Learn about Sorg, the virtual currency of the Sogverse..."
+- [ ] `/login` — "Sign in to your Sogverse account"
+- [ ] `/register` — "Create your Sogverse parent account"
+
+Lower priority (auth/dashboard pages — less likely to be shared, but descriptions exist):
+- `/forgot-password`, `/reset-password` — auth flows
+- `/admin`, `/customer`, `/gamer`, `/gedu` — dashboard homepages
+- `/admin/voice`, `/gamer/voice`, `/gamer/games` — dashboard subpages
+- `/gedu/groups`, `/gedu/groups/[id]`, `/gedu/voice/[id]` — gedu subpages
+
 **SEO static assets:**
 - [ ] `robots.txt` — block crawlers from authenticated routes (`/admin`, `/customer`, `/gamer`, `/gedu`). Use `src/app/robots.ts` for App Router convention.
 - [ ] `sitemap.xml` — index public pages for search engines. Use `src/app/sitemap.ts` for App Router convention.
@@ -123,6 +139,7 @@ Link previews on WhatsApp, Discord, Slack, Facebook, LinkedIn, and Twitter/X are
 **Already done:**
 - [x] Favicon — `src/app/icon.svg` (Next.js file-based metadata convention)
 - [x] Apple touch icon — `src/app/apple-icon.png`
+- [x] Per-page `description` metadata — all 17 pages export a `description` in their `metadata`
 
 **When:** Before production launch or when public-facing pages need SEO visibility.
 
