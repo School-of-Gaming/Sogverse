@@ -67,6 +67,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [localRole, setLocalRole] = useState<UserRole>("gamer");
   const activeSpeakerIdRef = useRef<string | null>(null);
+  // Synchronous gate — events like track-started fire before joined-meeting,
+  // when co.participants().local doesn't exist yet. updateParticipants skips
+  // until this is true; handleJoined calls it to catch up on current state.
+  const joinedRef = useRef(false);
 
   // --- Compose hooks ---
 
@@ -90,6 +94,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   // --- Participant management ---
 
   const updateParticipants = useCallback((co: DailyCall) => {
+    if (!joinedRef.current) return;
+
     const pMap = co.participants();
     const list = Object.values(pMap).map((p) => mapParticipant(p, activeSpeakerIdRef.current));
     setParticipants(list);
@@ -140,6 +146,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       if (callObjectRef.current) {
         await callObjectRef.current.destroy();
       }
+      joinedRef.current = false;
       audio.reset();
       spatial.reset();
       moderator.reset();
@@ -159,6 +166,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       setCallObject(co);
 
       const handleJoined = () => {
+        joinedRef.current = true;
         setJoined(true);
         setJoining(false);
         updateParticipants(co);
@@ -183,6 +191,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       };
 
       const handleLeft = () => {
+        joinedRef.current = false;
         setJoined(false);
         setParticipants([]);
         setMicOn(true);
@@ -221,8 +230,14 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       await callObjectRef.current.destroy();
       callObjectRef.current = null;
       setCallObject(null);
+      joinedRef.current = false;
       setJoined(false);
       setParticipants([]);
+      setMicOn(true);
+      setCameraOn(false);
+      setCameraAllowed(false);
+      setLocalRole("gamer");
+      activeSpeakerIdRef.current = null;
       spatial.reset();
       moderator.reset();
       screenShare.reset();

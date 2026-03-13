@@ -173,18 +173,21 @@ Screen share video is detected via `p.tracks.screenVideo?.state === "playable"` 
 
 ## Audio Pipeline
 
-### Audio element + Web Audio hybrid
-Audio playback uses `<audio>` elements for reliable WebRTC track output. A Web Audio graph exists solely for speaking-glow visualization:
+### Two independent pipelines per remote participant
 
 ```
-<audio>.srcObject = MediaStream([track])
-createMediaElementSource(element) → AnalyserNode → AudioContext.destination
+Playback:  <audio>.srcObject = MediaStream([track])       ← element.volume for volume/muting
+Analysis:  createMediaStreamSource(MediaStream([track])) → AnalyserNode  ← speaking glow
 ```
 
-**Chrome bypasses the Web Audio graph for output** when `createMediaElementSource` is used with a MediaStream `srcObject`. The graph exists solely for the AnalyserNode (speaking glow) — it must terminate at `ctx.destination` for data to flow. All audible control (`element.volume`) is applied outside the graph. See `docs/chrome-webrtc-volume-bug.md` for the full investigation.
+The `<audio>` element handles WebRTC playback. A separate `createMediaStreamSource` from the same track feeds the `AnalyserNode` for speaking-glow visualization. The two pipelines are completely independent.
+
+**Do NOT use `createMediaElementSource` for the analyser.** Chrome doesn't reliably route MediaStream-backed element audio through a `MediaElementAudioSourceNode` — the AnalyserNode gets silence. See `docs/chrome-webrtc-volume-bug.md` for the full investigation.
+
+**Do NOT connect the analyser to `ctx.destination`.** Chrome kills WebRTC audio when a `MediaStreamAudioSourceNode` is routed to `ctx.destination`. Leaving the analyser disconnected is safe because Chrome's `MediaStreamAudioSourceNode` is a push source that feeds connected nodes without needing a pull from the destination.
 
 ### AudioContext lifecycle
-Browsers create AudioContext in a suspended state until a user gesture resumes it. `manageAudioNodes()` always `await ctx.resume()` before connecting any node to the destination. Without this, nodes would connect to a still-suspended context and produce no audio output.
+Browsers create AudioContext in a suspended state until a user gesture resumes it. `manageAudioNodes()` always `await ctx.resume()` before creating nodes. Without this, nodes would be created against a still-suspended context and produce no data.
 
 ### Zone-based routing
 `updateAudioRouting()` uses `element.volume` for zone isolation. `canHearZone(localZone, remoteZone)` returns true (same zone or broadcast) or false (different zones). When false, `element.volume` is set to 0 (silent). Otherwise it's set to the user's chosen volume multiplier.
@@ -257,7 +260,7 @@ Currently participant presence is only tracked in Daily.co's runtime. Persisting
 The `NextSession` component computes "Next session in X days/hours" once on render. When a session is minutes away, a live-updating countdown (re-computing every ~30s) would give better feedback that the room is about to open.
 
 ### Volume amplification above 100%
-Currently capped at 100% due to a Chrome limitation with WebRTC MediaStream sources (see `docs/chrome-webrtc-volume-bug.md`). If Chrome fixes [the underlying bug](https://issues.chromium.org/issues/40184923), GainNode amplification through the existing Web Audio graph would "just work" — the only code change needed would be raising the slider max and volume clamp. Alternatively, if Daily.co adds per-subscriber server-side audio processing to their SFU, that would bypass the client-side limitation entirely.
+Currently capped at 100% due to a Chrome limitation with WebRTC MediaStream sources (see `docs/chrome-webrtc-volume-bug.md`). If Chrome fixes [the underlying bug](https://issues.chromium.org/issues/40184923), a GainNode could be re-introduced in the analyser pipeline for amplification — but note that the analyser pipeline is intentionally separate from playback (see "Audio Pipeline" above), so a GainNode-based approach would require re-evaluating the architecture. Alternatively, if Daily.co adds per-subscriber server-side audio processing to their SFU, that would bypass the client-side limitation entirely.
 
 ### Sanitize pipe delimiter from display names in token userName
 The token endpoint encodes `userId|role|displayName` as a pipe-delimited string in Daily.co's `user_name` field. If a user's `display_name` contains `|`, the client-side parser (`mapParticipant`) handles it correctly by re-joining slots 2+. However, a user could set their display name to e.g. `fakeId|admin|Admin` and the parser would extract a spoofed `role` and `userId`. This is cosmetic-only — the Daily.co token's `is_owner` flag (set server-side) is the real authority for drag permissions and `moveUser` validation — but it could cause incorrect role badges or identicons. Fix by stripping `|` from `displayName` before encoding, or switching to JSON encoding.

@@ -10,15 +10,21 @@ We capped the volume slider at 10–100%. The 0–100% range via `element.volume
 
 ## Current implementation
 
+Two independent pipelines per remote participant:
+
 ```
-<audio element>.srcObject = MediaStream([persistentTrack])
-createMediaElementSource(element) → AnalyserNode → ctx.destination
+Playback:  <audio element>.srcObject = MediaStream([persistentTrack])
+Analysis:  createMediaStreamSource(MediaStream([persistentTrack])) → AnalyserNode
 ```
 
 - `element.volume` handles everything audible: volume control (10–100%) AND zone muting (set to 0)
-- `AnalyserNode` powers speaking-glow visualization (pass-through)
+- The `<audio>` element is **not** connected to the Web Audio graph — no `createMediaElementSource`
+- A separate `createMediaStreamSource` from the same track feeds the `AnalyserNode` for speaking-glow visualization
+- The `AnalyserNode` is **not** connected to `ctx.destination` — same pattern as the local mic analyser
 
-**Why the graph exists at all:** The AnalyserNode only processes data when it's part of a chain that terminates at a destination. The graph doesn't produce audible output (Chrome bypasses it for MediaStream-backed elements), but it must exist for speaking glow to work. No GainNode is needed — Chrome ignores the entire Web Audio graph for output when `createMediaElementSource` is used with a MediaStream `srcObject`.
+**Why NOT use `createMediaElementSource`:** When `createMediaElementSource` is used on a MediaStream-backed element, Chrome doesn't reliably route audio data through the Web Audio graph — the AnalyserNode receives silence even though the element plays audio fine. This broke the speaking glow indicator. Using `createMediaStreamSource` with an independent MediaStream from the same track gives the AnalyserNode reliable data without interfering with the element's playback or volume control.
+
+**Why NOT connect analyser to `ctx.destination`:** Approaches 1 and 2 below show that routing `createMediaStreamSource` to `ctx.destination` kills all WebRTC audio in Chrome. Leaving the analyser disconnected from the destination avoids this. Chrome's `MediaStreamAudioSourceNode` is a push source that feeds connected nodes regardless of destination — the AnalyserNode processes data without needing a pull from `ctx.destination`.
 
 ## Approaches investigated
 
@@ -30,9 +36,11 @@ createMediaElementSource(element) → AnalyserNode → ctx.destination
 
 **Result: No audio.** Based on the [otalk/mediastream-gain](https://github.com/otalk/mediastream-gain) pattern. Chrome's WebRTC audio disruption still occurs even when routing to `createMediaStreamDestination` instead of `ctx.destination`.
 
-### 3. `createMediaElementSource(element)` → GainNode → `ctx.destination` (current)
+### 3. `createMediaElementSource(element)` → GainNode → `ctx.destination`
 
-**Result: Audio plays, but GainNode amplification above 1.0 has no effect.** Chrome bypasses Web Audio graph gain when `createMediaElementSource` is used on an element whose `srcObject` is a MediaStream (as opposed to a `src` URL). The audio passes through the graph, so the AnalyserNode and zone-muting GainNode (0/1) work, but amplification above 1.0 is silently ignored. `element.volume` (0–1) still works because it's applied outside the Web Audio graph.
+**Result: Audio plays, but GainNode amplification above 1.0 has no effect.** Chrome bypasses Web Audio graph gain when `createMediaElementSource` is used on an element whose `srcObject` is a MediaStream (as opposed to a `src` URL). `element.volume` (0–1) still works because it's applied outside the Web Audio graph.
+
+**Additional problem: AnalyserNode gets silence.** When volume control was moved to `element.volume` and the GainNode was removed, the AnalyserNode stopped receiving data. Chrome doesn't reliably route MediaStream-backed element audio through the `MediaElementAudioSourceNode` — the speaking glow broke. This led to the current approach of using a separate `createMediaStreamSource` for analysis.
 
 Volume boost browser extensions use `createMediaElementSource` on elements with `src` URLs (file/streaming playback), which does allow GainNode amplification — but that doesn't apply to WebRTC MediaStream sources.
 

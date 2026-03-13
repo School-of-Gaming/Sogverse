@@ -54,9 +54,14 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
 
   /** Manage audio pipeline for remote participants.
    *  <audio> elements handle WebRTC playback and all audible control (volume,
-   *  zone muting) via element.volume. The Web Audio graph exists solely for
-   *  speaking-glow visualization — Chrome bypasses it for output on
-   *  MediaStream-backed elements. See docs/chrome-webrtc-volume-bug.md. */
+   *  zone muting) via element.volume. A separate MediaStreamSource feeds the
+   *  AnalyserNode for speaking-glow visualization.
+   *
+   *  IMPORTANT: Do NOT use createMediaElementSource for the analyser.
+   *  Chrome doesn't reliably route MediaStream-backed element audio through
+   *  the Web Audio graph, so the AnalyserNode gets silence. Using an
+   *  independent createMediaStreamSource from the same track avoids this.
+   *  See docs/chrome-webrtc-volume-bug.md. */
   const manageAudioNodes = useCallback(async (co: DailyCall) => {
     const ctx = audioContextRef.current;
     if (!ctx) return;
@@ -83,27 +88,29 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
         // Clean up previous nodes + element
         const existing = audioNodesRef.current.get(p.session_id);
         if (existing) {
-          existing.source.disconnect();
+          existing.analyserSource.disconnect();
           existing.element.srcObject = null;
           existing.element.remove();
         }
 
-        // Create <audio> element for reliable WebRTC track playback
+        // <audio> element for playback — element.volume controls
+        // volume and zone muting. Completely independent of Web Audio.
         const element = new Audio();
         element.srcObject = new MediaStream([audioTrack.persistentTrack]);
         element.autoplay = true;
         element.play().catch(() => {});
 
-        // Web Audio graph for speaking glow visualization only.
-        // Must terminate at ctx.destination for AnalyserNode to process data.
-        const source = ctx.createMediaElementSource(element);
+        // Separate MediaStreamSource → AnalyserNode for speaking glow.
+        // Not connected to ctx.destination — same pattern as the local
+        // analyser and MicLevelIndicator.
+        const analyserSource = ctx.createMediaStreamSource(
+          new MediaStream([audioTrack.persistentTrack]),
+        );
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 256;
+        analyserSource.connect(analyser);
 
-        source.connect(analyser);
-        analyser.connect(ctx.destination);
-
-        audioNodesRef.current.set(p.session_id, { element, source, analyser });
+        audioNodesRef.current.set(p.session_id, { element, analyserSource, analyser });
       }
     }
 
@@ -115,7 +122,7 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
 
         const nodes = audioNodesRef.current.get(sessionId);
         if (nodes) {
-          nodes.source.disconnect();
+          nodes.analyserSource.disconnect();
           nodes.element.srcObject = null;
           nodes.element.remove();
         }
@@ -166,7 +173,7 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
   /** Clean up all audio nodes and elements */
   const cleanupAudioNodes = useCallback(() => {
     for (const [, nodes] of audioNodesRef.current) {
-      nodes.source.disconnect();
+      nodes.analyserSource.disconnect();
       nodes.element.remove();
     }
     audioNodesRef.current.clear();
