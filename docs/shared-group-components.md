@@ -111,8 +111,15 @@ Follow `src/components/gedu/GeduGroupsPageContent.tsx` and `GeduGroupDetailConte
 **Voice session route:**
 ```tsx
 // src/app/(dashboard)/admin/voice/[id]/page.tsx
-<VoiceSessionPage roomId={id} backHref="/admin/groups" />
+// Read ?groupId from searchParams — if present, go back to the detail page;
+// otherwise fall back to the role's groups list.
+const backHref = typeof groupId === "string"
+  ? ROUTES.admin.group(groupId)
+  : ROUTES.admin.groups;
+<VoiceSessionPage roomId={id} backHref={backHref} />
 ```
+
+The detail page's JoinButton should append `?groupId=...` to the voice href so the user returns to the detail page after leaving. The list page and lounge card omit it — the fallback to the groups list is correct for those entry points. Each role's voice page owns its own fallback route; `VoiceSessionPage` itself is role-agnostic.
 
 ### 5. Update navigation
 

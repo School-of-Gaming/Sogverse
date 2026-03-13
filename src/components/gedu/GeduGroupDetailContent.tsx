@@ -116,7 +116,7 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
           )}
         </div>
         <JoinButton
-          href={ROUTES.gedu.voice(group.voiceRoomId)}
+          href={`${ROUTES.gedu.voice(group.voiceRoomId)}?groupId=${group.groupId}`}
           disabled={!group.voiceIsOpen}
         />
       </div>
