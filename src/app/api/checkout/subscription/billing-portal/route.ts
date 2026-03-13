@@ -19,9 +19,7 @@ export async function POST(request: NextRequest) {
       .eq("user_id", user.id)
       .single();
 
-    const typedCustomerProfile = customerProfile as { stripe_customer_id: string | null } | null;
-
-    if (!typedCustomerProfile?.stripe_customer_id) {
+    if (!customerProfile?.stripe_customer_id) {
       return NextResponse.json(
         { error: "No billing account found" },
         { status: 400 }
@@ -33,7 +31,7 @@ export async function POST(request: NextRequest) {
       `https://${request.headers.get("host")}`;
 
     const session = await stripe.billingPortal.sessions.create({
-      customer: typedCustomerProfile.stripe_customer_id,
+      customer: customerProfile.stripe_customer_id,
       return_url: `${origin}${ROUTES.customer.sorg}`,
     });
 

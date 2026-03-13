@@ -21,11 +21,6 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .single();
 
-    const typedCustomerProfile = customerProfile as {
-      stripe_customer_id: string | null;
-      subscription_status: string | null;
-    } | null;
-
     const { packageId, currency: rawCurrency, returnPath } = await request.json();
 
     const currency = isSupportedCurrency(rawCurrency) ? rawCurrency : DEFAULT_CURRENCY;
@@ -44,8 +39,8 @@ export async function POST(request: Request) {
 
     if (
       tokenPackage.type === "subscription" &&
-      (typedCustomerProfile?.subscription_status === "active" ||
-        typedCustomerProfile?.subscription_status === "past_due")
+      (customerProfile?.subscription_status === "active" ||
+        customerProfile?.subscription_status === "past_due")
     ) {
       return NextResponse.json(
         { error: "You already have an active subscription" },
@@ -61,8 +56,8 @@ export async function POST(request: Request) {
     const customerParams: Pick<
       Stripe.Checkout.SessionCreateParams,
       "customer" | "customer_email"
-    > = typedCustomerProfile?.stripe_customer_id
-      ? { customer: typedCustomerProfile.stripe_customer_id }
+    > = customerProfile?.stripe_customer_id
+      ? { customer: customerProfile.stripe_customer_id }
       : { customer_email: profile.email || undefined };
 
     const unitAmount = getPackagePrice(tokenPackage, currency);

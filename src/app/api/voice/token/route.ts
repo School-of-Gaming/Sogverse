@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     }
 
     // --- Room type access control ---
-    const roomType = room.room_type as string;
+    const roomType = room.room_type;
 
     if (roomType === "admin_only" && role !== "admin") {
       return NextResponse.json(
@@ -60,16 +60,7 @@ export async function POST(request: Request) {
     let gamerEnrolledAt: Date | undefined;
 
     if (roomType === "group") {
-      const group = room.product_groups as {
-        gedu_id: string;
-        product_id: string;
-        products: {
-          day_of_week: number;
-          start_time: string;
-          timezone: string;
-          duration_minutes: number;
-        };
-      } | null;
+      const group = room.product_groups;
 
       if (!group) {
         return NextResponse.json(

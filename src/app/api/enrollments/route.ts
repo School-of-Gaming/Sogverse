@@ -35,11 +35,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Group not found" }, { status: 404 });
     }
 
-    const product = group.products as {
-      day_of_week: number;
-      start_time: string;
-      timezone: string;
-    };
+    const product = group.products;
 
     // Compute the next session date for the first charge
     const nextSession = getNextSessionStart(

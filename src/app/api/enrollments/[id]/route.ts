@@ -52,12 +52,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Enrollment is not active" }, { status: 400 });
     }
 
-    const product = (enrollment.product_groups as { products: {
-      token_cost: number;
-      day_of_week: number;
-      start_time: string;
-      timezone: string;
-    } }).products;
+    const product = enrollment.product_groups.products;
 
     // Look up the latest charge to determine if the session has already been attended
     const { data: latestCharge } = await admin

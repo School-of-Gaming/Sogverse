@@ -18,14 +18,12 @@ export async function GET() {
       .eq("user_id", user.id)
       .single();
 
-    const typedCustomerProfile = customerProfile as { stripe_subscription_id: string | null } | null;
-
-    if (!typedCustomerProfile?.stripe_subscription_id) {
+    if (!customerProfile?.stripe_subscription_id) {
       return NextResponse.json({ subscription: null });
     }
 
     const subscription = await stripe.subscriptions.retrieve(
-      typedCustomerProfile.stripe_subscription_id
+      customerProfile.stripe_subscription_id
     );
 
     return NextResponse.json({

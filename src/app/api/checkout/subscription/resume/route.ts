@@ -18,9 +18,7 @@ export async function POST() {
       .eq("user_id", user.id)
       .single();
 
-    const typedCustomerProfile = customerProfile as { stripe_subscription_id: string | null } | null;
-
-    if (!typedCustomerProfile?.stripe_subscription_id) {
+    if (!customerProfile?.stripe_subscription_id) {
       return NextResponse.json(
         { error: "No active subscription found" },
         { status: 400 }
@@ -28,7 +26,7 @@ export async function POST() {
     }
 
     await stripe.subscriptions.update(
-      typedCustomerProfile.stripe_subscription_id,
+      customerProfile.stripe_subscription_id,
       { cancel_at_period_end: false }
     );
 
