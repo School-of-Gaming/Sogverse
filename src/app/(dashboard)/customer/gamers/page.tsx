@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Gamepad2, Settings, ChevronDown, ChevronRight } from "lucide-react";
+import { Gamepad2, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -123,34 +123,31 @@ export default function CustomerGamersPage() {
             return (
               <section key={gamer.id} className="space-y-4">
                 {/* Gamer header card */}
-                <Card>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="h-12 w-12">
-                          <Identicon id={gamer.id} size={48} />
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-lg">
-                            {gamer.display_name}
-                          </CardTitle>
-                          <CardDescription>@{gamer.username}</CardDescription>
+                <Link href={`${ROUTES.customer.gamers}/${gamer.id}`} className="block">
+                  <Card className="transition-colors hover:bg-muted/50">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-12 w-12">
+                            <Identicon id={gamer.id} size={48} />
+                          </Avatar>
+                          <div>
+                            <CardTitle className="text-lg">
+                              {gamer.display_name}
+                            </CardTitle>
+                            <CardDescription>@{gamer.username}</CardDescription>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            Joined {formatRelativeTime(gamer.created_at, locale)}
+                          </span>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                          Joined {formatRelativeTime(gamer.created_at, locale)}
-                        </span>
-                        <Link href={`${ROUTES.customer.gamers}/${gamer.id}`}>
-                          <Button variant="outline" size="sm">
-                            <Settings className="mr-2 h-4 w-4" />
-                            Manage
-                          </Button>
-                        </Link>
-                      </div>
-                    </div>
-                  </CardHeader>
-                </Card>
+                    </CardHeader>
+                  </Card>
+                </Link>
 
                 {/* Active enrollments */}
                 {activeEnrollments.length > 0 ? (
