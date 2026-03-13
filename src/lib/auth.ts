@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import type { UserRole } from "@/types";
+import type { Profile, UserRole } from "@/types";
 
 type AuthSuccess = {
   user: { id: string; email?: string };
-  profile: Record<string, unknown>;
+  profile: Profile;
   supabase: Awaited<ReturnType<typeof createClient>>;
 };
 
@@ -17,7 +17,7 @@ type AuthSuccess = {
  */
 export async function requireRole(
   allowedRoles: UserRole | UserRole[],
-  options?: { select?: string; forbiddenMessage?: string },
+  options?: { forbiddenMessage?: string },
 ): Promise<AuthSuccess | NextResponse> {
   const supabase = await createClient();
   const {
@@ -29,12 +29,10 @@ export async function requireRole(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Dynamic select string — the type parser can't infer the shape at compile time.
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select(options?.select ?? "role")
+    .select("*")
     .eq("id", user.id)
-    .returns<Record<string, unknown>>()
     .single();
 
   if (profileError) {
@@ -45,7 +43,7 @@ export async function requireRole(
   }
 
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-  if (!roles.includes((profile as { role: UserRole }).role)) {
+  if (!roles.includes(profile.role)) {
     return NextResponse.json(
       { error: options?.forbiddenMessage ?? "Forbidden" },
       { status: 403 },

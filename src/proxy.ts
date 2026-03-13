@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/types/database.types";
-import type { UserRole } from "@/types";
+
 import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 
@@ -72,7 +72,7 @@ export async function proxy(request: NextRequest) {
       .single();
 
     if (!profileError) {
-      const profileRole = (profile as { role: UserRole }).role;
+      const profileRole = profile.role;
       const dashboardPath = ROLE_DASHBOARD_PATHS[profileRole] || ROUTES.customer.dashboard;
       return redirect(new URL(dashboardPath, request.url));
     }
@@ -102,7 +102,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // Check role-based access
-  const userRole = (profileData as { role: UserRole }).role;
+  const userRole = profileData.role;
 
   // Shared routes (feedback, settings) are accessible to all authenticated users
   if (pathname.startsWith(ROUTES.feedback) || pathname.startsWith(ROUTES.settings)) {

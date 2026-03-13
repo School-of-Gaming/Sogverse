@@ -12,9 +12,7 @@ const feedbackSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const result = await requireRole(["admin", "customer", "gamer", "gedu"], {
-      select: "role, email, display_name, username",
-    });
+    const result = await requireRole(["admin", "customer", "gamer", "gedu"]);
     if (result instanceof NextResponse) return result;
 
     const { user, profile } = result;
@@ -64,8 +62,8 @@ export async function POST(request: Request) {
     const adminEmails = admins.map((a) => a.email).filter(Boolean) as string[];
 
     // Determine reply-to email
-    const role = profile.role as string;
-    const userEmail = (profile.email as string) || "";
+    const role = profile.role;
+    const userEmail = profile.email || "";
     let replyToEmail = userEmail;
     let isGamer = false;
     let parentEmail: string | undefined;
@@ -94,7 +92,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const displayName = (profile.display_name as string) || (profile.username as string) || "Unknown";
+    const displayName = profile.display_name || profile.username || "Unknown";
 
     const htmlContent = buildFeedbackEmail({
       userName: displayName,

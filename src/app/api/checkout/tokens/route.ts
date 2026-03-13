@@ -10,7 +10,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 export async function POST(request: Request) {
   try {
     const result = await requireRole("customer", {
-      select: "role, email",
       forbiddenMessage: "Only customers can purchase tokens",
     });
     if (result instanceof NextResponse) return result;
@@ -64,7 +63,7 @@ export async function POST(request: Request) {
       "customer" | "customer_email"
     > = typedCustomerProfile?.stripe_customer_id
       ? { customer: typedCustomerProfile.stripe_customer_id }
-      : { customer_email: (profile.email as string | null) || undefined };
+      : { customer_email: profile.email || undefined };
 
     const unitAmount = getPackagePrice(tokenPackage, currency);
 

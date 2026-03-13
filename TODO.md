@@ -215,15 +215,12 @@ Enabled type-aware linting with `@typescript-eslint/no-unnecessary-condition` se
 - [x] Enable `@typescript-eslint/no-unnecessary-condition: "error"`
 - [x] Fix existing violations across the codebase
 
-### Use Generated Types in API Routes
+### ~~Use Generated Types in API Routes~~ — DONE
 
-All 14 API route handlers cast the Supabase profile query result with hand-written inline types (e.g. `profile as { role: string; stripe_customer_id: string | null } | null`) instead of using the generated `Profile` type from `@/types`. If a column is renamed or its type changes, these casts will silently become wrong.
+Changed `requireRole()` in `src/lib/auth.ts` to use `select("*")` instead of a dynamic select string, returning a fully-typed `Profile` instead of `Record<string, unknown>`. Removed the `select` option from `requireRole()` — all callers now get the full profile. Removed all inline `as { role: UserRole }` casts from API routes (`feedback`, `voice/token`, `checkout/tokens`, `auth/callback`), `proxy.ts`, and `login-form.tsx`. The PostgREST type parser resolves `select("*")` and `select("role")` to concrete types at compile time, so casts are no longer needed.
 
-- [ ] Replace all inline `as { role: string; ... }` casts with the generated `Database["public"]["Tables"]["profiles"]["Row"]` type (or a `Pick<>` of it)
-
-**Affected routes:** Same 14 routes as the auth helper item above.
-
-**Why:** Inline types drift out of sync with the schema. The generated type is always correct after `supabase:gen-types`.
+- [x] Replace all inline `as { role: string; ... }` casts with generated types
+- [x] Change `requireRole()` to return typed `Profile` instead of `Record<string, unknown>`
 
 ### Consolidate Multiple Permissive RLS Policies
 

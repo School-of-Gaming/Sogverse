@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import type { UserRole } from "@/types";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -32,7 +31,7 @@ export async function GET(request: Request) {
           gedu: "/gedu",
         };
 
-        const role = (profile as { role: UserRole } | null)?.role;
+        const role = profile?.role;
         const redirectPath =
           next !== "/"
             ? next

@@ -8,13 +8,12 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
 export async function POST(request: Request) {
   try {
     const result = await requireRole(["gedu", "gamer", "admin"], {
-      select: "role, display_name, username",
       forbiddenMessage: "You do not have permission to join voice rooms",
     });
     if (result instanceof NextResponse) return result;
     const { user, profile } = result;
 
-    const role = profile.role as string;
+    const role = profile.role;
 
     // Parse body
     const body = await request.json();
@@ -143,7 +142,7 @@ export async function POST(request: Request) {
     }
 
     // Build token — encode userId|role|displayName
-    const displayName = profile.display_name as string;
+    const displayName = profile.display_name;
     const userName = `${user.id}|${role}|${displayName}`;
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
     if (!domain) {

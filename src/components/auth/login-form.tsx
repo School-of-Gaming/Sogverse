@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { generateGamerEmail, cn } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 type LoginRole = "customer" | "gamer" | "gedu";
@@ -136,7 +136,7 @@ export function LoginForm() {
         .eq("id", data.user.id)
         .single();
 
-      const role = (profile as { role: UserRole } | null)?.role;
+      const role = profile?.role;
       const dashboardPath = role
         ? ROLE_DASHBOARD_PATHS[role]
         : ROUTES.customer.dashboard;
