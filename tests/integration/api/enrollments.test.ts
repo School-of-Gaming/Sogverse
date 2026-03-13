@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 
 // --- Mocks ---
 
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return { ...actual, after: vi.fn((cb: () => void) => cb()) };
+});
+
 const mockRequireRole = vi.fn();
 vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
