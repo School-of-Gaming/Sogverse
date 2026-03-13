@@ -69,7 +69,7 @@ export default function AdminProductsPage() {
               ))}
             </div>
           ) : filteredProducts && filteredProducts.length > 0 ? (
-            <div className="space-y-4">
+            <div className="grid gap-3">
               {filteredProducts.map((product) => (
                 <Link
                   key={product.id}

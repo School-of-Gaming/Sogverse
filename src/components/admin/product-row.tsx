@@ -22,7 +22,7 @@ export function ProductRow({ product, currency, locale }: ProductRowProps) {
   const gameName = product.games?.name;
 
   return (
-    <div className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground">
+    <div className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
       <div className="flex items-center gap-4">
         <div className="relative flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
           <Image
@@ -39,17 +39,17 @@ export function ProductRow({ product, currency, locale }: ProductRowProps) {
             {!product.is_visible && (
               <Badge
                 variant="outline"
-                className="text-muted-foreground group-hover:text-accent-foreground/70"
+                className="text-muted-foreground"
               >
                 Hidden
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70 line-clamp-1">
+          <p className="text-sm text-muted-foreground line-clamp-1">
             {product.description}
           </p>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground group-hover:text-accent-foreground/70">
-            <span className="font-semibold text-primary group-hover:text-secondary">
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span className="font-semibold text-primary">
               {product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})
             </span>
             <span>
@@ -61,7 +61,7 @@ export function ProductRow({ product, currency, locale }: ProductRowProps) {
           </div>
         </div>
       </div>
-      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground" />
+      <ChevronRight className="h-5 w-5 text-muted-foreground" />
     </div>
   );
 }
