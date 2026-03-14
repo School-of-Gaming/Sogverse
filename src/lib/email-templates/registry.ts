@@ -20,6 +20,7 @@ import {
   enrollmentChangeSubjects,
 } from "./enrollment-changes";
 import { buildPasswordResetEmail } from "./password-reset";
+import { buildGeduInviteEmail } from "./gedu-invite";
 
 // --- Field types for the testing UI ---
 
@@ -91,6 +92,10 @@ function resolveMinecraftStatus(params: Record<string, string>): Record<string, 
 
 const passwordResetParamsSchema = z.object({
   resetLink: z.string().url(),
+});
+
+const geduInviteParamsSchema = z.object({
+  setupLink: z.string().url(),
 });
 
 const feedbackParamsSchema = z.object({
@@ -169,6 +174,16 @@ const unenrollmentGeduParamsSchema = z.object({
 // --- Single source of truth for all email templates ---
 
 export const templateRegistry: Record<string, TemplateDefinition> = {
+  geduInvite: {
+    label: "Gedu Invite",
+    fields: [
+      { key: "setupLink", label: "Setup Link", placeholder: "https://sogverse.sog.gg/setup-account" },
+    ],
+    schema: geduInviteParamsSchema,
+    build: (p) => buildGeduInviteEmail(p.setupLink as string),
+    subject: () => "You're invited to The Sogverse",
+    fromName: SENDER_NAME_AUTH,
+  },
   passwordReset: {
     label: "Password Reset",
     fields: [

@@ -102,13 +102,13 @@ export default function AdminUsersPage() {
         <div>
           <h1 className="text-3xl font-bold">Users</h1>
           <p className="text-muted-foreground">
-            Manage user accounts and permissions
+            Manage user accounts
           </p>
         </div>
         <Link href="/admin/users/add">
           <Button>
             <UserPlus className="mr-2 h-4 w-4" />
-            Add User
+            Invite Gedu
           </Button>
         </Link>
       </div>
