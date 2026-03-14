@@ -12,5 +12,6 @@ export const GAMER_EMAIL_DOMAIN = "@gamer.sogverse.internal";
 
 /** Verified sender for transactional emails via Brevo. */
 export const SENDER_EMAIL = "sogverse@sog.gg";
+export const SENDER_NAME_AUTH = "Sogverse Authentication";
 export const SENDER_NAME_FEEDBACK = "Sogverse Feedback";
 export const SENDER_NAME_ENROLLMENT = "Sogverse Enrollment";

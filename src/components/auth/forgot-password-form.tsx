@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { getClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants";
 
 const forgotPasswordSchema = z.object({
@@ -21,8 +20,6 @@ export function ForgotPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const supabase = getClient();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -31,15 +28,14 @@ export function ForgotPasswordForm() {
     try {
       const validatedData = forgotPasswordSchema.parse({ email });
 
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        validatedData.email,
-        {
-          redirectTo: `${window.location.origin}/api/auth/callback?next=${ROUTES.resetPassword}`,
-        }
-      );
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: validatedData.email }),
+      });
 
-      if (resetError) {
-        setError(resetError.message);
+      if (!response.ok) {
+        setError("An unexpected error occurred");
         return;
       }
 

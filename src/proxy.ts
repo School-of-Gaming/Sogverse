@@ -6,7 +6,9 @@ import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.sorg, ROUTES.checkout, ROUTES.about];
+// resetPassword is public (not an auth route) because it must work for both
+// unauthenticated users (email recovery flow) and authenticated users (settings → change password).
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.sorg, ROUTES.checkout, ROUTES.about, ROUTES.resetPassword];
 
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];

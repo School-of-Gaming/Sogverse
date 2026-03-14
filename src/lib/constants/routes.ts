@@ -39,21 +39,4 @@ export const ROUTES = {
   },
 } as const;
 
-export const PUBLIC_ROUTES = [
-  ROUTES.home,
-  ROUTES.products,
-  ROUTES.sorg,
-  ROUTES.checkout,
-  ROUTES.about,
-  ROUTES.login,
-  ROUTES.register,
-  ROUTES.forgotPassword,
-] as const;
-
-export const AUTH_ROUTES = [
-  ROUTES.login,
-  ROUTES.register,
-  ROUTES.forgotPassword,
-] as const;
-
 

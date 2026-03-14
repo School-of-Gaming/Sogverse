@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
@@ -21,14 +20,45 @@ const resetPasswordSchema = z.object({
 });
 
 export function ResetPasswordForm() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
 
   const supabase = getClient();
+
+  // generateLink() uses implicit flow (tokens in URL hash) because there's
+  // no PKCE challenge. The @supabase/ssr client is configured for PKCE mode
+  // so it won't detect hash tokens automatically — parse them manually.
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) {
+      setSessionReady(true);
+      return;
+    }
+
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+
+    if (accessToken && refreshToken) {
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error }) => {
+          if (error) {
+            setError("Your reset link has expired. Please request a new one.");
+          } else {
+            // Clear hash from URL without triggering navigation
+            window.history.replaceState(null, "", window.location.pathname);
+          }
+          setSessionReady(true);
+        });
+    } else {
+      setSessionReady(true);
+    }
+  }, [supabase.auth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +78,6 @@ export function ResetPasswordForm() {
       }
 
       setSuccess(true);
-      setTimeout(() => router.push(ROUTES.login), 3000);
     } catch (err) {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
@@ -66,17 +95,16 @@ export function ResetPasswordForm() {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl">Password updated</CardTitle>
           <CardDescription>
-            Your password has been successfully reset. You will be redirected to
-            the login page shortly.
+            Your password has been successfully updated.
           </CardDescription>
         </CardHeader>
-        <CardFooter className="flex flex-col space-y-4">
-          <Link href={ROUTES.login} className="w-full">
-            <Button variant="outline" className="w-full">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Login
-            </Button>
-          </Link>
+        <CardFooter>
+          <Button
+            className="w-full"
+            onClick={() => { window.location.href = ROUTES.login; }}
+          >
+            Continue
+          </Button>
         </CardFooter>
       </Card>
     );
@@ -128,8 +156,8 @@ export function ResetPasswordForm() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Updating..." : "Reset Password"}
+          <Button type="submit" className="w-full" disabled={isLoading || !sessionReady}>
+            {!sessionReady ? "Loading..." : isLoading ? "Updating..." : "Reset Password"}
           </Button>
           <Link
             href="/login"

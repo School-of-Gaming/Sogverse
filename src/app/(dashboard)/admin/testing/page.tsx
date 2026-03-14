@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL } from "@/lib/constants";
+import { templateRegistry, type TemplateField } from "@/lib/email-templates/registry";
 
 type EmailProvider = "brevo" | "klaviyo";
 type EmailMode = "custom" | "template";
@@ -23,179 +24,12 @@ interface EmailResult {
   message: string;
 }
 
-// --- Template definitions (mirrors the API route's registry) ---
-
-interface TextField {
-  key: string;
-  label: string;
-  placeholder: string;
-}
-
-interface SelectField {
-  key: string;
-  label: string;
-  type: "select";
-  options: { label: string; value: string }[];
-}
-
-type TemplateField = TextField | SelectField;
-
-interface TemplateDef {
-  label: string;
-  fields: TemplateField[];
-  /** Map a select field value to multiple params (e.g. minecraft status → username + uuid). */
-  resolveParams?: (params: Record<string, string>) => Record<string, string | null>;
-}
-
-const MINECRAFT_STATUS_OPTIONS = [
-  { label: "Verified (username + uuid)", value: "verified" },
-  { label: "Unverified (username only)", value: "unverified" },
-  { label: "Not provided", value: "none" },
-];
-
-function resolveMinecraftStatus(params: Record<string, string>): Record<string, string | null> {
-  const resolved: Record<string, string | null> = { ...params };
-  const status = params.minecraftStatus;
-  delete resolved.minecraftStatus;
-  switch (status) {
-    case "verified":
-      resolved.minecraftUsername = "Notch";
-      resolved.minecraftUuid = "069a79f4-44e9-4726-a5be-fca90e38aaf5";
-      break;
-    case "unverified":
-      resolved.minecraftUsername = "PlayerOne";
-      resolved.minecraftUuid = null;
-      break;
-    default:
-      resolved.minecraftUsername = null;
-      resolved.minecraftUuid = null;
-  }
-  return resolved;
-}
-
-const templateDefs: Record<string, TemplateDef> = {
-  feedback: {
-    label: "Feedback",
-    fields: [
-      { key: "userName", label: "User Name", placeholder: "Jane Doe" },
-      { key: "userRole", label: "User Role", placeholder: "customer" },
-      { key: "userEmail", label: "User Email", placeholder: "jane@example.com" },
-      { key: "message", label: "Message", placeholder: "Great product!" },
-      { key: "sentAt", label: "Sent At", placeholder: "March 11, 2026 at 3:00 PM" },
-    ],
-  },
-  groupAdded: {
-    label: "Group Added (Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-  },
-  groupDeleted: {
-    label: "Group Deleted (Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-  },
-  groupReassignedOldGedu: {
-    label: "Group Reassigned (Old Gedu)",
-    fields: [
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-  },
-  groupReassignedNewGedu: {
-    label: "Group Reassigned (New Gedu)",
-    fields: [
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-  },
-  groupReassignedParent: {
-    label: "Group Reassigned (Parent)",
-    fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-  },
-  gamerMovedParent: {
-    label: "Gamer Moved (Parent)",
-    fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-  },
-  gamerMovedOldGedu: {
-    label: "Gamer Moved (Old Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-  },
-  gamerMovedNewGedu: {
-    label: "Gamer Moved (New Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Bob" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-  },
-  enrollmentParent: {
-    label: "Enrollment (Parent)",
-    fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-      { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
-    ],
-    resolveParams: resolveMinecraftStatus,
-  },
-  enrollmentGedu: {
-    label: "Enrollment (Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-      { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
-    ],
-    resolveParams: resolveMinecraftStatus,
-  },
-  unenrollmentParent: {
-    label: "Unenrollment (Parent)",
-    fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-  },
-  unenrollmentGedu: {
-    label: "Unenrollment (Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-      { key: "minecraftStatus", label: "Minecraft Status", type: "select", options: MINECRAFT_STATUS_OPTIONS },
-    ],
-    resolveParams: resolveMinecraftStatus,
-  },
-};
-
 const selectClass =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+
+function isSelectField(field: TemplateField): field is Extract<TemplateField, { type: "select" }> {
+  return "type" in field;
+}
 
 // --- Page ---
 
@@ -215,10 +49,11 @@ export default function TestingPage() {
   const [replyToEmail, setReplyToEmail] = useState("");
 
   // Template mode state
-  const [templateName, setTemplateName] = useState("groupAdded");
+  const templateKeys = Object.keys(templateRegistry);
+  const [templateName, setTemplateName] = useState(templateKeys[0]);
   const [templateParams, setTemplateParams] = useState<Record<string, string>>({});
 
-  const selectedTemplate = templateDefs[templateName];
+  const selectedTemplate = templateRegistry[templateName];
 
   function handleModeChange(newMode: EmailMode) {
     setMode(newMode);
@@ -270,7 +105,7 @@ export default function TestingPage() {
               const raw = Object.fromEntries(
                 selectedTemplate.fields.map((f) => [
                   f.key,
-                  templateParams[f.key] || ("placeholder" in f ? f.placeholder : f.options[0].value),
+                  templateParams[f.key] || (isSelectField(f) ? f.options[0].value : f.placeholder),
                 ]),
               );
               return selectedTemplate.resolveParams ? selectedTemplate.resolveParams(raw) : raw;
@@ -371,7 +206,7 @@ export default function TestingPage() {
                     onChange={(e) => handleTemplateChange(e.target.value)}
                     className={selectClass}
                   >
-                    {Object.entries(templateDefs).map(([key, def]) => (
+                    {Object.entries(templateRegistry).map(([key, def]) => (
                       <option key={key} value={key}>
                         {def.label}
                       </option>
@@ -388,7 +223,7 @@ export default function TestingPage() {
                         <Label htmlFor={`param-${field.key}`} className="text-sm">
                           {field.label}
                         </Label>
-                        {"type" in field ? (
+                        {isSelectField(field) ? (
                           <select
                             id={`param-${field.key}`}
                             value={templateParams[field.key] ?? field.options[0].value}
@@ -406,7 +241,7 @@ export default function TestingPage() {
                             id={`param-${field.key}`}
                             value={templateParams[field.key] ?? ""}
                             onChange={(e) => updateParam(field.key, e.target.value)}
-                            placeholder={"placeholder" in field ? field.placeholder : ""}
+                            placeholder={field.placeholder}
                           />
                         )}
                       </div>

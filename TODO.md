@@ -8,6 +8,10 @@
   npx supabase link --project-ref $SUPABASE_PROJECT_REF
   npx supabase db push
   ```
+- [ ] Push auth config to production (syncs `otp_expiry`, `enable_confirmations`, etc. from `config.toml`):
+  ```bash
+  supabase config push
+  ```
 
 ## Vercel Setup
 
