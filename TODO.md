@@ -367,23 +367,15 @@ To support a second parent linking to an existing gamer:
 
 **Why:** The previous client-side INSERT policy only checked `parent_id = auth.uid()`, allowing any customer to link to any gamer. The fix correctly removed this, but a secure server-side path is needed if multiple parents per gamer is a requirement.
 
-### Code-Owned Password Reset Email via Brevo API
+### ~~Code-Owned Password Reset Email via Brevo API~~ — DONE
 
-Password reset emails are currently sent by Supabase's built-in SMTP relay using a template configured in the Supabase dashboard. This means the template must be maintained separately in each Supabase project (staging, production). Move email delivery to code so the template is version-controlled and consistent across environments.
+Replaced Supabase's built-in password reset email with a branded template sent via Brevo. Created `POST /api/auth/forgot-password` using `admin.generateLink()` to get the reset link server-side, then sends via `sendTransactionalEmail()`. Updated `forgot-password-form.tsx` to call the API route instead of `supabase.auth.resetPasswordForEmail()`. Handles the implicit flow / PKCE mismatch by manually parsing hash fragment tokens on the reset-password page and calling `setSession()`. Also unified email template definitions into a single registry (`src/lib/email-templates/registry.ts`) used by both the API route and the admin testing page.
 
-**Approach:** Use `auth.admin.generateLink({ type: 'recovery', email })` to generate the reset link server-side (Supabase still creates and validates the token), then send the email via the existing Brevo API wrapper (`src/lib/brevo.ts`). Auth security is unaffected — Supabase still owns token generation, validation, and session exchange.
-
-- [ ] Create `POST /api/auth/forgot-password` route — calls `generateLink()` on the admin client, sends email via `sendTransactionalEmail()`
-- [ ] Create HTML email template function (e.g., `src/lib/email-templates/password-reset.ts`) with branded markup and the reset link
-- [ ] Update `forgot-password-form.tsx` to call the new API route instead of `supabase.auth.resetPasswordForEmail()`
-- [ ] Return a generic success response regardless of whether the email exists (prevent user enumeration)
-- [ ] Disable the built-in recovery email template in Supabase dashboard (optional — it won't fire if `resetPasswordForEmail()` is no longer called)
-
-**What stays the same:** `/api/auth/callback` route, `reset-password-form.tsx`, token validation, session exchange — the entire post-click flow is unchanged.
-
-**Affected files:** `src/app/api/auth/forgot-password/route.ts` (new), `src/lib/email-templates/password-reset.ts` (new), `src/components/auth/forgot-password-form.tsx`, `src/services/auth/auth.service.ts`
-
-**Dependencies:** None — Brevo API wrapper and admin client already exist.
+- [x] Create `POST /api/auth/forgot-password` route — calls `generateLink()` on the admin client, sends email via `sendTransactionalEmail()`
+- [x] Create HTML email template function (`src/lib/email-templates/password-reset.ts`) with branded markup and the reset link
+- [x] Update `forgot-password-form.tsx` to call the new API route instead of `supabase.auth.resetPasswordForEmail()`
+- [x] Return a generic success response regardless of whether the email exists (prevent user enumeration)
+- [x] Unified template registry so new templates only need to be defined in one place
 
 ### Use Identicon Avatars in Email Templates
 
@@ -399,7 +391,7 @@ The identicon generator (`src/lib/identicon.ts`) creates unique SVG avatars from
 
 Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.
 
-- [ ] Create branded email templates in Brevo's visual editor (signup, password reset, magic link, etc.)
+- [ ] Create branded email templates in Brevo's visual editor (signup, magic link, etc. — password reset already code-owned)
 - [ ] Set up Supabase Auth Hooks or Edge Functions to send emails via Brevo's template API instead of Supabase's built-in templates
 - [ ] Pass user data (name, email, confirmation URL) as template variables to Brevo
 
