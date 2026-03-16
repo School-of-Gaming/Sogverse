@@ -1,6 +1,6 @@
 # Groups Architecture
 
-Admin-managed groups that assign a gedu (game educator) to a set of gamers within a product, with role-based viewing for admins, gedus, and gamers.
+Admin-managed groups that assign a gedu (game educator) to a set of gamers within a product, with role-based viewing for all roles.
 
 ## Overview
 
@@ -8,7 +8,7 @@ Each product can have multiple groups. Each group has exactly one gedu and zero 
 
 A gamer can only be enrolled in one group per product (enforced by a trigger-based constraint). A gedu can only lead one group per product (enforced by a `UNIQUE(product_id, gedu_id)` constraint). When all groups are removed from a product, it is automatically hidden.
 
-All three roles (admin, gedu, gamer) view groups through a shared page architecture with role-specific thin wrappers. A single `get_my_groups()` RPC branches by role to return the appropriate data.
+All four roles (admin, gedu, gamer, customer) view groups through a shared page architecture with role-specific thin wrappers. A single `get_my_groups()` RPC branches by role to return the appropriate data.
 
 ## Component Map
 
@@ -38,28 +38,32 @@ API routes (src/app/api/admin/products/)
 
 ```
 Pages
-├── /admin/groups       → AdminGroupsPageContent   → GroupsListContent
-├── /admin/groups/[id]  → AdminGroupDetailContent   → GroupDetailContent
-├── /gedu/groups        → GeduGroupsPageContent     → GroupsListContent
-├── /gedu/groups/[id]   → GeduGroupDetailContent    → GroupDetailContent
-├── /gamer/groups       → GamerGroupsPageContent    → GroupsListContent
-├── /gamer/groups/[id]  → GamerGroupDetailContent   → GroupDetailContent
-└── /{role}/voice/[id]  → VoiceSessionPage (shared, role-agnostic)
+├── /admin/groups        → AdminGroupsPageContent    → GroupsListContent
+├── /admin/groups/[id]   → AdminGroupDetailContent    → GroupDetailContent
+├── /gedu/groups         → GeduGroupsPageContent      → GroupsListContent
+├── /gedu/groups/[id]    → GeduGroupDetailContent     → GroupDetailContent
+├── /gamer/groups        → GamerGroupsPageContent     → GroupsListContent
+├── /gamer/groups/[id]   → GamerGroupDetailContent    → GroupDetailContent
+├── /customer/gamers     → CustomerGamersPage (GroupCards inline per gamer)
+├── /customer/groups/[id]→ CustomerGroupDetailContent  → GroupDetailContent
+└── /{role}/voice/[id]   → VoiceSessionPage (shared, role-agnostic)
 
 Shared components (src/components/groups/)
 ├── GroupsListContent   — Lounge cards + group card list with loading/error/empty states
-└── GroupDetailContent  — Group header, voice status, gamer roster (adapts to data availability)
+└── GroupDetailContent  — Product image, header, voice status, gamer roster, optional enrollment info
+    Props: voiceRoute | onJoinClick (discriminated union), optional enrollment prop
 
 Shared UI (src/components/ui/)
-├── GroupCard           — Clickable card: product name, gedu, gamer count, schedule, voice status
+├── GroupCard           — Product image, product name, gedu, gamer count, schedule, voice status
 ├── GroupVoiceStatus    — Self-updating countdown/live status text
 ├── LoungeCard          — Always-open voice lounge banner card
-└── JoinButton          — Fixed-width join button with loading state
+└── JoinButton          — Fixed-width join button (Link via href | button via onClick, discriminated union)
 
 Role wrappers (src/components/{role}/)
-├── AdminGroupsPageContent / AdminGroupDetailContent
-├── GeduGroupsPageContent  / GeduGroupDetailContent
-└── GamerGroupsPageContent / GamerGroupDetailContent
+├── AdminGroupsPageContent  / AdminGroupDetailContent
+├── GeduGroupsPageContent   / GeduGroupDetailContent
+├── GamerGroupsPageContent  / GamerGroupDetailContent
+└── CustomerGroupDetailContent (detail only — list is inline in CustomerGamersPage)
 
 Hooks
 └── src/hooks/use-groups-page.ts      — useGroupsWithVoice(): shared enrichment (session windows, sorting)
@@ -120,14 +124,24 @@ The `commit_group_changes` RPC executes steps in a specific order to satisfy FK 
 3. `useGroupsWithVoice()` enriches each group with `computeSessionWindow()` → `voiceIsOpen` + `voiceNextSessionStart`
 4. Groups are sorted: live first, then upcoming by soonest session start
 5. A 30-second tick timer re-evaluates session windows so Live badges and Join buttons update in real-time
-6. Role wrapper passes enriched groups + role-specific config (lounges, routes, headings) to shared `GroupsListContent`
+6. Role wrapper passes enriched groups + role-specific config to shared components
 
 ### Group detail page
 
 1. Same data source as the list page (shared query, found by `groupId`)
-2. `GroupDetailContent` renders header, voice status, and gamer roster
-3. Roster adapts to data: shows age + gender when available (admin/gedu), names-only when null (gamer — DOB/gender stripped server-side)
-4. Join button links to `/{role}/voice/{roomId}?groupId={groupId}` so the back button returns to the detail page
+2. `GroupDetailContent` renders product image, header, voice status, and gamer roster
+3. Roster adapts to data: shows age + gender when available (admin/gedu/customer's own gamers), names-only when null (gamer role or other families' gamers — DOB/gender stripped server-side)
+4. Voice join: admin/gedu/gamer use `voiceRoute` (Link navigation), customer uses `onJoinClick` (placeholder alert dialog)
+5. Customer detail page also shows an enrollment info card (Sorgs/week + Unenroll button)
+
+### Customer groups (inline in My Gamers page)
+
+1. `CustomerGamersPage` calls `useMyGroups()` + `useGroupsWithVoice()` + `useMyGamers()`
+2. Groups are filtered per gamer by matching `group.gamers` against the customer's gamer IDs
+3. `GroupCard` renders per group under each gamer header, sorted live-first
+4. Join button fires `onJoinClick` → placeholder "Voice Chat Coming Soon" dialog
+5. Clicking a card navigates to `/customer/groups/[id]` → `CustomerGroupDetailContent`
+6. After a successful unenroll, the customer is navigated back to My Gamers
 
 ## Database Schema
 
@@ -165,16 +179,16 @@ A gamer can only be enrolled in one group per product. Since this spans two tabl
 |---|---|---|
 | `get_product_groups_with_details(p_product_id)` | admin | Returns flat rows joining groups, gedus, enrollments, and gamer profiles for a specific product |
 | `commit_group_changes(p_product_id, ...)` | admin | Atomic batch mutation of groups and enrollments, returns `{ autoHidden }` |
-| `get_my_groups()` | admin, gedu, gamer | Returns groups for the calling user based on role (see below) |
+| `get_my_groups()` | admin, gedu, gamer, customer | Returns groups for the calling user based on role (see below) |
 
 **`get_my_groups()` role branching:**
 
 | Role | Filter | Data |
 |---|---|---|
-| Admin | No filter (all groups) | Full gamer details (DOB, gender) |
-| Gedu | `pg.gedu_id = auth.uid()` | Full gamer details (DOB, gender) |
-| Gamer | Enrolled groups only (`group_enrollments WHERE gamer_id = auth.uid()`) | DOB and gender are NULL (privacy) |
-| Customer | Raises `42501` permission error | — |
+| Admin | No filter (all groups) | Full gamer details (DOB, gender), token cost, last charge date |
+| Gedu | `pg.gedu_id = auth.uid()` | Full gamer details (DOB, gender), token cost, last charge date |
+| Gamer | Enrolled groups only (`group_enrollments WHERE gamer_id = auth.uid()`) | DOB and gender are NULL (privacy), token cost, no charge date |
+| Customer | Enrolled groups only (`group_enrollments WHERE enrolled_by = auth.uid()`) | DOB/gender for own gamers only (CASE), token cost, last charge date for own enrollments |
 
 ### RLS Policies
 
@@ -185,9 +199,9 @@ A gamer can only be enrolled in one group per product. Since this spans two tabl
 
 | Migration | Description |
 |---|---|
-| `00007_groups_and_enrollments.sql` | `product_groups`, `group_enrollments`, `enrollment_charges` tables, `commit_group_changes` RPC (admin-gated), `get_product_groups_with_details` RPC, `check_unique_gamer_per_product` trigger |
+| `00006_groups_and_enrollments.sql` | `product_groups`, `group_enrollments`, `enrollment_charges` tables, `commit_group_changes` RPC (admin-gated), `get_product_groups_with_details` RPC, `check_unique_gamer_per_product` trigger |
 | `00009_rls_and_grants.sql` | All RLS policies and table/function grants for groups |
-| `00012_gedu_groups_rpc.sql` | `get_my_groups` RPC (multi-role, SECURITY DEFINER) |
+| `00012_gedu_groups_rpc.sql` | `get_my_groups` RPC (multi-role with customer branch, SECURITY DEFINER) |
 
 ## Client-Side State Management
 
@@ -222,19 +236,20 @@ New groups receive `temp-N` IDs (module-level counter). These are sent to the RP
 | Capability | Admin | Customer | Gamer | Gedu |
 |---|---|---|---|---|
 | View groups (visible products) | Yes | Yes | Yes | Yes |
-| View groups page (own groups) | Yes | - | Yes | Yes |
+| View groups page (own groups) | Yes | Yes (inline in My Gamers) | Yes | Yes |
 | Manage groups (CRUD) | Yes | - | - | - |
-| Manage enrollments | Yes | - | - | - |
+| Manage enrollments | Yes | Enroll/unenroll own gamers | - | - |
 
 ## Role-Specific Page Behavior
 
-| Aspect | Admin | Gedu | Gamer |
-|---|---|---|---|
-| Groups shown | All groups | Assigned groups | Enrolled groups |
-| Lounge cards | Admin Lounge + Gedu Lounge | Gedu Lounge | None |
-| Gamer roster | Full (age, gender) | Full (age, gender) | Names only (DOB/gender stripped) |
-| Voice join | Yes | Yes | Yes |
-| Heading | "All Groups" | "Your Groups" | "My Groups" |
+| Aspect | Admin | Gedu | Gamer | Customer |
+|---|---|---|---|---|
+| Groups shown | All groups | Assigned groups | Enrolled groups | Enrolled groups (per gamer) |
+| Lounge cards | Admin Lounge + Gedu Lounge | Gedu Lounge | None | None |
+| Gamer roster | Full (age, gender) | Full (age, gender) | Names only | Own gamers full, others names only |
+| Voice join | Navigate to voice room | Navigate to voice room | Navigate to voice room | Placeholder alert dialog |
+| Enrollment info | - | - | - | Token cost + Unenroll button |
+| Heading | "All Groups" | "Your Groups" | "My Groups" | Per-gamer under "My Gamers" |
 
 ## Future Improvements
 
@@ -266,8 +281,8 @@ Only `PointerSensor` is configured in `GeduGroupsCard`. Keyboard-only users cann
 
 ### Reduce SQL duplication in `get_my_groups()`
 
-The three role branches (admin, gedu, gamer) share nearly identical `SELECT`/`FROM`/`JOIN` clauses (~90 lines duplicated). If a column is added or a JOIN changes, all three branches must be updated in sync. Consider extracting the common query into a CTE or view — but only once the branches have stabilized, since admin and gedu may diverge (e.g., admin-only columns or gedu-only JOINs) and premature abstraction would make that harder.
+The four role branches (admin, gedu, gamer, customer) share nearly identical `SELECT`/`FROM`/`JOIN` clauses. If a column is added or a JOIN changes, all branches must be updated in sync. Consider extracting the common query into a CTE or view — but only once the branches have stabilized, since roles may diverge (e.g., admin-only columns) and premature abstraction would make that harder.
 
-### Customer/parent groups page
+### Customer voice chat access
 
-Add a groups page for customer role showing groups where their linked gamers are enrolled. Would use the same shared components with a new `get_my_groups` branch for `customer` role.
+The customer Join button currently shows a placeholder "Voice Chat Coming Soon" dialog. When parent voice access is implemented, replace `onJoinClick` with `voiceRoute` in `CustomerGroupDetailContent` and `CustomerGamersPage`.
