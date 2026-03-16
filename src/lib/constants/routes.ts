@@ -32,7 +32,6 @@ export const ROUTES = {
   },
   gamer: {
     dashboard: "/gamer",
-    games: "/gamer/games",
     voice: "/gamer/voice",
     groups: "/gamer/groups",
     group: (groupId: string) => `/gamer/groups/${groupId}`,

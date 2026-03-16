@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
-import { Gamepad2, Trophy, Star, Zap } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
+import { Users, Trophy, Star, Zap } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NavChevron } from "@/components/ui/nav-chevron";
+import { ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Gamer Home",
@@ -54,28 +57,22 @@ export default function GamerDashboardPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Gamepad2 className="h-5 w-5" />
-            My Games
-          </CardTitle>
-          <CardDescription>
-            Your available games and learning content
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-              <Gamepad2 className="h-8 w-8 text-muted-foreground" />
+      <Link href={ROUTES.gamer.groups} className="block">
+        <Card className="group cursor-pointer transition-colors hover:bg-muted/50">
+          <CardContent className="flex items-center gap-4 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <Users className="h-5 w-5 text-primary" />
             </div>
-            <h3 className="mt-4 text-lg font-medium">No Games Yet</h3>
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              Ask your parent to get you some cool games!
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium">My Groups</p>
+              <p className="text-sm text-muted-foreground">
+                View your groups and upcoming voice sessions
+              </p>
+            </div>
+            <NavChevron />
+          </CardContent>
+        </Card>
+      </Link>
 
       <Card className="border-secondary/50 bg-secondary/5">
         <CardContent className="flex items-center gap-4 py-4">
