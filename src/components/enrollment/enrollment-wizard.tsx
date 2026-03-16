@@ -14,6 +14,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { useRequiredAuth } from "@/providers";
 import { useMyGamers } from "@/services/gamers";
 import {
@@ -244,10 +245,10 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                             gamer.display_name,
                           )
                         }
-                        className={`flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors ${
+                        className={`group flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors ${
                           alreadyEnrolled
-                            ? "cursor-not-allowed opacity-50"
-                            : "hover:border-primary hover:bg-accent"
+                            ? "opacity-50"
+                            : "hover:bg-muted/50"
                         }`}
                       >
                         <Avatar className="h-10 w-10">
@@ -259,10 +260,12 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                             @{gamer.username}
                           </p>
                         </div>
-                        {alreadyEnrolled && (
+                        {alreadyEnrolled ? (
                           <span className="text-xs font-medium text-muted-foreground">
                             Already enrolled
                           </span>
+                        ) : (
+                          <NavChevron size="sm" />
                         )}
                       </button>
                     );
