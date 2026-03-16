@@ -265,7 +265,7 @@ export default function GamerDetailsPage() {
             <div className="space-y-2">
               <Label>Username</Label>
               <Input
-                value={gamer.username ?? ""}
+                value={gamer.username}
                 disabled
                 className="bg-muted"
               />
@@ -347,7 +347,7 @@ export default function GamerDetailsPage() {
           )}
 
           <form onSubmit={(e) => { e.preventDefault(); handleChangePassword(); }} className="space-y-6">
-            <input type="text" name="username" autoComplete="username" value={gamer.username ?? ""} readOnly tabIndex={-1} aria-hidden="true" className="sr-only" />
+            <input type="text" name="username" autoComplete="username" value={gamer.username} readOnly tabIndex={-1} aria-hidden="true" className="sr-only" />
             <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
               <Input
