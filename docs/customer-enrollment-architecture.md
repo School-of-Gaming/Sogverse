@@ -193,7 +193,7 @@ enrollment_charges (
 | `00006_groups_and_enrollments.sql` | `group_enrollments`, `enrollment_charges` tables, `enroll_gamer_in_group`, `unenroll_gamer`, `get_enrollment_groups` RPCs, updated `commit_group_changes` with UPDATE-based moves |
 | `00008_cron.sql` | `compute_next_session()`, `process_enrollment_charges()`, pg_cron schedule |
 | `00009_rls_and_grants.sql` | All RLS policies and table/function grants for enrollments |
-| `00012_gedu_groups_rpc.sql` | `get_my_groups()` with customer branch (replaces `get_customer_enrollments`) |
+| `00012_gedu_groups_rpc.sql` | `get_my_groups()` with customer branch for enrollment viewing |
 
 ## Cron Job Details
 
