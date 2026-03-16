@@ -9,6 +9,9 @@ import {
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS, SEED } from "./constants";
 
+/** A second group assigned to admin (not the test gedu) for negative isolation tests. */
+const OTHER_GROUP_ID = "00000000-0000-0000-0000-0000000000a1";
+
 describe("get_my_groups RPC", () => {
   let admin: SupabaseClient<Database>;
   let adminClient: SupabaseClient<Database>;
@@ -36,6 +39,15 @@ describe("get_my_groups RPC", () => {
       TEST_CREDENTIALS.CUSTOMER.email,
       TEST_CREDENTIALS.CUSTOMER.password,
     );
+
+    // Create a second group assigned to admin (not the test gedu) for isolation tests.
+    // Gamer is NOT enrolled in this group.
+    await admin.from("product_groups").upsert({
+      id: OTHER_GROUP_ID,
+      product_id: TEST_IDS.PRODUCT,
+      gedu_id: TEST_IDS.ADMIN,
+      display_order: 99,
+    });
   });
 
   // --- Security: role isolation ---
@@ -72,6 +84,30 @@ describe("get_my_groups RPC", () => {
 
       const seededRow = data!.find((r) => r.group_id === TEST_IDS.GROUP);
       expect(seededRow).toBeDefined();
+    });
+
+    it("gedu does not see groups assigned to other users", async () => {
+      const { data, error } = await geduClient.rpc("get_my_groups");
+
+      expect(error).toBeNull();
+      const otherGroup = data!.find((r) => r.group_id === OTHER_GROUP_ID);
+      expect(otherGroup).toBeUndefined();
+    });
+
+    it("gamer does not see groups they are not enrolled in", async () => {
+      const { data, error } = await gamerClient.rpc("get_my_groups");
+
+      expect(error).toBeNull();
+      const otherGroup = data!.find((r) => r.group_id === OTHER_GROUP_ID);
+      expect(otherGroup).toBeUndefined();
+    });
+
+    it("admin sees both the seeded group and the isolation group", async () => {
+      const { data, error } = await adminClient.rpc("get_my_groups");
+
+      expect(error).toBeNull();
+      expect(data!.find((r) => r.group_id === TEST_IDS.GROUP)).toBeDefined();
+      expect(data!.find((r) => r.group_id === OTHER_GROUP_ID)).toBeDefined();
     });
 
     it("customer gets a permission error", async () => {
@@ -182,6 +218,7 @@ describe("get_my_groups RPC", () => {
   });
 
   afterAll(async () => {
+    await admin.from("product_groups").delete().eq("id", OTHER_GROUP_ID);
     await resetEnrollmentState(admin);
   });
 });
