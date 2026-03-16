@@ -10,7 +10,6 @@ import {
   Settings,
   Gamepad2,
   Coins,
-  Mic,
   FlaskConical,
   MessageSquare,
   ChevronLeft,
@@ -42,9 +41,9 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       icon: <Package className="h-5 w-5" />,
     },
     {
-      href: ROUTES.admin.voice,
-      label: "Voice Rooms",
-      icon: <Mic className="h-5 w-5" />,
+      href: ROUTES.admin.groups,
+      label: "Groups",
+      icon: <Users className="h-5 w-5" />,
     },
     {
       href: ROUTES.admin.uiComponents,
@@ -101,14 +100,9 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       icon: <LayoutDashboard className="h-5 w-5" />,
     },
     {
-      href: ROUTES.gamer.games,
-      label: "My Games",
-      icon: <Gamepad2 className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.gamer.voice,
-      label: "Voice Rooms",
-      icon: <Mic className="h-5 w-5" />,
+      href: ROUTES.gamer.groups,
+      label: "My Groups",
+      icon: <Users className="h-5 w-5" />,
     },
     {
       href: ROUTES.feedback,

@@ -9,7 +9,7 @@ function makeMockClient(rows: Record<string, unknown>[]) {
   } as unknown as SupabaseClient<Database>;
 }
 
-describe("GroupsService.getGeduGroups()", () => {
+describe("GroupsService.getMyGroups()", () => {
   it("reshapes flat rows into nested groups", async () => {
     const rows = [
       {
@@ -88,7 +88,7 @@ describe("GroupsService.getGeduGroups()", () => {
 
     const client = makeMockClient(rows);
     const service = new GroupsService(client);
-    const groups = await service.getGeduGroups();
+    const groups = await service.getMyGroups();
 
     expect(groups).toHaveLength(2);
 
@@ -113,7 +113,7 @@ describe("GroupsService.getGeduGroups()", () => {
   it("returns empty array when RPC returns no data", async () => {
     const client = makeMockClient([]);
     const service = new GroupsService(client);
-    const groups = await service.getGeduGroups();
+    const groups = await service.getMyGroups();
 
     expect(groups).toEqual([]);
   });
@@ -172,7 +172,7 @@ describe("GroupsService.getGeduGroups()", () => {
 
     const client = makeMockClient(rows);
     const service = new GroupsService(client);
-    const groups = await service.getGeduGroups();
+    const groups = await service.getMyGroups();
 
     expect(groups[0].groupId).toBe("g1");
     expect(groups[1].groupId).toBe("g2");

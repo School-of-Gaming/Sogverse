@@ -20,13 +20,13 @@ export interface ProductGroup {
   gamers: GroupGamer[];
 }
 
-/** Enrolled gamer fields from the get_gedu_groups RPC (gedu). */
+/** Enrolled gamer fields from the get_my_groups RPC. */
 export interface GeduGroupGamer {
   gamerId: string;
   displayName: string;
   enrollmentId: string;
-  dateOfBirth: string;
-  gender: string;
+  dateOfBirth: string | null;
+  gender: string | null;
 }
 
 export interface GeduGroup {
@@ -55,6 +55,75 @@ export interface BatchGroupChanges {
   updatedGroups: Array<{ groupId: string; geduId: string }>;
   deletedGroupIds: string[];
   enrollmentMoves: Array<{ gamerId: string; fromGroupId: string; toGroupId: string }>;
+}
+
+/** Reshape flat RPC rows (one per gamer per group) into nested GeduGroup[]. */
+function reshapeGroupRows(
+  data: Array<{
+    group_id: string;
+    product_id: string;
+    product_name: string;
+    product_description: string;
+    product_image_url: string | null;
+    product_padlet_url: string | null;
+    product_min_age: number;
+    product_max_age: number;
+    game_id: string;
+    game_name: string;
+    gedu_display_name: string;
+    day_of_week: number;
+    start_time: string;
+    timezone: string;
+    duration_minutes: number;
+    display_order: number;
+    voice_room_id: string;
+    gamer_id: string | null;
+    gamer_display_name: string | null;
+    gamer_date_of_birth: string | null;
+    gamer_gender: string | null;
+    enrollment_id: string | null;
+  }>,
+): GeduGroup[] {
+  const groupMap = new Map<string, GeduGroup>();
+
+  for (const row of data) {
+    if (!groupMap.has(row.group_id)) {
+      groupMap.set(row.group_id, {
+        groupId: row.group_id,
+        productId: row.product_id,
+        productName: row.product_name,
+        productDescription: row.product_description,
+        productImageUrl: row.product_image_url,
+        productPadletUrl: row.product_padlet_url,
+        productMinAge: row.product_min_age,
+        productMaxAge: row.product_max_age,
+        gameId: row.game_id,
+        gameName: row.game_name,
+        geduName: row.gedu_display_name,
+        dayOfWeek: row.day_of_week,
+        startTime: row.start_time,
+        timezone: row.timezone,
+        durationMinutes: row.duration_minutes,
+        displayOrder: row.display_order,
+        voiceRoomId: row.voice_room_id,
+        gamers: [],
+      });
+    }
+
+    if (row.gamer_id) {
+      groupMap.get(row.group_id)!.gamers.push({
+        gamerId: row.gamer_id,
+        displayName: row.gamer_display_name!,
+        enrollmentId: row.enrollment_id!,
+        dateOfBirth: row.gamer_date_of_birth,
+        gender: row.gamer_gender,
+      });
+    }
+  }
+
+  return Array.from(groupMap.values()).sort(
+    (a, b) => a.displayOrder - b.displayOrder,
+  );
 }
 
 export class GroupsService {
@@ -102,51 +171,12 @@ export class GroupsService {
     );
   }
 
-  async getGeduGroups(): Promise<GeduGroup[]> {
-    const { data, error } = await this.supabase.rpc("get_gedu_groups");
+  async getMyGroups(): Promise<GeduGroup[]> {
+    const { data, error } = await this.supabase.rpc("get_my_groups");
 
     if (error) throw error;
 
-    const groupMap = new Map<string, GeduGroup>();
-
-    for (const row of data) {
-      if (!groupMap.has(row.group_id)) {
-        groupMap.set(row.group_id, {
-          groupId: row.group_id,
-          productId: row.product_id,
-          productName: row.product_name,
-          productDescription: row.product_description,
-          productImageUrl: row.product_image_url,
-          productPadletUrl: row.product_padlet_url,
-          productMinAge: row.product_min_age,
-          productMaxAge: row.product_max_age,
-          gameId: row.game_id,
-          gameName: row.game_name,
-          geduName: row.gedu_display_name,
-          dayOfWeek: row.day_of_week,
-          startTime: row.start_time,
-          timezone: row.timezone,
-          durationMinutes: row.duration_minutes,
-          displayOrder: row.display_order,
-          voiceRoomId: row.voice_room_id,
-          gamers: [],
-        });
-      }
-
-      if (row.gamer_id) {
-        groupMap.get(row.group_id)!.gamers.push({
-          gamerId: row.gamer_id,
-          displayName: row.gamer_display_name,
-          enrollmentId: row.enrollment_id,
-          dateOfBirth: row.gamer_date_of_birth,
-          gender: row.gamer_gender,
-        });
-      }
-    }
-
-    return Array.from(groupMap.values()).sort(
-      (a, b) => a.displayOrder - b.displayOrder,
-    );
+    return reshapeGroupRows(data as Parameters<typeof reshapeGroupRows>[0]);
   }
 
 }

@@ -7,7 +7,7 @@ import { GroupsService } from "./groups.service";
 export const groupKeys = {
   all: ["groups"] as const,
   byProduct: (productId: string) => [...groupKeys.all, "product", productId] as const,
-  gedu: () => [...groupKeys.all, "gedu"] as const,
+  mine: () => [...groupKeys.all, "mine"] as const,
 };
 
 export function useProductGroups(productId: string) {
@@ -21,12 +21,12 @@ export function useProductGroups(productId: string) {
   });
 }
 
-export function useGeduGroups() {
+export function useMyGroups() {
   const supabase = getClient();
   const service = new GroupsService(supabase);
 
   return useQuery({
-    queryKey: groupKeys.gedu(),
-    queryFn: () => service.getGeduGroups(),
+    queryKey: groupKeys.mine(),
+    queryFn: () => service.getMyGroups(),
   });
 }

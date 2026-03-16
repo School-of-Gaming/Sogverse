@@ -88,12 +88,12 @@ export type GroupEnrollmentInsert = Database["public"]["Tables"]["group_enrollme
 // enrollment_charges
 export type EnrollmentCharge = Database["public"]["Tables"]["enrollment_charges"]["Row"];
 
-// get_gedu_groups RPC — the generated type marks nullable LEFT JOIN fields as
+// get_my_groups RPC — the generated type marks nullable LEFT JOIN fields as
 // non-nullable. Override to reflect that groups with no enrollments return null
-// for gamer-related columns.
-type _GeduGroupGenerated = Database["public"]["Functions"]["get_gedu_groups"]["Returns"][number];
-export type GeduGroupWithDetails = Omit<
-  _GeduGroupGenerated,
+// for gamer-related columns (and gamer branch always returns null for DOB/gender).
+type _MyGroupGenerated = Database["public"]["Functions"]["get_my_groups"]["Returns"][number];
+export type MyGroupWithDetails = Omit<
+  _MyGroupGenerated,
   "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
 > & {
   enrollment_id: string | null;

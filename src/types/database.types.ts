@@ -645,7 +645,26 @@ export type Database = {
           min_gamer_age: number
         }[]
       }
-      get_gedu_groups: {
+      get_my_gamers: {
+        Args: never
+        Returns: {
+          created_at: string
+          currency: string | null
+          display_name: string
+          email: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+          username: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "profiles"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_my_groups: {
         Args: never
         Returns: {
           day_of_week: number
@@ -671,25 +690,6 @@ export type Database = {
           timezone: string
           voice_room_id: string
         }[]
-      }
-      get_my_gamers: {
-        Args: never
-        Returns: {
-          created_at: string
-          currency: string | null
-          display_name: string
-          email: string | null
-          id: string
-          role: Database["public"]["Enums"]["user_role"]
-          updated_at: string
-          username: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "profiles"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       get_my_parents: {
         Args: never

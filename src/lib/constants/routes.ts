@@ -18,6 +18,9 @@ export const ROUTES = {
     usersAdd: "/admin/users/add",
     products: "/admin/products",
     voice: "/admin/voice",
+    groups: "/admin/groups",
+    group: (groupId: string) => `/admin/groups/${groupId}`,
+    voiceSession: (roomId: string) => `/admin/voice/${roomId}`,
     uiComponents: "/admin/ui-components",
     testing: "/admin/testing",
   },
@@ -31,6 +34,9 @@ export const ROUTES = {
     dashboard: "/gamer",
     games: "/gamer/games",
     voice: "/gamer/voice",
+    groups: "/gamer/groups",
+    group: (groupId: string) => `/gamer/groups/${groupId}`,
+    voiceSession: (roomId: string) => `/gamer/voice/${roomId}`,
   },
   gedu: {
     dashboard: "/gedu",
@@ -39,5 +45,3 @@ export const ROUTES = {
     voice: (roomId: string) => `/gedu/voice/${roomId}`,
   },
 } as const;
-
-
