@@ -17,7 +17,6 @@ export const ROUTES = {
     users: "/admin/users",
     usersAdd: "/admin/users/add",
     products: "/admin/products",
-    voice: "/admin/voice",
     groups: "/admin/groups",
     group: (groupId: string) => `/admin/groups/${groupId}`,
     voiceSession: (roomId: string) => `/admin/voice/${roomId}`,
@@ -32,7 +31,6 @@ export const ROUTES = {
   },
   gamer: {
     dashboard: "/gamer",
-    voice: "/gamer/voice",
     groups: "/gamer/groups",
     group: (groupId: string) => `/gamer/groups/${groupId}`,
     voiceSession: (roomId: string) => `/gamer/voice/${roomId}`,
