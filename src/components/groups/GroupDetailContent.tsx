@@ -136,13 +136,14 @@ export function GroupDetailContent({
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
+          <div className="flex h-24 w-24 shrink-0 items-center justify-center">
             <Image
               src={group.productImageUrl}
               alt={group.productName}
-              fill
+              width={96}
+              height={96}
               unoptimized
-              className="object-cover"
+              className="h-auto w-auto max-h-full max-w-full rounded-md"
             />
           </div>
           <div>
