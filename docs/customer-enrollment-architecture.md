@@ -340,5 +340,8 @@ The cron job logs results to `cron.job_run_details` and emits `RAISE WARNING` to
 ### Charge window constant sync
 The 24-hour window is defined in two places: TypeScript constant and SQL local variable. A single source of truth (e.g., a `settings` table row readable by both) would prevent drift.
 
+### E2E test: unenroll targets correct gamer when siblings share a group
+A parent with two gamers (B and C) in the same group must be able to unenroll C without affecting B. The `?gamer=` query parameter on `/customer/groups/[id]` controls which enrollment the unenroll button targets. This flow needs an E2E test with a real database: enroll two gamers from the same customer into one group, click through from Gamer C's section, verify the unenroll dialog shows Gamer C's name and that only C's enrollment is removed. Requires local Supabase (Docker) to be available in the E2E test environment.
+
 ### Preserve enrollment history when groups are deleted
 When an admin deletes a gedu group, unenrolled `group_enrollments` rows (and their linked `enrollment_charges`) are deleted to unblock the `ON DELETE RESTRICT` FK. This means parents lose visibility of past enrollments for that group. A future improvement could decouple enrollment history from the group lifecycle — e.g., by changing the FK to `SET NULL` and updating `get_my_groups` to `LEFT JOIN` on `product_groups`, showing a "Group removed" placeholder for orphaned enrollments.

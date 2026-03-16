@@ -19,6 +19,7 @@ import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
 interface CustomerGroupDetailContentProps {
   groupId: string;
+  gamerId: string;
 }
 
 /**
@@ -26,12 +27,15 @@ interface CustomerGroupDetailContentProps {
  * with the customer's gamers. Returns undefined if the customer has no gamer
  * in this group.
  */
-function buildCustomerEnrollment(
+export function buildCustomerEnrollment(
   group: GroupWithVoice,
   gamers: { id: string; display_name: string }[],
+  targetGamerId: string,
 ): CustomerEnrollmentContext | undefined {
   const myGamerIds = new Set(gamers.map((g) => g.id));
-  const myGamer = group.gamers.find((gg) => myGamerIds.has(gg.gamerId));
+  const myGamer = group.gamers.find(
+    (gg) => gg.gamerId === targetGamerId && myGamerIds.has(gg.gamerId),
+  );
   if (!myGamer) return undefined;
 
   const gamer = gamers.find((g) => g.id === myGamer.gamerId);
@@ -44,7 +48,7 @@ function buildCustomerEnrollment(
   };
 }
 
-export function CustomerGroupDetailContent({ groupId }: CustomerGroupDetailContentProps) {
+export function CustomerGroupDetailContent({ groupId, gamerId }: CustomerGroupDetailContentProps) {
   const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(useMyGroups());
   const { data: gamers, isLoading: gamersLoading } = useMyGamers();
   const [showJoinAlert, setShowJoinAlert] = useState(false);
@@ -52,8 +56,8 @@ export function CustomerGroupDetailContent({ groupId }: CustomerGroupDetailConte
   const customerEnrollment = useMemo(() => {
     const group = groups.find((g) => g.groupId === groupId);
     if (!group || !gamers) return undefined;
-    return buildCustomerEnrollment(group, gamers);
-  }, [groups, groupId, gamers]);
+    return buildCustomerEnrollment(group, gamers, gamerId);
+  }, [groups, groupId, gamers, gamerId]);
 
   return (
     <>

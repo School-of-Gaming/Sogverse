@@ -104,6 +104,7 @@ export default function CustomerGamersPage() {
                       <GroupCardForCustomer
                         key={group.groupId}
                         group={group}
+                        gamerId={gamer.id}
                         locale={locale}
                         onJoinClick={() => setShowJoinAlert(true)}
                       />
@@ -166,10 +167,12 @@ export default function CustomerGamersPage() {
 
 function GroupCardForCustomer({
   group,
+  gamerId,
   locale,
   onJoinClick,
 }: {
   group: import("@/hooks/use-groups-page").GroupWithVoice;
+  gamerId: string;
   locale: string;
   onJoinClick: () => void;
 }) {
@@ -189,7 +192,7 @@ function GroupCardForCustomer({
       voiceNextSessionStart={group.voiceNextSessionStart}
       locale={locale}
       onJoinClick={onJoinClick}
-      detailHref={ROUTES.customer.group(group.groupId)}
+      detailHref={ROUTES.customer.group(group.groupId, gamerId)}
     />
   );
 }

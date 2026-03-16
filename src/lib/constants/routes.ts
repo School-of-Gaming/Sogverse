@@ -29,7 +29,10 @@ export const ROUTES = {
     billing: "/customer/billing",
     gamers: "/customer/gamers",
     groups: "/customer/groups",
-    group: (groupId: string) => `/customer/groups/${groupId}`,
+    group: (groupId: string, gamerId?: string) =>
+      gamerId
+        ? `/customer/groups/${groupId}?gamer=${gamerId}`
+        : `/customer/groups/${groupId}`,
   },
   gamer: {
     dashboard: "/gamer",
