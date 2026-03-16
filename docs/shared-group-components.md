@@ -106,10 +106,6 @@ Groups are sorted live-first, then by soonest upcoming session.
 
 A 30-second tick timer (`SESSION_TICK_MS`) periodically updates session window computations so Live badges and Join buttons transition in real-time without waiting for a data refetch.
 
-### `useGeduGroupsPage()` (`src/hooks/use-gedu-groups-page.ts`)
-
-Gedu-specific composition: `useGroupsWithVoice(useMyGroups())` + `useLoungeRoomId("gedu_only")`. Returns groups, lounge room ID, loading state, and error.
-
 ## Role Wrappers
 
 Each role has two thin wrapper components (~15 lines each) that pass role-specific configuration:

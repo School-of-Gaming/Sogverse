@@ -56,7 +56,7 @@ export function GroupDetailContent({
   if (error) {
     return (
       <p className="text-sm text-destructive">
-        {error instanceof Error ? error.message : "Failed to load group"}
+        {error.message}
       </p>
     );
   }

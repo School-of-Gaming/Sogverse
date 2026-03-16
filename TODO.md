@@ -133,8 +133,7 @@ Priority pages (public-facing, most likely to be shared):
 Lower priority (auth/dashboard pages — less likely to be shared, but descriptions exist):
 - `/forgot-password`, `/reset-password` — auth flows
 - `/admin`, `/customer`, `/gamer`, `/gedu` — dashboard homepages
-- `/admin/voice`, `/gamer/voice`, `/gamer/games` — dashboard subpages
-- `/gedu/groups`, `/gedu/groups/[id]`, `/gedu/voice/[id]` — gedu subpages
+- `/{role}/groups`, `/{role}/groups/[id]`, `/{role}/voice/[id]` — groups & voice subpages (admin, gedu, gamer)
 
 **SEO static assets:**
 - [ ] `robots.txt` — block crawlers from authenticated routes (`/admin`, `/customer`, `/gamer`, `/gedu`). Use `src/app/robots.ts` for App Router convention.

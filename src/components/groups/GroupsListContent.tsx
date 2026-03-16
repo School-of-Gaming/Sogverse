@@ -69,7 +69,7 @@ export function GroupsListContent({
           </Card>
         ) : error ? (
           <p className="text-sm text-destructive">
-            {error instanceof Error ? error.message : "Failed to load groups"}
+            {error.message}
           </p>
         ) : groups.length === 0 ? (
           <Card>

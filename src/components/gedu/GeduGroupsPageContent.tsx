@@ -1,22 +1,25 @@
 "use client";
 
+import { useMyGroups } from "@/services/groups";
+import { useLoungeRoomId } from "@/services/voice";
+import { useGroupsWithVoice } from "@/hooks/use-groups-page";
 import { GroupsListContent } from "@/components/groups/GroupsListContent";
-import { useGeduGroupsPage } from "@/hooks/use-gedu-groups-page";
 import { ROUTES } from "@/lib/constants";
 
 export function GeduGroupsPageContent() {
-  const { groups, loungeRoomId, isLoading, error } = useGeduGroupsPage();
+  const { groups, isLoading: groupsLoading, error } = useGroupsWithVoice(useMyGroups());
+  const { data: geduLoungeId } = useLoungeRoomId("gedu_only");
 
   return (
     <GroupsListContent
       groups={groups}
-      isLoading={isLoading}
+      isLoading={groupsLoading}
       error={error}
       lounges={[
         {
           name: "Gedu Lounge",
           description: "Connect with other educators anytime",
-          joinHref: loungeRoomId ? ROUTES.gedu.voiceSession(loungeRoomId) : null,
+          joinHref: geduLoungeId ? ROUTES.gedu.voiceSession(geduLoungeId) : null,
         },
       ]}
       heading="Your Groups"

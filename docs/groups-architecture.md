@@ -62,8 +62,7 @@ Role wrappers (src/components/{role}/)
 └── GamerGroupsPageContent / GamerGroupDetailContent
 
 Hooks
-├── src/hooks/use-groups-page.ts      — useGroupsWithVoice(): shared enrichment (session windows, sorting)
-└── src/hooks/use-gedu-groups-page.ts — Gedu-specific: composes useMyGroups() + gedu lounge lookup
+└── src/hooks/use-groups-page.ts      — useGroupsWithVoice(): shared enrichment (session windows, sorting)
 
 Service layer (src/services/groups/)
 ├── groups.service.ts  — GroupsService class (RPC queries + reshaping)

@@ -8,13 +8,13 @@ import { ROUTES } from "@/lib/constants";
 
 export function AdminGroupsPageContent() {
   const { groups, isLoading: groupsLoading, error } = useGroupsWithVoice(useMyGroups());
-  const { data: adminLoungeId, isLoading: adminLoungeLoading } = useLoungeRoomId("admin_only");
-  const { data: geduLoungeId, isLoading: geduLoungeLoading } = useLoungeRoomId("gedu_only");
+  const { data: adminLoungeId } = useLoungeRoomId("admin_only");
+  const { data: geduLoungeId } = useLoungeRoomId("gedu_only");
 
   return (
     <GroupsListContent
       groups={groups}
-      isLoading={groupsLoading || adminLoungeLoading || geduLoungeLoading}
+      isLoading={groupsLoading}
       error={error}
       lounges={[
         {

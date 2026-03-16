@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { GroupsService } from "@/services/groups/groups.service";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types";
+import type { Database, MyGroupWithDetails } from "@/types";
 
-function makeMockClient(rows: Record<string, unknown>[]) {
+function makeMockClient(rows: MyGroupWithDetails[]) {
   return {
     rpc: vi.fn().mockResolvedValue({ data: rows, error: null }),
   } as unknown as SupabaseClient<Database>;
@@ -17,7 +17,7 @@ describe("GroupsService.getMyGroups()", () => {
         product_id: "p1",
         product_name: "Product A",
         product_description: "Test product",
-        product_image_url: null,
+        product_image_url: "https://example.com/default.png",
         product_padlet_url: null,
         product_min_age: 8,
         product_max_age: 14,
@@ -42,7 +42,7 @@ describe("GroupsService.getMyGroups()", () => {
         product_id: "p1",
         product_name: "Product A",
         product_description: "Test product",
-        product_image_url: null,
+        product_image_url: "https://example.com/default.png",
         product_padlet_url: null,
         product_min_age: 8,
         product_max_age: 14,
@@ -128,7 +128,7 @@ describe("GroupsService.getMyGroups()", () => {
         product_id: "p1",
         product_name: "B",
         product_description: "Test product",
-        product_image_url: null,
+        product_image_url: "https://example.com/default.png",
         product_padlet_url: null,
         product_min_age: 8,
         product_max_age: 14,
@@ -153,7 +153,7 @@ describe("GroupsService.getMyGroups()", () => {
         product_id: "p1",
         product_name: "A",
         product_description: "Test product",
-        product_image_url: null,
+        product_image_url: "https://example.com/default.png",
         product_padlet_url: null,
         product_min_age: 8,
         product_max_age: 14,
