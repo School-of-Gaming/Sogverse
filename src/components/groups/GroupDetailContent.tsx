@@ -138,7 +138,7 @@ export function GroupDetailContent({
               <Avatar className="h-8 w-8">
                 <Identicon id={group.geduId} size={32} />
               </Avatar>
-              {group.geduName}&apos;s Group
+              {group.geduName}
             </CardTitle>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
