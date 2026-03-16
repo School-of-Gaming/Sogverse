@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Coins, AlertTriangle, Users, ChevronRight } from "lucide-react";
+import { ArrowLeft, Coins, AlertTriangle, Users } from "lucide-react";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -151,7 +152,7 @@ export default function AdminUserDetailPage() {
                       <Badge className={ROLE_BADGES.gamer.className}>
                         {ROLE_BADGES.gamer.label}
                       </Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      <NavChevron size="sm" />
                     </div>
                   </Link>
                 ))}
@@ -185,7 +186,7 @@ export default function AdminUserDetailPage() {
                       <Badge className={ROLE_BADGES.customer.className}>
                         {ROLE_BADGES.customer.label}
                       </Badge>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      <NavChevron size="sm" />
                     </div>
                   </Link>
                 ))}

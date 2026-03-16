@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, Clock, Radio, Users } from "lucide-react";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { JoinButton } from "@/components/ui/join-button";
@@ -153,6 +154,8 @@ export function GroupCard({
         {voiceIsOpen && (
           <JoinButton href={joinHref} stopPropagation />
         )}
+
+        <NavChevron />
       </CardContent>
     </Card>
   );

@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search, UserPlus, ChevronRight } from "lucide-react";
+import { Search, UserPlus } from "lucide-react";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -215,7 +216,7 @@ function UserRow({ user, linkedGamers }: { user: Profile; linkedGamers?: Profile
           <Badge className={ROLE_BADGES[user.role].className}>
             {ROLE_BADGES[user.role].label}
           </Badge>
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          <NavChevron />
         </div>
       </Link>
 
@@ -245,7 +246,7 @@ function UserRow({ user, linkedGamers }: { user: Profile; linkedGamers?: Profile
                 <Badge className={`${ROLE_BADGES.gamer.className} text-[10px] px-2 py-0`}>
                   {ROLE_BADGES.gamer.label}
                 </Badge>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <NavChevron size="sm" />
               </div>
             </Link>
           ))}

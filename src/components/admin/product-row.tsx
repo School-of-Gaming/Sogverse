@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { formatScheduleLocal } from "@/lib/utils";
 import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
 import type { ProductWithGame } from "@/services/products";
@@ -61,7 +61,7 @@ export function ProductRow({ product, currency, locale }: ProductRowProps) {
           </div>
         </div>
       </div>
-      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+      <NavChevron />
     </div>
   );
 }

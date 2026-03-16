@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Gamepad2, ChevronDown, ChevronRight } from "lucide-react";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -124,7 +125,7 @@ export default function CustomerGamersPage() {
               <section key={gamer.id} className="space-y-4">
                 {/* Gamer header card */}
                 <Link href={`${ROUTES.customer.gamers}/${gamer.id}`} className="block">
-                  <Card className="transition-colors hover:bg-muted/50">
+                  <Card className="group transition-colors hover:bg-muted/50">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
@@ -142,7 +143,7 @@ export default function CustomerGamersPage() {
                           <span className="text-sm text-muted-foreground">
                             Joined {formatRelativeTime(gamer.created_at, locale)}
                           </span>
-                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                          <NavChevron />
                         </div>
                       </div>
                     </CardHeader>
