@@ -132,9 +132,9 @@ export function GroupDetailContent({
       </Link>
 
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
             <Image
               src={group.productImageUrl}
               alt={group.productName}

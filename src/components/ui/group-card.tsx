@@ -119,7 +119,7 @@ export function GroupCard({
       }}
     >
       <CardContent className="flex items-center gap-4 py-4">
-        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
+        <div className="relative h-24 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
           <Image
             src={productImageUrl}
             alt={productName}
