@@ -24,13 +24,14 @@ export function ProductRow({ product, currency, locale }: ProductRowProps) {
   return (
     <div className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
       <div className="flex items-center gap-4">
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
+        <div className="flex h-16 w-16 items-center justify-center">
           <Image
             src={product.image_url}
             alt={product.name}
-            fill
+            width={64}
+            height={64}
             unoptimized
-            className="rounded-lg object-cover"
+            className="h-auto w-auto max-h-full max-w-full rounded-md"
           />
         </div>
         <div>
