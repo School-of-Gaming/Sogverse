@@ -1,6 +1,6 @@
-# Gedu Groups Architecture
+# Groups Architecture
 
-Admin-managed groups that assign a gedu (game educator) to a set of gamers within a product.
+Admin-managed groups that assign a gedu (game educator) to a set of gamers within a product, with role-based viewing for admins, gedus, and gamers.
 
 ## Overview
 
@@ -8,7 +8,11 @@ Each product can have multiple groups. Each group has exactly one gedu and zero 
 
 A gamer can only be enrolled in one group per product (enforced by a trigger-based constraint). A gedu can only lead one group per product (enforced by a `UNIQUE(product_id, gedu_id)` constraint). When all groups are removed from a product, it is automatically hidden.
 
+All three roles (admin, gedu, gamer) view groups through a shared page architecture with role-specific thin wrappers. A single `get_my_groups()` RPC branches by role to return the appropriate data.
+
 ## Component Map
+
+### Admin Group Management (batch editing)
 
 ```
 Pages
@@ -28,16 +32,48 @@ Hooks
 
 API routes (src/app/api/admin/products/)
 └── [id]/groups/route.ts — POST: batch commit (admin-only, delegates to commit_group_changes RPC)
+```
+
+### Groups Viewing (all roles)
+
+```
+Pages
+├── /admin/groups       → AdminGroupsPageContent   → GroupsListContent
+├── /admin/groups/[id]  → AdminGroupDetailContent   → GroupDetailContent
+├── /gedu/groups        → GeduGroupsPageContent     → GroupsListContent
+├── /gedu/groups/[id]   → GeduGroupDetailContent    → GroupDetailContent
+├── /gamer/groups       → GamerGroupsPageContent    → GroupsListContent
+├── /gamer/groups/[id]  → GamerGroupDetailContent   → GroupDetailContent
+└── /{role}/voice/[id]  → VoiceSessionPage (shared, role-agnostic)
+
+Shared components (src/components/groups/)
+├── GroupsListContent   — Lounge cards + group card list with loading/error/empty states
+└── GroupDetailContent  — Group header, voice status, gamer roster (adapts to data availability)
+
+Shared UI (src/components/ui/)
+├── GroupCard           — Clickable card: product name, gedu, gamer count, schedule, voice status
+├── GroupVoiceStatus    — Self-updating countdown/live status text
+├── LoungeCard          — Always-open voice lounge banner card
+└── JoinButton          — Fixed-width join button with loading state
+
+Role wrappers (src/components/{role}/)
+├── AdminGroupsPageContent / AdminGroupDetailContent
+├── GeduGroupsPageContent  / GeduGroupDetailContent
+└── GamerGroupsPageContent / GamerGroupDetailContent
+
+Hooks
+├── src/hooks/use-groups-page.ts      — useGroupsWithVoice(): shared enrichment (session windows, sorting)
+└── src/hooks/use-gedu-groups-page.ts — Gedu-specific: composes useMyGroups() + gedu lounge lookup
 
 Service layer (src/services/groups/)
-├── groups.service.ts  — GroupsService class (RPC query + API fetch for commit)
-├── groups.queries.ts  — React Query hooks (useProductGroups, useCommitGroupChanges)
+├── groups.service.ts  — GroupsService class (RPC queries + reshaping)
+├── groups.queries.ts  — React Query hooks (useProductGroups, useMyGroups)
 └── index.ts           — Barrel exports
 ```
 
 ## Data Flow
 
-### Admin loads a product page
+### Admin loads a product page (batch editing)
 
 1. `GeduGroupsCard` renders with `productId`
 2. `useProductGroups(productId)` calls the `get_product_groups_with_details` RPC (SECURITY DEFINER, admin-only)
@@ -78,6 +114,22 @@ The `commit_group_changes` RPC executes steps in a specific order to satisfy FK 
 5. **Insert enrollments** into destination groups — resolves temp IDs via the map
 6. **Auto-hide check** — if no groups remain, set `is_visible = false` on the product
 
+### Any role views their groups
+
+1. Role wrapper calls `useMyGroups()` → `get_my_groups()` RPC (branches by role server-side)
+2. `GroupsService.getMyGroups()` reshapes flat RPC rows into nested `GeduGroup[]`
+3. `useGroupsWithVoice()` enriches each group with `computeSessionWindow()` → `voiceIsOpen` + `voiceNextSessionStart`
+4. Groups are sorted: live first, then upcoming by soonest session start
+5. A 30-second tick timer re-evaluates session windows so Live badges and Join buttons update in real-time
+6. Role wrapper passes enriched groups + role-specific config (lounges, routes, headings) to shared `GroupsListContent`
+
+### Group detail page
+
+1. Same data source as the list page (shared query, found by `groupId`)
+2. `GroupDetailContent` renders header, voice status, and gamer roster
+3. Roster adapts to data: shows age + gender when available (admin/gedu), names-only when null (gamer — DOB/gender stripped server-side)
+4. Join button links to `/{role}/voice/{roomId}?groupId={groupId}` so the back button returns to the detail page
+
 ## Database Schema
 
 ### `product_groups`
@@ -112,11 +164,18 @@ A gamer can only be enrolled in one group per product. Since this spans two tabl
 
 | Function | Role Gate | Purpose |
 |---|---|---|
-| `get_product_groups_with_details(p_product_id)` | admin | Returns flat rows joining groups, gedus, enrollments, and gamer profiles (date of birth, gender) |
+| `get_product_groups_with_details(p_product_id)` | admin | Returns flat rows joining groups, gedus, enrollments, and gamer profiles for a specific product |
 | `commit_group_changes(p_product_id, ...)` | admin | Atomic batch mutation of groups and enrollments, returns `{ autoHidden }` |
-| `get_gedu_groups()` | gedu | Returns all groups for the calling gedu with product info + enrolled gamers (flat rows, client reshapes) |
+| `get_my_groups()` | admin, gedu, gamer | Returns groups for the calling user based on role (see below) |
 
-Admin RPCs check `get_user_role() = 'admin'` and raise `42501`. The gedu RPC checks `get_user_role() = 'gedu'`.
+**`get_my_groups()` role branching:**
+
+| Role | Filter | Data |
+|---|---|---|
+| Admin | No filter (all groups) | Full gamer details (DOB, gender) |
+| Gedu | `pg.gedu_id = auth.uid()` | Full gamer details (DOB, gender) |
+| Gamer | Enrolled groups only (`group_enrollments WHERE gamer_id = auth.uid()`) | DOB and gender are NULL (privacy) |
+| Customer | Raises `42501` permission error | — |
 
 ### RLS Policies
 
@@ -129,7 +188,7 @@ Admin RPCs check `get_user_role() = 'admin'` and raise `42501`. The gedu RPC che
 |---|---|
 | `00007_groups_and_enrollments.sql` | `product_groups`, `group_enrollments`, `enrollment_charges` tables, `commit_group_changes` RPC (admin-gated), `get_product_groups_with_details` RPC, `check_unique_gamer_per_product` trigger |
 | `00009_rls_and_grants.sql` | All RLS policies and table/function grants for groups |
-| `00012_gedu_groups_rpc.sql` | `get_gedu_groups` RPC (gedu-gated, SECURITY DEFINER) |
+| `00012_gedu_groups_rpc.sql` | `get_my_groups` RPC (multi-role, SECURITY DEFINER) |
 
 ## Client-Side State Management
 
@@ -164,36 +223,19 @@ New groups receive `temp-N` IDs (module-level counter). These are sent to the RP
 | Capability | Admin | Customer | Gamer | Gedu |
 |---|---|---|---|---|
 | View groups (visible products) | Yes | Yes | Yes | Yes |
+| View groups page (own groups) | Yes | - | Yes | Yes |
 | Manage groups (CRUD) | Yes | - | - | - |
 | Manage enrollments | Yes | - | - | - |
 
-## Gedu-Facing View
+## Role-Specific Page Behavior
 
-Gedus access their groups through `/gedu/groups` (list) and `/gedu/groups/[id]` (detail). Voice sessions open in a separate route (`/gedu/voice/[id]`) so the gedu can browse groups in one tab while in a call in another.
-
-### Pages and Components
-
-```
-/gedu/groups       → GeduGroupsPageContent (lounge card + group cards grid)
-/gedu/groups/[id]  → GeduGroupDetailContent (schedule, gamer roster, voice join)
-/gedu/voice/[id]   → VoiceSessionPage (shared, role-agnostic voice room wrapper)
-```
-
-Components live in `src/components/gedu/` (groups-specific) and `src/components/voice/VoiceSessionPage.tsx` (shared).
-
-### Data Flow
-
-1. `useGeduGroupsPage()` composes two parallel queries:
-   - `useGeduGroups()` → `get_gedu_groups()` RPC — returns groups with product info + enrolled gamers
-   - `useAvailableVoiceRooms()` → `get_available_voice_rooms()` RPC — returns voice room status
-2. Client-side join by `group_id` produces `GeduGroupWithVoice[]` — each group enriched with voice room ID and open/upcoming status
-3. Voice status is display-only: badges + links to `/gedu/voice/[roomId]`. No `VoiceRoomProvider` on the groups pages.
-
-### Security Model
-
-- `get_gedu_groups()` is `SECURITY DEFINER`, gated on `get_user_role() = 'gedu'`. Non-gedu roles get `42501`.
-- Voice join authorization is handled by the existing `POST /api/voice/token` endpoint — the groups page only links to the voice route.
-- `VoiceSessionPage` auto-joins on mount via the token endpoint, which independently validates role, membership, and session window.
+| Aspect | Admin | Gedu | Gamer |
+|---|---|---|---|
+| Groups shown | All groups | Assigned groups | Enrolled groups |
+| Lounge cards | Admin Lounge + Gedu Lounge | Gedu Lounge | None |
+| Gamer roster | Full (age, gender) | Full (age, gender) | Names only (DOB/gender stripped) |
+| Voice join | Yes | Yes | Yes |
+| Heading | "All Groups" | "Your Groups" | "My Groups" |
 
 ## Future Improvements
 
@@ -215,10 +257,6 @@ The `POST /api/admin/products/[id]/groups` route destructures the request body w
 
 While the commit mutation is pending, the admin can still add groups, move gamers, etc. On success, `RESET` clears all staged changes — including any made after clicking Commit. Those changes are silently lost (they were never sent to the server). Disable the groups section (Add Group button, drag-and-drop, reassign/delete actions) while `isPending` to prevent this.
 
-### Reuse VoiceSessionPage for admin and gamer voice routes
-
-`src/components/voice/VoiceSessionPage.tsx` is role-agnostic — it takes a `roomId` and `backHref` prop, fetches a token, and renders the spatial voice room. Currently only used by `/gedu/voice/[id]`. To adopt for other roles, create a thin page wrapper (e.g., `src/app/(dashboard)/admin/voice/[id]/page.tsx`) that passes the appropriate `backHref`.
-
 ### Prevent gedu scheduling conflicts
 
 A gedu can currently be assigned to groups across multiple products with no check for time conflicts. If products have scheduled sessions that overlap, a gedu could be double-booked. Add schedule conflict detection when assigning a gedu to a group.
@@ -226,3 +264,7 @@ A gedu can currently be assigned to groups across multiple products with no chec
 ### Add keyboard support for drag-and-drop
 
 Only `PointerSensor` is configured in `GeduGroupsCard`. Keyboard-only users cannot move gamers between groups. Add `KeyboardSensor` from `@dnd-kit/core` alongside the existing sensor for accessibility.
+
+### Customer/parent groups page
+
+Add a groups page for customer role showing groups where their linked gamers are enrolled. Would use the same shared components with a new `get_my_groups` branch for `customer` role.

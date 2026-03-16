@@ -6,20 +6,18 @@ Daily.co-powered spatial voice (and optional video) chat for gedus, admins, and 
 
 Voice rooms are linked 1:1 to product groups — each group gets a dedicated room that opens/closes automatically based on the product's weekly schedule. Two always-open special rooms (Admin Lounge, Gedu Lounge) are seeded in the migration. Access control is enrollment-based: gamers can only see and join rooms for groups they're enrolled in, gedus see rooms for their assigned groups, and admins see everything.
 
-The spatial canvas lets participants drag avatars into zones (breakout rooms, broadcast) for zone-based audio isolation.
+Users access voice sessions from their groups page — clicking "Join" on a group card or lounge card navigates to `/{role}/voice/{roomId}`, which auto-joins the Daily.co room. The spatial canvas lets participants drag avatars into zones (breakout rooms, broadcast) for zone-based audio isolation.
 
 ## Component Map
 
 ```
 Pages
-├── /admin/voice    → VoiceRoomDashboard (all rooms visible)
-├── /gedu/voice/[id] → VoiceSessionPage (accessed from Groups page, not a room list)
-└── /gamer/voice    → VoiceRoomDashboard (enrolled group rooms only)
+├── /{role}/groups      → Groups list (see docs/shared-group-components.md)
+├── /{role}/groups/[id] → Group detail with Join button
+└── /{role}/voice/[id]  → VoiceSessionPage (auto-joins by room ID)
 
-Shared voice components (src/components/voice/)
+Voice components (src/components/voice/)
 ├── VoiceSessionPage    — Standalone voice page: auto-joins by room ID, role-agnostic (backHref pattern)
-├── VoiceRoomDashboard  — Unified dashboard: room list or in-session spatial view
-├── VoiceRoomCard       — Card for each room (always-open, live, or upcoming)
 ├── VoiceRoomProvider   — React context orchestrator (composes internal hooks)
 ├── SpatialVoiceRoom    — In-session layout: screen share + canvas + controls + participants
 ├── SpatialCanvas       — Renders zones + draggable avatars on a 21:9 canvas
@@ -38,16 +36,12 @@ Internal hooks (src/components/voice/hooks/)
 ├── use-screen-share.ts       — Screen sharer detection, start/stop, auto-replace
 └── use-moderator-controls.ts — Mute, lock/unlock, lock state sync, moderator app messages
 
-Global hooks
-├── src/hooks/use-voice-session.ts       — Session logic (room lists, join/leave, auto-leave)
-└── src/hooks/use-voice-room-realtime.ts — Supabase Realtime → query invalidation
-
 API routes (src/app/api/voice/)
 └── token/route.ts  — POST (access control + Daily.co meeting token)
 
 Service layer (src/services/voice/)
 ├── voice.service.ts  — VoiceService class (RPC + session window computation)
-├── voice.queries.ts  — React Query hooks (useAvailableVoiceRooms, useVoiceToken)
+├── voice.queries.ts  — React Query hooks (useAvailableVoiceRooms, useVoiceToken, useLoungeRoomId)
 └── index.ts          — Barrel exports
 
 Utilities
@@ -83,7 +77,7 @@ voice_rooms (
 
 **Realtime:** Table has `REPLICA IDENTITY FULL` so UPDATE/DELETE events are delivered through RLS.
 
-**RPC:** `get_available_voice_rooms()` (SECURITY DEFINER) returns role-filtered rooms with schedule data joined from products. Admins see all rooms, gedus see gedu lounge + own group rooms, gamers see enrolled group rooms only. For gamers, the RPC also returns `enrolled_at` (from `group_enrollments.created_at`) so the client can determine whether a mid-session enrollment should display as "Upcoming" instead of "Live".
+**RPC:** `get_available_voice_rooms()` (SECURITY DEFINER) returns role-filtered rooms with schedule data joined from products. Used by `VoiceSessionPage` to look up room metadata when joining a session. Admins see all rooms, gedus see gedu lounge + own group rooms, gamers see enrolled group rooms only. For gamers, the RPC also returns `enrolled_at` (from `group_enrollments.created_at`) so the client can determine whether a mid-session enrollment should display as "Upcoming" instead of "Live".
 
 ## Schedule-Driven Room Windows
 
@@ -93,7 +87,7 @@ Voice rooms don't have an "open/closed" status column. Instead, each group room 
 
 The `computeSessionWindow()` utility (in `src/lib/voice-schedule.ts`) determines if a room is currently open. It reuses `getNextSessionStart()` from `src/lib/enrollment.ts` and also checks the previous week's occurrence to handle "currently in session" state.
 
-**Client-side:** The service layer maps each room through `computeSessionWindow()` to get `isOpen`, `nextSessionStart`, and `windowClosesAt` for UI display (Live/Upcoming badges, countdown).
+**Client-side:** The groups page enrichment hook (`useGroupsWithVoice`) maps each group through `computeSessionWindow()` to get `isOpen` and `voiceNextSessionStart` for UI display (Live/Upcoming badges, countdown). `VoiceSessionPage` also uses it for auto-leave detection.
 
 **Server-side:** The token endpoint independently computes the session window and rejects with 403 if the room isn't open for the requesting user. This is the security boundary — client-side `isOpen` is display-only.
 
@@ -217,25 +211,22 @@ Lock states are synced via app messages (`moderatorLock`). For late joiners, loc
 
 ## Data Flow
 
-### Viewing rooms
-1. `VoiceRoomDashboard` renders `VoiceRoomDashboardInner` inside `VoiceRoomProvider`
-2. `useVoiceSession()` calls `useAvailableVoiceRooms()` → `get_available_voice_rooms` RPC
-3. Each room is mapped through `computeSessionWindow()` to compute `isOpen` and `nextSessionStart`
-4. Rooms are sorted: always-open first, then live group rooms, then upcoming group rooms
-5. Supabase Realtime on `voice_rooms` + `group_enrollments` invalidates the cache
+### Joining a voice session
 
-### Joining a room
-1. User clicks Join on a `VoiceRoomCard`
-2. `joinRoom()` → `POST /api/voice/token` with `roomId`
-3. Token endpoint validates role, membership, and session window
-4. Lazy-creates Daily.co room if needed
-5. Issues a meeting token with `isOwner` (which also controls `enable_screenshare`) and `exp`
-6. `VoiceRoomProvider.join()` connects to the Daily.co room
+1. User clicks Join on a group card or lounge card on the groups page
+2. Browser navigates to `/{role}/voice/{roomId}` (with optional `?groupId` for back navigation)
+3. `VoiceSessionPage` mounts inside `VoiceRoomProvider`
+4. Auto-join: `useVoiceToken().mutateAsync(roomId)` → `POST /api/voice/token`
+5. Token endpoint validates role, membership, and session window
+6. Lazy-creates Daily.co room if needed
+7. Issues a meeting token with `isOwner` (which also controls `enable_screenshare`) and `exp`
+8. `VoiceRoomProvider.join()` connects to the Daily.co room
+9. `SpatialVoiceRoom` renders the spatial canvas with avatars
 
 ### Auto-leave triggers
-1. **Room disappears** from available list → auto-leave + "session ended" message
-2. **Session window expires** → periodic `computeSessionWindow()` check → graceful leave
-3. **Token expires** → Daily.co hard disconnect (backup if client-side check misses it)
+1. **Session window expires** → periodic `computeSessionWindow()` check in `VoiceSessionPage` → graceful leave + "Session has ended" message
+2. **Token expires** → Daily.co hard disconnect (backup if client-side check misses it)
+3. **User clicks Leave** → `leave()` + navigate to `backHref`
 
 ## Token userName Encoding
 
@@ -255,9 +246,6 @@ Currently lock state is ephemeral — if a locked gamer disconnects and rejoins,
 
 ### Add participant tracking to the database
 Currently participant presence is only tracked in Daily.co's runtime. Persisting join/leave events to a `voice_room_participants` table would enable session history, analytics, and participant count display without joining the call.
-
-### Live countdown for upcoming sessions
-The `NextSession` component computes "Next session in X days/hours" once on render. When a session is minutes away, a live-updating countdown (re-computing every ~30s) would give better feedback that the room is about to open.
 
 ### Volume amplification above 100%
 Currently capped at 100% due to a Chrome limitation with WebRTC MediaStream sources (see `docs/chrome-webrtc-volume-bug.md`). If Chrome fixes [the underlying bug](https://issues.chromium.org/issues/40184923), a GainNode could be re-introduced in the analyser pipeline for amplification — but note that the analyser pipeline is intentionally separate from playback (see "Audio Pipeline" above), so a GainNode-based approach would require re-evaluating the architecture. Alternatively, if Daily.co adds per-subscriber server-side audio processing to their SFU, that would bypass the client-side limitation entirely.
