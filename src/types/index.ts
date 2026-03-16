@@ -97,7 +97,7 @@ type _MyGroupGenerated = Database["public"]["Functions"]["get_my_groups"]["Retur
 export type MyGroupWithDetails = Omit<
   _MyGroupGenerated,
   | "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
-  | "product_padlet_url"
+  | "product_padlet_url" | "last_charge_session_date"
 > & {
   enrollment_id: string | null;
   gamer_id: string | null;
@@ -105,6 +105,7 @@ export type MyGroupWithDetails = Omit<
   gamer_date_of_birth: string | null;
   gamer_gender: string | null;
   product_padlet_url: string | null;
+  last_charge_session_date: string | null;
 };
 
 // get_product_groups_with_details RPC — the generated return type incorrectly

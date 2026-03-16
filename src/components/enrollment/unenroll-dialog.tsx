@@ -13,18 +13,23 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useUnenrollGamer } from "@/services/enrollments";
-import type { CustomerEnrollment } from "@/services/enrollments";
 import { ENROLLMENT_CHARGE_WINDOW_HOURS } from "@/lib/constants/enrollment";
 
 interface UnenrollDialogProps {
-  enrollment: CustomerEnrollment;
+  enrollmentId: string;
+  productName: string;
+  gamerDisplayName: string;
+  tokenCost: number;
   refundEligible: boolean;
   refundDenialReason?: "within_window" | "session_past";
   onClose: () => void;
 }
 
 export function UnenrollDialog({
-  enrollment,
+  enrollmentId,
+  productName,
+  gamerDisplayName,
+  tokenCost,
   refundEligible,
   refundDenialReason,
   onClose,
@@ -45,7 +50,7 @@ export function UnenrollDialog({
   const handleUnenroll = async () => {
     setError(null);
     try {
-      const result = await unenroll.mutateAsync(enrollment.enrollmentId);
+      const result = await unenroll.mutateAsync(enrollmentId);
       setSuccess(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to unenroll");
@@ -63,8 +68,8 @@ export function UnenrollDialog({
                 Unenrolled
               </DialogTitle>
               <DialogDescription>
-                <strong>{enrollment.gamerDisplayName}</strong> has been unenrolled
-                from <strong>{enrollment.productName}</strong>.
+                <strong>{gamerDisplayName}</strong> has been unenrolled
+                from <strong>{productName}</strong>.
               </DialogDescription>
             </DialogHeader>
 
@@ -91,11 +96,11 @@ export function UnenrollDialog({
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Unenroll {enrollment.gamerDisplayName}?</DialogTitle>
+              <DialogTitle>Unenroll {gamerDisplayName}?</DialogTitle>
               <DialogDescription>
                 This will remove{" "}
-                <strong>{enrollment.gamerDisplayName}</strong> from{" "}
-                <strong>{enrollment.productName}</strong>.
+                <strong>{gamerDisplayName}</strong> from{" "}
+                <strong>{productName}</strong>.
               </DialogDescription>
             </DialogHeader>
 
@@ -103,17 +108,17 @@ export function UnenrollDialog({
             <div className="mt-2 space-y-3 rounded-md border border-border p-4 text-sm">
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Product</span>
-                <span className="font-medium">{enrollment.productName}</span>
+                <span className="font-medium">{productName}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Gamer</span>
-                <span className="font-medium">{enrollment.gamerDisplayName}</span>
+                <span className="font-medium">{gamerDisplayName}</span>
               </div>
               <div className="border-t border-border pt-3">
                 {refundEligible ? (
                   <p className="text-success">
                     You will receive a refund of{" "}
-                    <strong>{enrollment.productTokenCost} Sorgs</strong>.
+                    <strong>{tokenCost} Sorgs</strong>.
                   </p>
                 ) : refundDenialReason === "within_window" ? (
                   <p className="flex items-start gap-2 text-warning">

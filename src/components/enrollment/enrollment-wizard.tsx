@@ -19,9 +19,9 @@ import { useMyGamers } from "@/services/gamers";
 import {
   useEnrollmentGroups,
   useEnrollGamer,
-  useMyEnrollments,
   type EnrollmentGroup,
 } from "@/services/enrollments";
+import { useMyGroups } from "@/services/groups";
 import { useTokenBalance } from "@/services/tokens";
 import type { ProductWithGame } from "@/services/products/products.service";
 import { ROUTES } from "@/lib/constants";
@@ -45,14 +45,14 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
     product.id,
   );
   const { data: balance } = useTokenBalance(user.id);
-  const { data: myEnrollments } = useMyEnrollments();
+  const { data: myGroups } = useMyGroups();
   const enrollGamer = useEnrollGamer();
 
   // Gamer IDs already actively enrolled in this product
   const enrolledGamerIds = new Set(
-    myEnrollments
-      ?.filter((e) => e.productId === product.id && e.status === "active")
-      .map((e) => e.gamerId) ?? [],
+    myGroups
+      ?.filter((g) => g.productId === product.id)
+      .flatMap((g) => g.gamers.map((gg) => gg.gamerId)) ?? [],
   );
 
   const [step, setStep] = useState<Step>("select-gamer");

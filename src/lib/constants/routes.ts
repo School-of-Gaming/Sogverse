@@ -28,6 +28,8 @@ export const ROUTES = {
     sorg: "/customer/sorg",
     billing: "/customer/billing",
     gamers: "/customer/gamers",
+    groups: "/customer/groups",
+    group: (groupId: string) => `/customer/groups/${groupId}`,
   },
   gamer: {
     dashboard: "/gamer",

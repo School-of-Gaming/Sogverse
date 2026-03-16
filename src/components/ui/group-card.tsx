@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Calendar, Clock, Radio, Users } from "lucide-react";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { JoinButton } from "@/components/ui/join-button";
+
 import { cn } from "@/lib/utils";
 import { formatCountdown } from "@/lib/enrollment";
 
@@ -69,31 +71,33 @@ export function GroupVoiceStatus({
 
 interface GroupCardProps {
   productName: string;
+  productImageUrl: string;
   geduName: string;
   gamerCount: number;
   schedule: { localDay: string; localTime: string; tzAbbrev: string };
   voiceIsOpen: boolean;
   voiceNextSessionStart: Date;
   locale?: string;
-  /** Where the Join button navigates (e.g. /gedu/voice/[id]). */
-  joinHref: string;
+  /** Called when the Join button is clicked. Callers handle navigation or show a dialog. */
+  onJoinClick?: () => void;
   /** Where clicking the card navigates (e.g. /gedu/groups/[id]). */
   detailHref: string;
 }
 
 /**
  * Shared group card used across all roles (gedu, gamer, parent, admin).
- * Shows product name, gedu name, gamer count, schedule, and voice status.
+ * Shows product image, product name, gedu name, gamer count, schedule, and voice status.
  */
 export function GroupCard({
   productName,
+  productImageUrl,
   geduName,
   gamerCount,
   schedule,
   voiceIsOpen,
   voiceNextSessionStart,
   locale,
-  joinHref,
+  onJoinClick,
   detailHref,
 }: GroupCardProps) {
   const router = useRouter();
@@ -115,6 +119,16 @@ export function GroupCard({
       }}
     >
       <CardContent className="flex items-center gap-4 py-4">
+        <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-muted">
+          <Image
+            src={productImageUrl}
+            alt={productName}
+            fill
+            unoptimized
+            className="object-cover"
+          />
+        </div>
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium truncate">{productName}</p>
@@ -151,8 +165,8 @@ export function GroupCard({
           </div>
         </div>
 
-        {voiceIsOpen && (
-          <JoinButton href={joinHref} stopPropagation />
+        {voiceIsOpen && onJoinClick && (
+          <JoinButton onClick={onJoinClick} stopPropagation />
         )}
 
         <NavChevron />

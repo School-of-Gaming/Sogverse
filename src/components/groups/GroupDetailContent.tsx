@@ -1,27 +1,50 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Radio, Users } from "lucide-react";
+import { ArrowLeft, Coins, Loader2, Radio, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { Button } from "@/components/ui/button";
 import { JoinButton } from "@/components/ui/join-button";
 import { GroupVoiceStatus } from "@/components/ui/group-card";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { computeAge, formatScheduleLocal } from "@/lib/utils";
+import { getRefundEligibility } from "@/lib/enrollment";
 import { useCurrency } from "@/hooks/use-currency";
+import { UnenrollDialog } from "@/components/enrollment/unenroll-dialog";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
-interface GroupDetailContentProps {
+export interface EnrollmentInfo {
+  enrollmentId: string;
+  tokenCost: number;
+  gamerDisplayName: string;
+  lastChargeSessionDate: string | null;
+}
+
+interface GroupDetailContentBase {
   groups: GroupWithVoice[];
   groupId: string;
   isLoading: boolean;
   error: Error | null;
   backHref: string;
-  voiceRoute: (roomId: string) => string;
+  enrollment?: EnrollmentInfo;
 }
+
+interface GroupDetailWithVoiceRoute extends GroupDetailContentBase {
+  voiceRoute: (roomId: string) => string;
+  onJoinClick?: never;
+}
+
+interface GroupDetailWithJoinClick extends GroupDetailContentBase {
+  voiceRoute?: never;
+  onJoinClick: () => void;
+}
+
+type GroupDetailContentProps = GroupDetailWithVoiceRoute | GroupDetailWithJoinClick;
 
 export function GroupDetailContent({
   groups,
@@ -30,8 +53,11 @@ export function GroupDetailContent({
   error,
   backHref,
   voiceRoute,
+  onJoinClick,
+  enrollment,
 }: GroupDetailContentProps) {
   const { locale } = useCurrency();
+  const [showUnenroll, setShowUnenroll] = useState(false);
 
   const group = useMemo(
     () => groups.find((g) => g.groupId === groupId) ?? null,
@@ -42,6 +68,21 @@ export function GroupDetailContent({
     if (!group) return null;
     return formatScheduleLocal(group.dayOfWeek, group.startTime, group.timezone, locale);
   }, [group, locale]);
+
+  const refund = useMemo(() => {
+    if (!group || !enrollment) return null;
+    return getRefundEligibility(
+      {
+        day_of_week: group.dayOfWeek,
+        start_time: group.startTime,
+        timezone: group.timezone,
+        token_cost: enrollment.tokenCost,
+      },
+      undefined,
+      undefined,
+      enrollment.lastChargeSessionDate,
+    );
+  }, [group, enrollment]);
 
   if (isLoading) {
     return (
@@ -92,42 +133,53 @@ export function GroupDetailContent({
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold">{group.productName}</h1>
-            <Badge className="shrink-0">
-              {group.gameName}
-            </Badge>
-            {group.voiceIsOpen && (
-              <Badge className="bg-success/10 text-success text-xs shrink-0">
-                <Radio className="mr-1 h-3 w-3" />
-                Live
-              </Badge>
-            )}
-          </div>
-          <div className="mt-1">
-            <GroupVoiceStatus
-              nextSessionStart={group.voiceNextSessionStart}
-              locale={locale}
+        <div className="flex items-start gap-4">
+          <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
+            <Image
+              src={group.productImageUrl}
+              alt={group.productName}
+              fill
+              unoptimized
+              className="object-cover"
             />
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {schedule && (
-              <>Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}</>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold">{group.productName}</h1>
+              <Badge className="shrink-0">
+                {group.gameName}
+              </Badge>
+              {group.voiceIsOpen && (
+                <Badge className="bg-success/10 text-success text-xs shrink-0">
+                  <Radio className="mr-1 h-3 w-3" />
+                  Live
+                </Badge>
+              )}
+            </div>
+            <div className="mt-1">
+              <GroupVoiceStatus
+                nextSessionStart={group.voiceNextSessionStart}
+                locale={locale}
+              />
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {schedule && (
+                <>Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}</>
+              )}
+              {schedule && group.durationMinutes && " · "}
+              {group.durationMinutes && <>{group.durationMinutes} min</>}
+              {(schedule || group.durationMinutes) && " · "}
+              <>Ages {group.productMinAge}–{group.productMaxAge}</>
+            </p>
+            {group.productPadletUrl && (
+              <PadletLink href={group.productPadletUrl} />
             )}
-            {schedule && group.durationMinutes && " · "}
-            {group.durationMinutes && <>{group.durationMinutes} min</>}
-            {(schedule || group.durationMinutes) && " · "}
-            <>Ages {group.productMinAge}–{group.productMaxAge}</>
-          </p>
-          {group.productPadletUrl && (
-            <PadletLink href={group.productPadletUrl} />
-          )}
+          </div>
         </div>
-        <JoinButton
-          href={`${voiceRoute(group.voiceRoomId)}?groupId=${group.groupId}`}
-          disabled={!group.voiceIsOpen}
-        />
+        {onJoinClick
+          ? <JoinButton onClick={onJoinClick} disabled={!group.voiceIsOpen} />
+          : <JoinButton href={`${voiceRoute!(group.voiceRoomId)}?groupId=${group.groupId}`} disabled={!group.voiceIsOpen} />
+        }
       </div>
 
       {/* Gamers Roster */}
@@ -178,6 +230,37 @@ export function GroupDetailContent({
           )}
         </CardContent>
       </Card>
+
+      {/* Enrollment info (customer only) */}
+      {enrollment && (
+        <Card>
+          <CardContent className="space-y-4 py-4">
+            <div className="flex items-center gap-2 text-sm">
+              <Coins className="h-4 w-4 text-muted-foreground" />
+              <span>{enrollment.tokenCost} Sorgs/week</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowUnenroll(true)}
+            >
+              Unenroll {enrollment.gamerDisplayName}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {showUnenroll && enrollment && refund && (
+        <UnenrollDialog
+          enrollmentId={enrollment.enrollmentId}
+          productName={group.productName}
+          gamerDisplayName={enrollment.gamerDisplayName}
+          tokenCost={enrollment.tokenCost}
+          refundEligible={refund.eligible}
+          refundDenialReason={refund.reason}
+          onClose={() => setShowUnenroll(false)}
+        />
+      )}
     </div>
   );
 }

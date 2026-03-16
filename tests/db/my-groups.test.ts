@@ -18,6 +18,7 @@ describe("get_my_groups RPC", () => {
   let geduClient: SupabaseClient<Database>;
   let gamerClient: SupabaseClient<Database>;
   let customerClient: SupabaseClient<Database>;
+  let customer2Client: SupabaseClient<Database>;
 
   beforeAll(async () => {
     admin = createAdminTestClient();
@@ -38,6 +39,10 @@ describe("get_my_groups RPC", () => {
     customerClient = await createAuthenticatedClient(
       TEST_CREDENTIALS.CUSTOMER.email,
       TEST_CREDENTIALS.CUSTOMER.password,
+    );
+    customer2Client = await createAuthenticatedClient(
+      TEST_CREDENTIALS.CUSTOMER_2.email,
+      TEST_CREDENTIALS.CUSTOMER_2.password,
     );
 
     // Create a second group assigned to admin (not the test gedu) for isolation tests.
@@ -86,6 +91,34 @@ describe("get_my_groups RPC", () => {
       expect(seededRow).toBeDefined();
     });
 
+    it("customer sees groups where their gamers are enrolled", async () => {
+      const { data, error } = await customerClient.rpc("get_my_groups");
+
+      expect(error).toBeNull();
+      expect(data).not.toBeNull();
+      expect(data!.length).toBeGreaterThanOrEqual(1);
+
+      const seededRow = data!.find((r) => r.group_id === TEST_IDS.GROUP);
+      expect(seededRow).toBeDefined();
+    });
+
+    it("customer does not see groups where other customers' gamers are enrolled", async () => {
+      const { data, error } = await customer2Client.rpc("get_my_groups");
+
+      expect(error).toBeNull();
+      // Customer 2 has no enrollments — should see no groups
+      expect(data).toEqual([]);
+    });
+
+    it("customer does not see groups with no enrollment from their gamers", async () => {
+      const { data, error } = await customerClient.rpc("get_my_groups");
+
+      expect(error).toBeNull();
+      // OTHER_GROUP_ID has no enrollments from this customer's gamers
+      const otherGroup = data!.find((r) => r.group_id === OTHER_GROUP_ID);
+      expect(otherGroup).toBeUndefined();
+    });
+
     it("gedu does not see groups assigned to other users", async () => {
       const { data, error } = await geduClient.rpc("get_my_groups");
 
@@ -109,14 +142,9 @@ describe("get_my_groups RPC", () => {
       expect(data!.find((r) => r.group_id === TEST_IDS.GROUP)).toBeDefined();
       expect(data!.find((r) => r.group_id === OTHER_GROUP_ID)).toBeDefined();
     });
-
-    it("customer gets a permission error", async () => {
-      const { error } = await customerClient.rpc("get_my_groups");
-      expect(error).not.toBeNull();
-    });
   });
 
-  // --- Privacy: data minimization for gamers ---
+  // --- Privacy: data minimization ---
 
   describe("privacy (gamer data minimization)", () => {
     it("gamer: gamer_date_of_birth is NULL for all rows", async () => {
@@ -164,6 +192,17 @@ describe("get_my_groups RPC", () => {
       expect(gamerRow!.gamer_date_of_birth).not.toBeNull();
       expect(gamerRow!.gamer_gender).not.toBeNull();
     });
+
+    it("customer: DOB/gender returned for own gamers", async () => {
+      const { data } = await customerClient.rpc("get_my_groups");
+      expect(data).not.toBeNull();
+      const ownGamerRow = data!.find(
+        (r) => r.group_id === TEST_IDS.GROUP && r.gamer_id === TEST_IDS.GAMER,
+      );
+      expect(ownGamerRow).toBeDefined();
+      expect(ownGamerRow!.gamer_date_of_birth).not.toBeNull();
+      expect(ownGamerRow!.gamer_gender).not.toBeNull();
+    });
   });
 
   // --- Data integrity ---
@@ -196,6 +235,31 @@ describe("get_my_groups RPC", () => {
       const seededRow = data!.find((r) => r.group_id === TEST_IDS.GROUP);
       expect(seededRow).toBeDefined();
       expect(seededRow!.voice_room_id).toBeDefined();
+    });
+
+    it("returns product_token_cost for all roles", async () => {
+      // Admin
+      const { data: adminData } = await adminClient.rpc("get_my_groups");
+      const adminRow = adminData!.find((r) => r.group_id === TEST_IDS.GROUP);
+      expect(adminRow).toBeDefined();
+      expect(adminRow!.product_token_cost).toBe(SEED.PRODUCT_TOKEN_COST);
+
+      // Gedu
+      const { data: geduData } = await geduClient.rpc("get_my_groups");
+      const geduRow = geduData!.find((r) => r.group_id === TEST_IDS.GROUP);
+      expect(geduRow!.product_token_cost).toBe(SEED.PRODUCT_TOKEN_COST);
+
+      // Customer
+      const { data: customerData } = await customerClient.rpc("get_my_groups");
+      const customerRow = customerData!.find((r) => r.group_id === TEST_IDS.GROUP);
+      expect(customerRow!.product_token_cost).toBe(SEED.PRODUCT_TOKEN_COST);
+    });
+
+    it("customer: voice_room_id is returned", async () => {
+      const { data } = await customerClient.rpc("get_my_groups");
+      const row = data!.find((r) => r.group_id === TEST_IDS.GROUP);
+      expect(row).toBeDefined();
+      expect(row!.voice_room_id).toBeDefined();
     });
 
     it("groups with no enrollments still appear (gamer fields are null)", async () => {

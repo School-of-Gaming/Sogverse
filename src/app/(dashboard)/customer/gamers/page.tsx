@@ -2,80 +2,48 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Gamepad2, ChevronDown, ChevronRight } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { GroupCard } from "@/components/ui/group-card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { GamerCard } from "@/components/customer/gamer-card";
 import { useMyGamers } from "@/services/gamers";
-import { useMyEnrollments } from "@/services/enrollments";
-import { EnrollmentCard } from "@/components/enrollment/enrollment-card";
-import { formatRelativeTime } from "@/lib/utils";
+import { useMyGroups } from "@/services/groups";
+import { useGroupsWithVoice } from "@/hooks/use-groups-page";
+import { formatRelativeTime, formatScheduleLocal } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
 import { ROUTES } from "@/lib/constants";
-import type { CustomerEnrollment } from "@/services/enrollments";
-
-interface GamerEnrollments {
-  active: CustomerEnrollment[];
-  inactive: CustomerEnrollment[];
-}
-
-function GamerInactiveEnrollments({ enrollments }: { enrollments: CustomerEnrollment[] }) {
-  const [showInactive, setShowInactive] = useState(false);
-
-  if (enrollments.length === 0) return null;
-
-  return (
-    <div>
-      <button
-        onClick={() => setShowInactive(!showInactive)}
-        className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        {showInactive ? (
-          <ChevronDown className="h-4 w-4" />
-        ) : (
-          <ChevronRight className="h-4 w-4" />
-        )}
-        Past Enrollments ({enrollments.length})
-      </button>
-
-      {showInactive && (
-        <div className="mt-3 space-y-3">
-          {enrollments.map((enrollment) => (
-            <EnrollmentCard
-              key={enrollment.enrollmentId}
-              enrollment={enrollment}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function CustomerGamersPage() {
   const { data: gamers, isLoading: gamersLoading } = useMyGamers();
-  const { data: enrollments, isLoading: enrollmentsLoading } = useMyEnrollments();
+  const groupsQuery = useMyGroups();
+  const { groups, isLoading: groupsLoading } = useGroupsWithVoice(groupsQuery);
   const { locale } = useCurrency();
+  const [showJoinAlert, setShowJoinAlert] = useState(false);
 
-  const isLoading = gamersLoading || enrollmentsLoading;
+  const isLoading = gamersLoading || groupsLoading;
 
-  const enrollmentsByGamer = useMemo(() => {
-    if (!enrollments) return new Map<string, GamerEnrollments>();
+  // Build a map of gamerId → groups that gamer is enrolled in
+  const groupsByGamer = useMemo(() => {
+    const map = new Map<string, typeof groups>();
+    if (!gamers) return map;
 
-    const map = new Map<string, GamerEnrollments>();
-    for (const enrollment of enrollments) {
-      if (!map.has(enrollment.gamerId)) {
-        map.set(enrollment.gamerId, { active: [], inactive: [] });
-      }
-      const group = map.get(enrollment.gamerId)!;
-      if (enrollment.status === "active") {
-        group.active.push(enrollment);
-      } else {
-        group.inactive.push(enrollment);
-      }
+    for (const gamer of gamers) {
+      const gamerGroups = groups.filter((g) =>
+        g.gamers.some((gg) => gg.gamerId === gamer.id),
+      );
+      map.set(gamer.id, gamerGroups);
     }
     return map;
-  }, [enrollments]);
+  }, [gamers, groups]);
 
   return (
     <div className="space-y-6">
@@ -115,9 +83,7 @@ export default function CustomerGamersPage() {
       ) : gamers && gamers.length > 0 ? (
         <div className="space-y-8">
           {gamers.map((gamer) => {
-            const gamerEnrollments = enrollmentsByGamer.get(gamer.id);
-            const activeEnrollments = gamerEnrollments?.active ?? [];
-            const inactiveEnrollments = gamerEnrollments?.inactive ?? [];
+            const gamerGroups = groupsByGamer.get(gamer.id) ?? [];
 
             return (
               <section key={gamer.id} className="space-y-4">
@@ -131,13 +97,15 @@ export default function CustomerGamersPage() {
                   />
                 </Link>
 
-                {/* Active enrollments */}
-                {activeEnrollments.length > 0 ? (
+                {/* Group cards (sorted live-first by useGroupsWithVoice) */}
+                {gamerGroups.length > 0 ? (
                   <div className="space-y-3 pl-4">
-                    {activeEnrollments.map((enrollment) => (
-                      <EnrollmentCard
-                        key={enrollment.enrollmentId}
-                        enrollment={enrollment}
+                    {gamerGroups.map((group) => (
+                      <GroupCardForCustomer
+                        key={group.groupId}
+                        group={group}
+                        locale={locale}
+                        onJoinClick={() => setShowJoinAlert(true)}
                       />
                     ))}
                   </div>
@@ -156,13 +124,6 @@ export default function CustomerGamersPage() {
                       </p>
                     </CardContent>
                   </Card>
-                )}
-
-                {/* Inactive enrollments (collapsible) */}
-                {inactiveEnrollments.length > 0 && (
-                  <div className="pl-4">
-                    <GamerInactiveEnrollments enrollments={inactiveEnrollments} />
-                  </div>
                 )}
               </section>
             );
@@ -184,6 +145,51 @@ export default function CustomerGamersPage() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={showJoinAlert} onOpenChange={setShowJoinAlert}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Voice Chat Coming Soon</DialogTitle>
+            <DialogDescription>
+              Parent voice chat access is not yet available. Your gamer can join
+              the session from their own account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowJoinAlert(false)}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+  );
+}
+
+function GroupCardForCustomer({
+  group,
+  locale,
+  onJoinClick,
+}: {
+  group: import("@/hooks/use-groups-page").GroupWithVoice;
+  locale: string;
+  onJoinClick: () => void;
+}) {
+  const schedule = useMemo(
+    () => formatScheduleLocal(group.dayOfWeek, group.startTime, group.timezone, locale),
+    [group.dayOfWeek, group.startTime, group.timezone, locale],
+  );
+
+  return (
+    <GroupCard
+      productName={group.productName}
+      productImageUrl={group.productImageUrl}
+      geduName={group.geduName}
+      gamerCount={group.gamers.length}
+      schedule={schedule}
+      voiceIsOpen={group.voiceIsOpen}
+      voiceNextSessionStart={group.voiceNextSessionStart}
+      locale={locale}
+      onJoinClick={onJoinClick}
+      detailHref={ROUTES.customer.group(group.groupId)}
+    />
   );
 }
