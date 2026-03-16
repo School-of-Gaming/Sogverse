@@ -234,7 +234,7 @@ export function GroupDetailContent({
       {/* Enrollment info (customer only) */}
       {enrollment && (
         <Card>
-          <CardContent className="space-y-4 py-4">
+          <CardContent className="flex items-center justify-between py-4">
             <div className="flex items-center gap-2 text-sm">
               <Coins className="h-4 w-4 text-muted-foreground" />
               <span>{enrollment.tokenCost} Sorgs/week</span>
