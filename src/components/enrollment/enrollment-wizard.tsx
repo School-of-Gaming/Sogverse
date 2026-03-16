@@ -428,12 +428,23 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                 New balance: {enrollResult.newBalance} Sorgs
               </p>
             )}
+            <div className="mt-4 rounded-md border border-info/30 bg-info/10 p-3 text-left text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">
+                How to join a session
+              </p>
+              <p className="mt-1">
+                When a session starts, a green &quot;Live&quot; badge will
+                appear on the group card in{" "}
+                <strong>{selectedGamerName}&apos;s</strong> dashboard. They can
+                click &quot;Join&quot; to connect.
+              </p>
+            </div>
             <div className="mt-6 flex gap-3">
-              <Link href={ROUTES.customer.gamers}>
-                <Button variant="outline">View My Gamers</Button>
-              </Link>
               <Link href={ROUTES.products}>
-                <Button>Browse Products</Button>
+                <Button variant="outline">Browse Products</Button>
+              </Link>
+              <Link href={ROUTES.customer.gamers}>
+                <Button>View My Gamers</Button>
               </Link>
             </div>
           </div>
