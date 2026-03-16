@@ -3,11 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Gamepad2, ChevronDown, ChevronRight } from "lucide-react";
-import { NavChevron } from "@/components/ui/nav-chevron";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
-import { Identicon } from "@/components/ui/identicon";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { GamerCard } from "@/components/customer/gamer-card";
 import { useMyGamers } from "@/services/gamers";
 import { useMyEnrollments } from "@/services/enrollments";
 import { EnrollmentCard } from "@/components/enrollment/enrollment-card";
@@ -125,29 +123,12 @@ export default function CustomerGamersPage() {
               <section key={gamer.id} className="space-y-4">
                 {/* Gamer header card */}
                 <Link href={`${ROUTES.customer.gamers}/${gamer.id}`} className="block">
-                  <Card className="group transition-colors hover:bg-muted/50">
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <Avatar className="h-12 w-12">
-                            <Identicon id={gamer.id} size={48} />
-                          </Avatar>
-                          <div>
-                            <CardTitle className="text-lg">
-                              {gamer.display_name}
-                            </CardTitle>
-                            <CardDescription>@{gamer.username}</CardDescription>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            Joined {formatRelativeTime(gamer.created_at, locale)}
-                          </span>
-                          <NavChevron />
-                        </div>
-                      </div>
-                    </CardHeader>
-                  </Card>
+                  <GamerCard
+                    id={gamer.id}
+                    displayName={gamer.display_name}
+                    username={gamer.username}
+                    subtitle={`Joined ${formatRelativeTime(gamer.created_at, locale)}`}
+                  />
                 </Link>
 
                 {/* Active enrollments */}

@@ -1,10 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Profile, ParentGamer, CreateGamerInput, GamerProfile, Database } from "@/types";
+import type { Profile, GamerProfileRow, ParentGamer, CreateGamerInput, GamerProfile, Database } from "@/types";
 
 export class GamerService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
-  async getLinkedGamers(parentId: string): Promise<Profile[]> {
+  async getLinkedGamers(parentId: string): Promise<GamerProfileRow[]> {
     const { data, error } = await this.supabase
       .from("parent_gamer")
       .select(`
@@ -13,7 +13,7 @@ export class GamerService {
       .eq("parent_id", parentId);
 
     if (error) throw error;
-    return data.map((row: { gamer: unknown }) => row.gamer as Profile);
+    return data.map((row: { gamer: unknown }) => row.gamer as GamerProfileRow);
   }
 
   async getLinkedParents(gamerId: string): Promise<Profile[]> {
@@ -28,10 +28,10 @@ export class GamerService {
     return data.map((row: { parent: unknown }) => row.parent as Profile);
   }
 
-  async getMyGamers(): Promise<Profile[]> {
+  async getMyGamers(): Promise<GamerProfileRow[]> {
     const { data, error } = await this.supabase.rpc("get_my_gamers");
     if (error) throw error;
-    return data;
+    return data as GamerProfileRow[];
   }
 
   async getMyParents(): Promise<Profile[]> {

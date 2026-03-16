@@ -24,6 +24,9 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 
+/** Profile narrowed for gamer context — username is always set */
+export type GamerProfileRow = Profile & { username: string };
+
 // customer_profiles
 export type CustomerProfile = Database["public"]["Tables"]["customer_profiles"]["Row"];
 export type CustomerProfileUpdate = Database["public"]["Tables"]["customer_profiles"]["Update"];

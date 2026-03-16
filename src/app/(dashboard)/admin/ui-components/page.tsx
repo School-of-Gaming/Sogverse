@@ -6,12 +6,10 @@ import {
   Pencil,
   Trash,
   Search,
-  Settings,
   Users,
   Package,
   TrendingUp,
   DollarSign,
-  Gamepad2,
   Check,
   AlertCircle,
   AlertTriangle,
@@ -46,6 +44,8 @@ import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow } from "@/components/voice/ParticipantRow";
 import { TokenBalanceCard } from "@/components/customer";
 import { ProductRow } from "@/components/admin/product-row";
+import { UserRow } from "@/components/admin/user-row";
+import { GamerCard } from "@/components/customer/gamer-card";
 import { LoungeCard } from "@/components/ui/lounge-card";
 import { GroupCard } from "@/components/ui/group-card";
 import { formatScheduleLocal } from "@/lib/utils";
@@ -963,52 +963,43 @@ export default function AdminUIComponentsPage() {
           <ProductRowDemo />
         </SubSection>
 
-        {/* -- Hoverable Card (customer gamers) -- */}
-        <SubSection title="Hoverable Card (customer/gamers)">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              { name: "MyrskySusi", id: "8e86d931-500c-49ed-889d-c2cd10879a28", username: "myrskysusi" },
-              { name: "CrimsonArrow", id: "5aec0f5a-5398-46d7-a150-3554cf701beb", username: "crimsonarrow" },
-            ].map((gamer) => (
-              <Card
-                key={gamer.id}
-                className="group transition-colors hover:bg-accent hover:text-accent-foreground"
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
-                        <Identicon id={gamer.id} size={48} />
-                      </Avatar>
-                      <div>
-                        <CardTitle className="text-lg">
-                          {gamer.name}
-                        </CardTitle>
-                        <CardDescription className="group-hover:text-accent-foreground/70">
-                          @{gamer.username}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <Gamepad2 className="h-5 w-5 text-muted-foreground group-hover:text-accent-foreground/70" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground group-hover:text-accent-foreground/70">
-                      Joined 3 days ago
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="group-hover:bg-secondary group-hover:text-secondary-foreground hover:!bg-secondary/80 hover:!text-secondary-foreground"
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      Manage
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+        {/* -- Gamer Card (customer/gamers) -- */}
+        <SubSection title="Gamer Card (customer/gamers)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Card shown to customers on their gamers list. Wrap in a Link for navigation. Used in customer/gamers.
+          </p>
+          <div className="space-y-4">
+            <GamerCard
+              id="8e86d931-500c-49ed-889d-c2cd10879a28"
+              displayName="MyrskySusi"
+              username="myrskysusi"
+              subtitle="Joined 3 days ago"
+            />
+            <GamerCard
+              id="5aec0f5a-5398-46d7-a150-3554cf701beb"
+              displayName="CrimsonArrow"
+              username="crimsonarrow"
+              subtitle="Joined 2 weeks ago"
+            />
+          </div>
+        </SubSection>
+
+        {/* -- User Row (admin/users) -- */}
+        <SubSection title="User Row (admin/users)">
+          <p className="text-sm text-muted-foreground mb-3">
+            Row showing a user with role badge, optional nested gamers. Used in admin/users.
+          </p>
+          <div className="space-y-4">
+            <UserRow
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000001", display_name: "Jane Parent", username: "janeparent", email: "jane@example.com", role: "customer" }}
+              linkedGamers={[
+                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", display_name: "MyrskySusi", username: "myrskysusi", email: null, role: "gamer" },
+                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", display_name: "CrimsonArrow", username: "crimsonarrow", email: null, role: "gamer" },
+              ]}
+            />
+            <UserRow
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000002", display_name: "Sam Gedu", username: "samgedu", email: "sam@example.com", role: "gedu" }}
+            />
           </div>
         </SubSection>
 

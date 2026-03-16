@@ -1,0 +1,38 @@
+import { NavChevron } from "@/components/ui/nav-chevron";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
+
+interface GamerCardProps {
+  id: string;
+  displayName: string;
+  username: string;
+  /** Pre-formatted "Joined X ago" text, or any trailing label */
+  subtitle?: string;
+}
+
+export function GamerCard({ id, displayName, username, subtitle }: GamerCardProps) {
+  return (
+    <Card className="group transition-colors hover:bg-muted/50">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-12 w-12">
+              <Identicon id={id} size={48} />
+            </Avatar>
+            <div>
+              <CardTitle className="text-lg">{displayName}</CardTitle>
+              <CardDescription>@{username}</CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {subtitle && (
+              <span className="text-sm text-muted-foreground">{subtitle}</span>
+            )}
+            <NavChevron />
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  );
+}
