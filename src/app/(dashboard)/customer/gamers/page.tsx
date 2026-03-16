@@ -24,8 +24,7 @@ import { ROUTES } from "@/lib/constants";
 
 export default function CustomerGamersPage() {
   const { data: gamers, isLoading: gamersLoading, error: gamersError } = useMyGamers();
-  const groupsQuery = useMyGroups();
-  const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(groupsQuery);
+  const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(useMyGroups());
   const { locale } = useCurrency();
   const [showJoinAlert, setShowJoinAlert] = useState(false);
 

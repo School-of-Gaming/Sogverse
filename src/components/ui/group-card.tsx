@@ -35,7 +35,7 @@ export function GroupVoiceStatus({
   nextSessionStart,
   locale,
 }: GroupVoiceStatusProps) {
-  const [now, setNow] = useState(Date.now);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
