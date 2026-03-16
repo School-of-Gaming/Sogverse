@@ -134,10 +134,18 @@ export function GroupDetailContent({
       {/* Gamers Roster */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Users className="h-4 w-4" />
-            Gamers ({group.gamers.length})
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Avatar className="h-8 w-8">
+                <Identicon id={group.geduId} size={32} />
+              </Avatar>
+              {group.geduName}&apos;s Group
+            </CardTitle>
+            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Users className="h-4 w-4" />
+              {group.gamers.length} gamer{group.gamers.length !== 1 && "s"}
+            </span>
+          </div>
         </CardHeader>
         <CardContent>
           {group.gamers.length === 0 ? (

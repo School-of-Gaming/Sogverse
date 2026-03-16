@@ -678,6 +678,7 @@ export type Database = {
           gamer_gender: string
           gamer_id: string
           gedu_display_name: string
+          gedu_id: string
           group_id: string
           product_description: string
           product_id: string

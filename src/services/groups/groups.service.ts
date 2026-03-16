@@ -40,6 +40,7 @@ export interface GeduGroup {
   productMaxAge: number;
   gameId: string;
   gameName: string;
+  geduId: string;
   geduName: string;
   dayOfWeek: number;
   startTime: string;
@@ -70,6 +71,7 @@ function reshapeGroupRows(
     product_max_age: number;
     game_id: string;
     game_name: string;
+    gedu_id: string;
     gedu_display_name: string;
     day_of_week: number;
     start_time: string;
@@ -99,6 +101,7 @@ function reshapeGroupRows(
         productMaxAge: row.product_max_age,
         gameId: row.game_id,
         gameName: row.game_name,
+        geduId: row.gedu_id,
         geduName: row.gedu_display_name,
         dayOfWeek: row.day_of_week,
         startTime: row.start_time,
