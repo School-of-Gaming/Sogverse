@@ -39,6 +39,6 @@ export const ROUTES = {
     dashboard: "/gedu",
     groups: "/gedu/groups",
     group: (groupId: string) => `/gedu/groups/${groupId}`,
-    voice: (roomId: string) => `/gedu/voice/${roomId}`,
+    voiceSession: (roomId: string) => `/gedu/voice/${roomId}`,
   },
 } as const;

@@ -18,7 +18,7 @@ export function GeduGroupDetailContent({ groupId }: GeduGroupDetailContentProps)
       isLoading={isLoading}
       error={error}
       backHref={ROUTES.gedu.groups}
-      voiceRoute={ROUTES.gedu.voice}
+      voiceRoute={ROUTES.gedu.voiceSession}
     />
   );
 }

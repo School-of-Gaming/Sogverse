@@ -91,16 +91,20 @@ export type EnrollmentCharge = Database["public"]["Tables"]["enrollment_charges"
 // get_my_groups RPC — the generated type marks nullable LEFT JOIN fields as
 // non-nullable. Override to reflect that groups with no enrollments return null
 // for gamer-related columns (and gamer branch always returns null for DOB/gender).
+// Also overrides product_padlet_url which is nullable in the products table but
+// marked non-null by the type generator.
 type _MyGroupGenerated = Database["public"]["Functions"]["get_my_groups"]["Returns"][number];
 export type MyGroupWithDetails = Omit<
   _MyGroupGenerated,
-  "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
+  | "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
+  | "product_padlet_url"
 > & {
   enrollment_id: string | null;
   gamer_id: string | null;
   gamer_display_name: string | null;
   gamer_date_of_birth: string | null;
   gamer_gender: string | null;
+  product_padlet_url: string | null;
 };
 
 // get_product_groups_with_details RPC — the generated return type incorrectly

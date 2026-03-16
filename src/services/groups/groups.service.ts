@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types";
+import type { Database, MyGroupWithDetails } from "@/types";
 
 /** Enrolled gamer fields from the get_product_groups_with_details RPC (admin). */
 export interface GroupGamer {
@@ -34,7 +34,7 @@ export interface GeduGroup {
   productId: string;
   productName: string;
   productDescription: string;
-  productImageUrl: string | null;
+  productImageUrl: string;
   productPadletUrl: string | null;
   productMinAge: number;
   productMaxAge: number;
@@ -59,33 +59,7 @@ export interface BatchGroupChanges {
 }
 
 /** Reshape flat RPC rows (one per gamer per group) into nested GeduGroup[]. */
-function reshapeGroupRows(
-  data: Array<{
-    group_id: string;
-    product_id: string;
-    product_name: string;
-    product_description: string;
-    product_image_url: string | null;
-    product_padlet_url: string | null;
-    product_min_age: number;
-    product_max_age: number;
-    game_id: string;
-    game_name: string;
-    gedu_id: string;
-    gedu_display_name: string;
-    day_of_week: number;
-    start_time: string;
-    timezone: string;
-    duration_minutes: number;
-    display_order: number;
-    voice_room_id: string;
-    gamer_id: string | null;
-    gamer_display_name: string | null;
-    gamer_date_of_birth: string | null;
-    gamer_gender: string | null;
-    enrollment_id: string | null;
-  }>,
-): GeduGroup[] {
+function reshapeGroupRows(data: MyGroupWithDetails[]): GeduGroup[] {
   const groupMap = new Map<string, GeduGroup>();
 
   for (const row of data) {
@@ -179,7 +153,7 @@ export class GroupsService {
 
     if (error) throw error;
 
-    return reshapeGroupRows(data as Parameters<typeof reshapeGroupRows>[0]);
+    return reshapeGroupRows(data as MyGroupWithDetails[]);
   }
 
 }

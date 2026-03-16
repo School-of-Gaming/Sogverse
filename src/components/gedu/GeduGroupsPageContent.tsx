@@ -16,13 +16,13 @@ export function GeduGroupsPageContent() {
         {
           name: "Gedu Lounge",
           description: "Connect with other educators anytime",
-          joinHref: loungeRoomId ? ROUTES.gedu.voice(loungeRoomId) : null,
+          joinHref: loungeRoomId ? ROUTES.gedu.voiceSession(loungeRoomId) : null,
         },
       ]}
       heading="Your Groups"
       subheading="Your assigned groups, students, and voice sessions."
       emptyText="Groups will appear here when an admin assigns you to a product."
-      voiceRoute={ROUTES.gedu.voice}
+      voiceRoute={ROUTES.gedu.voiceSession}
       detailRoute={ROUTES.gedu.group}
     />
   );

@@ -265,6 +265,10 @@ A gedu can currently be assigned to groups across multiple products with no chec
 
 Only `PointerSensor` is configured in `GeduGroupsCard`. Keyboard-only users cannot move gamers between groups. Add `KeyboardSensor` from `@dnd-kit/core` alongside the existing sensor for accessibility.
 
+### Reduce SQL duplication in `get_my_groups()`
+
+The three role branches (admin, gedu, gamer) share nearly identical `SELECT`/`FROM`/`JOIN` clauses (~90 lines duplicated). If a column is added or a JOIN changes, all three branches must be updated in sync. Consider extracting the common query into a CTE or view — but only once the branches have stabilized, since admin and gedu may diverge (e.g., admin-only columns or gedu-only JOINs) and premature abstraction would make that harder.
+
 ### Customer/parent groups page
 
 Add a groups page for customer role showing groups where their linked gamers are enrolled. Would use the same shared components with a new `get_my_groups` branch for `customer` role.
