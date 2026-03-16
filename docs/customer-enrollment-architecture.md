@@ -49,7 +49,7 @@ Service layer (src/services/groups/)
 
 Utilities
 ├── src/lib/utils.ts                   — wallClockToUtc() (shared timezone conversion)
-├── src/lib/enrollment.ts              — getNextSessionStart(), isWithinChargeWindow(), getRefundEligibility()
+├── src/lib/enrollment.ts              — getNextSessionStart(schedule, opts?), isWithinChargeWindow(nextSession, opts?), getRefundEligibility(opts)
 └── src/lib/constants/enrollment.ts    — ENROLLMENT_CHARGE_WINDOW_HOURS = 24
 
 Database functions (SQL)
@@ -80,7 +80,7 @@ Database functions (SQL)
 1. Customer opens `/customer/gamers` → `useMyGroups()` loads groups, `GroupCard` renders per gamer
 2. Customer clicks a group card → navigates to `/customer/groups/[id]`
 3. `GroupDetailContent` shows roster, schedule, enrollment info card with "N Sorgs/week" and "Unenroll" button
-4. Customer clicks "Unenroll" → `UnenrollDialog` opens with refund confirmation
+4. Customer clicks "Unenroll" → `getRefundEligibility()` runs with fresh `new Date()` → `UnenrollDialog` opens with refund confirmation
 5. Customer confirms → `useUnenrollGamer()` → `DELETE /api/enrollments/[id]`
 6. API route queries the latest `enrollment_charges` row's `session_date` for this enrollment
 7. API route reconstructs the session timestamp via `wallClockToUtc(session_date + start_time, timezone)` and verifies `now < sessionTime` (session hasn't started)

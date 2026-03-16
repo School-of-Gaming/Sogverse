@@ -333,10 +333,11 @@ describe("DELETE /api/enrollments/[id]", () => {
     expect(data.refundAmount).toBe(0);
     // Verify the charge session_date was passed to getRefundEligibility
     expect(mockGetRefundEligibility).toHaveBeenCalledWith(
-      MOCK_PRODUCT,
-      expect.any(Number),
-      expect.any(Date),
-      "2026-02-25",
+      expect.objectContaining({
+        product: MOCK_PRODUCT,
+        lastChargeSessionDate: "2026-02-25",
+        windowHours: expect.any(Number),
+      }),
     );
   });
 
@@ -363,10 +364,11 @@ describe("DELETE /api/enrollments/[id]", () => {
     expect(data.refunded).toBe(false);
     // Verify null session_date was passed
     expect(mockGetRefundEligibility).toHaveBeenCalledWith(
-      MOCK_PRODUCT,
-      expect.any(Number),
-      expect.any(Date),
-      null,
+      expect.objectContaining({
+        product: MOCK_PRODUCT,
+        lastChargeSessionDate: null,
+        windowHours: expect.any(Number),
+      }),
     );
   });
 });

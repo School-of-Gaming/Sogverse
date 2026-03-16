@@ -13,11 +13,35 @@ import {
 import { useMyGroups } from "@/services/groups";
 import { useMyGamers } from "@/services/gamers";
 import { useGroupsWithVoice } from "@/hooks/use-groups-page";
-import { GroupDetailContent, type EnrollmentInfo } from "@/components/groups/GroupDetailContent";
+import { GroupDetailContent, type CustomerEnrollmentContext } from "@/components/groups/GroupDetailContent";
 import { ROUTES } from "@/lib/constants";
+import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
 interface CustomerGroupDetailContentProps {
   groupId: string;
+}
+
+/**
+ * Build the customer enrollment context by cross-referencing the group roster
+ * with the customer's gamers. Returns undefined if the customer has no gamer
+ * in this group.
+ */
+function buildCustomerEnrollment(
+  group: GroupWithVoice,
+  gamers: { id: string; display_name: string }[],
+): CustomerEnrollmentContext | undefined {
+  const myGamerIds = new Set(gamers.map((g) => g.id));
+  const myGamer = group.gamers.find((gg) => myGamerIds.has(gg.gamerId));
+  if (!myGamer) return undefined;
+
+  const gamer = gamers.find((g) => g.id === myGamer.gamerId);
+
+  return {
+    enrollmentId: myGamer.enrollmentId,
+    tokenCost: group.productTokenCost ?? 0,
+    gamerDisplayName: gamer?.display_name ?? myGamer.displayName,
+    lastChargeSessionDate: myGamer.lastChargeSessionDate,
+  };
 }
 
 export function CustomerGroupDetailContent({ groupId }: CustomerGroupDetailContentProps) {
@@ -25,28 +49,11 @@ export function CustomerGroupDetailContent({ groupId }: CustomerGroupDetailConte
   const { data: gamers, isLoading: gamersLoading } = useMyGamers();
   const [showJoinAlert, setShowJoinAlert] = useState(false);
 
-  const group = useMemo(
-    () => groups.find((g) => g.groupId === groupId) ?? null,
-    [groups, groupId],
-  );
-
-  // Find the customer's gamer in this group to build enrollment info
-  const enrollment: EnrollmentInfo | undefined = useMemo(() => {
+  const customerEnrollment = useMemo(() => {
+    const group = groups.find((g) => g.groupId === groupId);
     if (!group || !gamers) return undefined;
-
-    const myGamerIds = new Set(gamers.map((g) => g.id));
-    const myGamer = group.gamers.find((gg) => myGamerIds.has(gg.gamerId));
-    if (!myGamer) return undefined;
-
-    const gamer = gamers.find((g) => g.id === myGamer.gamerId);
-
-    return {
-      enrollmentId: myGamer.enrollmentId,
-      tokenCost: group.productTokenCost ?? 0,
-      gamerDisplayName: gamer?.display_name ?? myGamer.displayName,
-      lastChargeSessionDate: myGamer.lastChargeSessionDate,
-    };
-  }, [group, gamers]);
+    return buildCustomerEnrollment(group, gamers);
+  }, [groups, groupId, gamers]);
 
   return (
     <>
@@ -57,7 +64,7 @@ export function CustomerGroupDetailContent({ groupId }: CustomerGroupDetailConte
         error={groupsError}
         backHref={ROUTES.customer.gamers}
         onJoinClick={() => setShowJoinAlert(true)}
-        enrollment={enrollment}
+        customerEnrollment={customerEnrollment}
       />
 
       <Dialog open={showJoinAlert} onOpenChange={setShowJoinAlert}>

@@ -19,7 +19,8 @@ import { useCurrency } from "@/hooks/use-currency";
 import { UnenrollDialog } from "@/components/enrollment/unenroll-dialog";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
-export interface EnrollmentInfo {
+/** Customer enrollment context — all-or-nothing. Built by the parent. */
+export interface CustomerEnrollmentContext {
   enrollmentId: string;
   tokenCost: number;
   gamerDisplayName: string;
@@ -32,7 +33,7 @@ interface GroupDetailContentBase {
   isLoading: boolean;
   error: Error | null;
   backHref: string;
-  enrollment?: EnrollmentInfo;
+  customerEnrollment?: CustomerEnrollmentContext;
 }
 
 interface GroupDetailWithVoiceRoute extends GroupDetailContentBase {
@@ -55,11 +56,14 @@ export function GroupDetailContent({
   backHref,
   voiceRoute,
   onJoinClick,
-  enrollment,
+  customerEnrollment,
 }: GroupDetailContentProps) {
   const router = useRouter();
   const { locale } = useCurrency();
-  const [showUnenroll, setShowUnenroll] = useState(false);
+  const [unenrollRefund, setUnenrollRefund] = useState<{
+    eligible: boolean;
+    reason?: "within_window" | "session_past";
+  } | null>(null);
 
   const group = useMemo(
     () => groups.find((g) => g.groupId === groupId) ?? null,
@@ -70,21 +74,6 @@ export function GroupDetailContent({
     if (!group) return null;
     return formatScheduleLocal(group.dayOfWeek, group.startTime, group.timezone, locale);
   }, [group, locale]);
-
-  const refund = useMemo(() => {
-    if (!group || !enrollment) return null;
-    return getRefundEligibility(
-      {
-        day_of_week: group.dayOfWeek,
-        start_time: group.startTime,
-        timezone: group.timezone,
-        token_cost: enrollment.tokenCost,
-      },
-      undefined,
-      undefined,
-      enrollment.lastChargeSessionDate,
-    );
-  }, [group, enrollment]);
 
   if (isLoading) {
     return (
@@ -235,33 +224,44 @@ export function GroupDetailContent({
       </Card>
 
       {/* Enrollment info (customer only) */}
-      {enrollment && (
+      {customerEnrollment && (
         <Card>
           <CardContent className="flex items-center justify-between py-4">
             <div className="flex items-center gap-2 text-sm">
               <Coins className="h-4 w-4 text-muted-foreground" />
-              <span>{enrollment.tokenCost} Sorgs/week</span>
+              <span>{customerEnrollment.tokenCost} Sorgs/week</span>
             </div>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowUnenroll(true)}
+              onClick={() => {
+                const refund = getRefundEligibility({
+                  product: {
+                    day_of_week: group.dayOfWeek,
+                    start_time: group.startTime,
+                    timezone: group.timezone,
+                    token_cost: customerEnrollment.tokenCost,
+                  },
+                  lastChargeSessionDate: customerEnrollment.lastChargeSessionDate,
+                });
+                setUnenrollRefund({ eligible: refund.eligible, reason: refund.reason });
+              }}
             >
-              Unenroll {enrollment.gamerDisplayName}
+              Unenroll {customerEnrollment.gamerDisplayName}
             </Button>
           </CardContent>
         </Card>
       )}
 
-      {showUnenroll && enrollment && refund && (
+      {unenrollRefund && customerEnrollment && (
         <UnenrollDialog
-          enrollmentId={enrollment.enrollmentId}
+          enrollmentId={customerEnrollment.enrollmentId}
           productName={group.productName}
-          gamerDisplayName={enrollment.gamerDisplayName}
-          tokenCost={enrollment.tokenCost}
-          refundEligible={refund.eligible}
-          refundDenialReason={refund.reason}
-          onClose={() => setShowUnenroll(false)}
+          gamerDisplayName={customerEnrollment.gamerDisplayName}
+          tokenCost={customerEnrollment.tokenCost}
+          refundEligible={unenrollRefund.eligible}
+          refundDenialReason={unenrollRefund.reason}
+          onClose={() => setUnenrollRefund(null)}
           onSuccess={() => router.push(backHref)}
         />
       )}

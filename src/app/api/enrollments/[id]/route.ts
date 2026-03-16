@@ -64,13 +64,11 @@ export async function DELETE(
       .maybeSingle();
 
     // Determine refund eligibility
-    const now = new Date();
-    const { eligible, refundAmount } = getRefundEligibility(
+    const { eligible, refundAmount } = getRefundEligibility({
       product,
-      ENROLLMENT_CHARGE_WINDOW_HOURS,
-      now,
-      latestCharge?.session_date ?? null,
-    );
+      lastChargeSessionDate: latestCharge?.session_date ?? null,
+      windowHours: ENROLLMENT_CHARGE_WINDOW_HOURS,
+    });
 
     const { data, error } = await admin.rpc("unenroll_gamer", {
       p_customer_id: user.id,
