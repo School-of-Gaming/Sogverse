@@ -51,7 +51,7 @@ export function GroupVoiceStatus({
       <p className="text-sm">
         Next session {dateStr}{" "}
         <span className={cn(
-          totalMinutes < HIGHLIGHT_MINUTES ? "font-medium text-warning" : "text-muted-foreground",
+          totalMinutes < HIGHLIGHT_MINUTES ? "font-medium text-primary" : "text-muted-foreground",
         )}>
           (starts in {formatCountdown(msUntil)})
         </span>

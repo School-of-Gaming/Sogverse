@@ -35,7 +35,7 @@ export function NextSession({ nextSessionStart, locale }: NextSessionProps) {
         <span
           className={
             totalMinutes < HIGHLIGHT_MINUTES
-              ? "font-medium text-warning"
+              ? "font-medium text-primary"
               : "text-muted-foreground"
           }
         >
