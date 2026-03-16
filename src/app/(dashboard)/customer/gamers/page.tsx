@@ -23,9 +23,9 @@ import { useCurrency } from "@/hooks/use-currency";
 import { ROUTES } from "@/lib/constants";
 
 export default function CustomerGamersPage() {
-  const { data: gamers, isLoading: gamersLoading } = useMyGamers();
+  const { data: gamers, isLoading: gamersLoading, error: gamersError } = useMyGamers();
   const groupsQuery = useMyGroups();
-  const { groups, isLoading: groupsLoading } = useGroupsWithVoice(groupsQuery);
+  const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(groupsQuery);
   const { locale } = useCurrency();
   const [showJoinAlert, setShowJoinAlert] = useState(false);
 
@@ -61,7 +61,11 @@ export default function CustomerGamersPage() {
         </Link>
       </div>
 
-      {isLoading ? (
+      {(gamersError || groupsError) ? (
+        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          {gamersError?.message || groupsError?.message || "Failed to load data"}
+        </div>
+      ) : isLoading ? (
         <div className="space-y-6">
           {[1, 2].map((i) => (
             <div key={i} className="space-y-3">

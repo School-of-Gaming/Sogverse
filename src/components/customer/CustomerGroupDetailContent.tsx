@@ -50,7 +50,7 @@ export function buildCustomerEnrollment(
 
 export function CustomerGroupDetailContent({ groupId, gamerId }: CustomerGroupDetailContentProps) {
   const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(useMyGroups());
-  const { data: gamers, isLoading: gamersLoading } = useMyGamers();
+  const { data: gamers, isLoading: gamersLoading, error: gamersError } = useMyGamers();
   const [showJoinAlert, setShowJoinAlert] = useState(false);
 
   const customerEnrollment = useMemo(() => {
@@ -65,7 +65,7 @@ export function CustomerGroupDetailContent({ groupId, gamerId }: CustomerGroupDe
         groups={groups}
         groupId={groupId}
         isLoading={groupsLoading || gamersLoading}
-        error={groupsError}
+        error={groupsError ?? gamersError}
         backHref={ROUTES.customer.gamers}
         onJoinClick={() => setShowJoinAlert(true)}
         customerEnrollment={customerEnrollment}
