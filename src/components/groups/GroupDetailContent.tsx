@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, Coins, Loader2, Radio, Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +57,7 @@ export function GroupDetailContent({
   onJoinClick,
   enrollment,
 }: GroupDetailContentProps) {
+  const router = useRouter();
   const { locale } = useCurrency();
   const [showUnenroll, setShowUnenroll] = useState(false);
 
@@ -259,6 +261,7 @@ export function GroupDetailContent({
           refundEligible={refund.eligible}
           refundDenialReason={refund.reason}
           onClose={() => setShowUnenroll(false)}
+          onSuccess={() => router.push(backHref)}
         />
       )}
     </div>

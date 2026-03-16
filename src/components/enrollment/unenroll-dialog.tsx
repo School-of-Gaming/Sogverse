@@ -23,6 +23,8 @@ interface UnenrollDialogProps {
   refundEligible: boolean;
   refundDenialReason?: "within_window" | "session_past";
   onClose: () => void;
+  /** Called after the user dismisses a successful unenroll (after invalidation). */
+  onSuccess?: () => void;
 }
 
 export function UnenrollDialog({
@@ -33,6 +35,7 @@ export function UnenrollDialog({
   refundEligible,
   refundDenialReason,
   onClose,
+  onSuccess,
 }: UnenrollDialogProps) {
   const { invalidateEnrollments, ...unenroll } = useUnenrollGamer();
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +46,10 @@ export function UnenrollDialog({
   } | null>(null);
 
   const handleClose = () => {
-    if (success) invalidateEnrollments();
+    if (success) {
+      invalidateEnrollments();
+      onSuccess?.();
+    }
     onClose();
   };
 
