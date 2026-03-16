@@ -6,7 +6,7 @@ Customer-initiated enrollment system where parents enroll their gamers (children
 
 Customers browse products on the public products page, click into a product detail page, and follow a multi-step enrollment wizard: select a gamer (or create one inline), select a group, review the cost, and confirm. Enrollment immediately deducts Sorg tokens for the upcoming session. Each subsequent week, a `pg_cron` job charges the customer's balance 24 hours before the next session. If the balance is insufficient, the enrollment is automatically cancelled.
 
-Unenrollment is customer-initiated via the enrollments dashboard. A refund is only granted if the customer has been charged for an upcoming session that hasn't started yet AND the session is more than 24 hours away. If the charged session has already started, no refund is issued (the customer attended or had the opportunity to attend). If the session hasn't started but is within 24 hours, no refund is issued either.
+Unenrollment is customer-initiated via the group detail page. A refund is only granted if the customer has been charged for an upcoming session that hasn't started yet AND the session is more than 24 hours away. If the charged session has already started, no refund is issued (the customer attended or had the opportunity to attend). If the session hasn't started but is within 24 hours, no refund is issued either.
 
 Admins cannot enroll or unenroll gamers — they can only move gamers between groups within a product via `commit_group_changes`. Moves use `UPDATE` (not DELETE+INSERT) to preserve enrollment metadata and charge history.
 
@@ -16,14 +16,22 @@ Admins cannot enroll or unenroll gamers — they can only move gamers between gr
 Pages
 ├── /products                 → Product listing with "View Details" links
 ├── /products/[id]            → Product detail page with <EnrollmentWizard /> (customers only)
-├── /customer/enrollments     → Enrollment management dashboard
-└── /customer                 → Dashboard with "My Enrollments" quick action
+├── /customer/gamers          → My Gamers page with GroupCards per gamer
+├── /customer/groups/[id]     → Group detail page with roster, voice status, enrollment info, unenroll
+└── /customer                 → Dashboard with "My Gamers" quick action
 
 Enrollment components (src/components/enrollment/)
 ├── EnrollmentWizard          — Multi-step flow: select gamer → select group → confirm → success
 ├── InlineGamerForm           — Compact gamer creation with dynamic age display (DOB + gender required)
-├── EnrollmentCard            — Active/past enrollment display with schedule, refund indicator, unenroll button
 └── UnenrollDialog            — Confirmation dialog with refund/no-refund messaging
+
+Customer components (src/components/customer/)
+└── CustomerGroupDetailContent — Thin wrapper: passes enrollment info + onJoinClick to GroupDetailContent
+
+Shared group components (src/components/groups/, src/components/ui/)
+├── GroupCard                 — Shared card with product image, schedule, voice status, Join button
+├── GroupDetailContent        — Shared detail page with roster, padlet, optional enrollment info
+└── JoinButton                — Shared button: Link (href) or button (onClick) via discriminated union
 
 API routes (src/app/api/)
 ├── enrollments/route.ts              — POST: enroll gamer (customer-only)
@@ -31,7 +39,12 @@ API routes (src/app/api/)
 
 Service layer (src/services/enrollments/)
 ├── enrollments.service.ts    — EnrollmentsService class (API fetches + RPC calls)
-├── enrollments.queries.ts    — React Query hooks (useMyEnrollments, useEnrollGamer, useUnenrollGamer, useEnrollmentGroups)
+├── enrollments.queries.ts    — React Query hooks (useEnrollGamer, useUnenrollGamer, useEnrollmentGroups)
+└── index.ts                  — Barrel exports
+
+Service layer (src/services/groups/)
+├── groups.service.ts         — GroupsService class (get_my_groups RPC call + reshaping)
+├── groups.queries.ts         — React Query hooks (useMyGroups — used by all roles including customers)
 └── index.ts                  — Barrel exports
 
 Utilities
@@ -42,7 +55,7 @@ Utilities
 Database functions (SQL)
 ├── enroll_gamer_in_group()            — Atomic enroll: verify parent, deduct tokens, insert enrollment + charge
 ├── unenroll_gamer()                   — Atomic unenroll: mark inactive, optional refund, mark charge as refunded
-├── get_customer_enrollments()         — Customer's enrollments with product/gamer/gedu details + last_charge_session_date
+├── get_my_groups()                    — Unified RPC for all roles (customer branch scoped by enrolled_by)
 ├── get_enrollment_groups()            — Customer-facing group list with gamer count and age stats
 ├── compute_next_session()             — SQL equivalent of getNextSessionStart() for cron use
 └── process_enrollment_charges()       — Cron entry point: charge active enrollments, auto-unenroll on failure
@@ -53,32 +66,33 @@ Database functions (SQL)
 ### 1. Enroll a gamer (customer)
 
 1. Customer navigates to `/products/[id]` → `EnrollmentWizard` renders
-2. **Step 1: Select gamer** — `useMyGamers()` fetches customer's gamers. Already-enrolled gamers (via `useMyEnrollments()`) are disabled. If no gamers exist, the inline creation form is shown automatically.
+2. **Step 1: Select gamer** — `useMyGamers()` fetches customer's gamers. Already-enrolled gamers (via `useMyGroups()`) are disabled. If no gamers exist, the inline creation form is shown automatically.
 3. **Step 1a: Create gamer (optional)** — `InlineGamerForm` collects display name, username, password, DOB, gender. Calls `POST /api/gamers/create`. On success, auto-selects the new gamer and advances.
 4. **Step 2: Select group** — `useEnrollmentGroups(productId)` fetches groups via `get_enrollment_groups` RPC. Shows gedu name, gamer count, age range. If only one group exists, auto-selects and skips to step 3.
 5. **Step 3: Confirm** — Shows enrollment summary: gamer, gedu, token cost, current balance, balance after. Insufficient balance shows a warning with link to `/customer/sorg`.
 6. Customer clicks "Confirm Enrollment" → `useEnrollGamer()` mutation → `POST /api/enrollments`
 7. API route looks up product via group, computes next `session_date` via `getNextSessionStart()`, calls `enroll_gamer_in_group` RPC
 8. RPC atomically: verifies parent-child relationship, checks no active enrollment exists, deducts tokens via `adjust_token_balance()`, inserts `group_enrollments` row, inserts `enrollment_charges` row
-9. Success screen shows new balance and links to enrollments dashboard
+9. Success screen shows new balance and links to My Gamers page
 
 ### 2. Unenroll — with refund (> 24h before next session)
 
-1. Customer opens `/customer/enrollments` → `useMyEnrollments()` loads enrollments
-2. `EnrollmentCard` shows "Refund available if you unenroll now" (green text)
-3. Customer clicks "Unenroll" → `UnenrollDialog` opens with refund confirmation
-4. Customer confirms → `useUnenrollGamer()` → `DELETE /api/enrollments/[id]`
-5. API route queries the latest `enrollment_charges` row's `session_date` for this enrollment
-6. API route reconstructs the session timestamp via `wallClockToUtc(session_date + start_time, timezone)` and verifies `now < sessionTime` (session hasn't started)
-7. Passes `lastChargeSessionDate` to `getRefundEligibility()` → session hasn't started, outside 24h window → `eligible: true, refundAmount: token_cost`
-8. Calls `unenroll_gamer` RPC with `p_refund = true`
-9. RPC: looks up `products.token_cost` internally, sets `status='unenrolled'`, `unenrolled_at=NOW()`, credits tokens via `adjust_token_balance('enrollment_refund')`, marks latest `enrollment_charges` row as refunded
-10. Dialog shows success with refund amount and new balance
+1. Customer opens `/customer/gamers` → `useMyGroups()` loads groups, `GroupCard` renders per gamer
+2. Customer clicks a group card → navigates to `/customer/groups/[id]`
+3. `GroupDetailContent` shows roster, schedule, enrollment info card with "N Sorgs/week" and "Unenroll" button
+4. Customer clicks "Unenroll" → `UnenrollDialog` opens with refund confirmation
+5. Customer confirms → `useUnenrollGamer()` → `DELETE /api/enrollments/[id]`
+6. API route queries the latest `enrollment_charges` row's `session_date` for this enrollment
+7. API route reconstructs the session timestamp via `wallClockToUtc(session_date + start_time, timezone)` and verifies `now < sessionTime` (session hasn't started)
+8. Passes `lastChargeSessionDate` to `getRefundEligibility()` → session hasn't started, outside 24h window → `eligible: true, refundAmount: token_cost`
+9. Calls `unenroll_gamer` RPC with `p_refund = true`
+10. RPC: looks up `products.token_cost` internally, sets `status='unenrolled'`, `unenrolled_at=NOW()`, credits tokens via `adjust_token_balance('enrollment_refund')`, marks latest `enrollment_charges` row as refunded
+11. Dialog shows success with refund amount and new balance
+12. On dismiss, customer is navigated back to My Gamers page
 
 ### 3. Unenroll — no refund (within 24h of next session)
 
 Same as flow 2, except:
-- `EnrollmentCard` shows "No refund — next session is within 24h" (amber warning)
 - `UnenrollDialog` shows "No refund will be issued — the next session is within 24 hours"
 - API route's `getRefundEligibility()` → session hasn't started but within 24h window → `eligible: false, refundAmount: 0, reason: "within_window"`
 - RPC is called with `p_refund = false` — status changes but no token adjustment
@@ -87,8 +101,7 @@ Same as flow 2, except:
 
 Customer unenrolls after the charged session has already started. The latest charge covered a session that has already happened — refunding it would mean the customer attended for free.
 
-- `EnrollmentCard` shows "You won't be charged for the next session" (muted text)
-- `UnenrollDialog` shows "No refund needed — you won't be charged for the next session"
+- `UnenrollDialog` shows "You won't be charged for the next session"
 - API route's `getRefundEligibility()` → `now > sessionTimestamp` → `eligible: false, refundAmount: 0, reason: "session_past"`
 - RPC is called with `p_refund = false` — status changes, no token adjustment
 - The cron hasn't charged for the next session yet, so the customer won't owe anything further
@@ -111,7 +124,7 @@ Customer unenrolls after the charged session has already started. The latest cha
 3. The `EXCEPTION WHEN check_violation` handler catches it
 4. Handler sets `status='unenrolled'`, `unenrolled_at=NOW()` on the enrollment
 5. No charge is recorded; the customer's balance is unchanged
-6. Customer sees the enrollment as "Unenrolled" on their dashboard
+6. Customer sees the enrollment disappear from their My Gamers page
 
 ## Database Schema
 
@@ -159,7 +172,7 @@ enrollment_charges (
 |---|---|---|
 | `enroll_gamer_in_group(customer_id, gamer_id, group_id, token_cost, session_date)` | Atomic enrollment with first charge | `POST /api/enrollments` |
 | `unenroll_gamer(customer_id, enrollment_id, refund_amount)` | Unenroll with optional refund | `DELETE /api/enrollments/[id]` |
-| `get_customer_enrollments(customer_id)` | Customer's enrollment list with product/gamer/gedu details + `last_charge_session_date` | `EnrollmentsService.getMyEnrollments()` |
+| `get_my_groups()` | All roles: returns groups with roster, schedule, voice room, token cost, last charge date. Customer branch scoped by `enrolled_by = auth.uid()` | `GroupsService.getMyGroups()` |
 | `get_enrollment_groups(product_id)` | Visible product groups with gamer count and age stats | `EnrollmentsService.getEnrollmentGroups()` |
 | `compute_next_session(day_of_week, start_time, timezone)` | Next session in UTC (SQL equivalent of `getNextSessionStart()`) | `process_enrollment_charges()` |
 | `process_enrollment_charges()` | Hourly cron: charge active enrollments, auto-unenroll on failure | pg_cron |
@@ -177,9 +190,10 @@ enrollment_charges (
 
 | Migration | Description |
 |---|---|
-| `00007_groups_and_enrollments.sql` | `group_enrollments`, `enrollment_charges` tables, `enroll_gamer_in_group`, `unenroll_gamer`, `get_customer_enrollments`, `get_enrollment_groups` RPCs, updated `commit_group_changes` with UPDATE-based moves |
+| `00006_groups_and_enrollments.sql` | `group_enrollments`, `enrollment_charges` tables, `enroll_gamer_in_group`, `unenroll_gamer`, `get_enrollment_groups` RPCs, updated `commit_group_changes` with UPDATE-based moves |
 | `00008_cron.sql` | `compute_next_session()`, `process_enrollment_charges()`, pg_cron schedule |
 | `00009_rls_and_grants.sql` | All RLS policies and table/function grants for enrollments |
+| `00012_gedu_groups_rpc.sql` | `get_my_groups()` with customer branch (replaces `get_customer_enrollments`) |
 
 ## Cron Job Details
 
@@ -296,7 +310,7 @@ The TypeScript version uses `wallClockToUtc()` from `src/lib/utils.ts`, which co
 |---|---|---|---|---|
 | Enroll a gamer | - | Own gamers only | - | - |
 | Unenroll a gamer | - | Own enrollments only | - | - |
-| View enrollments | All (via RLS) | Own only | - | - |
+| View enrollments | All (via RLS) | Own only (via `get_my_groups` customer branch) | - | - |
 | Move gamers between groups | Yes (via `commit_group_changes`) | - | - | - |
 | View enrollment charges | All (via RLS) | Own only | - | - |
 
@@ -327,4 +341,4 @@ The cron job logs results to `cron.job_run_details` and emits `RAISE WARNING` to
 The 24-hour window is defined in two places: TypeScript constant and SQL local variable. A single source of truth (e.g., a `settings` table row readable by both) would prevent drift.
 
 ### Preserve enrollment history when groups are deleted
-When an admin deletes a gedu group, unenrolled `group_enrollments` rows (and their linked `enrollment_charges`) are deleted to unblock the `ON DELETE RESTRICT` FK. This means parents lose visibility of past enrollments for that group in their dashboard. A future improvement could decouple enrollment history from the group lifecycle — e.g., by changing the FK to `SET NULL` and updating `get_customer_enrollments` to `LEFT JOIN` on `product_groups`, showing a "Group removed" placeholder for orphaned enrollments.
+When an admin deletes a gedu group, unenrolled `group_enrollments` rows (and their linked `enrollment_charges`) are deleted to unblock the `ON DELETE RESTRICT` FK. This means parents lose visibility of past enrollments for that group. A future improvement could decouple enrollment history from the group lifecycle — e.g., by changing the FK to `SET NULL` and updating `get_my_groups` to `LEFT JOIN` on `product_groups`, showing a "Group removed" placeholder for orphaned enrollments.
