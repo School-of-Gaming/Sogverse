@@ -57,7 +57,9 @@ export function GroupsListContent({
       ))}
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">{heading}</h2>
+        {lounges.length > 0 && (
+          <h2 className="text-lg font-semibold">{heading}</h2>
+        )}
 
         {isLoading ? (
           <Card>
