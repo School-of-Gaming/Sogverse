@@ -24,7 +24,7 @@ Admin components (src/components/admin/)
 ├── EnrolledGamerChip    — Draggable gamer chip with age/gender detail
 ├── GeduPickerDialog     — Searchable side sheet for selecting a gedu (add or reassign)
 ├── CommitBar            — Sticky bottom bar: pending change count, discard/commit buttons
-├── ChangeSummaryDialog  — Confirmation dialog: color-coded change list with gamer/gedu names
+├── CommitFlowDialog     — Confirmation dialog: color-coded change list with gamer/gedu names
 └── VisibilityWarningBanner — Warning when product is hidden or has no groups
 
 Hooks
@@ -97,7 +97,7 @@ Each action updates the reducer state. `computeEffectiveGroups()` derives the UI
 
 ### Admin commits changes
 
-1. Admin clicks "Commit Changes" → `CommitBar` opens `ChangeSummaryDialog`
+1. Admin clicks "Commit Changes" → `CommitBar` opens `CommitFlowDialog`
 2. Admin reviews the color-coded summary and clicks "Confirm"
 3. `useCommitGroupChanges` mutation fires → `POST /api/admin/products/[id]/groups` with `BatchGroupChanges`
 4. API route verifies admin role, checks product exists, calls `commit_group_changes` RPC

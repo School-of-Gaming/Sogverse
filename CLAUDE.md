@@ -44,9 +44,15 @@ Proxy (`src/proxy.ts`) refreshes Supabase auth sessions and enforces role-based 
 ### Key Conventions
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
 - Components are organized by role: `components/[role]/`, shared UI in `components/ui/`
-- Each service in `services/` exports a class + React Query hooks
 - Supabase clients: `lib/supabase/` — `client.ts` (browser), `server.ts` (RSC), `admin.ts` (privileged)
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
+
+### Service Layer Pattern
+Each feature in `src/services/` follows a two-file pattern:
+- `*.service.ts` — Class that takes a `SupabaseClient<Database>` in the constructor. Methods call RPCs or `.from()` queries and reshape results.
+- `*.queries.ts` — React Query hooks. Each hook calls `getClient()`, instantiates the service, and returns `useQuery`/`useMutation`. Exports a `*Keys` factory object for cache key hierarchy (e.g., `groupKeys.all`, `groupKeys.byProduct(id)`).
+
+**Rule: Mutations must invalidate related queries in `onSuccess`.** Use the key hierarchy so invalidating a parent key (e.g., `groupKeys.all`) cascades to children.
 
 ### Supabase Clients
 - `createBrowserClient()` - Browser-side, singleton pattern. **Data queries only — never use for auth operations.**
@@ -62,6 +68,10 @@ The proxy (`src/proxy.ts`) owns session management: it refreshes tokens server-s
 
 **Rule: Never make Supabase data queries inside `onAuthStateChange` callbacks.** The callback can fire from `_recoverAndRefresh()` which holds the GoTrueClient's internal lock. A data query would call `getSession()` → `_acquireLock()` → deadlock. Only do synchronous React state updates in the callback.
 
+### Layout & Scrolling
+
+See `docs/layout-scroll-architecture.md` for the scroll containment model and how dashboard layouts handle overflow.
+
 ### Styling
 - Use `cn()` utility from `lib/utils.ts` for conditional classes
 - Brand colors: primary yellow `#FAA901`, secondary purple `#8F00E2`
@@ -72,17 +82,21 @@ A living style guide is available at `/admin/ui-components` (admin login require
 
 ### Groups
 
-See `docs/groups-architecture.md` for the full architecture. All group/enrollment mutations must go through the `commit_group_changes` RPC — never modify `product_groups` or `group_enrollments` directly.
+See `docs/groups-architecture.md` for the full architecture, component map, shared component patterns, and data flow. All group/enrollment mutations must go through the `commit_group_changes` RPC — never modify `product_groups` or `group_enrollments` directly.
+
+### Customer Enrollment
+
+See `docs/customer-enrollment-architecture.md` for the enrollment flow, refund logic, weekly charge cron, and component map.
 
 ### Voice Chat (Daily.co)
 
-See `docs/voice-chat-architecture.md` for the full architecture, component map, permissions, and data flow.
+See `docs/voice-chat-architecture.md` for the full architecture, component map, permissions, and data flow. See `docs/chrome-webrtc-volume-bug.md` for the Web Audio workaround.
 
 **Rule: Realtime hooks must only invalidate queries — never make Supabase data queries in callbacks.** Same deadlock risk as `onAuthStateChange`.
 
 ### Sorg Token Purchasing (Stripe)
 
-See `docs/sorg-token-architecture.md` for the full architecture, component map, data flows, and fulfillment model.
+See `docs/sorg-token-architecture.md` for the full architecture, component map, data flows, and fulfillment model. See `docs/stripe-testing.md` for local Stripe CLI testing setup.
 
 **Rule: All token balance changes must go through the `adjust_token_balance()` RPC.** Never update `token_balance` directly.
 
@@ -91,6 +105,11 @@ See `docs/sorg-token-architecture.md` for the full architecture, component map, 
 **Rule: The Stripe webhook is the sole fulfillment path for all token crediting.** Both handlers use idempotency checks + UNIQUE constraint on `stripe_session_id`.
 
 **Rule: Only customers can purchase tokens.** Admins can manually adjust via `POST /api/admin/adjust-tokens`.
+
+### Other Docs
+
+- `docs/email-deliverability.md` — SPF, DKIM, DMARC setup for Brevo/sog.gg
+- `docs/SECURITY_REPORT.md` — Past security audit findings and remediations
 
 ## Environment Variables
 
@@ -143,6 +162,12 @@ This avoids a chicken-and-egg problem where tests reference functions that aren'
 
 **Rule: When writing RPCs with JOINs, verify `RETURNS TABLE` column nullability matches what the SQL actually produces.** PostgreSQL doesn't enforce `NOT NULL` on `RETURNS TABLE` columns, so the type generator infers from the base type alone — it can't see whether a column comes from an INNER JOIN (never null) or LEFT JOIN (sometimes null). After pushing and regenerating types, check the generated return type in `database.types.ts`. This is the one gap in the DB-to-TypeScript type chain: the compiler trusts the function signature, not the query.
 
+**Fix pattern:** When the generated type has wrong nullability, add a corrected alias in `src/types/index.ts` using `Omit` + intersection — never hand-edit `database.types.ts`:
+```typescript
+type _Generated = Database["public"]["Functions"]["my_rpc"]["Returns"][number];
+export type MyType = Omit<_Generated, "nullable_col"> & { nullable_col: string | null };
+```
+
 ### Function & Table Access Control
 
 **Rule: New PostgreSQL functions must be private by default.** After creating a function, add `REVOKE EXECUTE` from `authenticated`, `anon`, and `public` unless the function is intentionally called from the browser client. If the function IS public, add it to the allowlist in `tests/db/access-control.test.ts`. Extra care with `SECURITY DEFINER` functions — they bypass RLS, so a public grant is a privilege escalation vector.
@@ -167,6 +192,22 @@ Tests are in `tests/` with four subdirectories: `unit/`, `integration/`, `db/`, 
 | **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
 | **db** | RPCs, constraints, RLS policies against real local Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
 | **e2e** | Playwright browser tests against running dev server | `.spec.ts`, Playwright |
+
+### DB Test Conventions
+
+DB tests run against a real local Supabase (Docker). Shared helpers and constants live in `tests/db/`:
+- `helpers.ts` — `createAdminTestClient()` (service-role, bypasses RLS) and `createAuthenticatedClient(email, password)` (signs in via auth, respects RLS). Also exports idempotent seed/reset helpers: `seedEnrollment()`, `resetTokenState()`, `resetEnrollmentState()`.
+- `constants.ts` — `TEST_IDS` (deterministic UUIDs matching `supabase/seed.sql`), `TEST_CREDENTIALS` (email/password per role), and `SEED` values (balances, costs, names that must match seed data).
+
+### Integration Test Conventions
+
+Integration tests import route handlers directly and call them with mock `Request` objects:
+```typescript
+vi.mock("@/lib/auth", () => ({ requireRole: (...args) => mockRequireRole(...args) }));
+import { POST } from "@/app/api/path/route";
+const response = await POST(createRequest({ ... }));
+```
+Mock `requireRole()` to return `{ user, profile, supabase }` for authenticated scenarios or a `NextResponse` error for unauthorized. Mock Supabase clients (`@/lib/supabase/admin`, `@/lib/supabase/server`) with `vi.mock()`.
 
 ## Code Style
 

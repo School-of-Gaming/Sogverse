@@ -15,7 +15,6 @@
 
 ## Vercel Setup
 
-- [x] Import repo and link Vercel project
 - [ ] Connect Git repository (requires public repo or Pro plan)
 - [ ] Configure environment variables:
 
@@ -39,16 +38,11 @@ Go to: Repository → Settings → Secrets and variables → Actions
 
 - [ ] `SUPABASE_PROD_PROJECT_REF` = (your prod project ref)
 
-## Git Branches
-
-- [x] Push `main` and `dev` branches
-
 ## Pre-Production Database Cleanup
 
 Before deploying to production, squash migrations again into a clean set for the prod DB:
 
-- [x] **Staging squash (done):** Squashed 48 dev migrations into 10 domain-organized files. Verified via CI DB tests + `pg_dump` schema diff.
-- [ ] **Production squash:** Repeat the process below for the final production release.
+- [ ] **Production squash:** Repeat the staging squash process (48 → 10 domain-organized files, verified via CI DB tests + `pg_dump` schema diff) for the final production release.
 
 ### Migration Squash Process
 
@@ -89,10 +83,6 @@ This was tested during the staging squash and worked well:
 - [ ] Test user registration flow
 - [ ] Test login flow (email and gamer username)
 - [ ] Verify RLS policies are working (users can only see their own data)
-
-## Pre-Production Security Checklist
-
-- [x] Promote `Content-Security-Policy-Report-Only` to enforcing `Content-Security-Policy` once the allowlist is validated with zero console warnings in staging
 
 ## Cleanup
 
@@ -139,10 +129,7 @@ Lower priority (auth/dashboard pages — less likely to be shared, but descripti
 - [ ] `robots.txt` — block crawlers from authenticated routes (`/admin`, `/customer`, `/gamer`, `/gedu`). Use `src/app/robots.ts` for App Router convention.
 - [ ] `sitemap.xml` — index public pages for search engines. Use `src/app/sitemap.ts` for App Router convention.
 
-**Already done:**
-- [x] Favicon — `src/app/icon.svg` (Next.js file-based metadata convention)
-- [x] Apple touch icon — `src/app/apple-icon.png`
-- [x] Per-page `description` metadata — all 17 pages export a `description` in their `metadata`
+**Already in place:** Favicon (`src/app/icon.svg`), apple touch icon (`src/app/apple-icon.png`), and per-page `description` metadata on all 17 pages.
 
 **When:** Before production launch or when public-facing pages need SEO visibility.
 
@@ -170,10 +157,6 @@ Test cases to add:
 
 **Why:** RLS policies and role-based routing are complex enough that testing against a real DB catches integration bugs that mocked tests miss. Local Supabase keeps tests fast, deterministic, and free from network flakiness — and Docker is available by default in GitHub Actions runners.
 
-### ~~Brevo Domain Verification (Email Deliverability)~~ — DONE
-
-Domain `sog.gg` authenticated on Brevo (Brevo code, DKIM 1, DKIM 2). DMARC handled by existing EasyDMARC config. Sender `sogverse@sog.gg` verified. API key deployed to Vercel (production + preview).
-
 ### Production Domain & Deployment
 
 - [ ] Deploy to production on Vercel (push to `main` or trigger production build)
@@ -193,37 +176,6 @@ GitHub Actions and Vercel currently duplicate work (both do a full build), and V
 - [ ] Verify Vercel preview deploys still work for PRs
 
 **Why:** Currently the `build` job in CI is redundant with Vercel's build, and Vercel deploys even when CI fails. Branch protection prevents broken code from reaching production, while Vercel's preview deploys remain useful for PR review.
-
-### ~~Extract Shared Auth/Role-Check Helper for API Routes~~ — DONE
-
-Extracted `requireRole()` helper to `src/lib/auth.ts`. All 14 API route handlers now use the shared helper instead of repeating auth/profile/role-check boilerplate. Also fixes a latent bug where a profiles query failure returned a misleading 403 instead of 500.
-
-- [x] Create a shared `requireRole()` helper in `src/lib/auth.ts`
-- [x] Replace the boilerplate in all 14 route handlers with a one-liner call to the helper
-
-### ~~Replace `SupabaseClientType = any` with Real Types in Service Classes~~ — DONE
-
-Replaced `SupabaseClientType = any` with `SupabaseClient<Database>` in all 9 service classes. Updated `@supabase/ssr` from 0.5.2 to 0.9.0 and `@supabase/supabase-js` from 2.95.0 to 2.99.1 to align type signatures — the version mismatch was the original reason for `any`. Regenerated `database.types.ts` to include `__InternalSupabase` metadata required by the newer PostgREST type parser. Removed `|| []` / `|| false` defensive fallbacks (now caught by `no-unnecessary-condition`), fixed test mocks returning `null` instead of `[]` (incorrect Supabase contract), added `useRequiredAuth()` hook for dashboard components where auth is guaranteed, and updated the `lock` function signature to match the new generic `LockFunc` type.
-
-- [x] Replace `type SupabaseClientType = any` with `SupabaseClient<Database>` in all service constructors
-- [x] Verify that `.rpc()` and `.from()` calls type-check against the generated `database.types.ts`
-- [x] Update `@supabase/ssr` and `@supabase/supabase-js` to align type signatures
-- [x] Add `useRequiredAuth()` hook for non-null auth context in dashboard components
-
-### ~~Enable Type-Aware ESLint with `no-unnecessary-condition`~~ — DONE
-
-Enabled type-aware linting with `@typescript-eslint/no-unnecessary-condition` set to `"error"`. Fixed all 85 violations: removed dead null checks, added `joined` guards to voice components (instead of defensive `?.` chains), fixed inaccurate type casts, and aligned Supabase error handling with the discriminated union pattern (check `error`, not `!data`). One suppression remains for `.maybeSingle()` which has a genuine Supabase type gap (returns null data without error, but types don't model it).
-
-- [x] Add `parserOptions.project` to ESLint config (with `tsconfigRootDir: import.meta.dirname`)
-- [x] Enable `@typescript-eslint/no-unnecessary-condition: "error"`
-- [x] Fix existing violations across the codebase
-
-### ~~Use Generated Types in API Routes~~ — DONE
-
-Changed `requireRole()` in `src/lib/auth.ts` to use `select("*")` instead of a dynamic select string, returning a fully-typed `Profile` instead of `Record<string, unknown>`. Removed the `select` option from `requireRole()` — all callers now get the full profile. Removed all inline `as { role: UserRole }` casts from API routes (`feedback`, `voice/token`, `checkout/tokens`, `auth/callback`), `proxy.ts`, and `login-form.tsx`. The PostgREST type parser resolves `select("*")` and `select("role")` to concrete types at compile time, so casts are no longer needed.
-
-- [x] Replace all inline `as { role: string; ... }` casts with generated types
-- [x] Change `requireRole()` to return typed `Profile` instead of `Record<string, unknown>`
 
 ### Consolidate Multiple Permissive RLS Policies
 
@@ -257,15 +209,6 @@ Currently safe — RLS admin-only `FOR ALL` policies block non-admin writes. But
 Also add a DB test in `access-control.test.ts` that asserts table-level privileges match an allowlist (similar to the existing RPC grant test), so overly broad GRANTs are caught automatically.
 
 **When:** Before production launch. Low urgency — defense in depth, not an active vulnerability.
-
-### ~~Centralize Date and Currency Formatting for Localization~~ — DONE
-
-Multi-currency support (USD, GBP, EUR) implemented. All user-facing formatting uses browser default locale (`undefined`) so US, UK, and Finnish users see familiar formats automatically. `formatCurrency()`, `formatCurrencyFromCents()`, and `formatDate()` accept an optional `locale` parameter as the last argument for callers that need to override, but default to browser locale when omitted. `parseTime()` helper centralizes Postgres TIME parsing (`"HH:MM"` / `"HH:MM:SS"`). Internal timezone computation is consolidated in `wallClockToUtc()` in `utils.ts`, which pins `"en-US"` with `hour12: false` for predictable numeric parsing — this will be replaced when we adopt `date-fns-tz`. User-facing time formatting in `formatScheduleLocal()` omits `hour12` so each locale gets its natural format (24h for Finland, 12h for US).
-
-- [x] Audit all date/currency formatting across the codebase
-- [x] Consolidate into `lib/utils.ts` helpers that use browser locale by default
-- [x] Replace all inline formatting with shared helpers or `undefined` locale
-- [x] Add optional `locale` override parameter to formatting functions
 
 ### Replace Intl.DateTimeFormat Timezone Hacking with `date-fns-tz`
 
@@ -343,16 +286,9 @@ Supabase's "Confirm email" setting is disabled to keep signup frictionless (user
 **Dependencies:**
 - Database migration for new `profiles` columns
 
-### ~~Split Profiles into Role-Specific Extension Tables~~ — DONE
+### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
-Created `customer_profiles` and `gamer_profiles` extension tables. Migrated role-specific columns out of `profiles`. Updated `adjust_token_balance()` RPC, RLS policies, service classes, and API routes.
-
-- [x] Create migration adding extension tables
-- [x] Migrate data and drop role-specific columns from `profiles`
-- [x] Update RPC, RLS, services, and routes
-- [x] Regenerate TypeScript types
-
-**Future:** Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
+Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
 
 ### Multi-Parent Gamer Linking
 
@@ -365,16 +301,6 @@ To support a second parent linking to an existing gamer:
 - [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
 
 **Why:** The previous client-side INSERT policy only checked `parent_id = auth.uid()`, allowing any customer to link to any gamer. The fix correctly removed this, but a secure server-side path is needed if multiple parents per gamer is a requirement.
-
-### ~~Code-Owned Password Reset Email via Brevo API~~ — DONE
-
-Replaced Supabase's built-in password reset email with a branded template sent via Brevo. Created `POST /api/auth/forgot-password` using `admin.generateLink()` to get the reset link server-side, then sends via `sendTransactionalEmail()`. Updated `forgot-password-form.tsx` to call the API route instead of `supabase.auth.resetPasswordForEmail()`. Handles the implicit flow / PKCE mismatch by manually parsing hash fragment tokens on the reset-password page and calling `setSession()`. Also unified email template definitions into a single registry (`src/lib/email-templates/registry.ts`) used by both the API route and the admin testing page.
-
-- [x] Create `POST /api/auth/forgot-password` route — calls `generateLink()` on the admin client, sends email via `sendTransactionalEmail()`
-- [x] Create HTML email template function (`src/lib/email-templates/password-reset.ts`) with branded markup and the reset link
-- [x] Update `forgot-password-form.tsx` to call the new API route instead of `supabase.auth.resetPasswordForEmail()`
-- [x] Return a generic success response regardless of whether the email exists (prevent user enumeration)
-- [x] Unified template registry so new templates only need to be defined in one place
 
 ### Use Identicon Avatars in Email Templates
 
