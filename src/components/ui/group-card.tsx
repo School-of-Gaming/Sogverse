@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Calendar, Clock, Radio, Users } from "lucide-react";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -119,13 +118,12 @@ export function GroupCard({
     >
       <CardContent className="flex items-center gap-4 py-4">
         <div className="flex h-24 w-24 shrink-0 items-center justify-center">
-          <Image
+          {/* Plain <img> — unoptimized external URLs get no benefit from next/image,
+              and next/image warns when CSS constrains only one dimension */}
+          <img
             src={productImageUrl}
             alt={productName}
-            width={96}
-            height={96}
-            unoptimized
-            className="h-auto w-auto max-h-full max-w-full rounded-md"
+            className="max-h-full max-w-full rounded-md"
           />
         </div>
 
