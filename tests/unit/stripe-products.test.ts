@@ -13,8 +13,13 @@ vi.mock("stripe", () => ({
   })),
 }));
 
+// Mock unstable_cache to pass through to the inner function (no caching in tests)
+vi.mock("next/cache", () => ({
+  unstable_cache: (fn: Function) => fn,
+}));
+
 // Import after mocks are set up
-import { getStripeProducts, getProductByPriceId, getPackageSavings, tokensToCurrencyDisplay, invalidateProductCache } from "@/lib/stripe/products";
+import { getStripeProducts, getProductByPriceId, getPackageSavings, tokensToCurrencyDisplay } from "@/lib/stripe/products";
 
 function makeProduct(id: string, name: string, tokenAmount: number) {
   return {
@@ -41,7 +46,6 @@ function makePrice(id: string, productId: string, currency: string, unitAmount: 
 describe("getStripeProducts", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    invalidateProductCache();
   });
 
   it("fetches and categorizes products correctly", async () => {
@@ -165,31 +169,11 @@ describe("getStripeProducts", () => {
       "No one-time packages found in Stripe"
     );
   });
-
-  it("uses cache on subsequent calls", async () => {
-    mockProductsList.mockResolvedValue({
-      data: [makeProduct("prod_starter", "Starter Pack", 5)],
-    });
-    mockPricesList.mockResolvedValue({
-      data: [
-        makePrice("price_usd", "prod_starter", "usd", 1500, "one_time"),
-        makePrice("price_gbp", "prod_starter", "gbp", 1200, "one_time"),
-        makePrice("price_eur", "prod_starter", "eur", 1400, "one_time"),
-      ],
-    });
-
-    await getStripeProducts();
-    await getStripeProducts();
-
-    // Should only fetch once due to caching
-    expect(mockProductsList).toHaveBeenCalledTimes(1);
-  });
 });
 
 describe("getProductByPriceId", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    invalidateProductCache();
   });
 
   it("returns product info for a valid priceId", async () => {

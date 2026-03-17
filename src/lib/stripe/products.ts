@@ -1,4 +1,5 @@
 import Stripe from "stripe";
+import { unstable_cache } from "next/cache";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { StripePackage } from "@/types";
@@ -8,99 +9,97 @@ export { getPackageSavings, tokensToCurrencyDisplay } from "./utils";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-interface CachedProducts {
+interface StripeProducts {
   oneTimePackages: StripePackage[];
   subscriptionPackages: StripePackage[];
   baseRates: Record<SupportedCurrency, number>;
-  fetchedAt: number;
 }
-
-let cache: CachedProducts | null = null;
 
 /**
  * Fetch active Stripe Products with `tokenAmount` metadata.
  * Returns one-time and subscription packages sorted by price (cheapest first),
  * plus base rates computed from the cheapest one-off package.
  *
- * Results are cached in-memory for 5 minutes.
+ * Cached via Next.js data cache (persists across serverless cold starts).
+ * Revalidates every 5 minutes with stale-while-revalidate.
  */
-export async function getStripeProducts(): Promise<Omit<CachedProducts, "fetchedAt">> {
-  if (cache && Date.now() - cache.fetchedAt < CACHE_TTL_MS) {
-    const { fetchedAt: _, ...rest } = cache;
-    return rest;
-  }
+export const getStripeProducts = unstable_cache(
+  async (): Promise<StripeProducts> => {
+    const start = Date.now();
+    const products = await stripe.products.list({
+      active: true,
+      limit: 100,
+    });
 
-  const products = await stripe.products.list({
-    active: true,
-    limit: 100,
-  });
+    // Filter to Sogverse token products (those with tokenAmount metadata)
+    const tokenProducts = products.data.filter(
+      (p) => Number(p.metadata.tokenAmount) > 0,
+    );
 
-  // Filter to Sogverse token products (those with tokenAmount metadata)
-  const tokenProducts = products.data.filter(
-    (p) => Number(p.metadata.tokenAmount) > 0,
-  );
+    // Fetch prices for all token products in parallel (one call per product,
+    // but concurrent instead of sequential)
+    const priceResults = await Promise.all(
+      tokenProducts.map((p) =>
+        stripe.prices.list({ product: p.id, active: true, limit: 100 }),
+      ),
+    );
 
-  // Fetch prices for all token products in parallel (one call per product,
-  // but concurrent instead of sequential)
-  const priceResults = await Promise.all(
-    tokenProducts.map((p) =>
-      stripe.prices.list({ product: p.id, active: true, limit: 100 }),
-    ),
-  );
+    const packages: StripePackage[] = [];
 
-  const packages: StripePackage[] = [];
+    for (let i = 0; i < tokenProducts.length; i++) {
+      const product = tokenProducts[i];
+      const prices = priceResults[i];
+      const tokenAmount = Number(product.metadata.tokenAmount);
 
-  for (let i = 0; i < tokenProducts.length; i++) {
-    const product = tokenProducts[i];
-    const prices = priceResults[i];
-    const tokenAmount = Number(product.metadata.tokenAmount);
+      const priceMap: Partial<Record<SupportedCurrency, { priceId: string; unitAmount: number }>> = {};
+      let type: "one_time" | "subscription" | null = null;
 
-    const priceMap: Partial<Record<SupportedCurrency, { priceId: string; unitAmount: number }>> = {};
-    let type: "one_time" | "subscription" | null = null;
+      for (const price of prices.data) {
+        const currency = price.currency as SupportedCurrency;
+        if (!(SUPPORTED_CURRENCIES as readonly string[]).includes(currency)) continue;
+        if (price.unit_amount == null) continue;
 
-    for (const price of prices.data) {
-      const currency = price.currency as SupportedCurrency;
-      if (!(SUPPORTED_CURRENCIES as readonly string[]).includes(currency)) continue;
-      if (price.unit_amount == null) continue;
+        priceMap[currency] = {
+          priceId: price.id,
+          unitAmount: price.unit_amount,
+        };
 
-      priceMap[currency] = {
-        priceId: price.id,
-        unitAmount: price.unit_amount,
-      };
+        // All prices for a product should be the same type
+        type = price.type === "recurring" ? "subscription" : "one_time";
+      }
 
-      // All prices for a product should be the same type
-      type = price.type === "recurring" ? "subscription" : "one_time";
+      if (!type || Object.keys(priceMap).length === 0) continue;
+
+      packages.push({
+        stripeProductId: product.id,
+        name: product.name,
+        description: product.description,
+        tokenAmount,
+        prices: priceMap as Record<SupportedCurrency, { priceId: string; unitAmount: number }>,
+        type,
+      });
     }
 
-    if (!type || Object.keys(priceMap).length === 0) continue;
+    const oneTimePackages = packages
+      .filter((p) => p.type === "one_time")
+      .sort((a, b) => a.prices.usd.unitAmount - b.prices.usd.unitAmount);
 
-    packages.push({
-      stripeProductId: product.id,
-      name: product.name,
-      description: product.description,
-      tokenAmount,
-      prices: priceMap as Record<SupportedCurrency, { priceId: string; unitAmount: number }>,
-      type,
-    });
-  }
+    const subscriptionPackages = packages
+      .filter((p) => p.type === "subscription")
+      .sort((a, b) => a.prices.usd.unitAmount - b.prices.usd.unitAmount);
 
-  const oneTimePackages = packages
-    .filter((p) => p.type === "one_time")
-    .sort((a, b) => a.prices.usd.unitAmount - b.prices.usd.unitAmount);
+    // Compute base rates from the cheapest one-off package (price per token)
+    const baseRates = computeBaseRates(oneTimePackages);
 
-  const subscriptionPackages = packages
-    .filter((p) => p.type === "subscription")
-    .sort((a, b) => a.prices.usd.unitAmount - b.prices.usd.unitAmount);
+    console.log(
+      `[Stripe] Cache miss — fetched ${oneTimePackages.length} one-time + ${subscriptionPackages.length} subscription packages in ${Date.now() - start}ms`,
+    );
 
-  // Compute base rates from the cheapest one-off package (price per token)
-  const baseRates = computeBaseRates(oneTimePackages);
-
-  cache = { oneTimePackages, subscriptionPackages, baseRates, fetchedAt: Date.now() };
-
-  return { oneTimePackages, subscriptionPackages, baseRates };
-}
+    return { oneTimePackages, subscriptionPackages, baseRates };
+  },
+  ["stripe-products"],
+  { revalidate: 300 }, // 5 minutes
+);
 
 function computeBaseRates(
   oneTimePackages: StripePackage[],
@@ -149,9 +148,4 @@ export async function getProductByPriceId(priceId: string): Promise<{
   }
 
   return null;
-}
-
-/** Invalidate the in-memory cache (e.g., for testing). */
-export function invalidateProductCache(): void {
-  cache = null;
 }

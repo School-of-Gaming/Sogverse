@@ -314,18 +314,19 @@ The identicon generator (`src/lib/identicon.ts`) creates unique SVG avatars from
 
 ### Make Root Layout Resilient to Stripe Outages
 
-`getStripeProducts()` is called in the root layout (`src/app/layout.tsx:40`). If Stripe is unreachable or returns no products, this throws and every page renders an error — including pages that don't need pricing data (admin dashboard, gamer dashboard, etc.).
+`getStripeProducts()` is called in the root layout (`src/app/layout.tsx:40`). It uses `unstable_cache` with 5-minute stale-while-revalidate, so brief Stripe outages are transparent — cached data is served while revalidation fails silently in the background.
 
-Current risk is low: Stripe has ~99.99% uptime, outages are typically minutes, and the 5-minute cache (`src/lib/stripe/products.ts:11`) means the first successful page load after recovery fixes it for all users.
+**Remaining risk:** If Stripe is down on the very first request after a deploy (no cache exists yet), or during a prolonged outage that outlasts the cache, the function throws and every page shows an error — including pages that don't need pricing data.
 
-Potential approaches (pick one):
-- [ ] Wrap the `getStripeProducts()` call in try/catch, pass `null` baseRates to `TokenRateProvider`, make downstream components handle null gracefully (show "rates unavailable" instead of crashing)
-- [ ] Cache the last successful Stripe result to disk/KV — serve stale rates on Stripe failure instead of crashing
-- [ ] Move `getStripeProducts()` out of the root layout into only the layouts/pages that need pricing data (customer token purchase pages)
+Potential approaches if this becomes a problem:
+- [ ] Wrap the `getStripeProducts()` call in try/catch, pass `null` baseRates to `TokenRateProvider`, make downstream components show a graceful fallback
+- [ ] Move `getStripeProducts()` out of the root layout into only the pages that need pricing data
 
-**Affected files:** `src/app/layout.tsx`, `src/lib/stripe/products.ts`, `src/providers/index.tsx` (TokenRateProvider)
+**Affected files:** `src/app/layout.tsx`, `src/lib/stripe/products.ts`, `src/providers/index.tsx`
 
-**When:** If Stripe outages cause user-facing incidents. Not worth the complexity until then.
+**When:** If Stripe outages cause user-facing incidents. Current risk is very low given Stripe's ~99.99% uptime and the persistent cache.
+
+**Note:** `unstable_cache` is the current API. When Next.js ships the stable `"use cache"` directive (not available in 16.1.6), migrate to that — it's a one-line replacement.
 
 ### Migrate Auth Email Templates to Brevo Visual Editor
 
