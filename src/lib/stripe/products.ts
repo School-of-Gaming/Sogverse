@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { unstable_cache } from "next/cache";
-import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
+import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { StripePackage } from "@/types";
 
@@ -75,6 +75,7 @@ export const getStripeProducts = unstable_cache(
         name: product.name,
         description: product.description,
         tokenAmount,
+        // Safe cast: all Stripe token products are configured with prices in every supported currency
         prices: priceMap as Record<SupportedCurrency, { priceId: string; unitAmount: number }>,
         type,
       });
@@ -82,11 +83,11 @@ export const getStripeProducts = unstable_cache(
 
     const oneTimePackages = packages
       .filter((p) => p.type === "one_time")
-      .sort((a, b) => a.prices.usd.unitAmount - b.prices.usd.unitAmount);
+      .sort((a, b) => a.prices[DEFAULT_CURRENCY].unitAmount - b.prices[DEFAULT_CURRENCY].unitAmount);
 
     const subscriptionPackages = packages
       .filter((p) => p.type === "subscription")
-      .sort((a, b) => a.prices.usd.unitAmount - b.prices.usd.unitAmount);
+      .sort((a, b) => a.prices[DEFAULT_CURRENCY].unitAmount - b.prices[DEFAULT_CURRENCY].unitAmount);
 
     // Compute base rates from the cheapest one-off package (price per token)
     const baseRates = computeBaseRates(oneTimePackages);

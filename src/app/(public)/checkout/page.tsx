@@ -5,10 +5,12 @@ import { useSearchParams } from "next/navigation";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/providers";
+import { useCurrency } from "@/hooks/use-currency";
 import { ROUTES } from "@/lib/constants";
 
 function CheckoutRedirect() {
   const { user, profile, isLoading } = useAuth();
+  const { currency } = useCurrency();
   const searchParams = useSearchParams();
   const priceId = searchParams.get("priceId");
   const triggered = useRef(false);
@@ -35,7 +37,7 @@ function CheckoutRedirect() {
     fetch("/api/checkout/tokens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ priceId, returnPath: ROUTES.sorg }),
+      body: JSON.stringify({ priceId, currency, returnPath: ROUTES.sorg }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -48,7 +50,7 @@ function CheckoutRedirect() {
       .catch(() => {
         setError(true);
       });
-  }, [user, profile, isLoading, priceId]);
+  }, [user, profile, isLoading, priceId, currency]);
 
   if (error) {
     return (

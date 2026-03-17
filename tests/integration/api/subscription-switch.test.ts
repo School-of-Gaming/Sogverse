@@ -28,12 +28,6 @@ vi.mock("@/lib/stripe/products", () => ({
   getProductByPriceId: (...args: unknown[]) => mockGetProductByPriceId(...args),
 }));
 
-const mockAdminFrom = vi.fn();
-vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({
-    from: mockAdminFrom,
-  })),
-}));
 
 // --- Helpers ---
 
@@ -86,11 +80,6 @@ function createRequest(body: Record<string, unknown>): Request {
 describe("POST /api/checkout/subscription/switch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAdminFrom.mockReturnValue({
-      update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-      }),
-    });
   });
 
   it("should return 401 when not authenticated", async () => {
@@ -192,8 +181,7 @@ describe("POST /api/checkout/subscription/switch", () => {
       },
     });
 
-    // Verify DB was updated
-    expect(mockAdminFrom).toHaveBeenCalledWith("customer_profiles");
+    // DB update is handled by the customer.subscription.updated webhook
   });
 
   it("should return 403 for non-customer roles", async () => {

@@ -19,7 +19,7 @@ vi.mock("next/cache", () => ({
 }));
 
 // Import after mocks are set up
-import { getStripeProducts, getProductByPriceId, getPackageSavings, tokensToCurrencyDisplay } from "@/lib/stripe/products";
+import { getStripeProducts, getProductByPriceId } from "@/lib/stripe/products";
 
 function makeProduct(id: string, name: string, tokenAmount: number) {
   return {
@@ -217,24 +217,4 @@ describe("getProductByPriceId", () => {
   });
 });
 
-describe("getPackageSavings", () => {
-  it("returns positive savings when price is below base rate", () => {
-    expect(getPackageSavings(4000, 15, 300)).toBe(500);
-  });
-
-  it("returns 0 when price equals base rate", () => {
-    expect(getPackageSavings(1500, 5, 300)).toBe(0);
-  });
-
-  it("returns 0 when price exceeds base rate", () => {
-    expect(getPackageSavings(2000, 5, 300)).toBe(0);
-  });
-});
-
-describe("tokensToCurrencyDisplay", () => {
-  it("formats correctly", () => {
-    const result = tokensToCurrencyDisplay(10, 300, "usd", "en-US");
-    expect(result).toContain("$");
-    expect(result).toContain("30");
-  });
-});
+// getPackageSavings and tokensToCurrencyDisplay are tested in tests/unit/tokens.test.ts

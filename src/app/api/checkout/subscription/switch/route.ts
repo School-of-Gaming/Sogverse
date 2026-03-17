@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { requireRole } from "@/lib/auth";
 import { getProductByPriceId } from "@/lib/stripe/products";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -78,13 +77,9 @@ export async function POST(request: Request) {
       },
     });
 
-    // Update subscription_tier in DB
-    const admin = createAdminClient();
-    await admin
-      .from("customer_profiles")
-      .update({ subscription_tier: productInfo.stripeProductId })
-      .eq("user_id", user.id);
-
+    // DB update is handled by the customer.subscription.updated webhook,
+    // consistent with cancel/resume routes. Client optimistically updates
+    // the query cache for instant UI feedback.
     return NextResponse.json({ switched: true });
   } catch (err) {
     console.error("Subscription switch error:", err);
