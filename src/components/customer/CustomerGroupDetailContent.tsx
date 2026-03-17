@@ -1,19 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useMyGroups } from "@/services/groups";
 import { useMyGamers } from "@/services/gamers";
 import { useGroupsWithVoice } from "@/hooks/use-groups-page";
 import { GroupDetailContent, type CustomerEnrollmentContext } from "@/components/groups/GroupDetailContent";
+import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
 import { ROUTES } from "@/lib/constants";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
@@ -51,13 +43,16 @@ export function buildCustomerEnrollment(
 export function CustomerGroupDetailContent({ groupId, gamerId }: CustomerGroupDetailContentProps) {
   const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(useMyGroups());
   const { data: gamers, isLoading: gamersLoading, error: gamersError } = useMyGamers();
-  const [showJoinAlert, setShowJoinAlert] = useState(false);
+  const [showSwitchDialog, setShowSwitchDialog] = useState(false);
+
+  const group = groups.find((g) => g.groupId === groupId);
 
   const customerEnrollment = useMemo(() => {
-    const group = groups.find((g) => g.groupId === groupId);
     if (!group || !gamers) return undefined;
     return buildCustomerEnrollment(group, gamers, gamerId);
   }, [groups, groupId, gamers, gamerId]);
+
+  const gamerDisplayName = customerEnrollment?.gamerDisplayName ?? "Gamer";
 
   return (
     <>
@@ -67,24 +62,19 @@ export function CustomerGroupDetailContent({ groupId, gamerId }: CustomerGroupDe
         isLoading={groupsLoading || gamersLoading}
         error={groupsError ?? gamersError}
         backHref={ROUTES.customer.gamers}
-        onJoinClick={() => setShowJoinAlert(true)}
+        onJoinClick={() => setShowSwitchDialog(true)}
         customerEnrollment={customerEnrollment}
       />
 
-      <Dialog open={showJoinAlert} onOpenChange={setShowJoinAlert}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Voice Chat Coming Soon</DialogTitle>
-            <DialogDescription>
-              Parent voice chat access is not yet available. Your gamer can join
-              the session from their own account.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setShowJoinAlert(false)}>OK</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {group && (
+        <SwitchToGamerDialog
+          open={showSwitchDialog}
+          onOpenChange={setShowSwitchDialog}
+          gamerId={gamerId}
+          gamerDisplayName={gamerDisplayName}
+          redirectUrl={`${ROUTES.gamer.voiceSession(group.voiceRoomId)}?groupId=${group.groupId}`}
+        />
+      )}
     </>
   );
 }

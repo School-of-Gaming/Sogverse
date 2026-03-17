@@ -6,14 +6,7 @@ import { Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { GroupCard } from "@/components/ui/group-card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
 import { GamerCard } from "@/components/customer/gamer-card";
 import { useMyGamers } from "@/services/gamers";
 import { useMyGroups } from "@/services/groups";
@@ -26,7 +19,11 @@ export default function CustomerGamersPage() {
   const { data: gamers, isLoading: gamersLoading, error: gamersError } = useMyGamers();
   const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(useMyGroups());
   const { locale } = useCurrency();
-  const [showJoinAlert, setShowJoinAlert] = useState(false);
+  const [switchTarget, setSwitchTarget] = useState<{
+    gamerId: string;
+    gamerDisplayName: string;
+    redirectUrl: string;
+  } | null>(null);
 
   const isLoading = gamersLoading || groupsLoading;
 
@@ -109,7 +106,11 @@ export default function CustomerGamersPage() {
                         group={group}
                         gamerId={gamer.id}
                         locale={locale}
-                        onJoinClick={() => setShowJoinAlert(true)}
+                        onJoinClick={() => setSwitchTarget({
+                          gamerId: gamer.id,
+                          gamerDisplayName: gamer.display_name,
+                          redirectUrl: `${ROUTES.gamer.voiceSession(group.voiceRoomId)}?groupId=${group.groupId}`,
+                        })}
                       />
                     ))}
                   </div>
@@ -150,20 +151,15 @@ export default function CustomerGamersPage() {
         </Card>
       )}
 
-      <Dialog open={showJoinAlert} onOpenChange={setShowJoinAlert}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Voice Chat Coming Soon</DialogTitle>
-            <DialogDescription>
-              Parent voice chat access is not yet available. Your gamer can join
-              the session from their own account.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setShowJoinAlert(false)}>OK</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {switchTarget && (
+        <SwitchToGamerDialog
+          open={!!switchTarget}
+          onOpenChange={(open) => { if (!open) setSwitchTarget(null); }}
+          gamerId={switchTarget.gamerId}
+          gamerDisplayName={switchTarget.gamerDisplayName}
+          redirectUrl={switchTarget.redirectUrl}
+        />
+      )}
     </div>
   );
 }

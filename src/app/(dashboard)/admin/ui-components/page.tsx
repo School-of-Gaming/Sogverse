@@ -41,6 +41,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow } from "@/components/voice/ParticipantRow";
 import { TokenBalanceCard } from "@/components/customer";
+import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
 import { ProductRow } from "@/components/admin/product-row";
 import { UserRow } from "@/components/admin/user-row";
 import { GamerCard } from "@/components/customer/gamer-card";
@@ -210,6 +211,31 @@ function VoiceAvatarDemo() {
 /* ------------------------------------------------------------------ */
 /*  Dialog Demo                                                        */
 /* ------------------------------------------------------------------ */
+
+function SwitchToGamerDialogDemo() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Section title="Switch to Gamer Dialog">
+      <SubSection title="Customer → Gamer session switch">
+        <p className="text-sm text-muted-foreground mb-3">
+          Shown when a customer clicks &ldquo;Join&rdquo; on a voice session. Uses info color to signal
+          an attention-worthy auth action. Confirm button triggers session swap then full page navigation.
+        </p>
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          Open Switch Dialog
+        </Button>
+        <SwitchToGamerDialog
+          open={open}
+          onOpenChange={setOpen}
+          gamerId="demo-gamer-id"
+          gamerDisplayName="JääKarhu"
+          redirectUrl="#"
+        />
+      </SubSection>
+    </Section>
+  );
+}
 
 function DialogDemo() {
   const [openDialog, setOpenDialog] = useState<"confirm" | "destructive" | "info" | null>(null);
@@ -898,6 +924,11 @@ export default function AdminUIComponentsPage() {
       {/* Section 8: Dialog                                              */}
       {/* ============================================================ */}
       <DialogDemo />
+
+      {/* ============================================================ */}
+      {/* Section 8b: Switch to Gamer Dialog                            */}
+      {/* ============================================================ */}
+      <SwitchToGamerDialogDemo />
 
       {/* ============================================================ */}
       {/* Section 9: Participant Card                                   */}
