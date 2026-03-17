@@ -23,8 +23,6 @@ import { ROLE_BADGES } from "@/lib/constants";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -688,45 +686,7 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 4: Card                                               */}
-      {/* ============================================================ */}
-      <Section title="Card">
-        <SubSection title="Full Card">
-          <Card>
-            <CardHeader>
-              <CardTitle>Card Title</CardTitle>
-              <CardDescription>
-                Card description with supporting text
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Card body content goes here. This demonstrates all sub-components.
-              </p>
-            </CardContent>
-            <CardFooter className="gap-2">
-              <Button variant="outline">Cancel</Button>
-              <Button>Save</Button>
-            </CardFooter>
-          </Card>
-        </SubSection>
-
-        <SubSection title="Minimal Card">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Minimal Card</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Header and content only &mdash; no description or footer.
-              </p>
-            </CardContent>
-          </Card>
-        </SubSection>
-      </Section>
-
-      {/* ============================================================ */}
-      {/* Section 5: Input & Label                                      */}
+      {/* Section 4: Input & Label                                      */}
       {/* ============================================================ */}
       <Section title="Input & Label">
         <div className="grid gap-6 md:grid-cols-2">
