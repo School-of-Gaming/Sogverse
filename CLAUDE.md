@@ -100,11 +100,13 @@ See `docs/sorg-token-architecture.md` for the full architecture, component map, 
 
 **Rule: All token balance changes must go through the `adjust_token_balance()` RPC.** Never update `token_balance` directly.
 
-**Rule: Prices are defined server-side only.** The client sends a `packageId`, never a price.
+**Rule: Token packages are defined in Stripe, not in code.** Products with `tokenAmount` metadata are fetched at runtime via `getStripeProducts()` (`src/lib/stripe/products.ts`) and cached for 5 minutes. The client sends a `priceId` (validated server-side against live Stripe products), never a price amount.
 
 **Rule: The Stripe webhook is the sole fulfillment path for all token crediting.** Both handlers use idempotency checks + UNIQUE constraint on `stripe_session_id`.
 
 **Rule: Only customers can purchase tokens.** Admins can manually adjust via `POST /api/admin/adjust-tokens`.
+
+**Rule: Subscription tier switches use `proration_behavior: "none"`.** The new tier starts on the next billing cycle. The switch route updates both Stripe subscription metadata and `customer_profiles.subscription_tier` immediately.
 
 ### Other Docs
 
