@@ -66,6 +66,8 @@ export async function POST(request: Request) {
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: isSubscription ? "subscription" : "payment",
       ...customerParams,
+      // User already selected their currency — don't let Stripe offer conversion
+      adaptive_pricing: { enabled: false },
       line_items: [
         {
           price: priceId,
