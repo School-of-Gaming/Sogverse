@@ -118,12 +118,13 @@ export function useSwitchSubscription(userId: string) {
     mutationFn: ({ priceId }: { priceId: string; stripeProductId: string }) =>
       service.switchSubscription(priceId),
     onSuccess: (_data, { stripeProductId }) => {
-      // Optimistically update the tier so the UI shows "Subscribed" immediately
-      // instead of briefly showing "Switch to this plan" until the refetch completes.
+      // Optimistically update the tier so the UI shows "Subscribed" immediately.
+      // Also set status to "active" — switching a canceling subscription clears
+      // cancel_at_period_end in Stripe, effectively resuming it.
       queryClient.setQueryData(
         tokenKeys.subscription(userId),
         (old: { stripe_subscription_id: string | null; subscription_status: string | null; subscription_tier: string | null } | undefined) =>
-          old ? { ...old, subscription_tier: stripeProductId } : old,
+          old ? { ...old, subscription_tier: stripeProductId, subscription_status: "active" } : old,
       );
     },
   });

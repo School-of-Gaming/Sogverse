@@ -362,6 +362,9 @@ export function TokenPurchaseSection({
               Your plan will change to {switchConfirm?.name} ({switchConfirm?.tokenAmount} Sorgs/month).
               The switch takes effect at the start of your next billing cycle — your current
               plan and Sorg allocation remain active until then.
+              {subState.status === "canceling" && (
+                <> This will also resume your subscription.</>
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

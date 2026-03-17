@@ -105,12 +105,12 @@ Packages are defined as **Stripe Products** in the Stripe dashboard, not in code
 ### 5. Subscription tier switch
 
 1. Customer clicks "Switch to this plan" in `<TokenPurchaseSection />`
-2. Confirmation dialog → `useSwitchSubscription()` → `POST /api/checkout/subscription/switch` with `{ priceId }`
+2. Confirmation dialog (warns that switching a canceling subscription will resume it) → `useSwitchSubscription()` → `POST /api/checkout/subscription/switch` with `{ priceId }`
 3. Server validates `priceId` belongs to an active subscription product, retrieves the current subscription from Stripe
-4. Updates the subscription item's price with `proration_behavior: "none"` — the new tier starts on the next billing cycle
-5. Updates subscription metadata (`tokenAmount`, `stripeProductId`) so future `invoice.paid` renewals credit the correct amount
-6. Writes `subscription_tier` (Stripe Product ID) to `customer_profiles` immediately
-7. Stripe fires `customer.subscription.updated` webhook → syncs `subscription_tier` from subscription metadata
+4. Resolves the correct price in the subscription's actual currency (Stripe locks currency at creation, so the client's display currency may differ)
+5. Updates the subscription item's price with `proration_behavior: "none"` — the new tier starts on the next billing cycle
+6. Updates subscription metadata (`tokenAmount`, `stripeProductId`) so future `invoice.paid` renewals credit the correct amount
+7. Stripe fires `customer.subscription.updated` webhook → syncs `subscription_tier` and `subscription_status` from subscription metadata
 
 ### 6. Subscription cancellation
 
@@ -189,6 +189,8 @@ All token crediting happens exclusively through the Stripe webhook.
 
 **Idempotency:** Both token-crediting handlers check `stripe_session_id` in `token_transactions` before crediting. A `UNIQUE` constraint on `stripe_session_id` provides database-level protection against concurrent deliveries.
 
+**Note:** The `customer_profiles` updates in the webhook (storing customer ID, subscription status/tier) do not check for errors. If one fails, the webhook still returns 200 and Stripe won't retry. This is accepted because the profile fields are eventually consistent — the next webhook event (renewal, status change) will overwrite them. Token crediting (the critical path) does check for errors and returns 500 on failure.
+
 ## Environment Variables
 
 | Variable | Side | Purpose |
@@ -204,6 +206,12 @@ All token crediting happens exclusively through the Stripe webhook.
 
 ### Handle `trialing` subscription status
 `getSubscriptionState()` treats all unrecognized Stripe statuses (including `trialing`) as `{ status: "none", hasActiveSubscription: false }`. If trial periods are offered, this would allow users to purchase a duplicate subscription while trialing. Add an explicit `trialing` case to the state machine and gate the Subscribe button accordingly.
+
+### Transaction history currency mismatch after currency switch
+If a customer changes their display currency (e.g. from USD to EUR) and re-subscribes, their old transaction history shows amounts in the old currency but `TransactionHistoryTable` has no per-row currency indicator — all rows appear formatted in the current display currency. This makes historical amounts misleading (e.g. a $15.00 purchase rendered as "€15.00"). Display the `token_transactions.currency` column per row (fall back to display currency for old rows where `currency` is null).
+
+### Make root layout resilient to Stripe outages
+`getStripeProducts()` is called in the root layout (`src/app/layout.tsx`). `unstable_cache` with 5-minute stale-while-revalidate makes brief Stripe outages transparent. **Remaining risk:** If Stripe is down on the very first request after a deploy (no cache exists yet), the function throws and every page shows an error — including pages that don't need pricing data. Potential fixes: wrap in try/catch with `null` baseRates and graceful fallback, or move the call out of the root layout into only the pages that need it. Current risk is very low given Stripe's ~99.99% uptime and the persistent cache. When Next.js ships the stable `"use cache"` directive, migrate from `unstable_cache`.
 
 ### Gamer token spending
 Tokens are currently only purchased and credited. The spending side (gamers using tokens for activities) is not yet implemented.

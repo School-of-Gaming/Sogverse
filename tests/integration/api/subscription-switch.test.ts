@@ -24,8 +24,10 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 const mockGetProductByPriceId = vi.fn();
+const mockGetStripeProducts = vi.fn();
 vi.mock("@/lib/stripe/products", () => ({
   getProductByPriceId: (...args: unknown[]) => mockGetProductByPriceId(...args),
+  getStripeProducts: (...args: unknown[]) => mockGetStripeProducts(...args),
 }));
 
 
@@ -160,7 +162,20 @@ describe("POST /api/checkout/subscription/switch", () => {
     });
     mockSubscriptionsRetrieve.mockResolvedValue({
       items: { data: [{ id: "si_item_123" }] },
+      currency: "usd",
       metadata: { userId: "user-123" },
+    });
+    mockGetStripeProducts.mockResolvedValue({
+      subscriptionPackages: [
+        {
+          stripeProductId: "prod_premium",
+          prices: {
+            usd: { priceId: "price_premium_usd", unitAmount: 1500 },
+            eur: { priceId: "price_premium_eur", unitAmount: 1400 },
+            gbp: { priceId: "price_premium_gbp", unitAmount: 1200 },
+          },
+        },
+      ],
     });
     mockSubscriptionsUpdate.mockResolvedValue({});
 
@@ -170,7 +185,7 @@ describe("POST /api/checkout/subscription/switch", () => {
     expect(response.status).toBe(200);
     expect(data.switched).toBe(true);
 
-    // Verify Stripe was called correctly
+    // Verify Stripe was called with the resolved price in the subscription's currency
     expect(mockSubscriptionsUpdate).toHaveBeenCalledWith("sub_active_123", {
       items: [{ id: "si_item_123", price: "price_premium_usd" }],
       proration_behavior: "none",
@@ -180,8 +195,52 @@ describe("POST /api/checkout/subscription/switch", () => {
         stripeProductId: "prod_premium",
       },
     });
+  });
 
-    // DB update is handled by the customer.subscription.updated webhook
+  it("should resolve the correct price when client currency differs from subscription currency", async () => {
+    mockAuthenticatedCustomer({ subscription_tier: "prod_old" });
+    // Client sends a USD price, but the subscription was created in EUR
+    mockGetProductByPriceId.mockResolvedValue({
+      stripeProductId: "prod_premium",
+      tokenAmount: 50,
+      type: "subscription",
+      currency: "usd",
+    });
+    mockSubscriptionsRetrieve.mockResolvedValue({
+      items: { data: [{ id: "si_item_123" }] },
+      currency: "eur",
+      metadata: { userId: "user-123" },
+    });
+    mockGetStripeProducts.mockResolvedValue({
+      subscriptionPackages: [
+        {
+          stripeProductId: "prod_premium",
+          prices: {
+            usd: { priceId: "price_premium_usd", unitAmount: 1500 },
+            eur: { priceId: "price_premium_eur", unitAmount: 1400 },
+            gbp: { priceId: "price_premium_gbp", unitAmount: 1200 },
+          },
+        },
+      ],
+    });
+    mockSubscriptionsUpdate.mockResolvedValue({});
+
+    const response = await POST(createRequest({ priceId: "price_premium_usd" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.switched).toBe(true);
+
+    // Should use the EUR price, not the USD price the client sent
+    expect(mockSubscriptionsUpdate).toHaveBeenCalledWith("sub_active_123", {
+      items: [{ id: "si_item_123", price: "price_premium_eur" }],
+      proration_behavior: "none",
+      metadata: {
+        userId: "user-123",
+        tokenAmount: "50",
+        stripeProductId: "prod_premium",
+      },
+    });
   });
 
   it("should return 403 for non-customer roles", async () => {

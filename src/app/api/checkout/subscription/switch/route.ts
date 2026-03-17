@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { requireRole } from "@/lib/auth";
-import { getProductByPriceId } from "@/lib/stripe/products";
+import { getProductByPriceId, getStripeProducts } from "@/lib/stripe/products";
+import { isSupportedCurrency } from "@/lib/constants/currency";
+import type { SupportedCurrency } from "@/lib/constants/currency";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -66,9 +68,33 @@ export async function POST(request: Request) {
       );
     }
 
+    // Stripe locks a subscription's currency at creation. The client sends a
+    // priceId based on the user's display currency, which may differ from the
+    // subscription's currency. Resolve the correct price for the target product
+    // in the subscription's actual currency.
+    const subCurrency = subscription.currency as SupportedCurrency;
+    if (!isSupportedCurrency(subCurrency)) {
+      return NextResponse.json(
+        { error: "Subscription currency is not supported" },
+        { status: 400 }
+      );
+    }
+
+    const { subscriptionPackages } = await getStripeProducts();
+    const targetPkg = subscriptionPackages.find(
+      (p) => p.stripeProductId === productInfo.stripeProductId,
+    );
+    const resolvedPriceId = targetPkg?.prices[subCurrency]?.priceId;
+    if (!resolvedPriceId) {
+      return NextResponse.json(
+        { error: "Price not available in subscription currency" },
+        { status: 400 }
+      );
+    }
+
     // Switch tier — no proration, new tier starts on next billing cycle
     await stripe.subscriptions.update(customerProfile.stripe_subscription_id, {
-      items: [{ id: itemId, price: priceId }],
+      items: [{ id: itemId, price: resolvedPriceId }],
       proration_behavior: "none",
       metadata: {
         ...subscription.metadata,

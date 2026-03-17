@@ -223,15 +223,6 @@ Internal timezone math uses `Intl.DateTimeFormat("en-US", { timeZone })` + `form
 
 **Why:** Cleaner code, less surface area for bugs (like the `"HH:MM:SS"` parsing issue), and a standard approach used across the industry. The current code works correctly but is unnecessarily complex.
 
-### Transaction History Currency Mismatch After Currency Switch
-
-If a customer changes their display currency (e.g. from USD to EUR) and re-subscribes, their old transaction history shows amounts in the old currency but `TransactionHistoryTable` has no per-row currency indicator — all rows appear formatted in the current display currency. This makes historical amounts misleading (e.g. a $15.00 purchase rendered as "€15.00").
-
-- [ ] Display the `token_transactions.currency` column in `TransactionHistoryTable` (fall back to display currency for old rows where `currency` is null)
-- [ ] Consider showing the currency code or symbol next to each amount when it differs from the user's current currency
-
-**When:** Before production launch or when multi-currency is used by real customers.
-
 ### Clarify Service Class Pattern for Mixed Data Sources
 
 Service classes (e.g. `TokensService`) mix two data-fetching patterns: some methods query Supabase directly via the injected client, while others use `fetch()` to call API routes (for operations that need server-side secrets like Stripe). The constructor-injected Supabase client is unused by the fetch-based methods.
@@ -311,22 +302,6 @@ The identicon generator (`src/lib/identicon.ts`) creates unique SVG avatars from
 - [ ] Add identicon next to gamer names in group change notification emails
 
 **Caveat:** Email client SVG support is inconsistent (Gmail strips `<svg>` tags). May need to render identicons as PNG via a server-side route (e.g., `GET /api/identicon/[id].png`) and reference via `<img>` tag, or use inline `data:image/svg+xml` URIs.
-
-### Make Root Layout Resilient to Stripe Outages
-
-`getStripeProducts()` is called in the root layout (`src/app/layout.tsx:40`). It uses `unstable_cache` with 5-minute stale-while-revalidate, so brief Stripe outages are transparent — cached data is served while revalidation fails silently in the background.
-
-**Remaining risk:** If Stripe is down on the very first request after a deploy (no cache exists yet), or during a prolonged outage that outlasts the cache, the function throws and every page shows an error — including pages that don't need pricing data.
-
-Potential approaches if this becomes a problem:
-- [ ] Wrap the `getStripeProducts()` call in try/catch, pass `null` baseRates to `TokenRateProvider`, make downstream components show a graceful fallback
-- [ ] Move `getStripeProducts()` out of the root layout into only the pages that need pricing data
-
-**Affected files:** `src/app/layout.tsx`, `src/lib/stripe/products.ts`, `src/providers/index.tsx`
-
-**When:** If Stripe outages cause user-facing incidents. Current risk is very low given Stripe's ~99.99% uptime and the persistent cache.
-
-**Note:** `unstable_cache` is the current API. When Next.js ships the stable `"use cache"` directive (not available in 16.1.6), migrate to that — it's a one-line replacement.
 
 ### Migrate Auth Email Templates to Brevo Visual Editor
 
