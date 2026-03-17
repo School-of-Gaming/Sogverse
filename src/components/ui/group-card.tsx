@@ -120,6 +120,7 @@ export function GroupCard({
         <div className="flex h-24 w-24 shrink-0 items-center justify-center">
           {/* Plain <img> — unoptimized external URLs get no benefit from next/image,
               and next/image warns when CSS constrains only one dimension */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={productImageUrl}
             alt={productName}
