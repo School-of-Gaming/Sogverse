@@ -8,7 +8,6 @@ import { NavChevron } from "@/components/ui/nav-chevron";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { JoinButton } from "@/components/ui/join-button";
-
 import { cn } from "@/lib/utils";
 import { formatCountdown } from "@/lib/enrollment";
 
@@ -79,7 +78,7 @@ interface GroupCardProps {
   voiceNextSessionStart: Date;
   locale?: string;
   /** Called when the Join button is clicked. Callers handle navigation or show a dialog. */
-  onJoinClick?: () => void;
+  onJoinClick: () => void;
   /** Where clicking the card navigates (e.g. /gedu/groups/[id]). */
   detailHref: string;
 }
@@ -166,7 +165,7 @@ export function GroupCard({
           </div>
         </div>
 
-        {voiceIsOpen && onJoinClick && (
+        {voiceIsOpen && (
           <JoinButton onClick={onJoinClick} stopPropagation />
         )}
 

@@ -28,7 +28,9 @@ type JoinButtonProps = JoinButtonLinkProps | JoinButtonClickProps;
  * Shared Join button used across group cards, lounge cards, and detail pages.
  * Renders as a Link when given `href`, or a `<button>` when given `onClick`.
  */
-export function JoinButton({ href, onClick, disabled, loading, stopPropagation }: JoinButtonProps) {
+export function JoinButton(props: JoinButtonProps) {
+  const { disabled, loading, stopPropagation } = props;
+
   if (loading) {
     return (
       <div className={cn(buttonVariants({ size: "sm" }), "w-20 justify-center shrink-0 opacity-50 pointer-events-none")}>
@@ -43,7 +45,8 @@ export function JoinButton({ href, onClick, disabled, loading, stopPropagation }
     disabled && "pointer-events-none opacity-50",
   );
 
-  if (onClick) {
+  if (props.onClick) {
+    const { onClick } = props;
     return (
       <button
         className={classes}
@@ -58,7 +61,7 @@ export function JoinButton({ href, onClick, disabled, loading, stopPropagation }
 
   return (
     <Link
-      href={href!}
+      href={props.href}
       className={classes}
       aria-disabled={disabled}
       tabIndex={disabled ? -1 : undefined}

@@ -515,6 +515,7 @@ function GroupCardDemo() {
             schedule={formatScheduleLocal(g.day, g.time, g.tz, locale)}
             voiceIsOpen={live}
             voiceNextSessionStart={new Date(now + offset)}
+            onJoinClick={() => {}}
             detailHref="#"
           />
         );
