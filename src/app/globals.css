@@ -185,6 +185,12 @@ label[for] {
   cursor: pointer;
 }
 
+button:disabled,
+[type="button"]:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: default;
+}
+
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));

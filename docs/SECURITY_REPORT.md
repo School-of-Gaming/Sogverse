@@ -478,7 +478,7 @@ GRANT EXECUTE ON FUNCTION adjust_token_balance TO authenticated;
 -- Function is SECURITY DEFINER — bypasses all RLS
 ```
 
-Migration 00037 added `auth.uid()` guards to `enroll_gamer_in_group`, `unenroll_gamer`, and `get_customer_enrollments`, but `adjust_token_balance` was not included in that hardening pass.
+Migration 00037 added `auth.uid()` guards to `enroll_gamer_in_group`, `unenroll_gamer`, and `get_customer_enrollments` (since removed — replaced by the customer branch in `get_my_groups`), but `adjust_token_balance` was not included in that hardening pass.
 
 #### Reproduction
 

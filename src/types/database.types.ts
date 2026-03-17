@@ -611,30 +611,6 @@ export type Database = {
           timezone: string
         }[]
       }
-      get_customer_enrollments: {
-        Args: { p_customer_id: string }
-        Returns: {
-          enrolled_at: string
-          enrollment_id: string
-          gamer_display_name: string
-          gamer_id: string
-          gedu_display_name: string
-          group_id: string
-          last_charge_session_date: string
-          last_charged_at: string
-          product_day_of_week: number
-          product_duration_minutes: number
-          product_id: string
-          product_image_url: string
-          product_name: string
-          product_padlet_url: string
-          product_start_time: string
-          product_timezone: string
-          product_token_cost: number
-          status: string
-          unenrolled_at: string
-        }[]
-      }
       get_enrollment_groups: {
         Args: { p_product_id: string }
         Returns: {
@@ -680,6 +656,7 @@ export type Database = {
           gedu_display_name: string
           gedu_id: string
           group_id: string
+          last_charge_session_date: string
           product_description: string
           product_id: string
           product_image_url: string
@@ -687,6 +664,7 @@ export type Database = {
           product_min_age: number
           product_name: string
           product_padlet_url: string
+          product_token_cost: number
           start_time: string
           timezone: string
           voice_room_id: string

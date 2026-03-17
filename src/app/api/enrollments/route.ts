@@ -38,11 +38,11 @@ export async function POST(request: Request) {
     const product = group.products;
 
     // Compute the next session date for the first charge
-    const nextSession = getNextSessionStart(
-      product.day_of_week,
-      product.start_time,
-      product.timezone,
-    );
+    const nextSession = getNextSessionStart({
+      dayOfWeek: product.day_of_week,
+      startTime: product.start_time,
+      timezone: product.timezone,
+    });
     // Format as YYYY-MM-DD for the SQL DATE parameter
     const sessionDate = nextSession.toISOString().split("T")[0];
 

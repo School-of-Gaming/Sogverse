@@ -14,14 +14,15 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { useRequiredAuth } from "@/providers";
 import { useMyGamers } from "@/services/gamers";
 import {
   useEnrollmentGroups,
   useEnrollGamer,
-  useMyEnrollments,
   type EnrollmentGroup,
 } from "@/services/enrollments";
+import { useMyGroups } from "@/services/groups";
 import { useTokenBalance } from "@/services/tokens";
 import type { ProductWithGame } from "@/services/products/products.service";
 import { ROUTES } from "@/lib/constants";
@@ -45,14 +46,14 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
     product.id,
   );
   const { data: balance } = useTokenBalance(user.id);
-  const { data: myEnrollments } = useMyEnrollments();
+  const { data: myGroups } = useMyGroups();
   const enrollGamer = useEnrollGamer();
 
   // Gamer IDs already actively enrolled in this product
   const enrolledGamerIds = new Set(
-    myEnrollments
-      ?.filter((e) => e.productId === product.id && e.status === "active")
-      .map((e) => e.gamerId) ?? [],
+    myGroups
+      ?.filter((g) => g.productId === product.id)
+      .flatMap((g) => g.gamers.map((gg) => gg.gamerId)) ?? [],
   );
 
   const [step, setStep] = useState<Step>("select-gamer");
@@ -244,10 +245,10 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                             gamer.display_name,
                           )
                         }
-                        className={`flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors ${
+                        className={`group flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors ${
                           alreadyEnrolled
-                            ? "cursor-not-allowed opacity-50"
-                            : "hover:border-primary hover:bg-accent"
+                            ? "opacity-50"
+                            : "hover:bg-muted/50"
                         }`}
                       >
                         <Avatar className="h-10 w-10">
@@ -259,10 +260,12 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                             @{gamer.username}
                           </p>
                         </div>
-                        {alreadyEnrolled && (
+                        {alreadyEnrolled ? (
                           <span className="text-xs font-medium text-muted-foreground">
                             Already enrolled
                           </span>
+                        ) : (
+                          <NavChevron size="sm" />
                         )}
                       </button>
                     );
@@ -425,12 +428,23 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                 New balance: {enrollResult.newBalance} Sorgs
               </p>
             )}
+            <div className="mt-4 rounded-md border border-info/30 bg-info/10 p-3 text-left text-sm text-muted-foreground">
+              <p className="font-medium text-foreground">
+                How to join a session
+              </p>
+              <p className="mt-1">
+                When a session starts, a green &quot;Live&quot; badge will
+                appear on the group card in{" "}
+                <strong>{selectedGamerName}&apos;s</strong> dashboard. They can
+                click &quot;Join&quot; to connect.
+              </p>
+            </div>
             <div className="mt-6 flex gap-3">
-              <Link href={ROUTES.customer.gamers}>
-                <Button variant="outline">View My Gamers</Button>
-              </Link>
               <Link href={ROUTES.products}>
-                <Button>Browse Products</Button>
+                <Button variant="outline">Browse Products</Button>
+              </Link>
+              <Link href={ROUTES.customer.gamers}>
+                <Button>View My Gamers</Button>
               </Link>
             </div>
           </div>

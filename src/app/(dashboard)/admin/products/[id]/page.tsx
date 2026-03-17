@@ -107,14 +107,15 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
 
       {/* Product Summary */}
       <Card>
-        <CardContent className="flex items-start gap-6 pt-6">
-          <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
+        <CardContent className="flex items-center gap-6 pt-6">
+          <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center">
             <Image
               src={product.image_url}
               alt={product.name}
-              fill
+              width={96}
+              height={96}
               unoptimized
-              className="object-cover"
+              className="h-auto w-auto max-h-full max-w-full rounded-md"
             />
           </div>
           <div className="flex-1 space-y-2">

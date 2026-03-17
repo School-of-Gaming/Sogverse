@@ -1,27 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types";
 
-export interface CustomerEnrollment {
-  enrollmentId: string;
-  groupId: string;
-  gamerId: string;
-  gamerDisplayName: string;
-  status: string;
-  enrolledAt: string;
-  lastChargedAt: string | null;
-  unenrolledAt: string | null;
-  productId: string;
-  productName: string;
-  productImageUrl: string;
-  productTokenCost: number;
-  productDayOfWeek: number;
-  productStartTime: string;
-  productTimezone: string;
-  productDurationMinutes: number;
-  geduDisplayName: string;
-  lastChargeSessionDate: string | null;
-}
-
 export interface EnrollmentGroup {
   groupId: string;
   geduDisplayName: string;
@@ -64,41 +43,6 @@ export class EnrollmentsService {
     }
 
     return response.json();
-  }
-
-  async getMyEnrollments(): Promise<CustomerEnrollment[]> {
-    const {
-      data: { user },
-    } = await this.supabase.auth.getUser();
-
-    if (!user) throw new Error("Not authenticated");
-
-    const { data, error } = await this.supabase.rpc("get_customer_enrollments", {
-      p_customer_id: user.id,
-    });
-
-    if (error) throw error;
-
-    return data.map((row) => ({
-      enrollmentId: row.enrollment_id,
-      groupId: row.group_id,
-      gamerId: row.gamer_id,
-      gamerDisplayName: row.gamer_display_name,
-      status: row.status,
-      enrolledAt: row.enrolled_at,
-      lastChargedAt: row.last_charged_at,
-      unenrolledAt: row.unenrolled_at,
-      productId: row.product_id,
-      productName: row.product_name,
-      productImageUrl: row.product_image_url,
-      productTokenCost: row.product_token_cost,
-      productDayOfWeek: row.product_day_of_week,
-      productStartTime: row.product_start_time,
-      productTimezone: row.product_timezone,
-      productDurationMinutes: row.product_duration_minutes,
-      geduDisplayName: row.gedu_display_name,
-      lastChargeSessionDate: row.last_charge_session_date,
-    }));
   }
 
   async getEnrollmentGroups(productId: string): Promise<EnrollmentGroup[]> {

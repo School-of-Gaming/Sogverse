@@ -27,6 +27,7 @@ export interface GeduGroupGamer {
   enrollmentId: string;
   dateOfBirth: string | null;
   gender: string | null;
+  lastChargeSessionDate: string | null;
 }
 
 export interface GeduGroup {
@@ -38,6 +39,7 @@ export interface GeduGroup {
   productPadletUrl: string | null;
   productMinAge: number;
   productMaxAge: number;
+  productTokenCost: number | null;
   gameId: string;
   gameName: string;
   geduId: string;
@@ -73,6 +75,7 @@ function reshapeGroupRows(data: MyGroupWithDetails[]): GeduGroup[] {
         productPadletUrl: row.product_padlet_url,
         productMinAge: row.product_min_age,
         productMaxAge: row.product_max_age,
+        productTokenCost: row.product_token_cost,
         gameId: row.game_id,
         gameName: row.game_name,
         geduId: row.gedu_id,
@@ -94,6 +97,7 @@ function reshapeGroupRows(data: MyGroupWithDetails[]): GeduGroup[] {
         enrollmentId: row.enrollment_id!,
         dateOfBirth: row.gamer_date_of_birth,
         gender: row.gamer_gender,
+        lastChargeSessionDate: row.last_charge_session_date,
       });
     }
   }

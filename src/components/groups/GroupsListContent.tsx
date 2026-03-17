@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { GroupCard } from "@/components/ui/group-card";
@@ -108,21 +109,27 @@ function GroupCardAdapter({
   voiceRoute: (roomId: string) => string;
   detailRoute: (groupId: string) => string;
 }) {
+  const router = useRouter();
   const schedule = useMemo(
     () => formatScheduleLocal(group.dayOfWeek, group.startTime, group.timezone, locale),
     [group.dayOfWeek, group.startTime, group.timezone, locale],
+  );
+  const handleJoinClick = useCallback(
+    () => router.push(voiceRoute(group.voiceRoomId)),
+    [router, voiceRoute, group.voiceRoomId],
   );
 
   return (
     <GroupCard
       productName={group.productName}
+      productImageUrl={group.productImageUrl}
       geduName={group.geduName}
       gamerCount={group.gamers.length}
       schedule={schedule}
       voiceIsOpen={group.voiceIsOpen}
       voiceNextSessionStart={group.voiceNextSessionStart}
       locale={locale}
-      joinHref={voiceRoute(group.voiceRoomId)}
+      onJoinClick={handleJoinClick}
       detailHref={detailRoute(group.groupId)}
     />
   );

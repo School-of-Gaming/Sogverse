@@ -339,9 +339,6 @@ REVOKE EXECUTE ON FUNCTION commit_group_changes(UUID, JSONB, JSONB, UUID[], JSON
 GRANT EXECUTE ON FUNCTION commit_group_changes(UUID, JSONB, JSONB, UUID[], JSONB) TO authenticated;
 
 -- Customer-facing enrollment RPCs: authenticated only
-REVOKE EXECUTE ON FUNCTION get_customer_enrollments(UUID) FROM public, anon, authenticated;
-GRANT EXECUTE ON FUNCTION get_customer_enrollments(UUID) TO authenticated;
-
 REVOKE EXECUTE ON FUNCTION get_enrollment_groups(UUID) FROM public, anon, authenticated;
 GRANT EXECUTE ON FUNCTION get_enrollment_groups(UUID) TO authenticated;
 

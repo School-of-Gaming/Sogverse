@@ -467,12 +467,12 @@ const DEMO_PRODUCTS = [
 
 // Demo products: day_of_week (0=Mon–6=Sun), start_time, timezone (IANA)
 const DEMO_GROUPS = [
-  { name: "Thursday Minecraft Club", gedu: "Rachel Morgan", gamers: 4, day: 3, time: "17:30", tz: "Europe/Helsinki" },
-  { name: "Friday Creative Lab",     gedu: "Morgan Ellis",  gamers: 3, day: 4, time: "16:00", tz: "America/New_York" },
-  { name: "Weekend Warriors",        gedu: "Taylor Kim",    gamers: 2, day: 6, time: "15:00", tz: "America/New_York" },
-  { name: "Saturday Adventure Club", gedu: "Jordan Lee",    gamers: 6, day: 5, time: "10:00", tz: "America/New_York" },
-  { name: "Wednesday Roblox Group",  gedu: "Sam Rivera",    gamers: 5, day: 2, time: "17:00", tz: "America/New_York" },
-  { name: "Monday Builders",         gedu: "Alex Chen",     gamers: 3, day: 0, time: "16:00", tz: "America/New_York" },
+  { name: "Thursday Minecraft Club", gedu: "Rachel Morgan", gamers: 4, day: 3, time: "17:30", tz: "Europe/Helsinki", image: "https://placehold.co/80x96" },
+  { name: "Friday Creative Lab",     gedu: "Morgan Ellis",  gamers: 3, day: 4, time: "16:00", tz: "America/New_York", image: "https://placehold.co/200x96" },
+  { name: "Weekend Warriors",        gedu: "Taylor Kim",    gamers: 2, day: 6, time: "15:00", tz: "America/New_York", image: "https://placehold.co/96x96" },
+  { name: "Saturday Adventure Club", gedu: "Jordan Lee",    gamers: 6, day: 5, time: "10:00", tz: "America/New_York", image: "https://placehold.co/80x200" },
+  { name: "Wednesday Roblox Group",  gedu: "Sam Rivera",    gamers: 5, day: 2, time: "17:00", tz: "America/New_York", image: "https://placehold.co/160x90" },
+  { name: "Monday Builders",         gedu: "Alex Chen",     gamers: 3, day: 0, time: "16:00", tz: "America/New_York", image: "https://placehold.co/80x96" },
 ] as const;
 
 /** Defers time-dependent values to after mount so SSR and client render match. */
@@ -507,12 +507,13 @@ function GroupCardDemo() {
           <GroupCard
             key={g.name}
             productName={g.name}
+            productImageUrl={g.image}
             geduName={g.gedu}
             gamerCount={g.gamers}
             schedule={formatScheduleLocal(g.day, g.time, g.tz, locale)}
             voiceIsOpen={live}
             voiceNextSessionStart={new Date(now + offset)}
-            joinHref="#"
+            onJoinClick={() => {}}
             detailHref="#"
           />
         );
