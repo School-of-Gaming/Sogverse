@@ -312,6 +312,21 @@ The identicon generator (`src/lib/identicon.ts`) creates unique SVG avatars from
 
 **Caveat:** Email client SVG support is inconsistent (Gmail strips `<svg>` tags). May need to render identicons as PNG via a server-side route (e.g., `GET /api/identicon/[id].png`) and reference via `<img>` tag, or use inline `data:image/svg+xml` URIs.
 
+### Make Root Layout Resilient to Stripe Outages
+
+`getStripeProducts()` is called in the root layout (`src/app/layout.tsx:40`). If Stripe is unreachable or returns no products, this throws and every page renders an error — including pages that don't need pricing data (admin dashboard, gamer dashboard, etc.).
+
+Current risk is low: Stripe has ~99.99% uptime, outages are typically minutes, and the 5-minute cache (`src/lib/stripe/products.ts:11`) means the first successful page load after recovery fixes it for all users.
+
+Potential approaches (pick one):
+- [ ] Wrap the `getStripeProducts()` call in try/catch, pass `null` baseRates to `TokenRateProvider`, make downstream components handle null gracefully (show "rates unavailable" instead of crashing)
+- [ ] Cache the last successful Stripe result to disk/KV — serve stale rates on Stripe failure instead of crashing
+- [ ] Move `getStripeProducts()` out of the root layout into only the layouts/pages that need pricing data (customer token purchase pages)
+
+**Affected files:** `src/app/layout.tsx`, `src/lib/stripe/products.ts`, `src/providers/index.tsx` (TokenRateProvider)
+
+**When:** If Stripe outages cause user-facing incidents. Not worth the complexity until then.
+
 ### Migrate Auth Email Templates to Brevo Visual Editor
 
 Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.

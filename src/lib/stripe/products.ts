@@ -35,22 +35,27 @@ export async function getStripeProducts(): Promise<Omit<CachedProducts, "fetched
   const products = await stripe.products.list({
     active: true,
     limit: 100,
-    expand: ["data.default_price"],
   });
 
-  // Fetch all prices for each product (products can have multiple currency prices)
+  // Filter to Sogverse token products (those with tokenAmount metadata)
+  const tokenProducts = products.data.filter(
+    (p) => Number(p.metadata.tokenAmount) > 0,
+  );
+
+  // Fetch prices for all token products in parallel (one call per product,
+  // but concurrent instead of sequential)
+  const priceResults = await Promise.all(
+    tokenProducts.map((p) =>
+      stripe.prices.list({ product: p.id, active: true, limit: 100 }),
+    ),
+  );
+
   const packages: StripePackage[] = [];
 
-  for (const product of products.data) {
+  for (let i = 0; i < tokenProducts.length; i++) {
+    const product = tokenProducts[i];
+    const prices = priceResults[i];
     const tokenAmount = Number(product.metadata.tokenAmount);
-    if (!tokenAmount) continue;
-
-    // Fetch all active prices for this product
-    const prices = await stripe.prices.list({
-      product: product.id,
-      active: true,
-      limit: 100,
-    });
 
     const priceMap: Partial<Record<SupportedCurrency, { priceId: string; unitAmount: number }>> = {};
     let type: "one_time" | "subscription" | null = null;
@@ -100,13 +105,16 @@ export async function getStripeProducts(): Promise<Omit<CachedProducts, "fetched
 function computeBaseRates(
   oneTimePackages: StripePackage[],
 ): Record<SupportedCurrency, number> {
-  // Default fallback rates if no one-off packages exist
-  const rates: Record<SupportedCurrency, number> = { usd: 300, gbp: 240, eur: 280 };
-
-  if (oneTimePackages.length === 0) return rates;
+  if (oneTimePackages.length === 0) {
+    throw new Error("No one-time packages found in Stripe — cannot compute base rates");
+  }
 
   const cheapest = oneTimePackages[0]; // already sorted cheapest first
-  if (cheapest.tokenAmount <= 0) return rates;
+  if (cheapest.tokenAmount <= 0) {
+    throw new Error("Cheapest one-time package has invalid tokenAmount");
+  }
+
+  const rates = {} as Record<SupportedCurrency, number>;
   for (const currency of SUPPORTED_CURRENCIES) {
     rates[currency] = Math.round(cheapest.prices[currency].unitAmount / cheapest.tokenAmount);
   }

@@ -158,8 +158,25 @@ describe("getStripeProducts", () => {
     expect(result.baseRates.eur).toBe(280);
   });
 
-  it("uses cache on subsequent calls", async () => {
+  it("throws when no one-time packages exist", async () => {
     mockProductsList.mockResolvedValue({ data: [] });
+
+    await expect(getStripeProducts()).rejects.toThrow(
+      "No one-time packages found in Stripe"
+    );
+  });
+
+  it("uses cache on subsequent calls", async () => {
+    mockProductsList.mockResolvedValue({
+      data: [makeProduct("prod_starter", "Starter Pack", 5)],
+    });
+    mockPricesList.mockResolvedValue({
+      data: [
+        makePrice("price_usd", "prod_starter", "usd", 1500, "one_time"),
+        makePrice("price_gbp", "prod_starter", "gbp", 1200, "one_time"),
+        makePrice("price_eur", "prod_starter", "eur", 1400, "one_time"),
+      ],
+    });
 
     await getStripeProducts();
     await getStripeProducts();
@@ -199,7 +216,16 @@ describe("getProductByPriceId", () => {
   });
 
   it("returns null for an unknown priceId", async () => {
-    mockProductsList.mockResolvedValue({ data: [] });
+    mockProductsList.mockResolvedValue({
+      data: [makeProduct("prod_starter", "Starter Pack", 5)],
+    });
+    mockPricesList.mockResolvedValue({
+      data: [
+        makePrice("price_starter_usd", "prod_starter", "usd", 1500, "one_time"),
+        makePrice("price_starter_gbp", "prod_starter", "gbp", 1200, "one_time"),
+        makePrice("price_starter_eur", "prod_starter", "eur", 1400, "one_time"),
+      ],
+    });
 
     const result = await getProductByPriceId("price_nonexistent");
 
