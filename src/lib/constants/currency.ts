@@ -1,6 +1,6 @@
 // Single source of truth for supported currencies.
-// When adding a new currency, also update: CURRENCY_CONFIG below,
-// TOKEN_PACKAGES prices and TOKEN_BASE_RATE in tokens.ts.
+// When adding a new currency, also update CURRENCY_CONFIG below and
+// ensure Stripe Products have prices in the new currency.
 export const SUPPORTED_CURRENCIES = ["usd", "gbp", "eur"] as const;
 export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
 export const DEFAULT_CURRENCY: SupportedCurrency = "eur";

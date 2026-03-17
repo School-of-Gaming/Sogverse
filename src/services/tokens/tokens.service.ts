@@ -29,10 +29,11 @@ export class TokensService {
   async getSubscription(userId: string): Promise<{
     stripe_subscription_id: string | null;
     subscription_status: string | null;
+    subscription_tier: string | null;
   }> {
     const { data, error } = await this.supabase
       .from("customer_profiles")
-      .select("stripe_subscription_id, subscription_status")
+      .select("stripe_subscription_id, subscription_status, subscription_tier")
       .eq("user_id", userId)
       .single();
 
@@ -46,6 +47,8 @@ export class TokensService {
     currentPeriodEnd: number;
     amount: number | null;
     currency: string;
+    productName: string | null;
+    tokenAmount: number | null;
   } | null> {
     const response = await fetch("/api/checkout/subscription");
 
@@ -98,6 +101,21 @@ export class TokensService {
     if (!response.ok) {
       const data = await response.json();
       throw new Error(data.error || "Failed to resume subscription");
+    }
+
+    return response.json();
+  }
+
+  async switchSubscription(priceId: string): Promise<{ switched: boolean }> {
+    const response = await fetch("/api/checkout/subscription/switch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ priceId }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Failed to switch subscription");
     }
 
     return response.json();

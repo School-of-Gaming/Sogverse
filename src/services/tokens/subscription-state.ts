@@ -5,11 +5,14 @@ export interface SubscriptionState {
   status: SubscriptionStatus;
   /** Whether the subscription should block new subscription purchases (active or past_due with a valid subscription ID) */
   hasActiveSubscription: boolean;
+  /** Stripe Product ID of the current subscription tier, or null */
+  tier: string | null;
 }
 
 interface SubscriptionData {
   stripe_subscription_id: string | null;
   subscription_status: string | null;
+  subscription_tier: string | null;
 }
 
 /**
@@ -21,27 +24,28 @@ export function getSubscriptionState(
   subscription: SubscriptionData | undefined,
 ): SubscriptionState {
   if (!subscription?.stripe_subscription_id) {
-    return { status: "none", hasActiveSubscription: false };
+    return { status: "none", hasActiveSubscription: false, tier: null };
   }
 
   const dbStatus = subscription.subscription_status;
+  const tier = subscription.subscription_tier ?? null;
 
   if (dbStatus === "canceled") {
-    return { status: "canceled", hasActiveSubscription: false };
+    return { status: "canceled", hasActiveSubscription: false, tier: null };
   }
 
   if (dbStatus === "past_due") {
-    return { status: "past_due", hasActiveSubscription: true };
+    return { status: "past_due", hasActiveSubscription: true, tier };
   }
 
   if (dbStatus === "canceling") {
-    return { status: "canceling", hasActiveSubscription: true };
+    return { status: "canceling", hasActiveSubscription: true, tier };
   }
 
   if (dbStatus === "active") {
-    return { status: "active", hasActiveSubscription: true };
+    return { status: "active", hasActiveSubscription: true, tier };
   }
 
   // Unknown/null status with a subscription ID
-  return { status: "none", hasActiveSubscription: false };
+  return { status: "none", hasActiveSubscription: false, tier: null };
 }

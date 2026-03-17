@@ -26,6 +26,16 @@ export async function GET() {
       customerProfile.stripe_subscription_id
     );
 
+    // Get product name and token amount from subscription metadata
+    const productName = subscription.items.data[0]?.price.product
+      ? typeof subscription.items.data[0].price.product === "string"
+        ? null // product not expanded, skip
+        : (subscription.items.data[0].price.product as Stripe.Product).name
+      : null;
+    const tokenAmount = subscription.metadata.tokenAmount
+      ? Number(subscription.metadata.tokenAmount)
+      : null;
+
     return NextResponse.json({
       subscription: {
         status: subscription.status,
@@ -33,6 +43,8 @@ export async function GET() {
         currentPeriodEnd: subscription.current_period_end,
         amount: subscription.items.data[0]?.price.unit_amount ?? null,
         currency: subscription.items.data[0]?.price.currency ?? "usd",
+        productName,
+        tokenAmount,
       },
     });
   } catch {

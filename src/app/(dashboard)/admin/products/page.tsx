@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAllProducts } from "@/services/products";
 import { useCurrency } from "@/hooks/use-currency";
+import { useTokenRates } from "@/providers/token-rate-provider";
 import { ProductRow } from "@/components/admin/product-row";
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: products, isLoading } = useAllProducts();
   const { currency, locale } = useCurrency();
+  const { tokensToCurrencyDisplay } = useTokenRates();
 
   const filteredProducts = products?.filter(
     (product) =>
@@ -75,7 +77,7 @@ export default function AdminProductsPage() {
                   key={product.id}
                   href={`/admin/products/${product.id}`}
                 >
-                  <ProductRow product={product} currency={currency} locale={locale} />
+                  <ProductRow product={product} currency={currency} locale={locale} tokensToCurrencyDisplay={tokensToCurrencyDisplay} />
                 </Link>
               ))}
             </div>

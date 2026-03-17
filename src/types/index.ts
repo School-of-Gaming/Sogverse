@@ -124,6 +124,21 @@ export type ProductGroupWithDetails = Omit<
 };
 
 // ---------------------------------------------------------------------------
+// Stripe-driven package types
+// ---------------------------------------------------------------------------
+
+import type { SupportedCurrency } from "@/lib/constants/currency";
+
+export interface StripePackage {
+  stripeProductId: string;
+  name: string;
+  description: string | null;
+  tokenAmount: number;
+  prices: Record<SupportedCurrency, { priceId: string; unitAmount: number }>;
+  type: "one_time" | "subscription";
+}
+
+// ---------------------------------------------------------------------------
 // App-level types (not generated)
 // ---------------------------------------------------------------------------
 

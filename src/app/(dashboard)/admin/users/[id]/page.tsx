@@ -24,14 +24,16 @@ import { useProfile } from "@/services/users";
 import { useLinkedGamers, useLinkedParents } from "@/services/gamers";
 import { useTokenBalance, useTokenTransactions, useAdjustTokens } from "@/services/tokens";
 import { TransactionHistoryTable } from "@/components/tokens";
-import { ROLE_BADGES, TOKEN_BASE_RATE } from "@/lib/constants";
+import { ROLE_BADGES } from "@/lib/constants";
 import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
+import { useTokenRates } from "@/providers/token-rate-provider";
 
 export default function AdminUserDetailPage() {
   const params = useParams();
   const userId = params.id as string;
   const { currency, locale } = useCurrency();
+  const { baseRates } = useTokenRates();
 
   const { data: profile, isLoading: profileLoading } = useProfile(userId);
   const { data: balance } = useTokenBalance(userId, profile?.role === "customer");
@@ -47,7 +49,7 @@ export default function AdminUserDetailPage() {
   const { data: linkedParents } = useLinkedParents(isGamer ? userId : "");
   const parsedAmount = parseInt(amount, 10);
   const isValidAmount = !isNaN(parsedAmount) && parsedAmount !== 0;
-  const baseRate = TOKEN_BASE_RATE[currency];
+  const baseRate = baseRates[currency];
   const monetaryValue = isValidAmount
     ? formatCurrencyFromCents(Math.abs(parsedAmount) * baseRate, currency, locale)
     : formatCurrencyFromCents(0, currency, locale);

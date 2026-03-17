@@ -5,6 +5,7 @@ import { Providers } from "@/providers";
 import { Header } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { parseAcceptLanguage, DEFAULT_LOCALE } from "@/lib/locale";
+import { getStripeProducts } from "@/lib/stripe/products";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,6 +37,7 @@ export default async function RootLayout({
   const userWithProfile = await getUserWithProfile();
   const headersList = await headers();
   const locale = parseAcceptLanguage(headersList.get("accept-language")) ?? DEFAULT_LOCALE;
+  const { baseRates } = await getStripeProducts();
 
   return (
     <html lang="en" className="dark overflow-hidden" suppressHydrationWarning>
@@ -46,6 +48,7 @@ export default async function RootLayout({
           initialUser={userWithProfile?.user ?? null}
           initialProfile={userWithProfile?.profile}
           initialLocale={locale}
+          baseRates={baseRates}
         >
           <Header />
           <main className="h-screen overflow-auto pt-16">

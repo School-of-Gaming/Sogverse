@@ -2,7 +2,6 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { formatScheduleLocal } from "@/lib/utils";
-import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
 import type { ProductWithGame } from "@/services/products";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 
@@ -10,9 +9,10 @@ interface ProductRowProps {
   product: ProductWithGame;
   currency: SupportedCurrency;
   locale: string;
+  tokensToCurrencyDisplay: (tokens: number, currency: SupportedCurrency, locale: string) => string;
 }
 
-export function ProductRow({ product, currency, locale }: ProductRowProps) {
+export function ProductRow({ product, currency, locale, tokensToCurrencyDisplay }: ProductRowProps) {
   const schedule = formatScheduleLocal(
     product.day_of_week,
     product.start_time,

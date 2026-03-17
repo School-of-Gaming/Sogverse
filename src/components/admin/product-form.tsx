@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { CardContent } from "@/components/ui/card";
 import { useGames, useCreateGame } from "@/services/games";
 import { useCurrency } from "@/hooks/use-currency";
-import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
+import { useTokenRates } from "@/providers/token-rate-provider";
 import { cn, DAYS_OF_WEEK } from "@/lib/utils";
 
 const productSchema = z.object({
@@ -62,6 +62,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const { data: games, isLoading: gamesLoading } = useGames();
   const createGame = useCreateGame();
   const { currency, locale } = useCurrency();
+  const { tokensToCurrencyDisplay } = useTokenRates();
 
   const [name, setName] = useState(initialValues?.name ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");

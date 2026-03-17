@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
  *
  * vi.mock / vi.hoisted calls must stay in each test file (Vitest hoists them
  * at the module level), but these helpers eliminate the duplicated auth and
- * profile setup used across subscription cancel, resume, etc.
+ * profile setup used across subscription cancel, resume, switch, etc.
  */
 
 /** Configures mockRequireRole to return a 401 response (unauthenticated). */
@@ -26,7 +26,12 @@ export function mockAuthenticatedSubscriptionProfile(
   mockRequireRole: ReturnType<typeof vi.fn>,
   overrides: Record<string, unknown> = {},
 ) {
-  const { role = "customer", stripe_subscription_id = "sub_active_123", ...rest } = overrides;
+  const {
+    role = "customer",
+    stripe_subscription_id = "sub_active_123",
+    subscription_tier = null,
+    ...rest
+  } = overrides;
 
   const mockFrom = vi.fn().mockImplementation((table: string) => {
     if (table === "customer_profiles") {
@@ -34,7 +39,7 @@ export function mockAuthenticatedSubscriptionProfile(
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             single: vi.fn().mockResolvedValue({
-              data: { stripe_subscription_id, ...rest },
+              data: { stripe_subscription_id, subscription_tier, ...rest },
               error: null,
             }),
           }),

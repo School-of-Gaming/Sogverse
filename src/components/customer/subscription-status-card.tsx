@@ -16,13 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { useRequiredAuth } from "@/providers";
 import { useSubscription, useSubscriptionDetails, useCancelSubscription, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
-import { TOKEN_PACKAGES } from "@/lib/constants/tokens";
 import { ROUTES } from "@/lib/constants";
 import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
 import { isSupportedCurrency, type SupportedCurrency } from "@/lib/constants/currency";
-
-const SUB_PACKAGE = TOKEN_PACKAGES.find((pkg) => pkg.type === "subscription");
 
 function formatPeriodDate(timestamp: number, locale: string) {
   return formatDate(new Date(timestamp * 1000), locale, {
@@ -53,6 +50,13 @@ export function SubscriptionStatusCard() {
       ? details.currency
       : displayCurrency;
 
+  // Dynamic tier name from subscription details
+  const tierLabel = details?.productName && details.tokenAmount
+    ? `${details.productName} — ${details.tokenAmount} Sorgs/month`
+    : details?.tokenAmount
+      ? `${details.tokenAmount} Sorgs/month`
+      : "Subscription";
+
   const handleCancel = async () => {
     await cancelMutation.mutateAsync();
     setConfirmOpen(false);
@@ -64,7 +68,7 @@ export function SubscriptionStatusCard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-secondary" />
-            Monthly Pass
+            {tierLabel}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -89,7 +93,7 @@ export function SubscriptionStatusCard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">
-                {SUB_PACKAGE ? `${SUB_PACKAGE.tokens} Sorgs/month` : "Subscription"}
+                {tierLabel}
                 {details?.amount && (
                   <span className="text-muted-foreground"> — {formatCurrencyFromCents(details.amount, billingCurrency, locale)}/mo</span>
                 )}
@@ -138,9 +142,9 @@ export function SubscriptionStatusCard() {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel {SUB_PACKAGE?.name ?? "Subscription"}?</DialogTitle>
+            <DialogTitle>Cancel Subscription?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel your {SUB_PACKAGE?.name ?? "subscription"}?
+              Are you sure you want to cancel your subscription?
               {details?.amount && <> You&apos;ll lose the monthly rate of {formatCurrencyFromCents(details.amount, billingCurrency, locale)}/mo.</>}
               {" "}Your current Sorgs will remain in your account, and you&apos;ll keep
               access until the end of your billing period.

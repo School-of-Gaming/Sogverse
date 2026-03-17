@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useProduct } from "@/services/products";
 import { useCurrency } from "@/hooks/use-currency";
-import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
+import { useTokenRates } from "@/providers/token-rate-provider";
 import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { EnrollmentWizard } from "@/components/enrollment";
@@ -26,6 +26,7 @@ export default function ProductDetailPage() {
   const id = params.id;
   const { data: product, isLoading } = useProduct(id);
   const { currency, locale } = useCurrency();
+  const { tokensToCurrencyDisplay } = useTokenRates();
   const { user, profile } = useAuth();
   const pathname = usePathname();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;

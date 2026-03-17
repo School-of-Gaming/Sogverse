@@ -146,7 +146,7 @@ describe("POST /api/webhooks/stripe", () => {
       });
     });
 
-    it("should credit tokens for subscription first payment", async () => {
+    it("should credit tokens and store subscription_tier for subscription first payment", async () => {
       mockConstructEvent.mockReturnValue(
         createEvent("checkout.session.completed", {
           id: "cs_sub_123",
@@ -155,6 +155,7 @@ describe("POST /api/webhooks/stripe", () => {
             userId: "user-123",
             packageType: "subscription",
             tokenAmount: "25",
+            stripeProductId: "prod_basic",
             currency: "usd",
           },
           customer: "cus_abc",
@@ -296,7 +297,7 @@ describe("POST /api/webhooks/stripe", () => {
       expect(mockAdminFrom).toHaveBeenCalledWith("customer_profiles");
     });
 
-    it("should store subscription metadata for subscription checkout", async () => {
+    it("should store subscription metadata including tier for subscription checkout", async () => {
       mockConstructEvent.mockReturnValue(
         createEvent("checkout.session.completed", {
           id: "cs_sub_meta_123",
@@ -305,6 +306,7 @@ describe("POST /api/webhooks/stripe", () => {
             userId: "user-123",
             packageType: "subscription",
             tokenAmount: "25",
+            stripeProductId: "prod_basic",
             currency: "usd",
           },
           customer: "cus_abc",
@@ -595,11 +597,11 @@ describe("POST /api/webhooks/stripe", () => {
   // -- customer.subscription.updated --
 
   describe("customer.subscription.updated", () => {
-    it("should update subscription status on profile", async () => {
+    it("should update subscription status and tier on profile", async () => {
       const { updateFn, eqFn } = mockAdminUpdate();
       mockConstructEvent.mockReturnValue(
         createEvent("customer.subscription.updated", {
-          metadata: { userId: "user-123" },
+          metadata: { userId: "user-123", stripeProductId: "prod_basic" },
           status: "past_due",
         })
       );
@@ -608,7 +610,10 @@ describe("POST /api/webhooks/stripe", () => {
 
       expect(response.status).toBe(200);
       expect(mockAdminFrom).toHaveBeenCalledWith("customer_profiles");
-      expect(updateFn).toHaveBeenCalledWith({ subscription_status: "past_due" });
+      expect(updateFn).toHaveBeenCalledWith({
+        subscription_status: "past_due",
+        subscription_tier: "prod_basic",
+      });
       expect(eqFn).toHaveBeenCalledWith("user_id", "user-123");
     });
 
@@ -616,7 +621,7 @@ describe("POST /api/webhooks/stripe", () => {
       const { updateFn } = mockAdminUpdate();
       mockConstructEvent.mockReturnValue(
         createEvent("customer.subscription.updated", {
-          metadata: { userId: "user-123" },
+          metadata: { userId: "user-123", stripeProductId: "prod_basic" },
           status: "active",
           cancel_at_period_end: false,
         })
@@ -624,14 +629,17 @@ describe("POST /api/webhooks/stripe", () => {
 
       await POST(createWebhookRequest());
 
-      expect(updateFn).toHaveBeenCalledWith({ subscription_status: "active" });
+      expect(updateFn).toHaveBeenCalledWith({
+        subscription_status: "active",
+        subscription_tier: "prod_basic",
+      });
     });
 
     it("should write 'canceling' when active with cancel_at_period_end", async () => {
       const { updateFn } = mockAdminUpdate();
       mockConstructEvent.mockReturnValue(
         createEvent("customer.subscription.updated", {
-          metadata: { userId: "user-123" },
+          metadata: { userId: "user-123", stripeProductId: "prod_basic" },
           status: "active",
           cancel_at_period_end: true,
         })
@@ -639,7 +647,10 @@ describe("POST /api/webhooks/stripe", () => {
 
       await POST(createWebhookRequest());
 
-      expect(updateFn).toHaveBeenCalledWith({ subscription_status: "canceling" });
+      expect(updateFn).toHaveBeenCalledWith({
+        subscription_status: "canceling",
+        subscription_tier: "prod_basic",
+      });
     });
 
     it("should skip when userId is missing from metadata", async () => {
@@ -660,7 +671,7 @@ describe("POST /api/webhooks/stripe", () => {
   // -- customer.subscription.deleted --
 
   describe("customer.subscription.deleted", () => {
-    it("should clear subscription metadata on profile", async () => {
+    it("should clear subscription metadata including tier on profile", async () => {
       const { updateFn, eqFn } = mockAdminUpdate();
       mockConstructEvent.mockReturnValue(
         createEvent("customer.subscription.deleted", {
@@ -675,6 +686,7 @@ describe("POST /api/webhooks/stripe", () => {
       expect(updateFn).toHaveBeenCalledWith({
         stripe_subscription_id: null,
         subscription_status: null,
+        subscription_tier: null,
       });
       expect(eqFn).toHaveBeenCalledWith("user_id", "user-123");
     });

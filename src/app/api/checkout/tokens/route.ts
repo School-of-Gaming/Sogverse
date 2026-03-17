@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { requireRole } from "@/lib/auth";
-import { getTokenPackage, getPackagePrice } from "@/lib/constants/tokens";
+import { getProductByPriceId } from "@/lib/stripe/products";
 import { isSupportedCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import { ROUTES } from "@/lib/constants";
 
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .single();
 
-    const { packageId, currency: rawCurrency, returnPath } = await request.json();
+    const { priceId, currency: rawCurrency, returnPath } = await request.json();
 
     const currency = isSupportedCurrency(rawCurrency) ? rawCurrency : DEFAULT_CURRENCY;
 
@@ -29,16 +29,17 @@ export async function POST(request: Request) {
     const safePath =
       returnPath === ROUTES.customer.sorg ? ROUTES.customer.sorg : ROUTES.sorg;
 
-    const tokenPackage = getTokenPackage(packageId);
-    if (!tokenPackage) {
+    // Validate priceId against active Stripe products
+    const productInfo = await getProductByPriceId(priceId);
+    if (!productInfo) {
       return NextResponse.json(
-        { error: "Invalid package ID" },
+        { error: "Invalid price ID" },
         { status: 400 }
       );
     }
 
     if (
-      tokenPackage.type === "subscription" &&
+      productInfo.type === "subscription" &&
       (customerProfile?.subscription_status === "active" ||
         customerProfile?.subscription_status === "past_due")
     ) {
@@ -60,44 +61,34 @@ export async function POST(request: Request) {
       ? { customer: customerProfile.stripe_customer_id }
       : { customer_email: profile.email || undefined };
 
-    const unitAmount = getPackagePrice(tokenPackage, currency);
+    const isSubscription = productInfo.type === "subscription";
 
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
-      mode: tokenPackage.type === "subscription" ? "subscription" : "payment",
+      mode: isSubscription ? "subscription" : "payment",
       ...customerParams,
       line_items: [
         {
-          price_data: {
-            currency: currency,
-            product_data: {
-              name: `${tokenPackage.name} — ${tokenPackage.tokens} Sorgs`,
-              description: tokenPackage.description,
-            },
-            unit_amount: unitAmount,
-            ...(tokenPackage.type === "subscription" && {
-              recurring: { interval: "month" as const },
-            }),
-          },
+          price: priceId,
           quantity: 1,
         },
       ],
       metadata: {
         userId: user.id,
-        packageId: tokenPackage.id,
-        tokenAmount: String(tokenPackage.tokens),
-        packageType: tokenPackage.type,
+        tokenAmount: String(productInfo.tokenAmount),
+        stripeProductId: productInfo.stripeProductId,
+        packageType: productInfo.type,
         currency,
       },
       success_url: `${origin}${safePath}?success=true`,
       cancel_url: `${origin}${safePath}?canceled=true`,
     };
 
-    if (tokenPackage.type === "subscription") {
+    if (isSubscription) {
       sessionParams.subscription_data = {
         metadata: {
           userId: user.id,
-          packageId: tokenPackage.id,
-          tokenAmount: String(tokenPackage.tokens),
+          tokenAmount: String(productInfo.tokenAmount),
+          stripeProductId: productInfo.stripeProductId,
           currency,
         },
       };

@@ -84,7 +84,7 @@ export function useCancelSubscription(userId: string) {
       // arrives, so an immediate refetch would overwrite the optimistic value.
       queryClient.setQueryData(
         tokenKeys.subscription(userId),
-        (old: { stripe_subscription_id: string | null; subscription_status: string | null } | undefined) =>
+        (old: { stripe_subscription_id: string | null; subscription_status: string | null; subscription_tier: string | null } | undefined) =>
           old ? { ...old, subscription_status: "canceling" } : old,
       );
     },
@@ -102,9 +102,22 @@ export function useResumeSubscription(userId: string) {
       // Optimistically show "active" — same reasoning as useCancelSubscription.
       queryClient.setQueryData(
         tokenKeys.subscription(userId),
-        (old: { stripe_subscription_id: string | null; subscription_status: string | null } | undefined) =>
+        (old: { stripe_subscription_id: string | null; subscription_status: string | null; subscription_tier: string | null } | undefined) =>
           old ? { ...old, subscription_status: "active" } : old,
       );
+    },
+  });
+}
+
+export function useSwitchSubscription(userId: string) {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new TokensService(supabase);
+
+  return useMutation({
+    mutationFn: (priceId: string) => service.switchSubscription(priceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tokenKeys.subscription(userId) });
     },
   });
 }

@@ -9,4 +9,5 @@ export {
   useAdjustTokens,
   useCancelSubscription,
   useResumeSubscription,
+  useSwitchSubscription,
 } from "./tokens.queries";

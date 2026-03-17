@@ -10,14 +10,14 @@ import { ROUTES } from "@/lib/constants";
 function CheckoutRedirect() {
   const { user, profile, isLoading } = useAuth();
   const searchParams = useSearchParams();
-  const packageId = searchParams.get("package");
+  const priceId = searchParams.get("priceId");
   const triggered = useRef(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     if (triggered.current) return;
 
-    if (!packageId) {
+    if (!priceId) {
       window.location.href = ROUTES.sorg;
       return;
     }
@@ -26,7 +26,7 @@ function CheckoutRedirect() {
     if (isLoading) return;
 
     if (!user || profile?.role !== "customer") {
-      window.location.href = `${ROUTES.login}?redirect=${encodeURIComponent(`${ROUTES.checkout}?package=${packageId}`)}`;
+      window.location.href = `${ROUTES.login}?redirect=${encodeURIComponent(`${ROUTES.checkout}?priceId=${priceId}`)}`;
       return;
     }
 
@@ -35,7 +35,7 @@ function CheckoutRedirect() {
     fetch("/api/checkout/tokens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ packageId, returnPath: ROUTES.sorg }),
+      body: JSON.stringify({ priceId, returnPath: ROUTES.sorg }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -48,7 +48,7 @@ function CheckoutRedirect() {
       .catch(() => {
         setError(true);
       });
-  }, [user, profile, isLoading, packageId]);
+  }, [user, profile, isLoading, priceId]);
 
   if (error) {
     return (

@@ -76,13 +76,15 @@ export async function POST(request: Request) {
             .eq("user_id", userId);
         }
 
-        // For subscriptions, store subscription ID
+        // For subscriptions, store subscription ID and tier
         if (packageType === "subscription" && session.subscription) {
+          const stripeProductId = session.metadata?.stripeProductId || null;
           await admin
             .from("customer_profiles")
             .update({
               stripe_subscription_id: session.subscription as string,
               subscription_status: "active",
+              subscription_tier: stripeProductId,
             })
             .eq("user_id", userId);
         }
@@ -156,9 +158,15 @@ export async function POST(request: Request) {
             ? "canceling"
             : subscription.status;
 
+        // Update tier from subscription metadata (set by tier switch or initial checkout)
+        const stripeProductId = subscription.metadata.stripeProductId || null;
+
         await admin
           .from("customer_profiles")
-          .update({ subscription_status: status })
+          .update({
+            subscription_status: status,
+            subscription_tier: stripeProductId,
+          })
           .eq("user_id", userId);
         break;
       }
@@ -173,6 +181,7 @@ export async function POST(request: Request) {
           .update({
             stripe_subscription_id: null,
             subscription_status: null,
+            subscription_tier: null,
           })
           .eq("user_id", userId);
         break;

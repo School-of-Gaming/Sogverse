@@ -40,6 +40,7 @@ export function createMockCustomerProfile(
     stripe_customer_id: null,
     stripe_subscription_id: null,
     subscription_status: null,
+    subscription_tier: null,
     ...overrides,
   };
 }

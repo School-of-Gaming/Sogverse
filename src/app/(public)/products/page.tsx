@@ -7,12 +7,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { useVisibleProducts } from "@/services/products";
 import { useCurrency } from "@/hooks/use-currency";
-import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
+import { useTokenRates } from "@/providers/token-rate-provider";
 import { formatScheduleLocal } from "@/lib/utils";
 
 export default function ProductsPage() {
   const { data: products, isLoading } = useVisibleProducts();
   const { currency, locale } = useCurrency();
+  const { tokensToCurrencyDisplay } = useTokenRates();
 
   return (
     <div className="container mx-auto px-4 py-12">

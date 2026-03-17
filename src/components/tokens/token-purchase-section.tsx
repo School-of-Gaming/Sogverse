@@ -2,24 +2,20 @@
 
 import { useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Coins, Sparkles, Zap, Loader2, AlertCircle, AlertTriangle, CheckCircle2, type LucideIcon } from "lucide-react";
+import { Loader2, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { useAuth } from "@/providers";
-import { useSubscription, useResumeSubscription, getSubscriptionState } from "@/services/tokens";
-import { TOKEN_PACKAGES, getPackagePrice, getPackageSavings, type TokenPackage, type TokenPackageId } from "@/lib/constants/tokens";
+import { useTokenRates } from "@/providers/token-rate-provider";
+import { useSubscription, useResumeSubscription, useSwitchSubscription, getSubscriptionState } from "@/services/tokens";
+import { getPackageSavings } from "@/lib/stripe/utils";
 import { ROUTES } from "@/lib/constants";
 import { useCurrency } from "@/hooks/use-currency";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-
-const PACKAGE_ICONS: Record<TokenPackageId, LucideIcon> = {
-  tokens_5: Coins,
-  tokens_20: Zap,
-  tokens_sub_25: Sparkles,
-};
+import type { StripePackage } from "@/types";
 
 function PurchaseFeedback() {
   const searchParams = useSearchParams();
@@ -57,42 +53,48 @@ function PurchaseFeedback() {
 
 function PackageCard({
   pkg,
-  icon: Icon,
   currency,
   locale,
+  baseRate,
   onBuy,
   onResume,
+  onSwitch,
   isLoading,
   isResuming,
+  isSwitching,
+  isCurrentTier,
   hasActiveSubscription,
   isCanceling,
 }: {
-  pkg: TokenPackage;
-  icon: React.ElementType;
+  pkg: StripePackage;
   currency: SupportedCurrency;
   locale: string;
-  onBuy: (packageId: string) => void;
+  baseRate: number;
+  onBuy: (priceId: string) => void;
   onResume: () => void;
+  onSwitch: (priceId: string) => void;
   isLoading: boolean;
   isResuming: boolean;
+  isSwitching: boolean;
+  isCurrentTier: boolean;
   hasActiveSubscription: boolean;
   isCanceling: boolean;
 }) {
-  const price = getPackagePrice(pkg, currency);
-  const savings = getPackageSavings(pkg, currency);
-  const priceFormatted = formatCurrencyFromCents(price, currency, locale);
+  const priceInfo = pkg.prices[currency];
+
+  const savings = getPackageSavings(priceInfo.unitAmount, pkg.tokenAmount, baseRate);
+  const priceFormatted = formatCurrencyFromCents(priceInfo.unitAmount, currency, locale);
   const isSubscription = pkg.type === "subscription";
-  const isCurrentPlan = isSubscription && hasActiveSubscription;
   // Active + renewing: fully locked. Active + canceling: show resume action.
-  const isLockedPlan = isCurrentPlan && !isCanceling;
+  const isLockedPlan = isCurrentTier && !isCanceling;
 
   return (
     <Card className={cn("relative flex flex-col", isLockedPlan && "opacity-60")}>
-      {isCurrentPlan && isCanceling ? (
+      {isCurrentTier && isCanceling ? (
         <div className="absolute -top-3 right-4">
           <Badge variant="outline">Cancels at period end</Badge>
         </div>
-      ) : isCurrentPlan ? (
+      ) : isCurrentTier ? (
         <div className="absolute -top-3 right-4">
           <Badge variant="secondary">Current plan</Badge>
         </div>
@@ -104,15 +106,14 @@ function PackageCard({
         </div>
       ) : null}
       <CardHeader className="text-center">
-        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-          <Icon className="h-6 w-6 text-primary" />
-        </div>
         <CardTitle className="text-lg">{pkg.name}</CardTitle>
-        <p className="text-sm text-muted-foreground">{pkg.description}</p>
+        {pkg.description && (
+          <p className="text-sm text-muted-foreground">{pkg.description}</p>
+        )}
       </CardHeader>
       <CardContent className="flex flex-1 flex-col items-center justify-end gap-4">
         <div className="text-center">
-          <span className="text-3xl font-bold">{pkg.tokens}</span>
+          <span className="text-3xl font-bold">{pkg.tokenAmount}</span>
           <span className="ml-1 text-muted-foreground">Sorgs</span>
         </div>
         <div className="text-center">
@@ -121,7 +122,7 @@ function PackageCard({
             <span className="text-sm text-muted-foreground">/month</span>
           )}
         </div>
-        {isCurrentPlan && isCanceling ? (
+        {isCurrentTier && isCanceling ? (
           <Button
             className="w-full"
             onClick={onResume}
@@ -136,10 +137,26 @@ function PackageCard({
               "Resume Subscription"
             )}
           </Button>
+        ) : isSubscription && hasActiveSubscription && !isCurrentTier ? (
+          <Button
+            className="w-full"
+            variant="outline"
+            onClick={() => onSwitch(priceInfo.priceId)}
+            disabled={isSwitching}
+          >
+            {isSwitching ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Switching...
+              </>
+            ) : (
+              "Switch to this plan"
+            )}
+          </Button>
         ) : (
           <Button
             className="w-full"
-            onClick={() => onBuy(pkg.id)}
+            onClick={() => onBuy(priceInfo.priceId)}
             disabled={isLoading || isLockedPlan}
           >
             {isLoading ? (
@@ -159,24 +176,35 @@ function PackageCard({
   );
 }
 
-export function TokenPurchaseSection() {
+interface TokenPurchaseSectionProps {
+  oneTimePackages: StripePackage[];
+  subscriptionPackages: StripePackage[];
+}
+
+export function TokenPurchaseSection({
+  oneTimePackages,
+  subscriptionPackages,
+}: TokenPurchaseSectionProps) {
   const { user, profile } = useAuth();
   const { currency, locale } = useCurrency();
+  const { baseRates } = useTokenRates();
   const isCustomer = profile?.role === "customer";
   const { data: subscription } = useSubscription(profile?.id ?? "", isCustomer);
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
-  const [loadingPackage, setLoadingPackage] = useState<string | null>(null);
+  const switchMutation = useSwitchSubscription(profile?.id ?? "");
+  const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState(false);
   const subState = getSubscriptionState(subscription);
+  const baseRate = baseRates[currency];
 
-  const startCheckout = useCallback(async (packageId: string) => {
-    setLoadingPackage(packageId);
+  const startCheckout = useCallback(async (priceId: string) => {
+    setLoadingPriceId(priceId);
     setCheckoutError(false);
     try {
       const response = await fetch("/api/checkout/tokens", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ packageId, currency, returnPath: window.location.pathname }),
+        body: JSON.stringify({ priceId, currency, returnPath: window.location.pathname }),
       });
 
       const data = await response.json();
@@ -190,16 +218,24 @@ export function TokenPurchaseSection() {
     } catch {
       setCheckoutError(true);
     }
-    setLoadingPackage(null);
+    setLoadingPriceId(null);
   }, [currency]);
 
-  const handleBuy = (packageId: string) => {
+  const handleBuy = (priceId: string) => {
     if (!user || profile?.role !== "customer") {
-      window.location.href = `${ROUTES.login}?redirect=${encodeURIComponent(`${ROUTES.checkout}?package=${packageId}`)}`;
+      window.location.href = `${ROUTES.login}?redirect=${encodeURIComponent(ROUTES.sorg)}`;
       return;
     }
-    startCheckout(packageId);
+    startCheckout(priceId);
   };
+
+  const handleSwitch = (priceId: string) => {
+    switchMutation.mutate(priceId);
+  };
+
+  // Check if user is on a legacy/archived tier not in current packages
+  const isLegacyTier = subState.tier &&
+    !subscriptionPackages.some((pkg) => pkg.stripeProductId === subState.tier);
 
   return (
     <div id="buy-sorgs" className="mx-auto mt-16 max-w-5xl scroll-mt-16">
@@ -214,27 +250,78 @@ export function TokenPurchaseSection() {
           </AlertDescription>
         </Alert>
       )}
+      {switchMutation.isError && (
+        <Alert variant="destructive" className="mb-8">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {switchMutation.error.message || "Failed to switch plan. Please try again."}
+          </AlertDescription>
+        </Alert>
+      )}
       <h2 className="text-center text-2xl font-bold">Buy Sorgs</h2>
       <p className="mt-2 text-center text-muted-foreground">
         Top up your balance and power up your Sogverse experience
       </p>
-      <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {TOKEN_PACKAGES.map((pkg) => (
-          <PackageCard
-            key={pkg.id}
-            pkg={pkg}
-            icon={PACKAGE_ICONS[pkg.id]}
-            currency={currency}
-            locale={locale}
-            onBuy={handleBuy}
-            onResume={() => resumeMutation.mutate()}
-            isLoading={loadingPackage === pkg.id}
-            isResuming={resumeMutation.isPending}
-            hasActiveSubscription={subState.hasActiveSubscription}
-            isCanceling={subState.status === "canceling"}
-          />
-        ))}
-      </div>
+
+      {/* One-Time Packs */}
+      {oneTimePackages.length > 0 && (
+        <>
+          <h3 className="mt-8 text-center text-lg font-semibold text-muted-foreground">One-Time Packs</h3>
+          <div className="mt-4 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {oneTimePackages.map((pkg) => (
+              <PackageCard
+                key={pkg.stripeProductId}
+                pkg={pkg}
+                currency={currency}
+                locale={locale}
+                baseRate={baseRate}
+                onBuy={handleBuy}
+                onResume={() => resumeMutation.mutate()}
+                onSwitch={handleSwitch}
+                isLoading={loadingPriceId === pkg.prices[currency].priceId}
+                isResuming={resumeMutation.isPending}
+                isSwitching={switchMutation.isPending}
+                isCurrentTier={false}
+                hasActiveSubscription={subState.hasActiveSubscription}
+                isCanceling={subState.status === "canceling"}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Monthly Subscriptions */}
+      {subscriptionPackages.length > 0 && (
+        <>
+          <h3 className="mt-10 text-center text-lg font-semibold text-muted-foreground">Monthly Subscriptions</h3>
+          {isLegacyTier && (
+            <p className="mt-2 text-center text-sm text-muted-foreground">
+              Your current plan is no longer available for new subscribers.
+            </p>
+          )}
+          <div className="mt-4 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {subscriptionPackages.map((pkg) => (
+              <PackageCard
+                key={pkg.stripeProductId}
+                pkg={pkg}
+                currency={currency}
+                locale={locale}
+                baseRate={baseRate}
+                onBuy={handleBuy}
+                onResume={() => resumeMutation.mutate()}
+                onSwitch={handleSwitch}
+                isLoading={loadingPriceId === pkg.prices[currency].priceId}
+                isResuming={resumeMutation.isPending}
+                isSwitching={switchMutation.isPending}
+                isCurrentTier={subState.tier === pkg.stripeProductId}
+                hasActiveSubscription={subState.hasActiveSubscription}
+                isCanceling={subState.status === "canceling"}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
       {!user && (
         <p className="mt-4 text-center text-sm text-muted-foreground">
           You&apos;ll need to sign in or create an account to purchase Sorgs.

@@ -28,7 +28,7 @@ import { useProduct, useToggleProductVisibility, useDeleteProduct } from "@/serv
 import { useProductGroups } from "@/services/groups";
 import { GeduGroupsCard, VisibilityWarningBanner } from "@/components/admin/gedu-groups-card";
 import { useCurrency } from "@/hooks/use-currency";
-import { tokensToCurrencyDisplay } from "@/lib/constants/tokens";
+import { useTokenRates } from "@/providers/token-rate-provider";
 import { formatScheduleLocal, formatDate } from "@/lib/utils";
 
 export default function ManageProductPage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,6 +37,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
   const { data: product, isLoading } = useProduct(id);
   const { data: groups = [] } = useProductGroups(id);
   const { currency, locale } = useCurrency();
+  const { tokensToCurrencyDisplay } = useTokenRates();
   const toggleVisibility = useToggleProductVisibility();
   const deleteProduct = useDeleteProduct();
   const [isNavigating, startTransition] = useTransition();

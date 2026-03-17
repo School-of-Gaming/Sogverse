@@ -22,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { TokenPurchaseSection } from "@/components/tokens";
+import { getStripeProducts } from "@/lib/stripe/products";
 
 export const metadata: Metadata = {
   title: "Sorg - The Sogverse Currency",
@@ -106,7 +107,9 @@ const faqs = [
   },
 ];
 
-export default function SorgPage() {
+export default async function SorgPage() {
+  const { oneTimePackages, subscriptionPackages } = await getStripeProducts();
+
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Hero Section */}
@@ -143,7 +146,10 @@ export default function SorgPage() {
       </div>
 
       {/* Buy Sorgs */}
-      <TokenPurchaseSection />
+      <TokenPurchaseSection
+        oneTimePackages={oneTimePackages}
+        subscriptionPackages={subscriptionPackages}
+      />
 
       {/* How to Earn */}
       <div className="mx-auto mt-16 max-w-5xl">

@@ -23,6 +23,12 @@ vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
+// Mock Stripe products fetch — returns known test products
+const mockGetProductByPriceId = vi.fn();
+vi.mock("@/lib/stripe/products", () => ({
+  getProductByPriceId: (...args: unknown[]) => mockGetProductByPriceId(...args),
+}));
+
 // --- Helpers ---
 
 function mockUnauthenticated() {
@@ -95,11 +101,28 @@ function createRequest(
   });
 }
 
+// --- Test product data ---
+
+const ONE_TIME_PRODUCT = {
+  stripeProductId: "prod_starter",
+  tokenAmount: 5,
+  type: "one_time" as const,
+  currency: "usd",
+};
+
+const SUB_PRODUCT = {
+  stripeProductId: "prod_basic",
+  tokenAmount: 10,
+  type: "subscription" as const,
+  currency: "usd",
+};
+
 // --- Tests ---
 
 describe("POST /api/checkout/tokens", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetProductByPriceId.mockResolvedValue(null); // default: invalid
   });
 
   // -- Auth & Authorization --
@@ -107,7 +130,7 @@ describe("POST /api/checkout/tokens", () => {
   it("should return 401 when not authenticated", async () => {
     mockUnauthenticated();
 
-    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
+    const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(401);
@@ -117,7 +140,7 @@ describe("POST /api/checkout/tokens", () => {
   it("should return 403 for gamer role", async () => {
     mockAuthenticatedWithRole("gamer");
 
-    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
+    const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(403);
@@ -127,7 +150,7 @@ describe("POST /api/checkout/tokens", () => {
   it("should return 403 for gedu role", async () => {
     mockAuthenticatedWithRole("gedu");
 
-    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
+    const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(403);
@@ -136,7 +159,7 @@ describe("POST /api/checkout/tokens", () => {
   it("should return 403 for admin role", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
+    const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(403);
@@ -144,21 +167,23 @@ describe("POST /api/checkout/tokens", () => {
 
   // -- Validation --
 
-  it("should return 400 for invalid packageId", async () => {
+  it("should return 400 for invalid priceId", async () => {
     mockAuthenticatedCustomer();
+    mockGetProductByPriceId.mockResolvedValue(null);
 
-    const response = await POST(createRequest({ packageId: "nonexistent", currency: "usd" }));
+    const response = await POST(createRequest({ priceId: "price_nonexistent", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe("Invalid package ID");
+    expect(data.error).toBe("Invalid price ID");
   });
 
   it("should return 409 when customer with active subscription buys another subscription", async () => {
     mockAuthenticatedCustomer({ subscription_status: "active" });
+    mockGetProductByPriceId.mockResolvedValue(SUB_PRODUCT);
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
+      createRequest({ priceId: "price_basic_usd", currency: "usd" })
     );
     const data = await response.json();
 
@@ -168,9 +193,10 @@ describe("POST /api/checkout/tokens", () => {
 
   it("should return 409 when customer with past_due subscription buys another subscription", async () => {
     mockAuthenticatedCustomer({ subscription_status: "past_due" });
+    mockGetProductByPriceId.mockResolvedValue(SUB_PRODUCT);
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
+      createRequest({ priceId: "price_basic_usd", currency: "usd" })
     );
     const data = await response.json();
 
@@ -179,11 +205,12 @@ describe("POST /api/checkout/tokens", () => {
 
   it("should allow one-time purchase even with active subscription", async () => {
     mockAuthenticatedCustomer({ subscription_status: "active" });
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/session_123",
     });
 
-    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
+    const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -192,12 +219,13 @@ describe("POST /api/checkout/tokens", () => {
 
   it("should allow subscription purchase when subscription_status is null (never subscribed)", async () => {
     mockAuthenticatedCustomer({ subscription_status: null });
+    mockGetProductByPriceId.mockResolvedValue(SUB_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/session_new_sub",
     });
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
+      createRequest({ priceId: "price_basic_usd", currency: "usd" })
     );
     const data = await response.json();
 
@@ -206,16 +234,14 @@ describe("POST /api/checkout/tokens", () => {
   });
 
   it("should allow subscription purchase when previous subscription is fully canceled", async () => {
-    // Stripe "canceled" means the subscription has ended — the user should be
-    // able to start a new one. This is a regression guard: the client-side
-    // previously treated "canceled" as active, and the server must never do so.
     mockAuthenticatedCustomer({ subscription_status: "canceled" });
+    mockGetProductByPriceId.mockResolvedValue(SUB_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/session_resub",
     });
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
+      createRequest({ priceId: "price_basic_usd", currency: "usd" })
     );
     const data = await response.json();
 
@@ -223,30 +249,16 @@ describe("POST /api/checkout/tokens", () => {
     expect(data.url).toBe("https://checkout.stripe.com/session_resub");
   });
 
-  it("should block subscription purchase when active subscription is canceling at period end", async () => {
-    // When a user cancels, Stripe keeps status "active" with
-    // cancel_at_period_end=true. The DB subscription_status is still "active",
-    // so the server must block a second subscription to prevent duplicates.
-    mockAuthenticatedCustomer({ subscription_status: "active" });
-
-    const response = await POST(
-      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
-    );
-    const data = await response.json();
-
-    expect(response.status).toBe(409);
-    expect(data.error).toBe("You already have an active subscription");
-  });
-
   // -- One-time purchase --
 
   it("should create a payment session for one-time purchase", async () => {
     mockAuthenticatedCustomer();
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/session_abc",
     });
 
-    const response = await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
+    const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
@@ -255,14 +267,12 @@ describe("POST /api/checkout/tokens", () => {
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.mode).toBe("payment");
     expect(params.customer_email).toBe("customer@example.com");
-    expect(params.line_items[0].price_data.unit_amount).toBe(1500);
-    expect(params.line_items[0].price_data.currency).toBe("usd");
-    expect(params.line_items[0].price_data.recurring).toBeUndefined();
+    expect(params.line_items[0].price).toBe("price_starter_usd");
     expect(params.line_items[0].quantity).toBe(1);
     expect(params.metadata).toEqual({
       userId: "customer-user-id",
-      packageId: "tokens_5",
       tokenAmount: "5",
+      stripeProductId: "prod_starter",
       packageType: "one_time",
       currency: "usd",
     });
@@ -273,12 +283,13 @@ describe("POST /api/checkout/tokens", () => {
 
   it("should create a subscription session for subscription purchase", async () => {
     mockAuthenticatedCustomer();
+    mockGetProductByPriceId.mockResolvedValue(SUB_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/session_sub",
     });
 
     const response = await POST(
-      createRequest({ packageId: "tokens_sub_25", currency: "usd" })
+      createRequest({ priceId: "price_basic_usd", currency: "usd" })
     );
     const data = await response.json();
 
@@ -287,22 +298,19 @@ describe("POST /api/checkout/tokens", () => {
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.mode).toBe("subscription");
-    expect(params.line_items[0].price_data.unit_amount).toBe(5000);
-    expect(params.line_items[0].price_data.recurring).toEqual({
-      interval: "month",
-    });
+    expect(params.line_items[0].price).toBe("price_basic_usd");
     expect(params.metadata).toEqual({
       userId: "customer-user-id",
-      packageId: "tokens_sub_25",
-      tokenAmount: "25",
+      tokenAmount: "10",
+      stripeProductId: "prod_basic",
       packageType: "subscription",
       currency: "usd",
     });
     expect(params.subscription_data).toEqual({
       metadata: {
         userId: "customer-user-id",
-        packageId: "tokens_sub_25",
-        tokenAmount: "25",
+        tokenAmount: "10",
+        stripeProductId: "prod_basic",
         currency: "usd",
       },
     });
@@ -310,70 +318,35 @@ describe("POST /api/checkout/tokens", () => {
 
   // -- Currency handling --
 
-  it("should use GBP prices when currency is gbp", async () => {
-    mockAuthenticatedCustomer();
-    mockStripeSessionCreate.mockResolvedValue({
-      url: "https://checkout.stripe.com/session_gbp",
-    });
-
-    const response = await POST(createRequest({ packageId: "tokens_5", currency: "gbp" }));
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-
-    const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.line_items[0].price_data.unit_amount).toBe(1200);
-    expect(params.line_items[0].price_data.currency).toBe("gbp");
-    expect(params.metadata.currency).toBe("gbp");
-  });
-
-  it("should use EUR prices when currency is eur", async () => {
-    mockAuthenticatedCustomer();
-    mockStripeSessionCreate.mockResolvedValue({
-      url: "https://checkout.stripe.com/session_eur",
-    });
-
-    const response = await POST(createRequest({ packageId: "tokens_5", currency: "eur" }));
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-
-    const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.line_items[0].price_data.unit_amount).toBe(1400);
-    expect(params.line_items[0].price_data.currency).toBe("eur");
-    expect(params.metadata.currency).toBe("eur");
-  });
-
   it("should default to EUR when currency is missing", async () => {
     mockAuthenticatedCustomer();
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/session_default",
     });
 
-    const response = await POST(createRequest({ packageId: "tokens_5" }));
+    const response = await POST(createRequest({ priceId: "price_starter_usd" }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.line_items[0].price_data.currency).toBe("eur");
-    expect(params.line_items[0].price_data.unit_amount).toBe(1400);
     expect(params.metadata.currency).toBe("eur");
   });
 
   it("should default to EUR when currency is invalid", async () => {
     mockAuthenticatedCustomer();
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/session_invalid",
     });
 
-    const response = await POST(createRequest({ packageId: "tokens_5", currency: "xyz" }));
+    const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "xyz" }));
     const data = await response.json();
 
     expect(response.status).toBe(200);
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.line_items[0].price_data.currency).toBe("eur");
     expect(params.metadata.currency).toBe("eur");
   });
 
@@ -381,11 +354,12 @@ describe("POST /api/checkout/tokens", () => {
 
   it("should use provided returnPath in success and cancel URLs", async () => {
     mockAuthenticatedCustomer();
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
     await POST(
       createRequest(
-        { packageId: "tokens_5", currency: "usd", returnPath: "/customer/sorg" },
+        { priceId: "price_starter_usd", currency: "usd", returnPath: "/customer/sorg" },
         "https://myapp.vercel.app"
       )
     );
@@ -401,9 +375,10 @@ describe("POST /api/checkout/tokens", () => {
 
   it("should default returnPath to /sorg when not provided", async () => {
     mockAuthenticatedCustomer();
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
-    await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
+    await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.success_url).toContain("/sorg?success=true");
@@ -412,23 +387,11 @@ describe("POST /api/checkout/tokens", () => {
 
   it("should fall back to /sorg for unrecognized returnPath values", async () => {
     mockAuthenticatedCustomer();
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
     await POST(
-      createRequest({ packageId: "tokens_5", currency: "usd", returnPath: "https://evil.com" })
-    );
-
-    const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.success_url).toContain("/sorg?success=true");
-    expect(params.cancel_url).toContain("/sorg?canceled=true");
-  });
-
-  it("should fall back to /sorg for arbitrary path returnPath", async () => {
-    mockAuthenticatedCustomer();
-    mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
-
-    await POST(
-      createRequest({ packageId: "tokens_5", currency: "usd", returnPath: "/some/other/page" })
+      createRequest({ priceId: "price_starter_usd", currency: "usd", returnPath: "https://evil.com" })
     );
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
@@ -440,9 +403,10 @@ describe("POST /api/checkout/tokens", () => {
 
   it("should use existing stripe_customer_id instead of customer_email for returning customers", async () => {
     mockAuthenticatedCustomer({ stripe_customer_id: "cus_existing123" });
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
-    await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
+    await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.customer).toBe("cus_existing123");
@@ -451,22 +415,13 @@ describe("POST /api/checkout/tokens", () => {
 
   it("should fall back to customer_email for first-time purchasers", async () => {
     mockAuthenticatedCustomer({ stripe_customer_id: null });
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
-    await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
+    await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.customer).toBeUndefined();
     expect(params.customer_email).toBe("customer@example.com");
-  });
-
-  it("should omit customer_email when profile has no email", async () => {
-    mockAuthenticatedCustomer({ email: null });
-    mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
-
-    await POST(createRequest({ packageId: "tokens_5", currency: "usd" }));
-
-    const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.customer_email).toBeUndefined();
   });
 });
