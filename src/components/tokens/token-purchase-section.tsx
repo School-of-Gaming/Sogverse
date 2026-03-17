@@ -7,6 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useTokenRates } from "@/providers/token-rate-provider";
@@ -61,7 +69,8 @@ function PackageCard({
   onSwitch,
   isLoading,
   isResuming,
-  isSwitching,
+  isSwitchingThis,
+  isSwitchingAny,
   isCurrentTier,
   hasActiveSubscription,
   isCanceling,
@@ -72,10 +81,11 @@ function PackageCard({
   baseRate: number;
   onBuy: (priceId: string) => void;
   onResume: () => void;
-  onSwitch: (priceId: string) => void;
+  onSwitch: (priceId: string, stripeProductId: string) => void;
   isLoading: boolean;
   isResuming: boolean;
-  isSwitching: boolean;
+  isSwitchingThis: boolean;
+  isSwitchingAny: boolean;
   isCurrentTier: boolean;
   hasActiveSubscription: boolean;
   isCanceling: boolean;
@@ -141,10 +151,10 @@ function PackageCard({
           <Button
             className="w-full"
             variant="outline"
-            onClick={() => onSwitch(priceInfo.priceId)}
-            disabled={isSwitching}
+            onClick={() => onSwitch(priceInfo.priceId, pkg.stripeProductId)}
+            disabled={isSwitchingAny}
           >
-            {isSwitching ? (
+            {isSwitchingThis ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Switching...
@@ -193,6 +203,8 @@ export function TokenPurchaseSection({
   const resumeMutation = useResumeSubscription(profile?.id ?? "");
   const switchMutation = useSwitchSubscription(profile?.id ?? "");
   const [loadingPriceId, setLoadingPriceId] = useState<string | null>(null);
+  const [switchingProductId, setSwitchingProductId] = useState<string | null>(null);
+  const [switchConfirm, setSwitchConfirm] = useState<{ priceId: string; stripeProductId: string; name: string; tokenAmount: number } | null>(null);
   const [checkoutError, setCheckoutError] = useState(false);
   const subState = getSubscriptionState(subscription);
   const baseRate = baseRates[currency];
@@ -229,8 +241,20 @@ export function TokenPurchaseSection({
     startCheckout(priceId);
   };
 
-  const handleSwitch = (priceId: string) => {
-    switchMutation.mutate(priceId);
+  const handleSwitchRequest = (priceId: string, stripeProductId: string) => {
+    const pkg = subscriptionPackages.find((p) => p.stripeProductId === stripeProductId);
+    if (!pkg) return;
+    setSwitchConfirm({ priceId, stripeProductId, name: pkg.name, tokenAmount: pkg.tokenAmount });
+  };
+
+  const handleSwitchConfirm = () => {
+    if (!switchConfirm) return;
+    const { priceId, stripeProductId } = switchConfirm;
+    setSwitchingProductId(stripeProductId);
+    setSwitchConfirm(null);
+    switchMutation.mutate({ priceId, stripeProductId }, {
+      onSettled: () => setSwitchingProductId(null),
+    });
   };
 
   // Check if user is on a legacy/archived tier not in current packages
@@ -277,10 +301,11 @@ export function TokenPurchaseSection({
                 baseRate={baseRate}
                 onBuy={handleBuy}
                 onResume={() => resumeMutation.mutate()}
-                onSwitch={handleSwitch}
+                onSwitch={handleSwitchRequest}
                 isLoading={loadingPriceId === pkg.prices[currency].priceId}
                 isResuming={resumeMutation.isPending}
-                isSwitching={switchMutation.isPending}
+                isSwitchingThis={false}
+                isSwitchingAny={switchMutation.isPending}
                 isCurrentTier={false}
                 hasActiveSubscription={subState.hasActiveSubscription}
                 isCanceling={subState.status === "canceling"}
@@ -309,10 +334,11 @@ export function TokenPurchaseSection({
                 baseRate={baseRate}
                 onBuy={handleBuy}
                 onResume={() => resumeMutation.mutate()}
-                onSwitch={handleSwitch}
+                onSwitch={handleSwitchRequest}
                 isLoading={loadingPriceId === pkg.prices[currency].priceId}
                 isResuming={resumeMutation.isPending}
-                isSwitching={switchMutation.isPending}
+                isSwitchingThis={switchingProductId === pkg.stripeProductId}
+                isSwitchingAny={switchMutation.isPending}
                 isCurrentTier={subState.tier === pkg.stripeProductId}
                 hasActiveSubscription={subState.hasActiveSubscription}
                 isCanceling={subState.status === "canceling"}
@@ -327,6 +353,27 @@ export function TokenPurchaseSection({
           You&apos;ll need to sign in or create an account to purchase Sorgs.
         </p>
       )}
+
+      <Dialog open={!!switchConfirm} onOpenChange={(open) => !open && setSwitchConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Switch to {switchConfirm?.name}?</DialogTitle>
+            <DialogDescription>
+              Your plan will change to {switchConfirm?.name} ({switchConfirm?.tokenAmount} Sorgs/month).
+              The switch takes effect at the start of your next billing cycle — your current
+              plan and Sorg allocation remain active until then.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSwitchConfirm(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSwitchConfirm}>
+              Switch Plan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
