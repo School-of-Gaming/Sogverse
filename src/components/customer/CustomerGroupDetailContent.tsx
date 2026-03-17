@@ -50,7 +50,7 @@ export function CustomerGroupDetailContent({ groupId, gamerId }: CustomerGroupDe
   const customerEnrollment = useMemo(() => {
     if (!group || !gamers) return undefined;
     return buildCustomerEnrollment(group, gamers, gamerId);
-  }, [groups, groupId, gamers, gamerId]);
+  }, [group, gamers, gamerId]);
 
   const gamerDisplayName = customerEnrollment?.gamerDisplayName ?? "Gamer";
 

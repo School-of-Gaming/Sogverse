@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     .eq("id", gamerId)
     .single();
 
-  if (profileError || !gamerProfile) {
+  if (profileError) {
     console.error("switch-to-gamer: gamer profile lookup failed", profileError);
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -70,7 +70,7 @@ export async function POST(request: Request) {
     email: gamerEmail,
   });
 
-  if (generateError || !linkData?.properties?.email_otp) {
+  if (generateError || !linkData.properties.email_otp) {
     console.error("switch-to-gamer: generateLink failed", generateError);
     return NextResponse.json({ error: "Failed to generate session" }, { status: 500 });
   }
