@@ -319,8 +319,20 @@ The TypeScript version uses `wallClockToUtc()` from `src/lib/utils.ts`, which co
 ### Age validation enforcement
 Block enrollment if gamer's age (from DOB) is outside the product's min/max age range. Currently the UI shows age information but does not enforce restrictions.
 
-### Notification on auto-unenroll
-Email or push notification to inform parents when their gamer is auto-unenrolled due to insufficient Sorg balance. Important for customer trust — currently the customer only discovers it on their next dashboard visit.
+### Move charging to application code (when notifications are needed)
+
+The charging logic currently lives in a pg_cron SQL function (`process_enrollment_charges`). The SQL is stable — double-charging is prevented by the UNIQUE constraint, overdraft by the CHECK constraint, and concurrent access by `SELECT ... FOR UPDATE`. **Don't move it just for testability or observability.**
+
+The trigger to move is **parent notifications**: warning parents before a charge fails (low balance) and notifying them after auto-unenroll. SQL can't send emails, so this requires application code. Running notifications as a separate job from charging is fragile — two independent jobs on the same data with no coordination means the notification job could say "you're fine" and then the charging job unenrolls the kid minutes later.
+
+When the time comes, move everything into a single Vercel Cron API route (`POST /api/cron/charge-enrollments`) that runs the full sequence:
+
+1. Check balances — identify parents whose gamers are enrolled but can't cover the upcoming session
+2. Send low-balance warnings via Brevo
+3. Run charges via `adjust_token_balance()` RPC
+4. Send unenroll notifications for any auto-unenrolled gamers
+
+Delete the pg_cron job and configure the schedule in `vercel.json`. One system, one place to debug. The DB-level constraints (UNIQUE, CHECK, row locking) still protect against double-charging and overdraft regardless of where the orchestration lives.
 
 ### Enrollment pause/resume
 Allow customers to temporarily pause an enrollment without fully unenrolling. Paused enrollments would not be charged by the cron and would not count toward group capacity, but could be resumed without re-enrolling.
@@ -330,12 +342,6 @@ The cron currently runs hourly. For tighter charge timing (e.g., products starti
 
 ### Rate-limit gamer creation
 The `/api/gamers/create` endpoint only checks `requireRole("customer")`. A customer with 0 Sorgs could create unlimited gamer accounts. Options: add a max-gamers-per-customer cap, or defer gamer creation to happen atomically with enrollment.
-
-### Move weekly charging to application code
-The charging logic currently lives in a pg_cron SQL function (`process_enrollment_charges`). This works correctly — double-charging is prevented by the unique constraint, overdraft is prevented by the CHECK constraint — but the SQL is untestable in the normal Vitest pipeline, has no application-level logging or error alerting (Sentry, etc.), and failures are silent unless someone checks `cron.job_run_details`. Moving the orchestration to a Vercel Cron API route (e.g., `POST /api/cron/charge-enrollments`) would make the logic testable, debuggable, and observable alongside the rest of the codebase, while still using `adjust_token_balance()` for the atomic token deduction.
-
-### Cron failure alerting
-The cron job logs results to `cron.job_run_details` and emits `RAISE WARNING` to PostgreSQL logs on per-enrollment errors, but no one is proactively notified if the cron fails entirely or encounters errors. A scheduled health check (e.g., a Vercel Cron that queries `cron.job_run_details` for recent failures and alerts via email/Slack) would catch silent failures before they affect customers.
 
 ### Charge window constant sync
 The 24-hour window is defined in two places: TypeScript constant and SQL local variable. A single source of truth (e.g., a `settings` table row readable by both) would prevent drift.
