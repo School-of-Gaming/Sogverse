@@ -150,12 +150,13 @@ export function Sidebar() {
   if (!profile?.role) return null;
 
   const navItems = navItemsByRole[profile.role];
-  const transition = "transition-all duration-700";
+  const collapseTransition = "[transition:width_700ms,padding_700ms,gap_700ms,max-width_700ms,opacity_700ms]";
+  const navTransition = "[transition:padding_700ms,gap_700ms,background-color_300ms,color_300ms]";
 
   return (
     <aside
       className={cn(
-        `relative flex h-full flex-col border-r border-sidebar-border bg-sidebar-background ${transition}`,
+        `relative flex h-full flex-col border-r border-sidebar-border bg-sidebar-background ${collapseTransition}`,
         collapsed ? "w-18" : "w-64"
       )}
     >
@@ -188,7 +189,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                `flex items-center overflow-hidden whitespace-nowrap rounded-lg py-2 text-sm font-medium ${transition}`,
+                `flex items-center overflow-hidden whitespace-nowrap rounded-lg py-2 text-sm font-medium ${navTransition}`,
                 collapsed ? "gap-0 px-2.5" : "gap-3 px-3",
                 isActive
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
@@ -199,7 +200,7 @@ export function Sidebar() {
               <span className="shrink-0">{item.icon}</span>
               <span
                 className={cn(
-                  `overflow-hidden text-ellipsis ${transition}`,
+                  `overflow-hidden text-ellipsis ${collapseTransition}`,
                   collapsed ? "max-w-0 opacity-0" : "max-w-48 opacity-100"
                 )}
               >

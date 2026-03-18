@@ -47,23 +47,26 @@ export default function CustomerDashboardPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {quickActions.map((action) => (
+        {quickActions.map((action, i) => {
+          const secondary = i >= 2;
+          return (
           <Link key={action.href} href={action.href}>
-            <Card className="group h-full transition-colors hover:bg-accent hover:text-accent-foreground">
+            <Card className="group h-full transition-colors hover:bg-muted/50">
               <CardHeader>
                 <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <action.icon className="h-6 w-6 text-muted-foreground group-hover:text-accent-foreground/70" />
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${secondary ? "bg-secondary/10" : "bg-primary/10"}`}>
+                    <action.icon className={`h-6 w-6 ${secondary ? "text-secondary" : "text-primary"}`} />
                   </div>
                   <div>
                     <CardTitle className="text-lg">{action.title}</CardTitle>
-                    <CardDescription className="group-hover:text-accent-foreground/70">{action.description}</CardDescription>
+                    <CardDescription>{action.description}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
             </Card>
           </Link>
-        ))}
+          );
+        })}
       </div>
 
       <Card>
@@ -86,7 +89,7 @@ export default function CustomerDashboardPage() {
             </div>
           </div>
           <div className="flex items-start gap-4 rounded-lg border p-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-sm font-bold text-secondary-foreground">
               2
             </div>
             <div>
