@@ -37,8 +37,9 @@ export default async function RootLayout({
   const userWithProfile = await getUserWithProfile();
   const headersList = await headers();
   const locale = parseAcceptLanguage(headersList.get("accept-language")) ?? DEFAULT_LOCALE;
-  // Safe to await: unstable_cache returns stale data if Stripe is unreachable during
-  // background revalidation. Only a cold-cache miss (first-ever request) can throw.
+  // getStripeProducts() is backed by unstable_cache (persistent data cache, 5-min revalidation).
+  // Callers always get the cached value instantly — Stripe is only contacted during background
+  // revalidation, so this adds no latency and no runtime dependency on Stripe availability.
   const { baseRates } = await getStripeProducts();
 
   return (

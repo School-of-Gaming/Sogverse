@@ -59,7 +59,7 @@ Packages are defined as **Stripe Products** in the Stripe dashboard, not in code
 - One or more active Prices in supported currencies (USD, GBP, EUR)
 - Prices with `type: "one_time"` for one-time packages or `type: "recurring"` for subscriptions
 
-`getStripeProducts()` in `src/lib/stripe/products.ts` fetches all active products with `tokenAmount` metadata, groups their prices by currency, and splits them into `oneTimePackages` and `subscriptionPackages` (sorted cheapest-first by USD price). Results are cached in-memory for 5 minutes.
+`getStripeProducts()` in `src/lib/stripe/products.ts` fetches all active products with `tokenAmount` metadata, groups their prices by currency, and splits them into `oneTimePackages` and `subscriptionPackages` (sorted cheapest-first by USD price). Results are cached via Next.js `unstable_cache` (persistent data cache, not in-memory) with a 5-minute revalidation window. After 5 minutes the cache is stale: the next caller still gets the stale value instantly while a background revalidation fetches fresh data from Stripe. If the background fetch fails, the stale value continues to be served. This means callers never block on Stripe except on a cold-cache miss (the very first request after a deploy with no existing cache entry).
 
 **Base rates** (price-per-token used for "value" display) are derived from the cheapest one-time package's price divided by its token amount, per currency.
 
@@ -210,8 +210,8 @@ All token crediting happens exclusively through the Stripe webhook.
 ### Transaction history currency mismatch after currency switch
 If a customer changes their display currency (e.g. from USD to EUR) and re-subscribes, their old transaction history shows amounts in the old currency but `TransactionHistoryTable` has no per-row currency indicator — all rows appear formatted in the current display currency. This makes historical amounts misleading (e.g. a $15.00 purchase rendered as "€15.00"). Display the `token_transactions.currency` column per row (fall back to display currency for old rows where `currency` is null).
 
-### Make root layout resilient to Stripe outages
-`getStripeProducts()` is called in the root layout (`src/app/layout.tsx`). `unstable_cache` with 5-minute stale-while-revalidate makes brief Stripe outages transparent. **Remaining risk:** If Stripe is down on the very first request after a deploy (no cache exists yet), the function throws and every page shows an error — including pages that don't need pricing data. Potential fixes: wrap in try/catch with `null` baseRates and graceful fallback, or move the call out of the root layout into only the pages that need it. Current risk is very low given Stripe's ~99.99% uptime and the persistent cache. When Next.js ships the stable `"use cache"` directive, migrate from `unstable_cache`.
+### Migrate to `"use cache"` directive
+`getStripeProducts()` uses `unstable_cache`. When Next.js ships the stable `"use cache"` directive, migrate to it.
 
 ### Gamer token spending
 Tokens are currently only purchased and credited. The spending side (gamers using tokens for activities) is not yet implemented.
