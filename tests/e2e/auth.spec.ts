@@ -6,7 +6,7 @@ test.describe("Authentication Pages", () => {
       await page.goto("/login");
 
       await expect(
-        page.getByRole("heading", { name: /welcome to sogverse/i })
+        page.getByRole("heading", { name: /welcome to the sogverse/i })
       ).toBeVisible();
 
       await expect(page.getByRole("button", { name: /^parent/i })).toBeVisible();

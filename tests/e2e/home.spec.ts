@@ -51,7 +51,7 @@ test.describe("Home Page", () => {
     await page.goto("/");
 
     await expect(
-      page.getByText(/safe online community/i)
+      page.getByRole("heading", { name: /minecraft clubs with gedus/i })
     ).toBeVisible();
 
     await expect(
