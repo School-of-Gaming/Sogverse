@@ -636,7 +636,7 @@ The `/api/auth/signout` endpoint uses HTTP GET, which has a side effect (signing
 
 #### Fix Applied
 
-Changed `/api/auth/signout` from GET to POST. GET now returns 405. The client uses `fetch` with POST to clear cookies server-side, then `window.location.href = "/"` to wipe all client state. `SameSite=Lax` blocks cross-origin POST requests with cookies, eliminating the CSRF vector.
+The server-side signout API route was removed entirely. Sign-out now uses the browser Supabase client's `signOut()` method, which calls the Supabase Auth API with the access token in the Authorization header (not cookies) — there is no endpoint to CSRF. Full page navigation via `window.location.href = "/"` wipes all client state.
 
 ---
 

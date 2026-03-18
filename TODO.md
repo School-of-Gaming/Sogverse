@@ -232,19 +232,6 @@ Service classes (e.g. `TokensService`) mix two data-fetching patterns: some meth
 
 **Affected services:** `src/services/tokens/tokens.service.ts` (and any future services that need server-side API calls).
 
-### Move Sign-In and Sign-Up to Server-Side API Routes
-
-Login forms (`login-form.tsx`, `gamer-login-form.tsx`) currently call `supabase.auth.signInWithPassword()` on the browser client, and the register form (`register-form.tsx`) calls `supabase.auth.signUp()` on the browser client. Both violate the "never use browser client for auth" rule. Since email confirmation is disabled, `signUp` immediately creates a session and fires `onAuthStateChange` with `SIGNED_IN`, which carries the same deadlock risk as `signIn`.
-
-- [ ] Create `/api/auth/signin` API route (mirrors existing `/api/auth/signout` pattern)
-- [ ] Move `signInWithPassword()` to the server-side route
-- [ ] Create `/api/auth/signup` API route
-- [ ] Move `signUp()` to the server-side route
-- [ ] Return role/redirect path in the responses so the forms can navigate
-- [ ] Update login and register forms to POST to the API routes instead of using the browser client
-
-**Why:** Consolidates all auth operations server-side, consistent with sign-out. Eliminates the browser Supabase client's GoTrueClient lock as a concern for auth flows entirely. With email confirmation disabled, `signUp` creates a session immediately, making it just as risky as `signIn`. See `docs/supabase-auth-lock-fix.md` for the lock deadlock context.
-
 ### Custom Email Verification (Non-Blocking)
 
 Supabase's "Confirm email" setting is disabled to keep signup frictionless (users can register and pay immediately). However, this means `email_confirmed_at` on `auth.users` is auto-set to `NOW()` on signup — it's always populated and useless for tracking real verification. `supabase.auth.resend({ type: 'signup' })` also does nothing when confirmation is disabled.
