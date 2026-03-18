@@ -84,7 +84,7 @@ export async function POST(request: Request) {
     const targetPkg = subscriptionPackages.find(
       (p) => p.stripeProductId === productInfo.stripeProductId,
     );
-    const resolvedPriceId = targetPkg?.prices[subCurrency]?.priceId;
+    const resolvedPriceId = targetPkg?.prices[subCurrency].priceId;
     if (!resolvedPriceId) {
       return NextResponse.json(
         { error: "Price not available in subscription currency" },
