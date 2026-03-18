@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useCallback, type ReactNode } from "react";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { tokensToCurrencyDisplay as convertTokens } from "@/lib/stripe/utils";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 
 interface TokenRateContextValue {
@@ -19,7 +19,7 @@ interface TokenRateProviderProps {
 export function TokenRateProvider({ children, baseRates }: TokenRateProviderProps) {
   const tokensToCurrencyDisplay = useCallback(
     (tokens: number, currency: SupportedCurrency, locale: string) =>
-      formatCurrencyFromCents(tokens * baseRates[currency], currency, locale),
+      convertTokens(tokens, baseRates[currency], currency, locale),
     [baseRates],
   );
 
