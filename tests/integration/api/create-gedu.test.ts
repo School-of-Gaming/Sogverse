@@ -187,7 +187,7 @@ describe("POST /api/admin/create-gedu", () => {
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         toEmail: "gedu@example.com",
-        subject: "You're invited to The Sogverse",
+        subject: "You're invited to the Sogverse",
       })
     );
   });

@@ -1,4 +1,4 @@
-import { Heart, Sun, Sword, Brain, type LucideIcon } from "lucide-react";
+import { Heart, Sun, Sword, Brain } from "lucide-react";
 
 /** The four Yty elements — the core values of the School of Gaming. */
 export const YTY_ELEMENTS = [
