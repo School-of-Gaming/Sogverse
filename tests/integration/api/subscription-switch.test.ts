@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/checkout/subscription/switch/route";
 import { NextResponse } from "next/server";
+import {
+  mockUnauthenticated as _mockUnauthenticated,
+  mockAuthenticatedSubscriptionProfile,
+} from "../../mocks/stripe";
 
 // --- Mocks ---
 
@@ -34,39 +38,11 @@ vi.mock("@/lib/stripe/products", () => ({
 // --- Helpers ---
 
 function mockUnauthenticated() {
-  mockRequireRole.mockResolvedValue(
-    NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  );
+  _mockUnauthenticated(mockRequireRole);
 }
 
 function mockAuthenticatedCustomer(overrides: Record<string, unknown> = {}) {
-  const {
-    stripe_subscription_id = "sub_active_123",
-    subscription_tier = "prod_old",
-    ...rest
-  } = overrides;
-
-  const mockFrom = vi.fn().mockImplementation((table: string) => {
-    if (table === "customer_profiles") {
-      return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: { stripe_subscription_id, subscription_tier, ...rest },
-              error: null,
-            }),
-          }),
-        }),
-      };
-    }
-    return {};
-  });
-
-  mockRequireRole.mockResolvedValue({
-    user: { id: "user-123" },
-    profile: { role: "customer" },
-    supabase: { from: mockFrom },
-  });
+  mockAuthenticatedSubscriptionProfile(mockRequireRole, overrides);
 }
 
 function createRequest(body: Record<string, unknown>): Request {

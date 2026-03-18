@@ -79,11 +79,24 @@ function mockAuthenticatedCustomer(overrides: Record<string, unknown> = {}) {
 }
 
 function mockAuthenticatedWithRole(role: string) {
-  mockRequireRole.mockResolvedValue(
-    NextResponse.json(
-      { error: "Only customers can purchase tokens" },
-      { status: 403 }
-    )
+  mockRequireRole.mockImplementation(
+    (requiredRole: string, options?: { forbiddenMessage?: string }) => {
+      if (role !== requiredRole) {
+        return Promise.resolve(
+          NextResponse.json(
+            { error: options?.forbiddenMessage || "Forbidden" },
+            { status: 403 }
+          )
+        );
+      }
+      // Role matches — should not happen in these tests, but return
+      // a plausible auth result so a mistaken call is caught.
+      return Promise.resolve({
+        user: { id: "user-123" },
+        profile: { role, email: "test@example.com" },
+        supabase: { from: vi.fn() },
+      });
+    }
   );
 }
 
