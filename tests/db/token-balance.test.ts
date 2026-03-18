@@ -27,7 +27,7 @@ describe("Token Balance (adjust_token_balance RPC)", () => {
       p_amount: 5,
       p_type: "purchase",
       p_description: "Test credit",
-      p_stripe_session_id: "cs_test_credit_001",
+      p_stripe_idempotency_key: "cs_test_credit_001",
     });
 
     expect(error).toBeNull();
@@ -46,7 +46,7 @@ describe("Token Balance (adjust_token_balance RPC)", () => {
     expect(tx!.amount).toBe(5);
     expect(tx!.type).toBe("purchase");
     expect(tx!.balance_after).toBe(SEED.CUSTOMER_TOKEN_BALANCE + 5);
-    expect(tx!.stripe_session_id).toBe("cs_test_credit_001");
+    expect(tx!.stripe_idempotency_key).toBe("cs_test_credit_001");
   });
 
   it("debits tokens and decreases balance", async () => {
@@ -87,7 +87,7 @@ describe("Token Balance (adjust_token_balance RPC)", () => {
     expect(error!.code).toBe("23514");
   });
 
-  it("enforces idempotency via stripe_session_id UNIQUE constraint", async () => {
+  it("enforces idempotency via stripe_idempotency_key UNIQUE constraint", async () => {
     await resetTokenState(admin);
 
     const sessionId = "cs_test_idempotent_001";
@@ -97,7 +97,7 @@ describe("Token Balance (adjust_token_balance RPC)", () => {
       p_user_id: TEST_IDS.CUSTOMER,
       p_amount: 10,
       p_type: "purchase",
-      p_stripe_session_id: sessionId,
+      p_stripe_idempotency_key: sessionId,
     });
     expect(err1).toBeNull();
 
@@ -106,7 +106,7 @@ describe("Token Balance (adjust_token_balance RPC)", () => {
       p_user_id: TEST_IDS.CUSTOMER,
       p_amount: 10,
       p_type: "purchase",
-      p_stripe_session_id: sessionId,
+      p_stripe_idempotency_key: sessionId,
     });
 
     expect(err2).not.toBeNull();

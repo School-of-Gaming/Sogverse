@@ -140,7 +140,7 @@ describe("POST /api/webhooks/stripe", () => {
         p_amount: 5,
         p_type: "purchase",
         p_description: "Purchased 5 Sorgs",
-        p_stripe_session_id: "cs_one_time_123",
+        p_stripe_idempotency_key: "cs_one_time_123",
         p_stripe_subscription_id: undefined,
         p_currency: "usd",
       });
@@ -174,7 +174,7 @@ describe("POST /api/webhooks/stripe", () => {
         p_amount: 25,
         p_type: "subscription",
         p_description: "Purchased 25 Sorgs",
-        p_stripe_session_id: "cs_sub_123",
+        p_stripe_idempotency_key: "cs_sub_123",
         p_stripe_subscription_id: "sub_xyz",
         p_currency: "usd",
       });
@@ -237,7 +237,7 @@ describe("POST /api/webhooks/stripe", () => {
       mockIdempotencyAndRpc(false);
       mockAdminRpc.mockResolvedValue({
         data: null,
-        error: { message: 'duplicate key value violates unique constraint "unique_stripe_session_id"', code: "23505" },
+        error: { message: 'duplicate key value violates unique constraint "unique_stripe_idempotency_key"', code: "23505" },
       });
 
       const response = await POST(createWebhookRequest());
@@ -408,7 +408,7 @@ describe("POST /api/webhooks/stripe", () => {
         p_amount: 25,
         p_type: "subscription",
         p_description: "Monthly subscription — 25 Sorgs",
-        p_stripe_session_id: "inv_renewal_456",
+        p_stripe_idempotency_key: "inv_renewal_456",
         p_stripe_subscription_id: "sub_789",
         p_currency: "usd",
       });
@@ -538,7 +538,7 @@ describe("POST /api/webhooks/stripe", () => {
       mockIdempotencyAndRpc(false); // SELECT returns empty (race condition)
       mockAdminRpc.mockResolvedValue({
         data: null,
-        error: { message: 'duplicate key value violates unique constraint "unique_stripe_session_id"', code: "23505" },
+        error: { message: 'duplicate key value violates unique constraint "unique_stripe_idempotency_key"', code: "23505" },
       });
 
       const response = await POST(createWebhookRequest());

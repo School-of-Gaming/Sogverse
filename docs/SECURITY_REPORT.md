@@ -335,8 +335,8 @@ BEGIN
   WHERE id = p_user_id
   RETURNING token_balance INTO v_new_balance;
 
-  INSERT INTO token_transactions (user_id, amount, type, description, stripe_session_id, stripe_subscription_id, currency)
-  VALUES (p_user_id, p_amount, p_type, p_description, p_stripe_session_id, p_stripe_subscription_id, p_currency)
+  INSERT INTO token_transactions (user_id, amount, type, description, stripe_idempotency_key, stripe_subscription_id, currency)
+  VALUES (p_user_id, p_amount, p_type, p_description, p_stripe_idempotency_key, p_stripe_subscription_id, p_currency)
   RETURNING id INTO v_transaction_id;
 
   RETURN QUERY SELECT v_new_balance, v_transaction_id;

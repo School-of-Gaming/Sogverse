@@ -38,7 +38,7 @@ export async function POST(request: Request) {
         const { data: existing } = await admin
           .from("token_transactions")
           .select("id")
-          .eq("stripe_session_id", session.id)
+          .eq("stripe_idempotency_key", session.id)
           .limit(1);
 
         if (existing && existing.length > 0) break;
@@ -51,14 +51,14 @@ export async function POST(request: Request) {
           p_amount: tokenAmount,
           p_type: txType as "purchase" | "subscription",
           p_description: `Purchased ${tokenAmount} Sorgs`,
-          p_stripe_session_id: session.id,
+          p_stripe_idempotency_key: session.id,
           p_stripe_subscription_id:
             (session.subscription as string) || undefined,
           p_currency: sessionCurrency,
         });
 
         if (rpcError) {
-          // UNIQUE constraint on stripe_session_id — concurrent request already
+          // UNIQUE constraint on stripe_idempotency_key — concurrent request already
           // credited tokens for this session. Safe to ignore.
           if (rpcError.code === "23505") break;
           console.error("Token credit failed:", rpcError);
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
         const { data: existing } = await admin
           .from("token_transactions")
           .select("id")
-          .eq("stripe_session_id", invoice.id)
+          .eq("stripe_idempotency_key", invoice.id)
           .limit(1);
 
         if (existing && existing.length > 0) break;
@@ -119,13 +119,13 @@ export async function POST(request: Request) {
           p_amount: tokenAmount,
           p_type: "subscription" as const,
           p_description: `Monthly subscription — ${tokenAmount} Sorgs`,
-          p_stripe_session_id: invoice.id,
+          p_stripe_idempotency_key: invoice.id,
           p_stripe_subscription_id: invoice.subscription as string,
           p_currency: invoiceCurrency,
         });
 
         if (rpcError) {
-          // UNIQUE constraint on stripe_session_id — concurrent request already
+          // UNIQUE constraint on stripe_idempotency_key — concurrent request already
           // credited tokens for this invoice. Safe to ignore.
           if (rpcError.code === "23505") break;
           console.error("Token credit failed:", rpcError);

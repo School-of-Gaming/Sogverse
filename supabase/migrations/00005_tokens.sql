@@ -19,7 +19,7 @@ CREATE TABLE token_transactions (
   amount INTEGER NOT NULL,
   type token_transaction_type NOT NULL,
   description TEXT,
-  stripe_session_id TEXT,
+  stripe_idempotency_key TEXT,
   stripe_subscription_id TEXT,
   admin_id UUID REFERENCES profiles(id),
   balance_after INTEGER NOT NULL,
@@ -28,14 +28,14 @@ CREATE TABLE token_transactions (
 );
 
 CREATE INDEX idx_token_transactions_user_id ON token_transactions(user_id);
-CREATE INDEX idx_token_transactions_stripe_session_id ON token_transactions(stripe_session_id);
+CREATE INDEX idx_token_transactions_stripe_idempotency_key ON token_transactions(stripe_idempotency_key);
 CREATE INDEX idx_token_transactions_created_at ON token_transactions(created_at);
 
 -- PostgreSQL allows multiple NULLs in UNIQUE columns, so admin adjustments
--- (which have NULL stripe_session_id) are unaffected by this constraint.
+-- (which have NULL stripe_idempotency_key) are unaffected by this constraint.
 -- This is the idempotency gate that prevents double-crediting via TOCTOU races.
 ALTER TABLE token_transactions
-  ADD CONSTRAINT unique_stripe_session_id UNIQUE (stripe_session_id);
+  ADD CONSTRAINT unique_stripe_idempotency_key UNIQUE (stripe_idempotency_key);
 
 ALTER TABLE token_transactions ENABLE ROW LEVEL SECURITY;
 
@@ -50,7 +50,7 @@ CREATE OR REPLACE FUNCTION adjust_token_balance(
   p_amount INTEGER,
   p_type token_transaction_type,
   p_description TEXT DEFAULT NULL,
-  p_stripe_session_id TEXT DEFAULT NULL,
+  p_stripe_idempotency_key TEXT DEFAULT NULL,
   p_stripe_subscription_id TEXT DEFAULT NULL,
   p_admin_id UUID DEFAULT NULL,
   p_currency TEXT DEFAULT NULL
@@ -82,8 +82,8 @@ BEGIN
   RETURNING token_balance INTO v_new_balance;
 
   -- Insert transaction record
-  INSERT INTO token_transactions (user_id, amount, type, description, stripe_session_id, stripe_subscription_id, admin_id, balance_after, currency)
-  VALUES (p_user_id, p_amount, p_type, p_description, p_stripe_session_id, p_stripe_subscription_id, p_admin_id, v_new_balance, p_currency)
+  INSERT INTO token_transactions (user_id, amount, type, description, stripe_idempotency_key, stripe_subscription_id, admin_id, balance_after, currency)
+  VALUES (p_user_id, p_amount, p_type, p_description, p_stripe_idempotency_key, p_stripe_subscription_id, p_admin_id, v_new_balance, p_currency)
   RETURNING id INTO v_transaction_id;
 
   RETURN QUERY SELECT v_new_balance, v_transaction_id;

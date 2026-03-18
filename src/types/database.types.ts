@@ -436,7 +436,7 @@ export type Database = {
           currency: string | null
           description: string | null
           id: string
-          stripe_session_id: string | null
+          stripe_idempotency_key: string | null
           stripe_subscription_id: string | null
           type: Database["public"]["Enums"]["token_transaction_type"]
           user_id: string
@@ -449,7 +449,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           id?: string
-          stripe_session_id?: string | null
+          stripe_idempotency_key?: string | null
           stripe_subscription_id?: string | null
           type: Database["public"]["Enums"]["token_transaction_type"]
           user_id: string
@@ -462,7 +462,7 @@ export type Database = {
           currency?: string | null
           description?: string | null
           id?: string
-          stripe_session_id?: string | null
+          stripe_idempotency_key?: string | null
           stripe_subscription_id?: string | null
           type?: Database["public"]["Enums"]["token_transaction_type"]
           user_id?: string
@@ -555,7 +555,7 @@ export type Database = {
           p_amount: number
           p_currency?: string
           p_description?: string
-          p_stripe_session_id?: string
+          p_stripe_idempotency_key?: string
           p_stripe_subscription_id?: string
           p_type: Database["public"]["Enums"]["token_transaction_type"]
           p_user_id: string

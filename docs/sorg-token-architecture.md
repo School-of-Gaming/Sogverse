@@ -99,7 +99,7 @@ Packages are defined as **Stripe Products** in the Stripe dashboard, not in code
 1. Stripe fires `invoice.paid` event to `POST /api/webhooks/stripe`
 2. Handler skips if `billing_reason === "subscription_create"` (first payment handled by `checkout.session.completed`)
 3. Retrieves `userId` and `tokenAmount` from subscription metadata (metadata is updated on tier switch, so renewals always use the current tier's token amount)
-4. Checks idempotency (existing transaction with `stripe_session_id = invoice.id`)
+4. Checks idempotency (existing transaction with `stripe_idempotency_key = invoice.id`)
 5. Calls `adjust_token_balance()` with `p_type = "subscription"`
 
 ### 5. Subscription tier switch
@@ -145,13 +145,13 @@ token_transactions (
   amount                  INTEGER NOT NULL,
   type                    token_transaction_type ('purchase' | 'subscription' | 'admin_adjustment'),
   description             TEXT,
-  stripe_session_id       TEXT,      -- idempotency key
+  stripe_idempotency_key       TEXT,      -- idempotency key
   stripe_subscription_id  TEXT,
   admin_id                UUID FK → profiles(id),
   balance_after           INTEGER NOT NULL,
   created_at              TIMESTAMPTZ DEFAULT now()
 )
--- Indexes: user_id, stripe_session_id, created_at
+-- Indexes: user_id, stripe_idempotency_key, created_at
 ```
 
 ### `adjust_token_balance()` RPC (SECURITY DEFINER)
@@ -187,7 +187,7 @@ All token crediting happens exclusively through the Stripe webhook.
 | `customer.subscription.updated` | Sync `subscription_status` and `subscription_tier` from subscription metadata |
 | `customer.subscription.deleted` | Clear `stripe_subscription_id`, `subscription_status`, and `subscription_tier` |
 
-**Idempotency:** Both token-crediting handlers check `stripe_session_id` in `token_transactions` before crediting. A `UNIQUE` constraint on `stripe_session_id` provides database-level protection against concurrent deliveries.
+**Idempotency:** Both token-crediting handlers check `stripe_idempotency_key` in `token_transactions` before crediting. A `UNIQUE` constraint on `stripe_idempotency_key` provides database-level protection against concurrent deliveries.
 
 **Note:** The `customer_profiles` updates in the webhook (storing customer ID, subscription status/tier) do not check for errors. If one fails, the webhook still returns 200 and Stripe won't retry. This is accepted because the profile fields are eventually consistent — the next webhook event (renewal, status change) will overwrite them. Token crediting (the critical path) does check for errors and returns 500 on failure.
 
