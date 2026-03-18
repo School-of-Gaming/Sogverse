@@ -142,17 +142,21 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
 export function Sidebar() {
   const pathname = usePathname();
   const { profile } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+  // Collapsed by default below Tailwind `md` breakpoint (48rem)
+  const [collapsed, setCollapsed] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 768
+  );
 
   if (!profile?.role) return null;
 
   const navItems = navItemsByRole[profile.role];
+  const transition = "transition-all duration-700";
 
   return (
     <aside
       className={cn(
-        "relative flex h-full flex-col border-r border-sidebar-border bg-sidebar-background transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        `relative flex h-full flex-col border-r border-sidebar-border bg-sidebar-background ${transition}`,
+        collapsed ? "w-18" : "w-64"
       )}
     >
       {/* Collapse Toggle */}
@@ -169,7 +173,7 @@ export function Sidebar() {
       </button>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex-1 space-y-1 overflow-hidden p-4">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -184,34 +188,39 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                `flex items-center overflow-hidden whitespace-nowrap rounded-lg py-2 text-sm font-medium ${transition}`,
+                collapsed ? "gap-0 px-2.5" : "gap-3 px-3",
                 isActive
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                collapsed && "justify-center px-2"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
               title={collapsed ? item.label : undefined}
             >
-              {item.icon}
-              {!collapsed && <span>{item.label}</span>}
+              <span className="shrink-0">{item.icon}</span>
+              <span
+                className={cn(
+                  `overflow-hidden text-ellipsis ${transition}`,
+                  collapsed ? "max-w-0 opacity-0" : "max-w-48 opacity-100"
+                )}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
       </nav>
 
       {/* User Info */}
-      {!collapsed && (
-        <div className="border-t border-sidebar-border p-4">
-          <div className="text-sm">
-            <p className="font-medium text-sidebar-foreground">
-              {profile.display_name}
-            </p>
-            <p className="text-xs capitalize text-muted-foreground">
-              {profile.role}
-            </p>
-          </div>
+      <div className="overflow-hidden border-t border-sidebar-border p-4">
+        <div className="whitespace-nowrap text-sm">
+          <p className="overflow-hidden text-ellipsis font-medium text-sidebar-foreground">
+            {profile.display_name}
+          </p>
+          <p className="overflow-hidden text-ellipsis text-xs capitalize text-muted-foreground">
+            {profile.role}
+          </p>
         </div>
-      )}
+      </div>
     </aside>
   );
 }
