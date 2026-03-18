@@ -165,18 +165,6 @@ Test cases to add:
 - [ ] Create Stripe **live mode** webhook endpoint pointing to `https://sogverse.sog.gg/api/webhooks/stripe`
 - [ ] Add the live mode `STRIPE_WEBHOOK_SECRET` to Vercel production environment
 
-### Streamline CI/CD Pipeline
-
-GitHub Actions and Vercel currently duplicate work (both do a full build), and Vercel deploys regardless of CI results. Align with best practice: let each tool do what it's good at.
-
-- [ ] Remove the standalone `build` job from `.github/workflows/ci.yml` (Vercel handles builds)
-- [ ] Remove Vercel deployment logic from CI (let Vercel's Git integration handle deploys)
-- [ ] Simplify the `deploy` job to only run DB migrations + type generation on push to main
-- [ ] Set up GitHub branch protection on `main` requiring CI checks (`lint-and-typecheck`, `test`, `e2e`) to pass before merging
-- [ ] Verify Vercel preview deploys still work for PRs
-
-**Why:** Currently the `build` job in CI is redundant with Vercel's build, and Vercel deploys even when CI fails. Branch protection prevents broken code from reaching production, while Vercel's preview deploys remain useful for PR review.
-
 ### Consolidate Multiple Permissive RLS Policies
 
 Every table has a separate `admin_full_access_*` permissive policy alongside role-specific permissive policies for the same action. PostgreSQL evaluates ALL permissive policies per query, which is suboptimal at scale. Merge overlapping policies into single combined policies with OR conditions.
