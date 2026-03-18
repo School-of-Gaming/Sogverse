@@ -16,7 +16,7 @@ CREATE TABLE profiles (
   email TEXT,
   username TEXT UNIQUE,
   role user_role NOT NULL DEFAULT 'customer',
-  display_name TEXT NOT NULL,
+  display_name TEXT NOT NULL CHECK (char_length(display_name) BETWEEN 2 AND 32),
   currency TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

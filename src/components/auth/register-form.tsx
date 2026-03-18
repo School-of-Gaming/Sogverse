@@ -10,14 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
-  displayName: z.string().min(2, "Display name must be at least 2 characters"),
+  displayName: z.string().min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Display name must be at most ${DISPLAY_NAME_MAX} characters`),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -121,6 +121,7 @@ export function RegisterForm() {
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={isLoading}
               required
+              maxLength={DISPLAY_NAME_MAX}
               autoComplete="name"
             />
           </div>

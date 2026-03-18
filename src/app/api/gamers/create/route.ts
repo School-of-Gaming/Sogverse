@@ -3,6 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateGamerEmail } from "@/lib/utils";
 import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 
 export async function POST(request: Request) {
   try {
@@ -22,9 +23,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!displayName || typeof displayName !== "string") {
+    if (!displayName || typeof displayName !== "string" || displayName.trim().length < DISPLAY_NAME_MIN || displayName.trim().length > DISPLAY_NAME_MAX) {
       return NextResponse.json(
-        { error: "Display name is required" },
+        { error: `Display name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters` },
         { status: 400 }
       );
     }

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { useUpdateProfile } from "@/services/users";
 import { useGamerProfile, useUpdateMyMinecraft } from "@/services/gamers";
@@ -153,6 +154,7 @@ export default function SettingsPage() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your display name"
+              maxLength={DISPLAY_NAME_MAX}
             />
           </div>
 

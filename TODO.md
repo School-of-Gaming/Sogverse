@@ -90,17 +90,6 @@ This was tested during the staging squash and worked well:
 
 ## Future Improvements
 
-### Add Display Name Length Limit
-
-`profiles.display_name` is `TEXT` with no max length. No validation exists at the API layer or DB level, so arbitrarily long names flow through to Daily.co tokens (`userId|role|displayName`) and the voice room UI unchecked.
-
-- [ ] Add a `CHECK (char_length(display_name) <= N)` constraint to `profiles` in a migration (pick a limit, e.g. 24 or 32)
-- [ ] Add server-side max length validation in `PATCH /api/gamers/[id]` (already enforces min 2)
-- [ ] Add `maxLength` to the display name `<input>` in the gamer edit form
-- [ ] Truncate or validate `displayName` before encoding into Daily.co token `user_name` in `POST /api/voice/token`
-
-**Affected files:** `supabase/migrations/` (new), `src/app/api/gamers/[id]/route.ts`, `src/app/(dashboard)/customer/gamers/[id]/page.tsx`, `src/app/api/voice/token/route.ts`
-
 ### Add Open Graph Metadata & SEO Assets
 
 Link previews on WhatsApp, Discord, Slack, Facebook, LinkedIn, and Twitter/X are driven by Open Graph (OG) tags. Currently no OG tags are set, so shared links show only the page title and URL — no preview image or styled card. Use [opengraph.xyz](https://opengraph.xyz) to test how previews render.

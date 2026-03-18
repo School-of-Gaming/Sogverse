@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 
 export async function PATCH(
   request: Request,
@@ -30,9 +31,9 @@ export async function PATCH(
     }
 
     if (displayName !== undefined) {
-      if (typeof displayName !== "string" || displayName.trim().length < 2) {
+      if (typeof displayName !== "string" || displayName.trim().length < DISPLAY_NAME_MIN || displayName.trim().length > DISPLAY_NAME_MAX) {
         return NextResponse.json(
-          { error: "Display name must be at least 2 characters" },
+          { error: `Display name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters` },
           { status: 400 },
         );
       }

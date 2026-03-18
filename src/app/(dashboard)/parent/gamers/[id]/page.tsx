@@ -12,7 +12,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
 
 export default function GamerDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -259,6 +259,7 @@ export default function GamerDetailsPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="Display name"
+                maxLength={DISPLAY_NAME_MAX}
               />
             </div>
 

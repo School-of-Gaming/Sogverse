@@ -200,7 +200,7 @@ describe("PATCH /api/gamers/[id]", () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain("at least 2 characters");
+    expect(data.error).toContain("between 2 and 32 characters");
   });
 
   it("should return 400 when password is too short", async () => {
