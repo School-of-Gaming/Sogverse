@@ -39,8 +39,8 @@ export const YTY_ELEMENTS = [
     },
   },
   {
-    id: "common_sense",
-    name: "Common Sense",
+    id: "wit",
+    name: "Wit",
     description: "Your relationship with media & tech",
     icon: Brain,
     color: {

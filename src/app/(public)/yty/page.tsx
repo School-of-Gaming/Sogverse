@@ -136,6 +136,6 @@ const elementDetails: Record<string, string> = {
     "How can I help others? Glow is about empathy, kindness, and building meaningful relationships. It means respecting differences, giving space to others, communicating well, and being the kind of person who lifts people up.",
   valor:
     "How can I make a difference? Valor is about finding your place in the world and having the courage to contribute. It means teamwork, expressing your ideas, using your imagination, and working towards a better future — locally and globally.",
-  common_sense:
-    "How do I navigate the digital world? Common Sense is about a healthy, critical relationship with games, media, and technology. It means understanding online behavior, thinking critically about information, and balancing screen time with the rest of life.",
+  wit:
+    "How do I navigate the digital world? Wit is about a healthy, critical relationship with games, media, and technology. It means understanding online behavior, thinking critically about information, and balancing screen time with the rest of life.",
 };
