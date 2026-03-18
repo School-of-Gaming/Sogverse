@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         fromEmail: SENDER_EMAIL,
         fromName: SENDER_NAME_AUTH,
         toEmail: email,
-        subject: "You're invited to The Sogverse",
+        subject: "You're invited to the Sogverse",
         htmlContent: buildGeduInviteEmail(data.properties.action_link),
       });
     } catch (emailError) {

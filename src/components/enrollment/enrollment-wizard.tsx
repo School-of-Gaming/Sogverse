@@ -344,7 +344,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
             ) : (
               <Alert>
                 <AlertDescription>
-                  No groups available for this product yet. Please try again
+                  No groups available for this club yet. Please try again
                   later.
                 </AlertDescription>
               </Alert>
@@ -441,7 +441,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
             </div>
             <div className="mt-6 flex gap-3">
               <Link href={ROUTES.products}>
-                <Button variant="outline">Browse Products</Button>
+                <Button variant="outline">Browse Clubs</Button>
               </Link>
               <Link href={ROUTES.customer.gamers}>
                 <Button>View My Gamers</Button>

@@ -135,7 +135,7 @@ export function SetupAccountForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Welcome to The Sogverse</CardTitle>
+        <CardTitle className="text-2xl text-center">Welcome to the Sogverse</CardTitle>
         <CardDescription className="text-center">
           Set up your game educator account below.
         </CardDescription>

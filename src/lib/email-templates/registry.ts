@@ -181,7 +181,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     ],
     schema: geduInviteParamsSchema,
     build: (p) => buildGeduInviteEmail(p.setupLink as string),
-    subject: () => "You're invited to The Sogverse",
+    subject: () => "You're invited to the Sogverse",
     fromName: SENDER_NAME_AUTH,
   },
   passwordReset: {

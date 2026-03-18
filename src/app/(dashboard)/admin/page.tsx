@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, Package, TrendingUp, DollarSign } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
@@ -14,14 +15,14 @@ const stats = [
     value: "0",
     description: "Active accounts",
     icon: Users,
-    href: "/admin/users",
+    href: ROUTES.admin.users,
   },
   {
     title: "Products",
     value: "0",
     description: "Active products",
     icon: Package,
-    href: "/admin/products",
+    href: ROUTES.admin.products,
   },
   {
     title: "Revenue",
@@ -78,7 +79,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-2">
             <Link
-              href="/admin/users"
+              href={ROUTES.admin.users}
               className="group block rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               <h3 className="font-medium">Manage Users</h3>
@@ -87,7 +88,7 @@ export default function AdminDashboardPage() {
               </p>
             </Link>
             <Link
-              href="/admin/products"
+              href={ROUTES.admin.products}
               className="group block rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               <h3 className="font-medium">Manage Products</h3>

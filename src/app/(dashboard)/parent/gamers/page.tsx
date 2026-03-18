@@ -52,7 +52,7 @@ export default function CustomerGamersPage() {
         </div>
         <Link href={ROUTES.products}>
           <Button>
-            Browse Products
+            Browse Clubs
           </Button>
         </Link>
       </div>
@@ -123,7 +123,7 @@ export default function CustomerGamersPage() {
                           href={ROUTES.products}
                           className="font-medium text-primary hover:underline"
                         >
-                          Browse products
+                          Browse clubs
                         </Link>{" "}
                         to enroll this gamer.
                       </p>
@@ -140,11 +140,11 @@ export default function CustomerGamersPage() {
             <Gamepad2 className="h-12 w-12 text-muted-foreground" />
             <h3 className="mt-4 text-lg font-medium">No Gamers Yet</h3>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              Enroll in a product to create your first gamer account.
+              Enroll in a club to create your first gamer account.
             </p>
             <Link href={ROUTES.products} className="mt-4">
               <Button>
-                Browse Products
+                Browse Clubs
               </Button>
             </Link>
           </CardContent>

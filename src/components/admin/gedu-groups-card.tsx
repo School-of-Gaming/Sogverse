@@ -41,11 +41,11 @@ export function VisibilityWarningBanner({ isVisible, groupCount }: VisibilityWar
     message = "This product is hidden and has no groups assigned. Add groups before making it visible.";
     variant = "warning";
   } else if (!isVisible && groupCount > 0) {
-    message = "This product is hidden. Make it visible so customers can see it.";
+    message = "This product is hidden. Make it visible so parents can see it.";
     variant = "info";
   } else {
     // visible but no groups — shouldn't normally happen (blocked by UI), but show warning
-    message = "This product is visible but has no groups. Customers won't be able to enroll.";
+    message = "This product is visible but has no groups. Parents won't be able to enroll.";
     variant = "warning";
   }
 

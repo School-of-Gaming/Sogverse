@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Coins, AlertTriangle, Users } from "lucide-react";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Button } from "@/components/ui/button";
@@ -78,7 +79,7 @@ export default function AdminUserDetailPage() {
   if (!profile) {
     return (
       <div className="space-y-6">
-        <Link href="/admin/users" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+        <Link href={ROUTES.admin.users} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back to Users
         </Link>
         <p className="text-muted-foreground">User not found.</p>
@@ -88,7 +89,7 @@ export default function AdminUserDetailPage() {
 
   return (
     <div className="space-y-6">
-      <Link href="/admin/users" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+      <Link href={ROUTES.admin.users} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Back to Users
       </Link>
 
@@ -134,7 +135,7 @@ export default function AdminUserDetailPage() {
                 {linkedGamers.map((gamer) => (
                   <Link
                     key={gamer.id}
-                    href={`/admin/users/${gamer.id}`}
+                    href={ROUTES.admin.user(gamer.id)}
                     className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-3">
@@ -168,7 +169,7 @@ export default function AdminUserDetailPage() {
                 {linkedParents.map((parent) => (
                   <Link
                     key={parent.id}
-                    href={`/admin/users/${parent.id}`}
+                    href={ROUTES.admin.user(parent.id)}
                     className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
                   >
                     <div className="flex items-center gap-3">

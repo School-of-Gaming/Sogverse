@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
+import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -32,7 +33,7 @@ export default function AdminProductsPage() {
             Manage your product catalog
           </p>
         </div>
-        <Link href="/admin/products/add">
+        <Link href={ROUTES.admin.productsAdd}>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
             Add Product
@@ -75,7 +76,7 @@ export default function AdminProductsPage() {
               {filteredProducts.map((product) => (
                 <Link
                   key={product.id}
-                  href={`/admin/products/${product.id}`}
+                  href={ROUTES.admin.product(product.id)}
                 >
                   <ProductRow product={product} currency={currency} locale={locale} tokensToCurrencyDisplay={tokensToCurrencyDisplay} />
                 </Link>

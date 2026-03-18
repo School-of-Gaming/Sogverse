@@ -172,7 +172,7 @@ export function LoginForm() {
         >
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h1 className="text-2xl font-bold">Welcome to Sogverse</h1>
+              <h1 className="text-2xl font-bold">Welcome to the Sogverse</h1>
               <p className="text-muted-foreground">Choose how you&apos;d like to sign in</p>
             </div>
 

@@ -23,8 +23,8 @@ const quickActions = [
     href: ROUTES.customer.sorg,
   },
   {
-    title: "Browse Products",
-    description: "Explore products and enroll your gamers",
+    title: "Browse Clubs",
+    description: "Explore clubs and enroll your gamers",
     icon: ShoppingCart,
     href: ROUTES.products,
   },
@@ -40,9 +40,9 @@ export default function CustomerDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Welcome to Sogverse!</h1>
+        <h1 className="text-3xl font-bold">Welcome to the Sogverse!</h1>
         <p className="text-muted-foreground">
-          Manage your gamer accounts and explore our educational gaming content.
+          Manage your gamer accounts and explore our clubs.
         </p>
       </div>
 
@@ -70,7 +70,7 @@ export default function CustomerDashboardPage() {
         <CardHeader>
           <CardTitle>Getting Started</CardTitle>
           <CardDescription>
-            Here&apos;s how to get the most out of Sogverse
+            Here&apos;s how to get the most out of the Sogverse
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -92,7 +92,7 @@ export default function CustomerDashboardPage() {
             <div>
               <h3 className="font-medium">Browse &amp; Enroll</h3>
               <p className="text-sm text-muted-foreground">
-                Find a product, create a gamer account, and enroll them in a group — all in one step.
+                Find a club, create a gamer account, and enroll them — all in one step.
               </p>
             </div>
           </div>

@@ -340,7 +340,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
             required
           />
           <p className="text-xs text-muted-foreground">
-            Enter time in Finland time (Europe/Helsinki). Customers will see this in their local timezone.
+            Enter time in Finland time (Europe/Helsinki). Parents will see this in their local timezone.
           </p>
         </div>
 

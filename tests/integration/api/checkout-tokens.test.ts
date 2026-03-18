@@ -372,17 +372,17 @@ describe("POST /api/checkout/tokens", () => {
 
     await POST(
       createRequest(
-        { priceId: "price_starter_usd", currency: "usd", returnPath: "/customer/sorg" },
+        { priceId: "price_starter_usd", currency: "usd", returnPath: "/parent/sorg" },
         "https://myapp.vercel.app"
       )
     );
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.success_url).toBe(
-      "https://myapp.vercel.app/customer/sorg?success=true"
+      "https://myapp.vercel.app/parent/sorg?success=true"
     );
     expect(params.cancel_url).toBe(
-      "https://myapp.vercel.app/customer/sorg?canceled=true"
+      "https://myapp.vercel.app/parent/sorg?canceled=true"
     );
   });
 

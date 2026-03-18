@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, UserPlus } from "lucide-react";
+import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import type { Profile, UserRole } from "@/types";
 
 const ROLE_FILTERS: { value: UserRole; label: string }[] = [
   { value: "admin", label: "Admin" },
-  { value: "customer", label: "Customer" },
+  { value: "customer", label: "Parent" },
   { value: "gedu", label: "Gedu" },
 ];
 
@@ -103,7 +104,7 @@ export default function AdminUsersPage() {
             Manage user accounts
           </p>
         </div>
-        <Link href="/admin/users/add">
+        <Link href={ROUTES.admin.usersAdd}>
           <Button>
             <UserPlus className="mr-2 h-4 w-4" />
             Invite Gedu

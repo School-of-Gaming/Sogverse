@@ -220,9 +220,9 @@ function SwitchToGamerDialogDemo() {
 
   return (
     <Section title="Switch to Gamer Dialog">
-      <SubSection title="Customer → Gamer session switch">
+      <SubSection title="Parent → Gamer session switch">
         <p className="text-sm text-muted-foreground mb-3">
-          Shown when a customer clicks &ldquo;Join&rdquo; on a voice session. Uses info color to signal
+          Shown when a parent clicks &ldquo;Join&rdquo; on a voice session. Uses info color to signal
           an attention-worthy auth action. Confirm button triggers session swap then full page navigation.
         </p>
         <Button variant="secondary" onClick={() => setOpen(true)}>
@@ -264,7 +264,7 @@ function DialogDemo() {
           <DialogHeader>
             <DialogTitle>Hide Product</DialogTitle>
             <DialogDescription>
-              Are you sure you want to hide &ldquo;Sogverse Pro&rdquo;? It will no longer be visible to customers.
+              Are you sure you want to hide &ldquo;Sogverse Pro&rdquo;? It will no longer be visible to parents.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -1044,7 +1044,7 @@ export default function AdminUIComponentsPage() {
         {/* -- Gamer Card (customer/gamers) -- */}
         <SubSection title="Gamer Card (customer/gamers)">
           <p className="text-sm text-muted-foreground mb-3">
-            Card shown to customers on their gamers list. Wrap in a Link for navigation. Used in customer/gamers.
+            Card shown to parents on their gamers list. Wrap in a Link for navigation. Used in customer/gamers.
           </p>
           <div className="space-y-4">
             <GamerCard

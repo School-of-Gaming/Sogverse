@@ -73,7 +73,7 @@ describe("GET /api/auth/callback", () => {
     );
   });
 
-  it("redirects to /customer for customer role", async () => {
+  it("redirects to /parent for customer role", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
     mockGetUser.mockResolvedValue({
       data: { user: createMockUser() },
@@ -86,7 +86,7 @@ describe("GET /api/auth/callback", () => {
     const response = await GET(createCallbackRequest({ code: "valid-code" }));
 
     expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/customer");
+    expect(getRedirectUrl(response).pathname).toBe("/parent");
   });
 
   it("redirects to /admin for admin role", async () => {
@@ -137,7 +137,7 @@ describe("GET /api/auth/callback", () => {
     expect(getRedirectUrl(response).pathname).toBe("/gamer");
   });
 
-  it("redirects to /customer when profile is null (fallback)", async () => {
+  it("redirects to /parent when profile is null (fallback)", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
     mockGetUser.mockResolvedValue({
       data: { user: createMockUser() },
@@ -147,7 +147,7 @@ describe("GET /api/auth/callback", () => {
     const response = await GET(createCallbackRequest({ code: "valid-code" }));
 
     expect(response.status).toBe(307);
-    expect(getRedirectUrl(response).pathname).toBe("/customer");
+    expect(getRedirectUrl(response).pathname).toBe("/parent");
   });
 
   it("redirects to next param when set", async () => {

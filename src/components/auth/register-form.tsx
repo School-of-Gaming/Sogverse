@@ -102,7 +102,7 @@ export function RegisterForm() {
               <AlertDescription>
                 This account is for you, the parent. Your child&apos;s gamer
                 account is separate and will be created later when you enroll
-                them in a product.
+                them in a club.
               </AlertDescription>
             </div>
           </Alert>
@@ -171,16 +171,6 @@ export function RegisterForm() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {status ?? (isLoading ? "Creating account..." : "Create Account")}
           </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            By creating an account, you agree to our{" "}
-            <Link href="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-          </p>
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">

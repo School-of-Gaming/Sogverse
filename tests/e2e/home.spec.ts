@@ -5,11 +5,11 @@ test.describe("Home Page", () => {
     await page.goto("/");
 
     await expect(
-      page.getByRole("heading", { name: /learn through play/i })
+      page.getByRole("heading", { level: 1, name: /screen time/i })
     ).toBeVisible();
 
     await expect(
-      page.getByText(/educational gaming platform/i)
+      page.getByText(/promote healthy gaming/i)
     ).toBeVisible();
   });
 
@@ -24,7 +24,7 @@ test.describe("Home Page", () => {
 
     await expect(page.getByRole("link", { name: "Home" }).first()).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Products", exact: true })
+      page.getByRole("link", { name: "Clubs", exact: true })
     ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "About", exact: true })
@@ -39,23 +39,23 @@ test.describe("Home Page", () => {
     await expect(page).toHaveURL("/register");
   });
 
-  test("should navigate to products page", async ({ page }) => {
+  test("should navigate to clubs page", async ({ page }) => {
     await page.goto("/");
 
-    await page.getByRole("link", { name: /view products/i }).click();
+    await page.getByRole("link", { name: /view clubs/i }).click();
 
-    await expect(page).toHaveURL("/products");
+    await expect(page).toHaveURL("/clubs");
   });
 
   test("should display features section", async ({ page }) => {
     await page.goto("/");
 
     await expect(
-      page.getByText(/safe gaming environment/i)
+      page.getByText(/safe online community/i)
     ).toBeVisible();
 
     await expect(
-      page.getByRole("heading", { name: /educational content/i })
+      page.getByRole("heading", { name: /make gaming a great hobby/i })
     ).toBeVisible();
   });
 
@@ -67,7 +67,7 @@ test.describe("Home Page", () => {
     ).toBeVisible();
 
     await expect(page.getByText(/create your account/i)).toBeVisible();
-    await expect(page.getByText(/add your gamers/i)).toBeVisible();
-    await expect(page.getByText(/start learning/i)).toBeVisible();
+    await expect(page.getByText(/pick a club/i)).toBeVisible();
+    await expect(page.getByText(/join the adventure/i)).toBeVisible();
   });
 });

@@ -24,7 +24,7 @@ export function GeduGroupsPageContent() {
       ]}
       heading="Your Groups"
       subheading="Your assigned groups, students, and voice sessions."
-      emptyText="Groups will appear here when an admin assigns you to a product."
+      emptyText="Groups will appear here when an admin assigns you to a club."
       voiceRoute={ROUTES.gedu.voiceSession}
       detailRoute={ROUTES.gedu.group}
     />

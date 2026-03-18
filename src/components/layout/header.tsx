@@ -15,8 +15,9 @@ import { CurrencyPicker } from "@/components/layout/currency-picker";
 
 const publicNavLinks = [
   { href: ROUTES.home, label: "Home" },
-  { href: ROUTES.products, label: "Products" },
+  { href: ROUTES.products, label: "Clubs" },
   { href: ROUTES.sorg, label: "Sorg" },
+  { href: ROUTES.yty, label: "Yty" },
   { href: ROUTES.about, label: "About" },
 ];
 

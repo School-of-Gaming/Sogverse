@@ -54,17 +54,17 @@ export default function ProductDetailPage() {
         <Link href={ROUTES.products}>
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Products
+            Back to Clubs
           </Button>
         </Link>
         <Card className="mx-auto max-w-md">
           <CardContent className="flex flex-col items-center py-12 text-center">
-            <h3 className="text-lg font-medium">Product Not Found</h3>
+            <h3 className="text-lg font-medium">Club Not Found</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              This product may no longer be available.
+              This club may no longer be available.
             </p>
             <Link href={ROUTES.products} className="mt-4">
-              <Button>Browse Products</Button>
+              <Button>Browse Clubs</Button>
             </Link>
           </CardContent>
         </Card>
@@ -85,12 +85,12 @@ export default function ProductDetailPage() {
       <Link href={ROUTES.products}>
         <Button variant="ghost" className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Products
+          Back to Clubs
         </Button>
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Left: Product info */}
+        {/* Left: Club info */}
         <div>
           <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
             <Image
@@ -162,7 +162,7 @@ export default function ProductDetailPage() {
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  Only customer accounts can enroll gamers in products.
+                  Only parent accounts can enroll gamers in clubs.
                 </p>
               </CardContent>
             </Card>
@@ -172,7 +172,7 @@ export default function ProductDetailPage() {
                 <CardTitle>Ready to Enroll?</CardTitle>
                 <CardDescription>
                   Log in or create an account to enroll your child in this
-                  product.
+                  club.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-3">

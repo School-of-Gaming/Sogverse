@@ -1,29 +1,30 @@
 import Link from "next/link";
-import { ArrowRight, Gamepad2, Users, GraduationCap, Shield } from "lucide-react";
+import { ArrowRight, Shield, Users, Sparkles, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Footer } from "@/components/layout";
+import { ROUTES } from "@/lib/constants";
 
 const features = [
   {
-    title: "Safe Gaming Environment",
-    description: "Parent-controlled accounts with age-appropriate content and no exposure to emails or external contacts.",
-    icon: Shield,
+    title: "Minecraft Clubs with Gedus",
+    description: "Our game educators — Gedus — are gamers themselves. They understand that as children, identity and friendships are built both online and offline. Every session is guided by someone who truly gets it.",
+    icon: Gamepad2,
   },
   {
-    title: "Educational Content",
-    description: "Games designed to teach while entertaining. From problem-solving to creativity, learning is built in.",
-    icon: GraduationCap,
+    title: "Screen Time Becomes Quality Time",
+    description: "Skilfully designed clubs turn gaming into a playful learning experience where children develop real skills and have fun doing what they love.",
+    icon: Sparkles,
   },
   {
-    title: "Family Connections",
-    description: "Parents create and manage gamer accounts for their children. Stay in control while they have fun.",
+    title: "New Friends, Real Connections",
+    description: "Children build genuine, lasting friendships through shared adventures. No one is left without a friend. The gamer's oath means treating each other with kindness — online and offline.",
     icon: Users,
   },
   {
-    title: "Progress Tracking",
-    description: "Monitor achievements, learning milestones, and gaming time all from your parent dashboard.",
-    icon: Gamepad2,
+    title: "Parents Are Part of It",
+    description: "Parental game education is just as important as the clubs themselves. We keep you informed, involved, and equipped to support your child's gaming journey.",
+    icon: Shield,
   },
 ];
 
@@ -35,24 +36,30 @@ export default function HomePage() {
         <div className="container mx-auto px-4 py-24 sm:py-32">
           <div className="mx-auto max-w-3xl text-center">
             <h1 className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
-              <span className="text-primary">Learn</span> Through{" "}
-              <span className="text-secondary">Play</span>
+              Where
+              <br />
+              <span className="text-primary">Screen Time</span>
+              <br />
+              Becomes
+              <br />
+              <span className="text-secondary">Quality Time</span>
             </h1>
             <p className="mt-6 text-lg leading-8 text-muted-foreground">
-              Sogverse is the educational gaming platform where children learn valuable
-              skills through engaging games, while parents stay in control. Safe,
-              fun, and educational.
+              Our skilfully designed Minecraft clubs promote healthy gaming as a
+              hobby. World-class game educators make every session a playful
+              learning experience where children make new friends, develop their
+              unique talents, and have fun doing what they love.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/register">
+              <Link href={ROUTES.products}>
+                <Button variant="outline" size="lg">
+                  View Clubs
+                </Button>
+              </Link>
+              <Link href={ROUTES.register}>
                 <Button size="lg" className="gap-2">
                   Get Started
                   <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/products">
-                <Button variant="outline" size="lg">
-                  View Products
                 </Button>
               </Link>
             </div>
@@ -64,11 +71,11 @@ export default function HomePage() {
       <section className="container mx-auto px-4 py-24">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Gaming Reimagined for Education
+            Make Gaming a Great Hobby
           </h2>
           <p className="mt-4 text-muted-foreground">
-            We combine the best of gaming with educational content to create
-            an experience that children love and parents trust.
+            Gaming is a hobby just like any other — better with good friends
+            and with a professional instructor who is there to guide and help.
           </p>
         </div>
         <div className="mx-auto mt-16 grid max-w-5xl gap-8 sm:grid-cols-2">
@@ -100,7 +107,7 @@ export default function HomePage() {
               How It Works
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Get your family started with Sogverse in three simple steps.
+              Join a Minecraft club in three simple steps.
             </p>
           </div>
           <div className="mx-auto mt-16 grid max-w-4xl gap-8 md:grid-cols-3">
@@ -110,25 +117,25 @@ export default function HomePage() {
               </div>
               <h3 className="mt-4 text-lg font-semibold">Create Your Account</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Sign up as a parent with your email. It only takes a minute.
+                Sign up as a parent and create gamer accounts for your children.
               </p>
             </div>
             <div className="text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-2xl font-bold text-secondary-foreground">
                 2
               </div>
-              <h3 className="mt-4 text-lg font-semibold">Add Your Gamers</h3>
+              <h3 className="mt-4 text-lg font-semibold">Pick a Club</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Create gamer accounts for your children with custom usernames.
+                Browse our clubs and enroll your gamers in the ones that fit their schedule and interests.
               </p>
             </div>
             <div className="text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
                 3
               </div>
-              <h3 className="mt-4 text-lg font-semibold">Start Learning</h3>
+              <h3 className="mt-4 text-lg font-semibold">Join the Adventure</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Your kids log in and start playing educational games!
+                Your gamers log in each week, meet their Gedu, and dive into Minecraft adventures with new friends.
               </p>
             </div>
           </div>
@@ -140,18 +147,19 @@ export default function HomePage() {
         <Card className="mx-auto max-w-3xl bg-gradient-to-r from-primary/10 to-secondary/10">
           <CardContent className="flex flex-col items-center py-12 text-center">
             <h2 className="text-2xl font-bold sm:text-3xl">
-              Ready to Start Your Gaming Journey?
+              Ready to Turn Gaming into Learning?
             </h2>
             <p className="mt-4 text-muted-foreground">
-              Join thousands of families who are already learning through play.
+              Give your child a fun, safe place to play, learn, and make
+              friends — guided by a professional game educator.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <Link href="/register">
-                <Button size="lg">Create Free Account</Button>
+              <Link href={ROUTES.about}>
+                <Button variant="outline" size="lg">Learn More</Button>
               </Link>
-              <Link href="/about">
-                <Button variant="outline" size="lg">
-                  Learn More
+              <Link href={ROUTES.register}>
+                <Button size="lg">
+                  Create Free Account
                 </Button>
               </Link>
             </div>

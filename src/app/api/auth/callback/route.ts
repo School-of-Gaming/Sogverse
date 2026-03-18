@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -24,20 +25,13 @@ export async function GET(request: Request) {
           .single();
 
         // Redirect to role-specific dashboard or the intended destination
-        const roleRedirects: Record<string, string> = {
-          admin: "/admin",
-          customer: "/customer",
-          gamer: "/gamer",
-          gedu: "/gedu",
-        };
-
         const role = profile?.role;
         const redirectPath =
           next !== "/"
             ? next
             : role
-              ? roleRedirects[role]
-              : "/customer";
+              ? ROLE_DASHBOARD_PATHS[role as keyof typeof ROLE_DASHBOARD_PATHS]
+              : ROLE_DASHBOARD_PATHS.customer;
 
         return NextResponse.redirect(`${origin}${redirectPath}`);
       }

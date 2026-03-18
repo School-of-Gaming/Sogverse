@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s | Sogverse",
   },
   description:
-    "School of Gaming Business Hub - Educational gaming for the next generation",
+    "School of Gaming - Where screen time becomes quality time",
   keywords: ["gaming", "education", "learning", "kids", "games"],
 };
 

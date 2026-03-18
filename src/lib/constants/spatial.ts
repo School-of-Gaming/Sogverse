@@ -9,6 +9,7 @@ export type ZoneId =
 export interface ZoneRect {
   id: ZoneId;
   label: string;
+  icon?: import("lucide-react").LucideIcon;
   x: number;
   y: number;
   width: number;

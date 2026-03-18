@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  BookOpen,
-  Trophy,
-  CalendarCheck,
-  PartyPopper,
-  Shirt,
-  Zap,
-  Lock,
-  Gift,
-  HelpCircle,
   Coins,
+  CalendarCheck,
+  ShieldCheck,
+  Wallet,
+  RefreshCw,
+  HelpCircle,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
@@ -25,62 +21,35 @@ import { TokenPurchaseSection } from "@/components/tokens";
 import { getStripeProducts } from "@/lib/stripe/products";
 
 export const metadata: Metadata = {
-  title: "Sorg - The Sogverse Currency",
+  title: "Sorg - the Sogverse Currency",
   description:
-    "Learn about Sorg, the virtual currency of the Sogverse. Earn Sorgs by completing lessons, unlocking achievements, and more.",
+    "Sorg is the currency that powers your child's club sessions in the Sogverse. Purchase tokens and pay per session with full flexibility.",
 };
 
-const earnMethods = [
+const benefits = [
   {
-    title: "Complete Lessons",
+    title: "Pay Per Session",
     description:
-      "Earn Sorgs every time you finish a lesson or learning module. The harder the challenge, the bigger the reward.",
-    icon: BookOpen,
-  },
-  {
-    title: "Unlock Achievements",
-    description:
-      "Hit milestones and earn bonus Sorgs. Achievements reward consistency, mastery, and exploration.",
-    icon: Trophy,
-  },
-  {
-    title: "Daily Logins",
-    description:
-      "Show up every day and collect your daily Sorg bonus. Streaks unlock even bigger payouts.",
+      "Sorgs are deducted once a week for each enrolled club. You only pay for the sessions your child attends — no long-term contracts.",
     icon: CalendarCheck,
   },
   {
-    title: "Special Events",
+    title: "Full Transparency",
     description:
-      "Participate in limited-time events and seasonal challenges for exclusive Sorg rewards.",
-    icon: PartyPopper,
-  },
-];
-
-const spendMethods = [
-  {
-    title: "Avatar Items",
-    description:
-      "Customize your look with outfits, accessories, and emotes from the Sorg Shop.",
-    icon: Shirt,
+      "See exactly where every Sorg goes. Your parent dashboard shows your balance, transaction history, and upcoming charges.",
+    icon: Wallet,
   },
   {
-    title: "Power-Ups",
+    title: "Flexible Top-Ups",
     description:
-      "Boost your gameplay with hints, extra lives, and time extensions.",
-    icon: Zap,
+      "Buy a one-time token pack when you need it, or subscribe for a monthly allowance at a better rate. Change or cancel anytime.",
+    icon: RefreshCw,
   },
   {
-    title: "Unlock Content",
+    title: "Safe by Design",
     description:
-      "Access bonus levels, hidden worlds, and exclusive learning adventures.",
-    icon: Lock,
-  },
-  {
-    title: "Gift Friends",
-    description:
-      "Send Sorgs to your friends to help them on their learning journey.",
-    icon: Gift,
+      "Sorgs exist only within the Sogverse. Only parents can see balances and make purchases — children are never exposed to the currency. No surprises.",
+    icon: ShieldCheck,
   },
 ];
 
@@ -88,22 +57,27 @@ const faqs = [
   {
     question: "Is Sorg real money?",
     answer:
-      "No. Sorg is a virtual currency that exists only within the Sogverse. It cannot be exchanged for real money or transferred outside the platform.",
+      "Sorgs are purchased with real money but exist only within the Sogverse. They cannot be transferred outside the platform, but if you ever want a refund on unused Sorgs, just contact our support team.",
+  },
+  {
+    question: "How are Sorgs spent?",
+    answer:
+      "Each club session costs a set number of Sorgs, shown on the club page. Sorgs are automatically deducted once a week when your child's session is scheduled.",
   },
   {
     question: "Can parents control spending?",
     answer:
-      "Absolutely. Parents have full visibility into their child's Sorg balance and spending history. Spending limits and approval settings are available in the parent dashboard.",
+      "Yes. Sorgs are completely invisible to children. Only parents can see balances, purchase tokens, and view spending history in the parent dashboard.",
   },
   {
     question: "Do Sorgs expire?",
     answer:
-      "No. Once earned, Sorgs stay in your account until you decide to spend them. There are no expiration dates or hidden fees.",
+      "No. Once purchased, Sorgs stay in your account until they are used for club sessions. There are no expiration dates or hidden fees.",
   },
   {
-    question: "Can I buy Sorgs with real money?",
+    question: "Can I get a refund?",
     answer:
-      "Yes! Parents can purchase Sorg packs or subscribe to a monthly plan. Check out our packages above. Sorgs can also be earned through gameplay and learning activities.",
+      "If you unenroll a gamer at least 24 hours before the start of a session, the Sorgs for that session are automatically refunded to your balance. For anything else, contact our support team — we're happy to help.",
   },
 ];
 
@@ -121,8 +95,9 @@ export default async function SorgPage() {
           What is <span className="text-primary">Sorg</span>?
         </h1>
         <p className="mt-6 text-lg leading-8 text-muted-foreground">
-          The currency that powers the Sogverse. Earn it, spend it, and watch
-          your progress grow.
+          Sorg is the currency that powers your child&apos;s club sessions in
+          the Sogverse. Parents purchase Sorgs and they are used to pay for
+          weekly sessions — simple, transparent, and flexible.
         </p>
       </div>
 
@@ -130,16 +105,14 @@ export default async function SorgPage() {
       <div className="mx-auto mt-16 max-w-4xl">
         <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">
-              The Currency of the Sogverse
-            </CardTitle>
+            <CardTitle className="text-2xl">How It Works</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-lg text-muted-foreground">
-              Sorgs are the virtual currency that fuels everything in the
-              Sogverse. Earn them through learning, playing, and achieving — or
-              purchase packs to give your gamer a head start. Every Sorg powers
-              real progress on the educational journey.
+              Each club session costs a set number of Sorgs. When you enroll
+              your child in a club, Sorgs are deducted automatically each week
+              for their session. Buy a token pack or subscribe monthly —
+              whichever suits your family best.
             </p>
           </CardContent>
         </Card>
@@ -151,53 +124,28 @@ export default async function SorgPage() {
         subscriptionPackages={subscriptionPackages}
       />
 
-      {/* How to Earn */}
+      {/* Benefits */}
       <div className="mx-auto mt-16 max-w-5xl">
-        <h2 className="text-center text-2xl font-bold">How to Earn Sorgs</h2>
+        <h2 className="text-center text-2xl font-bold">
+          Why Sorgs?
+        </h2>
         <p className="mt-2 text-center text-muted-foreground">
-          Put in the work, reap the rewards
+          A simple, fair way to pay for your child&apos;s clubs
         </p>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
-          {earnMethods.map((method) => (
-            <Card key={method.title}>
+          {benefits.map((benefit) => (
+            <Card key={benefit.title}>
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <method.icon className="h-6 w-6 text-primary" />
+                    <benefit.icon className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-lg">{method.title}</CardTitle>
+                  <CardTitle className="text-lg">{benefit.title}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
                 <CardDescription className="text-base">
-                  {method.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* How to Spend */}
-      <div className="mx-auto mt-16 max-w-5xl">
-        <h2 className="text-center text-2xl font-bold">How to Spend Sorgs</h2>
-        <p className="mt-2 text-center text-muted-foreground">
-          Your Sorgs, your choice
-        </p>
-        <div className="mt-8 grid gap-6 sm:grid-cols-2">
-          {spendMethods.map((method) => (
-            <Card key={method.title}>
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-secondary/10">
-                    <method.icon className="h-6 w-6 text-secondary" />
-                  </div>
-                  <CardTitle className="text-lg">{method.title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  {method.description}
+                  {benefit.description}
                 </CardDescription>
               </CardContent>
             </Card>
@@ -233,17 +181,17 @@ export default async function SorgPage() {
       <div className="mx-auto mt-16 max-w-2xl text-center">
         <Card className="bg-muted/30">
           <CardContent className="py-8">
-            <h3 className="text-xl font-semibold">Ready to Start Earning?</h3>
+            <h3 className="text-xl font-semibold">Ready to Get Started?</h3>
             <p className="mt-2 text-muted-foreground">
-              Join the Sogverse today and start earning your first Sorgs. Every
-              lesson brings you closer to your next reward.
+              Create an account, grab some Sorgs, and enroll your child in
+              their first club.
             </p>
             <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">
+              <Link href={ROUTES.products} className={buttonVariants({ variant: "outline", size: "lg" })}>
+                Explore Clubs
+              </Link>
               <Link href={ROUTES.register} className={buttonVariants({ size: "lg" })}>
                 Get Started
-              </Link>
-              <Link href={ROUTES.products} className={buttonVariants({ variant: "outline", size: "lg" })}>
-                Explore Products
               </Link>
             </div>
           </CardContent>

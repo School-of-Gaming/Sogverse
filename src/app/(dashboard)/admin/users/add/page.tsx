@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, UserPlus, Check } from "lucide-react";
+import { ROUTES } from "@/lib/constants";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -68,7 +69,7 @@ export default function AddUserPage() {
               </p>
             )}
             <div className="mt-6 flex gap-4">
-              <Link href="/admin/users">
+              <Link href={ROUTES.admin.users}>
                 <Button variant="outline">View All Users</Button>
               </Link>
               <Button onClick={() => {
@@ -88,7 +89,7 @@ export default function AddUserPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/users">
+        <Link href={ROUTES.admin.users}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>

@@ -35,11 +35,17 @@ export function Zone({ zone, isActive }: ZoneProps) {
     >
       <div
         className={cn(
-          "absolute left-2 top-1 flex items-center gap-1 text-xs font-medium",
-          colors.accent
+          "absolute flex items-center gap-1 font-medium",
+          colors.accent,
+          isBroadcast ? "left-0 right-0 top-1 justify-center text-xs" : "gap-2 text-sm",
+          zone.id === "breakout_1" && "left-3 top-2",
+          zone.id === "breakout_2" && "right-3 top-2 flex-row-reverse",
+          zone.id === "breakout_3" && "left-3 bottom-2",
+          zone.id === "breakout_4" && "right-3 bottom-2 flex-row-reverse",
         )}
       >
         {isBroadcast && <Megaphone className="h-3 w-3" />}
+        {zone.icon && <zone.icon className="h-6 w-6" />}
         {zone.label}
       </div>
     </div>

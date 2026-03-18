@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +21,7 @@ export default function AddProductPage() {
 
   const handleSubmit = async (values: ProductFormValues) => {
     const created = await createProduct.mutateAsync(values);
-    startTransition(() => router.push(`/admin/products/${created.id}`));
+    startTransition(() => router.push(ROUTES.admin.product(created.id)));
   };
 
   if (cloneId && cloneLoading) {
@@ -66,7 +67,7 @@ export default function AddProductPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/products">
+        <Link href={ROUTES.admin.products}>
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-4 w-4" />
           </Button>

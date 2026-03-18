@@ -1,34 +1,35 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Heart, Target, Users, Sparkles } from "lucide-react";
+import { Heart, Shield, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ROUTES } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "About Us",
-  description: "Learn about Sogverse and our mission to make learning fun",
+  description: "School of Gaming — where screen time becomes quality time through Minecraft clubs led by professional game educators.",
 };
 
 const values = [
   {
-    title: "Learning Through Play",
-    description: "We believe that the best learning happens when children are engaged and having fun. Our games are designed to teach while entertaining.",
+    title: "Play Is Essential for Children",
+    description: "Play is a child's work. It is crucial for their wellbeing and development. Our clubs are designed to promote free play that feeds imagination, curiosity, and creativity — powerful tools to face any future.",
     icon: Sparkles,
   },
   {
-    title: "Family First",
-    description: "Parents are partners in their children's education. We give you the tools to stay involved and in control of your child's gaming experience.",
+    title: "Friends Carry Over Obstacles",
+    description: "No one should be left without a friend. Moments of play and friendship carry kids over any obstacle in life. In our clubs, children build genuine connections through shared adventures.",
     icon: Heart,
   },
   {
-    title: "Safe Environment",
-    description: "Child safety is our top priority. No emails, no external contacts, no ads. Just safe, educational gaming.",
-    icon: Users,
+    title: "Keep Children Safe Online",
+    description: "We nurture inclusive, kind, and safe online communities. We grow caring and polite digital citizens who look out for their fellow gamers. Zero tolerance for bullying and toxicity.",
+    icon: Shield,
   },
   {
-    title: "Growth Focused",
-    description: "Every game is designed with learning objectives in mind. We track progress and celebrate achievements together.",
-    icon: Target,
+    title: "Family in the Loop",
+    description: "Parents are partners. You stay in control of your child's gaming experience while they enjoy the freedom to explore, create, and make friends in a safe environment.",
+    icon: Users,
   },
 ];
 
@@ -41,9 +42,20 @@ export default function AboutPage() {
           About <span className="text-primary">School of Gaming</span>
         </h1>
         <p className="mt-6 text-lg leading-8 text-muted-foreground">
-          We&apos;re on a mission to transform how children learn by harnessing the
-          power of gaming. At Sogverse, education meets entertainment in a safe,
-          parent-controlled environment.
+          In our Minecraft clubs, screen time becomes quality time. We bring
+          together children, professional game educators, and the game kids
+          already love — creating playful learning experiences where they make
+          new friends, develop real skills, and have fun.
+        </p>
+      </div>
+
+      {/* Quote */}
+      <div className="mx-auto mt-16 max-w-3xl text-center">
+        <blockquote className="text-xl italic text-muted-foreground">
+          &ldquo;What is true now, was once just your imagination.&rdquo;
+        </blockquote>
+        <p className="mt-2 text-sm text-muted-foreground">
+          — The Principal of the School of Gaming
         </p>
       </div>
 
@@ -55,9 +67,10 @@ export default function AboutPage() {
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-lg text-muted-foreground">
-              To create a world where every child has access to high-quality
-              educational content through the medium they love most: games. We
-              believe that learning should be an adventure, not a chore.
+              All screen content is not made equal. Gaming is a great hobby when
+              it is treated like all the other hobbies. We use children&apos;s
+              love for games to their advantage — with good friends and a
+              professional game educator who is there to guide and help.
             </p>
           </CardContent>
         </Card>
@@ -65,7 +78,7 @@ export default function AboutPage() {
 
       {/* Values Section */}
       <div className="mx-auto mt-16 max-w-5xl">
-        <h2 className="text-center text-2xl font-bold">Our Values</h2>
+        <h2 className="text-center text-2xl font-bold">Things We Care About</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {values.map((value) => (
             <Card key={value.title}>
@@ -87,26 +100,51 @@ export default function AboutPage() {
         </div>
       </div>
 
-      {/* Story Section */}
+      {/* How Clubs Work Section */}
       <div className="mx-auto mt-16 max-w-3xl">
-        <h2 className="text-center text-2xl font-bold">Our Story</h2>
+        <h2 className="text-center text-2xl font-bold">How Our Clubs Work</h2>
         <div className="mt-8 space-y-6 text-muted-foreground">
           <p>
-            School of Gaming (SOG) was founded with a simple observation: children
-            are naturally drawn to games. Rather than fighting this tendency, we
-            asked ourselves: what if we could harness this passion for learning?
+            Each week, our gamers log in and are greeted by their own game
+            educator — a Gedu. The Gedu guides them through the day&apos;s
+            topic, giving children space and freedom to make the adventures
+            their own.
           </p>
           <p>
-            Our team of educators, game designers, and parents came together to
-            create Sogverse—a platform where educational content is delivered
-            through engaging, age-appropriate games. We&apos;ve built a system that
-            keeps parents in the loop while giving children the freedom to explore
-            and learn.
+            Our Gedus are gamers themselves. They understand firsthand that as
+            children and teenagers, identity and friendships are built both
+            online and offline. That understanding shapes every session they
+            lead.
           </p>
           <p>
-            Today, Sogverse serves families around the world, helping children
-            develop critical thinking, problem-solving, creativity, and academic
-            skills—all while having fun.
+            All our clubs are built around stories that give space for gamers to
+            explore, create, and imagine. Between weekly sessions, gamers get
+            fun challenges to do online and offline. During holidays we organize
+            camps, and every week there are community events, tournaments, and
+            competitions.
+          </p>
+          <p>
+            Every gamer takes an oath to behave kindly and righteously —
+            whether in-game, on voice chat, or out in the real world. The same
+            values apply everywhere.
+          </p>
+        </div>
+      </div>
+
+      {/* Parents Section */}
+      <div className="mx-auto mt-16 max-w-3xl">
+        <h2 className="text-center text-2xl font-bold">For Parents</h2>
+        <div className="mt-8 space-y-6 text-muted-foreground">
+          <p>
+            Parental game education is just as important a part of what we do as
+            the clubs themselves. We want to help parents keep up with the
+            ever-changing gaming world so they can support their children with
+            confidence.
+          </p>
+          <p>
+            You stay in control — managing accounts, enrollments, and
+            spending — while your child enjoys a safe environment guided by
+            professionals who care.
           </p>
         </div>
       </div>
@@ -117,16 +155,16 @@ export default function AboutPage() {
           <CardContent className="py-8">
             <h3 className="text-xl font-semibold">Join Our Community</h3>
             <p className="mt-2 text-muted-foreground">
-              Ready to transform how your children learn? Create a free account
-              today and discover the joy of learning through play.
+              Give your child a fun, safe place to play, learn, and make
+              friends — guided by a professional game educator.
             </p>
             <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">
-              <Link href="/register">
-                <Button size="lg">Get Started Free</Button>
+              <Link href={ROUTES.products}>
+                <Button variant="outline" size="lg">Explore Clubs</Button>
               </Link>
-              <Link href="/products">
-                <Button variant="outline" size="lg">
-                  Explore Products
+              <Link href={ROUTES.register}>
+                <Button size="lg">
+                  Get Started
                 </Button>
               </Link>
             </div>
@@ -138,11 +176,10 @@ export default function AboutPage() {
       <div className="mx-auto mt-16 max-w-2xl text-center">
         <h2 className="text-2xl font-bold">Get in Touch</h2>
         <p className="mt-4 text-muted-foreground">
-          Have questions? We&apos;d love to hear from you. Reach out to our team
-          and we&apos;ll get back to you as soon as possible.
+          Have questions? We&apos;d love to hear from you.
         </p>
         <p className="mt-4 text-sm text-muted-foreground">
-          Email: support@sogverse.com
+          Email: kanslia@sog.gg
         </p>
       </div>
     </div>

@@ -76,7 +76,7 @@ describe("proxy", () => {
   // --- Public routes ---
 
   describe("public routes (pass through regardless of auth)", () => {
-    it.each(["/", "/products", "/products/some-product-id", "/about", "/api/some-endpoint"])(
+    it.each(["/", "/clubs", "/clubs/some-club-id", "/about", "/api/some-endpoint"])(
       "passes through %s without auth",
       async (path) => {
         mockNoUser();
@@ -102,11 +102,11 @@ describe("proxy", () => {
   // --- Auth routes (authenticated → redirect to dashboard) ---
 
   describe("auth routes (authenticated)", () => {
-    it("redirects customer from /login to /customer", async () => {
+    it("redirects customer from /login to /parent", async () => {
       mockUser("customer");
       const response = await proxy(createNextRequest("/login"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/customer");
+      expect(getRedirectUrl(response).pathname).toBe("/parent");
     });
 
     it("redirects admin from /login to /admin", async () => {
@@ -143,13 +143,13 @@ describe("proxy", () => {
       expect(url.searchParams.get("redirect")).toBe("/admin");
     });
 
-    it("redirects /customer/purchases to /login with redirect param", async () => {
+    it("redirects /parent/purchases to /login with redirect param", async () => {
       mockNoUser();
-      const response = await proxy(createNextRequest("/customer/purchases"));
+      const response = await proxy(createNextRequest("/parent/purchases"));
       expect(response.status).toBe(307);
       const url = getRedirectUrl(response);
       expect(url.pathname).toBe("/login");
-      expect(url.searchParams.get("redirect")).toBe("/customer/purchases");
+      expect(url.searchParams.get("redirect")).toBe("/parent/purchases");
     });
   });
 
@@ -158,7 +158,7 @@ describe("proxy", () => {
   describe("protected routes (correct role)", () => {
     it.each([
       ["/admin", "admin"],
-      ["/customer", "customer"],
+      ["/parent", "customer"],
       ["/gamer", "gamer"],
       ["/gedu", "gedu"],
     ])("allows %s for %s role", async (path, role) => {
@@ -171,16 +171,16 @@ describe("proxy", () => {
   // --- Protected routes (wrong role → redirect to correct dashboard) ---
 
   describe("protected routes (wrong role)", () => {
-    it("redirects customer from /admin to /customer", async () => {
+    it("redirects customer from /admin to /parent", async () => {
       mockUser("customer");
       const response = await proxy(createNextRequest("/admin"));
       expect(response.status).toBe(307);
-      expect(getRedirectUrl(response).pathname).toBe("/customer");
+      expect(getRedirectUrl(response).pathname).toBe("/parent");
     });
 
-    it("redirects admin from /customer to /admin", async () => {
+    it("redirects admin from /parent to /admin", async () => {
       mockUser("admin");
-      const response = await proxy(createNextRequest("/customer"));
+      const response = await proxy(createNextRequest("/parent"));
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).pathname).toBe("/admin");
     });

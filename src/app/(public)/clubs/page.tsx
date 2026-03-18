@@ -19,11 +19,11 @@ export default function ProductsPage() {
     <div className="container mx-auto px-4 py-12">
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Our Products
+          Our Clubs
         </h1>
         <p className="mt-4 text-muted-foreground">
-          Explore our collection of educational gaming products designed for
-          learning and fun.
+          Explore our Minecraft clubs — each one led by a professional game
+          educator.
         </p>
       </div>
 
@@ -91,7 +91,7 @@ export default function ProductsPage() {
                         ≈ {tokensToCurrencyDisplay(product.token_cost, currency, locale)} per session
                       </p>
                     </div>
-                    <Link href={`/products/${product.id}`}>
+                    <Link href={`/clubs/${product.id}`}>
                       <Button>View Details</Button>
                     </Link>
                   </CardFooter>
@@ -102,9 +102,9 @@ export default function ProductsPage() {
         ) : (
           <Card className="mx-auto max-w-md">
             <CardContent className="flex flex-col items-center py-12 text-center">
-              <h3 className="mt-4 text-lg font-medium">No Products Available</h3>
+              <h3 className="mt-4 text-lg font-medium">No Clubs Available</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Check back soon for exciting educational gaming products!
+                Check back soon for new clubs!
               </p>
             </CardContent>
           </Card>
@@ -117,7 +117,7 @@ export default function ProductsPage() {
           <CardContent className="py-8">
             <h3 className="text-lg font-semibold">Need Help Choosing?</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Not sure which product is right for your family? Contact us for
+              Not sure which club is right for your family? Contact us for
               personalized recommendations based on your children&apos;s ages and
               interests.
             </p>

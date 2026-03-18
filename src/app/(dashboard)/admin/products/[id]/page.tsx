@@ -3,6 +3,7 @@
 import { use, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/lib/constants";
 import Image from "next/image";
 import {
   ArrowLeft,
@@ -59,7 +60,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
     return (
       <div className="space-y-6">
         <Link
-          href="/admin/products"
+          href={ROUTES.admin.products}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> Back to Products
@@ -90,7 +91,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
 
   const handleDelete = () => {
     deleteProduct.mutate(product.id, {
-      onSuccess: () => startTransition(() => router.push("/admin/products")),
+      onSuccess: () => startTransition(() => router.push(ROUTES.admin.products)),
     });
     setConfirmDelete(false);
   };
@@ -98,7 +99,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
   return (
     <div className="space-y-6">
       <Link
-        href="/admin/products"
+        href={ROUTES.admin.products}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" /> Back to Products
@@ -173,13 +174,13 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
             )}
             {isVisible ? "Hide Product" : "Show Product"}
           </Button>
-          <Link href={`/admin/products/${product.id}/edit`}>
+          <Link href={ROUTES.admin.productEdit(product.id)}>
             <Button variant="outline">
               <Pencil className="mr-2 h-4 w-4" />
               Edit
             </Button>
           </Link>
-          <Link href={`/admin/products/add?clone=${product.id}`}>
+          <Link href={ROUTES.admin.productClone(product.id)}>
             <Button variant="outline">
               <Copy className="mr-2 h-4 w-4" />
               Clone
@@ -208,8 +209,8 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
             </DialogTitle>
             <DialogDescription>
               {isVisible
-                ? `Are you sure you want to hide "${product.name}"? It will no longer be visible to customers.`
-                : `Are you sure you want to show "${product.name}"? It will become visible to customers.`}
+                ? `Are you sure you want to hide "${product.name}"? It will no longer be visible to parents.`
+                : `Are you sure you want to show "${product.name}"? It will become visible to parents.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

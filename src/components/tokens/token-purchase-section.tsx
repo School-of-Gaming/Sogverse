@@ -284,7 +284,7 @@ export function TokenPurchaseSection({
       )}
       <h2 className="text-center text-2xl font-bold">Buy Sorgs</h2>
       <p className="mt-2 text-center text-muted-foreground">
-        Top up your balance and power up your Sogverse experience
+        Purchase tokens to cover your child&apos;s weekly club sessions
       </p>
 
       {/* One-Time Packs */}

@@ -3,6 +3,7 @@
 import { use, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +19,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   const handleSubmit = async (values: ProductFormValues) => {
     await updateProduct.mutateAsync({ id, updates: values });
-    startTransition(() => router.push(`/admin/products/${id}`));
+    startTransition(() => router.push(ROUTES.admin.product(id)));
   };
 
   if (isLoading) {
@@ -49,7 +50,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="mx-auto max-w-lg space-y-6">
         <div className="flex items-center gap-4">
-          <Link href={`/admin/products/${id}`}>
+          <Link href={ROUTES.admin.product(id)}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>

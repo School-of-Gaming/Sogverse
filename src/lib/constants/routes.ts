@@ -1,8 +1,9 @@
 /** Centralized route paths — import and reference instead of hardcoding string literals. */
 export const ROUTES = {
   home: "/",
-  products: "/products",
+  products: "/clubs",
   sorg: "/sorg",
+  yty: "/yty",
   checkout: "/checkout",
   about: "/about",
   login: "/login",
@@ -16,7 +17,12 @@ export const ROUTES = {
     dashboard: "/admin",
     users: "/admin/users",
     usersAdd: "/admin/users/add",
+    user: (id: string) => `/admin/users/${id}`,
     products: "/admin/products",
+    productsAdd: "/admin/products/add",
+    product: (id: string) => `/admin/products/${id}`,
+    productEdit: (id: string) => `/admin/products/${id}/edit`,
+    productClone: (id: string) => `/admin/products/add?clone=${id}`,
     groups: "/admin/groups",
     group: (groupId: string) => `/admin/groups/${groupId}`,
     voiceSession: (roomId: string) => `/admin/voice/${roomId}`,
@@ -24,14 +30,14 @@ export const ROUTES = {
     testing: "/admin/testing",
   },
   customer: {
-    dashboard: "/customer",
-    sorg: "/customer/sorg",
-    billing: "/customer/billing",
-    gamers: "/customer/gamers",
+    dashboard: "/parent",
+    sorg: "/parent/sorg",
+    billing: "/parent/billing",
+    gamers: "/parent/gamers",
     group: (groupId: string, gamerId?: string) =>
       gamerId
-        ? `/customer/groups/${groupId}?gamer=${gamerId}`
-        : `/customer/groups/${groupId}`,
+        ? `/parent/groups/${groupId}?gamer=${gamerId}`
+        : `/parent/groups/${groupId}`,
   },
   gamer: {
     dashboard: "/gamer",

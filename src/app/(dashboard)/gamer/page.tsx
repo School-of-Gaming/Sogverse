@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Users, Trophy, Star, Zap } from "lucide-react";
+import { Users } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { ROUTES } from "@/lib/constants";
+import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
 export const metadata: Metadata = {
   title: "Gamer Home",
-  description: "Your gaming dashboard",
+  description: "Your gamer dashboard in the Sogverse",
 };
 
 export default function GamerDashboardPage() {
@@ -22,39 +23,19 @@ export default function GamerDashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
-          <CardHeader className="text-center">
-            <Trophy className="mx-auto h-8 w-8 text-secondary" />
-            <CardTitle className="text-lg">Achievements</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-3xl font-bold">0</p>
-            <p className="text-sm text-muted-foreground">Trophies earned</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-secondary/10 to-secondary/5">
-          <CardHeader className="text-center">
-            <Star className="mx-auto h-8 w-8 text-secondary" />
-            <CardTitle className="text-lg">Level</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-3xl font-bold">1</p>
-            <p className="text-sm text-muted-foreground">Keep playing to level up!</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-success/10 to-success/5">
-          <CardHeader className="text-center">
-            <Zap className="mx-auto h-8 w-8 text-success" />
-            <CardTitle className="text-lg">XP Points</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-3xl font-bold">0</p>
-            <p className="text-sm text-muted-foreground">Experience points</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+        {YTY_ELEMENTS.map((el) => (
+          <Card key={el.id} className={`bg-gradient-to-br ${el.color.bgGradient}`}>
+            <CardHeader className="text-center pb-2">
+              <el.icon className={`mx-auto h-8 w-8 ${el.color.accent}`} />
+              <CardTitle className="text-base">{el.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center pt-0">
+              <p className="text-3xl font-bold">0</p>
+              <p className="text-xs text-muted-foreground">{el.description}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       <Link href={ROUTES.gamer.groups} className="block">
@@ -80,7 +61,8 @@ export default function GamerDashboardPage() {
           <div>
             <h3 className="font-medium">Tip of the Day</h3>
             <p className="text-sm text-muted-foreground">
-              Learning is more fun when you play games! Keep exploring and earning achievements.
+              By doing good things — learning new skills, making friends, and joining
+              in — you earn Yty for yourself and for the Sogverse!
             </p>
           </div>
         </CardContent>
