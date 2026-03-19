@@ -132,24 +132,24 @@ export async function PATCH(
       }
     }
 
-    // 6. Update Minecraft username if provided
+    // 6. Update Minecraft username if provided (stored in minecraft_accounts)
     if (hasMinecraft) {
-      let mcUpdate: { minecraft_username: string | null; minecraft_uuid: string | null };
+      let mcUpsert: { user_id: string; minecraft_username: string | null; minecraft_uuid: string | null };
 
       if (body.minecraftUsername === null) {
-        mcUpdate = { minecraft_username: null, minecraft_uuid: null };
+        mcUpsert = { user_id: gamerId, minecraft_username: null, minecraft_uuid: null };
       } else {
         const mojang = await lookupMinecraftUser(body.minecraftUsername);
-        mcUpdate = {
+        mcUpsert = {
+          user_id: gamerId,
           minecraft_username: body.minecraftUsername,
           minecraft_uuid: mojang?.uuid ?? null,
         };
       }
 
       const { error: mcError } = await admin
-        .from("gamer_profiles")
-        .update(mcUpdate)
-        .eq("user_id", gamerId);
+        .from("minecraft_accounts")
+        .upsert(mcUpsert, { onConflict: "user_id" });
 
       if (mcError) {
         return NextResponse.json({ error: mcError.message }, { status: 500 });

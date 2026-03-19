@@ -32,4 +32,6 @@ export const SEED = {
   PRODUCT_TOKEN_COST: 2,
   PRODUCT_NAME: "Test Product",
   GAME_NAME: "Test Game",
+  MINECRAFT_USERNAME_GEDU: "TestGedu",
+  MINECRAFT_USERNAME_GAMER: "TestGamer",
 } as const;

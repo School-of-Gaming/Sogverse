@@ -137,22 +137,16 @@ export type Database = {
         Row: {
           date_of_birth: string
           gender: Database["public"]["Enums"]["gender_type"]
-          minecraft_username: string | null
-          minecraft_uuid: string | null
           user_id: string
         }
         Insert: {
           date_of_birth: string
           gender: Database["public"]["Enums"]["gender_type"]
-          minecraft_username?: string | null
-          minecraft_uuid?: string | null
           user_id: string
         }
         Update: {
           date_of_birth?: string
           gender?: Database["public"]["Enums"]["gender_type"]
-          minecraft_username?: string | null
-          minecraft_uuid?: string | null
           user_id?: string
         }
         Relationships: [
@@ -234,6 +228,32 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      minecraft_accounts: {
+        Row: {
+          minecraft_username: string | null
+          minecraft_uuid: string | null
+          user_id: string
+        }
+        Insert: {
+          minecraft_username?: string | null
+          minecraft_uuid?: string | null
+          user_id: string
+        }
+        Update: {
+          minecraft_username?: string | null
+          minecraft_uuid?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "minecraft_accounts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { PATCH } from "@/app/api/gamer/minecraft/route";
+import { PATCH } from "@/app/api/minecraft/account/route";
 import { NextResponse } from "next/server";
 
 // --- Mocks ---
@@ -27,31 +27,30 @@ vi.mock("@/lib/supabase/admin", () => ({
 // --- Helpers ---
 
 function createRequest(body: Record<string, unknown>): Request {
-  return new Request("http://localhost:3000/api/gamer/minecraft", {
+  return new Request("http://localhost:3000/api/minecraft/account", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
 }
 
-function mockAuthenticated(userId = "gamer-123") {
+function mockAuthenticated(userId = "gamer-123", role = "gamer") {
   mockRequireRole.mockResolvedValue({
     user: { id: userId },
-    profile: { role: "gamer" },
+    profile: { role },
     supabase: {},
   });
 }
 
-function mockUpdateSuccess() {
-  const eqMock = vi.fn().mockResolvedValue({ data: null, error: null });
-  const updateMock = vi.fn().mockReturnValue({ eq: eqMock });
-  mockAdminFrom.mockReturnValue({ update: updateMock });
-  return { updateMock, eqMock };
+function mockUpsertSuccess() {
+  const upsertMock = vi.fn().mockResolvedValue({ data: null, error: null });
+  mockAdminFrom.mockReturnValue({ upsert: upsertMock });
+  return { upsertMock };
 }
 
 // --- Tests ---
 
-describe("PATCH /api/gamer/minecraft", () => {
+describe("PATCH /api/minecraft/account", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockIsValidMinecraftUsername.mockImplementation(
@@ -68,17 +67,35 @@ describe("PATCH /api/gamer/minecraft", () => {
     expect(response.status).toBe(401);
   });
 
-  it("should return 403 for non-gamer roles", async () => {
+  it("should return 403 for non-gamer/gedu roles", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json(
-        { error: "Only gamers can update their Minecraft username" },
+        { error: "Only gamers and gedus can update their Minecraft username" },
         { status: 403 },
       ),
     );
 
     const response = await PATCH(createRequest({ minecraftUsername: "Notch" }));
     expect(response.status).toBe(403);
-    expect(mockRequireRole).toHaveBeenCalledWith("gamer", expect.any(Object));
+    expect(mockRequireRole).toHaveBeenCalledWith(["gamer", "gedu"], expect.any(Object));
+  });
+
+  it("should accept gamer role", async () => {
+    mockAuthenticated("gamer-123", "gamer");
+    mockLookupMinecraftUser.mockResolvedValue({ username: "Notch", uuid: "uuid-1" });
+    mockUpsertSuccess();
+
+    const response = await PATCH(createRequest({ minecraftUsername: "Notch" }));
+    expect(response.status).toBe(200);
+  });
+
+  it("should accept gedu role", async () => {
+    mockAuthenticated("gedu-123", "gedu");
+    mockLookupMinecraftUser.mockResolvedValue({ username: "Notch", uuid: "uuid-1" });
+    mockUpsertSuccess();
+
+    const response = await PATCH(createRequest({ minecraftUsername: "Notch" }));
+    expect(response.status).toBe(200);
   });
 
   it("should return 400 for invalid minecraft username", async () => {
@@ -91,13 +108,13 @@ describe("PATCH /api/gamer/minecraft", () => {
     expect(data.error).toContain("Invalid Minecraft username");
   });
 
-  it("should set username and resolve UUID when Mojang finds account", async () => {
+  it("should upsert username and resolve UUID when Mojang finds account", async () => {
     mockAuthenticated("gamer-123");
     mockLookupMinecraftUser.mockResolvedValue({
       username: "Notch",
       uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
     });
-    const { updateMock, eqMock } = mockUpdateSuccess();
+    const { upsertMock } = mockUpsertSuccess();
 
     const response = await PATCH(createRequest({ minecraftUsername: "notch" }));
     const data = await response.json();
@@ -106,17 +123,20 @@ describe("PATCH /api/gamer/minecraft", () => {
     expect(data.success).toBe(true);
     expect(data.minecraft_username).toBe("notch");
     expect(data.minecraft_uuid).toBe("069a79f4-44e9-4726-a5be-fca90e38aaf5");
-    expect(updateMock).toHaveBeenCalledWith({
-      minecraft_username: "notch",
-      minecraft_uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
-    });
-    expect(eqMock).toHaveBeenCalledWith("user_id", "gamer-123");
+    expect(upsertMock).toHaveBeenCalledWith(
+      {
+        user_id: "gamer-123",
+        minecraft_username: "notch",
+        minecraft_uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+      },
+      { onConflict: "user_id" },
+    );
   });
 
-  it("should set username with null UUID when Mojang finds no account", async () => {
+  it("should upsert username with null UUID when Mojang finds no account", async () => {
     mockAuthenticated();
     mockLookupMinecraftUser.mockResolvedValue(null);
-    mockUpdateSuccess();
+    mockUpsertSuccess();
 
     const response = await PATCH(
       createRequest({ minecraftUsername: "unknown_player" }),
@@ -130,7 +150,7 @@ describe("PATCH /api/gamer/minecraft", () => {
 
   it("should clear both columns when minecraftUsername is null", async () => {
     mockAuthenticated();
-    const { updateMock } = mockUpdateSuccess();
+    const { upsertMock } = mockUpsertSuccess();
 
     const response = await PATCH(createRequest({ minecraftUsername: null }));
     const data = await response.json();
@@ -138,10 +158,14 @@ describe("PATCH /api/gamer/minecraft", () => {
     expect(response.status).toBe(200);
     expect(data.minecraft_username).toBeNull();
     expect(data.minecraft_uuid).toBeNull();
-    expect(updateMock).toHaveBeenCalledWith({
-      minecraft_username: null,
-      minecraft_uuid: null,
-    });
+    expect(upsertMock).toHaveBeenCalledWith(
+      {
+        user_id: "gamer-123",
+        minecraft_username: null,
+        minecraft_uuid: null,
+      },
+      { onConflict: "user_id" },
+    );
     // Should NOT call Mojang API when clearing
     expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
   });

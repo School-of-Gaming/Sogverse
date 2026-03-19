@@ -114,23 +114,12 @@ export async function POST(request: Request) {
 
     await admin.from("customer_profiles").delete().eq("user_id", gamerId);
 
-    // Resolve Minecraft UUID if username provided
-    let mcData: { minecraft_username?: string; minecraft_uuid?: string | null } = {};
-    if (minecraftUsername) {
-      const mojang = await lookupMinecraftUser(minecraftUsername);
-      mcData = {
-        minecraft_username: minecraftUsername,
-        minecraft_uuid: mojang?.uuid ?? null,
-      };
-    }
-
     const { error: gamerProfileError } = await admin
       .from("gamer_profiles")
       .insert({
         user_id: gamerId,
         date_of_birth: dateOfBirth,
         gender,
-        ...mcData,
       });
 
     if (gamerProfileError) {
@@ -138,6 +127,25 @@ export async function POST(request: Request) {
         { error: gamerProfileError.message },
         { status: 500 }
       );
+    }
+
+    // Insert minecraft account separately if username provided
+    if (minecraftUsername) {
+      const mojang = await lookupMinecraftUser(minecraftUsername);
+      const { error: mcError } = await admin
+        .from("minecraft_accounts")
+        .insert({
+          user_id: gamerId,
+          minecraft_username: minecraftUsername,
+          minecraft_uuid: mojang?.uuid ?? null,
+        });
+
+      if (mcError) {
+        return NextResponse.json(
+          { error: mcError.message },
+          { status: 500 }
+        );
+      }
     }
 
     // Step 3: Link gamer to parent (validate_parent_gamer_roles trigger

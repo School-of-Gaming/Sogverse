@@ -62,7 +62,7 @@ describe("GET /api/minecraft/verify", () => {
     expect(response.status).toBe(403);
   });
 
-  it("should accept customer and gamer roles", async () => {
+  it("should accept customer, gamer, and gedu roles", async () => {
     mockAuthenticated();
     mockLookupMinecraftUser.mockResolvedValue({
       username: "Notch",
@@ -72,7 +72,7 @@ describe("GET /api/minecraft/verify", () => {
     const response = await GET(createRequest("Notch"));
     expect(response.status).toBe(200);
     expect(mockRequireRole).toHaveBeenCalledWith(
-      ["customer", "gamer"],
+      ["customer", "gamer", "gedu"],
       expect.any(Object),
     );
   });

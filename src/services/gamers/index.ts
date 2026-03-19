@@ -8,6 +8,4 @@ export {
   useCreateGamer,
   useUpdateGamer,
   useGamerProfile,
-  useVerifyMinecraft,
-  useUpdateMyMinecraft,
 } from "./gamers.queries";

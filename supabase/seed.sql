@@ -173,6 +173,11 @@ DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000
 INSERT INTO gamer_profiles (user_id, date_of_birth, gender)
 VALUES ('00000000-0000-0000-0000-000000000004', '2015-06-15', 'boy');
 
+-- Minecraft accounts for testing RLS
+INSERT INTO minecraft_accounts (user_id, minecraft_username, minecraft_uuid) VALUES
+  ('00000000-0000-0000-0000-000000000003', 'TestGedu', NULL),
+  ('00000000-0000-0000-0000-000000000004', 'TestGamer', NULL);
+
 -- =============================================================================
 -- 3. Patch extension tables (trigger creates them with defaults)
 -- =============================================================================

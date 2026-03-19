@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { GamerService } from "./gamers.service";
 import { groupKeys } from "@/services/groups/groups.queries";
+import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import type { CreateGamerInput } from "@/types";
 
 export const gamerKeys = {
@@ -101,6 +102,7 @@ export function useUpdateGamer() {
       queryClient.invalidateQueries({
         queryKey: gamerKeys.gamerProfile(variables.gamerId),
       });
+      queryClient.invalidateQueries({ queryKey: minecraftKeys.all });
     },
   });
 }
@@ -116,25 +118,3 @@ export function useGamerProfile(gamerId: string) {
   });
 }
 
-export function useVerifyMinecraft() {
-  const supabase = getClient();
-  const service = new GamerService(supabase);
-
-  return useMutation({
-    mutationFn: (username: string) => service.verifyMinecraftUsername(username),
-  });
-}
-
-export function useUpdateMyMinecraft() {
-  const queryClient = useQueryClient();
-  const supabase = getClient();
-  const service = new GamerService(supabase);
-
-  return useMutation({
-    mutationFn: (minecraftUsername: string | null) =>
-      service.updateMyMinecraft(minecraftUsername),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: gamerKeys.all });
-    },
-  });
-}

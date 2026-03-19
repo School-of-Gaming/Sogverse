@@ -13,14 +13,14 @@ import { MinecraftUsernameField } from "@/components/minecraft/minecraft-usernam
 import { DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { useUpdateProfile } from "@/services/users";
-import { useGamerProfile, useUpdateMyMinecraft } from "@/services/gamers";
+import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth();
   const updateProfile = useUpdateProfile();
   const router = useRouter();
-  const isGamer = profile?.role === "gamer";
-  const { data: gamerProfile } = useGamerProfile(isGamer && user ? user.id : "");
+  const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
+  const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
 
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
@@ -28,16 +28,16 @@ export default function SettingsPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Minecraft state (gamers only)
+  // Minecraft state (gamers and gedus)
   const [minecraftUsername, setMinecraftUsername] = useState("");
   const [mcInitialized, setMcInitialized] = useState(false);
   const [isSavingMc, setIsSavingMc] = useState(false);
   const [mcSuccess, setMcSuccess] = useState<string | null>(null);
   const [mcError, setMcError] = useState<string | null>(null);
 
-  // Initialize minecraft username once gamer profile loads
-  if (gamerProfile && !mcInitialized) {
-    setMinecraftUsername(gamerProfile.minecraft_username ?? "");
+  // Initialize minecraft username once account data loads
+  if (mcAccount !== undefined && !mcInitialized) {
+    setMinecraftUsername(mcAccount?.minecraft_username ?? "");
     setMcInitialized(true);
   }
   const handleSaveProfile = async () => {
@@ -205,8 +205,8 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Minecraft Account (gamers only) */}
-      {isGamer && (
+      {/* Minecraft Account (gamers and gedus) */}
+      {showMinecraft && (
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">

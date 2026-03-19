@@ -4,7 +4,7 @@ import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
 
 export async function GET(request: Request) {
   try {
-    const result = await requireRole(["customer", "gamer"], {
+    const result = await requireRole(["customer", "gamer", "gedu"], {
       forbiddenMessage: "Not authorized",
     });
     if (result instanceof NextResponse) return result;

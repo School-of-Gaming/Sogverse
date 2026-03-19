@@ -59,12 +59,23 @@ ALTER TABLE customer_profiles ENABLE ROW LEVEL SECURITY;
 CREATE TABLE gamer_profiles (
   user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
   date_of_birth DATE NOT NULL CHECK (date_of_birth <= CURRENT_DATE),
-  gender gender_type NOT NULL,
-  minecraft_username TEXT,
-  minecraft_uuid TEXT
+  gender gender_type NOT NULL
 );
 
 ALTER TABLE gamer_profiles ENABLE ROW LEVEL SECURITY;
+
+-- =============================================================================
+-- Minecraft Accounts (cross-role, 1:1 per user)
+-- =============================================================================
+
+CREATE TABLE minecraft_accounts (
+  user_id UUID PRIMARY KEY REFERENCES profiles(id) ON DELETE CASCADE,
+  minecraft_username TEXT,
+  minecraft_uuid TEXT,
+  CONSTRAINT minecraft_accounts_uuid_unique UNIQUE (minecraft_uuid)
+);
+
+ALTER TABLE minecraft_accounts ENABLE ROW LEVEL SECURITY;
 
 -- =============================================================================
 -- handle_new_user trigger

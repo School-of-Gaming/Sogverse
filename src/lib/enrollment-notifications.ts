@@ -28,7 +28,7 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
     // Gamer profile + minecraft info
     admin
       .from("profiles")
-      .select("display_name, gamer_profiles(minecraft_username, minecraft_uuid)")
+      .select("display_name, minecraft_accounts(minecraft_username, minecraft_uuid)")
       .eq("id", ctx.gamerId)
       .single(),
     // Group → gedu + product
@@ -57,7 +57,7 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
   const parent = parentResult.data as { display_name: string; email: string };
   const gamer = gamerResult.data as {
     display_name: string;
-    gamer_profiles: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
+    minecraft_accounts: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
   };
   const group = groupResult.data as {
     gedu_id: string;
@@ -73,8 +73,8 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
     parentName: parent.display_name,
     parentEmail: parent.email,
     gamerName: gamer.display_name,
-    minecraftUsername: gamer.gamer_profiles?.minecraft_username ?? null,
-    minecraftUuid: gamer.gamer_profiles?.minecraft_uuid ?? null,
+    minecraftUsername: gamer.minecraft_accounts?.minecraft_username ?? null,
+    minecraftUuid: gamer.minecraft_accounts?.minecraft_uuid ?? null,
     geduName: group.profiles.display_name,
     geduEmail: group.profiles.email,
     productName: group.products.name,

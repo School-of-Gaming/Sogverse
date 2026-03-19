@@ -74,13 +74,13 @@ function setupMockData(overrides?: {
             };
           }
           // Gamer profile with minecraft
-          if (selectStr.includes("gamer_profiles")) {
+          if (selectStr.includes("minecraft_accounts")) {
             return {
               eq: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue({
                   data: {
                     display_name: "Gamer Name",
-                    gamer_profiles: { minecraft_username: minecraftUsername, minecraft_uuid: minecraftUuid },
+                    minecraft_accounts: { minecraft_username: minecraftUsername, minecraft_uuid: minecraftUuid },
                   },
                   error: null,
                 }),

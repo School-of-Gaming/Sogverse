@@ -127,7 +127,7 @@ The `npm run supabase:gen-types` script uses `--local` which requires Docker. Fo
 
 **Important:** The gen-types command may append a CLI upgrade warning to the output file. Always check and remove any trailing non-TypeScript text from `src/types/database.types.ts` after generation.
 
-**Important:** `database.types.ts` is purely auto-generated — do not hand-edit it. Convenience type aliases (e.g., `Profile`, `UserRole`) live in `src/types/index.ts`. After regenerating, check whether new tables or enums need aliases added to `index.ts`.
+**Important:** `database.types.ts` is purely auto-generated — **never** hand-edit it, even as a shortcut when the remote DB hasn't been updated yet. Always push the migration first, then regenerate. Convenience type aliases (e.g., `Profile`, `UserRole`) live in `src/types/index.ts`. After regenerating, check whether new tables or enums need aliases added to `index.ts`.
 
 ### Remote Database Migrations
 
@@ -159,6 +159,8 @@ The `npm run supabase:gen-types` script uses `--local` which requires Docker. Fo
 5. Commit migration + updated types + tests together in the PR
 
 This avoids a chicken-and-egg problem where tests reference functions that aren't in the generated types yet.
+
+**Note:** During dev we sometimes modify existing migration files directly and fix the remote DB via psql. In production, schema changes must **only** go through new migration files — never edit a pushed migration or run ad-hoc DDL against production.
 
 **Rule: When writing RPCs with JOINs, verify `RETURNS TABLE` column nullability matches what the SQL actually produces.** PostgreSQL doesn't enforce `NOT NULL` on `RETURNS TABLE` columns, so the type generator infers from the base type alone — it can't see whether a column comes from an INNER JOIN (never null) or LEFT JOIN (sometimes null). After pushing and regenerating types, check the generated return type in `database.types.ts`. This is the one gap in the DB-to-TypeScript type chain: the compiler trusts the function signature, not the query.
 

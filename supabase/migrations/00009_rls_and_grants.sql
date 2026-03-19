@@ -71,6 +71,23 @@ CREATE POLICY "parents_read_linked_gamer_profiles"
   USING (is_parent_of(user_id));
 
 -- =============================================================================
+-- MINECRAFT_ACCOUNTS POLICIES
+-- =============================================================================
+
+CREATE POLICY "admin_full_access_minecraft_accounts"
+  ON minecraft_accounts FOR ALL TO authenticated
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+CREATE POLICY "users_read_own_minecraft_account"
+  ON minecraft_accounts FOR SELECT TO authenticated
+  USING (user_id = (select auth.uid()));
+
+CREATE POLICY "parents_read_linked_gamer_minecraft"
+  ON minecraft_accounts FOR SELECT TO authenticated
+  USING (is_parent_of(user_id));
+
+-- =============================================================================
 -- PARENT_GAMER POLICIES
 -- =============================================================================
 
@@ -271,6 +288,7 @@ REVOKE ALL ON voice_rooms FROM authenticated;
 REVOKE ALL ON token_transactions FROM authenticated;
 REVOKE ALL ON customer_profiles FROM authenticated;
 REVOKE ALL ON gamer_profiles FROM authenticated;
+REVOKE ALL ON minecraft_accounts FROM authenticated;
 REVOKE ALL ON product_groups FROM authenticated;
 REVOKE ALL ON group_enrollments FROM authenticated;
 REVOKE ALL ON enrollment_charges FROM authenticated;
@@ -291,6 +309,8 @@ GRANT SELECT ON token_transactions TO authenticated;
 GRANT SELECT ON customer_profiles TO authenticated;
 
 GRANT SELECT, UPDATE ON gamer_profiles TO authenticated;
+
+GRANT SELECT ON minecraft_accounts TO authenticated;
 
 GRANT SELECT ON product_groups TO authenticated;
 

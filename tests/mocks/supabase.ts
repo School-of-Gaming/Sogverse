@@ -1,4 +1,4 @@
-import type { Profile, CustomerProfile, GamerProfile, Product, UserRole } from "@/types";
+import type { Profile, CustomerProfile, GamerProfile, MinecraftAccount, Product, UserRole } from "@/types";
 
 // Mock data generators
 export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
@@ -52,6 +52,15 @@ export function createMockGamerExtProfile(
     user_id: "test-gamer-id",
     date_of_birth: "2015-01-01",
     gender: "boy",
+    ...overrides,
+  };
+}
+
+export function createMockMinecraftAccount(
+  overrides: Partial<MinecraftAccount> = {}
+): MinecraftAccount {
+  return {
+    user_id: "test-gamer-id",
     minecraft_username: null,
     minecraft_uuid: null,
     ...overrides,

@@ -5,8 +5,8 @@ import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
 
 export async function PATCH(request: Request) {
   try {
-    const result = await requireRole("gamer", {
-      forbiddenMessage: "Only gamers can update their Minecraft username",
+    const result = await requireRole(["gamer", "gedu"], {
+      forbiddenMessage: "Only gamers and gedus can update their Minecraft username",
     });
     if (result instanceof NextResponse) return result;
 
@@ -25,28 +25,32 @@ export async function PATCH(request: Request) {
     }
 
     const admin = createAdminClient();
-    let update: { minecraft_username: string | null; minecraft_uuid: string | null };
+    let upsertData: { user_id: string; minecraft_username: string | null; minecraft_uuid: string | null };
 
     if (minecraftUsername === null) {
-      update = { minecraft_username: null, minecraft_uuid: null };
+      upsertData = { user_id: result.user.id, minecraft_username: null, minecraft_uuid: null };
     } else {
       const mojang = await lookupMinecraftUser(minecraftUsername);
-      update = {
+      upsertData = {
+        user_id: result.user.id,
         minecraft_username: minecraftUsername,
         minecraft_uuid: mojang?.uuid ?? null,
       };
     }
 
     const { error } = await admin
-      .from("gamer_profiles")
-      .update(update)
-      .eq("user_id", result.user.id);
+      .from("minecraft_accounts")
+      .upsert(upsertData, { onConflict: "user_id" });
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, ...update });
+    return NextResponse.json({
+      success: true,
+      minecraft_username: upsertData.minecraft_username,
+      minecraft_uuid: upsertData.minecraft_uuid,
+    });
   } catch {
     return NextResponse.json(
       { error: "Internal server error" },

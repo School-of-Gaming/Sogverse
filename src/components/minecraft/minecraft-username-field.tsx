@@ -5,7 +5,7 @@ import { Check, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useVerifyMinecraft } from "@/services/gamers";
+import { useVerifyMinecraft } from "@/services/minecraft";
 
 interface MinecraftUsernameFieldProps {
   value: string;

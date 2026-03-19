@@ -332,9 +332,11 @@ describe("PATCH /api/gamers/[id]", () => {
       uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
     });
 
-    // Admin calls: role check → gamer_profiles update → profiles final fetch
+    // Admin calls: role check → minecraft_accounts upsert → profiles final fetch
     const roleCheck = mockTargetProfile("gamer");
-    const mcUpdate = mockProfileUpdate(); // reuse mock shape for gamer_profiles update
+    const mcUpsert = {
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
     const fetch = mockProfileFetch({
       id: "gamer-1",
       display_name: "Existing",
@@ -345,7 +347,7 @@ describe("PATCH /api/gamers/[id]", () => {
     mockAdminFrom.mockImplementation(() => {
       callCount++;
       if (callCount === 1) return roleCheck;
-      if (callCount === 2) return mcUpdate;
+      if (callCount === 2) return mcUpsert;
       return fetch;
     });
 
@@ -356,6 +358,14 @@ describe("PATCH /api/gamers/[id]", () => {
 
     expect(response.status).toBe(200);
     expect(mockLookupMinecraftUser).toHaveBeenCalledWith("notch");
+    expect(mcUpsert.upsert).toHaveBeenCalledWith(
+      {
+        user_id: "gamer-1",
+        minecraft_username: "notch",
+        minecraft_uuid: "069a79f4-44e9-4726-a5be-fca90e38aaf5",
+      },
+      { onConflict: "user_id" },
+    );
   });
 
   it("should clear minecraft fields when minecraftUsername is null", async () => {
@@ -363,7 +373,9 @@ describe("PATCH /api/gamers/[id]", () => {
     mockParentGamerLookup(true);
 
     const roleCheck = mockTargetProfile("gamer");
-    const mcUpdate = mockProfileUpdate();
+    const mcUpsert = {
+      upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
     const fetch = mockProfileFetch({
       id: "gamer-1",
       display_name: "Existing",
@@ -374,7 +386,7 @@ describe("PATCH /api/gamers/[id]", () => {
     mockAdminFrom.mockImplementation(() => {
       callCount++;
       if (callCount === 1) return roleCheck;
-      if (callCount === 2) return mcUpdate;
+      if (callCount === 2) return mcUpsert;
       return fetch;
     });
 

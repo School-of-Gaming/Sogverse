@@ -11,13 +11,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
-import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
+import { useMyGamers, useUpdateGamer } from "@/services/gamers";
+import { useMinecraftAccount } from "@/services/minecraft";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
 
 export default function GamerDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: gamers, isLoading } = useMyGamers();
-  const { data: gamerProfile } = useGamerProfile(id);
+  const { data: mcAccount } = useMinecraftAccount(id);
   const updateGamer = useUpdateGamer();
 
   const gamer = gamers?.find((g) => g.id === id);
@@ -49,9 +50,9 @@ export default function GamerDetailsPage() {
     setProfileInitialized(true);
   }
 
-  // Initialize minecraft username once gamer profile loads
-  if (gamerProfile && !mcInitialized) {
-    setMinecraftUsername(gamerProfile.minecraft_username ?? "");
+  // Initialize minecraft username once account data loads
+  if (mcAccount !== undefined && !mcInitialized) {
+    setMinecraftUsername(mcAccount?.minecraft_username ?? "");
     setMcInitialized(true);
   }
 

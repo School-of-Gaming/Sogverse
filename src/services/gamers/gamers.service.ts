@@ -59,34 +59,6 @@ export class GamerService {
     return data as GamerProfile;
   }
 
-  async verifyMinecraftUsername(
-    username: string,
-  ): Promise<{ username: string; uuid: string }> {
-    const response = await fetch(
-      `/api/minecraft/verify?username=${encodeURIComponent(username)}`,
-    );
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || "Verification failed");
-    }
-    return data;
-  }
-
-  async updateMyMinecraft(
-    minecraftUsername: string | null,
-  ): Promise<void> {
-    const response = await fetch("/api/gamer/minecraft", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ minecraftUsername }),
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || "Failed to update Minecraft username");
-    }
-  }
-
   async createGamerAccount(
     _parentId: string,
     input: CreateGamerInput

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 
@@ -22,6 +23,7 @@ export function SetupAccountForm() {
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [minecraftUsername, setMinecraftUsername] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -97,6 +99,20 @@ export function SetupAccountForm() {
         await supabase.auth.updateUser({
           data: { display_name: validatedData.displayName },
         });
+
+        // Save minecraft username if provided (server-side uses admin client)
+        if (minecraftUsername.trim()) {
+          const mcResponse = await fetch("/api/minecraft/account", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ minecraftUsername: minecraftUsername.trim() }),
+          });
+          if (!mcResponse.ok) {
+            const mcData = await mcResponse.json();
+            setError(mcData.error || "Failed to save Minecraft username");
+            return;
+          }
+        }
       }
 
       setSuccess(true);
@@ -192,6 +208,12 @@ export function SetupAccountForm() {
               autoComplete="new-password"
             />
           </div>
+          <MinecraftUsernameField
+            value={minecraftUsername}
+            onChange={setMinecraftUsername}
+            disabled={isLoading}
+            optional
+          />
         </CardContent>
         <CardFooter>
           <Button type="submit" className="w-full" disabled={isLoading || !sessionReady}>
