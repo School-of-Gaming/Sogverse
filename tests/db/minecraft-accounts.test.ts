@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
@@ -34,6 +34,19 @@ describe("minecraft_accounts RLS", () => {
       TEST_CREDENTIALS.GEDU.email,
       TEST_CREDENTIALS.GEDU.password,
     );
+
+    // Create test minecraft accounts (not seeded — this test owns its own data)
+    await admin.from("minecraft_accounts").upsert([
+      { user_id: TEST_IDS.GEDU, minecraft_username: SEED.MINECRAFT_USERNAME_GEDU },
+      { user_id: TEST_IDS.GAMER, minecraft_username: SEED.MINECRAFT_USERNAME_GAMER },
+    ], { onConflict: "user_id" });
+  });
+
+  afterAll(async () => {
+    await admin
+      .from("minecraft_accounts")
+      .delete()
+      .in("user_id", [TEST_IDS.GEDU, TEST_IDS.GAMER]);
   });
 
   // -- Read own account --
@@ -119,30 +132,32 @@ describe("minecraft_accounts RLS", () => {
   it("rejects duplicate minecraft_uuid across users", async () => {
     const sharedUuid = "069a79f4-44e9-4726-a5be-fca90e38aaf5";
 
-    // Set a UUID on the gamer's account
-    await admin
-      .from("minecraft_accounts")
-      .update({ minecraft_uuid: sharedUuid })
-      .eq("user_id", TEST_IDS.GAMER);
+    try {
+      // Set a UUID on the gamer's account
+      await admin
+        .from("minecraft_accounts")
+        .update({ minecraft_uuid: sharedUuid })
+        .eq("user_id", TEST_IDS.GAMER);
 
-    // Try to set the same UUID on the gedu's account — should fail
-    const { error } = await admin
-      .from("minecraft_accounts")
-      .update({ minecraft_uuid: sharedUuid })
-      .eq("user_id", TEST_IDS.GEDU);
+      // Try to set the same UUID on the gedu's account — should fail
+      const { error } = await admin
+        .from("minecraft_accounts")
+        .update({ minecraft_uuid: sharedUuid })
+        .eq("user_id", TEST_IDS.GEDU);
 
-    expect(error).not.toBeNull();
-    expect(error!.message).toContain("minecraft_accounts_uuid_unique");
-
-    // Cleanup: reset both to NULL
-    await admin
-      .from("minecraft_accounts")
-      .update({ minecraft_uuid: null })
-      .eq("user_id", TEST_IDS.GAMER);
+      expect(error).not.toBeNull();
+      expect(error!.message).toContain("minecraft_accounts_uuid_unique");
+    } finally {
+      // Reset both to NULL even if assertions fail
+      await admin
+        .from("minecraft_accounts")
+        .update({ minecraft_uuid: null })
+        .in("user_id", [TEST_IDS.GAMER, TEST_IDS.GEDU]);
+    }
   });
 
   it("allows multiple users with NULL minecraft_uuid", async () => {
-    // Both seed accounts have NULL uuid — verify they coexist
+    // Both test accounts have NULL uuid — verify they coexist
     const { data, error } = await admin
       .from("minecraft_accounts")
       .select("user_id, minecraft_uuid")

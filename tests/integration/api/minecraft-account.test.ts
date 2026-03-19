@@ -172,7 +172,7 @@ describe("PATCH /api/minecraft/account", () => {
 
   // -- UNIQUE constraint scenario (gedu setup retry flow) --
 
-  it("should return 500 with error when minecraft_uuid conflicts", async () => {
+  it("should return 409 with friendly message when minecraft_uuid conflicts", async () => {
     mockAuthenticated("gedu-123", "gedu");
     mockLookupMinecraftUser.mockResolvedValue({
       username: "TakenPlayer",
@@ -191,8 +191,8 @@ describe("PATCH /api/minecraft/account", () => {
     const response = await PATCH(createRequest({ minecraftUsername: "TakenPlayer" }));
     const data = await response.json();
 
-    expect(response.status).toBe(500);
-    expect(data.error).toContain("minecraft_accounts_uuid_unique");
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("This Minecraft account is already linked to another user");
   });
 
   // TODO: E2E test for full gedu setup retry flow (UNIQUE conflict → fix username → resubmit)

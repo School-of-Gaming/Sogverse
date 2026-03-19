@@ -72,8 +72,10 @@ export function SetupAccountForm() {
     try {
       const validatedData = setupAccountSchema.parse({ displayName, password, confirmPassword });
 
-      // Save minecraft first — this can fail on UNIQUE constraint, and we
-      // want to reject before making any irreversible auth/profile changes.
+      // Save minecraft FIRST — the UNIQUE constraint on minecraft_uuid can
+      // reject this call, and password/profile updates are irreversible
+      // (no "undo"). By doing the fallible step first, a retry after fixing
+      // the username just re-runs the whole form without double-setting anything.
       if (minecraftUsername.trim()) {
         const mcResponse = await fetch("/api/minecraft/account", {
           method: "PATCH",

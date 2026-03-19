@@ -43,7 +43,13 @@ export async function PATCH(request: Request) {
       .upsert(upsertData, { onConflict: "user_id" });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "This Minecraft account is already linked to another user" },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ error: "Failed to update Minecraft account" }, { status: 500 });
     }
 
     return NextResponse.json({
