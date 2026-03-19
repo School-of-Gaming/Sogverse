@@ -5,6 +5,10 @@ import { LoginForm } from "@/components/auth";
 export const metadata: Metadata = {
   title: "Sign In",
   description: "Sign in to your Sogverse account",
+  openGraph: {
+    title: "Sign In to Sogverse",
+    description: "Sign in to your Sogverse account to manage clubs, gamers, and more.",
+  },
 };
 
 export default function LoginPage() {

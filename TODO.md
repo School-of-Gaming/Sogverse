@@ -90,37 +90,6 @@ This was tested during the staging squash and worked well:
 
 ## Future Improvements
 
-### Add Open Graph Metadata & SEO Assets
-
-Link previews on WhatsApp, Discord, Slack, Facebook, LinkedIn, and Twitter/X are driven by Open Graph (OG) tags. Currently no OG tags are set, so shared links show only the page title and URL — no preview image or styled card. Use [opengraph.xyz](https://opengraph.xyz) to test how previews render.
-
-**Open Graph metadata (root layout):**
-- [ ] Add `openGraph` to the root layout metadata — `og:title`, `og:description`, `og:image`, `og:url`, `og:site_name`
-- [ ] Add `twitter` card metadata — `twitter:card` (`summary_large_image`), `twitter:title`, `twitter:description`, `twitter:image`
-- [ ] Create an OG image (1200x630px) — branded banner with logo, "School of Gaming" tagline, yellow/purple brand colors. Place as `src/app/opengraph-image.png` (Next.js serves it automatically) or in `public/`
-
-**Per-page OG overrides (public & auth pages):**
-
-All 17 pages already export a `description` in their `metadata`, but none set `openGraph`. Pages that are shareable via link should override `openGraph` so previews show page-specific titles, descriptions, and (optionally) images instead of the root layout defaults.
-
-Priority pages (public-facing, most likely to be shared):
-- [ ] `/about` — "Learn about Sogverse and our mission to make learning fun"
-- [ ] `/sorg` — "Learn about Sorg, the virtual currency of the Sogverse..."
-- [ ] `/login` — "Sign in to your Sogverse account"
-- [ ] `/register` — "Create your Sogverse parent account"
-
-Lower priority (auth/dashboard pages — less likely to be shared, but descriptions exist):
-- `/forgot-password`, `/reset-password` — auth flows
-- `/admin`, `/customer`, `/gamer`, `/gedu` — dashboard homepages
-- `/{role}/groups`, `/{role}/groups/[id]`, `/{role}/voice/[id]` — groups & voice subpages (admin, gedu, gamer)
-
-**SEO static assets:**
-- [ ] `robots.txt` — block crawlers from authenticated routes (`/admin`, `/customer`, `/gamer`, `/gedu`). Use `src/app/robots.ts` for App Router convention.
-- [ ] `sitemap.xml` — index public pages for search engines. Use `src/app/sitemap.ts` for App Router convention.
-
-**Already in place:** Favicon (`src/app/icon.svg`), apple touch icon (`src/app/apple-icon.png`), and per-page `description` metadata on all 17 pages.
-
-**When:** Before production launch or when public-facing pages need SEO visibility.
 
 ### E2E Tests with Local Supabase
 

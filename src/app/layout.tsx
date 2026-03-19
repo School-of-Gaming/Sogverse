@@ -20,6 +20,7 @@ const pressStart2P = Press_Start_2P({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
   title: {
     default: "Sogverse - School of Gaming",
     template: "%s | Sogverse",
@@ -27,6 +28,17 @@ export const metadata: Metadata = {
   description:
     "School of Gaming - Where screen time becomes quality time",
   keywords: ["gaming", "education", "learning", "kids", "games"],
+  openGraph: {
+    type: "website",
+    siteName: "Sogverse",
+    title: "Sogverse - School of Gaming",
+    description: "Where screen time becomes quality time through Minecraft clubs led by professional game educators.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sogverse - School of Gaming",
+    description: "Where screen time becomes quality time through Minecraft clubs led by professional game educators.",
+  },
 };
 
 export default async function RootLayout({

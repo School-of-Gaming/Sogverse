@@ -24,6 +24,10 @@ export const metadata: Metadata = {
   title: "Sorg - the Sogverse Currency",
   description:
     "Sorg is the currency that powers your child's club sessions in the Sogverse. Purchase tokens and pay per session with full flexibility.",
+  openGraph: {
+    title: "Sorg - the Sogverse Currency",
+    description: "Learn about Sorg, the virtual currency of the Sogverse. Purchase tokens and pay per session with full flexibility.",
+  },
 };
 
 const benefits = [

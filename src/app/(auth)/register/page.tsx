@@ -5,6 +5,10 @@ import { RegisterForm } from "@/components/auth";
 export const metadata: Metadata = {
   title: "Create Account",
   description: "Create your Sogverse parent account",
+  openGraph: {
+    title: "Join Sogverse",
+    description: "Create your Sogverse parent account and enroll your child in Minecraft clubs led by professional game educators.",
+  },
 };
 
 export default function RegisterPage() {

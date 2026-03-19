@@ -8,6 +8,10 @@ import { ROUTES } from "@/lib/constants";
 export const metadata: Metadata = {
   title: "About Us",
   description: "School of Gaming — where screen time becomes quality time through Minecraft clubs led by professional game educators.",
+  openGraph: {
+    title: "About Sogverse",
+    description: "Learn about Sogverse and our mission to make screen time quality time through Minecraft clubs led by professional game educators.",
+  },
 };
 
 const values = [
