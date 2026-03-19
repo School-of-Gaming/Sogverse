@@ -142,10 +142,7 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
 export function Sidebar() {
   const pathname = usePathname();
   const { profile } = useAuth();
-  // Collapsed by default below Tailwind `md` breakpoint (48rem)
-  const [collapsed, setCollapsed] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < 768
-  );
+  const [collapsed, setCollapsed] = useState(false);
 
   if (!profile?.role) return null;
 
@@ -157,13 +154,13 @@ export function Sidebar() {
     <aside
       className={cn(
         `relative flex h-full flex-col border-r border-sidebar-border bg-sidebar-background ${collapseTransition}`,
-        collapsed ? "w-18" : "w-64"
+        collapsed ? "w-18" : "w-18 md:w-64"
       )}
     >
-      {/* Collapse Toggle */}
+      {/* Collapse Toggle — desktop only, mobile is always icon-only via CSS */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent"
+        className="absolute -right-3 top-6 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent md:flex"
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         {collapsed ? (
@@ -190,18 +187,18 @@ export function Sidebar() {
               href={item.href}
               className={cn(
                 `flex items-center overflow-hidden whitespace-nowrap rounded-lg py-2 text-sm font-medium ${navTransition}`,
-                collapsed ? "gap-0 px-2.5" : "gap-3 px-3",
+                collapsed ? "gap-0 px-2.5" : "gap-0 px-2.5 md:gap-3 md:px-3",
                 isActive
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
-              title={collapsed ? item.label : undefined}
+              title={item.label}
             >
               <span className="shrink-0">{item.icon}</span>
               <span
                 className={cn(
                   `overflow-hidden text-ellipsis ${collapseTransition}`,
-                  collapsed ? "max-w-0 opacity-0" : "max-w-48 opacity-100"
+                  collapsed ? "max-w-0 opacity-0" : "max-w-0 opacity-0 md:max-w-48 md:opacity-100"
                 )}
               >
                 {item.label}
