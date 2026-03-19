@@ -543,6 +543,13 @@ export type Database = {
           function_name: string
         }[]
       }
+      _list_table_grants: {
+        Args: never
+        Returns: {
+          privilege_type: string
+          table_name: string
+        }[]
+      }
       _list_tables_without_rls: {
         Args: never
         Returns: {

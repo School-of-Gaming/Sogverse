@@ -56,7 +56,26 @@ AS $$
   FROM cron.job j;
 $$;
 
+-- Returns table-level privileges for authenticated role on public-schema tables.
+CREATE OR REPLACE FUNCTION _list_table_grants()
+RETURNS TABLE (
+  table_name text,
+  privilege_type text
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+STABLE
+AS $$
+  SELECT table_name::text, privilege_type::text
+  FROM information_schema.table_privileges
+  WHERE grantee = 'authenticated'
+    AND table_schema = 'public'
+  ORDER BY table_name, privilege_type;
+$$;
+
 -- Revoke from all roles — only service-role can call these.
 REVOKE EXECUTE ON FUNCTION _list_rpc_access() FROM authenticated, anon, public;
 REVOKE EXECUTE ON FUNCTION _list_tables_without_rls() FROM authenticated, anon, public;
 REVOKE EXECUTE ON FUNCTION _list_cron_jobs() FROM authenticated, anon, public;
+REVOKE EXECUTE ON FUNCTION _list_table_grants() FROM authenticated, anon, public;

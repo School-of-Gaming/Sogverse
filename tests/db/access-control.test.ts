@@ -79,6 +79,32 @@ describe("Access Control", () => {
     expect(unexpected).toEqual([]);
   });
 
+  it("table-level grants match allowlist (no excess write privileges)", async () => {
+    // Allowlist of write privileges per table. Tables not listed here
+    // should only have SELECT. If a table needs INSERT/UPDATE/DELETE
+    // for authenticated users, add it here with the specific privileges.
+    const WRITE_GRANT_ALLOWLIST: Record<string, Set<string>> = {
+      profiles: new Set(["UPDATE"]),
+      parent_gamer: new Set(["DELETE"]),
+      gamer_profiles: new Set(["UPDATE"]),
+    };
+
+    const { data, error } = await admin.rpc("_list_table_grants");
+
+    expect(error).toBeNull();
+    expect(data).not.toBeNull();
+
+    const grants = data as { table_name: string; privilege_type: string }[];
+
+    const unexpected = grants.filter((row) => {
+      if (row.privilege_type === "SELECT") return false;
+      const allowed = WRITE_GRANT_ALLOWLIST[row.table_name];
+      return !allowed || !allowed.has(row.privilege_type);
+    });
+
+    expect(unexpected).toEqual([]);
+  });
+
   it("all public tables have RLS enabled", async () => {
     const { data, error } = await admin.rpc("_list_tables_without_rls");
 

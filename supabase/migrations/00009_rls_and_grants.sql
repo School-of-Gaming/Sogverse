@@ -270,13 +270,11 @@ GRANT UPDATE (display_name) ON profiles TO authenticated;
 REVOKE ALL ON parent_gamer FROM authenticated;
 GRANT SELECT, DELETE ON parent_gamer TO authenticated;
 
--- products: full CRUD for admin RLS policies, SELECT for anon
+-- products: SELECT only (writes go through admin client / service-role)
 GRANT SELECT ON products TO anon, authenticated;
-GRANT INSERT, UPDATE, DELETE ON products TO authenticated;
 
--- games: same pattern as products
+-- games: SELECT only (writes go through admin client / service-role)
 GRANT SELECT ON games TO anon, authenticated;
-GRANT INSERT, UPDATE, DELETE ON games TO authenticated;
 
 -- voice_rooms: read-only for authenticated (writes go through admin client / migration seed)
 GRANT SELECT ON voice_rooms TO authenticated;
@@ -290,11 +288,11 @@ GRANT SELECT ON customer_profiles TO authenticated;
 -- gamer_profiles: SELECT + UPDATE for gamers/parents
 GRANT SELECT, UPDATE ON gamer_profiles TO authenticated;
 
--- product_groups: full CRUD for admin commit_group_changes RPC
-GRANT SELECT, INSERT, UPDATE, DELETE ON product_groups TO authenticated;
+-- product_groups: SELECT only (writes go through commit_group_changes SECURITY DEFINER RPC)
+GRANT SELECT ON product_groups TO authenticated;
 
--- group_enrollments: full CRUD for admin/enrollment RPCs
-GRANT SELECT, INSERT, UPDATE, DELETE ON group_enrollments TO authenticated;
+-- group_enrollments: SELECT only (writes go through enroll/unenroll SECURITY DEFINER RPCs)
+GRANT SELECT ON group_enrollments TO authenticated;
 
 -- enrollment_charges: read-only
 GRANT SELECT ON enrollment_charges TO authenticated;

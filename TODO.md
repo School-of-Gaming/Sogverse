@@ -172,21 +172,6 @@ Affected tables and actions (8 issues):
 
 **When:** Before production launch or when table sizes grow large enough for this to matter.
 
-### Tighten Table-Level GRANTs to Match Actual Write Paths
-
-Four tables grant full `SELECT, INSERT, UPDATE, DELETE` to `authenticated` even though non-admin writes are blocked by RLS and all mutations go through `SECURITY DEFINER` RPCs or the admin client (service-role key), both of which bypass GRANTs entirely:
-
-- [ ] `product_groups` — writes go through `commit_group_changes` RPC → narrow to `GRANT SELECT`
-- [ ] `group_enrollments` — writes go through `enroll_gamer_in_group` / `unenroll_gamer` RPCs → narrow to `GRANT SELECT`
-- [ ] `products` — writes go through admin client (service-role) → narrow to `GRANT SELECT`
-- [ ] `games` — writes go through admin client (service-role) → narrow to `GRANT SELECT`
-
-Currently safe — RLS admin-only `FOR ALL` policies block non-admin writes. But the broad GRANTs mean a future accidental permissive RLS policy would immediately open writes to all authenticated users. Narrowing to `SELECT` adds a second layer of protection.
-
-Also add a DB test in `access-control.test.ts` that asserts table-level privileges match an allowlist (similar to the existing RPC grant test), so overly broad GRANTs are caught automatically.
-
-**When:** Before production launch. Low urgency — defense in depth, not an active vulnerability.
-
 ### Replace Intl.DateTimeFormat Timezone Hacking with `date-fns-tz`
 
 Internal timezone math uses `Intl.DateTimeFormat("en-US", { timeZone })` + `formatToParts` as a workaround to convert between timezones — formatting a date to a locale string, then parsing the numbers back out. This works but is fragile and confusing. The `"en-US"` locale is pinned solely to guarantee Arabic numerals. The shared `wallClockToUtc()` in `utils.ts` consolidates this logic (used by both `formatScheduleLocal()` and `enrollment.ts`).
