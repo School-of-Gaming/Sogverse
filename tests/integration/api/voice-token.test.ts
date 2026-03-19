@@ -32,7 +32,7 @@ vi.mock("@/lib/daily", () => ({
 
 const mockComputeSessionWindow = vi.fn();
 const mockIsEnrolledForSession = vi.fn();
-vi.mock("@/lib/voice-schedule", () => ({
+vi.mock("@/lib/session-schedule", () => ({
   computeSessionWindow: (...args: unknown[]) => mockComputeSessionWindow(...args),
   isEnrolledForSession: (...args: unknown[]) => mockIsEnrolledForSession(...args),
 }));

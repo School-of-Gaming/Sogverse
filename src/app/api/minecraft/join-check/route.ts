@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { timingSafeEqual } from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { computeSessionWindow, isEnrolledForSession } from "@/lib/voice-schedule";
+import { computeSessionWindow, isEnrolledForSession } from "@/lib/session-schedule";
 
 /** Normalize a Minecraft UUID to dashed 8-4-4-4-12 form. */
 function normalizeMcUuid(raw: string): string | null {

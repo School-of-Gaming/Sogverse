@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { type SessionWindow } from "@/lib/voice-schedule";
+import { type SessionWindow } from "@/lib/session-schedule";
 
 // --- Mocks ---
 
@@ -12,7 +12,7 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 const mockComputeSessionWindow = vi.fn();
 const mockIsEnrolledForSession = vi.fn();
-vi.mock("@/lib/voice-schedule", () => ({
+vi.mock("@/lib/session-schedule", () => ({
   computeSessionWindow: (...args: unknown[]) => mockComputeSessionWindow(...args),
   isEnrolledForSession: (...args: unknown[]) => mockIsEnrolledForSession(...args),
 }));

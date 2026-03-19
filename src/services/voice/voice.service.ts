@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AvailableVoiceRoom, Database } from "@/types";
-import { computeSessionWindow } from "@/lib/voice-schedule";
+import { computeSessionWindow } from "@/lib/session-schedule";
 
 export interface AvailableVoiceRoomWithWindow extends AvailableVoiceRoom {
   isOpen: boolean;

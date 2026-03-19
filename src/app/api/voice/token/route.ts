@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createMeetingToken, getDailyRoom, createDailyRoom } from "@/lib/daily";
-import { computeSessionWindow, isEnrolledForSession } from "@/lib/voice-schedule";
+import { computeSessionWindow, isEnrolledForSession } from "@/lib/session-schedule";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 export async function POST(request: Request) {

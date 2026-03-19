@@ -7,7 +7,7 @@ import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomPro
 import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
 import { useAvailableVoiceRooms, useVoiceToken } from "@/services/voice";
 import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
-import { computeSessionWindow } from "@/lib/voice-schedule";
+import { computeSessionWindow } from "@/lib/session-schedule";
 
 interface VoiceSessionPageProps {
   roomId: string;

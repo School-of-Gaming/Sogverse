@@ -45,7 +45,7 @@ Service layer (src/services/voice/)
 └── index.ts          — Barrel exports
 
 Utilities
-├── src/lib/voice-schedule.ts   — computeSessionWindow() (shared server/client)
+├── src/lib/session-schedule.ts   — computeSessionWindow() (shared server/client)
 ├── src/lib/constants/voice.ts  — SESSION_WINDOW_BEFORE/AFTER, TOKEN_EXPIRY, etc.
 ├── src/lib/daily.ts            — Daily.co REST API wrapper (server-only)
 
@@ -85,7 +85,7 @@ Voice rooms don't have an "open/closed" status column. Instead, each group room 
 
 **Session window** = `[sessionStart - BEFORE, sessionEnd + AFTER]` (configurable in `src/lib/constants/voice.ts`)
 
-The `computeSessionWindow()` utility (in `src/lib/voice-schedule.ts`) determines if a room is currently open. It reuses `getNextSessionStart()` from `src/lib/enrollment.ts` and also checks the previous week's occurrence to handle "currently in session" state.
+The `computeSessionWindow()` utility (in `src/lib/session-schedule.ts`) determines if a room is currently open. It reuses `getNextSessionStart()` from `src/lib/enrollment.ts` and also checks the previous week's occurrence to handle "currently in session" state.
 
 **Client-side:** The groups page enrichment hook (`useGroupsWithVoice`) maps each group through `computeSessionWindow()` to get `isOpen` and `voiceNextSessionStart` for UI display (Live/Upcoming badges, countdown). `VoiceSessionPage` also uses it for auto-leave detection.
 

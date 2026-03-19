@@ -5,10 +5,10 @@ import {
   mockSupabaseError,
 } from "../../mocks/supabase";
 import { createMockAvailableVoiceRoom } from "../../mocks/voice";
-import { computeSessionWindow } from "@/lib/voice-schedule";
+import { computeSessionWindow } from "@/lib/session-schedule";
 
-vi.mock("@/lib/voice-schedule", async (importOriginal) => {
-  const original = await importOriginal<typeof import("@/lib/voice-schedule")>();
+vi.mock("@/lib/session-schedule", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/session-schedule")>();
   return { ...original, computeSessionWindow: vi.fn(original.computeSessionWindow) };
 });
 

@@ -3,7 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import type { UseQueryResult } from "@tanstack/react-query";
 import type { GeduGroup } from "@/services/groups";
-import { computeSessionWindow } from "@/lib/voice-schedule";
+import { computeSessionWindow } from "@/lib/session-schedule";
 
 /** Re-evaluate session windows every 30 seconds so the Live badge and Join button update in real-time. */
 const SESSION_TICK_MS = 30_000;

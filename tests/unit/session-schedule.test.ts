@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeSessionWindow } from "@/lib/voice-schedule";
+import { computeSessionWindow } from "@/lib/session-schedule";
 
 // Helper: create a Date at a specific wall-clock time in UTC
 function utcDate(isoString: string): Date {
