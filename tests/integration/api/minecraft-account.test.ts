@@ -195,19 +195,7 @@ describe("PATCH /api/minecraft/account", () => {
     expect(data.error).toContain("minecraft_accounts_uuid_unique");
   });
 
-  it("should succeed on retry with a different username after UNIQUE conflict", async () => {
-    mockAuthenticated("gedu-123", "gedu");
-    mockLookupMinecraftUser.mockResolvedValue({
-      username: "FreePlayer",
-      uuid: "unclaimed-uuid",
-    });
-    mockUpsertSuccess();
-
-    const response = await PATCH(createRequest({ minecraftUsername: "FreePlayer" }));
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.minecraft_username).toBe("FreePlayer");
-  });
+  // TODO: E2E test for full gedu setup retry flow (UNIQUE conflict → fix username → resubmit)
+  // Can't test at the route level — the bug spans the form's sequential API calls
+  // (minecraft save → password set). Needs Playwright with a real auth session.
 });
