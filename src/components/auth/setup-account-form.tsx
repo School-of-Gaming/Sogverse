@@ -72,6 +72,21 @@ export function SetupAccountForm() {
     try {
       const validatedData = setupAccountSchema.parse({ displayName, password, confirmPassword });
 
+      // Save minecraft first — this can fail on UNIQUE constraint, and we
+      // want to reject before making any irreversible auth/profile changes.
+      if (minecraftUsername.trim()) {
+        const mcResponse = await fetch("/api/minecraft/account", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ minecraftUsername: minecraftUsername.trim() }),
+        });
+        if (!mcResponse.ok) {
+          const mcData = await mcResponse.json();
+          setError(mcData.error || "Failed to save Minecraft username");
+          return;
+        }
+      }
+
       // Set the password
       const { error: passwordError } = await supabase.auth.updateUser({
         password: validatedData.password,
@@ -99,20 +114,6 @@ export function SetupAccountForm() {
         await supabase.auth.updateUser({
           data: { display_name: validatedData.displayName },
         });
-
-        // Save minecraft username if provided (server-side uses admin client)
-        if (minecraftUsername.trim()) {
-          const mcResponse = await fetch("/api/minecraft/account", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ minecraftUsername: minecraftUsername.trim() }),
-          });
-          if (!mcResponse.ok) {
-            const mcData = await mcResponse.json();
-            setError(mcData.error || "Failed to save Minecraft username");
-            return;
-          }
-        }
       }
 
       setSuccess(true);
