@@ -18,7 +18,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, ROLE_BADGES } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
 interface NavItem {
@@ -214,8 +214,8 @@ export function Sidebar() {
           <p className="overflow-hidden text-ellipsis font-medium text-sidebar-foreground">
             {profile.display_name}
           </p>
-          <p className="overflow-hidden text-ellipsis text-xs capitalize text-muted-foreground">
-            {profile.role}
+          <p className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
+            {ROLE_BADGES[profile.role].label}
           </p>
         </div>
       </div>

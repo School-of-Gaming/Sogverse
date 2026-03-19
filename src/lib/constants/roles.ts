@@ -7,12 +7,6 @@ export const USER_ROLES = {
 
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
-export const ROLE_LABELS: Record<UserRole, string> = {
-  admin: "Administrator",
-  customer: "Parent",
-  gamer: "Gamer",
-  gedu: "Game Educator",
-};
 
 export const ROLE_BADGES: Record<UserRole, { label: string; className: string }> = {
   gamer: { label: "Gamer", className: "bg-primary text-primary-foreground" },
