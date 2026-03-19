@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createMeetingToken, getDailyRoom, createDailyRoom } from "@/lib/daily";
-import { computeSessionWindow } from "@/lib/voice-schedule";
+import { computeSessionWindow, isEnrolledForSession } from "@/lib/voice-schedule";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 export async function POST(request: Request) {
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
       }
 
       // Gamer enrolled after the current session started — not paid for this session
-      if (gamerEnrolledAt && gamerEnrolledAt.getTime() >= sessionWindow.nextSessionStart.getTime()) {
+      if (gamerEnrolledAt && !isEnrolledForSession(gamerEnrolledAt, sessionWindow.nextSessionStart)) {
         return NextResponse.json(
           { error: "Your enrollment starts next session" },
           { status: 403 },

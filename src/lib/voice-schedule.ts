@@ -1,6 +1,11 @@
 import { getNextSessionStart } from "@/lib/enrollment";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
+/** Whether a gamer enrolled before the session started (i.e., they've paid for it). */
+export function isEnrolledForSession(enrolledAt: Date, sessionStart: Date): boolean {
+  return enrolledAt.getTime() < sessionStart.getTime();
+}
+
 export interface SessionWindow {
   isOpen: boolean;
   nextSessionStart: Date;

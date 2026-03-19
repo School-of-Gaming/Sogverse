@@ -31,8 +31,10 @@ vi.mock("@/lib/daily", () => ({
 }));
 
 const mockComputeSessionWindow = vi.fn();
+const mockIsEnrolledForSession = vi.fn();
 vi.mock("@/lib/voice-schedule", () => ({
   computeSessionWindow: (...args: unknown[]) => mockComputeSessionWindow(...args),
+  isEnrolledForSession: (...args: unknown[]) => mockIsEnrolledForSession(...args),
 }));
 
 // --- Helpers ---
@@ -135,6 +137,7 @@ describe("POST /api/voice/token", () => {
       windowOpensAt: new Date(),
       windowClosesAt: new Date(Date.now() + 3600_000),
     });
+    mockIsEnrolledForSession.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -377,6 +380,7 @@ describe("POST /api/voice/token", () => {
         id: "enrollment-1",
         created_at: new Date(sessionStart.getTime() - 7 * 24 * 3600_000).toISOString(),
       });
+      mockIsEnrolledForSession.mockReturnValue(true);
 
       const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
       expect(response.status).toBe(200);
@@ -445,6 +449,7 @@ describe("POST /api/voice/token", () => {
         id: "enrollment-1",
         created_at: new Date(Date.now() - 5 * 60_000).toISOString(),
       });
+      mockIsEnrolledForSession.mockReturnValue(false);
 
       const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
       const data = await response.json();
@@ -474,6 +479,7 @@ describe("POST /api/voice/token", () => {
         id: "enrollment-1",
         created_at: new Date(Date.now() - 2 * 60_000).toISOString(),
       });
+      mockIsEnrolledForSession.mockReturnValue(true);
 
       const response = await POST(createTokenRequest({ roomId: "room-uuid-1234" }));
       expect(response.status).toBe(200);
