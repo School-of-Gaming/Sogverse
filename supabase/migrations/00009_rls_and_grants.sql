@@ -261,40 +261,41 @@ CREATE POLICY "customers_read_own_enrollment_charges"
 
 GRANT USAGE ON SCHEMA public TO anon, authenticated;
 
--- profiles: SELECT + UPDATE(display_name) only
+-- Supabase local Docker bootstraps default ALL grants on public tables.
+-- Explicit REVOKE ALL ensures only the selective GRANTs below are in effect.
+REVOKE ALL ON profiles FROM authenticated;
+REVOKE ALL ON parent_gamer FROM authenticated;
+REVOKE ALL ON products FROM authenticated;
+REVOKE ALL ON games FROM authenticated;
+REVOKE ALL ON voice_rooms FROM authenticated;
+REVOKE ALL ON token_transactions FROM authenticated;
+REVOKE ALL ON customer_profiles FROM authenticated;
+REVOKE ALL ON gamer_profiles FROM authenticated;
+REVOKE ALL ON product_groups FROM authenticated;
+REVOKE ALL ON group_enrollments FROM authenticated;
+REVOKE ALL ON enrollment_charges FROM authenticated;
+
 GRANT SELECT ON profiles TO authenticated;
 GRANT UPDATE (display_name) ON profiles TO authenticated;
 
--- parent_gamer: SELECT + DELETE only (INSERT revoked — linking goes through service-role).
--- Explicit REVOKE needed because Supabase bootstraps default grants on public tables.
-REVOKE ALL ON parent_gamer FROM authenticated;
 GRANT SELECT, DELETE ON parent_gamer TO authenticated;
 
--- products: SELECT only (writes go through admin client / service-role)
 GRANT SELECT ON products TO anon, authenticated;
 
--- games: SELECT only (writes go through admin client / service-role)
 GRANT SELECT ON games TO anon, authenticated;
 
--- voice_rooms: read-only for authenticated (writes go through admin client / migration seed)
 GRANT SELECT ON voice_rooms TO authenticated;
 
--- token_transactions: read-only (writes go through adjust_token_balance RPC)
 GRANT SELECT ON token_transactions TO authenticated;
 
--- customer_profiles: read-only (writes go through adjust_token_balance RPC)
 GRANT SELECT ON customer_profiles TO authenticated;
 
--- gamer_profiles: SELECT + UPDATE for gamers/parents
 GRANT SELECT, UPDATE ON gamer_profiles TO authenticated;
 
--- product_groups: SELECT only (writes go through commit_group_changes SECURITY DEFINER RPC)
 GRANT SELECT ON product_groups TO authenticated;
 
--- group_enrollments: SELECT only (writes go through enroll/unenroll SECURITY DEFINER RPCs)
 GRANT SELECT ON group_enrollments TO authenticated;
 
--- enrollment_charges: read-only
 GRANT SELECT ON enrollment_charges TO authenticated;
 
 -- =============================================================================
