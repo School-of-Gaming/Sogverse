@@ -108,7 +108,7 @@ See `docs/sorg-token-architecture.md` for the full architecture, component map, 
 
 ### Other Docs
 
-- `docs/email-deliverability.md` — SPF, DKIM, DMARC setup for Brevo/sog.gg
+- `docs/email-architecture.md` — Brevo integration, email templates, notifications, deliverability/DNS, and testing UI
 - `docs/SECURITY_REPORT.md` — Past security audit findings and remediations
 
 ## Environment Variables

@@ -163,38 +163,6 @@ Service classes (e.g. `TokensService`) mix two data-fetching patterns: some meth
 
 **Affected services:** `src/services/tokens/tokens.service.ts` (and any future services that need server-side API calls).
 
-### Custom Email Verification (Non-Blocking)
-
-Supabase's "Confirm email" setting is disabled to keep signup frictionless (users can register and pay immediately). However, this means `email_confirmed_at` on `auth.users` is auto-set to `NOW()` on signup — it's always populated and useless for tracking real verification. `supabase.auth.resend({ type: 'signup' })` also does nothing when confirmation is disabled.
-
-**Goal:** Track which customers have actually verified their email, without blocking signup or payments. Gate certain actions behind verification later.
-
-**Why not Supabase's built-in confirmation?** Supabase's `enable_confirmations` is binary — either it blocks sign-in until the email is verified, or it auto-confirms and never sends a verification email. There is no "send verification but allow unverified sign-in" option ([GitHub Issue #5113](https://github.com/supabase/supabase/issues/5113)). `config.toml` must stay at `enable_confirmations = false` across staging and production (pushed via `supabase config push`).
-
-**Approach — custom token + Brevo API:**
-
-1. Add `email_verified BOOLEAN DEFAULT false` column to `profiles` table
-2. Add `email_verification_token TEXT` and `email_verification_expires_at TIMESTAMPTZ` columns (or encode everything in a signed JWT to avoid extra columns)
-3. After signup, generate a secure token and send a verification email via SMTP (Brevo credentials already configured in Supabase — reuse the same SMTP host/port/user/password in `.env.local` with `nodemailer`)
-4. Create `/api/auth/verify-email?token=xxx` route that validates the token, sets `email_verified = true` on the profile, and redirects to a success page
-5. Create `/api/auth/resend-verification` route that generates a new token and sends another email
-6. Update Settings page (`/settings`) to show verified/unverified status next to email, with a "Resend" button for unverified users
-7. Update admin user detail page (`/admin/users/[id]`) to show verification badge (skip for gamer role — synthetic emails)
-8. Gate specific features behind `email_verified` via RLS policies or service-layer checks (TBD which features)
-
-**UI removed (was non-functional):** The verification UI and its backing API routes were removed because `email_confirmed_at` is always set (useless) and `supabase.auth.resend()` is a no-op with confirmation disabled. When implementing this feature, re-add:
-- Settings page (`src/app/(dashboard)/settings/page.tsx`) — verified/unverified badge next to email field, with "Resend verification" button for unverified users. Read `profile.email_verified` instead of `user.email_confirmed_at`.
-- Admin user detail page (`src/app/(dashboard)/admin/users/[id]/page.tsx`) — verification badge next to email in user summary card. Read `profile.email_verified` directly (no separate API call needed).
-- `src/app/api/auth/resend-verification/route.ts` — recreate using custom token + Brevo instead of `supabase.auth.resend()`.
-- `src/app/api/admin/users/[id]/auth/route.ts` — recreate to return `profile.email_verified` if needed (or just query profiles directly from the admin page).
-
-**Note:** Gamer accounts use synthetic emails (`{username}@gamer.sogverse.internal`) — skip verification for them entirely.
-
-**Email sending:** Use the Brevo API wrapper (`src/lib/brevo.ts`) already set up with `BREVO_API_KEY` and verified sender `sogverse@sog.gg`.
-
-**Dependencies:**
-- Database migration for new `profiles` columns
-
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
 Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
@@ -211,23 +179,4 @@ To support a second parent linking to an existing gamer:
 
 **Why:** The previous client-side INSERT policy only checked `parent_id = auth.uid()`, allowing any customer to link to any gamer. The fix correctly removed this, but a secure server-side path is needed if multiple parents per gamer is a requirement.
 
-### Use Identicon Avatars in Email Templates
-
-The identicon generator (`src/lib/identicon.ts`) creates unique SVG avatars from user IDs. These could be embedded in email templates to make them more personal and visually recognizable — e.g., showing a gamer's identicon next to their name in enrollment/unenrollment emails, or in group change notifications.
-
-- [ ] Investigate rendering identicons as inline SVG or data URIs for email client compatibility
-- [ ] Add identicon next to gamer names in enrollment confirmation emails
-- [ ] Add identicon next to gamer names in group change notification emails
-
-**Caveat:** Email client SVG support is inconsistent (Gmail strips `<svg>` tags). May need to render identicons as PNG via a server-side route (e.g., `GET /api/identicon/[id].png`) and reference via `<img>` tag, or use inline `data:image/svg+xml` URIs.
-
-### Migrate Auth Email Templates to Brevo Visual Editor
-
-Auth email templates (signup confirmation, password reset, etc.) are currently plain HTML in the Supabase dashboard. Moving them to Brevo would let non-technical team members design branded emails using Brevo's drag-and-drop visual editor with personalization variables.
-
-- [ ] Create branded email templates in Brevo's visual editor (signup, magic link, etc. — password reset already code-owned)
-- [ ] Set up Supabase Auth Hooks or Edge Functions to send emails via Brevo's template API instead of Supabase's built-in templates
-- [ ] Pass user data (name, email, confirmation URL) as template variables to Brevo
-
-**Why:** Supabase's built-in templates are developer-edited HTML. Brevo's visual editor lets marketing/design team members own the email branding and content without code changes.
 

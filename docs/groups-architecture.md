@@ -283,6 +283,3 @@ Only `PointerSensor` is configured in `GeduGroupsCard`. Keyboard-only users cann
 
 The four role branches (admin, gedu, gamer, customer) share nearly identical `SELECT`/`FROM`/`JOIN` clauses. If a column is added or a JOIN changes, all branches must be updated in sync. Consider extracting the common query into a CTE or view — but only once the branches have stabilized, since roles may diverge (e.g., admin-only columns) and premature abstraction would make that harder.
 
-### Customer voice chat access
-
-The customer Join button currently shows a placeholder "Voice Chat Coming Soon" dialog. When parent voice access is implemented, replace `onJoinClick` with `voiceRoute` in `CustomerGroupDetailContent` and `CustomerGamersPage`.
