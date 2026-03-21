@@ -84,12 +84,19 @@ This was tested during the staging squash and worked well:
 - [ ] Test login flow (email and gamer username)
 - [ ] Verify RLS policies are working (users can only see their own data)
 
+## Production Domain & Deployment
+
+- [ ] Deploy to production on Vercel (push to `main` or trigger production build)
+- [ ] Add `sogverse.sog.gg` domain in Vercel (production environment)
+- [ ] Add `CNAME` record in Nordname: `sogverse` → `cname.vercel-dns.com.`
+- [ ] Create Stripe **live mode** webhook endpoint pointing to `https://sogverse.sog.gg/api/webhooks/stripe`
+- [ ] Add the live mode `STRIPE_WEBHOOK_SECRET` to Vercel production environment
+
 ## Cleanup
 
 - [ ] Remove `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` from `.github/workflows/ci.yml` after June 2, 2026 (Node.js 24 becomes the default runner)
 
 ## Future Improvements
-
 
 ### E2E Tests with Local Supabase
 
@@ -114,14 +121,6 @@ Test cases to add:
 - [ ] Core purchase flow
 
 **Why:** RLS policies and role-based routing are complex enough that testing against a real DB catches integration bugs that mocked tests miss. Local Supabase keeps tests fast, deterministic, and free from network flakiness — and Docker is available by default in GitHub Actions runners.
-
-### Production Domain & Deployment
-
-- [ ] Deploy to production on Vercel (push to `main` or trigger production build)
-- [ ] Add `sogverse.sog.gg` domain in Vercel (production environment)
-- [ ] Add `CNAME` record in Nordname: `sogverse` → `cname.vercel-dns.com.`
-- [ ] Create Stripe **live mode** webhook endpoint pointing to `https://sogverse.sog.gg/api/webhooks/stripe`
-- [ ] Add the live mode `STRIPE_WEBHOOK_SECRET` to Vercel production environment
 
 ### Consolidate Multiple Permissive RLS Policies
 
