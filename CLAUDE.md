@@ -49,7 +49,7 @@ Proxy (`src/proxy.ts`) refreshes Supabase auth sessions and enforces role-based 
 
 ### Service Layer Pattern
 Each feature in `src/services/` follows a two-file pattern:
-- `*.service.ts` — Class that takes a `SupabaseClient<Database>` in the constructor. Methods call RPCs or `.from()` queries and reshape results.
+- `*.service.ts` — Class that takes a `SupabaseClient<Database>` in the constructor. Read methods use the injected client (`.from()` queries, `.rpc()` calls). Write methods that need server-side secrets (Stripe, Daily.co, admin client) use `fetch()` to call API routes instead — the injected client is unused by those methods, and this is intentional.
 - `*.queries.ts` — React Query hooks. Each hook calls `getClient()`, instantiates the service, and returns `useQuery`/`useMutation`. Exports a `*Keys` factory object for cache key hierarchy (e.g., `groupKeys.all`, `groupKeys.byProduct(id)`).
 
 **Rule: Mutations must invalidate related queries in `onSuccess`.** Use the key hierarchy so invalidating a parent key (e.g., `groupKeys.all`) cascades to children.

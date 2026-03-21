@@ -153,15 +153,6 @@ Internal timezone math uses `Intl.DateTimeFormat("en-US", { timeZone })` + `form
 
 **Why:** Cleaner code, less surface area for bugs (like the `"HH:MM:SS"` parsing issue), and a standard approach used across the industry. The current code works correctly but is unnecessarily complex.
 
-### Clarify Service Class Pattern for Mixed Data Sources
-
-Service classes (e.g. `TokensService`) mix two data-fetching patterns: some methods query Supabase directly via the injected client, while others use `fetch()` to call API routes (for operations that need server-side secrets like Stripe). The constructor-injected Supabase client is unused by the fetch-based methods.
-
-- [ ] Decide on a convention: split into separate classes (e.g. `TokensReader` for Supabase queries, `TokensActions` for API calls), or document the mixed pattern as intentional
-- [ ] Apply the chosen convention across all service classes
-
-**Affected services:** `src/services/tokens/tokens.service.ts` (and any future services that need server-side API calls).
-
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
 Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
