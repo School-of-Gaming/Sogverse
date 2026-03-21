@@ -563,6 +563,12 @@ export type Database = {
           function_name: string
         }[]
       }
+      _list_security_definer_without_search_path: {
+        Args: never
+        Returns: {
+          function_name: string
+        }[]
+      }
       _list_table_grants: {
         Args: never
         Returns: {

@@ -66,6 +66,12 @@ Tests use a separate vitest config (`vitest.config.db.mts`) that:
 - Runs tests sequentially (shared database)
 - Has a 15-second timeout (DB ops are slower than mocked tests)
 
+### Access-Control Tests and Helper RPCs
+
+`access-control.test.ts` queries PostgreSQL system catalogs (`pg_proc`, `pg_tables`, etc.) to verify function grants, RLS status, and table privileges. Because the tests connect through PostgREST (Supabase client), they can't run raw SQL — so the catalog queries are wrapped in helper RPCs (`_list_rpc_access`, `_list_tables_without_rls`, etc.) defined in `00010_access_control_helpers.sql`. These are `REVOKE`d from all roles (only the service-role client can call them) but they still ship to production as test scaffolding.
+
+**Planned improvement:** Replace the helper RPCs with a direct PostgreSQL connection (`pg` package) for the access-control tests. This would let them query catalogs directly, remove the helper functions from production migrations, and keep behavioral tests (RLS, RPCs) on the Supabase client where they belong.
+
 ### Test Data Strategy
 
 Seed entities use deterministic UUIDs in the `00000000-...-0000000000xx` range (defined in `tests/db/constants.ts`). Mutation tests create ephemeral rows (via RPCs like `enroll_gamer_in_group`) that get database-generated UUIDs — these are cleaned up between tests by reset helpers.

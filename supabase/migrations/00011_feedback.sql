@@ -36,6 +36,7 @@ CREATE OR REPLACE FUNCTION submit_feedback(p_user_id UUID, p_message TEXT)
 RETURNS boolean
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_count integer;

@@ -105,6 +105,18 @@ describe("Access Control", () => {
     expect(unexpected).toEqual([]);
   });
 
+  it("all SECURITY DEFINER functions have SET search_path", async () => {
+    const { data, error } = await admin.rpc(
+      "_list_security_definer_without_search_path"
+    );
+
+    expect(error).toBeNull();
+
+    const functions = (data as { function_name: string }[] | null) ?? [];
+
+    expect(functions).toEqual([]);
+  });
+
   it("all public tables have RLS enabled", async () => {
     const { data, error } = await admin.rpc("_list_tables_without_rls");
 

@@ -74,8 +74,30 @@ AS $$
   ORDER BY table_name, privilege_type;
 $$;
 
+-- Returns SECURITY DEFINER functions in public schema that lack SET search_path.
+CREATE OR REPLACE FUNCTION _list_security_definer_without_search_path()
+RETURNS TABLE (
+  function_name text
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = ''
+STABLE
+AS $$
+  SELECT p.proname::text AS function_name
+  FROM pg_catalog.pg_proc p
+  JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'public'
+    AND p.prosecdef = true
+    AND NOT EXISTS (
+      SELECT 1 FROM unnest(p.proconfig) AS c
+      WHERE c LIKE 'search_path=%'
+    );
+$$;
+
 -- Revoke from all roles — only service-role can call these.
 REVOKE EXECUTE ON FUNCTION _list_rpc_access() FROM authenticated, anon, public;
 REVOKE EXECUTE ON FUNCTION _list_tables_without_rls() FROM authenticated, anon, public;
 REVOKE EXECUTE ON FUNCTION _list_cron_jobs() FROM authenticated, anon, public;
 REVOKE EXECUTE ON FUNCTION _list_table_grants() FROM authenticated, anon, public;
+REVOKE EXECUTE ON FUNCTION _list_security_definer_without_search_path() FROM authenticated, anon, public;
