@@ -1,4 +1,4 @@
--- Parent-gamer linking, role validation, orphan cleanup
+-- Parent-gamer linking, role validation, orphan cleanup, policies, and grants
 
 CREATE TABLE parent_gamer (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -101,3 +101,74 @@ BEGIN
   WHERE pg.gamer_id = auth.uid();
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
+
+-- =============================================================================
+-- RLS policies
+-- =============================================================================
+
+-- No INSERT policy: all linking goes through the server-side /api/gamers/create
+-- route using the service-role client, which bypasses RLS entirely.
+
+CREATE POLICY "admin_full_access_parent_gamer"
+  ON parent_gamer FOR ALL TO authenticated
+  USING (get_user_role() = 'admin')
+  WITH CHECK (get_user_role() = 'admin');
+
+CREATE POLICY "customers_view_own_links"
+  ON parent_gamer FOR SELECT TO authenticated
+  USING (
+    (select get_user_role()) = 'customer' AND
+    parent_id = (select auth.uid())
+  );
+
+CREATE POLICY "customers_delete_own_links"
+  ON parent_gamer FOR DELETE TO authenticated
+  USING (
+    (select get_user_role()) = 'customer' AND
+    parent_id = (select auth.uid())
+  );
+
+CREATE POLICY "gamers_view_parent_links"
+  ON parent_gamer FOR SELECT TO authenticated
+  USING (
+    (select get_user_role()) = 'gamer' AND
+    gamer_id = (select auth.uid())
+  );
+
+-- Parent-linked policies for tables defined in 00002.
+-- These live here because they depend on parent_gamer / is_parent_of().
+
+CREATE POLICY "parents_view_linked_gamers"
+  ON profiles FOR SELECT TO authenticated
+  USING (
+    (select get_user_role()) = 'customer' AND
+    id IN (SELECT gamer_id FROM parent_gamer WHERE parent_id = (select auth.uid()))
+  );
+
+CREATE POLICY "parents_read_linked_gamer_profiles"
+  ON gamer_profiles FOR SELECT TO authenticated
+  USING (is_parent_of(user_id));
+
+CREATE POLICY "parents_read_linked_gamer_minecraft"
+  ON minecraft_accounts FOR SELECT TO authenticated
+  USING (is_parent_of(user_id));
+
+-- =============================================================================
+-- Table grants
+-- =============================================================================
+
+REVOKE ALL ON parent_gamer FROM authenticated;
+GRANT SELECT, DELETE ON parent_gamer TO authenticated;
+
+-- =============================================================================
+-- Function grants
+-- =============================================================================
+
+REVOKE EXECUTE ON FUNCTION is_parent_of(UUID) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION is_parent_of(UUID) TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION get_my_gamers() FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_my_gamers() TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION get_my_parents() FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_my_parents() TO authenticated;

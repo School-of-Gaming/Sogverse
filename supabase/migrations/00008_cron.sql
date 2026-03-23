@@ -1,4 +1,4 @@
--- Cron: weekly enrollment charge processing
+-- Cron: weekly enrollment charge processing and grants
 
 -- =============================================================================
 -- compute_next_session — mirrors getNextSessionStart() in src/lib/enrollment.ts
@@ -186,3 +186,11 @@ SELECT cron.schedule(
   '0 * * * *',
   $$SELECT process_enrollment_charges()$$
 );
+
+-- =============================================================================
+-- Function grants
+-- =============================================================================
+
+-- Cron-only: internal functions (called by pg_cron, not via PostgREST)
+REVOKE EXECUTE ON FUNCTION compute_next_session(SMALLINT, TIME, TEXT) FROM public, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION process_enrollment_charges() FROM public, anon, authenticated;

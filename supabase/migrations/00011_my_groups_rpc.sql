@@ -1,4 +1,4 @@
--- get_my_groups RPC
+-- get_my_groups RPC, policies, and grants
 -- Returns groups for the current user based on their role:
 --   admin    → all groups
 --   gedu     → assigned groups only

@@ -38,44 +38,6 @@ Go to: Repository → Settings → Secrets and variables → Actions
 
 - [ ] `SUPABASE_PROD_PROJECT_REF` = (your prod project ref)
 
-## Pre-Production Database Cleanup
-
-Before deploying to production, squash migrations again into a clean set for the prod DB:
-
-- [ ] **Production squash:** Repeat the staging squash process (48 → 10 domain-organized files, verified via CI DB tests + `pg_dump` schema diff) for the final production release.
-
-### Migration Squash Process
-
-This was tested during the staging squash and worked well:
-
-1. **Create branch** (`squash-migrations` or similar)
-2. **Delete all migration files** from `supabase/migrations/`
-3. **Write new squashed files** — manually synthesize from the originals, writing only the final state of each object. Don't use `pg_dump` (it can't capture `cron.schedule()`, `ALTER PUBLICATION`, `REPLICA IDENTITY FULL`, or inline comments)
-4. **Preserve non-obvious comments** — keep comments that explain "why" (e.g., RLS recursion workaround, row locking rationale). Drop obvious ones.
-5. **Push branch and let CI run** — `supabase start` in CI applies migrations to a fresh local Postgres and runs all DB tests. Fix failures and iterate.
-6. **Schema diff for extra confidence** — dump the remote schema with `pg_dump --schema-only --schema=public --no-owner`, dump the local CI schema the same way (upload as CI artifact), and diff them. Expected differences: column ordering, comment text, policy/constraint names.
-7. **Update remote tracking table** via psql:
-   ```sql
-   BEGIN;
-   DELETE FROM supabase_migrations.schema_migrations;
-   INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES
-     ('00001', '00001_extensions_and_helpers'),
-     ('00002', '00002_profiles'), ...;
-   COMMIT;
-   ```
-   **Critical:** The `version` column must be ONLY the numeric prefix (e.g., `00001`), not the full filename stem. The CLI extracts just the numeric prefix from local filenames for matching. The `name` column can hold the full stem for readability.
-   This does NOT touch the actual schema — only updates which versions the CLI considers "applied".
-8. **Regenerate types** from remote: `supabase gen types typescript --project-id $REF 2>/dev/null > src/types/database.types.ts`
-
-**Key pitfalls from staging squash:**
-- Supabase local Docker bootstraps default ALL grants on public tables — need explicit `REVOKE ALL` before restrictive `GRANT` (e.g., `parent_gamer`)
-- Function overloads: only write the final signature
-- `products.is_visible` should be `DEFAULT false NOT NULL`, `products.timezone` should have no default (force explicit)
-- `cron.schedule()` is DML — will execute on `supabase db reset` and register the job (this is correct)
-- Migration tracking `version` must be numeric prefix only (`00001`), not full stem (`00001_extensions_and_helpers`) — the CLI can't match otherwise
-
-**Important:** Only squash BEFORE production has real users. After launch, keep all migrations for the audit trail.
-
 ## Post-Deployment Verification
 
 - [ ] Verify staging deployment works on Vercel preview URL

@@ -1,4 +1,4 @@
--- Product groups, enrollments, charges, and related RPCs
+-- Product groups, enrollments, charges, RPCs, policies, and grants
 
 -- =============================================================================
 -- product_groups table
@@ -465,3 +465,110 @@ BEGIN
   ORDER BY pg.display_order;
 END;
 $$;
+
+-- =============================================================================
+-- RLS policies
+-- =============================================================================
+
+-- Product Groups
+CREATE POLICY "admin_full_access_product_groups"
+  ON product_groups FOR ALL TO authenticated
+  USING ((SELECT get_user_role()) = 'admin')
+  WITH CHECK ((SELECT get_user_role()) = 'admin');
+
+CREATE POLICY "gedus_view_own_groups"
+  ON product_groups FOR SELECT TO authenticated
+  USING (
+    (SELECT get_user_role()) = 'gedu'
+    AND gedu_id = auth.uid()
+  );
+
+CREATE POLICY "authenticated_view_visible_product_groups"
+  ON product_groups FOR SELECT TO authenticated
+  USING (
+    product_id IN (SELECT id FROM products WHERE is_visible = true)
+  );
+
+-- Group Enrollments
+CREATE POLICY "admin_full_access_group_enrollments"
+  ON group_enrollments FOR ALL TO authenticated
+  USING ((SELECT get_user_role()) = 'admin')
+  WITH CHECK ((SELECT get_user_role()) = 'admin');
+
+CREATE POLICY "gedus_view_own_group_enrollments"
+  ON group_enrollments FOR SELECT TO authenticated
+  USING (
+    (SELECT get_user_role()) = 'gedu'
+    AND group_id IN (
+      SELECT id FROM product_groups WHERE gedu_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "gamers_view_own_enrollments"
+  ON group_enrollments FOR SELECT TO authenticated
+  USING (
+    (SELECT get_user_role()) = 'gamer'
+    AND gamer_id = auth.uid()
+  );
+
+CREATE POLICY "authenticated_view_visible_group_enrollments"
+  ON group_enrollments FOR SELECT TO authenticated
+  USING (
+    group_id IN (
+      SELECT pg.id FROM product_groups pg
+      JOIN products p ON p.id = pg.product_id
+      WHERE p.is_visible = true
+    )
+  );
+
+CREATE POLICY "customers_read_own_enrollments"
+  ON group_enrollments FOR SELECT TO authenticated
+  USING (
+    (SELECT get_user_role()) = 'customer'
+    AND enrolled_by = auth.uid()
+  );
+
+-- Enrollment Charges
+CREATE POLICY "admin_full_access_enrollment_charges"
+  ON enrollment_charges FOR ALL TO authenticated
+  USING ((SELECT get_user_role()) = 'admin')
+  WITH CHECK ((SELECT get_user_role()) = 'admin');
+
+CREATE POLICY "customers_read_own_enrollment_charges"
+  ON enrollment_charges FOR SELECT TO authenticated
+  USING (
+    enrollment_id IN (
+      SELECT id FROM group_enrollments WHERE enrolled_by = auth.uid()
+    )
+  );
+
+-- =============================================================================
+-- Table grants
+-- =============================================================================
+
+REVOKE ALL ON product_groups FROM authenticated;
+REVOKE ALL ON group_enrollments FROM authenticated;
+REVOKE ALL ON enrollment_charges FROM authenticated;
+
+GRANT SELECT ON product_groups TO authenticated;
+GRANT SELECT ON group_enrollments TO authenticated;
+GRANT SELECT ON enrollment_charges TO authenticated;
+
+-- =============================================================================
+-- Function grants
+-- =============================================================================
+
+-- Group management RPCs: authenticated only (admin-gated internally)
+REVOKE EXECUTE ON FUNCTION get_product_groups_with_details(UUID) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_product_groups_with_details(UUID) TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION commit_group_changes(UUID, JSONB, JSONB, UUID[], JSONB) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION commit_group_changes(UUID, JSONB, JSONB, UUID[], JSONB) TO authenticated;
+
+-- Customer-facing enrollment RPCs: authenticated only
+REVOKE EXECUTE ON FUNCTION get_enrollment_groups(UUID) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_enrollment_groups(UUID) TO authenticated;
+
+-- Service-role only: enrollment write RPCs (called from API routes)
+REVOKE EXECUTE ON FUNCTION enroll_gamer_in_group(UUID, UUID, UUID, DATE) FROM public, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION unenroll_gamer(UUID, UUID, BOOLEAN) FROM public, anon, authenticated;

@@ -1,4 +1,4 @@
--- Voice rooms for real-time sessions via Daily.co
+-- Voice rooms for real-time sessions via Daily.co, policies, and grants
 -- Each voice room is linked 1:1 to a product group (schedule-driven),
 -- or is a special always-open room (admin lounge, gedu lounge).
 
@@ -137,3 +137,50 @@ BEGIN
   -- Customers and other roles: return nothing (empty result set)
 END;
 $$;
+
+-- =============================================================================
+-- RLS policies
+-- =============================================================================
+
+CREATE POLICY "admin_full_access_voice_rooms"
+  ON voice_rooms FOR ALL TO authenticated
+  USING ((SELECT get_user_role()) = 'admin')
+  WITH CHECK ((SELECT get_user_role()) = 'admin');
+
+CREATE POLICY "gedu_view_voice_rooms"
+  ON voice_rooms FOR SELECT TO authenticated
+  USING (
+    (SELECT get_user_role()) = 'gedu'
+    AND (
+      room_type = 'gedu_only'
+      OR (room_type = 'group' AND group_id IN (
+        SELECT id FROM product_groups WHERE gedu_id = auth.uid()
+      ))
+    )
+  );
+
+CREATE POLICY "gamer_view_enrolled_voice_rooms"
+  ON voice_rooms FOR SELECT TO authenticated
+  USING (
+    (SELECT get_user_role()) = 'gamer'
+    AND room_type = 'group'
+    AND group_id IN (
+      SELECT ge.group_id FROM group_enrollments ge
+       WHERE ge.gamer_id = auth.uid()
+         AND ge.status = 'active'
+    )
+  );
+
+-- =============================================================================
+-- Table grants
+-- =============================================================================
+
+REVOKE ALL ON voice_rooms FROM authenticated;
+GRANT SELECT ON voice_rooms TO authenticated;
+
+-- =============================================================================
+-- Function grants
+-- =============================================================================
+
+REVOKE EXECUTE ON FUNCTION get_available_voice_rooms() FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_available_voice_rooms() TO authenticated;

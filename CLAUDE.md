@@ -160,7 +160,7 @@ The `npm run supabase:gen-types` script uses `--local` which requires Docker. Fo
 
 This avoids a chicken-and-egg problem where tests reference functions that aren't in the generated types yet.
 
-**Note:** During dev we sometimes modify existing migration files directly and fix the remote DB via psql. In production, schema changes must **only** go through new migration files — never edit a pushed migration or run ad-hoc DDL against production.
+**Rule: To understand the current schema, read `database.types.ts` and `src/types/index.ts` — not migrations.** Migrations show the history of changes, not the current state. `database.types.ts` is auto-generated from the live schema and is always authoritative. Only read migration files when you need to understand RLS policies, grants, triggers, or function implementations — things the type generator doesn't capture.
 
 **Rule: When writing RPCs with JOINs, verify `RETURNS TABLE` column nullability matches what the SQL actually produces.** PostgreSQL doesn't enforce `NOT NULL` on `RETURNS TABLE` columns, so the type generator infers from the base type alone — it can't see whether a column comes from an INNER JOIN (never null) or LEFT JOIN (sometimes null). After pushing and regenerating types, check the generated return type in `database.types.ts`. This is the one gap in the DB-to-TypeScript type chain: the compiler trusts the function signature, not the query.
 

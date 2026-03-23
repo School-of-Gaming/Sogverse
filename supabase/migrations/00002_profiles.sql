@@ -1,4 +1,4 @@
--- Enums, profiles, customer_profiles, gamer_profiles, auth helpers
+-- Enums, profiles (base + customer + gamer + minecraft), auth helpers, policies, and grants
 
 -- =============================================================================
 -- Enums
@@ -47,7 +47,8 @@ CREATE TABLE customer_profiles (
   token_balance INTEGER NOT NULL DEFAULT 0 CHECK (token_balance >= 0),
   stripe_customer_id TEXT,
   stripe_subscription_id TEXT,
-  subscription_status TEXT
+  subscription_status TEXT,
+  subscription_tier TEXT  -- Stripe Product ID of the active subscription tier
 );
 
 ALTER TABLE customer_profiles ENABLE ROW LEVEL SECURITY;
@@ -128,3 +129,88 @@ BEGIN
   RETURN get_user_role() = 'admin';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER STABLE SET search_path = public;
+
+-- =============================================================================
+-- RLS policies
+-- =============================================================================
+
+CREATE POLICY "admin_full_access_profiles"
+  ON profiles FOR ALL TO authenticated
+  USING (get_user_role() = 'admin')
+  WITH CHECK (get_user_role() = 'admin');
+
+-- Wrap auth.uid() / get_user_role() in (select ...) for RLS initplan optimization:
+-- evaluated once per query instead of once per row.
+CREATE POLICY "users_view_own_profile"
+  ON profiles FOR SELECT TO authenticated
+  USING (id = (select auth.uid()));
+
+-- Uses get_user_role() instead of a subquery on profiles to avoid PostgreSQL
+-- error 42P17 (infinite recursion in policy for relation).
+CREATE POLICY "users_update_own_profile"
+  ON profiles FOR UPDATE TO authenticated
+  USING (id = (select auth.uid()))
+  WITH CHECK (
+    id = (select auth.uid()) AND
+    role = (select get_user_role())
+  );
+
+CREATE POLICY "admin_full_access_customer_profiles"
+  ON customer_profiles FOR ALL TO authenticated
+  USING (is_admin());
+
+CREATE POLICY "customers_read_own_customer_profile"
+  ON customer_profiles FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
+
+CREATE POLICY "admin_full_access_gamer_profiles"
+  ON gamer_profiles FOR ALL TO authenticated
+  USING (is_admin());
+
+CREATE POLICY "gamers_read_own_gamer_profile"
+  ON gamer_profiles FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
+
+CREATE POLICY "gamers_update_own_gamer_profile"
+  ON gamer_profiles FOR UPDATE TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "admin_full_access_minecraft_accounts"
+  ON minecraft_accounts FOR ALL TO authenticated
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+CREATE POLICY "users_read_own_minecraft_account"
+  ON minecraft_accounts FOR SELECT TO authenticated
+  USING (user_id = (select auth.uid()));
+
+-- =============================================================================
+-- Table grants
+-- =============================================================================
+
+-- Supabase local Docker bootstraps default ALL grants on public tables.
+-- Explicit REVOKE ALL ensures only the selective GRANTs below are in effect.
+REVOKE ALL ON profiles FROM authenticated;
+REVOKE ALL ON customer_profiles FROM authenticated;
+REVOKE ALL ON gamer_profiles FROM authenticated;
+REVOKE ALL ON minecraft_accounts FROM authenticated;
+
+GRANT SELECT ON profiles TO authenticated;
+GRANT UPDATE (display_name) ON profiles TO authenticated;
+
+GRANT SELECT ON customer_profiles TO authenticated;
+
+GRANT SELECT, UPDATE ON gamer_profiles TO authenticated;
+
+GRANT SELECT ON minecraft_accounts TO authenticated;
+
+-- =============================================================================
+-- Function grants
+-- =============================================================================
+
+REVOKE EXECUTE ON FUNCTION get_user_role() FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_user_role() TO authenticated;
+
+REVOKE EXECUTE ON FUNCTION is_admin() FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION is_admin() TO authenticated;

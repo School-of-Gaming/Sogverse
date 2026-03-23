@@ -1,4 +1,4 @@
--- Token transactions and balance adjustment
+-- Token transactions, balance adjustment, policies, and grants
 
 -- =============================================================================
 -- Token transaction type enum
@@ -89,3 +89,29 @@ BEGIN
   RETURN QUERY SELECT v_new_balance, v_transaction_id;
 END;
 $$;
+
+-- =============================================================================
+-- RLS policies
+-- =============================================================================
+
+CREATE POLICY "admin_full_access_token_transactions"
+  ON token_transactions FOR ALL TO authenticated
+  USING (is_admin());
+
+CREATE POLICY "users_read_own_transactions"
+  ON token_transactions FOR SELECT TO authenticated
+  USING (user_id = (select auth.uid()));
+
+-- =============================================================================
+-- Table grants
+-- =============================================================================
+
+REVOKE ALL ON token_transactions FROM authenticated;
+GRANT SELECT ON token_transactions TO authenticated;
+
+-- =============================================================================
+-- Function grants
+-- =============================================================================
+
+-- Service-role only: token balance (called from API routes and other RPCs)
+REVOKE EXECUTE ON FUNCTION adjust_token_balance(UUID, INTEGER, token_transaction_type, TEXT, TEXT, TEXT, UUID, TEXT) FROM public, anon, authenticated;

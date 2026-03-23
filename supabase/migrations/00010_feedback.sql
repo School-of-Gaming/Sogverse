@@ -1,6 +1,4 @@
--- =============================================================================
--- Feedback submissions table + RLS + grants
--- =============================================================================
+-- Feedback submissions, submit_feedback RPC, policies, and grants
 
 CREATE TABLE feedback_submissions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

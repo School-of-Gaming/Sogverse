@@ -1,4 +1,4 @@
--- Extensions and shared helper functions
+-- Extensions, shared helpers, and schema grants
 
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
@@ -10,3 +10,9 @@ BEGIN
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SET search_path = public;
+
+-- =============================================================================
+-- Schema grants
+-- =============================================================================
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
