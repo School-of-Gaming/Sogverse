@@ -1,3 +1,4 @@
+export { Alert, AlertTitle, AlertDescription, alertVariants } from "./alert";
 export { Button, buttonVariants, type ButtonProps } from "./button";
 export { Input, type InputProps } from "./input";
 export { Label, type LabelProps } from "./label";
@@ -9,5 +10,13 @@ export {
   CardDescription,
   CardContent,
 } from "./card";
-export { Avatar, AvatarImage, AvatarFallback } from "./avatar";
+export { Avatar } from "./avatar";
 export { Badge, badgeVariants, type BadgeProps } from "./badge";
+export {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "./dialog";

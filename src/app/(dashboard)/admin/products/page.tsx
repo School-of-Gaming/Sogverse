@@ -1,35 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, MoreVertical, Pencil, Trash, Eye, EyeOff } from "lucide-react";
+import Link from "next/link";
+import { Plus, Search } from "lucide-react";
+import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { useAllProducts, useToggleProductStatus, useDeleteProduct } from "@/services/products";
-import { formatCurrency } from "@/lib/utils";
+import { useAllProducts } from "@/services/products";
+import { useCurrency } from "@/hooks/use-currency";
+import { useTokenRates } from "@/providers/token-rate-provider";
+import { ProductRow } from "@/components/admin/product-row";
 
 export default function AdminProductsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: products, isLoading } = useAllProducts();
-  const toggleStatus = useToggleProductStatus();
-  const deleteProduct = useDeleteProduct();
+  const { currency, locale } = useCurrency();
+  const { tokensToCurrencyDisplay } = useTokenRates();
 
   const filteredProducts = products?.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.description?.toLowerCase().includes(searchQuery.toLowerCase())
+      product.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  const handleToggleStatus = (id: string, currentStatus: boolean) => {
-    toggleStatus.mutate({ id, isActive: !currentStatus });
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this product?")) {
-      deleteProduct.mutate(id);
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -40,10 +33,12 @@ export default function AdminProductsPage() {
             Manage your product catalog
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        <Link href={ROUTES.admin.productsAdd}>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        </Link>
       </div>
 
       <Card>
@@ -77,68 +72,14 @@ export default function AdminProductsPage() {
               ))}
             </div>
           ) : filteredProducts && filteredProducts.length > 0 ? (
-            <div className="space-y-4">
+            <div className="grid gap-3">
               {filteredProducts.map((product) => (
-                <div
+                <Link
                   key={product.id}
-                  className="flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent"
+                  href={ROUTES.admin.product(product.id)}
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-muted">
-                      {product.image_url ? (
-                        <img
-                          src={product.image_url}
-                          alt={product.name}
-                          className="h-full w-full rounded-lg object-cover"
-                        />
-                      ) : (
-                        <span className="text-2xl">📦</span>
-                      )}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{product.name}</p>
-                        {!product.is_active && (
-                          <Badge variant="outline" className="text-muted-foreground">
-                            Inactive
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground line-clamp-1">
-                        {product.description || "No description"}
-                      </p>
-                      <p className="text-sm font-semibold text-primary">
-                        {formatCurrency(product.price, product.currency)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleToggleStatus(product.id, product.is_active)}
-                      title={product.is_active ? "Deactivate" : "Activate"}
-                    >
-                      {product.is_active ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button variant="ghost" size="icon" title="Edit">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive"
-                      onClick={() => handleDelete(product.id)}
-                      title="Delete"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+                  <ProductRow product={product} currency={currency} locale={locale} tokensToCurrencyDisplay={tokensToCurrencyDisplay} />
+                </Link>
               ))}
             </div>
           ) : (

@@ -1,12 +1,11 @@
 export { ProductsService } from "./products.service";
+export type { ProductWithGame } from "./products.service";
 export {
-  useActiveProducts,
+  useVisibleProducts,
   useAllProducts,
   useProduct,
-  useProductsByCategory,
-  useSearchProducts,
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
-  useToggleProductStatus,
+  useToggleProductVisibility,
 } from "./products.queries";

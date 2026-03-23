@@ -1,43 +1,51 @@
 "use client";
 
 import { useState } from "react";
-import { User, Lock, Bell, Palette } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { User, Lock, Bell, Palette, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
+import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { useUpdateProfile } from "@/services/users";
+import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth();
   const updateProfile = useUpdateProfile();
+  const router = useRouter();
+  const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
+  const { data: mcAccount } = useMyMinecraftAccount();
+  const updateMyMc = useUpdateMyMinecraft();
 
-  const [displayName, setDisplayName] = useState(profile?.display_name || "");
+  const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const getInitials = () => {
-    if (profile?.display_name) {
-      return profile.display_name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    if (profile?.username) {
-      return profile.username.slice(0, 2).toUpperCase();
-    }
-    return "U";
-  };
+  // Minecraft state (gamers and gedus)
+  const [minecraftUsername, setMinecraftUsername] = useState("");
+  const [mcInitialized, setMcInitialized] = useState(false);
+  const [isSavingMc, setIsSavingMc] = useState(false);
+  const [mcSuccess, setMcSuccess] = useState<string | null>(null);
+  const [mcError, setMcError] = useState<string | null>(null);
 
+  // Initialize minecraft username once account data loads
+  if (mcAccount !== undefined && !mcInitialized) {
+    setMinecraftUsername(mcAccount?.minecraft_username ?? "");
+    setMcInitialized(true);
+  }
   const handleSaveProfile = async () => {
     if (!user) return;
 
     setIsSaving(true);
     setSuccessMessage(null);
+    setErrorMessage(null);
 
     try {
       await updateProfile.mutateAsync({
@@ -46,10 +54,46 @@ export default function SettingsPage() {
       });
       await refreshProfile();
       setSuccessMessage("Profile updated successfully!");
-    } catch (error) {
-      console.error("Failed to update profile:", error);
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String((error as { message: unknown }).message)
+            : "Failed to update profile";
+      setErrorMessage(message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleChangePassword = () => {
+    router.push("/reset-password");
+  };
+
+  const handleSaveMc = async () => {
+    setIsSavingMc(true);
+    setMcSuccess(null);
+    setMcError(null);
+
+    try {
+      const mcValue = minecraftUsername.trim() || null;
+      await updateMyMc.mutateAsync(mcValue);
+      setMcSuccess(
+        mcValue
+          ? "Minecraft username saved!"
+          : "Minecraft username cleared.",
+      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String((error as { message: unknown }).message)
+            : "Failed to update Minecraft username";
+      setMcError(message);
+    } finally {
+      setIsSavingMc(false);
     }
   };
 
@@ -76,12 +120,11 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
+              <Identicon id={profile?.id || user?.id || ""} size={64} />
             </Avatar>
             <div>
               <p className="font-medium">
-                {profile?.display_name || profile?.username || "User"}
+                {profile?.display_name}
               </p>
               <p className="text-sm text-muted-foreground">
                 {profile?.email || `@${profile?.username}`}
@@ -93,8 +136,14 @@ export default function SettingsPage() {
           </div>
 
           {successMessage && (
-            <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-500">
+            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
               {successMessage}
+            </div>
+          )}
+
+          {errorMessage && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {errorMessage}
             </div>
           )}
 
@@ -105,6 +154,7 @@ export default function SettingsPage() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your display name"
+              maxLength={DISPLAY_NAME_MAX}
             />
           </div>
 
@@ -115,9 +165,6 @@ export default function SettingsPage() {
               disabled
               className="bg-muted"
             />
-            <p className="text-xs text-muted-foreground">
-              Email cannot be changed
-            </p>
           </div>
 
           {profile?.username && (
@@ -148,13 +195,58 @@ export default function SettingsPage() {
             Manage your password and security settings
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Button variant="outline">Change Password</Button>
-          <p className="text-sm text-muted-foreground">
-            You will receive an email with instructions to reset your password.
-          </p>
+        <CardContent>
+          <Button
+            variant="outline"
+            onClick={handleChangePassword}
+          >
+            Change Password
+          </Button>
         </CardContent>
       </Card>
+
+      {/* Minecraft Account (gamers and gedus) */}
+      {showMinecraft && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Gamepad2 className="h-5 w-5" />
+              <CardTitle>Minecraft Account</CardTitle>
+            </div>
+            <CardDescription>
+              Link your Minecraft Java username
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {mcSuccess && (
+              <div className="rounded-md bg-success/10 p-3 text-sm text-success">
+                {mcSuccess}
+              </div>
+            )}
+
+            {mcError && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {mcError}
+              </div>
+            )}
+
+            <form onSubmit={(e) => { e.preventDefault(); handleSaveMc(); }} className="space-y-6">
+              <MinecraftUsernameField
+                value={minecraftUsername}
+                onChange={setMinecraftUsername}
+                disabled={isSavingMc}
+              />
+
+              <Button
+                type="submit"
+                disabled={isSavingMc}
+              >
+                {isSavingMc ? "Saving..." : "Save Minecraft Username"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Notifications Settings */}
       <Card>

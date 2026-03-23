@@ -1,11 +1,9 @@
-import type { Profile, ProfileUpdate, UserRole } from "@/types";
-
-// Using generic type to avoid version-specific Supabase type incompatibilities
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SupabaseClientType = any;
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Profile, ProfileUpdate, UserRole, ParentGamer, Database } from "@/types";
+import { escapeLikePattern } from "@/lib/utils";
 
 export class UsersService {
-  constructor(private supabase: SupabaseClientType) {}
+  constructor(private supabase: SupabaseClient<Database>) {}
 
   async getProfile(userId: string): Promise<Profile> {
     const { data, error } = await this.supabase
@@ -27,6 +25,14 @@ export class UsersService {
       .single();
 
     if (error) throw error;
+
+    // Sync display_name to auth.users metadata so it shows in Supabase dashboard
+    if (updates.display_name !== undefined) {
+      await this.supabase.auth.updateUser({
+        data: { display_name: updates.display_name },
+      });
+    }
+
     return data;
   }
 
@@ -55,7 +61,7 @@ export class UsersService {
     const { data, error } = await this.supabase
       .from("profiles")
       .select("*")
-      .or(`email.ilike.%${query}%,username.ilike.%${query}%,display_name.ilike.%${query}%`)
+      .or(`email.ilike.%${escapeLikePattern(query)}%,username.ilike.%${escapeLikePattern(query)}%,display_name.ilike.%${escapeLikePattern(query)}%`)
       .order("created_at", { ascending: false })
       .limit(20);
 
@@ -63,9 +69,28 @@ export class UsersService {
     return data;
   }
 
-  async deleteUser(userId: string): Promise<void> {
-    // Note: This requires admin privileges and the admin client
-    const { error } = await this.supabase.auth.admin.deleteUser(userId);
+  async getAllParentGamerLinks(): Promise<ParentGamer[]> {
+    const { data, error } = await this.supabase
+      .from("parent_gamer")
+      .select("*");
+
     if (error) throw error;
+    return data;
+  }
+
+  async createGedu(email: string): Promise<{ warning?: string }> {
+    const response = await fetch("/api/admin/create-gedu", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Failed to create gedu account");
+    }
+
+    return data;
   }
 }

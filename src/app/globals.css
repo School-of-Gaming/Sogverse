@@ -14,34 +14,46 @@
   --popover: 0 0% 10%;
   --popover-foreground: 0 0% 93%;
 
-  /* Primary - SOG Purple */
-  --primary: 276 100% 44%;         /* #8F00E2 */
-  --primary-foreground: 0 0% 100%;
+  /* Primary - SOG Yellow */
+  --primary: 42 98% 49%;           /* #FAA901 */
+  --primary-foreground: 0 0% 7%;
 
-  /* Secondary - SOG Yellow */
-  --secondary: 42 98% 49%;         /* #FAA901 */
-  --secondary-foreground: 0 0% 7%;
+  /* Secondary - SOG Purple */
+  --secondary: 276 100% 44%;      /* #8F00E2 */
+  --secondary-foreground: 0 0% 100%;
 
   /* Muted colors */
   --muted: 0 0% 15%;
   --muted-foreground: 0 0% 65%;
 
   /* Accent colors */
-  --accent: 276 100% 44%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 42 98% 49%;
+  --accent-foreground: 0 0% 7%;
 
   /* Destructive colors */
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
+  /* Success colors */
+  --success: 160 60% 45%;
+  --success-foreground: 0 0% 100%;
+
+  /* Info colors */
+  --info: 210 80% 55%;
+  --info-foreground: 0 0% 100%;
+
+  /* Warning colors */
+  --warning: 45 93% 47%;
+  --warning-foreground: 0 0% 7%;
+
   /* Border colors */
   --border: 0 0% 20%;
   --input: 0 0% 20%;
-  --ring: 276 100% 44%;
+  --ring: 42 98% 49%;
 
   /* Chart colors */
-  --chart-1: 276 100% 44%;
-  --chart-2: 42 98% 49%;
+  --chart-1: 42 98% 49%;
+  --chart-2: 276 100% 44%;
   --chart-3: 160 60% 45%;
   --chart-4: 200 80% 50%;
   --chart-5: 340 75% 55%;
@@ -52,12 +64,12 @@
   /* Sidebar */
   --sidebar-background: 0 0% 9%;
   --sidebar-foreground: 0 0% 93%;
-  --sidebar-primary: 276 100% 44%;
-  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-primary: 42 98% 49%;
+  --sidebar-primary-foreground: 0 0% 7%;
   --sidebar-accent: 0 0% 15%;
   --sidebar-accent-foreground: 0 0% 93%;
   --sidebar-border: 0 0% 20%;
-  --sidebar-ring: 276 100% 44%;
+  --sidebar-ring: 42 98% 49%;
 }
 
 /* Light theme override */
@@ -71,33 +83,42 @@
   --popover: 0 0% 100%;
   --popover-foreground: 0 0% 7%;
 
-  --primary: 276 100% 44%;
-  --primary-foreground: 0 0% 100%;
+  --primary: 42 98% 49%;
+  --primary-foreground: 0 0% 7%;
 
-  --secondary: 42 98% 49%;
-  --secondary-foreground: 0 0% 7%;
+  --secondary: 276 100% 44%;
+  --secondary-foreground: 0 0% 100%;
 
   --muted: 0 0% 93%;
   --muted-foreground: 0 0% 40%;
 
-  --accent: 276 100% 44%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 42 98% 49%;
+  --accent-foreground: 0 0% 7%;
 
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
+  --success: 160 60% 40%;
+  --success-foreground: 0 0% 100%;
+
+  --info: 210 80% 50%;
+  --info-foreground: 0 0% 100%;
+
+  --warning: 45 93% 47%;
+  --warning-foreground: 0 0% 7%;
+
   --border: 0 0% 85%;
   --input: 0 0% 85%;
-  --ring: 276 100% 44%;
+  --ring: 42 98% 49%;
 
   --sidebar-background: 0 0% 96%;
   --sidebar-foreground: 0 0% 7%;
-  --sidebar-primary: 276 100% 44%;
-  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-primary: 42 98% 49%;
+  --sidebar-primary-foreground: 0 0% 7%;
   --sidebar-accent: 0 0% 90%;
   --sidebar-accent-foreground: 0 0% 7%;
   --sidebar-border: 0 0% 85%;
-  --sidebar-ring: 276 100% 44%;
+  --sidebar-ring: 42 98% 49%;
 }
 
 @theme inline {
@@ -117,6 +138,12 @@
   --color-accent-foreground: hsl(var(--accent-foreground));
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -143,6 +170,25 @@
 
 * {
   border-color: hsl(var(--border));
+}
+
+/* All interactive elements should show a pointer cursor */
+button,
+[type="button"],
+[type="reset"],
+[type="submit"],
+[role="button"],
+a,
+select,
+summary,
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+[type="button"]:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: default;
 }
 
 body {

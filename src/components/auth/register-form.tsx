@@ -1,33 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { z } from "zod";
+import { Info } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
+import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
-  displayName: z.string().min(2, "Display name must be at least 2 characters").optional(),
+  displayName: z.string().min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Display name must be at most ${DISPLAY_NAME_MAX} characters`),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
 
 export function RegisterForm() {
-  const router = useRouter();
+  const { redirect, status, navigateAfterAuth } = useAuthRedirect();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const supabase = getClient();
@@ -42,7 +44,7 @@ export function RegisterForm() {
         email,
         password,
         confirmPassword,
-        displayName: displayName || undefined,
+        displayName,
       });
 
       const { data, error: signUpError } = await supabase.auth.signUp({
@@ -58,6 +60,7 @@ export function RegisterForm() {
 
       if (signUpError) {
         setError(signUpError.message);
+        setIsLoading(false);
         return;
       }
 
@@ -65,10 +68,12 @@ export function RegisterForm() {
         // Check if email confirmation is required
         if (data.user.identities?.length === 0) {
           setError("An account with this email already exists");
+          setIsLoading(false);
           return;
         }
 
-        setSuccess(true);
+        navigateAfterAuth(ROUTES.customer.dashboard);
+        return;
       }
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -76,31 +81,9 @@ export function RegisterForm() {
       } else {
         setError("An unexpected error occurred");
       }
-    } finally {
       setIsLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">Check your email</CardTitle>
-          <CardDescription>
-            We&apos;ve sent a confirmation link to {email}. Please check your
-            inbox and click the link to complete your registration.
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="flex flex-col space-y-4">
-          <Link href="/login" className="w-full">
-            <Button variant="outline" className="w-full">
-              Back to Login
-            </Button>
-          </Link>
-        </CardFooter>
-      </Card>
-    );
-  }
 
   return (
     <Card className="w-full max-w-md">
@@ -112,13 +95,24 @@ export function RegisterForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          <Alert variant="info">
+            <Info className="h-4 w-4 shrink-0" />
+            <div>
+              <AlertTitle>This is a parent account</AlertTitle>
+              <AlertDescription>
+                This account is for you, the parent. Your child&apos;s gamer
+                account is separate and will be created later when you enroll
+                them in a club.
+              </AlertDescription>
+            </div>
+          </Alert>
           {error && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {error}
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name (Optional)</Label>
+            <Label htmlFor="displayName">Parent&apos;s Display Name</Label>
             <Input
               id="displayName"
               type="text"
@@ -126,6 +120,9 @@ export function RegisterForm() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={isLoading}
+              required
+              maxLength={DISPLAY_NAME_MAX}
+              autoComplete="name"
             />
           </div>
           <div className="space-y-2">
@@ -138,6 +135,7 @@ export function RegisterForm() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
               required
+              autoComplete="username"
             />
           </div>
           <div className="space-y-2">
@@ -150,6 +148,7 @@ export function RegisterForm() {
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
               required
+              autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">
               Must be at least 8 characters
@@ -165,26 +164,17 @@ export function RegisterForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}
               required
+              autoComplete="new-password"
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Creating account..." : "Create Account"}
+            {status ?? (isLoading ? "Creating account..." : "Create Account")}
           </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            By creating an account, you agree to our{" "}
-            <Link href="/terms" className="text-primary hover:underline">
-              Terms of Service
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="text-primary hover:underline">
-              Privacy Policy
-            </Link>
-          </p>
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline">
+            <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">
               Sign in
             </Link>
           </div>

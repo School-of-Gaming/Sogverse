@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { getClient } from "@/lib/supabase/client";
+import { ROUTES } from "@/lib/constants";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -20,8 +20,6 @@ export function ForgotPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const supabase = getClient();
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -30,15 +28,14 @@ export function ForgotPasswordForm() {
     try {
       const validatedData = forgotPasswordSchema.parse({ email });
 
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        validatedData.email,
-        {
-          redirectTo: `${window.location.origin}/api/auth/callback?next=/settings/reset-password`,
-        }
-      );
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: validatedData.email }),
+      });
 
-      if (resetError) {
-        setError(resetError.message);
+      if (!response.ok) {
+        setError("An unexpected error occurred");
         return;
       }
 
@@ -65,7 +62,7 @@ export function ForgotPasswordForm() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex flex-col space-y-4">
-          <Link href="/login" className="w-full">
+          <Link href={ROUTES.login} className="w-full">
             <Button variant="outline" className="w-full">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Login

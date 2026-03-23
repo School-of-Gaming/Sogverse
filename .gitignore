@@ -48,6 +48,7 @@ next-env.d.ts
 
 # supabase
 .supabase/
+supabase/.temp/
 
 # IDE
 .idea/
@@ -59,5 +60,9 @@ next-env.d.ts
 logs
 *.log
 
-# Keep .env.local.example for reference
+# Keep example env files for reference
 !.env.local.example
+!.env.test.local.example
+
+.vercel
+.env*.local

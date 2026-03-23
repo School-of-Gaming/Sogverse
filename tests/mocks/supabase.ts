@@ -1,5 +1,4 @@
-import { vi } from "vitest";
-import type { Profile, Product, UserRole } from "@/types";
+import type { Profile, CustomerProfile, GamerProfile, MinecraftAccount, Product, UserRole } from "@/types";
 
 // Mock data generators
 export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
@@ -9,9 +8,9 @@ export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
     username: null,
     role: "customer" as UserRole,
     display_name: "Test User",
-    avatar_url: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    currency: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
 }
@@ -25,9 +24,45 @@ export function createMockGamerProfile(
     username: "testgamer",
     role: "gamer" as UserRole,
     display_name: "Test Gamer",
-    avatar_url: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    currency: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+export function createMockCustomerProfile(
+  overrides: Partial<CustomerProfile> = {}
+): CustomerProfile {
+  return {
+    user_id: "test-user-id",
+    token_balance: 0,
+    stripe_customer_id: null,
+    stripe_subscription_id: null,
+    subscription_status: null,
+    subscription_tier: null,
+    ...overrides,
+  };
+}
+
+export function createMockGamerExtProfile(
+  overrides: Partial<GamerProfile> = {}
+): GamerProfile {
+  return {
+    user_id: "test-gamer-id",
+    date_of_birth: "2015-01-01",
+    gender: "boy",
+    ...overrides,
+  };
+}
+
+export function createMockMinecraftAccount(
+  overrides: Partial<MinecraftAccount> = {}
+): MinecraftAccount {
+  return {
+    user_id: "test-gamer-id",
+    minecraft_username: null,
+    minecraft_uuid: null,
     ...overrides,
   };
 }
@@ -37,15 +72,20 @@ export function createMockProduct(overrides: Partial<Product> = {}): Product {
     id: "test-product-id",
     name: "Test Product",
     description: "A test product description",
-    price: 29.99,
-    currency: "USD",
-    image_url: null,
-    stripe_product_id: null,
-    stripe_price_id: null,
-    is_active: true,
-    metadata: {},
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    token_cost: 2,
+    image_url: "https://example.com/image.png",
+    is_visible: true,
+    created_by: "test-admin-id",
+    game_id: "00000000-0000-0000-0000-000000000001",
+    day_of_week: 0,
+    start_time: "16:00",
+    timezone: "Europe/Helsinki",
+    duration_minutes: 60,
+    min_age: 7,
+    max_age: 12,
+    padlet_url: null,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
 }
@@ -62,7 +102,3 @@ export function mockSupabaseError(message: string, code?: string) {
   };
 }
 
-// Reset all mocks
-export function resetSupabaseMocks(mockClient: ReturnType<typeof vi.fn>) {
-  vi.clearAllMocks();
-}

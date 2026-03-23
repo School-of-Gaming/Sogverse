@@ -1,9 +1,11 @@
 export { GamerService } from "./gamers.service";
 export {
+  gamerKeys,
   useMyGamers,
   useMyParents,
   useLinkedGamers,
+  useLinkedParents,
   useCreateGamer,
-  useLinkGamer,
-  useUnlinkGamer,
+  useUpdateGamer,
+  useGamerProfile,
 } from "./gamers.queries";

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { User } from "@supabase/supabase-js";
+import { useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 
@@ -37,6 +38,7 @@ export function AuthProvider({
   const [isLoading, setIsLoading] = useState(!initialUser);
 
   const supabase = getClient();
+  const queryClient = useQueryClient();
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -61,17 +63,10 @@ export function AuthProvider({
   };
 
   const signOut = async () => {
-    setUser(null);
-    setProfile(null);
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
-      // Ignore abort errors during navigation
-      if (error instanceof Error && error.name === 'AbortError') {
-        return;
-      }
-      console.error('Sign out error:', error);
-    }
+    await supabase.auth.signOut();
+    // Full page navigation (not router.push) wipes all client state
+    // (React, query cache, Supabase singleton).
+    window.location.href = "/";
   };
 
   useEffect(() => {
@@ -96,22 +91,29 @@ export function AuthProvider({
 
     initAuth();
 
+    // IMPORTANT: Do NOT call fetchProfile() or any Supabase data query inside
+    // this callback. It can fire while the GoTrueClient's internal lock is held
+    // (e.g., during _recoverAndRefresh on tab focus). A data query would call
+    // getSession() → _acquireLock() → deadlock. Only synchronous React state
+    // updates are safe here. See docs/supabase-auth-lock-fix.md.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
         setUser(session.user);
-        const userProfile = await fetchProfile(session.user.id);
-        setProfile(userProfile);
       } else if (event === "SIGNED_OUT") {
         setUser(null);
         setProfile(null);
+        queryClient.removeQueries();
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
+    // fetchProfile and queryClient are intentionally excluded: fetchProfile is not
+    // memoized so including it would re-run the effect on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialUser, supabase]);
 
   return (
@@ -135,4 +137,16 @@ export function useAuth() {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+}
+
+/**
+ * Like useAuth(), but asserts that user and profile are non-null.
+ * Use in dashboard components where routing guarantees authentication.
+ */
+export function useRequiredAuth() {
+  const { user, profile, ...rest } = useAuth();
+  if (!user || !profile) {
+    throw new Error("useRequiredAuth must be used in an authenticated context");
+  }
+  return { user, profile, ...rest };
 }

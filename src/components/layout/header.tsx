@@ -1,28 +1,38 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Menu, X, LogOut, Settings } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Menu, X, LogOut, Settings, Coins } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
+import { useTokenBalance } from "@/services/tokens";
 import { cn } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
+import { CurrencyPicker } from "@/components/layout/currency-picker";
 
 const publicNavLinks = [
-  { href: "/", label: "Home" },
-  { href: "/products", label: "Products" },
-  { href: "/about", label: "About" },
+  { href: ROUTES.home, label: "Home" },
+  { href: ROUTES.products, label: "Clubs" },
+  { href: ROUTES.sorg, label: "Sorg" },
+  { href: ROUTES.yty, label: "Yty" },
+  { href: ROUTES.about, label: "About" },
 ];
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, profile, signOut, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const isCustomer = profile?.role === "customer";
+  const { data: tokenBalance } = useTokenBalance(
+    profile?.id ?? "",
+    isCustomer
+  );
 
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
@@ -31,7 +41,6 @@ export function Header() {
   const handleSignOut = () => {
     setDropdownOpen(false);
     signOut();
-    router.push("/");
   };
 
   // Close dropdown when clicking outside
@@ -46,23 +55,8 @@ export function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const getInitials = () => {
-    if (profile?.display_name) {
-      return profile.display_name
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    if (profile?.username) {
-      return profile.username.slice(0, 2).toUpperCase();
-    }
-    return "U";
-  };
-
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="fixed top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
@@ -100,44 +94,51 @@ export function Header() {
             <div className="flex items-center gap-4">
               {dashboardPath && (
                 <Link href={dashboardPath}>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="cursor-pointer">
                     Dashboard
                   </Button>
+                </Link>
+              )}
+              <CurrencyPicker />
+              {isCustomer && tokenBalance !== undefined && (
+                <Link
+                  href={ROUTES.customer.sorg}
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium"
+                >
+                  <Coins className="h-4 w-4 text-primary" />
+                  <span>{tokenBalance}</span>
                 </Link>
               )}
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={profile?.avatar_url || undefined} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                      {getInitials()}
-                    </AvatarFallback>
+                    <Identicon id={profile?.id || user.id} size={32} />
                   </Avatar>
                 </button>
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md border border-border bg-card py-1 shadow-lg">
                     <div className="px-4 py-2 border-b border-border">
                       <p className="text-sm font-medium">
-                        {profile?.display_name || profile?.username}
+                        {profile?.display_name}
                       </p>
                       <p className="text-xs text-muted-foreground capitalize">
                         {profile?.role}
                       </p>
                     </div>
                     <Link
-                      href="/settings"
+                      href={ROUTES.settings}
                       onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent"
+                      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
                     >
                       <Settings className="h-4 w-4" />
                       Settings
                     </Link>
                     <button
                       onClick={handleSignOut}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent"
+                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-accent-foreground"
                     >
                       <LogOut className="h-4 w-4" />
                       Sign Out
@@ -148,12 +149,13 @@ export function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Link href="/login">
+              <CurrencyPicker />
+              <Link href={ROUTES.login}>
                 <Button variant="ghost" size="sm">
                   Sign In
                 </Button>
               </Link>
-              <Link href="/register">
+              <Link href={ROUTES.register}>
                 <Button size="sm">Get Started</Button>
               </Link>
             </div>
@@ -185,8 +187,8 @@ export function Header() {
                 className={cn(
                   "block rounded-md px-3 py-2 text-sm font-medium",
                   pathname === link.href
-                    ? "bg-accent text-primary"
-                    : "text-muted-foreground hover:bg-accent"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -199,15 +201,28 @@ export function Header() {
                 {dashboardPath && (
                   <Link
                     href={dashboardPath}
-                    className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                    className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Dashboard
                   </Link>
                 )}
+                <div className="px-3 py-2">
+                  <CurrencyPicker />
+                </div>
+                {isCustomer && tokenBalance !== undefined && (
+                  <Link
+                    href={ROUTES.customer.sorg}
+                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Coins className="h-4 w-4 text-primary" />
+                    <span>{tokenBalance} Sorgs</span>
+                  </Link>
+                )}
                 <Link
-                  href="/settings"
-                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                  href={ROUTES.settings}
+                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Settings
@@ -217,22 +232,25 @@ export function Header() {
                     setMobileMenuOpen(false);
                     handleSignOut();
                   }}
-                  className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent"
+                  className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent hover:text-accent-foreground"
                 >
                   Sign Out
                 </button>
               </>
             ) : (
               <>
+                <div className="px-3 py-2">
+                  <CurrencyPicker />
+                </div>
                 <Link
-                  href="/login"
-                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+                  href={ROUTES.login}
+                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Sign In
                 </Link>
                 <Link
-                  href="/register"
+                  href={ROUTES.register}
                   className="block rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >

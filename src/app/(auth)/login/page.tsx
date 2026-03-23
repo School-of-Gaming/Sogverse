@@ -5,11 +5,15 @@ import { LoginForm } from "@/components/auth";
 export const metadata: Metadata = {
   title: "Sign In",
   description: "Sign in to your Sogverse account",
+  openGraph: {
+    title: "Sign In to Sogverse",
+    description: "Sign in to your Sogverse account to manage clubs, gamers, and more.",
+  },
 };
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="h-96 w-full max-w-md animate-pulse rounded-lg bg-card" />}>
+    <Suspense fallback={<div className="h-96 w-full max-w-lg animate-pulse rounded-lg bg-card" />}>
       <LoginForm />
     </Suspense>
   );

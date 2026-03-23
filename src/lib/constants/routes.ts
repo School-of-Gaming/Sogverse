@@ -1,55 +1,55 @@
-import { UserRole } from "./roles";
-
-export const PUBLIC_ROUTES = [
-  "/",
-  "/products",
-  "/about",
-  "/login",
-  "/gamer-login",
-  "/register",
-  "/forgot-password",
-] as const;
-
-export const AUTH_ROUTES = [
-  "/login",
-  "/gamer-login",
-  "/register",
-  "/forgot-password",
-] as const;
-
-export const PROTECTED_ROUTES = {
-  admin: ["/admin"],
-  customer: ["/customer"],
-  gamer: ["/gamer"],
-  gedu: ["/gedu"],
-  shared: ["/settings"],
+/** Centralized route paths — import and reference instead of hardcoding string literals. */
+export const ROUTES = {
+  home: "/",
+  products: "/clubs",
+  sorg: "/sorg",
+  yty: "/yty",
+  checkout: "/checkout",
+  about: "/about",
+  docs: "/docs",
+  login: "/login",
+  register: "/register",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
+  setupAccount: "/setup-account",
+  feedback: "/feedback",
+  settings: "/settings",
+  admin: {
+    dashboard: "/admin",
+    users: "/admin/users",
+    usersAdd: "/admin/users/add",
+    user: (id: string) => `/admin/users/${id}`,
+    products: "/admin/products",
+    productsAdd: "/admin/products/add",
+    product: (id: string) => `/admin/products/${id}`,
+    productEdit: (id: string) => `/admin/products/${id}/edit`,
+    productClone: (id: string) => `/admin/products/add?clone=${id}`,
+    groups: "/admin/groups",
+    group: (groupId: string) => `/admin/groups/${groupId}`,
+    voiceSession: (roomId: string) => `/admin/voice/${roomId}`,
+    uiComponents: "/admin/ui-components",
+    testing: "/admin/testing",
+  },
+  customer: {
+    dashboard: "/parent",
+    sorg: "/parent/sorg",
+    billing: "/parent/billing",
+    gamers: "/parent/gamers",
+    group: (groupId: string, gamerId?: string) =>
+      gamerId
+        ? `/parent/groups/${groupId}?gamer=${gamerId}`
+        : `/parent/groups/${groupId}`,
+  },
+  gamer: {
+    dashboard: "/gamer",
+    groups: "/gamer/groups",
+    group: (groupId: string) => `/gamer/groups/${groupId}`,
+    voiceSession: (roomId: string) => `/gamer/voice/${roomId}`,
+  },
+  gedu: {
+    dashboard: "/gedu",
+    groups: "/gedu/groups",
+    group: (groupId: string) => `/gedu/groups/${groupId}`,
+    voiceSession: (roomId: string) => `/gedu/voice/${roomId}`,
+  },
 } as const;
-
-export function isPublicRoute(pathname: string): boolean {
-  return PUBLIC_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
-}
-
-export function isAuthRoute(pathname: string): boolean {
-  return AUTH_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
-}
-
-export function getRequiredRole(pathname: string): UserRole | null {
-  if (pathname.startsWith("/admin")) return "admin";
-  if (pathname.startsWith("/customer")) return "customer";
-  if (pathname.startsWith("/gamer")) return "gamer";
-  if (pathname.startsWith("/gedu")) return "gedu";
-  return null;
-}
-
-export function canAccessRoute(pathname: string, userRole: UserRole): boolean {
-  const requiredRole = getRequiredRole(pathname);
-
-  if (!requiredRole) return true;
-  if (pathname.startsWith("/settings")) return true;
-
-  return requiredRole === userRole;
-}

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Gamepad2, Trophy, Star, Zap } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Users } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NavChevron } from "@/components/ui/nav-chevron";
+import { ROUTES } from "@/lib/constants";
+import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
 export const metadata: Metadata = {
   title: "Gamer Home",
-  description: "Your gaming dashboard",
+  description: "Your gamer dashboard in the Sogverse",
 };
 
 export default function GamerDashboardPage() {
@@ -21,63 +23,37 @@ export default function GamerDashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
-          <CardHeader className="text-center">
-            <Trophy className="mx-auto h-8 w-8 text-secondary" />
-            <CardTitle className="text-lg">Achievements</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-3xl font-bold">0</p>
-            <p className="text-sm text-muted-foreground">Trophies earned</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-secondary/10 to-secondary/5">
-          <CardHeader className="text-center">
-            <Star className="mx-auto h-8 w-8 text-secondary" />
-            <CardTitle className="text-lg">Level</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-3xl font-bold">1</p>
-            <p className="text-sm text-muted-foreground">Keep playing to level up!</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5">
-          <CardHeader className="text-center">
-            <Zap className="mx-auto h-8 w-8 text-green-500" />
-            <CardTitle className="text-lg">XP Points</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-3xl font-bold">0</p>
-            <p className="text-sm text-muted-foreground">Experience points</p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+        {YTY_ELEMENTS.map((el) => (
+          <Card key={el.id} className={`bg-gradient-to-br ${el.color.bgGradient}`}>
+            <CardHeader className="text-center pb-2">
+              <el.icon className={`mx-auto h-8 w-8 ${el.color.accent}`} />
+              <CardTitle className="text-base">{el.name}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center pt-0">
+              <p className="text-3xl font-bold">0</p>
+              <p className="text-xs text-muted-foreground">{el.description}</p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Gamepad2 className="h-5 w-5" />
-            My Games
-          </CardTitle>
-          <CardDescription>
-            Your available games and learning content
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-center justify-center py-8">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-              <Gamepad2 className="h-8 w-8 text-muted-foreground" />
+      <Link href={ROUTES.gamer.groups} className="block">
+        <Card className="group cursor-pointer transition-colors hover:bg-muted/50">
+          <CardContent className="flex items-center gap-4 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <Users className="h-5 w-5 text-primary" />
             </div>
-            <h3 className="mt-4 text-lg font-medium">No Games Yet</h3>
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              Ask your parent to get you some cool games!
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium">My Groups</p>
+              <p className="text-sm text-muted-foreground">
+                View your groups and upcoming voice sessions
+              </p>
+            </div>
+            <NavChevron />
+          </CardContent>
+        </Card>
+      </Link>
 
       <Card className="border-secondary/50 bg-secondary/5">
         <CardContent className="flex items-center gap-4 py-4">
@@ -85,7 +61,8 @@ export default function GamerDashboardPage() {
           <div>
             <h3 className="font-medium">Tip of the Day</h3>
             <p className="text-sm text-muted-foreground">
-              Learning is more fun when you play games! Keep exploring and earning achievements.
+              By doing good things — learning new skills, making friends, and joining
+              in — you earn Yty for yourself and for the Sogverse!
             </p>
           </div>
         </CardContent>

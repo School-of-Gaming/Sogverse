@@ -53,6 +53,7 @@ double_confirm_changes = true
 enable_confirmations = false
 secure_password_change = true
 max_frequency = "1s"
+otp_expiry = 3600  # 1 hour — keep in sync with password-reset.ts email copy
 
 [auth.sms]
 enable_signup = false

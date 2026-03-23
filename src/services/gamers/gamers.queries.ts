@@ -3,15 +3,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { GamerService } from "./gamers.service";
+import { groupKeys } from "@/services/groups/groups.queries";
+import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import type { CreateGamerInput } from "@/types";
 
-const gamerKeys = {
+export const gamerKeys = {
   all: ["gamers"] as const,
   myGamers: () => [...gamerKeys.all, "my-gamers"] as const,
   myParents: () => [...gamerKeys.all, "my-parents"] as const,
   linkedGamers: (parentId: string) =>
     [...gamerKeys.all, "linked", parentId] as const,
+  linkedParents: (gamerId: string) =>
+    [...gamerKeys.all, "linked-parents", gamerId] as const,
   links: (parentId: string) => [...gamerKeys.all, "links", parentId] as const,
+  gamerProfile: (gamerId: string) =>
+    [...gamerKeys.all, "gamer-profile", gamerId] as const,
 };
 
 export function useMyGamers() {
@@ -45,6 +51,17 @@ export function useLinkedGamers(parentId: string) {
   });
 }
 
+export function useLinkedParents(gamerId: string) {
+  const supabase = getClient();
+  const service = new GamerService(supabase);
+
+  return useQuery({
+    queryKey: gamerKeys.linkedParents(gamerId),
+    queryFn: () => service.getLinkedParents(gamerId),
+    enabled: !!gamerId,
+  });
+}
+
 export function useCreateGamer() {
   const queryClient = useQueryClient();
   const supabase = getClient();
@@ -64,36 +81,40 @@ export function useCreateGamer() {
   });
 }
 
-export function useLinkGamer() {
+export function useUpdateGamer() {
   const queryClient = useQueryClient();
   const supabase = getClient();
   const service = new GamerService(supabase);
 
   return useMutation({
-    mutationFn: ({ parentId, gamerId }: { parentId: string; gamerId: string }) =>
-      service.linkGamer(parentId, gamerId),
-    onSuccess: (_, { parentId }) => {
+    mutationFn: ({
+      gamerId,
+      updates,
+    }: {
+      gamerId: string;
+      updates: { displayName?: string; password?: string; minecraftUsername?: string | null };
+    }) => service.updateGamer(gamerId, updates),
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });
       queryClient.invalidateQueries({
-        queryKey: gamerKeys.linkedGamers(parentId),
+        queryKey: groupKeys.mine(),
       });
+      queryClient.invalidateQueries({
+        queryKey: gamerKeys.gamerProfile(variables.gamerId),
+      });
+      queryClient.invalidateQueries({ queryKey: minecraftKeys.all });
     },
   });
 }
 
-export function useUnlinkGamer() {
-  const queryClient = useQueryClient();
+export function useGamerProfile(gamerId: string) {
   const supabase = getClient();
   const service = new GamerService(supabase);
 
-  return useMutation({
-    mutationFn: ({ parentId, gamerId }: { parentId: string; gamerId: string }) =>
-      service.unlinkGamer(parentId, gamerId),
-    onSuccess: (_, { parentId }) => {
-      queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });
-      queryClient.invalidateQueries({
-        queryKey: gamerKeys.linkedGamers(parentId),
-      });
-    },
+  return useQuery({
+    queryKey: gamerKeys.gamerProfile(gamerId),
+    queryFn: () => service.getGamerProfile(gamerId),
+    enabled: !!gamerId,
   });
 }
+
