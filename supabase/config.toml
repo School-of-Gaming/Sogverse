@@ -13,7 +13,7 @@ max_rows = 1000
 [db]
 port = 54322
 shadow_port = 54320
-major_version = 15
+major_version = 17
 
 [db.pooler]
 enabled = false
@@ -69,3 +69,21 @@ enabled = false
 enabled = false
 port = 54327
 backend = "postgres"
+
+# Environment-specific overrides
+# Root config above is used for local dev (supabase start)
+# Remotes override only the settings that differ per environment
+
+[remotes.production]
+project_id = "yoqkelsopqsksqrkrorx"
+
+[remotes.production.auth]
+site_url = "https://sogverse.sog.gg"
+additional_redirect_urls = ["https://sogverse.sog.gg/**"]
+
+[remotes.staging]
+project_id = "dbcozhkmfsczwgduizkg"
+
+[remotes.staging.auth]
+site_url = "https://sogverse-staging.sog.gg"
+additional_redirect_urls = ["https://sogverse-staging.sog.gg/**"]
