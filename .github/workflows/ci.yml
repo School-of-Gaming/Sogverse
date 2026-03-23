@@ -160,7 +160,7 @@ jobs:
 
       - name: Push migrations and config to Supabase
         run: |
-          npx supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }}
+          npx supabase link --project-ref ${{ secrets.SUPABASE_PROD_PROJECT_REF }} -p "$SUPABASE_DB_PASSWORD"
           npx supabase db push
           npx supabase config push
         env:
