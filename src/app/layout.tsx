@@ -6,6 +6,7 @@ import { Header } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { parseAcceptLanguage, DEFAULT_LOCALE } from "@/lib/locale";
 import { getStripeProducts } from "@/lib/stripe/products";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -70,6 +71,7 @@ export default async function RootLayout({
             {children}
           </main>
         </Providers>
+        <SpeedInsights />
       </body>
     </html>
   );
