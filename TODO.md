@@ -1,64 +1,8 @@
-# Sogverse Deployment TODO
-
-## Supabase Setup
-
-- [ ] Create production Supabase project (`sogverse-prod`)
-- [ ] Run database migrations on production:
-  ```bash
-  npx supabase link --project-ref $SUPABASE_PROJECT_REF
-  npx supabase db push
-  ```
-- [ ] Push auth config to production (syncs `otp_expiry`, `enable_confirmations`, etc. from `config.toml`):
-  ```bash
-  supabase config push
-  ```
-
-## Vercel Setup
-
-- [ ] Connect Git repository (requires public repo or Pro plan)
-- [ ] Configure environment variables:
-
-  **Production (main branch):**
-  | Variable | Value |
-  |----------|-------|
-  | `NEXT_PUBLIC_SUPABASE_URL` | prod Supabase URL |
-  | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | prod anon key |
-  | `SUPABASE_SERVICE_ROLE_KEY` | prod service role key |
-
-  **Preview (dev branch):**
-  | Variable | Value |
-  |----------|-------|
-  | `NEXT_PUBLIC_SUPABASE_URL` | staging Supabase URL |
-  | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | staging anon key |
-  | `SUPABASE_SERVICE_ROLE_KEY` | staging service role key |
-
-## GitHub Secrets (for CI/CD)
-
-Go to: Repository → Settings → Secrets and variables → Actions
-
-- [ ] `SUPABASE_PROD_PROJECT_REF` = (your prod project ref)
-
-## Post-Deployment Verification
-
-- [ ] Verify staging deployment works on Vercel preview URL
-- [ ] Verify production deployment works on Vercel production URL
-- [ ] Test user registration flow
-- [ ] Test login flow (email and gamer username)
-- [ ] Verify RLS policies are working (users can only see their own data)
-
-## Production Domain & Deployment
-
-- [ ] Deploy to production on Vercel (push to `main` or trigger production build)
-- [ ] Add `sogverse.sog.gg` domain in Vercel (production environment)
-- [ ] Add `CNAME` record in Nordname: `sogverse` → `cname.vercel-dns.com.`
-- [ ] Create Stripe **live mode** webhook endpoint pointing to `https://sogverse.sog.gg/api/webhooks/stripe`
-- [ ] Add the live mode `STRIPE_WEBHOOK_SECRET` to Vercel production environment
+# Sogverse TODO
 
 ## Cleanup
 
 - [ ] Remove `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` from `.github/workflows/ci.yml` after June 2, 2026 (Node.js 24 becomes the default runner)
-
-## Future Improvements
 
 ### E2E Tests with Local Supabase
 
@@ -112,5 +56,3 @@ To support a second parent linking to an existing gamer:
 - [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
 
 **Why:** The previous client-side INSERT policy only checked `parent_id = auth.uid()`, allowing any customer to link to any gamer. The fix correctly removed this, but a secure server-side path is needed if multiple parents per gamer is a requirement.
-
-
