@@ -32,9 +32,11 @@ function buildCspHeader(nonce: string): string {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self'",
-    // wss: Supabase Realtime, Daily.co signaling
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co",
+    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io",
     "frame-src 'self' https://*.daily.co https://*.stripe.com",
+    // blob: workers used by Daily.co for WebRTC media processing
+    "worker-src 'self' blob:",
     "frame-ancestors 'self'",
   ].join("; ");
 }
