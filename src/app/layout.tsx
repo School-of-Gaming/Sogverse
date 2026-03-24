@@ -49,6 +49,7 @@ export default async function RootLayout({
 }>) {
   const userWithProfile = await getUserWithProfile();
   const headersList = await headers();
+  const nonce = headersList.get("x-nonce") ?? undefined;
   const locale = parseAcceptLanguage(headersList.get("accept-language")) ?? DEFAULT_LOCALE;
   // getStripeProducts() is backed by unstable_cache (persistent data cache, 5-min revalidation).
   // Callers always get the cached value instantly — Stripe is only contacted during background
@@ -65,6 +66,7 @@ export default async function RootLayout({
           initialProfile={userWithProfile?.profile}
           initialLocale={locale}
           baseRates={baseRates}
+          nonce={nonce}
         >
           <Header />
           <main className="h-screen overflow-auto pt-16">
