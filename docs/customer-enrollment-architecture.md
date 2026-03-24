@@ -48,7 +48,7 @@ Service layer (src/services/groups/)
 └── index.ts                  — Barrel exports
 
 Utilities
-├── src/lib/utils.ts                   — wallClockToUtc() (shared timezone conversion)
+├── src/lib/utils.ts                   — parseTime(), formatScheduleLocal() (shared timezone display)
 ├── src/lib/enrollment.ts              — getNextSessionStart(schedule, opts?), isWithinChargeWindow(nextSession, opts?), getRefundEligibility(opts)
 └── src/lib/constants/enrollment.ts    — ENROLLMENT_CHARGE_WINDOW_HOURS = 24
 
@@ -83,8 +83,8 @@ Database functions (SQL)
 4. Customer clicks "Unenroll" → `getRefundEligibility()` runs with fresh `new Date()` → `UnenrollDialog` opens with refund confirmation
 5. Customer confirms → `useUnenrollGamer()` → `DELETE /api/enrollments/[id]`
 6. API route queries the latest `enrollment_charges` row's `session_date` for this enrollment
-7. API route reconstructs the session timestamp via `wallClockToUtc(session_date + start_time, timezone)` and verifies `now < sessionTime` (session hasn't started)
-8. Passes `lastChargeSessionDate` to `getRefundEligibility()` → session hasn't started, outside 24h window → `eligible: true, refundAmount: token_cost`
+7. Passes `lastChargeSessionDate` to `getRefundEligibility()`, which reconstructs the session timestamp via `fromZonedTime(session_date + start_time, timezone)` and checks `now < sessionTimestamp`
+8. Session hasn't started and outside 24h window → `eligible: true, refundAmount: token_cost`
 9. Calls `unenroll_gamer` RPC with `p_refund = true`
 10. RPC: looks up `products.token_cost` internally, sets `status='unenrolled'`, `unenrolled_at=NOW()`, credits tokens via `adjust_token_balance('enrollment_refund')`, marks latest `enrollment_charges` row as refunded
 11. Dialog shows success with refund amount and new balance
@@ -258,7 +258,7 @@ The constant lives in `src/lib/constants/enrollment.ts` (TypeScript) and is mirr
 
 `getRefundEligibility()` receives the `lastChargeSessionDate` (the session date the latest charge covers) and applies two checks in order:
 
-1. **Stage 1 — Has the charged session started?** Reconstruct the session timestamp via `wallClockToUtc(lastChargeSessionDate + start_time, timezone)`. If `now > sessionTimestamp`, the session has already started. No refund — the customer attended (or had the opportunity to attend). Return `reason: "session_past"`.
+1. **Stage 1 — Has the charged session started?** Reconstruct the session timestamp via `fromZonedTime(lastChargeSessionDate + start_time, timezone)`. If `now > sessionTimestamp`, the session has already started. No refund — the customer attended (or had the opportunity to attend). Return `reason: "session_past"`.
 2. **Stage 2 — Is the session within the cancellation window?** If the charged session hasn't started, check whether the next session is within 24 hours. If so, no refund — return `reason: "within_window"`. Otherwise, the customer is eligible for a full refund.
 
 This prevents a scenario where a customer could repeatedly enroll, attend a session, unenroll for a refund, and re-enroll — getting free sessions indefinitely.
@@ -302,7 +302,7 @@ Both functions compute the same result — the next UTC occurrence of a weekly s
 4. Convert to UTC
 5. If the result is in the past (today but time already passed), add 7 days
 
-The TypeScript version uses `wallClockToUtc()` from `src/lib/utils.ts`, which converts wall-clock times to UTC via `Intl.DateTimeFormat`. The same function is used by `formatScheduleLocal()` for display formatting. The SQL version uses PostgreSQL's `AT TIME ZONE` operator. Both handle DST transitions natively through their respective timezone libraries.
+The TypeScript version uses `fromZonedTime()` / `toZonedTime()` from `date-fns-tz` to convert between wall-clock times and UTC. The SQL version uses PostgreSQL's `AT TIME ZONE` operator. Both handle DST transitions natively through their respective timezone libraries.
 
 ## Role Permissions
 

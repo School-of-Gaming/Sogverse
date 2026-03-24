@@ -1,5 +1,6 @@
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { ENROLLMENT_CHARGE_WINDOW_HOURS } from "@/lib/constants/enrollment";
-import { parseTime, wallClockToUtc } from "@/lib/utils";
+import { parseTime } from "@/lib/utils";
 
 interface Schedule {
   dayOfWeek: number;
@@ -28,23 +29,22 @@ export function getNextSessionStart(
   // Convert: jsDay = (dayOfWeek + 1) % 7
   const targetJsDay = (schedule.dayOfWeek + 1) % 7;
 
-  // Try days 0..6 ahead of "today in the source timezone" to find the next occurrence
+  // Try days 0..6 ahead of "today in the source timezone" to find the next occurrence.
+  // toZonedTime returns a Date whose UTC fields represent wall-clock in the source TZ.
+  const zonedNow = toZonedTime(now, schedule.timezone);
   for (let offset = 0; offset <= 7; offset++) {
-    const candidate = new Date(now.getTime() + offset * 24 * 60 * 60 * 1000);
+    const candidate = new Date(zonedNow.getTime() + offset * 86_400_000);
 
-    // Build a wall-clock string in the source timezone for this candidate date
-    const year = getWallClockPart(candidate, schedule.timezone, "year");
-    const month = getWallClockPart(candidate, schedule.timezone, "month");
-    const day = getWallClockPart(candidate, schedule.timezone, "day");
-    const jsDay = getWallClockDayOfWeek(candidate, schedule.timezone);
-
+    const jsDay = candidate.getUTCDay();
     if (jsDay !== targetJsDay && offset < 7) continue;
-    // On day 7 we must match (full week cycle)
     if (jsDay !== targetJsDay) continue;
 
-    // Found the right weekday — build the wall-clock datetime
-    const wallStr = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:00`;
-    const utcDate = wallClockToUtc(wallStr, schedule.timezone);
+    // Found the right weekday — build the wall-clock datetime and convert to UTC
+    const year = candidate.getUTCFullYear();
+    const month = pad(candidate.getUTCMonth() + 1);
+    const day = pad(candidate.getUTCDate());
+    const wallStr = `${year}-${month}-${day}T${pad(hours)}:${pad(minutes)}:00`;
+    const utcDate = fromZonedTime(wallStr, schedule.timezone);
 
     // If it's the same day and the session is already past, skip to next week
     if (offset === 0 && utcDate.getTime() <= now.getTime()) continue;
@@ -102,7 +102,7 @@ export function getRefundEligibility(opts: {
   }
 
   const { hours: h, minutes: m } = parseTime(product.start_time);
-  const sessionTimestamp = wallClockToUtc(
+  const sessionTimestamp = fromZonedTime(
     `${lastChargeSessionDate}T${pad(h)}:${pad(m)}:00`,
     product.timezone,
   );
@@ -147,33 +147,4 @@ export function formatCountdown(ms: number): string {
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
-}
-
-function getWallClockPart(
-  date: Date,
-  timezone: string,
-  part: "year" | "month" | "day",
-): number {
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
-  const parts = fmt.formatToParts(date);
-  const val = parts.find((p) => p.type === part)?.value;
-  return Number(val);
-}
-
-function getWallClockDayOfWeek(date: Date, timezone: string): number {
-  // Returns JS day-of-week (0=Sunday..6=Saturday) for the wall-clock date in the timezone
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    timeZone: timezone,
-    weekday: "short",
-  });
-  const weekday = fmt.format(date);
-  const map: Record<string, number> = {
-    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
-  };
-  return map[weekday] ?? 0;
 }
