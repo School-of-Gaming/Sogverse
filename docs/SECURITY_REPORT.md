@@ -18,7 +18,7 @@
 | 4 | Token Balance Race Condition | **HIGH** | Medium | Concurrency | **FIXED** |
 | 5 | JSONB DoS via Expensive Casts | **LOW** | Low | Denial of Service | Mitigated |
 | 6 | Cron Function Public Access | **MEDIUM** | Easy | Broken Access Control | **FIXED** |
-| 7 | Missing Security Headers | **MEDIUM** | N/A | Configuration | **FIXED** |
+| 7 | Missing Security Headers / Weak CSP | **MEDIUM** | N/A | Configuration | **FIXED** (nonce-based CSP) |
 | 8 | GET-Based Signout CSRF | **MEDIUM** | Easy | CSRF | **FIXED** |
 | 9 | LIKE Wildcard Injection | **LOW** | Medium | Input Validation | **FIXED** |
 | 10 | `adjust_token_balance` Public RPC Access | **CRITICAL** | Easy | Broken Access Control | **FIXED** |
@@ -583,20 +583,22 @@ This also mitigates Finding #3 — with no external callers, the race condition 
 
 ---
 
-### 7. Missing Security Headers — Partial
+### 7. Missing Security Headers — FIXED
 
 **Severity:** MEDIUM
-**Location:** `next.config.ts`
+**Location:** `next.config.ts`, `src/proxy.ts`
 **CWE:** CWE-693 (Protection Mechanism Failure)
-**Partially fixed in:** `next.config.ts` `headers()` function
-**Fixed date:** 2026-03-04
+**Initially fixed in:** `next.config.ts` `headers()` function (2026-03-04)
+**CSP hardened:** Nonce-based CSP in `src/proxy.ts` (2026-03-24)
 
 #### Description
 
-`next.config.ts` has no security headers configured. While Vercel provides some defaults, critical headers are missing:
+`next.config.ts` had no security headers configured. While Vercel provides some defaults, critical headers were missing:
 - `X-Frame-Options` (clickjacking protection)
 - `Referrer-Policy` (prevents URL leakage)
 - `Content-Security-Policy` (XSS defense-in-depth)
+
+The initial fix added a CSP with `'unsafe-inline'` and `'unsafe-eval'` in `script-src`, which did not protect against most XSS vectors (the primary purpose of CSP).
 
 #### Impact
 
@@ -606,14 +608,17 @@ This also mitigates Finding #3 — with no external callers, the race condition 
 
 #### Fix Applied
 
-Five enforced security headers added to `next.config.ts` via the `headers()` function:
+Five enforced security headers in `next.config.ts`:
 - `X-Frame-Options: SAMEORIGIN`
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: strict-origin-when-cross-origin`
 - `X-XSS-Protection: 1; mode=block`
 - `Strict-Transport-Security: max-age=31536000; includeSubDomains`
 
-A `Content-Security-Policy` header is enforced with an allowlist covering Next.js (`'unsafe-inline'`, `'unsafe-eval'`), Tailwind CSS, Supabase, Daily.co, and Stripe.
+CSP is set dynamically per-request in `src/proxy.ts` with a **nonce-based `script-src`** in production:
+- `script-src 'self' 'nonce-{random}' 'strict-dynamic'` — only scripts tagged by Next.js's SSR pipeline can execute; injected inline scripts are blocked
+- `'strict-dynamic'` allows dynamically loaded chunks (Next.js code splitting, Daily.co dynamic import) to execute when loaded by a nonce'd script
+- In development, falls back to `'unsafe-inline' 'unsafe-eval'` because Next.js HMR injects scripts outside the SSR pipeline
 
 ---
 
