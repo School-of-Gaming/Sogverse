@@ -21,6 +21,13 @@ const publicNavLinks = [
   { href: ROUTES.about, label: "About" },
 ];
 
+/** Links short enough to show inline on mobile (≥320px) */
+const mobileInlineLinks = [
+  { href: ROUTES.home, label: "Home" },
+  { href: ROUTES.products, label: "Clubs" },
+  { href: ROUTES.about, label: "About" },
+];
+
 export function Header() {
   const pathname = usePathname();
   const { user, profile, signOut, isLoading } = useAuth();
@@ -160,6 +167,24 @@ export function Header() {
               </Link>
             </div>
           )}
+        </div>
+
+        {/* Mobile Inline Navigation */}
+        <div className="flex items-center gap-3 md:hidden">
+          {mobileInlineLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                pathname === link.href
+                  ? "text-primary"
+                  : "text-muted-foreground"
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
 
         {/* Mobile Menu Button */}
