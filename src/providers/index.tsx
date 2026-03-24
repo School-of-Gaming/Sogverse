@@ -16,6 +16,7 @@ interface ProvidersProps {
   initialProfile?: Profile | null;
   initialLocale: string;
   baseRates: Record<SupportedCurrency, number>;
+  nonce?: string;
 }
 
 export function Providers({
@@ -24,9 +25,10 @@ export function Providers({
   initialProfile,
   initialLocale,
   baseRates,
+  nonce,
 }: ProvidersProps) {
   return (
-    <ThemeProvider>
+    <ThemeProvider nonce={nonce}>
       <QueryProvider>
         <AuthProvider initialUser={initialUser} initialProfile={initialProfile}>
           <CurrencyProvider initialLocale={initialLocale}>

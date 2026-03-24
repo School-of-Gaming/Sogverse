@@ -16,18 +16,15 @@ test.describe("Home Page", () => {
   test("should have navigation links", async ({ page }) => {
     await page.goto("/");
 
-    // On mobile viewports, open the hamburger menu first
-    const menuButton = page.getByLabel("Toggle menu");
-    if (await menuButton.isVisible()) {
-      await menuButton.click();
-    }
-
+    // Home, Clubs, and About are visible inline on both desktop and mobile,
+    // so no need to open the hamburger menu. Use .first() because mobile
+    // renders them both inline and inside the hamburger menu.
     await expect(page.getByRole("link", { name: "Home" }).first()).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Clubs", exact: true })
+      page.getByRole("link", { name: "Clubs", exact: true }).first()
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "About", exact: true })
+      page.getByRole("link", { name: "About", exact: true }).first()
     ).toBeVisible();
   });
 

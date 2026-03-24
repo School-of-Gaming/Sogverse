@@ -13,12 +13,50 @@ const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.sorg, ROUTES.yty, RO
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
 
+/**
+ * Build a Content-Security-Policy header value.
+ * In production, uses a per-request nonce so only scripts explicitly tagged by
+ * Next.js's SSR pipeline can execute (blocks injected inline scripts — the main
+ * XSS vector CSP exists to stop).
+ * In development, falls back to unsafe-inline/unsafe-eval because Next.js HMR
+ * injects scripts outside the SSR pipeline that can't receive nonces.
+ */
+function buildCspHeader(nonce: string): string {
+  const isProd = process.env.NODE_ENV === "production";
+
+  return [
+    "default-src 'self'",
+    isProd
+      ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self'",
+    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io",
+    "frame-src 'self' https://*.daily.co https://*.stripe.com",
+    // blob: workers used by Daily.co for WebRTC media processing
+    "worker-src 'self' blob:",
+    "frame-ancestors 'self'",
+  ].join("; ");
+}
+
 export async function proxy(request: NextRequest) {
+  // Generate a per-request nonce for CSP. Setting it on the request headers
+  // lets Next.js's SSR pipeline read the nonce and apply it to every <script>
+  // tag it renders (including next/script components like SpeedInsights).
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  const cspHeader = buildCspHeader(nonce);
+
+  request.headers.set("x-nonce", nonce);
+  request.headers.set("Content-Security-Policy", cspHeader);
+
   const { pathname } = request.nextUrl;
 
   let supabaseResponse = NextResponse.next({
     request,
   });
+  supabaseResponse.headers.set("Content-Security-Policy", cspHeader);
 
   const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,6 +73,8 @@ export async function proxy(request: NextRequest) {
           supabaseResponse = NextResponse.next({
             request,
           });
+          // Re-apply CSP after Supabase cookie handling recreates the response
+          supabaseResponse.headers.set("Content-Security-Policy", cspHeader);
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -48,12 +88,13 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Helper: create a redirect that preserves refreshed auth cookies
+  // Helper: create a redirect that preserves refreshed auth cookies and CSP
   function redirect(url: URL) {
     const redirectResponse = NextResponse.redirect(url);
     supabaseResponse.cookies.getAll().forEach((cookie) => {
       redirectResponse.cookies.set(cookie.name, cookie.value);
     });
+    redirectResponse.headers.set("Content-Security-Policy", cspHeader);
     return redirectResponse;
   }
 

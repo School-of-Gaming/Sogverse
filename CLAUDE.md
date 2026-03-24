@@ -39,7 +39,7 @@ Four user roles with separate dashboards:
 - `gamer` → `/gamer` - Child accounts (use username login, synthetic email: `{username}@gamer.sogverse.internal`)
 - `gedu` → `/gedu` - Game educators
 
-Proxy (`src/proxy.ts`) refreshes Supabase auth sessions and enforces role-based routing (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
+Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based routing, and sets a per-request nonce-based Content Security Policy (Next.js 16 uses `proxy.ts` instead of `middleware.ts`). RLS policies protect data at the database level.
 
 ### Key Conventions
 - App routes are grouped: `(auth)`, `(dashboard)`, `(public)`, plus `api/`
@@ -65,6 +65,12 @@ Proxy (`src/proxy.ts`) refreshes tokens server-side on every request and enforce
 **Rule: After any auth state change (sign-in, sign-out), navigate with `window.location.href`, not `router.push()`**. The root layout passes `initialUser`/`initialProfile` to AuthProvider via server-side `getUserWithProfile()`. React's `useState` ignores new initial values after mount, so client-side navigation won't update auth state. Full page navigation forces the root layout to re-run and hydrate correctly.
 
 **Rule: Never make Supabase data queries inside `onAuthStateChange` callbacks.** Only do synchronous React state updates in the callback.
+
+### Content Security Policy (CSP)
+
+CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.randomUUID()`). In production, `script-src` uses `'nonce-{random}' 'strict-dynamic'` — only scripts tagged by Next.js's SSR pipeline execute. In development, it falls back to `'unsafe-inline' 'unsafe-eval'` for HMR compatibility. Static security headers (X-Frame-Options, HSTS, etc.) remain in `next.config.ts`.
+
+**Rule: Never add inline `<script>` tags directly.** The nonce-based CSP blocks any inline script without the per-request nonce. Use Next.js `<Script>` component or ensure scripts go through the SSR pipeline. If you must add an inline script, read the nonce from the `x-nonce` request header in a server component.
 
 ### Layout & Scrolling
 

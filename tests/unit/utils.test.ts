@@ -122,8 +122,13 @@ describe("capitalize", () => {
 
 describe("formatScheduleLocal", () => {
   // Pin the test timezone so results are deterministic in any CI environment.
-  // We mock Intl.DateTimeFormat to control the "local" timezone.
+  // We mock Intl.DateTimeFormat to control the "local" timezone for the
+  // output formatters, while timezone conversion logic uses date-fns-tz.
   const RealDateTimeFormat = Intl.DateTimeFormat;
+
+  // All tests pin `now` for deterministic results.
+  // Wednesday 2026-02-25 12:00 UTC = Wednesday 14:00 Helsinki (EET, UTC+2)
+  const now = new Date("2026-02-25T12:00:00Z");
 
   afterEach(() => {
     Intl.DateTimeFormat = RealDateTimeFormat;
@@ -155,9 +160,8 @@ describe("formatScheduleLocal", () => {
 
   it("returns a valid day name, formatted time, and timezone abbreviation", () => {
     pinLocalTimezone("Europe/Helsinki");
-    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki", "en-US");
+    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki", "en-US", { now });
 
-    // Should return recognizable values regardless of local TZ
     expect(typeof result.localDay).toBe("string");
     expect(result.localDay.length).toBeGreaterThan(0);
     expect(result.localTime).toMatch(/\d{1,2}:\d{2}/);
@@ -166,7 +170,7 @@ describe("formatScheduleLocal", () => {
 
   it("handles HH:MM:SS format (DB returns seconds)", () => {
     pinLocalTimezone("Europe/Helsinki");
-    const result = formatScheduleLocal(2, "17:30:00", "Europe/Helsinki", "en-US");
+    const result = formatScheduleLocal(2, "17:30:00", "Europe/Helsinki", "en-US", { now });
 
     expect(result.localTime).toMatch(/\d{1,2}:\d{2}/);
   });
@@ -174,19 +178,17 @@ describe("formatScheduleLocal", () => {
   it("converts to a different timezone when source and local differ", () => {
     pinLocalTimezone("America/New_York");
 
-    // 16:00 Helsinki viewed from New York should NOT be 4:00 PM —
-    // we just verify that timezone conversion actually happened.
-    const result = formatScheduleLocal(2, "16:00", "Europe/Helsinki", "en-US");
+    // 16:00 Helsinki viewed from New York should NOT be 4:00 PM
+    const result = formatScheduleLocal(2, "16:00", "Europe/Helsinki", "en-US", { now });
 
     expect(result.localTime).not.toMatch(/4:00\s*PM/);
     expect(result.tzAbbrev).toMatch(/E[SD]T/);
   });
 
   it("same-timezone returns the same wall-clock time", () => {
-    // Pin local TZ to Helsinki
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki", "en-US");
+    const result = formatScheduleLocal(0, "16:00", "Europe/Helsinki", "en-US", { now });
 
     expect(result.localTime).toMatch(/4:00\s*PM/);
   });
@@ -194,7 +196,7 @@ describe("formatScheduleLocal", () => {
   it("maps dayOfWeek=0 to Monday", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(0, "12:00", "Europe/Helsinki", "en-US");
+    const result = formatScheduleLocal(0, "12:00", "Europe/Helsinki", "en-US", { now });
 
     expect(result.localDay).toBe("Monday");
   });
@@ -202,7 +204,7 @@ describe("formatScheduleLocal", () => {
   it("maps dayOfWeek=6 to Sunday", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(6, "12:00", "Europe/Helsinki", "en-US");
+    const result = formatScheduleLocal(6, "12:00", "Europe/Helsinki", "en-US", { now });
 
     expect(result.localDay).toBe("Sunday");
   });
@@ -210,17 +212,16 @@ describe("formatScheduleLocal", () => {
   it("maps dayOfWeek=4 to Friday", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(4, "12:00", "Europe/Helsinki", "en-US");
+    const result = formatScheduleLocal(4, "12:00", "Europe/Helsinki", "en-US", { now });
 
     expect(result.localDay).toBe("Friday");
   });
 
   it("shifts the day when timezone offset crosses midnight", () => {
-    // Pin to a timezone far behind Helsinki
     pinLocalTimezone("Pacific/Honolulu"); // UTC-10
 
     // Monday 01:00 Helsinki is 12-13 hours behind in Honolulu → previous day
-    const result = formatScheduleLocal(0, "01:00", "Europe/Helsinki", "en-US");
+    const result = formatScheduleLocal(0, "01:00", "Europe/Helsinki", "en-US", { now });
 
     expect(result.localDay).not.toBe("Monday");
   });
@@ -228,7 +229,7 @@ describe("formatScheduleLocal", () => {
   it("handles midnight start time", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(3, "00:00", "Europe/Helsinki", "en-US");
+    const result = formatScheduleLocal(3, "00:00", "Europe/Helsinki", "en-US", { now });
 
     expect(result.localTime).toMatch(/12:00\s*AM/);
     expect(result.localDay).toBe("Thursday");
@@ -237,9 +238,52 @@ describe("formatScheduleLocal", () => {
   it("handles end-of-day start time", () => {
     pinLocalTimezone("Europe/Helsinki");
 
-    const result = formatScheduleLocal(1, "23:30", "Europe/Helsinki", "en-US");
+    const result = formatScheduleLocal(1, "23:30", "Europe/Helsinki", "en-US", { now });
 
     expect(result.localTime).toMatch(/11:30\s*PM/);
     expect(result.localDay).toBe("Tuesday");
+  });
+
+  it("handles month boundary: end-of-month reference date with ahead-of-UTC timezone", () => {
+    // "now" is Saturday 2026-03-28 12:00 UTC = Saturday 15:00 Helsinki (EET+3, post-DST).
+    // Target: Tuesday (dayOfWeek=1). Next Tuesday in Helsinki = March 31.
+    // Session: Tuesday 23:30 Helsinki. March 31 23:30 EEST = March 31 20:30 UTC.
+    // The old wallClockToUtc had a bug here: srcDay=1 (Apr 1) vs targetDay=31 (Mar 31)
+    // caused incorrect day-of-month comparison at the month boundary.
+    const marchNow = new Date("2026-03-28T12:00:00Z");
+    pinLocalTimezone("Europe/Helsinki");
+
+    const result = formatScheduleLocal(1, "23:30", "Europe/Helsinki", "en-US", { now: marchNow });
+
+    expect(result.localDay).toBe("Tuesday");
+    expect(result.localTime).toMatch(/11:30\s*PM/);
+  });
+
+  it("handles month boundary: end-of-month with cross-timezone day shift", () => {
+    // "now" is Saturday 2026-03-28 12:00 UTC.
+    // Target: Tuesday (dayOfWeek=1) 23:30 Helsinki = Tuesday 20:30 UTC.
+    // Viewed from Honolulu (UTC-10): Tuesday 10:30 AM — still Tuesday.
+    const marchNow = new Date("2026-03-28T12:00:00Z");
+    pinLocalTimezone("Pacific/Honolulu");
+
+    const result = formatScheduleLocal(1, "23:30", "Europe/Helsinki", "en-US", { now: marchNow });
+
+    expect(result.localDay).toBe("Tuesday");
+    expect(result.localTime).toMatch(/10:30\s*AM/);
+  });
+
+  it("handles month boundary: late-night session that crosses into next month in UTC", () => {
+    // "now" is Sunday 2026-03-29 12:00 UTC.
+    // Target: Tuesday (dayOfWeek=1) 01:00 Asia/Tokyo (UTC+9).
+    // Next Tuesday in Tokyo = March 31.
+    // March 31 01:00 JST = March 30 16:00 UTC — crosses back to Monday in UTC.
+    // Viewed from Tokyo (pinned local), the day should still be Tuesday.
+    const marchNow = new Date("2026-03-29T12:00:00Z");
+    pinLocalTimezone("Asia/Tokyo");
+
+    const result = formatScheduleLocal(1, "01:00", "Asia/Tokyo", "en-US", { now: marchNow });
+
+    expect(result.localDay).toBe("Tuesday");
+    expect(result.localTime).toMatch(/1:00\s*AM/);
   });
 });

@@ -160,6 +160,11 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         audioSource: true,
         videoSource: true,
         startVideoOff: true,
+        dailyConfig: {
+          // Use <script> element loader instead of fetch+eval, so the call object
+          // bundle is allowed by our nonce-based CSP ('strict-dynamic').
+          avoidEval: true,
+        },
       });
 
       callObjectRef.current = co;

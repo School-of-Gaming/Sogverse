@@ -17,20 +17,8 @@ const nextConfig: NextConfig = {
             key: "Strict-Transport-Security",
             value: "max-age=31536000; includeSubDomains",
           },
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self'",
-              // wss: Supabase Realtime, Daily.co signaling
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co",
-              "frame-src 'self' https://*.daily.co https://*.stripe.com",
-              "frame-ancestors 'self'",
-            ].join("; "),
-          },
+          // CSP is set dynamically per-request in proxy.ts with a unique nonce
+          // (nonce-based script-src blocks injected inline scripts in production)
         ],
       },
     ];

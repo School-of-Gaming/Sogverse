@@ -5,15 +5,17 @@ import type { ReactNode } from "react";
 
 interface ThemeProviderProps {
   children: ReactNode;
+  nonce?: string;
 }
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
+export function ThemeProvider({ children, nonce }: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"
       defaultTheme="dark"
       enableSystem={false}
       disableTransitionOnChange
+      nonce={nonce}
     >
       {children}
     </NextThemesProvider>
