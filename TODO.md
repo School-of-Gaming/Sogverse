@@ -45,12 +45,8 @@ Customers (parents) will set `date_of_birth` and `gender` on their linked gamers
 
 ### Multi-Parent Gamer Linking
 
-The IDOR fix (Security Report Finding #2) removed client-side INSERT access to `parent_gamer`. Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`.
-
-To support a second parent linking to an existing gamer:
+Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`. To support a second parent linking to an existing gamer:
 
 - [ ] Choose an authorization mechanism (invite code, existing parent approval, or admin-only)
 - [ ] Create a server-side API route (e.g., `POST /api/gamers/link`) that validates authorization before inserting into `parent_gamer` using the admin client
 - [ ] Add UI for the chosen flow (e.g., "Share invite code" button for existing parent, "Enter code" form for second parent)
-
-**Why:** The previous client-side INSERT policy only checked `parent_id = auth.uid()`, allowing any customer to link to any gamer. The fix correctly removed this, but a secure server-side path is needed if multiple parents per gamer is a requirement.
