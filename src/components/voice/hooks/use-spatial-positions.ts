@@ -129,6 +129,8 @@ export function useSpatialPositions({
         break;
       }
       case "posUpdate": {
+        // Reject spoofed updates — sender can only update their own position
+        if (msg.sessionId !== fromId) break;
         const localSid = co.participants().local.session_id;
         if (msg.sessionId !== localSid) {
           positionsRef.current.set(msg.sessionId, msg.position);
