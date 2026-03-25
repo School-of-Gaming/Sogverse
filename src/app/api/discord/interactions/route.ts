@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { after } from "next/server";
 import {
   verifyKey,
   InteractionType,
@@ -32,8 +33,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ type: InteractionResponseType.PONG });
     }
 
-    // Defer the response — Gemini may take more than 3 seconds
-    sendFollowUp(interaction.token, question).catch(console.error);
+    // after() keeps the function alive after the response is sent,
+    // so Vercel doesn't kill it before Gemini responds.
+    after(sendFollowUp(interaction.token, question));
 
     return NextResponse.json({
       type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
