@@ -53,7 +53,5 @@ export async function askGeduFaq(question: string): Promise<string> {
     { text: question },
   ]);
 
-  return (
-    response.response.text() ?? "En pystynyt vastaamaan kysymykseesi."
-  );
+  return response.response.text() || "En pystynyt vastaamaan kysymykseesi.";
 }

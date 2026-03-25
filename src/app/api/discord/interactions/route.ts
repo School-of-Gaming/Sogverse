@@ -12,9 +12,9 @@ const APPLICATION_COMMAND = 2;
 const PONG = 1;
 const DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5;
 
-function hexToUint8Array(hex: string): Uint8Array {
+function hexToBuffer(hex: string): ArrayBuffer {
   const pairs = hex.match(/.{1,2}/g) || [];
-  return new Uint8Array(pairs.map((byte) => parseInt(byte, 16)));
+  return new Uint8Array(pairs.map((byte) => parseInt(byte, 16))).buffer as ArrayBuffer;
 }
 
 async function verifyDiscordSignature(
@@ -25,7 +25,7 @@ async function verifyDiscordSignature(
   try {
     const key = await crypto.subtle.importKey(
       "raw",
-      hexToUint8Array(DISCORD_PUBLIC_KEY),
+      hexToBuffer(DISCORD_PUBLIC_KEY),
       "Ed25519",
       false,
       ["verify"]
@@ -33,7 +33,7 @@ async function verifyDiscordSignature(
     return crypto.subtle.verify(
       "Ed25519",
       key,
-      hexToUint8Array(signature),
+      hexToBuffer(signature),
       new TextEncoder().encode(timestamp + body)
     );
   } catch {
