@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
 import { askGeduFaq } from "@/lib/gemini";
 
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
@@ -13,25 +12,33 @@ const APPLICATION_COMMAND = 2;
 const PONG = 1;
 const DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5;
 
-function verifyDiscordSignature(
+function hexToUint8Array(hex: string): Uint8Array {
+  const pairs = hex.match(/.{1,2}/g) || [];
+  return new Uint8Array(pairs.map((byte) => parseInt(byte, 16)));
+}
+
+async function verifyDiscordSignature(
   body: string,
   signature: string,
   timestamp: string
-): boolean {
-  const message = Buffer.from(timestamp + body);
-  return crypto.verify(
-    null,
-    message,
-    {
-      key: crypto.createPublicKey({
-        key: Buffer.from("302a300506032b6570032100" + DISCORD_PUBLIC_KEY, "hex"),
-        format: "der",
-        type: "spki",
-      }),
-      dsaEncoding: "ieee-p1363",
-    },
-    Buffer.from(signature, "hex")
-  );
+): Promise<boolean> {
+  try {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      hexToUint8Array(DISCORD_PUBLIC_KEY),
+      "Ed25519",
+      false,
+      ["verify"]
+    );
+    return crypto.subtle.verify(
+      "Ed25519",
+      key,
+      hexToUint8Array(signature),
+      new TextEncoder().encode(timestamp + body)
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function POST(request: Request) {
@@ -43,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing signature" }, { status: 401 });
   }
 
-  if (!verifyDiscordSignature(body, signature, timestamp)) {
+  if (!(await verifyDiscordSignature(body, signature, timestamp))) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
@@ -62,7 +69,6 @@ export async function POST(request: Request) {
     }
 
     // Defer the response — Gemini may take more than 3 seconds
-    const interactionId = interaction.id;
     const interactionToken = interaction.token;
 
     // Send deferred response immediately, then follow up
