@@ -54,10 +54,10 @@ async function sendFollowUp(interactionToken: string, question: string): Promise
     answer = "Pahoittelut, en pystynyt käsittelemään kysymystäsi. Yritä uudelleen.";
   }
 
+  const reply = `**${question}**\n\n${answer}`;
+
   // Discord messages have a 2000 character limit
-  if (answer.length > 2000) {
-    answer = answer.slice(0, 1997) + "...";
-  }
+  const content = reply.length > 2000 ? reply.slice(0, 1997) + "..." : reply;
 
   await fetch(
     `https://discord.com/api/v10/webhooks/${DISCORD_APPLICATION_ID}/${interactionToken}/messages/@original`,
@@ -67,7 +67,7 @@ async function sendFollowUp(interactionToken: string, question: string): Promise
         "Content-Type": "application/json",
         Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
       },
-      body: JSON.stringify({ content: answer }),
+      body: JSON.stringify({ content }),
     }
   );
 }

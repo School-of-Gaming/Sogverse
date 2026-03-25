@@ -30,8 +30,8 @@ if (!APP_ID || !BOT_TOKEN) {
 }
 
 const questionOption = {
-  name: "question",
-  description: "Kysymyksesi / Your question",
+  name: "kysymys",
+  description: "Kysymyksesi",
   type: 3, // STRING
   required: true,
 };
@@ -40,12 +40,6 @@ const commands = [
   {
     name: "kysy",
     description: "Kysy kysymys Sogversen avustajalta",
-    type: 1,
-    options: [questionOption],
-  },
-  {
-    name: "ask",
-    description: "Ask the Sogverse assistant a question",
     type: 1,
     options: [questionOption],
   },
