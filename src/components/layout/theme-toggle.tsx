@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { useTheme } from "next-themes";
 import { Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// useSyncExternalStore avoids the setState-in-effect lint error for mount detection.
+// Server snapshot returns false, client snapshot returns true — no effect needed.
+const subscribe = () => () => {};
+const getSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
-  // Avoid hydration mismatch — next-themes resolves on client only
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   if (!mounted) {
     // Render a placeholder the same size to prevent layout shift
@@ -22,8 +26,11 @@ export function ThemeToggle({ className }: { className?: string }) {
   function toggleTheme() {
     const newTheme = isDark ? "light" : "dark";
 
+    // startViewTransition is not in all TS lib typings yet
+    const startViewTransition = (document as unknown as { startViewTransition?: (cb: () => void) => void }).startViewTransition;
+
     // Fallback for browsers without View Transitions API
-    if (!document.startViewTransition) {
+    if (!startViewTransition) {
       setTheme(newTheme);
       return;
     }
@@ -31,7 +38,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     // The API screenshots the current state, applies the DOM change
     // synchronously via flushSync, then crossfades to the new state
     // as a single GPU-composited animation — no per-element transitions.
-    document.startViewTransition(() => {
+    startViewTransition.call(document, () => {
       flushSync(() => {
         setTheme(newTheme);
       });
