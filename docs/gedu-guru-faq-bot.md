@@ -1,6 +1,6 @@
-# Happinappi FAQ Bot
+# Gedu Guru FAQ Bot
 
-Happinappi is an AI assistant for game educators (gedus), powered by Gemini and delivered via Discord slash commands.
+Gedu Guru is an AI assistant for game educators (gedus), powered by Gemini and delivered via Discord slash commands.
 
 ## How It Works
 
@@ -16,7 +16,7 @@ Happinappi is an AI assistant for game educators (gedus), powered by Gemini and 
 |---|---|
 | `src/app/api/discord/interactions/route.ts` | Discord interactions endpoint — signature verification, defer, follow-up |
 | `src/lib/gemini.ts` | Gemini client — uploads PDFs, sends questions, returns answers |
-| `src/data/gedu-docs/` | PDF documents that Happinappi uses as knowledge base |
+| `src/data/gedu-docs/` | PDF documents that Gedu Guru uses as knowledge base |
 | `scripts/register-discord-command.ts` | One-time script to register slash commands with Discord |
 
 ## Environment Variables
@@ -62,7 +62,7 @@ Gemini file uploads expire after 48 hours, but Vercel serverless functions recyc
 
 ## System Prompt
 
-The system prompt (in `src/lib/gemini.ts`) instructs Happinappi to:
+The system prompt (in `src/lib/gemini.ts`) instructs Gedu Guru to:
 - Answer primarily from the uploaded documents
 - Use general knowledge for broader topics (tax, law, pedagogy) with a disclaimer to verify from official sources
 - Always respond in Finnish

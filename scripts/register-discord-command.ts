@@ -38,14 +38,8 @@ const questionOption = {
 
 const commands = [
   {
-    name: "kysy",
-    description: "Kysy kysymys Sogversen avustajalta",
-    type: 1,
-    options: [questionOption],
-  },
-  {
-    name: "apua",
-    description: "Pyydä apua Sogversen avustajalta",
+    name: "geduguru",
+    description: "Kysy kysymys Gedu Gurulta",
     type: 1,
     options: [questionOption],
   },
