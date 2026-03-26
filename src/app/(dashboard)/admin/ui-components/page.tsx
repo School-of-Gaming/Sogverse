@@ -48,6 +48,7 @@ import { GamerCard } from "@/components/customer/gamer-card";
 import { LoungeCard } from "@/components/ui/lounge-card";
 import { GroupCard } from "@/components/ui/group-card";
 import { formatScheduleLocal } from "@/lib/utils";
+import { YTY_ELEMENTS } from "@/lib/constants/yty";
 import { useAuth } from "@/providers";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
@@ -706,6 +707,33 @@ export default function AdminUIComponentsPage() {
             </span>
             <span className="text-sm font-medium text-info">Info</span>
             <span className="text-sm font-medium text-warning">Warning</span>
+          </div>
+        </SubSection>
+
+        <SubSection title="Yty Element Colors">
+          <p className="mb-4 text-sm text-muted-foreground">
+            Used in Yty page cards and voice room breakout zones. These shift shade between themes.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {YTY_ELEMENTS.map((el) => (
+              <Swatch key={el.id} label={el.name} className={el.color.bg} />
+            ))}
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {YTY_ELEMENTS.map((el) => (
+              <div
+                key={el.id}
+                className={`flex items-center gap-3 rounded-lg border-2 p-4 ${el.color.border} ${el.color.bg}`}
+              >
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${el.color.bg}`}>
+                  <el.icon className={`h-5 w-5 ${el.color.accent}`} />
+                </div>
+                <div>
+                  <p className={`font-medium ${el.color.accent}`}>{el.name}</p>
+                  <p className="text-sm text-muted-foreground">{el.description}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </SubSection>
       </Section>

@@ -58,6 +58,9 @@
   --chart-4: 200 80% 50%;
   --chart-5: 340 75% 55%;
 
+  /* Speaking glow — white on dark, dark on light */
+  --speaking-glow: 255, 255, 255;
+
   /* Yty element colors — lighter shades for dark backgrounds */
   --yty-harmony: 158 64% 52%;     /* emerald-400 */
   --yty-glow: 43 96% 56%;         /* amber-400 */
@@ -101,16 +104,16 @@
   --accent: 42 98% 49%;
   --accent-foreground: 0 0% 7%;
 
-  --destructive: 0 72% 45%;
+  --destructive: 0 85% 50%;
   --destructive-foreground: 0 0% 100%;
 
-  --success: 160 72% 28%;
+  --success: 155 90% 32%;
   --success-foreground: 0 0% 100%;
 
-  --info: 210 80% 42%;
+  --info: 210 90% 45%;
   --info-foreground: 0 0% 100%;
 
-  --warning: 35 92% 33%;
+  --warning: 38 95% 40%;
   --warning-foreground: 0 0% 100%;
 
   --border: 220 13% 88%;              /* #DADEE5 — cool border */
@@ -126,11 +129,13 @@
   --sidebar-border: 220 13% 88%;
   --sidebar-ring: 42 98% 49%;
 
-  /* Yty element colors — darker shades for light backgrounds */
-  --yty-harmony: 161 94% 30%;     /* emerald-600 */
-  --yty-glow: 32 95% 44%;         /* amber-600 */
-  --yty-valor: 347 77% 50%;       /* rose-600 */
-  --yty-wit: 262 83% 58%;         /* violet-600 */
+  --speaking-glow: 0, 0, 0;
+
+  /* Yty element colors — saturated mid-tones for light backgrounds */
+  --yty-harmony: 158 90% 36%;
+  --yty-glow: 38 95% 48%;
+  --yty-valor: 347 90% 52%;
+  --yty-wit: 262 90% 55%;
 }
 
 @theme inline {
@@ -247,7 +252,7 @@ body {
 .light .bg-hero-gradient {
   background:
     linear-gradient(to bottom, transparent 0%, hsl(var(--background)) 100%),
-    linear-gradient(to right, hsl(var(--primary) / 0.45), transparent 50%, hsl(var(--secondary) / 0.25));
+    linear-gradient(to right, hsl(var(--primary) / 0.6), transparent 50%, hsl(var(--secondary) / 0.35));
 }
 
 /* CTA card gradient — subtle brand tint */
@@ -255,7 +260,7 @@ body {
   background: linear-gradient(to right, hsl(var(--primary) / 0.1), hsl(var(--secondary) / 0.1));
 }
 .light .bg-cta-gradient {
-  background: linear-gradient(to right, hsl(var(--primary) / 0.2), hsl(var(--secondary) / 0.15));
+  background: linear-gradient(to right, hsl(var(--primary) / 0.25), hsl(var(--secondary) / 0.2));
 }
 
 /* Lighter variant for secondary CTAs */
@@ -263,7 +268,7 @@ body {
   background: linear-gradient(to right, hsl(var(--primary) / 0.05), hsl(var(--secondary) / 0.05));
 }
 .light .bg-cta-gradient-subtle {
-  background: linear-gradient(to right, hsl(var(--primary) / 0.12), hsl(var(--secondary) / 0.1));
+  background: linear-gradient(to right, hsl(var(--primary) / 0.15), hsl(var(--secondary) / 0.12));
 }
 
 /* Voice-active card gradient — subtle primary tint for active voice indicators */
@@ -271,7 +276,7 @@ body {
   background: linear-gradient(to right, hsl(var(--primary) / 0.12), transparent);
 }
 .light .bg-voice-active-gradient {
-  background: linear-gradient(to right, hsl(var(--primary) / 0.12), transparent);
+  background: linear-gradient(to right, hsl(var(--primary) / 0.18), transparent);
 }
 
 /* Gaming-inspired glow effects */

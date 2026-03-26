@@ -27,12 +27,20 @@ export const ZONE_RECTS: ZoneRect[] = [
 ];
 
 // ── Avatar speaking glow ─────────────────────────────────────────────
-/** Dynamic glow driven by audio level. Color is RGB for use in rgba(). */
+/** Dynamic glow driven by audio level. Color comes from --speaking-glow CSS
+ *  variable (white on dark, black on light). */
 export const SPEAKING_GLOW = {
-  color: "255, 255, 255",
   maxSpread: 14,
   threshold: 0.05,
 };
+
+/** Read --speaking-glow CSS variable (RGB triplet like "255, 255, 255"). */
+function getGlowColor(): string {
+  if (typeof window === "undefined") return "255, 255, 255";
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue("--speaking-glow")
+    .trim() || "255, 255, 255";
+}
 
 /** Compute inline glow styles for a given audio level (0–1).
  *  Returns empty object when below threshold (no glow). */
@@ -40,9 +48,10 @@ export function computeGlowStyle(level: number): React.CSSProperties {
   if (level <= SPEAKING_GLOW.threshold) return {};
   const spread = level * SPEAKING_GLOW.maxSpread;
   const opacity = 0.3 + level * 0.5;
+  const color = getGlowColor();
   return {
-    boxShadow: `0 0 ${spread}px rgba(${SPEAKING_GLOW.color}, ${opacity})`,
-    borderColor: `rgba(${SPEAKING_GLOW.color}, ${0.5 + level * 0.5})`,
+    boxShadow: `0 0 ${spread}px rgba(${color}, ${opacity})`,
+    borderColor: `rgba(${color}, ${0.5 + level * 0.5})`,
   };
 }
 
