@@ -13,7 +13,7 @@ export function ThemeProvider({ children, nonce }: ThemeProviderProps) {
     <NextThemesProvider
       attribute="class"
       defaultTheme="dark"
-      enableSystem={false}
+      enableSystem
       enableColorScheme={false}
       nonce={nonce}
     >

