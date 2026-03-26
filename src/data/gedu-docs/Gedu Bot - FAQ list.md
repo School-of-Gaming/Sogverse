@@ -141,4 +141,3 @@ Happinappi jatkoi eloaan Sogversessä pienenä easter egginä. Jos sinulla on pe
 
 **Montako lasta kerhossa on?**   
 Yleisesti ottaen kerhoryhmissä on 12-15 osallistujaa. Nepsy-ryhmät ovat pienryhmiä ja niihin otetaan vain 6 osallistujaa. Oman ryhmäsi maksimiosallistujamäärän löydät kerhon Sogga \-sivulta, mistä löytyy myös ilmoittautuneiden yhteystiedot.
-

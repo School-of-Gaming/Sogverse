@@ -65,7 +65,6 @@ If you have any questions, ideas for improvement, or notice that something on th
 
 * Shopkeeper NPCs
 
-
 [**Teams**](#teams)
 
 * Team specific commands
@@ -137,7 +136,6 @@ A Game Educator has several permissions related to moderation and club managemen
 * Teleporting to Destination locations  
 * Building at the Open Survival spawn  
 * Transforming themselves or a player
-
 
 ## Internal Gedu Chat
 
@@ -416,4 +414,3 @@ If multiple groups are playing on the same server at the same time, you should n
 # 🇬🇧 International Servers
 
 # Server: Oddnook
-
