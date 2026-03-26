@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, Bell, Palette, Gamepad2 } from "lucide-react";
+import { User, Lock, Bell, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -262,24 +262,6 @@ export default function SettingsPage() {
         <CardContent>
           <p className="text-sm text-muted-foreground">
             Notification settings coming soon.
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Appearance Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            <CardTitle>Appearance</CardTitle>
-          </div>
-          <CardDescription>
-            Customize how Sogverse looks
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Theme settings coming soon. Currently using dark theme.
           </p>
         </CardContent>
       </Card>
