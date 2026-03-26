@@ -15,29 +15,19 @@ const getServerSnapshot = () => false;
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
   const mounted = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-
-  if (!mounted) {
-    // Render a placeholder the same size to prevent layout shift
-    return <div className={cn("h-8 w-8", className)} />;
-  }
-
   const isDark = theme === "dark";
 
-  function toggleTheme() {
-    const newTheme = isDark ? "light" : "dark";
+  function switchTo(newTheme: "light" | "dark") {
+    if (newTheme === theme) return;
 
     // startViewTransition is not in all TS lib typings yet
     const startViewTransition = (document as unknown as { startViewTransition?: (cb: () => void) => void }).startViewTransition;
 
-    // Fallback for browsers without View Transitions API
     if (!startViewTransition) {
       setTheme(newTheme);
       return;
     }
 
-    // The API screenshots the current state, applies the DOM change
-    // synchronously via flushSync, then crossfades to the new state
-    // as a single GPU-composited animation — no per-element transitions.
     startViewTransition.call(document, () => {
       flushSync(() => {
         setTheme(newTheme);
@@ -47,14 +37,31 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={mounted ? () => switchTo(isDark ? "light" : "dark") : undefined}
       className={cn(
-        "flex items-center justify-center rounded-md border border-border bg-muted/50 p-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+        "flex gap-0.5 rounded-full border border-border bg-muted/50 p-0.5",
         className,
       )}
-      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
+      role="switch"
+      aria-checked={mounted ? isDark : undefined}
+      aria-label="Toggle theme"
     >
-      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      <span
+        className={cn(
+          "flex h-6 w-6 items-center justify-center rounded-full transition-colors duration-200",
+          mounted && !isDark ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+        )}
+      >
+        <Sun className="h-3.5 w-3.5" />
+      </span>
+      <span
+        className={cn(
+          "flex h-6 w-6 items-center justify-center rounded-full transition-colors duration-200",
+          mounted && isDark ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+        )}
+      >
+        <Moon className="h-3.5 w-3.5" />
+      </span>
     </button>
   );
 }

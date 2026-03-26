@@ -198,7 +198,7 @@
    transitions needed. Default is a crossfade; duration is set here. */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 1s;
+  animation-duration: 700ms;
 }
 
 /* All interactive elements should show a pointer cursor */
