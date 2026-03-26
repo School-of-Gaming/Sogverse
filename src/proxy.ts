@@ -28,7 +28,7 @@ function buildCspHeader(nonce: string): string {
     "default-src 'self'",
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com",
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self'",
