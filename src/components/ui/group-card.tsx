@@ -104,7 +104,7 @@ export function GroupCard({
     <Card
       className={cn(
         "group cursor-pointer transition-colors hover:bg-muted/50",
-        voiceIsOpen && "border-primary/30 bg-gradient-to-r from-primary/5 to-transparent",
+        voiceIsOpen && "border-primary/30 bg-voice-active-gradient",
       )}
       role="button"
       tabIndex={0}

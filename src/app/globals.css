@@ -101,17 +101,17 @@
   --accent: 42 98% 49%;
   --accent-foreground: 0 0% 7%;
 
-  --destructive: 0 84% 60%;
+  --destructive: 0 72% 45%;
   --destructive-foreground: 0 0% 100%;
 
-  --success: 160 60% 35%;
+  --success: 160 72% 28%;
   --success-foreground: 0 0% 100%;
 
-  --info: 210 80% 50%;
+  --info: 210 80% 42%;
   --info-foreground: 0 0% 100%;
 
-  --warning: 45 93% 47%;
-  --warning-foreground: 0 0% 7%;
+  --warning: 35 92% 33%;
+  --warning-foreground: 0 0% 100%;
 
   --border: 220 13% 88%;              /* #DADEE5 — cool border */
   --input: 220 13% 88%;
@@ -188,6 +188,14 @@
   border-color: hsl(var(--border));
 }
 
+/* Theme switch animation via View Transitions API.
+   The API composites old/new page snapshots on the GPU — no per-element
+   transitions needed. Default is a crossfade; duration is set here. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 1s;
+}
+
 /* All interactive elements should show a pointer cursor */
 button,
 [type="button"],
@@ -228,6 +236,42 @@ body {
 
 .bg-brand-yellow {
   background-color: hsl(42 98% 49%);
+}
+
+/* Brand gradients — stronger tints on light backgrounds where low opacity washes out */
+.bg-hero-gradient {
+  background:
+    linear-gradient(to bottom, transparent 0%, hsl(var(--background)) 100%),
+    linear-gradient(to right, hsl(var(--primary) / 0.2), transparent 50%, hsl(var(--secondary) / 0.1));
+}
+.light .bg-hero-gradient {
+  background:
+    linear-gradient(to bottom, transparent 0%, hsl(var(--background)) 100%),
+    linear-gradient(to right, hsl(var(--primary) / 0.45), transparent 50%, hsl(var(--secondary) / 0.25));
+}
+
+/* CTA card gradient — subtle brand tint */
+.bg-cta-gradient {
+  background: linear-gradient(to right, hsl(var(--primary) / 0.1), hsl(var(--secondary) / 0.1));
+}
+.light .bg-cta-gradient {
+  background: linear-gradient(to right, hsl(var(--primary) / 0.2), hsl(var(--secondary) / 0.15));
+}
+
+/* Lighter variant for secondary CTAs */
+.bg-cta-gradient-subtle {
+  background: linear-gradient(to right, hsl(var(--primary) / 0.05), hsl(var(--secondary) / 0.05));
+}
+.light .bg-cta-gradient-subtle {
+  background: linear-gradient(to right, hsl(var(--primary) / 0.12), hsl(var(--secondary) / 0.1));
+}
+
+/* Voice-active card gradient — subtle primary tint for active voice indicators */
+.bg-voice-active-gradient {
+  background: linear-gradient(to right, hsl(var(--primary) / 0.12), transparent);
+}
+.light .bg-voice-active-gradient {
+  background: linear-gradient(to right, hsl(var(--primary) / 0.12), transparent);
 }
 
 /* Gaming-inspired glow effects */

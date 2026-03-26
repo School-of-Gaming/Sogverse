@@ -107,7 +107,7 @@ export default async function SorgPage() {
 
       {/* Overview Card */}
       <div className="mx-auto mt-16 max-w-4xl">
-        <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
+        <Card className="bg-cta-gradient-subtle">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">How It Works</CardTitle>
           </CardHeader>
