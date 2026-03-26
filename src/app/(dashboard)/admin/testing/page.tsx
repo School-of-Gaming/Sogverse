@@ -316,7 +316,7 @@ export default function TestingPage() {
               <div
                 className={`rounded-md p-3 text-sm ${
                   result.type === "success"
-                    ? "bg-green-500/10 text-green-500"
+                    ? "bg-success/10 text-success"
                     : "bg-destructive/10 text-destructive"
                 }`}
               >

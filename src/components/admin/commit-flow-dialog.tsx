@@ -36,7 +36,7 @@ function StepIcon({ status }: { status: StepItem["status"] }) {
     case "active":
       return <Loader2 className="h-4 w-4 mt-0.5 shrink-0 animate-spin text-primary" />;
     case "done":
-      return <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-green-500" />;
+      return <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-success" />;
     case "failed":
       return <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-destructive" />;
   }
@@ -191,17 +191,17 @@ export function CommitFlowDialog({
             <ul className="my-4 space-y-2 text-sm">
               {summary.lines.map((segments, i) => (
                 <li key={i} className="flex items-start gap-2">
-                  <span className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${segments.some((s: ChangeSegment) => s.type === "warning") ? "bg-amber-400" : "bg-primary"}`} />
+                  <span className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${segments.some((s: ChangeSegment) => s.type === "warning") ? "bg-warning" : "bg-primary"}`} />
                   <span>
                     {segments.map((seg: ChangeSegment, j: number) => {
                       if (seg.type === "warning") {
-                        return <span key={j} className="font-medium text-amber-400">{seg.value}</span>;
+                        return <span key={j} className="font-medium text-warning">{seg.value}</span>;
                       }
                       if (seg.type === "gamer") {
-                        return <span key={j} className="font-medium text-blue-400">{seg.value}</span>;
+                        return <span key={j} className="font-medium text-info">{seg.value}</span>;
                       }
                       if (seg.type === "gedu") {
-                        return <span key={j} className="font-medium text-purple-400">{seg.value}</span>;
+                        return <span key={j} className="font-medium text-secondary">{seg.value}</span>;
                       }
                       return <span key={j}>{seg.value}</span>;
                     })}

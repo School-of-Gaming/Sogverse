@@ -12,7 +12,7 @@ export function ThemeProvider({ children, nonce }: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="dark"
+      defaultTheme="light"
       enableSystem={false}
       disableTransitionOnChange
       nonce={nonce}

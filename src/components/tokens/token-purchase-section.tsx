@@ -110,7 +110,7 @@ function PackageCard({
         </div>
       ) : savings > 0 ? (
         <div className="absolute -top-3 right-4">
-          <Badge className="bg-green-600 text-white hover:bg-green-600">
+          <Badge className="bg-success text-success-foreground hover:bg-success">
             Save {formatCurrencyFromCents(savings, currency, locale)}{isSubscription ? "/mo" : ""}
           </Badge>
         </div>

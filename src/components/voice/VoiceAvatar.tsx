@@ -46,7 +46,7 @@ export const VoiceAvatar = forwardRef<HTMLDivElement, VoiceAvatarProps>(
           {/* Mic status overlay */}
           <div className="absolute bottom-0.5 right-0.5">
             {audioOn ? (
-              <Mic className="h-3 w-3 text-emerald-400 drop-shadow" />
+              <Mic className="h-3 w-3 text-success drop-shadow" />
             ) : (
               <MicOff className="h-3 w-3 text-destructive drop-shadow" />
             )}

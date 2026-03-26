@@ -56,8 +56,8 @@ export function VisibilityWarningBanner({ isVisible, groupCount }: VisibilityWar
       className={cn(
         "flex items-start gap-3 rounded-lg border p-4",
         variant === "warning"
-          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-200"
-          : "border-blue-500/30 bg-blue-500/10 text-blue-200",
+          ? "border-warning/30 bg-warning/10 text-warning"
+          : "border-info/30 bg-info/10 text-info",
       )}
     >
       <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />

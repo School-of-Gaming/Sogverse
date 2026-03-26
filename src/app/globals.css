@@ -58,6 +58,12 @@
   --chart-4: 200 80% 50%;
   --chart-5: 340 75% 55%;
 
+  /* Yty element colors — lighter shades for dark backgrounds */
+  --yty-harmony: 158 64% 52%;     /* emerald-400 */
+  --yty-glow: 43 96% 56%;         /* amber-400 */
+  --yty-valor: 351 95% 72%;       /* rose-400 */
+  --yty-wit: 263 70% 76%;         /* violet-400 */
+
   /* Radius */
   --radius: 0.5rem;
 
@@ -72,25 +78,25 @@
   --sidebar-ring: 42 98% 49%;
 }
 
-/* Light theme override */
+/* Light theme override — cool off-whites to match sog.gg */
 .light {
-  --background: 0 0% 98%;
-  --foreground: 0 0% 7%;
+  --background: 220 20% 97%;          /* #F5F7FA — cool off-white */
+  --foreground: 220 20% 10%;          /* #161A22 — cool dark text */
 
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 7%;
+  --card: 0 0% 100%;                  /* #FFFFFF */
+  --card-foreground: 220 20% 10%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 7%;
+  --popover-foreground: 220 20% 10%;
 
-  --primary: 42 98% 49%;
+  --primary: 42 98% 49%;              /* #FAA901 — same yellow */
   --primary-foreground: 0 0% 7%;
 
-  --secondary: 276 100% 44%;
+  --secondary: 276 100% 44%;          /* #8F00E2 — same purple */
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 0 0% 93%;
-  --muted-foreground: 0 0% 40%;
+  --muted: 220 14% 93%;               /* #ECEEF2 — cool muted surface */
+  --muted-foreground: 220 10% 40%;    /* #5C6370 — cool muted text */
 
   --accent: 42 98% 49%;
   --accent-foreground: 0 0% 7%;
@@ -98,7 +104,7 @@
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
 
-  --success: 160 60% 40%;
+  --success: 160 60% 35%;
   --success-foreground: 0 0% 100%;
 
   --info: 210 80% 50%;
@@ -107,18 +113,24 @@
   --warning: 45 93% 47%;
   --warning-foreground: 0 0% 7%;
 
-  --border: 0 0% 85%;
-  --input: 0 0% 85%;
+  --border: 220 13% 88%;              /* #DADEE5 — cool border */
+  --input: 220 13% 88%;
   --ring: 42 98% 49%;
 
-  --sidebar-background: 0 0% 96%;
-  --sidebar-foreground: 0 0% 7%;
+  --sidebar-background: 220 20% 96%;  /* #F1F4F8 — slightly darker cool off-white */
+  --sidebar-foreground: 220 20% 10%;
   --sidebar-primary: 42 98% 49%;
   --sidebar-primary-foreground: 0 0% 7%;
-  --sidebar-accent: 0 0% 90%;
-  --sidebar-accent-foreground: 0 0% 7%;
-  --sidebar-border: 0 0% 85%;
+  --sidebar-accent: 220 14% 91%;      /* #E4E7ED — cool sidebar hover */
+  --sidebar-accent-foreground: 220 20% 10%;
+  --sidebar-border: 220 13% 88%;
   --sidebar-ring: 42 98% 49%;
+
+  /* Yty element colors — darker shades for light backgrounds */
+  --yty-harmony: 161 94% 30%;     /* emerald-600 */
+  --yty-glow: 32 95% 44%;         /* amber-600 */
+  --yty-valor: 347 77% 50%;       /* rose-600 */
+  --yty-wit: 262 83% 58%;         /* violet-600 */
 }
 
 @theme inline {
@@ -160,6 +172,10 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-yty-harmony: hsl(var(--yty-harmony));
+  --color-yty-glow: hsl(var(--yty-glow));
+  --color-yty-valor: hsl(var(--yty-valor));
+  --color-yty-wit: hsl(var(--yty-wit));
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

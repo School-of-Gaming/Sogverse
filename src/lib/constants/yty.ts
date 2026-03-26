@@ -8,10 +8,10 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with yourself",
     icon: Heart,
     color: {
-      bg: "bg-emerald-500/10",
-      bgGradient: "from-emerald-500/10 to-emerald-500/5",
-      border: "border-emerald-500/30",
-      accent: "text-emerald-400",
+      bg: "bg-yty-harmony/10",
+      bgGradient: "from-yty-harmony/10 to-yty-harmony/5",
+      border: "border-yty-harmony/30",
+      accent: "text-yty-harmony",
     },
   },
   {
@@ -20,10 +20,10 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with others",
     icon: Sun,
     color: {
-      bg: "bg-amber-500/10",
-      bgGradient: "from-amber-500/10 to-amber-500/5",
-      border: "border-amber-500/30",
-      accent: "text-amber-400",
+      bg: "bg-yty-glow/10",
+      bgGradient: "from-yty-glow/10 to-yty-glow/5",
+      border: "border-yty-glow/30",
+      accent: "text-yty-glow",
     },
   },
   {
@@ -32,10 +32,10 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with the world",
     icon: Sword,
     color: {
-      bg: "bg-rose-500/10",
-      bgGradient: "from-rose-500/10 to-rose-500/5",
-      border: "border-rose-500/30",
-      accent: "text-rose-400",
+      bg: "bg-yty-valor/10",
+      bgGradient: "from-yty-valor/10 to-yty-valor/5",
+      border: "border-yty-valor/30",
+      accent: "text-yty-valor",
     },
   },
   {
@@ -44,10 +44,10 @@ export const YTY_ELEMENTS = [
     description: "Your relationship with media & tech",
     icon: Brain,
     color: {
-      bg: "bg-violet-500/10",
-      bgGradient: "from-violet-500/10 to-violet-500/5",
-      border: "border-violet-500/30",
-      accent: "text-violet-400",
+      bg: "bg-yty-wit/10",
+      bgGradient: "from-yty-wit/10 to-yty-wit/5",
+      border: "border-yty-wit/30",
+      accent: "text-yty-wit",
     },
   },
 ] as const;
