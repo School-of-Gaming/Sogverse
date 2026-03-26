@@ -5,7 +5,7 @@ import {
   InteractionType,
   InteractionResponseType,
 } from "discord-interactions";
-import { askGeduFaq } from "@/lib/gemini";
+import { askGeduGuru, askHappinappi } from "@/lib/gemini";
 
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
@@ -27,15 +27,14 @@ export async function POST(request: Request) {
   }
 
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-    const question = interaction.data.options?.[0]?.value;
+    const command = interaction.data.name as string;
+    const message = interaction.data.options?.[0]?.value;
 
-    if (!question) {
+    if (!message) {
       return NextResponse.json({ type: InteractionResponseType.PONG });
     }
 
-    // after() keeps the function alive after the response is sent,
-    // so Vercel doesn't kill it before Gemini responds.
-    after(sendFollowUp(interaction.token, question));
+    after(sendFollowUp(interaction.token, command, message));
 
     return NextResponse.json({
       type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
@@ -45,16 +44,26 @@ export async function POST(request: Request) {
   return NextResponse.json({ error: "Unknown interaction" }, { status: 400 });
 }
 
-async function sendFollowUp(interactionToken: string, question: string): Promise<void> {
+async function sendFollowUp(
+  interactionToken: string,
+  command: string,
+  message: string
+): Promise<void> {
   let answer: string;
   try {
-    answer = await askGeduFaq(question);
+    answer =
+      command === "happinappi"
+        ? await askHappinappi(message)
+        : await askGeduGuru(message);
   } catch (error) {
     console.error("Gemini error:", error);
-    answer = "Pahoittelut, en pystynyt käsittelemään kysymystäsi. Yritä uudelleen.";
+    answer =
+      command === "happinappi"
+        ? "HAPPEE! ...mutta jotain meni pieleen. Yritä uudelleen!"
+        : "Pahoittelut, en pystynyt käsittelemään kysymystäsi. Yritä uudelleen.";
   }
 
-  const reply = `**${question}**\n\n${answer}`;
+  const reply = `**${message}**\n\n${answer}`;
 
   // Discord messages have a 2000 character limit
   const content = reply.length > 2000 ? reply.slice(0, 1997) + "..." : reply;

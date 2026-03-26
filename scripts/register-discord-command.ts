@@ -29,19 +29,32 @@ if (!APP_ID || !BOT_TOKEN) {
   process.exit(1);
 }
 
-const questionOption = {
-  name: "kysymys",
-  description: "Kysymyksesi",
-  type: 3, // STRING
-  required: true,
-};
-
 const commands = [
   {
     name: "geduguru",
     description: "Kysy kysymys Gedu Gurulta",
     type: 1,
-    options: [questionOption],
+    options: [
+      {
+        name: "kysymys",
+        description: "Kysymyksesi",
+        type: 3, // STRING
+        required: true,
+      },
+    ],
+  },
+  {
+    name: "happinappi",
+    description: "Paina Happinappia ja saat happea!",
+    type: 1,
+    options: [
+      {
+        name: "viesti",
+        description: "Sano jotain Happinapille",
+        type: 3, // STRING
+        required: true,
+      },
+    ],
   },
 ];
 
