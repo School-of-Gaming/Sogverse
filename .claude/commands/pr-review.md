@@ -5,6 +5,8 @@ description: PR review focusing on architecture, code quality, testing, and secu
 
 I want you to perform a thorough Pull Request review of the current feature branch against the 'dev' branch.
 
+**Important: This is a static code review only.** Do not run type-check, lint, or tests — CI already handles those. Focus on reading and reasoning about the code.
+
 1.  **Analysis**:
     * **Diff**: Check the diff between the current branch and the dev branch.
     * **File Review**: For each file in the diff, read the full file (not just the diff hunks) using the Read tool. This is critical for understanding context around changes — how the changed code fits into the larger file
@@ -21,9 +23,7 @@ I want you to perform a thorough Pull Request review of the current feature bran
     * Identify redundant code or "copy-paste" patterns that increase the maintenance burden.
     * Check if there any unnecessarily large files or functions that could benefit from being broken up.
     * Check for code readability and maintainability.
-    * Verify that essential or complex logic has unit tests and integration tests where appropriate.
-    * For critical database logic (monetary transactions, SECURITY DEFINER RPCs, RLS policies protecting sensitive data), verify there are DB tests in `tests/db/`.
-    * Verify that critical pages and UI components and have e2e tests.
+    * For high-risk code (financial logic, auth, SECURITY DEFINER RPCs, RLS policies) or complex logic that would benefit from tests, verify there are corresponding tests. Do not flag missing tests for routine code.
 
 4.  **Security & Performance**: 
     * Identify security holes (especially Supabase RLS and monetary payments).
@@ -31,12 +31,12 @@ I want you to perform a thorough Pull Request review of the current feature bran
 
 **Provide the review in this format:**
 1. Overall summary and feedback
-2. Sort and number the issues from most important to least important and place them into these categories:
+2. Sort and number the issues from most important to least important and place them into these categories. Every item must be actionable — do not include praise or observations that require no changes:
     * Critical
     * Major
     * Minor
-    * Trival / Nitpick
-3. Give the user the option go through the issues one by one
-    * Explain the issue
-    * Offer a potential fix
-    * Rate the fix as either **straightforward** (safe to apply without further discussion) or **needs discussion** (higher risk, multiple approaches, or behavioral changes worth talking through)
+    * Trivial / Nitpick
+3. For each issue, rate it as either:
+    * **straightforward** — safe to apply without further discussion
+    * **needs discussion** — higher risk, multiple valid approaches, or behavioral changes worth talking through
+4. Do not apply any fixes. Wait for the user to pick which issues to address. When the user selects a **needs discussion** issue, explain the trade-offs and align on an approach before making changes.
