@@ -215,8 +215,8 @@ export default function AdminUserDetailPage() {
                 <span className="text-muted-foreground">Sorgs</span>
               </div>
 
-              <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-3">
-                <div className="flex items-center gap-2 text-sm text-yellow-400">
+              <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
+                <div className="flex items-center gap-2 text-sm text-warning">
                   <AlertTriangle className="h-4 w-4" />
                   Tokens have monetary value ({formatCurrencyFromCents(baseRate, currency, locale)}/token). All changes are logged.
                 </div>

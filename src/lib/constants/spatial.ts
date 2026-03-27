@@ -6,8 +6,11 @@ export type ZoneId =
   | "breakout_4"
   | "broadcast";
 
+/** Zones that have a visual rect and color on the canvas (everything except "general"). */
+export type VisualZoneId = Exclude<ZoneId, "general">;
+
 export interface ZoneRect {
-  id: ZoneId;
+  id: VisualZoneId;
   label: string;
   icon?: import("lucide-react").LucideIcon;
   x: number;
