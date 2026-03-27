@@ -1,5 +1,5 @@
 /**
- * Registers the /ask slash command with Discord.
+ * Registers slash commands with Discord.
  * Run once: npx tsx scripts/register-discord-command.ts
  *
  * Requires DISCORD_APPLICATION_ID and DISCORD_BOT_TOKEN in .env.local
