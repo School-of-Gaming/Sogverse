@@ -66,13 +66,22 @@ async function patchDiscordResponse(interactionToken: string, content: string) {
 
 async function sendPasswordReset(
   interactionToken: string,
-  username: string
+  input: string
 ): Promise<void> {
-  const result = await resetPassword(username);
-  const content = result.ok
-    ? `Password reset for **${result.upn}**\nNew password: \`${result.password}\`${result.forceChange ? "\n⚠️ Temporary — must be changed on first sign-in" : ""}`
-    : `Failed: ${result.error}`;
-  await patchDiscordResponse(interactionToken, content);
+  const usernames = input.split(/[\s,]+/).filter(Boolean);
+
+  const results = await Promise.all(
+    usernames.map(async (username) => {
+      const result = await resetPassword(username);
+      if (result.ok) {
+        const line = `✅ **${result.upn}** → \`${result.password}\``;
+        return result.forceChange ? `${line} (must change on sign-in)` : line;
+      }
+      return `❌ **${username}** — ${result.error}`;
+    })
+  );
+
+  await patchDiscordResponse(interactionToken, results.join("\n"));
 }
 
 async function sendFollowUp(

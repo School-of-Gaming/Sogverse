@@ -53,17 +53,17 @@ This uses a bulk `PUT` — whatever commands are in the script become the full l
 Current commands:
 - `/geduguru` — "Kysy kysymys Gedu Gurulta" (takes a `kysymys` parameter)
 - `/happinappi` — "Paina Happinappia ja saat happea!" (takes a `viesti` parameter)
-- `/reset-password` — Reset a Minecraft Education account password (takes a `username` parameter)
+- `/reset-password` — Reset one or more Minecraft Education account passwords (takes a `usernames` parameter, space-separated)
 
 ## Password Reset (`/reset-password`)
 
 Resets the password for shared Minecraft Education accounts managed in Azure AD (sog.gg tenant).
 
 **How it works:**
-1. User provides a username (e.g. `sog5461`)
-2. The bot tries `username@gamer.sog.gg`, then `username@gedu.sog.gg` — only these two domains are allowed
+1. User provides one or more usernames (e.g. `sog5461 sog5113 sog4417`), space- or comma-separated
+2. For each username, the bot tries `username@gamer.sog.gg`, then `username@gedu.sog.gg` — only these two domains are allowed
 3. On success, replies with the full email and new password (e.g. `Sogverse42`)
-4. Passwords are `Sogverse` + 2-digit number (00–99)
+4. Passwords are `Sogverse` + 2-digit number (00–99), each account gets a different random password
 5. `@gamer.sog.gg` accounts keep the password as-is; `@gedu.sog.gg` accounts must change it on first sign-in
 
 **Azure setup:**

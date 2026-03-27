@@ -62,8 +62,8 @@ const commands = [
     type: 1,
     options: [
       {
-        name: "username",
-        description: "The account username (without @gamer.sog.gg / @gedu.sog.gg)",
+        name: "usernames",
+        description: "One or more usernames, separated by spaces (e.g. sog5461 sog5113)",
         type: 3, // STRING
         required: true,
       },
