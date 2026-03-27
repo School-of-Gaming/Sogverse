@@ -30,7 +30,7 @@ const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
 
 // ---------- Helpers ----------
 
-function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null, position: SpatialPosition): VoiceParticipant {
+function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): VoiceParticipant {
   const raw = p.user_name || "";
   const parts = raw.split("|");
   const userId = parts[0] || p.session_id;
@@ -48,7 +48,6 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null, pos
     isLocal: p.local,
     isOwner: p.owner,
     isSpeaking: p.session_id === activeSpeakerId && Boolean(p.audio) && p.tracks.audio.state === "playable",
-    position,
   };
 }
 
@@ -78,16 +77,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
   const audio = useAudioPipeline({ callObjectRef, positionsRef });
 
-  // Ref indirection: the spatial hook is created before updateParticipants
-  // is defined, so we give it a stable ref that we point at the real
-  // function once it exists.
-  const refreshParticipantsRef = useRef(() => {});
-
   const spatial = useSpatialPositions({
     callObjectRef,
     positionsRef,
     onPositionChanged: audio.updateAudioRouting,
-    onPositionsUpdated: () => refreshParticipantsRef.current(),
   });
 
   const localSessionId = participants.find((p) => p.isLocal)?.sessionId ?? null;
@@ -102,20 +95,19 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     setCameraOn,
   });
 
+  // --- Position access (ref-based, no React re-renders) ---
+
+  const getPosition = useCallback((sessionId: string) => {
+    return positionsRef.current.get(sessionId);
+  }, []);
+
   // --- Participant management ---
 
   const updateParticipants = useCallback((co: DailyCall) => {
     if (!joinedRef.current) return;
 
     const pMap = co.participants();
-    const list: VoiceParticipant[] = [];
-    for (const p of Object.values(pMap)) {
-      const pos = positionsRef.current.get(p.session_id);
-      // A participant doesn't exist until we have their position.
-      // The posUpdate message fills this in; updateParticipants re-runs then.
-      if (!pos) continue;
-      list.push(mapParticipant(p, activeSpeakerIdRef.current, pos));
-    }
+    const list = Object.values(pMap).map((p) => mapParticipant(p, activeSpeakerIdRef.current));
     setParticipants(list);
 
     const local = pMap.local;
@@ -128,19 +120,12 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- individual methods are stable useCallback refs; adding the parent objects would re-create this callback on every render
   }, [screenShare.detectScreenSharer, audio.manageAudioNodes, audio.manageLocalAnalyser]);
 
-  // Now that updateParticipants exists, wire it into the spatial hook's flush callback.
-  refreshParticipantsRef.current = () => {
-    const co = callObjectRef.current;
-    if (co && joinedRef.current) updateParticipants(co);
-  };
-
   // --- App message dispatch ---
 
   const handleAppMessage = useCallback((event: { data: AppMessage; fromId: string }) => {
     const co = callObjectRef.current;
     if (!co) return;
     const { data: msg, fromId } = event;
-
     if (msg.type === "requestPositions") {
       // Cross-concern: reply with positions + lock states
       const posObj: Record<string, SpatialPosition> = {};
@@ -198,13 +183,13 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         joinedRef.current = true;
         setJoined(true);
         setJoining(false);
-        updateParticipants(co);
         setCameraAllowed(true);
 
         const local = co.participants().local;
         const rawName = local.user_name || "";
         setLocalRole(rawName.split("|")[1] as UserRole);
         spatial.onJoined(local.session_id);
+        updateParticipants(co);
       };
 
       const handleParticipantUpdate = () => updateParticipants(co);
@@ -322,6 +307,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       callObject,
       localZone: spatial.localZone,
       localRole,
+      getPosition,
       moveLocal: spatial.moveLocal,
       moveOther: spatial.moveOther,
       getAnalyser: audio.getAnalyser,
@@ -337,7 +323,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       muteParticipant: moderator.muteParticipant,
       lockParticipant: moderator.lockParticipant,
     }),
-    [joined, joining, participants, micOn, cameraOn, cameraAllowed, join, leave, toggleMic, toggleCamera, callObject, spatial.localZone, localRole, spatial.moveLocal, spatial.moveOther, audio.getAnalyser, audio.volumeMultipliers, audio.setParticipantVolume, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant],
+    [joined, joining, participants, micOn, cameraOn, cameraAllowed, join, leave, toggleMic, toggleCamera, callObject, spatial.localZone, localRole, getPosition, spatial.moveLocal, spatial.moveOther, audio.getAnalyser, audio.volumeMultipliers, audio.setParticipantVolume, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant],
   );
 
   return (

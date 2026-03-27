@@ -21,7 +21,7 @@ Voice components (src/components/voice/)
 ├── VoiceRoomProvider   — React context orchestrator (composes internal hooks)
 ├── SpatialVoiceRoom    — In-session layout: screen share + canvas + controls + participants
 ├── SpatialCanvas       — Renders zones + draggable avatars on a 21:9 canvas
-├── DraggableAvatar     — Pointer-drag avatar with speaking glow (rAF + AnalyserNode)
+├── DraggableAvatar     — Pointer-drag avatar with rAF position rendering and speaking glow
 ├── VoiceAvatar         — Presentational avatar (identicon/video, mic status, name label)
 ├── Zone                — Renders a named zone rectangle on the canvas
 ├── VoiceControls       — Mic/camera/screen-share toggles, lock indicators, mic level
@@ -30,7 +30,7 @@ Voice components (src/components/voice/)
 └── MicLevelIndicator   — Real-time mic input level bar (Web Audio API)
 
 Internal hooks (src/components/voice/hooks/)
-├── types.ts                  — Shared types (VoiceParticipant, LockState, AppMessage, etc.)
+├── types.ts                  — Shared types (VoiceParticipant, LockState, AppMessage, context shape)
 ├── use-audio-pipeline.ts     — Audio element playback, volume multipliers, AnalyserNodes, routing
 ├── use-spatial-positions.ts  — Spatial movement, zone detection, app messages, position sync
 ├── use-screen-share.ts       — Screen sharer detection, start/stop, auto-replace
@@ -56,13 +56,24 @@ Spatial config (src/lib/constants/)
 
 ## Spatial Position Model
 
-`position: SpatialPosition` is a required field on `VoiceParticipant`. A participant is not added to the `participants` list until their position data has arrived via `posUpdate` app message (or local placement on join). If a participant is in the list, it has a valid position — no fallbacks, no nullable fields.
+Positions are decoupled from React state. The provider owns a shared `positionsRef` (`Map<string, SpatialPosition>`) that the `use-spatial-positions` hook writes into. `VoiceParticipant` contains only identity/audio/video state — it has no `position` field.
 
-The provider owns positions in a shared `positionsRef` (`Map<string, SpatialPosition>`). When `updateParticipants()` builds the participant list from Daily.co's participant map, it skips any participant whose session ID is not yet in `positionsRef`. The `use-spatial-positions` hook writes into this ref and signals the provider to re-derive participants via an `onPositionsUpdated` callback (debounced at 50ms to batch rapid position updates).
+### Two data paths
 
-**Why position is part of the participant, not a separate data channel:** Position data and Daily.co participant data arrive via independent event sources (app messages vs. Daily.co SDK events). Keeping them as separate React state creates a window where a participant renders without a position. Making position a precondition for participant existence eliminates this class of bug structurally.
+| Data | Storage | Rendering | Update trigger |
+|---|---|---|---|
+| Participant list, badges, controls | React state (`participants`) | Normal React re-renders | Daily.co SDK events |
+| Positions, speaking glow | Refs (`positionsRef`, `AnalyserNode`) | `requestAnimationFrame` loops + direct DOM mutation | App messages, drag events |
 
-**Daily.co `participant-joined` event is intentionally not handled.** This event fires before the new participant has broadcast their position, so we have incomplete data. The participant materializes when their `posUpdate` message arrives and `updateParticipants` includes them with a real position. If a "joining in progress" indicator is needed in the future, `participant-joined` is the right hook point — listen for it and track pending session IDs separately from the `participants` list.
+This separation exists because position updates are high-frequency (drag events, ~30fps broadcasts) and must not trigger React re-renders. The canvas reads positions via `getPosition(sessionId)` — a stable callback that reads from `positionsRef` — and `DraggableAvatar` runs a rAF loop that sets `el.style.left/top` directly, same pattern as the speaking glow visualization.
+
+### Position access
+
+`getPosition(sessionId)` is exposed on the voice room context. It returns the current `SpatialPosition` from `positionsRef` or `undefined` if the participant has no position yet. Components that need positions (e.g., `DraggableAvatar`, overlap resolution) call this instead of reading from participant state.
+
+### Participant materialization
+
+`updateParticipants()` maps all participants from Daily.co's participant map unconditionally — it does not gate on position existence. A participant can briefly render without a position (the rAF loop in `DraggableAvatar` skips the DOM update until `getPosition` returns a value). Positions arrive shortly after via `posUpdate` app messages or local placement on join.
 
 ## Database Schema
 
@@ -232,7 +243,7 @@ Lock states are synced via app messages (`moderatorLock`). For late joiners, loc
 7. Issues a meeting token with `isOwner` (which also controls `enable_screenshare`) and `exp`
 8. `VoiceRoomProvider.join()` connects to the Daily.co room
 9. Local avatar is placed at a random non-overlapping position in the general zone; a `requestPositions` broadcast asks existing participants for their positions
-10. Existing participants reply with `positionSync` (positions + lock states); remote participants appear on the canvas as their `posUpdate` messages arrive
+10. Existing participants reply with `positionSync` (positions + lock states); positions are written into `positionsRef` and each avatar's rAF loop picks them up on the next frame
 11. `SpatialVoiceRoom` renders the spatial canvas with avatars
 
 ### Auto-leave triggers

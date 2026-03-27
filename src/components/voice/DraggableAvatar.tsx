@@ -19,27 +19,33 @@ interface DraggableAvatarProps {
 }
 
 export const DraggableAvatar = memo(function DraggableAvatar({ participant, canDrag }: DraggableAvatarProps) {
-  const { callObject, joined, moveLocal, moveOther, participants } = useVoiceRoom();
+  const { callObject, joined, moveLocal, moveOther, getPosition, participants } = useVoiceRoom();
   const [dragging, setDragging] = useState(false);
-  const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const dragStartRef = useRef<{ offsetX: number; offsetY: number } | null>(null);
+  const dragPosRef = useRef<{ x: number; y: number } | null>(null);
   const lastBroadcastRef = useRef(0);
 
-  // Clear stale dragPos when the provider's position catches up after drag ends.
-  // Uses the React "adjust state during render" pattern instead of an effect.
-  const [prevPosKey, setPrevPosKey] = useState("");
-  const posKey = `${participant.position.x},${participant.position.y}`;
-  if (posKey !== prevPosKey) {
-    setPrevPosKey(posKey);
-    if (!dragging) {
-      setDragPos(null);
-    }
-  }
+  // --- Position rendering via rAF (bypasses React state) ---
 
-  const pos = dragPos ?? participant.position;
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let rafId = 0;
+    const tick = () => {
+      const pos = dragPosRef.current ?? getPosition(participant.sessionId);
+      if (pos) {
+        el.style.left = `${(pos.x / CANVAS_WIDTH) * 100}%`;
+        el.style.top = `${(pos.y / CANVAS_HEIGHT) * 100}%`;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [participant.sessionId, getPosition]);
 
   // Attach video track when available
   useEffect(() => {
@@ -79,10 +85,10 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
       const scaleX = CANVAS_WIDTH / rect.width;
       const scaleY = CANVAS_HEIGHT / rect.height;
 
-      const currentX = pos.x;
-      const currentY = pos.y;
+      const pos = getPosition(participant.sessionId);
+      const currentX = pos?.x ?? 0;
+      const currentY = pos?.y ?? 0;
 
-      // Calculate offset from the pointer to the avatar's position
       const pointerX = (e.clientX - rect.left) * scaleX;
       const pointerY = (e.clientY - rect.top) * scaleY;
       dragStartRef.current = { offsetX: pointerX - currentX, offsetY: pointerY - currentY };
@@ -90,7 +96,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
       setDragging(true);
       containerRef.current?.setPointerCapture(e.pointerId);
     },
-    [canDrag, pos.x, pos.y]
+    [canDrag, getPosition, participant.sessionId]
   );
 
   const handlePointerMove = useCallback(
@@ -112,11 +118,11 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
       x = Math.max(0, Math.min(CANVAS_WIDTH - AVATAR_SIZE, x));
       y = Math.max(0, Math.min(CANVAS_HEIGHT - AVATAR_SIZE, y));
 
-      setDragPos({ x, y });
+      dragPosRef.current = { x, y };
 
-      // Broadcast position to other users (throttled ~20fps)
+      // Broadcast position to other users (throttled ~30fps)
       const now = Date.now();
-      if (now - lastBroadcastRef.current >= 50) {
+      if (now - lastBroadcastRef.current >= 33) {
         lastBroadcastRef.current = now;
         if (participant.isLocal) {
           moveLocal(x, y);
@@ -135,26 +141,26 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
       setDragging(false);
       dragStartRef.current = null;
 
-      if (!dragPos) return;
+      if (!dragPosRef.current) return;
 
       // Gamers cannot enter broadcast zone — push to nearest edge
-      let dropX = dragPos.x;
-      let dropY = dragPos.y;
+      let dropX = dragPosRef.current.x;
+      let dropY = dragPosRef.current.y;
       if (participant.role === "gamer") {
         const ejected = ejectFromBroadcastZone(dropX, dropY);
         dropX = ejected.x;
         dropY = ejected.y;
       }
 
-      // Resolve overlap: nudge so avatars don't stack on top of each other
+      // Resolve overlap: read positions from the ref (always fresh)
       const others: { x: number; y: number }[] = [];
       for (const p of participants) {
         if (p.sessionId !== participant.sessionId) {
-          others.push(p.position);
+          const pos = getPosition(p.sessionId);
+          if (pos) others.push(pos);
         }
       }
       const resolved = resolveOverlap(dropX, dropY, others);
-      setDragPos(resolved);
 
       // Send final position update
       if (participant.isLocal) {
@@ -163,10 +169,9 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
         moveOther(participant.sessionId, resolved.x, resolved.y);
       }
 
-      // Don't clear dragPos here — it gets cleared during render when
-      // the provider's position prop catches up, preventing snap-back.
+      dragPosRef.current = null;
     },
-    [dragging, dragPos, participant, moveLocal, moveOther, participants]
+    [dragging, participant, moveLocal, moveOther, participants, getPosition]
   );
 
   // Determine avatar size as percentage of canvas
@@ -183,8 +188,6 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
         !canDrag && "cursor-default"
       )}
       style={{
-        left: `${(pos.x / CANVAS_WIDTH) * 100}%`,
-        top: `${(pos.y / CANVAS_HEIGHT) * 100}%`,
         width: `${sizePercW}%`,
         height: `${sizePercH}%`,
       }}
