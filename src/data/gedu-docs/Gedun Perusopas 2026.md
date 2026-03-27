@@ -1,7 +1,6 @@
 # ℹ️ START
 
-![][image1]  
-Updated: 11.3.2026
+Updated: 27.3.2026
 
 Tähän perehdytysoppaaseen on koottu perusohjeita, \-tietoja ja useimmin kysyttyjä pulmia joita pelikasvattajamme työssään tarvitsevat. Oppaan uusin versio löytyy aina tästä linkistä ja välilehdeltä Update Log näet viimeisimmät muutokset. Voit **tikettijärjestelmän kautta** ehdottaa meille sisältöä joka mielestäsi puuttuu oppaasta tai kaipaa selvennystä.
 
@@ -99,6 +98,42 @@ Navigoi oppaassa vasemmalla olevien välilehtien kautta tai klikkaamalla alla ol
 * Myyntilauseita
 
 [**Update Log**](#update-log)
+
+# ❓ Minulla on kysymys
+
+# Minulla on kysymys
+
+## 🤖 GeduGuru-botti vastaa yleisiin kysymyksiin ja resetoi salasanoja
+
+Virtuaalitoimistolla Discordissa ahertaa GeduGuru-botti, joka osaa vastata yleisluontoisiin kysymyksiin ja resetoida Minecraft Education \-salasanoja. Kirjoita komento \#gedu-guru \-kanavalle, niin botti vastaa sinulle. Treenaamme bottia koko ajan. 
+
+GeduGuru-botti on Kategorian **Help** alla → **\#gedu-guru** 
+
+**Yleisluontoiset kysymykset**  
+Käytä bottia kun haluat kysyä esimerkiksi mistä löydät materiaalia, miten serverillä toimii X, mitä teen kun jne.
+
+/geduguru Mikä on School of Gaming?
+
+**Minecraft Education \-salasanojen resetointi**  
+GeduGuru osaa resetoida gamereiden ja Gedujen Minecraft Education \-salasanoja. Kuka vain voi resetoida botilla salasanan. Voit myös resetoida useita salasanoja kerrallaan.
+
+Gamereiden salasanaa ei tarvitse vaihtaa kirjautuessa, mutta gedun resetoitu salasana on väliaikainen ja se täytyy vaihtaa peliin kirjautuessa.
+
+/reset-password sog1234  
+/reset-password gedu.gedunen  
+/reset-password sog1234 sog5678 sog8910
+
+## 🎟️ Tiketin avaaminen virtuaalitoimistolla
+
+Tiketin voi avata kanavalla **\#open-ticket**, joka löytyy palvelimen ylälaidasta **Lobby-kategoriasta**. Valitse parhaiten asiaasi kuvaava tiketti. Voit kirjoittaa tikettisi suomeksi tai englanniksi. Jos etsit tuuraustikettiä, katso välilehti [Tuurauskäytännöt](#tuurauskäytännöt). Yleisiin kysymyksiin ja Minecraft Education \-salasanojen resetointiin käytä GeduGuru-bottia.
+
+**Onkohan asiani tarpeeksi suuri tikettiä varten..**.  
+Tiketillä voit hoitaa niin isot kuin pienetkin asiat\!
+
+**Kuka tiketit näkee?**  
+Vain School of Gamingin henkilökunta näkee tiketit tuuraustikettejä lukuun ottamatta. Tuuraustiketit näkyvät myös tuurauspoolissa oleville pelikasvattajille.
+
+*P.S. Saatat törmätä Happinappiin. 👀*
 
 # 🌠 SOGin toiminta
 
@@ -261,13 +296,11 @@ Tämän kategorian alla on kaikki työhön liittyvät kanavat, mukaan lukien ilm
 **Pidä seurannassa \#announcements, sillä se on tärkein tiedotuskanavamme.**  
 Kanavalla \#office voi jutella työhön liittyvistä asioista. Henkilökuntaa tavoitellessa käytä silti tikettejä.
 
-**![][image2]**
+****
 
 ## SOG Lounge \= Geduyhteisö
 
 Serverillä on alue nimeltä Lounge, jossa voi tutustua muihin pelikasvattajiin myös peliharrastukseen liittyvien aiheiden ulkopuolella. Voit rupatella niitä näitä kahvihuoneessa tai avata foorumipostauksen jostain tietystä aiheesta.
-
-![][image3]
 
 # 📄 SOGGA
 
@@ -351,12 +384,10 @@ The new lesson’s default state will show as scheduled.
 **How to?**
 
 Open the correct club page.  
-**![][image4]**
+****
 
 Add a new lesson by clicking the plus sign. Make sure the time and date matches  
 the club details and press create. A new lesson appears.
-
-![][image5]
 
 ## 2\. Book the participants
 
@@ -364,8 +395,6 @@ At the start of the club, do the roll-call and mark the present gamers in the pa
 
 **How to?**  
 Click the title PARTICIPANTS on the lesson and checkbox the ones present. The gamers are sorted alphabetically by their Discord user name. You may press save and book more participants if some gamers are late. Your previously marked participants will stay marked. The amount of marked participants will be visible inside brackets.
-
-![][image6]
 
 ## 3\. Write a lesson report and mark the lesson Done
 
@@ -376,8 +405,6 @@ When you are ready, mark the lesson status as Done. Only marking a lesson Done w
 **How to?**  
 Click the edit button on the lesson (pen icon) and write your report in the text field. Click the Lesson status menu and select Done. Then finish by clicking update. If you need to edit something, click the lock icon and edit the lesson.
 
-![][image7]
-
 ## 4\. Check invoicing period and mark it ready to be invoiced
 
 At the end of each month check your report for the invoicing period containing all the lessons you have run during the month mark them ready so that SOG staff can approve them. When everything is in order in the invoicing period, mark it Ready.
@@ -387,13 +414,9 @@ At the end of each month check your report for the invoicing period containing a
 **How to?**  
 Open the Invoicing period by clicking INVOICING on the menu left side. Open the invoicing report and click the button below stating READY. You should now see Waiting for approval text appear on the status button below. Now wait for the Staff to approve your Invoicing.
 
-![][image8]
-
 ## 5\. Send the Invoice (not Truster Collective)
 
 Create and send us the Invoice after your invoicing period has been approved. You will see your status on the Sogga Home Page. Truster Collective Gedu’s do nothing after your invoice has been approved.
-
-![][image9]
 
 **What needs to be on the invoice?**
 
@@ -474,8 +497,6 @@ Käytä asiakasviestintään aina School of Gamingilta käyttöön saamaasi säh
 
 **BCC eli piilokopio**  
 Asiakkaat eivät saa nähdä toistensa yhteystietoja. Siksi vastaanottajat listätään piilokopiona kun vastaanottajia on useampi. Webmailissa piilokopio-kenttä lisätään klikkaamalla **plus-symbolia** vastaanottajien kentässä.
-
-![][image10]
 
 ## Hyvät sähköpostikäytännöt
 
@@ -700,7 +721,7 @@ Yty on iänikuista voimaa, jolla koko Sogverse pysyy pystyssä. Gamerit kerääv
 
 Alla on Sogversen seikkailukartta vuodelta 2023\. Kartasta näkyy muutamia kolkkia, jotka ovat myös kuluttajapuolen palvelimia.  
 Klikkaa isommaksi.  
-[![][image11]](https://drive.google.com/file/d/1uzu7j7BPQtpNbM9bzVUF62-S0a7_x31r/view?usp=drive_link)
+[](https://drive.google.com/file/d/1uzu7j7BPQtpNbM9bzVUF62-S0a7_x31r/view?usp=drive_link)
 
 ## Sogversen rakentajat
 
@@ -751,9 +772,6 @@ Ou jea\! Pistähän tikettiä tulemaan. Kanavalla **\#open-ticket** on tiketti k
 📍 **Itälahdenkatu 23 B, kerros 5**
 
 Meillä on Lauttasaaressa toimistotila, jossa järjestämme myös kerhoja ja leirejä. Kaikki pelikasvattajat ovat tervetulleita työskentelemään myös toimistolla\!
-
-![][image12]  
-  
 
 # 🧡 Apuja ryhmänohjaukseen
 
@@ -808,7 +826,7 @@ Aina kurinpitotoimia tehdessä **lähetämme lapsen huoltajalle viestiä kotiin*
 Kurinpitoportaikossa on kuvattu miten kerholaisen sääntörikkeiden kanssa voi toimia. Portaikko ei toimi mustavalkoisesti jokaisen kanssa, vaan sitä käytetään aina tilannekohtaisesti. Pyydä tarvittaessa apua henkilökunnalta.
 
 Klikkaa isommaksi \[PDF\].  
-[![][image13]](https://drive.google.com/file/d/1LyzAHO4HMF6dfdrOz307geRCI8_55nUy/view?usp=drive_link)
+[](https://drive.google.com/file/d/1LyzAHO4HMF6dfdrOz307geRCI8_55nUy/view?usp=drive_link)
 
 ## Palautteen antaminen
 
@@ -914,6 +932,9 @@ Tehdään yhteistyötä turvallisen verkkopelaamisen puolesta\!
 # ♻️ Update Log
 
 # Update Log {#update-log}
+
+**27.3.2026**  
+GeduGuru-botti on otettu käyttöön ja sen ohjeistus lisätty tabiin: Minulla on kysymys. Tästä eteenpäin yleisluontoiset kysymykset menee GeduGurun kautta.
 
 **11.3.2026**  
 Opas muutettiin PDF-muodosta Google Docsiin ja sisältöä lisättiin sekä päivitettiin. Suurin päivitys koskee tuurauskäytäntöjä: sairaudesta on ilmoitettava aamulla ja yllärilomamatkat eivät ole pätevä syy jättää toimeksianto hoitamatta.

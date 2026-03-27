@@ -21,6 +21,8 @@ for (const filename of files) {
     .replace(/^\[image\d+\]:?\s*<data:image\/[^>]+>\s*$/gm, "")
     // Remove inline ![alt](data:image/...) references
     .replace(/!\[[^\]]*\]\(data:image\/[^)]+\)/g, "")
+    // Remove ![][imageN] reference-style image tags (left behind after stripping definitions)
+    .replace(/!\[\]\[image\d+\]\s*/g, "")
     // Collapse 3+ consecutive blank lines into 2
     .replace(/\n{3,}/g, "\n\n")
     .trim() + "\n";
