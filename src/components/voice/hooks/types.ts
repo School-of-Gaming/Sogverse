@@ -60,7 +60,7 @@ export interface VoiceRoomContextValue {
   // Spatial extensions
   localZone: ZoneId;
   localRole: UserRole;
-  getPosition: (sessionId: string) => SpatialPosition | undefined;
+  getPosition: (sessionId: string) => SpatialPosition;
   moveLocal: (x: number, y: number) => void;
   moveOther: (targetSessionId: string, x: number, y: number) => void;
   // Audio analysis

@@ -28,8 +28,9 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
   const dragPosRef = useRef<{ x: number; y: number } | null>(null);
   const lastBroadcastRef = useRef(0);
 
-  // --- Position rendering via rAF (bypasses React state) ---
-
+  // Position loop — runs per avatar but each tick is trivial (one ref read +
+  // two style sets). The browser coalesces all rAF callbacks into a single
+  // frame, so N avatars ≠ N frames. Same pattern as use-speaking-glow.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -37,10 +38,8 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
     let rafId = 0;
     const tick = () => {
       const pos = dragPosRef.current ?? getPosition(participant.sessionId);
-      if (pos) {
-        el.style.left = `${(pos.x / CANVAS_WIDTH) * 100}%`;
-        el.style.top = `${(pos.y / CANVAS_HEIGHT) * 100}%`;
-      }
+      el.style.left = `${(pos.x / CANVAS_WIDTH) * 100}%`;
+      el.style.top = `${(pos.y / CANVAS_HEIGHT) * 100}%`;
       rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
@@ -86,8 +85,8 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
       const scaleY = CANVAS_HEIGHT / rect.height;
 
       const pos = getPosition(participant.sessionId);
-      const currentX = pos?.x ?? 0;
-      const currentY = pos?.y ?? 0;
+      const currentX = pos.x;
+      const currentY = pos.y;
 
       const pointerX = (e.clientX - rect.left) * scaleX;
       const pointerY = (e.clientY - rect.top) * scaleY;
@@ -156,8 +155,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
       const others: { x: number; y: number }[] = [];
       for (const p of participants) {
         if (p.sessionId !== participant.sessionId) {
-          const pos = getPosition(p.sessionId);
-          if (pos) others.push(pos);
+          others.push(getPosition(p.sessionId));
         }
       }
       const resolved = resolveOverlap(dropX, dropY, others);
@@ -177,6 +175,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
   // Determine avatar size as percentage of canvas
   const sizePercW = (AVATAR_SIZE / CANVAS_WIDTH) * 100;
   const sizePercH = (AVATAR_SIZE / CANVAS_HEIGHT) * 100;
+  const initialPos = getPosition(participant.sessionId);
 
   return (
     <div
@@ -188,6 +187,8 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
         !canDrag && "cursor-default"
       )}
       style={{
+        left: `${(initialPos.x / CANVAS_WIDTH) * 100}%`,
+        top: `${(initialPos.y / CANVAS_HEIGHT) * 100}%`,
         width: `${sizePercW}%`,
         height: `${sizePercH}%`,
       }}

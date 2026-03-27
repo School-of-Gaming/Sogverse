@@ -69,11 +69,11 @@ This separation exists because position updates are high-frequency (drag events,
 
 ### Position access
 
-`getPosition(sessionId)` is exposed on the voice room context. It returns the current `SpatialPosition` from `positionsRef` or `undefined` if the participant has no position yet. Components that need positions (e.g., `DraggableAvatar`, overlap resolution) call this instead of reading from participant state.
+`getPosition(sessionId)` is exposed on the voice room context. It returns the current `SpatialPosition` from `positionsRef`. The return type is non-nullable — every participant in the list is guaranteed to have a position (enforced by the gate in `updateParticipants`).
 
 ### Participant materialization
 
-`updateParticipants()` maps all participants from Daily.co's participant map unconditionally — it does not gate on position existence. A participant can briefly render without a position (the rAF loop in `DraggableAvatar` skips the DOM update until `getPosition` returns a value). Positions arrive shortly after via `posUpdate` app messages or local placement on join.
+`updateParticipants()` skips any participant whose session ID is not yet in `positionsRef`. A participant appears on the canvas only after their position data has arrived via `posUpdate` app message (or local placement on join). This guarantees that every rendered avatar has a valid position — no fallbacks, no nullable fields.
 
 ## Database Schema
 

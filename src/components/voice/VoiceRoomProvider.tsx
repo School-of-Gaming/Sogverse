@@ -97,8 +97,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
   // --- Position access (ref-based, no React re-renders) ---
 
-  const getPosition = useCallback((sessionId: string) => {
-    return positionsRef.current.get(sessionId);
+  const getPosition = useCallback((sessionId: string): SpatialPosition => {
+    const pos = positionsRef.current.get(sessionId);
+    if (!pos) throw new Error(`No position for session ${sessionId} — participant should not be in the list without a position`);
+    return pos;
   }, []);
 
   // --- Participant management ---
@@ -107,7 +109,11 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     if (!joinedRef.current) return;
 
     const pMap = co.participants();
-    const list = Object.values(pMap).map((p) => mapParticipant(p, activeSpeakerIdRef.current));
+    const list: VoiceParticipant[] = [];
+    for (const p of Object.values(pMap)) {
+      if (!positionsRef.current.has(p.session_id)) continue;
+      list.push(mapParticipant(p, activeSpeakerIdRef.current));
+    }
     setParticipants(list);
 
     const local = pMap.local;
