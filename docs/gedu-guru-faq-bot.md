@@ -4,10 +4,10 @@ Gedu Guru is an AI assistant for game educators (gedus), powered by Gemini and d
 
 ## How It Works
 
-1. A gedu types `/kysy` or `/apua` in Discord with a question
+1. A gedu types `/geduguru` or `/happinappi` in Discord with a question
 2. Discord POSTs to `/api/discord/interactions` on our Vercel deployment
 3. The route verifies the request signature, defers a response ("thinking..."), then uses `after()` to keep the function alive
-4. `src/lib/gemini.ts` uploads the PDFs from `src/data/gedu-docs/` to Gemini's File API (cached in memory per function instance) and sends the question with the system prompt
+4. `src/lib/gemini.ts` uploads the markdown docs from `src/data/gedu-docs/` to Gemini's File API (cached in memory per function instance) and sends the question with the system prompt
 5. The answer (with the original question in bold) is PATCHed back to Discord
 
 ## Key Files
@@ -15,8 +15,8 @@ Gedu Guru is an AI assistant for game educators (gedus), powered by Gemini and d
 | File | Purpose |
 |---|---|
 | `src/app/api/discord/interactions/route.ts` | Discord interactions endpoint — signature verification, defer, follow-up |
-| `src/lib/gemini.ts` | Gemini client — uploads PDFs, sends questions, returns answers |
-| `src/data/gedu-docs/` | PDF documents that Gedu Guru uses as knowledge base |
+| `src/lib/gemini.ts` | Gemini client — uploads docs, sends questions, returns answers |
+| `src/data/gedu-docs/` | Markdown documents that Gedu Guru uses as knowledge base |
 | `scripts/register-discord-command.ts` | One-time script to register slash commands with Discord |
 
 ## Environment Variables
@@ -47,14 +47,12 @@ npx tsx scripts/register-discord-command.ts
 This uses a bulk `PUT` — whatever commands are in the script become the full list. Edit the script and re-run to update.
 
 Current commands:
-- `/kysy` — "Kysy kysymys Sogversen avustajalta"
-- `/apua` — "Pyydä apua Sogversen avustajalta"
-
-Both do the same thing — take a `kysymys` (question) parameter and send it to Gemini.
+- `/geduguru` — "Kysy kysymys Gedu Gurulta" (takes a `kysymys` parameter)
+- `/happinappi` — "Paina Happinappia ja saat happea!" (takes a `viesti` parameter)
 
 ## Updating FAQ Documents
 
-1. Replace or add PDF files in `src/data/gedu-docs/`
+1. Replace or add markdown files in `src/data/gedu-docs/`
 2. Commit and deploy
 3. The first request after deploy will upload the new files to Gemini's File API
 

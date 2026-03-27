@@ -21,7 +21,7 @@ async function getDocFiles() {
     .filter((f) => /\.(pdf|md)$/i.test(f));
 
   if (files.length === 0) {
-    throw new Error("No PDF files found in src/data/gedu-docs/");
+    throw new Error("No document files found in src/data/gedu-docs/");
   }
 
   cachedFiles = await Promise.all(

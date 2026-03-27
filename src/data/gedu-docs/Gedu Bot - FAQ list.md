@@ -1,7 +1,5 @@
 # Selitteitä
 
-# Selitteitä
-
 **Minecraft Education**  
 Tästä voidaan puhua myös nimellä Mine Edu tai vain Edu.
 
