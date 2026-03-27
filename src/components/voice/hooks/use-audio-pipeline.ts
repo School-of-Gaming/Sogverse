@@ -237,5 +237,5 @@ export function useAudioPipeline({ callObjectRef, positionsRef, analyserRefsRef 
     createAudioContext,
     onParticipantLeft,
     reset,
-  } as const;
+  };
 }
