@@ -1,6 +1,5 @@
 import { useEffect, type RefObject } from "react";
 import { computeGlowStyle } from "@/lib/constants/spatial.config";
-import { useVoiceRoom } from "../VoiceRoomProvider";
 
 /**
  * Animate a white speaking glow on a DOM element using the participant's
@@ -9,11 +8,9 @@ import { useVoiceRoom } from "../VoiceRoomProvider";
  */
 export function useSpeakingGlow(
   ref: RefObject<HTMLElement | null>,
-  sessionId: string,
+  analyserRef: { current: AnalyserNode | null },
   audioOn: boolean,
 ) {
-  const { getAnalyser } = useVoiceRoom();
-
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -28,7 +25,7 @@ export function useSpeakingGlow(
     let rafId = 0;
 
     const tick = () => {
-      const analyser = getAnalyser(sessionId);
+      const analyser = analyserRef.current;
       if (analyser) {
         analyser.getByteTimeDomainData(dataArray);
         let sum = 0;
@@ -50,5 +47,5 @@ export function useSpeakingGlow(
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [ref, getAnalyser, sessionId, audioOn]);
+  }, [ref, analyserRef, audioOn]);
 }

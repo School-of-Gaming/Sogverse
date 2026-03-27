@@ -70,7 +70,7 @@ function ParticipantRowWithGlow({
   onLock: (track: "audio" | "video", locked: boolean) => void;
 }) {
   const avatarRef = useRef<HTMLDivElement>(null);
-  useSpeakingGlow(avatarRef, participant.sessionId, participant.audioOn);
+  useSpeakingGlow(avatarRef, participant.analyserRef, participant.audioOn);
 
   return (
     <ParticipantRow

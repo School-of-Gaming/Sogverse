@@ -19,7 +19,7 @@ interface DraggableAvatarProps {
 }
 
 export const DraggableAvatar = memo(function DraggableAvatar({ participant, canDrag }: DraggableAvatarProps) {
-  const { callObject, joined, moveLocal, moveOther, getPosition, participants } = useVoiceRoom();
+  const { callObject, joined, moveLocal, moveOther, participants } = useVoiceRoom();
   const [dragging, setDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -37,14 +37,14 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
 
     let rafId = 0;
     const tick = () => {
-      const pos = dragPosRef.current ?? getPosition(participant.sessionId);
+      const pos = dragPosRef.current ?? participant.positionRef.current;
       el.style.left = `${(pos.x / CANVAS_WIDTH) * 100}%`;
       el.style.top = `${(pos.y / CANVAS_HEIGHT) * 100}%`;
       rafId = requestAnimationFrame(tick);
     };
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [participant.sessionId, getPosition]);
+  }, [participant.positionRef]);
 
   // Attach video track when available
   useEffect(() => {
@@ -69,34 +69,31 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
     }
   }, [callObject, joined, participant.sessionId, participant.videoOn]);
 
-  useSpeakingGlow(frameRef, participant.sessionId, participant.audioOn);
+  useSpeakingGlow(frameRef, participant.analyserRef, participant.audioOn);
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => {
-      if (!canDrag) return;
-      e.preventDefault();
-      e.stopPropagation();
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (!canDrag) return;
+    e.preventDefault();
+    e.stopPropagation();
 
-      const container = containerRef.current?.parentElement;
-      if (!container) return;
+    const container = containerRef.current?.parentElement;
+    if (!container) return;
 
-      const rect = container.getBoundingClientRect();
-      const scaleX = CANVAS_WIDTH / rect.width;
-      const scaleY = CANVAS_HEIGHT / rect.height;
+    const rect = container.getBoundingClientRect();
+    const scaleX = CANVAS_WIDTH / rect.width;
+    const scaleY = CANVAS_HEIGHT / rect.height;
 
-      const pos = getPosition(participant.sessionId);
-      const currentX = pos.x;
-      const currentY = pos.y;
+    const pos = participant.positionRef.current;
+    const currentX = pos.x;
+    const currentY = pos.y;
 
-      const pointerX = (e.clientX - rect.left) * scaleX;
-      const pointerY = (e.clientY - rect.top) * scaleY;
-      dragStartRef.current = { offsetX: pointerX - currentX, offsetY: pointerY - currentY };
+    const pointerX = (e.clientX - rect.left) * scaleX;
+    const pointerY = (e.clientY - rect.top) * scaleY;
+    dragStartRef.current = { offsetX: pointerX - currentX, offsetY: pointerY - currentY };
 
-      setDragging(true);
-      containerRef.current?.setPointerCapture(e.pointerId);
-    },
-    [canDrag, getPosition, participant.sessionId]
-  );
+    setDragging(true);
+    containerRef.current?.setPointerCapture(e.pointerId);
+  };
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
@@ -155,7 +152,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
       const others: { x: number; y: number }[] = [];
       for (const p of participants) {
         if (p.sessionId !== participant.sessionId) {
-          others.push(getPosition(p.sessionId));
+          others.push(p.positionRef.current);
         }
       }
       const resolved = resolveOverlap(dropX, dropY, others);
@@ -169,13 +166,13 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
 
       dragPosRef.current = null;
     },
-    [dragging, participant, moveLocal, moveOther, participants, getPosition]
+    [dragging, participant, moveLocal, moveOther, participants]
   );
 
   // Determine avatar size as percentage of canvas
   const sizePercW = (AVATAR_SIZE / CANVAS_WIDTH) * 100;
   const sizePercH = (AVATAR_SIZE / CANVAS_HEIGHT) * 100;
-  const initialPos = getPosition(participant.sessionId);
+  const initialPos = participant.positionRef.current;
 
   return (
     <div

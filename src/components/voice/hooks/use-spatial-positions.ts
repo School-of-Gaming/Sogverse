@@ -14,7 +14,7 @@ import type { AppMessage, LockState } from "./types";
 
 interface UseSpatialPositionsParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
-  positionsRef: React.MutableRefObject<Map<string, SpatialPosition>>;
+  positionsRef: React.MutableRefObject<Map<string, { current: SpatialPosition }>>;
   onPositionChanged: () => void;
 }
 
@@ -29,6 +29,16 @@ export function useSpatialPositions({
   onPositionChanged,
 }: UseSpatialPositionsParams) {
   const [localZone, setLocalZone] = useState<ZoneId>("general");
+
+  /** Get or create a stable ref holder for a session's position. */
+  const setPosition = useCallback((sid: string, pos: SpatialPosition) => {
+    const existing = positionsRef.current.get(sid);
+    if (existing) {
+      existing.current = pos;
+    } else {
+      positionsRef.current.set(sid, { current: pos });
+    }
+  }, [positionsRef]);
 
   const broadcastPosition = useCallback((sessionId: string, position: SpatialPosition) => {
     const co = callObjectRef.current;
@@ -46,11 +56,11 @@ export function useSpatialPositions({
     const zone = getZoneAtPosition(x, y);
     const position: SpatialPosition = { x, y, zone };
 
-    positionsRef.current.set(sessionId, position);
+    setPosition(sessionId, position);
     setLocalZone(zone);
     broadcastPosition(sessionId, position);
     onPositionChanged();
-  }, [callObjectRef, positionsRef, broadcastPosition, onPositionChanged]);
+  }, [callObjectRef, setPosition, broadcastPosition, onPositionChanged]);
 
   const moveOther = useCallback((targetSessionId: string, x: number, y: number) => {
     const co = callObjectRef.current;
@@ -59,12 +69,12 @@ export function useSpatialPositions({
     const zone = getZoneAtPosition(x, y);
     const position: SpatialPosition = { x, y, zone };
 
-    positionsRef.current.set(targetSessionId, position);
+    setPosition(targetSessionId, position);
     onPositionChanged();
 
     const msg: AppMessage = { type: "moveUser", targetSessionId, position };
     co.sendAppMessage(msg, "*");
-  }, [callObjectRef, positionsRef, onPositionChanged]);
+  }, [callObjectRef, setPosition, onPositionChanged]);
 
   /** Place local avatar and request positions from existing participants */
   const onJoined = useCallback((localSessionId: string) => {
@@ -72,17 +82,17 @@ export function useSpatialPositions({
     if (!co) return;
 
     const randomPos = getRandomPositionInZone("general");
-    const others = Array.from(positionsRef.current.values());
+    const others = Array.from(positionsRef.current.values()).map(r => r.current);
     const pos = resolveOverlap(randomPos.x, randomPos.y, others);
     const zone = getZoneAtPosition(pos.x, pos.y);
     const spatialPos: SpatialPosition = { ...pos, zone };
-    positionsRef.current.set(localSessionId, spatialPos);
+    setPosition(localSessionId, spatialPos);
     setLocalZone(zone);
     broadcastPosition(localSessionId, spatialPos);
 
     const msg: AppMessage = { type: "requestPositions" };
     co.sendAppMessage(msg, "*");
-  }, [callObjectRef, positionsRef, broadcastPosition]);
+  }, [callObjectRef, positionsRef, setPosition, broadcastPosition]);
 
   const onParticipantLeft = useCallback((sessionId: string) => {
     positionsRef.current.delete(sessionId);
@@ -100,7 +110,7 @@ export function useSpatialPositions({
         const localSid = co.participants().local.session_id;
         for (const [sid, pos] of Object.entries(msg.positions)) {
           if (sid !== localSid) {
-            positionsRef.current.set(sid, pos);
+            setPosition(sid, pos);
           }
         }
         if (onLockStatesReceived) {
@@ -114,7 +124,7 @@ export function useSpatialPositions({
         if (msg.sessionId !== fromId) break;
         const localSid = co.participants().local.session_id;
         if (msg.sessionId !== localSid) {
-          positionsRef.current.set(msg.sessionId, msg.position);
+          setPosition(msg.sessionId, msg.position);
           onPositionChanged();
         }
         break;
@@ -135,18 +145,18 @@ export function useSpatialPositions({
             finalPos = { ...ejected, zone: ejectedZone };
           }
 
-          positionsRef.current.set(localSid, finalPos);
+          setPosition(localSid, finalPos);
           setLocalZone(finalPos.zone);
           onPositionChanged();
           broadcastPosition(localSid, finalPos);
         } else {
-          positionsRef.current.set(msg.targetSessionId, msg.position);
+          setPosition(msg.targetSessionId, msg.position);
           onPositionChanged();
         }
         break;
       }
     }
-  }, [positionsRef, onPositionChanged, broadcastPosition]);
+  }, [setPosition, onPositionChanged, broadcastPosition]);
 
   const reset = useCallback(() => {
     positionsRef.current.clear();

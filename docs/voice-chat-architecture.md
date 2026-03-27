@@ -56,24 +56,26 @@ Spatial config (src/lib/constants/)
 
 ## Spatial Position Model
 
-Positions are decoupled from React state. The provider owns a shared `positionsRef` (`Map<string, SpatialPosition>`) that the `use-spatial-positions` hook writes into. `VoiceParticipant` contains only identity/audio/video state — it has no `position` field.
+`VoiceParticipant` carries both React state fields (identity, audio, video) and mutable ref fields (`positionRef`, `analyserRef`). The ref fields are `{ current: T }` objects — mutating `.current` does not trigger React re-renders, so high-frequency updates (drag positions, analyser data) stay outside the React render cycle.
 
 ### Two data paths
 
 | Data | Storage | Rendering | Update trigger |
 |---|---|---|---|
-| Participant list, badges, controls | React state (`participants`) | Normal React re-renders | Daily.co SDK events |
-| Positions, speaking glow | Refs (`positionsRef`, `AnalyserNode`) | `requestAnimationFrame` loops + direct DOM mutation | App messages, drag events |
+| Identity, audio/video state, badges | `VoiceParticipant` plain fields | Normal React re-renders | Daily.co SDK events |
+| Positions, speaking glow | `VoiceParticipant` ref fields (`positionRef`, `analyserRef`) | `requestAnimationFrame` loops + direct DOM mutation | App messages, drag events, audio pipeline |
 
-This separation exists because position updates are high-frequency (drag events, ~30fps broadcasts) and must not trigger React re-renders. The canvas reads positions via `getPosition(sessionId)` — a stable callback that reads from `positionsRef` — and `DraggableAvatar` runs a rAF loop that sets `el.style.left/top` directly, same pattern as the speaking glow visualization.
+This separation exists because position updates are high-frequency (drag events, ~30fps broadcasts) and must not trigger React re-renders. `DraggableAvatar` reads `participant.positionRef.current` in a rAF loop and sets `el.style.left/top` directly. `useSpeakingGlow` reads `participant.analyserRef.current` in the same pattern.
 
-### Position access
+### Ref holder lifecycle
 
-`getPosition(sessionId)` is exposed on the voice room context. It returns the current `SpatialPosition` from `positionsRef`. The return type is non-nullable — every participant in the list is guaranteed to have a position (enforced by the gate in `updateParticipants`).
+The provider owns two backing maps: `positionsRef` (`Map<string, { current: SpatialPosition }>`) and `analyserRefsRef` (`Map<string, { current: AnalyserNode | null }>`). When `updateParticipants` builds the participant list, it attaches the matching ref holders from these maps directly onto each `VoiceParticipant`. Consumers read `participant.positionRef.current` and `participant.analyserRef.current` — never the maps. This gives type safety by construction: if you have a participant, you have its position and analyser refs.
+
+The backing maps are internal to the provider and its hooks. The spatial hook writes position ref holders; the audio pipeline writes analyser ref holders. Consumers never touch the maps.
 
 ### Participant materialization
 
-`updateParticipants()` skips any participant whose session ID is not yet in `positionsRef`. A participant appears on the canvas only after their position data has arrived via `posUpdate` app message (or local placement on join). This guarantees that every rendered avatar has a valid position — no fallbacks, no nullable fields.
+`updateParticipants()` skips any participant whose session ID is not yet in `positionsRef`. A participant appears on the canvas only after their position data has arrived via `posUpdate` app message (or local placement on join). When spatial messages (`positionSync`, `posUpdate`) arrive, the provider re-derives the participant list so newly-positioned participants materialize immediately.
 
 ## Database Schema
 
@@ -243,7 +245,7 @@ Lock states are synced via app messages (`moderatorLock`). For late joiners, loc
 7. Issues a meeting token with `isOwner` (which also controls `enable_screenshare`) and `exp`
 8. `VoiceRoomProvider.join()` connects to the Daily.co room
 9. Local avatar is placed at a random non-overlapping position in the general zone; a `requestPositions` broadcast asks existing participants for their positions
-10. Existing participants reply with `positionSync` (positions + lock states); positions are written into `positionsRef` and each avatar's rAF loop picks them up on the next frame
+10. Existing participants reply with `positionSync` (positions + lock states); positions are written into ref holders and the provider re-derives participants so they materialize immediately; each avatar's rAF loop picks up positions on the next frame
 11. `SpatialVoiceRoom` renders the spatial canvas with avatars
 
 ### Auto-leave triggers

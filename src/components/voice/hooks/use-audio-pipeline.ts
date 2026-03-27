@@ -7,7 +7,8 @@ import type { AudioNodes } from "./types";
 
 interface UseAudioPipelineParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
-  positionsRef: React.MutableRefObject<Map<string, SpatialPosition>>;
+  positionsRef: React.MutableRefObject<Map<string, { current: SpatialPosition }>>;
+  analyserRefsRef: React.MutableRefObject<Map<string, { current: AnalyserNode | null }>>;
 }
 
 async function ensureAudioContextResumed(ctx: AudioContext): Promise<void> {
@@ -16,7 +17,7 @@ async function ensureAudioContextResumed(ctx: AudioContext): Promise<void> {
   }
 }
 
-export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipelineParams) {
+export function useAudioPipeline({ callObjectRef, positionsRef, analyserRefsRef }: UseAudioPipelineParams) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioNodesRef = useRef<Map<string, AudioNodes>>(new Map());
   const audioTrackIdsRef = useRef<Map<string, string>>(new Map());
@@ -33,11 +34,11 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
 
     const localSessionId = co.participants().local.session_id;
 
-    const localPos = positionsRef.current.get(localSessionId);
+    const localPos = positionsRef.current.get(localSessionId)?.current;
     const lZone = localPos?.zone ?? "general";
 
     for (const [sessionId, nodes] of audioNodesRef.current) {
-      const remotePos = positionsRef.current.get(sessionId);
+      const remotePos = positionsRef.current.get(sessionId)?.current;
       const rZone = remotePos?.zone ?? "general";
       const multiplier = volumeMultipliersRef.current.get(sessionId) ?? 1.0;
       nodes.element.volume = canHearZone(lZone, rZone) ? multiplier : 0;
@@ -111,6 +112,14 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
         analyserSource.connect(analyser);
 
         audioNodesRef.current.set(p.session_id, { element, analyserSource, analyser });
+
+        // Update the shared analyser ref holder
+        const aRef = analyserRefsRef.current.get(p.session_id);
+        if (aRef) {
+          aRef.current = analyser;
+        } else {
+          analyserRefsRef.current.set(p.session_id, { current: analyser });
+        }
       }
     }
 
@@ -127,13 +136,17 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
           nodes.element.remove();
         }
         audioNodesRef.current.delete(sessionId);
+
+        const aRef = analyserRefsRef.current.get(sessionId);
+        if (aRef) aRef.current = null;
+        analyserRefsRef.current.delete(sessionId);
       }
     }
 
     if (changed) {
       updateAudioRouting();
     }
-  }, [updateAudioRouting]);
+  }, [updateAudioRouting, analyserRefsRef]);
 
   /** Manage analyser for local user's mic track (glow visualization only) */
   const manageLocalAnalyser = useCallback((co: DailyCall) => {
@@ -141,6 +154,7 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
     if (!ctx) return;
 
     const local = co.participants().local;
+    const localSid = local.session_id;
     const audioTrack = local.tracks.audio;
     if (audioTrack.state === "playable" && audioTrack.persistentTrack) {
       const existingTrack = localAnalyserRef.current?.source.mediaStream.getAudioTracks()[0];
@@ -154,21 +168,17 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
         analyser.fftSize = 256;
         source.connect(analyser);
         localAnalyserRef.current = { source, analyser };
-      }
-    }
-  }, []);
 
-  /** Get the AnalyserNode for a participant (local or remote) */
-  const getAnalyser = useCallback((sessionId: string): AnalyserNode | null => {
-    const co = callObjectRef.current;
-    if (co) {
-      const localSid = co.participants().local.session_id;
-      if (sessionId === localSid && localAnalyserRef.current) {
-        return localAnalyserRef.current.analyser;
+        // Update the shared analyser ref holder
+        const aRef = analyserRefsRef.current.get(localSid);
+        if (aRef) {
+          aRef.current = analyser;
+        } else {
+          analyserRefsRef.current.set(localSid, { current: analyser });
+        }
       }
     }
-    return audioNodesRef.current.get(sessionId)?.analyser ?? null;
-  }, [callObjectRef]);
+  }, [analyserRefsRef]);
 
   /** Clean up all audio nodes and elements */
   const cleanupAudioNodes = useCallback(() => {
@@ -178,6 +188,7 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
     }
     audioNodesRef.current.clear();
     audioTrackIdsRef.current.clear();
+    analyserRefsRef.current.clear();
 
     if (localAnalyserRef.current) {
       localAnalyserRef.current.source.disconnect();
@@ -188,7 +199,7 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
       audioContextRef.current.close().catch(() => {});
       audioContextRef.current = null;
     }
-  }, []);
+  }, [analyserRefsRef]);
 
   // Clean up on unmount
   useEffect(() => {
@@ -200,11 +211,14 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
     audioContextRef.current = new AudioContext();
   }, []);
 
-  /** Clean up volume multiplier for a participant who left */
+  /** Clean up volume multiplier and analyser ref for a participant who left */
   const onParticipantLeft = useCallback((sessionId: string) => {
     volumeMultipliersRef.current.delete(sessionId);
     setVolumeMultipliers(new Map(volumeMultipliersRef.current));
-  }, []);
+    const aRef = analyserRefsRef.current.get(sessionId);
+    if (aRef) aRef.current = null;
+    analyserRefsRef.current.delete(sessionId);
+  }, [analyserRefsRef]);
 
   /** Reset all state (join/leave) */
   const reset = useCallback(() => {
@@ -216,7 +230,6 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
   return {
     volumeMultipliers,
     setParticipantVolume,
-    getAnalyser,
     updateAudioRouting,
     manageAudioNodes,
     manageLocalAnalyser,
@@ -224,5 +237,5 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
     createAudioContext,
     onParticipantLeft,
     reset,
-  };
+  } as const;
 }

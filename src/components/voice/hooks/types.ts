@@ -15,6 +15,10 @@ export interface VoiceParticipant {
   isLocal: boolean;
   isOwner: boolean;
   isSpeaking: boolean;
+  /** Mutable ref — written by spatial hook, read by rAF loops. */
+  positionRef: { current: SpatialPosition };
+  /** Mutable ref — written by audio pipeline, read by speaking glow rAF loop. */
+  analyserRef: { current: AnalyserNode | null };
 }
 
 // ---------- Moderator ----------
@@ -60,11 +64,8 @@ export interface VoiceRoomContextValue {
   // Spatial extensions
   localZone: ZoneId;
   localRole: UserRole;
-  getPosition: (sessionId: string) => SpatialPosition;
   moveLocal: (x: number, y: number) => void;
   moveOther: (targetSessionId: string, x: number, y: number) => void;
-  // Audio analysis
-  getAnalyser: (sessionId: string) => AnalyserNode | null;
   // Volume control
   volumeMultipliers: Map<string, number>;
   setParticipantVolume: (sessionId: string, volume: number) => void;
