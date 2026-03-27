@@ -21,6 +21,7 @@ import { useAudioPipeline } from "./hooks/use-audio-pipeline";
 import { useSpatialPositions } from "./hooks/use-spatial-positions";
 import { useScreenShare } from "./hooks/use-screen-share";
 import { useModeratorControls } from "./hooks/use-moderator-controls";
+import { useWakeLock } from "./hooks/use-wake-lock";
 
 // Re-export types so existing imports from VoiceRoomProvider still work
 export type { VoiceParticipant, LockState } from "./hooks/types";
@@ -91,6 +92,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
   const localSessionId = participants.find((p) => p.isLocal)?.sessionId ?? null;
   const screenShare = useScreenShare({ callObjectRef, localRole, localSessionId });
+
+  // Keep the screen awake while in a voice call.
+  useWakeLock();
 
   const moderator = useModeratorControls({
     callObjectRef,
