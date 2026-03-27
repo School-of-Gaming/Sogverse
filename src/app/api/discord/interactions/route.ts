@@ -35,18 +35,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ type: InteractionResponseType.PONG });
     }
 
+    // All commands use deferred responses to avoid Discord's 3-second timeout on cold starts
     if (command === "reset-password") {
-      const result = await resetPassword(message);
-      const content = result.ok
-        ? `Password reset for **${result.upn}**\nNew password: \`${result.password}\``
-        : `Failed: ${result.error}`;
-      return NextResponse.json({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: { content },
-      });
+      after(sendPasswordReset(interaction.token, message));
+    } else {
+      after(sendFollowUp(interaction.token, command, message));
     }
-
-    after(sendFollowUp(interaction.token, command, message));
 
     return NextResponse.json({
       type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
@@ -54,6 +48,31 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ error: "Unknown interaction" }, { status: 400 });
+}
+
+async function patchDiscordResponse(interactionToken: string, content: string) {
+  await fetch(
+    `https://discord.com/api/v10/webhooks/${DISCORD_APPLICATION_ID}/${interactionToken}/messages/@original`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
+      },
+      body: JSON.stringify({ content }),
+    }
+  );
+}
+
+async function sendPasswordReset(
+  interactionToken: string,
+  username: string
+): Promise<void> {
+  const result = await resetPassword(username);
+  const content = result.ok
+    ? `Password reset for **${result.upn}**\nNew password: \`${result.password}\``
+    : `Failed: ${result.error}`;
+  await patchDiscordResponse(interactionToken, content);
 }
 
 async function sendFollowUp(
@@ -80,15 +99,5 @@ async function sendFollowUp(
   // Discord messages have a 2000 character limit
   const content = reply.length > 2000 ? reply.slice(0, 1997) + "..." : reply;
 
-  await fetch(
-    `https://discord.com/api/v10/webhooks/${DISCORD_APPLICATION_ID}/${interactionToken}/messages/@original`,
-    {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bot ${DISCORD_BOT_TOKEN}`,
-      },
-      body: JSON.stringify({ content }),
-    }
-  );
+  await patchDiscordResponse(interactionToken, content);
 }
