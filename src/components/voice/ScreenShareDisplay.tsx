@@ -47,7 +47,7 @@ export function ScreenShareDisplay({
     return () => {
       videoEl.srcObject = null;
     };
-  }, [callObject, joined, effectiveSharerSessionId, participants]);
+  }, [callObject, joined, effectiveSharerSessionId, sharer?.screenShareOn]);
 
   if (!effectiveSharerSessionId || !sharer) return null;
 
