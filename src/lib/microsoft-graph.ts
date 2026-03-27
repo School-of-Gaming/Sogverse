@@ -4,12 +4,9 @@ const AZURE_CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET!;
 
 const ALLOWED_DOMAINS = ["gamer.sog.gg", "gedu.sog.gg"];
 
-/** Generate a simple human-readable password like "Harmony4295" */
 function generatePassword(): string {
-  const words = ["Harmony", "Valor", "Glow", "Wit"];
-  const word = words[Math.floor(Math.random() * words.length)];
-  const num = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
-  return `${word}${num}`;
+  const num = Math.floor(Math.random() * 100).toString().padStart(2, "0");
+  return `Sogverse${num}`;
 }
 
 async function getAccessToken(): Promise<string> {
