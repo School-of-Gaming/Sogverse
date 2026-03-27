@@ -6,6 +6,7 @@ import {
   InteractionResponseType,
 } from "discord-interactions";
 import { askGeduGuru, askHappinappi } from "@/lib/gemini";
+import { resetPassword } from "@/lib/microsoft-graph";
 
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
@@ -32,6 +33,17 @@ export async function POST(request: Request) {
 
     if (!message) {
       return NextResponse.json({ type: InteractionResponseType.PONG });
+    }
+
+    if (command === "reset-password") {
+      const result = await resetPassword(message);
+      const content = result.ok
+        ? `Password reset for **${result.upn}**\nNew password: \`${result.password}\``
+        : `Failed: ${result.error}`;
+      return NextResponse.json({
+        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+        data: { content },
+      });
     }
 
     after(sendFollowUp(interaction.token, command, message));

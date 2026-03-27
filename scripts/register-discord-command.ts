@@ -56,6 +56,19 @@ const commands = [
       },
     ],
   },
+  {
+    name: "reset-password",
+    description: "Reset a Minecraft Education account password",
+    type: 1,
+    options: [
+      {
+        name: "username",
+        description: "The account username (without @gamer.sog.gg / @gedu.sog.gg)",
+        type: 3, // STRING
+        required: true,
+      },
+    ],
+  },
 ];
 
 async function register() {
