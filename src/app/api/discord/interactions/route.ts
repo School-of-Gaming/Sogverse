@@ -70,7 +70,7 @@ async function sendPasswordReset(
 ): Promise<void> {
   const result = await resetPassword(username);
   const content = result.ok
-    ? `Password reset for **${result.upn}**\nNew password: \`${result.password}\``
+    ? `Password reset for **${result.upn}**\nNew password: \`${result.password}\`${result.forceChange ? "\n⚠️ Temporary — must be changed on first sign-in" : ""}`
     : `Failed: ${result.error}`;
   await patchDiscordResponse(interactionToken, content);
 }

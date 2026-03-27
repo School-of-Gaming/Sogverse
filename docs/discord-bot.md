@@ -62,8 +62,9 @@ Resets the password for shared Minecraft Education accounts managed in Azure AD 
 **How it works:**
 1. User provides a username (e.g. `sog5461`)
 2. The bot tries `username@gamer.sog.gg`, then `username@gedu.sog.gg` — only these two domains are allowed
-3. On success, replies with the full email and new temporary password (e.g. `Sogverse42`)
-4. Passwords are `Sogverse` + 2-digit number (00–99), no forced password change on next sign-in
+3. On success, replies with the full email and new password (e.g. `Sogverse42`)
+4. Passwords are `Sogverse` + 2-digit number (00–99)
+5. `@gamer.sog.gg` accounts keep the password as-is; `@gedu.sog.gg` accounts must change it on first sign-in
 
 **Azure setup:**
 - App registration "Sogverse Bot" in the sog.gg tenant with `User.ReadWrite.All` application permission (admin-consented)

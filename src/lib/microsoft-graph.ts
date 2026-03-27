@@ -32,7 +32,7 @@ async function getAccessToken(): Promise<string> {
 }
 
 type ResetResult =
-  | { ok: true; upn: string; password: string }
+  | { ok: true; upn: string; password: string; forceChange: boolean }
   | { ok: false; error: string };
 
 /**
@@ -59,6 +59,7 @@ export async function resetPassword(username: string): Promise<ResetResult> {
   for (const domain of ALLOWED_DOMAINS) {
     const upn = `${sanitized}@${domain}`;
     const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(upn)}`;
+    const forceChange = domain !== "gamer.sog.gg";
 
     const response = await fetch(url, {
       method: "PATCH",
@@ -68,14 +69,14 @@ export async function resetPassword(username: string): Promise<ResetResult> {
       },
       body: JSON.stringify({
         passwordProfile: {
-          forceChangePasswordNextSignIn: false,
+          forceChangePasswordNextSignIn: forceChange,
           password,
         },
       }),
     });
 
     if (response.ok || response.status === 204) {
-      return { ok: true, upn, password };
+      return { ok: true, upn, password, forceChange };
     }
 
     // 404 = user not found on this domain, try the next one
