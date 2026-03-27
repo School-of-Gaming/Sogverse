@@ -15,6 +15,7 @@ export interface VoiceParticipant {
   isLocal: boolean;
   isOwner: boolean;
   isSpeaking: boolean;
+  position: SpatialPosition;
 }
 
 // ---------- Moderator ----------
@@ -58,7 +59,6 @@ export interface VoiceRoomContextValue {
   toggleCamera: () => Promise<void> | void;
   callObject: DailyCall | null;
   // Spatial extensions
-  positions: Map<string, SpatialPosition>;
   localZone: ZoneId;
   localRole: UserRole;
   moveLocal: (x: number, y: number) => void;

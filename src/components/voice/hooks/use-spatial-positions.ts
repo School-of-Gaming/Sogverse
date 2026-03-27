@@ -16,6 +16,8 @@ interface UseSpatialPositionsParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
   positionsRef: React.MutableRefObject<Map<string, SpatialPosition>>;
   onPositionChanged: () => void;
+  /** Signal the provider to re-render participants with updated positions. */
+  onPositionsUpdated: () => void;
 }
 
 function mapRole(p: DailyParticipant): UserRole {
@@ -27,22 +29,18 @@ export function useSpatialPositions({
   callObjectRef,
   positionsRef,
   onPositionChanged,
+  onPositionsUpdated,
 }: UseSpatialPositionsParams) {
-  const [positions, setPositions] = useState<Map<string, SpatialPosition>>(new Map());
   const [localZone, setLocalZone] = useState<ZoneId>("general");
   const posUpdateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const flushPositions = useCallback(() => {
-    setPositions(new Map(positionsRef.current));
-  }, [positionsRef]);
 
   const scheduleFlush = useCallback(() => {
     if (posUpdateTimerRef.current) return;
     posUpdateTimerRef.current = setTimeout(() => {
       posUpdateTimerRef.current = null;
-      flushPositions();
+      onPositionsUpdated();
     }, 50);
-  }, [flushPositions]);
+  }, [onPositionsUpdated]);
 
   const broadcastPosition = useCallback((sessionId: string, position: SpatialPosition) => {
     const co = callObjectRef.current;
@@ -94,12 +92,12 @@ export function useSpatialPositions({
     const spatialPos: SpatialPosition = { ...pos, zone };
     positionsRef.current.set(localSessionId, spatialPos);
     setLocalZone(zone);
-    flushPositions();
+    onPositionsUpdated();
     broadcastPosition(localSessionId, spatialPos);
 
     const msg: AppMessage = { type: "requestPositions" };
     co.sendAppMessage(msg, "*");
-  }, [callObjectRef, positionsRef, flushPositions, broadcastPosition]);
+  }, [callObjectRef, positionsRef, onPositionsUpdated, broadcastPosition]);
 
   const onParticipantLeft = useCallback((sessionId: string) => {
     positionsRef.current.delete(sessionId);
@@ -172,7 +170,6 @@ export function useSpatialPositions({
 
   const reset = useCallback(() => {
     positionsRef.current.clear();
-    setPositions(new Map());
     setLocalZone("general");
     if (posUpdateTimerRef.current) {
       clearTimeout(posUpdateTimerRef.current);
@@ -190,7 +187,6 @@ export function useSpatialPositions({
   }, []);
 
   return {
-    positions,
     localZone,
     moveLocal,
     moveOther,

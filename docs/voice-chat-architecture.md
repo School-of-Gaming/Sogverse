@@ -32,7 +32,7 @@ Voice components (src/components/voice/)
 Internal hooks (src/components/voice/hooks/)
 ├── types.ts                  — Shared types (VoiceParticipant, LockState, AppMessage, etc.)
 ├── use-audio-pipeline.ts     — Audio element playback, volume multipliers, AnalyserNodes, routing
-├── use-spatial-positions.ts  — Position tracking, zone detection, move, spatial app messages
+├── use-spatial-positions.ts  — Spatial movement, zone detection, app messages, position sync
 ├── use-screen-share.ts       — Screen sharer detection, start/stop, auto-replace
 └── use-moderator-controls.ts — Mute, lock/unlock, lock state sync, moderator app messages
 
@@ -53,6 +53,16 @@ Spatial config (src/lib/constants/)
 ├── spatial.ts        — Types, pure functions (zone detection, overlap, gain calc)
 └── spatial.config.ts — Canvas dimensions, zone rects, avatar size, colors
 ```
+
+## Spatial Position Model
+
+`position: SpatialPosition` is a required field on `VoiceParticipant`. A participant is not added to the `participants` list until their position data has arrived via `posUpdate` app message (or local placement on join). If a participant is in the list, it has a valid position — no fallbacks, no nullable fields.
+
+The provider owns positions in a shared `positionsRef` (`Map<string, SpatialPosition>`). When `updateParticipants()` builds the participant list from Daily.co's participant map, it skips any participant whose session ID is not yet in `positionsRef`. The `use-spatial-positions` hook writes into this ref and signals the provider to re-derive participants via an `onPositionsUpdated` callback (debounced at 50ms to batch rapid position updates).
+
+**Why position is part of the participant, not a separate data channel:** Position data and Daily.co participant data arrive via independent event sources (app messages vs. Daily.co SDK events). Keeping them as separate React state creates a window where a participant renders without a position. Making position a precondition for participant existence eliminates this class of bug structurally.
+
+**Daily.co `participant-joined` event is intentionally not handled.** This event fires before the new participant has broadcast their position, so we have incomplete data. The participant materializes when their `posUpdate` message arrives and `updateParticipants` includes them with a real position. If a "joining in progress" indicator is needed in the future, `participant-joined` is the right hook point — listen for it and track pending session IDs separately from the `participants` list.
 
 ## Database Schema
 
@@ -221,7 +231,9 @@ Lock states are synced via app messages (`moderatorLock`). For late joiners, loc
 6. Lazy-creates Daily.co room if needed
 7. Issues a meeting token with `isOwner` (which also controls `enable_screenshare`) and `exp`
 8. `VoiceRoomProvider.join()` connects to the Daily.co room
-9. `SpatialVoiceRoom` renders the spatial canvas with avatars
+9. Local avatar is placed at a random non-overlapping position in the general zone; a `requestPositions` broadcast asks existing participants for their positions
+10. Existing participants reply with `positionSync` (positions + lock states); remote participants appear on the canvas as their `posUpdate` messages arrive
+11. `SpatialVoiceRoom` renders the spatial canvas with avatars
 
 ### Auto-leave triggers
 1. **Session window expires** → periodic `computeSessionWindow()` check in `VoiceSessionPage` → graceful leave + "Session has ended" message

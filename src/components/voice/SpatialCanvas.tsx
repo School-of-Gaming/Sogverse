@@ -6,7 +6,7 @@ import { DraggableAvatar } from "./DraggableAvatar";
 import { ZONE_RECTS } from "@/lib/constants/spatial";
 
 export function SpatialCanvas() {
-  const { participants, positions, localZone, localRole } = useVoiceRoom();
+  const { participants, localZone, localRole } = useVoiceRoom();
 
   return (
     <div className="relative w-full overflow-hidden rounded-lg border bg-card" style={{ aspectRatio: "21 / 9" }}>
@@ -24,7 +24,6 @@ export function SpatialCanvas() {
           <DraggableAvatar
             key={p.sessionId}
             participant={p}
-            position={positions.get(p.sessionId)}
             canDrag={canDrag}
           />
         );
