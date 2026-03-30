@@ -55,6 +55,9 @@ import { TokenPurchaseSection } from "@/components/tokens";
 import type { StripePackage } from "@/types";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
 import { computeGlowStyle } from "@/lib/constants/spatial.config";
+import type { ChangeSegment } from "@/hooks/use-group-editor";
+import { ChangeSummaryList, StepProgressPanel } from "@/components/admin/commit-flow-parts";
+import type { StepItem } from "@/components/admin/commit-flow-parts";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -646,6 +649,104 @@ const DEMO_SUB_PACKAGES: StripePackage[] = [
 ];
 
 /* ------------------------------------------------------------------ */
+/*  Commit Flow Dialog Demo                                            */
+/* ------------------------------------------------------------------ */
+
+const DEMO_SUMMARY_LINES: ChangeSegment[][] = [
+  [
+    { type: "text", value: "Move " },
+    { type: "gamer", value: "CoolKid" },
+    { type: "text", value: " from " },
+    { type: "gedu", value: "GeduSteve" },
+    { type: "text", value: "'s group to " },
+    { type: "gedu", value: "GeduMaria" },
+    { type: "text", value: "'s group" },
+  ],
+  [
+    { type: "text", value: "Add group with " },
+    { type: "gedu", value: "GeduMaria" },
+  ],
+  [
+    { type: "text", value: "Delete " },
+    { type: "gedu", value: "GeduAlex" },
+    { type: "text", value: "'s group" },
+  ],
+  [
+    { type: "warning", value: "Product will be automatically hidden (no groups remaining)" },
+  ],
+];
+
+const DEMO_PROGRESS_STEPS: StepItem[] = [
+  { label: "Save group changes to database", status: "done" },
+  { label: "Notify CoolKid's parent about schedule change", status: "done" },
+  { label: "Notify PixelDude's parent about removal", status: "active" },
+  { label: "Notify GeduSteve about new assignment", status: "pending" },
+];
+
+const DEMO_ERROR_STEPS: StepItem[] = [
+  { label: "Save group changes to database", status: "done" },
+  { label: "Notify CoolKid's parent about schedule change", status: "failed" },
+  { label: "Notify PixelDude's parent about removal", status: "done" },
+  { label: "Notify GeduSteve about new assignment", status: "pending" },
+];
+
+function CommitFlowDialogDemo() {
+  const [phase, setPhase] = useState<"review" | "progress" | "error">("review");
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <Button size="sm" variant={phase === "review" ? "default" : "outline"} onClick={() => setPhase("review")}>Review</Button>
+        <Button size="sm" variant={phase === "progress" ? "default" : "outline"} onClick={() => setPhase("progress")}>Progress</Button>
+        <Button size="sm" variant={phase === "error" ? "default" : "outline"} onClick={() => setPhase("error")}>Error</Button>
+      </div>
+
+      <div className="rounded-lg border bg-card p-6 shadow-lg max-w-lg">
+        {phase === "review" && (
+          <>
+            <div className="space-y-1.5 mb-4">
+              <h4 className="text-lg font-semibold leading-none tracking-tight">Confirm Group Changes</h4>
+              <p className="text-sm text-muted-foreground">The following changes will be applied:</p>
+            </div>
+            <ChangeSummaryList lines={DEMO_SUMMARY_LINES} />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" size="sm">Cancel</Button>
+              <Button size="sm">Confirm</Button>
+            </div>
+          </>
+        )}
+
+        {phase === "progress" && (
+          <>
+            <div className="space-y-1.5 mb-4">
+              <h4 className="text-lg font-semibold leading-none tracking-tight">Applying Changes</h4>
+              <p className="text-sm text-muted-foreground">Saving and notifying impacted users...</p>
+            </div>
+            <StepProgressPanel steps={DEMO_PROGRESS_STEPS} />
+            <div className="flex justify-end mt-4">
+              <Button size="sm" disabled>Working...</Button>
+            </div>
+          </>
+        )}
+
+        {phase === "error" && (
+          <>
+            <div className="space-y-1.5 mb-4">
+              <h4 className="text-lg font-semibold leading-none tracking-tight">Applying Changes</h4>
+              <p className="text-sm text-muted-foreground">An error occurred.</p>
+            </div>
+            <StepProgressPanel steps={DEMO_ERROR_STEPS} errorMessage="Failed to deliver email notification" />
+            <div className="flex justify-end mt-4">
+              <Button size="sm">Close</Button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -1172,6 +1273,14 @@ export default function AdminUIComponentsPage() {
             Shared group card used across all roles. Shows product name, gamer count, schedule, and voice status. Self-updating countdown ticks every 60s. Clicking the card navigates to a detail page; the Join button navigates to the voice session.
           </p>
           <GroupCardDemo />
+        </SubSection>
+
+        {/* -- Commit Flow Dialog -- */}
+        <SubSection title="Commit Flow Dialog">
+          <p className="text-sm text-muted-foreground mb-3">
+            Multi-step commit dialog for applying group changes. Shows a review summary with colored segments (gamer, gedu, warning), then a live progress view with step icons and a progress bar.
+          </p>
+          <CommitFlowDialogDemo />
         </SubSection>
 
         {/* -- Loading Skeleton -- */}

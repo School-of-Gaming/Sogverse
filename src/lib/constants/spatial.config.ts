@@ -1,4 +1,4 @@
-import type { ZoneId, ZoneRect } from "./spatial";
+import type { VisualZoneId, ZoneRect } from "./spatial";
 import { YTY_ELEMENTS } from "./yty";
 
 // ── Canvas ──────────────────────────────────────────────────────────
@@ -47,11 +47,10 @@ export function computeGlowStyle(level: number): React.CSSProperties {
 }
 
 // ── Zone colours (Tailwind classes) ─────────────────────────────────
-export const ZONE_COLORS: Record<ZoneId, { bg: string; border: string; accent: string }> = {
-  general: { bg: "bg-blue-500/10", border: "border-blue-500/30", accent: "text-blue-400" },
+export const ZONE_COLORS: Record<VisualZoneId, { bg: string; border: string; accent: string }> = {
   breakout_1: YTY_ELEMENTS[0].color,
   breakout_2: YTY_ELEMENTS[1].color,
   breakout_3: YTY_ELEMENTS[2].color,
   breakout_4: YTY_ELEMENTS[3].color,
-  broadcast: { bg: "bg-yellow-500/15", border: "border-yellow-500/40", accent: "text-yellow-400" },
+  broadcast: { bg: "bg-warning/15", border: "border-warning/40", accent: "text-warning" },
 };

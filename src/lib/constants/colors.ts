@@ -13,6 +13,13 @@ export const STATUS = {
   warning: "#E7B008",    // --warning: 45 93% 47%
 } as const;
 
+export const YTY_ELEMENT = {
+  harmony: "#34d399",
+  glow: "#fbbf24",
+  valor: "#fb7185",
+  wit: "#a78bfa",
+} as const;
+
 export const DARK_THEME = {
   bg: "#121212",         // --background: 0 0% 7%
   card: "#1a1a1a",       // --card: 0 0% 10%

@@ -12,10 +12,10 @@ import {
 } from "@dnd-kit/core";
 import { Plus, Users, AlertTriangle, Info } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { useProductGroups, groupKeys } from "@/services/groups";
 import { useUsersByRole } from "@/services/users";
 import { useGroupEditor, type EffectiveGroup } from "@/hooks/use-group-editor";
@@ -52,17 +52,10 @@ export function VisibilityWarningBanner({ isVisible, groupCount }: VisibilityWar
   const Icon = variant === "warning" ? AlertTriangle : Info;
 
   return (
-    <div
-      className={cn(
-        "flex items-start gap-3 rounded-lg border p-4",
-        variant === "warning"
-          ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-200"
-          : "border-blue-500/30 bg-blue-500/10 text-blue-200",
-      )}
-    >
-      <Icon className="mt-0.5 h-4 w-4 flex-shrink-0" />
-      <p className="text-sm">{message}</p>
-    </div>
+    <Alert variant={variant}>
+      <Icon className="h-4 w-4" />
+      <p>{message}</p>
+    </Alert>
   );
 }
 

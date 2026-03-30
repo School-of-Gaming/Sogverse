@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { useVoiceRoom, type VoiceParticipant } from "./VoiceRoomProvider";
 import { VoiceAvatar } from "./VoiceAvatar";
 import {
-  type SpatialPosition,
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   AVATAR_SIZE,
@@ -16,12 +15,11 @@ import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 
 interface DraggableAvatarProps {
   participant: VoiceParticipant;
-  position: SpatialPosition | undefined;
   canDrag: boolean;
 }
 
-export const DraggableAvatar = memo(function DraggableAvatar({ participant, position, canDrag }: DraggableAvatarProps) {
-  const { callObject, joined, moveLocal, moveOther, positions } = useVoiceRoom();
+export const DraggableAvatar = memo(function DraggableAvatar({ participant, canDrag }: DraggableAvatarProps) {
+  const { callObject, joined, moveLocal, moveOther, participants } = useVoiceRoom();
   const [dragging, setDragging] = useState(false);
   const [dragPos, setDragPos] = useState<{ x: number; y: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,7 +31,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
   // Clear stale dragPos when the provider's position catches up after drag ends.
   // Uses the React "adjust state during render" pattern instead of an effect.
   const [prevPosKey, setPrevPosKey] = useState("");
-  const posKey = position ? `${position.x},${position.y}` : "";
+  const posKey = `${participant.position.x},${participant.position.y}`;
   if (posKey !== prevPosKey) {
     setPrevPosKey(posKey);
     if (!dragging) {
@@ -41,7 +39,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
     }
   }
 
-  const pos = dragPos ?? position ?? { x: 0, y: 0 };
+  const pos = dragPos ?? participant.position;
 
   // Attach video track when available
   useEffect(() => {
@@ -150,9 +148,9 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
 
       // Resolve overlap: nudge so avatars don't stack on top of each other
       const others: { x: number; y: number }[] = [];
-      for (const [sid, pos] of positions) {
-        if (sid !== participant.sessionId) {
-          others.push(pos);
+      for (const p of participants) {
+        if (p.sessionId !== participant.sessionId) {
+          others.push(p.position);
         }
       }
       const resolved = resolveOverlap(dropX, dropY, others);
@@ -168,7 +166,7 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, posi
       // Don't clear dragPos here — it gets cleared during render when
       // the provider's position prop catches up, preventing snap-back.
     },
-    [dragging, dragPos, participant, moveLocal, moveOther, positions]
+    [dragging, dragPos, participant, moveLocal, moveOther, participants]
   );
 
   // Determine avatar size as percentage of canvas

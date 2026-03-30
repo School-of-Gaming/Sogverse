@@ -21,6 +21,7 @@ import { useAudioPipeline } from "./hooks/use-audio-pipeline";
 import { useSpatialPositions } from "./hooks/use-spatial-positions";
 import { useScreenShare } from "./hooks/use-screen-share";
 import { useModeratorControls } from "./hooks/use-moderator-controls";
+import { useWakeLock } from "./hooks/use-wake-lock";
 
 // Re-export types so existing imports from VoiceRoomProvider still work
 export type { VoiceParticipant, LockState } from "./hooks/types";
@@ -29,7 +30,7 @@ const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
 
 // ---------- Helpers ----------
 
-function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): VoiceParticipant {
+function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null, position: SpatialPosition): VoiceParticipant {
   const raw = p.user_name || "";
   const parts = raw.split("|");
   const userId = parts[0] || p.session_id;
@@ -47,6 +48,7 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): Vo
     isLocal: p.local,
     isOwner: p.owner,
     isSpeaking: p.session_id === activeSpeakerId && Boolean(p.audio) && p.tracks.audio.state === "playable",
+    position,
   };
 }
 
@@ -85,6 +87,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   const localSessionId = participants.find((p) => p.isLocal)?.sessionId ?? null;
   const screenShare = useScreenShare({ callObjectRef, localRole, localSessionId });
 
+  // Keep the screen awake while in a voice call.
+  useWakeLock();
+
   const moderator = useModeratorControls({
     callObjectRef,
     setMicOn,
@@ -97,7 +102,14 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     if (!joinedRef.current) return;
 
     const pMap = co.participants();
-    const list = Object.values(pMap).map((p) => mapParticipant(p, activeSpeakerIdRef.current));
+    const list: VoiceParticipant[] = [];
+    for (const p of Object.values(pMap)) {
+      const pos = positionsRef.current.get(p.session_id);
+      // A participant doesn't exist until we have their position.
+      // The posUpdate message fills this in; updateParticipants re-runs then.
+      if (!pos) continue;
+      list.push(mapParticipant(p, activeSpeakerIdRef.current, pos));
+    }
     setParticipants(list);
 
     const local = pMap.local;
@@ -135,9 +147,17 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     // Spatial messages: positionSync, posUpdate, moveUser
     spatial.onAppMessage(msg, fromId, co, moderator.onLockStatesReceived);
 
+    // Position messages may have materialized new participants (their
+    // position now exists in positionsRef, passing the gate in
+    // updateParticipants). Re-derive the list synchronously so they
+    // appear without a setTimeout delay.
+    if (msg.type === "positionSync" || msg.type === "posUpdate" || msg.type === "moveUser") {
+      updateParticipants(co);
+    }
+
     // Moderator messages: moderatorMute, moderatorLock
     moderator.onAppMessage(msg, fromId, co);
-  }, [spatial, moderator]);
+  }, [spatial, moderator, updateParticipants]);
 
   // --- Join / Leave ---
 
@@ -174,18 +194,20 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         joinedRef.current = true;
         setJoined(true);
         setJoining(false);
-        updateParticipants(co);
         setCameraAllowed(true);
 
         const local = co.participants().local;
-        const mapped = mapParticipant(local, null);
-        setLocalRole(mapped.role);
+        const rawName = local.user_name || "";
+        setLocalRole(rawName.split("|")[1] as UserRole);
+
+        // Set local position before updateParticipants so the local user
+        // passes the position gate and appears immediately.
         spatial.onJoined(local.session_id);
+        updateParticipants(co);
       };
 
       const handleParticipantUpdate = () => updateParticipants(co);
       const handleTrackStarted = () => updateParticipants(co);
-      const handleParticipantJoined = () => updateParticipants(co);
 
       const handleParticipantLeft = (event: { participant: DailyParticipant }) => {
         const sid = event.participant.session_id;
@@ -216,7 +238,6 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       };
 
       co.on("joined-meeting", handleJoined);
-      co.on("participant-joined", handleParticipantJoined);
       co.on("participant-left", handleParticipantLeft);
       co.on("participant-updated", handleParticipantUpdate);
       co.on("track-started", handleTrackStarted);
@@ -298,7 +319,6 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       toggleMic,
       toggleCamera,
       callObject,
-      positions: spatial.positions,
       localZone: spatial.localZone,
       localRole,
       moveLocal: spatial.moveLocal,
@@ -316,7 +336,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       muteParticipant: moderator.muteParticipant,
       lockParticipant: moderator.lockParticipant,
     }),
-    [joined, joining, participants, micOn, cameraOn, cameraAllowed, join, leave, toggleMic, toggleCamera, callObject, spatial.positions, spatial.localZone, localRole, spatial.moveLocal, spatial.moveOther, audio.getAnalyser, audio.volumeMultipliers, audio.setParticipantVolume, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant],
+    [joined, joining, participants, micOn, cameraOn, cameraAllowed, join, leave, toggleMic, toggleCamera, callObject, spatial.localZone, localRole, spatial.moveLocal, spatial.moveOther, audio.getAnalyser, audio.volumeMultipliers, audio.setParticipantVolume, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant],
   );
 
   return (

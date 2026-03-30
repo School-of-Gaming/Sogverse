@@ -101,7 +101,7 @@ export default function MinecraftApiDocsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-base">
-                <span className="rounded bg-green-500/10 px-2 py-0.5 text-xs font-semibold text-green-500">
+                <span className="rounded bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
                   200
                 </span>
                 Player Allowed
@@ -142,7 +142,7 @@ export default function MinecraftApiDocsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-base">
-                <span className="rounded bg-yellow-500/10 px-2 py-0.5 text-xs font-semibold text-yellow-500">
+                <span className="rounded bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">
                   200
                 </span>
                 Player Denied
@@ -169,7 +169,7 @@ export default function MinecraftApiDocsPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-500">
+                <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
                   401
                 </span>
                 <p className="text-sm text-muted-foreground">
@@ -177,7 +177,7 @@ export default function MinecraftApiDocsPage() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-500">
+                <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
                   400
                 </span>
                 <p className="text-sm text-muted-foreground">
@@ -185,7 +185,7 @@ export default function MinecraftApiDocsPage() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-500">
+                <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
                   404
                 </span>
                 <p className="text-sm text-muted-foreground">
@@ -193,7 +193,7 @@ export default function MinecraftApiDocsPage() {
                 </p>
               </div>
               <div className="flex items-start gap-3">
-                <span className="mt-0.5 shrink-0 rounded bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-500">
+                <span className="mt-0.5 shrink-0 rounded bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
                   500
                 </span>
                 <p className="text-sm text-muted-foreground">

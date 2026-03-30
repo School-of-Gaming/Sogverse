@@ -33,7 +33,7 @@ export function TransactionHistoryTable({ transactions, locale }: TransactionHis
                   year: "numeric",
                 })}
               </td>
-              <td className={cn("py-2 pr-4 font-medium", tx.amount > 0 ? "text-green-400" : "text-red-400")}>
+              <td className={cn("py-2 pr-4 font-medium", tx.amount > 0 ? "text-success" : "text-destructive")}>
                 {tx.amount > 0 ? "+" : ""}{tx.amount}
               </td>
               <td className="py-2 pr-4 capitalize">

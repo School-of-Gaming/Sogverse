@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
 import type { DailyParticipant } from "@daily-co/daily-js";
 import type { UserRole } from "@/types";
@@ -28,21 +28,7 @@ export function useSpatialPositions({
   positionsRef,
   onPositionChanged,
 }: UseSpatialPositionsParams) {
-  const [positions, setPositions] = useState<Map<string, SpatialPosition>>(new Map());
   const [localZone, setLocalZone] = useState<ZoneId>("general");
-  const posUpdateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const flushPositions = useCallback(() => {
-    setPositions(new Map(positionsRef.current));
-  }, [positionsRef]);
-
-  const scheduleFlush = useCallback(() => {
-    if (posUpdateTimerRef.current) return;
-    posUpdateTimerRef.current = setTimeout(() => {
-      posUpdateTimerRef.current = null;
-      flushPositions();
-    }, 50);
-  }, [flushPositions]);
 
   const broadcastPosition = useCallback((sessionId: string, position: SpatialPosition) => {
     const co = callObjectRef.current;
@@ -62,10 +48,9 @@ export function useSpatialPositions({
 
     positionsRef.current.set(sessionId, position);
     setLocalZone(zone);
-    scheduleFlush();
     broadcastPosition(sessionId, position);
     onPositionChanged();
-  }, [callObjectRef, positionsRef, scheduleFlush, broadcastPosition, onPositionChanged]);
+  }, [callObjectRef, positionsRef, broadcastPosition, onPositionChanged]);
 
   const moveOther = useCallback((targetSessionId: string, x: number, y: number) => {
     const co = callObjectRef.current;
@@ -75,12 +60,11 @@ export function useSpatialPositions({
     const position: SpatialPosition = { x, y, zone };
 
     positionsRef.current.set(targetSessionId, position);
-    scheduleFlush();
     onPositionChanged();
 
     const msg: AppMessage = { type: "moveUser", targetSessionId, position };
     co.sendAppMessage(msg, "*");
-  }, [callObjectRef, positionsRef, scheduleFlush, onPositionChanged]);
+  }, [callObjectRef, positionsRef, onPositionChanged]);
 
   /** Place local avatar and request positions from existing participants */
   const onJoined = useCallback((localSessionId: string) => {
@@ -94,17 +78,15 @@ export function useSpatialPositions({
     const spatialPos: SpatialPosition = { ...pos, zone };
     positionsRef.current.set(localSessionId, spatialPos);
     setLocalZone(zone);
-    flushPositions();
     broadcastPosition(localSessionId, spatialPos);
 
     const msg: AppMessage = { type: "requestPositions" };
     co.sendAppMessage(msg, "*");
-  }, [callObjectRef, positionsRef, flushPositions, broadcastPosition]);
+  }, [callObjectRef, positionsRef, broadcastPosition]);
 
   const onParticipantLeft = useCallback((sessionId: string) => {
     positionsRef.current.delete(sessionId);
-    scheduleFlush();
-  }, [positionsRef, scheduleFlush]);
+  }, [positionsRef]);
 
   /** Handle spatial app messages. Delegates lock data from positionSync to onLockStatesReceived. */
   const onAppMessage = useCallback((
@@ -124,7 +106,6 @@ export function useSpatialPositions({
         if (onLockStatesReceived) {
           onLockStatesReceived(msg.locks);
         }
-        scheduleFlush();
         onPositionChanged();
         break;
       }
@@ -134,7 +115,6 @@ export function useSpatialPositions({
         const localSid = co.participants().local.session_id;
         if (msg.sessionId !== localSid) {
           positionsRef.current.set(msg.sessionId, msg.position);
-          scheduleFlush();
           onPositionChanged();
         }
         break;
@@ -157,40 +137,23 @@ export function useSpatialPositions({
 
           positionsRef.current.set(localSid, finalPos);
           setLocalZone(finalPos.zone);
-          scheduleFlush();
           onPositionChanged();
           broadcastPosition(localSid, finalPos);
         } else {
           positionsRef.current.set(msg.targetSessionId, msg.position);
-          scheduleFlush();
           onPositionChanged();
         }
         break;
       }
     }
-  }, [positionsRef, scheduleFlush, onPositionChanged, broadcastPosition]);
+  }, [positionsRef, onPositionChanged, broadcastPosition]);
 
   const reset = useCallback(() => {
     positionsRef.current.clear();
-    setPositions(new Map());
     setLocalZone("general");
-    if (posUpdateTimerRef.current) {
-      clearTimeout(posUpdateTimerRef.current);
-      posUpdateTimerRef.current = null;
-    }
   }, [positionsRef]);
 
-  // Clean up timer on unmount
-  useEffect(() => {
-    return () => {
-      if (posUpdateTimerRef.current) {
-        clearTimeout(posUpdateTimerRef.current);
-      }
-    };
-  }, []);
-
   return {
-    positions,
     localZone,
     moveLocal,
     moveOther,

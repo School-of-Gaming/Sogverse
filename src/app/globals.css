@@ -160,6 +160,11 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
+  /* YTY Element colors */
+  --color-yty-harmony: #34d399;
+  --color-yty-glow: #fbbf24;
+  --color-yty-valor: #fb7185;
+  --color-yty-wit: #a78bfa;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

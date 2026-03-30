@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { CheckCircle2, AlertCircle, Loader2, Circle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -11,7 +10,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import type { ChangeSummary, ChangeSegment, NotifyPayload } from "@/hooks/use-group-editor";
+import { ChangeSummaryList, StepProgressPanel } from "@/components/admin/commit-flow-parts";
+import type { StepItem } from "@/components/admin/commit-flow-parts";
+import type { ChangeSummary, NotifyPayload } from "@/hooks/use-group-editor";
 import type { BatchGroupChanges } from "@/services/groups";
 
 interface CommitFlowDialogProps {
@@ -22,24 +23,6 @@ interface CommitFlowDialogProps {
   batchPayload: BatchGroupChanges;
   notifyPayload: NotifyPayload;
   onComplete: () => void;
-}
-
-interface StepItem {
-  label: string;
-  status: "pending" | "active" | "done" | "failed";
-}
-
-function StepIcon({ status }: { status: StepItem["status"] }) {
-  switch (status) {
-    case "pending":
-      return <Circle className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground/40" />;
-    case "active":
-      return <Loader2 className="h-4 w-4 mt-0.5 shrink-0 animate-spin text-primary" />;
-    case "done":
-      return <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0 text-green-500" />;
-    case "failed":
-      return <AlertCircle className="h-4 w-4 mt-0.5 shrink-0 text-destructive" />;
-  }
 }
 
 export function CommitFlowDialog({
@@ -173,8 +156,6 @@ export function CommitFlowDialog({
   }, []);
 
   const showProgress = steps.length > 0;
-  const doneCount = steps.filter((s) => s.status === "done").length;
-  const percent = steps.length > 0 ? Math.round((doneCount / steps.length) * 100) : 0;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -188,33 +169,13 @@ export function CommitFlowDialog({
                 The following changes will be applied:
               </DialogDescription>
             </DialogHeader>
-            <ul className="my-4 space-y-2 text-sm">
-              {summary.lines.map((segments, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className={`mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full ${segments.some((s: ChangeSegment) => s.type === "warning") ? "bg-amber-400" : "bg-primary"}`} />
-                  <span>
-                    {segments.map((seg: ChangeSegment, j: number) => {
-                      if (seg.type === "warning") {
-                        return <span key={j} className="font-medium text-amber-400">{seg.value}</span>;
-                      }
-                      if (seg.type === "gamer") {
-                        return <span key={j} className="font-medium text-blue-400">{seg.value}</span>;
-                      }
-                      if (seg.type === "gedu") {
-                        return <span key={j} className="font-medium text-purple-400">{seg.value}</span>;
-                      }
-                      return <span key={j}>{seg.value}</span>;
-                    })}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <ChangeSummaryList lines={summary.lines} />
             <DialogFooter>
               <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={running}>
                 Cancel
               </Button>
               <Button onClick={handleConfirm} disabled={running}>
-                {running ? "Saving…" : "Confirm"}
+                {running ? "Saving\u2026" : "Confirm"}
               </Button>
             </DialogFooter>
           </>
@@ -232,32 +193,7 @@ export function CommitFlowDialog({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 py-2">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-300"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-
-              <div className="max-h-52 overflow-auto rounded border border-border bg-muted/50 p-3 text-sm space-y-2">
-                {steps.map((step, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <StepIcon status={step.status} />
-                    <span className={step.status === "pending" ? "text-muted-foreground/40" : "text-muted-foreground"}>
-                      {step.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {done && errorMessage && (
-                <div className="flex items-center gap-2 text-sm">
-                  <AlertCircle className="h-4 w-4 text-destructive" />
-                  <span className="text-muted-foreground">{errorMessage}</span>
-                </div>
-              )}
-            </div>
+            <StepProgressPanel steps={steps} errorMessage={errorMessage} done={done} />
 
             <DialogFooter>
               <Button onClick={() => handleOpenChange(false)} disabled={!done}>

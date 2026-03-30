@@ -63,9 +63,11 @@ export function AuthProvider({
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    // Full page navigation (not router.push) wipes all client state
-    // (React, query cache, Supabase singleton).
+    // Navigate immediately — don't await signOut() or the onAuthStateChange
+    // SIGNED_OUT event will null the profile before the browser navigates,
+    // causing the sidebar to flash away. The full page navigation wipes all
+    // client state (React, query cache, Supabase singleton) anyway.
+    void supabase.auth.signOut();
     window.location.href = "/";
   };
 
