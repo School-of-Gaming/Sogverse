@@ -78,16 +78,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
   const audio = useAudioPipeline({ callObjectRef, positionsRef });
 
-  // Ref indirection: the spatial hook is created before updateParticipants
-  // is defined, so we give it a stable ref that we point at the real
-  // function once it exists.
-  const refreshParticipantsRef = useRef(() => {});
-
   const spatial = useSpatialPositions({
     callObjectRef,
     positionsRef,
     onPositionChanged: audio.updateAudioRouting,
-    onPositionsUpdated: () => refreshParticipantsRef.current(),
   });
 
   const localSessionId = participants.find((p) => p.isLocal)?.sessionId ?? null;
@@ -128,12 +122,6 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- individual methods are stable useCallback refs; adding the parent objects would re-create this callback on every render
   }, [screenShare.detectScreenSharer, audio.manageAudioNodes, audio.manageLocalAnalyser]);
 
-  // Now that updateParticipants exists, wire it into the spatial hook's flush callback.
-  refreshParticipantsRef.current = () => {
-    const co = callObjectRef.current;
-    if (co && joinedRef.current) updateParticipants(co);
-  };
-
   // --- App message dispatch ---
 
   const handleAppMessage = useCallback((event: { data: AppMessage; fromId: string }) => {
@@ -159,9 +147,17 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     // Spatial messages: positionSync, posUpdate, moveUser
     spatial.onAppMessage(msg, fromId, co, moderator.onLockStatesReceived);
 
+    // Position messages may have materialized new participants (their
+    // position now exists in positionsRef, passing the gate in
+    // updateParticipants). Re-derive the list synchronously so they
+    // appear without a setTimeout delay.
+    if (msg.type === "positionSync" || msg.type === "posUpdate" || msg.type === "moveUser") {
+      updateParticipants(co);
+    }
+
     // Moderator messages: moderatorMute, moderatorLock
     moderator.onAppMessage(msg, fromId, co);
-  }, [spatial, moderator]);
+  }, [spatial, moderator, updateParticipants]);
 
   // --- Join / Leave ---
 
@@ -198,13 +194,16 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         joinedRef.current = true;
         setJoined(true);
         setJoining(false);
-        updateParticipants(co);
         setCameraAllowed(true);
 
         const local = co.participants().local;
         const rawName = local.user_name || "";
         setLocalRole(rawName.split("|")[1] as UserRole);
+
+        // Set local position before updateParticipants so the local user
+        // passes the position gate and appears immediately.
         spatial.onJoined(local.session_id);
+        updateParticipants(co);
       };
 
       const handleParticipantUpdate = () => updateParticipants(co);
