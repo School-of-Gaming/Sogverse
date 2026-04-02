@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN!;
 const appSecret = process.env.WHATSAPP_APP_SECRET!;
@@ -14,6 +15,49 @@ function verifySignature(body: string, signature: string | null): boolean {
     Buffer.from(expected),
     Buffer.from(signature)
   );
+}
+
+/** Extract message body and type from various WhatsApp message formats */
+function extractMessageContent(message: Record<string, unknown>): {
+  body: string | null;
+  messageType: string;
+} {
+  const type = message.type as string;
+
+  switch (type) {
+    case "text": {
+      const text = message.text as { body: string } | undefined;
+      return { body: text?.body ?? null, messageType: "text" };
+    }
+    case "interactive": {
+      const interactive = message.interactive as
+        | { type: string; button_reply?: { title: string }; list_reply?: { title: string } }
+        | undefined;
+      if (interactive?.type === "button_reply") {
+        return { body: interactive.button_reply?.title ?? null, messageType: "button_reply" };
+      }
+      if (interactive?.type === "list_reply") {
+        return { body: interactive.list_reply?.title ?? null, messageType: "list_reply" };
+      }
+      return { body: null, messageType: "interactive" };
+    }
+    case "image":
+      return { body: "[Image]", messageType: "image" };
+    case "video":
+      return { body: "[Video]", messageType: "video" };
+    case "audio":
+      return { body: "[Audio]", messageType: "audio" };
+    case "document":
+      return { body: "[Document]", messageType: "document" };
+    case "sticker":
+      return { body: "[Sticker]", messageType: "sticker" };
+    case "location":
+      return { body: "[Location]", messageType: "location" };
+    case "contacts":
+      return { body: "[Contact]", messageType: "contacts" };
+    default:
+      return { body: `[${type}]`, messageType: type };
+  }
 }
 
 /** Meta webhook verification challenge */
@@ -40,6 +84,7 @@ export async function POST(request: Request) {
   }
 
   const body = JSON.parse(rawBody);
+  const admin = createAdminClient();
 
   const entries = body.entry ?? [];
   for (const entry of entries) {
@@ -47,14 +92,39 @@ export async function POST(request: Request) {
     for (const change of changes) {
       if (change.field !== "messages") continue;
 
+      const contacts = change.value?.contacts ?? [];
+      const contactMap = new Map<string, string>();
+      for (const contact of contacts) {
+        contactMap.set(contact.wa_id, contact.profile?.name ?? null);
+      }
+
       const messages = change.value?.messages ?? [];
       for (const message of messages) {
-        console.log("[WhatsApp] Message received:", {
-          from: message.from,
-          type: message.type,
-          text: message.text?.body ?? null,
-          timestamp: message.timestamp,
+        const phone = message.from as string;
+        const waName = contactMap.get(phone) ?? null;
+        const { body: msgBody, messageType } = extractMessageContent(message);
+
+        // Upsert contact
+        await admin.from("whatsapp_contacts").upsert(
+          {
+            phone,
+            wa_name: waName,
+            last_message_at: new Date().toISOString(),
+          },
+          { onConflict: "phone" }
+        );
+
+        // Insert message
+        await admin.from("whatsapp_messages").insert({
+          id: message.id as string,
+          phone,
+          direction: "inbound",
+          body: msgBody,
+          message_type: messageType,
+          raw_payload: message,
+          created_at: new Date().toISOString(),
         });
+
       }
     }
   }

@@ -92,6 +92,12 @@ export type GroupEnrollmentInsert = Database["public"]["Tables"]["group_enrollme
 // enrollment_charges
 export type EnrollmentCharge = Database["public"]["Tables"]["enrollment_charges"]["Row"];
 
+// whatsapp_contacts
+export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"]["Row"];
+
+// whatsapp_messages
+export type WhatsAppMessage = Database["public"]["Tables"]["whatsapp_messages"]["Row"];
+
 // get_my_groups RPC — the generated type marks nullable LEFT JOIN fields as
 // non-nullable. Override to reflect that groups with no enrollments return null
 // for gamer-related columns (and gamer branch always returns null for DOB/gender).

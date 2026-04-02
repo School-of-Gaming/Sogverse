@@ -11,6 +11,7 @@ import {
   Gamepad2,
   Coins,
   FlaskConical,
+  MessageCircle,
   MessageSquare,
   ChevronLeft,
   ChevronRight,
@@ -49,6 +50,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       href: ROUTES.admin.uiComponents,
       label: "UI Components",
       icon: <Palette className="h-5 w-5" />,
+    },
+    {
+      href: ROUTES.admin.whatsapp,
+      label: "WhatsApp",
+      icon: <MessageCircle className="h-5 w-5" />,
     },
     {
       href: ROUTES.admin.testing,
