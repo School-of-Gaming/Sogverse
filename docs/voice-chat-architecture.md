@@ -58,11 +58,11 @@ Spatial config (src/lib/constants/)
 
 `position: SpatialPosition` is a required field on `VoiceParticipant`. A participant is not added to the `participants` list until their position data has arrived via `posUpdate` app message (or local placement on join). If a participant is in the list, it has a valid position — no fallbacks, no nullable fields.
 
-The provider owns positions in a shared `positionsRef` (`Map<string, SpatialPosition>`). When `updateParticipants()` builds the participant list from Daily.co's participant map, it skips any participant whose session ID is not yet in `positionsRef`. The `use-spatial-positions` hook writes into this ref; the provider calls `updateParticipants` directly in `handleAppMessage` after processing position-related messages (`positionSync`, `posUpdate`, `moveUser`).
+The provider owns positions in a shared `positionsRef` (`Map<string, SpatialPosition>`). When `updateParticipants()` builds the participant list from Daily.co's participant map, it skips any participant whose session ID is not yet in `positionsRef`. The `use-spatial-positions` hook writes into this ref; the provider calls `updateParticipants` directly in `handleAppMessage` after processing position-related messages (`posUpdate`, `moveUser`).
 
 **Why position is part of the participant, not a separate data channel:** Position data and Daily.co participant data arrive via independent event sources (app messages vs. Daily.co SDK events). Keeping them as separate React state creates a window where a participant renders without a position. Making position a precondition for participant existence eliminates this class of bug structurally.
 
-**Position exchange on join — `participant-joined` drives the flow.** The new joiner does NOT broadcast their position on `joined-meeting` — `sendAppMessage("*")` immediately after joining is unreliable under high latency because the SFU's app-message route to existing peers may not be established yet. Instead, existing participants handle `participant-joined` (which only fires once the route to the new peer is ready) and proactively send a `positionSync` to the new joiner. The new joiner's `positionSync` handler replies with their own `posUpdate`, completing the exchange in both directions over a proven channel.
+**Position exchange on join — per-peer `posUpdate` handshake.** The new joiner does NOT broadcast their position on `joined-meeting` — `sendAppMessage("*")` immediately after joining is unreliable under high latency because the SFU's app-message route to existing peers may not be established yet. Instead, each existing participant handles `participant-joined` (which only fires once the SFU route to the new peer is established) and sends a targeted `posUpdate` containing only their own position. The new joiner replies with their own `posUpdate`, completing a bidirectional exchange per peer pair. A `sentPositionToRef` set prevents redundant replies: the existing peer records the new peer's session ID when it initiates the exchange, so it skips the reply logic when the new peer's `posUpdate` arrives. Each peer also self-reports their own lock state via a `lockSync` message if they are currently locked — only the entry matching the sender's session ID is accepted.
 
 ## Database Schema
 
@@ -231,8 +231,8 @@ Lock states are synced via app messages (`moderatorLock`). For late joiners, loc
 6. Lazy-creates Daily.co room if needed
 7. Issues a meeting token with `isOwner` (which also controls `enable_screenshare`) and `exp`
 8. `VoiceRoomProvider.join()` connects to the Daily.co room
-9. Local avatar is placed at a random non-overlapping position in the general zone; a `requestPositions` broadcast asks existing participants for their positions
-10. Existing participants reply with `positionSync` (positions + lock states); remote participants appear on the canvas as their `posUpdate` messages arrive
+9. Local avatar is placed at a random non-overlapping position in the general zone (no broadcast — see position exchange paragraph above)
+10. Each existing participant sends their own `posUpdate` (triggered by `participant-joined`); the new joiner replies with their own `posUpdate`, completing a bidirectional handshake per peer. Locked peers also send a `lockSync` with their own lock state.
 11. `SpatialVoiceRoom` renders the spatial canvas with avatars
 
 ### Auto-leave triggers

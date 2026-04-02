@@ -37,9 +37,8 @@ export interface AudioNodes {
 
 /** App message types sent via Daily.co sendAppMessage */
 export type AppMessage =
-  | { type: "requestPositions" }
-  | { type: "positionSync"; positions: Record<string, SpatialPosition>; locks: Record<string, LockState> }
   | { type: "posUpdate"; sessionId: string; position: SpatialPosition }
+  | { type: "lockSync"; locks: Record<string, LockState> }
   | { type: "moveUser"; targetSessionId: string; position: SpatialPosition }
   | { type: "moderatorMute"; targetSessionId: string; track: "audio" | "video" }
   | { type: "moderatorLock"; targetSessionId: string; track: "audio" | "video"; locked: boolean };

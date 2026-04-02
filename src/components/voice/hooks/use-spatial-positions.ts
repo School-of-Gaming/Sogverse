@@ -10,7 +10,7 @@ import {
   resolveOverlap,
   ejectFromBroadcastZone,
 } from "@/lib/constants/spatial";
-import type { AppMessage, LockState } from "./types";
+import type { AppMessage } from "./types";
 
 interface UseSpatialPositionsParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
@@ -67,10 +67,10 @@ export function useSpatialPositions({
   }, [callObjectRef, positionsRef, onPositionChanged]);
 
   /** Place local avatar. Does NOT broadcast — existing participants send us
-   *  a positionSync on their participant-joined event, and we reply with our
-   *  position then. This avoids the race condition where broadcasting
-   *  immediately after joined-meeting is unreliable under high latency
-   *  (the SFU's app-message route may not be established yet). */
+   *  their posUpdate on their participant-joined event (proving the SFU route
+   *  works), and we reply with our own posUpdate then. This avoids the race
+   *  where sendAppMessage("*") immediately after joined-meeting is unreliable
+   *  under high latency because the SFU route may not be established yet. */
   const onJoined = useCallback((localSessionId: string) => {
     const randomPos = getRandomPositionInZone("general");
     const others = Array.from(positionsRef.current.values());
@@ -85,36 +85,13 @@ export function useSpatialPositions({
     positionsRef.current.delete(sessionId);
   }, [positionsRef]);
 
-  /** Handle spatial app messages. Delegates lock data from positionSync to onLockStatesReceived. */
+  /** Handle spatial app messages (posUpdate, moveUser). */
   const onAppMessage = useCallback((
     msg: AppMessage,
     fromId: string,
     co: DailyCall,
-    onLockStatesReceived?: (locks: Record<string, LockState>) => void,
   ) => {
     switch (msg.type) {
-      case "positionSync": {
-        const localSid = co.participants().local.session_id;
-        for (const [sid, pos] of Object.entries(msg.positions)) {
-          if (sid !== localSid) {
-            positionsRef.current.set(sid, pos);
-          }
-        }
-        if (onLockStatesReceived) {
-          onLockStatesReceived(msg.locks);
-        }
-        onPositionChanged();
-
-        // Reply with our position so the sender can see us. This is the
-        // reliable path: the sender's positionSync reached us (proving the
-        // route works), so our reply will reach them.
-        const localPos = positionsRef.current.get(localSid);
-        if (localPos) {
-          const reply: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
-          co.sendAppMessage(reply, fromId);
-        }
-        break;
-      }
       case "posUpdate": {
         // Reject spoofed updates — sender can only update their own position
         if (msg.sessionId !== fromId) break;

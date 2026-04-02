@@ -73,6 +73,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   // when co.participants().local doesn't exist yet. updateParticipants skips
   // until this is true; handleJoined calls it to catch up on current state.
   const joinedRef = useRef(false);
+  // Tracks peers we've already sent our position to (via participant-joined
+  // or posUpdate reply). Prevents redundant replies in the handshake protocol.
+  const sentPositionToRef = useRef<Set<string>>(new Set());
 
   // --- Compose hooks ---
 
@@ -129,30 +132,35 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     if (!co) return;
     const { data: msg, fromId } = event;
 
-    if (msg.type === "requestPositions") {
-      // Cross-concern: reply with positions + lock states
-      const posObj: Record<string, SpatialPosition> = {};
-      for (const [sid, pos] of positionsRef.current) {
-        posObj[sid] = pos;
-      }
-      const locksObj: Record<string, { audio: boolean; video: boolean }> = {};
-      for (const [sid, lock] of moderator.lockStateRef.current) {
-        locksObj[sid] = lock;
-      }
-      const reply: AppMessage = { type: "positionSync", positions: posObj, locks: locksObj };
-      co.sendAppMessage(reply, fromId);
+    // Lock sync: each peer self-reports their own lock state on join.
+    // Only accept the entry keyed by fromId — a peer can only claim their own state.
+    if (msg.type === "lockSync") {
+      moderator.onLockStatesReceived({ [fromId]: msg.locks[fromId] });
       return;
     }
 
-    // Spatial messages: positionSync, posUpdate, moveUser
-    spatial.onAppMessage(msg, fromId, co, moderator.onLockStatesReceived);
+    // Spatial messages: posUpdate, moveUser
+    spatial.onAppMessage(msg, fromId, co);
 
     // Position messages may have materialized new participants (their
     // position now exists in positionsRef, passing the gate in
     // updateParticipants). Re-derive the list synchronously so they
     // appear without a setTimeout delay.
-    if (msg.type === "positionSync" || msg.type === "posUpdate" || msg.type === "moveUser") {
+    if (msg.type === "posUpdate" || msg.type === "moveUser") {
       updateParticipants(co);
+    }
+
+    // Handshake reply: if we haven't sent our position to this peer yet,
+    // reply with our own posUpdate so they can see us. This completes the
+    // per-peer handshake initiated by participant-joined.
+    if (msg.type === "posUpdate" && !sentPositionToRef.current.has(fromId)) {
+      sentPositionToRef.current.add(fromId);
+      const localSid = co.participants().local.session_id;
+      const localPos = positionsRef.current.get(localSid);
+      if (localPos) {
+        const reply: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
+        co.sendAppMessage(reply, fromId);
+      }
     }
 
     // Moderator messages: moderatorMute, moderatorLock
@@ -167,6 +175,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         await callObjectRef.current.destroy();
       }
       joinedRef.current = false;
+      sentPositionToRef.current.clear();
       audio.reset();
       spatial.reset();
       moderator.reset();
@@ -208,20 +217,28 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       const handleParticipantJoined = (event: { participant: DailyParticipant }) => {
         if (!joinedRef.current) return;
-        // Proactively send all positions to the new participant. This is the
-        // reliable initiation path: participant-joined only fires once the
-        // SFU route to the new peer is established. The new peer replies
-        // with their own posUpdate, completing the exchange.
-        const posObj: Record<string, SpatialPosition> = {};
-        for (const [sid, pos] of positionsRef.current) {
-          posObj[sid] = pos;
+        const newPeerSid = event.participant.session_id;
+        const localSid = co.participants().local.session_id;
+
+        // Send our own position to the new peer. participant-joined only
+        // fires once the SFU route is established, so this message is
+        // guaranteed to arrive. The new peer replies with their own
+        // posUpdate, completing a bidirectional handshake.
+        const localPos = positionsRef.current.get(localSid);
+        if (localPos) {
+          const msg: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
+          co.sendAppMessage(msg, newPeerSid);
         }
-        const locksObj: Record<string, { audio: boolean; video: boolean }> = {};
-        for (const [sid, lock] of moderator.lockStateRef.current) {
-          locksObj[sid] = lock;
+        sentPositionToRef.current.add(newPeerSid);
+
+        // Self-report our lock state so the new peer's moderator UI is accurate.
+        // Each peer only claims their own state — the real enforcement is
+        // Daily.co's canSend permission at the SFU level.
+        const myLocks = moderator.lockStateRef.current.get(localSid);
+        if (myLocks && (myLocks.audio || myLocks.video)) {
+          const lockMsg: AppMessage = { type: "lockSync", locks: { [localSid]: myLocks } };
+          co.sendAppMessage(lockMsg, newPeerSid);
         }
-        const msg: AppMessage = { type: "positionSync", positions: posObj, locks: locksObj };
-        co.sendAppMessage(msg, event.participant.session_id);
       };
 
       const handleParticipantUpdate = () => updateParticipants(co);
@@ -229,6 +246,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       const handleParticipantLeft = (event: { participant: DailyParticipant }) => {
         const sid = event.participant.session_id;
+        sentPositionToRef.current.delete(sid);
         spatial.onParticipantLeft(sid);
         moderator.onParticipantLeft(sid);
         audio.onParticipantLeft(sid);
@@ -237,6 +255,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       const handleLeft = () => {
         joinedRef.current = false;
+        sentPositionToRef.current.clear();
         setJoined(false);
         setParticipants([]);
         setMicOn(true);
@@ -276,6 +295,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       callObjectRef.current = null;
       setCallObject(null);
       joinedRef.current = false;
+      sentPositionToRef.current.clear();
       setJoined(false);
       setParticipants([]);
       setMicOn(true);
