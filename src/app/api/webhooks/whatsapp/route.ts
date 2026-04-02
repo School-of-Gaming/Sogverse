@@ -1,6 +1,20 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 
 const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN!;
+const appSecret = process.env.WHATSAPP_APP_SECRET!;
+
+/** Verify that the request came from Meta using X-Hub-Signature-256 */
+function verifySignature(body: string, signature: string | null): boolean {
+  if (!signature) return false;
+  const expected =
+    "sha256=" +
+    crypto.createHmac("sha256", appSecret).update(body).digest("hex");
+  return crypto.timingSafeEqual(
+    Buffer.from(expected),
+    Buffer.from(signature)
+  );
+}
 
 /** Meta webhook verification challenge */
 export async function GET(request: Request) {
@@ -18,7 +32,14 @@ export async function GET(request: Request) {
 
 /** Receive incoming WhatsApp messages */
 export async function POST(request: Request) {
-  const body = await request.json();
+  const rawBody = await request.text();
+  const signature = request.headers.get("x-hub-signature-256");
+
+  if (!verifySignature(rawBody, signature)) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+
+  const body = JSON.parse(rawBody);
 
   const entries = body.entry ?? [];
   for (const entry of entries) {
