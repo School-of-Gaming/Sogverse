@@ -43,6 +43,13 @@ Product images are currently arbitrary URLs provided by admins. The CSP `img-src
 
 Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
 
+### Reusable Phone Number Input Component
+
+A pre-configured international phone input component exists at `src/components/ui/phone-input.tsx` using `react-phone-number-input`. It pins Finland, UK, Sweden, and US at the top of the country dropdown and outputs E.164 format. Dark theme CSS overrides are in `src/app/globals.css`.
+
+- [ ] Use this component in user profile forms when adding phone numbers to profiles
+- [ ] Consider adding it to the UI Components reference page (`/admin/ui-components`)
+
 ### Multi-Parent Gamer Linking
 
 Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`. To support a second parent linking to an existing gamer:
