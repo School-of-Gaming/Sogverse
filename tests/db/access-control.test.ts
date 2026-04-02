@@ -87,6 +87,8 @@ describe("Access Control", () => {
       profiles: new Set(["UPDATE"]),
       parent_gamer: new Set(["DELETE"]),
       gamer_profiles: new Set(["UPDATE"]),
+      whatsapp_contacts: new Set(["INSERT", "UPDATE"]),
+      whatsapp_messages: new Set(["INSERT"]),
     };
 
     const { data, error } = await admin.rpc("_list_table_grants");
