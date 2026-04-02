@@ -66,11 +66,12 @@ export function useSpatialPositions({
     co.sendAppMessage(msg, "*");
   }, [callObjectRef, positionsRef, onPositionChanged]);
 
-  /** Place local avatar and request positions from existing participants */
+  /** Place local avatar. Does NOT broadcast — existing participants send us
+   *  a positionSync on their participant-joined event, and we reply with our
+   *  position then. This avoids the race condition where broadcasting
+   *  immediately after joined-meeting is unreliable under high latency
+   *  (the SFU's app-message route may not be established yet). */
   const onJoined = useCallback((localSessionId: string) => {
-    const co = callObjectRef.current;
-    if (!co) return;
-
     const randomPos = getRandomPositionInZone("general");
     const others = Array.from(positionsRef.current.values());
     const pos = resolveOverlap(randomPos.x, randomPos.y, others);
@@ -78,11 +79,7 @@ export function useSpatialPositions({
     const spatialPos: SpatialPosition = { ...pos, zone };
     positionsRef.current.set(localSessionId, spatialPos);
     setLocalZone(zone);
-    broadcastPosition(localSessionId, spatialPos);
-
-    const msg: AppMessage = { type: "requestPositions" };
-    co.sendAppMessage(msg, "*");
-  }, [callObjectRef, positionsRef, broadcastPosition]);
+  }, [positionsRef]);
 
   const onParticipantLeft = useCallback((sessionId: string) => {
     positionsRef.current.delete(sessionId);
@@ -107,6 +104,15 @@ export function useSpatialPositions({
           onLockStatesReceived(msg.locks);
         }
         onPositionChanged();
+
+        // Reply with our position so the sender can see us. This is the
+        // reliable path: the sender's positionSync reached us (proving the
+        // route works), so our reply will reach them.
+        const localPos = positionsRef.current.get(localSid);
+        if (localPos) {
+          const reply: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
+          co.sendAppMessage(reply, fromId);
+        }
         break;
       }
       case "posUpdate": {

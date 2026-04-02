@@ -62,7 +62,7 @@ The provider owns positions in a shared `positionsRef` (`Map<string, SpatialPosi
 
 **Why position is part of the participant, not a separate data channel:** Position data and Daily.co participant data arrive via independent event sources (app messages vs. Daily.co SDK events). Keeping them as separate React state creates a window where a participant renders without a position. Making position a precondition for participant existence eliminates this class of bug structurally.
 
-**Daily.co `participant-joined` event is intentionally not handled.** This event fires before the new participant has broadcast their position, so we have incomplete data. The participant materializes when their `posUpdate` message arrives and `updateParticipants` includes them with a real position. If a "joining in progress" indicator is needed in the future, `participant-joined` is the right hook point — listen for it and track pending session IDs separately from the `participants` list.
+**Position exchange on join — `participant-joined` drives the flow.** The new joiner does NOT broadcast their position on `joined-meeting` — `sendAppMessage("*")` immediately after joining is unreliable under high latency because the SFU's app-message route to existing peers may not be established yet. Instead, existing participants handle `participant-joined` (which only fires once the route to the new peer is ready) and proactively send a `positionSync` to the new joiner. The new joiner's `positionSync` handler replies with their own `posUpdate`, completing the exchange in both directions over a proven channel.
 
 ## Database Schema
 

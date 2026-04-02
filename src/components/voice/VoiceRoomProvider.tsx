@@ -206,6 +206,24 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         updateParticipants(co);
       };
 
+      const handleParticipantJoined = (event: { participant: DailyParticipant }) => {
+        if (!joinedRef.current) return;
+        // Proactively send all positions to the new participant. This is the
+        // reliable initiation path: participant-joined only fires once the
+        // SFU route to the new peer is established. The new peer replies
+        // with their own posUpdate, completing the exchange.
+        const posObj: Record<string, SpatialPosition> = {};
+        for (const [sid, pos] of positionsRef.current) {
+          posObj[sid] = pos;
+        }
+        const locksObj: Record<string, { audio: boolean; video: boolean }> = {};
+        for (const [sid, lock] of moderator.lockStateRef.current) {
+          locksObj[sid] = lock;
+        }
+        const msg: AppMessage = { type: "positionSync", positions: posObj, locks: locksObj };
+        co.sendAppMessage(msg, event.participant.session_id);
+      };
+
       const handleParticipantUpdate = () => updateParticipants(co);
       const handleTrackStarted = () => updateParticipants(co);
 
@@ -238,6 +256,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       };
 
       co.on("joined-meeting", handleJoined);
+      co.on("participant-joined", handleParticipantJoined);
       co.on("participant-left", handleParticipantLeft);
       co.on("participant-updated", handleParticipantUpdate);
       co.on("track-started", handleTrackStarted);
