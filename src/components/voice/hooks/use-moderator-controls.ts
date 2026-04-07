@@ -109,20 +109,11 @@ export function useModeratorControls({
     }
   }, [flushLockStates, setMicOn, setCameraOn]);
 
-  /** Merge lock states received from positionSync (late-joiner sync) */
-  const onLockStatesReceived = useCallback((locks: Record<string, LockState>) => {
-    const co = callObjectRef.current;
-    const localSid = co?.participants().local.session_id;
-
-    for (const [sid, lock] of Object.entries(locks)) {
-      lockStateRef.current.set(sid, lock);
-      if (sid === localSid) {
-        localLocksRef.current = lock;
-        setLocalLocks(lock);
-      }
-    }
+  /** Store a lock state received from lockSync (per-peer self-report on join) */
+  const onLockStatesReceived = useCallback((sessionId: string, lock: LockState) => {
+    lockStateRef.current.set(sessionId, lock);
     flushLockStates();
-  }, [callObjectRef, flushLockStates]);
+  }, [flushLockStates]);
 
   const onParticipantLeft = useCallback((sessionId: string) => {
     lockStateRef.current.delete(sessionId);

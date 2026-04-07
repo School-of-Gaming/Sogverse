@@ -58,11 +58,11 @@ Spatial config (src/lib/constants/)
 
 `position: SpatialPosition` is a required field on `VoiceParticipant`. A participant is not added to the `participants` list until their position data has arrived via `posUpdate` app message (or local placement on join). If a participant is in the list, it has a valid position — no fallbacks, no nullable fields.
 
-The provider owns positions in a shared `positionsRef` (`Map<string, SpatialPosition>`). When `updateParticipants()` builds the participant list from Daily.co's participant map, it skips any participant whose session ID is not yet in `positionsRef`. The `use-spatial-positions` hook writes into this ref; the provider calls `updateParticipants` directly in `handleAppMessage` after processing position-related messages (`positionSync`, `posUpdate`, `moveUser`).
+The provider owns positions in a shared `positionsRef` (`Map<string, SpatialPosition>`). When `updateParticipants()` builds the participant list from Daily.co's participant map, it skips any participant whose session ID is not yet in `positionsRef`. The `use-spatial-positions` hook writes into this ref; the provider calls `updateParticipants` directly in `handleAppMessage` after processing position-related messages (`posUpdate`, `moveUser`).
 
 **Why position is part of the participant, not a separate data channel:** Position data and Daily.co participant data arrive via independent event sources (app messages vs. Daily.co SDK events). Keeping them as separate React state creates a window where a participant renders without a position. Making position a precondition for participant existence eliminates this class of bug structurally.
 
-**Daily.co `participant-joined` event is intentionally not handled.** This event fires before the new participant has broadcast their position, so we have incomplete data. The participant materializes when their `posUpdate` message arrives and `updateParticipants` includes them with a real position. If a "joining in progress" indicator is needed in the future, `participant-joined` is the right hook point — listen for it and track pending session IDs separately from the `participants` list.
+**Position exchange on join — per-peer `posUpdate` handshake.** The new joiner does NOT broadcast their position on `joined-meeting` — `sendAppMessage("*")` immediately after joining is unreliable under high latency because the SFU's app-message route to existing peers may not be established yet. (This unreliability is specific to the join moment; once the session is established, broadcast via `sendAppMessage("*")` works normally and is used for ongoing position updates like `moveLocal`.) Instead, each existing participant handles `participant-joined` (which only fires once the SFU route to the new peer is established) and sends a targeted `posUpdate` containing only their own position. The new joiner replies with their own `posUpdate`, completing a bidirectional exchange per peer pair. A `sentPositionToRef` set prevents redundant replies: the existing peer records the new peer's session ID when it initiates the exchange, so it skips the reply logic when the new peer's `posUpdate` arrives. Each peer also self-reports their own lock state via a `lockSync` message if they are currently locked — the provider keys the received lock state by `fromId` (Daily.co-verified sender), so a peer can only set their own lock state.
 
 ## Database Schema
 
@@ -213,7 +213,7 @@ Each remote participant has a local-only volume multiplier (0.1–1.0, default 1
 - **Lock** (`lockParticipant`): Persistent restriction via `updateParticipant(sid, { setAudio: false, updatePermissions: { canSend: [...] } })`. Revokes the `canSend` permission for that track type. The participant's toggle is disabled and they physically cannot send the track. Unlock restores the permission.
 
 ### Lock state sync
-Lock states are synced via app messages (`moderatorLock`). For late joiners, lock states are included in the `positionSync` reply alongside spatial positions.
+Lock states are synced via app messages (`moderatorLock`). When a new peer joins, each locked participant self-reports their own lock state via a targeted `lockSync` message containing a single `LockState` value. The receiver trusts only the sender's own state — enforcement is at the SFU level via `canSend` permissions.
 
 ### UI
 - **VoiceControls:** Lock indicator (lock icon) overlays mic/camera buttons when locally locked. Buttons are disabled.
@@ -231,8 +231,8 @@ Lock states are synced via app messages (`moderatorLock`). For late joiners, loc
 6. Lazy-creates Daily.co room if needed
 7. Issues a meeting token with `isOwner` (which also controls `enable_screenshare`) and `exp`
 8. `VoiceRoomProvider.join()` connects to the Daily.co room
-9. Local avatar is placed at a random non-overlapping position in the general zone; a `requestPositions` broadcast asks existing participants for their positions
-10. Existing participants reply with `positionSync` (positions + lock states); remote participants appear on the canvas as their `posUpdate` messages arrive
+9. Local avatar is placed at a random non-overlapping position in the general zone (no broadcast — see position exchange paragraph above)
+10. Each existing participant sends their own `posUpdate` (triggered by `participant-joined`); the new joiner replies with their own `posUpdate`, completing a bidirectional handshake per peer. Locked peers also send a `lockSync` with their own lock state.
 11. `SpatialVoiceRoom` renders the spatial canvas with avatars
 
 ### Auto-leave triggers
@@ -261,6 +261,9 @@ Currently participant presence is only tracked in Daily.co's runtime. Persisting
 
 ### Volume amplification above 100%
 Currently capped at 100% due to a Chrome limitation with WebRTC MediaStream sources (see `docs/chrome-webrtc-volume-bug.md`). If Chrome fixes [the underlying bug](https://issues.chromium.org/issues/40184923), a GainNode could be re-introduced in the analyser pipeline for amplification — but note that the analyser pipeline is intentionally separate from playback (see "Audio Pipeline" above), so a GainNode-based approach would require re-evaluating the architecture. Alternatively, if Daily.co adds per-subscriber server-side audio processing to their SFU, that would bypass the client-side limitation entirely.
+
+### State machine extraction for protocol testing
+The position exchange protocol (per-peer `posUpdate` handshake, `lockSync`, `sentPositionToRef` dedup) is timing-sensitive — bugs manifest as invisible participants under specific event orderings. If regressions recur, extract the protocol logic into a pure state machine (`voice-protocol.ts`, ~50 lines) that takes `(state, event) → actions[]`. State: `{ positions, sentPositionTo, joined, localSessionId, localLocks }`. Events: `joined-meeting`, `participant-joined`, `received-posUpdate`, `received-lockSync`, `participant-left`. Actions: `send-posUpdate-to-X`, `store-position`, `store-lock`, etc. The hooks become thin adapters that map Daily.co events to protocol events and execute the returned actions. Then write permutation tests (~150 lines) with a multi-peer simulator that feeds every plausible event ordering into the state machines and asserts the invariant: after all events settle, every peer pair has exchanged positions. This is the industry-standard approach for testing timing-sensitive protocols without needing a real network.
 
 ### Sanitize pipe delimiter from display names in token userName
 The token endpoint encodes `userId|role|displayName` as a pipe-delimited string in Daily.co's `user_name` field. If a user's `display_name` contains `|`, the client-side parser (`mapParticipant`) handles it correctly by re-joining slots 2+. However, a user could set their display name to e.g. `fakeId|admin|Admin` and the parser would extract a spoofed `role` and `userId`. This is cosmetic-only — the Daily.co token's `is_owner` flag (set server-side) is the real authority for drag permissions and `moveUser` validation — but it could cause incorrect role badges or identicons. Fix by stripping `|` from `displayName` before encoding, or switching to JSON encoding.
