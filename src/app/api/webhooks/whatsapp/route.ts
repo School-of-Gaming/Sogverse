@@ -11,6 +11,7 @@ function verifySignature(body: string, signature: string | null): boolean {
   const expected =
     "sha256=" +
     crypto.createHmac("sha256", appSecret).update(body).digest("hex");
+  if (expected.length !== signature.length) return false;
   return crypto.timingSafeEqual(
     Buffer.from(expected),
     Buffer.from(signature)
