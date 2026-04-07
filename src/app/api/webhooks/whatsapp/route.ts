@@ -147,8 +147,6 @@ export async function POST(request: Request) {
           if (errorCode === 131047 || rawTitle.toLowerCase().includes("re-engage")) {
             errorMsg =
               "Not delivered — over 24 hours since the customer last messaged us. They need to message us first before we can reply.";
-          } else if (errorCode === 131026 || rawTitle.toLowerCase().includes("not able to send")) {
-            errorMsg = "Not delivered — this phone number is not on WhatsApp.";
           } else {
             errorMsg = rawTitle || "Message delivery failed";
           }
