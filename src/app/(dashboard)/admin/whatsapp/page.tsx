@@ -159,15 +159,23 @@ function ChatThread({
   sendError: string | null;
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Focus input when the conversation opens or sending completes
+  useEffect(() => {
+    if (!isSending) inputRef.current?.focus();
+  }, [phone, isSending]);
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!draft.trim()) return;
     onSend(draft.trim());
+    // Re-focus after send so user can keep typing
+    inputRef.current?.focus();
   }
 
   const dateGroups = groupMessagesByDate(messages);
@@ -258,6 +266,7 @@ function ChatThread({
       {/* Input */}
       <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-3">
         <Input
+          ref={inputRef}
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
           placeholder="Type a message..."
