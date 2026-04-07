@@ -14,14 +14,19 @@ vi.mock("@/lib/whatsapp", () => ({
   sendWhatsAppMessage: (...args: unknown[]) => mockSendWhatsAppMessage(...args),
 }));
 
-const mockUpsert = vi.fn().mockResolvedValue({ error: null });
-const mockInsert = vi.fn().mockResolvedValue({ error: null });
+const mockContactUpsert = vi.fn().mockResolvedValue({ error: null });
+const mockMessageInsert = vi.fn().mockResolvedValue({ error: null });
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
-    from: () => ({
-      upsert: mockUpsert,
-      insert: mockInsert,
-    }),
+    from: (table: string) => {
+      if (table === "whatsapp_contacts") {
+        return { upsert: mockContactUpsert };
+      }
+      if (table === "whatsapp_messages") {
+        return { insert: mockMessageInsert };
+      }
+      return {};
+    },
   })),
 }));
 
@@ -121,7 +126,7 @@ describe("POST /api/admin/whatsapp/send", () => {
     // Verify message is stored with 'pending' status — webhooks will
     // promote to sent/delivered/read or failed. If this is missing,
     // the DB default ('sent') skips the pending state entirely.
-    expect(mockInsert).toHaveBeenCalledWith(
+    expect(mockMessageInsert).toHaveBeenCalledWith(
       expect.objectContaining({
         id: "wamid.test123",
         phone: "358401234567",
@@ -141,8 +146,8 @@ describe("POST /api/admin/whatsapp/send", () => {
     );
 
     expect(response.status).toBe(500);
-    expect(mockUpsert).not.toHaveBeenCalled();
-    expect(mockInsert).not.toHaveBeenCalled();
+    expect(mockContactUpsert).not.toHaveBeenCalled();
+    expect(mockMessageInsert).not.toHaveBeenCalled();
   });
 
 });

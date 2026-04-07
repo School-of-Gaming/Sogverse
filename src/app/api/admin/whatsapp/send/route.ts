@@ -5,6 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { z } from "zod";
 
 const requestSchema = z.object({
+  // No format validation — `to` always comes from a whatsapp_contacts row
+  // created by the inbound webhook, so it's a known-valid WhatsApp number.
   to: z.string().min(1),
   body: z.string().min(1).max(4096),
 });

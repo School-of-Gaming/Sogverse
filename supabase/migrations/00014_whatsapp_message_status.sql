@@ -7,7 +7,8 @@ alter table whatsapp_messages
     check (status in ('sent', 'delivered', 'read', 'failed')),
   add column status_error text;  -- error description when status = 'failed'
 
--- Webhook needs to update status on existing messages
+-- Migration 00013 revoked all then granted only SELECT + INSERT.
+-- UPDATE is needed now for webhook status updates on existing messages.
 grant update on whatsapp_messages to authenticated;
 
 -- RLS: allow admins to read the updated status (already covered by SELECT policy).
