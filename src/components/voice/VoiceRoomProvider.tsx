@@ -134,6 +134,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
     // Lock sync: each peer self-reports their own lock state on join.
     // The type carries a single LockState — a peer can only claim their own.
+    // Note: a malicious peer could lie about being unlocked. This is cosmetic
+    // only — actual enforcement is via Daily.co's canSend SFU permissions.
     if (msg.type === "lockSync") {
       moderator.onLockStatesReceived({ [fromId]: msg.lock });
       return;
