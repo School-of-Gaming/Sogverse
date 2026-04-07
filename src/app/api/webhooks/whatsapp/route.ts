@@ -139,10 +139,20 @@ export async function POST(request: Request) {
         const update: Record<string, unknown> = { status: statusValue };
 
         if (statusValue === "failed") {
-          const errorMsg =
-            status.errors?.[0]?.title ??
-            status.errors?.[0]?.message ??
-            "Message delivery failed";
+          const errorCode = status.errors?.[0]?.code;
+          const rawTitle = status.errors?.[0]?.title ?? "";
+
+          // Map Meta's technical error titles to support-friendly messages
+          let errorMsg: string;
+          if (errorCode === 131047 || rawTitle.toLowerCase().includes("re-engage")) {
+            errorMsg =
+              "Not delivered — over 24 hours since the customer last messaged us. They need to message us first before we can reply.";
+          } else if (errorCode === 131026 || rawTitle.toLowerCase().includes("not able to send")) {
+            errorMsg = "Not delivered — this phone number is not on WhatsApp.";
+          } else {
+            errorMsg = rawTitle || "Message delivery failed";
+          }
+
           update.status_error = errorMsg;
         }
 
