@@ -44,10 +44,8 @@ export function useSendWhatsAppMessage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      return data;
+      return data as { messageId: string };
     },
-    // Optimistic update: immediately add the message to the query cache
-    // so there's a single source of truth (the messages array).
     onMutate: async ({ to, body }) => {
       await queryClient.cancelQueries({ queryKey: whatsappKeys.messages(to) });
 
@@ -55,8 +53,9 @@ export function useSendWhatsAppMessage() {
         whatsappKeys.messages(to)
       );
 
+      const tempId = `pending-${Date.now()}`;
       const optimistic: WhatsAppMessage = {
-        id: `pending-${Date.now()}`,
+        id: tempId,
         phone: to.replace(/^\+/, ""),
         direction: "outbound",
         body,
@@ -72,17 +71,32 @@ export function useSendWhatsAppMessage() {
         (old) => [...(old ?? []), optimistic]
       );
 
-      return { previous };
+      return { previous, tempId };
+    },
+    onSuccess: (data, { to }, context) => {
+      // Swap the temp ID with the real Meta message ID so that
+      // subsequent Realtime UPDATE events (delivered/read/failed)
+      // can match by ID and patch the cache directly.
+      if (!context?.tempId) return;
+      queryClient.setQueryData<WhatsAppMessage[]>(
+        whatsappKeys.messages(to),
+        (old) =>
+          old?.map((msg) =>
+            msg.id === context.tempId
+              ? { ...msg, id: data.messageId, status: "sent" }
+              : msg
+          )
+      );
     },
     onError: (_err, { to }, context) => {
-      // Roll back optimistic update on failure
       if (context?.previous) {
         queryClient.setQueryData(whatsappKeys.messages(to), context.previous);
       }
     },
     onSettled: (_data, _error, { to }) => {
-      // Refetch to sync with server (safe fallback alongside Realtime)
-      queryClient.invalidateQueries({ queryKey: whatsappKeys.messages(to) });
+      // Refetch contacts to update last_message_at ordering.
+      // Message cache is already correct from onSuccess/onError +
+      // Realtime handles ongoing status updates (delivered/read).
       queryClient.invalidateQueries({ queryKey: whatsappKeys.contacts() });
     },
   });
