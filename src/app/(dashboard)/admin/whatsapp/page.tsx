@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
+import { AlertCircle, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -47,6 +47,27 @@ function groupMessagesByDate(messages: WhatsAppMessage[]) {
   }
 
   return groups;
+}
+
+// --- Delivery status for outbound messages ---
+// "pending" and "sent" both mean "waiting for confirmation" — show spinner.
+// Only "delivered" and "read" are confirmed — show checkmarks.
+
+function isUnconfirmed(status: string) {
+  return status === "pending" || status === "sent";
+}
+
+function StatusIndicator({ status }: { status: string }) {
+  if (isUnconfirmed(status)) {
+    return <Loader2 className="h-3 w-3 animate-spin" />;
+  }
+  if (status === "delivered") {
+    return <CheckCheck className="h-3 w-3" />;
+  }
+  if (status === "read") {
+    return <CheckCheck className="h-3 w-3 text-sky-400" />;
+  }
+  return null;
 }
 
 // --- Contact List ---
@@ -115,21 +136,6 @@ function ContactList({
   );
 }
 
-// --- Status indicator for outbound messages ---
-
-function StatusIndicator({ status, className }: { status: string; className?: string }) {
-  switch (status) {
-    case "sent":
-      return <Check className={cn("h-3 w-3", className)} />;
-    case "delivered":
-      return <CheckCheck className={cn("h-3 w-3", className)} />;
-    case "read":
-      return <CheckCheck className={cn("h-3 w-3 text-sky-400", className)} />;
-    default:
-      return null;
-  }
-}
-
 // --- Chat Thread ---
 
 function ChatThread({
@@ -140,7 +146,6 @@ function ChatThread({
   onDraftChange,
   onSend,
   isSending,
-  pendingBody,
   sendError,
 }: {
   phone: string;
@@ -150,14 +155,13 @@ function ChatThread({
   onDraftChange: (value: string) => void;
   onSend: (body: string) => void;
   isSending: boolean;
-  pendingBody: string | null;
   sendError: string | null;
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, pendingBody]);
+  }, [messages]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -203,7 +207,7 @@ function ChatThread({
                       "max-w-[70%] rounded-lg px-3 py-2 text-sm",
                       msg.status === "failed"
                         ? "bg-destructive/15 text-destructive"
-                        : msg.direction === "outbound" && msg.status === "sent"
+                        : msg.direction === "outbound" && isUnconfirmed(msg.status)
                           ? "bg-muted/50 text-muted-foreground"
                           : msg.direction === "outbound"
                             ? "bg-primary text-primary-foreground"
@@ -222,7 +226,7 @@ function ChatThread({
                         "mt-1 flex items-center justify-end gap-1 text-[10px]",
                         msg.status === "failed"
                           ? "text-destructive/70"
-                          : msg.direction === "outbound" && msg.status === "sent"
+                          : msg.direction === "outbound" && isUnconfirmed(msg.status)
                             ? "text-muted-foreground"
                             : msg.direction === "outbound"
                               ? "text-primary-foreground/70"
@@ -240,21 +244,6 @@ function ChatThread({
             </div>
           </div>
         ))}
-
-        {/* Pending message — shown until the real message appears in the
-            query results (cleared by the useEffect body-match check) */}
-        {pendingBody && (
-          <div className="flex justify-end">
-            <div className="max-w-[70%] rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-              <p className="whitespace-pre-wrap break-words">{pendingBody}</p>
-              <div className="mt-1 flex items-center justify-end gap-1 text-[10px]">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>Sending</span>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div ref={messagesEndRef} />
       </div>
 
@@ -289,7 +278,6 @@ export default function WhatsAppInboxPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
-  const [pendingBody, setPendingBody] = useState<string | null>(null);
 
   const { data: contacts = [] } = useWhatsAppContacts();
   const { data: messages = [] } = useWhatsAppMessages(selectedPhone);
@@ -298,7 +286,7 @@ export default function WhatsAppInboxPage() {
 
   const selectedContact = contacts.find((c) => c.phone === selectedPhone);
 
-  // Supabase Realtime subscription for new messages
+  // Supabase Realtime subscription for new messages and status updates
   useEffect(() => {
     const supabase = getClient();
 
@@ -325,28 +313,17 @@ export default function WhatsAppInboxPage() {
     };
   }, [queryClient]);
 
-  // Clear pending bubble once the message appears in the DB query results
-  useEffect(() => {
-    if (
-      pendingBody &&
-      messages.some((m) => m.direction === "outbound" && m.body === pendingBody)
-    ) {
-      setPendingBody(null);
-      setDraft("");
-    }
-  }, [messages, pendingBody]);
-
   function handleSend(body: string) {
     if (!selectedPhone) return;
     setSendError(null);
-    setPendingBody(body);
+    setDraft("");
 
     sendMutation.mutate(
       { to: selectedPhone, body },
       {
         onError: (error) => {
           setSendError(error.message);
-          setPendingBody(null);
+          setDraft(body); // restore draft so user can retry
         },
       }
     );
@@ -390,7 +367,6 @@ export default function WhatsAppInboxPage() {
               onDraftChange={setDraft}
               onSend={handleSend}
               isSending={sendMutation.isPending}
-              pendingBody={pendingBody}
               sendError={sendError}
             />
           ) : (

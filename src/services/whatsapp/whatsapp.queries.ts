@@ -1,8 +1,9 @@
 "use client";
 
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { WhatsAppService } from "./whatsapp.service";
+import type { WhatsAppMessage } from "@/types";
 
 export const whatsappKeys = {
   all: ["whatsapp"] as const,
@@ -32,6 +33,8 @@ export function useWhatsAppMessages(phone: string | null) {
 }
 
 export function useSendWhatsAppMessage() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ to, body }: { to: string; body: string }) => {
       const res = await fetch("/api/admin/whatsapp/send", {
@@ -43,8 +46,44 @@ export function useSendWhatsAppMessage() {
       if (!res.ok) throw new Error(data.error);
       return data;
     },
-    // No onSuccess invalidation — Realtime subscription handles query freshness.
-    // Dual invalidation (mutation + Realtime) causes visual flickering from
-    // competing refetches that interleave with Meta's status webhook updates.
+    // Optimistic update: immediately add the message to the query cache
+    // so there's a single source of truth (the messages array).
+    onMutate: async ({ to, body }) => {
+      await queryClient.cancelQueries({ queryKey: whatsappKeys.messages(to) });
+
+      const previous = queryClient.getQueryData<WhatsAppMessage[]>(
+        whatsappKeys.messages(to)
+      );
+
+      const optimistic: WhatsAppMessage = {
+        id: `pending-${Date.now()}`,
+        phone: to.replace(/^\+/, ""),
+        direction: "outbound",
+        body,
+        message_type: "text",
+        raw_payload: null,
+        status: "pending",
+        status_error: null,
+        created_at: new Date().toISOString(),
+      };
+
+      queryClient.setQueryData<WhatsAppMessage[]>(
+        whatsappKeys.messages(to),
+        (old) => [...(old ?? []), optimistic]
+      );
+
+      return { previous };
+    },
+    onError: (_err, { to }, context) => {
+      // Roll back optimistic update on failure
+      if (context?.previous) {
+        queryClient.setQueryData(whatsappKeys.messages(to), context.previous);
+      }
+    },
+    onSettled: (_data, _error, { to }) => {
+      // Refetch to sync with server (safe fallback alongside Realtime)
+      queryClient.invalidateQueries({ queryKey: whatsappKeys.messages(to) });
+      queryClient.invalidateQueries({ queryKey: whatsappKeys.contacts() });
+    },
   });
 }
