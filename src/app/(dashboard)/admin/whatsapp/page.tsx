@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, MessageCircle, Send } from "lucide-react";
+import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -115,6 +115,21 @@ function ContactList({
   );
 }
 
+// --- Status indicator for outbound messages ---
+
+function StatusIndicator({ status, className }: { status: string; className?: string }) {
+  switch (status) {
+    case "sent":
+      return <Check className={cn("h-3 w-3", className)} />;
+    case "delivered":
+      return <CheckCheck className={cn("h-3 w-3", className)} />;
+    case "read":
+      return <CheckCheck className={cn("h-3 w-3 text-sky-400", className)} />;
+    default:
+      return null;
+  }
+}
+
 // --- Chat Thread ---
 
 function ChatThread({
@@ -125,6 +140,7 @@ function ChatThread({
   onDraftChange,
   onSend,
   isSending,
+  pendingBody,
   sendError,
 }: {
   phone: string;
@@ -134,13 +150,14 @@ function ChatThread({
   onDraftChange: (value: string) => void;
   onSend: (body: string) => void;
   isSending: boolean;
+  pendingBody: string | null;
   sendError: string | null;
 }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isSending]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -198,9 +215,9 @@ function ChatThread({
                         <span>{msg.status_error ?? "Not delivered"}</span>
                       </div>
                     )}
-                    <p
+                    <div
                       className={cn(
-                        "mt-1 text-right text-[10px]",
+                        "mt-1 flex items-center justify-end gap-1 text-[10px]",
                         msg.status === "failed"
                           ? "text-destructive/70"
                           : msg.direction === "outbound"
@@ -208,14 +225,31 @@ function ChatThread({
                             : "text-muted-foreground"
                       )}
                     >
-                      {formatTime(msg.created_at)}
-                    </p>
+                      <span>{formatTime(msg.created_at)}</span>
+                      {msg.direction === "outbound" && msg.status !== "failed" && (
+                        <StatusIndicator status={msg.status} />
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         ))}
+
+        {/* Pending message — shown while API call is in-flight */}
+        {isSending && pendingBody && (
+          <div className="flex justify-end">
+            <div className="max-w-[70%] rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
+              <p className="whitespace-pre-wrap break-words">{pendingBody}</p>
+              <div className="mt-1 flex items-center justify-end gap-1 text-[10px]">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                <span>Sending</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -250,6 +284,7 @@ export default function WhatsAppInboxPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [pendingBody, setPendingBody] = useState<string | null>(null);
 
   const { data: contacts = [] } = useWhatsAppContacts();
   const { data: messages = [] } = useWhatsAppMessages(selectedPhone);
@@ -288,15 +323,18 @@ export default function WhatsAppInboxPage() {
   function handleSend(body: string) {
     if (!selectedPhone) return;
     setSendError(null);
+    setPendingBody(body);
 
     sendMutation.mutate(
       { to: selectedPhone, body },
       {
         onSuccess: () => {
           setDraft("");
+          setPendingBody(null);
         },
         onError: (error) => {
           setSendError(error.message);
+          setPendingBody(null);
         },
       }
     );
@@ -340,6 +378,7 @@ export default function WhatsAppInboxPage() {
               onDraftChange={setDraft}
               onSend={handleSend}
               isSending={sendMutation.isPending}
+              pendingBody={pendingBody}
               sendError={sendError}
             />
           ) : (
