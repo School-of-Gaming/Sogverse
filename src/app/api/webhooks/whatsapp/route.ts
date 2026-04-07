@@ -74,7 +74,7 @@ export async function GET(request: Request) {
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 }
 
-/** Receive incoming WhatsApp messages */
+/** Receive incoming WhatsApp messages and delivery status updates */
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-hub-signature-256");
@@ -92,6 +92,7 @@ export async function POST(request: Request) {
     for (const change of changes) {
       if (change.field !== "messages") continue;
 
+      // --- Inbound messages ---
       const contacts = change.value?.contacts ?? [];
       const contactMap = new Map<string, string>();
       for (const contact of contacts) {
@@ -124,7 +125,31 @@ export async function POST(request: Request) {
           raw_payload: message,
           created_at: new Date().toISOString(),
         });
+      }
 
+      // --- Delivery status updates (sent → delivered → read, or failed) ---
+      const statuses = change.value?.statuses ?? [];
+      for (const status of statuses) {
+        const msgId = status.id as string;
+        const statusValue = status.status as string;
+
+        // Only update statuses we track
+        if (!["sent", "delivered", "read", "failed"].includes(statusValue)) continue;
+
+        const update: Record<string, unknown> = { status: statusValue };
+
+        if (statusValue === "failed") {
+          const errorMsg =
+            status.errors?.[0]?.title ??
+            status.errors?.[0]?.message ??
+            "Message delivery failed";
+          update.status_error = errorMsg;
+        }
+
+        await admin
+          .from("whatsapp_messages")
+          .update(update)
+          .eq("id", msgId);
       }
     }
   }

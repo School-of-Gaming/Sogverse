@@ -572,6 +572,8 @@ export type Database = {
           message_type: string
           phone: string
           raw_payload: Json | null
+          status: string
+          status_error: string | null
         }
         Insert: {
           body?: string | null
@@ -581,6 +583,8 @@ export type Database = {
           message_type?: string
           phone: string
           raw_payload?: Json | null
+          status?: string
+          status_error?: string | null
         }
         Update: {
           body?: string | null
@@ -590,6 +594,8 @@ export type Database = {
           message_type?: string
           phone?: string
           raw_payload?: Json | null
+          status?: string
+          status_error?: string | null
         }
         Relationships: [
           {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MessageCircle, Send } from "lucide-react";
+import { AlertCircle, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -121,6 +121,8 @@ function ChatThread({
   phone,
   contactName,
   messages,
+  draft,
+  onDraftChange,
   onSend,
   isSending,
   sendError,
@@ -128,11 +130,12 @@ function ChatThread({
   phone: string;
   contactName: string | null;
   messages: WhatsAppMessage[];
+  draft: string;
+  onDraftChange: (value: string) => void;
   onSend: (body: string) => void;
   isSending: boolean;
   sendError: string | null;
 }) {
-  const [draft, setDraft] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -143,7 +146,6 @@ function ChatThread({
     e.preventDefault();
     if (!draft.trim()) return;
     onSend(draft.trim());
-    setDraft("");
   }
 
   const dateGroups = groupMessagesByDate(messages);
@@ -182,18 +184,28 @@ function ChatThread({
                   <div
                     className={cn(
                       "max-w-[70%] rounded-lg px-3 py-2 text-sm",
-                      msg.direction === "outbound"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-foreground"
+                      msg.status === "failed"
+                        ? "bg-destructive/15 text-destructive"
+                        : msg.direction === "outbound"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-foreground"
                     )}
                   >
                     <p className="whitespace-pre-wrap break-words">{msg.body}</p>
+                    {msg.status === "failed" && (
+                      <div className="mt-1 flex items-center gap-1 text-[10px] text-destructive">
+                        <AlertCircle className="h-3 w-3" />
+                        <span>{msg.status_error ?? "Not delivered"}</span>
+                      </div>
+                    )}
                     <p
                       className={cn(
                         "mt-1 text-right text-[10px]",
-                        msg.direction === "outbound"
-                          ? "text-primary-foreground/70"
-                          : "text-muted-foreground"
+                        msg.status === "failed"
+                          ? "text-destructive/70"
+                          : msg.direction === "outbound"
+                            ? "text-primary-foreground/70"
+                            : "text-muted-foreground"
                       )}
                     >
                       {formatTime(msg.created_at)}
@@ -218,7 +230,7 @@ function ChatThread({
       <form onSubmit={handleSubmit} className="flex gap-2 border-t border-border p-3">
         <Input
           value={draft}
-          onChange={(e) => setDraft(e.target.value)}
+          onChange={(e) => onDraftChange(e.target.value)}
           placeholder="Type a message..."
           disabled={isSending}
           className="flex-1"
@@ -237,6 +249,7 @@ export default function WhatsAppInboxPage() {
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
 
   const { data: contacts = [] } = useWhatsAppContacts();
   const { data: messages = [] } = useWhatsAppMessages(selectedPhone);
@@ -253,7 +266,7 @@ export default function WhatsAppInboxPage() {
       .channel("whatsapp-inbox")
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "whatsapp_messages" },
+        { event: "*", schema: "public", table: "whatsapp_messages" },
         () => {
           queryClient.invalidateQueries({ queryKey: whatsappKeys.all });
         }
@@ -279,6 +292,9 @@ export default function WhatsAppInboxPage() {
     sendMutation.mutate(
       { to: selectedPhone, body },
       {
+        onSuccess: () => {
+          setDraft("");
+        },
         onError: (error) => {
           setSendError(error.message);
         },
@@ -289,6 +305,7 @@ export default function WhatsAppInboxPage() {
   function handleSelectContact(phone: string) {
     setSelectedPhone(phone);
     setSendError(null);
+    setDraft("");
   }
 
   return (
@@ -319,6 +336,8 @@ export default function WhatsAppInboxPage() {
               phone={selectedPhone}
               contactName={selectedContact?.wa_name ?? null}
               messages={messages}
+              draft={draft}
+              onDraftChange={setDraft}
               onSend={handleSend}
               isSending={sendMutation.isPending}
               sendError={sendError}
