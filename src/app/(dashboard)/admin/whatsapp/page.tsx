@@ -241,8 +241,11 @@ function ChatThread({
           </div>
         ))}
 
-        {/* Pending message — shown while API call is in-flight */}
-        {isSending && pendingBody && (
+        {/* Pending message — shown while API call is in-flight, hidden once
+            Realtime delivers the real message into the messages array */}
+        {isSending && pendingBody && !messages.some(
+          (m) => m.direction === "outbound" && m.body === pendingBody
+        ) && (
           <div className="flex justify-end">
             <div className="max-w-[70%] rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
               <p className="whitespace-pre-wrap break-words">{pendingBody}</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { WhatsAppService } from "./whatsapp.service";
 
@@ -32,8 +32,6 @@ export function useWhatsAppMessages(phone: string | null) {
 }
 
 export function useSendWhatsAppMessage() {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: async ({ to, body }: { to: string; body: string }) => {
       const res = await fetch("/api/admin/whatsapp/send", {
@@ -45,9 +43,8 @@ export function useSendWhatsAppMessage() {
       if (!res.ok) throw new Error(data.error);
       return data;
     },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: whatsappKeys.messages(variables.to) });
-      queryClient.invalidateQueries({ queryKey: whatsappKeys.contacts() });
-    },
+    // No onSuccess invalidation — Realtime subscription handles query freshness.
+    // Dual invalidation (mutation + Realtime) causes visual flickering from
+    // competing refetches that interleave with Meta's status webhook updates.
   });
 }
