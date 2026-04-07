@@ -203,9 +203,11 @@ function ChatThread({
                       "max-w-[70%] rounded-lg px-3 py-2 text-sm",
                       msg.status === "failed"
                         ? "bg-destructive/15 text-destructive"
-                        : msg.direction === "outbound"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-foreground"
+                        : msg.direction === "outbound" && msg.status === "sent"
+                          ? "bg-muted/50 text-muted-foreground"
+                          : msg.direction === "outbound"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted text-foreground"
                     )}
                   >
                     <p className="whitespace-pre-wrap break-words">{msg.body}</p>
@@ -220,9 +222,11 @@ function ChatThread({
                         "mt-1 flex items-center justify-end gap-1 text-[10px]",
                         msg.status === "failed"
                           ? "text-destructive/70"
-                          : msg.direction === "outbound"
-                            ? "text-primary-foreground/70"
-                            : "text-muted-foreground"
+                          : msg.direction === "outbound" && msg.status === "sent"
+                            ? "text-muted-foreground"
+                            : msg.direction === "outbound"
+                              ? "text-primary-foreground/70"
+                              : "text-muted-foreground"
                       )}
                     >
                       <span>{formatTime(msg.created_at)}</span>
