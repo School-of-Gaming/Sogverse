@@ -114,20 +114,3 @@ export async function sendWhatsAppMessage(
   return { messageId: data.messages[0].id };
 }
 
-// --- Phone number normalization ---
-
-/**
- * Normalize a phone number from various spreadsheet formats to WhatsApp
- * format (digits only with country code, no +).
- *
- * Examples:
- *   "+358 44 0824754"  → "358440824754"
- *   "0442721930"       → "358442721930"
- *   " 050 569 9741"    → "358505699741"
- *   "+46709116891"     → "46709116891"
- */
-export function normalizePhoneNumber(phone: string): string {
-  let n = phone.replace(/[\s+]/g, "");
-  if (n.startsWith("0")) n = "358" + n.slice(1);
-  return n;
-}
