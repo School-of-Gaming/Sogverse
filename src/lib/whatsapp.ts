@@ -26,7 +26,7 @@ interface ListMessage {
   }[];
 }
 
-export type WhatsAppMessage = TextMessage | ButtonMessage | ListMessage;
+export type WhatsAppOutboundPayload = TextMessage | ButtonMessage | ListMessage;
 
 interface SendResult {
   messageId: string;
@@ -36,7 +36,7 @@ interface SendResult {
 
 export async function sendWhatsAppMessage(
   to: string,
-  message: WhatsAppMessage
+  message: WhatsAppOutboundPayload
 ): Promise<SendResult> {
   // Strip the leading + if present — Meta expects digits only
   const recipient = to.replace(/^\+/, "");

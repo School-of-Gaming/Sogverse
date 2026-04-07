@@ -583,7 +583,7 @@ export type Database = {
           message_type?: string
           phone: string
           raw_payload?: Json | null
-          status?: string
+          status: string
           status_error?: string | null
         }
         Update: {

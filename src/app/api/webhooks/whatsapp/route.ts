@@ -84,6 +84,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
+  // Safe to parse without try/catch — the HMAC check above guarantees
+  // this is the exact payload Meta sent, and Meta always sends valid JSON.
   const body = JSON.parse(rawBody);
   const admin = createAdminClient();
 
@@ -116,16 +118,21 @@ export async function POST(request: Request) {
           { onConflict: "phone" }
         );
 
-        // Insert message
-        await admin.from("whatsapp_messages").insert({
-          id: message.id as string,
-          phone,
-          direction: "inbound",
-          body: msgBody,
-          message_type: messageType,
-          raw_payload: message,
-          created_at: new Date().toISOString(),
-        });
+        // Upsert message — Meta retries webhook deliveries on transient
+        // failures, so duplicate message IDs are expected.
+        await admin.from("whatsapp_messages").upsert(
+          {
+            id: message.id as string,
+            phone,
+            direction: "inbound",
+            status: "received",
+            body: msgBody,
+            message_type: messageType,
+            raw_payload: message,
+            created_at: new Date().toISOString(),
+          },
+          { onConflict: "id" }
+        );
       }
 
       // --- Delivery status updates (sent → delivered → read, or failed) ---

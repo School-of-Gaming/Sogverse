@@ -13,19 +13,19 @@ const { GET, POST } = await import("@/app/api/webhooks/whatsapp/route");
 
 // --- Mocks ---
 
-const mockUpsert = vi.fn().mockResolvedValue({ error: null });
-const mockInsert = vi.fn().mockResolvedValue({ error: null });
+const mockContactUpsert = vi.fn().mockResolvedValue({ error: null });
+const mockMessageUpsert = vi.fn().mockResolvedValue({ error: null });
 const mockUpdate = vi.fn();
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: (table: string) => {
       if (table === "whatsapp_contacts") {
-        return { upsert: mockUpsert };
+        return { upsert: mockContactUpsert };
       }
       if (table === "whatsapp_messages") {
         return {
-          insert: mockInsert,
+          upsert: mockMessageUpsert,
           update: (data: Record<string, unknown>) => {
             mockUpdate(data);
             return {
@@ -180,8 +180,8 @@ describe("WhatsApp Webhook", () => {
       const response = await POST(request);
 
       expect(response.status).toBe(401);
-      expect(mockUpsert).not.toHaveBeenCalled();
-      expect(mockInsert).not.toHaveBeenCalled();
+      expect(mockContactUpsert).not.toHaveBeenCalled();
+      expect(mockMessageUpsert).not.toHaveBeenCalled();
     });
 
     it("should reject requests with no signature header", async () => {
@@ -212,7 +212,7 @@ describe("WhatsApp Webhook", () => {
 
       expect(response.status).toBe(200);
 
-      expect(mockUpsert).toHaveBeenCalledWith(
+      expect(mockContactUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
           phone: "358501234567",
           wa_name: "Matti",
@@ -220,14 +220,16 @@ describe("WhatsApp Webhook", () => {
         { onConflict: "phone" }
       );
 
-      expect(mockInsert).toHaveBeenCalledWith(
+      expect(mockMessageUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
           id: "wamid.abc",
           phone: "358501234567",
           direction: "inbound",
+          status: "received",
           body: "Hi there",
           message_type: "text",
-        })
+        }),
+        { onConflict: "id" }
       );
     });
 
@@ -236,11 +238,12 @@ describe("WhatsApp Webhook", () => {
       const request = createWebhookRequest(payload);
       await POST(request);
 
-      expect(mockInsert).toHaveBeenCalledWith(
+      expect(mockMessageUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
           body: "[Image]",
           message_type: "image",
-        })
+        }),
+        { onConflict: "id" }
       );
     });
 
@@ -249,12 +252,30 @@ describe("WhatsApp Webhook", () => {
       const request = createWebhookRequest(payload);
       await POST(request);
 
-      expect(mockInsert).toHaveBeenCalledWith(
+      expect(mockMessageUpsert).toHaveBeenCalledWith(
         expect.objectContaining({
           body: "[Sticker]",
           message_type: "sticker",
-        })
+        }),
+        { onConflict: "id" }
       );
+    });
+
+    it("should handle duplicate message delivery (Meta retry) idempotently", async () => {
+      const payload = inboundMessagePayload({ id: "wamid.duplicate" });
+      const request1 = createWebhookRequest(payload);
+      const request2 = createWebhookRequest(payload);
+
+      await POST(request1);
+      await POST(request2);
+
+      // Both calls use upsert with onConflict, so the second is a no-op
+      // rather than a constraint violation crash
+      expect(mockMessageUpsert).toHaveBeenCalledTimes(2);
+      for (const call of mockMessageUpsert.mock.calls) {
+        expect(call[0]).toMatchObject({ id: "wamid.duplicate" });
+        expect(call[1]).toEqual({ onConflict: "id" });
+      }
     });
 
     it("should ignore non-message webhook fields", async () => {
@@ -265,8 +286,8 @@ describe("WhatsApp Webhook", () => {
       const response = await POST(request);
 
       expect(response.status).toBe(200);
-      expect(mockUpsert).not.toHaveBeenCalled();
-      expect(mockInsert).not.toHaveBeenCalled();
+      expect(mockContactUpsert).not.toHaveBeenCalled();
+      expect(mockMessageUpsert).not.toHaveBeenCalled();
     });
   });
 
