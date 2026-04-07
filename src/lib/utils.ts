@@ -1,4 +1,5 @@
 import { clsx, type ClassValue } from "clsx";
+import { format } from "date-fns";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { twMerge } from "tailwind-merge";
 import { type SupportedCurrency } from "@/lib/constants/currency";
@@ -33,6 +34,11 @@ export function formatCurrencyFromCents(
   locale: string,
 ): string {
   return formatCurrency(cents / 100, currency, locale);
+}
+
+export function formatTime(date: Date | string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return format(d, "HH:mm");
 }
 
 export function formatDate(date: Date | string, locale: string, options?: Intl.DateTimeFormatOptions): string {

@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
+import { format, isToday, isYesterday } from "date-fns";
 import { getClient } from "@/lib/supabase/client";
 import {
   useWhatsAppContacts,
@@ -13,24 +14,18 @@ import {
   whatsappKeys,
 } from "@/services/whatsapp";
 import { useQueryClient } from "@tanstack/react-query";
-import type { WhatsAppContact, WhatsAppMessage } from "@/types";
+import {
+  WHATSAPP_DIRECTION,
+  WHATSAPP_MESSAGE_STATUS,
+  type WhatsAppContact,
+  type WhatsAppMessage,
+} from "@/types";
 
-function formatTime(dateStr: string) {
-  return new Date(dateStr).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function formatDate(dateStr: string) {
+function formatChatDate(dateStr: string) {
   const date = new Date(dateStr);
-  const today = new Date();
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-
-  if (date.toDateString() === today.toDateString()) return "Today";
-  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-  return date.toLocaleDateString();
+  if (isToday(date)) return "Today";
+  if (isYesterday(date)) return "Yesterday";
+  return format(date, "PP");
 }
 
 function groupMessagesByDate(messages: WhatsAppMessage[]) {
@@ -38,7 +33,7 @@ function groupMessagesByDate(messages: WhatsAppMessage[]) {
   let currentDate = "";
 
   for (const msg of messages) {
-    const date = formatDate(msg.created_at);
+    const date = formatChatDate(msg.created_at);
     if (date !== currentDate) {
       currentDate = date;
       groups.push({ date, messages: [] });
@@ -56,16 +51,16 @@ function groupMessagesByDate(messages: WhatsAppMessage[]) {
 // read     → ✓✓ purple (recipient opened)
 
 function StatusIndicator({ status }: { status: string }) {
-  if (status === "pending") {
+  if (status === WHATSAPP_MESSAGE_STATUS.PENDING) {
     return <Loader2 className="h-3 w-3 animate-spin" />;
   }
-  if (status === "sent") {
+  if (status === WHATSAPP_MESSAGE_STATUS.SENT) {
     return <Check className="h-3 w-3" />;
   }
-  if (status === "delivered") {
+  if (status === WHATSAPP_MESSAGE_STATUS.DELIVERED) {
     return <CheckCheck className="h-3 w-3" />;
   }
-  if (status === "read") {
+  if (status === WHATSAPP_MESSAGE_STATUS.READ) {
     return <CheckCheck className="h-3 w-3 text-secondary" />;
   }
   return null;
@@ -208,23 +203,23 @@ function ChatThread({
                   key={msg.id}
                   className={cn(
                     "flex",
-                    msg.direction === "outbound" ? "justify-end" : "justify-start"
+                    msg.direction === WHATSAPP_DIRECTION.OUTBOUND ? "justify-end" : "justify-start"
                   )}
                 >
                   <div
                     className={cn(
                       "max-w-[70%] rounded-lg px-3 py-2 text-sm",
-                      msg.status === "failed"
+                      msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
                         ? "bg-destructive/15 text-destructive"
-                        : msg.direction === "outbound" && msg.status === "pending"
+                        : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
                           ? "bg-muted/50 text-muted-foreground"
-                          : msg.direction === "outbound"
+                          : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted text-foreground"
                     )}
                   >
                     <p className="whitespace-pre-wrap break-words">{msg.body}</p>
-                    {msg.status === "failed" && (
+                    {msg.status === WHATSAPP_MESSAGE_STATUS.FAILED && (
                       <div className="mt-1 flex items-center gap-1 text-[10px] text-destructive">
                         <AlertCircle className="h-3 w-3" />
                         <span>{msg.status_error ?? "Not delivered"}</span>
@@ -233,17 +228,17 @@ function ChatThread({
                     <div
                       className={cn(
                         "mt-1 flex items-center justify-end gap-1 text-[10px]",
-                        msg.status === "failed"
+                        msg.status === WHATSAPP_MESSAGE_STATUS.FAILED
                           ? "text-destructive/70"
-                          : msg.direction === "outbound" && msg.status === "pending"
+                          : msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status === WHATSAPP_MESSAGE_STATUS.PENDING
                             ? "text-muted-foreground"
-                            : msg.direction === "outbound"
+                            : msg.direction === WHATSAPP_DIRECTION.OUTBOUND
                               ? "text-primary-foreground/70"
                               : "text-muted-foreground"
                       )}
                     >
                       <span>{formatTime(msg.created_at)}</span>
-                      {msg.direction === "outbound" && msg.status !== "failed" && (
+                      {msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status !== WHATSAPP_MESSAGE_STATUS.FAILED && (
                         <StatusIndicator status={msg.status} />
                       )}
                     </div>

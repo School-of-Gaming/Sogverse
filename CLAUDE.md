@@ -76,6 +76,10 @@ CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.rand
 
 See `docs/layout-scroll-architecture.md` for the scroll containment model and how dashboard layouts handle overflow.
 
+### Date & Time Formatting
+
+**Rule: Use `date-fns` / `date-fns-tz` for all date and time formatting.** Never use raw `Date.toLocaleTimeString()`, `Date.toLocaleDateString()`, or `Intl.DateTimeFormat` directly. Shared formatters live in `src/lib/utils.ts`. For timezone-aware formatting, use `date-fns-tz`.
+
 ### Styling
 - Use `cn()` utility from `lib/utils.ts` for conditional classes
 - Brand colors: primary yellow `#FAA901`, secondary purple `#8F00E2`

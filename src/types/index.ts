@@ -98,6 +98,22 @@ export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"][
 // whatsapp_messages
 export type WhatsAppMessage = Database["public"]["Tables"]["whatsapp_messages"]["Row"];
 
+export const WHATSAPP_MESSAGE_STATUS = {
+  PENDING: "pending",
+  SENT: "sent",
+  DELIVERED: "delivered",
+  READ: "read",
+  FAILED: "failed",
+  RECEIVED: "received",
+} as const;
+export type WhatsAppMessageStatus = (typeof WHATSAPP_MESSAGE_STATUS)[keyof typeof WHATSAPP_MESSAGE_STATUS];
+
+export const WHATSAPP_DIRECTION = {
+  INBOUND: "inbound",
+  OUTBOUND: "outbound",
+} as const;
+export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAPP_DIRECTION];
+
 // get_my_groups RPC — the generated type marks nullable LEFT JOIN fields as
 // non-nullable. Override to reflect that groups with no enrollments return null
 // for gamer-related columns (and gamer branch always returns null for DOB/gender).

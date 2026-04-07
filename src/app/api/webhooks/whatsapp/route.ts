@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { WHATSAPP_DIRECTION, WHATSAPP_MESSAGE_STATUS } from "@/types";
 
 const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN!;
 const appSecret = process.env.WHATSAPP_APP_SECRET!;
@@ -124,8 +125,8 @@ export async function POST(request: Request) {
           {
             id: message.id as string,
             phone,
-            direction: "inbound",
-            status: "received",
+            direction: WHATSAPP_DIRECTION.INBOUND,
+            status: WHATSAPP_MESSAGE_STATUS.RECEIVED,
             body: msgBody,
             message_type: messageType,
             raw_payload: message,
@@ -142,11 +143,17 @@ export async function POST(request: Request) {
         const statusValue = status.status as string;
 
         // Only update statuses we track
-        if (!["sent", "delivered", "read", "failed"].includes(statusValue)) continue;
+        const trackableStatuses: string[] = [
+          WHATSAPP_MESSAGE_STATUS.SENT,
+          WHATSAPP_MESSAGE_STATUS.DELIVERED,
+          WHATSAPP_MESSAGE_STATUS.READ,
+          WHATSAPP_MESSAGE_STATUS.FAILED,
+        ];
+        if (!trackableStatuses.includes(statusValue)) continue;
 
         const update: Record<string, unknown> = { status: statusValue };
 
-        if (statusValue === "failed") {
+        if (statusValue === WHATSAPP_MESSAGE_STATUS.FAILED) {
           const errorCode = status.errors?.[0]?.code;
           const rawTitle = status.errors?.[0]?.title ?? "";
 

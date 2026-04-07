@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { WHATSAPP_DIRECTION, WHATSAPP_MESSAGE_STATUS } from "@/types";
 import { z } from "zod";
 
 const requestSchema = z.object({
@@ -51,10 +52,10 @@ export async function POST(request: Request) {
     await admin.from("whatsapp_messages").insert({
       id: messageId,
       phone: to,
-      direction: "outbound",
+      direction: WHATSAPP_DIRECTION.OUTBOUND,
       body,
       message_type: "text",
-      status: "pending",
+      status: WHATSAPP_MESSAGE_STATUS.PENDING,
       created_at: now,
     });
 

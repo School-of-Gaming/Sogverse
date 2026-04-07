@@ -43,6 +43,14 @@ Product images are currently arbitrary URLs provided by admins. The CSP `img-src
 
 Customers (parents) will set `date_of_birth` and `gender` on their linked gamers. When implemented, add a "Parents can update linked gamer profiles" UPDATE policy on `gamer_profiles` using `is_parent_of(user_id)` and consider restricting the current "Gamers can update own gamer_profile" policy. Age should be derived from `date_of_birth`, never stored directly.
 
+### WhatsApp Service Layer Extraction
+
+The send route (`src/app/api/admin/whatsapp/send/route.ts`) and webhook handler (`src/app/api/webhooks/whatsapp/route.ts`) perform direct Supabase inserts/upserts instead of delegating to `WhatsAppService`. The webhook also contains business logic (message parsing, error code mapping, status transformation) that belongs in a service or utility layer.
+
+- [ ] Add server-side methods to `WhatsAppService` (e.g., `storeOutboundMessage()`, `upsertInboundMessage()`, `updateMessageStatus()`)
+- [ ] Extract `extractMessageContent()` and error-code mapping from the webhook into `src/lib/whatsapp.ts`
+- [ ] Update both route handlers to delegate persistence to the service
+
 ### Reusable Phone Number Input Component
 
 A pre-configured international phone input component exists at `src/components/ui/phone-input.tsx` using `react-phone-number-input`. It pins Finland, UK, Sweden, and US at the top of the country dropdown and outputs E.164 format. Dark theme CSS overrides are in `src/app/globals.css`.
