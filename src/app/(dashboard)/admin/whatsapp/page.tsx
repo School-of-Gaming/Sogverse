@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
+import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -50,16 +50,17 @@ function groupMessagesByDate(messages: WhatsAppMessage[]) {
 }
 
 // --- Delivery status for outbound messages ---
-// "pending" and "sent" both mean "waiting for confirmation" — show spinner.
-// Only "delivered" and "read" are confirmed — show checkmarks.
-
-function isUnconfirmed(status: string) {
-  return status === "pending" || status === "sent";
-}
+// pending  → spinner (waiting for Meta to accept)
+// sent     → ✓      (Meta confirmed dispatch)
+// delivered → ✓✓    (reached recipient's phone)
+// read     → ✓✓ purple (recipient opened)
 
 function StatusIndicator({ status }: { status: string }) {
-  if (isUnconfirmed(status)) {
+  if (status === "pending") {
     return <Loader2 className="h-3 w-3 animate-spin" />;
+  }
+  if (status === "sent") {
+    return <Check className="h-3 w-3" />;
   }
   if (status === "delivered") {
     return <CheckCheck className="h-3 w-3" />;
@@ -207,7 +208,7 @@ function ChatThread({
                       "max-w-[70%] rounded-lg px-3 py-2 text-sm",
                       msg.status === "failed"
                         ? "bg-destructive/15 text-destructive"
-                        : msg.direction === "outbound" && isUnconfirmed(msg.status)
+                        : msg.direction === "outbound" && msg.status === "pending"
                           ? "bg-muted/50 text-muted-foreground"
                           : msg.direction === "outbound"
                             ? "bg-primary text-primary-foreground"
@@ -226,7 +227,7 @@ function ChatThread({
                         "mt-1 flex items-center justify-end gap-1 text-[10px]",
                         msg.status === "failed"
                           ? "text-destructive/70"
-                          : msg.direction === "outbound" && isUnconfirmed(msg.status)
+                          : msg.direction === "outbound" && msg.status === "pending"
                             ? "text-muted-foreground"
                             : msg.direction === "outbound"
                               ? "text-primary-foreground/70"
@@ -286,10 +287,9 @@ export default function WhatsAppInboxPage() {
 
   const selectedContact = contacts.find((c) => c.phone === selectedPhone);
 
-  // Supabase Realtime subscription for new messages and status updates.
-  // UPDATEs (status changes) patch the cache directly from the payload
-  // to avoid React Query deduplicating the refetch when one is already
-  // in-flight from onSettled. INSERTs still invalidate and refetch.
+  // Supabase Realtime — the sole driver of UI updates for messages.
+  // INSERTs (new messages) refetch the full list.
+  // UPDATEs (status changes) patch the specific message in-place.
   useEffect(() => {
     const supabase = getClient();
 
@@ -298,14 +298,8 @@ export default function WhatsAppInboxPage() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "whatsapp_messages" },
-        (payload) => {
-          const msg = payload.new as WhatsAppMessage;
-          // Only refetch for inbound messages. Outbound sends are handled
-          // by the mutation's onSuccess (which swaps the temp ID in-place),
-          // so a full refetch here would wipe out other optimistic entries.
-          if (msg.direction === "inbound") {
-            queryClient.invalidateQueries({ queryKey: whatsappKeys.all });
-          }
+        () => {
+          queryClient.invalidateQueries({ queryKey: whatsappKeys.all });
         }
       )
       .on(
@@ -336,14 +330,15 @@ export default function WhatsAppInboxPage() {
   function handleSend(body: string) {
     if (!selectedPhone) return;
     setSendError(null);
-    setDraft("");
 
     sendMutation.mutate(
       { to: selectedPhone, body },
       {
+        onSuccess: () => {
+          setDraft("");
+        },
         onError: (error) => {
           setSendError(error.message);
-          setDraft(body); // restore draft so user can retry
         },
       }
     );

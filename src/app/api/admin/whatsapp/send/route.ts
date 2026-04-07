@@ -49,6 +49,7 @@ export async function POST(request: Request) {
       direction: "outbound",
       body,
       message_type: "text",
+      status: "pending",
       created_at: now,
     });
 
