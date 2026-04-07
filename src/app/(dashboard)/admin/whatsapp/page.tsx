@@ -308,6 +308,9 @@ export default function WhatsAppInboxPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "whatsapp_messages" },
         () => {
+          // Invalidates all contacts + message queries. Fine for low volume;
+          // if this becomes a bottleneck, narrow to whatsappKeys.contacts()
+          // + the specific phone's messages instead of whatsappKeys.all.
           queryClient.invalidateQueries({ queryKey: whatsappKeys.all });
         }
       )

@@ -34,7 +34,10 @@ export async function POST(request: Request) {
       body,
     });
 
-    // Store outbound message and upsert contact
+    // Store outbound message and upsert contact.
+    // DB errors are not checked — the message is already sent to Meta at this
+    // point, so failing the request would mislead the admin. A DB failure here
+    // is near-impossible anyway (service role, no RLS, no token expiry).
     const admin = createAdminClient();
     const now = new Date().toISOString();
 
@@ -57,18 +60,6 @@ export async function POST(request: Request) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Internal server error";
-
-    // Surface WhatsApp 24-hour window errors clearly
-    if (message.includes("131047") || message.includes("Re-engage")) {
-      return NextResponse.json(
-        {
-          error:
-            "Message failed: the 24-hour conversation window has expired. The user needs to message us first.",
-        },
-        { status: 400 },
-      );
-    }
-
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

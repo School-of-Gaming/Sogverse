@@ -145,20 +145,4 @@ describe("POST /api/admin/whatsapp/send", () => {
     expect(mockInsert).not.toHaveBeenCalled();
   });
 
-  // -- Error handling --
-
-  it("should surface 24-hour window error with friendly message", async () => {
-    mockAdmin();
-    mockSendWhatsAppMessage.mockRejectedValue(
-      new Error("(#131047) Re-engage the user")
-    );
-
-    const response = await POST(
-      createRequest({ to: "358401234567", body: "Hello!" })
-    );
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toContain("24-hour conversation window");
-  });
 });
