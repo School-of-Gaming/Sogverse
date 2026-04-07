@@ -103,14 +103,14 @@ export function useSpatialPositions({
         const localSid = co.participants().local.session_id;
         if (msg.sessionId !== localSid) {
           const sender = co.participants()[fromId];
-          positionsRef.current.set(msg.sessionId, enforceZoneRestrictions(msg.position, !!sender?.owner));
+          positionsRef.current.set(msg.sessionId, enforceZoneRestrictions(msg.position, !!sender.owner));
           onPositionChanged();
         }
         break;
       }
       case "moveUser": {
         const sender = co.participants()[fromId];
-        if (!sender?.owner) break;
+        if (!sender.owner) break;
 
         const localSid = co.participants().local.session_id;
         if (msg.targetSessionId === localSid) {

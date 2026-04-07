@@ -125,6 +125,20 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- individual methods are stable useCallback refs; adding the parent objects would re-create this callback on every render
   }, [screenShare.detectScreenSharer, audio.manageAudioNodes, audio.manageLocalAnalyser]);
 
+  // --- Shared helpers ---
+
+  /** Send our posUpdate to a specific peer and mark them in sentPositionToRef.
+   *  No-op if local position isn't set yet (joined-meeting hasn't fired). */
+  const sendPositionTo = useCallback((co: DailyCall, targetSid: string) => {
+    const localSid = co.participants().local.session_id;
+    const localPos = positionsRef.current.get(localSid);
+    if (localPos) {
+      sentPositionToRef.current.add(targetSid);
+      const msg: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
+      co.sendAppMessage(msg, targetSid);
+    }
+  }, [positionsRef]);
+
   // --- App message dispatch ---
 
   const handleAppMessage = useCallback((event: { data: AppMessage; fromId: string }) => {
@@ -164,20 +178,6 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     // Moderator messages: moderatorMute, moderatorLock
     moderator.onAppMessage(msg, fromId, co);
   }, [spatial, moderator, updateParticipants, sendPositionTo]);
-
-  // --- Shared helpers ---
-
-  /** Send our posUpdate to a specific peer and mark them in sentPositionToRef.
-   *  No-op if local position isn't set yet (joined-meeting hasn't fired). */
-  const sendPositionTo = useCallback((co: DailyCall, targetSid: string) => {
-    const localSid = co.participants().local.session_id;
-    const localPos = positionsRef.current.get(localSid);
-    if (localPos) {
-      sentPositionToRef.current.add(targetSid);
-      const msg: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
-      co.sendAppMessage(msg, targetSid);
-    }
-  }, [positionsRef]);
 
   // --- Shared reset ---
 
