@@ -151,7 +151,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     // Note: a malicious peer could lie about being unlocked. This is cosmetic
     // only — actual enforcement is via Daily.co's canSend SFU permissions.
     if (msg.type === "lockSync") {
-      moderator.onLockStatesReceived({ [fromId]: msg.lock });
+      moderator.onLockStatesReceived(fromId, msg.lock);
       return;
     }
 
