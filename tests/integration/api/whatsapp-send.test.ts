@@ -102,7 +102,7 @@ describe("POST /api/admin/whatsapp/send", () => {
 
   // -- Happy path --
 
-  it("should send message and store in database", async () => {
+  it("should send message and store in database with pending status", async () => {
     mockAdmin();
     const response = await POST(
       createRequest({ to: "358401234567", body: "Hello!" })
@@ -112,15 +112,24 @@ describe("POST /api/admin/whatsapp/send", () => {
     expect(response.status).toBe(200);
     expect(data.messageId).toBe("wamid.test123");
 
-    // Verify Meta API was called first
+    // Verify Meta API was called
     expect(mockSendWhatsAppMessage).toHaveBeenCalledWith("358401234567", {
       type: "text",
       body: "Hello!",
     });
 
-    // Verify DB writes happened after
-    expect(mockUpsert).toHaveBeenCalled();
-    expect(mockInsert).toHaveBeenCalled();
+    // Verify message is stored with 'pending' status — webhooks will
+    // promote to sent/delivered/read or failed. If this is missing,
+    // the DB default ('sent') skips the pending state entirely.
+    expect(mockInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "wamid.test123",
+        phone: "358401234567",
+        direction: "outbound",
+        body: "Hello!",
+        status: "pending",
+      })
+    );
   });
 
   it("should not store message in DB when Meta API fails", async () => {
