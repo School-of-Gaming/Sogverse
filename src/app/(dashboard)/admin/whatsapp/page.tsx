@@ -157,7 +157,7 @@ function ChatThread({
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isSending]);
+  }, [messages, pendingBody]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -241,11 +241,9 @@ function ChatThread({
           </div>
         ))}
 
-        {/* Pending message — shown while API call is in-flight, hidden once
-            Realtime delivers the real message into the messages array */}
-        {isSending && pendingBody && !messages.some(
-          (m) => m.direction === "outbound" && m.body === pendingBody
-        ) && (
+        {/* Pending message — shown until the real message appears in the
+            query results (cleared by the useEffect body-match check) */}
+        {pendingBody && (
           <div className="flex justify-end">
             <div className="max-w-[70%] rounded-lg bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
               <p className="whitespace-pre-wrap break-words">{pendingBody}</p>
@@ -327,6 +325,17 @@ export default function WhatsAppInboxPage() {
     };
   }, [queryClient]);
 
+  // Clear pending bubble once the message appears in the DB query results
+  useEffect(() => {
+    if (
+      pendingBody &&
+      messages.some((m) => m.direction === "outbound" && m.body === pendingBody)
+    ) {
+      setPendingBody(null);
+      setDraft("");
+    }
+  }, [messages, pendingBody]);
+
   function handleSend(body: string) {
     if (!selectedPhone) return;
     setSendError(null);
@@ -335,10 +344,6 @@ export default function WhatsAppInboxPage() {
     sendMutation.mutate(
       { to: selectedPhone, body },
       {
-        onSuccess: () => {
-          setDraft("");
-          setPendingBody(null);
-        },
         onError: (error) => {
           setSendError(error.message);
           setPendingBody(null);
