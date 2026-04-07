@@ -213,7 +213,7 @@ Each remote participant has a local-only volume multiplier (0.1–1.0, default 1
 - **Lock** (`lockParticipant`): Persistent restriction via `updateParticipant(sid, { setAudio: false, updatePermissions: { canSend: [...] } })`. Revokes the `canSend` permission for that track type. The participant's toggle is disabled and they physically cannot send the track. Unlock restores the permission.
 
 ### Lock state sync
-Lock states are synced via app messages (`moderatorLock`). For late joiners, lock states are included in the `positionSync` reply alongside spatial positions.
+Lock states are synced via app messages (`moderatorLock`). When a new peer joins, each locked participant self-reports their own lock state via a targeted `lockSync` message containing a single `LockState` value. The receiver trusts only the sender's own state — enforcement is at the SFU level via `canSend` permissions.
 
 ### UI
 - **VoiceControls:** Lock indicator (lock icon) overlays mic/camera buttons when locally locked. Buttons are disabled.

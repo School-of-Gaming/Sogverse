@@ -66,7 +66,9 @@ export function useSpatialPositions({
     co.sendAppMessage(msg, "*");
   }, [callObjectRef, positionsRef, onPositionChanged]);
 
-  /** Place local avatar. Does NOT broadcast — existing participants send us
+  /** Place local avatar only — the join handshake (sending/replying with
+   *  posUpdate per peer) is orchestrated by VoiceRoomProvider.
+   *  Does NOT broadcast — existing participants send us
    *  their posUpdate on their participant-joined event (proving the SFU route
    *  works), and we reply with our own posUpdate then. This avoids the race
    *  where sendAppMessage("*") immediately after joined-meeting is unreliable

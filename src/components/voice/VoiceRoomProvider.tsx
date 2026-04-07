@@ -133,9 +133,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     const { data: msg, fromId } = event;
 
     // Lock sync: each peer self-reports their own lock state on join.
-    // Only accept the entry keyed by fromId — a peer can only claim their own state.
+    // The type carries a single LockState — a peer can only claim their own.
     if (msg.type === "lockSync") {
-      moderator.onLockStatesReceived({ [fromId]: msg.locks[fromId] });
+      moderator.onLockStatesReceived({ [fromId]: msg.lock });
       return;
     }
 
@@ -152,12 +152,15 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
     // Handshake reply: if we haven't sent our position to this peer yet,
     // reply with our own posUpdate so they can see us. This completes the
-    // per-peer handshake initiated by participant-joined.
+    // per-peer handshake initiated by participant-joined. Only mark as
+    // "sent" after confirming localPos exists — if joined-meeting hasn't
+    // fired yet, localPos is undefined and we need to retry on the next
+    // posUpdate from this peer.
     if (msg.type === "posUpdate" && !sentPositionToRef.current.has(fromId)) {
-      sentPositionToRef.current.add(fromId);
       const localSid = co.participants().local.session_id;
       const localPos = positionsRef.current.get(localSid);
       if (localPos) {
+        sentPositionToRef.current.add(fromId);
         const reply: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
         co.sendAppMessage(reply, fromId);
       }
@@ -167,6 +170,24 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     moderator.onAppMessage(msg, fromId, co);
   }, [spatial, moderator, updateParticipants]);
 
+  // --- Shared reset ---
+
+  const resetState = useCallback(() => {
+    joinedRef.current = false;
+    sentPositionToRef.current.clear();
+    setJoined(false);
+    setParticipants([]);
+    setMicOn(true);
+    setCameraOn(false);
+    setCameraAllowed(false);
+    setLocalRole("gamer");
+    activeSpeakerIdRef.current = null;
+    spatial.reset();
+    moderator.reset();
+    screenShare.reset();
+    audio.reset();
+  }, [spatial, moderator, screenShare, audio]);
+
   // --- Join / Leave ---
 
   const join = useCallback(
@@ -174,12 +195,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       if (callObjectRef.current) {
         await callObjectRef.current.destroy();
       }
-      joinedRef.current = false;
-      sentPositionToRef.current.clear();
-      audio.reset();
-      spatial.reset();
-      moderator.reset();
-      screenShare.reset();
+      resetState();
 
       setJoining(true);
       audio.createAudioContext();
@@ -215,6 +231,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         updateParticipants(co);
       };
 
+      // Position handshake initiation + reply logic lives here in the
+      // provider; position storage and movement live in use-spatial-positions.
       const handleParticipantJoined = (event: { participant: DailyParticipant }) => {
         if (!joinedRef.current) return;
         const newPeerSid = event.participant.session_id;
@@ -236,7 +254,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         // Daily.co's canSend permission at the SFU level.
         const myLocks = moderator.lockStateRef.current.get(localSid);
         if (myLocks && (myLocks.audio || myLocks.video)) {
-          const lockMsg: AppMessage = { type: "lockSync", locks: { [localSid]: myLocks } };
+          const lockMsg: AppMessage = { type: "lockSync", lock: myLocks };
           co.sendAppMessage(lockMsg, newPeerSid);
         }
       };
@@ -253,21 +271,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         updateParticipants(co);
       };
 
-      const handleLeft = () => {
-        joinedRef.current = false;
-        sentPositionToRef.current.clear();
-        setJoined(false);
-        setParticipants([]);
-        setMicOn(true);
-        setCameraOn(false);
-        setCameraAllowed(false);
-        setLocalRole("gamer");
-        activeSpeakerIdRef.current = null;
-        spatial.reset();
-        moderator.reset();
-        screenShare.reset();
-        audio.reset();
-      };
+      const handleLeft = () => resetState();
 
       const handleActiveSpeakerChange = (event: { activeSpeaker: { peerId: string } }) => {
         activeSpeakerIdRef.current = event.activeSpeaker.peerId;
@@ -285,7 +289,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       await co.join({ url: roomUrl, token });
     },
-    [updateParticipants, handleAppMessage, audio, spatial, moderator, screenShare],
+    [updateParticipants, handleAppMessage, resetState, audio, spatial, moderator],
   );
 
   const leave = useCallback(async () => {
@@ -294,21 +298,9 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       await callObjectRef.current.destroy();
       callObjectRef.current = null;
       setCallObject(null);
-      joinedRef.current = false;
-      sentPositionToRef.current.clear();
-      setJoined(false);
-      setParticipants([]);
-      setMicOn(true);
-      setCameraOn(false);
-      setCameraAllowed(false);
-      setLocalRole("gamer");
-      activeSpeakerIdRef.current = null;
-      spatial.reset();
-      moderator.reset();
-      screenShare.reset();
-      audio.reset();
+      resetState();
     }
-  }, [audio, spatial, moderator, screenShare]);
+  }, [resetState]);
 
   // --- Lock-aware toggles ---
 
