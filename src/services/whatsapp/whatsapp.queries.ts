@@ -89,9 +89,13 @@ export function useSendWhatsAppMessage() {
       );
     },
     onError: (_err, { to }, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(whatsappKeys.messages(to), context.previous);
-      }
+      // Remove only the failed optimistic entry — don't roll back the
+      // entire cache, which would wipe out other concurrent mutations.
+      if (!context?.tempId) return;
+      queryClient.setQueryData<WhatsAppMessage[]>(
+        whatsappKeys.messages(to),
+        (old) => old?.filter((msg) => msg.id !== context.tempId)
+      );
     },
     onSettled: (_data, _error, { to }) => {
       // Refetch contacts to update last_message_at ordering.

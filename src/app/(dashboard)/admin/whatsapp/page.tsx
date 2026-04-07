@@ -298,8 +298,14 @@ export default function WhatsAppInboxPage() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "whatsapp_messages" },
-        () => {
-          queryClient.invalidateQueries({ queryKey: whatsappKeys.all });
+        (payload) => {
+          const msg = payload.new as WhatsAppMessage;
+          // Only refetch for inbound messages. Outbound sends are handled
+          // by the mutation's onSuccess (which swaps the temp ID in-place),
+          // so a full refetch here would wipe out other optimistic entries.
+          if (msg.direction === "inbound") {
+            queryClient.invalidateQueries({ queryKey: whatsappKeys.all });
+          }
         }
       )
       .on(
