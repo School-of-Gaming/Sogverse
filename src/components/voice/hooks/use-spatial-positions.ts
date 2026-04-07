@@ -1,7 +1,5 @@
 import { useCallback, useState } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
-import type { DailyParticipant } from "@daily-co/daily-js";
-import type { UserRole } from "@/types";
 import {
   type ZoneId,
   type SpatialPosition,
@@ -18,9 +16,14 @@ interface UseSpatialPositionsParams {
   onPositionChanged: () => void;
 }
 
-function mapRole(p: DailyParticipant): UserRole {
-  const raw = p.user_name || "";
-  return raw.split("|")[1] as UserRole;
+/** If a non-owner claims the broadcast zone, eject them to the nearest edge.
+ *  Owner status maps to role: owners are admins/gedus, non-owners are gamers. */
+function enforceZoneRestrictions(position: SpatialPosition, isOwner: boolean): SpatialPosition {
+  if (!isOwner && position.zone === "broadcast") {
+    const ejected = ejectFromBroadcastZone(position.x, position.y);
+    return { ...ejected, zone: getZoneAtPosition(ejected.x, ejected.y) };
+  }
+  return position;
 }
 
 export function useSpatialPositions({
@@ -99,26 +102,21 @@ export function useSpatialPositions({
         if (msg.sessionId !== fromId) break;
         const localSid = co.participants().local.session_id;
         if (msg.sessionId !== localSid) {
-          positionsRef.current.set(msg.sessionId, msg.position);
+          const sender = co.participants()[fromId];
+          positionsRef.current.set(msg.sessionId, enforceZoneRestrictions(msg.position, !!sender?.owner));
           onPositionChanged();
         }
         break;
       }
       case "moveUser": {
-        const sender = Object.values(co.participants()).find((p) => p.session_id === fromId);
+        const sender = co.participants()[fromId];
         if (!sender?.owner) break;
 
         const localSid = co.participants().local.session_id;
         if (msg.targetSessionId === localSid) {
           const local = co.participants().local;
-          const role = mapRole(local);
 
-          let finalPos = msg.position;
-          if (role === "gamer" && msg.position.zone === "broadcast") {
-            const ejected = ejectFromBroadcastZone(msg.position.x, msg.position.y);
-            const ejectedZone = getZoneAtPosition(ejected.x, ejected.y);
-            finalPos = { ...ejected, zone: ejectedZone };
-          }
+          const finalPos = enforceZoneRestrictions(msg.position, !!local.owner);
 
           positionsRef.current.set(localSid, finalPos);
           setLocalZone(finalPos.zone);

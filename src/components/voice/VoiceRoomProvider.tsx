@@ -154,23 +154,30 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
     // Handshake reply: if we haven't sent our position to this peer yet,
     // reply with our own posUpdate so they can see us. This completes the
-    // per-peer handshake initiated by participant-joined. Only mark as
-    // "sent" after confirming localPos exists — if joined-meeting hasn't
-    // fired yet, localPos is undefined and we need to retry on the next
-    // posUpdate from this peer.
+    // per-peer handshake initiated by participant-joined. sendPositionTo
+    // only marks the set when localPos exists, so if joined-meeting hasn't
+    // fired yet we'll retry on the next posUpdate from this peer.
     if (msg.type === "posUpdate" && !sentPositionToRef.current.has(fromId)) {
-      const localSid = co.participants().local.session_id;
-      const localPos = positionsRef.current.get(localSid);
-      if (localPos) {
-        sentPositionToRef.current.add(fromId);
-        const reply: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
-        co.sendAppMessage(reply, fromId);
-      }
+      sendPositionTo(co, fromId);
     }
 
     // Moderator messages: moderatorMute, moderatorLock
     moderator.onAppMessage(msg, fromId, co);
-  }, [spatial, moderator, updateParticipants]);
+  }, [spatial, moderator, updateParticipants, sendPositionTo]);
+
+  // --- Shared helpers ---
+
+  /** Send our posUpdate to a specific peer and mark them in sentPositionToRef.
+   *  No-op if local position isn't set yet (joined-meeting hasn't fired). */
+  const sendPositionTo = useCallback((co: DailyCall, targetSid: string) => {
+    const localSid = co.participants().local.session_id;
+    const localPos = positionsRef.current.get(localSid);
+    if (localPos) {
+      sentPositionToRef.current.add(targetSid);
+      const msg: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
+      co.sendAppMessage(msg, targetSid);
+    }
+  }, [positionsRef]);
 
   // --- Shared reset ---
 
@@ -236,6 +243,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       // Position handshake initiation + reply logic lives here in the
       // provider; position storage and movement live in use-spatial-positions.
       const handleParticipantJoined = (event: { participant: DailyParticipant }) => {
+        // Guard against events on a stale call object (e.g., rapid
+        // rejoin before the previous instance is fully destroyed).
+        // Daily.co guarantees joined-meeting fires before any
+        // participant-joined, so this isn't a race condition guard.
         if (!joinedRef.current) return;
         const newPeerSid = event.participant.session_id;
         const localSid = co.participants().local.session_id;
@@ -244,12 +255,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         // fires once the SFU route is established, so this message is
         // guaranteed to arrive. The new peer replies with their own
         // posUpdate, completing a bidirectional handshake.
-        const localPos = positionsRef.current.get(localSid);
-        if (localPos) {
-          const msg: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
-          co.sendAppMessage(msg, newPeerSid);
-        }
-        sentPositionToRef.current.add(newPeerSid);
+        sendPositionTo(co, newPeerSid);
 
         // Self-report our lock state so the new peer's moderator UI is accurate.
         // Each peer only claims their own state — the real enforcement is
@@ -291,7 +297,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       await co.join({ url: roomUrl, token });
     },
-    [updateParticipants, handleAppMessage, resetState, audio, spatial, moderator],
+    [updateParticipants, handleAppMessage, resetState, sendPositionTo, audio, spatial, moderator],
   );
 
   const leave = useCallback(async () => {
