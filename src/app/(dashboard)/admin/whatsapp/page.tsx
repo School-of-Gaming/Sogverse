@@ -65,7 +65,7 @@ function StatusIndicator({ status }: { status: string }) {
     return <CheckCheck className="h-3 w-3" />;
   }
   if (status === "read") {
-    return <CheckCheck className="h-3 w-3 text-sky-400" />;
+    return <CheckCheck className="h-3 w-3 text-secondary" />;
   }
   return null;
 }
@@ -286,7 +286,10 @@ export default function WhatsAppInboxPage() {
 
   const selectedContact = contacts.find((c) => c.phone === selectedPhone);
 
-  // Supabase Realtime subscription for new messages and status updates
+  // Supabase Realtime subscription for new messages and status updates.
+  // UPDATEs (status changes) patch the cache directly from the payload
+  // to avoid React Query deduplicating the refetch when one is already
+  // in-flight from onSettled. INSERTs still invalidate and refetch.
   useEffect(() => {
     const supabase = getClient();
 
@@ -294,9 +297,20 @@ export default function WhatsAppInboxPage() {
       .channel("whatsapp-inbox")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "whatsapp_messages" },
+        { event: "INSERT", schema: "public", table: "whatsapp_messages" },
         () => {
           queryClient.invalidateQueries({ queryKey: whatsappKeys.all });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "whatsapp_messages" },
+        (payload) => {
+          const updated = payload.new as WhatsAppMessage;
+          queryClient.setQueryData<WhatsAppMessage[]>(
+            whatsappKeys.messages(updated.phone),
+            (old) => old?.map((msg) => msg.id === updated.id ? updated : msg)
+          );
         }
       )
       .on(
