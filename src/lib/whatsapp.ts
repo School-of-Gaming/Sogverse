@@ -38,16 +38,13 @@ export async function sendWhatsAppMessage(
   to: string,
   message: WhatsAppOutboundPayload
 ): Promise<SendResult> {
-  // Strip the leading + if present — Meta expects digits only
-  const recipient = to.replace(/^\+/, "");
-
   let payload: Record<string, unknown>;
 
   switch (message.type) {
     case "text":
       payload = {
         messaging_product: "whatsapp",
-        to: recipient,
+        to,
         type: "text",
         text: { body: message.body },
       };
@@ -56,7 +53,7 @@ export async function sendWhatsAppMessage(
     case "button":
       payload = {
         messaging_product: "whatsapp",
-        to: recipient,
+        to,
         type: "interactive",
         interactive: {
           type: "button",
@@ -74,7 +71,7 @@ export async function sendWhatsAppMessage(
     case "list":
       payload = {
         messaging_product: "whatsapp",
-        to: recipient,
+        to,
         type: "interactive",
         interactive: {
           type: "list",

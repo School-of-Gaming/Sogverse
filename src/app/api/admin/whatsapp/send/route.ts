@@ -42,13 +42,13 @@ export async function POST(request: Request) {
     const now = new Date().toISOString();
 
     await admin.from("whatsapp_contacts").upsert(
-      { phone: to.replace(/^\+/, ""), last_message_at: now },
+      { phone: to, last_message_at: now },
       { onConflict: "phone" }
     );
 
     await admin.from("whatsapp_messages").insert({
       id: messageId,
-      phone: to.replace(/^\+/, ""),
+      phone: to,
       direction: "outbound",
       body,
       message_type: "text",
