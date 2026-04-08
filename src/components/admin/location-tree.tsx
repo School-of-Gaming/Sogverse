@@ -4,8 +4,7 @@ import { useState } from "react";
 import { ChevronRight, ChevronDown, Plus, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { getChildLevel, getTypeLabel } from "@/lib/constants/location-hierarchies";
+import { getChildLevel } from "@/lib/constants/location-hierarchies";
 import type { Location } from "@/types";
 
 export interface LocationNode extends Location {
@@ -58,7 +57,7 @@ function LocationTreeNode({
   const hasChildren = node.children.length > 0;
   const childLevel = getChildLevel(node.country_code, node.type);
   const canAddChildren = childLevel !== null;
-  const typeLabel = getTypeLabel(node.country_code, node.type);
+  const childCount = node.children.length;
 
   // When searching, auto-expand
   const isExpanded = searchQuery ? true : expanded;
@@ -68,14 +67,14 @@ function LocationTreeNode({
       <div
         className={cn(
           "group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/50",
+          hasChildren && "cursor-pointer",
         )}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}
+        onClick={() => hasChildren && setExpanded(!expanded)}
       >
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
+        <span
           className={cn(
-            "flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground",
+            "flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground",
             !hasChildren && "invisible"
           )}
         >
@@ -84,21 +83,17 @@ function LocationTreeNode({
           ) : (
             <ChevronRight className="h-4 w-4" />
           )}
-        </button>
+        </span>
 
         <span className="font-medium">{node.name}</span>
 
-        <Badge variant="outline" className="text-xs">
-          {typeLabel}
-        </Badge>
-
-        {node.country_code && node.type === "country" && (
+        {childLevel && childCount > 0 && (
           <span className="text-xs text-muted-foreground">
-            {node.country_code}
+            {childCount} {childCount === 1 ? childLevel.label.toLowerCase() : childLevel.pluralLabel.toLowerCase()}
           </span>
         )}
 
-        <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100">
+        <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
           {canAddChildren && (
             <Button
               variant="ghost"

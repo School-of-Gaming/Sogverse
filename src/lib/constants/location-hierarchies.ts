@@ -3,6 +3,7 @@ import type { LocationType } from "@/types";
 export interface HierarchyLevel {
   type: LocationType;
   label: string;
+  pluralLabel: string;
 }
 
 export interface CountryConfig {
@@ -21,29 +22,29 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
     code: "FI",
     name: "Finland",
     hierarchy: [
-      { type: "region", label: "Region" },
-      { type: "municipality", label: "Municipality" },
-      { type: "site", label: "Site" },
+      { type: "region", label: "Region", pluralLabel: "Regions" },
+      { type: "municipality", label: "Municipality", pluralLabel: "Municipalities" },
+      { type: "site", label: "Site", pluralLabel: "Sites" },
     ],
   },
   {
     code: "US",
     name: "United States",
     hierarchy: [
-      { type: "region", label: "State" },
-      { type: "municipality", label: "City" },
-      { type: "district", label: "School District" },
-      { type: "site", label: "Site" },
+      { type: "region", label: "State", pluralLabel: "States" },
+      { type: "municipality", label: "City", pluralLabel: "Cities" },
+      { type: "district", label: "School District", pluralLabel: "School Districts" },
+      { type: "site", label: "Site", pluralLabel: "Sites" },
     ],
   },
   {
     code: "GB",
     name: "United Kingdom",
     hierarchy: [
-      { type: "region", label: "Nation" },
-      { type: "municipality", label: "City" },
-      { type: "district", label: "Borough" },
-      { type: "site", label: "Site" },
+      { type: "region", label: "Nation", pluralLabel: "Nations" },
+      { type: "municipality", label: "City", pluralLabel: "Cities" },
+      { type: "district", label: "Borough", pluralLabel: "Boroughs" },
+      { type: "site", label: "Site", pluralLabel: "Sites" },
     ],
   },
 ];
