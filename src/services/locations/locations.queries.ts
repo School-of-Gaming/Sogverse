@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { LocationsService } from "./locations.service";
-import type { LocationInsert, LocationUpdate } from "@/types";
+import type { Location, LocationInsert } from "@/types";
 
 export const locationKeys = {
   all: ["locations"] as const,
@@ -52,23 +52,10 @@ export function useUpdateLocation() {
   const service = new LocationsService(supabase);
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: LocationUpdate }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: Pick<Location, "name"> }) =>
       service.updateLocation(id, updates),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: locationKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: locationKeys.lists() });
-    },
-  });
-}
-
-export function useDeleteLocation() {
-  const queryClient = useQueryClient();
-  const supabase = getClient();
-  const service = new LocationsService(supabase);
-
-  return useMutation({
-    mutationFn: (id: string) => service.deleteLocation(id),
-    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: locationKeys.lists() });
     },
   });

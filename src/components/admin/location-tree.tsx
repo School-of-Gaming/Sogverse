@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronRight, ChevronDown, Plus, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { getChildLevel } from "@/lib/constants/location-hierarchies";
+import { getChildLevel } from "@/lib/constants";
 import type { Location } from "@/types";
 
 export interface LocationNode extends Location {

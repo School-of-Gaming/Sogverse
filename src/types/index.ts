@@ -85,7 +85,6 @@ export type AvailableVoiceRoom = Omit<
 // locations
 export type Location = Database["public"]["Tables"]["locations"]["Row"];
 export type LocationInsert = Database["public"]["Tables"]["locations"]["Insert"];
-export type LocationUpdate = Database["public"]["Tables"]["locations"]["Update"];
 
 // product_groups
 export type ProductGroup = Database["public"]["Tables"]["product_groups"]["Row"];

@@ -19,7 +19,11 @@ import { LocationFormDialog } from "@/components/admin/location-form-dialog";
 import type { LocationFormValues } from "@/components/admin/location-form-dialog";
 import type { Location } from "@/types";
 
-/** Recursively filter a tree, keeping nodes that match and their ancestors. */
+/**
+ * Recursively filter a tree, keeping nodes that match and their ancestors.
+ * When a node matches, all its descendants are included — searching "Helsinki"
+ * shows Helsinki and all its child sites, not just the name match.
+ */
 function filterTree(nodes: LocationNode[], query: string): LocationNode[] {
   const q = query.toLowerCase();
   return nodes.reduce<LocationNode[]>((acc, node) => {
@@ -90,11 +94,7 @@ export default function AdminLocationsPage() {
     if (editingLocation) {
       await updateLocation.mutateAsync({
         id: editingLocation.id,
-        updates: {
-          name: values.name,
-          type: values.type,
-          country_code: values.country_code,
-        },
+        updates: { name: values.name },
       });
     } else {
       await createLocation.mutateAsync({

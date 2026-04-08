@@ -11,10 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  SUPPORTED_COUNTRIES,
-  getChildLevel,
-} from "@/lib/constants/location-hierarchies";
+import { SUPPORTED_COUNTRIES, getChildLevel } from "@/lib/constants";
 import type { Location } from "@/types";
 
 export interface LocationFormValues {
@@ -93,62 +90,37 @@ function LocationFormDialogInner({
     e.preventDefault();
     setError(null);
 
+    // Build values per mode, validating along the way
+    let values: LocationFormValues;
+
     if (isAddingCountry) {
-      // Adding a country — name and code come from the dropdown
       if (!selectedCountryCode) {
         setError("Please select a country");
         return;
       }
       const country = SUPPORTED_COUNTRIES.find((c) => c.code === selectedCountryCode);
       if (!country) return;
-
-      try {
-        await onSubmit({
-          name: country.name,
-          type: "country",
-          parent_id: null,
-          country_code: country.code,
-        });
-        onOpenChange(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An unexpected error occurred");
-      }
+      values = { name: country.name, type: "country", parent_id: null, country_code: country.code };
     } else if (isEditing) {
-      // Editing — only the name can change
       if (!name.trim()) {
         setError("Name is required");
         return;
       }
-      try {
-        await onSubmit({
-          name: name.trim(),
-          type: initialValues.type,
-          parent_id: initialValues.parent_id,
-          country_code: initialValues.country_code,
-        });
-        onOpenChange(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An unexpected error occurred");
-      }
+      values = { name: name.trim(), type: initialValues.type, parent_id: initialValues.parent_id, country_code: initialValues.country_code };
     } else {
-      // Adding a child — type is determined by hierarchy
       if (!name.trim()) {
         setError("Name is required");
         return;
       }
       if (!childLevel || !parent) return;
+      values = { name: name.trim(), type: childLevel.type, parent_id: parent.id, country_code: parent.country_code };
+    }
 
-      try {
-        await onSubmit({
-          name: name.trim(),
-          type: childLevel.type,
-          parent_id: parent.id,
-          country_code: parent.country_code,
-        });
-        onOpenChange(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An unexpected error occurred");
-      }
+    try {
+      await onSubmit(values);
+      onOpenChange(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
     }
   };
 

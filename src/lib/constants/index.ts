@@ -2,6 +2,7 @@ export * from "./currency";
 export * from "./enrollment";
 export * from "./roles";
 export * from "./routes";
+export * from "./location-hierarchies";
 export * from "./voice";
 
 export const APP_NAME = "Sogverse";

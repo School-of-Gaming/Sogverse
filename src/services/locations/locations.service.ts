@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Location, LocationInsert, LocationUpdate, Database } from "@/types";
+import type { Location, LocationInsert, Database } from "@/types";
 
 export class LocationsService {
   constructor(private supabase: SupabaseClient<Database>) {}
@@ -36,7 +36,7 @@ export class LocationsService {
     return data;
   }
 
-  async updateLocation(id: string, updates: LocationUpdate): Promise<Location> {
+  async updateLocation(id: string, updates: Pick<Location, "name">): Promise<Location> {
     const { data, error } = await this.supabase
       .from("locations")
       .update(updates)
@@ -46,14 +46,5 @@ export class LocationsService {
 
     if (error) throw error;
     return data;
-  }
-
-  async deleteLocation(id: string): Promise<void> {
-    const { error } = await this.supabase
-      .from("locations")
-      .delete()
-      .eq("id", id);
-
-    if (error) throw error;
   }
 }

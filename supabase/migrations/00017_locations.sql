@@ -65,7 +65,7 @@ CREATE POLICY "admin_manage_locations"
 
 REVOKE ALL ON locations FROM authenticated;
 GRANT SELECT ON locations TO authenticated;
-GRANT INSERT, UPDATE, DELETE ON locations TO authenticated;
+GRANT INSERT, UPDATE ON locations TO authenticated;
 
 -- =============================================================================
 -- Function grants — no RPCs in this migration, nothing to revoke

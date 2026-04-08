@@ -5,5 +5,4 @@ export {
   useLocation,
   useCreateLocation,
   useUpdateLocation,
-  useDeleteLocation,
 } from "./locations.queries";
