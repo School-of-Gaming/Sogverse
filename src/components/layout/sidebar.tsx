@@ -13,6 +13,7 @@ import {
   FlaskConical,
   MessageCircle,
   MessageSquare,
+  MapPin,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -45,6 +46,11 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
       href: ROUTES.admin.groups,
       label: "Groups",
       icon: <Users className="h-5 w-5" />,
+    },
+    {
+      href: ROUTES.admin.locations,
+      label: "Locations",
+      icon: <MapPin className="h-5 w-5" />,
     },
     {
       href: ROUTES.admin.uiComponents,

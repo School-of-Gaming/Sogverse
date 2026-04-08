@@ -18,6 +18,7 @@ import type { Database } from "./database.types";
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type TokenTransactionType = Database["public"]["Enums"]["token_transaction_type"];
 export type GenderType = Database["public"]["Enums"]["gender_type"];
+export type LocationType = Database["public"]["Enums"]["location_type"];
 
 // profiles
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -80,6 +81,11 @@ export type AvailableVoiceRoom = Omit<
   gedu_id: string | null;
   enrolled_at: string | null;
 };
+
+// locations
+export type Location = Database["public"]["Tables"]["locations"]["Row"];
+export type LocationInsert = Database["public"]["Tables"]["locations"]["Insert"];
+export type LocationUpdate = Database["public"]["Tables"]["locations"]["Update"];
 
 // product_groups
 export type ProductGroup = Database["public"]["Tables"]["product_groups"]["Row"];

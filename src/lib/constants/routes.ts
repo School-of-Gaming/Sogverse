@@ -30,6 +30,7 @@ export const ROUTES = {
     uiComponents: "/admin/ui-components",
     testing: "/admin/testing",
     whatsapp: "/admin/whatsapp",
+    locations: "/admin/locations",
   },
   customer: {
     dashboard: "/parent",

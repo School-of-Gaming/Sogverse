@@ -232,6 +232,44 @@ export type Database = {
           },
         ]
       }
+      locations: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          type: Database["public"]["Enums"]["location_type"]
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          type: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          type?: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       minecraft_accounts: {
         Row: {
           minecraft_username: string | null
@@ -859,6 +897,7 @@ export type Database = {
     }
     Enums: {
       gender_type: "boy" | "girl" | "non_binary"
+      location_type: "country" | "region" | "municipality" | "district" | "site"
       token_transaction_type:
         | "purchase"
         | "subscription"
@@ -994,6 +1033,7 @@ export const Constants = {
   public: {
     Enums: {
       gender_type: ["boy", "girl", "non_binary"],
+      location_type: ["country", "region", "municipality", "district", "site"],
       token_transaction_type: [
         "purchase",
         "subscription",
