@@ -11,7 +11,7 @@ import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { LanguageCheckboxes } from "@/components/ui/language-checkboxes";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
-import type { LanguageRow } from "@/types";
+import { useLanguages } from "@/services/users";
 
 const setupAccountSchema = z.object({
   displayName: z.string().min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Display name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -29,7 +29,6 @@ export function SetupAccountForm() {
   const [minecraftUsername, setMinecraftUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [languages, setLanguages] = useState<string[]>([]);
-  const [availableLanguages, setAvailableLanguages] = useState<LanguageRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,16 +36,7 @@ export function SetupAccountForm() {
   const [sessionEmail, setSessionEmail] = useState("");
 
   const supabase = getClient();
-
-  useEffect(() => {
-    supabase
-      .from("languages")
-      .select("code, name")
-      .order("name")
-      .then(({ data }) => {
-        if (data) setAvailableLanguages(data);
-      });
-  }, [supabase]);
+  const { data: availableLanguages } = useLanguages();
 
   // generateLink() uses implicit flow (tokens in URL hash) because there's
   // no PKCE challenge. The @supabase/ssr client is configured for PKCE mode
@@ -246,7 +236,7 @@ export function SetupAccountForm() {
             />
           </div>
           <LanguageCheckboxes
-            languages={availableLanguages}
+            languages={availableLanguages ?? []}
             selected={languages}
             onChange={setLanguages}
             disabled={isLoading}
