@@ -90,7 +90,7 @@ export function SubscriptionStatusCard() {
               <p className="font-medium">
                 {tierLabel}
                 {details?.amount && (
-                  <span className="text-muted-foreground">{" — "}{t('package.perMonth', { price: formatCurrencyFromCents(details.amount, billingCurrency, locale) })}</span>
+                  <span className="text-muted-foreground">{" — "}{formatCurrencyFromCents(details.amount, billingCurrency, locale)}{t('package.perMonth')}</span>
                 )}
               </p>
               <p className="text-sm text-muted-foreground">

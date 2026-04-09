@@ -928,7 +928,7 @@
       "cancelsAtPeriodEnd": "Avslutas vid periodens slut",
       "currentPlan": "Nuvarande plan",
       "save": "Spara {amount}{period}",
-      "perMonth": "{price}/mån",
+      "perMonth": "/mån",
       "resuming": "Återupptar...",
       "resumeSubscription": "Återuppta prenumeration",
       "switching": "Byter...",

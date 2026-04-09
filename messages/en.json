@@ -928,7 +928,7 @@
       "cancelsAtPeriodEnd": "Cancels at period end",
       "currentPlan": "Current Plan",
       "save": "Save {amount}{period}",
-      "perMonth": "{price}/mo",
+      "perMonth": "/mo",
       "resuming": "Resuming...",
       "resumeSubscription": "Resume Subscription",
       "switching": "Switching...",

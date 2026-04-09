@@ -928,7 +928,7 @@
       "cancelsAtPeriodEnd": "Peruuntuu kauden lopussa",
       "currentPlan": "Nykyinen suunnitelma",
       "save": "Säästä {amount}{period}",
-      "perMonth": "{price}/kk",
+      "perMonth": "/kk",
       "resuming": "Jatketaan...",
       "resumeSubscription": "Jatka tilausta",
       "switching": "Vaihdetaan...",
