@@ -83,7 +83,7 @@
         "description": "Vi vårdar inkluderande, vänliga och trygga onlinegemenskaper. Vi fostrar omtänksamma och artiga digitala medborgare som ser till sina medspelare. Nolltolerans mot mobbning och toxicitet."
       },
       "familyInTheLoop": {
-        "title": "Familjen är med i svängen",
+        "title": "Familjen är delaktig",
         "description": "Föräldrar är partners. Du har kontroll över ditt barns spelupplevelse medan de njuter av friheten att utforska, skapa och få vänner i en trygg miljö."
       }
     },
@@ -304,7 +304,7 @@
       "genderNonBinary": "Icke-binär",
       "boyCount": "{count, plural, one {# pojke} other {# pojkar}}",
       "girlCount": "{count, plural, one {# flicka} other {# flickor}}",
-      "nonBinaryCount": "{count} icke-binära",
+      "nonBinaryCount": "{count, plural, one {# icke-binär} other {# icke-binära}}",
       "ageRangeLabel": "åldersintervall {range}",
       "reassignGedu": "Omtilldela Gedu",
       "moveGamersFirst": "Flytta alla spelare först",
@@ -621,7 +621,7 @@
     "backToGroups": "Tillbaka till grupper",
     "groupNotFound": "Gruppen hittades inte.",
     "live": "Live",
-    "gamerCount": "{count} spelare",
+    "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
     "noGamersEnrolled": "Inga spelare anmälda ännu.",
     "age": "Ålder {age}",
     "sorgsPerWeek": "{cost} Sorgs / vecka",

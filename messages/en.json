@@ -91,13 +91,13 @@
       "heading": "How Our Clubs Work",
       "paragraph1": "Each week, our gamers log in and are greeted by their own game educator — a Gedu. The Gedu guides them through the day's topic, giving children space and freedom to make the adventures their own.",
       "paragraph2": "Our Gedus are gamers themselves. They understand firsthand that as children and teenagers, identity and friendships are built both online and offline. That understanding shapes every session they lead.",
-      "paragraph3": "All our clubs are built around stories that give space for gamers to explore, create, and imagine. Between weekly sessions, gamers get fun challenges to do online and offline. During holidays we organize camps, and every week there are community events, tournaments, and competitions.",
+      "paragraph3": "All our clubs are built around stories that give space for gamers to explore, create, and imagine. Between weekly sessions, gamers get fun challenges to do online and offline. During holidays we organise camps, and every week there are community events, tournaments, and competitions.",
       "paragraph4": "Every gamer takes an oath to behave kindly and righteously — whether in-game, on voice chat, or out in the real world. The same values apply everywhere."
     },
     "forParents": {
       "heading": "For Parents",
       "paragraph1": "Parental game education is just as important a part of what we do as the clubs themselves. We want to help parents keep up with the ever-changing gaming world so they can support their children with confidence.",
-      "paragraph2": "You stay in control — managing accounts, enrollments, and spending — while your child enjoys a safe environment guided by professionals who care."
+      "paragraph2": "You stay in control — managing accounts, enrolments, and spending — while your child enjoys a safe environment guided by professionals who care."
     },
     "cta": {
       "heading": "Join Our Community",
@@ -125,7 +125,7 @@
     },
     "products": {
       "title": "Products",
-      "manageCatalog": "Manage your product catalog",
+      "manageCatalog": "Manage your product catalogue",
       "addProduct": "Add Product",
       "searchPlaceholder": "Search products...",
       "noSearchResults": "No products match your search.",
@@ -138,8 +138,8 @@
       "actions": "Actions",
       "hideProduct": "Hide Product",
       "showProduct": "Show Product",
-      "hideConfirm": "Are you sure you want to hide \"{name}\"? It will no longer appear in the catalog.",
-      "showConfirm": "Are you sure you want to show \"{name}\"? It will appear in the catalog for parents.",
+      "hideConfirm": "Are you sure you want to hide \"{name}\"? It will no longer appear in the catalogue.",
+      "showConfirm": "Are you sure you want to show \"{name}\"? It will appear in the catalogue for parents.",
       "hide": "Hide",
       "show": "Show",
       "cannotShowProduct": "Cannot Show Product",
@@ -152,7 +152,7 @@
       "cloneProduct": "Clone Product",
       "cloningFrom": "Cloning from \"{name}\"",
       "addAProduct": "New Product",
-      "createNewProduct": "Create a new product for the catalog",
+      "createNewProduct": "Create a new product for the catalogue",
       "newProduct": "New Product",
       "fillDetails": "Fill in the product details below.",
       "createProduct": "Create Product",
@@ -296,15 +296,15 @@
       "groupNumber": "Group {number}",
       "groupDeleted": "{label} (deleted)",
       "hiddenNoGroups": "This product is hidden and has no groups. Add at least one group and make it visible for parents to see it.",
-      "hiddenWithGroups": "This product is hidden. Parents cannot see it in the catalog. Toggle visibility from the Actions card above.",
-      "visibleNoGroups": "This product is visible but has no groups. Parents can see it but cannot enroll.",
+      "hiddenWithGroups": "This product is hidden. Parents cannot see it in the catalogue. Toggle visibility from the Actions card above.",
+      "visibleNoGroups": "This product is visible but has no groups. Parents can see it but cannot enrol.",
       "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
       "genderBoy": "Boy",
       "genderGirl": "Girl",
       "genderNonBinary": "Non-binary",
       "boyCount": "{count, plural, one {# boy} other {# boys}}",
       "girlCount": "{count, plural, one {# girl} other {# girls}}",
-      "nonBinaryCount": "{count} non-binary",
+      "nonBinaryCount": "{count, plural, one {# non-binary} other {# non-binary}}",
       "ageRangeLabel": "age range {range}",
       "reassignGedu": "Reassign gedu",
       "moveGamersFirst": "Move all gamers out first",
@@ -394,7 +394,7 @@
       "title": "Create an account",
       "description": "Enter your details to create your parent account",
       "parentAccountAlertTitle": "This is a parent account",
-      "parentAccountAlertDescription": "This account is for you, the parent. Your child's gamer account is separate and will be created later when you enroll them in a club.",
+      "parentAccountAlertDescription": "This account is for you, the parent. Your child's gamer account is separate and will be created later when you enrol them in a club.",
       "parentDisplayName": "Parent's Display Name",
       "namePlaceholder": "Your name",
       "emailPlaceholder": "you@example.com",
@@ -447,9 +447,9 @@
       "heading": "Our Clubs",
       "subheading": "Explore our Minecraft clubs — each one led by a professional game educator.",
       "noClubs": "No Clubs Available",
-      "checkBackSoon": "Check back soon for new clubs!",
+      "checkBackSoon": "Check again soon for new clubs!",
       "needHelp": "Need Help Choosing?",
-      "needHelpDescription": "Not sure which club is right for your family? Contact us for personalized recommendations based on your children's ages and interests.",
+      "needHelpDescription": "Not sure which club is right for your family? Contact us for personalised recommendations based on your children's ages and interests.",
       "learnMoreAboutUs": "Learn More About Us"
     },
     "tokenCost": "{cost} Sorgs",
@@ -458,11 +458,11 @@
       "notFound": "Club Not Found",
       "notFoundDescription": "This club may no longer be available.",
       "every": "Every {day}",
-      "enrollment": "Enrollment",
-      "onlyParents": "Only parent accounts can enroll gamers in clubs.",
-      "readyToEnroll": "Ready to Enroll?",
-      "readyToEnrollDescription": "Log in or create an account to enroll your child in this club.",
-      "logInToEnroll": "Log In to Enroll"
+      "enrollment": "Enrolment",
+      "onlyParents": "Only parent accounts can enrol gamers in clubs.",
+      "readyToEnroll": "Ready to Enrol?",
+      "readyToEnrollDescription": "Log in or create an account to enrol your child in this club.",
+      "logInToEnroll": "Log In to Enrol"
     }
   },
   "docs": {
@@ -513,32 +513,32 @@
   },
   "enrollment": {
     "wizard": {
-      "title": "Enroll Your Gamer",
+      "title": "Enrol Your Gamer",
       "costDescription": "{cost} Sorgs will be deducted for the upcoming session",
       "insufficientBalance": "Insufficient Balance",
-      "insufficientBalanceDescription": "You need <strong>{cost} Sorgs</strong> to enroll but only have <strong>{balance}</strong>.",
+      "insufficientBalanceDescription": "You need <strong>{cost} Sorgs</strong> to enrol but only have <strong>{balance}</strong>.",
       "getMoreSorgs": "Get More Sorgs",
-      "chooseGamer": "Choose which gamer to enroll:",
+      "chooseGamer": "Choose which gamer to enrol:",
       "createNewGamer": "Create New Gamer",
       "createGamerDescription": "Create a new gamer account for your child",
       "chooseGroup": "Choose a group for {name}:",
       "noGroupsAvailable": "No groups available for this club yet. Please try again later.",
-      "enrollmentSummary": "Enrollment Summary",
+      "enrollmentSummary": "Enrolment Summary",
       "summaryGamer": "Gamer",
       "summaryGedu": "Gedu",
       "summaryCost": "Cost",
       "sorgAmount": "{amount} Sorgs",
       "currentBalance": "Current Balance",
-      "afterEnrollment": "After Enrollment",
+      "afterEnrollment": "After Enrolment",
       "enrolling": "Enrolling...",
-      "confirmEnrollment": "Confirm Enrollment",
+      "confirmEnrollment": "Confirm Enrolment",
       "enrolled": "Enrolled!",
       "enrolledDescription": "<strong>{gamer}</strong> is now enrolled in <strong>{club}</strong>.",
       "newBalance": "New balance: {balance} Sorgs",
       "howToJoinTitle": "How to join a session",
       "howToJoinDescription": "When a session starts, a green \"Live\" badge will appear on the group card in <strong>{name}'s</strong> dashboard. They can click \"Join\" to connect.",
       "viewMyGamers": "View My Gamers",
-      "failedToEnroll": "Failed to enroll",
+      "failedToEnroll": "Failed to enrol",
       "gamerCount": "{count, plural, one {# gamer} other {# gamers}}"
     },
     "gamerForm": {
@@ -562,7 +562,7 @@
       "createGamer": "Create Gamer"
     },
     "unenroll": {
-      "failedToUnenroll": "Failed to unenroll",
+      "failedToUnenroll": "Failed to unenrol",
       "successTitle": "Unenrolled",
       "successDescription": "<strong>{gamer}</strong> has been unenrolled from <strong>{club}</strong>.",
       "sorgsRefunded": "{amount} Sorgs refunded",
@@ -570,7 +570,7 @@
       "noRefund": "No refund was issued.",
       "newBalance": "New balance: <strong>{balance} Sorgs</strong>",
       "done": "Done",
-      "title": "Unenroll {name}?",
+      "title": "Unenrol {name}?",
       "description": "This will remove <strong>{gamer}</strong> from <strong>{club}</strong>.",
       "club": "Club",
       "gamer": "Gamer",
@@ -578,7 +578,7 @@
       "noRefundWithinWindow": "No refund will be issued — the next session is within {hours} hours.",
       "noChargeNextSession": "You won't be charged for the next session.",
       "unenrolling": "Unenrolling...",
-      "confirmUnenroll": "Confirm Unenroll"
+      "confirmUnenroll": "Confirm Unenrol"
     }
   },
   "feedback": {
@@ -621,11 +621,11 @@
     "backToGroups": "Back to Groups",
     "groupNotFound": "Group not found.",
     "live": "Live",
-    "gamerCount": "{count} gamers",
+    "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
     "noGamersEnrolled": "No gamers enrolled yet.",
     "age": "Age {age}",
     "sorgsPerWeek": "{cost} Sorgs / week",
-    "unenrollGamer": "Unenroll {name}",
+    "unenrollGamer": "Unenrol {name}",
     "noGroupsYet": "No Groups Yet",
     "nextSession": "Next: {date}",
     "startsIn": "(starts in {countdown})",
@@ -703,7 +703,7 @@
       },
       "step2": {
         "title": "Pick a Club",
-        "description": "Browse our clubs and enroll your gamers in the ones that fit their schedule and interests."
+        "description": "Browse our clubs and enrol your gamers in the ones that fit their schedule and interests."
       },
       "step3": {
         "title": "Join the Adventure",
@@ -728,7 +728,7 @@
   "parent": {
     "dashboard": {
       "welcome": "Parent Dashboard",
-      "subtitle": "Manage your gamers and enrollments",
+      "subtitle": "Manage your gamers and enrolments",
       "quickActions": {
         "gamers": {
           "title": "My Gamers",
@@ -740,7 +740,7 @@
         },
         "browseClubs": {
           "title": "Browse Clubs",
-          "description": "Find and enroll in gaming clubs"
+          "description": "Find and enrol in gaming clubs"
         },
         "settings": {
           "title": "Settings",
@@ -759,8 +759,8 @@
           "description": "Explore our gaming clubs and find the perfect fit for your child's age and interests."
         },
         "step3": {
-          "title": "Enroll Your Gamer",
-          "description": "Create a gamer account and enroll them in a club. They'll be ready to join their first session!"
+          "title": "Enrol Your Gamer",
+          "description": "Create a gamer account and enrol them in a club. They'll be ready to join their first session!"
         }
       }
     },
@@ -770,9 +770,9 @@
     },
     "gamers": {
       "title": "My Gamers",
-      "subtitle": "Manage your gamer accounts and enrollments",
+      "subtitle": "Manage your gamer accounts and enrolments",
       "joined": "Joined {time}",
-      "noEnrollments": "No active enrollments. <link>Browse clubs</link> to enroll this gamer.",
+      "noEnrollments": "No active enrolments. <link>Browse clubs</link> to enrol this gamer.",
       "empty": {
         "title": "No gamers yet",
         "description": "Create a gamer account by enrolling in a club. Your child will use their own username and password to log in."
@@ -841,7 +841,7 @@
     "notificationsDescription": "Configure how you receive notifications",
     "notificationsComingSoon": "Notification settings coming soon.",
     "appearance": "Appearance",
-    "appearanceDescription": "Customize the look and feel",
+    "appearanceDescription": "Customise the look and feel",
     "appearanceComingSoon": "Theme settings coming soon.",
     "languages": "Languages spoken"
   },
@@ -852,7 +852,7 @@
     },
     "overview": {
       "heading": "How It Works",
-      "text": "Each club session costs a set number of Sorgs. When you enroll your child in a club, Sorgs are deducted automatically each week for their session. Buy a token pack or subscribe monthly — whichever suits your family best."
+      "text": "Each club session costs a set number of Sorgs. When you enrol your child in a club, Sorgs are deducted automatically each week for their session. Buy a token pack or subscribe monthly — whichever suits your family best."
     },
     "benefits": {
       "heading": "Why Sorgs?",
@@ -894,12 +894,12 @@
       },
       "refund": {
         "question": "Can I get a refund?",
-        "answer": "If you unenroll a gamer at least 24 hours before the start of a session, the Sorgs for that session are automatically refunded to your balance. For anything else, contact our support team — we're happy to help."
+        "answer": "If you unenrol a gamer at least 24 hours before the start of a session, the Sorgs for that session are automatically refunded to your balance. For anything else, contact our support team — we're happy to help."
       }
     },
     "cta": {
       "heading": "Ready to Get Started?",
-      "subheading": "Create an account, grab some Sorgs, and enroll your child in their first club."
+      "subheading": "Create an account, grab some Sorgs, and enrol your child in their first club."
     }
   },
   "tokens": {
@@ -914,9 +914,9 @@
       "paymentFailedDescription": "Your last payment failed. Please <link>update your payment method</link> to continue your subscription.",
       "nextPayment": "Next payment on {date}",
       "activeRenews": "Active — renews automatically",
-      "canceledAccessUntil": "Canceled — access until {date}",
-      "canceledAccessUntilEnd": "Canceled — access until end of billing period",
-      "pastDue": "Payment past due — please update your payment method",
+      "canceledAccessUntil": "Cancelled — access until {date}",
+      "canceledAccessUntilEnd": "Cancelled — access until end of billing period",
+      "pastDue": "Payment overdue — please update your payment method",
       "status": "Status: {status}",
       "manageBilling": "Manage Billing",
       "resuming": "Resuming...",
@@ -928,13 +928,13 @@
         "loseRate": "You'll lose your current rate of {rate}/mo.",
         "keepAccess": "You'll keep access until the end of your current billing period.",
         "keep": "Keep Subscription",
-        "canceling": "Canceling...",
+        "canceling": "Cancelling...",
         "confirm": "Yes, Cancel"
       }
     },
     "purchase": {
       "success": "Payment successful! Your Sorgs have been added to your balance.",
-      "canceled": "Payment was canceled. No charges were made.",
+      "canceled": "Payment was cancelled. No charges were made.",
       "checkoutError": "Could not start checkout. Please try again.",
       "switchError": "Could not switch subscription. Please try again.",
       "title": "Get Sorgs",
@@ -946,7 +946,7 @@
       "switchDialog": {
         "title": "Switch to {name}?",
         "description": "You'll be switched to the {name} plan ({amount} Sorgs/month). The change takes effect on your next billing cycle.",
-        "resumeNote": "This will also resume your canceled subscription.",
+        "resumeNote": "This will also resume your cancelled subscription.",
         "confirm": "Switch Plan"
       }
     },
@@ -1024,7 +1024,7 @@
         "detail": "How can I make a difference? Valor is about finding your place in the world and having the courage to contribute. It means teamwork, expressing your ideas, using your imagination, and working towards a better future — locally and globally."
       },
       "wit": {
-        "detail": "How do I navigate the digital world? Wit is about a healthy, critical relationship with games, media, and technology. It means understanding online behavior, thinking critically about information, and balancing screen time with the rest of life."
+        "detail": "How do I navigate the digital world? Wit is about a healthy, critical relationship with games, media, and technology. It means understanding online behaviour, thinking critically about information, and balancing screen time with the rest of life."
       }
     },
     "earning": {

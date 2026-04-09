@@ -304,7 +304,7 @@
       "genderNonBinary": "Muunsukupuolinen",
       "boyCount": "{count, plural, one {# poika} other {# poikaa}}",
       "girlCount": "{count, plural, one {# tyttö} other {# tyttöä}}",
-      "nonBinaryCount": "{count} muunsukupuolista",
+      "nonBinaryCount": "{count, plural, one {# muunsukupuolinen} other {# muunsukupuolista}}",
       "ageRangeLabel": "ikähaarukka {range}",
       "reassignGedu": "Vaihda Gedu",
       "moveGamersFirst": "Siirrä kaikki pelaajat ensin pois",
@@ -447,7 +447,7 @@
       "heading": "Kerhomme",
       "subheading": "Tutustu Minecraft-kerhoihimme — jokaista johtaa ammattimainen pelikasvattaja.",
       "noClubs": "Kerhoja ei saatavilla",
-      "checkBackSoon": "Tarkista pian uudet kerhot!",
+      "checkBackSoon": "Palaa pian katsomaan uusia kerhoja!",
       "needHelp": "Tarvitsetko apua valinnassa?",
       "needHelpDescription": "Etkö ole varma, mikä kerho sopii perheellesi? Ota yhteyttä niin annamme henkilökohtaisia suosituksia lastesi iän ja kiinnostusten perusteella.",
       "learnMoreAboutUs": "Lue lisää meistä"
@@ -621,7 +621,7 @@
     "backToGroups": "Takaisin ryhmiin",
     "groupNotFound": "Ryhmää ei löytynyt.",
     "live": "Live",
-    "gamerCount": "{count} pelaajaa",
+    "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
     "noGamersEnrolled": "Ei vielä ilmoittautuneita pelaajia.",
     "age": "Ikä {age}",
     "sorgsPerWeek": "{cost} Sorgia / viikko",
@@ -666,7 +666,7 @@
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
-    "roleGedu": "Pelikasvattaja"
+    "roleGedu": "Gedu"
   },
   "home": {
     "hero": {
