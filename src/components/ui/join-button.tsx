@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Loader2, PhoneCall } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,7 @@ type JoinButtonProps = JoinButtonLinkProps | JoinButtonClickProps;
  * Renders as a Link when given `href`, or a `<button>` when given `onClick`.
  */
 export function JoinButton(props: JoinButtonProps) {
+  const t = useTranslations('groups');
   const { disabled, loading, stopPropagation } = props;
 
   if (loading) {
@@ -54,7 +56,7 @@ export function JoinButton(props: JoinButtonProps) {
         onClick={stopPropagation ? (e) => { e.stopPropagation(); onClick(); } : onClick}
       >
         <PhoneCall className="h-4 w-4" />
-        Join
+        {t('join')}
       </button>
     );
   }
@@ -68,7 +70,7 @@ export function JoinButton(props: JoinButtonProps) {
       onClick={stopPropagation ? (e) => e.stopPropagation() : undefined}
     >
       <PhoneCall className="h-4 w-4" />
-      Join
+      {t('join')}
     </Link>
   );
 }

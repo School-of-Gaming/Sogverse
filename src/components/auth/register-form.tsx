@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { Info } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -24,6 +25,8 @@ const registerSchema = z.object({
 });
 
 export function RegisterForm() {
+  const t = useTranslations('auth');
+  const c = useTranslations('common');
   const { redirect, status, navigateAfterAuth } = useAuthRedirect();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,7 +70,7 @@ export function RegisterForm() {
       if (data.user) {
         // Check if email confirmation is required
         if (data.user.identities?.length === 0) {
-          setError("An account with this email already exists");
+          setError(t('register.accountExists'));
           setIsLoading(false);
           return;
         }
@@ -79,7 +82,7 @@ export function RegisterForm() {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
       } else {
-        setError("An unexpected error occurred");
+        setError(c('unexpectedError'));
       }
       setIsLoading(false);
     }
@@ -88,9 +91,9 @@ export function RegisterForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Create an account</CardTitle>
+        <CardTitle className="text-2xl text-center">{t('register.title')}</CardTitle>
         <CardDescription className="text-center">
-          Enter your details to create your parent account
+          {t('register.description')}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -98,11 +101,9 @@ export function RegisterForm() {
           <Alert variant="info">
             <Info className="h-4 w-4 shrink-0" />
             <div>
-              <AlertTitle>This is a parent account</AlertTitle>
+              <AlertTitle>{t('register.parentAccountAlertTitle')}</AlertTitle>
               <AlertDescription>
-                This account is for you, the parent. Your child&apos;s gamer
-                account is separate and will be created later when you enroll
-                them in a club.
+                {t('register.parentAccountAlertDescription')}
               </AlertDescription>
             </div>
           </Alert>
@@ -112,11 +113,11 @@ export function RegisterForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="displayName">Parent&apos;s Display Name</Label>
+            <Label htmlFor="displayName">{t('register.parentDisplayName')}</Label>
             <Input
               id="displayName"
               type="text"
-              placeholder="Your name"
+              placeholder={t('register.namePlaceholder')}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={isLoading}
@@ -126,11 +127,11 @@ export function RegisterForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{c('email')}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder={t('register.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
@@ -139,11 +140,11 @@ export function RegisterForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{c('password')}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Create a strong password"
+              placeholder={t('register.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -151,15 +152,15 @@ export function RegisterForm() {
               autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters
+              {c('passwordMinLength', { count: 8 })}
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder={t('register.confirmPasswordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}
@@ -170,13 +171,16 @@ export function RegisterForm() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {status ?? (isLoading ? "Creating account..." : "Create Account")}
+            {status ?? (isLoading ? t('register.creatingAccount') : c('createAccount'))}
           </Button>
           <div className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">
-              Sign in
-            </Link>
+            {t.rich('register.alreadyHaveAccount', {
+              link: (chunks) => (
+                <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">
+                  {chunks}
+                </Link>
+              ),
+            })}
           </div>
         </CardFooter>
       </form>

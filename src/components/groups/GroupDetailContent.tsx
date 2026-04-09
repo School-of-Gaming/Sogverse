@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Coins, Loader2, Radio, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -58,6 +59,8 @@ export function GroupDetailContent({
   onJoinClick,
   customerEnrollment,
 }: GroupDetailContentProps) {
+  const t = useTranslations('groups');
+  const c = useTranslations('common');
   const router = useRouter();
   const { locale } = useCurrency();
   const [unenrollRefund, setUnenrollRefund] = useState<{
@@ -101,11 +104,11 @@ export function GroupDetailContent({
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Groups
+          {t('backToGroups')}
         </Link>
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">Group not found.</p>
+            <p className="text-sm text-muted-foreground">{t('groupNotFound')}</p>
           </CardContent>
         </Card>
       </div>
@@ -119,7 +122,7 @@ export function GroupDetailContent({
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Groups
+        {t('backToGroups')}
       </Link>
 
       {/* Header */}
@@ -144,7 +147,7 @@ export function GroupDetailContent({
               {group.voiceIsOpen && (
                 <Badge className="bg-success/10 text-success text-xs shrink-0">
                   <Radio className="mr-1 h-3 w-3" />
-                  Live
+                  {t('live')}
                 </Badge>
               )}
             </div>
@@ -156,12 +159,12 @@ export function GroupDetailContent({
             </div>
             <p className="mt-1 text-sm text-muted-foreground">
               {schedule && (
-                <>Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}</>
+                <>{c('schedule', { day: schedule.localDay, time: schedule.localTime, tz: schedule.tzAbbrev })}</>
               )}
               {schedule && group.durationMinutes && " · "}
-              {group.durationMinutes && <>{group.durationMinutes} min</>}
+              {group.durationMinutes && <>{group.durationMinutes} {c('minutes')}</>}
               {(schedule || group.durationMinutes) && " · "}
-              <>Ages {group.productMinAge}–{group.productMaxAge}</>
+              <>{c('ages', { min: group.productMinAge, max: group.productMaxAge })}</>
             </p>
             {group.productPadletUrl && (
               <PadletLink href={group.productPadletUrl} />
@@ -186,14 +189,14 @@ export function GroupDetailContent({
             </CardTitle>
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
-              {group.gamers.length} gamer{group.gamers.length !== 1 && "s"}
+              {t('gamerCount', { count: group.gamers.length })}
             </span>
           </div>
         </CardHeader>
         <CardContent>
           {group.gamers.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No gamers enrolled in this group yet.
+              {t('noGamersEnrolled')}
             </p>
           ) : (
             <div className="divide-y">
@@ -210,7 +213,7 @@ export function GroupDetailContent({
                       <p className="text-sm font-medium">{gamer.displayName}</p>
                       {gamer.dateOfBirth && gamer.gender && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>Age {computeAge(gamer.dateOfBirth)}</span>
+                          <span>{t('age', { age: computeAge(gamer.dateOfBirth) })}</span>
                           <span className="capitalize">{gamer.gender.replace("_", " ")}</span>
                         </div>
                       )}
@@ -229,7 +232,7 @@ export function GroupDetailContent({
           <CardContent className="flex items-center justify-between py-4">
             <div className="flex items-center gap-2 text-sm">
               <Coins className="h-4 w-4 text-muted-foreground" />
-              <span>{customerEnrollment.tokenCost} Sorgs/week</span>
+              <span>{t('sorgsPerWeek', { cost: customerEnrollment.tokenCost })}</span>
             </div>
             <Button
               variant="outline"
@@ -247,7 +250,7 @@ export function GroupDetailContent({
                 setUnenrollRefund({ eligible: refund.eligible, reason: refund.reason });
               }}
             >
-              Unenroll {customerEnrollment.gamerDisplayName}
+              {t('unenrollGamer', { name: customerEnrollment.gamerDisplayName })}
             </Button>
           </CardContent>
         </Card>

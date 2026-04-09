@@ -23,6 +23,7 @@ const eslintConfig = defineConfig([
       // Too many false positives on standard bracket notation in TypeScript
       "security/detect-object-injection": "off",
       "@typescript-eslint/no-unnecessary-condition": "error",
+      "@typescript-eslint/no-explicit-any": "error",
     },
   },
   {

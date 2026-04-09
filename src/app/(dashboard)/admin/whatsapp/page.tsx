@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, formatTime } from "@/lib/utils";
@@ -21,19 +22,19 @@ import {
   type WhatsAppMessage,
 } from "@/types";
 
-function formatChatDate(dateStr: string) {
+function formatChatDate(dateStr: string, todayLabel: string, yesterdayLabel: string) {
   const date = new Date(dateStr);
-  if (isToday(date)) return "Today";
-  if (isYesterday(date)) return "Yesterday";
+  if (isToday(date)) return todayLabel;
+  if (isYesterday(date)) return yesterdayLabel;
   return format(date, "PP");
 }
 
-function groupMessagesByDate(messages: WhatsAppMessage[]) {
+function groupMessagesByDate(messages: WhatsAppMessage[], todayLabel: string, yesterdayLabel: string) {
   const groups: { date: string; messages: WhatsAppMessage[] }[] = [];
   let currentDate = "";
 
   for (const msg of messages) {
-    const date = formatChatDate(msg.created_at);
+    const date = formatChatDate(msg.created_at, todayLabel, yesterdayLabel);
     if (date !== currentDate) {
       currentDate = date;
       groups.push({ date, messages: [] });
@@ -81,6 +82,7 @@ function ContactList({
   searchQuery: string;
   onSearchChange: (q: string) => void;
 }) {
+  const t = useTranslations('admin.whatsapp');
   const filtered = contacts.filter((c) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -93,14 +95,14 @@ function ContactList({
     <div className="flex h-full flex-col border-r border-border">
       <div className="border-b border-border p-3">
         <Input
-          placeholder="Search contacts..."
+          placeholder={t("searchContacts")}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
         />
       </div>
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 && (
-          <p className="p-4 text-sm text-muted-foreground">No conversations yet</p>
+          <p className="p-4 text-sm text-muted-foreground">{t("noConversations")}</p>
         )}
         {filtered.map((contact) => (
           <button
@@ -153,6 +155,7 @@ function ChatThread({
   isSending: boolean;
   sendError: string | null;
 }) {
+  const t = useTranslations('admin.whatsapp');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -173,7 +176,7 @@ function ChatThread({
     inputRef.current?.focus();
   }
 
-  const dateGroups = groupMessagesByDate(messages);
+  const dateGroups = groupMessagesByDate(messages, t("today"), t("yesterday"));
 
   return (
     <div className="flex h-full flex-col">
@@ -222,7 +225,7 @@ function ChatThread({
                     {msg.status === WHATSAPP_MESSAGE_STATUS.FAILED && (
                       <div className="mt-1 flex items-center gap-1 text-[10px] text-destructive">
                         <AlertCircle className="h-3 w-3" />
-                        <span>{msg.status_error ?? "Not delivered"}</span>
+                        <span>{msg.status_error ?? t("notDelivered")}</span>
                       </div>
                     )}
                     <div
@@ -264,7 +267,7 @@ function ChatThread({
           ref={inputRef}
           value={draft}
           onChange={(e) => onDraftChange(e.target.value)}
-          placeholder="Type a message..."
+          placeholder={t("typeMessage")}
           disabled={isSending}
           className="flex-1"
         />
@@ -279,6 +282,7 @@ function ChatThread({
 // --- Page ---
 
 export default function WhatsAppInboxPage() {
+  const t = useTranslations('admin.whatsapp');
   const [selectedPhone, setSelectedPhone] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sendError, setSendError] = useState<string | null>(null);
@@ -360,9 +364,9 @@ export default function WhatsAppInboxPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-3xl font-bold">WhatsApp</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Send and receive messages via the School of Gaming WhatsApp number.
+          {t('description')}
         </p>
       </div>
 
@@ -394,7 +398,7 @@ export default function WhatsAppInboxPage() {
           ) : (
             <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
               <MessageCircle className="mb-4 h-12 w-12" />
-              <p>Select a conversation to start messaging</p>
+              <p>{t('selectConversation')}</p>
             </div>
           )}
         </div>

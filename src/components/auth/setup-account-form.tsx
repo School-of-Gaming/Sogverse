@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,8 @@ const setupAccountSchema = z.object({
 });
 
 export function SetupAccountForm() {
+  const t = useTranslations('auth');
+  const c = useTranslations('common');
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -59,7 +62,7 @@ export function SetupAccountForm() {
         .setSession({ access_token: accessToken, refresh_token: refreshToken })
         .then(({ data: sessionData, error }) => {
           if (error) {
-            setError("Your invite link has expired. Please ask your admin to send a new one.");
+            setError(t('setupAccount.inviteLinkExpired'));
           } else {
             setSessionEmail(sessionData.user?.email ?? "");
             // Clear hash from URL without triggering navigation
@@ -70,7 +73,7 @@ export function SetupAccountForm() {
     } else {
       setSessionReady(true);
     }
-  }, [supabase.auth]);
+  }, [supabase.auth, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +95,7 @@ export function SetupAccountForm() {
         });
         if (!mcResponse.ok) {
           const mcData = await mcResponse.json();
-          setError(mcData.error || "Failed to save Minecraft username");
+          setError(mcData.error || t('setupAccount.minecraftSaveFailed'));
           return;
         }
       }
@@ -111,7 +114,7 @@ export function SetupAccountForm() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         if (phone && !isValidPhoneNumber(phone)) {
-          setError("Please enter a valid phone number");
+          setError(t('setupAccount.invalidPhone'));
           return;
         }
 
@@ -140,7 +143,7 @@ export function SetupAccountForm() {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
       } else {
-        setError("An unexpected error occurred");
+        setError(c('unexpectedError'));
       }
     } finally {
       setIsLoading(false);
@@ -151,9 +154,9 @@ export function SetupAccountForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">You&apos;re all set!</CardTitle>
+          <CardTitle className="text-2xl">{t('setupAccount.successTitle')}</CardTitle>
           <CardDescription>
-            Your account has been set up successfully.
+            {t('setupAccount.successDescription')}
           </CardDescription>
         </CardHeader>
         <CardFooter>
@@ -161,7 +164,7 @@ export function SetupAccountForm() {
             className="w-full"
             onClick={() => { window.location.href = ROUTES.login; }}
           >
-            Continue
+            {c('continue')}
           </Button>
         </CardFooter>
       </Card>
@@ -171,9 +174,9 @@ export function SetupAccountForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Welcome to the Sogverse</CardTitle>
+        <CardTitle className="text-2xl text-center">{t('setupAccount.title')}</CardTitle>
         <CardDescription className="text-center">
-          Set up your game educator account below.
+          {t('setupAccount.description')}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -186,11 +189,11 @@ export function SetupAccountForm() {
           {/* Hidden email field so Chrome saves the password against the correct email */}
           <input type="email" autoComplete="username" value={sessionEmail} readOnly hidden />
           <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
+            <Label htmlFor="displayName">{c('displayName')}</Label>
             <Input
               id="displayName"
               type="text"
-              placeholder="Your name"
+              placeholder={t('setupAccount.namePlaceholder')}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={isLoading}
@@ -200,11 +203,11 @@ export function SetupAccountForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{c('password')}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder={t('setupAccount.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -212,15 +215,15 @@ export function SetupAccountForm() {
               autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters
+              {c('passwordMinLength', { count: 8 })}
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder={t('setupAccount.confirmPasswordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}
@@ -235,7 +238,7 @@ export function SetupAccountForm() {
             optional
           />
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">{c('phoneNumber')}</Label>
             <InternationalPhoneInput
               id="phone"
               value={phone || undefined}
@@ -251,7 +254,7 @@ export function SetupAccountForm() {
         </CardContent>
         <CardFooter>
           <Button type="submit" className="w-full" disabled={isLoading || !sessionReady}>
-            {!sessionReady ? "Loading..." : isLoading ? "Setting up..." : "Set Up Account"}
+            {!sessionReady ? c('loading') : isLoading ? t('setupAccount.settingUp') : t('setupAccount.submitButton')}
           </Button>
         </CardFooter>
       </form>

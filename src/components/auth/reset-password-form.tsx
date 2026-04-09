@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,8 @@ const resetPasswordSchema = z.object({
 });
 
 export function ResetPasswordForm() {
+  const t = useTranslations('auth');
+  const c = useTranslations('common');
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -48,7 +51,7 @@ export function ResetPasswordForm() {
         .setSession({ access_token: accessToken, refresh_token: refreshToken })
         .then(({ error }) => {
           if (error) {
-            setError("Your reset link has expired. Please request a new one.");
+            setError(t('resetPassword.linkExpired'));
           } else {
             // Clear hash from URL without triggering navigation
             window.history.replaceState(null, "", window.location.pathname);
@@ -58,7 +61,7 @@ export function ResetPasswordForm() {
     } else {
       setSessionReady(true);
     }
-  }, [supabase.auth]);
+  }, [supabase.auth, t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,7 +85,7 @@ export function ResetPasswordForm() {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
       } else {
-        setError("An unexpected error occurred");
+        setError(c('unexpectedError'));
       }
     } finally {
       setIsLoading(false);
@@ -93,9 +96,9 @@ export function ResetPasswordForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">Password updated</CardTitle>
+          <CardTitle className="text-2xl">{t('resetPassword.successTitle')}</CardTitle>
           <CardDescription>
-            Your password has been successfully updated.
+            {t('resetPassword.successDescription')}
           </CardDescription>
         </CardHeader>
         <CardFooter>
@@ -103,7 +106,7 @@ export function ResetPasswordForm() {
             className="w-full"
             onClick={() => { window.location.href = ROUTES.login; }}
           >
-            Continue
+            {c('continue')}
           </Button>
         </CardFooter>
       </Card>
@@ -113,9 +116,9 @@ export function ResetPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Reset your password</CardTitle>
+        <CardTitle className="text-2xl text-center">{t('resetPassword.title')}</CardTitle>
         <CardDescription className="text-center">
-          Enter your new password below.
+          {t('resetPassword.description')}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -126,11 +129,11 @@ export function ResetPasswordForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="password">New Password</Label>
+            <Label htmlFor="password">{c('newPassword')}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your new password"
+              placeholder={t('resetPassword.newPasswordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -138,15 +141,15 @@ export function ResetPasswordForm() {
               autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters
+              {c('passwordMinLength', { count: 8 })}
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your new password"
+              placeholder={t('resetPassword.confirmPasswordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}
@@ -157,14 +160,14 @@ export function ResetPasswordForm() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading || !sessionReady}>
-            {!sessionReady ? "Loading..." : isLoading ? "Updating..." : "Reset Password"}
+            {!sessionReady ? c('loading') : isLoading ? t('resetPassword.updating') : t('resetPassword.resetButton')}
           </Button>
           <Link
             href="/login"
             className="flex items-center justify-center text-sm text-muted-foreground hover:text-primary"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Login
+            {c('backToLogin')}
           </Link>
         </CardFooter>
       </form>

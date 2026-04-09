@@ -3,6 +3,7 @@
 import { use, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,8 @@ import { ProductForm, type ProductFormValues } from "@/components/admin/product-
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const t = useTranslations('admin.products');
+  const c = useTranslations('common');
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
   const updateProduct = useUpdateProduct();
@@ -55,7 +58,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold">Product Not Found</h1>
+          <h1 className="text-2xl font-bold">{t('productNotFound')}</h1>
         </div>
       </div>
     );
@@ -70,9 +73,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Edit Product</h1>
+          <h1 className="text-2xl font-bold">{t('editProduct')}</h1>
           <p className="text-muted-foreground">
-            Update the details for this product
+            {t('updateDetails')}
           </p>
         </div>
       </div>
@@ -86,7 +89,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <div>
               <CardTitle>{product.name}</CardTitle>
               <CardDescription>
-                Edit the product details below
+                {t('editDetailsBelow')}
               </CardDescription>
             </div>
           </div>
@@ -107,8 +110,8 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           }}
           onSubmit={handleSubmit}
           isPending={updateProduct.isPending || isNavigating}
-          submitLabel="Save Changes"
-          pendingLabel="Saving..."
+          submitLabel={c('saveChanges')}
+          pendingLabel={c('saving')}
         />
       </Card>
     </div>

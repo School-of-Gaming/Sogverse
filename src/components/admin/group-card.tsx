@@ -3,6 +3,7 @@
 import { memo, useState } from "react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { GripVertical, Trash2, RefreshCw } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,14 +24,11 @@ import type { Profile, GenderType } from "@/types";
 
 // --- Helpers ---
 
-function formatGenderShort(gender: string): string {
-  switch (gender) {
-    case "boy": return "Boy";
-    case "girl": return "Girl";
-    case "non_binary": return "Non-binary";
-    default: return "";
-  }
-}
+const GENDER_KEYS: Record<string, string> = {
+  boy: "genderBoy",
+  girl: "genderGirl",
+  non_binary: "genderNonBinary",
+};
 
 // --- Draggable gamer chip ---
 
@@ -48,7 +46,9 @@ const GamerChipContent = memo(function GamerChipContent({
   dateOfBirth: string;
   gender: string;
 }) {
-  const detail = `${computeAge(dateOfBirth)}y / ${formatGenderShort(gender)}`;
+  const t = useTranslations('admin.groups');
+  const genderLabel = GENDER_KEYS[gender] ? t(GENDER_KEYS[gender] as "genderBoy") : "";
+  const detail = `${computeAge(dateOfBirth)}y / ${genderLabel}`;
 
   return (
     <>
@@ -116,6 +116,8 @@ interface GroupCardProps {
 }
 
 export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onReassignGedu }: GroupCardProps) {
+  const t = useTranslations('admin.groups');
+  const c = useTranslations('common');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showReassign, setShowReassign] = useState(false);
 
@@ -142,9 +144,9 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
     }
   }
   const genderParts: string[] = [];
-  if (genderCounts.boy > 0) genderParts.push(`${genderCounts.boy} ${genderCounts.boy === 1 ? "boy" : "boys"}`);
-  if (genderCounts.girl > 0) genderParts.push(`${genderCounts.girl} ${genderCounts.girl === 1 ? "girl" : "girls"}`);
-  if (genderCounts.non_binary > 0) genderParts.push(`${genderCounts.non_binary} non-binary`);
+  if (genderCounts.boy > 0) genderParts.push(t('boyCount', { count: genderCounts.boy }));
+  if (genderCounts.girl > 0) genderParts.push(t('girlCount', { count: genderCounts.girl }));
+  if (genderCounts.non_binary > 0) genderParts.push(t('nonBinaryCount', { count: genderCounts.non_binary }));
 
   return (
     <>
@@ -166,7 +168,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
               <CardTitle className="text-base">
                 {groupLabel}
                 <span className="ml-2 text-sm font-normal text-muted-foreground">
-                  ({group.gamers.length} {group.gamers.length === 1 ? "gamer" : "gamers"})
+                  ({t('gamerCount', { count: group.gamers.length })})
                 </span>
               </CardTitle>
               <p className="text-sm text-muted-foreground">
@@ -175,7 +177,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
               {hasGamers && (ageRange || genderParts.length > 0) && (
                 <p className="text-xs text-muted-foreground">
                   {[
-                    ageRange && `age range ${ageRange}`,
+                    ageRange && t('ageRangeLabel', { range: ageRange }),
                     genderParts.length > 0 && genderParts.join(", "),
                   ].filter(Boolean).join(" · ")}
                 </p>
@@ -189,7 +191,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => setShowReassign(true)}
-                title="Reassign gedu"
+                title={t('reassignGedu')}
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
@@ -202,7 +204,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
                   setConfirmDelete(true);
                 }}
                 disabled={hasGamers}
-                title={hasGamers ? "Move all gamers out first" : "Delete group"}
+                title={hasGamers ? t('moveGamersFirst') : t('deleteGroup')}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -226,12 +228,12 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              {group.isDeleted ? "Marked for deletion" : "No gamers enrolled. Drag gamers here."}
+              {group.isDeleted ? t('markedForDeletion') : t('noGamersEnrolled')}
             </p>
           )}
           {group.isNew && (
             <Badge variant="secondary" className="mt-3 text-xs">
-              New
+              {t('new')}
             </Badge>
           )}
         </CardContent>
@@ -242,15 +244,14 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
         <Dialog open onOpenChange={setConfirmDelete}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Delete {groupLabel}?</DialogTitle>
+              <DialogTitle>{t('deleteGroupConfirmTitle', { label: groupLabel })}</DialogTitle>
               <DialogDescription>
-                This will remove the group and its gedu assignment. This change
-                won&apos;t take effect until you commit.
+                {t('deleteGroupConfirmDescription')}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="outline" onClick={() => setConfirmDelete(false)}>
-                Cancel
+                {c('cancel')}
               </Button>
               <Button
                 variant="destructive"
@@ -259,7 +260,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
                   setConfirmDelete(false);
                 }}
               >
-                Delete
+                {c('delete')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -271,8 +272,8 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
         <GeduPickerDialog
           open
           onOpenChange={setShowReassign}
-          title={`Reassign Gedu for ${groupLabel}`}
-          description="Select a different gedu for this group."
+          title={t('reassignGeduFor', { label: groupLabel })}
+          description={t('selectDifferentGedu')}
           gedus={gedus}
           excludeIds={usedGeduIds}
           highlightId={group.geduId}

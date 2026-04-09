@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, Package, TrendingUp, DollarSign } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
@@ -9,44 +10,47 @@ export const metadata: Metadata = {
   description: "Manage users, products, and system settings",
 };
 
-const stats = [
-  {
-    title: "Total Users",
-    value: "0",
-    description: "Active accounts",
-    icon: Users,
-    href: ROUTES.admin.users,
-  },
-  {
-    title: "Products",
-    value: "0",
-    description: "Active products",
-    icon: Package,
-    href: ROUTES.admin.products,
-  },
-  {
-    title: "Revenue",
-    value: "$0",
-    description: "This month",
-    icon: DollarSign,
-    href: "#",
-  },
-  {
-    title: "Growth",
-    value: "0%",
-    description: "From last month",
-    icon: TrendingUp,
-    href: "#",
-  },
-];
-
 export default function AdminDashboardPage() {
+  const t = useTranslations('admin.dashboard');
+  const c = useTranslations('common');
+
+  const stats = [
+    {
+      title: t('totalUsers'),
+      value: "0",
+      description: t('activeAccounts'),
+      icon: Users,
+      href: ROUTES.admin.users,
+    },
+    {
+      title: t('products'),
+      value: "0",
+      description: t('activeProducts'),
+      icon: Package,
+      href: ROUTES.admin.products,
+    },
+    {
+      title: t('revenue'),
+      value: "$0",
+      description: t('thisMonth'),
+      icon: DollarSign,
+      href: "#",
+    },
+    {
+      title: t('growth'),
+      value: "0%",
+      description: t('fromLastMonth'),
+      icon: TrendingUp,
+      href: "#",
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Welcome to the Sogverse admin panel. Manage users, products, and system settings.
+          {t('description')}
         </p>
       </div>
 
@@ -73,12 +77,12 @@ export default function AdminDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest system events</CardDescription>
+          <CardTitle>{c('recentActivity')}</CardTitle>
+          <CardDescription>{t('latestEvents')}</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            No recent activity to display.
+            {c('noRecentActivity')}
           </p>
         </CardContent>
       </Card>

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { formatScheduleLocal } from "@/lib/utils";
@@ -13,6 +14,8 @@ interface ProductRowProps {
 }
 
 export function ProductRow({ product, currency, locale, tokensToCurrencyDisplay }: ProductRowProps) {
+  const t = useTranslations('admin.products');
+  const c = useTranslations('common');
   const schedule = formatScheduleLocal(
     product.day_of_week,
     product.start_time,
@@ -42,7 +45,7 @@ export function ProductRow({ product, currency, locale, tokensToCurrencyDisplay 
                 variant="outline"
                 className="text-muted-foreground"
               >
-                Hidden
+                {t('hidden')}
               </Badge>
             )}
           </div>
@@ -51,14 +54,14 @@ export function ProductRow({ product, currency, locale, tokensToCurrencyDisplay 
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
             <span className="font-semibold text-primary">
-              {product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})
+              {product.token_cost} {c('sorgs')} ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})
             </span>
             <span>
-              Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}
+              {c('schedule', { day: schedule.localDay, time: schedule.localTime, tz: schedule.tzAbbrev })}
             </span>
-            <span>{product.duration_minutes} min</span>
+            <span>{product.duration_minutes} {c('minutes')}</span>
             {gameName && <span>{gameName}</span>}
-            <span>Ages {product.min_age}–{product.max_age}</span>
+            <span>{c('ages', { min: product.min_age, max: product.max_age })}</span>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, CreditCard } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -28,6 +29,7 @@ function formatPeriodDate(timestamp: number, locale: string) {
 }
 
 export function SubscriptionStatusCard() {
+  const t = useTranslations('tokens');
   const { profile } = useRequiredAuth();
   const { currency: displayCurrency, locale } = useCurrency();
   const { data: subscription } = useSubscription(profile.id);
@@ -52,10 +54,10 @@ export function SubscriptionStatusCard() {
 
   // Dynamic tier name from subscription details
   const tierLabel = details?.productName && details.tokenAmount
-    ? `${details.productName} — ${details.tokenAmount} Sorgs/month`
+    ? t('subscription.tierLabelFull', { name: details.productName, amount: details.tokenAmount })
     : details?.tokenAmount
-      ? `${details.tokenAmount} Sorgs/month`
-      : "Subscription";
+      ? t('subscription.tierLabelAmount', { amount: details.tokenAmount })
+      : t('subscription.label');
 
   const handleCancel = async () => {
     await cancelMutation.mutateAsync();
@@ -76,16 +78,9 @@ export function SubscriptionStatusCard() {
             <Alert variant="destructive">
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
               <div>
-                <AlertTitle>Payment failed</AlertTitle>
+                <AlertTitle>{t('subscription.paymentFailed')}</AlertTitle>
                 <AlertDescription>
-                  Your last payment didn&apos;t go through. Please{" "}
-                  <Link
-                    href={ROUTES.customer.billing}
-                    className="font-medium text-destructive underline underline-offset-4 hover:text-destructive/80"
-                  >
-                    update your payment method
-                  </Link>{" "}
-                  to keep your subscription active.
+                  {t.rich('subscription.paymentFailedDescription', { link: (chunks) => <Link href={ROUTES.customer.billing} className="font-medium text-destructive underline underline-offset-4 hover:text-destructive/80">{chunks}</Link> })}
                 </AlertDescription>
               </div>
             </Alert>
@@ -95,26 +90,26 @@ export function SubscriptionStatusCard() {
               <p className="font-medium">
                 {tierLabel}
                 {details?.amount && (
-                  <span className="text-muted-foreground"> — {formatCurrencyFromCents(details.amount, billingCurrency, locale)}/mo</span>
+                  <span className="text-muted-foreground">{" — "}{t('package.perMonth', { price: formatCurrencyFromCents(details.amount, billingCurrency, locale) })}</span>
                 )}
               </p>
               <p className="text-sm text-muted-foreground">
                 {isActive && details?.currentPeriodEnd && (
-                  <>Next payment: {formatPeriodDate(details.currentPeriodEnd, locale)}</>
+                  <>{t('subscription.nextPayment', { date: formatPeriodDate(details.currentPeriodEnd, locale) })}</>
                 )}
-                {isActive && !details?.currentPeriodEnd && "Active — renews monthly"}
+                {isActive && !details?.currentPeriodEnd && t('subscription.activeRenews')}
                 {isCanceling && details?.currentPeriodEnd && (
-                  <>Canceled — access until {formatPeriodDate(details.currentPeriodEnd, locale)}</>
+                  <>{t('subscription.canceledAccessUntil', { date: formatPeriodDate(details.currentPeriodEnd, locale) })}</>
                 )}
-                {isCanceling && !details?.currentPeriodEnd && "Canceled — access until end of billing period"}
-                {isPastDue && "Past due — update payment to continue"}
-                {!isActive && !isCanceling && !isPastDue && `Status: ${subState.status}`}
+                {isCanceling && !details?.currentPeriodEnd && t('subscription.canceledAccessUntilEnd')}
+                {isPastDue && t('subscription.pastDue')}
+                {!isActive && !isCanceling && !isPastDue && t('subscription.status', { status: subState.status })}
               </p>
             </div>
             <div className="flex items-center gap-2">
               {(isActive || isCanceling || isPastDue) && (
                 <Link href={ROUTES.customer.billing} className={buttonVariants({ variant: "outline" })}>
-                  Manage Billing
+                  {t('subscription.manageBilling')}
                 </Link>
               )}
               {isCanceling && (
@@ -123,7 +118,7 @@ export function SubscriptionStatusCard() {
                   onClick={() => resumeMutation.mutate()}
                   disabled={resumeMutation.isPending}
                 >
-                  {resumeMutation.isPending ? "Resuming..." : "Resume Subscription"}
+                  {resumeMutation.isPending ? t('subscription.resuming') : t('subscription.resume')}
                 </Button>
               )}
               {isActive && (
@@ -131,7 +126,7 @@ export function SubscriptionStatusCard() {
                   variant="outline"
                   onClick={() => setConfirmOpen(true)}
                 >
-                  Cancel Subscription
+                  {t('subscription.cancelSubscription')}
                 </Button>
               )}
             </div>
@@ -142,24 +137,23 @@ export function SubscriptionStatusCard() {
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cancel Subscription?</DialogTitle>
+            <DialogTitle>{t('subscription.cancelDialog.title')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to cancel your subscription?
-              {details?.amount && <> You&apos;ll lose the monthly rate of {formatCurrencyFromCents(details.amount, billingCurrency, locale)}/mo.</>}
-              {" "}Your current Sorgs will remain in your account, and you&apos;ll keep
-              access until the end of your billing period.
+              {t('subscription.cancelDialog.description')}
+              {details?.amount && <> {t('subscription.cancelDialog.loseRate', { rate: formatCurrencyFromCents(details.amount, billingCurrency, locale) })}</>}
+              {" "}{t('subscription.cancelDialog.keepAccess')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-              Keep Subscription
+              {t('subscription.cancelDialog.keep')}
             </Button>
             <Button
               variant="destructive"
               onClick={handleCancel}
               disabled={cancelMutation.isPending}
             >
-              {cancelMutation.isPending ? "Canceling..." : "Yes, Cancel"}
+              {cancelMutation.isPending ? t('subscription.cancelDialog.canceling') : t('subscription.cancelDialog.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

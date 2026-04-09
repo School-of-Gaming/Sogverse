@@ -1,6 +1,1015 @@
 {
   "common": {
     "appName": "Sogverse",
-    "loading": "Loading..."
+    "tagline": "School of Gaming",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "sending": "Sending...",
+    "back": "Back",
+    "cancel": "Cancel",
+    "close": "Close",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "continue": "Continue",
+    "submit": "Submit",
+    "saveChanges": "Save Changes",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "getStarted": "Get Started",
+    "viewDetails": "View Details",
+    "learnMore": "Learn More",
+    "browseClubs": "Browse Clubs",
+    "exploreClubs": "Explore Clubs",
+    "createAccount": "Create Account",
+    "unexpectedError": "An unexpected error occurred",
+    "somethingWentWrong": "Something went wrong",
+    "noPermission": "You don't have permission to view this page.",
+    "sorgs": "Sorgs",
+    "perSession": "per session",
+    "minutes": "min",
+    "ages": "Ages {min}–{max}",
+    "schedule": "Every {day} at {time} {tz}",
+    "duration": "{minutes} minutes",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "displayName": "Display Name",
+    "username": "Username",
+    "phoneNumber": "Phone Number",
+    "newPassword": "New Password",
+    "profile": "Profile",
+    "security": "Security",
+    "settings": "Settings",
+    "dashboard": "Dashboard",
+    "backToLogin": "Back to Login",
+    "passwordMinLength": "Must be at least {count} characters",
+    "forgotPassword": "Forgot password?",
+    "failedToLoad": "Failed to load data",
+    "alreadyEnrolled": "Already enrolled",
+    "noRecentActivity": "No recent activity to display.",
+    "recentActivity": "Recent Activity"
+  },
+  "about": {
+    "hero": {
+      "title": "About <primary>School of Gaming</primary>",
+      "subtitle": "In our Minecraft clubs, screen time becomes quality time. We bring together children, professional game educators, and the game kids already love — creating playful learning experiences where they make new friends, develop real skills, and have fun."
+    },
+    "quote": {
+      "text": "“What is true now, was once just your imagination.”",
+      "attribution": "— The Principal of the School of Gaming"
+    },
+    "mission": {
+      "heading": "Our Mission",
+      "text": "All screen content is not made equal. Gaming is a great hobby when it is treated like all the other hobbies. We use children's love for games to their advantage — with good friends and a professional game educator who is there to guide and help."
+    },
+    "values": {
+      "heading": "Things We Care About",
+      "playIsEssential": {
+        "title": "Play Is Essential for Children",
+        "description": "Play is a child's work. It is crucial for their wellbeing and development. Our clubs are designed to promote free play that feeds imagination, curiosity, and creativity — powerful tools to face any future."
+      },
+      "friendsCarry": {
+        "title": "Friends Carry Over Obstacles",
+        "description": "No one should be left without a friend. Moments of play and friendship carry kids over any obstacle in life. In our clubs, children build genuine connections through shared adventures."
+      },
+      "keepChildrenSafe": {
+        "title": "Keep Children Safe Online",
+        "description": "We nurture inclusive, kind, and safe online communities. We grow caring and polite digital citizens who look out for their fellow gamers. Zero tolerance for bullying and toxicity."
+      },
+      "familyInTheLoop": {
+        "title": "Family in the Loop",
+        "description": "Parents are partners. You stay in control of your child's gaming experience while they enjoy the freedom to explore, create, and make friends in a safe environment."
+      }
+    },
+    "howClubsWork": {
+      "heading": "How Our Clubs Work",
+      "paragraph1": "Each week, our gamers log in and are greeted by their own game educator — a Gedu. The Gedu guides them through the day's topic, giving children space and freedom to make the adventures their own.",
+      "paragraph2": "Our Gedus are gamers themselves. They understand firsthand that as children and teenagers, identity and friendships are built both online and offline. That understanding shapes every session they lead.",
+      "paragraph3": "All our clubs are built around stories that give space for gamers to explore, create, and imagine. Between weekly sessions, gamers get fun challenges to do online and offline. During holidays we organize camps, and every week there are community events, tournaments, and competitions.",
+      "paragraph4": "Every gamer takes an oath to behave kindly and righteously — whether in-game, on voice chat, or out in the real world. The same values apply everywhere."
+    },
+    "forParents": {
+      "heading": "For Parents",
+      "paragraph1": "Parental game education is just as important a part of what we do as the clubs themselves. We want to help parents keep up with the ever-changing gaming world so they can support their children with confidence.",
+      "paragraph2": "You stay in control — managing accounts, enrollments, and spending — while your child enjoys a safe environment guided by professionals who care."
+    },
+    "cta": {
+      "heading": "Join Our Community",
+      "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional game educator."
+    },
+    "contact": {
+      "heading": "Get in Touch",
+      "subheading": "Have questions? We'd love to hear from you.",
+      "email": "Email: kanslia@sog.gg"
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "description": "Welcome to the Sogverse admin panel. Manage users, products, and system settings.",
+      "totalUsers": "Total Users",
+      "activeAccounts": "Active accounts",
+      "products": "Products",
+      "activeProducts": "Active products",
+      "revenue": "Revenue",
+      "thisMonth": "This month",
+      "growth": "Growth",
+      "fromLastMonth": "From last month",
+      "latestEvents": "Latest events across the platform"
+    },
+    "products": {
+      "title": "Products",
+      "manageCatalog": "Manage your product catalog",
+      "addProduct": "Add Product",
+      "searchPlaceholder": "Search products...",
+      "noSearchResults": "No products match your search.",
+      "noProducts": "No products yet. Create your first product.",
+      "backToProducts": "Back to Products",
+      "productNotFound": "Product not found.",
+      "hidden": "Hidden",
+      "created": "Created",
+      "unknown": "Unknown",
+      "actions": "Actions",
+      "hideProduct": "Hide Product",
+      "showProduct": "Show Product",
+      "hideConfirm": "Are you sure you want to hide \"{name}\"? It will no longer appear in the catalog.",
+      "showConfirm": "Are you sure you want to show \"{name}\"? It will appear in the catalog for parents.",
+      "hide": "Hide",
+      "show": "Show",
+      "cannotShowProduct": "Cannot Show Product",
+      "addGroupBeforeVisible": "Add at least one gedu group before making this product visible.",
+      "ok": "OK",
+      "deleteProduct": "Delete Product",
+      "deleteConfirm": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+      "deleting": "Deleting...",
+      "clone": "Clone",
+      "cloneProduct": "Clone Product",
+      "cloningFrom": "Cloning from \"{name}\"",
+      "addAProduct": "New Product",
+      "createNewProduct": "Create a new product for the catalog",
+      "newProduct": "New Product",
+      "fillDetails": "Fill in the product details below.",
+      "createProduct": "Create Product",
+      "creating": "Creating...",
+      "editProduct": "Edit Product",
+      "updateDetails": "Update the product details below",
+      "editDetailsBelow": "Edit the details below."
+    },
+    "users": {
+      "title": "Users",
+      "manageAccounts": "Manage user accounts and roles",
+      "inviteGedu": "Invite Gedu",
+      "searchPlaceholder": "Search by name, email, or username...",
+      "searchAriaLabel": "Search users",
+      "roleFilterLabel": "Role",
+      "all": "All",
+      "roleAdmin": "Admin",
+      "roleParent": "Parent",
+      "roleGedu": "Gedu",
+      "noFilterResults": "No users match your filters.",
+      "noUsers": "No users found.",
+      "backToUsers": "Back to Users",
+      "userNotFound": "User not found.",
+      "joined": "Joined",
+      "unknown": "Unknown",
+      "linkedGamers": "Linked Gamers",
+      "linkedParents": "Linked Parents",
+      "unnamedGamer": "Unnamed Gamer",
+      "unnamedUser": "Unnamed User",
+      "noConnectedGamers": "No connected gamers",
+      "tokenBalance": "Token Balance",
+      "tokenMonetaryWarning": "Each Sorg is worth {rate}. Adjustments affect real monetary value.",
+      "amountLabel": "Amount (+ to add, − to remove)",
+      "amountPlaceholder": "e.g. 10 or -5",
+      "reasonLabel": "Reason",
+      "reasonPlaceholder": "e.g. Compensation for missed session",
+      "adjustBalance": "Adjust Balance",
+      "failedToAdjust": "Failed to adjust balance",
+      "transactionHistory": "Transaction History",
+      "adjustDialogTitle": "{action} {count, plural, one {# Sorg} other {# Sorgs}}",
+      "adjustDialogDescription": "This will {action} {count, plural, one {# Sorg} other {# Sorgs}} {direction} {user}.",
+      "add": "Add",
+      "remove": "Remove",
+      "to": "to",
+      "from": "from",
+      "thisUser": "this user",
+      "monetaryValue": "Monetary value",
+      "adjusting": "Adjusting...",
+      "inviteNewGedu": "Invite New Gedu",
+      "sendInvitation": "Send an invitation email to a new game educator",
+      "newGeduInvitation": "New Gedu Invitation",
+      "geduReceiveEmail": "The gedu will receive an email with instructions to set up their account.",
+      "emailAddress": "Email Address",
+      "emailPlaceholder": "gedu@example.com",
+      "sendInvite": "Send Invitation",
+      "sendingInvite": "Sending...",
+      "inviteSent": "Invitation Sent!",
+      "inviteSentDescription": "An invitation has been sent to {email}.",
+      "viewAllUsers": "View All Users",
+      "inviteAnother": "Invite Another",
+      "invalidEmail": "Please enter a valid email address"
+    },
+    "locations": {
+      "title": "Locations",
+      "description": "Manage countries, cities, and sites",
+      "addCountry": "Add Country",
+      "searchPlaceholder": "Search locations...",
+      "editName": "Edit {name}",
+      "addChildUnder": "Add {type} under {parent}",
+      "location": "Location",
+      "pleaseSelectCountry": "Please select a country",
+      "nameRequired": "Name is required",
+      "country": "Country",
+      "selectCountry": "Select a country...",
+      "allCountriesAdded": "All supported countries have already been added.",
+      "name": "Name",
+      "enterTypeName": "Enter {type} name",
+      "enterName": "Enter name",
+      "adding": "Adding...",
+      "addType": "Add {type}"
+    },
+    "testing": {
+      "title": "Testing",
+      "description": "Internal tools for testing and development",
+      "emailTool": "Email Testing Tool",
+      "emailToolDescription": "Send test emails via Brevo (SMTP) to verify delivery and templates.",
+      "provider": "Provider",
+      "brevo": "Brevo (SMTP)",
+      "klaviyoComingSoon": "Klaviyo (coming soon)",
+      "content": "Content",
+      "template": "Template",
+      "custom": "Custom",
+      "toEmail": "To Email",
+      "toEmailPlaceholder": "recipient@example.com",
+      "templateParameters": "Template Parameters",
+      "fromEmail": "From Email",
+      "fromName": "From Name",
+      "subject": "Subject",
+      "subjectPlaceholder": "Test email subject",
+      "body": "Body",
+      "bodyPlaceholder": "Enter email body (HTML supported)",
+      "replyTo": "Reply-To (optional)",
+      "replyToPlaceholder": "reply@example.com",
+      "sendTestEmail": "Send Test Email",
+      "emailSentSuccess": "Email sent! Message ID: {messageId}",
+      "failedToSendRequest": "Failed to send request"
+    },
+    "whatsapp": {
+      "title": "WhatsApp",
+      "description": "View and respond to WhatsApp conversations",
+      "searchContacts": "Search contacts...",
+      "noConversations": "No conversations yet.",
+      "selectConversation": "Select a conversation to start messaging",
+      "typeMessage": "Type a message...",
+      "notDelivered": "Not delivered",
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "groups": {
+      "pendingChanges": "{count, plural, one {# pending change} other {# pending changes}}",
+      "discard": "Discard",
+      "commitChanges": "Commit Changes",
+      "confirmGroupChanges": "Confirm Group Changes",
+      "changesWillBeApplied": "The following changes will be applied:",
+      "saving": "Saving...",
+      "applyingChanges": "Applying Changes",
+      "errorOccurred": "An error occurred during the operation.",
+      "allChangesApplied": "All changes have been applied successfully.",
+      "savingAndNotifying": "Saving changes and sending notifications...",
+      "working": "Working...",
+      "serverError": "Server error ({status})",
+      "noResponseStream": "No response stream from server",
+      "failedToSaveChanges": "Failed to save changes",
+      "operationFailed": "Operation failed",
+      "networkError": "Network error",
+      "geduGroups": "Gedu Groups",
+      "addGroup": "Add Group",
+      "noGroups": "No gedu groups yet. Add a group to assign a game educator.",
+      "selectGeduForGroup": "Select a gedu to create a new group.",
+      "group": "Group",
+      "groupNumber": "Group {number}",
+      "groupDeleted": "{label} (deleted)",
+      "hiddenNoGroups": "This product is hidden and has no groups. Add at least one group and make it visible for parents to see it.",
+      "hiddenWithGroups": "This product is hidden. Parents cannot see it in the catalog. Toggle visibility from the Actions card above.",
+      "visibleNoGroups": "This product is visible but has no groups. Parents can see it but cannot enroll.",
+      "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
+      "genderBoy": "Boy",
+      "genderGirl": "Girl",
+      "genderNonBinary": "Non-binary",
+      "boyCount": "{count, plural, one {# boy} other {# boys}}",
+      "girlCount": "{count, plural, one {# girl} other {# girls}}",
+      "nonBinaryCount": "{count} non-binary",
+      "ageRangeLabel": "age range {range}",
+      "reassignGedu": "Reassign gedu",
+      "moveGamersFirst": "Move all gamers out first",
+      "deleteGroup": "Delete group",
+      "markedForDeletion": "Marked for deletion",
+      "noGamersEnrolled": "No gamers enrolled. Drag gamers here.",
+      "new": "New",
+      "deleteGroupConfirmTitle": "Delete {label}?",
+      "deleteGroupConfirmDescription": "This will remove the group and its gedu assignment. This change won’t take effect until you commit.",
+      "reassignGeduFor": "Reassign Gedu for {label}",
+      "selectDifferentGedu": "Select a different gedu for this group."
+    },
+    "forms": {
+      "nameLabel": "Name",
+      "namePlaceholder": "Product name",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe your product",
+      "padletUrlLabel": "Padlet URL",
+      "sorgCostLabel": "Sorg Cost (per session)",
+      "approxPerSession": "≈ {amount} per session",
+      "imageUrlLabel": "Image URL",
+      "preview": "Preview",
+      "imagePreviewError": "Could not load image preview",
+      "gameLabel": "Game",
+      "newGameName": "New game name",
+      "addButton": "Add",
+      "selectGame": "Select a game...",
+      "addNewGame": "Add new game",
+      "dayOfWeekLabel": "Day of Week",
+      "startTimeLabel": "Start Time",
+      "startTimeHint": "Enter time in Finland time (Europe/Helsinki). Parents will see this in their local timezone.",
+      "durationLabel": "Duration (minutes)",
+      "minAgeLabel": "Min Age",
+      "maxAgeLabel": "Max Age",
+      "nameRequired": "Product name is required",
+      "nameMaxLength": "Product name must be at most 100 characters",
+      "descriptionRequired": "Description is required",
+      "sorgCostNumber": "Sorg cost must be a number",
+      "sorgCostWhole": "Sorg cost must be a whole number",
+      "sorgCostMin": "Sorg cost must be at least 1",
+      "validUrl": "Must be a valid URL",
+      "gameRequired": "Game is required",
+      "validTime": "Must be a valid time",
+      "durationMin": "Duration must be at least 1 minute",
+      "minAgeMin": "Min age must be 0 or greater",
+      "maxAgeMin": "Max age must be 0 or greater",
+      "maxAgeGte": "Max age must be greater than or equal to min age",
+      "failedToCreateGame": "Failed to create game"
+    }
+  },
+  "auth": {
+    "login": {
+      "welcomeTitle": "Welcome to the Sogverse",
+      "chooseRole": "Choose how you'd like to sign in",
+      "noAccountSignUp": "Don't have an account? <link>Sign up</link>",
+      "signingIn": "Signing in...",
+      "startPlaying": "Start Playing!",
+      "gamerHelp": "Need help? Ask your parent or guardian.",
+      "geduAccountNote": "Gedu accounts are created by an administrator.",
+      "gamerInvalidCredentials": "Incorrect username or password. Please try again.",
+      "emailPlaceholder": "you@example.com",
+      "passwordPlaceholder": "Enter your password",
+      "gamerUsernamePlaceholder": "Your gaming username",
+      "gamerPasswordPlaceholder": "Your secret password",
+      "roles": {
+        "customer": {
+          "title": "Parent",
+          "subtitle": "Manage your gamers",
+          "loginTitle": "Parent Login",
+          "description": "Sign in to manage purchases and gamer accounts"
+        },
+        "gedu": {
+          "title": "Gedu",
+          "subtitle": "Teach & inspire",
+          "loginTitle": "Gedu Login",
+          "description": "Sign in to access your teaching tools"
+        },
+        "gamer": {
+          "title": "Gamer",
+          "subtitle": "Start playing",
+          "loginTitle": "Gamer Login",
+          "description": "Sign in with your username to start playing"
+        }
+      }
+    },
+    "register": {
+      "title": "Create an account",
+      "description": "Enter your details to create your parent account",
+      "parentAccountAlertTitle": "This is a parent account",
+      "parentAccountAlertDescription": "This account is for you, the parent. Your child's gamer account is separate and will be created later when you enroll them in a club.",
+      "parentDisplayName": "Parent's Display Name",
+      "namePlaceholder": "Your name",
+      "emailPlaceholder": "you@example.com",
+      "passwordPlaceholder": "Create a strong password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "creatingAccount": "Creating account...",
+      "accountExists": "An account with this email already exists",
+      "alreadyHaveAccount": "Already have an account? <link>Sign in</link>"
+    },
+    "forgotPassword": {
+      "title": "Forgot password?",
+      "description": "Enter your email address and we'll send you a link to reset your password.",
+      "emailPlaceholder": "you@example.com",
+      "sendResetLink": "Send Reset Link",
+      "checkEmailTitle": "Check your email",
+      "checkEmailDescription": "We've sent a password reset link to {email}. Please check your inbox and click the link to reset your password."
+    },
+    "resetPassword": {
+      "title": "Reset your password",
+      "description": "Enter your new password below.",
+      "newPasswordPlaceholder": "Enter your new password",
+      "confirmPasswordPlaceholder": "Confirm your new password",
+      "updating": "Updating...",
+      "resetButton": "Reset Password",
+      "linkExpired": "Your reset link has expired. Please request a new one.",
+      "successTitle": "Password updated",
+      "successDescription": "Your password has been successfully updated."
+    },
+    "setupAccount": {
+      "title": "Welcome to the Sogverse",
+      "description": "Set up your game educator account below.",
+      "namePlaceholder": "Your name",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "settingUp": "Setting up...",
+      "submitButton": "Set Up Account",
+      "inviteLinkExpired": "Your invite link has expired. Please ask your admin to send a new one.",
+      "minecraftSaveFailed": "Failed to save Minecraft username",
+      "invalidPhone": "Please enter a valid phone number",
+      "successTitle": "You're all set!",
+      "successDescription": "Your account has been set up successfully."
+    }
+  },
+  "checkout": {
+    "redirecting": "Redirecting to checkout...",
+    "error": "Something went wrong starting checkout. Please <link>go back</link> and try again."
+  },
+  "clubs": {
+    "listing": {
+      "heading": "Our Clubs",
+      "subheading": "Explore our Minecraft clubs — each one led by a professional game educator.",
+      "noClubs": "No Clubs Available",
+      "checkBackSoon": "Check back soon for new clubs!",
+      "needHelp": "Need Help Choosing?",
+      "needHelpDescription": "Not sure which club is right for your family? Contact us for personalized recommendations based on your children's ages and interests.",
+      "learnMoreAboutUs": "Learn More About Us"
+    },
+    "tokenCost": "{cost} Sorgs",
+    "detail": {
+      "backToClubs": "Back to Clubs",
+      "notFound": "Club Not Found",
+      "notFoundDescription": "This club may no longer be available.",
+      "every": "Every {day}",
+      "enrollment": "Enrollment",
+      "onlyParents": "Only parent accounts can enroll gamers in clubs.",
+      "readyToEnroll": "Ready to Enroll?",
+      "readyToEnrollDescription": "Log in or create an account to enroll your child in this club.",
+      "logInToEnroll": "Log In to Enroll"
+    }
+  },
+  "docs": {
+    "minecraftApi": {
+      "title": "Minecraft Server API",
+      "description": "Use this endpoint to check whether a connecting player is allowed to join the Minecraft world. The server sends the player's Minecraft UUID and receives an allow/deny decision with session timing.",
+      "authentication": {
+        "heading": "Authentication",
+        "description": "All requests require a static API key passed as a Bearer token in the <code>Authorization</code> header.",
+        "contactNote": "Contact the Sogverse team if you need a key or need it rotated."
+      },
+      "endpoint": {
+        "heading": "Endpoint",
+        "queryParams": "Query Parameters",
+        "uuidType": "string (required)",
+        "uuidDescription": "The player's Minecraft UUID. Both dashed (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) and undashed (<code2>069a79f444e94726a5befca90e38aaf5</code2>) formats are accepted."
+      },
+      "responses": {
+        "heading": "Responses",
+        "playerAllowed": "Player Allowed",
+        "playerDenied": "Player Denied",
+        "errorResponses": "Error Responses",
+        "deniedDescription": "The player exists in Sogverse but has no active session right now. No <code>endTime</code> is included.",
+        "fields": {
+          "allowedTrue": "Player has an active session right now.",
+          "role": "The player's role in Sogverse.",
+          "displayName": "The player's display name.",
+          "endTime": "When the session window closes (includes a 5-minute buffer after the scheduled end). Use this to schedule a kick or re-check.",
+          "reason": "Human-readable description: the product name and educator name."
+        },
+        "error401": "Missing, malformed, or invalid API key.",
+        "error400": "Missing or invalid <code>uuid</code> query parameter.",
+        "error404": "No Sogverse account linked to this Minecraft UUID.",
+        "error500": "Server error. Retry with backoff."
+      },
+      "example": {
+        "heading": "Example"
+      },
+      "integrationNotes": {
+        "heading": "Integration Notes",
+        "note1": "Call this endpoint on every player join. Both gedus and gamers are session-gated — they can only join during their scheduled session window.",
+        "note2": "The session window opens 5 minutes before the scheduled start and closes 5 minutes after the scheduled end.",
+        "note3": "When <code1>allowed: true</code1>, use <code2>endTime</code2> to schedule a re-check or kick. If back-to-back sessions exist (e.g. one ends 14:00, next starts 14:05), the player gets kicked at the first session's end and rejoins for the next.",
+        "note4": "A <code>404</code> means the player hasn't linked their Minecraft account in Sogverse yet. You can show them a message to link their account in their profile settings.",
+        "note5": "All error responses follow the shape <code>{ \"error\": \"message\" }</code>."
+      }
+    }
+  },
+  "enrollment": {
+    "wizard": {
+      "title": "Enroll Your Gamer",
+      "costDescription": "{cost} Sorgs will be deducted for the upcoming session",
+      "insufficientBalance": "Insufficient Balance",
+      "insufficientBalanceDescription": "You need <strong>{cost} Sorgs</strong> to enroll but only have <strong>{balance}</strong>.",
+      "getMoreSorgs": "Get More Sorgs",
+      "chooseGamer": "Choose which gamer to enroll:",
+      "createNewGamer": "Create New Gamer",
+      "createGamerDescription": "Create a new gamer account for your child",
+      "chooseGroup": "Choose a group for {name}:",
+      "noGroupsAvailable": "No groups available for this club yet. Please try again later.",
+      "enrollmentSummary": "Enrollment Summary",
+      "summaryGamer": "Gamer",
+      "summaryGedu": "Gedu",
+      "summaryCost": "Cost",
+      "sorgAmount": "{amount} Sorgs",
+      "currentBalance": "Current Balance",
+      "afterEnrollment": "After Enrollment",
+      "enrolling": "Enrolling...",
+      "confirmEnrollment": "Confirm Enrollment",
+      "enrolled": "Enrolled!",
+      "enrolledDescription": "<strong>{gamer}</strong> is now enrolled in <strong>{club}</strong>.",
+      "newBalance": "New balance: {balance} Sorgs",
+      "howToJoinTitle": "How to join a session",
+      "howToJoinDescription": "When a session starts, a green \"Live\" badge will appear on the group card in <strong>{name}'s</strong> dashboard. They can click \"Join\" to connect.",
+      "viewMyGamers": "View My Gamers",
+      "failedToEnroll": "Failed to enroll",
+      "gamerCount": "{count, plural, one {# gamer} other {# gamers}}"
+    },
+    "gamerForm": {
+      "mustBeLoggedIn": "You must be logged in",
+      "credentialsAlertTitle": "Share these credentials with your child",
+      "credentialsAlertDescription": "Your child will use the username and password below to log in to their own gamer account. This is safer than sharing your parent password — gamer accounts can only access their games and profile, not your billing or account settings.",
+      "displayNameLabel": "Gamer's Display Name",
+      "displayNamePlaceholder": "How their name appears in-game",
+      "usernamePlaceholder": "Choose a unique username",
+      "usernameHint": "Letters, numbers, and underscores only",
+      "passwordPlaceholder": "Create a password",
+      "passwordHint": "At least 6 characters",
+      "confirmPasswordPlaceholder": "Confirm the password",
+      "dateOfBirthLabel": "Date of Birth",
+      "age": "Age: {age} {count, plural, one {year} other {years}} old",
+      "genderLabel": "Gender",
+      "genderBoy": "Boy",
+      "genderGirl": "Girl",
+      "genderNonBinary": "Non-binary",
+      "creating": "Creating...",
+      "createGamer": "Create Gamer"
+    },
+    "unenroll": {
+      "failedToUnenroll": "Failed to unenroll",
+      "successTitle": "Unenrolled",
+      "successDescription": "<strong>{gamer}</strong> has been unenrolled from <strong>{club}</strong>.",
+      "sorgsRefunded": "{amount} Sorgs refunded",
+      "toYourBalance": "to your balance.",
+      "noRefund": "No refund was issued.",
+      "newBalance": "New balance: <strong>{balance} Sorgs</strong>",
+      "done": "Done",
+      "title": "Unenroll {name}?",
+      "description": "This will remove <strong>{gamer}</strong> from <strong>{club}</strong>.",
+      "club": "Club",
+      "gamer": "Gamer",
+      "refundEligible": "You will receive a refund of <strong>{cost} Sorgs</strong>.",
+      "noRefundWithinWindow": "No refund will be issued — the next session is within {hours} hours.",
+      "noChargeNextSession": "You won't be charged for the next session.",
+      "unenrolling": "Unenrolling...",
+      "confirmUnenroll": "Confirm Unenroll"
+    }
+  },
+  "feedback": {
+    "title": "Feedback",
+    "subtitle": "Share your thoughts with us",
+    "sendFeedback": "Send Feedback",
+    "feedbackDescription": "We'd love to hear your feedback, suggestions, or bug reports.",
+    "gamerReplyNote": "Your educator may follow up with you during your next session.",
+    "message": "Message",
+    "placeholder": "Share your thoughts, suggestions, or report a bug...",
+    "charactersNeeded": "{count} more characters needed",
+    "submitFeedback": "Submit Feedback",
+    "thankYou": "Thank you for your feedback! We appreciate you taking the time to share your thoughts.",
+    "failedToSubmit": "Failed to submit feedback.",
+    "failedToSubmitRetry": "Failed to submit feedback. Please try again."
+  },
+  "footer": {
+    "tagline": "School of Gaming - Where screen time becomes quality time.",
+    "copyright": "© {year} School of Gaming. All rights reserved."
+  },
+  "gamer": {
+    "welcome": "Welcome, Gamer!",
+    "subtitle": "Ready to play and learn?",
+    "myGroups": "My Groups",
+    "myGroupsDescription": "View your groups and upcoming voice sessions",
+    "tipOfTheDay": "Tip of the Day",
+    "tipOfTheDayMessage": "Practice makes perfect! Join a group session to level up your skills."
+  },
+  "gedu": {
+    "title": "Educator Dashboard",
+    "subtitle": "Manage your groups and students",
+    "statsGroups": "Groups",
+    "statsGroupsDescription": "Manage your groups",
+    "statsGamers": "Gamers",
+    "statsGamersDescription": "Across all groups",
+    "latestStudentActivities": "Latest student activities"
+  },
+  "groups": {
+    "title": "Groups",
+    "backToGroups": "Back to Groups",
+    "groupNotFound": "Group not found.",
+    "live": "Live",
+    "gamerCount": "{count} gamers",
+    "noGamersEnrolled": "No gamers enrolled yet.",
+    "age": "Age {age}",
+    "sorgsPerWeek": "{cost} Sorgs / week",
+    "unenrollGamer": "Unenroll {name}",
+    "noGroupsYet": "No Groups Yet",
+    "nextSession": "Next: {date}",
+    "startsIn": "(starts in {countdown})",
+    "sessionInProgress": "Session in progress",
+    "everyDay": "Every {day}",
+    "join": "Join",
+    "alwaysOpen": "Always Open",
+    "padlet": "Padlet"
+  },
+  "header": {
+    "nav": {
+      "home": "Home",
+      "clubs": "Clubs",
+      "sorg": "Sorg",
+      "yty": "Yty",
+      "about": "About"
+    },
+    "toggleMenu": "Toggle menu",
+    "tokenBalance": "{count} Sorgs"
+  },
+  "home": {
+    "hero": {
+      "title": "Where<br></br><primary>Screen Time</primary><br></br>Becomes<br></br><secondary>Quality Time</secondary>",
+      "subtitle": "Our skilfully designed Minecraft clubs promote healthy gaming as a hobby. World-class game educators make every session a playful learning experience where children make new friends, develop their unique talents, and have fun doing what they love.",
+      "viewClubs": "View Clubs"
+    },
+    "features": {
+      "heading": "Make Gaming a Great Hobby",
+      "subheading": "Gaming is a hobby just like any other — better with good friends and with a professional instructor who is there to guide and help.",
+      "minecraftClubs": {
+        "title": "Minecraft Clubs with Gedus",
+        "description": "Our game educators — Gedus — are gamers themselves. They understand that as children, identity and friendships are built both online and offline. Every session is guided by someone who truly gets it."
+      },
+      "screenTime": {
+        "title": "Screen Time Becomes Quality Time",
+        "description": "Skilfully designed clubs turn gaming into a playful learning experience where children develop real skills and have fun doing what they love."
+      },
+      "newFriends": {
+        "title": "New Friends, Real Connections",
+        "description": "Children build genuine, lasting friendships through shared adventures. No one is left without a friend. The gamer's oath means treating each other with kindness — online and offline."
+      },
+      "parents": {
+        "title": "Parents Are Part of It",
+        "description": "Parental game education is just as important as the clubs themselves. We keep you informed, involved, and equipped to support your child's gaming journey."
+      }
+    },
+    "howItWorks": {
+      "heading": "How It Works",
+      "subheading": "Join a Minecraft club in three simple steps.",
+      "step1": {
+        "title": "Create Your Account",
+        "description": "Sign up as a parent and create gamer accounts for your children."
+      },
+      "step2": {
+        "title": "Pick a Club",
+        "description": "Browse our clubs and enroll your gamers in the ones that fit their schedule and interests."
+      },
+      "step3": {
+        "title": "Join the Adventure",
+        "description": "Your gamers log in each week, meet their Gedu, and dive into Minecraft adventures with new friends."
+      }
+    },
+    "cta": {
+      "heading": "Ready to Turn Gaming into Learning?",
+      "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional game educator.",
+      "createFreeAccount": "Create Free Account"
+    }
+  },
+  "minecraft": {
+    "label": "Minecraft Username",
+    "optional": "(optional)",
+    "placeholder": "e.g. Steve",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "notFound": "Minecraft account not found. Check the username and try again.",
+    "mcHeadsAttribution": "Skin rendered by <link>mc-heads.net</link>"
+  },
+  "parent": {
+    "dashboard": {
+      "welcome": "Parent Dashboard",
+      "subtitle": "Manage your gamers and enrollments",
+      "quickActions": {
+        "gamers": {
+          "title": "My Gamers",
+          "description": "View and manage your gamer accounts"
+        },
+        "sorg": {
+          "title": "Sorg Tokens",
+          "description": "Check balance and purchase tokens"
+        },
+        "browseClubs": {
+          "title": "Browse Clubs",
+          "description": "Find and enroll in gaming clubs"
+        },
+        "settings": {
+          "title": "Settings",
+          "description": "Manage your account settings"
+        }
+      },
+      "gettingStarted": {
+        "title": "Getting Started",
+        "subtitle": "Follow these steps to get your gamer playing",
+        "step1": {
+          "title": "Purchase Sorg Tokens",
+          "description": "Sorg tokens are used to pay for gaming sessions. Head to the Sorg page to buy a pack or subscribe."
+        },
+        "step2": {
+          "title": "Browse Clubs",
+          "description": "Explore our gaming clubs and find the perfect fit for your child's age and interests."
+        },
+        "step3": {
+          "title": "Enroll Your Gamer",
+          "description": "Create a gamer account and enroll them in a club. They'll be ready to join their first session!"
+        }
+      }
+    },
+    "billing": {
+      "error": "Could not open the billing portal. Please try again or visit the <link>Sorg page</link>.",
+      "redirecting": "Redirecting to billing portal..."
+    },
+    "gamers": {
+      "title": "My Gamers",
+      "subtitle": "Manage your gamer accounts and enrollments",
+      "joined": "Joined {time}",
+      "noEnrollments": "No active enrollments. <link>Browse clubs</link> to enroll this gamer.",
+      "empty": {
+        "title": "No gamers yet",
+        "description": "Create a gamer account by enrolling in a club. Your child will use their own username and password to log in."
+      }
+    },
+    "gamerDetail": {
+      "backToGamers": "Back to My Gamers",
+      "title": "Gamer Settings",
+      "subtitle": "Manage settings for {name}",
+      "profileDescription": "Update your gamer's display name and view their username.",
+      "profileUpdated": "Display name updated!",
+      "failedUpdateDisplayName": "Failed to update display name",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "passwordUpdated": "Password updated!",
+      "failedUpdatePassword": "Failed to update password",
+      "notFound": {
+        "title": "Gamer not found",
+        "description": "This gamer account may have been removed or you don't have access to it."
+      },
+      "minecraft": {
+        "title": "Minecraft Account",
+        "description": "Link a Minecraft Java Edition username for in-game features.",
+        "save": "Save Minecraft Username"
+      },
+      "mcSaved": "Minecraft username saved!",
+      "mcCleared": "Minecraft username cleared",
+      "failedUpdateMc": "Failed to update Minecraft username",
+      "security": {
+        "description": "Change the password your gamer uses to log in.",
+        "passwordPlaceholder": "Enter new password",
+        "confirmPlaceholder": "Confirm new password",
+        "updating": "Updating...",
+        "updatePassword": "Update Password"
+      }
+    },
+    "sorg": {
+      "title": "Sorg Tokens",
+      "subtitle": "Purchase tokens and manage your balance",
+      "transactionHistory": "Transaction History"
+    },
+    "switchToGamer": {
+      "title": "Switch to {name}?",
+      "description": "You'll be signed in as <bold>{name}</bold>. You can switch back to your parent account from the gamer dashboard.",
+      "failedSwitch": "Failed to switch accounts",
+      "switching": "Switching...",
+      "confirm": "Switch to {name}"
+    }
+  },
+  "settings": {
+    "subtitle": "Manage your account preferences",
+    "profileDescription": "Update your personal information",
+    "roleAccount": "{role} account",
+    "displayNamePlaceholder": "Enter your display name",
+    "invalidPhone": "Please enter a valid phone number.",
+    "profileUpdated": "Profile updated successfully!",
+    "failedToUpdateProfile": "Failed to update profile.",
+    "securityDescription": "Manage your password and security settings",
+    "changePassword": "Change Password",
+    "minecraftAccount": "Minecraft Account",
+    "minecraftDescription": "Link your Minecraft Java Edition account",
+    "minecraftSaved": "Minecraft username saved!",
+    "minecraftCleared": "Minecraft username cleared.",
+    "failedToUpdateMinecraft": "Failed to update Minecraft username.",
+    "saveMinecraft": "Save Minecraft Username",
+    "notifications": "Notifications",
+    "notificationsDescription": "Configure how you receive notifications",
+    "notificationsComingSoon": "Notification settings coming soon.",
+    "appearance": "Appearance",
+    "appearanceDescription": "Customize the look and feel",
+    "appearanceComingSoon": "Theme settings coming soon.",
+    "languages": "Languages spoken"
+  },
+  "sorg": {
+    "hero": {
+      "title": "What is <primary>Sorg</primary>?",
+      "subtitle": "Sorg is the currency that powers your child's club sessions in the Sogverse. Parents purchase Sorgs and they are used to pay for weekly sessions — simple, transparent, and flexible."
+    },
+    "overview": {
+      "heading": "How It Works",
+      "text": "Each club session costs a set number of Sorgs. When you enroll your child in a club, Sorgs are deducted automatically each week for their session. Buy a token pack or subscribe monthly — whichever suits your family best."
+    },
+    "benefits": {
+      "heading": "Why Sorgs?",
+      "subheading": "A simple, fair way to pay for your child's clubs",
+      "payPerSession": {
+        "title": "Pay Per Session",
+        "description": "Sorgs are deducted once a week for each enrolled club. You only pay for the sessions your child attends — no long-term contracts."
+      },
+      "fullTransparency": {
+        "title": "Full Transparency",
+        "description": "See exactly where every Sorg goes. Your parent dashboard shows your balance, transaction history, and upcoming charges."
+      },
+      "flexibleTopUps": {
+        "title": "Flexible Top-Ups",
+        "description": "Buy a one-time token pack when you need it, or subscribe for a monthly allowance at a better rate. Change or cancel anytime."
+      },
+      "safeByDesign": {
+        "title": "Safe by Design",
+        "description": "Sorgs exist only within the Sogverse. Only parents can see balances and make purchases — children are never exposed to the currency. No surprises."
+      }
+    },
+    "faqs": {
+      "heading": "Frequently Asked Questions",
+      "isRealMoney": {
+        "question": "Is Sorg real money?",
+        "answer": "Sorgs are purchased with real money but exist only within the Sogverse. They cannot be transferred outside the platform, but if you ever want a refund on unused Sorgs, just contact our support team."
+      },
+      "howSpent": {
+        "question": "How are Sorgs spent?",
+        "answer": "Each club session costs a set number of Sorgs, shown on the club page. Sorgs are automatically deducted once a week when your child's session is scheduled."
+      },
+      "parentControl": {
+        "question": "Can parents control spending?",
+        "answer": "Yes. Sorgs are completely invisible to children. Only parents can see balances, purchase tokens, and view spending history in the parent dashboard."
+      },
+      "doExpire": {
+        "question": "Do Sorgs expire?",
+        "answer": "No. Once purchased, Sorgs stay in your account until they are used for club sessions. There are no expiration dates or hidden fees."
+      },
+      "refund": {
+        "question": "Can I get a refund?",
+        "answer": "If you unenroll a gamer at least 24 hours before the start of a session, the Sorgs for that session are automatically refunded to your balance. For anything else, contact our support team — we're happy to help."
+      }
+    },
+    "cta": {
+      "heading": "Ready to Get Started?",
+      "subheading": "Create an account, grab some Sorgs, and enroll your child in their first club."
+    }
+  },
+  "tokens": {
+    "balance": {
+      "title": "Sorg Balance"
+    },
+    "subscription": {
+      "label": "Subscription",
+      "tierLabelFull": "{name} — {amount} Sorgs/mo",
+      "tierLabelAmount": "{amount} Sorgs/mo",
+      "paymentFailed": "Payment Failed",
+      "paymentFailedDescription": "Your last payment failed. Please <link>update your payment method</link> to continue your subscription.",
+      "nextPayment": "Next payment on {date}",
+      "activeRenews": "Active — renews automatically",
+      "canceledAccessUntil": "Canceled — access until {date}",
+      "canceledAccessUntilEnd": "Canceled — access until end of billing period",
+      "pastDue": "Payment past due — please update your payment method",
+      "status": "Status: {status}",
+      "manageBilling": "Manage Billing",
+      "resuming": "Resuming...",
+      "resume": "Resume",
+      "cancelSubscription": "Cancel Subscription",
+      "cancelDialog": {
+        "title": "Cancel Subscription?",
+        "description": "Are you sure you want to cancel your subscription?",
+        "loseRate": "You'll lose your current rate of {rate}/mo.",
+        "keepAccess": "You'll keep access until the end of your current billing period.",
+        "keep": "Keep Subscription",
+        "canceling": "Canceling...",
+        "confirm": "Yes, Cancel"
+      }
+    },
+    "purchase": {
+      "success": "Payment successful! Your Sorgs have been added to your balance.",
+      "canceled": "Payment was canceled. No charges were made.",
+      "checkoutError": "Could not start checkout. Please try again.",
+      "switchError": "Could not switch subscription. Please try again.",
+      "title": "Get Sorgs",
+      "subtitle": "Choose a pack or subscription to power your gaming sessions",
+      "oneTimePacks": "One-Time Packs",
+      "monthlySubscriptions": "Monthly Subscriptions",
+      "legacyTier": "Your current plan is no longer available. Switch to a new tier below.",
+      "signInRequired": "Sign in to purchase Sorgs",
+      "switchDialog": {
+        "title": "Switch to {name}?",
+        "description": "You'll be switched to the {name} plan ({amount} Sorgs/month). The change takes effect on your next billing cycle.",
+        "resumeNote": "This will also resume your canceled subscription.",
+        "confirm": "Switch Plan"
+      }
+    },
+    "package": {
+      "cancelsAtPeriodEnd": "Cancels at period end",
+      "currentPlan": "Current Plan",
+      "save": "Save {amount}{period}",
+      "perMonth": "{price}/mo",
+      "resuming": "Resuming...",
+      "resumeSubscription": "Resume Subscription",
+      "switching": "Switching...",
+      "switchToPlan": "Switch to Plan",
+      "redirectingCheckout": "Redirecting to checkout...",
+      "subscribed": "Subscribed",
+      "subscribe": "Subscribe",
+      "buyNow": "Buy Now"
+    },
+    "transactions": {
+      "empty": "No transactions yet.",
+      "date": "Date",
+      "amount": "Amount",
+      "type": "Type",
+      "description": "Description",
+      "balanceAfter": "Balance After"
+    }
+  },
+  "voice": {
+    "participantsCount": "Participants ({count})",
+    "noParticipantsYet": "No participants yet",
+    "you": "(you)",
+    "host": "Host",
+    "mute": "Mute",
+    "muteMicrophone": "Mute microphone",
+    "camOff": "Cam off",
+    "disableCamera": "Disable camera",
+    "lockMic": "Lock mic",
+    "unlockMic": "Unlock mic",
+    "lockMicrophone": "Lock microphone",
+    "unlockMicrophone": "Unlock microphone",
+    "lockCam": "Lock cam",
+    "unlockCam": "Unlock cam",
+    "lockCamera": "Lock camera",
+    "unlockCamera": "Unlock camera",
+    "sharerScreen": "{name}'s screen",
+    "stopSharing": "Stop sharing",
+    "voiceRoom": "Voice Room",
+    "live": "Live",
+    "spatialDescription": "Drag your avatar to move between zones. Same-zone participants can hear each other.",
+    "leave": "Leave",
+    "failedToJoinRoom": "Failed to join room",
+    "sessionEnded": "Session has ended",
+    "disconnecting": "Disconnecting...",
+    "connecting": "Connecting..."
+  },
+  "yty": {
+    "hero": {
+      "title": "What is <primary>Yty</primary>?",
+      "subtitle": "Yty is a magical force that maintains the delicate balance of the worlds of the Sogverse. By doing good things — learning new skills, making friends, behaving well, and participating in the community — gamers earn Yty for themselves and for everyone."
+    },
+    "overview": {
+      "heading": "How Yty Works",
+      "paragraph1": "Every gamer starts at zero. From every session attended, every challenge completed, and every act of kindness shown, gamers earn Yty points. These points build up across four elements, each reflecting a different part of growing up well.",
+      "paragraph2": "As gamers collect Yty for themselves, they also increase the total Yty of the Sogverse — shaping the story and unlocking new possibilities for the whole community."
+    },
+    "elements": {
+      "heading": "The Four Elements of Yty",
+      "subheading": "Each element reflects a gamer's relationship with a different part of their world",
+      "harmony": {
+        "detail": "Who am I? Harmony is about accepting yourself as you are — strengths and weaknesses alike. It means learning to take care of your wellbeing, expressing your emotions, making good decisions, and understanding why rules and trust matter."
+      },
+      "glow": {
+        "detail": "How can I help others? Glow is about empathy, kindness, and building meaningful relationships. It means respecting differences, giving space to others, communicating well, and being the kind of person who lifts people up."
+      },
+      "valor": {
+        "detail": "How can I make a difference? Valor is about finding your place in the world and having the courage to contribute. It means teamwork, expressing your ideas, using your imagination, and working towards a better future — locally and globally."
+      },
+      "wit": {
+        "detail": "How do I navigate the digital world? Wit is about a healthy, critical relationship with games, media, and technology. It means understanding online behavior, thinking critically about information, and balancing screen time with the rest of life."
+      }
+    },
+    "earning": {
+      "heading": "How Gamers Earn Yty",
+      "paragraph1": "Yty points are earned through participation. Attending weekly club sessions, completing quests and challenges, showing kindness to fellow gamers, joining community events and camps — all of these contribute to a gamer's Yty.",
+      "paragraph2": "As points accumulate under specific achievement badges, gamers level up those badges — from bronze to silver, gold, platinum, and diamond. Every point also feeds into their overall Yty level and the element it belongs to.",
+      "paragraph3": "And it's not just gamers. Gedus, parents, and the entire community can take part in building the Yty of the Sogverse through events and shared activities."
+    },
+    "cta": {
+      "heading": "Start Your Journey",
+      "subheading": "Join the Sogverse and start earning Yty. Every session, every friendship, every act of kindness makes a difference."
+    }
   }
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Mic, Radio, Loader2, PhoneOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -24,8 +25,9 @@ const SCREEN_SHARE_ANIMATION_MS = 700;
 export function SpatialVoiceRoom({
   room,
   onLeave,
-  leaveLabel = "Leave",
+  leaveLabel,
 }: SpatialVoiceRoomProps) {
+  const t = useTranslations('voice');
   const { participants, joining, screenSharerSessionId } = useVoiceRoom();
   const [leaving, setLeaving] = useState(false);
 
@@ -78,20 +80,20 @@ export function SpatialVoiceRoom({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Mic className="h-5 w-5" />
-              {room?.product_name ?? room?.name ?? "Voice Room"}
+              {room?.product_name ?? room?.name ?? t('voiceRoom')}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
-                {participants.length} participant{participants.length !== 1 && "s"}
+                {t('participantsCount', { count: participants.length })}
               </Badge>
               <Badge className="bg-success/10 text-success">
                 <Radio className="mr-1 h-3 w-3" />
-                Live
+                {t('live')}
               </Badge>
             </div>
           </div>
           <CardDescription>
-            Drag your avatar to move between zones. Same-zone participants can hear each other.
+            {t('spatialDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -131,7 +133,7 @@ export function SpatialVoiceRoom({
               ) : (
                 <PhoneOff className="h-4 w-4" />
               )}
-              {leaveLabel}
+              {leaveLabel ?? t('leave')}
             </Button>
           </div>
         </CardContent>

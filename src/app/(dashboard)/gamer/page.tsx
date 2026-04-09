@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { ROUTES } from "@/lib/constants";
@@ -12,14 +13,16 @@ export const metadata: Metadata = {
 };
 
 export default function GamerDashboardPage() {
+  const t = useTranslations('gamer');
+
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="font-display text-3xl font-bold text-primary">
-          Welcome, Gamer!
+          {t('welcome')}
         </h1>
         <p className="text-muted-foreground">
-          Ready to play and learn?
+          {t('subtitle')}
         </p>
       </div>
 
@@ -45,9 +48,9 @@ export default function GamerDashboardPage() {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium">My Groups</p>
+              <p className="font-medium">{t('myGroups')}</p>
               <p className="text-sm text-muted-foreground">
-                View your groups and upcoming voice sessions
+                {t('myGroupsDescription')}
               </p>
             </div>
             <NavChevron />
@@ -59,10 +62,9 @@ export default function GamerDashboardPage() {
         <CardContent className="flex items-center gap-4 py-4">
           <div className="text-4xl">🎮</div>
           <div>
-            <h3 className="font-medium">Tip of the Day</h3>
+            <h3 className="font-medium">{t('tipOfTheDay')}</h3>
             <p className="text-sm text-muted-foreground">
-              By doing good things — learning new skills, making friends, and joining
-              in — you earn Yty for yourself and for the Sogverse!
+              {t('tipOfTheDayMessage')}
             </p>
           </div>
         </CardContent>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, Clock, Radio, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,6 +34,7 @@ export function GroupVoiceStatus({
   nextSessionStart,
   locale,
 }: GroupVoiceStatusProps) {
+  const t = useTranslations('groups');
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -50,17 +52,17 @@ export function GroupVoiceStatus({
     });
     return (
       <p className="text-sm">
-        Next session {dateStr}{" "}
+        {t('nextSession', { date: dateStr })}{" "}
         <span className={cn(
           totalMinutes < HIGHLIGHT_MINUTES ? "font-medium text-primary" : "text-muted-foreground",
         )}>
-          (starts in {formatCountdown(msUntil)})
+          {t('startsIn', { countdown: formatCountdown(msUntil) })}
         </span>
       </p>
     );
   }
 
-  return <p className="text-sm font-medium text-primary">Session in progress</p>;
+  return <p className="text-sm font-medium text-primary">{t('sessionInProgress')}</p>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -98,6 +100,7 @@ export function GroupCard({
   onJoinClick,
   detailHref,
 }: GroupCardProps) {
+  const t = useTranslations('groups');
   const router = useRouter();
 
   return (
@@ -134,7 +137,7 @@ export function GroupCard({
             {voiceIsOpen && (
               <Badge className="bg-success/10 text-success text-xs shrink-0">
                 <Radio className="mr-1 h-3 w-3" />
-                Live
+                {t('live')}
               </Badge>
             )}
           </div>
@@ -144,11 +147,11 @@ export function GroupCard({
           <div className="mt-1 flex items-center gap-x-4 gap-y-1 text-sm text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3" />
-              {gamerCount} gamer{gamerCount !== 1 && "s"}
+              {t('gamerCount', { count: gamerCount })}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              Every {schedule.localDay}
+              {t('everyDay', { day: schedule.localDay })}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />

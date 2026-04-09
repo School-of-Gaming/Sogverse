@@ -3,6 +3,7 @@
 import { useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { GroupCard } from "@/components/ui/group-card";
 import { LoungeCard } from "@/components/ui/lounge-card";
@@ -39,12 +40,13 @@ export function GroupsListContent({
   voiceRoute,
   detailRoute,
 }: GroupsListContentProps) {
+  const t = useTranslations('groups');
   const { locale } = useCurrency();
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Groups</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">{subheading}</p>
       </div>
 
@@ -76,7 +78,7 @@ export function GroupsListContent({
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Users className="h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-medium">No Groups Yet</h3>
+              <h3 className="mt-4 text-lg font-medium">{t('noGroupsYet')}</h3>
               <p className="mt-2 text-center text-sm text-muted-foreground">
                 {emptyText}
               </p>

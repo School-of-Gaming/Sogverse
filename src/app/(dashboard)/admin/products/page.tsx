@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ import { useTokenRates } from "@/providers/token-rate-provider";
 import { ProductRow } from "@/components/admin/product-row";
 
 export default function AdminProductsPage() {
+  const t = useTranslations('admin.products');
   const [searchQuery, setSearchQuery] = useState("");
   const { data: products, isLoading } = useAllProducts();
   const { currency, locale } = useCurrency();
@@ -28,15 +30,15 @@ export default function AdminProductsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Products</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage your product catalog
+            {t('manageCatalog')}
           </p>
         </div>
         <Link href={ROUTES.admin.productsAdd}>
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Add Product
+            {t('addProduct')}
           </Button>
         </Link>
       </div>
@@ -47,7 +49,7 @@ export default function AdminProductsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search products..."
+                placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -85,8 +87,8 @@ export default function AdminProductsPage() {
           ) : (
             <div className="py-8 text-center text-muted-foreground">
               {searchQuery
-                ? "No products found matching your search."
-                : "No products found. Add your first product to get started."}
+                ? t('noSearchResults')
+                : t('noProducts')}
             </div>
           )}
         </CardContent>

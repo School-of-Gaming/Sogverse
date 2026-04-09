@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Coins, Gamepad2, ShoppingCart, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
@@ -9,57 +10,43 @@ export const metadata: Metadata = {
   description: "Manage your gamers and enrollments",
 };
 
-const quickActions = [
-  {
-    title: "My Gamers",
-    description: "View and manage your gamers and their enrollments",
-    icon: Gamepad2,
-    href: ROUTES.customer.gamers,
-  },
-  {
-    title: "Sorg",
-    description: "Balance, purchases, and transaction history",
-    icon: Coins,
-    href: ROUTES.customer.sorg,
-  },
-  {
-    title: "Browse Clubs",
-    description: "Explore clubs and enroll your gamers",
-    icon: ShoppingCart,
-    href: ROUTES.products,
-  },
-  {
-    title: "Settings",
-    description: "Update your account settings",
-    icon: Settings,
-    href: ROUTES.settings,
-  },
-];
+const quickActionIcons = [Gamepad2, Coins, ShoppingCart, Settings] as const;
+const quickActionHrefs = [
+  ROUTES.customer.gamers,
+  ROUTES.customer.sorg,
+  ROUTES.products,
+  ROUTES.settings,
+] as const;
+const quickActionKeys = ["gamers", "sorg", "browseClubs", "settings"] as const;
 
 export default function CustomerDashboardPage() {
+  const t = useTranslations('parent');
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Welcome to the Sogverse!</h1>
+        <h1 className="text-3xl font-bold">{t('dashboard.welcome')}</h1>
         <p className="text-muted-foreground">
-          Manage your gamer accounts and explore our clubs.
+          {t('dashboard.subtitle')}
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {quickActions.map((action, i) => {
+        {quickActionKeys.map((key, i) => {
+          const Icon = quickActionIcons[i];
+          const href = quickActionHrefs[i];
           const secondary = i >= 2;
           return (
-          <Link key={action.href} href={action.href}>
+          <Link key={href} href={href}>
             <Card className="group h-full transition-colors hover:bg-muted/50">
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${secondary ? "bg-secondary/10" : "bg-primary/10"}`}>
-                    <action.icon className={`h-6 w-6 ${secondary ? "text-secondary" : "text-primary"}`} />
+                    <Icon className={`h-6 w-6 ${secondary ? "text-secondary" : "text-primary"}`} />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{action.title}</CardTitle>
-                    <CardDescription>{action.description}</CardDescription>
+                    <CardTitle className="text-lg">{t(`dashboard.quickActions.${key}.title`)}</CardTitle>
+                    <CardDescription>{t(`dashboard.quickActions.${key}.description`)}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -71,9 +58,9 @@ export default function CustomerDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Getting Started</CardTitle>
+          <CardTitle>{t('dashboard.gettingStarted.title')}</CardTitle>
           <CardDescription>
-            Here&apos;s how to get the most out of the Sogverse
+            {t('dashboard.gettingStarted.subtitle')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -82,9 +69,9 @@ export default function CustomerDashboardPage() {
               1
             </div>
             <div>
-              <h3 className="font-medium">Get Sorgs</h3>
+              <h3 className="font-medium">{t('dashboard.gettingStarted.step1.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                Purchase Sorg tokens to pay for your children&apos;s sessions.
+                {t('dashboard.gettingStarted.step1.description')}
               </p>
             </div>
           </div>
@@ -93,9 +80,9 @@ export default function CustomerDashboardPage() {
               2
             </div>
             <div>
-              <h3 className="font-medium">Browse &amp; Enroll</h3>
+              <h3 className="font-medium">{t('dashboard.gettingStarted.step2.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                Find a club, create a gamer account, and enroll them — all in one step.
+                {t('dashboard.gettingStarted.step2.description')}
               </p>
             </div>
           </div>
@@ -104,9 +91,9 @@ export default function CustomerDashboardPage() {
               3
             </div>
             <div>
-              <h3 className="font-medium">Let Them Play!</h3>
+              <h3 className="font-medium">{t('dashboard.gettingStarted.step3.title')}</h3>
               <p className="text-sm text-muted-foreground">
-                Your gamers log in with their username and join their sessions each week.
+                {t('dashboard.gettingStarted.step3.description')}
               </p>
             </div>
           </div>

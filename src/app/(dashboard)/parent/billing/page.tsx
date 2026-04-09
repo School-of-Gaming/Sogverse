@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ROUTES } from "@/lib/constants";
 
 export default function BillingRedirectPage() {
+  const t = useTranslations('parent');
   const triggered = useRef(false);
   const [error, setError] = useState(false);
 
@@ -33,12 +35,12 @@ export default function BillingRedirectPage() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Something went wrong opening the billing portal. Please <a href={ROUTES.customer.sorg} className="underline">go back</a> and try again.
+            {t.rich('billing.error', { link: (chunks) => <a href={ROUTES.customer.sorg} className="underline">{chunks}</a> })}
           </AlertDescription>
         </Alert>
       ) : (
         <p className="text-muted-foreground animate-pulse">
-          Redirecting to billing portal...
+          {t('billing.redirecting')}
         </p>
       )}
     </div>

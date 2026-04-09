@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -22,6 +23,7 @@ interface UserRowProps {
 }
 
 export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserRowProps) {
+  const t = useTranslations('admin.users');
   return (
     <div className="rounded-lg border">
       <Link
@@ -34,7 +36,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
           </Avatar>
           <div>
             <p className="font-medium">
-              {user.display_name || user.username || "Unnamed User"}
+              {user.display_name || user.username || t('unnamedUser')}
             </p>
             <p className="text-sm text-muted-foreground">
               {user.email || user.username}
@@ -51,7 +53,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
 
       {user.role === "customer" && (!linkedGamers || linkedGamers.length === 0) && (
         <div className="border-t bg-muted/30 py-3 pl-14 pr-4">
-          <p className="text-sm text-muted-foreground">No connected gamers</p>
+          <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
         </div>
       )}
 
@@ -68,7 +70,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
                   <Identicon id={gamer.id} size={28} />
                 </Avatar>
                 <p className="text-sm font-medium">
-                  {gamer.display_name || gamer.username || "Unnamed Gamer"}
+                  {gamer.display_name || gamer.username || t('unnamedGamer')}
                 </p>
               </div>
               <div className="flex items-center gap-2">

@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 import { ImageResponse } from "next/og";
 import { BRAND, DARK_THEME, YTY_ELEMENT } from "@/lib/constants/colors";
 

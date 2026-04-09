@@ -1,6 +1,7 @@
 "use client";
 
 import flags from "react-phone-number-input/flags";
+import { useTranslations } from "next-intl";
 import type { LanguageRow } from "@/types";
 
 // Map language codes to country codes for flag display.
@@ -24,11 +25,12 @@ export function LanguageCheckboxes({
   onChange: (selected: string[]) => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations('settings');
   const loaded = languages.length > 0;
 
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-medium leading-none">Languages</legend>
+      <legend className="text-sm font-medium leading-none">{t('languages')}</legend>
       <div className="flex flex-col gap-2">
         {loaded
           ? languages.map((lang) => {

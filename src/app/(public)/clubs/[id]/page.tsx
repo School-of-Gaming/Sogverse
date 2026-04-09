@@ -3,6 +3,7 @@
 import { useParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from 'next-intl';
 import { ArrowLeft, Calendar, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +31,8 @@ export default function ProductDetailPage() {
   const { user, profile } = useAuth();
   const pathname = usePathname();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
+  const t = useTranslations('clubs');
+  const c = useTranslations('common');
 
   if (isLoading) {
     return (
@@ -54,17 +57,17 @@ export default function ProductDetailPage() {
         <Link href={ROUTES.products}>
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Clubs
+            {t('detail.backToClubs')}
           </Button>
         </Link>
         <Card className="mx-auto max-w-md">
           <CardContent className="flex flex-col items-center py-12 text-center">
-            <h3 className="text-lg font-medium">Club Not Found</h3>
+            <h3 className="text-lg font-medium">{t('detail.notFound')}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              This club may no longer be available.
+              {t('detail.notFoundDescription')}
             </p>
             <Link href={ROUTES.products} className="mt-4">
-              <Button>Browse Clubs</Button>
+              <Button>{c('browseClubs')}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -85,7 +88,7 @@ export default function ProductDetailPage() {
       <Link href={ROUTES.products}>
         <Button variant="ghost" className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Clubs
+          {t('detail.backToClubs')}
         </Button>
       </Link>
 
@@ -116,7 +119,7 @@ export default function ProductDetailPage() {
             <CardContent className="grid grid-cols-2 gap-4 py-4">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm">Every {schedule.localDay}</span>
+                <span className="text-sm">{t('detail.every', { day: schedule.localDay })}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
@@ -127,13 +130,13 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">
-                  {product.duration_minutes} minutes
+                  {c('duration', { minutes: product.duration_minutes })}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">
-                  Ages {product.min_age}–{product.max_age}
+                  {c('ages', { min: product.min_age, max: product.max_age })}
                 </span>
               </div>
             </CardContent>
@@ -142,9 +145,9 @@ export default function ProductDetailPage() {
           {/* Token cost */}
           <div className="mt-4">
             <span className="text-2xl font-bold text-primary">
-              {product.token_cost} Sorgs
+              {t('tokenCost', { cost: product.token_cost })}
             </span>
-            <span className="text-sm text-muted-foreground"> per session</span>
+            <span className="text-sm text-muted-foreground"> {c('perSession')}</span>
             <p className="text-xs text-muted-foreground">
               ≈ {tokensToCurrencyDisplay(product.token_cost, currency, locale)}
             </p>
@@ -158,30 +161,29 @@ export default function ProductDetailPage() {
           ) : user ? (
             <Card>
               <CardHeader>
-                <CardTitle>Enrollment</CardTitle>
+                <CardTitle>{t('detail.enrollment')}</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  Only parent accounts can enroll gamers in clubs.
+                  {t('detail.onlyParents')}
                 </p>
               </CardContent>
             </Card>
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Ready to Enroll?</CardTitle>
+                <CardTitle>{t('detail.readyToEnroll')}</CardTitle>
                 <CardDescription>
-                  Log in or create an account to enroll your child in this
-                  club.
+                  {t('detail.readyToEnrollDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col items-center gap-3">
                 <Link href={`${ROUTES.login}${redirectParam}`} className="w-full">
-                  <Button className="w-full">Log In to Enroll</Button>
+                  <Button className="w-full">{t('detail.logInToEnroll')}</Button>
                 </Link>
                 <Link href={`${ROUTES.register}${redirectParam}`} className="w-full">
                   <Button variant="outline" className="w-full">
-                    Create Account
+                    {c('createAccount')}
                   </Button>
                 </Link>
               </CardContent>

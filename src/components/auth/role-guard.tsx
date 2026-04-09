@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers";
 import { ROLE_DASHBOARD_PATHS, type UserRole } from "@/lib/constants";
 
@@ -16,6 +17,7 @@ export function RoleGuard({
   allowedRoles,
   fallback,
 }: RoleGuardProps) {
+  const c = useTranslations('common');
   const { profile, isLoading } = useAuth();
   const router = useRouter();
 
@@ -44,7 +46,7 @@ export function RoleGuard({
       fallback || (
         <div className="flex h-64 items-center justify-center">
           <p className="text-muted-foreground">
-            You don&apos;t have permission to view this page.
+            {c('noPermission')}
           </p>
         </div>
       )

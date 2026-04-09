@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Search, UserPlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,18 +13,19 @@ import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users"
 import { ROLE_BADGES } from "@/lib/constants";
 import type { Profile, UserRole } from "@/types";
 
-const ROLE_FILTERS: { value: UserRole; label: string }[] = [
-  { value: "admin", label: "Admin" },
-  { value: "customer", label: "Parent" },
-  { value: "gedu", label: "Gedu" },
-];
-
 export default function AdminUsersPage() {
+  const t = useTranslations('admin.users');
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | null>(null);
   const { data: allUsers, isLoading: isLoadingAll } = useUsers();
   const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
   const { data: parentGamerLinks } = useParentGamerLinks();
+
+  const ROLE_FILTERS: { value: UserRole; label: string }[] = [
+    { value: "admin", label: t('roleAdmin') },
+    { value: "customer", label: t('roleParent') },
+    { value: "gedu", label: t('roleGedu') },
+  ];
 
   const isSearchActive = searchQuery.length >= 2;
   const baseUsers = isSearchActive ? searchResults : allUsers;
@@ -99,15 +101,15 @@ export default function AdminUsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Users</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage user accounts
+            {t('manageAccounts')}
           </p>
         </div>
         <Link href={ROUTES.admin.usersAdd}>
           <Button>
             <UserPlus className="mr-2 h-4 w-4" />
-            Invite Gedu
+            {t('inviteGedu')}
           </Button>
         </Link>
       </div>
@@ -117,15 +119,15 @@ export default function AdminUsersPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search users by name, email, or username..."
-              aria-label="Search users"
+              placeholder={t('searchPlaceholder')}
+              aria-label={t('searchAriaLabel')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground mr-1">Role:</span>
+            <span className="text-sm text-muted-foreground mr-1">{t('roleFilterLabel')}:</span>
             <button
               onClick={() => setRoleFilter(null)}
               className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
@@ -134,7 +136,7 @@ export default function AdminUsersPage() {
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
-              All
+              {t('all')}
             </button>
             {ROLE_FILTERS.map((rf) => (
               <button
@@ -180,8 +182,8 @@ export default function AdminUsersPage() {
           ) : (
             <div className="py-8 text-center text-muted-foreground">
               {searchQuery || roleFilter
-                ? "No users found matching your filters."
-                : "No users found."}
+                ? t('noFilterResults')
+                : t('noUsers')}
             </div>
           )}
         </CardContent>

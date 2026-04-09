@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check, Gamepad2, Plus, Users, ArrowLeft, Coins } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -40,6 +41,8 @@ interface EnrollmentWizardProps {
 }
 
 export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
+  const t = useTranslations('enrollment');
+  const c = useTranslations('common');
   const { user } = useRequiredAuth();
   const { data: gamers, isLoading: gamersLoading } = useMyGamers();
   const { data: groups, isLoading: groupsLoading } = useEnrollmentGroups(
@@ -57,11 +60,9 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
   );
 
   const [step, setStep] = useState<Step>("select-gamer");
-  const [selectedGamerId, setSelectedGamerId] = useState<string | null>(null);
-  const [selectedGamerName, setSelectedGamerName] = useState<string | null>(
-    null,
-  );
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedGamerId, setSelectedGamerId] = useState("");
+  const [selectedGamerName, setSelectedGamerName] = useState("");
+  const [selectedGroupId, setSelectedGroupId] = useState("");
   const [enrollResult, setEnrollResult] = useState<{
     enrollmentId: string;
     newBalance: number;
@@ -114,7 +115,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
       setEnrollResult(result);
       setStep("success");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to enroll");
+      setError(err instanceof Error ? err.message : t('wizard.failedToEnroll'));
     }
   };
 
@@ -126,17 +127,17 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
       }
     } else if (step === "select-group") {
       setStep("select-gamer");
-      setSelectedGamerId(null);
-      setSelectedGamerName(null);
+      setSelectedGamerId("");
+      setSelectedGamerName("");
     } else if (step === "confirm") {
       if (groups && groups.length === 1) {
         setStep("select-gamer");
-        setSelectedGamerId(null);
-        setSelectedGamerName(null);
-        setSelectedGroupId(null);
+        setSelectedGamerId("");
+        setSelectedGamerName("");
+        setSelectedGroupId("");
       } else {
         setStep("select-group");
-        setSelectedGroupId(null);
+        setSelectedGroupId("");
       }
     }
   };
@@ -153,11 +154,11 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Enroll Your Gamer</CardTitle>
+        <CardTitle>{t('wizard.title')}</CardTitle>
         {hasEnoughTokens && (
           <>
             <CardDescription>
-              {product.token_cost} Sorgs will be deducted for the upcoming session
+              {t('wizard.costDescription', { cost: product.token_cost })}
             </CardDescription>
 
             {/* Progress indicator */}
@@ -197,13 +198,12 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
         {!hasEnoughTokens && effectiveStep !== "success" ? (
           <div className="flex flex-col items-center py-4 text-center">
             <Coins className="h-12 w-12 text-warning" />
-            <h3 className="mt-4 text-lg font-medium">Insufficient Balance</h3>
+            <h3 className="mt-4 text-lg font-medium">{t('wizard.insufficientBalance')}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              You need <strong>{product.token_cost} Sorgs</strong> to enroll
-              but only have <strong>{currentBalance}</strong>.
+              {t.rich('wizard.insufficientBalanceDescription', { cost: product.token_cost, balance: currentBalance, strong: (chunks) => <strong>{chunks}</strong> })}
             </p>
             <Link href={ROUTES.sorg} className="mt-4">
-              <Button>Get More Sorgs</Button>
+              <Button>{t('wizard.getMoreSorgs')}</Button>
             </Link>
           </div>
         ) : (
@@ -218,7 +218,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
         {effectiveStep === "select-gamer" && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Choose which gamer to enroll:
+              {t('wizard.chooseGamer')}
             </p>
 
             {gamersLoading ? (
@@ -262,7 +262,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                         </div>
                         {alreadyEnrolled ? (
                           <span className="text-xs font-medium text-muted-foreground">
-                            Already enrolled
+                            {c('alreadyEnrolled')}
                           </span>
                         ) : (
                           <NavChevron size="sm" />
@@ -278,7 +278,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                   onClick={() => setStep("create-gamer")}
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Create New Gamer
+                  {t('wizard.createNewGamer')}
                 </Button>
               </>
             )}
@@ -291,7 +291,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
             <div className="flex items-center gap-2">
               <Gamepad2 className="h-5 w-5 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
-                Create a new gamer account for your child
+                {t('wizard.createGamerDescription')}
               </p>
             </div>
             <InlineGamerForm
@@ -310,15 +310,11 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                Choose a group for{" "}
-                <span className="font-medium text-foreground">
-                  {selectedGamerName}
-                </span>
-                :
+                {t('wizard.chooseGroup', { name: selectedGamerName })}
               </p>
               <Button variant="ghost" size="sm" onClick={handleBack}>
                 <ArrowLeft className="mr-1 h-3 w-3" />
-                Back
+                {c('back')}
               </Button>
             </div>
 
@@ -344,8 +340,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
             ) : (
               <Alert>
                 <AlertDescription>
-                  No groups available for this club yet. Please try again
-                  later.
+                  {t('wizard.noGroupsAvailable')}
                 </AlertDescription>
               </Alert>
             )}
@@ -356,39 +351,39 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
         {effectiveStep === "confirm" && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium">Enrollment Summary</p>
+              <p className="text-sm font-medium">{t('wizard.enrollmentSummary')}</p>
               <Button variant="ghost" size="sm" onClick={handleBack}>
                 <ArrowLeft className="mr-1 h-3 w-3" />
-                Back
+                {c('back')}
               </Button>
             </div>
 
             <div className="space-y-3 rounded-md border border-border p-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Gamer</span>
+                <span className="text-muted-foreground">{t('wizard.summaryGamer')}</span>
                 <span className="font-medium">{selectedGamerName}</span>
               </div>
               {selectedGroup && (
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Gedu</span>
+                  <span className="text-muted-foreground">{t('wizard.summaryGedu')}</span>
                   <span className="font-medium">
                     {selectedGroup.geduDisplayName}
                   </span>
                 </div>
               )}
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Cost</span>
+                <span className="text-muted-foreground">{t('wizard.summaryCost')}</span>
                 <span className="font-bold text-primary">
-                  {product.token_cost} Sorgs
+                  {t('wizard.sorgAmount', { amount: product.token_cost })}
                 </span>
               </div>
               <div className="border-t border-border pt-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Current Balance</span>
-                  <span>{currentBalance} Sorgs</span>
+                  <span className="text-muted-foreground">{t('wizard.currentBalance')}</span>
+                  <span>{t('wizard.sorgAmount', { amount: currentBalance })}</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">After Enrollment</span>
+                  <span className="text-muted-foreground">{t('wizard.afterEnrollment')}</span>
                   <span
                     className={
                       hasEnoughTokens
@@ -396,7 +391,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                         : "font-medium text-destructive"
                     }
                   >
-                    {currentBalance - product.token_cost} Sorgs
+                    {t('wizard.sorgAmount', { amount: currentBalance - product.token_cost })}
                   </span>
                 </div>
               </div>
@@ -407,7 +402,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
               disabled={!hasEnoughTokens || enrollGamer.isPending}
               onClick={handleEnroll}
             >
-              {enrollGamer.isPending ? "Enrolling..." : "Confirm Enrollment"}
+              {enrollGamer.isPending ? t('wizard.enrolling') : t('wizard.confirmEnrollment')}
             </Button>
           </div>
         )}
@@ -418,33 +413,29 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
               <Check className="h-8 w-8 text-success" />
             </div>
-            <h3 className="mt-4 text-lg font-medium">Enrolled!</h3>
+            <h3 className="mt-4 text-lg font-medium">{t('wizard.enrolled')}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              <strong>{selectedGamerName}</strong> is now enrolled in{" "}
-              <strong>{product.name}</strong>.
+              {t.rich('wizard.enrolledDescription', { gamer: selectedGamerName, club: product.name, strong: (chunks) => <strong>{chunks}</strong> })}
             </p>
             {enrollResult && (
               <p className="mt-1 text-sm text-muted-foreground">
-                New balance: {enrollResult.newBalance} Sorgs
+                {t('wizard.newBalance', { balance: enrollResult.newBalance })}
               </p>
             )}
             <div className="mt-4 rounded-md border border-info/30 bg-info/10 p-3 text-left text-sm text-muted-foreground">
               <p className="font-medium text-foreground">
-                How to join a session
+                {t('wizard.howToJoinTitle')}
               </p>
               <p className="mt-1">
-                When a session starts, a green &quot;Live&quot; badge will
-                appear on the group card in{" "}
-                <strong>{selectedGamerName}&apos;s</strong> dashboard. They can
-                click &quot;Join&quot; to connect.
+                {t.rich('wizard.howToJoinDescription', { name: selectedGamerName, strong: (chunks) => <strong>{chunks}</strong> })}
               </p>
             </div>
             <div className="mt-6 flex gap-3">
               <Link href={ROUTES.products}>
-                <Button variant="outline">Browse Clubs</Button>
+                <Button variant="outline">{c('browseClubs')}</Button>
               </Link>
               <Link href={ROUTES.customer.gamers}>
-                <Button>View My Gamers</Button>
+                <Button>{t('wizard.viewMyGamers')}</Button>
               </Link>
             </div>
           </div>
@@ -463,6 +454,9 @@ function GroupCard({
   group: EnrollmentGroup;
   onSelect: () => void;
 }) {
+  const t = useTranslations('enrollment');
+  const c = useTranslations('common');
+
   const ageRange =
     group.minGamerAge != null && group.maxGamerAge != null
       ? group.minGamerAge === group.maxGamerAge
@@ -480,9 +474,9 @@ function GroupCard({
         <div className="mt-1 flex items-center gap-3 text-sm text-muted-foreground">
           <span className="flex items-center gap-1">
             <Users className="h-3 w-3" />
-            {group.gamerCount} gamer{group.gamerCount !== 1 ? "s" : ""}
+            {t('wizard.gamerCount', { count: group.gamerCount })}
           </span>
-          {ageRange && <span>Ages {ageRange}</span>}
+          {ageRange && <span>{c('ages', { min: group.minGamerAge!, max: group.maxGamerAge! })}</span>}
         </div>
       </div>
     </button>

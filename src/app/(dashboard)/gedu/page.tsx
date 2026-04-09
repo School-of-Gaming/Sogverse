@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, Gamepad2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
@@ -8,30 +9,33 @@ export const metadata: Metadata = {
   description: "Manage your groups and students",
 };
 
-const stats = [
-  {
-    title: "Groups",
-    value: "--",
-    description: "Assigned groups",
-    icon: Users,
-    href: "/gedu/groups",
-  },
-  {
-    title: "Gamers",
-    value: "--",
-    description: "Enrolled gamers",
-    icon: Gamepad2,
-    href: "#",
-  },
-];
-
 export default function GeduDashboardPage() {
+  const t = useTranslations('gedu');
+  const c = useTranslations('common');
+
+  const stats = [
+    {
+      title: t('statsGroups'),
+      value: "--",
+      description: t('statsGroupsDescription'),
+      icon: Users,
+      href: "/gedu/groups",
+    },
+    {
+      title: t('statsGamers'),
+      value: "--",
+      description: t('statsGamersDescription'),
+      icon: Gamepad2,
+      href: "#",
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Educator Dashboard</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Welcome to your game educator portal. View your groups, students, and voice sessions.
+          {t('subtitle')}
         </p>
       </div>
 
@@ -58,12 +62,12 @@ export default function GeduDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest student activities</CardDescription>
+          <CardTitle>{c('recentActivity')}</CardTitle>
+          <CardDescription>{t('latestStudentActivities')}</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            No recent activity to display.
+            {c('noRecentActivity')}
           </p>
         </CardContent>
       </Card>
