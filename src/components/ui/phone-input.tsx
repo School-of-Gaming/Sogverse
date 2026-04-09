@@ -5,10 +5,8 @@ import "react-phone-number-input/style.css";
 
 /**
  * Pre-configured international phone input with Finnish default.
- * Pins Finland, UK, Sweden, and US at the top of the country dropdown.
+ * Restricts country dropdown to Finland, UK, Sweden, and US.
  * Outputs E.164 format (e.g. "+358401234567").
- *
- * TODO: Reuse this component in profile forms when adding phone numbers to user profiles.
  */
 export function InternationalPhoneInput({
   value,

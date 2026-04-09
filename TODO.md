@@ -58,13 +58,6 @@ The send route (`src/app/api/admin/whatsapp/send/route.ts`) and webhook handler 
 - [ ] Extract `extractMessageContent()` and error-code mapping from the webhook into `src/lib/whatsapp.ts`
 - [ ] Update both route handlers to delegate persistence to the service
 
-### Reusable Phone Number Input Component
-
-A pre-configured international phone input component exists at `src/components/ui/phone-input.tsx` using `react-phone-number-input`. It pins Finland, UK, Sweden, and US at the top of the country dropdown and outputs E.164 format. Dark theme CSS overrides are in `src/app/globals.css`.
-
-- [ ] Use this component in user profile forms when adding phone numbers to profiles
-- [ ] Consider adding it to the UI Components reference page (`/admin/ui-components`)
-
 ### Multi-Parent Gamer Linking
 
 Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`. To support a second parent linking to an existing gamer:
