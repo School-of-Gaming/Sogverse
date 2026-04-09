@@ -1,8 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { NextIntlClientProvider } from "next-intl";
 import { QueryProvider } from "./query-provider";
 import { AuthProvider } from "./auth-provider";
+import { LanguageProvider } from "./language-provider";
 import { CurrencyProvider } from "./currency-provider";
 import { ThemeProvider } from "./theme-provider";
 import { TokenRateProvider } from "./token-rate-provider";
@@ -15,6 +17,7 @@ interface ProvidersProps {
   initialUser?: User | null;
   initialProfile?: Profile | null;
   initialLocale: string;
+  messages: Record<string, unknown>;
   baseRates: Record<SupportedCurrency, number>;
   nonce?: string;
 }
@@ -24,6 +27,7 @@ export function Providers({
   initialUser,
   initialProfile,
   initialLocale,
+  messages,
   baseRates,
   nonce,
 }: ProvidersProps) {
@@ -31,11 +35,15 @@ export function Providers({
     <ThemeProvider nonce={nonce}>
       <QueryProvider>
         <AuthProvider initialUser={initialUser} initialProfile={initialProfile}>
-          <CurrencyProvider initialLocale={initialLocale}>
-            <TokenRateProvider baseRates={baseRates}>
-              {children}
-            </TokenRateProvider>
-          </CurrencyProvider>
+          <NextIntlClientProvider locale={initialLocale} messages={messages}>
+            <LanguageProvider>
+              <CurrencyProvider initialLocale={initialLocale}>
+                <TokenRateProvider baseRates={baseRates}>
+                  {children}
+                </TokenRateProvider>
+              </CurrencyProvider>
+            </LanguageProvider>
+          </NextIntlClientProvider>
         </AuthProvider>
       </QueryProvider>
     </ThemeProvider>
@@ -46,5 +54,6 @@ export { useAuth, useRequiredAuth } from "./auth-provider";
 export { QueryProvider } from "./query-provider";
 export { ThemeProvider } from "./theme-provider";
 export { AuthProvider } from "./auth-provider";
+export { LanguageProvider, useLanguagePreference } from "./language-provider";
 export { CurrencyProvider, useCurrency } from "./currency-provider";
 export { TokenRateProvider, useTokenRates } from "./token-rate-provider";

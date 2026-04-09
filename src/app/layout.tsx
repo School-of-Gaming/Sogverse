@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Inter, Press_Start_2P } from "next/font/google";
+import { getLocale, getMessages } from "next-intl/server";
 import { Providers } from "@/providers";
 import { Header } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
-import { parseAcceptLanguage, DEFAULT_LOCALE } from "@/lib/locale";
 import { getStripeProducts } from "@/lib/stripe/products";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
@@ -50,14 +50,15 @@ export default async function RootLayout({
   const userWithProfile = await getUserWithProfile();
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") ?? undefined;
-  const locale = parseAcceptLanguage(headersList.get("accept-language")) ?? DEFAULT_LOCALE;
+  const locale = await getLocale();
+  const messages = await getMessages();
   // getStripeProducts() is backed by unstable_cache (persistent data cache, 5-min revalidation).
   // Callers always get the cached value instantly — Stripe is only contacted during background
   // revalidation, so this adds no latency and no runtime dependency on Stripe availability.
   const { baseRates } = await getStripeProducts();
 
   return (
-    <html lang="en" className="dark overflow-hidden" suppressHydrationWarning>
+    <html lang={locale} className="dark overflow-hidden" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${pressStart2P.variable} antialiased bg-background text-foreground`}
       >
@@ -65,6 +66,7 @@ export default async function RootLayout({
           initialUser={userWithProfile?.user ?? null}
           initialProfile={userWithProfile?.profile}
           initialLocale={locale}
+          messages={messages}
           baseRates={baseRates}
           nonce={nonce}
         >

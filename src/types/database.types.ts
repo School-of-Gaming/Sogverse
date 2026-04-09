@@ -474,6 +474,7 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
+          language_preference: string | null
           languages: string[]
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -486,6 +487,7 @@ export type Database = {
           display_name: string
           email?: string | null
           id: string
+          language_preference?: string | null
           languages?: string[]
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -498,6 +500,7 @@ export type Database = {
           display_name?: string
           email?: string | null
           id?: string
+          language_preference?: string | null
           languages?: string[]
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -789,6 +792,7 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
+          language_preference: string | null
           languages: string[]
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -840,6 +844,7 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
+          language_preference: string | null
           languages: string[]
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
