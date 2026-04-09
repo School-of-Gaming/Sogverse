@@ -1,9 +1,16 @@
 "use client";
 
+import flags from "react-phone-number-input/flags";
 import type { LanguageRow } from "@/types";
 
-// If languages are added beyond 3, update PLACEHOLDER_COUNT to match
-// so the layout doesn't shift on load.
+// Map language codes to country codes for flag display.
+// Update when adding new languages to the DB.
+const LANG_TO_COUNTRY: Record<string, string> = {
+  fi: "FI",
+  sv: "SE",
+  en: "GB",
+};
+
 const PLACEHOLDER_COUNT = 3;
 
 export function LanguageCheckboxes({
@@ -24,24 +31,29 @@ export function LanguageCheckboxes({
       <legend className="text-sm font-medium leading-none">Languages</legend>
       <div className="flex flex-col gap-2">
         {loaded
-          ? languages.map((lang) => (
-              <label key={lang.code} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={selected.includes(lang.code)}
-                  onChange={(e) => {
-                    onChange(
-                      e.target.checked
-                        ? [...selected, lang.code]
-                        : selected.filter((l) => l !== lang.code)
-                    );
-                  }}
-                  disabled={disabled}
-                  className="h-4 w-4 accent-primary"
-                />
-                {lang.name}
-              </label>
-            ))
+          ? languages.map((lang) => {
+              const country = LANG_TO_COUNTRY[lang.code];
+              const FlagIcon = country ? flags[country as keyof typeof flags] : undefined;
+              return (
+                <label key={lang.code} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(lang.code)}
+                    onChange={(e) => {
+                      onChange(
+                        e.target.checked
+                          ? [...selected, lang.code]
+                          : selected.filter((l) => l !== lang.code)
+                      );
+                    }}
+                    disabled={disabled}
+                    className="h-4 w-4 accent-primary"
+                  />
+                  {FlagIcon && <FlagIcon title={lang.name} className="h-4 w-auto" />}
+                  {lang.name}
+                </label>
+              );
+            })
           : Array.from({ length: PLACEHOLDER_COUNT }, (_, i) => (
               <label key={i} className="invisible flex items-center gap-2 text-sm">
                 <input type="checkbox" className="h-4 w-4" />

@@ -91,8 +91,7 @@ export function useLanguages() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("languages")
-        .select("code, name")
-        .order("name");
+        .select("code, name");
       if (error) throw error;
       return data;
     },
