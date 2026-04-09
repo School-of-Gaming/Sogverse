@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import flags from "react-phone-number-input/flags";
+import { useTranslations } from "next-intl";
 import { useLanguagePreference } from "@/hooks/use-language-preference";
 import {
   SUPPORTED_LANGUAGES,
@@ -12,6 +13,7 @@ import { cn } from "@/lib/utils";
 
 export function LanguagePicker({ className }: { className?: string }) {
   const { language, setLanguage } = useLanguagePreference();
+  const c = useTranslations('common');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -33,7 +35,7 @@ export function LanguagePicker({ className }: { className?: string }) {
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-        aria-label="Select language"
+        aria-label={c('selectLanguage')}
       >
         {FlagIcon && (
           <span className="h-4 w-6 [&>svg]:h-full">

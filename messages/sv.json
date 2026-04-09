@@ -49,7 +49,11 @@
     "failedToLoad": "Kunde inte ladda data",
     "alreadyEnrolled": "Redan anmäld",
     "noRecentActivity": "Ingen senaste aktivitet att visa.",
-    "recentActivity": "Senaste aktivitet"
+    "recentActivity": "Senaste aktivitet",
+    "selectLanguage": "Välj språk",
+    "languageEnglish": "engelska",
+    "languageFinnish": "finska",
+    "languageSwedish": "svenska"
   },
   "about": {
     "hero": {
@@ -641,6 +645,28 @@
     },
     "toggleMenu": "Växla meny",
     "tokenBalance": "{count} Sorgs"
+  },
+  "sidebar": {
+    "dashboard": "Instrumentpanel",
+    "users": "Användare",
+    "products": "Produkter",
+    "groups": "Grupper",
+    "locations": "Platser",
+    "uiComponents": "UI-komponenter",
+    "whatsapp": "WhatsApp",
+    "testing": "Testning",
+    "feedback": "Feedback",
+    "settings": "Inställningar",
+    "sorg": "Sorg",
+    "myGamers": "Mina spelare",
+    "home": "Hem",
+    "myGroups": "Mina grupper",
+    "expandSidebar": "Expandera sidopanel",
+    "collapseSidebar": "Minimera sidopanel",
+    "roleAdmin": "Admin",
+    "roleParent": "Förälder",
+    "roleGamer": "Spelare",
+    "roleGedu": "Spelutbildare"
   },
   "home": {
     "hero": {

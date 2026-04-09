@@ -49,7 +49,11 @@
     "failedToLoad": "Tietojen lataaminen epäonnistui",
     "alreadyEnrolled": "Jo ilmoittautunut",
     "noRecentActivity": "Ei viimeaikaista toimintaa näytettäväksi.",
-    "recentActivity": "Viimeaikainen toiminta"
+    "recentActivity": "Viimeaikainen toiminta",
+    "selectLanguage": "Valitse kieli",
+    "languageEnglish": "englanti",
+    "languageFinnish": "suomi",
+    "languageSwedish": "ruotsi"
   },
   "about": {
     "hero": {
@@ -641,6 +645,28 @@
     },
     "toggleMenu": "Vaihda valikko",
     "tokenBalance": "{count} Sorgia"
+  },
+  "sidebar": {
+    "dashboard": "Hallintapaneeli",
+    "users": "Käyttäjät",
+    "products": "Tuotteet",
+    "groups": "Ryhmät",
+    "locations": "Sijainnit",
+    "uiComponents": "UI-komponentit",
+    "whatsapp": "WhatsApp",
+    "testing": "Testaus",
+    "feedback": "Palaute",
+    "settings": "Asetukset",
+    "sorg": "Sorg",
+    "myGamers": "Pelaajani",
+    "home": "Etusivu",
+    "myGroups": "Ryhmäni",
+    "expandSidebar": "Laajenna sivupalkki",
+    "collapseSidebar": "Pienennä sivupalkki",
+    "roleAdmin": "Ylläpitäjä",
+    "roleParent": "Vanhempi",
+    "roleGamer": "Pelaaja",
+    "roleGedu": "Pelikasvattaja"
   },
   "home": {
     "hero": {

@@ -12,6 +12,14 @@ const LANG_TO_COUNTRY: Record<string, string> = {
   en: "GB",
 };
 
+// Map language codes to common.* translation keys.
+// Falls back to the DB name for codes not listed here.
+const LANG_NAME_KEYS: Record<string, string> = {
+  en: "languageEnglish",
+  fi: "languageFinnish",
+  sv: "languageSwedish",
+};
+
 const PLACEHOLDER_COUNT = 3;
 
 export function LanguageCheckboxes({
@@ -26,6 +34,7 @@ export function LanguageCheckboxes({
   disabled?: boolean;
 }) {
   const t = useTranslations('settings');
+  const c = useTranslations('common');
   const loaded = languages.length > 0;
 
   return (
@@ -36,8 +45,10 @@ export function LanguageCheckboxes({
           ? languages.map((lang) => {
               const country = LANG_TO_COUNTRY[lang.code];
               const FlagIcon = country ? flags[country as keyof typeof flags] : undefined;
+              const nameKey = LANG_NAME_KEYS[lang.code];
+              const displayName = nameKey ? c(nameKey as "languageEnglish") : lang.name;
               return (
-                <label key={lang.code} className="flex items-center gap-2 text-sm">
+                <label key={lang.code} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selected.includes(lang.code)}
@@ -49,10 +60,10 @@ export function LanguageCheckboxes({
                       );
                     }}
                     disabled={disabled}
-                    className="h-4 w-4 accent-primary"
+                    className="h-4 w-4 accent-primary cursor-pointer"
                   />
-                  {FlagIcon && <span className="h-4 w-6 [&>svg]:h-full"><FlagIcon title={lang.name} /></span>}
-                  {lang.name}
+                  {FlagIcon && <span className="h-4 w-6 [&>svg]:h-full"><FlagIcon title={displayName} /></span>}
+                  {displayName}
                 </label>
               );
             })

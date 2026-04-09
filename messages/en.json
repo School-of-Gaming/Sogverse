@@ -49,7 +49,11 @@
     "failedToLoad": "Failed to load data",
     "alreadyEnrolled": "Already enrolled",
     "noRecentActivity": "No recent activity to display.",
-    "recentActivity": "Recent Activity"
+    "recentActivity": "Recent Activity",
+    "selectLanguage": "Select language",
+    "languageEnglish": "English",
+    "languageFinnish": "Finnish",
+    "languageSwedish": "Swedish"
   },
   "about": {
     "hero": {
@@ -641,6 +645,28 @@
     },
     "toggleMenu": "Toggle menu",
     "tokenBalance": "{count} Sorgs"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "products": "Products",
+    "groups": "Groups",
+    "locations": "Locations",
+    "uiComponents": "UI Components",
+    "whatsapp": "WhatsApp",
+    "testing": "Testing",
+    "feedback": "Feedback",
+    "settings": "Settings",
+    "sorg": "Sorg",
+    "myGamers": "My Gamers",
+    "home": "Home",
+    "myGroups": "My Groups",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "roleAdmin": "Admin",
+    "roleParent": "Parent",
+    "roleGamer": "Gamer",
+    "roleGedu": "Gedu"
   },
   "home": {
     "hero": {
