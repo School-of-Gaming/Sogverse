@@ -6,5 +6,6 @@ export {
   useSearchUsers,
   useUpdateProfile,
   useParentGamerLinks,
+  useLanguages,
   useCreateGedu,
 } from "./users.queries";

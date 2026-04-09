@@ -232,6 +232,21 @@ export type Database = {
           },
         ]
       }
+      languages: {
+        Row: {
+          code: string
+          name: string
+        }
+        Insert: {
+          code: string
+          name: string
+        }
+        Update: {
+          code?: string
+          name?: string
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           country_code: string | null
@@ -459,6 +474,8 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
+          languages: string[]
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           username: string | null
@@ -469,6 +486,8 @@ export type Database = {
           display_name: string
           email?: string | null
           id: string
+          languages?: string[]
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           username?: string | null
@@ -479,6 +498,8 @@ export type Database = {
           display_name?: string
           email?: string | null
           id?: string
+          languages?: string[]
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
           username?: string | null
@@ -768,6 +789,8 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
+          languages: string[]
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           username: string | null
@@ -817,6 +840,8 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
+          languages: string[]
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
           username: string | null

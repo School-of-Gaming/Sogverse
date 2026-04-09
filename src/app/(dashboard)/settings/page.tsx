@@ -10,10 +10,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { InternationalPhoneInput } from "@/components/ui/phone-input";
+import { LanguageCheckboxes } from "@/components/ui/language-checkboxes";
 import { DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useAuth } from "@/providers";
-import { useUpdateProfile } from "@/services/users";
+import { useUpdateProfile, useLanguages } from "@/services/users";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
+import type { ProfileUpdate } from "@/types";
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth();
@@ -22,8 +25,11 @@ export default function SettingsPage() {
   const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
+  const { data: availableLanguages } = useLanguages();
 
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
+  const [phone, setPhone] = useState(profile?.phone ? `+${profile.phone}` : "");
+  const [languages, setLanguages] = useState<string[]>(profile?.languages ?? []);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -48,10 +54,12 @@ export default function SettingsPage() {
     setErrorMessage(null);
 
     try {
-      await updateProfile.mutateAsync({
-        userId: user.id,
-        updates: { display_name: displayName },
-      });
+      const updates: ProfileUpdate = {
+        display_name: displayName,
+        phone: phone ? phone.replace(/^\+/, "") : null,
+        languages,
+      };
+      await updateProfile.mutateAsync({ userId: user.id, updates });
       await refreshProfile();
       setSuccessMessage("Profile updated successfully!");
     } catch (error: unknown) {
@@ -157,6 +165,21 @@ export default function SettingsPage() {
               maxLength={DISPLAY_NAME_MAX}
             />
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <InternationalPhoneInput
+              id="phone"
+              value={phone || undefined}
+              onChange={(value) => setPhone(value ?? "")}
+            />
+          </div>
+
+          <LanguageCheckboxes
+            languages={availableLanguages ?? []}
+            selected={languages}
+            onChange={setLanguages}
+          />
 
           <div className="space-y-2">
             <Label>Email</Label>

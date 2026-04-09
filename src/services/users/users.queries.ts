@@ -13,6 +13,7 @@ const userKeys = {
   detail: (id: string) => [...userKeys.details(), id] as const,
   byRole: (role: UserRole) => [...userKeys.all, "role", role] as const,
   parentGamerLinks: () => [...userKeys.all, "parent-gamer-links"] as const,
+  languages: () => [...userKeys.all, "languages"] as const,
 };
 
 export function useProfile(userId: string) {
@@ -79,6 +80,22 @@ export function useParentGamerLinks() {
   return useQuery({
     queryKey: userKeys.parentGamerLinks(),
     queryFn: () => service.getAllParentGamerLinks(),
+  });
+}
+
+export function useLanguages() {
+  const supabase = getClient();
+
+  return useQuery({
+    queryKey: userKeys.languages(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("languages")
+        .select("code, name")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
   });
 }
 

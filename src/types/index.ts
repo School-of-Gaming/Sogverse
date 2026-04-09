@@ -82,6 +82,9 @@ export type AvailableVoiceRoom = Omit<
   enrolled_at: string | null;
 };
 
+// languages (reference table)
+export type LanguageRow = Database["public"]["Tables"]["languages"]["Row"];
+
 // locations
 export type Location = Database["public"]["Tables"]["locations"]["Row"];
 export type LocationInsert = Database["public"]["Tables"]["locations"]["Insert"];

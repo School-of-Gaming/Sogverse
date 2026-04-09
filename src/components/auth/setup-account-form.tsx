@@ -7,8 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { InternationalPhoneInput } from "@/components/ui/phone-input";
+import { LanguageCheckboxes } from "@/components/ui/language-checkboxes";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import type { LanguageRow } from "@/types";
 
 const setupAccountSchema = z.object({
   displayName: z.string().min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Display name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -24,6 +27,9 @@ export function SetupAccountForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [minecraftUsername, setMinecraftUsername] = useState("");
+  const [phone, setPhone] = useState("");
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [availableLanguages, setAvailableLanguages] = useState<LanguageRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,6 +37,16 @@ export function SetupAccountForm() {
   const [sessionEmail, setSessionEmail] = useState("");
 
   const supabase = getClient();
+
+  useEffect(() => {
+    supabase
+      .from("languages")
+      .select("code, name")
+      .order("name")
+      .then(({ data }) => {
+        if (data) setAvailableLanguages(data);
+      });
+  }, [supabase]);
 
   // generateLink() uses implicit flow (tokens in URL hash) because there's
   // no PKCE challenge. The @supabase/ssr client is configured for PKCE mode
@@ -104,7 +120,11 @@ export function SetupAccountForm() {
       if (user) {
         const { error: profileError } = await supabase
           .from("profiles")
-          .update({ display_name: validatedData.displayName })
+          .update({
+            display_name: validatedData.displayName,
+            phone: phone ? phone.replace(/^\+/, "") : null,
+            languages,
+          })
           .eq("id", user.id);
 
         if (profileError) {
@@ -216,6 +236,20 @@ export function SetupAccountForm() {
             onChange={setMinecraftUsername}
             disabled={isLoading}
             optional
+          />
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone Number</Label>
+            <InternationalPhoneInput
+              id="phone"
+              value={phone || undefined}
+              onChange={(value) => setPhone(value ?? "")}
+            />
+          </div>
+          <LanguageCheckboxes
+            languages={availableLanguages}
+            selected={languages}
+            onChange={setLanguages}
+            disabled={isLoading}
           />
         </CardContent>
         <CardFooter>

@@ -26,7 +26,7 @@ export function InternationalPhoneInput({
       id={id}
       international
       defaultCountry="FI"
-      countryOptionsOrder={["FI", "GB", "SE", "US"]}
+      countries={["FI", "GB", "SE", "US"]}
       addInternationalOption={true}
       value={value}
       onChange={onChange}

@@ -90,6 +90,7 @@ describe("Access Control", () => {
       whatsapp_contacts: new Set(["INSERT", "UPDATE"]),
       whatsapp_messages: new Set(["INSERT", "UPDATE"]),
       locations: new Set(["INSERT", "UPDATE"]),
+      languages: new Set(["INSERT", "UPDATE", "DELETE"]),
     };
 
     const { data, error } = await admin.rpc("_list_table_grants");
