@@ -14,7 +14,9 @@ import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { LanguageCheckboxes } from "@/components/ui/language-checkboxes";
 import { DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useAuth } from "@/providers";
+import { isValidPhoneNumber } from "react-phone-number-input";
 import { useUpdateProfile, useLanguages } from "@/services/users";
+import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 import type { ProfileUpdate } from "@/types";
 
@@ -54,9 +56,15 @@ export default function SettingsPage() {
     setErrorMessage(null);
 
     try {
+      if (phone && !isValidPhoneNumber(phone)) {
+        setErrorMessage("Please enter a valid phone number");
+        setIsSaving(false);
+        return;
+      }
+
       const updates: ProfileUpdate = {
         display_name: displayName,
-        phone: phone ? phone.replace(/^\+/, "") : null,
+        phone: toE164Digits(phone),
         languages,
       };
       await updateProfile.mutateAsync({ userId: user.id, updates });

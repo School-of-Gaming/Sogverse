@@ -74,6 +74,11 @@ export function isGamerEmail(email: string): boolean {
   return email.endsWith("@gamer.sogverse.internal");
 }
 
+/** Strip the leading '+' from an E.164 phone number for DB storage, or return null if empty. */
+export function toE164Digits(phone: string): string | null {
+  return phone ? phone.replace(/^\+/, "") : null;
+}
+
 export function escapeLikePattern(str: string): string {
   return str.replace(/[%_\\]/g, "\\$&");
 }

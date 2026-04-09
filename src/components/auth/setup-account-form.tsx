@@ -9,7 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { LanguageCheckboxes } from "@/components/ui/language-checkboxes";
+import { isValidPhoneNumber } from "react-phone-number-input";
 import { getClient } from "@/lib/supabase/client";
+import { toE164Digits } from "@/lib/utils";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useLanguages } from "@/services/users";
 
@@ -108,11 +110,16 @@ export function SetupAccountForm() {
       // Update display name on the profile
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        if (phone && !isValidPhoneNumber(phone)) {
+          setError("Please enter a valid phone number");
+          return;
+        }
+
         const { error: profileError } = await supabase
           .from("profiles")
           .update({
             display_name: validatedData.displayName,
-            phone: phone ? phone.replace(/^\+/, "") : null,
+            phone: toE164Digits(phone),
             languages,
           })
           .eq("id", user.id);
