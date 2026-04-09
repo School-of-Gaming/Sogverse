@@ -49,7 +49,7 @@ export function LanguageCheckboxes({
                     disabled={disabled}
                     className="h-4 w-4 accent-primary"
                   />
-                  {FlagIcon && <FlagIcon title={lang.name} className="h-4 w-auto" />}
+                  {FlagIcon && <span className="h-4 w-6 [&>svg]:h-full"><FlagIcon title={lang.name} /></span>}
                   {lang.name}
                 </label>
               );
