@@ -7,7 +7,9 @@ export function useClickOutside(elementRef: RefObject<HTMLElement | null>, onCli
   // Store callback in a ref so the event listener doesn't need to be
   // re-attached when callers pass an inline arrow function.
   const callbackRef = useRef(onClickOutside);
-  callbackRef.current = onClickOutside;
+  useEffect(() => {
+    callbackRef.current = onClickOutside;
+  }, [onClickOutside]);
 
   useEffect(() => {
     const handler = (event: MouseEvent) => {
