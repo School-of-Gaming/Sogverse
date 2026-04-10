@@ -1189,7 +1189,7 @@
       "body": "Hi {geduName}, {gamerName} has been moved to your group from {oldGeduName}\u2019s group in {productName}."
     },
     "feedback": {
-      "subject": "New Feedback Received",
+      "subject": "Feedback from {displayName} ({role})",
       "heading": "New Feedback Received",
       "from": "From",
       "role": "Role",

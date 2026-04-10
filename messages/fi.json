@@ -1189,7 +1189,7 @@
       "body": "Hei {geduName}, {gamerName} on siirretty ryhmääsi Gedun {oldGeduName} ryhmästä kerhossa {productName}."
     },
     "feedback": {
-      "subject": "Uusi palaute vastaanotettu",
+      "subject": "Palaute käyttäjältä {displayName} ({role})",
       "heading": "Uusi palaute vastaanotettu",
       "from": "Lähettäjä",
       "role": "Rooli",
