@@ -155,12 +155,15 @@ export default function AboutPage() {
       </div>
 
       {/* Klingon Easter Egg — only visible when the locale is tlh */}
+      {/* eslint-disable i18next/no-literal-string */}
       {locale === "tlh" && (
         <div className="mx-auto mt-16 max-w-3xl">
           <Card className="border-primary/30 bg-gradient-to-b from-primary/5 to-transparent">
             <CardHeader className="text-center">
+              {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
               <CardTitle className="text-2xl">{t('easterEgg.heading')}</CardTitle>
               <CardDescription className="text-base">
+                {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
                 {t('easterEgg.intro')}
               </CardDescription>
             </CardHeader>
@@ -177,24 +180,30 @@ export default function AboutPage() {
                   <tbody>
                     {easterEggRows.map((row) => (
                       <tr key={row} className="border-b border-border/50">
-                        <td className="py-2 pr-4">{t(`easterEgg.${row}Label` as "easterEgg.deleteLabel")}</td>
-                        <td className="py-2 pr-4 font-mono text-primary">{t(`easterEgg.${row}Value` as "easterEgg.deleteValue")}</td>
-                        <td className="py-2 italic text-muted-foreground">{t(`easterEgg.${row}Meaning` as "easterEgg.deleteMeaning")}</td>
+                        {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                        <td className="py-2 pr-4">{t(`easterEgg.${row}Label`)}</td>
+                        {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                        <td className="py-2 pr-4 font-mono text-primary">{t(`easterEgg.${row}Value`)}</td>
+                        {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                        <td className="py-2 italic text-muted-foreground">{t(`easterEgg.${row}Meaning`)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
               <p className="mt-6 text-center text-xs text-muted-foreground">
+                {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
                 {t('easterEgg.note')}
               </p>
               <p className="mt-4 text-center text-2xl font-bold text-primary">
+                {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
                 {t('easterEgg.qapla')}
               </p>
             </CardContent>
           </Card>
         </div>
       )}
+      {/* eslint-enable i18next/no-literal-string */}
     </div>
   );
 }
