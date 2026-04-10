@@ -1,14 +1,31 @@
 import type { LocationType } from "@/types";
+import type { SupportedLanguage } from "./language-preference";
+
+interface LabelPair {
+  label: string;
+  pluralLabel: string;
+}
 
 export interface HierarchyLevel {
   type: LocationType;
+  /** Default (English) label. */
   label: string;
+  /** Default (English) plural label. */
   pluralLabel: string;
+  /**
+   * Locale-specific labels for the country's own language.
+   * Only the country's native language needs an entry here — all others
+   * fall back to the English label/pluralLabel above.
+   * e.g. Finland's "region" has fi: { label: "Maakunta", pluralLabel: "Maakunnat" }
+   */
+  i18n?: Partial<Record<SupportedLanguage, LabelPair>>;
 }
 
 export interface CountryConfig {
   code: string;
   name: string;
+  /** Country name in supported languages (falls back to `name` for unlisted locales). */
+  nameI18n?: Partial<Record<SupportedLanguage, string>>;
   hierarchy: HierarchyLevel[];
 }
 
@@ -16,15 +33,20 @@ export interface CountryConfig {
  * Defines the strict hierarchy for each supported country.
  * The UI only allows adding children in this order.
  * The DB can store any structure, but the admin UI enforces these.
+ *
+ * Location type labels are translated for the country's native language only.
+ * A Finnish user sees Finland's hierarchy in Finnish but UK/US in English.
+ * See docs/locations-architecture.md § Localised Labels for the rationale.
  */
 export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {
     code: "FI",
     name: "Finland",
+    nameI18n: { fi: "Suomi" },
     hierarchy: [
-      { type: "region", label: "Region", pluralLabel: "Regions" },
-      { type: "municipality", label: "Municipality", pluralLabel: "Municipalities" },
-      { type: "site", label: "Site", pluralLabel: "Sites" },
+      { type: "region", label: "Region", pluralLabel: "Regions", i18n: { fi: { label: "Maakunta", pluralLabel: "Maakunnat" } } },
+      { type: "municipality", label: "Municipality", pluralLabel: "Municipalities", i18n: { fi: { label: "Kunta", pluralLabel: "Kunnat" } } },
+      { type: "site", label: "Site", pluralLabel: "Sites", i18n: { fi: { label: "Toimipiste", pluralLabel: "Toimipisteet" } } },
     ],
   },
   {
@@ -57,6 +79,15 @@ export function getCountryConfig(countryCode: string | null): CountryConfig | nu
   return countriesByCode.get(countryCode) ?? null;
 }
 
+/** Resolve the label/pluralLabel for a hierarchy level, respecting locale. */
+export function resolveLabels(level: HierarchyLevel, locale?: string): LabelPair {
+  if (locale && level.i18n) {
+    const localized = level.i18n[locale as SupportedLanguage];
+    if (localized) return localized;
+  }
+  return { label: level.label, pluralLabel: level.pluralLabel };
+}
+
 /**
  * Get the next child level for a given location type within a country's hierarchy.
  * Returns null if the type is at the bottom of the hierarchy (no children allowed).
@@ -83,16 +114,26 @@ export function getChildLevel(
  */
 export function getTypeLabel(
   countryCode: string | null,
-  type: LocationType
+  type: LocationType,
+  locale?: string,
 ): string {
   if (type === "country") return "Country";
 
   const config = getCountryConfig(countryCode);
   if (config) {
     const level = config.hierarchy.find((h) => h.type === type);
-    if (level) return level.label;
+    if (level) return resolveLabels(level, locale).label;
   }
 
   // Fallback: capitalize the type
   return type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+/** Get the country display name, respecting locale. */
+export function getCountryName(config: CountryConfig, locale?: string): string {
+  if (locale && config.nameI18n) {
+    const localized = config.nameI18n[locale as SupportedLanguage];
+    if (localized) return localized;
+  }
+  return config.name;
 }

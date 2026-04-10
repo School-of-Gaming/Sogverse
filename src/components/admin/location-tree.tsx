@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { ChevronRight, ChevronDown, Plus, Pencil } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { getChildLevel } from "@/lib/constants";
+import { getChildLevel, resolveLabels } from "@/lib/constants";
 import type { Location } from "@/types";
 
 export interface LocationNode extends Location {
@@ -42,6 +42,7 @@ export function buildLocationTree(locations: Location[]): LocationNode[] {
 interface LocationTreeNodeProps {
   node: LocationNode;
   depth: number;
+  locale: string;
   onAdd: (parent: Location) => void;
   onEdit: (location: Location) => void;
   searchQuery: string;
@@ -50,6 +51,7 @@ interface LocationTreeNodeProps {
 function LocationTreeNode({
   node,
   depth,
+  locale,
   onAdd,
   onEdit,
   searchQuery,
@@ -57,6 +59,7 @@ function LocationTreeNode({
   const [expanded, setExpanded] = useState(depth < 1 || !!searchQuery);
   const hasChildren = node.children.length > 0;
   const childLevel = getChildLevel(node.country_code, node.type);
+  const childLabels = childLevel ? resolveLabels(childLevel, locale) : null;
   const canAddChildren = childLevel !== null;
   const childCount = node.children.length;
 
@@ -88,9 +91,9 @@ function LocationTreeNode({
 
         <span className="font-medium">{node.name}</span>
 
-        {childLevel && childCount > 0 && (
+        {childLabels && childCount > 0 && (
           <span className="text-xs text-muted-foreground">
-            {childCount} {childCount === 1 ? childLevel.label.toLowerCase() : childLevel.pluralLabel.toLowerCase()}
+            {childCount} {childCount === 1 ? childLabels.label.toLowerCase() : childLabels.pluralLabel.toLowerCase()}
           </span>
         )}
 
@@ -101,7 +104,7 @@ function LocationTreeNode({
               size="icon"
               className="h-7 w-7"
               onClick={() => onAdd(node)}
-              title={`Add ${childLevel.label} under ${node.name}`}
+              title={`Add ${childLabels!.label} under ${node.name}`}
             >
               <Plus className="h-3.5 w-3.5" />
             </Button>
@@ -127,6 +130,7 @@ function LocationTreeNode({
               key={child.id}
               node={child}
               depth={depth + 1}
+              locale={locale}
               onAdd={onAdd}
               onEdit={onEdit}
               searchQuery={searchQuery}
@@ -147,6 +151,7 @@ interface LocationTreeProps {
 
 export function LocationTree({ nodes, onAdd, onEdit, searchQuery }: LocationTreeProps) {
   const t = useTranslations("admin.locations");
+  const locale = useLocale();
   if (nodes.length === 0) {
     return (
       <div className="py-8 text-center text-muted-foreground">
@@ -164,6 +169,7 @@ export function LocationTree({ nodes, onAdd, onEdit, searchQuery }: LocationTree
           key={node.id}
           node={node}
           depth={0}
+          locale={locale}
           onAdd={onAdd}
           onEdit={onEdit}
           searchQuery={searchQuery}
