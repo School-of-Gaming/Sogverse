@@ -23,8 +23,8 @@ const valueIcons = [Sparkles, Heart, Shield, Users];
 const valueKeys = ["playIsEssential", "friendsCarry", "keepChildrenSafe", "familyInTheLoop"] as const;
 
 const easterEggRows = [
-  "brandName", "delete", "deleting", "close", "cancel", "getStarted", "password",
-  "error", "english", "ok", "sorg", "copyright", "learnMore",
+  "brandName", "tagline", "delete", "deleting", "close", "cancel", "getStarted",
+  "password", "error", "english", "ok", "sorg", "copyright", "learnMore",
 ] as const;
 
 export default function AboutPage() {

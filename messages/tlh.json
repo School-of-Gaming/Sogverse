@@ -28,7 +28,7 @@
   },
   "common": {
     "appName": "Sogverse",
-    "tagline": "toy'wI' ghom",
+    "tagline": "noH Quj yejHaD",
     "loading": "loS...",
     "saving": "vISaH...",
     "sending": "vIlI'...",
@@ -146,6 +146,9 @@
       "brandNameLabel": "School of Gaming",
       "brandNameValue": "noH Quj yejHaD",
       "brandNameMeaning": "War Game Academy — because to a Klingon, all games are battle training",
+      "taglineLabel": "Where screen time becomes quality time",
+      "taglineValue": "naDev Quj yay' moj",
+      "taglineMeaning": "Here, games become victory",
       "deleteLabel": "Delete",
       "deleteValue": "yIHoH",
       "deleteMeaning": "Kill it!",
@@ -774,7 +777,7 @@
         "description": "Gedu'pu' — toy'wI'pu' chaH. bIH Sovchu' puqpu' pong je jupwI' chenmoHlu' HablI' je moQ. Hoch poH chaH bIH ghoStaH."
       },
       "screenTime": {
-        "title": "Daq tIv moj Qap tIv",
+        "title": "naDev Quj yay' moj",
         "description": "ghom'a'mey tIv chenmoH — puqpu' laHmey boqmoH je tIvqu'."
       },
       "newFriends": {
