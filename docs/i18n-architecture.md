@@ -148,3 +148,38 @@ Stripe product names and descriptions are fetched from the Stripe API in English
 ### Hardcoded metadata descriptions
 
 Page titles in `generateMetadata()` are translated, but `description` and `openGraph` fields remain hardcoded English across ~17 pages. These affect search results and social card previews for non-English users.
+
+### Locale-in-URL routing with translated slugs
+
+The current approach resolves language from cookies/headers with no locale signal in the URL. This works for the logged-in app experience but has limitations for SEO, social sharing, and the overall "native language" feel. The recommended next step is **locale-prefix routing with translated slugs** — the industry standard approach that next-intl's routing system is designed around.
+
+**Architecture:** Each language gets its own URL namespace with translated path segments:
+
+| Route | English | Finnish | Swedish |
+|-------|---------|---------|---------|
+| About | `/en/about` | `/fi/tietoa` | `/sv/om-oss` |
+| Clubs | `/en/clubs` | `/fi/kerhot` | `/sv/klubbar` |
+| Login | `/en/login` | `/fi/kirjaudu` | `/sv/logga-in` |
+| Admin Products | `/en/admin/products` | `/fi/admin/tuotteet` | `/sv/admin/produkter` |
+
+Bare paths (e.g. `/about`) redirect to the user's preferred locale version based on cookie/profile/Accept-Language, same resolution order as today.
+
+**What this enables:**
+- **Locale-specific OG images and metadata** — `generateMetadata()` knows the language from the route params, so social previews (Facebook, Slack, Discord) render in the correct language. OG crawlers don't send cookies, so this is impossible with cookie-only resolution.
+- **hreflang tags** — Each page declares its alternate-language URLs, letting search engines serve the right version to each user.
+- **Per-language sitemap** — One entry per language per page for proper indexing.
+- **Correct sharing behavior** — A Finnish user shares `/fi/tietoa`, the recipient sees Finnish content and Finnish social preview regardless of their own language setting.
+- **URL always matches content** — No mismatch between URL language and displayed language.
+
+**Scope:** All routes — public, auth, and dashboard. Brand-name slugs (`/sorg`, `/yty`) may stay untranslated if they're proper nouns.
+
+**Implementation approach:**
+1. Define a slug translation map (`src/lib/constants/slugs.ts`) mapping internal route keys to per-locale path segments.
+2. Adopt next-intl's built-in routing (`defineRouting()` with `pathnames` config) which handles locale prefix extraction, rewriting, and link generation.
+3. Add a `[locale]` dynamic segment to the app directory layout (next-intl's standard pattern). The existing `proxy.ts` handles the redirect from bare paths to prefixed paths.
+4. Replace `ROUTES` with a locale-aware version (e.g. `localizedRoutes(locale)`) so all existing `href={ROUTES.x}` usages propagate automatically. The centralized `ROUTES` object already covers ~148 references across 46 files, so this change is contained.
+5. Update `generateMetadata()` across pages to include `alternates.languages` (hreflang) and locale-specific OG images/descriptions.
+6. Add a localized sitemap generator.
+7. Language switcher changes the URL prefix + slug instead of just setting a cookie.
+
+**Migration notes:** The cookie/profile system remains as the redirect hint for bare paths and as the persistence layer. The URL becomes the source of truth for the current request's language; the cookie determines where to redirect when no locale prefix is present.
