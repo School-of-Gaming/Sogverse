@@ -1,7 +1,7 @@
 {
   "metadata": {
     "title": "Sogverse \u2013 School of Gaming",
-    "description": "N\u00e4r sk\u00e4rmtid blir kvalitetstid \u2013 Minecraft-klubbar ledda av professionella spelutbildare.",
+    "description": "N\u00e4r sk\u00e4rmtid blir kvalitetstid \u2013 Minecraft-klubbar ledda av professionella spelfostrare.",
     "shortDescription": "School of Gaming \u2013 N\u00e4r sk\u00e4rmtid blir kvalitetstid",
     "pages": {
       "signIn": "Logga in",
@@ -90,7 +90,7 @@
   "about": {
     "hero": {
       "title": "Om <primary>School of Gaming</primary>",
-      "subtitle": "I våra Minecraft-klubbar blir skärmtid kvalitetstid. Vi sammanför barn, professionella spelutbildare och spelet som barnen redan älskar — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
+      "subtitle": "I våra Minecraft-klubbar blir skärmtid kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelet som barnen redan älskar — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
     },
     "quote": {
       "text": "\"Det som är sant nu, var en gång bara din fantasi.\"",
@@ -98,7 +98,7 @@
     },
     "mission": {
       "heading": "Vårt uppdrag",
-      "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelutbildare som finns där för att vägleda och hjälpa."
+      "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelfostrare som finns där för att vägleda och hjälpa."
     },
     "values": {
       "heading": "Saker vi bryr oss om",
@@ -121,19 +121,19 @@
     },
     "howClubsWork": {
       "heading": "Så fungerar våra klubbar",
-      "paragraph1": "Varje vecka loggar våra spelare in och möts av sin egen spelutbildare — en Gedu. Gedun vägleder dem genom dagens tema och ger barnen utrymme och frihet att göra äventyren till sina egna.",
+      "paragraph1": "Varje vecka loggar våra spelare in och möts av sin egen spelfostrare — en Gedu. Gedun vägleder dem genom dagens tema och ger barnen utrymme och frihet att göra äventyren till sina egna.",
       "paragraph2": "Våra Gedus är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje session de leder.",
       "paragraph3": "Alla våra klubbar är byggda kring berättelser som ger utrymme för spelare att utforska, skapa och fantisera. Mellan veckovisa sessioner får spelarna roliga utmaningar att göra online och offline. Under lov arrangerar vi läger, och varje vecka finns det gemenskapsevent, turneringar och tävlingar.",
       "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller ute i verkligheten. Samma värderingar gäller överallt."
     },
     "forParents": {
       "heading": "För föräldrar",
-      "paragraph1": "Spelutbildning för föräldrar är en lika viktig del av det vi gör som själva klubbarna. Vi vill hjälpa föräldrar att hänga med i den ständigt föränderliga spelvärlden så att de kan stötta sina barn med tillförsikt.",
+      "paragraph1": "Spelfostran för föräldrar är en lika viktig del av det vi gör som själva klubbarna. Vi vill hjälpa föräldrar att hänga med i den ständigt föränderliga spelvärlden så att de kan stötta sina barn med tillförsikt.",
       "paragraph2": "Du har kontrollen — du hanterar konton, anmälningar och utgifter — medan ditt barn njuter av en trygg miljö ledd av professionella som bryr sig."
     },
     "cta": {
       "heading": "Gå med i vår gemenskap",
-      "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelutbildare."
+      "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelfostrare."
     },
     "contact": {
       "heading": "Kontakta oss",
@@ -231,7 +231,7 @@
       "monetaryValue": "Penningvärde",
       "adjusting": "Justerar...",
       "inviteNewGedu": "Bjud in ny Gedu",
-      "sendInvitation": "Skicka en inbjudan via e-post till en ny spelutbildare",
+      "sendInvitation": "Skicka en inbjudan via e-post till en ny spelfostrare",
       "newGeduInvitation": "Ny Gedu-inbjudan",
       "geduReceiveEmail": "Gedun kommer att få ett e-postmeddelande med instruktioner för att konfigurera sitt konto.",
       "emailAddress": "E-postadress",
@@ -323,7 +323,7 @@
       "networkError": "Nätverksfel",
       "geduGroups": "Gedu-grupper",
       "addGroup": "Lägg till grupp",
-      "noGroups": "Inga Gedu-grupper ännu. Lägg till en grupp för att tilldela en spelutbildare.",
+      "noGroups": "Inga Gedu-grupper ännu. Lägg till en grupp för att tilldela en spelfostrare.",
       "selectGeduForGroup": "Välj en Gedu för att skapa en ny grupp.",
       "group": "Grupp",
       "groupNumber": "Grupp {number}",
@@ -480,7 +480,7 @@
   "clubs": {
     "listing": {
       "heading": "Våra klubbar",
-      "subheading": "Utforska våra Minecraft-klubbar — varje klubb leds av en professionell spelutbildare.",
+      "subheading": "Utforska våra Minecraft-klubbar — varje klubb leds av en professionell spelfostrare.",
       "noClubs": "Inga klubbar tillgängliga",
       "checkBackSoon": "Kom tillbaka snart för nya klubbar!",
       "needHelp": "Behöver du hjälp att välja?",
@@ -718,7 +718,7 @@
   "home": {
     "hero": {
       "title": "Där<br></br><primary>skärmtid</primary><br></br>blir<br></br><secondary>kvalitetstid</secondary>",
-      "subtitle": "Våra skickligt utformade Minecraft-klubbar främjar hälsosamt spelande som hobby. Professionella spelutbildare i världsklass gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
+      "subtitle": "Våra skickligt utformade Minecraft-klubbar främjar hälsosamt spelande som hobby. Professionella spelfostrare i världsklass gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
       "viewClubs": "Visa klubbar"
     },
     "features": {
@@ -726,7 +726,7 @@
       "subheading": "Spelande är en hobby som alla andra — bättre med bra vänner och med en professionell handledare som finns där för att vägleda och hjälpa.",
       "minecraftClubs": {
         "title": "Minecraft-klubbar med Gedus",
-        "description": "Våra spelutbildare — Gedus — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje session leds av någon som verkligen förstår."
+        "description": "Våra spelfostrare — Gedus — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje session leds av någon som verkligen förstår."
       },
       "screenTime": {
         "title": "Skärmtid blir kvalitetstid",
@@ -738,7 +738,7 @@
       },
       "parents": {
         "title": "Föräldrar är med",
-        "description": "Spelutbildning för föräldrar är lika viktig som själva klubbarna. Vi håller dig informerad, involverad och rustad att stötta ditt barns spelresa."
+        "description": "Spelfostran för föräldrar är lika viktig som själva klubbarna. Vi håller dig informerad, involverad och rustad att stötta ditt barns spelresa."
       }
     },
     "howItWorks": {
@@ -759,7 +759,7 @@
     },
     "cta": {
       "heading": "Redo att förvandla spelande till lärande?",
-      "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelutbildare.",
+      "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelfostrare.",
       "createFreeAccount": "Skapa gratis konto"
     }
   },
