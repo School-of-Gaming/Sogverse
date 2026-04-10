@@ -10,11 +10,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { UserRow } from "@/components/admin/user-row";
 import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
-import { ROLE_BADGE_STYLES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import type { Profile, UserRole } from "@/types";
 
 export default function AdminUsersPage() {
   const t = useTranslations('admin.users');
+  const c = useTranslations('common');
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | null>(null);
   const { data: allUsers, isLoading: isLoadingAll } = useUsers();
@@ -22,9 +23,9 @@ export default function AdminUsersPage() {
   const { data: parentGamerLinks } = useParentGamerLinks();
 
   const ROLE_FILTERS: { value: UserRole; label: string }[] = [
-    { value: "admin", label: t('roleAdmin') },
-    { value: "customer", label: t('roleParent') },
-    { value: "gedu", label: t('roleGedu') },
+    { value: "admin", label: c(ROLE_LABEL_KEYS.admin as "roleAdmin") },
+    { value: "customer", label: c(ROLE_LABEL_KEYS.customer as "roleAdmin") },
+    { value: "gedu", label: c(ROLE_LABEL_KEYS.gedu as "roleAdmin") },
   ];
 
   const isSearchActive = searchQuery.length >= 2;
