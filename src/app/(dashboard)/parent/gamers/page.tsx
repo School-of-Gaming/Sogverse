@@ -96,7 +96,7 @@ export default function CustomerGamersPage() {
                     id={gamer.id}
                     displayName={gamer.display_name}
                     username={gamer.username}
-                    subtitle={t('gamers.joined', { time: format.relativeTime(new Date(gamer.created_at)) })}
+                    subtitle={t('gamers.joined', { time: format.relativeTime(new Date(gamer.created_at), new Date()) })}
                   />
                 </Link>
 
