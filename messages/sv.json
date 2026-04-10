@@ -1070,16 +1070,24 @@
       "heading": "Ytys fyra element",
       "subheading": "Varje element speglar en spelares relation till en del av sin värld",
       "harmony": {
-        "detail": "Vem är jag? Harmony handlar om att acceptera dig själv som du är — styrkor och svagheter. Det innebär att lära sig ta hand om sitt välmående, uttrycka sina känslor, fatta bra beslut och förstå varför regler och tillit är viktiga."
+        "name": "Harmoni",
+        "description": "Din relation till dig själv",
+        "detail": "Vem är jag? Harmoni handlar om att acceptera dig själv som du är — styrkor och svagheter. Det innebär att lära sig ta hand om sitt välmående, uttrycka sina känslor, fatta bra beslut och förstå varför regler och tillit är viktiga."
       },
       "glow": {
-        "detail": "Hur kan jag hjälpa andra? Glow handlar om empati, vänlighet och att bygga meningsfulla relationer. Det innebär att respektera olikheter, ge utrymme åt andra, kommunicera väl och vara den typen av person som lyfter andra."
+        "name": "Glöd",
+        "description": "Din relation till andra",
+        "detail": "Hur kan jag hjälpa andra? Glöd handlar om empati, vänlighet och att bygga meningsfulla relationer. Det innebär att respektera olikheter, ge utrymme åt andra, kommunicera väl och vara den typen av person som lyfter andra."
       },
       "valor": {
-        "detail": "Hur kan jag göra skillnad? Valor handlar om att hitta sin plats i världen och ha modet att bidra. Det innebär lagarbete, att uttrycka sina idéer, använda sin fantasi och arbeta mot en bättre framtid — lokalt och globalt."
+        "name": "Mod",
+        "description": "Din relation till världen",
+        "detail": "Hur kan jag göra skillnad? Mod handlar om att hitta sin plats i världen och ha modet att bidra. Det innebär lagarbete, att uttrycka sina idéer, använda sin fantasi och arbeta mot en bättre framtid — lokalt och globalt."
       },
       "wit": {
-        "detail": "Hur navigerar jag i den digitala världen? Wit handlar om en hälsosam, kritisk relation till spel, media och teknik. Det innebär att förstå onlinebeteende, tänka kritiskt om information och balansera skärmtid med resten av livet."
+        "name": "Vett",
+        "description": "Din relation till media och teknik",
+        "detail": "Hur navigerar jag i den digitala världen? Vett handlar om en hälsosam, kritisk relation till spel, media och teknik. Det innebär att förstå onlinebeteende, tänka kritiskt om information och balansera skärmtid med resten av livet."
       }
     },
     "earning": {

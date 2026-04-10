@@ -66,8 +66,8 @@ export default function YtyPage() {
                     <el.icon className={`h-6 w-6 ${el.color.accent}`} />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{el.name}</CardTitle>
-                    <p className={`text-sm ${el.color.accent}`}>{el.description}</p>
+                    <CardTitle className="text-lg">{t(`elements.${el.id}.name`)}</CardTitle>
+                    <p className={`text-sm ${el.color.accent}`}>{t(`elements.${el.id}.description`)}</p>
                   </div>
                 </div>
               </CardHeader>

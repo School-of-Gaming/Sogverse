@@ -15,6 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function GamerDashboardPage() {
   const t = useTranslations('gamer');
+  const yty = useTranslations('yty');
 
   return (
     <div className="space-y-6">
@@ -32,11 +33,11 @@ export default function GamerDashboardPage() {
           <Card key={el.id} className={`bg-gradient-to-br ${el.color.bgGradient}`}>
             <CardHeader className="text-center pb-2">
               <el.icon className={`mx-auto h-8 w-8 ${el.color.accent}`} />
-              <CardTitle className="text-base">{el.name}</CardTitle>
+              <CardTitle className="text-base">{yty(`elements.${el.id}.name`)}</CardTitle>
             </CardHeader>
             <CardContent className="text-center pt-0">
               <p className="text-3xl font-bold">0</p>
-              <p className="text-xs text-muted-foreground">{el.description}</p>
+              <p className="text-xs text-muted-foreground">{yty(`elements.${el.id}.description`)}</p>
             </CardContent>
           </Card>
         ))}

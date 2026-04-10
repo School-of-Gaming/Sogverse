@@ -1070,15 +1070,23 @@
       "heading": "The Four Elements of Yty",
       "subheading": "Each element reflects a gamer's relationship with a different part of their world",
       "harmony": {
+        "name": "Harmony",
+        "description": "Your relationship with yourself",
         "detail": "Who am I? Harmony is about accepting yourself as you are — strengths and weaknesses alike. It means learning to take care of your wellbeing, expressing your emotions, making good decisions, and understanding why rules and trust matter."
       },
       "glow": {
+        "name": "Glow",
+        "description": "Your relationship with others",
         "detail": "How can I help others? Glow is about empathy, kindness, and building meaningful relationships. It means respecting differences, giving space to others, communicating well, and being the kind of person who lifts people up."
       },
       "valor": {
+        "name": "Valor",
+        "description": "Your relationship with the world",
         "detail": "How can I make a difference? Valor is about finding your place in the world and having the courage to contribute. It means teamwork, expressing your ideas, using your imagination, and working towards a better future — locally and globally."
       },
       "wit": {
+        "name": "Wit",
+        "description": "Your relationship with media & tech",
         "detail": "How do I navigate the digital world? Wit is about a healthy, critical relationship with games, media, and technology. It means understanding online behaviour, thinking critically about information, and balancing screen time with the rest of life."
       }
     },

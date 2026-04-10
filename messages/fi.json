@@ -1070,16 +1070,24 @@
       "heading": "Yty:n neljä elementtiä",
       "subheading": "Jokainen elementti kuvastaa pelaajan suhdetta eri osa-alueeseen maailmastaan",
       "harmony": {
-        "detail": "Kuka minä olen? Harmony on itsensä hyväksymistä sellaisena kuin on — vahvuuksineen ja heikkouksineen. Se tarkoittaa hyvinvoinnista huolehtimista, tunteiden ilmaisemista, hyvien päätösten tekemistä ja sen ymmärtämistä, miksi säännöt ja luottamus ovat tärkeitä."
+        "name": "Harmonia",
+        "description": "Suhteesi itseesi",
+        "detail": "Kuka minä olen? Harmonia on itsensä hyväksymistä sellaisena kuin on — vahvuuksineen ja heikkouksineen. Se tarkoittaa hyvinvoinnista huolehtimista, tunteiden ilmaisemista, hyvien päätösten tekemistä ja sen ymmärtämistä, miksi säännöt ja luottamus ovat tärkeitä."
       },
       "glow": {
-        "detail": "Miten voin auttaa muita? Glow on empatiaa, ystävällisyyttä ja merkityksellisten ihmissuhteiden rakentamista. Se tarkoittaa erilaisuuden kunnioittamista, tilan antamista muille, hyvää viestintää ja sellaisen ihmisen olemista, joka nostaa muita ylös."
+        "name": "Hehku",
+        "description": "Suhteesi muihin",
+        "detail": "Miten voin auttaa muita? Hehku on empatiaa, ystävällisyyttä ja merkityksellisten ihmissuhteiden rakentamista. Se tarkoittaa erilaisuuden kunnioittamista, tilan antamista muille, hyvää viestintää ja sellaisen ihmisen olemista, joka nostaa muita ylös."
       },
       "valor": {
-        "detail": "Miten voin tehdä vaikutuksen? Valor on oman paikkansa löytämistä maailmassa ja rohkeutta osallistua. Se tarkoittaa tiimityötä, omien ideoiden ilmaisemista, mielikuvituksen käyttöä ja työskentelyä paremman tulevaisuuden puolesta — paikallisesti ja maailmanlaajuisesti."
+        "name": "Kantti",
+        "description": "Suhteesi maailmaan",
+        "detail": "Miten voin tehdä vaikutuksen? Kantti on oman paikkansa löytämistä maailmassa ja rohkeutta osallistua. Se tarkoittaa tiimityötä, omien ideoiden ilmaisemista, mielikuvituksen käyttöä ja työskentelyä paremman tulevaisuuden puolesta — paikallisesti ja maailmanlaajuisesti."
       },
       "wit": {
-        "detail": "Miten navigoin digitaalisessa maailmassa? Wit on terve ja kriittinen suhde peleihin, mediaan ja teknologiaan. Se tarkoittaa verkkokäyttäytymisen ymmärtämistä, kriittistä ajattelua tiedosta ja ruutuajan tasapainottamista muun elämän kanssa."
+        "name": "Arkijärki",
+        "description": "Suhteesi mediaan ja teknologiaan",
+        "detail": "Miten navigoin digitaalisessa maailmassa? Arkijärki on terve ja kriittinen suhde peleihin, mediaan ja teknologiaan. Se tarkoittaa verkkokäyttäytymisen ymmärtämistä, kriittistä ajattelua tiedosta ja ruutuajan tasapainottamista muun elämän kanssa."
       }
     },
     "earning": {
