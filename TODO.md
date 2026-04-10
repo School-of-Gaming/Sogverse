@@ -58,6 +58,17 @@ The send route (`src/app/api/admin/whatsapp/send/route.ts`) and webhook handler 
 - [ ] Extract `extractMessageContent()` and error-code mapping from the webhook into `src/lib/whatsapp.ts`
 - [ ] Update both route handlers to delegate persistence to the service
 
+### Translate Stripe Product Names & Descriptions
+
+Stripe product names (e.g., "Starter Pack") and descriptions are pulled from the Stripe API in English. They need locale-aware rendering.
+
+**Recommended approach:** Add `name_fi`, `name_sv`, `description_fi`, `description_sv` to each Stripe product's metadata in the Stripe dashboard (same pattern as `tokenAmount`). Extend `getStripeProducts()` to read these into a `nameI18n`/`descriptionI18n` map on `StripePackage`, and pick the right one based on the user's locale in the component.
+
+- [ ] Add translated metadata fields to Stripe products in the dashboard
+- [ ] Extend `StripePackage` type with `nameI18n` and `descriptionI18n`
+- [ ] Read `name_{locale}` / `description_{locale}` metadata in `getStripeProducts()`
+- [ ] Resolve localised name/description in `token-purchase-section.tsx` using `useLocale()`
+
 ### Multi-Parent Gamer Linking
 
 Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`. To support a second parent linking to an existing gamer:
