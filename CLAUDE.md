@@ -121,6 +121,7 @@ See `docs/sorg-token-architecture.md` for the full architecture, component map, 
 ### Other Docs
 
 - `docs/email-architecture.md` — Brevo integration, email templates, notifications, deliverability/DNS, and testing UI
+- `docs/i18n-architecture.md` — next-intl setup, locale resolution, translation patterns, adding languages/namespaces
 - `docs/SECURITY_REPORT.md` — Past security audit findings and remediations
 
 ## Environment Variables
