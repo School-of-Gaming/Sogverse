@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Heart, Shield, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "About Us",
-  description: "School of Gaming — where screen time becomes quality time through Minecraft clubs led by professional game educators.",
-  openGraph: {
-    title: "About Sogverse",
-    description: "Learn about Sogverse and our mission to make screen time quality time through Minecraft clubs led by professional game educators.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return {
+    title: t("about"),
+    description: "School of Gaming — where screen time becomes quality time through Minecraft clubs led by professional game educators.",
+    openGraph: {
+      title: "About Sogverse",
+      description: "Learn about Sogverse and our mission to make screen time quality time through Minecraft clubs led by professional game educators.",
+    },
+  };
+}
 
 const valueIcons = [Sparkles, Heart, Shield, Users];
 const valueKeys = ["playIsEssential", "friendsCarry", "keepChildrenSafe", "familyInTheLoop"] as const;

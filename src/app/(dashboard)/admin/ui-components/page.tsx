@@ -50,6 +50,7 @@ import { LoungeCard } from "@/components/ui/lounge-card";
 import { GroupCard } from "@/components/ui/group-card";
 import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth } from "@/providers";
+import { useLocale } from "next-intl";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { TokenPurchaseSection } from "@/components/tokens";
@@ -510,7 +511,7 @@ const DEMO_GROUPS = [
 
 /** Defers time-dependent values to after mount so SSR and client render match. */
 function GroupCardDemo() {
-  const { locale } = useCurrency();
+  const locale = useLocale();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -556,7 +557,8 @@ function GroupCardDemo() {
 }
 
 function ProductRowDemo() {
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { tokensToCurrencyDisplay } = useTokenRates();
   return (
     <div className="space-y-2">

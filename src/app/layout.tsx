@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { Inter, Press_Start_2P } from "next/font/google";
-import { getLocale, getMessages } from "next-intl/server";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { Header } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
@@ -20,27 +20,32 @@ const pressStart2P = Press_Start_2P({
   variable: "--font-press-start-2p",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
-  title: {
-    default: "Sogverse - School of Gaming",
-    template: "%s | Sogverse",
-  },
-  description:
-    "School of Gaming - Where screen time becomes quality time",
-  keywords: ["gaming", "education", "learning", "kids", "games"],
-  openGraph: {
-    type: "website",
-    siteName: "Sogverse",
-    title: "Sogverse - School of Gaming",
-    description: "Where screen time becomes quality time through Minecraft clubs led by professional game educators.",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Sogverse - School of Gaming",
-    description: "Where screen time becomes quality time through Minecraft clubs led by professional game educators.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata");
+  const title = t("title");
+  const description = t("description");
+
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL!),
+    title: {
+      default: title,
+      template: "%s | Sogverse",
+    },
+    description: t("shortDescription"),
+    keywords: ["gaming", "education", "learning", "kids", "games"],
+    openGraph: {
+      type: "website",
+      siteName: "Sogverse",
+      title,
+      description,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,

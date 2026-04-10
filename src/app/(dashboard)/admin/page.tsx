@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, Package, TrendingUp, DollarSign } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "Admin Dashboard",
-  description: "Manage users, products, and system settings",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return { title: t("adminDashboard"), description: "Manage users, products, and system settings" };
+}
 
 export default function AdminDashboardPage() {
   const t = useTranslations('admin.dashboard');

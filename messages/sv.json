@@ -1,4 +1,31 @@
 {
+  "metadata": {
+    "title": "Sogverse \u2013 School of Gaming",
+    "description": "N\u00e4r sk\u00e4rmtid blir kvalitetstid \u2013 Minecraft-klubbar ledda av professionella spelutbildare.",
+    "shortDescription": "School of Gaming \u2013 N\u00e4r sk\u00e4rmtid blir kvalitetstid",
+    "pages": {
+      "signIn": "Logga in",
+      "createAccount": "Skapa konto",
+      "forgotPassword": "Gl\u00f6mt l\u00f6senord",
+      "resetPassword": "\u00c5terst\u00e4ll l\u00f6senord",
+      "setupAccount": "Konfigurera ditt konto",
+      "about": "Om oss",
+      "sorg": "Sorg \u2013 Sogversens valuta",
+      "yty": "Yty \u2013 Sogversens kraft",
+      "minecraftApi": "Minecraft Server API",
+      "adminDashboard": "Administrat\u00f6rspanel",
+      "adminGroups": "Grupper",
+      "adminGroupDetails": "Gruppdetaljer",
+      "parentDashboard": "F\u00f6r\u00e4ldrapanel",
+      "geduDashboard": "Utbildarpanel",
+      "geduGroups": "Grupper",
+      "geduGroupDetails": "Gruppdetaljer",
+      "gamerHome": "Spelarens startsida",
+      "gamerGroups": "Mina grupper",
+      "gamerGroupDetails": "Gruppdetaljer",
+      "voiceSession": "R\u00f6stsession"
+    }
+  },
   "common": {
     "appName": "Sogverse",
     "tagline": "School of Gaming",
@@ -516,7 +543,7 @@
         "note2": "Sessionsfönstret öppnas 5 minuter före schemalagd start och stängs 5 minuter efter schemalagt slut.",
         "note3": "När <code1>allowed: true</code1>, använd <code2>endTime</code2> för att schemalägga en ny kontroll eller kick. Om det finns sessioner rygg i rygg (t.ex. en slutar 14:00, nästa börjar 14:05) kickas spelaren vid den första sessionens slut och ansluter igen för nästa.",
         "note4": "En <code>404</code> betyder att spelaren inte har kopplat sitt Minecraft-konto i Sogverse ännu. Du kan visa ett meddelande om att koppla sitt konto i profilinställningarna.",
-        "note5": "Alla felsvar följer formatet <code>{ \"error\": \"message\" }</code>."
+        "note5": "Alla felsvar följer formatet <code>'{ \"error\": \"message\" }'</code>."
       }
     }
   },

@@ -3,7 +3,7 @@
 import { useParams, usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { ArrowLeft, Calendar, Clock, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +26,8 @@ export default function ProductDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
   const { data: product, isLoading } = useProduct(id);
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { tokensToCurrencyDisplay } = useTokenRates();
   const { user, profile } = useAuth();
   const pathname = usePathname();

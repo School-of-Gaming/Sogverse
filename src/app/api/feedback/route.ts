@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       userRole: role,
       userEmail: replyToEmail || userEmail,
       message: parsed.data.message,
-      sentAt: new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+      sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
       isGamer,
       parentEmail,
     });

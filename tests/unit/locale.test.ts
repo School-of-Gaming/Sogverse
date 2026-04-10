@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseAcceptLanguage, DEFAULT_LOCALE } from "@/lib/locale";
+import { parseAcceptLanguage } from "@/lib/locale";
 
 describe("parseAcceptLanguage", () => {
   it("returns null for null input", () => {
@@ -39,8 +39,3 @@ describe("parseAcceptLanguage", () => {
   });
 });
 
-describe("DEFAULT_LOCALE", () => {
-  it("is en-US", () => {
-    expect(DEFAULT_LOCALE).toBe("en-US");
-  });
-});

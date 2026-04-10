@@ -3,7 +3,7 @@
 import { use, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import Image from "next/image";
 import {
@@ -40,7 +40,8 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
   const { data: groups = [] } = useProductGroups(id);
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { tokensToCurrencyDisplay } = useTokenRates();
   const toggleVisibility = useToggleProductVisibility();
   const deleteProduct = useDeleteProduct();

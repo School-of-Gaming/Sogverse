@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Coins, AlertTriangle, Users } from "lucide-react";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -36,7 +36,8 @@ export default function AdminUserDetailPage() {
   const c = useTranslations('common');
   const params = useParams();
   const userId = params.id as string;
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { baseRates } = useTokenRates();
 
   const { data: profile, isLoading: profileLoading } = useProfile(userId);

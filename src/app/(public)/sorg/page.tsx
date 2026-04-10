@@ -21,15 +21,17 @@ import {
 import { TokenPurchaseSection } from "@/components/tokens";
 import { getStripeProducts } from "@/lib/stripe/products";
 
-export const metadata: Metadata = {
-  title: "Sorg - the Sogverse Currency",
-  description:
-    "Sorg is the currency that powers your child's club sessions in the Sogverse. Purchase tokens and pay per session with full flexibility.",
-  openGraph: {
-    title: "Sorg - the Sogverse Currency",
-    description: "Learn about Sorg, the virtual currency of the Sogverse. Purchase tokens and pay per session with full flexibility.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return {
+    title: t("sorg"),
+    description: "Sorg is the currency that powers your child's club sessions in the Sogverse. Purchase tokens and pay per session with full flexibility.",
+    openGraph: {
+      title: "Sorg - the Sogverse Currency",
+      description: "Learn about Sorg, the virtual currency of the Sogverse. Purchase tokens and pay per session with full flexibility.",
+    },
+  };
+}
 
 const benefitIcons = [CalendarCheck, Wallet, RefreshCw, ShieldCheck];
 const benefitKeys = ["payPerSession", "fullTransparency", "flexibleTopUps", "safeByDesign"] as const;

@@ -3,7 +3,7 @@
 import { useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -202,7 +202,8 @@ export function TokenPurchaseSection({
   const t = useTranslations('tokens');
   const c = useTranslations('common');
   const { user, profile } = useAuth();
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { baseRates } = useTokenRates();
   const isCustomer = profile?.role === "customer";
   const { data: subscription } = useSubscription(profile?.id ?? "", isCustomer);

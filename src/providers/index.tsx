@@ -38,7 +38,7 @@ export function Providers({
         <AuthProvider initialUser={initialUser} initialProfile={initialProfile}>
           <NextIntlClientProvider locale={initialLocale} messages={messages} timeZone={DEFAULT_TIMEZONE}>
             <LanguageProvider>
-              <CurrencyProvider initialLocale={initialLocale}>
+              <CurrencyProvider>
                 <TokenRateProvider baseRates={baseRates}>
                   {children}
                 </TokenRateProvider>

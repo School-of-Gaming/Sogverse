@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Coins, Gamepad2, ShoppingCart, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "Parent Dashboard",
-  description: "Manage your gamers and enrollments",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return { title: t("parentDashboard"), description: "Manage your gamers and enrollments" };
+}
 
 const quickActionIcons = [Gamepad2, Coins, ShoppingCart, Settings] as const;
 const quickActionHrefs = [

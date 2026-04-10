@@ -7,11 +7,11 @@ export const DEFAULT_CURRENCY: SupportedCurrency = "eur";
 
 export const CURRENCY_CONFIG: Record<
   SupportedCurrency,
-  { symbol: string; label: string; locale: string }
+  { symbol: string; label: string }
 > = {
-  usd: { symbol: "$", label: "USD", locale: "en-US" },
-  gbp: { symbol: "\u00A3", label: "GBP", locale: "en-GB" },
-  eur: { symbol: "\u20AC", label: "EUR", locale: "en-IE" },
+  usd: { symbol: "$", label: "USD" },
+  gbp: { symbol: "\u00A3", label: "GBP" },
+  eur: { symbol: "\u20AC", label: "EUR" },
 };
 
 /**

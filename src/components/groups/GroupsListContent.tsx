@@ -3,12 +3,11 @@
 import { useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Users } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { GroupCard } from "@/components/ui/group-card";
 import { LoungeCard } from "@/components/ui/lounge-card";
 import { formatScheduleLocal } from "@/lib/utils";
-import { useCurrency } from "@/hooks/use-currency";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
 export interface LoungeConfig {
@@ -41,7 +40,7 @@ export function GroupsListContent({
   detailRoute,
 }: GroupsListContentProps) {
   const t = useTranslations('groups');
-  const { locale } = useCurrency();
+  const locale = useLocale();
 
   return (
     <div className="space-y-6">
@@ -130,7 +129,6 @@ function GroupCardAdapter({
       schedule={schedule}
       voiceIsOpen={group.voiceIsOpen}
       voiceNextSessionStart={group.voiceNextSessionStart}
-      locale={locale}
       onJoinClick={handleJoinClick}
       detailHref={detailRoute(group.groupId)}
     />

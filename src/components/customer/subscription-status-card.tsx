@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, CreditCard } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -31,7 +31,8 @@ function formatPeriodDate(timestamp: number, locale: string) {
 export function SubscriptionStatusCard() {
   const t = useTranslations('tokens');
   const { profile } = useRequiredAuth();
-  const { currency: displayCurrency, locale } = useCurrency();
+  const { currency: displayCurrency } = useCurrency();
+  const locale = useLocale();
   const { data: subscription } = useSubscription(profile.id);
   const { data: details } = useSubscriptionDetails(profile.id);
   const cancelMutation = useCancelSubscription(profile.id);

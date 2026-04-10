@@ -2,15 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { ROUTES } from "@/lib/constants";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
-export const metadata: Metadata = {
-  title: "Gamer Home",
-  description: "Your gamer dashboard in the Sogverse",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return { title: t("gamerHome"), description: "Your gamer dashboard in the Sogverse" };
+}
 
 export default function GamerDashboardPage() {
   const t = useTranslations('gamer');

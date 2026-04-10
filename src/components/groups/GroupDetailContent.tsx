@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Coins, Loader2, Radio, Users } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -16,7 +16,6 @@ import { GroupVoiceStatus } from "@/components/ui/group-card";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { computeAge, formatScheduleLocal } from "@/lib/utils";
 import { getRefundEligibility } from "@/lib/enrollment";
-import { useCurrency } from "@/hooks/use-currency";
 import { UnenrollDialog } from "@/components/enrollment/unenroll-dialog";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
@@ -62,7 +61,7 @@ export function GroupDetailContent({
   const t = useTranslations('groups');
   const c = useTranslations('common');
   const router = useRouter();
-  const { locale } = useCurrency();
+  const locale = useLocale();
   const [unenrollRefund, setUnenrollRefund] = useState<{
     eligible: boolean;
     reason?: "within_window" | "session_past";
@@ -154,7 +153,6 @@ export function GroupDetailContent({
             <div className="mt-1">
               <GroupVoiceStatus
                 nextSessionStart={group.voiceNextSessionStart}
-                locale={locale}
               />
             </div>
             <p className="mt-1 text-sm text-muted-foreground">

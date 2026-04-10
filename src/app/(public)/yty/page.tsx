@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
-export const metadata: Metadata = {
-  title: "Yty - the Force of the Sogverse",
-  description:
-    "Yty is the magical force that maintains the balance of the Sogverse. Learn how gamers earn Yty by doing good things.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return {
+    title: t("yty"),
+    description: "Yty is the magical force that maintains the balance of the Sogverse. Learn how gamers earn Yty by doing good things.",
+  };
+}
 
 
 export default function YtyPage() {

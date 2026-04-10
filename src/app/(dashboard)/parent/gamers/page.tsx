@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Gamepad2 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale, useFormatter } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { GroupCard } from "@/components/ui/group-card";
@@ -12,8 +12,7 @@ import { GamerCard } from "@/components/customer/gamer-card";
 import { useMyGamers } from "@/services/gamers";
 import { useMyGroups } from "@/services/groups";
 import { useGroupsWithVoice } from "@/hooks/use-groups-page";
-import { formatRelativeTime, formatScheduleLocal } from "@/lib/utils";
-import { useCurrency } from "@/hooks/use-currency";
+import { formatScheduleLocal } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 
 export default function CustomerGamersPage() {
@@ -21,7 +20,8 @@ export default function CustomerGamersPage() {
   const c = useTranslations('common');
   const { data: gamers, isLoading: gamersLoading, error: gamersError } = useMyGamers();
   const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(useMyGroups());
-  const { locale } = useCurrency();
+  const locale = useLocale();
+  const format = useFormatter();
   const [switchTarget, setSwitchTarget] = useState<{
     gamerId: string;
     gamerDisplayName: string;
@@ -96,7 +96,7 @@ export default function CustomerGamersPage() {
                     id={gamer.id}
                     displayName={gamer.display_name}
                     username={gamer.username}
-                    subtitle={t('gamers.joined', { time: formatRelativeTime(gamer.created_at, locale) })}
+                    subtitle={t('gamers.joined', { time: format.relativeTime(new Date(gamer.created_at)) })}
                   />
                 </Link>
 
@@ -185,7 +185,6 @@ function GroupCardForCustomer({
       schedule={schedule}
       voiceIsOpen={group.voiceIsOpen}
       voiceNextSessionStart={group.voiceNextSessionStart}
-      locale={locale}
       onJoinClick={onJoinClick}
       detailHref={ROUTES.customer.group(group.groupId, gamerId)}
     />

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { VoiceSessionPage } from "@/components/voice/VoiceSessionPage";
 import { ROUTES } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "Voice Session",
-  description: "Join a voice session",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return { title: t("voiceSession"), description: "Join a voice session" };
+}
 
 export default async function GeduVoiceSessionPage({
   params,

@@ -1,4 +1,31 @@
 {
+  "metadata": {
+    "title": "Sogverse \u2013 School of Gaming",
+    "description": "Kun ruutuajasta tulee laatuaikaa \u2013 Minecraft-kerhoja ammattimaisten pelikasvattajien johdolla.",
+    "shortDescription": "School of Gaming \u2013 Kun ruutuajasta tulee laatuaikaa",
+    "pages": {
+      "signIn": "Kirjaudu sis\u00e4\u00e4n",
+      "createAccount": "Luo tili",
+      "forgotPassword": "Unohtuiko salasana",
+      "resetPassword": "Vaihda salasana",
+      "setupAccount": "Tilin k\u00e4ytt\u00f6\u00f6notto",
+      "about": "Tietoa meist\u00e4",
+      "sorg": "Sorg \u2013 Sogversen valuutta",
+      "yty": "Yty \u2013 Sogversen voima",
+      "minecraftApi": "Minecraft Server API",
+      "adminDashboard": "Yll\u00e4pidon hallintapaneeli",
+      "adminGroups": "Ryhm\u00e4t",
+      "adminGroupDetails": "Ryhm\u00e4n tiedot",
+      "parentDashboard": "Vanhemman hallintapaneeli",
+      "geduDashboard": "Kasvattajan hallintapaneeli",
+      "geduGroups": "Ryhm\u00e4t",
+      "geduGroupDetails": "Ryhm\u00e4n tiedot",
+      "gamerHome": "Pelaajan etusivu",
+      "gamerGroups": "Omat ryhm\u00e4t",
+      "gamerGroupDetails": "Ryhm\u00e4n tiedot",
+      "voiceSession": "\u00c4\u00e4ni-istunto"
+    }
+  },
   "common": {
     "appName": "Sogverse",
     "tagline": "School of Gaming",
@@ -516,7 +543,7 @@
         "note2": "Istuntoikkuna aukeaa 5 minuuttia ennen suunniteltua alkua ja sulkeutuu 5 minuuttia suunnitellun lopun jälkeen.",
         "note3": "Kun <code1>allowed: true</code1>, käytä <code2>endTime</code2>-arvoa ajoittaaksesi uudelleentarkistuksen tai poiston. Jos peräkkäisiä istuntoja on (esim. yksi päättyy 14:00, seuraava alkaa 14:05), pelaaja poistetaan ensimmäisen istunnon päättyessä ja liittyy uudelleen seuraavaan.",
         "note4": "<code>404</code> tarkoittaa, ettei pelaaja ole vielä linkittänyt Minecraft-tiliään Sogversessä. Voit näyttää viestin, joka kehottaa linkittämään tilin profiiliasetuksissa.",
-        "note5": "Kaikki virheresponssit noudattavat muotoa <code>{ \"error\": \"viesti\" }</code>."
+        "note5": "Kaikki virheresponssit noudattavat muotoa <code>'{ \"error\": \"viesti\" }'</code>."
       }
     }
   },

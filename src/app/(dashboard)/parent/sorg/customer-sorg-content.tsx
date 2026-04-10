@@ -1,12 +1,11 @@
 "use client";
 
 import { Coins } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TokenBalanceCard, SubscriptionStatusCard } from "@/components/customer";
 import { TokenPurchaseSection, TransactionHistoryTable } from "@/components/tokens";
 import { useAuth } from "@/providers";
-import { useCurrency } from "@/hooks/use-currency";
 import { useTokenTransactions } from "@/services/tokens";
 import type { StripePackage } from "@/types";
 
@@ -21,7 +20,7 @@ export function CustomerSorgContent({
 }: CustomerSorgContentProps) {
   const t = useTranslations('parent');
   const { profile } = useAuth();
-  const { locale } = useCurrency();
+  const locale = useLocale();
   const { data: transactions, isLoading } = useTokenTransactions(profile?.id ?? "");
 
   return (

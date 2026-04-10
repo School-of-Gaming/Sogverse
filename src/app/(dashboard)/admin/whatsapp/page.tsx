@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn, formatTime } from "@/lib/utils";
-import { format, isToday, isYesterday } from "date-fns";
+import { cn, formatTime, formatDate } from "@/lib/utils";
 import { getClient } from "@/lib/supabase/client";
 import {
   useWhatsAppContacts,
@@ -22,19 +21,21 @@ import {
   type WhatsAppMessage,
 } from "@/types";
 
-function formatChatDate(dateStr: string, todayLabel: string, yesterdayLabel: string) {
+function formatChatDate(dateStr: string, todayLabel: string, yesterdayLabel: string, locale: string) {
   const date = new Date(dateStr);
-  if (isToday(date)) return todayLabel;
-  if (isYesterday(date)) return yesterdayLabel;
-  return format(date, "PP");
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) return todayLabel;
+  const yesterday = new Date(Date.now() - 86_400_000);
+  if (date.toDateString() === yesterday.toDateString()) return yesterdayLabel;
+  return formatDate(date, locale);
 }
 
-function groupMessagesByDate(messages: WhatsAppMessage[], todayLabel: string, yesterdayLabel: string) {
+function groupMessagesByDate(messages: WhatsAppMessage[], todayLabel: string, yesterdayLabel: string, locale: string) {
   const groups: { date: string; messages: WhatsAppMessage[] }[] = [];
   let currentDate = "";
 
   for (const msg of messages) {
-    const date = formatChatDate(msg.created_at, todayLabel, yesterdayLabel);
+    const date = formatChatDate(msg.created_at, todayLabel, yesterdayLabel, locale);
     if (date !== currentDate) {
       currentDate = date;
       groups.push({ date, messages: [] });
@@ -83,6 +84,7 @@ function ContactList({
   onSearchChange: (q: string) => void;
 }) {
   const t = useTranslations('admin.whatsapp');
+  const locale = useLocale();
   const filtered = contacts.filter((c) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -125,7 +127,7 @@ function ContactList({
               </p>
             </div>
             <span className="shrink-0 text-xs text-muted-foreground">
-              {formatTime(contact.last_message_at)}
+              {formatTime(contact.last_message_at, locale)}
             </span>
           </button>
         ))}
@@ -156,6 +158,7 @@ function ChatThread({
   sendError: string | null;
 }) {
   const t = useTranslations('admin.whatsapp');
+  const locale = useLocale();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -176,7 +179,7 @@ function ChatThread({
     inputRef.current?.focus();
   }
 
-  const dateGroups = groupMessagesByDate(messages, t("today"), t("yesterday"));
+  const dateGroups = groupMessagesByDate(messages, t("today"), t("yesterday"), locale);
 
   return (
     <div className="flex h-full flex-col">
@@ -240,7 +243,7 @@ function ChatThread({
                               : "text-muted-foreground"
                       )}
                     >
-                      <span>{formatTime(msg.created_at)}</span>
+                      <span>{formatTime(msg.created_at, locale)}</span>
                       {msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status !== WHATSAPP_MESSAGE_STATUS.FAILED && (
                         <StatusIndicator status={msg.status} />
                       )}

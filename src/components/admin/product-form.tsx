@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { z } from "zod";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,7 +66,8 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const c = useTranslations('common');
   const { data: games, isLoading: gamesLoading } = useGames();
   const createGame = useCreateGame();
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { tokensToCurrencyDisplay } = useTokenRates();
   const validationKeys = [
     "nameRequired", "nameMaxLength", "descriptionRequired", "sorgCostNumber",

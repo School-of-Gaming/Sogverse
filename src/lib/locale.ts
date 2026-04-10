@@ -1,5 +1,3 @@
-export const DEFAULT_LOCALE = "en-US";
-
 /**
  * Extract the highest-priority locale from an Accept-Language header.
  *

@@ -54,12 +54,11 @@ function resolveInitialCurrency(profileCurrency: string | null | undefined): Sup
 interface CurrencyContextType {
   currency: SupportedCurrency;
   setCurrency: (currency: SupportedCurrency) => void;
-  locale: string;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
-export function CurrencyProvider({ children, initialLocale }: { children: ReactNode; initialLocale: string }) {
+export function CurrencyProvider({ children }: { children: ReactNode }) {
   const { profile, user, refreshProfile } = useAuth();
   // Start with DEFAULT_CURRENCY to match SSR (cookies/navigator aren't
   // available server-side). Synced to the real value after hydration.
@@ -124,7 +123,7 @@ export function CurrencyProvider({ children, initialLocale }: { children: ReactN
   );
 
   return (
-    <CurrencyContext.Provider value={{ currency: derivedCurrency, setCurrency, locale: initialLocale }}>
+    <CurrencyContext.Provider value={{ currency: derivedCurrency, setCurrency }}>
       {children}
     </CurrencyContext.Provider>
   );

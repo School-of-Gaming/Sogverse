@@ -127,21 +127,23 @@ export function getRefundEligibility(opts: {
  * - 2–23 hours → "5 hours"
  * - 1–2 hours → "1 hour and 30 minutes"
  * - <1 hour → "45 minutes"
- *
- * TODO: i18n Phase 3 — replace with next-intl useFormatter().relativeTime()
- * or ICU plural keys so the time units are translated.
  */
-export function formatCountdown(ms: number): string {
+export function formatCountdown(ms: number, locale: string): string {
   const totalMinutes = Math.max(0, Math.floor(ms / 60_000));
   const days = Math.floor(totalMinutes / 1440);
   const hours = Math.floor((totalMinutes % 1440) / 60);
   const mins = totalMinutes % 60;
 
-  if (days > 0) return `${days} ${days === 1 ? "day" : "days"}`;
-  if (totalMinutes < 60) return `${totalMinutes} ${totalMinutes === 1 ? "minute" : "minutes"}`;
-  if (totalMinutes < 120)
-    return `${hours} hour${mins > 0 ? ` and ${mins} ${mins === 1 ? "minute" : "minutes"}` : ""}`;
-  return `${hours} ${hours === 1 ? "hour" : "hours"}`;
+  const fmtUnit = (value: number, unit: "day" | "hour" | "minute") =>
+    new Intl.NumberFormat(locale, { style: "unit", unit, unitDisplay: "long" }).format(value);
+
+  if (days > 0) return fmtUnit(days, "day");
+  if (totalMinutes < 60) return fmtUnit(totalMinutes, "minute");
+  if (totalMinutes < 120) {
+    const hourStr = fmtUnit(hours, "hour");
+    return mins > 0 ? `${hourStr} ${fmtUnit(mins, "minute")}` : hourStr;
+  }
+  return fmtUnit(hours, "hour");
 }
 
 // ---------------------------------------------------------------------------

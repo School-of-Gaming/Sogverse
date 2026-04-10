@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const metadata: Metadata = {
-  title: "Minecraft Server API",
-  description: "API documentation for the Sogverse Minecraft server join-check endpoint.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return {
+    title: t("minecraftApi"),
+    description: "API documentation for the Sogverse Minecraft server join-check endpoint.",
+    robots: { index: false, follow: false },
+  };
+}
 
 function Code({ children }: { children: React.ReactNode }) {
   return (

@@ -1,4 +1,31 @@
 {
+  "metadata": {
+    "title": "Sogverse \u2013 School of Gaming",
+    "description": "Where screen time becomes quality time through Minecraft clubs led by professional game educators.",
+    "shortDescription": "School of Gaming \u2013 Where screen time becomes quality time",
+    "pages": {
+      "signIn": "Sign In",
+      "createAccount": "Create Account",
+      "forgotPassword": "Forgot Password",
+      "resetPassword": "Reset Password",
+      "setupAccount": "Set Up Your Account",
+      "about": "About Us",
+      "sorg": "Sorg \u2013 the Sogverse Currency",
+      "yty": "Yty \u2013 the Force of the Sogverse",
+      "minecraftApi": "Minecraft Server API",
+      "adminDashboard": "Admin Dashboard",
+      "adminGroups": "Groups",
+      "adminGroupDetails": "Group Details",
+      "parentDashboard": "Parent Dashboard",
+      "geduDashboard": "Educator Dashboard",
+      "geduGroups": "Groups",
+      "geduGroupDetails": "Group Details",
+      "gamerHome": "Gamer Home",
+      "gamerGroups": "My Groups",
+      "gamerGroupDetails": "Group Details",
+      "voiceSession": "Voice Session"
+    }
+  },
   "common": {
     "appName": "Sogverse",
     "tagline": "School of Gaming",
@@ -516,7 +543,7 @@
         "note2": "The session window opens 5 minutes before the scheduled start and closes 5 minutes after the scheduled end.",
         "note3": "When <code1>allowed: true</code1>, use <code2>endTime</code2> to schedule a re-check or kick. If back-to-back sessions exist (e.g. one ends 14:00, next starts 14:05), the player gets kicked at the first session's end and rejoins for the next.",
         "note4": "A <code>404</code> means the player hasn't linked their Minecraft account in Sogverse yet. You can show them a message to link their account in their profile settings.",
-        "note5": "All error responses follow the shape <code>{ \"error\": \"message\" }</code>."
+        "note5": "All error responses follow the shape <code>'{ \"error\": \"message\" }'</code>."
       }
     }
   },
