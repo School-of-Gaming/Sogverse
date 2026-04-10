@@ -21,7 +21,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
-import { ROUTES } from "@/lib/constants";
+import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
 interface NavItemDef {
@@ -64,17 +64,11 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
   ],
 };
 
-const ROLE_LABEL_KEYS: Record<UserRole, string> = {
-  admin: "roleAdmin",
-  customer: "roleParent",
-  gamer: "roleGamer",
-  gedu: "roleGedu",
-};
-
 export function Sidebar() {
   const pathname = usePathname();
   const { profile } = useAuth();
   const t = useTranslations('sidebar');
+  const c = useTranslations('common');
   const [collapsed, setCollapsed] = useState(false);
 
   if (!profile?.role) return null;
@@ -149,7 +143,7 @@ export function Sidebar() {
             {profile.display_name}
           </p>
           <p className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
-            {t(ROLE_LABEL_KEYS[profile.role] as "roleAdmin")}
+            {c(ROLE_LABEL_KEYS[profile.role] as "roleAdmin")}
           </p>
         </div>
       </div>

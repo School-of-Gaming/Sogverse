@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { UserRow } from "@/components/admin/user-row";
 import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
-import { ROLE_BADGES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES } from "@/lib/constants";
 import type { Profile, UserRole } from "@/types";
 
 export default function AdminUsersPage() {
@@ -144,7 +144,7 @@ export default function AdminUsersPage() {
                 onClick={() => setRoleFilter(roleFilter === rf.value ? null : rf.value)}
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   roleFilter === rf.value
-                    ? ROLE_BADGES[rf.value].className
+                    ? ROLE_BADGE_STYLES[rf.value]
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
                 }`}
               >

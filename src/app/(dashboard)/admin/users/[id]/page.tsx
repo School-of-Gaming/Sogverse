@@ -26,7 +26,7 @@ import { useProfile } from "@/services/users";
 import { useLinkedGamers, useLinkedParents } from "@/services/gamers";
 import { useTokenBalance, useTokenTransactions, useAdjustTokens } from "@/services/tokens";
 import { TransactionHistoryTable } from "@/components/tokens";
-import { ROLE_BADGES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
@@ -112,8 +112,8 @@ export default function AdminUserDetailPage() {
               </p>
             </div>
             <div className="mt-2 flex items-center gap-3">
-              <Badge className={ROLE_BADGES[profile.role].className}>
-                {ROLE_BADGES[profile.role].label}
+              <Badge className={ROLE_BADGE_STYLES[profile.role]}>
+                {c(ROLE_LABEL_KEYS[profile.role] as "roleAdmin")}
               </Badge>
               <span className="text-sm text-muted-foreground">
                 {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale) : t('unknown')}
@@ -155,8 +155,8 @@ export default function AdminUserDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={ROLE_BADGES.gamer.className}>
-                        {ROLE_BADGES.gamer.label}
+                      <Badge className={ROLE_BADGE_STYLES.gamer}>
+                        {c("roleGamer")}
                       </Badge>
                       <NavChevron size="sm" />
                     </div>
@@ -189,8 +189,8 @@ export default function AdminUserDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={ROLE_BADGES.customer.className}>
-                        {ROLE_BADGES.customer.label}
+                      <Badge className={ROLE_BADGE_STYLES.customer}>
+                        {c("roleParent")}
                       </Badge>
                       <NavChevron size="sm" />
                     </div>

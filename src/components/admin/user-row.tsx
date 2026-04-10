@@ -4,7 +4,7 @@ import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { ROLE_BADGES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
 interface UserRowUser {
@@ -24,6 +24,7 @@ interface UserRowProps {
 
 export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserRowProps) {
   const t = useTranslations('admin.users');
+  const c = useTranslations('common');
   return (
     <div className="rounded-lg border">
       <Link
@@ -44,8 +45,8 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className={ROLE_BADGES[user.role].className}>
-            {ROLE_BADGES[user.role].label}
+          <Badge className={ROLE_BADGE_STYLES[user.role]}>
+            {c(ROLE_LABEL_KEYS[user.role] as "roleAdmin")}
           </Badge>
           <NavChevron />
         </div>
@@ -74,8 +75,8 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge className={`${ROLE_BADGES.gamer.className} text-[10px] px-2 py-0`}>
-                  {ROLE_BADGES.gamer.label}
+                <Badge className={`${ROLE_BADGE_STYLES.gamer} text-[10px] px-2 py-0`}>
+                  {c("roleGamer")}
                 </Badge>
                 <NavChevron size="sm" />
               </div>

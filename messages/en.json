@@ -53,7 +53,11 @@
     "selectLanguage": "Select language",
     "languageEnglish": "English",
     "languageFinnish": "Finnish",
-    "languageSwedish": "Swedish"
+    "languageSwedish": "Swedish",
+    "roleAdmin": "Admin",
+    "roleParent": "Parent",
+    "roleGamer": "Gamer",
+    "roleGedu": "Gedu"
   },
   "about": {
     "hero": {
@@ -664,11 +668,7 @@
     "home": "Home",
     "myGroups": "My Groups",
     "expandSidebar": "Expand sidebar",
-    "collapseSidebar": "Collapse sidebar",
-    "roleAdmin": "Admin",
-    "roleParent": "Parent",
-    "roleGamer": "Gamer",
-    "roleGedu": "Gedu"
+    "collapseSidebar": "Collapse sidebar"
   },
   "home": {
     "hero": {

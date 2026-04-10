@@ -20,7 +20,7 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ROLE_BADGES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -883,8 +883,8 @@ export default function AdminUIComponentsPage() {
         </div>
         <p className="text-sm text-muted-foreground mt-4 mb-2">Role badges</p>
         <div className="flex flex-wrap items-center gap-3">
-          {Object.values(ROLE_BADGES).map(({ label, className }) => (
-            <Badge key={label} className={className}>{label}</Badge>
+          {(["Gamer", "Parent", "Gedu", "Admin"] as const).map((label, i) => (
+            <Badge key={label} className={Object.values(ROLE_BADGE_STYLES)[i]}>{label}</Badge>
           ))}
         </div>
 

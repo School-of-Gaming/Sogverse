@@ -11,7 +11,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { useTokenBalance } from "@/services/tokens";
 import { cn } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import { CurrencyPicker } from "@/components/layout/currency-picker";
 import { LanguagePicker } from "@/components/layout/language-picker";
 
@@ -135,8 +135,8 @@ export function Header() {
                       <p className="text-sm font-medium">
                         {profile?.display_name}
                       </p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {profile?.role}
+                      <p className="text-xs text-muted-foreground">
+                        {profile?.role ? c(ROLE_LABEL_KEYS[profile.role] as "roleAdmin") : null}
                       </p>
                     </div>
                     <Link
