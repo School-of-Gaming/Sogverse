@@ -1054,7 +1054,8 @@
     "turnOnCamera": "Käynnistä kamera",
     "cameraLockedByModerator": "Kamera lukittu moderaattorin toimesta",
     "shareScreen": "Jaa näyttö",
-    "stopScreenShare": "Lopeta näytön jakaminen"
+    "stopScreenShare": "Lopeta näytön jakaminen",
+    "broadcast": "Kuulutus"
   },
   "yty": {
     "hero": {

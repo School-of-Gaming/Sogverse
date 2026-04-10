@@ -1054,7 +1054,8 @@
     "turnOnCamera": "Turn on camera",
     "cameraLockedByModerator": "Camera locked by moderator",
     "shareScreen": "Share screen",
-    "stopScreenShare": "Stop screen share"
+    "stopScreenShare": "Stop screen share",
+    "broadcast": "Broadcast"
   },
   "yty": {
     "hero": {
