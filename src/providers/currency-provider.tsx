@@ -116,7 +116,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ currency: newCurrency }),
-        }).then(() => refreshProfile());
+        })
+          .then(() => refreshProfile())
+          .catch((err) => console.error("Failed to persist currency preference:", err));
       }
     },
     [user, refreshProfile]

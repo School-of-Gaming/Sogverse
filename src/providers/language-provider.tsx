@@ -123,7 +123,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ language: newLanguage }),
-        }).then(() => refreshProfile());
+        })
+          .then(() => refreshProfile())
+          .catch((err) => console.error("Failed to persist language preference:", err));
       }
 
       // Trigger server re-render to load new locale's messages
