@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
+  AudioLines,
   Package,
   Palette,
   Settings,
@@ -45,7 +46,7 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
     {
       href: ROUTES.admin.groups,
       label: "Groups",
-      icon: <Users className="h-5 w-5" />,
+      icon: <AudioLines className="h-5 w-5" />,
     },
     {
       href: ROUTES.admin.locations,
@@ -114,7 +115,7 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
     {
       href: ROUTES.gamer.groups,
       label: "My Groups",
-      icon: <Users className="h-5 w-5" />,
+      icon: <AudioLines className="h-5 w-5" />,
     },
     {
       href: ROUTES.feedback,
@@ -136,7 +137,7 @@ const navItemsByRole: Record<UserRole, NavItem[]> = {
     {
       href: ROUTES.gedu.groups,
       label: "Groups",
-      icon: <Users className="h-5 w-5" />,
+      icon: <AudioLines className="h-5 w-5" />,
     },
     {
       href: ROUTES.feedback,
