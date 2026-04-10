@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import flags from "react-phone-number-input/flags";
 import { useTranslations } from "next-intl";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import { useLanguagePreference } from "@/hooks/use-language-preference";
 import {
   SUPPORTED_LANGUAGES,
@@ -17,15 +18,7 @@ export function LanguagePicker({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useClickOutside(ref, () => setOpen(false));
 
   const config = LANGUAGE_CONFIG[language];
   const FlagIcon = flags[config.country as keyof typeof flags];

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import { useCurrency } from "@/hooks/use-currency";
 import {
   SUPPORTED_CURRENCIES,
@@ -16,15 +17,7 @@ export function CurrencyPicker({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useClickOutside(ref, () => setOpen(false));
 
   const config = CURRENCY_CONFIG[currency];
 
