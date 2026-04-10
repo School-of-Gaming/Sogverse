@@ -10,7 +10,7 @@
       "resetPassword": "mu'mey yIchoH",
       "setupAccount": "Account yIchel",
       "about": "maH tIqel",
-      "sorg": "Sorg – Sogverse boqHa'",
+      "sorg": "darsek – Sogverse boqHa'",
       "yty": "Yty – Sogverse HoS",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin QaD",
@@ -53,7 +53,7 @@
     "unexpectedError": "Qagh Daj 'oH",
     "somethingWentWrong": "wanI' Qagh 'oH",
     "noPermission": "DaH Qumbe'. bIchaw'be'.",
-    "sorgs": "Sorgmey",
+    "sorgs": "darsekmey",
     "perSession": "wa' poHDaq",
     "minutes": "tup",
     "ages": "DIS {min}–{max}",
@@ -176,6 +176,9 @@
       "okLabel": "OK",
       "okValue": "Qapla'",
       "okMeaning": "Success!",
+      "sorgLabel": "Sorg (currency)",
+      "sorgValue": "darsek",
+      "sorgMeaning": "The official Klingon currency",
       "note": "Date and time formatting appears in English because the browser's Intl APIs don't have Klingon locale data. Klingons don't use a 7-day week anyway.",
       "qapla": "Qapla'!"
     }
@@ -251,8 +254,8 @@
       "unnamedGamer": "pong Hutlh toy'wI'",
       "unnamedUser": "pong Hutlh lo'wI'",
       "noConnectedGamers": "toy'wI'pu' jonbe'lu'",
-      "tokenBalance": "Sorg potlh",
-      "tokenMonetaryWarning": "Hoch Sorg {rate} 'oH. choHmey Huch Qatlhqu' moj.",
+      "tokenBalance": "darsek potlh",
+      "tokenMonetaryWarning": "Hoch darsek {rate} 'oH. choHmey Huch Qatlhqu' moj.",
       "amountLabel": "HSDu' (+ chelmeH, − teqmeH)",
       "amountPlaceholder": "e.g. 10 qoj -5",
       "reasonLabel": "meq",
@@ -260,8 +263,8 @@
       "adjustBalance": "potlh yIchoH",
       "failedToAdjust": "potlh choH Dabe'lu'",
       "transactionHistory": "Huch wanI' temmey",
-      "adjustDialogTitle": "{action} {count, plural, one {# Sorg} other {# Sorgmey}}",
-      "adjustDialogDescription": "{action} {count, plural, one {# Sorg} other {# Sorgmey}} {direction} {user}.",
+      "adjustDialogTitle": "{action} {count, plural, one {# darsek} other {# darsekmey}}",
+      "adjustDialogDescription": "{action} {count, plural, one {# darsek} other {# darsekmey}} {direction} {user}.",
       "add": "yIchel",
       "remove": "yIteq",
       "to": "naDev",
@@ -397,7 +400,7 @@
       "descriptionLabel": "Del",
       "descriptionPlaceholder": "De'vam yIDel",
       "padletUrlLabel": "Padlet URL",
-      "sorgCostLabel": "Sorg Huch (wa' poHDaq)",
+      "sorgCostLabel": "darsek Huch (wa' poHDaq)",
       "approxPerSession": "≈ {amount} wa' poHDaq",
       "imageUrlLabel": "mIl'oD URL",
       "preview": "yIlegh",
@@ -416,9 +419,9 @@
       "nameRequired": "De' pong nIS",
       "nameMaxLength": "De' pong 100 mu'mey law' Hutlh nIS",
       "descriptionRequired": "Del nIS",
-      "sorgCostNumber": "Sorg Huch HSDu' nIS",
-      "sorgCostWhole": "Sorg Huch HSDu' naQ nIS",
-      "sorgCostMin": "Sorg Huch 1 law' nIS",
+      "sorgCostNumber": "darsek Huch HSDu' nIS",
+      "sorgCostWhole": "darsek Huch HSDu' naQ nIS",
+      "sorgCostMin": "darsek Huch 1 law' nIS",
       "validUrl": "URL nIvbe' nIS",
       "gameRequired": "toy'a' nIS",
       "validTime": "tup nIvbe' nIS",
@@ -526,7 +529,7 @@
       "needHelpDescription": "ghom'a' nIvbe' DaSovbe''a'? maqIH — DIS je ngoQ Daj qel.",
       "learnMoreAboutUs": "maH tIqel"
     },
-    "tokenCost": "{cost} Sorgmey",
+    "tokenCost": "{cost} darsekmey",
     "detail": {
       "backToClubs": "ghom'a'mey yIchegh",
       "notFound": "ghom'a' tu'be'lu'",
@@ -588,10 +591,10 @@
   "enrollment": {
     "wizard": {
       "title": "toy'wI' yImuv",
-      "costDescription": "{cost} Sorgmey teqlu' pIq poHvaH",
-      "insufficientBalance": "Sorg Hutlh",
-      "insufficientBalanceDescription": "<strong>{cost} Sorgmey</strong> DanIS — <strong>{balance}</strong> neH DaghajlaH.",
-      "getMoreSorgs": "Sorgmey Daj Suq",
+      "costDescription": "{cost} darsekmey teqlu' pIq poHvaH",
+      "insufficientBalance": "darsek Hutlh",
+      "insufficientBalanceDescription": "<strong>{cost} darsekmey</strong> DanIS — <strong>{balance}</strong> neH DaghajlaH.",
+      "getMoreSorgs": "darsekmey Daj Suq",
       "chooseGamer": "toy'wI' yIwIv:",
       "createNewGamer": "toy'wI' chu' yIchenmoH",
       "createGamerDescription": "puqvaH toy'wI' account chu' yIchenmoH",
@@ -601,14 +604,14 @@
       "summaryGamer": "toy'wI'",
       "summaryGedu": "Gedu",
       "summaryCost": "Huch",
-      "sorgAmount": "{amount} Sorgmey",
+      "sorgAmount": "{amount} darsekmey",
       "currentBalance": "DaH potlh",
       "afterEnrollment": "qo' ghoHDaq",
       "enrolling": "vImuv...",
       "confirmEnrollment": "qo' ghoH yIchel",
       "enrolled": "qo' ghoHlu'! Qapla'!",
       "enrolledDescription": "<strong>{gamer}</strong> DaH <strong>{club}</strong>Daq tu'lu'.",
-      "newBalance": "potlh chu': {balance} Sorgmey",
+      "newBalance": "potlh chu': {balance} darsekmey",
       "howToJoinTitle": "poH nuq ghoS",
       "howToJoinDescription": "poH SoQDI', \"HaqwI'\" badge leghlu' ghom'a' De'Daq <strong>{name}'s</strong> QaDDaq. \"muv\" yIwIv.",
       "viewMyGamers": "jIH toy'wI'pu' tIlegh",
@@ -639,16 +642,16 @@
       "failedToUnenroll": "qo' ghoHHa' Dabe'lu'",
       "successTitle": "qo' ghoHHa'lu'",
       "successDescription": "<strong>{gamer}</strong> <strong>{club}</strong>Daq tu'be'lu'.",
-      "sorgsRefunded": "{amount} Sorgmey cheghmoHlu'",
+      "sorgsRefunded": "{amount} darsekmey cheghmoHlu'",
       "toYourBalance": "SoH potlhDaq.",
       "noRefund": "Huch cheghmoHbe'lu'.",
-      "newBalance": "potlh chu': <strong>{balance} Sorgmey</strong>",
+      "newBalance": "potlh chu': <strong>{balance} darsekmey</strong>",
       "done": "Qapla'!",
       "title": "{name} DaqoHHa'moH'a'?",
       "description": "<strong>{gamer}</strong> <strong>{club}</strong>Daq teqlu'.",
       "club": "ghom'a'",
       "gamer": "toy'wI'",
-      "refundEligible": "<strong>{cost} Sorgmey</strong> cheghmoHlu'.",
+      "refundEligible": "<strong>{cost} darsekmey</strong> cheghmoHlu'.",
       "noRefundWithinWindow": "Huch cheghmoHbe'lu' — pIq poH {hours} rep.",
       "noChargeNextSession": "pIq poHDaq Huch teqbe'lu'.",
       "unenrolling": "vIqoHHa'moH...",
@@ -698,7 +701,7 @@
     "gamerCount": "{count, plural, one {# toy''wI''} other {# toy''wI''pu''}}",
     "noGamersEnrolled": "toy'wI'pu' tu'be'lu'.",
     "age": "DIS {age}",
-    "sorgsPerWeek": "{cost} Sorgmey / Hogh",
+    "sorgsPerWeek": "{cost} darsekmey / Hogh",
     "unenrollGamer": "{name} yIqoHHa'moH",
     "noGroupsYet": "ghom'a'mey tu'be'lu'",
     "nextSession": "pIq: {date}",
@@ -729,12 +732,12 @@
     "nav": {
       "home": "juH",
       "clubs": "ghom'a'mey",
-      "sorg": "Sorg",
+      "sorg": "darsek",
       "yty": "Yty",
       "about": "maH"
     },
     "toggleMenu": "HeDmey choH",
-    "tokenBalance": "{count} Sorgmey"
+    "tokenBalance": "{count} darsekmey"
   },
   "sidebar": {
     "dashboard": "QaD",
@@ -747,7 +750,7 @@
     "testing": "Qu' nI'moH",
     "feedback": "QIn",
     "settings": "ngoQmey",
-    "sorg": "Sorg",
+    "sorg": "darsek",
     "myGamers": "jIH toy'wI'pu'",
     "home": "juH",
     "myGroups": "jIH ghom'a'mey",
@@ -821,7 +824,7 @@
           "description": "toy'wI' accountmey tIlegh je tI'ang"
         },
         "sorg": {
-          "title": "Sorg Sormey",
+          "title": "darsek Sormey",
           "description": "potlh legh je Suq"
         },
         "browseClubs": {
@@ -837,8 +840,8 @@
         "title": "DaH yIqet",
         "subtitle": "wej Hoch ghoS — toy'wI' DaH yItoy'",
         "step1": {
-          "title": "Sorg Sormey Suq",
-          "description": "Sorg Sormey toy'a' poHmey Huch 'oH. Sorg Daq yIghoS — pack Suq qoj qo'."
+          "title": "darsek Sormey Suq",
+          "description": "darsek Sormey toy'a' poHmey Huch 'oH. darsek Daq yIghoS — pack Suq qoj qo'."
         },
         "step2": {
           "title": "ghom'a'mey tInej",
@@ -851,7 +854,7 @@
       }
     },
     "billing": {
-      "error": "Huch Daq SoQbe'lu'. yIboq qoj <link>Sorg Daq</link> yIghoS.",
+      "error": "Huch Daq SoQbe'lu'. yIboq qoj <link>darsek Daq</link> yIghoS.",
       "redirecting": "Huch Daq ghoS..."
     },
     "gamers": {
@@ -895,8 +898,8 @@
       }
     },
     "sorg": {
-      "title": "Sorg Sormey",
-      "subtitle": "Sorgmey Suq je potlh tI'ang",
+      "title": "darsek Sormey",
+      "subtitle": "darsekmey Suq je potlh tI'ang",
       "transactionHistory": "Huch wanI' temmey"
     },
     "switchToGamer": {
@@ -933,23 +936,23 @@
   },
   "sorg": {
     "hero": {
-      "title": "<primary>Sorg</primary> nuq?",
-      "subtitle": "Sorg 'oH Huch Sogverse ghom'a' poHmeyvaH. vav/SoSmey Sorgmey Suq — Hoch Hogh poHmey Huch 'oH — nap, vItmoH, je nIvqu'."
+      "title": "<primary>darsek</primary> nuq?",
+      "subtitle": "darsek 'oH Huch Sogverse ghom'a' poHmeyvaH. vav/SoSmey darsekmey Suq — Hoch Hogh poHmey Huch 'oH — nap, vItmoH, je nIvqu'."
     },
     "overview": {
       "heading": "nuq ghoS",
-      "text": "Hoch ghom'a' poH Sorgmey Huch 'oH. toy'wI' ghom'a'Daq tImuvchoHDI', Sorgmey Hoch Hogh teqlu'. pack Suq qoj jar ngeH — SoH tlhIH nap."
+      "text": "Hoch ghom'a' poH darsekmey Huch 'oH. toy'wI' ghom'a'Daq tImuvchoHDI', darsekmey Hoch Hogh teqlu'. pack Suq qoj jar ngeH — SoH tlhIH nap."
     },
     "benefits": {
-      "heading": "meq Sorg?",
+      "heading": "meq darsek?",
       "subheading": "nap je batlh Huch — puq ghom'a'meyvaH",
       "payPerSession": {
         "title": "Hoch poH Huch",
-        "description": "Sorgmey wa' Hogh teqlu' Hoch ghom'a'vaH. toy'wI' poHmey neH Huch — peH Daj Qav tu'be'."
+        "description": "darsekmey wa' Hogh teqlu' Hoch ghom'a'vaH. toy'wI' poHmey neH Huch — peH Daj Qav tu'be'."
       },
       "fullTransparency": {
         "title": "Hoch vItmoH",
-        "description": "Hoch Sorg Daq tIlegh. vav/SoS QaD potlh, Huch wanI', je pIq Huch legh."
+        "description": "Hoch darsek Daq tIlegh. vav/SoS QaD potlh, Huch wanI', je pIq Huch legh."
       },
       "flexibleTopUps": {
         "title": "nap TopUp",
@@ -957,45 +960,45 @@
       },
       "safeByDesign": {
         "title": "QaQ chenmoHlu'",
-        "description": "Sorgmey Sogverse neH tu'lu'. vav/SoSmey neH potlh legh je Suq — puqpu' Huch tu'be'. Qagh tu'be'."
+        "description": "darsekmey Sogverse neH tu'lu'. vav/SoSmey neH potlh legh je Suq — puqpu' Huch tu'be'. Qagh tu'be'."
       }
     },
     "faqs": {
       "heading": "tlhoQ tlhob",
       "isRealMoney": {
-        "question": "Sorg Huch QaQ'a'?",
-        "answer": "Sorgmey Huch QaQ lo' — Sogverse neH tu'lu'. ngeH Dabe'. Huch cheghmoH DaneH — maHvaH yIjatlh."
+        "question": "darsek Huch QaQ'a'?",
+        "answer": "darsekmey Huch QaQ lo' — Sogverse neH tu'lu'. ngeH Dabe'. Huch cheghmoH DaneH — maHvaH yIjatlh."
       },
       "howSpent": {
-        "question": "Sorgmey nuqDaq?",
-        "answer": "Hoch ghom'a' poH Sorgmey Huch 'oH — ghom'a' Daq leghlu'. Sorgmey Hoch Hogh teqlu' toy'wI' poHDaq."
+        "question": "darsekmey nuqDaq?",
+        "answer": "Hoch ghom'a' poH darsekmey Huch 'oH — ghom'a' Daq leghlu'. darsekmey Hoch Hogh teqlu' toy'wI' poHDaq."
       },
       "parentControl": {
         "question": "vav/SoS Huch QaD'a'?",
-        "answer": "HIja'. Sorgmey puqpu' tu'be'. vav/SoSmey neH potlh legh, Sorgmey Suq, je Huch legh QaDDaq."
+        "answer": "HIja'. darsekmey puqpu' tu'be'. vav/SoSmey neH potlh legh, darsekmey Suq, je Huch legh QaDDaq."
       },
       "doExpire": {
-        "question": "Sorgmey Qav'a'?",
-        "answer": "ghobe'. Sorgmey Suqlu'DI', account tu'lu' — lo'lu'pa'. Qav tu'be' qoj peghHa' Huch tu'be'."
+        "question": "darsekmey Qav'a'?",
+        "answer": "ghobe'. darsekmey Suqlu'DI', account tu'lu' — lo'lu'pa'. Qav tu'be' qoj peghHa' Huch tu'be'."
       },
       "refund": {
         "question": "Huch cheghmoH'a'?",
-        "answer": "toy'wI' qo' ghoHHa' 24 rep Qav pawpa' — Sorgmey potlhDaq cheghmoHlu'. latlh — maHvaH yIjatlh. maH boq."
+        "answer": "toy'wI' qo' ghoHHa' 24 rep Qav pawpa' — darsekmey potlhDaq cheghmoHlu'. latlh — maHvaH yIjatlh. maH boq."
       }
     },
     "cta": {
       "heading": "DaH yIqet?",
-      "subheading": "account yIchenmoH, Sorgmey Suq, je puq wa'DIch ghom'a'Daq tImuv."
+      "subheading": "account yIchenmoH, darsekmey Suq, je puq wa'DIch ghom'a'Daq tImuv."
     }
   },
   "tokens": {
     "balance": {
-      "title": "Sorg potlh"
+      "title": "darsek potlh"
     },
     "subscription": {
       "label": "qo'",
-      "tierLabelFull": "{name} — {amount} Sorgmey/jar",
-      "tierLabelAmount": "{amount} Sorgmey/jar",
+      "tierLabelFull": "{name} — {amount} darsekmey/jar",
+      "tierLabelAmount": "{amount} darsekmey/jar",
       "paymentFailed": "Huch Dabe'lu'",
       "paymentFailedDescription": "Huch Qav Dabe'lu'. <link>Huch choHmoH</link> — qo' ghoS.",
       "nextPayment": "pIq Huch {date}Daq",
@@ -1019,19 +1022,19 @@
       }
     },
     "purchase": {
-      "success": "Huch Qapla'! Sorgmey potlhDaq chellu'.",
+      "success": "Huch Qapla'! darsekmey potlhDaq chellu'.",
       "canceled": "Huch mevlu'. Huch teqbe'lu'.",
       "checkoutError": "checkout SoQbe'lu'. yIboq.",
       "switchError": "qo' choH Dabe'lu'. yIboq.",
-      "title": "Sorgmey Suq",
+      "title": "darsekmey Suq",
       "subtitle": "pack qoj qo' yIwIv — toy'a' poHmey boqmoH",
       "oneTimePacks": "wa' Pack",
       "monthlySubscriptions": "jar qo'mey",
       "legacyTier": "DaH qo' DaHutlhlaHbe'. chu' yIwIv.",
-      "signInRequired": "Sorgmey Suq — bI'el nIS",
+      "signInRequired": "darsekmey Suq — bI'el nIS",
       "switchDialog": {
         "title": "{name}vaH yIchoH?",
-        "description": "{name} qo'Daq yIchoH ({amount} Sorgmey/jar). choH pIq jar SoQmoH.",
+        "description": "{name} qo'Daq yIchoH ({amount} darsekmey/jar). choH pIq jar SoQmoH.",
         "resumeNote": "mevlu' qo' boq.",
         "confirm": "qo' yIchoH"
       }

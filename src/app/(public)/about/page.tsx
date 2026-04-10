@@ -24,7 +24,7 @@ const valueKeys = ["playIsEssential", "friendsCarry", "keepChildrenSafe", "famil
 
 const easterEggRows = [
   "delete", "deleting", "close", "cancel", "getStarted", "password",
-  "error", "english", "ok", "copyright", "learnMore",
+  "error", "english", "ok", "sorg", "copyright", "learnMore",
 ] as const;
 
 export default function AboutPage() {
