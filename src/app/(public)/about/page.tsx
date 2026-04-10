@@ -154,15 +154,23 @@ export default function AboutPage() {
         </p>
       </div>
 
-      {/* Klingon Easter Egg — only visible when the locale is tlh */}
+      {/* Klingon Easter Egg — only visible when the locale is tlh.
+          Inline hardcoded colours (#d00, #0a0a0a) are intentional here —
+          these are Klingon Empire flag colours for a one-off easter egg,
+          not brand/theme colours that belong in the design system. */}
       {/* eslint-disable i18next/no-literal-string */}
       {locale === "tlh" && (
         <div className="mx-auto mt-16 max-w-3xl">
-          <Card className="border-primary/30 bg-gradient-to-b from-primary/5 to-transparent">
+          {/* Styled like a Klingon ship console: dark base, red accents, functional text */}
+          <Card
+            className="overflow-hidden border"
+            style={{ borderColor: 'rgba(221,0,0,0.4)', backgroundColor: '#0a0a0a' }}
+          >
+            <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #d00, transparent)' }} />
             <CardHeader className="text-center">
               {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
-              <CardTitle className="text-2xl">{t('easterEgg.heading')}</CardTitle>
-              <CardDescription className="text-base">
+              <CardTitle className="text-2xl" style={{ color: '#d00' }}>{t('easterEgg.heading')}</CardTitle>
+              <CardDescription className="text-base text-white/60">
                 {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
                 {t('easterEgg.intro')}
               </CardDescription>
@@ -171,31 +179,31 @@ export default function AboutPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border text-left">
-                      <th className="pb-2 pr-4 font-medium text-muted-foreground">English</th>
-                      <th className="pb-2 pr-4 font-medium text-muted-foreground">tlhIngan Hol</th>
-                      <th className="pb-2 font-medium text-muted-foreground">Literal meaning</th>
+                    <tr className="border-b text-left" style={{ borderColor: 'rgba(221,0,0,0.3)' }}>
+                      <th className="pb-2 pr-4 font-medium text-white/50">English</th>
+                      <th className="pb-2 pr-4 font-medium text-white/50">tlhIngan Hol</th>
+                      <th className="pb-2 font-medium text-white/50">Literal meaning</th>
                     </tr>
                   </thead>
                   <tbody>
                     {easterEggRows.map((row) => (
-                      <tr key={row} className="border-b border-border/50">
+                      <tr key={row} className="border-b" style={{ borderColor: 'rgba(221,0,0,0.1)' }}>
                         {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
-                        <td className="py-2 pr-4">{t(`easterEgg.${row}Label`)}</td>
+                        <td className="py-2 pr-4 text-white/70">{t(`easterEgg.${row}Label`)}</td>
                         {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
-                        <td className="py-2 pr-4 font-mono text-primary">{t(`easterEgg.${row}Value`)}</td>
+                        <td className="py-2 pr-4 font-mono" style={{ color: '#d00' }}>{t(`easterEgg.${row}Value`)}</td>
                         {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
-                        <td className="py-2 italic text-muted-foreground">{t(`easterEgg.${row}Meaning`)}</td>
+                        <td className="py-2 italic text-white/40">{t(`easterEgg.${row}Meaning`)}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-              <p className="mt-6 text-center text-xs text-muted-foreground">
+              <p className="mt-6 text-center text-xs text-white/30">
                 {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
                 {t('easterEgg.note')}
               </p>
-              <p className="mt-4 text-center text-2xl font-bold text-primary">
+              <p className="mt-4 text-center text-2xl font-bold" style={{ color: '#d00' }}>
                 {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
                 {t('easterEgg.qapla')}
               </p>
