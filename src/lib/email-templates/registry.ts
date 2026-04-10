@@ -103,7 +103,6 @@ const feedbackParamsSchema = z.object({
   userRole: z.string().min(1),
   userEmail: z.string().email(),
   message: z.string().min(1),
-  sentAt: z.string().min(1),
 });
 
 const geduProductParamsSchema = z.object({
@@ -201,10 +200,12 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       { key: "userRole", label: "User Role", placeholder: "customer" },
       { key: "userEmail", label: "User Email", placeholder: "jane@example.com" },
       { key: "message", label: "Message", placeholder: "Great product!" },
-      { key: "sentAt", label: "Sent At", placeholder: "March 11, 2026 at 3:00 PM" },
     ],
     schema: feedbackParamsSchema,
-    build: (p, t, locale) => buildFeedbackEmail(t, locale, p as z.infer<typeof feedbackParamsSchema>),
+    build: (p, t, locale) => buildFeedbackEmail(t, locale, {
+      ...p as z.infer<typeof feedbackParamsSchema>,
+      sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
+    }),
     subject: (p, t) => t("feedback.subject", { displayName: p.userName as string, role: t(ROLE_LABEL_KEYS[p.userRole as UserRole] as "roleAdmin") }),
     fromNameKey: "senderFeedback",
   },
