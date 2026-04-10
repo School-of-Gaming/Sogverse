@@ -55,6 +55,47 @@ for (const file of localeFiles) {
     for (const k of empty) console.error(`  - ${k}`);
   }
 
+  // Placeholder mismatch (e.g. English has {displayName} but target drops it or adds extras).
+  // Extracts top-level ICU placeholders like {name} and {count, plural, ...} while
+  // ignoring literal text nested inside plural/select branches.
+  function extractPlaceholders(str) {
+    const names = [];
+    let depth = 0;
+    let argStart = -1;
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === "{") {
+        if (depth === 0) argStart = i + 1;
+        depth++;
+      } else if (str[i] === "}") {
+        depth--;
+        if (depth === 0 && argStart !== -1) {
+          // Extract the argument name (first word before comma or closing brace)
+          const inner = str.slice(argStart, i);
+          const name = inner.split(/[\s,]/)[0];
+          if (name) names.push(name);
+          argStart = -1;
+        }
+      }
+    }
+    return names.sort().join(",");
+  }
+
+  const mismatchedPlaceholders = [];
+  for (const k of [...sourceKeySet].filter((k) => keySet.has(k))) {
+    const sourcePh = extractPlaceholders(String(sourceKeys[k]));
+    const targetPh = extractPlaceholders(String(keys[k]));
+    if (sourcePh !== targetPh) {
+      mismatchedPlaceholders.push({ key: k, expected: sourcePh, actual: targetPh });
+    }
+  }
+  if (mismatchedPlaceholders.length > 0) {
+    hasErrors = true;
+    console.error(`\n[${locale}] Mismatched placeholders in ${mismatchedPlaceholders.length} key(s):`);
+    for (const { key, expected, actual } of mismatchedPlaceholders) {
+      console.error(`  - ${key}: expected {${expected}} but got {${actual}}`);
+    }
+  }
+
   // Extra/stale keys (in target but not in source).
   // Keys under "about.easterEgg" are intentionally locale-specific (Klingon easter egg).
   const extra = [...keySet].filter((k) => !sourceKeySet.has(k) && !k.startsWith("about.easterEgg"));
