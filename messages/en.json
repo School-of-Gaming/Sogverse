@@ -1106,6 +1106,10 @@
     "senderFeedback": "Sogverse Feedback",
     "senderEnrollment": "Sogverse Enrolment",
     "footer": "\u00a9 {year} Sogverse. All rights reserved.",
+    "roleAdmin": "Admin",
+    "roleParent": "Parent",
+    "roleGamer": "Gamer",
+    "roleGedu": "Gedu",
     "passwordReset": {
       "subject": "Reset your Sogverse password",
       "heading": "Reset Your Password",

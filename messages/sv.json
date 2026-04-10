@@ -1106,6 +1106,10 @@
     "senderFeedback": "Sogverse Feedback",
     "senderEnrollment": "Sogverse Anmälan",
     "footer": "\u00a9 {year} Sogverse. Alla rättigheter förbehållna.",
+    "roleAdmin": "Administratör",
+    "roleParent": "Förälder",
+    "roleGamer": "Spelare",
+    "roleGedu": "Gedu",
     "passwordReset": {
       "subject": "Återställ ditt Sogverse-lösenord",
       "heading": "Återställ ditt lösenord",

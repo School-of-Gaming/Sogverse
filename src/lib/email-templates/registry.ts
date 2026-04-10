@@ -19,6 +19,8 @@ import {
 import { buildPasswordResetEmail } from "./password-reset";
 import { buildGeduInviteEmail } from "./gedu-invite";
 import type { EmailTranslator } from "./translator";
+import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import type { UserRole } from "@/types";
 
 // --- Field types for the testing UI ---
 
@@ -203,7 +205,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     ],
     schema: feedbackParamsSchema,
     build: (p, t, locale) => buildFeedbackEmail(t, locale, p as z.infer<typeof feedbackParamsSchema>),
-    subject: (p, t) => t("feedback.subject", { displayName: p.userName as string, role: p.userRole as string }),
+    subject: (p, t) => t("feedback.subject", { displayName: p.userName as string, role: t(ROLE_LABEL_KEYS[p.userRole as UserRole] as "roleAdmin") }),
     fromNameKey: "senderFeedback",
   },
   groupAdded: {

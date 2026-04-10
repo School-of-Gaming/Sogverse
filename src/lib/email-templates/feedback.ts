@@ -1,4 +1,6 @@
 import { DARK_THEME } from "@/lib/constants/colors";
+import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import type { UserRole } from "@/types";
 import { wrapInLayout } from "./layout";
 import { escapeHtml, heading } from "./utils";
 import type { EmailTranslator } from "./translator";
@@ -19,7 +21,8 @@ interface FeedbackEmailOptions {
 export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: FeedbackEmailOptions): string {
   const escapedMessage = escapeHtml(opts.message).replace(/\n/g, "<br/>");
   const escapedName = escapeHtml(opts.userName);
-  const escapedRole = escapeHtml(opts.userRole);
+  const roleKey = ROLE_LABEL_KEYS[opts.userRole as UserRole];
+  const escapedRole = escapeHtml(roleKey ? t(roleKey as "roleAdmin") : opts.userRole);
   const escapedEmail = escapeHtml(opts.userEmail);
 
   const gamerNote = opts.isGamer && opts.parentEmail
@@ -44,7 +47,7 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
             </tr>
             <tr>
               <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};">${t("feedback.role")}</td>
-              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;border-bottom:1px solid ${DARK_THEME.border};text-transform:capitalize;">${escapedRole}</td>
+              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;border-bottom:1px solid ${DARK_THEME.border};">${escapedRole}</td>
             </tr>
             <tr>
               <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};">${t("feedback.emailLabel")}</td>

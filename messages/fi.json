@@ -1106,6 +1106,10 @@
     "senderFeedback": "Sogverse-palaute",
     "senderEnrollment": "Sogverse-ilmoittautuminen",
     "footer": "\u00a9 {year} Sogverse. Kaikki oikeudet pidätetään.",
+    "roleAdmin": "Ylläpitäjä",
+    "roleParent": "Vanhempi",
+    "roleGamer": "Pelaaja",
+    "roleGedu": "Gedu",
     "passwordReset": {
       "subject": "Nollaa Sogverse-salasanasi",
       "heading": "Nollaa salasanasi",
