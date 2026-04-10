@@ -1,7 +1,7 @@
 // Single source of truth for supported UI languages.
 // When adding a new language, also update LANGUAGE_CONFIG below,
 // add a messages/<code>.json file, and update the CI check script.
-export const SUPPORTED_LANGUAGES = ["en", "fi", "sv"] as const;
+export const SUPPORTED_LANGUAGES = ["en", "fi", "sv", "tlh"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export const DEFAULT_LANGUAGE: SupportedLanguage = "en";
 
@@ -19,6 +19,7 @@ export const LANGUAGE_CONFIG: Record<
   en: { label: "English", nativeLabel: "English", country: "GB" },
   fi: { label: "Finnish", nativeLabel: "Suomi", country: "FI" },
   sv: { label: "Swedish", nativeLabel: "Svenska", country: "SE" },
+  tlh: { label: "Klingon", nativeLabel: "Klingon", country: "KLINGON" },
 };
 
 /**

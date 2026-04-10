@@ -55,8 +55,9 @@ for (const file of localeFiles) {
     for (const k of empty) console.error(`  - ${k}`);
   }
 
-  // Extra/stale keys (in target but not in source)
-  const extra = [...keySet].filter((k) => !sourceKeySet.has(k));
+  // Extra/stale keys (in target but not in source).
+  // Keys under "about.easterEgg" are intentionally locale-specific (Klingon easter egg).
+  const extra = [...keySet].filter((k) => !sourceKeySet.has(k) && !k.startsWith("about.easterEgg"));
   if (extra.length > 0) {
     // Warn but don't fail — stale keys aren't blocking
     console.warn(`\n[${locale}] Extra ${extra.length} stale key(s):`);

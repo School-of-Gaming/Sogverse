@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { getTranslations } from 'next-intl/server';
 import { Heart, Shield, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,9 +22,15 @@ export async function generateMetadata(): Promise<Metadata> {
 const valueIcons = [Sparkles, Heart, Shield, Users];
 const valueKeys = ["playIsEssential", "friendsCarry", "keepChildrenSafe", "familyInTheLoop"] as const;
 
+const easterEggRows = [
+  "delete", "deleting", "close", "cancel", "getStarted", "password",
+  "error", "english", "ok", "copyright", "learnMore",
+] as const;
+
 export default function AboutPage() {
   const t = useTranslations('about');
   const c = useTranslations('common');
+  const locale = useLocale();
 
   const values = valueKeys.map((key, i) => ({
     key,
@@ -147,6 +153,48 @@ export default function AboutPage() {
           {t('contact.email')}
         </p>
       </div>
+
+      {/* Klingon Easter Egg — only visible when the locale is tlh */}
+      {locale === "tlh" && (
+        <div className="mx-auto mt-16 max-w-3xl">
+          <Card className="border-primary/30 bg-gradient-to-b from-primary/5 to-transparent">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">{t('easterEgg.heading')}</CardTitle>
+              <CardDescription className="text-base">
+                {t('easterEgg.intro')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left">
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">English</th>
+                      <th className="pb-2 pr-4 font-medium text-muted-foreground">tlhIngan Hol</th>
+                      <th className="pb-2 font-medium text-muted-foreground">Literal meaning</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {easterEggRows.map((row) => (
+                      <tr key={row} className="border-b border-border/50">
+                        <td className="py-2 pr-4">{t(`easterEgg.${row}Label` as "easterEgg.deleteLabel")}</td>
+                        <td className="py-2 pr-4 font-mono text-primary">{t(`easterEgg.${row}Value` as "easterEgg.deleteValue")}</td>
+                        <td className="py-2 italic text-muted-foreground">{t(`easterEgg.${row}Meaning` as "easterEgg.deleteMeaning")}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-6 text-center text-xs text-muted-foreground">
+                {t('easterEgg.note')}
+              </p>
+              <p className="mt-4 text-center text-2xl font-bold text-primary">
+                {t('easterEgg.qapla')}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
