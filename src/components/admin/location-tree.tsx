@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ChevronRight, ChevronDown, Plus, Pencil } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { getChildLevel } from "@/lib/constants";
@@ -145,12 +146,13 @@ interface LocationTreeProps {
 }
 
 export function LocationTree({ nodes, onAdd, onEdit, searchQuery }: LocationTreeProps) {
+  const t = useTranslations("admin.locations");
   if (nodes.length === 0) {
     return (
       <div className="py-8 text-center text-muted-foreground">
         {searchQuery
-          ? "No locations found matching your search."
-          : "No locations yet. Add a country to get started."}
+          ? t("noLocationsMatchSearch")
+          : t("noLocationsYet")}
       </div>
     );
   }

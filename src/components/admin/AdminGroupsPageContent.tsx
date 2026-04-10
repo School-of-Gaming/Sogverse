@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useMyGroups } from "@/services/groups";
 import { useLoungeRoomId } from "@/services/voice";
 import { useGroupsWithVoice } from "@/hooks/use-groups-page";
@@ -10,6 +11,7 @@ export function AdminGroupsPageContent() {
   const { groups, isLoading: groupsLoading, error } = useGroupsWithVoice(useMyGroups());
   const { data: adminLoungeId } = useLoungeRoomId("admin_only");
   const { data: geduLoungeId } = useLoungeRoomId("gedu_only");
+  const t = useTranslations("groups");
 
   return (
     <GroupsListContent
@@ -18,19 +20,19 @@ export function AdminGroupsPageContent() {
       error={error}
       lounges={[
         {
-          name: "Admin Lounge",
-          description: "Private admin voice channel",
+          name: t("adminLounge"),
+          description: t("adminLoungeDescription"),
           joinHref: adminLoungeId ? ROUTES.admin.voiceSession(adminLoungeId) : null,
         },
         {
-          name: "Gedu Lounge",
-          description: "Connect with educators anytime",
+          name: t("geduLounge"),
+          description: t("geduLoungeDescription"),
           joinHref: geduLoungeId ? ROUTES.admin.voiceSession(geduLoungeId) : null,
         },
       ]}
-      heading="All Groups"
-      subheading="All groups across all products and educators."
-      emptyText="No groups have been created yet."
+      heading={t("allGroupsHeading")}
+      subheading={t("allGroupsSubheading")}
+      emptyText={t("allGroupsEmpty")}
       voiceRoute={ROUTES.admin.voiceSession}
       detailRoute={ROUTES.admin.group}
     />

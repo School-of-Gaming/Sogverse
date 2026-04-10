@@ -240,7 +240,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
           <Input
             id="imageUrl"
             type="url"
-            placeholder="https://example.com/image.png"
+            placeholder="https://example.com/image.png" // eslint-disable-line i18next/no-literal-string
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             disabled={isPending}

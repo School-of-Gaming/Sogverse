@@ -211,6 +211,7 @@ export default function MinecraftApiDocsPage() {
       <section className="mt-12">
         <h2 className="text-2xl font-semibold">{t('example.heading')}</h2>
         <div className="mt-4">
+          {/* eslint-disable-next-line i18next/no-literal-string */}
           <CodeBlock title="curl">{`curl -H "Authorization: Bearer <key>" \\
   "${baseUrl}/api/minecraft/join-check?uuid=069a79f4-44e9-4726-a5be-fca90e38aaf5"`}</CodeBlock>
         </div>

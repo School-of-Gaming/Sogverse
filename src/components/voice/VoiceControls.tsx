@@ -1,6 +1,7 @@
 "use client";
 
 import { Mic, MicOff, Video, VideoOff, ScreenShare, ScreenShareOff, Lock } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { MicLevelIndicator } from "./MicLevelIndicator";
@@ -19,6 +20,7 @@ export function VoiceControls() {
     startScreenShare,
     stopScreenShare,
   } = useVoiceRoom();
+  const t = useTranslations("voice");
 
   return (
     <div className="flex items-center gap-2">
@@ -31,10 +33,10 @@ export function VoiceControls() {
           disabled={joining || (localLocks.audio && !micOn)}
           title={
             localLocks.audio
-              ? "Microphone locked by moderator"
+              ? t("micLockedByModerator")
               : micOn
-                ? "Mute microphone"
-                : "Unmute microphone"
+                ? t("muteMicrophone")
+                : t("unmuteMicrophone")
           }
         >
           {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
@@ -54,10 +56,10 @@ export function VoiceControls() {
             disabled={joining || (localLocks.video && !cameraOn)}
             title={
               localLocks.video
-                ? "Camera locked by moderator"
+                ? t("cameraLockedByModerator")
                 : cameraOn
-                  ? "Turn off camera"
-                  : "Turn on camera"
+                  ? t("turnOffCamera")
+                  : t("turnOnCamera")
             }
           >
             {cameraOn ? (
@@ -79,7 +81,7 @@ export function VoiceControls() {
           size="icon"
           onClick={isScreenSharing ? stopScreenShare : startScreenShare}
           disabled={joining}
-          title={isScreenSharing ? "Stop screen share" : "Share screen"}
+          title={isScreenSharing ? t("stopScreenShare") : t("shareScreen")}
         >
           {isScreenSharing ? (
             <ScreenShareOff className="h-4 w-4" />

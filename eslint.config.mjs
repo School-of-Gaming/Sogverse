@@ -30,12 +30,27 @@ const eslintConfig = defineConfig([
     plugins: { i18next },
     rules: {
       "i18next/no-literal-string": ["error", {
-        markupOnly: true,
-        ignoreAttribute: [
-          "className", "href", "key", "data-testid", "aria-label",
-          "name", "type", "id", "role", "src", "alt", "htmlFor",
-        ],
-        ignore: [/^[A-Z_]+$/, /^\d+$/, /^\//, /^https?:\/\//],
+        mode: "jsx-only",
+        "jsx-attributes": {
+          include: [],
+          exclude: [
+            "className", "styleName", "style", "type", "key", "id",
+            "width", "height", "href", "src", "alt", "htmlFor",
+            "data-.*", "role",
+            "name", "value", "defaultValue", "defaultTheme",
+            "autoComplete", "autoCapitalize",
+            "variant", "size", "align", "side", "sideOffset",
+            "asChild", "orientation", "dir", "method", "action",
+            "target", "rel", "colSpan", "rowSpan",
+          ],
+        },
+        words: {
+          exclude: [
+            "[0-9!-/:-@\\[-`{-~]+",
+            "[A-Z_-]+",
+            "^[\\p{P}\\p{S}\\p{Emoji}\\s]+$",
+          ],
+        },
       }],
     },
   },

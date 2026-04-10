@@ -57,7 +57,9 @@
     "roleAdmin": "Admin",
     "roleParent": "Parent",
     "roleGamer": "Gamer",
-    "roleGedu": "Gedu"
+    "roleGedu": "Gedu",
+    "selectCurrency": "Select currency",
+    "close": "Close"
   },
   "about": {
     "hero": {
@@ -234,7 +236,9 @@
       "enterTypeName": "Enter {type} name",
       "enterName": "Enter name",
       "adding": "Adding...",
-      "addType": "Add {type}"
+      "addType": "Add {type}",
+      "noLocationsYet": "No locations yet. Add a country to get started.",
+      "noLocationsMatchSearch": "No locations found matching your search."
     },
     "testing": {
       "title": "Testing",
@@ -318,7 +322,9 @@
       "deleteGroupConfirmTitle": "Delete {label}?",
       "deleteGroupConfirmDescription": "This will remove the group and its gedu assignment. This change won’t take effect until you commit.",
       "reassignGeduFor": "Reassign Gedu for {label}",
-      "selectDifferentGedu": "Select a different gedu for this group."
+      "selectDifferentGedu": "Select a different gedu for this group.",
+      "searchByNameOrEmail": "Search by name or email\u2026",
+      "noGedusMatchSearch": "No gedus match your search."
     },
     "forms": {
       "nameLabel": "Name",
@@ -636,7 +642,23 @@
     "everyDay": "Every {day}",
     "join": "Join",
     "alwaysOpen": "Always Open",
-    "padlet": "Padlet"
+    "padlet": "Padlet",
+    "allGroupsHeading": "All Groups",
+    "allGroupsSubheading": "All groups across all products and educators.",
+    "allGroupsEmpty": "No groups have been created yet.",
+    "myGroupsHeading": "My Groups",
+    "myGroupsSubheading": "Your enrolled groups and upcoming voice sessions.",
+    "myGroupsEmpty": "You\u2019re not enrolled in any groups yet.",
+    "yourGroupsHeading": "Your Groups",
+    "yourGroupsSubheading": "Your assigned groups, students, and voice sessions.",
+    "yourGroupsEmpty": "Groups will appear here when an admin assigns you to a club.",
+    "adminLounge": "Admin Lounge",
+    "adminLoungeDescription": "Private admin voice channel",
+    "geduLounge": "Gedu Lounge",
+    "geduLoungeDescription": "Connect with educators anytime",
+    "geduLoungeDescriptionOther": "Connect with other educators anytime",
+    "currentGedu": "Current",
+    "assignedGedu": "Assigned"
   },
   "header": {
     "nav": {
@@ -998,7 +1020,14 @@
     "failedToJoinRoom": "Failed to join room",
     "sessionEnded": "Session has ended",
     "disconnecting": "Disconnecting...",
-    "connecting": "Connecting..."
+    "connecting": "Connecting...",
+    "unmuteMicrophone": "Unmute microphone",
+    "micLockedByModerator": "Microphone locked by moderator",
+    "turnOffCamera": "Turn off camera",
+    "turnOnCamera": "Turn on camera",
+    "cameraLockedByModerator": "Camera locked by moderator",
+    "shareScreen": "Share screen",
+    "stopScreenShare": "Stop screen share"
   },
   "yty": {
     "hero": {

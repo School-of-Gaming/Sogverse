@@ -231,11 +231,13 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
         <Label>{t('gamerForm.genderLabel')}</Label>
         <div className="flex gap-2">
           {(
+            /* eslint-disable i18next/no-literal-string */
             [
               { value: "boy", label: t('gamerForm.genderBoy') },
               { value: "girl", label: t('gamerForm.genderGirl') },
               { value: "non_binary", label: t('gamerForm.genderNonBinary') },
             ] as const
+            /* eslint-enable i18next/no-literal-string */
           ).map((option) => (
             <button
               key={option.value}

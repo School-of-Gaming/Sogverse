@@ -57,7 +57,9 @@
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
-    "roleGedu": "Gedu"
+    "roleGedu": "Gedu",
+    "selectCurrency": "Välj valuta",
+    "close": "Stäng"
   },
   "about": {
     "hero": {
@@ -234,7 +236,9 @@
       "enterTypeName": "Ange namn för {type}",
       "enterName": "Ange namn",
       "adding": "Lägger till...",
-      "addType": "Lägg till {type}"
+      "addType": "Lägg till {type}",
+      "noLocationsYet": "Inga platser ännu. Lägg till ett land för att komma igång.",
+      "noLocationsMatchSearch": "Inga platser hittades som matchar din sökning."
     },
     "testing": {
       "title": "Testning",
@@ -318,7 +322,9 @@
       "deleteGroupConfirmTitle": "Radera {label}?",
       "deleteGroupConfirmDescription": "Detta tar bort gruppen och dess Gedu-tilldelning. Ändringen träder inte i kraft förrän du verkställer.",
       "reassignGeduFor": "Omtilldela Gedu för {label}",
-      "selectDifferentGedu": "Välj en annan Gedu för denna grupp."
+      "selectDifferentGedu": "Välj en annan Gedu för denna grupp.",
+      "searchByNameOrEmail": "Sök på namn eller e-post\u2026",
+      "noGedusMatchSearch": "Inga Gedus matchar din sökning."
     },
     "forms": {
       "nameLabel": "Namn",
@@ -636,7 +642,23 @@
     "everyDay": "Varje {day}",
     "join": "Gå med",
     "alwaysOpen": "Alltid öppen",
-    "padlet": "Padlet"
+    "padlet": "Padlet",
+    "allGroupsHeading": "Alla grupper",
+    "allGroupsSubheading": "Alla grupper för alla produkter och utbildare.",
+    "allGroupsEmpty": "Inga grupper har skapats ännu.",
+    "myGroupsHeading": "Mina grupper",
+    "myGroupsSubheading": "Dina anmälda grupper och kommande röstsessioner.",
+    "myGroupsEmpty": "Du är inte anmäld i någon grupp ännu.",
+    "yourGroupsHeading": "Dina grupper",
+    "yourGroupsSubheading": "Dina tilldelade grupper, elever och röstsessioner.",
+    "yourGroupsEmpty": "Grupper visas här när en administratör tilldelar dig till en klubb.",
+    "adminLounge": "Admin Lounge",
+    "adminLoungeDescription": "Privat röstkanal för administratörer",
+    "geduLounge": "Gedu Lounge",
+    "geduLoungeDescription": "Anslut med utbildare när som helst",
+    "geduLoungeDescriptionOther": "Anslut med andra utbildare när som helst",
+    "currentGedu": "Nuvarande",
+    "assignedGedu": "Tilldelad"
   },
   "header": {
     "nav": {
@@ -998,7 +1020,14 @@
     "failedToJoinRoom": "Kunde inte gå med i rummet",
     "sessionEnded": "Sessionen har avslutats",
     "disconnecting": "Kopplar från...",
-    "connecting": "Ansluter..."
+    "connecting": "Ansluter...",
+    "unmuteMicrophone": "Slå på mikrofon",
+    "micLockedByModerator": "Mikrofon låst av moderator",
+    "turnOffCamera": "Stäng av kamera",
+    "turnOnCamera": "Slå på kamera",
+    "cameraLockedByModerator": "Kamera låst av moderator",
+    "shareScreen": "Dela skärm",
+    "stopScreenShare": "Sluta dela skärm"
   },
   "yty": {
     "hero": {

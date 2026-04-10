@@ -90,6 +90,7 @@ export function SubscriptionStatusCard() {
               <p className="font-medium">
                 {tierLabel}
                 {details?.amount && (
+                  // eslint-disable-next-line i18next/no-literal-string -- em dash separator
                   <span className="text-muted-foreground">{" — "}{formatCurrencyFromCents(details.amount, billingCurrency, locale)}{t('package.perMonth')}</span>
                 )}
               </p>

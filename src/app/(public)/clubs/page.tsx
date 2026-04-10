@@ -89,6 +89,7 @@ export default function ProductsPage() {
                   <CardFooter className="flex items-center justify-between">
                     <div>
                       <span className="text-xl font-bold text-primary">{t('tokenCost', { cost: product.token_cost })}</span>
+                      {/* eslint-disable-next-line i18next/no-literal-string -- approx symbol */}
                       <p className="text-xs text-muted-foreground">
                         ≈ {tokensToCurrencyDisplay(product.token_cost, currency, locale)} {c('perSession')}
                       </p>

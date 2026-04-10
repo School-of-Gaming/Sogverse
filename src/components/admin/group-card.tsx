@@ -176,10 +176,12 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
               </p>
               {hasGamers && (ageRange || genderParts.length > 0) && (
                 <p className="text-xs text-muted-foreground">
+                  {/* eslint-disable i18next/no-literal-string -- separators */}
                   {[
                     ageRange && t('ageRangeLabel', { range: ageRange }),
                     genderParts.length > 0 && genderParts.join(", "),
                   ].filter(Boolean).join(" · ")}
+                  {/* eslint-enable i18next/no-literal-string */}
                 </p>
               )}
             </div>

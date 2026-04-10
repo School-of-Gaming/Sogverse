@@ -57,7 +57,9 @@
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
-    "roleGedu": "Gedu"
+    "roleGedu": "Gedu",
+    "selectCurrency": "Valitse valuutta",
+    "close": "Sulje"
   },
   "about": {
     "hero": {
@@ -234,7 +236,9 @@
       "enterTypeName": "Syötä {type} nimi",
       "enterName": "Syötä nimi",
       "adding": "Lisätään...",
-      "addType": "Lisää {type}"
+      "addType": "Lisää {type}",
+      "noLocationsYet": "Ei sijainteja vielä. Lisää maa aloittaaksesi.",
+      "noLocationsMatchSearch": "Hakuasi vastaavia sijainteja ei löytynyt."
     },
     "testing": {
       "title": "Testaus",
@@ -318,7 +322,9 @@
       "deleteGroupConfirmTitle": "Poista {label}?",
       "deleteGroupConfirmDescription": "Tämä poistaa ryhmän ja sen Gedu-määrityksen. Muutos astuu voimaan vasta kun toteutat sen.",
       "reassignGeduFor": "Vaihda Gedu ryhmälle {label}",
-      "selectDifferentGedu": "Valitse toinen Gedu tälle ryhmälle."
+      "selectDifferentGedu": "Valitse toinen Gedu tälle ryhmälle.",
+      "searchByNameOrEmail": "Hae nimellä tai sähköpostilla\u2026",
+      "noGedusMatchSearch": "Hakuasi vastaavia Geduja ei löytynyt."
     },
     "forms": {
       "nameLabel": "Nimi",
@@ -636,7 +642,23 @@
     "everyDay": "Joka {day}",
     "join": "Liity",
     "alwaysOpen": "Aina auki",
-    "padlet": "Padlet"
+    "padlet": "Padlet",
+    "allGroupsHeading": "Kaikki ryhmät",
+    "allGroupsSubheading": "Kaikki ryhmät kaikista tuotteista ja kouluttajista.",
+    "allGroupsEmpty": "Ryhmiä ei ole vielä luotu.",
+    "myGroupsHeading": "Ryhmäni",
+    "myGroupsSubheading": "Ilmoittautuneet ryhmäsi ja tulevat äänikeskustelut.",
+    "myGroupsEmpty": "Et ole ilmoittautunut mihinkään ryhmään vielä.",
+    "yourGroupsHeading": "Ryhmäsi",
+    "yourGroupsSubheading": "Sinulle määrätyt ryhmät, opiskelijat ja äänikeskustelut.",
+    "yourGroupsEmpty": "Ryhmät ilmestyvät tähän, kun ylläpitäjä määrää sinut kerhoon.",
+    "adminLounge": "Admin Lounge",
+    "adminLoungeDescription": "Yksityinen ylläpitäjien äänikanava",
+    "geduLounge": "Gedu Lounge",
+    "geduLoungeDescription": "Keskustele kouluttajien kanssa milloin tahansa",
+    "geduLoungeDescriptionOther": "Keskustele muiden kouluttajien kanssa milloin tahansa",
+    "currentGedu": "Nykyinen",
+    "assignedGedu": "Määrätty"
   },
   "header": {
     "nav": {
@@ -998,7 +1020,14 @@
     "failedToJoinRoom": "Huoneeseen liittyminen epäonnistui",
     "sessionEnded": "Kerta on päättynyt",
     "disconnecting": "Katkaistaan yhteyttä...",
-    "connecting": "Yhdistetään..."
+    "connecting": "Yhdistetään...",
+    "unmuteMicrophone": "Poista mykistys",
+    "micLockedByModerator": "Mikrofoni lukittu moderaattorin toimesta",
+    "turnOffCamera": "Sammuta kamera",
+    "turnOnCamera": "Käynnistä kamera",
+    "cameraLockedByModerator": "Kamera lukittu moderaattorin toimesta",
+    "shareScreen": "Jaa näyttö",
+    "stopScreenShare": "Lopeta näytön jakaminen"
   },
   "yty": {
     "hero": {

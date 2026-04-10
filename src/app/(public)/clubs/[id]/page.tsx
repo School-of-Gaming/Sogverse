@@ -148,6 +148,7 @@ export default function ProductDetailPage() {
               {t('tokenCost', { cost: product.token_cost })}
             </span>
             <span className="text-sm text-muted-foreground"> {c('perSession')}</span>
+            {/* eslint-disable-next-line i18next/no-literal-string -- approx symbol */}
             <p className="text-xs text-muted-foreground">
               ≈ {tokensToCurrencyDisplay(product.token_cost, currency, locale)}
             </p>

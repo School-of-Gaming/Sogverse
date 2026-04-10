@@ -161,8 +161,10 @@ export function GroupDetailContent({
               {schedule && (
                 <>{c('schedule', { day: schedule.localDay, time: schedule.localTime, tz: schedule.tzAbbrev })}</>
               )}
+              {/* eslint-disable-next-line i18next/no-literal-string */}
               {schedule && group.durationMinutes && " · "}
               {group.durationMinutes && <>{group.durationMinutes} {c('minutes')}</>}
+              {/* eslint-disable-next-line i18next/no-literal-string */}
               {(schedule || group.durationMinutes) && " · "}
               <>{c('ages', { min: group.productMinAge, max: group.productMaxAge })}</>
             </p>
