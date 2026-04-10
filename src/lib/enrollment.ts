@@ -127,6 +127,9 @@ export function getRefundEligibility(opts: {
  * - 2–23 hours → "5 hours"
  * - 1–2 hours → "1 hour and 30 minutes"
  * - <1 hour → "45 minutes"
+ *
+ * TODO: i18n Phase 3 — replace with next-intl useFormatter().relativeTime()
+ * or ICU plural keys so the time units are translated.
  */
 export function formatCountdown(ms: number): string {
   const totalMinutes = Math.max(0, Math.floor(ms / 60_000));
