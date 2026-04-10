@@ -33,7 +33,6 @@ vi.mock("@/lib/brevo", () => ({
 
 vi.mock("@/lib/constants", () => ({
   SENDER_EMAIL: "noreply@test.com",
-  SENDER_NAME_ENROLLMENT: "Test Sender",
 }));
 
 vi.mock("@/lib/email-templates/group-changes", () => ({

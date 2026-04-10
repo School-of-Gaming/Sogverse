@@ -6,7 +6,7 @@ Brevo-powered transactional email system with code-owned HTML templates, role-ba
 
 All transactional emails are sent via the **Brevo API** (`src/lib/brevo.ts`). Supabase's built-in SMTP is configured with the same Brevo credentials for auth emails (signup confirmation, magic link). Templates are code-owned HTML with a shared dark-themed layout, built from TypeScript functions and rendered server-side. A template registry provides a single source of truth for all templates, powering both production sending and the admin testing page.
 
-**Sender identity:** All emails are sent from `sogverse@sog.gg` (verified in Brevo). Three sender display names are used depending on context: `Sogverse Team` (auth), `Sogverse Feedback` (feedback), `Sogverse Enrollment` (enrollment and group changes).
+**Sender identity:** All emails are sent from `sogverse@sog.gg` (verified in Brevo). Three sender display names are translated per-locale via the `email` namespace keys `senderAuth`, `senderFeedback`, and `senderEnrollment` (e.g. English: "Sogverse Team", Finnish: "Sogverse-tiimi").
 
 ## Component Map
 
@@ -40,11 +40,9 @@ API routes
 Testing UI
 └── /admin/testing                — Email tool with template picker, param fields, and custom mode
 
-Constants (src/lib/constants/index.ts)
-├── SENDER_EMAIL                  — "sogverse@sog.gg"
-├── SENDER_NAME_AUTH              — "Sogverse Team"
-├── SENDER_NAME_FEEDBACK          — "Sogverse Feedback"
-└── SENDER_NAME_ENROLLMENT        — "Sogverse Enrollment"
+Constants
+├── SENDER_EMAIL                  — "sogverse@sog.gg" (src/lib/constants/index.ts)
+└── Sender display names          — email namespace keys: senderAuth, senderFeedback, senderEnrollment (messages/*.json)
 ```
 
 ## Email Template System
