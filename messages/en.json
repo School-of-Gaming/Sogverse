@@ -85,8 +85,7 @@
     "roleParent": "Parent",
     "roleGamer": "Gamer",
     "roleGedu": "Gedu",
-    "selectCurrency": "Select currency",
-    "close": "Close"
+    "selectCurrency": "Select currency"
   },
   "about": {
     "hero": {

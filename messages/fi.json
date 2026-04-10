@@ -85,8 +85,7 @@
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
     "roleGedu": "Gedu",
-    "selectCurrency": "Valitse valuutta",
-    "close": "Sulje"
+    "selectCurrency": "Valitse valuutta"
   },
   "about": {
     "hero": {
@@ -1129,65 +1128,65 @@
       "notProvided": "Ei annettu"
     },
     "enrollmentParent": {
-      "subject": "{gamerName} on nyt ilmoittautunut kurssille {productName}",
+      "subject": "{gamerName} on nyt ilmoittautunut kerhoon {productName}",
       "heading": "Ilmoittautuminen vahvistettu",
-      "body": "Hei {parentName}, {gamerName} on nyt ilmoittautunut kurssille {productName} Gedun {geduName} kanssa."
+      "body": "Hei {parentName}, {gamerName} on nyt ilmoittautunut kerhoon {productName} Gedun {geduName} kanssa."
     },
     "enrollmentGedu": {
       "subject": "{gamerName} on liittynyt ryhmääsi \u2013 {productName}",
       "heading": "Uusi pelaaja ryhmässäsi",
-      "body": "Hei {geduName}, {gamerName} on liittynyt ryhmääsi kurssilla {productName}."
+      "body": "Hei {geduName}, {gamerName} on liittynyt ryhmääsi kerhossa {productName}."
     },
     "unenrollmentParent": {
-      "subject": "{gamerName} on poistettu kurssilta {productName}",
+      "subject": "{gamerName} on poistettu kerhosta {productName}",
       "heading": "Ilmoittautumisen peruutus vahvistettu",
-      "body": "Hei {parentName}, {gamerName} on poistettu kurssilta {productName} (Gedu: {geduName})."
+      "body": "Hei {parentName}, {gamerName} on poistettu kerhosta {productName} (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
       "subject": "{gamerName} on poistunut ryhmästäsi \u2013 {productName}",
       "heading": "Pelaaja poistunut ryhmästäsi",
-      "body": "Hei {geduName}, {gamerName} on poistunut ryhmästäsi kurssilla {productName}."
+      "body": "Hei {geduName}, {gamerName} on poistunut ryhmästäsi kerhossa {productName}."
     },
     "groupAdded": {
       "subject": "Sinut on määrätty uuteen ryhmään \u2013 {productName}",
       "heading": "Sinut on määrätty uuteen ryhmään",
-      "body": "Hei {geduName}, sinut on määrätty uuteen ryhmään kurssilla {productName}.",
+      "body": "Hei {geduName}, sinut on määrätty uuteen ryhmään kerhossa {productName}.",
       "dashboardNote": "Näet tämän ryhmän hallintapaneelissasi pian."
     },
     "groupDeleted": {
       "subject": "Ryhmäsi on poistettu \u2013 {productName}",
       "heading": "Ryhmäsi on poistettu",
-      "body": "Hei {geduName}, ryhmäsi kurssilla {productName} on poistettu ylläpitäjän toimesta."
+      "body": "Hei {geduName}, ryhmäsi kerhossa {productName} on poistettu ylläpitäjän toimesta."
     },
     "groupReassignedOldGedu": {
       "subject": "Ryhmäsi on siirretty toiselle \u2013 {productName}",
       "heading": "Ryhmäsi on siirretty toiselle",
-      "body": "Hei {oldGeduName}, ryhmäsi kurssilla {productName} on siirretty Gedulle {newGeduName}."
+      "body": "Hei {oldGeduName}, ryhmäsi kerhossa {productName} on siirretty Gedulle {newGeduName}."
     },
     "groupReassignedNewGedu": {
       "subject": "Sinut on määrätty ryhmään \u2013 {productName}",
       "heading": "Sinut on määrätty ryhmään",
-      "body": "Hei {newGeduName}, sinut on määrätty ryhmään kurssilla {productName} (aiemmin Gedun {oldGeduName} vetämä)."
+      "body": "Hei {newGeduName}, sinut on määrätty ryhmään kerhossa {productName} (aiemmin Gedun {oldGeduName} vetämä)."
     },
     "groupReassignedParent": {
       "subject": "Gedun vaihto: {gamerName} \u2013 {productName}",
       "heading": "Pelaajasi Gedu on vaihtunut",
-      "body": "Hei {parentName}, pelaajan {gamerName} ryhmän Gedu kurssilla {productName} on vaihtunut Gedusta {oldGeduName} Geduun {newGeduName}."
+      "body": "Hei {parentName}, pelaajan {gamerName} ryhmän Gedu kerhossa {productName} on vaihtunut Gedusta {oldGeduName} Geduun {newGeduName}."
     },
     "gamerMovedParent": {
       "subject": "{gamerName} on siirretty uuteen ryhmään \u2013 {productName}",
       "heading": "Lapsesi on siirretty uuteen ryhmään",
-      "body": "Hei {parentName}, {gamerName} on siirretty Gedun {oldGeduName} ryhmästä Gedun {newGeduName} ryhmään kurssilla {productName}."
+      "body": "Hei {parentName}, {gamerName} on siirretty Gedun {oldGeduName} ryhmästä Gedun {newGeduName} ryhmään kerhossa {productName}."
     },
     "gamerMovedOldGedu": {
       "subject": "{gamerName} on siirretty ryhmästäsi \u2013 {productName}",
       "heading": "Pelaaja on siirretty ryhmästäsi",
-      "body": "Hei {geduName}, {gamerName} on siirretty ryhmästäsi Gedun {newGeduName} ryhmään kurssilla {productName}."
+      "body": "Hei {geduName}, {gamerName} on siirretty ryhmästäsi Gedun {newGeduName} ryhmään kerhossa {productName}."
     },
     "gamerMovedNewGedu": {
       "subject": "{gamerName} on siirretty ryhmääsi \u2013 {productName}",
       "heading": "Pelaaja on siirretty ryhmääsi",
-      "body": "Hei {geduName}, {gamerName} on siirretty ryhmääsi Gedun {oldGeduName} ryhmästä kurssilla {productName}."
+      "body": "Hei {geduName}, {gamerName} on siirretty ryhmääsi Gedun {oldGeduName} ryhmästä kerhossa {productName}."
     },
     "feedback": {
       "subject": "Uusi palaute vastaanotettu",

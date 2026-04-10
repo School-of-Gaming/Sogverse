@@ -85,8 +85,7 @@
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
     "roleGedu": "Gedu",
-    "selectCurrency": "Välj valuta",
-    "close": "Stäng"
+    "selectCurrency": "Välj valuta"
   },
   "about": {
     "hero": {
@@ -973,7 +972,7 @@
       "cancelDialog": {
         "title": "Avsluta prenumeration?",
         "description": "Är du säker på att du vill avsluta din prenumeration?",
-        "loseRate": "Du förlorar din nuvarande pris på {rate}/mån.",
+        "loseRate": "Du förlorar ditt nuvarande pris på {rate}/mån.",
         "keepAccess": "Du behåller tillgången till slutet av din nuvarande faktureringsperiod.",
         "keep": "Behåll prenumeration",
         "canceling": "Avslutar...",
