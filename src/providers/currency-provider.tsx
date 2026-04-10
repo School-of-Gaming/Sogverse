@@ -17,19 +17,9 @@ import {
   type SupportedCurrency,
 } from "@/lib/constants/currency";
 
+import { getCookie, setCookie } from "@/lib/cookies";
+
 const COOKIE_NAME = "currency";
-const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year in seconds
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === "undefined") return undefined;
-  // eslint-disable-next-line security/detect-non-literal-regexp -- `name` is always the hardcoded COOKIE_NAME constant
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : undefined;
-}
-
-function setCookie(name: string, value: string) {
-  document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${COOKIE_MAX_AGE};SameSite=Lax`;
-}
 
 function resolveInitialCurrency(profileCurrency: string | null | undefined): SupportedCurrency {
   // 1. Profile preference
