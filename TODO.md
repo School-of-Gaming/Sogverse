@@ -3,6 +3,7 @@
 ## Cleanup
 
 - [ ] Remove `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` from `.github/workflows/ci.yml` after June 2, 2026 (Node.js 24 becomes the default runner)
+- [ ] Add CHECK constraints to `profiles.language_preference` (`IN ('en', 'fi', 'sv')`) and `profiles.currency` (`IN ('EUR', 'SEK', 'USD', 'GBP')`) — both are plain text columns with app-level validation only
 
 ### E2E Tests with Local Supabase
 
