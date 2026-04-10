@@ -19,5 +19,5 @@ const messageLoaders: Record<SupportedLanguage, () => Promise<{ default: Message
 
 export async function loadMessages(locale: SupportedLanguage): Promise<Messages> {
   const mod = await messageLoaders[locale]();
-  return mod.default ?? mod;
+  return mod.default;
 }

@@ -22,7 +22,7 @@ export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: Fee
   const escapedMessage = escapeHtml(opts.message).replace(/\n/g, "<br/>");
   const escapedName = escapeHtml(opts.userName);
   const roleKey = ROLE_LABEL_KEYS[opts.userRole as UserRole];
-  const escapedRole = escapeHtml(roleKey ? t(roleKey) : opts.userRole);
+  const escapedRole = escapeHtml(t(roleKey));
   const escapedEmail = escapeHtml(opts.userEmail);
 
   const gamerNote = opts.isGamer && opts.parentEmail
