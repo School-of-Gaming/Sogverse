@@ -355,9 +355,9 @@ describe("formatCountdown", () => {
 
   it("shows hours and minutes when 1–2 hours away", () => {
     expect(formatCountdown(hours(1), "en")).toBe("1 hour");
-    expect(formatCountdown(hours(1) + mins(30), "en")).toBe("1 hour 30 minutes");
-    expect(formatCountdown(hours(1) + mins(1), "en")).toBe("1 hour 1 minute");
-    expect(formatCountdown(mins(119), "en")).toBe("1 hour 59 minutes");
+    expect(formatCountdown(hours(1) + mins(30), "en")).toBe("1 hour, 30 minutes");
+    expect(formatCountdown(hours(1) + mins(1), "en")).toBe("1 hour, 1 minute");
+    expect(formatCountdown(mins(119), "en")).toBe("1 hour, 59 minutes");
   });
 
   it("shows minutes when under 1 hour", () => {
