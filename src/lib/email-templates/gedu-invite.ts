@@ -17,6 +17,7 @@ export function buildGeduInviteEmail(t: EmailTranslator, setupLink: string, loca
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
               <td align="center" style="background-color:${BRAND.primary};border-radius:8px;">
+                <!-- setupLink is a Supabase-generated URL, safe to embed unescaped -->
                 <a href="${setupLink}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:14px;font-weight:bold;color:${DARK_THEME.bg};text-decoration:none;">
                   ${t("geduInvite.button")}
                 </a>
