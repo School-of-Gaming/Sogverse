@@ -90,7 +90,7 @@
   "about": {
     "hero": {
       "title": "Tietoa <primary>School of Gaming</primary> -kerhosta",
-      "subtitle": "Minecraft-kerhoissamme ruutuaika muuttuu laatuajaksi. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelin, jota lapset jo rakastavat — luoden leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, kehittävät oikeita taitoja ja pitävät hauskaa."
+      "subtitle": "Minecraft-kerhoissamme ruutuajasta tulee laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelin, jota lapset jo rakastavat — luoden leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa."
     },
     "quote": {
       "text": "\"Se mikä on totta nyt, oli kerran vain mielikuvitustasi.\"",
@@ -717,28 +717,28 @@
   },
   "home": {
     "hero": {
-      "title": "Kun<br></br><primary>ruutuaika</primary><br></br>muuttuu<br></br><secondary>laatuajaksi</secondary>",
-      "subtitle": "Taidokkaasti suunnitellut Minecraft-kerhomme edistävät tervettä pelaamista harrastuksena. Maailmanluokan pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, kehittävät ainutlaatuisia kykyjään ja pitävät hauskaa tekemällä sitä, mitä rakastavat.",
-      "viewClubs": "Näytä kerhot"
+      "title": "<primary>Ruutuajasta</primary><br></br><secondary>Laatuaikaa</secondary>",
+      "subtitle": "Ammattilaisten suunnittelemat Minecraft-kerhomme edistävät tervettä pelaamista harrastuksena. Maailmanluokan pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat.",
+      "viewClubs": "Kerhot"
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
-      "subheading": "Pelaaminen on harrastus siinä kuin mikä tahansa muukin — parempi hyvien ystävien kanssa ja ammattimaisen ohjaajan avulla.",
+      "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattimaisen ohjaajan kanssa.",
       "minecraftClubs": {
-        "title": "Minecraft-kerhot Gedujen kanssa",
-        "description": "Pelikasvattajamme — Gedut — ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa joku, joka todella ymmärtää."
+        "title": "Ohjatut Minecraft-kerhot",
+        "description": "Pelikasvattajamme eli gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa kasvattaja, joka todella ymmärtää."
       },
       "screenTime": {
-        "title": "Ruutuaika muuttuu laatuajaksi",
-        "description": "Taidokkaasti suunnitellut kerhot muuttavat pelaamisen leikilliseksi oppimiskokemukseksi, jossa lapset kehittävät oikeita taitoja ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
+        "title": "Ruutuajasta laatuaikaa",
+        "description": "Ammattilaisten suunnittelemat kerhot muuttavat pelaamisen leikilliseksi oppimiskokemukseksi, jossa lapset kehittyvät monipuolisesti ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
       },
       "newFriends": {
         "title": "Uusia ystäviä, aitoja yhteyksiä",
-        "description": "Lapset luovat aitoja, kestäviä ystävyyksiä jaettujen seikkailujen kautta. Ketään ei jätetä ilman ystävää. Pelaajan vala tarkoittaa toisten kohtelemista ystävällisesti — verkossa ja sen ulkopuolella."
+        "description": "Lapset luovat aitoja, kestäviä ystävyyksiä jaettujen seikkailujen kautta. Ketään ei jätetä ilman ystävää. Jokainen pelaaja lupaa kohdella toisia ystävällisesti — verkossa ja sen ulkopuolella."
       },
       "parents": {
-        "title": "Vanhemmat ovat mukana",
-        "description": "Vanhempien pelikasvatus on yhtä tärkeää kuin itse kerhot. Pidämme sinut ajan tasalla, mukana ja varustettuna tukemaan lapsesi pelipolkua."
+        "title": "Koko perhe mukaan",
+        "description": "Pidämme vanhemmat ajan tasalla ja mukana lastensa pelipolulla. Vanhempien tukeminen on meille yhtä tärkeää kuin itse kerhot."
       }
     },
     "howItWorks": {
@@ -754,7 +754,7 @@
       },
       "step3": {
         "title": "Liity seikkailuun",
-        "description": "Pelaajasi kirjautuvat joka viikko, tapaavat Gedunsa ja sukeltavat Minecraft-seikkailuihin uusien ystävien kanssa."
+        "description": "Pelaajasi kirjautuvat joka viikko, tapaavat ohjaajansa ja sukeltavat Minecraft-seikkailuihin uusien ystävien kanssa."
       }
     },
     "cta": {
