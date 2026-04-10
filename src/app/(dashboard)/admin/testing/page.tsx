@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL } from "@/lib/constants";
+import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, DEFAULT_LANGUAGE, type SupportedLanguage } from "@/lib/constants/language-preference";
 import { templateRegistry, type TemplateField } from "@/lib/email-templates/registry";
 
 type EmailProvider = "brevo" | "klaviyo";
@@ -55,6 +56,7 @@ export default function TestingPage() {
   const templateKeys = Object.keys(templateRegistry);
   const [templateName, setTemplateName] = useState(templateKeys[0]);
   const [templateParams, setTemplateParams] = useState<Record<string, string>>({});
+  const [templateLocale, setTemplateLocale] = useState<SupportedLanguage>(DEFAULT_LANGUAGE);
 
   const selectedTemplate = templateRegistry[templateName];
 
@@ -104,6 +106,7 @@ export default function TestingPage() {
             mode: "template",
             template: templateName,
             toEmail,
+            locale: templateLocale,
             params: (() => {
               const raw = Object.fromEntries(
                 selectedTemplate.fields.map((f) => [
@@ -201,20 +204,37 @@ export default function TestingPage() {
             {/* Template mode fields */}
             {mode === "template" && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="template">{t('template')}</Label>
-                  <select
-                    id="template"
-                    value={templateName}
-                    onChange={(e) => handleTemplateChange(e.target.value)}
-                    className={selectClass}
-                  >
-                    {Object.entries(templateRegistry).map(([key, def]) => (
-                      <option key={key} value={key}>
-                        {def.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="template">{t('template')}</Label>
+                    <select
+                      id="template"
+                      value={templateName}
+                      onChange={(e) => handleTemplateChange(e.target.value)}
+                      className={selectClass}
+                    >
+                      {Object.entries(templateRegistry).map(([key, def]) => (
+                        <option key={key} value={key}>
+                          {def.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="templateLocale">{t('language')}</Label>
+                    <select
+                      id="templateLocale"
+                      value={templateLocale}
+                      onChange={(e) => setTemplateLocale(e.target.value as SupportedLanguage)}
+                      className={selectClass}
+                    >
+                      {SUPPORTED_LANGUAGES.map((lang) => (
+                        <option key={lang} value={lang}>
+                          {LANGUAGE_CONFIG[lang].nativeLabel} ({LANGUAGE_CONFIG[lang].label})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-3 rounded-md border border-border p-4">

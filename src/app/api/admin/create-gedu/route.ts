@@ -2,9 +2,11 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME_AUTH } from "@/lib/constants";
+import { SENDER_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 import { buildGeduInviteEmail } from "@/lib/email-templates/gedu-invite";
+import { getEmailTranslator } from "@/lib/email-templates/translator";
+import { DEFAULT_LANGUAGE, isSupportedLanguage, type SupportedLanguage } from "@/lib/constants/language-preference";
 
 export async function POST(request: Request) {
   try {
@@ -13,7 +15,7 @@ export async function POST(request: Request) {
     });
     if (result instanceof NextResponse) return result;
 
-    const { email } = await request.json();
+    const { email, language } = await request.json();
 
     if (!email || typeof email !== "string") {
       return NextResponse.json(
@@ -22,6 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const locale: SupportedLanguage = isSupportedLanguage(language) ? language : DEFAULT_LANGUAGE;
     const origin = new URL(request.url).origin;
     const admin = createAdminClient();
 
@@ -50,7 +53,7 @@ export async function POST(request: Request) {
 
     const { error: roleError } = await admin
       .from("profiles")
-      .update({ role: "gedu" })
+      .update({ role: "gedu", language_preference: locale })
       .eq("id", userId);
 
     if (roleError) {
@@ -63,12 +66,13 @@ export async function POST(request: Request) {
     // Step 3: Send welcome email via Brevo with the invite link.
     // If the email fails, roll back by deleting the user so there's no dead account.
     try {
+      const t = await getEmailTranslator(locale);
       await sendTransactionalEmail({
         fromEmail: SENDER_EMAIL,
-        fromName: SENDER_NAME_AUTH,
+        fromName: t("senderAuth"),
         toEmail: email,
-        subject: "You're invited to the Sogverse",
-        htmlContent: buildGeduInviteEmail(data.properties.action_link),
+        subject: t("geduInvite.subject"),
+        htmlContent: buildGeduInviteEmail(t, data.properties.action_link, locale),
       });
     } catch (emailError) {
       console.error("Invite email failed, rolling back user:", emailError instanceof Error ? emailError.message : emailError);

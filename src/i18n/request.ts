@@ -5,6 +5,7 @@ import {
   detectLanguageFromLocale,
   isSupportedLanguage,
   DEFAULT_LANGUAGE,
+  DEFAULT_TIMEZONE,
 } from "@/lib/constants/language-preference";
 
 export default getRequestConfig(async () => {
@@ -26,6 +27,7 @@ export default getRequestConfig(async () => {
 
   return {
     locale,
+    timeZone: DEFAULT_TIMEZONE,
     messages: (await import(`../../messages/${locale}.json`)).default,
   };
 });

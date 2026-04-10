@@ -12,6 +12,13 @@ vi.mock("@/lib/supabase/admin", () => ({
         generateLink: (...args: unknown[]) => mockGenerateLink(...args),
       },
     },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: () => Promise.resolve({ data: { language_preference: null }, error: null }),
+        }),
+      }),
+    }),
   })),
 }));
 
@@ -19,6 +26,7 @@ const mockSendTransactionalEmail = vi.fn();
 vi.mock("@/lib/brevo", () => ({
   sendTransactionalEmail: (...args: unknown[]) => mockSendTransactionalEmail(...args),
 }));
+
 
 // --- Helpers ---
 

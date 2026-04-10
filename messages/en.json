@@ -207,6 +207,7 @@
       "geduReceiveEmail": "The gedu will receive an email with instructions to set up their account.",
       "emailAddress": "Email Address",
       "emailPlaceholder": "gedu@example.com",
+      "inviteLanguage": "Invite Email Language",
       "sendInvite": "Send Invitation",
       "sendingInvite": "Sending...",
       "inviteSent": "Invitation Sent!",
@@ -244,6 +245,7 @@
       "klaviyoComingSoon": "Klaviyo (coming soon)",
       "content": "Content",
       "template": "Template",
+      "language": "Language",
       "custom": "Custom",
       "toEmail": "To Email",
       "toEmailPlaceholder": "recipient@example.com",
@@ -1036,6 +1038,104 @@
     "cta": {
       "heading": "Start Your Journey",
       "subheading": "Join the Sogverse and start earning Yty. Every session, every friendship, every act of kindness makes a difference."
+    }
+  },
+  "email": {
+    "senderAuth": "Sogverse Team",
+    "senderFeedback": "Sogverse Feedback",
+    "senderEnrollment": "Sogverse Enrolment",
+    "footer": "\u00a9 {year} Sogverse. All rights reserved.",
+    "passwordReset": {
+      "subject": "Reset your Sogverse password",
+      "heading": "Reset Your Password",
+      "body": "We received a request to reset your Sogverse password. Click the button below to choose a new password.",
+      "expiry": "This link will expire in 1 hour.",
+      "ignore": "If you didn\u2019t request a password reset, you can safely ignore this email. Your password will not be changed.",
+      "button": "Reset Password"
+    },
+    "geduInvite": {
+      "subject": "You\u2019re invited to the Sogverse",
+      "heading": "Welcome to the Sogverse",
+      "body": "You\u2019ve been invited to join the Sogverse as a <strong>Gedu</strong>. Click the button below to set up your account.",
+      "expiry": "This link will expire in 1 hour.",
+      "button": "Set Up Your Account"
+    },
+    "minecraft": {
+      "label": "Minecraft Username:",
+      "verified": "{username} (verified)",
+      "unverified": "{username} (not yet verified)",
+      "notProvided": "Not provided"
+    },
+    "enrollmentParent": {
+      "subject": "{gamerName} is now enrolled in {productName}",
+      "heading": "Enrolment Confirmed",
+      "body": "Hi {parentName}, {gamerName} is now enrolled in {productName} with Gedu {geduName}."
+    },
+    "enrollmentGedu": {
+      "subject": "{gamerName} has joined your group \u2013 {productName}",
+      "heading": "New Gamer in Your Group",
+      "body": "Hi {geduName}, {gamerName} has joined your group for {productName}."
+    },
+    "unenrollmentParent": {
+      "subject": "{gamerName} has been unenrolled from {productName}",
+      "heading": "Unenrolment Confirmed",
+      "body": "Hi {parentName}, {gamerName} has been unenrolled from {productName} (Gedu: {geduName})."
+    },
+    "unenrollmentGedu": {
+      "subject": "{gamerName} has left your group \u2013 {productName}",
+      "heading": "Gamer Left Your Group",
+      "body": "Hi {geduName}, {gamerName} has left your group for {productName}."
+    },
+    "groupAdded": {
+      "subject": "You\u2019ve been assigned to a new group \u2013 {productName}",
+      "heading": "You\u2019ve been assigned to a new group",
+      "body": "Hi {geduName}, you\u2019ve been assigned to a new group for {productName}.",
+      "dashboardNote": "You\u2019ll see this group in your dashboard shortly."
+    },
+    "groupDeleted": {
+      "subject": "Your group has been removed \u2013 {productName}",
+      "heading": "Your group has been removed",
+      "body": "Hi {geduName}, your group for {productName} has been removed by an admin."
+    },
+    "groupReassignedOldGedu": {
+      "subject": "Your group has been reassigned \u2013 {productName}",
+      "heading": "Your group has been reassigned",
+      "body": "Hi {oldGeduName}, your group for {productName} has been reassigned to {newGeduName}."
+    },
+    "groupReassignedNewGedu": {
+      "subject": "You\u2019ve been assigned to a group \u2013 {productName}",
+      "heading": "You\u2019ve been assigned to a group",
+      "body": "Hi {newGeduName}, you\u2019ve been assigned to a group for {productName} (previously led by {oldGeduName})."
+    },
+    "groupReassignedParent": {
+      "subject": "Gedu change for {gamerName} \u2013 {productName}",
+      "heading": "Your gamer\u2019s Gedu has changed",
+      "body": "Hi {parentName}, the Gedu for {gamerName}\u2019s group in {productName} has changed from {oldGeduName} to {newGeduName}."
+    },
+    "gamerMovedParent": {
+      "subject": "{gamerName} has been moved to a new group \u2013 {productName}",
+      "heading": "Your child has been moved to a new group",
+      "body": "Hi {parentName}, {gamerName} has been moved from {oldGeduName}\u2019s group to {newGeduName}\u2019s group in {productName}."
+    },
+    "gamerMovedOldGedu": {
+      "subject": "{gamerName} has been moved from your group \u2013 {productName}",
+      "heading": "A gamer has been moved from your group",
+      "body": "Hi {geduName}, {gamerName} has been moved from your group to {newGeduName}\u2019s group in {productName}."
+    },
+    "gamerMovedNewGedu": {
+      "subject": "{gamerName} has been moved to your group \u2013 {productName}",
+      "heading": "A gamer has been moved to your group",
+      "body": "Hi {geduName}, {gamerName} has been moved to your group from {oldGeduName}\u2019s group in {productName}."
+    },
+    "feedback": {
+      "subject": "New Feedback Received",
+      "heading": "New Feedback Received",
+      "from": "From",
+      "role": "Role",
+      "emailLabel": "Email",
+      "sent": "Sent",
+      "message": "Message",
+      "gamerNote": "This feedback is from a gamer account. Replies will go to their parent ({parentEmail})."
     }
   }
 }

@@ -45,17 +45,8 @@ vi.mock("@/lib/email-templates/group-changes", () => ({
   buildGamerMovedParentEmail: () => "<html>moved-parent</html>",
   buildGamerMovedOldGeduEmail: () => "<html>moved-old</html>",
   buildGamerMovedNewGeduEmail: () => "<html>moved-new</html>",
-  groupChangeSubjects: {
-    groupAdded: () => "Group Added",
-    groupDeleted: () => "Group Deleted",
-    groupReassignedOldGedu: () => "Reassigned (old)",
-    groupReassignedNewGedu: () => "Reassigned (new)",
-    groupReassignedParent: () => "Reassigned (parent)",
-    gamerMovedParent: () => "Moved (parent)",
-    gamerMovedOldGedu: () => "Moved (old)",
-    gamerMovedNewGedu: () => "Moved (new)",
-  },
 }));
+
 
 // --- Helpers ---
 

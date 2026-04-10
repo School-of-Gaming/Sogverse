@@ -207,6 +207,7 @@
       "geduReceiveEmail": "Gedun kommer att få ett e-postmeddelande med instruktioner för att konfigurera sitt konto.",
       "emailAddress": "E-postadress",
       "emailPlaceholder": "gedu@example.com",
+      "inviteLanguage": "Inbjudningsmailets språk",
       "sendInvite": "Skicka inbjudan",
       "sendingInvite": "Skickar...",
       "inviteSent": "Inbjudan skickad!",
@@ -244,6 +245,7 @@
       "klaviyoComingSoon": "Klaviyo (kommer snart)",
       "content": "Innehåll",
       "template": "Mall",
+      "language": "Språk",
       "custom": "Anpassad",
       "toEmail": "Mottagare",
       "toEmailPlaceholder": "mottagare@example.com",
@@ -1036,6 +1038,104 @@
     "cta": {
       "heading": "Börja din resa",
       "subheading": "Gå med i Sogverse och börja tjäna Yty. Varje session, varje vänskap, varje vänlig handling gör skillnad."
+    }
+  },
+  "email": {
+    "senderAuth": "Sogverse-teamet",
+    "senderFeedback": "Sogverse Feedback",
+    "senderEnrollment": "Sogverse Anmälan",
+    "footer": "\u00a9 {year} Sogverse. Alla rättigheter förbehållna.",
+    "passwordReset": {
+      "subject": "Återställ ditt Sogverse-lösenord",
+      "heading": "Återställ ditt lösenord",
+      "body": "Vi har mottagit en begäran om att återställa ditt Sogverse-lösenord. Klicka på knappen nedan för att välja ett nytt lösenord.",
+      "expiry": "Denna länk upphör att gälla om en timme.",
+      "ignore": "Om du inte begärde en lösenordsåterställning kan du ignorera detta e-postmeddelande. Ditt lösenord kommer inte att ändras.",
+      "button": "Återställ lösenord"
+    },
+    "geduInvite": {
+      "subject": "Du är inbjuden till Sogverse",
+      "heading": "Välkommen till Sogverse",
+      "body": "Du har blivit inbjuden att gå med i Sogverse som <strong>Gedu</strong>. Klicka på knappen nedan för att skapa ditt konto.",
+      "expiry": "Denna länk upphör att gälla om en timme.",
+      "button": "Skapa ditt konto"
+    },
+    "minecraft": {
+      "label": "Minecraft-användarnamn:",
+      "verified": "{username} (verifierad)",
+      "unverified": "{username} (ännu inte verifierad)",
+      "notProvided": "Inte angivet"
+    },
+    "enrollmentParent": {
+      "subject": "{gamerName} är nu anmäld till {productName}",
+      "heading": "Anmälan bekräftad",
+      "body": "Hej {parentName}, {gamerName} är nu anmäld till {productName} med Gedu {geduName}."
+    },
+    "enrollmentGedu": {
+      "subject": "{gamerName} har gått med i din grupp \u2013 {productName}",
+      "heading": "Ny spelare i din grupp",
+      "body": "Hej {geduName}, {gamerName} har gått med i din grupp för {productName}."
+    },
+    "unenrollmentParent": {
+      "subject": "{gamerName} har avregistrerats från {productName}",
+      "heading": "Avregistrering bekräftad",
+      "body": "Hej {parentName}, {gamerName} har avregistrerats från {productName} (Gedu: {geduName})."
+    },
+    "unenrollmentGedu": {
+      "subject": "{gamerName} har lämnat din grupp \u2013 {productName}",
+      "heading": "Spelare har lämnat din grupp",
+      "body": "Hej {geduName}, {gamerName} har lämnat din grupp för {productName}."
+    },
+    "groupAdded": {
+      "subject": "Du har tilldelats en ny grupp \u2013 {productName}",
+      "heading": "Du har tilldelats en ny grupp",
+      "body": "Hej {geduName}, du har tilldelats en ny grupp för {productName}.",
+      "dashboardNote": "Du kommer att se denna grupp i din instrumentpanel inom kort."
+    },
+    "groupDeleted": {
+      "subject": "Din grupp har tagits bort \u2013 {productName}",
+      "heading": "Din grupp har tagits bort",
+      "body": "Hej {geduName}, din grupp för {productName} har tagits bort av en administratör."
+    },
+    "groupReassignedOldGedu": {
+      "subject": "Din grupp har omtilldelats \u2013 {productName}",
+      "heading": "Din grupp har omtilldelats",
+      "body": "Hej {oldGeduName}, din grupp för {productName} har omtilldelats till {newGeduName}."
+    },
+    "groupReassignedNewGedu": {
+      "subject": "Du har tilldelats en grupp \u2013 {productName}",
+      "heading": "Du har tilldelats en grupp",
+      "body": "Hej {newGeduName}, du har tilldelats en grupp för {productName} (tidigare ledd av {oldGeduName})."
+    },
+    "groupReassignedParent": {
+      "subject": "Gedubyte för {gamerName} \u2013 {productName}",
+      "heading": "Din spelares Gedu har ändrats",
+      "body": "Hej {parentName}, Gedun för {gamerName}s grupp i {productName} har ändrats från {oldGeduName} till {newGeduName}."
+    },
+    "gamerMovedParent": {
+      "subject": "{gamerName} har flyttats till en ny grupp \u2013 {productName}",
+      "heading": "Ditt barn har flyttats till en ny grupp",
+      "body": "Hej {parentName}, {gamerName} har flyttats från {oldGeduName}s grupp till {newGeduName}s grupp i {productName}."
+    },
+    "gamerMovedOldGedu": {
+      "subject": "{gamerName} har flyttats från din grupp \u2013 {productName}",
+      "heading": "En spelare har flyttats från din grupp",
+      "body": "Hej {geduName}, {gamerName} har flyttats från din grupp till {newGeduName}s grupp i {productName}."
+    },
+    "gamerMovedNewGedu": {
+      "subject": "{gamerName} har flyttats till din grupp \u2013 {productName}",
+      "heading": "En spelare har flyttats till din grupp",
+      "body": "Hej {geduName}, {gamerName} har flyttats till din grupp från {oldGeduName}s grupp i {productName}."
+    },
+    "feedback": {
+      "subject": "Ny feedback mottagen",
+      "heading": "Ny feedback mottagen",
+      "from": "Från",
+      "role": "Roll",
+      "emailLabel": "E-post",
+      "sent": "Skickat",
+      "message": "Meddelande",
+      "gamerNote": "Denna feedback kommer från ett spelarkonto. Svar skickas till deras förälder ({parentEmail})."
     }
   }
 }

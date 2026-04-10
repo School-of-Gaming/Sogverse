@@ -11,6 +11,7 @@ import { TokenRateProvider } from "./token-rate-provider";
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import { DEFAULT_TIMEZONE } from "@/lib/constants/language-preference";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -35,7 +36,7 @@ export function Providers({
     <ThemeProvider nonce={nonce}>
       <QueryProvider>
         <AuthProvider initialUser={initialUser} initialProfile={initialProfile}>
-          <NextIntlClientProvider locale={initialLocale} messages={messages}>
+          <NextIntlClientProvider locale={initialLocale} messages={messages} timeZone={DEFAULT_TIMEZONE}>
             <LanguageProvider>
               <CurrencyProvider initialLocale={initialLocale}>
                 <TokenRateProvider baseRates={baseRates}>

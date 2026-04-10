@@ -207,6 +207,7 @@
       "geduReceiveEmail": "Gedu saa sähköpostin, jossa on ohjeet tilin luomiseen.",
       "emailAddress": "Sähköpostiosoite",
       "emailPlaceholder": "gedu@example.com",
+      "inviteLanguage": "Kutsusähköpostin kieli",
       "sendInvite": "Lähetä kutsu",
       "sendingInvite": "Lähetetään...",
       "inviteSent": "Kutsu lähetetty!",
@@ -244,6 +245,7 @@
       "klaviyoComingSoon": "Klaviyo (tulossa pian)",
       "content": "Sisältö",
       "template": "Malli",
+      "language": "Kieli",
       "custom": "Mukautettu",
       "toEmail": "Vastaanottajan sähköposti",
       "toEmailPlaceholder": "vastaanottaja@example.com",
@@ -1036,6 +1038,104 @@
     "cta": {
       "heading": "Aloita matkasi",
       "subheading": "Liity Sogverseen ja ala ansaita Yty-pisteitä. Jokainen kerta, jokainen ystävyys, jokainen ystävällinen teko tekee eron."
+    }
+  },
+  "email": {
+    "senderAuth": "Sogverse-tiimi",
+    "senderFeedback": "Sogverse-palaute",
+    "senderEnrollment": "Sogverse-ilmoittautuminen",
+    "footer": "\u00a9 {year} Sogverse. Kaikki oikeudet pidätetään.",
+    "passwordReset": {
+      "subject": "Nollaa Sogverse-salasanasi",
+      "heading": "Nollaa salasanasi",
+      "body": "Saimme pyynnön nollata Sogverse-salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
+      "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
+      "ignore": "Jos et pyytänyt salasanan nollausta, voit jättää tämän sähköpostin huomiotta. Salasanaasi ei muuteta.",
+      "button": "Nollaa salasana"
+    },
+    "geduInvite": {
+      "subject": "Sinut on kutsuttu Sogverseen",
+      "heading": "Tervetuloa Sogverseen",
+      "body": "Sinut on kutsuttu liittymään Sogverseen <strong>Geduna</strong>. Napsauta alla olevaa painiketta luodaksesi tilisi.",
+      "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
+      "button": "Luo tilisi"
+    },
+    "minecraft": {
+      "label": "Minecraft-käyttäjänimi:",
+      "verified": "{username} (vahvistettu)",
+      "unverified": "{username} (ei vielä vahvistettu)",
+      "notProvided": "Ei annettu"
+    },
+    "enrollmentParent": {
+      "subject": "{gamerName} on nyt ilmoittautunut kurssille {productName}",
+      "heading": "Ilmoittautuminen vahvistettu",
+      "body": "Hei {parentName}, {gamerName} on nyt ilmoittautunut kurssille {productName} Gedun {geduName} kanssa."
+    },
+    "enrollmentGedu": {
+      "subject": "{gamerName} on liittynyt ryhmääsi \u2013 {productName}",
+      "heading": "Uusi pelaaja ryhmässäsi",
+      "body": "Hei {geduName}, {gamerName} on liittynyt ryhmääsi kurssilla {productName}."
+    },
+    "unenrollmentParent": {
+      "subject": "{gamerName} on poistettu kurssilta {productName}",
+      "heading": "Ilmoittautumisen peruutus vahvistettu",
+      "body": "Hei {parentName}, {gamerName} on poistettu kurssilta {productName} (Gedu: {geduName})."
+    },
+    "unenrollmentGedu": {
+      "subject": "{gamerName} on poistunut ryhmästäsi \u2013 {productName}",
+      "heading": "Pelaaja poistunut ryhmästäsi",
+      "body": "Hei {geduName}, {gamerName} on poistunut ryhmästäsi kurssilla {productName}."
+    },
+    "groupAdded": {
+      "subject": "Sinut on määrätty uuteen ryhmään \u2013 {productName}",
+      "heading": "Sinut on määrätty uuteen ryhmään",
+      "body": "Hei {geduName}, sinut on määrätty uuteen ryhmään kurssilla {productName}.",
+      "dashboardNote": "Näet tämän ryhmän hallintapaneelissasi pian."
+    },
+    "groupDeleted": {
+      "subject": "Ryhmäsi on poistettu \u2013 {productName}",
+      "heading": "Ryhmäsi on poistettu",
+      "body": "Hei {geduName}, ryhmäsi kurssilla {productName} on poistettu ylläpitäjän toimesta."
+    },
+    "groupReassignedOldGedu": {
+      "subject": "Ryhmäsi on siirretty toiselle \u2013 {productName}",
+      "heading": "Ryhmäsi on siirretty toiselle",
+      "body": "Hei {oldGeduName}, ryhmäsi kurssilla {productName} on siirretty Gedulle {newGeduName}."
+    },
+    "groupReassignedNewGedu": {
+      "subject": "Sinut on määrätty ryhmään \u2013 {productName}",
+      "heading": "Sinut on määrätty ryhmään",
+      "body": "Hei {newGeduName}, sinut on määrätty ryhmään kurssilla {productName} (aiemmin Gedun {oldGeduName} vetämä)."
+    },
+    "groupReassignedParent": {
+      "subject": "Gedun vaihto: {gamerName} \u2013 {productName}",
+      "heading": "Pelaajasi Gedu on vaihtunut",
+      "body": "Hei {parentName}, pelaajan {gamerName} ryhmän Gedu kurssilla {productName} on vaihtunut Gedusta {oldGeduName} Geduun {newGeduName}."
+    },
+    "gamerMovedParent": {
+      "subject": "{gamerName} on siirretty uuteen ryhmään \u2013 {productName}",
+      "heading": "Lapsesi on siirretty uuteen ryhmään",
+      "body": "Hei {parentName}, {gamerName} on siirretty Gedun {oldGeduName} ryhmästä Gedun {newGeduName} ryhmään kurssilla {productName}."
+    },
+    "gamerMovedOldGedu": {
+      "subject": "{gamerName} on siirretty ryhmästäsi \u2013 {productName}",
+      "heading": "Pelaaja on siirretty ryhmästäsi",
+      "body": "Hei {geduName}, {gamerName} on siirretty ryhmästäsi Gedun {newGeduName} ryhmään kurssilla {productName}."
+    },
+    "gamerMovedNewGedu": {
+      "subject": "{gamerName} on siirretty ryhmääsi \u2013 {productName}",
+      "heading": "Pelaaja on siirretty ryhmääsi",
+      "body": "Hei {geduName}, {gamerName} on siirretty ryhmääsi Gedun {oldGeduName} ryhmästä kurssilla {productName}."
+    },
+    "feedback": {
+      "subject": "Uusi palaute vastaanotettu",
+      "heading": "Uusi palaute vastaanotettu",
+      "from": "Lähettäjä",
+      "role": "Rooli",
+      "emailLabel": "Sähköposti",
+      "sent": "Lähetetty",
+      "message": "Viesti",
+      "gamerNote": "Tämä palaute on pelaajatililtä. Vastaukset ohjataan hänen vanhemmalleen ({parentEmail})."
     }
   }
 }

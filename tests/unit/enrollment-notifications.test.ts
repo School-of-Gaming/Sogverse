@@ -20,13 +20,8 @@ vi.mock("@/lib/email-templates/enrollment-changes", () => ({
   buildEnrollmentGeduEmail: vi.fn(() => "<html>enrollment-gedu</html>"),
   buildUnenrollmentParentEmail: vi.fn(() => "<html>unenrollment-parent</html>"),
   buildUnenrollmentGeduEmail: vi.fn(() => "<html>unenrollment-gedu</html>"),
-  enrollmentChangeSubjects: {
-    enrollmentParent: (g: string, p: string) => `${g} enrolled in ${p}`,
-    enrollmentGedu: (g: string, p: string) => `${g} joined ${p}`,
-    unenrollmentParent: (g: string, p: string) => `${g} unenrolled from ${p}`,
-    unenrollmentGedu: (g: string, p: string) => `${g} left ${p}`,
-  },
 }));
+
 
 // --- Helpers ---
 
@@ -62,12 +57,12 @@ function setupMockData(overrides?: {
               }),
             };
           }
-          // Parent profile
-          if (selectStr === "display_name, email") {
+          // Parent profile (now includes language_preference)
+          if (selectStr.includes("display_name") && selectStr.includes("email") && selectStr.includes("language_preference") && !selectStr.includes("minecraft")) {
             return {
               eq: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue({
-                  data: { display_name: "Parent Name", email: parentEmail },
+                  data: { display_name: "Parent Name", email: parentEmail, language_preference: null },
                   error: null,
                 }),
               }),
@@ -99,7 +94,7 @@ function setupMockData(overrides?: {
               data: {
                 gedu_id: "gedu-1",
                 products: { name: "Minecraft 101" },
-                profiles: { display_name: "Gedu Name", email: geduEmail },
+                profiles: { display_name: "Gedu Name", email: geduEmail, language_preference: null },
               },
               error: null,
             }),
@@ -203,6 +198,8 @@ describe("sendUnenrollmentNotifications", () => {
 
     const { buildUnenrollmentGeduEmail } = await import("@/lib/email-templates/enrollment-changes");
     expect(buildUnenrollmentGeduEmail).toHaveBeenCalledWith(
+      expect.any(Function),  // translator
+      "en",                  // locale
       expect.objectContaining({
         minecraftUsername: "TestPlayer",
         minecraftUuid: "test-uuid",

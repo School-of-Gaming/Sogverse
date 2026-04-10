@@ -1,8 +1,11 @@
 import { BRAND, DARK_THEME, GRADIENT } from "@/lib/constants/colors";
+import type { EmailTranslator } from "./translator";
 
 interface LayoutOptions {
   title: string;
   content: string;
+  locale?: string;
+  t?: EmailTranslator;
 }
 
 /** Hero gradient: vertical fade over a horizontal brand-color glow. */
@@ -18,9 +21,12 @@ const HERO_GRADIENT = `linear-gradient(to bottom, transparent 0%, ${DARK_THEME.b
  * - Brand text colors use background-clip:text (via "u + .body" Gmail-only selector)
  *   because Gmail Android dark mode shifts the "color" property but preserves gradients.
  */
-export function wrapInLayout({ title, content }: LayoutOptions): string {
+export function wrapInLayout({ title, content, locale = "en", t }: LayoutOptions): string {
+  const footerText = t
+    ? t("footer", { year: String(new Date().getFullYear()) })
+    : `\u00a9 ${new Date().getFullYear()} Sogverse. All rights reserved.`;
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${locale}">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -76,7 +82,7 @@ export function wrapInLayout({ title, content }: LayoutOptions): string {
           <!-- Footer -->
           <tr>
             <td align="center" style="padding-top:24px;color:${DARK_THEME.footerText};font-size:12px;">
-              &copy; ${new Date().getFullYear()} Sogverse. All rights reserved.
+              ${footerText}
             </td>
           </tr>
         </table>

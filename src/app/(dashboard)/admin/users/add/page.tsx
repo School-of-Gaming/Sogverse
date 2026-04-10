@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, UserPlus, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
+import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, DEFAULT_LANGUAGE, type SupportedLanguage } from "@/lib/constants/language-preference";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,7 @@ export default function AddUserPage() {
   });
 
   const [email, setEmail] = useState("");
+  const [language, setLanguage] = useState<SupportedLanguage>(DEFAULT_LANGUAGE);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -36,6 +38,7 @@ export default function AddUserPage() {
 
       const result = await createGedu.mutateAsync({
         email: validatedData.email,
+        language,
       });
 
       if (result.warning) {
@@ -139,6 +142,23 @@ export default function AddUserPage() {
                 required
                 autoComplete="off"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="language">{t('inviteLanguage')}</Label>
+              <select
+                id="language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+                disabled={createGedu.isPending}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {LANGUAGE_CONFIG[lang].nativeLabel} ({LANGUAGE_CONFIG[lang].label})
+                  </option>
+                ))}
+              </select>
             </div>
 
             <Button

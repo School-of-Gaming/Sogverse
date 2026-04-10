@@ -1,15 +1,22 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import {
   buildEnrollmentParentEmail,
   buildEnrollmentGeduEmail,
   buildUnenrollmentParentEmail,
   buildUnenrollmentGeduEmail,
 } from "@/lib/email-templates/enrollment-changes";
+import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+
+let t: EmailTranslator;
+
+beforeAll(async () => {
+  t = await getEmailTranslator("en");
+});
 
 describe("enrollment-changes email templates", () => {
   describe("buildEnrollmentParentEmail", () => {
     it("includes parent, gamer, gedu, and product names", () => {
-      const html = buildEnrollmentParentEmail({
+      const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
         gamerName: "Kid",
         geduName: "Alice",
@@ -21,11 +28,11 @@ describe("enrollment-changes email templates", () => {
       expect(html).toContain("Kid");
       expect(html).toContain("Alice");
       expect(html).toContain("Minecraft 101");
-      expect(html).toContain("Enrollment Confirmed");
+      expect(html).toContain("Enrolment Confirmed");
     });
 
     it("escapes HTML in names", () => {
-      const html = buildEnrollmentParentEmail({
+      const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "<script>xss</script>",
         gamerName: "Kid",
         geduName: "Alice",
@@ -38,7 +45,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("wraps in layout", () => {
-      const html = buildEnrollmentParentEmail({
+      const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
         gamerName: "Kid",
         geduName: "Alice",
@@ -51,7 +58,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("shows verified minecraft status with skin image", () => {
-      const html = buildEnrollmentParentEmail({
+      const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
         gamerName: "Kid",
         geduName: "Alice",
@@ -65,7 +72,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("shows unverified minecraft status without skin image", () => {
-      const html = buildEnrollmentParentEmail({
+      const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
         gamerName: "Kid",
         geduName: "Alice",
@@ -79,7 +86,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("shows not provided minecraft status", () => {
-      const html = buildEnrollmentParentEmail({
+      const html = buildEnrollmentParentEmail(t, "en", {
         parentName: "Parent",
         gamerName: "Kid",
         geduName: "Alice",
@@ -93,7 +100,7 @@ describe("enrollment-changes email templates", () => {
 
   describe("buildEnrollmentGeduEmail", () => {
     it("includes gedu, gamer, and product names", () => {
-      const html = buildEnrollmentGeduEmail({
+      const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "Alice",
         gamerName: "Kid",
         productName: "Minecraft 101",
@@ -107,7 +114,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("shows verified minecraft status with skin image", () => {
-      const html = buildEnrollmentGeduEmail({
+      const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "Alice",
         gamerName: "Kid",
         productName: "Test",
@@ -120,7 +127,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("shows unverified minecraft status", () => {
-      const html = buildEnrollmentGeduEmail({
+      const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "Alice",
         gamerName: "Kid",
         productName: "Test",
@@ -131,7 +138,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("shows not provided minecraft status", () => {
-      const html = buildEnrollmentGeduEmail({
+      const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "Alice",
         gamerName: "Kid",
         productName: "Test",
@@ -142,7 +149,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("escapes HTML in names", () => {
-      const html = buildEnrollmentGeduEmail({
+      const html = buildEnrollmentGeduEmail(t, "en", {
         geduName: "A&B",
         gamerName: "Kid",
         productName: "Test",
@@ -155,7 +162,7 @@ describe("enrollment-changes email templates", () => {
 
   describe("buildUnenrollmentParentEmail", () => {
     it("includes parent, gamer, gedu, and product names", () => {
-      const html = buildUnenrollmentParentEmail({
+      const html = buildUnenrollmentParentEmail(t, "en", {
         parentName: "Parent",
         gamerName: "Kid",
         geduName: "Alice",
@@ -165,11 +172,11 @@ describe("enrollment-changes email templates", () => {
       expect(html).toContain("Kid");
       expect(html).toContain("Alice");
       expect(html).toContain("Roblox Pro");
-      expect(html).toContain("Unenrollment Confirmed");
+      expect(html).toContain("Unenrolment Confirmed");
     });
 
     it("confirms gamer unenrolled", () => {
-      const html = buildUnenrollmentParentEmail({
+      const html = buildUnenrollmentParentEmail(t, "en", {
         parentName: "Parent",
         gamerName: "Kid",
         geduName: "Alice",
@@ -179,7 +186,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("escapes HTML", () => {
-      const html = buildUnenrollmentParentEmail({
+      const html = buildUnenrollmentParentEmail(t, "en", {
         parentName: "<b>P</b>",
         gamerName: "Kid",
         geduName: "Alice",
@@ -191,7 +198,7 @@ describe("enrollment-changes email templates", () => {
 
   describe("buildUnenrollmentGeduEmail", () => {
     it("includes gedu, gamer, and product names", () => {
-      const html = buildUnenrollmentGeduEmail({
+      const html = buildUnenrollmentGeduEmail(t, "en", {
         geduName: "Alice",
         gamerName: "Kid",
         productName: "Test",
@@ -205,7 +212,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("shows verified minecraft status with skin image for whitelist removal", () => {
-      const html = buildUnenrollmentGeduEmail({
+      const html = buildUnenrollmentGeduEmail(t, "en", {
         geduName: "Alice",
         gamerName: "Kid",
         productName: "Test",
@@ -218,7 +225,7 @@ describe("enrollment-changes email templates", () => {
     });
 
     it("shows not provided minecraft status", () => {
-      const html = buildUnenrollmentGeduEmail({
+      const html = buildUnenrollmentGeduEmail(t, "en", {
         geduName: "Alice",
         gamerName: "Kid",
         productName: "Test",

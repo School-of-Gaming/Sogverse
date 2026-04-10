@@ -5,6 +5,13 @@ export const SUPPORTED_LANGUAGES = ["en", "fi", "sv"] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 export const DEFAULT_LANGUAGE: SupportedLanguage = "en";
 
+// Server-side default for next-intl's date/time formatters (useFormatter).
+// Not auto-detected from the browser — HTTP headers don't carry timezone.
+// Only affects next-intl formatters, not date-fns-tz which handles its own
+// timezone logic. Helsinki chosen as most users are in Finland/Sweden (±1h).
+// Used in both src/i18n/request.ts (server) and src/providers/index.tsx (client).
+export const DEFAULT_TIMEZONE = "Europe/Helsinki";
+
 export const LANGUAGE_CONFIG: Record<
   SupportedLanguage,
   { label: string; nativeLabel: string; country: string }

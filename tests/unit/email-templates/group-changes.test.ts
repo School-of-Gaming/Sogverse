@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll } from "vitest";
 import {
   buildGroupAddedEmail,
   buildGroupDeletedEmail,
@@ -9,24 +9,31 @@ import {
   buildGamerMovedOldGeduEmail,
   buildGamerMovedNewGeduEmail,
 } from "@/lib/email-templates/group-changes";
+import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+
+let t: EmailTranslator;
+
+beforeAll(async () => {
+  t = await getEmailTranslator("en");
+});
 
 describe("group-changes email templates", () => {
   describe("buildGroupAddedEmail", () => {
     it("includes gedu name and product name", () => {
-      const html = buildGroupAddedEmail({ geduName: "Alice", productName: "Minecraft 101" });
+      const html = buildGroupAddedEmail(t, "en", { geduName: "Alice", productName: "Minecraft 101" });
       expect(html).toContain("Alice");
       expect(html).toContain("Minecraft 101");
       expect(html).toContain("assigned to a new group");
     });
 
     it("escapes HTML in names", () => {
-      const html = buildGroupAddedEmail({ geduName: "<script>xss</script>", productName: "Test" });
+      const html = buildGroupAddedEmail(t, "en", { geduName: "<script>xss</script>", productName: "Test" });
       expect(html).not.toContain("<script>xss</script>");
       expect(html).toContain("&lt;script&gt;xss&lt;/script&gt;");
     });
 
     it("wraps in layout", () => {
-      const html = buildGroupAddedEmail({ geduName: "Alice", productName: "Test" });
+      const html = buildGroupAddedEmail(t, "en", { geduName: "Alice", productName: "Test" });
       expect(html).toContain("<!DOCTYPE html>");
       expect(html).toContain("SOG");
     });
@@ -34,21 +41,21 @@ describe("group-changes email templates", () => {
 
   describe("buildGroupDeletedEmail", () => {
     it("includes gedu name and product name", () => {
-      const html = buildGroupDeletedEmail({ geduName: "Bob", productName: "Roblox Pro" });
+      const html = buildGroupDeletedEmail(t, "en", { geduName: "Bob", productName: "Roblox Pro" });
       expect(html).toContain("Bob");
       expect(html).toContain("Roblox Pro");
       expect(html).toContain("removed");
     });
 
     it("escapes HTML", () => {
-      const html = buildGroupDeletedEmail({ geduName: "A&B", productName: "Test" });
+      const html = buildGroupDeletedEmail(t, "en", { geduName: "A&B", productName: "Test" });
       expect(html).toContain("A&amp;B");
     });
   });
 
   describe("buildGroupReassignedOldGeduEmail", () => {
     it("includes old and new gedu names", () => {
-      const html = buildGroupReassignedOldGeduEmail({
+      const html = buildGroupReassignedOldGeduEmail(t, "en", {
         oldGeduName: "Alice",
         newGeduName: "Bob",
         productName: "Test",
@@ -61,7 +68,7 @@ describe("group-changes email templates", () => {
 
   describe("buildGroupReassignedNewGeduEmail", () => {
     it("includes old and new gedu names", () => {
-      const html = buildGroupReassignedNewGeduEmail({
+      const html = buildGroupReassignedNewGeduEmail(t, "en", {
         oldGeduName: "Alice",
         newGeduName: "Bob",
         productName: "Test",
@@ -74,7 +81,7 @@ describe("group-changes email templates", () => {
 
   describe("buildGroupReassignedParentEmail", () => {
     it("includes parent, gamer, old gedu, and new gedu names", () => {
-      const html = buildGroupReassignedParentEmail({
+      const html = buildGroupReassignedParentEmail(t, "en", {
         parentName: "Parent",
         gamerName: "Kid",
         oldGeduName: "Alice",
@@ -89,7 +96,7 @@ describe("group-changes email templates", () => {
     });
 
     it("escapes all names", () => {
-      const html = buildGroupReassignedParentEmail({
+      const html = buildGroupReassignedParentEmail(t, "en", {
         parentName: "<b>P</b>",
         gamerName: "<i>G</i>",
         oldGeduName: "A",
@@ -103,7 +110,7 @@ describe("group-changes email templates", () => {
 
   describe("buildGamerMovedParentEmail", () => {
     it("includes all names and product", () => {
-      const html = buildGamerMovedParentEmail({
+      const html = buildGamerMovedParentEmail(t, "en", {
         parentName: "Parent",
         gamerName: "Kid",
         oldGeduName: "Alice",
@@ -120,7 +127,7 @@ describe("group-changes email templates", () => {
 
   describe("buildGamerMovedOldGeduEmail", () => {
     it("includes gedu, gamer, and destination names", () => {
-      const html = buildGamerMovedOldGeduEmail({
+      const html = buildGamerMovedOldGeduEmail(t, "en", {
         geduName: "Alice",
         gamerName: "Kid",
         newGeduName: "Bob",
@@ -135,7 +142,7 @@ describe("group-changes email templates", () => {
 
   describe("buildGamerMovedNewGeduEmail", () => {
     it("includes gedu, gamer, and origin names", () => {
-      const html = buildGamerMovedNewGeduEmail({
+      const html = buildGamerMovedNewGeduEmail(t, "en", {
         geduName: "Bob",
         gamerName: "Kid",
         oldGeduName: "Alice",
