@@ -143,6 +143,9 @@
     "easterEgg": {
       "heading": "You found the Klingon translation!",
       "intro": "This interface has been translated into tlhIngan Hol as a tribute to Star Trek and its fans. Here are some of our favourite translations:",
+      "brandNameLabel": "School of Gaming",
+      "brandNameValue": "noH Quj yejHaD",
+      "brandNameMeaning": "War Game Academy — because to a Klingon, all games are battle training",
       "deleteLabel": "Delete",
       "deleteValue": "yIHoH",
       "deleteMeaning": "Kill it!",

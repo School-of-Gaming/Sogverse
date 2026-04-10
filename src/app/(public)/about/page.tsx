@@ -23,7 +23,7 @@ const valueIcons = [Sparkles, Heart, Shield, Users];
 const valueKeys = ["playIsEssential", "friendsCarry", "keepChildrenSafe", "familyInTheLoop"] as const;
 
 const easterEggRows = [
-  "delete", "deleting", "close", "cancel", "getStarted", "password",
+  "brandName", "delete", "deleting", "close", "cancel", "getStarted", "password",
   "error", "english", "ok", "sorg", "copyright", "learnMore",
 ] as const;
 
