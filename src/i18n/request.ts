@@ -1,8 +1,7 @@
 import { getRequestConfig } from "next-intl/server";
 import { cookies, headers } from "next/headers";
-import { parseAcceptLanguage } from "@/lib/locale";
 import {
-  detectLanguageFromLocale,
+  detectLanguageFromHeader,
   isSupportedLanguage,
   DEFAULT_LANGUAGE,
   DEFAULT_TIMEZONE,
@@ -19,10 +18,7 @@ export default getRequestConfig(async () => {
     locale = cookieLocale;
   } else {
     const headersList = await headers();
-    const parsed = parseAcceptLanguage(headersList.get("accept-language"));
-    if (parsed) {
-      locale = detectLanguageFromLocale(parsed);
-    }
+    locale = detectLanguageFromHeader(headersList.get("accept-language"));
   }
 
   return {

@@ -6,7 +6,7 @@ import { SENDER_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 import { buildPasswordResetEmail } from "@/lib/email-templates/password-reset";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import { detectLanguageFromLocale, isSupportedLanguage } from "@/lib/constants/language-preference";
+import { detectLanguageFromHeader, isSupportedLanguage } from "@/lib/constants/language-preference";
 
 const requestSchema = z.object({
   email: z.string().email(),
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     const pref = profileResult.data?.language_preference;
     const locale = isSupportedLanguage(pref)
       ? pref
-      : detectLanguageFromLocale(request.headers.get("Accept-Language") ?? "");
+      : detectLanguageFromHeader(request.headers.get("Accept-Language"));
 
     const t = await getEmailTranslator(locale);
 

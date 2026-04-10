@@ -32,6 +32,47 @@ export function detectLanguageFromLocale(locale: string): SupportedLanguage {
   return DEFAULT_LANGUAGE;
 }
 
+/**
+ * Walk an Accept-Language header in priority order and return the first
+ * supported language. Falls back to DEFAULT_LANGUAGE when no match is found.
+ *
+ * Unlike detectLanguageFromLocale (single locale), this handles the full
+ * ranked header so users whose primary language is unsupported but who list
+ * a supported language lower in the preference list still get a match.
+ */
+export function detectLanguageFromHeader(
+  header: string | null,
+): SupportedLanguage {
+  if (!header) return DEFAULT_LANGUAGE;
+
+  // Parse into { tag, q } entries sorted by descending quality
+  const entries: { tag: string; q: number }[] = [];
+  for (const entry of header.split(",")) {
+    const parts = entry.trim().split(";");
+    const tag = parts[0].trim();
+    if (!tag) continue;
+
+    let q = 1;
+    for (let i = 1; i < parts.length; i++) {
+      const param = parts[i].trim();
+      if (param.startsWith("q=")) {
+        q = parseFloat(param.slice(2));
+        if (isNaN(q)) q = 0;
+      }
+    }
+    entries.push({ tag, q });
+  }
+
+  entries.sort((a, b) => b.q - a.q);
+
+  for (const { tag } of entries) {
+    const lang = tag.split("-")[0]?.toLowerCase();
+    if (isSupportedLanguage(lang)) return lang;
+  }
+
+  return DEFAULT_LANGUAGE;
+}
+
 export function isSupportedLanguage(value: unknown): value is SupportedLanguage {
   return (
     typeof value === "string" &&

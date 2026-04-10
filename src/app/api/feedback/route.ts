@@ -5,7 +5,7 @@ import { sendTransactionalEmail } from "@/lib/brevo";
 import { buildFeedbackEmail } from "@/lib/email-templates/feedback";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL } from "@/lib/constants";
-import { detectLanguageFromLocale, isSupportedLanguage } from "@/lib/constants/language-preference";
+import { detectLanguageFromHeader, isSupportedLanguage } from "@/lib/constants/language-preference";
 import { z } from "zod";
 
 const feedbackSchema = z.object({
@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     const pref = profile.language_preference;
     const locale = isSupportedLanguage(pref)
       ? pref
-      : detectLanguageFromLocale(request.headers.get("Accept-Language") ?? "");
+      : detectLanguageFromHeader(request.headers.get("Accept-Language"));
 
     const t = await getEmailTranslator(locale);
     const displayName = profile.display_name || profile.username || "Unknown";

@@ -30,10 +30,10 @@ vi.mock("@/lib/brevo", () => ({
 
 // --- Helpers ---
 
-function createRequest(body: Record<string, unknown>): Request {
+function createRequest(body: Record<string, unknown>, headers?: Record<string, string>): Request {
   return new Request("http://localhost:3000/api/auth/forgot-password", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
 }
@@ -115,6 +115,34 @@ describe("POST /api/auth/forgot-password", () => {
         toEmail: "user@example.com",
         subject: "Reset your Sogverse password",
         htmlContent: expect.stringContaining("Reset"),
+      })
+    );
+  });
+
+  // -- Accept-Language locale detection --
+
+  it("should send Finnish email when Accept-Language has fi as best supported match", async () => {
+    await POST(createRequest(
+      { email: "user@example.com" },
+      { "Accept-Language": "de-DE,fi;q=0.9,en;q=0.8" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Nollaa Sogverse-salasanasi",
+      })
+    );
+  });
+
+  it("should fall back to English when no Accept-Language language is supported", async () => {
+    await POST(createRequest(
+      { email: "user@example.com" },
+      { "Accept-Language": "de-DE,fr;q=0.9,ja;q=0.8" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Reset your Sogverse password",
       })
     );
   });
