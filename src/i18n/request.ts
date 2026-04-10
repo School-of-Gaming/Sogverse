@@ -5,14 +5,16 @@ import {
   isSupportedLanguage,
   DEFAULT_LANGUAGE,
   DEFAULT_TIMEZONE,
+  type SupportedLanguage,
 } from "@/lib/constants/language-preference";
+import { loadMessages } from "./messages";
 
 export default getRequestConfig(async () => {
   // Priority: cookie > Accept-Language header > default
   const cookieStore = await cookies();
   const cookieLocale = cookieStore.get("language")?.value;
 
-  let locale: string = DEFAULT_LANGUAGE;
+  let locale: SupportedLanguage = DEFAULT_LANGUAGE;
 
   if (cookieLocale && isSupportedLanguage(cookieLocale)) {
     locale = cookieLocale;
@@ -24,6 +26,6 @@ export default getRequestConfig(async () => {
   return {
     locale,
     timeZone: DEFAULT_TIMEZONE,
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    messages: await loadMessages(locale),
   };
 });

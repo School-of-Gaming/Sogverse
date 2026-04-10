@@ -55,7 +55,7 @@ export interface TemplateDefinition {
   /** Generate the email subject line from validated params and translator. */
   subject: (params: TemplateParams, t: EmailTranslator) => string;
   /** Translation key for sender display name (e.g. "senderAuth"). */
-  fromNameKey: string;
+  fromNameKey: "senderAuth" | "senderEnrollment" | "senderFeedback";
   /** Optional: transform UI field values into API params (e.g. minecraft status → username + uuid). */
   resolveParams?: (params: Record<string, string>) => Record<string, string | null>;
 }

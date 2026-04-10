@@ -3,10 +3,10 @@ import {
   DEFAULT_LANGUAGE,
   type SupportedLanguage,
 } from "@/lib/constants/language-preference";
+import { loadMessages, type Messages } from "@/i18n/messages";
 
 // Re-export the translator type so template builders can type their `t` parameter.
-// The generic is erased to keep it simple — email templates use flat string keys.
-export type EmailTranslator = ReturnType<typeof createTranslator>;
+export type EmailTranslator = ReturnType<typeof createTranslator<Messages, "email">>;
 
 /**
  * Creates a translator scoped to the `email` namespace for the given locale.
@@ -15,7 +15,6 @@ export type EmailTranslator = ReturnType<typeof createTranslator>;
 export async function getEmailTranslator(
   locale: SupportedLanguage = DEFAULT_LANGUAGE,
 ): Promise<EmailTranslator> {
-  const mod = await import(`../../../messages/${locale}.json`);
-  const messages = mod.default ?? mod;
+  const messages = await loadMessages(locale);
   return createTranslator({ locale, messages, namespace: "email" });
 }
