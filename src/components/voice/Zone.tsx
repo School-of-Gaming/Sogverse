@@ -30,12 +30,9 @@ export function Zone({ zone, isActive }: ZoneProps) {
   const colors = ZONE_COLORS[zone.id];
   const isBroadcast = zone.id === "broadcast";
 
-  const breakoutKey = BREAKOUT_KEY[zone.id as keyof typeof BREAKOUT_KEY];
   const label = isBroadcast
     ? voice("broadcast")
-    : breakoutKey
-      ? yty(breakoutKey)
-      : zone.label;
+    : yty(BREAKOUT_KEY[zone.id as keyof typeof BREAKOUT_KEY]);
 
   return (
     <div
