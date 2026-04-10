@@ -137,27 +137,6 @@ export function getChildLevel(
   return config.hierarchy[idx + 1];
 }
 
-/**
- * Get the display label for a location type within a specific country.
- * Falls back to the generic type name if the country is unknown.
- */
-export function getTypeLabel(
-  countryCode: string | null,
-  type: LocationType,
-  locale?: string,
-): string {
-  if (type === "country") return "Country";
-
-  const config = getCountryConfig(countryCode);
-  if (config) {
-    const level = config.hierarchy.find((h) => h.type === type);
-    if (level) return resolveLabels(level, locale).label;
-  }
-
-  // Fallback: capitalize the type
-  return type.charAt(0).toUpperCase() + type.slice(1);
-}
-
 /** Get the country display name, respecting locale. */
 export function getCountryName(config: CountryConfig, locale?: string): string {
   if (locale && config.nameI18n) {
