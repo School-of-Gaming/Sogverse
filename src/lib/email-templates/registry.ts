@@ -203,7 +203,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     ],
     schema: feedbackParamsSchema,
     build: (p, t, locale) => buildFeedbackEmail(t, locale, p as z.infer<typeof feedbackParamsSchema>),
-    subject: (_p, t) => t("feedback.subject"),
+    subject: (p, t) => t("feedback.subject", { displayName: p.userName as string, role: p.userRole as string }),
     fromNameKey: "senderFeedback",
   },
   groupAdded: {
