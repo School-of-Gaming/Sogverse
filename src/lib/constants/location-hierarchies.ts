@@ -69,6 +69,35 @@ export const SUPPORTED_COUNTRIES: CountryConfig[] = [
       { type: "site", label: "Site", pluralLabel: "Sites" },
     ],
   },
+  {
+    code: "SE",
+    name: "Sweden",
+    nameI18n: { sv: "Sverige" },
+    hierarchy: [
+      { type: "region", label: "County", pluralLabel: "Counties", i18n: { sv: { label: "Län", pluralLabel: "Län" } } },
+      { type: "municipality", label: "Municipality", pluralLabel: "Municipalities", i18n: { sv: { label: "Kommun", pluralLabel: "Kommuner" } } },
+      { type: "site", label: "Site", pluralLabel: "Sites", i18n: { sv: { label: "Plats", pluralLabel: "Platser" } } },
+    ],
+  },
+  {
+    code: "ES",
+    name: "Spain",
+    hierarchy: [
+      { type: "region", label: "Autonomous Community", pluralLabel: "Autonomous Communities" },
+      { type: "municipality", label: "City", pluralLabel: "Cities" },
+      { type: "site", label: "Site", pluralLabel: "Sites" },
+    ],
+  },
+  {
+    code: "JP",
+    name: "Japan",
+    hierarchy: [
+      { type: "region", label: "Prefecture", pluralLabel: "Prefectures" },
+      { type: "municipality", label: "City", pluralLabel: "Cities" },
+      { type: "district", label: "Ward", pluralLabel: "Wards" },
+      { type: "site", label: "Site", pluralLabel: "Sites" },
+    ],
+  },
 ];
 
 const countriesByCode = new Map(SUPPORTED_COUNTRIES.map((c) => [c.code, c]));
