@@ -114,7 +114,7 @@ export default function AdminUserDetailPage() {
             </div>
             <div className="mt-2 flex items-center gap-3">
               <Badge className={ROLE_BADGE_STYLES[profile.role]}>
-                {c(ROLE_LABEL_KEYS[profile.role] as "roleAdmin")}
+                {c(ROLE_LABEL_KEYS[profile.role])}
               </Badge>
               <span className="text-sm text-muted-foreground">
                 {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale) : t('unknown')}

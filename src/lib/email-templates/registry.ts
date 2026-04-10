@@ -206,7 +206,7 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
       ...p as z.infer<typeof feedbackParamsSchema>,
       sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
     }),
-    subject: (p, t) => t("feedback.subject", { displayName: p.userName as string, role: t(ROLE_LABEL_KEYS[p.userRole as UserRole] as "roleAdmin") }),
+    subject: (p, t) => t("feedback.subject", { displayName: p.userName as string, role: t(ROLE_LABEL_KEYS[p.userRole as UserRole]) }),
     fromNameKey: "senderFeedback",
   },
   groupAdded: {

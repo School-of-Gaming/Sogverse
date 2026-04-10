@@ -119,7 +119,7 @@ export async function POST(request: Request) {
       fromEmail: SENDER_EMAIL,
       fromName: t("senderFeedback"),
       toEmail: adminEmails,
-      subject: t("feedback.subject", { displayName, role: t(ROLE_LABEL_KEYS[role as UserRole] as "roleAdmin") }),
+      subject: t("feedback.subject", { displayName, role: t(ROLE_LABEL_KEYS[role as UserRole]) }),
       htmlContent,
       replyToEmail: replyToEmail || undefined,
     });

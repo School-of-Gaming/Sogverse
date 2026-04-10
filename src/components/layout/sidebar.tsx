@@ -24,9 +24,14 @@ import { useAuth } from "@/providers";
 import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
+type SidebarKey =
+  | "dashboard" | "users" | "products" | "groups" | "locations"
+  | "uiComponents" | "whatsapp" | "testing" | "feedback" | "settings"
+  | "sorg" | "myGamers" | "home" | "myGroups";
+
 interface NavItemDef {
   href: string;
-  labelKey: string;
+  labelKey: SidebarKey;
   icon: React.ReactNode;
 }
 
@@ -100,7 +105,7 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-hidden p-4">
         {navItems.map((item) => {
-          const label = t(item.labelKey as "dashboard");
+          const label = t(item.labelKey);
           const isActive =
             pathname === item.href ||
             (item.href !== ROUTES.admin.dashboard &&
@@ -143,7 +148,7 @@ export function Sidebar() {
             {profile.display_name}
           </p>
           <p className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
-            {c(ROLE_LABEL_KEYS[profile.role] as "roleAdmin")}
+            {c(ROLE_LABEL_KEYS[profile.role])}
           </p>
         </div>
       </div>

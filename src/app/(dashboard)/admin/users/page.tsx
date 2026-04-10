@@ -23,9 +23,9 @@ export default function AdminUsersPage() {
   const { data: parentGamerLinks } = useParentGamerLinks();
 
   const ROLE_FILTERS: { value: UserRole; label: string }[] = [
-    { value: "admin", label: c(ROLE_LABEL_KEYS.admin as "roleAdmin") },
-    { value: "customer", label: c(ROLE_LABEL_KEYS.customer as "roleAdmin") },
-    { value: "gedu", label: c(ROLE_LABEL_KEYS.gedu as "roleAdmin") },
+    { value: "admin", label: c(ROLE_LABEL_KEYS.admin) },
+    { value: "customer", label: c(ROLE_LABEL_KEYS.customer) },
+    { value: "gedu", label: c(ROLE_LABEL_KEYS.gedu) },
   ];
 
   const isSearchActive = searchQuery.length >= 2;

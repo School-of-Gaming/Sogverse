@@ -46,7 +46,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
         </div>
         <div className="flex items-center gap-2">
           <Badge className={ROLE_BADGE_STYLES[user.role]}>
-            {c(ROLE_LABEL_KEYS[user.role] as "roleAdmin")}
+            {c(ROLE_LABEL_KEYS[user.role])}
           </Badge>
           <NavChevron />
         </div>

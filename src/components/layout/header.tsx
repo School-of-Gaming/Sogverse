@@ -127,7 +127,7 @@ export function Header() {
                         {profile?.display_name}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {profile?.role ? c(ROLE_LABEL_KEYS[profile.role] as "roleAdmin") : null}
+                        {profile?.role ? c(ROLE_LABEL_KEYS[profile.role]) : null}
                       </p>
                     </div>
                     <Link
