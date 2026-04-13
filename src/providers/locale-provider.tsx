@@ -146,11 +146,11 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useLocalePreference() {
+export function useLocaleControl() {
   const context = useContext(LocaleContext);
   if (context === undefined) {
     throw new Error(
-      "useLocalePreference must be used within a LocaleProvider",
+      "useLocaleControl must be used within a LocaleProvider",
     );
   }
   return context;

@@ -55,6 +55,6 @@ export { useAuth, useRequiredAuth } from "./auth-provider";
 export { QueryProvider } from "./query-provider";
 export { ThemeProvider } from "./theme-provider";
 export { AuthProvider } from "./auth-provider";
-export { LocaleProvider, useLocalePreference } from "./locale-provider";
+export { LocaleProvider, useLocaleControl } from "./locale-provider";
 export { CurrencyProvider, useCurrency } from "./currency-provider";
 export { TokenRateProvider, useTokenRates } from "./token-rate-provider";

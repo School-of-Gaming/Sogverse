@@ -246,7 +246,7 @@ export function SetupAccountForm() {
             />
           </div>
           <SpokenLanguageCheckboxes
-            languages={availableLanguages ?? []}
+            spokenLanguages={availableLanguages ?? []}
             selected={spokenLanguages}
             onChange={setSpokenLanguages}
             disabled={isLoading}

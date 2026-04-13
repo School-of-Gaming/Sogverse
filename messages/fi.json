@@ -890,7 +890,7 @@
     "appearance": "Ulkoasu",
     "appearanceDescription": "Mukauta ulkoasua ja tuntumaa",
     "appearanceComingSoon": "Teema-asetukset tulossa pian.",
-    "languages": "Puhutut kielet"
+    "spokenLanguages": "Puhutut kielet"
   },
   "sorg": {
     "hero": {

@@ -18,7 +18,7 @@ import type { SpokenLanguage } from "@/types";
 
 // Map spoken-language codes to country codes for flag display.
 // Update when adding new languages to the spoken_languages table.
-const LANG_TO_COUNTRY: Record<string, string> = {
+const SPOKEN_LANG_TO_COUNTRY: Record<string, string> = {
   fi: "FI",
   sv: "SE",
   en: "GB",
@@ -26,7 +26,7 @@ const LANG_TO_COUNTRY: Record<string, string> = {
 
 // Map spoken-language codes to common.* translation keys.
 // Falls back to the DB name for codes not listed here.
-const LANG_NAME_KEYS: Record<string, string> = {
+const SPOKEN_LANG_NAME_KEYS: Record<string, string> = {
   en: "languageEnglish",
   fi: "languageFinnish",
   sv: "languageSwedish",
@@ -35,29 +35,29 @@ const LANG_NAME_KEYS: Record<string, string> = {
 const PLACEHOLDER_COUNT = 3;
 
 export function SpokenLanguageCheckboxes({
-  languages,
+  spokenLanguages,
   selected,
   onChange,
   disabled,
 }: {
-  languages: SpokenLanguage[];
+  spokenLanguages: SpokenLanguage[];
   selected: string[];
   onChange: (selected: string[]) => void;
   disabled?: boolean;
 }) {
   const t = useTranslations('settings');
   const c = useTranslations('common');
-  const loaded = languages.length > 0;
+  const loaded = spokenLanguages.length > 0;
 
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-medium leading-none">{t('languages')}</legend>
+      <legend className="text-sm font-medium leading-none">{t('spokenLanguages')}</legend>
       <div className="flex flex-col gap-2">
         {loaded
-          ? languages.map((lang) => {
-              const country = LANG_TO_COUNTRY[lang.code];
+          ? spokenLanguages.map((lang) => {
+              const country = SPOKEN_LANG_TO_COUNTRY[lang.code];
               const FlagIcon = country ? flags[country as keyof typeof flags] : undefined;
-              const nameKey = LANG_NAME_KEYS[lang.code];
+              const nameKey = SPOKEN_LANG_NAME_KEYS[lang.code];
               const displayName = nameKey ? c(nameKey as "languageEnglish") : lang.name;
               return (
                 <label key={lang.code} className="flex items-center gap-2 text-sm cursor-pointer">

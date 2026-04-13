@@ -85,7 +85,7 @@ export function useParentGamerLinks() {
 
 /**
  * Fetch the reference set of spoken languages (human languages) from the
- * `spoken_languages` table. Distinct from `useLocalePreference` (UI locale).
+ * `spoken_languages` table. Distinct from `useLocaleControl` (UI locale).
  */
 export function useSpokenLanguages() {
   const supabase = getClient();

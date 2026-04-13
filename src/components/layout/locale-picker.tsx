@@ -15,7 +15,7 @@ import { ChevronDown } from "lucide-react";
 import flags from "react-phone-number-input/flags";
 import { useTranslations } from "next-intl";
 import { useClickOutside } from "@/hooks/use-click-outside";
-import { useLocalePreference } from "@/hooks/use-locale-preference";
+import { useLocaleControl } from "@/providers";
 import {
   SUPPORTED_LOCALES,
   LOCALE_CONFIG,
@@ -59,7 +59,7 @@ function FlagComponent({
 }
 
 export function LocalePicker({ className }: { className?: string }) {
-  const { locale, setLocale } = useLocalePreference();
+  const { locale, setLocale } = useLocaleControl();
   const c = useTranslations('common');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);

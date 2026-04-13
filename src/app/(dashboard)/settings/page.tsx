@@ -187,7 +187,7 @@ export default function SettingsPage() {
           </div>
 
           <SpokenLanguageCheckboxes
-            languages={availableLanguages ?? []}
+            spokenLanguages={availableLanguages ?? []}
             selected={spokenLanguages}
             onChange={setSpokenLanguages}
           />
