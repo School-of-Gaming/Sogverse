@@ -59,9 +59,32 @@ Packages are defined as **Stripe Products** in the Stripe dashboard, not in code
 - One or more active Prices in supported currencies (USD, GBP, EUR)
 - Prices with `type: "one_time"` for one-time packages or `type: "recurring"` for subscriptions
 
-`getStripeProducts()` in `src/lib/stripe/products.ts` fetches all active products with `tokenAmount` metadata, groups their prices by currency, and splits them into `oneTimePackages` and `subscriptionPackages` (sorted cheapest-first by USD price). Results are cached via Next.js `unstable_cache` (persistent data cache, not in-memory) with a 5-minute revalidation window. After 5 minutes the cache is stale: the next caller still gets the stale value instantly while a background revalidation fetches fresh data from Stripe. If the background fetch fails, the stale value continues to be served. This means callers never block on Stripe except on a cold-cache miss (the very first request after a deploy with no existing cache entry).
+Optional localisation metadata keys:
+- `name_{locale}` / `description_{locale}` — translated name and description per supported language (`name_fi`, `description_sv`, …). Missing keys fall back to the base `name` / `description` (English). English has no `name_en` key — the base field is the source of truth.
+
+`getStripeProducts()` in `src/lib/stripe/products.ts` fetches all active products with `tokenAmount` metadata, groups their prices by currency, and splits them into `oneTimePackages` and `subscriptionPackages` (sorted cheapest-first by USD price). Each package includes sparse `nameI18n` / `descriptionI18n` maps populated from the metadata. Results are cached via Next.js `unstable_cache` (persistent data cache, not in-memory) with a 5-minute revalidation window. After 5 minutes the cache is stale: the next caller still gets the stale value instantly while a background revalidation fetches fresh data from Stripe. If the background fetch fails, the stale value continues to be served. This means callers never block on Stripe except on a cold-cache miss (the very first request after a deploy with no existing cache entry).
 
 **Base rates** (price-per-token used for "value" display) are derived from the cheapest one-time package's price divided by its token amount, per currency.
+
+## Checkout localisation
+
+Stripe Checkout and the Stripe Billing Portal both localise their own UI chrome — "Pay" / "Subscribe" buttons, "Total" / "Subtotal" / "Order summary" labels, footer text, currency formatting — automatically from the browser's `Accept-Language` header (Stripe's `locale` parameter defaults to `auto` when unset). We don't pass `locale` explicitly; there's nothing to configure.
+
+### What Stripe's locale does NOT do
+
+Stripe's auto-localisation **does not translate product names or descriptions** shown on the Checkout page. Those come from the Stripe `Product` object's `name` / `description` fields and render in whatever language they were stored in (English, in our case). So a Finnish customer sees localised buttons and labels, but the line item still reads "Sogverse Basic — 25 Sorgs every month".
+
+The package cards on our own `/sorg` and `/customer/sorg` pages render the localised name / description from the `name_{locale}` / `description_{locale}` metadata via `localizeName()` / `localizeDescription()` in `token-purchase-section.tsx`, so the pre-checkout experience is fully localised. The gap is only the brief Stripe-hosted step.
+
+**Options considered for closing the gap (not implemented — documented so future-us doesn't repeat the evaluation):**
+
+1. **Inline `price_data` with translated `product_data`** — swap `line_items: [{ price: priceId }]` for `line_items: [{ price_data: { currency, unit_amount, product_data: { name, description }, recurring: { interval } } }]` at checkout time. Localised names appear on Stripe's page. **Downside:** for subscriptions, the resulting Stripe `Subscription` references an ad-hoc inline Product instead of the catalogue Product, which fragments Stripe dashboard reporting (Finnish subscribers appear under "Sogverse Perus", Swedish under "Sogverse Bas", etc., even though they're the same tier). Our webhook fulfillment is fine because it matches on `session.metadata.stripeProductId` / `subscription_data.metadata.stripeProductId`, not on the line item price.
+
+2. **Per-locale Products + Prices** — create `Sogverse Starter Pack (FI)`, `Sogverse Starter Pack (SV)` alongside the English product with mirrored prices and metadata. Checkout picks the right one by locale. **Downside:** 3× product explosion (6 → 18), ongoing sync burden, and still fragments Stripe dashboard reporting.
+
+3. **Accept the limitation** (current choice) — the customer sees the localised name on our site, clicks, spends ~10 seconds on Stripe's page with localised chrome but an English product name, and returns. Most international SaaS products do this. Zero implementation cost and no reporting drawbacks.
+
+If we later decide the English-name-on-Stripe-page is actually harming conversion, option 1 is the cheapest fix for one-time packs (no reporting impact) and we can leave subscriptions as-is.
 
 ## Data Flow
 

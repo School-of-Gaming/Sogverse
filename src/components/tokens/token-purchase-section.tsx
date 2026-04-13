@@ -24,7 +24,19 @@ import { getPackageSavings } from "@/lib/stripe/utils";
 import { ROUTES } from "@/lib/constants";
 import { useCurrency } from "@/hooks/use-currency";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import type { SupportedLanguage } from "@/lib/constants/language-preference";
 import type { StripePackage } from "@/types";
+
+// Resolve the locale-appropriate name/description from a Stripe package,
+// falling back to the English base fields when the locale has no translation.
+// The i18n maps are populated from Stripe product metadata (`name_fi`, etc.)
+// in getStripeProducts().
+function localizeName(pkg: StripePackage, locale: string): string {
+  return pkg.nameI18n?.[locale as SupportedLanguage] ?? pkg.name;
+}
+function localizeDescription(pkg: StripePackage, locale: string): string | null {
+  return pkg.descriptionI18n?.[locale as SupportedLanguage] ?? pkg.description;
+}
 
 function PurchaseFeedback() {
   const t = useTranslations('tokens');
@@ -95,6 +107,8 @@ function PackageCard({
   const t = useTranslations('tokens');
   const c = useTranslations('common');
   const priceInfo = pkg.prices[currency];
+  const displayName = localizeName(pkg, locale);
+  const displayDescription = localizeDescription(pkg, locale);
 
   const savings = getPackageSavings(priceInfo.unitAmount, pkg.tokenAmount, baseRate);
   const priceFormatted = formatCurrencyFromCents(priceInfo.unitAmount, currency, locale);
@@ -120,9 +134,9 @@ function PackageCard({
         </div>
       ) : null}
       <CardHeader className="text-center">
-        <CardTitle className="text-lg">{pkg.name}</CardTitle>
-        {pkg.description && (
-          <p className="text-sm text-muted-foreground">{pkg.description}</p>
+        <CardTitle className="text-lg">{displayName}</CardTitle>
+        {displayDescription && (
+          <p className="text-sm text-muted-foreground">{displayDescription}</p>
         )}
       </CardHeader>
       <CardContent className="flex flex-1 flex-col items-center justify-end gap-4">
@@ -251,7 +265,7 @@ export function TokenPurchaseSection({
   const handleSwitchRequest = (priceId: string, stripeProductId: string) => {
     const pkg = subscriptionPackages.find((p) => p.stripeProductId === stripeProductId);
     if (!pkg) return;
-    setSwitchConfirm({ priceId, stripeProductId, name: pkg.name, tokenAmount: pkg.tokenAmount });
+    setSwitchConfirm({ priceId, stripeProductId, name: localizeName(pkg, locale), tokenAmount: pkg.tokenAmount });
   };
 
   const handleSwitchConfirm = () => {

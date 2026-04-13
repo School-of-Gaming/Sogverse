@@ -112,6 +112,7 @@ The email translator (`use-intl/core`) operates on plain strings and does not be
 3. Add its config entry to `LANGUAGE_CONFIG` (label, native label, country flag code)
 4. The CI script (`check-translations.mjs`) will automatically validate the new file
 5. No changes needed to `next.config.ts`, `request.ts`, or provider code
+6. Add `name_{code}` / `description_{code}` metadata to each Sorg token product in Stripe (both test and live mode) — otherwise new-language customers silently fall back to English product names on the purchase page. See `docs/sorg-token-architecture.md` § Stripe Product Configuration.
 
 ## Adding a New Namespace
 
@@ -140,10 +141,6 @@ next-intl supports passing only the namespaces each page needs (via `pick()` or 
 ### ICU placeholder validation in CI
 
 The `check-translations.mjs` script validates key presence and non-empty values, but does not verify that ICU placeholders (e.g. `{gamerName}`, `{productName}`) match between source and target locales. A dropped or extra placeholder is the most common i18n runtime error. Adding a placeholder comparison step would catch these before merge.
-
-### Stripe product name localisation
-
-Stripe product names and descriptions are fetched from the Stripe API in English. See the "Translate Stripe Product Names & Descriptions" section in `TODO.md` for the planned approach using Stripe metadata fields.
 
 ### Hardcoded metadata descriptions
 

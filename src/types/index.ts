@@ -162,11 +162,18 @@ export type ProductGroupWithDetails = Omit<
 // ---------------------------------------------------------------------------
 
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import type { SupportedLanguage } from "@/lib/constants/language-preference";
 
 export interface StripePackage {
   stripeProductId: string;
+  /** English name (base). Use `nameI18n[locale] ?? name` for display. */
   name: string;
+  /** English description (base). Use `descriptionI18n[locale] ?? description` for display. */
   description: string | null;
+  /** Localised names from Stripe metadata (`name_fi`, `name_sv`, ...). Sparse — missing locales fall back to `name`. */
+  nameI18n?: Partial<Record<SupportedLanguage, string>>;
+  /** Localised descriptions from Stripe metadata (`description_fi`, `description_sv`, ...). Sparse — missing locales fall back to `description`. */
+  descriptionI18n?: Partial<Record<SupportedLanguage, string>>;
   tokenAmount: number;
   prices: Record<SupportedCurrency, { priceId: string; unitAmount: number }>;
   type: "one_time" | "subscription";
