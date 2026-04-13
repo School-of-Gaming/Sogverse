@@ -1202,5 +1202,11 @@
       "message": "Message",
       "gamerNote": "This feedback is from a gamer account. Replies will go to their parent ({parentEmail})."
     }
+  },
+  "mouseflow": {
+    "title": "Help us improve Sogverse",
+    "body": "Sogverse is in Beta. To learn how people actually use the site \u2014 so we can make it better for everyone \u2014 we'd like to record your visit (mouse movements, clicks, and which pages you visit). Only Sogverse admins can see this, and we will delete all of it once Beta ends.",
+    "accept": "Yes, help improve Sogverse",
+    "decline": "No thanks"
   }
 }

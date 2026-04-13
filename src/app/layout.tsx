@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { Inter, Press_Start_2P } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
-import { Header } from "@/components/layout";
+import { Header, MouseflowConsent } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { getStripeProducts } from "@/lib/stripe/products";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -82,6 +82,7 @@ export default async function RootLayout({
           <main className="h-screen overflow-auto pt-16">
             {children}
           </main>
+          <MouseflowConsent nonce={nonce} />
         </Providers>
         <SpeedInsights />
       </body>

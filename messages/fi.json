@@ -1202,5 +1202,11 @@
       "message": "Viesti",
       "gamerNote": "Tämä palaute on pelaajatililtä. Vastaukset ohjataan hänen vanhemmalleen ({parentEmail})."
     }
+  },
+  "mouseflow": {
+    "title": "Auta meitä parantamaan Sogversea",
+    "body": "Sogverse on Beta-vaiheessa. Jotta opimme, miten sivustoa todella käytetään \u2014 ja voimme tehdä siitä paremman kaikille \u2014 haluaisimme tallentaa vierailusi (hiiren liikkeet, klikkaukset ja vieraillut sivut). Vain Sogversen ylläpitäjät näkevät nämä tiedot, ja poistamme kaiken, kun Beta päättyy.",
+    "accept": "Kyllä, autan parantamaan Sogversea",
+    "decline": "Ei kiitos"
   }
 }

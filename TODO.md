@@ -4,6 +4,14 @@
 
 - [ ] Remove `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` from `.github/workflows/ci.yml` after June 2, 2026 (Node.js 24 becomes the default runner)
 - [ ] Add CHECK constraints to `profiles.language_preference` (`IN ('en', 'fi', 'sv')`) and `profiles.currency` (`IN ('EUR', 'SEK', 'USD', 'GBP')`) — both are plain text columns with app-level validation only
+- [ ] **Remove Mouseflow integration after Beta ends.** This is a temporary session-recording / consent-banner setup added to learn how users interact with the site. To remove it cleanly:
+  1. Delete `src/components/layout/mouseflow-consent.tsx`
+  2. Remove the `MouseflowConsent` export from `src/components/layout/index.ts`
+  3. Remove the `MouseflowConsent` import and `<MouseflowConsent />` render from `src/app/layout.tsx`
+  4. Remove `https://*.mouseflow.com` (and its comment) from the `connect-src` line in `src/proxy.ts`
+  5. Remove the `"mouseflow"` namespace from `messages/en.json`, `messages/fi.json`, and `messages/sv.json`
+  6. Delete all recorded sessions in the Mouseflow dashboard and close/downgrade the Mouseflow account
+  7. Sanity check: `git grep -i mouseflow` should return nothing
 
 ### E2E Tests with Local Supabase
 

@@ -1202,5 +1202,11 @@
       "message": "Meddelande",
       "gamerNote": "Denna feedback kommer från ett spelarkonto. Svar skickas till deras förälder ({parentEmail})."
     }
+  },
+  "mouseflow": {
+    "title": "Hjälp oss göra Sogverse bättre",
+    "body": "Sogverse är i Beta. För att lära oss hur människor faktiskt använder webbplatsen \u2014 så att vi kan göra den bättre för alla \u2014 skulle vi vilja spela in ditt besök (musrörelser, klick och vilka sidor du besöker). Endast Sogverses administratörer kan se detta, och vi kommer att radera allt när Beta tar slut.",
+    "accept": "Ja, hjälp till att förbättra Sogverse",
+    "decline": "Nej tack"
   }
 }

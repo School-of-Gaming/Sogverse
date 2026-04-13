@@ -1250,5 +1250,11 @@
       "message": "QIn",
       "gamerNote": "QIn'vam toy'wI' account vo'. jangmey vav/SoS naDev ({parentEmail}) ghoS."
     }
+  },
+  "mouseflow": {
+    "title": "Sogverse yIDubmoH",
+    "body": "Sogverse Beta 'oH. nuq Dalo'? 'e' wIyajqu' wIneH \u2014 vaj Hoch chaH yIDubmoH. Daqonta'bogh wIqonchugh maQap (DaQwI' vIH, jonta', je paq DaghoSpu'bogh). Sogverse pIn'a'pu' neH lulegh, je Beta rInchugh, Hoch wIteq.",
+    "accept": "HIja', Sogverse yIDubmoH",
+    "decline": "ghobe'"
   }
 }

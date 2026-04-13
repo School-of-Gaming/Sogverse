@@ -26,14 +26,17 @@ function buildCspHeader(nonce: string): string {
 
   return [
     "default-src 'self'",
+    // dev script-src includes https://cdn.mouseflow.com for Beta session recording — remove with the rest of the Mouseflow integration after Beta.
+    // Prod uses strict-dynamic + nonce, which trusts nonce-tagged scripts (via <Script nonce={nonce}>) without needing the cdn allowlisted.
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co",
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://cdn.mouseflow.com",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https:",
     "font-src 'self'",
-    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io",
+    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting;
+    // mouseflow: beta-only session recording (remove with the rest of the Mouseflow integration after Beta)
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://*.mouseflow.com",
     "frame-src 'self' https://*.daily.co https://*.stripe.com",
     // blob: workers used by Daily.co for WebRTC media processing
     "worker-src 'self' blob:",
