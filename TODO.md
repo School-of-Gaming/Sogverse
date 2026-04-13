@@ -3,7 +3,8 @@
 ## Cleanup
 
 - [ ] Remove `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` from `.github/workflows/ci.yml` after June 2, 2026 (Node.js 24 becomes the default runner)
-- [ ] Add CHECK constraints to `profiles.language_preference` (`IN ('en', 'fi', 'sv')`) and `profiles.currency` (`IN ('EUR', 'SEK', 'USD', 'GBP')`) — both are plain text columns with app-level validation only
+- [ ] Add CHECK constraints to `profiles.locale` (`IN ('en', 'fi', 'sv', 'tlh')`) and `profiles.currency` (`IN ('EUR', 'SEK', 'USD', 'GBP')`) — both are plain text columns with app-level validation only
+- [ ] **Locale doesn't follow `profile.locale` on first post-login page for new devices.** When a user signs in on a fresh device with no `locale` cookie, next-intl's `getRequestConfig` (`src/i18n/request.ts`) reads cookie → Accept-Language → English and loads that messages bundle *before* auth is available. `LocaleProvider` then writes `profile.locale` to the cookie on mount, but the current page stays in whatever SSR rendered until the next navigation. Currency doesn't have this bug because `CurrencyProvider` derives from `profile.currency` at render time (no pre-render bundle to load). Two fix options: (a) write `profile.locale` to the cookie during the auth callback so the next SSR already sees it, or (b) read the auth session and profile inside `getRequestConfig` (extra DB round-trip per SSR request). Option (a) is cheaper.
 - [ ] **Remove Mouseflow integration after Beta ends.** This is a temporary session-recording / consent-banner setup added to learn how users interact with the site. To remove it cleanly:
   1. Delete `src/components/layout/mouseflow-consent.tsx`
   2. Remove the `MouseflowConsent` export from `src/components/layout/index.ts`
