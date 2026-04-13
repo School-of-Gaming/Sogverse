@@ -15,7 +15,7 @@ import {
   buildGamerMovedNewGeduEmail,
 } from "@/lib/email-templates/group-changes";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
-import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import type { BatchGroupChanges } from "@/services/groups";
 import type { NotifyPayload } from "@/hooks/use-group-editor";
 
@@ -34,10 +34,6 @@ interface EmailJob {
 interface ApplyBody {
   batch: BatchGroupChanges;
   notify: NotifyPayload;
-}
-
-function resolveLocale(pref: string | null): SupportedLocale {
-  return isSupportedLocale(pref) ? pref : DEFAULT_LOCALE;
 }
 
 export async function POST(

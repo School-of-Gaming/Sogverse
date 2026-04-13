@@ -8,7 +8,7 @@ import {
   buildUnenrollmentGeduEmail,
 } from "@/lib/email-templates/enrollment-changes";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
-import { isSupportedLocale, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 
 interface EnrollmentNotificationContext {
   customerId: string;
@@ -73,13 +73,13 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
   return {
     parentName: parent.display_name,
     parentEmail: parent.email,
-    parentLocale: (isSupportedLocale(parent.locale) ? parent.locale : DEFAULT_LOCALE) as SupportedLocale,
+    parentLocale: resolveLocale(parent.locale),
     gamerName: gamer.display_name,
     minecraftUsername: gamer.minecraft_accounts?.minecraft_username ?? null,
     minecraftUuid: gamer.minecraft_accounts?.minecraft_uuid ?? null,
     geduName: group.profiles.display_name,
     geduEmail: group.profiles.email,
-    geduLocale: (isSupportedLocale(group.profiles.locale) ? group.profiles.locale : DEFAULT_LOCALE) as SupportedLocale,
+    geduLocale: resolveLocale(group.profiles.locale),
     productName: group.products.name,
     adminEmails,
   };

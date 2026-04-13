@@ -102,3 +102,18 @@ export function isSupportedLocale(value: unknown): value is SupportedLocale {
     (SUPPORTED_LOCALES as readonly string[]).includes(value)
   );
 }
+
+/**
+ * Validate a user-supplied locale value and fall back to a default. Use this
+ * when reading `profiles.locale` or a locale from a request body — it narrows
+ * `unknown` to `SupportedLocale` in one step without per-call-site casts.
+ *
+ * For multi-source resolution with Accept-Language fallback, don't use this —
+ * inline the chain (see src/app/api/auth/forgot-password/route.ts).
+ */
+export function resolveLocale(
+  value: unknown,
+  fallback: SupportedLocale = DEFAULT_LOCALE,
+): SupportedLocale {
+  return isSupportedLocale(value) ? value : fallback;
+}

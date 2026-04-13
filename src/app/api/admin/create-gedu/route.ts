@@ -6,7 +6,7 @@ import { SENDER_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 import { buildGeduInviteEmail } from "@/lib/email-templates/gedu-invite";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { resolveLocale } from "@/lib/constants/locales";
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const locale: SupportedLocale = isSupportedLocale(requestedLocale) ? requestedLocale : DEFAULT_LOCALE;
+    const locale = resolveLocale(requestedLocale);
     const origin = new URL(request.url).origin;
     const admin = createAdminClient();
 
