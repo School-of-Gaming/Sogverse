@@ -1,4 +1,8 @@
-// Single source of truth for supported UI languages.
+// Single source of truth for supported UI languages — the languages the web
+// app and Sogverse communication can be displayed in. Distinct from the
+// `profiles.languages` array, which is the user's preferred club/product
+// languages (unrelated to the UI). See docs/i18n-architecture.md.
+//
 // When adding a new language, also update LANGUAGE_CONFIG below,
 // add a messages/<code>.json file, and update the CI check script.
 export const SUPPORTED_LANGUAGES = ["en", "fi", "sv", "tlh"] as const;

@@ -123,7 +123,7 @@ The email translator (`use-intl/core`) operates on plain strings and does not be
 
 The `profiles` table has a nullable `language_preference` column (`text`). Null means "auto-detect from browser". The column is updated via `PATCH /api/user/language-preference` using the admin client (bypasses RLS). Existing RLS policies on profiles cover this column.
 
-This is distinct from the `languages` array on `gamer_profiles`/`gedu_profiles` which stores languages the user *speaks* (for matching purposes).
+This is distinct from the `profiles.languages` array (also on the base `profiles` table): `language_preference` controls which language the user sees the web app and receives Sogverse communication in, while `languages` stores the user's preferred club/product languages — used when matching gamers to gedus and shown on gedu profiles. A Finnish-speaking parent could have `language_preference = "fi"` (app in Finnish) and `languages = ["en"]` (wants their child placed in English-speaking clubs).
 
 ## Future Improvements
 

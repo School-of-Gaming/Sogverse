@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * Dropdown in the site header for choosing the UI language — which language the
+ * user sees the web app and Sogverse communication in. Backed by
+ * `profiles.language_preference` via the LanguageProvider.
+ *
+ * This is NOT the user's club/product language preference. For that, see
+ * src/components/ui/language-checkboxes.tsx. See docs/i18n-architecture.md.
+ */
+
 import { useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import flags from "react-phone-number-input/flags";

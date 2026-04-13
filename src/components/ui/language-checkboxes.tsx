@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * Multi-select for the user's preferred club/product languages — which languages
+ * they want clubs/products delivered in. Backed by the `profiles.languages` array
+ * and used when matching gamers to gedus.
+ *
+ * This is NOT the UI language picker (which language the user sees the app in).
+ * For that, see src/components/layout/language-picker.tsx and the
+ * LanguageProvider. See docs/i18n-architecture.md.
+ */
+
 import flags from "react-phone-number-input/flags";
 import { useTranslations } from "next-intl";
 import type { LanguageRow } from "@/types";

@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * LanguageProvider owns the user's UI language — which language they see the
+ * web app and Sogverse communication in. It syncs `profiles.language_preference`
+ * with a `language` cookie so SSR picks up the right locale on the next request.
+ *
+ * This is NOT the user's club/product language preference (`profiles.languages`),
+ * which is managed separately via the LanguageCheckboxes component in settings
+ * and used for matching gamers to gedus. See docs/i18n-architecture.md.
+ */
+
 import {
   createContext,
   useContext,

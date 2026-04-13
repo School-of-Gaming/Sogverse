@@ -1,6 +1,8 @@
 -- Add UI language preference column to profiles.
--- Distinct from the existing `languages` array which stores
--- languages a user speaks (for gedu/gamer matching).
+-- Distinct from the existing `profiles.languages` array: this column controls
+-- which language the user sees the web app and receives Sogverse communication
+-- in, while `languages` is the user's set of preferred club/product languages
+-- (used when matching gamers to gedus and displayed on gedu profiles).
 ALTER TABLE public.profiles
   ADD COLUMN language_preference text;
 
