@@ -14,6 +14,7 @@ vi.mock("@/lib/brevo", () => ({
   sendTransactionalEmail: (...args: unknown[]) => mockSendTransactionalEmail(...args),
 }));
 
+
 // --- Helpers ---
 
 function mockUnauthenticated() {

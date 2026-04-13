@@ -342,31 +342,36 @@ describe("formatCountdown", () => {
   const days = (n: number) => n * 24 * 60 * 60_000;
 
   it("shows days when 1+ days away", () => {
-    expect(formatCountdown(days(1))).toBe("1 day");
-    expect(formatCountdown(days(3))).toBe("3 days");
-    expect(formatCountdown(days(3) + hours(17))).toBe("3 days");
+    expect(formatCountdown(days(1), "en")).toBe("1 day");
+    expect(formatCountdown(days(3), "en")).toBe("3 days");
+    expect(formatCountdown(days(3) + hours(17), "en")).toBe("3 days");
   });
 
   it("shows hours when 2–23 hours away", () => {
-    expect(formatCountdown(hours(2) + mins(1))).toBe("2 hours");
-    expect(formatCountdown(hours(5))).toBe("5 hours");
-    expect(formatCountdown(hours(23) + mins(59))).toBe("23 hours");
+    expect(formatCountdown(hours(2) + mins(1), "en")).toBe("2 hours");
+    expect(formatCountdown(hours(5), "en")).toBe("5 hours");
+    expect(formatCountdown(hours(23) + mins(59), "en")).toBe("23 hours");
   });
 
   it("shows hours and minutes when 1–2 hours away", () => {
-    expect(formatCountdown(hours(1))).toBe("1 hour");
-    expect(formatCountdown(hours(1) + mins(30))).toBe("1 hour and 30 minutes");
-    expect(formatCountdown(hours(1) + mins(1))).toBe("1 hour and 1 minute");
-    expect(formatCountdown(mins(119))).toBe("1 hour and 59 minutes");
+    expect(formatCountdown(hours(1), "en")).toBe("1 hour");
+    expect(formatCountdown(hours(1) + mins(30), "en")).toBe("1 hour, 30 minutes");
+    expect(formatCountdown(hours(1) + mins(1), "en")).toBe("1 hour, 1 minute");
+    expect(formatCountdown(mins(119), "en")).toBe("1 hour, 59 minutes");
   });
 
   it("shows minutes when under 1 hour", () => {
-    expect(formatCountdown(mins(45))).toBe("45 minutes");
-    expect(formatCountdown(mins(1))).toBe("1 minute");
-    expect(formatCountdown(mins(0))).toBe("0 minutes");
+    expect(formatCountdown(mins(45), "en")).toBe("45 minutes");
+    expect(formatCountdown(mins(1), "en")).toBe("1 minute");
+    expect(formatCountdown(mins(0), "en")).toBe("0 minutes");
   });
 
   it("clamps negative values to 0 minutes", () => {
-    expect(formatCountdown(-1000)).toBe("0 minutes");
+    expect(formatCountdown(-1000, "en")).toBe("0 minutes");
+  });
+
+  it("localizes units for Finnish", () => {
+    expect(formatCountdown(days(3), "fi")).toContain("3");
+    expect(formatCountdown(mins(45), "fi")).toContain("45");
   });
 });

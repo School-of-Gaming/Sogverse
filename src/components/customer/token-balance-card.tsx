@@ -1,11 +1,14 @@
 "use client";
 
 import { Coins } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRequiredAuth } from "@/providers";
 import { useTokenBalance } from "@/services/tokens";
 
 export function TokenBalanceCard() {
+  const t = useTranslations('tokens');
+  const c = useTranslations('common');
   const { profile } = useRequiredAuth();
   const isCustomer = profile.role === "customer";
   const { data: balance, isLoading } = useTokenBalance(profile.id, isCustomer);
@@ -15,7 +18,7 @@ export function TokenBalanceCard() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Coins className="h-5 w-5 text-primary" />
-          Sorg Balance
+          {t('balance.title')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -26,7 +29,7 @@ export function TokenBalanceCard() {
             <span className="text-4xl font-bold">
               {balance ?? 0}
             </span>
-            <span className="text-muted-foreground">Sorgs</span>
+            <span className="text-muted-foreground">{c('sorgs')}</span>
           </div>
         )}
       </CardContent>

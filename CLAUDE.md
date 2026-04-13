@@ -78,7 +78,7 @@ See `docs/layout-scroll-architecture.md` for the scroll containment model and ho
 
 ### Date & Time Formatting
 
-**Rule: Use `date-fns` / `date-fns-tz` for all date and time formatting.** Never use raw `Date.toLocaleTimeString()`, `Date.toLocaleDateString()`, or `Intl.DateTimeFormat` directly. Shared formatters live in `src/lib/utils.ts`. For timezone-aware formatting, use `date-fns-tz`.
+**Rule: Use `Intl` APIs and `next-intl` formatters for date/time/number formatting.** Shared helpers (`formatDate`, `formatTime`, `formatCurrency*`) live in `src/lib/utils.ts`. For relative time, use `useFormatter().relativeTime()` from `next-intl`. For timezone math only (converting between zones), use `date-fns-tz`. The locale for formatting always comes from `useLocale()` (client) or `getLocale()` (server) via `next-intl`.
 
 ### Styling
 - Use `cn()` utility from `lib/utils.ts` for conditional classes
@@ -121,6 +121,7 @@ See `docs/sorg-token-architecture.md` for the full architecture, component map, 
 ### Other Docs
 
 - `docs/email-architecture.md` — Brevo integration, email templates, notifications, deliverability/DNS, and testing UI
+- `docs/i18n-architecture.md` — next-intl setup, locale resolution, translation patterns, adding languages/namespaces
 - `docs/SECURITY_REPORT.md` — Past security audit findings and remediations
 
 ## Environment Variables

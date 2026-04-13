@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Plus, Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -38,6 +39,7 @@ function filterTree(nodes: LocationNode[], query: string): LocationNode[] {
 }
 
 export default function AdminLocationsPage() {
+  const t = useTranslations('admin.locations');
   const { data: locations, isLoading } = useAllLocations();
   const createLocation = useCreateLocation();
   const updateLocation = useUpdateLocation();
@@ -110,14 +112,14 @@ export default function AdminLocationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Locations</h1>
+          <h1 className="text-3xl font-bold">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Manage location hierarchy for products and gedus
+            {t('description')}
           </p>
         </div>
         <Button onClick={handleAddRoot}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Country
+          {t('addCountry')}
         </Button>
       </div>
 
@@ -127,7 +129,7 @@ export default function AdminLocationsPage() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search locations..."
+                placeholder={t('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"

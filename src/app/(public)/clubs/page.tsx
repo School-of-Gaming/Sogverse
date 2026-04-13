@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations, useLocale } from 'next-intl';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,18 +13,20 @@ import { formatScheduleLocal } from "@/lib/utils";
 
 export default function ProductsPage() {
   const { data: products, isLoading } = useVisibleProducts();
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { tokensToCurrencyDisplay } = useTokenRates();
+  const t = useTranslations('clubs');
+  const c = useTranslations('common');
 
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Our Clubs
+          {t('listing.heading')}
         </h1>
         <p className="mt-4 text-muted-foreground">
-          Explore our Minecraft clubs — each one led by a professional game
-          educator.
+          {t('listing.subheading')}
         </p>
       </div>
 
@@ -78,21 +81,22 @@ export default function ProductsPage() {
                     </CardDescription>
                     <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                       <p>
-                        Every {schedule.localDay} at {schedule.localTime} {schedule.tzAbbrev}
+                        {c('schedule', { day: schedule.localDay, time: schedule.localTime, tz: schedule.tzAbbrev })}
                       </p>
-                      <p>{product.duration_minutes} min</p>
-                      <p>Ages {product.min_age}–{product.max_age}</p>
+                      <p>{c('duration', { minutes: product.duration_minutes })}</p>
+                      <p>{c('ages', { min: product.min_age, max: product.max_age })}</p>
                     </div>
                   </CardHeader>
                   <CardFooter className="flex items-center justify-between">
                     <div>
-                      <span className="text-xl font-bold text-primary">{product.token_cost} Sorgs</span>
+                      <span className="text-xl font-bold text-primary">{t('tokenCost', { cost: product.token_cost })}</span>
+                      {/* eslint-disable-next-line i18next/no-literal-string -- approx symbol */}
                       <p className="text-xs text-muted-foreground">
-                        ≈ {tokensToCurrencyDisplay(product.token_cost, currency, locale)} per session
+                        ≈ {tokensToCurrencyDisplay(product.token_cost, currency, locale)} {c('perSession')}
                       </p>
                     </div>
                     <Link href={`/clubs/${product.id}`}>
-                      <Button>View Details</Button>
+                      <Button>{c('viewDetails')}</Button>
                     </Link>
                   </CardFooter>
                 </Card>
@@ -102,9 +106,9 @@ export default function ProductsPage() {
         ) : (
           <Card className="mx-auto max-w-md">
             <CardContent className="flex flex-col items-center py-12 text-center">
-              <h3 className="mt-4 text-lg font-medium">No Clubs Available</h3>
+              <h3 className="mt-4 text-lg font-medium">{t('listing.noClubs')}</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Check back soon for new clubs!
+                {t('listing.checkBackSoon')}
               </p>
             </CardContent>
           </Card>
@@ -115,15 +119,13 @@ export default function ProductsPage() {
       <div className="mx-auto mt-16 max-w-2xl text-center">
         <Card className="bg-muted/30">
           <CardContent className="py-8">
-            <h3 className="text-lg font-semibold">Need Help Choosing?</h3>
+            <h3 className="text-lg font-semibold">{t('listing.needHelp')}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Not sure which club is right for your family? Contact us for
-              personalized recommendations based on your children&apos;s ages and
-              interests.
+              {t('listing.needHelpDescription')}
             </p>
             <Link href="/about">
               <Button variant="outline" className="mt-4">
-                Learn More About Us
+                {t('listing.learnMoreAboutUs')}
               </Button>
             </Link>
           </CardContent>

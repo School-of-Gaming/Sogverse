@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, UserPlus, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
+import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, DEFAULT_LANGUAGE, type SupportedLanguage } from "@/lib/constants/language-preference";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,14 +13,17 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCreateGedu } from "@/services/users";
 
-const createGeduSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-});
-
 export default function AddUserPage() {
+  const t = useTranslations('admin.users');
+  const c = useTranslations('common');
   const createGedu = useCreateGedu();
 
+  const createGeduSchema = z.object({
+    email: z.string().email(t('invalidEmail')),
+  });
+
   const [email, setEmail] = useState("");
+  const [language, setLanguage] = useState<SupportedLanguage>(DEFAULT_LANGUAGE);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -33,6 +38,7 @@ export default function AddUserPage() {
 
       const result = await createGedu.mutateAsync({
         email: validatedData.email,
+        language,
       });
 
       if (result.warning) {
@@ -46,7 +52,7 @@ export default function AddUserPage() {
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("An unexpected error occurred");
+        setError(c('unexpectedError'));
       }
     }
   };
@@ -59,9 +65,9 @@ export default function AddUserPage() {
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-success/10">
               <Check className="h-8 w-8 text-success" />
             </div>
-            <h3 className="mt-4 text-lg font-medium">Invite Sent!</h3>
+            <h3 className="mt-4 text-lg font-medium">{t('inviteSent')}</h3>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              An invitation email has been sent to <strong>{email}</strong>.
+              {t('inviteSentDescription', { email })}
             </p>
             {warning && (
               <p className="mt-2 text-center text-sm text-warning">
@@ -70,14 +76,14 @@ export default function AddUserPage() {
             )}
             <div className="mt-6 flex gap-4">
               <Link href={ROUTES.admin.users}>
-                <Button variant="outline">View All Users</Button>
+                <Button variant="outline">{t('viewAllUsers')}</Button>
               </Link>
               <Button onClick={() => {
                 setSuccess(false);
                 setEmail("");
                 setWarning(null);
               }}>
-                Invite Another
+                {t('inviteAnother')}
               </Button>
             </div>
           </CardContent>
@@ -95,9 +101,9 @@ export default function AddUserPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Invite a new Gedu</h1>
+          <h1 className="text-2xl font-bold">{t('inviteNewGedu')}</h1>
           <p className="text-muted-foreground">
-            Send an invitation to a new Gedu
+            {t('sendInvitation')}
           </p>
         </div>
       </div>
@@ -109,9 +115,9 @@ export default function AddUserPage() {
               <UserPlus className="h-6 w-6 text-secondary-foreground" />
             </div>
             <div>
-              <CardTitle>New Gedu Invitation</CardTitle>
+              <CardTitle>{t('newGeduInvitation')}</CardTitle>
               <CardDescription>
-                The Gedu will receive an email to set up their account
+                {t('geduReceiveEmail')}
               </CardDescription>
             </div>
           </div>
@@ -125,11 +131,11 @@ export default function AddUserPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">{t('emailAddress')}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="educator@example.com"
+                placeholder={t('emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={createGedu.isPending}
@@ -138,12 +144,29 @@ export default function AddUserPage() {
               />
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="language">{t('inviteLanguage')}</Label>
+              <select
+                id="language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value as SupportedLanguage)}
+                disabled={createGedu.isPending}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {LANGUAGE_CONFIG[lang].nativeLabel} ({LANGUAGE_CONFIG[lang].label})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <Button
               type="submit"
               className="w-full"
               disabled={createGedu.isPending}
             >
-              {createGedu.isPending ? "Sending Invite..." : "Send Invite"}
+              {createGedu.isPending ? t('sendingInvite') : t('sendInvite')}
             </Button>
           </CardContent>
         </form>

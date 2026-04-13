@@ -1,0 +1,1206 @@
+{
+  "metadata": {
+    "title": "Sogverse \u2013 School of Gaming",
+    "description": "Kun ruutuajasta tulee laatuaikaa \u2013 Minecraft-kerhoja ammattimaisten pelikasvattajien johdolla.",
+    "shortDescription": "School of Gaming \u2013 Kun ruutuajasta tulee laatuaikaa",
+    "pages": {
+      "signIn": "Kirjaudu sis\u00e4\u00e4n",
+      "createAccount": "Luo tili",
+      "forgotPassword": "Unohtuiko salasana",
+      "resetPassword": "Vaihda salasana",
+      "setupAccount": "Tilin k\u00e4ytt\u00f6\u00f6notto",
+      "about": "Tietoa meist\u00e4",
+      "sorg": "Sorgga \u2013 Sogversen valuutta",
+      "yty": "Yty \u2013 Sogversen voima",
+      "minecraftApi": "Minecraft Server API",
+      "adminDashboard": "Yll\u00e4pidon hallintapaneeli",
+      "adminGroups": "Ryhm\u00e4t",
+      "adminGroupDetails": "Ryhm\u00e4n tiedot",
+      "parentDashboard": "Vanhemman hallintapaneeli",
+      "geduDashboard": "Kasvattajan hallintapaneeli",
+      "geduGroups": "Ryhm\u00e4t",
+      "geduGroupDetails": "Ryhm\u00e4n tiedot",
+      "gamerHome": "Pelaajan etusivu",
+      "gamerGroups": "Omat ryhm\u00e4t",
+      "gamerGroupDetails": "Ryhm\u00e4n tiedot",
+      "voiceSession": "\u00c4\u00e4ni-istunto"
+    }
+  },
+  "common": {
+    "appName": "Sogverse",
+    "tagline": "School of Gaming",
+    "loading": "Ladataan...",
+    "saving": "Tallennetaan...",
+    "sending": "Lähetetään...",
+    "back": "Takaisin",
+    "cancel": "Peruuta",
+    "close": "Sulje",
+    "save": "Tallenna",
+    "delete": "Poista",
+    "edit": "Muokkaa",
+    "confirm": "Vahvista",
+    "continue": "Jatka",
+    "submit": "Lähetä",
+    "saveChanges": "Tallenna muutokset",
+    "signIn": "Kirjaudu sisään",
+    "signOut": "Kirjaudu ulos",
+    "getStarted": "Aloita tästä",
+    "viewDetails": "Näytä tiedot",
+    "learnMore": "Lue lisää",
+    "browseClubs": "Selaa kerhoja",
+    "exploreClubs": "Tutustu kerhoihin",
+    "createAccount": "Luo tili",
+    "unexpectedError": "Odottamaton virhe tapahtui",
+    "somethingWentWrong": "Jokin meni pieleen",
+    "noPermission": "Sinulla ei ole oikeutta tarkastella tätä sivua.",
+    "sorgs": "Sorggaa",
+    "perSession": "per kerta",
+    "minutes": "min",
+    "ages": "Ikä {min}–{max}",
+    "schedule": "Joka {day} klo {time} {tz}",
+    "duration": "{minutes} minuuttia",
+    "email": "Sähköposti",
+    "password": "Salasana",
+    "confirmPassword": "Vahvista salasana",
+    "displayName": "Näyttönimi",
+    "username": "Käyttäjänimi",
+    "phoneNumber": "Puhelinnumero",
+    "newPassword": "Uusi salasana",
+    "profile": "Profiili",
+    "security": "Turvallisuus",
+    "settings": "Asetukset",
+    "dashboard": "Hallintapaneeli",
+    "backToLogin": "Takaisin kirjautumiseen",
+    "passwordMinLength": "Vähintään {count} merkkiä",
+    "forgotPassword": "Unohditko salasanan?",
+    "failedToLoad": "Tietojen lataaminen epäonnistui",
+    "alreadyEnrolled": "Jo ilmoittautunut",
+    "noRecentActivity": "Ei viimeaikaista toimintaa näytettäväksi.",
+    "recentActivity": "Viimeaikainen toiminta",
+    "selectLanguage": "Valitse kieli",
+    "languageEnglish": "englanti",
+    "languageFinnish": "suomi",
+    "languageSwedish": "ruotsi",
+    "roleAdmin": "Ylläpitäjä",
+    "roleParent": "Vanhempi",
+    "roleGamer": "Pelaaja",
+    "roleGedu": "Gedu",
+    "selectCurrency": "Valitse valuutta"
+  },
+  "about": {
+    "hero": {
+      "title": "Tietoa <primary>School of Gaming</primary> -kerhosta",
+      "subtitle": "Minecraft-kerhoissamme ruutuajasta tulee laatuaikaa. Yhdistämme lapset, ammattitaitoiset pelikasvattajat ja pelin, jota lapset jo rakastavat — luoden leikillisiä oppimiskokemuksia, joissa he saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa."
+    },
+    "quote": {
+      "text": "\"Se mikä on totta nyt, oli kerran vain mielikuvitustasi.\"",
+      "attribution": "— School of Gaming -rehtorin sanat"
+    },
+    "mission": {
+      "heading": "Missiomme",
+      "text": "Kaikki ruutuaika ei ole samanarvoista. Pelaaminen on hieno harrastus, kun sitä kohdellaan kuten mitä tahansa muutakin harrastusta. Käytämme lasten rakkautta peleihin heidän edukseen — hyvien ystävien ja ammattimaisen pelikasvattajan kanssa, joka on paikalla ohjaamassa ja auttamassa."
+    },
+    "values": {
+      "heading": "Asiat joista välitämme",
+      "playIsEssential": {
+        "title": "Leikki on lapselle välttämätöntä",
+        "description": "Leikki on lapsen työtä. Se on ratkaisevan tärkeää heidän hyvinvoinnilleen ja kehitykselleen. Kerhomme on suunniteltu edistämään vapaata leikkiä, joka ruokkii mielikuvitusta, uteliaisuutta ja luovuutta — voimakkaita työkaluja minkä tahansa tulevaisuuden kohtaamiseen."
+      },
+      "friendsCarry": {
+        "title": "Ystävät kantavat esteiden yli",
+        "description": "Ketään ei pidä jättää ilman ystävää. Leikin ja ystävyyden hetket kantavat lapsia minkä tahansa esteen yli elämässä. Kerhoissamme lapset luovat aitoja yhteyksiä jaettujen seikkailujen kautta."
+      },
+      "keepChildrenSafe": {
+        "title": "Pidetään lapset turvassa verkossa",
+        "description": "Vaalimme osallistavia, ystävällisiä ja turvallisia verkkoyhteisöjä. Kasvatamme välittäviä ja kohteliaita digitaalisia kansalaisia, jotka pitävät huolta kanssapelaajistaan. Nollatoleranssi kiusaamiselle ja toksisuudelle."
+      },
+      "familyInTheLoop": {
+        "title": "Perhe mukana",
+        "description": "Vanhemmat ovat kumppaneita. Sinä pidät langat käsissäsi lapsesi pelikokemuksen suhteen, samalla kun he nauttivat vapaudesta tutkia, luoda ja saada ystäviä turvallisessa ympäristössä."
+      }
+    },
+    "howClubsWork": {
+      "heading": "Miten kerhomme toimivat",
+      "paragraph1": "Joka viikko pelaajamme kirjautuvat sisään ja heitä tervehtii oma pelikasvattajansa — Gedu. Gedu ohjaa heidät päivän aiheen läpi antaen lapsille tilaa ja vapautta tehdä seikkailuista omiaan.",
+      "paragraph2": "Gedumme ovat itsekin pelaajia. He ymmärtävät omakohtaisesti, että lapsina ja nuorina identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Tämä ymmärrys muokkaa jokaista heidän vetämäänsä kertaa.",
+      "paragraph3": "Kaikki kerhomme on rakennettu tarinoiden ympärille, jotka antavat pelaajille tilaa tutkia, luoda ja kuvitella. Viikoittaisten kertojen välillä pelaajat saavat hauskoja haasteita tehtäväksi verkossa ja sen ulkopuolella. Lomien aikana järjestämme leirejä, ja joka viikko on yhteisötapahtumia, turnauksia ja kilpailuja.",
+      "paragraph4": "Jokainen pelaaja vannoo valan käyttäytyä ystävällisesti ja oikein — olipa kyseessä peli, äänichatti tai todellinen maailma. Samat arvot pätevät kaikkialla."
+    },
+    "forParents": {
+      "heading": "Vanhemmille",
+      "paragraph1": "Vanhempien pelikasvatus on yhtä tärkeä osa toimintaamme kuin itse kerhot. Haluamme auttaa vanhempia pysymään mukana jatkuvasti muuttuvassa pelimaailmassa, jotta he voivat tukea lapsiaan luottavaisin mielin.",
+      "paragraph2": "Sinä pidät langat käsissäsi — hallitset tilejä, ilmoittautumisia ja kulutusta — samalla kun lapsesi nauttii turvallisesta ympäristöstä, jota ohjaavat välittävät ammattilaiset."
+    },
+    "cta": {
+      "heading": "Liity yhteisöömme",
+      "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattimaisen pelikasvattajan ohjaamana."
+    },
+    "contact": {
+      "heading": "Ota yhteyttä",
+      "subheading": "Onko kysyttävää? Kuulemme mielellämme sinusta.",
+      "email": "Sähköposti: kanslia@sog.gg"
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Ylläpidon hallintapaneeli",
+      "description": "Tervetuloa Sogverse-ylläpitopaneeliin. Hallitse käyttäjiä, tuotteita ja järjestelmäasetuksia.",
+      "totalUsers": "Käyttäjiä yhteensä",
+      "activeAccounts": "Aktiiviset tilit",
+      "products": "Tuotteet",
+      "activeProducts": "Aktiiviset tuotteet",
+      "revenue": "Tuotto",
+      "thisMonth": "Tässä kuussa",
+      "growth": "Kasvu",
+      "fromLastMonth": "Viime kuusta",
+      "latestEvents": "Viimeisimmät tapahtumat alustalla"
+    },
+    "products": {
+      "title": "Tuotteet",
+      "manageCatalog": "Hallitse tuoteluetteloasi",
+      "addProduct": "Lisää tuote",
+      "searchPlaceholder": "Hae tuotteita...",
+      "noSearchResults": "Hakuasi vastaavia tuotteita ei löytynyt.",
+      "noProducts": "Ei vielä tuotteita. Luo ensimmäinen tuotteesi.",
+      "backToProducts": "Takaisin tuotteisiin",
+      "productNotFound": "Tuotetta ei löytynyt.",
+      "hidden": "Piilotettu",
+      "created": "Luotu",
+      "unknown": "Tuntematon",
+      "actions": "Toiminnot",
+      "hideProduct": "Piilota tuote",
+      "showProduct": "Näytä tuote",
+      "hideConfirm": "Haluatko varmasti piilottaa tuotteen \"{name}\"? Se ei näy enää luettelossa.",
+      "showConfirm": "Haluatko varmasti näyttää tuotteen \"{name}\"? Se tulee näkyviin luettelossa vanhemmille.",
+      "hide": "Piilota",
+      "show": "Näytä",
+      "cannotShowProduct": "Tuotetta ei voi näyttää",
+      "addGroupBeforeVisible": "Lisää vähintään yksi Gedu-ryhmä ennen kuin teet tuotteen näkyväksi.",
+      "ok": "OK",
+      "deleteProduct": "Poista tuote",
+      "deleteConfirm": "Haluatko varmasti poistaa tuotteen \"{name}\"? Tätä toimintoa ei voi peruuttaa.",
+      "deleting": "Poistetaan...",
+      "clone": "Kopioi",
+      "cloneProduct": "Kopioi tuote",
+      "cloningFrom": "Kopioidaan tuotteesta \"{name}\"",
+      "addAProduct": "Uusi tuote",
+      "createNewProduct": "Luo uusi tuote luetteloon",
+      "newProduct": "Uusi tuote",
+      "fillDetails": "Täytä tuotetiedot alle.",
+      "createProduct": "Luo tuote",
+      "creating": "Luodaan...",
+      "editProduct": "Muokkaa tuotetta",
+      "updateDetails": "Päivitä tuotetiedot alla",
+      "editDetailsBelow": "Muokkaa tietoja alla."
+    },
+    "users": {
+      "title": "Käyttäjät",
+      "manageAccounts": "Hallitse käyttäjätilejä ja rooleja",
+      "inviteGedu": "Kutsu Gedu",
+      "searchPlaceholder": "Hae nimellä, sähköpostilla tai käyttäjänimellä...",
+      "searchAriaLabel": "Hae käyttäjiä",
+      "roleFilterLabel": "Rooli",
+      "all": "Kaikki",
+      "noFilterResults": "Suodattimiasi vastaavia käyttäjiä ei löytynyt.",
+      "noUsers": "Käyttäjiä ei löytynyt.",
+      "backToUsers": "Takaisin käyttäjiin",
+      "userNotFound": "Käyttäjää ei löytynyt.",
+      "joined": "Liittynyt",
+      "unknown": "Tuntematon",
+      "linkedGamers": "Liitetyt pelaajat",
+      "linkedParents": "Liitetyt vanhemmat",
+      "unnamedGamer": "Nimetön pelaaja",
+      "unnamedUser": "Nimetön käyttäjä",
+      "noConnectedGamers": "Ei liitettyjä pelaajia",
+      "tokenBalance": "Sorgga-saldo",
+      "tokenMonetaryWarning": "Jokainen Sorgga on arvoltaan {rate}. Muutokset vaikuttavat todelliseen rahalliseen arvoon.",
+      "amountLabel": "Määrä (+ lisää, − vähennä)",
+      "amountPlaceholder": "esim. 10 tai -5",
+      "reasonLabel": "Syy",
+      "reasonPlaceholder": "esim. Hyvitys menetetystä kerrasta",
+      "adjustBalance": "Muuta saldoa",
+      "failedToAdjust": "Saldon muuttaminen epäonnistui",
+      "transactionHistory": "Tapahtumahistoria",
+      "adjustDialogTitle": "{action} {count, plural, one {# Sorgga} other {# Sorggaa}}",
+      "adjustDialogDescription": "Tämä {action} {count, plural, one {# Sorggan} other {# Sorggaa}} {direction} {user}.",
+      "add": "Lisää",
+      "remove": "Poista",
+      "to": "käyttäjälle",
+      "from": "käyttäjältä",
+      "thisUser": "tämä käyttäjä",
+      "monetaryValue": "Rahallinen arvo",
+      "adjusting": "Muutetaan...",
+      "inviteNewGedu": "Kutsu uusi Gedu",
+      "sendInvitation": "Lähetä kutsu uudelle pelikasvattajalle",
+      "newGeduInvitation": "Uusi Gedu-kutsu",
+      "geduReceiveEmail": "Gedu saa sähköpostin, jossa on ohjeet tilin luomiseen.",
+      "emailAddress": "Sähköpostiosoite",
+      "emailPlaceholder": "gedu@example.com",
+      "inviteLanguage": "Kutsusähköpostin kieli",
+      "sendInvite": "Lähetä kutsu",
+      "sendingInvite": "Lähetetään...",
+      "inviteSent": "Kutsu lähetetty!",
+      "inviteSentDescription": "Kutsu on lähetetty osoitteeseen {email}.",
+      "viewAllUsers": "Näytä kaikki käyttäjät",
+      "inviteAnother": "Kutsu toinen",
+      "invalidEmail": "Anna kelvollinen sähköpostiosoite"
+    },
+    "locations": {
+      "title": "Sijainnit",
+      "description": "Hallitse maita, kaupunkeja ja toimipisteitä",
+      "addCountry": "Lisää maa",
+      "searchPlaceholder": "Hae sijainteja...",
+      "editName": "Muokkaa: {name}",
+      "addChildUnder": "Lisää {type} kohteen {parent} alle",
+      "location": "Sijainti",
+      "pleaseSelectCountry": "Valitse maa",
+      "nameRequired": "Nimi on pakollinen",
+      "country": "Maa",
+      "selectCountry": "Valitse maa...",
+      "allCountriesAdded": "Kaikki tuetut maat on jo lisätty.",
+      "name": "Nimi",
+      "enterTypeName": "Syötä {type} nimi",
+      "enterName": "Syötä nimi",
+      "adding": "Lisätään...",
+      "addType": "Lisää {type}",
+      "noLocationsYet": "Ei sijainteja vielä. Lisää maa aloittaaksesi.",
+      "noLocationsMatchSearch": "Hakuasi vastaavia sijainteja ei löytynyt."
+    },
+    "testing": {
+      "title": "Testaus",
+      "description": "Sisäiset testaus- ja kehitystyökalut",
+      "emailTool": "Sähköpostin testaustyökalu",
+      "emailToolDescription": "Lähetä testisähköposteja Brevo-palvelun (SMTP) kautta toimituksen ja mallien varmistamiseksi.",
+      "provider": "Palveluntarjoaja",
+      "brevo": "Brevo (SMTP)",
+      "klaviyoComingSoon": "Klaviyo (tulossa pian)",
+      "content": "Sisältö",
+      "template": "Malli",
+      "language": "Kieli",
+      "custom": "Mukautettu",
+      "toEmail": "Vastaanottajan sähköposti",
+      "toEmailPlaceholder": "vastaanottaja@example.com",
+      "templateParameters": "Malliparametrit",
+      "fromEmail": "Lähettäjän sähköposti",
+      "fromName": "Lähettäjän nimi",
+      "subject": "Aihe",
+      "subjectPlaceholder": "Testisähköpostin aihe",
+      "body": "Sisältö",
+      "bodyPlaceholder": "Kirjoita sähköpostin sisältö (HTML tuettu)",
+      "replyTo": "Vastausosoite (valinnainen)",
+      "replyToPlaceholder": "vastaus@example.com",
+      "sendTestEmail": "Lähetä testisähköposti",
+      "emailSentSuccess": "Sähköposti lähetetty! Viestin tunnus: {messageId}",
+      "failedToSendRequest": "Pyynnön lähettäminen epäonnistui"
+    },
+    "whatsapp": {
+      "title": "WhatsApp",
+      "description": "Näytä ja vastaa WhatsApp-keskusteluihin",
+      "searchContacts": "Hae kontakteja...",
+      "noConversations": "Ei keskusteluja vielä.",
+      "selectConversation": "Valitse keskustelu aloittaaksesi viestinnän",
+      "typeMessage": "Kirjoita viesti...",
+      "notDelivered": "Ei toimitettu",
+      "today": "Tänään",
+      "yesterday": "Eilen"
+    },
+    "groups": {
+      "pendingChanges": "{count, plural, one {# odottava muutos} other {# odottavaa muutosta}}",
+      "discard": "Hylkää",
+      "commitChanges": "Toteuta muutokset",
+      "confirmGroupChanges": "Vahvista ryhmämuutokset",
+      "changesWillBeApplied": "Seuraavat muutokset toteutetaan:",
+      "saving": "Tallennetaan...",
+      "applyingChanges": "Toteutetaan muutoksia",
+      "errorOccurred": "Toiminnon aikana tapahtui virhe.",
+      "allChangesApplied": "Kaikki muutokset on toteutettu onnistuneesti.",
+      "savingAndNotifying": "Tallennetaan muutoksia ja lähetetään ilmoituksia...",
+      "working": "Käsitellään...",
+      "serverError": "Palvelinvirhe ({status})",
+      "noResponseStream": "Palvelimelta ei saatu vastausvirtaa",
+      "failedToSaveChanges": "Muutosten tallentaminen epäonnistui",
+      "operationFailed": "Toiminto epäonnistui",
+      "networkError": "Verkkovirhe",
+      "geduGroups": "Gedu-ryhmät",
+      "addGroup": "Lisää ryhmä",
+      "noGroups": "Ei vielä Gedu-ryhmiä. Lisää ryhmä määrittääksesi pelikasvattajan.",
+      "selectGeduForGroup": "Valitse Gedu luodaksesi uuden ryhmän.",
+      "group": "Ryhmä",
+      "groupNumber": "Ryhmä {number}",
+      "groupDeleted": "{label} (poistettu)",
+      "hiddenNoGroups": "Tämä tuote on piilotettu eikä sillä ole ryhmiä. Lisää vähintään yksi ryhmä ja tee se näkyväksi, jotta vanhemmat näkevät sen.",
+      "hiddenWithGroups": "Tämä tuote on piilotettu. Vanhemmat eivät näe sitä luettelossa. Vaihda näkyvyyttä yllä olevasta Toiminnot-kortista.",
+      "visibleNoGroups": "Tämä tuote on näkyvissä, mutta sillä ei ole ryhmiä. Vanhemmat näkevät sen, mutta eivät voi ilmoittautua.",
+      "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
+      "genderBoy": "Poika",
+      "genderGirl": "Tyttö",
+      "genderNonBinary": "Muunsukupuolinen",
+      "boyCount": "{count, plural, one {# poika} other {# poikaa}}",
+      "girlCount": "{count, plural, one {# tyttö} other {# tyttöä}}",
+      "nonBinaryCount": "{count, plural, one {# muunsukupuolinen} other {# muunsukupuolista}}",
+      "ageRangeLabel": "ikähaarukka {range}",
+      "reassignGedu": "Vaihda Gedu",
+      "moveGamersFirst": "Siirrä kaikki pelaajat ensin pois",
+      "deleteGroup": "Poista ryhmä",
+      "markedForDeletion": "Merkitty poistettavaksi",
+      "noGamersEnrolled": "Ei ilmoittautuneita pelaajia. Raahaa pelaajia tähän.",
+      "new": "Uusi",
+      "deleteGroupConfirmTitle": "Poista {label}?",
+      "deleteGroupConfirmDescription": "Tämä poistaa ryhmän ja sen Gedu-määrityksen. Muutos astuu voimaan vasta kun toteutat sen.",
+      "reassignGeduFor": "Vaihda Gedu ryhmälle {label}",
+      "selectDifferentGedu": "Valitse toinen Gedu tälle ryhmälle.",
+      "searchByNameOrEmail": "Hae nimellä tai sähköpostilla\u2026",
+      "noGedusMatchSearch": "Hakuasi vastaavia Geduja ei löytynyt."
+    },
+    "forms": {
+      "nameLabel": "Nimi",
+      "namePlaceholder": "Tuotteen nimi",
+      "descriptionLabel": "Kuvaus",
+      "descriptionPlaceholder": "Kuvaile tuotettasi",
+      "padletUrlLabel": "Padlet-URL",
+      "sorgCostLabel": "Sorgga-hinta (per kerta)",
+      "approxPerSession": "≈ {amount} per kerta",
+      "imageUrlLabel": "Kuvan URL",
+      "preview": "Esikatselu",
+      "imagePreviewError": "Kuvan esikatselua ei voitu ladata",
+      "gameLabel": "Peli",
+      "newGameName": "Uuden pelin nimi",
+      "addButton": "Lisää",
+      "selectGame": "Valitse peli...",
+      "addNewGame": "Lisää uusi peli",
+      "dayOfWeekLabel": "Viikonpäivä",
+      "startTimeLabel": "Alkamisaika",
+      "startTimeHint": "Syötä aika Suomen aikaa (Europe/Helsinki). Vanhemmat näkevät tämän omassa aikavyöhykkeessään.",
+      "durationLabel": "Kesto (minuuttia)",
+      "minAgeLabel": "Vähimmäisikä",
+      "maxAgeLabel": "Enimmäisikä",
+      "nameRequired": "Tuotteen nimi on pakollinen",
+      "nameMaxLength": "Tuotteen nimi saa olla enintään 100 merkkiä",
+      "descriptionRequired": "Kuvaus on pakollinen",
+      "sorgCostNumber": "Sorgga-hinnan pitää olla numero",
+      "sorgCostWhole": "Sorgga-hinnan pitää olla kokonaisluku",
+      "sorgCostMin": "Sorgga-hinnan pitää olla vähintään 1",
+      "validUrl": "Syötä kelvollinen URL",
+      "gameRequired": "Peli on pakollinen",
+      "validTime": "Syötä kelvollinen aika",
+      "durationMin": "Keston pitää olla vähintään 1 minuutti",
+      "minAgeMin": "Vähimmäisiän pitää olla 0 tai enemmän",
+      "maxAgeMin": "Enimmäisiän pitää olla 0 tai enemmän",
+      "maxAgeGte": "Enimmäisiän pitää olla vähintään yhtä suuri kuin vähimmäisikä",
+      "failedToCreateGame": "Pelin luominen epäonnistui"
+    }
+  },
+  "auth": {
+    "login": {
+      "welcomeTitle": "Tervetuloa Sogverseen",
+      "chooseRole": "Valitse miten haluat kirjautua",
+      "noAccountSignUp": "Eikö sinulla ole tiliä? <link>Rekisteröidy</link>",
+      "signingIn": "Kirjaudutaan...",
+      "startPlaying": "Aloita pelaaminen!",
+      "gamerHelp": "Tarvitsetko apua? Kysy vanhemmaltasi tai huoltajaltasi.",
+      "geduAccountNote": "Gedu-tilit luodaan ylläpitäjän toimesta.",
+      "gamerInvalidCredentials": "Väärä käyttäjänimi tai salasana. Yritä uudelleen.",
+      "emailPlaceholder": "sinä@example.com",
+      "passwordPlaceholder": "Syötä salasanasi",
+      "gamerUsernamePlaceholder": "Pelikäyttäjänimesi",
+      "gamerPasswordPlaceholder": "Salainen salasanasi",
+      "roles": {
+        "customer": {
+          "title": "Vanhempi",
+          "subtitle": "Hallitse pelaajiasi",
+          "loginTitle": "Vanhemman kirjautuminen",
+          "description": "Kirjaudu hallitaksesi ostoksia ja pelaajatilejä"
+        },
+        "gedu": {
+          "title": "Gedu",
+          "subtitle": "Opeta ja inspiroi",
+          "loginTitle": "Gedun kirjautuminen",
+          "description": "Kirjaudu käyttääksesi opetustyökalujasi"
+        },
+        "gamer": {
+          "title": "Pelaaja",
+          "subtitle": "Aloita pelaaminen",
+          "loginTitle": "Pelaajan kirjautuminen",
+          "description": "Kirjaudu käyttäjänimelläsi aloittaaksesi pelaamisen"
+        }
+      }
+    },
+    "register": {
+      "title": "Luo tili",
+      "description": "Syötä tietosi luodaksesi vanhemman tilin",
+      "parentAccountAlertTitle": "Tämä on vanhemman tili",
+      "parentAccountAlertDescription": "Tämä tili on sinulle, vanhemmalle. Lapsesi pelaajatili on erillinen ja luodaan myöhemmin, kun ilmoitat hänet kerhoon.",
+      "parentDisplayName": "Vanhemman näyttönimi",
+      "namePlaceholder": "Nimesi",
+      "emailPlaceholder": "sinä@example.com",
+      "passwordPlaceholder": "Luo vahva salasana",
+      "confirmPasswordPlaceholder": "Vahvista salasanasi",
+      "creatingAccount": "Luodaan tiliä...",
+      "accountExists": "Tällä sähköpostiosoitteella on jo tili",
+      "alreadyHaveAccount": "Onko sinulla jo tili? <link>Kirjaudu sisään</link>"
+    },
+    "forgotPassword": {
+      "title": "Unohditko salasanan?",
+      "description": "Syötä sähköpostiosoitteesi, niin lähetämme sinulle linkin salasanan nollaamiseksi.",
+      "emailPlaceholder": "sinä@example.com",
+      "sendResetLink": "Lähetä nollauslinkki",
+      "checkEmailTitle": "Tarkista sähköpostisi",
+      "checkEmailDescription": "Olemme lähettäneet salasanan nollauslinkin osoitteeseen {email}. Tarkista postilaatikkosi ja klikkaa linkkiä nollataksesi salasanasi."
+    },
+    "resetPassword": {
+      "title": "Nollaa salasanasi",
+      "description": "Syötä uusi salasanasi alle.",
+      "newPasswordPlaceholder": "Syötä uusi salasanasi",
+      "confirmPasswordPlaceholder": "Vahvista uusi salasanasi",
+      "updating": "Päivitetään...",
+      "resetButton": "Nollaa salasana",
+      "linkExpired": "Nollauslinkkisi on vanhentunut. Pyydä uusi linkki.",
+      "successTitle": "Salasana päivitetty",
+      "successDescription": "Salasanasi on päivitetty onnistuneesti."
+    },
+    "setupAccount": {
+      "title": "Tervetuloa Sogverseen",
+      "description": "Määritä pelikasvattajatilisi alla.",
+      "namePlaceholder": "Nimesi",
+      "passwordPlaceholder": "Vähintään 8 merkkiä",
+      "confirmPasswordPlaceholder": "Vahvista salasanasi",
+      "settingUp": "Määritetään...",
+      "submitButton": "Luo tili",
+      "inviteLinkExpired": "Kutsulinkki on vanhentunut. Pyydä ylläpitäjää lähettämään uusi.",
+      "minecraftSaveFailed": "Minecraft-käyttäjänimen tallentaminen epäonnistui",
+      "invalidPhone": "Syötä kelvollinen puhelinnumero",
+      "successTitle": "Kaikki valmista!",
+      "successDescription": "Tilisi on luotu onnistuneesti."
+    }
+  },
+  "checkout": {
+    "redirecting": "Ohjataan kassalle...",
+    "error": "Jokin meni pieleen kassalle siirryttäessä. <link>Palaa takaisin</link> ja yritä uudelleen."
+  },
+  "clubs": {
+    "listing": {
+      "heading": "Kerhomme",
+      "subheading": "Tutustu Minecraft-kerhoihimme — jokaista johtaa ammattimainen pelikasvattaja.",
+      "noClubs": "Kerhoja ei saatavilla",
+      "checkBackSoon": "Palaa pian katsomaan uusia kerhoja!",
+      "needHelp": "Tarvitsetko apua valinnassa?",
+      "needHelpDescription": "Etkö ole varma, mikä kerho sopii perheellesi? Ota yhteyttä niin annamme henkilökohtaisia suosituksia lastesi iän ja kiinnostusten perusteella.",
+      "learnMoreAboutUs": "Lue lisää meistä"
+    },
+    "tokenCost": "{cost} Sorggaa",
+    "detail": {
+      "backToClubs": "Takaisin kerhoihin",
+      "notFound": "Kerhoa ei löytynyt",
+      "notFoundDescription": "Tämä kerho ei ehkä ole enää saatavilla.",
+      "every": "Joka {day}",
+      "enrollment": "Ilmoittautuminen",
+      "onlyParents": "Vain vanhempien tilit voivat ilmoittaa pelaajia kerhoihin.",
+      "readyToEnroll": "Valmis ilmoittautumaan?",
+      "readyToEnrollDescription": "Kirjaudu sisään tai luo tili ilmoittaaksesi lapsesi tähän kerhoon.",
+      "logInToEnroll": "Kirjaudu ilmoittautuaksesi"
+    }
+  },
+  "docs": {
+    "minecraftApi": {
+      "title": "Minecraft-palvelimen API",
+      "description": "Käytä tätä päätepistettä tarkistaaksesi, onko yhdistävällä pelaajalla lupa liittyä Minecraft-maailmaan. Palvelin lähettää pelaajan Minecraft UUID:n ja saa salli/estä-päätöksen istunnon ajoitustiedoilla.",
+      "authentication": {
+        "heading": "Autentikointi",
+        "description": "Kaikki pyynnöt vaativat staattisen API-avaimen Bearer-tokenina <code>Authorization</code>-otsakkeessa.",
+        "contactNote": "Ota yhteyttä Sogverse-tiimiin, jos tarvitset avaimen tai sen vaihdon."
+      },
+      "endpoint": {
+        "heading": "Päätepiste",
+        "queryParams": "Kyselyparametrit",
+        "uuidType": "merkkijono (pakollinen)",
+        "uuidDescription": "Pelaajan Minecraft UUID. Sekä viivoitettu (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) että viivottamaton (<code2>069a79f444e94726a5befca90e38aaf5</code2>) muoto hyväksytään."
+      },
+      "responses": {
+        "heading": "Vastaukset",
+        "playerAllowed": "Pelaaja sallittu",
+        "playerDenied": "Pelaaja estetty",
+        "errorResponses": "Virheresponssit",
+        "deniedDescription": "Pelaaja löytyy Sogversesta, mutta hänellä ei ole aktiivista istuntoa juuri nyt. <code>endTime</code>-kenttää ei sisällytetä.",
+        "fields": {
+          "allowedTrue": "Pelaajalla on aktiivinen istunto juuri nyt.",
+          "role": "Pelaajan rooli Sogversessa.",
+          "displayName": "Pelaajan näyttönimi.",
+          "endTime": "Milloin istuntoikkuna sulkeutuu (sisältää 5 minuutin puskurin suunnitellun lopun jälkeen). Käytä tätä ajoittaaksesi poiston tai uudelleentarkistuksen.",
+          "reason": "Ihmisluettava kuvaus: tuotteen nimi ja kasvattajan nimi."
+        },
+        "error401": "Puuttuva, virheellinen tai kelvoton API-avain.",
+        "error400": "Puuttuva tai kelvoton <code>uuid</code>-kyselyparametri.",
+        "error404": "Tähän Minecraft UUID:hen ei ole liitetty Sogverse-tiliä.",
+        "error500": "Palvelinvirhe. Yritä uudelleen viiveellä."
+      },
+      "example": {
+        "heading": "Esimerkki"
+      },
+      "integrationNotes": {
+        "heading": "Integraatio-ohjeet",
+        "note1": "Kutsu tätä päätepistettä jokaisella pelaajan liittymisellä. Sekä Gedut että pelaajat ovat istuntorajoitettuja — he voivat liittyä vain ajoitetun istuntoikkunan aikana.",
+        "note2": "Istuntoikkuna aukeaa 5 minuuttia ennen suunniteltua alkua ja sulkeutuu 5 minuuttia suunnitellun lopun jälkeen.",
+        "note3": "Kun <code1>allowed: true</code1>, käytä <code2>endTime</code2>-arvoa ajoittaaksesi uudelleentarkistuksen tai poiston. Jos peräkkäisiä istuntoja on (esim. yksi päättyy 14:00, seuraava alkaa 14:05), pelaaja poistetaan ensimmäisen istunnon päättyessä ja liittyy uudelleen seuraavaan.",
+        "note4": "<code>404</code> tarkoittaa, ettei pelaaja ole vielä linkittänyt Minecraft-tiliään Sogversessä. Voit näyttää viestin, joka kehottaa linkittämään tilin profiiliasetuksissa.",
+        "note5": "Kaikki virheresponssit noudattavat muotoa <code>'{ \"error\": \"viesti\" }'</code>."
+      }
+    }
+  },
+  "enrollment": {
+    "wizard": {
+      "title": "Ilmoita pelaajasi",
+      "costDescription": "{cost} Sorggaa vähennetään tulevasta kerrasta",
+      "insufficientBalance": "Riittämätön saldo",
+      "insufficientBalanceDescription": "Tarvitset <strong>{cost} Sorggaa</strong> ilmoittautumiseen, mutta sinulla on vain <strong>{balance}</strong>.",
+      "getMoreSorgs": "Hanki lisää Sorggoja",
+      "chooseGamer": "Valitse ilmoitettava pelaaja:",
+      "createNewGamer": "Luo uusi pelaaja",
+      "createGamerDescription": "Luo uusi pelaajatili lapsellesi",
+      "chooseGroup": "Valitse ryhmä pelaajalle {name}:",
+      "noGroupsAvailable": "Tälle kerholle ei ole vielä ryhmiä saatavilla. Yritä myöhemmin uudelleen.",
+      "enrollmentSummary": "Ilmoittautumisen yhteenveto",
+      "summaryGamer": "Pelaaja",
+      "summaryGedu": "Gedu",
+      "summaryCost": "Hinta",
+      "sorgAmount": "{amount} Sorggaa",
+      "currentBalance": "Nykyinen saldo",
+      "afterEnrollment": "Ilmoittautumisen jälkeen",
+      "enrolling": "Ilmoitetaan...",
+      "confirmEnrollment": "Vahvista ilmoittautuminen",
+      "enrolled": "Ilmoittautunut!",
+      "enrolledDescription": "<strong>{gamer}</strong> on nyt ilmoitettu kerhoon <strong>{club}</strong>.",
+      "newBalance": "Uusi saldo: {balance} Sorggaa",
+      "howToJoinTitle": "Miten liityt kertaan",
+      "howToJoinDescription": "Kun kerta alkaa, vihreä \"Live\"-merkki ilmestyy ryhmäkorttiin <strong>{name}</strong> hallintapaneelissa. Hän voi klikata \"Liity\" yhdistääkseen.",
+      "viewMyGamers": "Näytä pelaajani",
+      "failedToEnroll": "Ilmoittautuminen epäonnistui",
+      "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}"
+    },
+    "gamerForm": {
+      "mustBeLoggedIn": "Sinun täytyy olla kirjautunut",
+      "credentialsAlertTitle": "Jaa nämä tunnukset lapsellesi",
+      "credentialsAlertDescription": "Lapsesi kirjautuu alla olevilla käyttäjänimellä ja salasanalla omaan pelaajatiliinsä. Tämä on turvallisempaa kuin vanhemman salasanan jakaminen — pelaajatilit pääsevät käsiksi vain peleihin ja profiiliin, eivät laskutus- tai tiliasetuksiin.",
+      "displayNameLabel": "Pelaajan näyttönimi",
+      "displayNamePlaceholder": "Miten nimi näkyy pelissä",
+      "usernamePlaceholder": "Valitse uniikki käyttäjänimi",
+      "usernameHint": "Vain kirjaimia, numeroita ja alaviivoja",
+      "passwordPlaceholder": "Luo salasana",
+      "passwordHint": "Vähintään 6 merkkiä",
+      "confirmPasswordPlaceholder": "Vahvista salasana",
+      "dateOfBirthLabel": "Syntymäpäivä",
+      "age": "Ikä: {age} {count, plural, one {vuosi} other {vuotta}}",
+      "genderLabel": "Sukupuoli",
+      "genderBoy": "Poika",
+      "genderGirl": "Tyttö",
+      "genderNonBinary": "Muunsukupuolinen",
+      "creating": "Luodaan...",
+      "createGamer": "Luo pelaaja"
+    },
+    "unenroll": {
+      "failedToUnenroll": "Ilmoittautumisen peruuttaminen epäonnistui",
+      "successTitle": "Ilmoittautuminen peruutettu",
+      "successDescription": "<strong>{gamer}</strong> on poistettu kerhosta <strong>{club}</strong>.",
+      "sorgsRefunded": "{amount} Sorggaa palautettu",
+      "toYourBalance": "saldollesi.",
+      "noRefund": "Hyvitystä ei myönnetty.",
+      "newBalance": "Uusi saldo: <strong>{balance} Sorggaa</strong>",
+      "done": "Valmis",
+      "title": "Poista {name} kerhosta?",
+      "description": "Tämä poistaa pelaajan <strong>{gamer}</strong> kerhosta <strong>{club}</strong>.",
+      "club": "Kerho",
+      "gamer": "Pelaaja",
+      "refundEligible": "Saat hyvityksen: <strong>{cost} Sorggaa</strong>.",
+      "noRefundWithinWindow": "Hyvitystä ei myönnetä — seuraava kerta on {hours} tunnin sisällä.",
+      "noChargeNextSession": "Seuraavasta kerrasta ei veloiteta.",
+      "unenrolling": "Peruutetaan...",
+      "confirmUnenroll": "Vahvista peruutus"
+    }
+  },
+  "feedback": {
+    "title": "Palaute",
+    "subtitle": "Jaa ajatuksesi kanssamme",
+    "sendFeedback": "Lähetä palaute",
+    "feedbackDescription": "Kuulemme mielellämme palautettasi, ehdotuksiasi tai virheilmoituksiasi.",
+    "gamerReplyNote": "Pelikasvattajasi saattaa palata asiaasi seuraavan kerran aikana.",
+    "message": "Viesti",
+    "placeholder": "Jaa ajatuksesi, ehdotuksesi tai ilmoita virheestä...",
+    "charactersNeeded": "{count} merkkiä vielä tarvitaan",
+    "submitFeedback": "Lähetä palaute",
+    "thankYou": "Kiitos palautteestasi! Arvostamme, että käytit aikaa ajatustesi jakamiseen.",
+    "failedToSubmit": "Palautteen lähettäminen epäonnistui.",
+    "failedToSubmitRetry": "Palautteen lähettäminen epäonnistui. Yritä uudelleen."
+  },
+  "footer": {
+    "tagline": "School of Gaming – Ruutuaika muuttuu laatuajaksi.",
+    "copyright": "© {year} School of Gaming. Kaikki oikeudet pidätetään."
+  },
+  "gamer": {
+    "welcome": "Tervetuloa, pelaaja!",
+    "subtitle": "Valmis pelaamaan ja oppimaan?",
+    "myGroups": "Ryhmäni",
+    "myGroupsDescription": "Näytä ryhmäsi ja tulevat ääni-istunnot",
+    "tipOfTheDay": "Päivän vinkki",
+    "tipOfTheDayMessage": "Harjoitus tekee mestarin! Liity ryhmäkertaan kehittääksesi taitojasi."
+  },
+  "gedu": {
+    "title": "Kasvattajan hallintapaneeli",
+    "subtitle": "Hallitse ryhmiäsi ja oppilaitasi",
+    "statsGroups": "Ryhmät",
+    "statsGroupsDescription": "Hallitse ryhmiäsi",
+    "statsGamers": "Pelaajat",
+    "statsGamersDescription": "Kaikissa ryhmissä",
+    "latestStudentActivities": "Oppilaiden viimeisimmät toiminnot"
+  },
+  "groups": {
+    "title": "Ryhmät",
+    "backToGroups": "Takaisin ryhmiin",
+    "groupNotFound": "Ryhmää ei löytynyt.",
+    "live": "Live",
+    "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
+    "noGamersEnrolled": "Ei vielä ilmoittautuneita pelaajia.",
+    "age": "Ikä {age}",
+    "sorgsPerWeek": "{cost} Sorggaa / viikko",
+    "unenrollGamer": "Poista {name} kerhosta",
+    "noGroupsYet": "Ei vielä ryhmiä",
+    "nextSession": "Seuraava: {date}",
+    "startsIn": "(alkaa {countdown} kuluttua)",
+    "sessionInProgress": "Kerta käynnissä",
+    "everyDay": "Joka {day}",
+    "join": "Liity",
+    "alwaysOpen": "Aina auki",
+    "padlet": "Padlet",
+    "allGroupsHeading": "Kaikki ryhmät",
+    "allGroupsSubheading": "Kaikki ryhmät kaikista tuotteista ja kouluttajista.",
+    "allGroupsEmpty": "Ryhmiä ei ole vielä luotu.",
+    "myGroupsHeading": "Ryhmäni",
+    "myGroupsSubheading": "Ilmoittautuneet ryhmäsi ja tulevat äänikeskustelut.",
+    "myGroupsEmpty": "Et ole ilmoittautunut mihinkään ryhmään vielä.",
+    "yourGroupsHeading": "Ryhmäsi",
+    "yourGroupsSubheading": "Sinulle määrätyt ryhmät, opiskelijat ja äänikeskustelut.",
+    "yourGroupsEmpty": "Ryhmät ilmestyvät tähän, kun ylläpitäjä määrää sinut kerhoon.",
+    "adminLounge": "Admin-lounge",
+    "adminLoungeDescription": "Yksityinen ylläpitäjien äänikanava",
+    "geduLounge": "Gedu-lounge",
+    "geduLoungeDescription": "Keskustele kouluttajien kanssa milloin tahansa",
+    "geduLoungeDescriptionOther": "Keskustele muiden kouluttajien kanssa milloin tahansa",
+    "currentGedu": "Nykyinen",
+    "assignedGedu": "Määrätty"
+  },
+  "header": {
+    "nav": {
+      "home": "Etusivu",
+      "clubs": "Kerhot",
+      "sorg": "Sorgga",
+      "yty": "Yty",
+      "about": "Tietoa"
+    },
+    "toggleMenu": "Vaihda valikko",
+    "tokenBalance": "{count} Sorggaa"
+  },
+  "sidebar": {
+    "dashboard": "Hallintapaneeli",
+    "users": "Käyttäjät",
+    "products": "Tuotteet",
+    "groups": "Ryhmät",
+    "locations": "Sijainnit",
+    "uiComponents": "UI-komponentit",
+    "whatsapp": "WhatsApp",
+    "testing": "Testaus",
+    "feedback": "Palaute",
+    "settings": "Asetukset",
+    "sorg": "Sorgga",
+    "myGamers": "Pelaajani",
+    "home": "Etusivu",
+    "myGroups": "Ryhmäni",
+    "expandSidebar": "Laajenna sivupalkki",
+    "collapseSidebar": "Pienennä sivupalkki"
+  },
+  "home": {
+    "hero": {
+      "title": "<primary>Ruutuajasta</primary><br></br><secondary>Laatuaikaa</secondary>",
+      "subtitle": "Ammattilaisten suunnittelemat Minecraft-kerhomme edistävät tervettä pelaamista harrastuksena. Maailmanluokan pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat.",
+      "viewClubs": "Kerhot"
+    },
+    "features": {
+      "heading": "Tee pelaamisesta hieno harrastus",
+      "subheading": "Pelaaminen on hieno harrastus — etenkin hyvien ystävien ja ammattimaisen ohjaajan kanssa.",
+      "minecraftClubs": {
+        "title": "Ohjatut Minecraft-kerhot",
+        "description": "Pelikasvattajamme eli gedut ovat itsekin pelaajia. He ymmärtävät, että lapsena identiteettiä ja ystävyyksiä rakennetaan sekä verkossa että sen ulkopuolella. Jokaista kertaa ohjaa kasvattaja, joka todella ymmärtää."
+      },
+      "screenTime": {
+        "title": "Ruutuajasta laatuaikaa",
+        "description": "Ammattilaisten suunnittelemat kerhot muuttavat pelaamisen leikilliseksi oppimiskokemukseksi, jossa lapset kehittyvät monipuolisesti ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
+      },
+      "newFriends": {
+        "title": "Uusia ystäviä, aitoja yhteyksiä",
+        "description": "Lapset luovat aitoja, kestäviä ystävyyksiä jaettujen seikkailujen kautta. Ketään ei jätetä ilman ystävää. Jokainen pelaaja lupaa kohdella toisia ystävällisesti — verkossa ja sen ulkopuolella."
+      },
+      "parents": {
+        "title": "Koko perhe mukaan",
+        "description": "Pidämme vanhemmat ajan tasalla ja mukana lastensa pelipolulla. Vanhempien tukeminen on meille yhtä tärkeää kuin itse kerhot."
+      }
+    },
+    "howItWorks": {
+      "heading": "Näin se toimii",
+      "subheading": "Liity Minecraft-kerhoon kolmella helpolla askeleella.",
+      "step1": {
+        "title": "Luo tilisi",
+        "description": "Rekisteröidy vanhempana ja luo pelaajatilit lapsillesi."
+      },
+      "step2": {
+        "title": "Valitse kerho",
+        "description": "Selaa kerhojamme ja ilmoita pelaajasi sopiviin kerhoihin aikataulun ja kiinnostusten mukaan."
+      },
+      "step3": {
+        "title": "Liity seikkailuun",
+        "description": "Pelaajasi kirjautuvat joka viikko, tapaavat ohjaajansa ja sukeltavat Minecraft-seikkailuihin uusien ystävien kanssa."
+      }
+    },
+    "cta": {
+      "heading": "Valmis muuttamaan pelaamisen oppimiseksi?",
+      "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattimaisen pelikasvattajan ohjaamana.",
+      "createFreeAccount": "Luo ilmainen tili"
+    }
+  },
+  "minecraft": {
+    "label": "Minecraft-käyttäjänimi",
+    "optional": "(valinnainen)",
+    "placeholder": "esim. Steve",
+    "verify": "Vahvista",
+    "verifying": "Vahvistetaan...",
+    "notFound": "Minecraft-tiliä ei löytynyt. Tarkista käyttäjänimi ja yritä uudelleen.",
+    "mcHeadsAttribution": "Ulkoasu renderöity palvelulla <link>mc-heads.net</link>"
+  },
+  "parent": {
+    "dashboard": {
+      "welcome": "Vanhemman hallintapaneeli",
+      "subtitle": "Hallitse pelaajiasi ja ilmoittautumisia",
+      "quickActions": {
+        "gamers": {
+          "title": "Pelaajani",
+          "description": "Näytä ja hallitse pelaajatilejäsi"
+        },
+        "sorg": {
+          "title": "Sorgga-tokenit",
+          "description": "Tarkista saldo ja osta tokeneita"
+        },
+        "browseClubs": {
+          "title": "Selaa kerhoja",
+          "description": "Etsi ja ilmoittaudu pelikerhoihin"
+        },
+        "settings": {
+          "title": "Asetukset",
+          "description": "Hallitse tilisi asetuksia"
+        }
+      },
+      "gettingStarted": {
+        "title": "Näin pääset alkuun",
+        "subtitle": "Seuraa näitä askeleita saadaksesi pelaajasi pelaamaan",
+        "step1": {
+          "title": "Osta Sorgga-tokeneita",
+          "description": "Sorgga-tokeneilla maksetaan pelikerrat. Siirry Sorgga-sivulle ostaaksesi paketin tai tilataksesi kuukausittaisen paketin."
+        },
+        "step2": {
+          "title": "Selaa kerhoja",
+          "description": "Tutustu pelikerhoihimme ja löydä lapsellesi sopiva ikä- ja kiinnostusryhmä."
+        },
+        "step3": {
+          "title": "Ilmoita pelaajasi",
+          "description": "Luo pelaajatili ja ilmoita hänet kerhoon. Hän on valmis ensimmäiselle kerralle!"
+        }
+      }
+    },
+    "billing": {
+      "error": "Laskutusportaalin avaaminen epäonnistui. Yritä uudelleen tai siirry <link>Sorgga-sivulle</link>.",
+      "redirecting": "Ohjataan laskutusportaaliin..."
+    },
+    "gamers": {
+      "title": "Pelaajani",
+      "subtitle": "Hallitse pelaajatilejä ja ilmoittautumisia",
+      "joined": "Liittynyt {time}",
+      "noEnrollments": "Ei aktiivisia ilmoittautumisia. <link>Selaa kerhoja</link> ilmoittaaksesi tämän pelaajan.",
+      "empty": {
+        "title": "Ei vielä pelaajia",
+        "description": "Luo pelaajatili ilmoittautumalla kerhoon. Lapsesi kirjautuu omalla käyttäjänimellä ja salasanalla."
+      }
+    },
+    "gamerDetail": {
+      "backToGamers": "Takaisin pelaajiin",
+      "title": "Pelaajan asetukset",
+      "subtitle": "Hallitse pelaajan {name} asetuksia",
+      "profileDescription": "Päivitä pelaajasi näyttönimi ja katso käyttäjänimi.",
+      "profileUpdated": "Näyttönimi päivitetty!",
+      "failedUpdateDisplayName": "Näyttönimen päivittäminen epäonnistui",
+      "passwordsDoNotMatch": "Salasanat eivät täsmää",
+      "passwordUpdated": "Salasana päivitetty!",
+      "failedUpdatePassword": "Salasanan päivittäminen epäonnistui",
+      "notFound": {
+        "title": "Pelaajaa ei löytynyt",
+        "description": "Tämä pelaajatili on ehkä poistettu tai sinulla ei ole pääsyä siihen."
+      },
+      "minecraft": {
+        "title": "Minecraft-tili",
+        "description": "Linkitä Minecraft Java Editionin käyttäjänimi pelinsisäisiä ominaisuuksia varten.",
+        "save": "Tallenna Minecraft-käyttäjänimi"
+      },
+      "mcSaved": "Minecraft-käyttäjänimi tallennettu!",
+      "mcCleared": "Minecraft-käyttäjänimi poistettu",
+      "failedUpdateMc": "Minecraft-käyttäjänimen päivittäminen epäonnistui",
+      "security": {
+        "description": "Vaihda salasana, jolla pelaajasi kirjautuu.",
+        "passwordPlaceholder": "Syötä uusi salasana",
+        "confirmPlaceholder": "Vahvista uusi salasana",
+        "updating": "Päivitetään...",
+        "updatePassword": "Päivitä salasana"
+      }
+    },
+    "sorg": {
+      "title": "Sorgga-tokenit",
+      "subtitle": "Osta tokeneita ja hallitse saldoasi",
+      "transactionHistory": "Tapahtumahistoria"
+    },
+    "switchToGamer": {
+      "title": "Vaihda käyttäjään {name}?",
+      "description": "Sinut kirjataan sisään käyttäjänä <bold>{name}</bold>. Voit vaihtaa takaisin vanhemman tilille pelaajan hallintapaneelista.",
+      "failedSwitch": "Tilin vaihtaminen epäonnistui",
+      "switching": "Vaihdetaan...",
+      "confirm": "Vaihda käyttäjään {name}"
+    }
+  },
+  "settings": {
+    "subtitle": "Hallitse tilisi asetuksia",
+    "profileDescription": "Päivitä henkilötietosi",
+    "roleAccount": "{role}-tili",
+    "displayNamePlaceholder": "Syötä näyttönimesi",
+    "invalidPhone": "Syötä kelvollinen puhelinnumero.",
+    "profileUpdated": "Profiili päivitetty onnistuneesti!",
+    "failedToUpdateProfile": "Profiilin päivittäminen epäonnistui.",
+    "securityDescription": "Hallitse salasanaasi ja turvallisuusasetuksiasi",
+    "changePassword": "Vaihda salasana",
+    "minecraftAccount": "Minecraft-tili",
+    "minecraftDescription": "Linkitä Minecraft Java Edition -tilisi",
+    "minecraftSaved": "Minecraft-käyttäjänimi tallennettu!",
+    "minecraftCleared": "Minecraft-käyttäjänimi poistettu.",
+    "failedToUpdateMinecraft": "Minecraft-käyttäjänimen päivittäminen epäonnistui.",
+    "saveMinecraft": "Tallenna Minecraft-käyttäjänimi",
+    "notifications": "Ilmoitukset",
+    "notificationsDescription": "Määritä miten saat ilmoituksia",
+    "notificationsComingSoon": "Ilmoitusasetukset tulossa pian.",
+    "appearance": "Ulkoasu",
+    "appearanceDescription": "Mukauta ulkoasua ja tuntumaa",
+    "appearanceComingSoon": "Teema-asetukset tulossa pian.",
+    "languages": "Puhutut kielet"
+  },
+  "sorg": {
+    "hero": {
+      "title": "Mikä on <primary>Sorgga</primary>?",
+      "subtitle": "Sorgga on valuutta, joka pyörittää lapsesi kerhojen kertoja Sogversessa. Vanhemmat ostavat Sorggoja ja niillä maksetaan viikottaiset kerrat — yksinkertaista, läpinäkyvää ja joustavaa."
+    },
+    "overview": {
+      "heading": "Näin se toimii",
+      "text": "Jokainen kerhokerran hinta on tietty määrä Sorggoja. Kun ilmoitat lapsesi kerhoon, Sorggoja vähennetään automaattisesti joka viikko heidän kerrasta. Osta tokeneita kerralla tai tilaa kuukausittain — kumpi sopii perheellesi paremmin."
+    },
+    "benefits": {
+      "heading": "Miksi Sorggat?",
+      "subheading": "Yksinkertainen ja reilu tapa maksaa lapsesi kerhoista",
+      "payPerSession": {
+        "title": "Maksa kerrasta",
+        "description": "Sorggoja vähennetään kerran viikossa jokaisesta ilmoitetusta kerhosta. Maksat vain kerroista, joihin lapsesi osallistuu — ei pitkiä sopimuksia."
+      },
+      "fullTransparency": {
+        "title": "Täysi läpinäkyvyys",
+        "description": "Näe tarkalleen mihin jokainen Sorgga menee. Vanhemman hallintapaneelissa näet saldosi, tapahtumahistorian ja tulevat veloitukset."
+      },
+      "flexibleTopUps": {
+        "title": "Joustavat täydennykset",
+        "description": "Osta kertatokenipaketti tarpeen mukaan tai tilaa kuukausittainen erä edullisempaan hintaan. Vaihda tai peruuta milloin tahansa."
+      },
+      "safeByDesign": {
+        "title": "Turvallinen suunnittelultaan",
+        "description": "Sorggat ovat olemassa vain Sogversessa. Vain vanhemmat näkevät saldot ja voivat tehdä ostoksia — lapset eivät koskaan näe valuuttaa. Ei yllätyksiä."
+      }
+    },
+    "faqs": {
+      "heading": "Usein kysytyt kysymykset",
+      "isRealMoney": {
+        "question": "Onko Sorgga oikeaa rahaa?",
+        "answer": "Sorggoja ostetaan oikealla rahalla, mutta ne ovat olemassa vain Sogversessa. Niitä ei voi siirtää alustan ulkopuolelle, mutta jos haluat hyvityksen käyttämättömistä Sorggoista, ota yhteyttä tukitiimiimme."
+      },
+      "howSpent": {
+        "question": "Miten Sorggoja käytetään?",
+        "answer": "Jokainen kerhokerran hinta on tietty määrä Sorggoja, joka näkyy kerhon sivulla. Sorggat vähennetään automaattisesti kerran viikossa, kun lapsesi kerta on aikataulutettu."
+      },
+      "parentControl": {
+        "question": "Voivatko vanhemmat hallita kulutusta?",
+        "answer": "Kyllä. Sorggat ovat lapsille täysin näkymättömiä. Vain vanhemmat näkevät saldot, ostavat tokeneita ja tarkastelevat kulutushistoriaa vanhemman hallintapaneelissa."
+      },
+      "doExpire": {
+        "question": "Vanhenevatko Sorggat?",
+        "answer": "Eivät. Ostetut Sorggat pysyvät tililläsi, kunnes niitä käytetään kerhokertoihin. Ei vanhenemispäiviä eikä piilokustannuksia."
+      },
+      "refund": {
+        "question": "Voinko saada hyvityksen?",
+        "answer": "Jos peruutat ilmoittautumisen vähintään 24 tuntia ennen kerran alkua, kerran Sorggat palautetaan automaattisesti saldollesi. Muissa tapauksissa ota yhteyttä tukitiimiimme — autamme mielellämme."
+      }
+    },
+    "cta": {
+      "heading": "Valmis aloittamaan?",
+      "subheading": "Luo tili, hanki Sorggoja ja ilmoita lapsesi ensimmäiseen kerhoon."
+    }
+  },
+  "tokens": {
+    "balance": {
+      "title": "Sorgga-saldo"
+    },
+    "subscription": {
+      "label": "Tilaus",
+      "tierLabelFull": "{name} — {amount} Sorggaa/kk",
+      "tierLabelAmount": "{amount} Sorggaa/kk",
+      "paymentFailed": "Maksu epäonnistui",
+      "paymentFailedDescription": "Viimeisin maksusi epäonnistui. <link>Päivitä maksutapasi</link> jatkaaksesi tilaustasi.",
+      "nextPayment": "Seuraava maksu {date}",
+      "activeRenews": "Aktiivinen — uusitaan automaattisesti",
+      "canceledAccessUntil": "Peruutettu — pääsy {date} asti",
+      "canceledAccessUntilEnd": "Peruutettu — pääsy laskutuskauden loppuun",
+      "pastDue": "Maksu myöhässä — päivitä maksutapasi",
+      "status": "Tila: {status}",
+      "manageBilling": "Hallitse laskutusta",
+      "resuming": "Jatketaan...",
+      "resume": "Jatka",
+      "cancelSubscription": "Peruuta tilaus",
+      "cancelDialog": {
+        "title": "Peruuta tilaus?",
+        "description": "Haluatko varmasti peruuttaa tilauksesi?",
+        "loseRate": "Menetät nykyisen hintasi {rate}/kk.",
+        "keepAccess": "Pääsysi säilyy nykyisen laskutuskauden loppuun.",
+        "keep": "Säilytä tilaus",
+        "canceling": "Peruutetaan...",
+        "confirm": "Kyllä, peruuta"
+      }
+    },
+    "purchase": {
+      "success": "Maksu onnistui! Sorggat on lisätty saldollesi.",
+      "canceled": "Maksu peruttiin. Veloituksia ei tehty.",
+      "checkoutError": "Kassaa ei voitu avata. Yritä uudelleen.",
+      "switchError": "Tilausta ei voitu vaihtaa. Yritä uudelleen.",
+      "title": "Hanki Sorggoja",
+      "subtitle": "Valitse paketti tai tilaus pelikertojesi tehoksi",
+      "oneTimePacks": "Kertapaketit",
+      "monthlySubscriptions": "Kuukausitilaukset",
+      "legacyTier": "Nykyinen suunnitelmasi ei ole enää saatavilla. Vaihda uuteen tasoon alla.",
+      "signInRequired": "Kirjaudu sisään ostaaksesi Sorggoja",
+      "switchDialog": {
+        "title": "Vaihda suunnitelmaan {name}?",
+        "description": "Sinut vaihdetaan suunnitelmaan {name} ({amount} Sorggaa/kuukausi). Muutos astuu voimaan seuraavalla laskutuskaudella.",
+        "resumeNote": "Tämä myös jatkaa peruutettua tilaustasi.",
+        "confirm": "Vaihda suunnitelma"
+      }
+    },
+    "package": {
+      "cancelsAtPeriodEnd": "Peruuntuu kauden lopussa",
+      "currentPlan": "Nykyinen suunnitelma",
+      "save": "Säästä {amount}{period}",
+      "perMonth": "/kk",
+      "resuming": "Jatketaan...",
+      "resumeSubscription": "Jatka tilausta",
+      "switching": "Vaihdetaan...",
+      "switchToPlan": "Vaihda suunnitelmaan",
+      "redirectingCheckout": "Ohjataan kassalle...",
+      "subscribed": "Tilattu",
+      "subscribe": "Tilaa",
+      "buyNow": "Osta nyt"
+    },
+    "transactions": {
+      "empty": "Ei vielä tapahtumia.",
+      "date": "Päivämäärä",
+      "amount": "Määrä",
+      "type": "Tyyppi",
+      "description": "Kuvaus",
+      "balanceAfter": "Saldo jälkeen"
+    }
+  },
+  "voice": {
+    "participantsCount": "Osallistujat ({count})",
+    "noParticipantsYet": "Ei vielä osallistujia",
+    "you": "(sinä)",
+    "host": "Isäntä",
+    "mute": "Mykistä",
+    "muteMicrophone": "Mykistä mikrofoni",
+    "camOff": "Kamera pois",
+    "disableCamera": "Poista kamera käytöstä",
+    "lockMic": "Lukitse mikki",
+    "unlockMic": "Vapauta mikki",
+    "lockMicrophone": "Lukitse mikrofoni",
+    "unlockMicrophone": "Vapauta mikrofoni",
+    "lockCam": "Lukitse kamera",
+    "unlockCam": "Vapauta kamera",
+    "lockCamera": "Lukitse kamera",
+    "unlockCamera": "Vapauta kamera",
+    "sharerScreen": "{name} näyttö",
+    "stopSharing": "Lopeta jakaminen",
+    "voiceRoom": "Äänihuone",
+    "live": "Live",
+    "spatialDescription": "Vedä avataristasi liikkuaksesi vyöhykkeiden välillä. Samalla vyöhykkeellä olevat osallistujat kuulevat toisensa.",
+    "leave": "Poistu",
+    "failedToJoinRoom": "Huoneeseen liittyminen epäonnistui",
+    "sessionEnded": "Kerta on päättynyt",
+    "disconnecting": "Katkaistaan yhteyttä...",
+    "connecting": "Yhdistetään...",
+    "unmuteMicrophone": "Poista mykistys",
+    "micLockedByModerator": "Mikrofoni lukittu moderaattorin toimesta",
+    "turnOffCamera": "Sammuta kamera",
+    "turnOnCamera": "Käynnistä kamera",
+    "cameraLockedByModerator": "Kamera lukittu moderaattorin toimesta",
+    "shareScreen": "Jaa näyttö",
+    "stopScreenShare": "Lopeta näytön jakaminen",
+    "broadcast": "Kuulutus"
+  },
+  "yty": {
+    "hero": {
+      "title": "Mikä on <primary>Yty</primary>?",
+      "subtitle": "Yty on maaginen voima, joka ylläpitää Sogversen maailmojen herkkää tasapainoa. Tekemällä hyviä asioita — oppimalla uusia taitoja, saamalla ystäviä, käyttäytymällä hyvin ja osallistumalla yhteisöön — pelaajat ansaitsevat Yty-pisteitä itselleen ja kaikille."
+    },
+    "overview": {
+      "heading": "Miten Yty toimii",
+      "paragraph1": "Jokainen pelaaja aloittaa nollasta. Jokaisesta osallistumiskerrasta, suoritetusta haasteesta ja ystävällisestä teosta pelaajat ansaitsevat Yty-pisteitä. Nämä pisteet kertyvät neljän elementin alle, joista jokainen heijastaa eri osa-aluetta hyvästä kasvusta.",
+      "paragraph2": "Kun pelaajat keräävät Yty-pisteitä itselleen, he kasvattavat myös koko Sogversen Yty-tasoa — muokaten tarinaa ja avaten uusia mahdollisuuksia koko yhteisölle."
+    },
+    "elements": {
+      "heading": "Yty:n neljä elementtiä",
+      "subheading": "Jokainen elementti kuvastaa pelaajan suhdetta eri osa-alueeseen maailmastaan",
+      "harmony": {
+        "name": "Harmonia",
+        "description": "Suhteesi itseesi",
+        "detail": "Kuka minä olen? Harmonia on itsensä hyväksymistä sellaisena kuin on — vahvuuksineen ja heikkouksineen. Se tarkoittaa hyvinvoinnista huolehtimista, tunteiden ilmaisemista, hyvien päätösten tekemistä ja sen ymmärtämistä, miksi säännöt ja luottamus ovat tärkeitä."
+      },
+      "glow": {
+        "name": "Hehku",
+        "description": "Suhteesi muihin",
+        "detail": "Miten voin auttaa muita? Hehku on empatiaa, ystävällisyyttä ja merkityksellisten ihmissuhteiden rakentamista. Se tarkoittaa erilaisuuden kunnioittamista, tilan antamista muille, hyvää viestintää ja sellaisen ihmisen olemista, joka nostaa muita ylös."
+      },
+      "valor": {
+        "name": "Kantti",
+        "description": "Suhteesi maailmaan",
+        "detail": "Miten voin tehdä vaikutuksen? Kantti on oman paikkansa löytämistä maailmassa ja rohkeutta osallistua. Se tarkoittaa tiimityötä, omien ideoiden ilmaisemista, mielikuvituksen käyttöä ja työskentelyä paremman tulevaisuuden puolesta — paikallisesti ja maailmanlaajuisesti."
+      },
+      "wit": {
+        "name": "Arkijärki",
+        "description": "Suhteesi mediaan ja teknologiaan",
+        "detail": "Miten navigoin digitaalisessa maailmassa? Arkijärki on terve ja kriittinen suhde peleihin, mediaan ja teknologiaan. Se tarkoittaa verkkokäyttäytymisen ymmärtämistä, kriittistä ajattelua tiedosta ja ruutuajan tasapainottamista muun elämän kanssa."
+      }
+    },
+    "earning": {
+      "heading": "Miten pelaajat ansaitsevat Yty-pisteitä",
+      "paragraph1": "Yty-pisteitä ansaitaan osallistumalla. Viikoittaiset kerhokerrat, tehtävien ja haasteiden suorittaminen, ystävällisyys kanssapelaajia kohtaan, yhteisötapahtumat ja leirit — kaikki nämä kartuttavat pelaajan Yty-pisteitä.",
+      "paragraph2": "Kun pisteitä kertyy tiettyjen saavutusmerkkien alle, pelaajat etenevät tasoissa — pronssista hopeaan, kultaan, platinaan ja timanttiin. Jokainen piste syöttää myös pelaajan yleistä Yty-tasoa ja elementtiä, johon se kuuluu.",
+      "paragraph3": "Eikä kyse ole vain pelaajista. Gedut, vanhemmat ja koko yhteisö voivat osallistua Sogversen Yty:n rakentamiseen tapahtumien ja yhteisten aktiviteettien kautta."
+    },
+    "cta": {
+      "heading": "Aloita matkasi",
+      "subheading": "Liity Sogverseen ja ala ansaita Yty-pisteitä. Jokainen kerta, jokainen ystävyys, jokainen ystävällinen teko tekee eron."
+    }
+  },
+  "email": {
+    "senderAuth": "Sogverse-tiimi",
+    "senderFeedback": "Sogverse-palaute",
+    "senderEnrollment": "Sogverse-ilmoittautuminen",
+    "footer": "\u00a9 {year} Sogverse. Kaikki oikeudet pidätetään.",
+    "roleAdmin": "Ylläpitäjä",
+    "roleParent": "Vanhempi",
+    "roleGamer": "Pelaaja",
+    "roleGedu": "Gedu",
+    "passwordReset": {
+      "subject": "Nollaa Sogverse-salasanasi",
+      "heading": "Nollaa salasanasi",
+      "body": "Saimme pyynnön nollata Sogverse-salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
+      "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
+      "ignore": "Jos et pyytänyt salasanan nollausta, voit jättää tämän sähköpostin huomiotta. Salasanaasi ei muuteta.",
+      "button": "Nollaa salasana"
+    },
+    "geduInvite": {
+      "subject": "Sinut on kutsuttu Sogverseen",
+      "heading": "Tervetuloa Sogverseen",
+      "body": "Sinut on kutsuttu liittymään Sogverseen <strong>Geduna</strong>. Napsauta alla olevaa painiketta luodaksesi tilisi.",
+      "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
+      "button": "Luo tilisi"
+    },
+    "minecraft": {
+      "label": "Minecraft-käyttäjänimi:",
+      "verified": "{username} (vahvistettu)",
+      "unverified": "{username} (ei vielä vahvistettu)",
+      "notProvided": "Ei annettu"
+    },
+    "enrollmentParent": {
+      "subject": "{gamerName} on nyt ilmoittautunut kerhoon {productName}",
+      "heading": "Ilmoittautuminen vahvistettu",
+      "body": "Hei {parentName}, {gamerName} on nyt ilmoittautunut kerhoon {productName} Gedun {geduName} kanssa."
+    },
+    "enrollmentGedu": {
+      "subject": "{gamerName} on liittynyt ryhmääsi \u2013 {productName}",
+      "heading": "Uusi pelaaja ryhmässäsi",
+      "body": "Hei {geduName}, {gamerName} on liittynyt ryhmääsi kerhossa {productName}."
+    },
+    "unenrollmentParent": {
+      "subject": "{gamerName} on poistettu kerhosta {productName}",
+      "heading": "Ilmoittautumisen peruutus vahvistettu",
+      "body": "Hei {parentName}, {gamerName} on poistettu kerhosta {productName} (Gedu: {geduName})."
+    },
+    "unenrollmentGedu": {
+      "subject": "{gamerName} on poistunut ryhmästäsi \u2013 {productName}",
+      "heading": "Pelaaja poistunut ryhmästäsi",
+      "body": "Hei {geduName}, {gamerName} on poistunut ryhmästäsi kerhossa {productName}."
+    },
+    "groupAdded": {
+      "subject": "Sinut on määrätty uuteen ryhmään \u2013 {productName}",
+      "heading": "Sinut on määrätty uuteen ryhmään",
+      "body": "Hei {geduName}, sinut on määrätty uuteen ryhmään kerhossa {productName}.",
+      "dashboardNote": "Näet tämän ryhmän hallintapaneelissasi pian."
+    },
+    "groupDeleted": {
+      "subject": "Ryhmäsi on poistettu \u2013 {productName}",
+      "heading": "Ryhmäsi on poistettu",
+      "body": "Hei {geduName}, ryhmäsi kerhossa {productName} on poistettu ylläpitäjän toimesta."
+    },
+    "groupReassignedOldGedu": {
+      "subject": "Ryhmäsi on siirretty toiselle \u2013 {productName}",
+      "heading": "Ryhmäsi on siirretty toiselle",
+      "body": "Hei {oldGeduName}, ryhmäsi kerhossa {productName} on siirretty Gedulle {newGeduName}."
+    },
+    "groupReassignedNewGedu": {
+      "subject": "Sinut on määrätty ryhmään \u2013 {productName}",
+      "heading": "Sinut on määrätty ryhmään",
+      "body": "Hei {newGeduName}, sinut on määrätty ryhmään kerhossa {productName} (aiemmin Gedun {oldGeduName} vetämä)."
+    },
+    "groupReassignedParent": {
+      "subject": "Gedun vaihto: {gamerName} \u2013 {productName}",
+      "heading": "Pelaajasi Gedu on vaihtunut",
+      "body": "Hei {parentName}, pelaajan {gamerName} ryhmän Gedu kerhossa {productName} on vaihtunut Gedusta {oldGeduName} Geduun {newGeduName}."
+    },
+    "gamerMovedParent": {
+      "subject": "{gamerName} on siirretty uuteen ryhmään \u2013 {productName}",
+      "heading": "Lapsesi on siirretty uuteen ryhmään",
+      "body": "Hei {parentName}, {gamerName} on siirretty Gedun {oldGeduName} ryhmästä Gedun {newGeduName} ryhmään kerhossa {productName}."
+    },
+    "gamerMovedOldGedu": {
+      "subject": "{gamerName} on siirretty ryhmästäsi \u2013 {productName}",
+      "heading": "Pelaaja on siirretty ryhmästäsi",
+      "body": "Hei {geduName}, {gamerName} on siirretty ryhmästäsi Gedun {newGeduName} ryhmään kerhossa {productName}."
+    },
+    "gamerMovedNewGedu": {
+      "subject": "{gamerName} on siirretty ryhmääsi \u2013 {productName}",
+      "heading": "Pelaaja on siirretty ryhmääsi",
+      "body": "Hei {geduName}, {gamerName} on siirretty ryhmääsi Gedun {oldGeduName} ryhmästä kerhossa {productName}."
+    },
+    "feedback": {
+      "subject": "Palaute käyttäjältä {displayName} ({role})",
+      "heading": "Uusi palaute vastaanotettu",
+      "from": "Lähettäjä",
+      "role": "Rooli",
+      "emailLabel": "Sähköposti",
+      "sent": "Lähetetty",
+      "message": "Viesti",
+      "gamerNote": "Tämä palaute on pelaajatililtä. Vastaukset ohjataan hänen vanhemmalleen ({parentEmail})."
+    }
+  }
+}

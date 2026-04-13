@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Gamepad2 } from "lucide-react";
+import { useTranslations, useLocale, useFormatter } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { GroupCard } from "@/components/ui/group-card";
@@ -11,14 +12,16 @@ import { GamerCard } from "@/components/customer/gamer-card";
 import { useMyGamers } from "@/services/gamers";
 import { useMyGroups } from "@/services/groups";
 import { useGroupsWithVoice } from "@/hooks/use-groups-page";
-import { formatRelativeTime, formatScheduleLocal } from "@/lib/utils";
-import { useCurrency } from "@/hooks/use-currency";
+import { formatScheduleLocal } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 
 export default function CustomerGamersPage() {
+  const t = useTranslations('parent');
+  const c = useTranslations('common');
   const { data: gamers, isLoading: gamersLoading, error: gamersError } = useMyGamers();
   const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(useMyGroups());
-  const { locale } = useCurrency();
+  const locale = useLocale();
+  const format = useFormatter();
   const [switchTarget, setSwitchTarget] = useState<{
     gamerId: string;
     gamerDisplayName: string;
@@ -45,21 +48,21 @@ export default function CustomerGamersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">My Gamers</h1>
+          <h1 className="text-3xl font-bold">{t('gamers.title')}</h1>
           <p className="text-muted-foreground">
-            View and manage your gamers and their enrollments
+            {t('gamers.subtitle')}
           </p>
         </div>
         <Link href={ROUTES.products}>
           <Button>
-            Browse Clubs
+            {c('browseClubs')}
           </Button>
         </Link>
       </div>
 
       {(gamersError || groupsError) ? (
         <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-          {gamersError?.message || groupsError?.message || "Failed to load data"}
+          {gamersError?.message || groupsError?.message || c('failedToLoad')}
         </div>
       ) : isLoading ? (
         <div className="space-y-6">
@@ -93,7 +96,7 @@ export default function CustomerGamersPage() {
                     id={gamer.id}
                     displayName={gamer.display_name}
                     username={gamer.username}
-                    subtitle={`Joined ${formatRelativeTime(gamer.created_at, locale)}`}
+                    subtitle={t('gamers.joined', { time: format.relativeTime(new Date(gamer.created_at), new Date()) })}
                   />
                 </Link>
 
@@ -118,14 +121,7 @@ export default function CustomerGamersPage() {
                   <Card className="ml-4">
                     <CardContent className="py-6 text-center">
                       <p className="text-sm text-muted-foreground">
-                        No active enrollments.{" "}
-                        <Link
-                          href={ROUTES.products}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          Browse clubs
-                        </Link>{" "}
-                        to enroll this gamer.
+                        {t.rich('gamers.noEnrollments', { link: (chunks) => <Link href={ROUTES.products} className="font-medium text-primary hover:underline">{chunks}</Link> })}
                       </p>
                     </CardContent>
                   </Card>
@@ -138,13 +134,13 @@ export default function CustomerGamersPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Gamepad2 className="h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-4 text-lg font-medium">No Gamers Yet</h3>
+            <h3 className="mt-4 text-lg font-medium">{t('gamers.empty.title')}</h3>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              Enroll in a club to create your first gamer account.
+              {t('gamers.empty.description')}
             </p>
             <Link href={ROUTES.products} className="mt-4">
               <Button>
-                Browse Clubs
+                {c('browseClubs')}
               </Button>
             </Link>
           </CardContent>
@@ -189,7 +185,6 @@ function GroupCardForCustomer({
       schedule={schedule}
       voiceIsOpen={group.voiceIsOpen}
       voiceNextSessionStart={group.voiceNextSessionStart}
-      locale={locale}
       onJoinClick={onJoinClick}
       detailHref={ROUTES.customer.group(group.groupId, gamerId)}
     />

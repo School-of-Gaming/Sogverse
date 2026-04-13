@@ -3,7 +3,11 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { buildFeedbackEmail } from "@/lib/email-templates/feedback";
-import { SENDER_EMAIL, SENDER_NAME_FEEDBACK } from "@/lib/constants";
+import { getEmailTranslator } from "@/lib/email-templates/translator";
+import { SENDER_EMAIL } from "@/lib/constants";
+import { detectLanguageFromHeader, isSupportedLanguage } from "@/lib/constants/language-preference";
+import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import type { UserRole } from "@/types";
 import { z } from "zod";
 
 const feedbackSchema = z.object({
@@ -92,23 +96,30 @@ export async function POST(request: Request) {
       }
     }
 
+    // Resolve locale: profile preference → Accept-Language → English
+    const pref = profile.language_preference;
+    const locale = isSupportedLanguage(pref)
+      ? pref
+      : detectLanguageFromHeader(request.headers.get("Accept-Language"));
+
+    const t = await getEmailTranslator(locale);
     const displayName = profile.display_name || profile.username || "Unknown";
 
-    const htmlContent = buildFeedbackEmail({
+    const htmlContent = buildFeedbackEmail(t, locale, {
       userName: displayName,
       userRole: role,
       userEmail: replyToEmail || userEmail,
       message: parsed.data.message,
-      sentAt: new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+      sentAt: new Date().toLocaleString(locale, { dateStyle: "medium", timeStyle: "short" }),
       isGamer,
       parentEmail,
     });
 
     await sendTransactionalEmail({
       fromEmail: SENDER_EMAIL,
-      fromName: SENDER_NAME_FEEDBACK,
+      fromName: t("senderFeedback"),
       toEmail: adminEmails,
-      subject: `Feedback from ${displayName} (${role})`,
+      subject: t("feedback.subject", { displayName, role: t(ROLE_LABEL_KEYS[role as UserRole]) }),
       htmlContent,
       replyToEmail: replyToEmail || undefined,
     });

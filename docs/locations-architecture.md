@@ -199,6 +199,16 @@ Japanese prefectures map to `region`. Tokyo's special wards and other city wards
 | district | -- | school district | borough | zone | sub-area | urban district | ward |
 | site | school | school | school | school | school | school | school |
 
+## Localised Labels
+
+Location type labels (Region, Municipality, Site, etc.) are translated only for the country whose language matches the user's UI language. All other countries display English labels.
+
+**Rationale:** A Finnish admin managing Finland's locations should see "Maakunta" (region) and "Kunta" (municipality) — the natural administrative terms. But when viewing UK locations, "Borough" stays in English because that's the actual British term and translating it to Finnish wouldn't add clarity.
+
+**Implementation:** Each `HierarchyLevel` in `SUPPORTED_COUNTRIES` has an optional `i18n` map keyed by locale. The `resolveLabels(level, locale)` helper picks the localised pair or falls back to the English default. Country names also support `nameI18n` (e.g. Finland → Suomi in Finnish).
+
+**When adding a new country with a supported UI language:** add `i18n` entries to each hierarchy level and a `nameI18n` entry. When adding a country whose language isn't a supported UI language, no `i18n` is needed — English labels are the default.
+
 ## UI: Cascading Dropdowns
 
 The hierarchy powers cascading dropdown selectors:

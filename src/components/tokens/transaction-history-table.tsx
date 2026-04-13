@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { cn, formatDate } from "@/lib/utils";
 import type { TokenTransaction } from "@/types";
 
@@ -7,8 +8,10 @@ interface TransactionHistoryTableProps {
 }
 
 export function TransactionHistoryTable({ transactions, locale }: TransactionHistoryTableProps) {
+  const t = useTranslations('tokens');
+
   if (!transactions || transactions.length === 0) {
-    return <p className="text-sm text-muted-foreground">No transactions yet.</p>;
+    return <p className="text-sm text-muted-foreground">{t('transactions.empty')}</p>;
   }
 
   return (
@@ -16,11 +19,11 @@ export function TransactionHistoryTable({ transactions, locale }: TransactionHis
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-muted-foreground">
-            <th className="pb-2 pr-4">Date</th>
-            <th className="pb-2 pr-4">Amount</th>
-            <th className="pb-2 pr-4">Type</th>
-            <th className="pb-2 pr-4">Description</th>
-            <th className="pb-2">Balance After</th>
+            <th className="pb-2 pr-4">{t('transactions.date')}</th>
+            <th className="pb-2 pr-4">{t('transactions.amount')}</th>
+            <th className="pb-2 pr-4">{t('transactions.type')}</th>
+            <th className="pb-2 pr-4">{t('transactions.description')}</th>
+            <th className="pb-2">{t('transactions.balanceAfter')}</th>
           </tr>
         </thead>
         <tbody>

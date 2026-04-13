@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
@@ -18,13 +19,14 @@ export function ParticipantList() {
     localRole,
   } = useVoiceRoom();
 
+  const t = useTranslations('voice');
   const isLocalOwner = localRole === "admin" || localRole === "gedu";
 
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium">
-          Participants ({participants.length})
+          {t('participantsCount', { count: participants.length })}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
@@ -43,7 +45,7 @@ export function ParticipantList() {
 
         {participants.length === 0 && (
           <p className="text-center text-sm text-muted-foreground">
-            No participants yet
+            {t('noParticipantsYet')}
           </p>
         )}
       </CardContent>

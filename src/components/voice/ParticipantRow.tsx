@@ -1,5 +1,6 @@
 import { type Ref } from "react";
 import { Mic, MicOff, Video, VideoOff, Crown, Lock, Volume2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -38,6 +39,7 @@ export function ParticipantRow({
   onMute,
   onLock,
 }: ParticipantRowProps) {
+  const t = useTranslations('voice');
   const showModButtons = isModView && !p.isLocal && !p.isOwner;
 
   return (
@@ -59,13 +61,13 @@ export function ParticipantRow({
         <span className="truncate text-sm font-medium">
           {p.userName}
           {p.isLocal && (
-            <span className="ml-1 text-xs text-muted-foreground">(you)</span>
+            <span className="ml-1 text-xs text-muted-foreground">{t('you')}</span>
           )}
         </span>
         {p.isOwner && (
           <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
             <Crown className="h-3 w-3" />
-            Host
+            {t('host')}
           </Badge>
         )}
       </div>
@@ -85,10 +87,10 @@ export function ParticipantRow({
             className="h-6 gap-1 px-1.5 text-xs"
             onClick={() => onMute?.("audio")}
             disabled={!p.audioOn}
-            title="Mute microphone"
+            title={t('muteMicrophone')}
           >
             <MicOff className="h-3 w-3" />
-            Mute
+            {t('mute')}
           </Button>
           <Button
             variant="ghost"
@@ -96,23 +98,23 @@ export function ParticipantRow({
             className="h-6 gap-1 px-1.5 text-xs"
             onClick={() => onMute?.("video")}
             disabled={!p.videoOn}
-            title="Disable camera"
+            title={t('disableCamera')}
           >
             <VideoOff className="h-3 w-3" />
-            Cam off
+            {t('camOff')}
           </Button>
           <Button
             variant={lockState.audio ? "destructive" : "ghost"}
             size="sm"
             className="h-6 gap-1 px-1.5 text-xs"
             onClick={() => onLock?.("audio", !lockState.audio)}
-            title={lockState.audio ? "Unlock microphone" : "Lock microphone"}
+            title={lockState.audio ? t('unlockMicrophone') : t('lockMicrophone')}
           >
             <Lock className="h-3 w-3" />
             {/* Grid-stack: invisible longest label reserves stable width */}
             <span className="inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
-              <span className="invisible">Unlock mic</span>
-              <span>{lockState.audio ? "Unlock mic" : "Lock mic"}</span>
+              <span className="invisible">{t('unlockMic')}</span>
+              <span>{lockState.audio ? t('unlockMic') : t('lockMic')}</span>
             </span>
           </Button>
           <Button
@@ -120,12 +122,12 @@ export function ParticipantRow({
             size="sm"
             className="h-6 gap-1 px-1.5 text-xs"
             onClick={() => onLock?.("video", !lockState.video)}
-            title={lockState.video ? "Unlock camera" : "Lock camera"}
+            title={lockState.video ? t('unlockCamera') : t('lockCamera')}
           >
             <Lock className="h-3 w-3" />
             <span className="inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
-              <span className="invisible">Unlock cam</span>
-              <span>{lockState.video ? "Unlock cam" : "Lock cam"}</span>
+              <span className="invisible">{t('unlockCam')}</span>
+              <span>{lockState.video ? t('unlockCam') : t('lockCam')}</span>
             </span>
           </Button>
         </div>

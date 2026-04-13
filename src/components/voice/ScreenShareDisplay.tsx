@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { ScreenShareOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useVoiceRoom } from "./VoiceRoomProvider";
@@ -14,6 +15,7 @@ interface ScreenShareDisplayProps {
 export function ScreenShareDisplay({
   sharerSessionIdOverride,
 }: ScreenShareDisplayProps) {
+  const t = useTranslations('voice');
   const {
     callObject,
     joined,
@@ -65,7 +67,7 @@ export function ScreenShareDisplay({
       {/* Sharer name badge */}
       <div className="absolute left-2 top-2">
         <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-          {sharer.userName}&apos;s screen
+          {t('sharerScreen', { name: sharer.userName })}
         </Badge>
       </div>
 
@@ -79,7 +81,7 @@ export function ScreenShareDisplay({
             className="gap-1.5"
           >
             <ScreenShareOff className="h-4 w-4" />
-            Stop sharing
+            {t('stopSharing')}
           </Button>
         </div>
       )}

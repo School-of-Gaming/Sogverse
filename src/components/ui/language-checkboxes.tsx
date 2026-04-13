@@ -1,6 +1,17 @@
 "use client";
 
+/**
+ * Multi-select for the user's preferred club/product languages — which languages
+ * they want clubs/products delivered in. Backed by the `profiles.languages` array
+ * and used when matching gamers to gedus.
+ *
+ * This is NOT the UI language picker (which language the user sees the app in).
+ * For that, see src/components/layout/language-picker.tsx and the
+ * LanguageProvider. See docs/i18n-architecture.md.
+ */
+
 import flags from "react-phone-number-input/flags";
+import { useTranslations } from "next-intl";
 import type { LanguageRow } from "@/types";
 
 // Map language codes to country codes for flag display.
@@ -9,6 +20,14 @@ const LANG_TO_COUNTRY: Record<string, string> = {
   fi: "FI",
   sv: "SE",
   en: "GB",
+};
+
+// Map language codes to common.* translation keys.
+// Falls back to the DB name for codes not listed here.
+const LANG_NAME_KEYS: Record<string, string> = {
+  en: "languageEnglish",
+  fi: "languageFinnish",
+  sv: "languageSwedish",
 };
 
 const PLACEHOLDER_COUNT = 3;
@@ -24,18 +43,22 @@ export function LanguageCheckboxes({
   onChange: (selected: string[]) => void;
   disabled?: boolean;
 }) {
+  const t = useTranslations('settings');
+  const c = useTranslations('common');
   const loaded = languages.length > 0;
 
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-medium leading-none">Languages</legend>
+      <legend className="text-sm font-medium leading-none">{t('languages')}</legend>
       <div className="flex flex-col gap-2">
         {loaded
           ? languages.map((lang) => {
               const country = LANG_TO_COUNTRY[lang.code];
               const FlagIcon = country ? flags[country as keyof typeof flags] : undefined;
+              const nameKey = LANG_NAME_KEYS[lang.code];
+              const displayName = nameKey ? c(nameKey as "languageEnglish") : lang.name;
               return (
-                <label key={lang.code} className="flex items-center gap-2 text-sm">
+                <label key={lang.code} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
                     type="checkbox"
                     checked={selected.includes(lang.code)}
@@ -47,10 +70,10 @@ export function LanguageCheckboxes({
                       );
                     }}
                     disabled={disabled}
-                    className="h-4 w-4 accent-primary"
+                    className="h-4 w-4 accent-primary cursor-pointer"
                   />
-                  {FlagIcon && <span className="h-4 w-6 [&>svg]:h-full"><FlagIcon title={lang.name} /></span>}
-                  {lang.name}
+                  {FlagIcon && <span className="h-4 w-6 [&>svg]:h-full"><FlagIcon title={displayName} /></span>}
+                  {displayName}
                 </label>
               );
             })

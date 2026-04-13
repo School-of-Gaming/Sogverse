@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { SUPPORTED_COUNTRIES, getChildLevel } from "@/lib/constants";
+import { SUPPORTED_COUNTRIES, getChildLevel, resolveLabels, getCountryName } from "@/lib/constants";
 import type { Location } from "@/types";
 
 export interface LocationFormValues {
@@ -69,11 +70,15 @@ function LocationFormDialogInner({
   parent,
   existingCountryCodes,
 }: Omit<LocationFormDialogProps, "open">) {
+  const t = useTranslations('admin.locations');
+  const c = useTranslations('common');
+  const locale = useLocale();
   const isEditing = !!initialValues;
   const isAddingCountry = !isEditing && !parent;
 
   // For "add child" mode, determine the child level from the parent
   const childLevel = parent ? getChildLevel(parent.country_code, parent.type) : null;
+  const childLabels = childLevel ? resolveLabels(childLevel, locale) : null;
 
   const [name, setName] = useState(initialValues?.name ?? "");
   const [selectedCountryCode, setSelectedCountryCode] = useState("");
@@ -81,10 +86,10 @@ function LocationFormDialogInner({
 
   // Build the dialog title
   const title = isEditing
-    ? `Edit ${initialValues.name}`
+    ? t('editName', { name: initialValues.name })
     : isAddingCountry
-      ? "Add Country"
-      : `Add ${childLevel?.label ?? "Location"} under ${parent!.name}`;
+      ? t('addCountry')
+      : t('addChildUnder', { type: childLabels?.label ?? t('location'), parent: parent!.name });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +100,7 @@ function LocationFormDialogInner({
 
     if (isAddingCountry) {
       if (!selectedCountryCode) {
-        setError("Please select a country");
+        setError(t('pleaseSelectCountry'));
         return;
       }
       const country = SUPPORTED_COUNTRIES.find((c) => c.code === selectedCountryCode);
@@ -103,13 +108,13 @@ function LocationFormDialogInner({
       values = { name: country.name, type: "country", parent_id: null, country_code: country.code };
     } else if (isEditing) {
       if (!name.trim()) {
-        setError("Name is required");
+        setError(t('nameRequired'));
         return;
       }
       values = { name: name.trim(), type: initialValues.type, parent_id: initialValues.parent_id, country_code: initialValues.country_code };
     } else {
       if (!name.trim()) {
-        setError("Name is required");
+        setError(t('nameRequired'));
         return;
       }
       if (!childLevel || !parent) return;
@@ -120,7 +125,7 @@ function LocationFormDialogInner({
       await onSubmit(values);
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setError(err instanceof Error ? err.message : c('unexpectedError'));
     }
   };
 
@@ -148,7 +153,7 @@ function LocationFormDialogInner({
 
             {isAddingCountry ? (
               <div className="space-y-2">
-                <Label htmlFor="loc-country">Country</Label>
+                <Label htmlFor="loc-country">{t('country')}</Label>
                 <select
                   id="loc-country"
                   value={selectedCountryCode}
@@ -157,28 +162,28 @@ function LocationFormDialogInner({
                   className={selectClassName}
                   autoFocus
                 >
-                  <option value="">Select a country...</option>
-                  {availableCountries.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name} ({c.code})
+                  <option value="">{t('selectCountry')}</option>
+                  {availableCountries.map((country) => (
+                    <option key={country.code} value={country.code}>
+                      {getCountryName(country, locale)} ({country.code})
                     </option>
                   ))}
                 </select>
                 {availableCountries.length === 0 && (
                   <p className="text-xs text-muted-foreground">
-                    All supported countries have already been added.
+                    {t('allCountriesAdded')}
                   </p>
                 )}
               </div>
             ) : (
               <div className="space-y-2">
-                <Label htmlFor="loc-name">Name</Label>
+                <Label htmlFor="loc-name">{t('name')}</Label>
                 <Input
                   id="loc-name"
                   placeholder={
                     childLevel
-                      ? `Enter ${childLevel.label.toLowerCase()} name`
-                      : "Enter name"
+                      ? t('enterTypeName', { type: childLabels!.label.toLowerCase() })
+                      : t('enterName')
                   }
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -197,15 +202,15 @@ function LocationFormDialogInner({
               onClick={() => onOpenChange(false)}
               disabled={isPending}
             >
-              Cancel
+              {c('cancel')}
             </Button>
             <Button
               type="submit"
               disabled={isPending || (isAddingCountry && availableCountries.length === 0)}
             >
               {isPending
-                ? isEditing ? "Saving..." : "Adding..."
-                : isEditing ? "Save Changes" : isAddingCountry ? "Add Country" : `Add ${childLevel?.label ?? "Location"}`}
+                ? isEditing ? c('saving') : t('adding')
+                : isEditing ? c('saveChanges') : isAddingCountry ? t('addCountry') : t('addType', { type: childLabels?.label ?? t('location') })}
             </Button>
           </DialogFooter>
         </form>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ export function MinecraftUsernameField({
   disabled,
   optional,
 }: MinecraftUsernameFieldProps) {
+  const t = useTranslations('minecraft');
   const verify = useVerifyMinecraft();
   const [verifiedName, setVerifiedName] = useState<string | null>(null);
   const [verifyError, setVerifyError] = useState<string | null>(null);
@@ -44,7 +46,7 @@ export function MinecraftUsernameField({
       setVerifyError(
         err instanceof Error
           ? err.message
-          : "No Minecraft account found with that username",
+          : t('notFound'),
       );
     }
   };
@@ -61,8 +63,8 @@ export function MinecraftUsernameField({
   return (
     <div className="space-y-2">
       <Label htmlFor="minecraftUsername">
-        Minecraft Java Username
-        {optional && <span className="ml-1 text-muted-foreground font-normal">(optional)</span>}
+        {t('label')}
+        {optional && <span className="ml-1 text-muted-foreground font-normal">{t('optional')}</span>}
       </Label>
       <div className="flex gap-2">
         <div className="relative flex-1">
@@ -70,7 +72,7 @@ export function MinecraftUsernameField({
             id="minecraftUsername"
             value={value}
             onChange={(e) => handleChange(e.target.value)}
-            placeholder="e.g. Notch"
+            placeholder={t('placeholder')}
             disabled={disabled}
           />
           {isVerified && (
@@ -88,10 +90,10 @@ export function MinecraftUsernameField({
           {verify.isPending ? (
             <>
               <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              Verifying...
+              {t('verifying')}
             </>
           ) : (
-            "Verify"
+            t('verify')
           )}
         </Button>
       </div>
@@ -112,16 +114,18 @@ export function MinecraftUsernameField({
               className="rounded"
             />
             <p className="text-xs text-muted-foreground">
-              Thanks to{" "}
-              <a
-                href="https://mc-heads.net"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline hover:text-foreground"
-              >
-                MCHeads
-              </a>
-              {" "}for providing Minecraft avatars.
+              {t.rich('mcHeadsAttribution', {
+                link: (chunks) => (
+                  <a
+                    href="https://mc-heads.net"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline hover:text-foreground"
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
             </p>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { useCreateProduct, useProduct } from "@/services/products";
 import { ProductForm, type ProductFormValues } from "@/components/admin/product-form";
 
 export default function AddProductPage() {
+  const t = useTranslations('admin.products');
   const router = useRouter();
   const searchParams = useSearchParams();
   const cloneId = searchParams.get("clone");
@@ -74,12 +76,12 @@ export default function AddProductPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">
-            {cloneSource ? "Clone Product" : "Add a Product"}
+            {cloneSource ? t('cloneProduct') : t('addAProduct')}
           </h1>
           <p className="text-muted-foreground">
             {cloneSource
-              ? `Cloning from "${cloneSource.name}"`
-              : "Create a new recurring event product"}
+              ? t('cloningFrom', { name: cloneSource.name })
+              : t('createNewProduct')}
           </p>
         </div>
       </div>
@@ -91,9 +93,9 @@ export default function AddProductPage() {
               <Package className="h-6 w-6 text-secondary-foreground" />
             </div>
             <div>
-              <CardTitle>New Product</CardTitle>
+              <CardTitle>{t('newProduct')}</CardTitle>
               <CardDescription>
-                Fill in the details for your new product
+                {t('fillDetails')}
               </CardDescription>
             </div>
           </div>
@@ -102,8 +104,8 @@ export default function AddProductPage() {
           initialValues={initialValues}
           onSubmit={handleSubmit}
           isPending={createProduct.isPending || isNavigating}
-          submitLabel="Create Product"
-          pendingLabel="Creating..."
+          submitLabel={t('createProduct')}
+          pendingLabel={t('creating')}
         />
       </Card>
     </div>

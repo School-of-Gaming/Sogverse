@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Eye, EyeOff, Info } from "lucide-react";
 import { z } from "zod";
+import { useTranslations } from "next-intl";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,8 @@ interface InlineGamerFormProps {
 }
 
 export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
+  const t = useTranslations('enrollment');
+  const c = useTranslations('common');
   const { user } = useAuth();
   const createGamer = useCreateGamer();
 
@@ -88,7 +91,7 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
       });
 
       if (!user) {
-        setError("You must be logged in");
+        setError(t('gamerForm.mustBeLoggedIn'));
         return;
       }
 
@@ -111,7 +114,7 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
       } else if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError("An unexpected error occurred");
+        setError(c('unexpectedError'));
       }
     }
   };
@@ -127,22 +130,19 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
       <Alert variant="info">
         <Info className="h-4 w-4 shrink-0" />
         <div>
-          <AlertTitle>Share these credentials with your child</AlertTitle>
+          <AlertTitle>{t('gamerForm.credentialsAlertTitle')}</AlertTitle>
           <AlertDescription>
-            Your child will use the username and password below to log in to
-            their own gamer account. This is safer than sharing your parent
-            password — gamer accounts can only access their games and profile,
-            not your billing or account settings.
+            {t('gamerForm.credentialsAlertDescription')}
           </AlertDescription>
         </div>
       </Alert>
 
       <div className="space-y-2">
-        <Label htmlFor="gamer-displayName">Gamer&apos;s Display Name</Label>
+        <Label htmlFor="gamer-displayName">{t('gamerForm.displayNameLabel')}</Label>
         <Input
           id="gamer-displayName"
           type="text"
-          placeholder="How their name appears in-game"
+          placeholder={t('gamerForm.displayNamePlaceholder')}
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           disabled={createGamer.isPending}
@@ -151,11 +151,11 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="gamer-username">Username</Label>
+        <Label htmlFor="gamer-username">{c('username')}</Label>
         <Input
           id="gamer-username"
           type="text"
-          placeholder="Choose a unique username"
+          placeholder={t('gamerForm.usernamePlaceholder')}
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           disabled={createGamer.isPending}
@@ -163,17 +163,17 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
           autoComplete="off"
         />
         <p className="text-xs text-muted-foreground">
-          Letters, numbers, and underscores only
+          {t('gamerForm.usernameHint')}
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="gamer-password">Password</Label>
+        <Label htmlFor="gamer-password">{c('password')}</Label>
         <div className="relative">
           <Input
             id="gamer-password"
             type={showPassword ? "text" : "password"}
-            placeholder="Create a password"
+            placeholder={t('gamerForm.passwordPlaceholder')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={createGamer.isPending}
@@ -192,15 +192,15 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
             )}
           </button>
         </div>
-        <p className="text-xs text-muted-foreground">At least 6 characters</p>
+        <p className="text-xs text-muted-foreground">{t('gamerForm.passwordHint')}</p>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="gamer-confirmPassword">Confirm Password</Label>
+        <Label htmlFor="gamer-confirmPassword">{c('confirmPassword')}</Label>
         <Input
           id="gamer-confirmPassword"
           type={showPassword ? "text" : "password"}
-          placeholder="Confirm the password"
+          placeholder={t('gamerForm.confirmPasswordPlaceholder')}
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           disabled={createGamer.isPending}
@@ -210,7 +210,7 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="gamer-dob">Date of Birth</Label>
+        <Label htmlFor="gamer-dob">{t('gamerForm.dateOfBirthLabel')}</Label>
         <Input
           id="gamer-dob"
           type="date"
@@ -222,20 +222,22 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
         />
         {age !== null && (
           <p className="text-sm font-medium text-primary">
-            Age: {age} year{age !== 1 ? "s" : ""} old
+            {t('gamerForm.age', { age, count: age })}
           </p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label>Gender</Label>
+        <Label>{t('gamerForm.genderLabel')}</Label>
         <div className="flex gap-2">
           {(
+            /* eslint-disable i18next/no-literal-string */
             [
-              { value: "boy", label: "Boy" },
-              { value: "girl", label: "Girl" },
-              { value: "non_binary", label: "Non-binary" },
+              { value: "boy", label: t('gamerForm.genderBoy') },
+              { value: "girl", label: t('gamerForm.genderGirl') },
+              { value: "non_binary", label: t('gamerForm.genderNonBinary') },
             ] as const
+            /* eslint-enable i18next/no-literal-string */
           ).map((option) => (
             <button
               key={option.value}
@@ -269,14 +271,14 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
           disabled={createGamer.isPending}
           className="flex-1"
         >
-          Cancel
+          {c('cancel')}
         </Button>
         <Button
           type="submit"
           disabled={createGamer.isPending || !gender}
           className="flex-1"
         >
-          {createGamer.isPending ? "Creating..." : "Create Gamer"}
+          {createGamer.isPending ? t('gamerForm.creating') : t('gamerForm.createGamer')}
         </Button>
       </div>
     </form>

@@ -3,6 +3,7 @@
 import { useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, AlertCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,9 +24,22 @@ import { getPackageSavings } from "@/lib/stripe/utils";
 import { ROUTES } from "@/lib/constants";
 import { useCurrency } from "@/hooks/use-currency";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import type { SupportedLanguage } from "@/lib/constants/language-preference";
 import type { StripePackage } from "@/types";
 
+// Resolve the locale-appropriate name/description from a Stripe package,
+// falling back to the English base fields when the locale has no translation.
+// The i18n maps are populated from Stripe product metadata (`name_fi`, etc.)
+// in getStripeProducts().
+function localizeName(pkg: StripePackage, locale: string): string {
+  return pkg.nameI18n?.[locale as SupportedLanguage] ?? pkg.name;
+}
+function localizeDescription(pkg: StripePackage, locale: string): string | null {
+  return pkg.descriptionI18n?.[locale as SupportedLanguage] ?? pkg.description;
+}
+
 function PurchaseFeedback() {
+  const t = useTranslations('tokens');
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
   const canceled = searchParams.get("canceled");
@@ -36,7 +50,7 @@ function PurchaseFeedback() {
         <Alert variant="success" align="center">
           <CheckCircle2 className="h-4 w-4 shrink-0" />
           <AlertDescription>
-            Purchase successful!
+            {t('purchase.success')}
           </AlertDescription>
         </Alert>
       </div>
@@ -49,7 +63,7 @@ function PurchaseFeedback() {
         <Alert variant="warning" align="center">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <AlertDescription>
-            Purchase canceled. No charges were made.
+            {t('purchase.canceled')}
           </AlertDescription>
         </Alert>
       </div>
@@ -90,7 +104,11 @@ function PackageCard({
   hasActiveSubscription: boolean;
   isCanceling: boolean;
 }) {
+  const t = useTranslations('tokens');
+  const c = useTranslations('common');
   const priceInfo = pkg.prices[currency];
+  const displayName = localizeName(pkg, locale);
+  const displayDescription = localizeDescription(pkg, locale);
 
   const savings = getPackageSavings(priceInfo.unitAmount, pkg.tokenAmount, baseRate);
   const priceFormatted = formatCurrencyFromCents(priceInfo.unitAmount, currency, locale);
@@ -102,34 +120,34 @@ function PackageCard({
     <Card className={cn("relative flex flex-col", isLockedPlan && "opacity-60")}>
       {isCurrentTier && isCanceling ? (
         <div className="absolute -top-3 right-4">
-          <Badge variant="outline">Cancels at period end</Badge>
+          <Badge variant="outline">{t('package.cancelsAtPeriodEnd')}</Badge>
         </div>
       ) : isCurrentTier ? (
         <div className="absolute -top-3 right-4">
-          <Badge variant="secondary">Current plan</Badge>
+          <Badge variant="secondary">{t('package.currentPlan')}</Badge>
         </div>
       ) : savings > 0 ? (
         <div className="absolute -top-3 right-4">
           <Badge className="bg-success text-primary-foreground hover:bg-success">
-            Save {formatCurrencyFromCents(savings, currency, locale)}{isSubscription ? "/mo" : ""}
+            {t('package.save', { amount: formatCurrencyFromCents(savings, currency, locale), period: isSubscription ? t('package.perMonth') : "" })}
           </Badge>
         </div>
       ) : null}
       <CardHeader className="text-center">
-        <CardTitle className="text-lg">{pkg.name}</CardTitle>
-        {pkg.description && (
-          <p className="text-sm text-muted-foreground">{pkg.description}</p>
+        <CardTitle className="text-lg">{displayName}</CardTitle>
+        {displayDescription && (
+          <p className="text-sm text-muted-foreground">{displayDescription}</p>
         )}
       </CardHeader>
       <CardContent className="flex flex-1 flex-col items-center justify-end gap-4">
         <div className="text-center">
           <span className="text-3xl font-bold">{pkg.tokenAmount}</span>
-          <span className="ml-1 text-muted-foreground">Sorgs</span>
+          <span className="ml-1 text-muted-foreground">{c('sorgs')}</span>
         </div>
         <div className="text-center">
           <span className="text-xl font-semibold">{priceFormatted}</span>
           {isSubscription && (
-            <span className="text-sm text-muted-foreground">/month</span>
+            <span className="text-sm text-muted-foreground">{t('package.perMonth')}</span>
           )}
         </div>
         {isCurrentTier && isCanceling ? (
@@ -141,10 +159,10 @@ function PackageCard({
             {isResuming ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Resuming...
+                {t('package.resuming')}
               </>
             ) : (
-              "Resume Subscription"
+              t('package.resumeSubscription')
             )}
           </Button>
         ) : isSubscription && hasActiveSubscription && !isCurrentTier ? (
@@ -157,10 +175,10 @@ function PackageCard({
             {isSwitchingThis ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Switching...
+                {t('package.switching')}
               </>
             ) : (
-              "Switch to this plan"
+              t('package.switchToPlan')
             )}
           </Button>
         ) : (
@@ -172,13 +190,13 @@ function PackageCard({
             {isLoading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Redirecting to checkout...
+                {t('package.redirectingCheckout')}
               </>
             ) : isLockedPlan
-              ? "Subscribed"
+              ? t('package.subscribed')
               : isSubscription
-                ? "Subscribe"
-                : "Buy Now"}
+                ? t('package.subscribe')
+                : t('package.buyNow')}
           </Button>
         )}
       </CardContent>
@@ -195,8 +213,11 @@ export function TokenPurchaseSection({
   oneTimePackages,
   subscriptionPackages,
 }: TokenPurchaseSectionProps) {
+  const t = useTranslations('tokens');
+  const c = useTranslations('common');
   const { user, profile } = useAuth();
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { baseRates } = useTokenRates();
   const isCustomer = profile?.role === "customer";
   const { data: subscription } = useSubscription(profile?.id ?? "", isCustomer);
@@ -244,7 +265,7 @@ export function TokenPurchaseSection({
   const handleSwitchRequest = (priceId: string, stripeProductId: string) => {
     const pkg = subscriptionPackages.find((p) => p.stripeProductId === stripeProductId);
     if (!pkg) return;
-    setSwitchConfirm({ priceId, stripeProductId, name: pkg.name, tokenAmount: pkg.tokenAmount });
+    setSwitchConfirm({ priceId, stripeProductId, name: localizeName(pkg, locale), tokenAmount: pkg.tokenAmount });
   };
 
   const handleSwitchConfirm = () => {
@@ -270,7 +291,7 @@ export function TokenPurchaseSection({
         <Alert variant="destructive" className="mb-8">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Something went wrong starting checkout. Please try again.
+            {t('purchase.checkoutError')}
           </AlertDescription>
         </Alert>
       )}
@@ -278,19 +299,19 @@ export function TokenPurchaseSection({
         <Alert variant="destructive" className="mb-8">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {switchMutation.error.message || "Failed to switch plan. Please try again."}
+            {switchMutation.error.message || t('purchase.switchError')}
           </AlertDescription>
         </Alert>
       )}
-      <h2 className="text-center text-2xl font-bold">Buy Sorgs</h2>
+      <h2 className="text-center text-2xl font-bold">{t('purchase.title')}</h2>
       <p className="mt-2 text-center text-muted-foreground">
-        Purchase tokens to cover your child&apos;s weekly club sessions
+        {t('purchase.subtitle')}
       </p>
 
       {/* One-Time Packs */}
       {oneTimePackages.length > 0 && (
         <>
-          <h3 className="mt-8 text-center text-lg font-semibold text-muted-foreground">One-Time Packs</h3>
+          <h3 className="mt-8 text-center text-lg font-semibold text-muted-foreground">{t('purchase.oneTimePacks')}</h3>
           <div className="mt-4 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {oneTimePackages.map((pkg) => (
               <PackageCard
@@ -318,10 +339,10 @@ export function TokenPurchaseSection({
       {/* Monthly Subscriptions */}
       {subscriptionPackages.length > 0 && (
         <>
-          <h3 className="mt-10 text-center text-lg font-semibold text-muted-foreground">Monthly Subscriptions</h3>
+          <h3 className="mt-10 text-center text-lg font-semibold text-muted-foreground">{t('purchase.monthlySubscriptions')}</h3>
           {isLegacyTier && (
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              Your current plan is no longer available for new subscribers.
+              {t('purchase.legacyTier')}
             </p>
           )}
           <div className="mt-4 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -350,29 +371,27 @@ export function TokenPurchaseSection({
 
       {!user && (
         <p className="mt-4 text-center text-sm text-muted-foreground">
-          You&apos;ll need to sign in or create an account to purchase Sorgs.
+          {t('purchase.signInRequired')}
         </p>
       )}
 
       <Dialog open={!!switchConfirm} onOpenChange={(open) => !open && setSwitchConfirm(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Switch to {switchConfirm?.name}?</DialogTitle>
+            <DialogTitle>{t('purchase.switchDialog.title', { name: switchConfirm?.name ?? '' })}</DialogTitle>
             <DialogDescription>
-              Your plan will change to {switchConfirm?.name} ({switchConfirm?.tokenAmount} Sorgs/month).
-              The switch takes effect at the start of your next billing cycle — your current
-              plan and Sorg allocation remain active until then.
+              {t('purchase.switchDialog.description', { name: switchConfirm?.name ?? '', amount: switchConfirm?.tokenAmount ?? 0 })}
               {subState.status === "canceling" && (
-                <> This will also resume your subscription.</>
+                <> {t('purchase.switchDialog.resumeNote')}</>
               )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSwitchConfirm(null)}>
-              Cancel
+              {c('cancel')}
             </Button>
             <Button onClick={handleSwitchConfirm}>
-              Switch Plan
+              {t('purchase.switchDialog.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

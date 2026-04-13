@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
@@ -15,6 +16,8 @@ interface VoiceSessionPageProps {
 }
 
 function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
+  const t = useTranslations('voice');
+  const c = useTranslations('common');
   const { joined, joining, join, leave } = useVoiceRoom();
   const { data: rooms } = useAvailableVoiceRooms();
   const getToken = useVoiceToken();
@@ -35,7 +38,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
       .mutateAsync(roomId)
       .then(({ token, roomUrl }) => join(roomUrl, token))
       .catch((err) => {
-        setError(err instanceof Error ? err.message : "Failed to join room");
+        setError(err instanceof Error ? err.message : t('failedToJoinRoom'));
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only run once on mount
   }, []);
@@ -81,7 +84,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
               href={backHref}
               className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground"
             >
-              Back
+              {c('back')}
             </a>
           </CardContent>
         </Card>
@@ -93,12 +96,12 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <p className="text-sm font-medium">Session has ended</p>
+          <p className="text-sm font-medium">{t('sessionEnded')}</p>
           <a
             href={backHref}
             className="mt-4 inline-block text-sm text-muted-foreground hover:text-foreground"
           >
-            Back
+            {c('back')}
           </a>
         </CardContent>
       </Card>
@@ -110,7 +113,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
       <Card>
         <CardContent className="flex items-center justify-center gap-2 py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Disconnecting...</p>
+          <p className="text-sm text-muted-foreground">{t('disconnecting')}</p>
         </CardContent>
       </Card>
     );
@@ -121,7 +124,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
       <Card>
         <CardContent className="flex items-center justify-center gap-2 py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Connecting...</p>
+          <p className="text-sm text-muted-foreground">{t('connecting')}</p>
         </CardContent>
       </Card>
     );
@@ -131,7 +134,7 @@ function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
     <SpatialVoiceRoom
       room={room}
       onLeave={handleLeave}
-      leaveLabel="Leave"
+      leaveLabel={t('leave')}
     />
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Calendar, Clock, Radio, Users } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,6 @@ const TICK_MS = 60_000;
 
 interface GroupVoiceStatusProps {
   nextSessionStart: Date;
-  locale?: string;
 }
 
 /**
@@ -31,8 +31,9 @@ interface GroupVoiceStatusProps {
  */
 export function GroupVoiceStatus({
   nextSessionStart,
-  locale,
 }: GroupVoiceStatusProps) {
+  const t = useTranslations('groups');
+  const locale = useLocale();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -50,17 +51,17 @@ export function GroupVoiceStatus({
     });
     return (
       <p className="text-sm">
-        Next session {dateStr}{" "}
+        {t('nextSession', { date: dateStr })}{" "}
         <span className={cn(
           totalMinutes < HIGHLIGHT_MINUTES ? "font-medium text-primary" : "text-muted-foreground",
         )}>
-          (starts in {formatCountdown(msUntil)})
+          {t('startsIn', { countdown: formatCountdown(msUntil, locale) })}
         </span>
       </p>
     );
   }
 
-  return <p className="text-sm font-medium text-primary">Session in progress</p>;
+  return <p className="text-sm font-medium text-primary">{t('sessionInProgress')}</p>;
 }
 
 /* ------------------------------------------------------------------ */
@@ -75,7 +76,6 @@ interface GroupCardProps {
   schedule: { localDay: string; localTime: string; tzAbbrev: string };
   voiceIsOpen: boolean;
   voiceNextSessionStart: Date;
-  locale?: string;
   /** Called when the Join button is clicked. Callers handle navigation or show a dialog. */
   onJoinClick: () => void;
   /** Where clicking the card navigates (e.g. /gedu/groups/[id]). */
@@ -94,10 +94,10 @@ export function GroupCard({
   schedule,
   voiceIsOpen,
   voiceNextSessionStart,
-  locale,
   onJoinClick,
   detailHref,
 }: GroupCardProps) {
+  const t = useTranslations('groups');
   const router = useRouter();
 
   return (
@@ -134,7 +134,7 @@ export function GroupCard({
             {voiceIsOpen && (
               <Badge className="bg-success/10 text-success text-xs shrink-0">
                 <Radio className="mr-1 h-3 w-3" />
-                Live
+                {t('live')}
               </Badge>
             )}
           </div>
@@ -144,11 +144,11 @@ export function GroupCard({
           <div className="mt-1 flex items-center gap-x-4 gap-y-1 text-sm text-muted-foreground flex-wrap">
             <span className="flex items-center gap-1">
               <Users className="h-3 w-3" />
-              {gamerCount} gamer{gamerCount !== 1 && "s"}
+              {t('gamerCount', { count: gamerCount })}
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              Every {schedule.localDay}
+              {t('everyDay', { day: schedule.localDay })}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
@@ -159,7 +159,6 @@ export function GroupCard({
           <div className="mt-1">
             <GroupVoiceStatus
               nextSessionStart={voiceNextSessionStart}
-              locale={locale}
             />
           </div>
         </div>

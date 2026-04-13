@@ -178,7 +178,7 @@ describe("POST /api/admin/create-gedu", () => {
     });
 
     // Promoted to gedu
-    expect(mockUpdateProfile).toHaveBeenCalledWith({ role: "gedu" });
+    expect(mockUpdateProfile).toHaveBeenCalledWith({ role: "gedu", language_preference: "en" });
 
     // Customer profile cleaned up
     expect(mockDeleteCustomerProfile).toHaveBeenCalledOnce();
@@ -187,7 +187,7 @@ describe("POST /api/admin/create-gedu", () => {
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         toEmail: "gedu@example.com",
-        subject: "You're invited to the Sogverse",
+        subject: "You\u2019re invited to the Sogverse",
       })
     );
   });

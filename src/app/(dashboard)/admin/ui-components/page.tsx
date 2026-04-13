@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -19,7 +20,7 @@ import {
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ROLE_BADGES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -49,6 +50,7 @@ import { LoungeCard } from "@/components/ui/lounge-card";
 import { GroupCard } from "@/components/ui/group-card";
 import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth } from "@/providers";
+import { useLocale } from "next-intl";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { TokenPurchaseSection } from "@/components/tokens";
@@ -509,7 +511,7 @@ const DEMO_GROUPS = [
 
 /** Defers time-dependent values to after mount so SSR and client render match. */
 function GroupCardDemo() {
-  const { locale } = useCurrency();
+  const locale = useLocale();
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -555,7 +557,8 @@ function GroupCardDemo() {
 }
 
 function ProductRowDemo() {
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { tokensToCurrencyDisplay } = useTokenRates();
   return (
     <div className="space-y-2">
@@ -882,8 +885,8 @@ export default function AdminUIComponentsPage() {
         </div>
         <p className="text-sm text-muted-foreground mt-4 mb-2">Role badges</p>
         <div className="flex flex-wrap items-center gap-3">
-          {Object.values(ROLE_BADGES).map(({ label, className }) => (
-            <Badge key={label} className={className}>{label}</Badge>
+          {(["Gamer", "Parent", "Gedu", "Admin"] as const).map((label, i) => (
+            <Badge key={label} className={Object.values(ROLE_BADGE_STYLES)[i]}>{label}</Badge>
           ))}
         </div>
 

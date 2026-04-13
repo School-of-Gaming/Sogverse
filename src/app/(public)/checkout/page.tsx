@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/providers";
@@ -15,6 +16,7 @@ function CheckoutRedirect() {
   const priceId = searchParams.get("priceId");
   const triggered = useRef(false);
   const [error, setError] = useState(false);
+  const t = useTranslations('checkout');
 
   useEffect(() => {
     if (triggered.current) return;
@@ -57,7 +59,9 @@ function CheckoutRedirect() {
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Something went wrong starting checkout. Please <a href={ROUTES.sorg} className="underline">go back</a> and try again.
+          {t.rich('error', {
+            link: (chunks) => <a href={ROUTES.sorg} className="underline">{chunks}</a>,
+          })}
         </AlertDescription>
       </Alert>
     );
@@ -65,18 +69,20 @@ function CheckoutRedirect() {
 
   return (
     <p className="text-muted-foreground animate-pulse">
-      Redirecting to checkout...
+      {t('redirecting')}
     </p>
   );
 }
 
 export default function CheckoutRedirectPage() {
+  const t = useTranslations('checkout');
+
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
       <Suspense
         fallback={
           <p className="text-muted-foreground animate-pulse">
-            Redirecting to checkout...
+            {t('redirecting')}
           </p>
         }
       >

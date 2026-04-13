@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import type { ChangeSummary } from "@/hooks/use-group-editor";
 
@@ -10,19 +11,21 @@ interface CommitBarProps {
 }
 
 export function CommitBar({ summary, onReview, onDiscard }: CommitBarProps) {
+  const t = useTranslations('admin.groups');
+
   if (!summary.hasChanges) return null;
 
   return (
     <div className="sticky bottom-0 z-10 flex items-center justify-between gap-4 rounded-lg border bg-card p-4 shadow-lg">
       <p className="text-sm text-muted-foreground">
-        {summary.lines.length} pending change{summary.lines.length !== 1 ? "s" : ""}
+        {t('pendingChanges', { count: summary.lines.length })}
       </p>
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={onDiscard}>
-          Discard
+          {t('discard')}
         </Button>
         <Button size="sm" onClick={onReview}>
-          Commit Changes
+          {t('commitChanges')}
         </Button>
       </div>
     </div>

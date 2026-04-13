@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AlertTriangle, Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,6 +38,8 @@ export function UnenrollDialog({
   onClose,
   onSuccess,
 }: UnenrollDialogProps) {
+  const t = useTranslations('enrollment');
+  const c = useTranslations('common');
   const { invalidateEnrollments, ...unenroll } = useUnenrollGamer();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{
@@ -59,7 +62,7 @@ export function UnenrollDialog({
       const result = await unenroll.mutateAsync(enrollmentId);
       setSuccess(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to unenroll");
+      setError(err instanceof Error ? err.message : t('unenroll.failedToUnenroll'));
     }
   };
 
@@ -71,11 +74,10 @@ export function UnenrollDialog({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Check className="h-5 w-5 text-success" />
-                Unenrolled
+                {t('unenroll.successTitle')}
               </DialogTitle>
               <DialogDescription>
-                <strong>{gamerDisplayName}</strong> has been unenrolled
-                from <strong>{productName}</strong>.
+                {t.rich('unenroll.successDescription', { gamer: gamerDisplayName, club: productName, strong: (chunks) => <strong>{chunks}</strong> })}
               </DialogDescription>
             </DialogHeader>
 
@@ -83,60 +85,56 @@ export function UnenrollDialog({
               {success.refunded ? (
                 <p>
                   <span className="font-medium text-success">
-                    {success.refundAmount} Sorgs refunded
+                    {t('unenroll.sorgsRefunded', { amount: success.refundAmount })}
                   </span>{" "}
-                  to your balance.
+                  {t('unenroll.toYourBalance')}
                 </p>
               ) : (
-                <p className="text-muted-foreground">No refund was issued.</p>
+                <p className="text-muted-foreground">{t('unenroll.noRefund')}</p>
               )}
               <p className="text-muted-foreground">
-                New balance: <span className="font-medium text-foreground">{success.newBalance} Sorgs</span>
+                {t.rich('unenroll.newBalance', { balance: success.newBalance, strong: (chunks) => <span className="font-medium text-foreground">{chunks}</span> })}
               </p>
             </div>
 
             <DialogFooter>
-              <Button onClick={handleClose}>Done</Button>
+              <Button onClick={handleClose}>{t('unenroll.done')}</Button>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Unenroll {gamerDisplayName}?</DialogTitle>
+              <DialogTitle>{t('unenroll.title', { name: gamerDisplayName })}</DialogTitle>
               <DialogDescription>
-                This will remove{" "}
-                <strong>{gamerDisplayName}</strong> from{" "}
-                <strong>{productName}</strong>.
+                {t.rich('unenroll.description', { gamer: gamerDisplayName, club: productName, strong: (chunks) => <strong>{chunks}</strong> })}
               </DialogDescription>
             </DialogHeader>
 
             {/* Refund messaging */}
             <div className="mt-2 space-y-3 rounded-md border border-border p-4 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Club</span>
+                <span className="text-muted-foreground">{t('unenroll.club')}</span>
                 <span className="font-medium">{productName}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Gamer</span>
+                <span className="text-muted-foreground">{t('unenroll.gamer')}</span>
                 <span className="font-medium">{gamerDisplayName}</span>
               </div>
               <div className="border-t border-border pt-3">
                 {refundEligible ? (
                   <p className="text-success">
-                    You will receive a refund of{" "}
-                    <strong>{tokenCost} Sorgs</strong>.
+                    {t.rich('unenroll.refundEligible', { cost: tokenCost, strong: (chunks) => <strong>{chunks}</strong> })}
                   </p>
                 ) : refundDenialReason === "within_window" ? (
                   <p className="flex items-start gap-2 text-warning">
                     <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                     <span>
-                      No refund will be issued — the next session is within{" "}
-                      {ENROLLMENT_CHARGE_WINDOW_HOURS} hours.
+                      {t('unenroll.noRefundWithinWindow', { hours: ENROLLMENT_CHARGE_WINDOW_HOURS })}
                     </span>
                   </p>
                 ) : (
                   <p className="text-muted-foreground">
-                    You won&apos;t be charged for the next session.
+                    {t('unenroll.noChargeNextSession')}
                   </p>
                 )}
               </div>
@@ -154,14 +152,14 @@ export function UnenrollDialog({
                 onClick={handleClose}
                 disabled={unenroll.isPending}
               >
-                Cancel
+                {c('cancel')}
               </Button>
               <Button
                 variant="destructive"
                 onClick={handleUnenroll}
                 disabled={unenroll.isPending}
               >
-                {unenroll.isPending ? "Unenrolling..." : "Confirm Unenroll"}
+                {unenroll.isPending ? t('unenroll.unenrolling') : t('unenroll.confirmUnenroll')}
               </Button>
             </DialogFooter>
           </>
