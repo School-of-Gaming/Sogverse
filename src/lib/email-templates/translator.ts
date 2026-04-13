@@ -1,8 +1,8 @@
 import { createTranslator } from "use-intl/core";
 import {
-  DEFAULT_LANGUAGE,
-  type SupportedLanguage,
-} from "@/lib/constants/language-preference";
+  DEFAULT_LOCALE,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { loadMessages, type Messages } from "@/i18n/messages";
 
 // Re-export the translator type so template builders can type their `t` parameter.
@@ -13,7 +13,7 @@ export type EmailTranslator = ReturnType<typeof createTranslator<Messages, "emai
  * Used by email template builders and their callers (API routes, notification orchestrator).
  */
 export async function getEmailTranslator(
-  locale: SupportedLanguage = DEFAULT_LANGUAGE,
+  locale: SupportedLocale = DEFAULT_LOCALE,
 ): Promise<EmailTranslator> {
   const messages = await loadMessages(locale);
   return createTranslator({ locale, messages, namespace: "email" });

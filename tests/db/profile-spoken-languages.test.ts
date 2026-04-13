@@ -4,7 +4,7 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
-describe("Profile languages validation", () => {
+describe("Profile spoken_languages validation", () => {
   let admin: SupabaseClient<Database>;
   let customer: SupabaseClient<Database>;
 
@@ -17,17 +17,17 @@ describe("Profile languages validation", () => {
   });
 
   afterEach(async () => {
-    // Reset languages to empty array
+    // Reset spoken_languages to empty array
     await admin
       .from("profiles")
-      .update({ languages: [] })
+      .update({ spoken_languages: [] })
       .eq("id", TEST_IDS.CUSTOMER);
   });
 
   it("accepts valid language codes", async () => {
     const { error } = await customer
       .from("profiles")
-      .update({ languages: ["fi", "en"] })
+      .update({ spoken_languages: ["fi", "en"] })
       .eq("id", TEST_IDS.CUSTOMER);
 
     expect(error).toBeNull();
@@ -36,7 +36,7 @@ describe("Profile languages validation", () => {
   it("accepts an empty array", async () => {
     const { error } = await customer
       .from("profiles")
-      .update({ languages: [] })
+      .update({ spoken_languages: [] })
       .eq("id", TEST_IDS.CUSTOMER);
 
     expect(error).toBeNull();
@@ -45,7 +45,7 @@ describe("Profile languages validation", () => {
   it("rejects invalid language codes", async () => {
     const { error } = await customer
       .from("profiles")
-      .update({ languages: ["fi", "xx"] })
+      .update({ spoken_languages: ["fi", "xx"] })
       .eq("id", TEST_IDS.CUSTOMER);
 
     expect(error).not.toBeNull();
@@ -55,7 +55,7 @@ describe("Profile languages validation", () => {
   it("rejects duplicate language codes", async () => {
     const { error } = await customer
       .from("profiles")
-      .update({ languages: ["fi", "fi"] })
+      .update({ spoken_languages: ["fi", "fi"] })
       .eq("id", TEST_IDS.CUSTOMER);
 
     expect(error).not.toBeNull();

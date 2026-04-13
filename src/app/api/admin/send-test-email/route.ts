@@ -6,7 +6,7 @@ import { templateRegistry, type TemplateParams } from "@/lib/email-templates/reg
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { escapeHtml } from "@/lib/email-templates/utils";
 import { parseEmails } from "@/lib/utils";
-import { DEFAULT_LANGUAGE, isSupportedLanguage, type SupportedLanguage } from "@/lib/constants/language-preference";
+import { resolveLocale } from "@/lib/constants/locales";
 import { z } from "zod";
 
 // --- Request schemas ---
@@ -89,9 +89,7 @@ export async function POST(request: Request) {
         );
       }
 
-      const locale: SupportedLanguage = isSupportedLanguage(parsed.data.locale)
-        ? parsed.data.locale
-        : DEFAULT_LANGUAGE;
+      const locale = resolveLocale(parsed.data.locale);
       const t = await getEmailTranslator(locale);
 
       const validatedParams = paramsParsed.data as TemplateParams;

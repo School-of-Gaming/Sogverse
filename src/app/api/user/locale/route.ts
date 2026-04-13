@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isSupportedLanguage } from "@/lib/constants/language-preference";
+import { isSupportedLocale } from "@/lib/constants/locales";
 
 export async function PATCH(request: Request) {
   try {
@@ -15,11 +15,11 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { language } = await request.json();
+    const { locale } = await request.json();
 
-    if (!isSupportedLanguage(language)) {
+    if (!isSupportedLocale(locale)) {
       return NextResponse.json(
-        { error: "Invalid language" },
+        { error: "Invalid locale" },
         { status: 400 },
       );
     }
@@ -29,20 +29,20 @@ export async function PATCH(request: Request) {
     const admin = createAdminClient();
     const { error } = await admin
       .from("profiles")
-      .update({ language_preference: language })
+      .update({ locale })
       .eq("id", user.id);
 
     if (error) {
-      console.error("Language preference update error:", error);
+      console.error("Locale update error:", error);
       return NextResponse.json(
-        { error: "Failed to update language preference" },
+        { error: "Failed to update locale" },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({ language });
+    return NextResponse.json({ locale });
   } catch (err) {
-    console.error("Language preference update error:", err);
+    console.error("Locale update error:", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

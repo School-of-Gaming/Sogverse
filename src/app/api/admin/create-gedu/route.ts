@@ -6,7 +6,7 @@ import { SENDER_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 import { buildGeduInviteEmail } from "@/lib/email-templates/gedu-invite";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import { DEFAULT_LANGUAGE, isSupportedLanguage, type SupportedLanguage } from "@/lib/constants/language-preference";
+import { resolveLocale } from "@/lib/constants/locales";
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     });
     if (result instanceof NextResponse) return result;
 
-    const { email, language } = await request.json();
+    const { email, locale: requestedLocale } = await request.json();
 
     if (!email || typeof email !== "string") {
       return NextResponse.json(
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const locale: SupportedLanguage = isSupportedLanguage(language) ? language : DEFAULT_LANGUAGE;
+    const locale = resolveLocale(requestedLocale);
     const origin = new URL(request.url).origin;
     const admin = createAdminClient();
 
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
     const { error: roleError } = await admin
       .from("profiles")
-      .update({ role: "gedu", language_preference: locale })
+      .update({ role: "gedu", locale })
       .eq("id", userId);
 
     if (roleError) {

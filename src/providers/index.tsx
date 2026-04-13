@@ -4,14 +4,14 @@ import type { ReactNode } from "react";
 import { NextIntlClientProvider } from "next-intl";
 import { QueryProvider } from "./query-provider";
 import { AuthProvider } from "./auth-provider";
-import { LanguageProvider } from "./language-provider";
+import { LocaleProvider } from "./locale-provider";
 import { CurrencyProvider } from "./currency-provider";
 import { ThemeProvider } from "./theme-provider";
 import { TokenRateProvider } from "./token-rate-provider";
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import { DEFAULT_TIMEZONE } from "@/lib/constants/language-preference";
+import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
 
 interface ProvidersProps {
   children: ReactNode;
@@ -37,13 +37,13 @@ export function Providers({
       <QueryProvider>
         <AuthProvider initialUser={initialUser} initialProfile={initialProfile}>
           <NextIntlClientProvider locale={initialLocale} messages={messages} timeZone={DEFAULT_TIMEZONE}>
-            <LanguageProvider>
+            <LocaleProvider>
               <CurrencyProvider>
                 <TokenRateProvider baseRates={baseRates}>
                   {children}
                 </TokenRateProvider>
               </CurrencyProvider>
-            </LanguageProvider>
+            </LocaleProvider>
           </NextIntlClientProvider>
         </AuthProvider>
       </QueryProvider>
@@ -55,6 +55,6 @@ export { useAuth, useRequiredAuth } from "./auth-provider";
 export { QueryProvider } from "./query-provider";
 export { ThemeProvider } from "./theme-provider";
 export { AuthProvider } from "./auth-provider";
-export { LanguageProvider, useLanguagePreference } from "./language-provider";
+export { LocaleProvider, useLocaleControl } from "./locale-provider";
 export { CurrencyProvider, useCurrency } from "./currency-provider";
 export { TokenRateProvider, useTokenRates } from "./token-rate-provider";

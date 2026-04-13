@@ -8,7 +8,7 @@ import {
   buildUnenrollmentGeduEmail,
 } from "@/lib/email-templates/enrollment-changes";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
-import { isSupportedLanguage, DEFAULT_LANGUAGE, type SupportedLanguage } from "@/lib/constants/language-preference";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 
 interface EnrollmentNotificationContext {
   customerId: string;
@@ -23,7 +23,7 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
     // Parent profile
     admin
       .from("profiles")
-      .select("display_name, email, language_preference")
+      .select("display_name, email, locale")
       .eq("id", ctx.customerId)
       .single(),
     // Gamer profile + minecraft info
@@ -35,7 +35,7 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
     // Group → gedu + product
     admin
       .from("product_groups")
-      .select("gedu_id, products(name), profiles:gedu_id(display_name, email, language_preference)")
+      .select("gedu_id, products(name), profiles:gedu_id(display_name, email, locale)")
       .eq("id", ctx.groupId)
       .single(),
     // Admin emails
@@ -55,7 +55,7 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
     throw new Error(`Failed to fetch group data: ${groupResult.error.message}`);
   }
 
-  const parent = parentResult.data as { display_name: string; email: string; language_preference: string | null };
+  const parent = parentResult.data as { display_name: string; email: string; locale: string | null };
   const gamer = gamerResult.data as {
     display_name: string;
     minecraft_accounts: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
@@ -63,7 +63,7 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
   const group = groupResult.data as {
     gedu_id: string;
     products: { name: string };
-    profiles: { display_name: string; email: string; language_preference: string | null };
+    profiles: { display_name: string; email: string; locale: string | null };
   };
 
   const adminEmails: string[] = (adminResult.data ?? [])
@@ -73,20 +73,20 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
   return {
     parentName: parent.display_name,
     parentEmail: parent.email,
-    parentLocale: (isSupportedLanguage(parent.language_preference) ? parent.language_preference : DEFAULT_LANGUAGE) as SupportedLanguage,
+    parentLocale: resolveLocale(parent.locale),
     gamerName: gamer.display_name,
     minecraftUsername: gamer.minecraft_accounts?.minecraft_username ?? null,
     minecraftUuid: gamer.minecraft_accounts?.minecraft_uuid ?? null,
     geduName: group.profiles.display_name,
     geduEmail: group.profiles.email,
-    geduLocale: (isSupportedLanguage(group.profiles.language_preference) ? group.profiles.language_preference : DEFAULT_LANGUAGE) as SupportedLanguage,
+    geduLocale: resolveLocale(group.profiles.locale),
     productName: group.products.name,
     adminEmails,
   };
 }
 
 /** Cache translators to avoid loading messages multiple times per request. */
-async function resolveTranslators(locales: SupportedLanguage[]): Promise<Map<SupportedLanguage, EmailTranslator>> {
+async function resolveTranslators(locales: SupportedLocale[]): Promise<Map<SupportedLocale, EmailTranslator>> {
   const unique = [...new Set(locales)];
   const entries = await Promise.all(
     unique.map(async (l) => [l, await getEmailTranslator(l)] as const),

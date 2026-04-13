@@ -178,7 +178,7 @@ describe("POST /api/admin/create-gedu", () => {
     });
 
     // Promoted to gedu
-    expect(mockUpdateProfile).toHaveBeenCalledWith({ role: "gedu", language_preference: "en" });
+    expect(mockUpdateProfile).toHaveBeenCalledWith({ role: "gedu", locale: "en" });
 
     // Customer profile cleaned up
     expect(mockDeleteCustomerProfile).toHaveBeenCalledOnce();

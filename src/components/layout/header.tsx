@@ -14,7 +14,7 @@ import { useTokenBalance } from "@/services/tokens";
 import { cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS, ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import { CurrencyPicker } from "@/components/layout/currency-picker";
-import { LanguagePicker } from "@/components/layout/language-picker";
+import { LocalePicker } from "@/components/layout/locale-picker";
 
 export function Header() {
   const pathname = usePathname();
@@ -100,7 +100,7 @@ export function Header() {
                   </Button>
                 </Link>
               )}
-              <LanguagePicker />
+              <LocalePicker />
               <CurrencyPicker />
               {isCustomer && tokenBalance !== undefined && (
                 <Link
@@ -151,7 +151,7 @@ export function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <LanguagePicker />
+              <LocalePicker />
               <CurrencyPicker />
               <Link href={ROUTES.login}>
                 <Button variant="ghost" size="sm">
@@ -229,7 +229,7 @@ export function Header() {
                   </Link>
                 )}
                 <div className="flex gap-2 px-3 py-2">
-                  <LanguagePicker />
+                  <LocalePicker />
                   <CurrencyPicker />
                 </div>
                 {isCustomer && tokenBalance !== undefined && (
@@ -262,7 +262,7 @@ export function Header() {
             ) : (
               <>
                 <div className="flex gap-2 px-3 py-2">
-                  <LanguagePicker />
+                  <LocalePicker />
                   <CurrencyPicker />
                 </div>
                 <Link

@@ -6,7 +6,7 @@ import { SENDER_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 import { buildPasswordResetEmail } from "@/lib/email-templates/password-reset";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
-import { detectLanguageFromHeader, isSupportedLanguage } from "@/lib/constants/language-preference";
+import { detectLocaleFromHeader, isSupportedLocale } from "@/lib/constants/locales";
 
 const requestSchema = z.object({
   email: z.string().email(),
@@ -25,11 +25,11 @@ export async function POST(request: Request) {
     const origin = new URL(request.url).origin;
     const adminClient = createAdminClient();
 
-    // Fetch language preference and generate reset link in parallel
+    // Fetch locale preference and generate reset link in parallel
     const [profileResult, linkResult] = await Promise.all([
       adminClient
         .from("profiles")
-        .select("language_preference")
+        .select("locale")
         .eq("email", parsed.data.email)
         .single(),
       adminClient.auth.admin.generateLink({
@@ -51,10 +51,10 @@ export async function POST(request: Request) {
     }
 
     // Resolve locale: profile preference → Accept-Language header → English
-    const pref = profileResult.data?.language_preference;
-    const locale = isSupportedLanguage(pref)
+    const pref = profileResult.data?.locale;
+    const locale = isSupportedLocale(pref)
       ? pref
-      : detectLanguageFromHeader(request.headers.get("Accept-Language"));
+      : detectLocaleFromHeader(request.headers.get("Accept-Language"));
 
     const t = await getEmailTranslator(locale);
 

@@ -232,21 +232,6 @@ export type Database = {
           },
         ]
       }
-      languages: {
-        Row: {
-          code: string
-          name: string
-        }
-        Insert: {
-          code: string
-          name: string
-        }
-        Update: {
-          code?: string
-          name?: string
-        }
-        Relationships: []
-      }
       locations: {
         Row: {
           country_code: string | null
@@ -474,10 +459,10 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
-          language_preference: string | null
-          languages: string[]
+          locale: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: string[]
           updated_at: string
           username: string | null
         }
@@ -487,10 +472,10 @@ export type Database = {
           display_name: string
           email?: string | null
           id: string
-          language_preference?: string | null
-          languages?: string[]
+          locale?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          spoken_languages?: string[]
           updated_at?: string
           username?: string | null
         }
@@ -500,12 +485,27 @@ export type Database = {
           display_name?: string
           email?: string | null
           id?: string
-          language_preference?: string | null
-          languages?: string[]
+          locale?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          spoken_languages?: string[]
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      spoken_languages: {
+        Row: {
+          code: string
+          name: string
+        }
+        Insert: {
+          code: string
+          name: string
+        }
+        Update: {
+          code?: string
+          name?: string
         }
         Relationships: []
       }
@@ -792,10 +792,10 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
-          language_preference: string | null
-          languages: string[]
+          locale: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: string[]
           updated_at: string
           username: string | null
         }[]
@@ -844,10 +844,10 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
-          language_preference: string | null
-          languages: string[]
+          locale: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: string[]
           updated_at: string
           username: string | null
         }[]

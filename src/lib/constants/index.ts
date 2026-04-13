@@ -1,5 +1,5 @@
 export * from "./currency";
-export * from "./language-preference";
+export * from "./locales";
 export * from "./enrollment";
 export * from "./roles";
 export * from "./routes";

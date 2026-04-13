@@ -5,7 +5,7 @@ import { sendTransactionalEmail } from "@/lib/brevo";
 import { buildFeedbackEmail } from "@/lib/email-templates/feedback";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL } from "@/lib/constants";
-import { detectLanguageFromHeader, isSupportedLanguage } from "@/lib/constants/language-preference";
+import { detectLocaleFromHeader, isSupportedLocale } from "@/lib/constants/locales";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
 import type { UserRole } from "@/types";
 import { z } from "zod";
@@ -97,10 +97,10 @@ export async function POST(request: Request) {
     }
 
     // Resolve locale: profile preference → Accept-Language → English
-    const pref = profile.language_preference;
-    const locale = isSupportedLanguage(pref)
+    const pref = profile.locale;
+    const locale = isSupportedLocale(pref)
       ? pref
-      : detectLanguageFromHeader(request.headers.get("Accept-Language"));
+      : detectLocaleFromHeader(request.headers.get("Accept-Language"));
 
     const t = await getEmailTranslator(locale);
     const displayName = profile.display_name || profile.username || "Unknown";

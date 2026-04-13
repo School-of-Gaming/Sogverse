@@ -12,11 +12,11 @@ import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
-import { LanguageCheckboxes } from "@/components/ui/language-checkboxes";
+import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
-import { useUpdateProfile, useLanguages } from "@/services/users";
+import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
 import type { ProfileUpdate } from "@/types";
@@ -30,11 +30,11 @@ export default function SettingsPage() {
   const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
-  const { data: availableLanguages } = useLanguages();
+  const { data: availableLanguages } = useSpokenLanguages();
 
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
   const [phone, setPhone] = useState(profile?.phone ? `+${profile.phone}` : "");
-  const [languages, setLanguages] = useState<string[]>(profile?.languages ?? []);
+  const [spokenLanguages, setSpokenLanguages] = useState<string[]>(profile?.spoken_languages ?? []);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -68,7 +68,7 @@ export default function SettingsPage() {
       const updates: ProfileUpdate = {
         display_name: displayName,
         phone: toE164Digits(phone),
-        languages,
+        spoken_languages: spokenLanguages,
       };
       await updateProfile.mutateAsync({ userId: user.id, updates });
       await refreshProfile();
@@ -186,10 +186,10 @@ export default function SettingsPage() {
             />
           </div>
 
-          <LanguageCheckboxes
-            languages={availableLanguages ?? []}
-            selected={languages}
-            onChange={setLanguages}
+          <SpokenLanguageCheckboxes
+            spokenLanguages={availableLanguages ?? []}
+            selected={spokenLanguages}
+            onChange={setSpokenLanguages}
           />
 
           <div className="space-y-2">
