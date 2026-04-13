@@ -197,7 +197,17 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     label: "Feedback",
     fields: [
       { key: "userName", label: "User Name", placeholder: "Jane Doe" },
-      { key: "userRole", label: "User Role", placeholder: "customer" },
+      {
+        key: "userRole",
+        label: "User Role",
+        type: "select",
+        options: [
+          { label: "Customer", value: "customer" },
+          { label: "Gamer", value: "gamer" },
+          { label: "Gedu", value: "gedu" },
+          { label: "Admin", value: "admin" },
+        ],
+      },
       { key: "userEmail", label: "User Email", placeholder: "jane@example.com" },
       { key: "message", label: "Message", placeholder: "Great product!" },
     ],

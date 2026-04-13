@@ -284,6 +284,22 @@ describe("POST /api/feedback", () => {
     );
   });
 
+  it("should prefer stored language_preference over Accept-Language header", async () => {
+    mockAuthenticatedAs("customer", { language_preference: "fi" });
+    setupHappyPath();
+
+    await POST(createRequest(
+      validBody,
+      { "Accept-Language": "en-US,en;q=0.9" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromName: "Sogverse-palaute",
+      })
+    );
+  });
+
   // -- RPC --
 
   it("should call submit_feedback RPC with correct params", async () => {
