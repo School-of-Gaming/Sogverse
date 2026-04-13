@@ -2,9 +2,22 @@
 
 next-intl-powered internationalisation supporting English, Finnish, and Swedish across the full stack: UI strings, email templates, page metadata, and user-facing constants.
 
+## Two distinct concepts: locale vs. spoken language
+
+The codebase deliberately uses two different words for two different concepts that English would otherwise both call "language":
+
+| Concept | Name | What it controls | Where it lives |
+|---|---|---|---|
+| **UI locale** | `locale` | Which translation of the web app the user sees (English, Finnish, Swedish, Klingon). | `profiles.locale`, `SUPPORTED_LOCALES`, `LocaleProvider`, `LocalePicker` |
+| **Spoken language** | `spoken_language` | The human languages a user speaks / a club is delivered in (used to match gamers to gedus). | `spoken_languages` table, `profiles.spoken_languages` array, `SpokenLanguageCheckboxes` |
+
+A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English-speaking clubs). The two systems are entirely independent — a user's UI translation has no relation to the language their child's club is delivered in.
+
+**Naming rule** — use **locale** for the UI system (matches next-intl's `useLocale()` and Unicode/ICU terminology) and **spoken language** for human fluency. They are deliberately named differently. See CLAUDE.md.
+
 ## Overview
 
-All user-facing strings are extracted into per-locale JSON files (`messages/{en,fi,sv}.json`). The UI language is resolved per-request (cookie > Accept-Language > default English) and persisted to the user's profile. Server components use `getTranslations()`, client components use `useTranslations()`, and email templates use a standalone translator built on `use-intl/core`. A CI script validates translation completeness on every push.
+All user-facing strings are extracted into per-locale JSON files (`messages/{en,fi,sv}.json`). The UI locale is resolved per-request (cookie > Accept-Language > default English) and persisted to the user's profile. Server components use `getTranslations()`, client components use `useTranslations()`, and email templates use a standalone translator built on `use-intl/core`. A CI script validates translation completeness on every push.
 
 ## Component Map
 
@@ -20,12 +33,17 @@ Translation files (messages/)
 ├── fi.json                           -- Finnish
 └── sv.json                           -- Swedish
 
-Language preference (user setting)
-├── src/lib/constants/language-preference.ts  -- SUPPORTED_LANGUAGES, detection/validation helpers
-├── src/providers/language-provider.tsx        -- LanguageProvider context (cookie + DB persistence)
-├── src/components/layout/language-picker.tsx  -- Dropdown UI with country flags
-├── src/app/api/user/language-preference/route.ts  -- PATCH endpoint to persist preference
-└── supabase/migrations/00022_profile_language_preference.sql  -- profiles.language_preference column
+UI locale (user setting)
+├── src/lib/constants/locales.ts              -- SUPPORTED_LOCALES, detection/validation helpers
+├── src/providers/locale-provider.tsx          -- LocaleProvider context (cookie + DB persistence)
+├── src/components/layout/locale-picker.tsx    -- Dropdown UI with country flags
+├── src/app/api/user/locale/route.ts           -- PATCH endpoint to persist preference
+└── supabase/migrations/00023_rename_locale_and_spoken_languages.sql  -- profiles.locale column
+
+Spoken languages (separate, see "Two distinct concepts" above)
+├── src/components/ui/spoken-language-checkboxes.tsx  -- Multi-select for profiles.spoken_languages
+├── src/services/users/users.queries.ts               -- useSpokenLanguages() hook
+└── supabase/migrations/00018_profile_phone_languages.sql  -- spoken_languages reference table
 
 Email translation
 ├── src/lib/email-templates/translator.ts  -- getEmailTranslator() (use-intl/core, scoped to email namespace)
@@ -39,9 +57,9 @@ CI validation
 
 Priority order (same logic in both SSR and API routes):
 
-1. **User profile** -- `language_preference` column (set via language picker)
-2. **Cookie** -- `language` cookie (set on every language change, works for logged-out users)
-3. **Accept-Language header** -- walks the full ranked list via `detectLanguageFromHeader()`, picks the first supported language
+1. **User profile** -- `profiles.locale` column (set via locale picker)
+2. **Cookie** -- `locale` cookie (set on every locale change, works for logged-out users)
+3. **Accept-Language header** -- walks the full ranked list via `detectLocaleFromHeader()`, picks the first supported locale
 4. **Default** -- English
 
 The SSR path (`src/i18n/request.ts`) checks cookie then header. API routes check profile preference then header.
@@ -105,14 +123,14 @@ Server-only namespaces are stripped in `src/app/layout.tsx` before passing messa
 
 The email translator (`use-intl/core`) operates on plain strings and does not benefit from this type augmentation.
 
-## Adding a New Language
+## Adding a New Locale
 
 1. Create `messages/{code}.json` by copying `en.json` and translating all values
-2. Add the language code to `SUPPORTED_LANGUAGES` in `src/lib/constants/language-preference.ts`
-3. Add its config entry to `LANGUAGE_CONFIG` (label, native label, country flag code)
+2. Add the locale code to `SUPPORTED_LOCALES` in `src/lib/constants/locales.ts`
+3. Add its config entry to `LOCALE_CONFIG` (label, native label, country flag code)
 4. The CI script (`check-translations.mjs`) will automatically validate the new file
 5. No changes needed to `next.config.ts`, `request.ts`, or provider code
-6. Add `name_{code}` / `description_{code}` metadata to each Sorg token product in Stripe (both test and live mode) — otherwise new-language customers silently fall back to English product names on the purchase page. See `docs/sorg-token-architecture.md` § Stripe Product Configuration.
+6. Add `name_{code}` / `description_{code}` metadata to each Sorg token product in Stripe (both test and live mode) — otherwise new-locale customers silently fall back to English product names on the purchase page. See `docs/sorg-token-architecture.md` § Stripe Product Configuration.
 
 ## Adding a New Namespace
 
@@ -122,9 +140,9 @@ The email translator (`use-intl/core`) operates on plain strings and does not be
 
 ## Database
 
-The `profiles` table has a nullable `language_preference` column (`text`). Null means "auto-detect from browser". The column is updated via `PATCH /api/user/language-preference` using the admin client (bypasses RLS). Existing RLS policies on profiles cover this column.
+The `profiles` table has a nullable `locale` column (`text`). Null means "auto-detect from browser". The column is updated via `PATCH /api/user/locale` using the admin client (bypasses RLS). Existing RLS policies on profiles cover this column.
 
-This is distinct from the `profiles.languages` array (also on the base `profiles` table): `language_preference` controls which language the user sees the web app and receives Sogverse communication in, while `languages` stores the user's preferred club/product languages — used when matching gamers to gedus and shown on gedu profiles. A Finnish-speaking parent could have `language_preference = "fi"` (app in Finnish) and `languages = ["en"]` (wants their child placed in English-speaking clubs).
+This is distinct from the `profiles.spoken_languages` array (also on the base `profiles` table): `locale` controls which translation of the web app the user sees and receives Sogverse communication in, while `spoken_languages` stores the user's preferred club/product languages — used when matching gamers to gedus and shown on gedu profiles. A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English-speaking clubs). See "Two distinct concepts" at the top of this doc.
 
 ## Future Improvements
 

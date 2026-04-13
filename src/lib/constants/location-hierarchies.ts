@@ -1,5 +1,5 @@
 import type { LocationType } from "@/types";
-import type { SupportedLanguage } from "./language-preference";
+import type { SupportedLocale } from "./locales";
 
 interface LabelPair {
   label: string;
@@ -18,14 +18,14 @@ export interface HierarchyLevel {
    * fall back to the English label/pluralLabel above.
    * e.g. Finland's "region" has fi: { label: "Maakunta", pluralLabel: "Maakunnat" }
    */
-  i18n?: Partial<Record<SupportedLanguage, LabelPair>>;
+  i18n?: Partial<Record<SupportedLocale, LabelPair>>;
 }
 
 export interface CountryConfig {
   code: string;
   name: string;
   /** Country name in supported languages (falls back to `name` for unlisted locales). */
-  nameI18n?: Partial<Record<SupportedLanguage, string>>;
+  nameI18n?: Partial<Record<SupportedLocale, string>>;
   hierarchy: HierarchyLevel[];
 }
 
@@ -111,7 +111,7 @@ export function getCountryConfig(countryCode: string | null): CountryConfig | nu
 /** Resolve the label/pluralLabel for a hierarchy level, respecting locale. */
 export function resolveLabels(level: HierarchyLevel, locale?: string): LabelPair {
   if (locale && level.i18n) {
-    const localized = level.i18n[locale as SupportedLanguage];
+    const localized = level.i18n[locale as SupportedLocale];
     if (localized) return localized;
   }
   return { label: level.label, pluralLabel: level.pluralLabel };
@@ -140,7 +140,7 @@ export function getChildLevel(
 /** Get the country display name, respecting locale. */
 export function getCountryName(config: CountryConfig, locale?: string): string {
   if (locale && config.nameI18n) {
-    const localized = config.nameI18n[locale as SupportedLanguage];
+    const localized = config.nameI18n[locale as SupportedLocale];
     if (localized) return localized;
   }
   return config.name;

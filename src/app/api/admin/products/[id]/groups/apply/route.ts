@@ -15,7 +15,7 @@ import {
   buildGamerMovedNewGeduEmail,
 } from "@/lib/email-templates/group-changes";
 import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
-import { DEFAULT_LANGUAGE, isSupportedLanguage, type SupportedLanguage } from "@/lib/constants/language-preference";
+import { DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
 import type { BatchGroupChanges } from "@/services/groups";
 import type { NotifyPayload } from "@/hooks/use-group-editor";
 
@@ -36,8 +36,8 @@ interface ApplyBody {
   notify: NotifyPayload;
 }
 
-function resolveLocale(pref: string | null): SupportedLanguage {
-  return isSupportedLanguage(pref) ? pref : DEFAULT_LANGUAGE;
+function resolveLocale(pref: string | null): SupportedLocale {
+  return isSupportedLocale(pref) ? pref : DEFAULT_LOCALE;
 }
 
 export async function POST(
@@ -87,15 +87,15 @@ export async function POST(
     geduIds.delete("");
     gamerIds.delete("");
 
-    const geduProfiles = new Map<string, { displayName: string; email: string; locale: SupportedLanguage }>();
+    const geduProfiles = new Map<string, { displayName: string; email: string; locale: SupportedLocale }>();
     if (geduIds.size > 0) {
       const { data: gedus } = await admin
         .from("profiles")
-        .select("id, display_name, email, language_preference")
+        .select("id, display_name, email, locale")
         .in("id", Array.from(geduIds));
       for (const g of gedus ?? []) {
         if (g.email) {
-          geduProfiles.set(g.id, { displayName: g.display_name, email: g.email, locale: resolveLocale(g.language_preference) });
+          geduProfiles.set(g.id, { displayName: g.display_name, email: g.email, locale: resolveLocale(g.locale) });
         }
       }
     }
@@ -170,15 +170,15 @@ export async function POST(
       for (const { parentId } of map.values()) allParentIds.add(parentId);
     }
 
-    const parentProfiles = new Map<string, { displayName: string; email: string; locale: SupportedLanguage }>();
+    const parentProfiles = new Map<string, { displayName: string; email: string; locale: SupportedLocale }>();
     if (allParentIds.size > 0) {
       const { data: parents } = await admin
         .from("profiles")
-        .select("id, display_name, email, language_preference")
+        .select("id, display_name, email, locale")
         .in("id", Array.from(allParentIds));
       for (const p of parents ?? []) {
         if (p.email) {
-          parentProfiles.set(p.id, { displayName: p.display_name, email: p.email, locale: resolveLocale(p.language_preference) });
+          parentProfiles.set(p.id, { displayName: p.display_name, email: p.email, locale: resolveLocale(p.locale) });
         }
       }
     }
@@ -192,10 +192,10 @@ export async function POST(
       .filter((e: string | null): e is string => !!e);
 
     // --- Pre-load translators for all unique locales ---
-    const allLocales = new Set<SupportedLanguage>();
+    const allLocales = new Set<SupportedLocale>();
     for (const g of geduProfiles.values()) allLocales.add(g.locale);
     for (const p of parentProfiles.values()) allLocales.add(p.locale);
-    const translators = new Map<SupportedLanguage, EmailTranslator>();
+    const translators = new Map<SupportedLocale, EmailTranslator>();
     await Promise.all(
       [...allLocales].map(async (l) => translators.set(l, await getEmailTranslator(l))),
     );

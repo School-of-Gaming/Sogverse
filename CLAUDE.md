@@ -80,6 +80,15 @@ See `docs/layout-scroll-architecture.md` for the scroll containment model and ho
 
 **Rule: Use `Intl` APIs and `next-intl` formatters for date/time/number formatting.** Shared helpers (`formatDate`, `formatTime`, `formatCurrency*`) live in `src/lib/utils.ts`. For relative time, use `useFormatter().relativeTime()` from `next-intl`. For timezone math only (converting between zones), use `date-fns-tz`. The locale for formatting always comes from `useLocale()` (client) or `getLocale()` (server) via `next-intl`.
 
+### Locale vs. Spoken Language
+
+**Rule: Use *locale* for the UI translation system and *spoken language* for human languages.** They are deliberately named differently because they are distinct concepts.
+
+- **Locale** — which translation of the web app the user sees. Owned by `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `LocaleProvider`, `LocalePicker`), backed by `profiles.locale`. This is what next-intl's `useLocale()` returns.
+- **Spoken language** — the human languages a user speaks / a club is delivered in. Owned by the `spoken_languages` reference table and `profiles.spoken_languages` array. UI lives in `src/components/ui/spoken-language-checkboxes.tsx` and `useSpokenLanguages()`.
+
+A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them. See `docs/i18n-architecture.md` § "Two distinct concepts".
+
 ### Styling
 - Use `cn()` utility from `lib/utils.ts` for conditional classes
 - Brand colors: primary yellow `#FAA901`, secondary purple `#8F00E2`

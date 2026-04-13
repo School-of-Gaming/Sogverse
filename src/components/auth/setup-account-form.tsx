@@ -9,12 +9,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
-import { LanguageCheckboxes } from "@/components/ui/language-checkboxes";
+import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { getClient } from "@/lib/supabase/client";
 import { toE164Digits } from "@/lib/utils";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
-import { useLanguages } from "@/services/users";
+import { useSpokenLanguages } from "@/services/users";
 
 const setupAccountSchema = z.object({
   displayName: z.string().min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Display name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -33,7 +33,7 @@ export function SetupAccountForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [minecraftUsername, setMinecraftUsername] = useState("");
   const [phone, setPhone] = useState("");
-  const [languages, setLanguages] = useState<string[]>([]);
+  const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +41,7 @@ export function SetupAccountForm() {
   const [sessionEmail, setSessionEmail] = useState("");
 
   const supabase = getClient();
-  const { data: availableLanguages } = useLanguages();
+  const { data: availableLanguages } = useSpokenLanguages();
 
   // generateLink() uses implicit flow (tokens in URL hash) because there's
   // no PKCE challenge. The @supabase/ssr client is configured for PKCE mode
@@ -123,7 +123,7 @@ export function SetupAccountForm() {
           .update({
             display_name: validatedData.displayName,
             phone: toE164Digits(phone),
-            languages,
+            spoken_languages: spokenLanguages,
           })
           .eq("id", user.id);
 
@@ -245,10 +245,10 @@ export function SetupAccountForm() {
               onChange={(value) => setPhone(value ?? "")}
             />
           </div>
-          <LanguageCheckboxes
+          <SpokenLanguageCheckboxes
             languages={availableLanguages ?? []}
-            selected={languages}
-            onChange={setLanguages}
+            selected={spokenLanguages}
+            onChange={setSpokenLanguages}
             disabled={isLoading}
           />
         </CardContent>

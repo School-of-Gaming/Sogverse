@@ -284,8 +284,8 @@ describe("POST /api/feedback", () => {
     );
   });
 
-  it("should prefer stored language_preference over Accept-Language header", async () => {
-    mockAuthenticatedAs("customer", { language_preference: "fi" });
+  it("should prefer stored profile locale over Accept-Language header", async () => {
+    mockAuthenticatedAs("customer", { locale: "fi" });
     setupHappyPath();
 
     await POST(createRequest(

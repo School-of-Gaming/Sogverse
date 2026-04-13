@@ -24,7 +24,7 @@ import { getPackageSavings } from "@/lib/stripe/utils";
 import { ROUTES } from "@/lib/constants";
 import { useCurrency } from "@/hooks/use-currency";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import type { SupportedLanguage } from "@/lib/constants/language-preference";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { StripePackage } from "@/types";
 
 // Resolve the locale-appropriate name/description from a Stripe package,
@@ -32,10 +32,10 @@ import type { StripePackage } from "@/types";
 // The i18n maps are populated from Stripe product metadata (`name_fi`, etc.)
 // in getStripeProducts().
 function localizeName(pkg: StripePackage, locale: string): string {
-  return pkg.nameI18n?.[locale as SupportedLanguage] ?? pkg.name;
+  return pkg.nameI18n?.[locale as SupportedLocale] ?? pkg.name;
 }
 function localizeDescription(pkg: StripePackage, locale: string): string | null {
-  return pkg.descriptionI18n?.[locale as SupportedLanguage] ?? pkg.description;
+  return pkg.descriptionI18n?.[locale as SupportedLocale] ?? pkg.description;
 }
 
 function PurchaseFeedback() {

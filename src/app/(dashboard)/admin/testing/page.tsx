@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL } from "@/lib/constants";
-import { SUPPORTED_LANGUAGES, LANGUAGE_CONFIG, DEFAULT_LANGUAGE, type SupportedLanguage } from "@/lib/constants/language-preference";
+import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
 import { templateRegistry, type TemplateField } from "@/lib/email-templates/registry";
 
 type EmailProvider = "brevo" | "klaviyo";
@@ -56,7 +56,7 @@ export default function TestingPage() {
   const templateKeys = Object.keys(templateRegistry);
   const [templateName, setTemplateName] = useState(templateKeys[0]);
   const [templateParams, setTemplateParams] = useState<Record<string, string>>({});
-  const [templateLocale, setTemplateLocale] = useState<SupportedLanguage>(DEFAULT_LANGUAGE);
+  const [templateLocale, setTemplateLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
 
   const selectedTemplate = templateRegistry[templateName];
 
@@ -225,12 +225,12 @@ export default function TestingPage() {
                     <select
                       id="templateLocale"
                       value={templateLocale}
-                      onChange={(e) => setTemplateLocale(e.target.value as SupportedLanguage)}
+                      onChange={(e) => setTemplateLocale(e.target.value as SupportedLocale)}
                       className={selectClass}
                     >
-                      {SUPPORTED_LANGUAGES.map((lang) => (
-                        <option key={lang} value={lang}>
-                          {LANGUAGE_CONFIG[lang].nativeLabel} ({LANGUAGE_CONFIG[lang].label})
+                      {SUPPORTED_LOCALES.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {LOCALE_CONFIG[opt].nativeLabel} ({LOCALE_CONFIG[opt].label})
                         </option>
                       ))}
                     </select>

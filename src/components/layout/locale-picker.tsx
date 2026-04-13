@@ -1,12 +1,13 @@
 "use client";
 
 /**
- * Dropdown in the site header for choosing the UI language — which language the
- * user sees the web app and Sogverse communication in. Backed by
- * `profiles.language_preference` via the LanguageProvider.
+ * Dropdown in the site header for choosing the UI locale — which translation
+ * of the web app the user sees. Backed by `profiles.locale` via the
+ * LocaleProvider.
  *
- * This is NOT the user's club/product language preference. For that, see
- * src/components/ui/language-checkboxes.tsx. See docs/i18n-architecture.md.
+ * Not the user's spoken-language preference. For that, see
+ * src/components/ui/spoken-language-checkboxes.tsx and
+ * docs/i18n-architecture.md.
  */
 
 import { useState, useRef } from "react";
@@ -14,11 +15,11 @@ import { ChevronDown } from "lucide-react";
 import flags from "react-phone-number-input/flags";
 import { useTranslations } from "next-intl";
 import { useClickOutside } from "@/hooks/use-click-outside";
-import { useLanguagePreference } from "@/hooks/use-language-preference";
+import { useLocalePreference } from "@/hooks/use-locale-preference";
 import {
-  SUPPORTED_LANGUAGES,
-  LANGUAGE_CONFIG,
-} from "@/lib/constants/language-preference";
+  SUPPORTED_LOCALES,
+  LOCALE_CONFIG,
+} from "@/lib/constants/locales";
 import { cn } from "@/lib/utils";
 
 // Klingon Empire flag from Wikimedia Commons (by Oren neu dag, public domain).
@@ -57,15 +58,15 @@ function FlagComponent({
   return Flag ? <Flag title={nativeLabel} /> : null;
 }
 
-export function LanguagePicker({ className }: { className?: string }) {
-  const { language, setLanguage } = useLanguagePreference();
+export function LocalePicker({ className }: { className?: string }) {
+  const { locale, setLocale } = useLocalePreference();
   const c = useTranslations('common');
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useClickOutside(ref, () => setOpen(false));
 
-  const config = LANGUAGE_CONFIG[language];
+  const config = LOCALE_CONFIG[locale];
 
   return (
     <div className={cn("relative", className)} ref={ref}>
@@ -77,29 +78,29 @@ export function LanguagePicker({ className }: { className?: string }) {
         <span className="h-4 w-6 [&>svg]:h-full">
           <FlagComponent country={config.country} nativeLabel={config.nativeLabel} />
         </span>
-        <span className="hidden sm:inline">{language.toUpperCase()}</span>
+        <span className="hidden sm:inline">{locale.toUpperCase()}</span>
         <ChevronDown className="h-3 w-3 text-muted-foreground" />
       </button>
       {open && (
         <div className="absolute left-0 z-50 mt-1 w-36 rounded-md border border-border bg-card py-1 shadow-lg">
-          {SUPPORTED_LANGUAGES.map((lang) => {
-            const opt = LANGUAGE_CONFIG[lang];
+          {SUPPORTED_LOCALES.map((opt) => {
+            const cfg = LOCALE_CONFIG[opt];
             return (
               <button
-                key={lang}
+                key={opt}
                 onClick={() => {
-                  setLanguage(lang);
+                  setLocale(opt);
                   setOpen(false);
                 }}
                 className={cn(
                   "flex w-full items-center gap-2 px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground",
-                  lang === language && "font-semibold text-primary",
+                  opt === locale && "font-semibold text-primary",
                 )}
               >
                 <span className="h-4 w-6 [&>svg]:h-full">
-                  <FlagComponent country={opt.country} nativeLabel={opt.nativeLabel} />
+                  <FlagComponent country={cfg.country} nativeLabel={cfg.nativeLabel} />
                 </span>
-                <span>{opt.nativeLabel}</span>
+                <span>{cfg.nativeLabel}</span>
               </button>
             );
           })}

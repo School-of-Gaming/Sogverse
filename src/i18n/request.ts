@@ -1,26 +1,26 @@
 import { getRequestConfig } from "next-intl/server";
 import { cookies, headers } from "next/headers";
 import {
-  detectLanguageFromHeader,
-  isSupportedLanguage,
-  DEFAULT_LANGUAGE,
+  detectLocaleFromHeader,
+  isSupportedLocale,
+  DEFAULT_LOCALE,
   DEFAULT_TIMEZONE,
-  type SupportedLanguage,
-} from "@/lib/constants/language-preference";
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import { loadMessages } from "./messages";
 
 export default getRequestConfig(async () => {
   // Priority: cookie > Accept-Language header > default
   const cookieStore = await cookies();
-  const cookieLocale = cookieStore.get("language")?.value;
+  const cookieLocale = cookieStore.get("locale")?.value;
 
-  let locale: SupportedLanguage = DEFAULT_LANGUAGE;
+  let locale: SupportedLocale = DEFAULT_LOCALE;
 
-  if (cookieLocale && isSupportedLanguage(cookieLocale)) {
+  if (cookieLocale && isSupportedLocale(cookieLocale)) {
     locale = cookieLocale;
   } else {
     const headersList = await headers();
-    locale = detectLanguageFromHeader(headersList.get("accept-language"));
+    locale = detectLocaleFromHeader(headersList.get("accept-language"));
   }
 
   return {

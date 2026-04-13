@@ -2,8 +2,8 @@ import Stripe from "stripe";
 import { unstable_cache } from "next/cache";
 import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import { SUPPORTED_LANGUAGES } from "@/lib/constants/language-preference";
-import type { SupportedLanguage } from "@/lib/constants/language-preference";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { StripePackage } from "@/types";
 
 // Re-export pure utilities so server-side consumers can import from one place
@@ -75,14 +75,14 @@ export const getStripeProducts = unstable_cache(
       // Extract localised name/description from Stripe metadata
       // (`name_fi`, `description_fi`, ...). English stays in the base
       // `name`/`description` fields — no `name_en` key needed.
-      const nameI18n: Partial<Record<SupportedLanguage, string>> = {};
-      const descriptionI18n: Partial<Record<SupportedLanguage, string>> = {};
-      for (const lang of SUPPORTED_LANGUAGES) {
-        if (lang === "en") continue;
-        const nameValue = product.metadata[`name_${lang}`];
-        if (nameValue) nameI18n[lang] = nameValue;
-        const descValue = product.metadata[`description_${lang}`];
-        if (descValue) descriptionI18n[lang] = descValue;
+      const nameI18n: Partial<Record<SupportedLocale, string>> = {};
+      const descriptionI18n: Partial<Record<SupportedLocale, string>> = {};
+      for (const loc of SUPPORTED_LOCALES) {
+        if (loc === "en") continue;
+        const nameValue = product.metadata[`name_${loc}`];
+        if (nameValue) nameI18n[loc] = nameValue;
+        const descValue = product.metadata[`description_${loc}`];
+        if (descValue) descriptionI18n[loc] = descValue;
       }
 
       packages.push({

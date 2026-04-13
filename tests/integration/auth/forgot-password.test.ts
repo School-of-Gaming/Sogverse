@@ -4,7 +4,7 @@ import { POST } from "@/app/api/auth/forgot-password/route";
 // --- Mocks ---
 
 const mockGenerateLink = vi.fn();
-let mockLanguagePreference: string | null = null;
+let mockProfileLocale: string | null = null;
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
@@ -17,7 +17,7 @@ vi.mock("@/lib/supabase/admin", () => ({
       select: () => ({
         eq: () => ({
           single: () => Promise.resolve({
-            data: { language_preference: mockLanguagePreference },
+            data: { locale: mockProfileLocale },
             error: null,
           }),
         }),
@@ -47,7 +47,7 @@ function createRequest(body: Record<string, unknown>, headers?: Record<string, s
 describe("POST /api/auth/forgot-password", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockLanguagePreference = null;
+    mockProfileLocale = null;
     mockGenerateLink.mockResolvedValue({
       data: { properties: { action_link: "https://supabase.co/verify?token=abc" } },
       error: null,
@@ -152,8 +152,8 @@ describe("POST /api/auth/forgot-password", () => {
     );
   });
 
-  it("should prefer stored language_preference over Accept-Language header", async () => {
-    mockLanguagePreference = "fi";
+  it("should prefer stored profile locale over Accept-Language header", async () => {
+    mockProfileLocale = "fi";
 
     await POST(createRequest(
       { email: "user@example.com" },

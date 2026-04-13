@@ -82,8 +82,10 @@ export type AvailableVoiceRoom = Omit<
   enrolled_at: string | null;
 };
 
-// languages (reference table)
-export type LanguageRow = Database["public"]["Tables"]["languages"]["Row"];
+// spoken_languages (reference table — the human languages a person speaks /
+// a club is delivered in). Distinct from `locale` (UI translation), which
+// has no DB table and is constrained by SUPPORTED_LOCALES in code.
+export type SpokenLanguage = Database["public"]["Tables"]["spoken_languages"]["Row"];
 
 // locations
 export type Location = Database["public"]["Tables"]["locations"]["Row"];
@@ -162,7 +164,7 @@ export type ProductGroupWithDetails = Omit<
 // ---------------------------------------------------------------------------
 
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import type { SupportedLanguage } from "@/lib/constants/language-preference";
+import type { SupportedLocale } from "@/lib/constants/locales";
 
 export interface StripePackage {
   stripeProductId: string;
@@ -171,9 +173,9 @@ export interface StripePackage {
   /** English description (base). Use `descriptionI18n[locale] ?? description` for display. */
   description: string | null;
   /** Localised names from Stripe metadata (`name_fi`, `name_sv`, ...). Sparse — missing locales fall back to `name`. */
-  nameI18n?: Partial<Record<SupportedLanguage, string>>;
+  nameI18n?: Partial<Record<SupportedLocale, string>>;
   /** Localised descriptions from Stripe metadata (`description_fi`, `description_sv`, ...). Sparse — missing locales fall back to `description`. */
-  descriptionI18n?: Partial<Record<SupportedLanguage, string>>;
+  descriptionI18n?: Partial<Record<SupportedLocale, string>>;
   tokenAmount: number;
   prices: Record<SupportedCurrency, { priceId: string; unitAmount: number }>;
   type: "one_time" | "subscription";
