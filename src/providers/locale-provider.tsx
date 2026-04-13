@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import { useAuth } from "./auth-provider";
 import {
-  detectLocaleFromTag,
+  detectLocaleFromHeader,
   isSupportedLocale,
   DEFAULT_LOCALE,
   type SupportedLocale,
@@ -50,9 +50,12 @@ function resolveInitialLocale(
     return cookieValue;
   }
 
-  // 3. Browser locale detection
+  // 3. Browser locale detection. detectLocaleFromHeader parses a comma-
+  // separated Accept-Language list, but a single navigator.language tag like
+  // "fi-FI" is just a one-entry list with implicit q=1, which the parser
+  // handles correctly.
   if (typeof navigator !== "undefined" && navigator.language) {
-    return detectLocaleFromTag(navigator.language);
+    return detectLocaleFromHeader(navigator.language);
   }
 
   return DEFAULT_LOCALE;

@@ -45,23 +45,13 @@ export const LOCALE_CONFIG: Record<
 };
 
 /**
- * Map a browser locale tag (e.g. "fi-FI", "sv-SE", "en-US") to a supported
- * locale. Extracts the language subtag and returns the matching supported
- * locale, falling back to DEFAULT_LOCALE for unrecognized tags.
- */
-export function detectLocaleFromTag(tag: string): SupportedLocale {
-  const lang = tag.split("-")[0]?.toLowerCase();
-  if (isSupportedLocale(lang)) return lang;
-  return DEFAULT_LOCALE;
-}
-
-/**
  * Walk an Accept-Language header in priority order and return the first
  * supported locale. Falls back to DEFAULT_LOCALE when no match is found.
  *
- * Unlike detectLocaleFromTag (single tag), this handles the full ranked
- * header so users whose primary language is unsupported but who list a
- * supported language lower in the preference list still get a match.
+ * Handles the full ranked header so users whose primary language is
+ * unsupported but who list a supported language lower in the preference
+ * list still get a match. Also accepts a single tag like "fi-FI"
+ * (navigator.language) — treated as a one-entry list with implicit q=1.
  */
 export function detectLocaleFromHeader(
   header: string | null,
