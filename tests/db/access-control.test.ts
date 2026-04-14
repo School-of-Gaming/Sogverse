@@ -90,8 +90,11 @@ describe("Access Control", () => {
     // The second direction matters because a dropped GRANT leaves the RLS
     // policy intact but silently breaks every authenticated write against
     // the table — exactly how products/games writes regressed in the past.
+    // profiles is intentionally NOT in this allowlist: it uses column-level
+    // UPDATE grants on (display_name, phone, spoken_languages) rather than
+    // table-level UPDATE. Column privileges live in information_schema
+    // .column_privileges and are out of scope for _list_table_grants.
     const WRITE_GRANT_ALLOWLIST = new Map<string, Set<string>>([
-      ["profiles", new Set(["UPDATE"])],
       ["parent_gamer", new Set(["DELETE"])],
       ["gamer_profiles", new Set(["UPDATE"])],
       // Admin edits products/games directly from the browser client via
