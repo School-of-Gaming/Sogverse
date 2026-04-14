@@ -314,6 +314,13 @@
       "noLocationsYet": "Dapmey tu'be'lu'. volchan yIchel.",
       "noLocationsMatchSearch": "Dapmey DanejboHpu' tu'be'lu'."
     },
+    "productLocation": {
+      "locationLabel": "Daq",
+      "remote": "Hop",
+      "inPerson": "Sum",
+      "selectLevel": "{type} yIwIv...",
+      "selectSiteHint": "Daq motlh yIwIv."
+    },
     "testing": {
       "title": "Qu' nI'moH",
       "description": "SuvwI' Qu'mey nI'moH je ghojmoH",
@@ -435,7 +442,10 @@
       "minAgeMin": "DIS mach 0 law' nIS",
       "maxAgeMin": "DIS tIn 0 law' nIS",
       "maxAgeGte": "DIS tIn DIS mach law' nIS",
-      "failedToCreateGame": "toy'a' chenmoH Dabe'lu'"
+      "failedToCreateGame": "toy'a' chenmoH Dabe'lu'",
+      "spokenLanguageLabel": "ghojmoqtaH Hol",
+      "spokenLanguageRequired": "ghojmoqtaH Hol yIwIv",
+      "locationRequired": "Daq yIwIv, pagh Hop 'oH yIghItlh"
     }
   },
   "auth": {
@@ -697,7 +707,20 @@
     "statsGroupsDescription": "ghom'a'mey tI'ang",
     "statsGamers": "toy'wI'pu'",
     "statsGamersDescription": "Hoch ghom'a'meyDaq",
-    "latestStudentActivities": "toy'wI' wanI' reHHa'"
+    "latestStudentActivities": "toy'wI' wanI' reHHa'",
+    "coverage": {
+      "title": "So' Daqmey",
+      "remoteOnlyNote": "ghom'a'Daj qemlaHbe' latlh Gedu 'e' luneHchugh, SoH DaDIvmoH. Hop neH DaqaDchugh, yIchIm yImej.",
+      "selectedHeading": "wIvlu' ({count})",
+      "noneSelected": "pagh Daq wIvlu'",
+      "remove": "{name} yIteq",
+      "clearAll": "Hoch yISay'moH",
+      "searchPlaceholder": "Daqmey yInej...",
+      "loading": "Daqmey Huqtaw...",
+      "save": "yIpol",
+      "saving": "polchoH...",
+      "saveError": "pol Qapbe'"
+    }
   },
   "groups": {
     "title": "ghom'a'mey",

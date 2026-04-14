@@ -340,6 +340,8 @@ describe("Row Level Security", () => {
           min_age: 6,
           max_age: 12,
           token_cost: 1,
+          is_remote: true,
+          spoken_language_code: "en",
         })
         .select("id")
         .single();
@@ -372,6 +374,8 @@ describe("Row Level Security", () => {
         min_age: 6,
         max_age: 12,
         token_cost: 1,
+        is_remote: true,
+        spoken_language_code: "en",
       });
 
       expect(error).not.toBeNull();
@@ -394,6 +398,8 @@ describe("Row Level Security", () => {
         min_age: 6,
         max_age: 12,
         token_cost: 1,
+        is_remote: true,
+        spoken_language_code: "en",
       });
 
       const { data, error } = await adminClient

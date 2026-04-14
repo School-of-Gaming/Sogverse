@@ -43,9 +43,12 @@ interface LocationTreeNodeProps {
   node: LocationNode;
   depth: number;
   locale: string;
-  onAdd: (parent: Location) => void;
-  onEdit: (location: Location) => void;
+  onAdd?: (parent: Location) => void;
+  onEdit?: (location: Location) => void;
   searchQuery: string;
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
 function LocationTreeNode({
@@ -55,8 +58,16 @@ function LocationTreeNode({
   onAdd,
   onEdit,
   searchQuery,
+  selectable,
+  selectedIds,
+  onToggleSelect,
 }: LocationTreeNodeProps) {
-  const [expanded, setExpanded] = useState(depth < 1 || !!searchQuery);
+  // In the admin locations view, top-level countries are expanded by default
+  // so admins can see the full tree at a glance. In selectable (gedu coverage)
+  // mode we start everything collapsed because gedus just need to drill into
+  // the one country they cover.
+  const initialExpanded = !selectable && depth < 1;
+  const [expanded, setExpanded] = useState(initialExpanded || !!searchQuery);
   const hasChildren = node.children.length > 0;
   const childLevel = getChildLevel(node.country_code, node.type);
   const childLabels = childLevel ? resolveLabels(childLevel, locale) : null;
@@ -65,6 +76,8 @@ function LocationTreeNode({
 
   // When searching, auto-expand
   const isExpanded = searchQuery ? true : expanded;
+
+  const isSelected = selectedIds?.has(node.id) ?? false;
 
   return (
     <div>
@@ -79,7 +92,7 @@ function LocationTreeNode({
         <span
           className={cn(
             "flex h-5 w-5 shrink-0 items-center justify-center text-muted-foreground",
-            !hasChildren && "invisible"
+            !hasChildren && "invisible",
           )}
         >
           {isExpanded ? (
@@ -89,6 +102,17 @@ function LocationTreeNode({
           )}
         </span>
 
+        {selectable && (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onToggleSelect?.(node.id)}
+            onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4 shrink-0 accent-primary cursor-pointer"
+            aria-label={node.name}
+          />
+        )}
+
         <span className="font-medium">{node.name}</span>
 
         {childLabels && childCount > 0 && (
@@ -97,30 +121,32 @@ function LocationTreeNode({
           </span>
         )}
 
-        <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
-          {canAddChildren && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => onAdd(node)}
-              title={`Add ${childLabels!.label} under ${node.name}`}
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
-          )}
-          {node.type !== "country" && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => onEdit(node)}
-              title={`Edit ${node.name}`}
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </Button>
-          )}
-        </div>
+        {!selectable && (
+          <div className="ml-auto flex gap-1 opacity-0 group-hover:opacity-100" onClick={(e) => e.stopPropagation()}>
+            {canAddChildren && onAdd && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => onAdd(node)}
+                title={`Add ${childLabels!.label} under ${node.name}`}
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+            )}
+            {node.type !== "country" && onEdit && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => onEdit(node)}
+                title={`Edit ${node.name}`}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       {isExpanded && hasChildren && (
@@ -134,6 +160,9 @@ function LocationTreeNode({
               onAdd={onAdd}
               onEdit={onEdit}
               searchQuery={searchQuery}
+              selectable={selectable}
+              selectedIds={selectedIds}
+              onToggleSelect={onToggleSelect}
             />
           ))}
         </div>
@@ -144,12 +173,24 @@ function LocationTreeNode({
 
 interface LocationTreeProps {
   nodes: LocationNode[];
-  onAdd: (parent: Location) => void;
-  onEdit: (location: Location) => void;
   searchQuery: string;
+  onAdd?: (parent: Location) => void;
+  onEdit?: (location: Location) => void;
+  /** When true, each row renders a checkbox instead of hover edit buttons. */
+  selectable?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
 }
 
-export function LocationTree({ nodes, onAdd, onEdit, searchQuery }: LocationTreeProps) {
+export function LocationTree({
+  nodes,
+  onAdd,
+  onEdit,
+  searchQuery,
+  selectable,
+  selectedIds,
+  onToggleSelect,
+}: LocationTreeProps) {
   const t = useTranslations("admin.locations");
   const locale = useLocale();
   if (nodes.length === 0) {
@@ -173,6 +214,9 @@ export function LocationTree({ nodes, onAdd, onEdit, searchQuery }: LocationTree
           onAdd={onAdd}
           onEdit={onEdit}
           searchQuery={searchQuery}
+          selectable={selectable}
+          selectedIds={selectedIds}
+          onToggleSelect={onToggleSelect}
         />
       ))}
     </div>

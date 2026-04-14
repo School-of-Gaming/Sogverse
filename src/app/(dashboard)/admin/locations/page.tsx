@@ -14,8 +14,8 @@ import {
 import {
   LocationTree,
   buildLocationTree,
-} from "@/components/admin/location-tree";
-import type { LocationNode } from "@/components/admin/location-tree";
+} from "@/components/locations/location-tree";
+import type { LocationNode } from "@/components/locations/location-tree";
 import { LocationFormDialog } from "@/components/admin/location-form-dialog";
 import type { LocationFormValues } from "@/components/admin/location-form-dialog";
 import type { Location } from "@/types";

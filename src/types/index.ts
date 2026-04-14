@@ -99,6 +99,11 @@ export type ProductGroupInsert = Database["public"]["Tables"]["product_groups"][
 export type GroupEnrollment = Database["public"]["Tables"]["group_enrollments"]["Row"];
 export type GroupEnrollmentInsert = Database["public"]["Tables"]["group_enrollments"]["Insert"];
 
+// gedu_locations (a gedu's coverage areas for substitute matching — rows
+// can sit at any level of the location hierarchy)
+export type GeduLocation = Database["public"]["Tables"]["gedu_locations"]["Row"];
+export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"]["Insert"];
+
 // enrollment_charges
 export type EnrollmentCharge = Database["public"]["Tables"]["enrollment_charges"]["Row"];
 

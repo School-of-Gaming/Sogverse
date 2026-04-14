@@ -62,6 +62,8 @@ const validBody = {
   duration_minutes: 60,
   min_age: 7,
   max_age: 12,
+  is_remote: true,
+  spoken_language_code: "en",
 };
 
 // --- Tests ---

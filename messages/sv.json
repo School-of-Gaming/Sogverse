@@ -266,6 +266,13 @@
       "noLocationsYet": "Inga platser ännu. Lägg till ett land för att komma igång.",
       "noLocationsMatchSearch": "Inga platser hittades som matchar din sökning."
     },
+    "productLocation": {
+      "locationLabel": "Plats",
+      "remote": "På distans",
+      "inPerson": "På plats",
+      "selectLevel": "Välj {type}...",
+      "selectSiteHint": "Välj en specifik plats för att fortsätta."
+    },
     "testing": {
       "title": "Testning",
       "description": "Interna verktyg för testning och utveckling",
@@ -387,7 +394,10 @@
       "minAgeMin": "Minimiålder måste vara 0 eller högre",
       "maxAgeMin": "Maxålder måste vara 0 eller högre",
       "maxAgeGte": "Maxålder måste vara lika med eller högre än minimiålder",
-      "failedToCreateGame": "Kunde inte skapa spel"
+      "failedToCreateGame": "Kunde inte skapa spel",
+      "spokenLanguageLabel": "Språk klubben hålls på",
+      "spokenLanguageRequired": "Välj språket klubben hålls på",
+      "locationRequired": "Välj en plats eller markera klubben som distans"
     }
   },
   "auth": {
@@ -649,7 +659,20 @@
     "statsGroupsDescription": "Hantera dina grupper",
     "statsGamers": "Spelare",
     "statsGamersDescription": "Över alla grupper",
-    "latestStudentActivities": "Senaste elevaktiviteter"
+    "latestStudentActivities": "Senaste elevaktiviteter",
+    "coverage": {
+      "title": "Områden du täcker",
+      "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan utbildare inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
+      "selectedHeading": "Valda ({count})",
+      "noneSelected": "Inga områden valda",
+      "remove": "Ta bort {name}",
+      "clearAll": "Rensa alla",
+      "searchPlaceholder": "Sök platser...",
+      "loading": "Laddar platser...",
+      "save": "Spara",
+      "saving": "Sparar...",
+      "saveError": "Kunde inte spara"
+    }
   },
   "groups": {
     "title": "Grupper",

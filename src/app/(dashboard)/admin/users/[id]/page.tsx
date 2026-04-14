@@ -26,6 +26,7 @@ import { useProfile } from "@/services/users";
 import { useLinkedGamers, useLinkedParents } from "@/services/gamers";
 import { useTokenBalance, useTokenTransactions, useAdjustTokens } from "@/services/tokens";
 import { TransactionHistoryTable } from "@/components/tokens";
+import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
@@ -50,6 +51,7 @@ export default function AdminUserDetailPage() {
 
   const isCustomer = profile?.role === "customer";
   const isGamer = profile?.role === "gamer";
+  const isGedu = profile?.role === "gedu";
   const { data: linkedGamers } = useLinkedGamers(isCustomer ? userId : "");
   const { data: linkedParents } = useLinkedParents(isGamer ? userId : "");
   const parsedAmount = parseInt(amount, 10);
@@ -202,6 +204,9 @@ export default function AdminUserDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Gedu coverage areas — substitute matching */}
+      {isGedu && <GeduCoverageEditor geduId={userId} />}
 
       {/* Token Management (customers only) */}
       {isCustomer && (

@@ -24,7 +24,8 @@
       "Bash(npx vercel logs:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(node scripts/check-translations.mjs)"
     ]
   }
 }

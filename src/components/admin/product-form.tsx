@@ -9,9 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent } from "@/components/ui/card";
 import { useGames, useCreateGame } from "@/services/games";
+import { useSpokenLanguages } from "@/services/users";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { cn, DAYS_OF_WEEK } from "@/lib/utils";
+import { ProductLocationPicker } from "@/components/admin/product-location-picker";
+import { SpokenLanguageRadioGroup } from "@/components/ui/spoken-language-checkboxes";
 
 function createProductSchema(msgs: Record<string, string>) {
   return z.object({
@@ -33,9 +36,15 @@ function createProductSchema(msgs: Record<string, string>) {
     durationMinutes: z.number().int().min(1, msgs.durationMin),
     minAge: z.number().int().min(0, msgs.minAgeMin),
     maxAge: z.number().int().min(0, msgs.maxAgeMin),
+    isRemote: z.boolean(),
+    locationId: z.string().uuid().nullable(),
+    spokenLanguageCode: z.string().min(1, msgs.spokenLanguageRequired),
   }).refine((data) => data.maxAge >= data.minAge, {
     message: msgs.maxAgeGte,
     path: ["maxAge"],
+  }).refine((data) => data.isRemote ? data.locationId === null : data.locationId !== null, {
+    message: msgs.locationRequired,
+    path: ["locationId"],
   });
 }
 
@@ -51,6 +60,9 @@ export interface ProductFormValues {
   duration_minutes: number;
   min_age: number;
   max_age: number;
+  is_remote: boolean;
+  location_id: string | null;
+  spoken_language_code: string;
 }
 
 interface ProductFormProps {
@@ -66,6 +78,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const c = useTranslations('common');
   const { data: games, isLoading: gamesLoading } = useGames();
   const createGame = useCreateGame();
+  const { data: spokenLanguages } = useSpokenLanguages();
   const { currency } = useCurrency();
   const locale = useLocale();
   const { tokensToCurrencyDisplay } = useTokenRates();
@@ -73,6 +86,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
     "nameRequired", "nameMaxLength", "descriptionRequired", "sorgCostNumber",
     "sorgCostWhole", "sorgCostMin", "validUrl", "gameRequired", "validTime",
     "durationMin", "minAgeMin", "maxAgeMin", "maxAgeGte",
+    "locationRequired", "spokenLanguageRequired",
   ] as const;
   const msgs = Object.fromEntries(validationKeys.map((k) => [k, t(k)]));
   const productSchema = createProductSchema(msgs);
@@ -90,6 +104,11 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const [durationMinutes, setDurationMinutes] = useState(String(initialValues?.duration_minutes ?? 60));
   const [minAge, setMinAge] = useState(String(initialValues?.min_age ?? 7));
   const [maxAge, setMaxAge] = useState(String(initialValues?.max_age ?? 12));
+  const [isRemote, setIsRemote] = useState(initialValues?.is_remote ?? true);
+  const [locationId, setLocationId] = useState<string | null>(initialValues?.location_id ?? null);
+  const [spokenLanguageCode, setSpokenLanguageCode] = useState(
+    initialValues?.spoken_language_code ?? "",
+  );
   const [error, setError] = useState<string | null>(null);
 
   // Debounced image preview
@@ -142,6 +161,9 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         durationMinutes: durationMinutes === "" ? undefined : Number(durationMinutes),
         minAge: minAge === "" ? undefined : Number(minAge),
         maxAge: maxAge === "" ? undefined : Number(maxAge),
+        isRemote,
+        locationId,
+        spokenLanguageCode,
       });
 
       await onSubmit({
@@ -156,6 +178,9 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         duration_minutes: validatedData.durationMinutes,
         min_age: validatedData.minAge,
         max_age: validatedData.maxAge,
+        is_remote: validatedData.isRemote,
+        location_id: validatedData.locationId,
+        spoken_language_code: validatedData.spokenLanguageCode,
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -318,6 +343,26 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
               </Button>
             </div>
           )}
+        </div>
+
+        <ProductLocationPicker
+          isRemote={isRemote}
+          locationId={locationId}
+          onChange={({ isRemote: nextRemote, locationId: nextId }) => {
+            setIsRemote(nextRemote);
+            setLocationId(nextId);
+          }}
+          disabled={isPending}
+        />
+
+        <div className="space-y-2">
+          <Label>{t('spokenLanguageLabel')}</Label>
+          <SpokenLanguageRadioGroup
+            spokenLanguages={spokenLanguages ?? []}
+            selected={spokenLanguageCode || null}
+            onChange={setSpokenLanguageCode}
+            disabled={isPending}
+          />
         </div>
 
         <div className="space-y-2">

@@ -30,6 +30,15 @@ export async function POST(request: Request) {
     const maxAge = typeof body.max_age === "number" ? body.max_age : -1;
     const padletUrl =
       typeof body.padlet_url === "string" ? body.padlet_url.trim() : "";
+    const isRemote = body.is_remote === true;
+    const locationId =
+      typeof body.location_id === "string" && body.location_id
+        ? body.location_id
+        : null;
+    const spokenLanguageCode =
+      typeof body.spoken_language_code === "string"
+        ? body.spoken_language_code.trim()
+        : "";
 
     if (!name) {
       return NextResponse.json(
@@ -102,6 +111,24 @@ export async function POST(request: Request) {
         );
       }
     }
+    if (isRemote && locationId !== null) {
+      return NextResponse.json(
+        { error: "Remote products cannot have a location" },
+        { status: 400 }
+      );
+    }
+    if (!isRemote && !locationId) {
+      return NextResponse.json(
+        { error: "In-person products must have a location" },
+        { status: 400 }
+      );
+    }
+    if (!spokenLanguageCode) {
+      return NextResponse.json(
+        { error: "Spoken language is required" },
+        { status: 400 }
+      );
+    }
 
     const admin = createAdminClient();
 
@@ -121,6 +148,9 @@ export async function POST(request: Request) {
         duration_minutes: durationMinutes,
         min_age: minAge,
         max_age: maxAge,
+        is_remote: isRemote,
+        location_id: locationId,
+        spoken_language_code: spokenLanguageCode,
       })
       .select()
       .single();
