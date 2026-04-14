@@ -231,13 +231,13 @@ export function InlineGamerForm({ onSuccess, onCancel }: InlineGamerFormProps) {
         <Label>{t('gamerForm.genderLabel')}</Label>
         <div className="flex gap-2">
           {(
-            /* eslint-disable i18next/no-literal-string */
+            /* eslint-disable i18next/no-literal-string -- "boy"/"girl"/"non_binary" are DB enum values, not user-facing text; the labels are already translated */
             [
               { value: "boy", label: t('gamerForm.genderBoy') },
               { value: "girl", label: t('gamerForm.genderGirl') },
               { value: "non_binary", label: t('gamerForm.genderNonBinary') },
             ] as const
-            /* eslint-enable i18next/no-literal-string */
+            /* eslint-enable i18next/no-literal-string -- end of DB enum values block */
           ).map((option) => (
             <button
               key={option.value}

@@ -44,7 +44,7 @@ function clearCookies() {
 
 function getCookieValue(name: string): string | undefined {
   const match = document.cookie.match(
-    // eslint-disable-next-line security/detect-non-literal-regexp
+    // eslint-disable-next-line security/detect-non-literal-regexp -- test helper; `name` is always a hardcoded cookie name in the test, never user input
     new RegExp(`(?:^|; )${name}=([^;]*)`),
   );
   return match ? decodeURIComponent(match[1]) : undefined;

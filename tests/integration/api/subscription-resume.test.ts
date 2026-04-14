@@ -63,6 +63,7 @@ describe("POST /api/checkout/subscription/resume", () => {
     const data = await response.json();
 
     expect(response.status).toBe(403);
+    expect(data.error).toBe("Forbidden");
   });
 
   // -- Validation --

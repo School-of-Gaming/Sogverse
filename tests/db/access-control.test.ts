@@ -83,7 +83,7 @@ describe("Access Control", () => {
     // Allowlist of write privileges per table. Tables not listed here
     // should only have SELECT. If a table needs INSERT/UPDATE/DELETE
     // for authenticated users, add it here with the specific privileges.
-    const WRITE_GRANT_ALLOWLIST: Record<string, Set<string>> = {
+    const WRITE_GRANT_ALLOWLIST: Record<string, Set<string> | undefined> = {
       profiles: new Set(["UPDATE"]),
       parent_gamer: new Set(["DELETE"]),
       gamer_profiles: new Set(["UPDATE"]),

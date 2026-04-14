@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { VoiceService } from "@/services/voice/voice.service";
+import type { Database } from "@/types/database.types";
 import {
   mockSupabaseSuccess,
   mockSupabaseError,
@@ -25,7 +27,7 @@ describe("VoiceService", () => {
 
   beforeEach(() => {
     mockSupabase = createMockSupabase();
-    service = new VoiceService(mockSupabase as any);
+    service = new VoiceService(mockSupabase as unknown as SupabaseClient<Database>);
   });
 
   describe("getAvailableRooms", () => {

@@ -1,4 +1,4 @@
-/* eslint-disable i18next/no-literal-string */
+/* eslint-disable i18next/no-literal-string -- internal admin-only style guide; all content is copy-paste component examples, not user-facing text that ships in any locale */
 "use client";
 
 import { useEffect, useRef, useState } from "react";

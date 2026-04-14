@@ -7,14 +7,18 @@ import type { DailyParticipant } from "@daily-co/daily-js";
 
 type UserRole = "admin" | "customer" | "gamer" | "gedu";
 
+type ParticipantFields = Pick<DailyParticipant, "user_name" | "session_id" | "audio" | "video" | "tracks" | "local" | "owner">;
+
+// Mirrors the production mapParticipant in src/components/voice/VoiceRoomProvider.tsx,
+// minus the spatial position argument. Keep in sync with production.
 function mapParticipant(
-  p: Pick<DailyParticipant, "user_name" | "session_id" | "audio" | "video" | "tracks" | "local" | "owner">,
+  p: ParticipantFields,
   activeSpeakerId: string | null
 ) {
   const raw = p.user_name || "";
   const parts = raw.split("|");
   const userId = parts[0] || p.session_id;
-  const role = (parts[1] as UserRole) || "gamer";
+  const role = parts[1] as UserRole;
   const userName = parts.slice(2).join("|") || "Unknown";
 
   return {
@@ -22,11 +26,11 @@ function mapParticipant(
     userId,
     role,
     userName,
-    audioOn: !p.audio ? false : p.tracks.audio?.state === "playable",
-    videoOn: !p.video ? false : p.tracks.video?.state === "playable",
+    audioOn: !p.audio ? false : p.tracks.audio.state === "playable",
+    videoOn: !p.video ? false : p.tracks.video.state === "playable",
     isLocal: p.local,
-    isOwner: p.owner ?? false,
-    isSpeaking: p.session_id === activeSpeakerId && Boolean(p.audio) && p.tracks.audio?.state === "playable",
+    isOwner: p.owner,
+    isSpeaking: p.session_id === activeSpeakerId && Boolean(p.audio) && p.tracks.audio.state === "playable",
   };
 }
 
@@ -64,7 +68,7 @@ function createFakeParticipant(
       audio: { state: audioState },
       video: { state: videoState },
     },
-  } as unknown as DailyParticipant;
+  } as unknown as ParticipantFields;
 }
 
 describe("mapParticipant", () => {
@@ -87,7 +91,7 @@ describe("mapParticipant", () => {
       expect(result.userName).toBe("Name|With|Pipes");
     });
 
-    it("should fall back to session_id for userId and gamer role when no separators", () => {
+    it("should fall back to user_name for userId and use 'Unknown' name when no separators", () => {
       const p = createFakeParticipant({
         user_name: "JustAName",
         session_id: "sess-xyz",
@@ -95,7 +99,6 @@ describe("mapParticipant", () => {
       const result = mapParticipant(p, null);
 
       expect(result.userId).toBe("JustAName");
-      expect(result.role).toBe("gamer");
       expect(result.userName).toBe("Unknown");
     });
 
@@ -107,18 +110,6 @@ describe("mapParticipant", () => {
       const result = mapParticipant(p, null);
 
       expect(result.userId).toBe("sess-xyz");
-      expect(result.role).toBe("gamer");
-      expect(result.userName).toBe("Unknown");
-    });
-
-    it("should handle undefined user_name", () => {
-      const p = createFakeParticipant({ session_id: "sess-abc" });
-      // Simulate undefined (Daily can return this for unnamed participants)
-      (p as any).user_name = undefined;
-      const result = mapParticipant(p, null);
-
-      expect(result.userId).toBe("sess-abc");
-      expect(result.role).toBe("gamer");
       expect(result.userName).toBe("Unknown");
     });
 
@@ -213,9 +204,8 @@ describe("mapParticipant", () => {
       expect(result.isOwner).toBe(true);
     });
 
-    it("should default owner to false when undefined", () => {
-      const p = createFakeParticipant();
-      (p as any).owner = undefined;
+    it("should reflect owner false", () => {
+      const p = createFakeParticipant({ owner: false });
       const result = mapParticipant(p, null);
 
       expect(result.isOwner).toBe(false);

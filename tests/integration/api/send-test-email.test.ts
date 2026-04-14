@@ -308,7 +308,6 @@ describe("POST /api/admin/send-test-email", () => {
     const response = await POST(
       createRequest({ toEmail: "test@example.com", template: "groupAdded", params: {} }),
     );
-    const data = await response.json();
 
     expect(response.status).toBe(400);
   });

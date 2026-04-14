@@ -97,7 +97,6 @@ describe("POST /api/admin/create-product", () => {
     mockAuthenticatedWithRole("gedu");
 
     const response = await POST(createRequest(validBody));
-    const data = await response.json();
 
     expect(response.status).toBe(403);
   });

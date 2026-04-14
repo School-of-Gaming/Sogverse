@@ -62,7 +62,7 @@ export default function GamerDashboardPage() {
 
       <Card className="border-secondary/50 bg-secondary/5">
         <CardContent className="flex items-center gap-4 py-4">
-          {/* eslint-disable-next-line i18next/no-literal-string */}
+          {/* eslint-disable-next-line i18next/no-literal-string -- decorative emoji, not translatable content */}
           <div className="text-4xl">🎮</div>
           <div>
             <h3 className="font-medium">{t('tipOfTheDay')}</h3>

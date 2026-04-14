@@ -106,7 +106,7 @@ export function MinecraftUsernameField({
       >
         <div className="min-h-0">
           <div className="flex flex-col items-center gap-2 pt-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- external third-party URL (mc-heads.net) that we don't want next/image to proxy; small avatar with no optimization benefit */}
             <img
               src={verifiedName ? `https://mc-heads.net/body/${verifiedName}` : undefined}
               alt={verifiedName ? `${verifiedName}'s Minecraft skin` : ""}

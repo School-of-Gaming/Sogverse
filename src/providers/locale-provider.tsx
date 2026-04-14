@@ -83,10 +83,8 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     if (!hasMounted.current) {
       hasMounted.current = true;
       const resolved = resolveInitialLocale(profile?.locale);
-      // One-time hydration sync: cookies/navigator aren't available during
-      // SSR so we must defer resolution to the client. Only fires once.
       if (resolved !== DEFAULT_LOCALE) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration sync; cookies/navigator aren't available during SSR so we must defer resolution to the client. Guarded by hasMounted.current so it only fires once.
         setLocaleState(resolved);
       }
     }

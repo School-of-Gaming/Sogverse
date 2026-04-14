@@ -158,7 +158,7 @@ export default function AboutPage() {
           Inline hardcoded colours (#d00, #0a0a0a) are intentional here —
           these are Klingon Empire flag colours for a one-off easter egg,
           not brand/theme colours that belong in the design system. */}
-      {/* eslint-disable i18next/no-literal-string */}
+      {/* eslint-disable i18next/no-literal-string -- Klingon easter egg: the "English"/"tlhIngan Hol"/"Literal meaning" reference headers are intentionally untranslated since this block only renders when locale === "tlh" */}
       {locale === "tlh" && (
         <div className="mx-auto mt-16 max-w-3xl">
           {/* Styled like a Klingon ship console: dark base, red accents, functional text */}
@@ -211,7 +211,7 @@ export default function AboutPage() {
           </Card>
         </div>
       )}
-      {/* eslint-enable i18next/no-literal-string */}
+      {/* eslint-enable i18next/no-literal-string -- end of Klingon easter egg block */}
     </div>
   );
 }

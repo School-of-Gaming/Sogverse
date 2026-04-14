@@ -15,7 +15,7 @@ vi.mock("stripe", () => ({
 
 // Mock unstable_cache to pass through to the inner function (no caching in tests)
 vi.mock("next/cache", () => ({
-  unstable_cache: (fn: Function) => fn,
+  unstable_cache: <T>(fn: T): T => fn,
 }));
 
 // Import after mocks are set up

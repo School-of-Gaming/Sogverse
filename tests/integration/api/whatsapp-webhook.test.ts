@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import crypto from "crypto";
 
 const TEST_VERIFY_TOKEN = "test-verify-token";

@@ -241,7 +241,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
           <Input
             id="imageUrl"
             type="url"
-            placeholder="https://example.com/image.png" // eslint-disable-line i18next/no-literal-string
+            placeholder="https://example.com/image.png" // eslint-disable-line i18next/no-literal-string -- example URL placeholder, not user-facing copy
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             disabled={isPending}
@@ -249,7 +249,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
           />
           {previewUrl && !previewError && (
             <div className="relative mt-2 h-32 w-full overflow-hidden rounded-md border bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- admin-entered arbitrary external URL preview; next/image requires configured remotePatterns which we don't have for this input */}
               <img
                 src={previewUrl}
                 alt={t('preview')}

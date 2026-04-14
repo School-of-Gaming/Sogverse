@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
 import {
   cn,
   formatCurrency,
@@ -17,7 +17,8 @@ describe("cn (className merge utility)", () => {
   });
 
   it("handles conditional classes", () => {
-    expect(cn("foo", false && "bar", "baz")).toBe("foo baz");
+    const includeBar = false as boolean;
+    expect(cn("foo", includeBar && "bar", "baz")).toBe("foo baz");
   });
 
   it("merges Tailwind classes correctly", () => {

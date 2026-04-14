@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { ProductsService } from "@/services/products/products.service";
+import type { Database } from "@/types/database.types";
 import {
   createMockProduct,
   mockSupabaseSuccess,
@@ -19,7 +21,7 @@ describe("ProductsService", () => {
 
   beforeEach(() => {
     mockSupabase = createMockSupabase();
-    service = new ProductsService(mockSupabase as any);
+    service = new ProductsService(mockSupabase as unknown as SupabaseClient<Database>);
   });
 
   describe("getVisibleProducts", () => {
