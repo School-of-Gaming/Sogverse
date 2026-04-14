@@ -28,7 +28,7 @@ export default function AddProductPage() {
 
   if (cloneId && cloneLoading) {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-4">
           <div className="h-10 w-10 rounded bg-muted animate-pulse" />
           <div className="space-y-2">
@@ -67,7 +67,7 @@ export default function AddProductPage() {
     : undefined;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
         <Link href={ROUTES.admin.products}>
           <Button variant="ghost" size="icon">
