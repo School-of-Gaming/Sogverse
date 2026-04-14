@@ -177,6 +177,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gedu_locations: {
+        Row: {
+          created_at: string
+          gedu_id: string
+          location_id: string
+        }
+        Insert: {
+          created_at?: string
+          gedu_id: string
+          location_id: string
+        }
+        Update: {
+          created_at?: string
+          gedu_id?: string
+          location_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_locations_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_enrollments: {
         Row: {
           created_at: string
@@ -387,11 +420,14 @@ export type Database = {
           game_id: string
           id: string
           image_url: string
+          is_remote: boolean
           is_visible: boolean | null
+          location_id: string | null
           max_age: number
           min_age: number
           name: string
           padlet_url: string | null
+          spoken_language_code: string
           start_time: string
           timezone: string
           token_cost: number
@@ -406,11 +442,14 @@ export type Database = {
           game_id: string
           id?: string
           image_url: string
+          is_remote: boolean
           is_visible?: boolean | null
+          location_id?: string | null
           max_age: number
           min_age: number
           name: string
           padlet_url?: string | null
+          spoken_language_code: string
           start_time: string
           timezone?: string
           token_cost: number
@@ -425,11 +464,14 @@ export type Database = {
           game_id?: string
           id?: string
           image_url?: string
+          is_remote?: boolean
           is_visible?: boolean | null
+          location_id?: string | null
           max_age?: number
           min_age?: number
           name?: string
           padlet_url?: string | null
+          spoken_language_code?: string
           start_time?: string
           timezone?: string
           token_cost?: number
@@ -449,6 +491,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "games"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_spoken_language_code_fkey"
+            columns: ["spoken_language_code"]
+            isOneToOne: false
+            referencedRelation: "spoken_languages"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -889,11 +945,14 @@ export type Database = {
           game_id: string
           id: string
           image_url: string
+          is_remote: boolean
           is_visible: boolean | null
+          location_id: string | null
           max_age: number
           min_age: number
           name: string
           padlet_url: string | null
+          spoken_language_code: string
           start_time: string
           timezone: string
           token_cost: number

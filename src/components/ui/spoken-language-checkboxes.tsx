@@ -1,15 +1,22 @@
 "use client";
 
 /**
- * Multi-select for the user's **spoken languages** — the human languages they
+ * Controls for the user's **spoken languages** — the human languages they
  * speak / want clubs delivered in. Backed by the `profiles.spoken_languages`
- * array and the `spoken_languages` reference table; used when matching
- * gamers/gedus to clubs.
+ * array (for users), the `products.spoken_language_code` column (for clubs),
+ * and the `spoken_languages` reference table.
  *
  * **Not the UI locale picker** (which translation of the app the user sees).
  * For that, see src/components/layout/locale-picker.tsx and the LocaleProvider.
  * See docs/i18n-architecture.md for the convention split between locale and
  * spoken language.
+ *
+ * Exports:
+ *   - SpokenLanguageCheckboxes — multi-select, for user profile / settings
+ *   - SpokenLanguageRadioGroup — single-select, for product admin form
+ *
+ * Both components share the same flag/translation helpers, so adding a new
+ * language to the DB shows up in both automatically.
  */
 
 import flags from "react-phone-number-input/flags";
@@ -34,6 +41,38 @@ const SPOKEN_LANG_NAME_KEYS: Record<string, string> = {
 
 const PLACEHOLDER_COUNT = 3;
 
+type FlagComponent = (typeof flags)[keyof typeof flags];
+
+function useLangDisplay() {
+  const c = useTranslations("common");
+  return (lang: SpokenLanguage): { FlagIcon: FlagComponent | undefined; displayName: string } => {
+    const country = SPOKEN_LANG_TO_COUNTRY[lang.code];
+    const FlagIcon = country ? flags[country as keyof typeof flags] : undefined;
+    const nameKey = SPOKEN_LANG_NAME_KEYS[lang.code];
+    const displayName = nameKey ? c(nameKey as "languageEnglish") : lang.name;
+    return { FlagIcon, displayName };
+  };
+}
+
+function FlagLabel({
+  FlagIcon,
+  displayName,
+}: {
+  FlagIcon: FlagComponent | undefined;
+  displayName: string;
+}) {
+  return (
+    <>
+      {FlagIcon && (
+        <span className="h-4 w-6 [&>svg]:h-full">
+          <FlagIcon title={displayName} />
+        </span>
+      )}
+      {displayName}
+    </>
+  );
+}
+
 export function SpokenLanguageCheckboxes({
   spokenLanguages,
   selected,
@@ -45,20 +84,17 @@ export function SpokenLanguageCheckboxes({
   onChange: (selected: string[]) => void;
   disabled?: boolean;
 }) {
-  const t = useTranslations('settings');
-  const c = useTranslations('common');
+  const t = useTranslations("settings");
+  const display = useLangDisplay();
   const loaded = spokenLanguages.length > 0;
 
   return (
     <fieldset className="space-y-2">
-      <legend className="text-sm font-medium leading-none">{t('spokenLanguages')}</legend>
+      <legend className="text-sm font-medium leading-none">{t("spokenLanguages")}</legend>
       <div className="flex flex-col gap-2">
         {loaded
           ? spokenLanguages.map((lang) => {
-              const country = SPOKEN_LANG_TO_COUNTRY[lang.code];
-              const FlagIcon = country ? flags[country as keyof typeof flags] : undefined;
-              const nameKey = SPOKEN_LANG_NAME_KEYS[lang.code];
-              const displayName = nameKey ? c(nameKey as "languageEnglish") : lang.name;
+              const { FlagIcon, displayName } = display(lang);
               return (
                 <label key={lang.code} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input
@@ -68,14 +104,13 @@ export function SpokenLanguageCheckboxes({
                       onChange(
                         e.target.checked
                           ? [...selected, lang.code]
-                          : selected.filter((l) => l !== lang.code)
+                          : selected.filter((l) => l !== lang.code),
                       );
                     }}
                     disabled={disabled}
                     className="h-4 w-4 accent-primary cursor-pointer"
                   />
-                  {FlagIcon && <span className="h-4 w-6 [&>svg]:h-full"><FlagIcon title={displayName} /></span>}
-                  {displayName}
+                  <FlagLabel FlagIcon={FlagIcon} displayName={displayName} />
                 </label>
               );
             })
@@ -87,5 +122,56 @@ export function SpokenLanguageCheckboxes({
             ))}
       </div>
     </fieldset>
+  );
+}
+
+/**
+ * Single-select variant for the product admin form. A club is delivered in
+ * exactly one language, so radios are the right affordance (not checkboxes
+ * with max=1).
+ */
+export function SpokenLanguageRadioGroup({
+  spokenLanguages,
+  selected,
+  onChange,
+  disabled,
+  name = "spoken-language",
+}: {
+  spokenLanguages: SpokenLanguage[];
+  selected: string | null;
+  onChange: (code: string) => void;
+  disabled?: boolean;
+  name?: string;
+}) {
+  const display = useLangDisplay();
+  const loaded = spokenLanguages.length > 0;
+
+  return (
+    <div className="flex flex-col gap-2">
+      {loaded
+        ? spokenLanguages.map((lang) => {
+            const { FlagIcon, displayName } = display(lang);
+            return (
+              <label key={lang.code} className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  name={name}
+                  value={lang.code}
+                  checked={selected === lang.code}
+                  onChange={() => onChange(lang.code)}
+                  disabled={disabled}
+                  className="h-4 w-4 accent-primary cursor-pointer"
+                />
+                <FlagLabel FlagIcon={FlagIcon} displayName={displayName} />
+              </label>
+            );
+          })
+        : Array.from({ length: PLACEHOLDER_COUNT }, (_, i) => (
+            <label key={i} className="invisible flex items-center gap-2 text-sm">
+              <input type="radio" className="h-4 w-4" />
+              &nbsp;
+            </label>
+          ))}
+    </div>
   );
 }

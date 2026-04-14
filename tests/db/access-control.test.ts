@@ -89,6 +89,10 @@ describe("Access Control", () => {
       gamer_profiles: new Set(["UPDATE"]),
       whatsapp_contacts: new Set(["INSERT", "UPDATE"]),
       whatsapp_messages: new Set(["INSERT", "UPDATE"]),
+      // Gedus write their own coverage rows directly from the browser
+      // (setForGedu uses DELETE + INSERT). RLS enforces self-only access
+      // and the role-is-gedu check on WITH CHECK.
+      gedu_locations: new Set(["INSERT", "DELETE"]),
     };
 
     const { data, error } = await admin.rpc("_list_table_grants");

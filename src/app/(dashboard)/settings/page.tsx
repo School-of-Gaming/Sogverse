@@ -13,6 +13,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
+import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
@@ -28,6 +29,7 @@ export default function SettingsPage() {
   const updateProfile = useUpdateProfile();
   const router = useRouter();
   const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
+  const isGedu = profile?.role === "gedu";
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
   const { data: availableLanguages } = useSpokenLanguages();
@@ -117,7 +119,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold">{c('settings')}</h1>
         <p className="text-muted-foreground">
@@ -238,6 +240,9 @@ export default function SettingsPage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* Gedu coverage areas — where they can substitute in-person */}
+      {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
 
       {/* Minecraft Account (gamers and gedus) */}
       {showMinecraft && (

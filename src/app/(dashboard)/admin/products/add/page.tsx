@@ -28,7 +28,7 @@ export default function AddProductPage() {
 
   if (cloneId && cloneLoading) {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-4">
           <div className="h-10 w-10 rounded bg-muted animate-pulse" />
           <div className="space-y-2">
@@ -63,11 +63,14 @@ export default function AddProductPage() {
         duration_minutes: cloneSource.duration_minutes,
         min_age: cloneSource.min_age,
         max_age: cloneSource.max_age,
+        is_remote: cloneSource.is_remote,
+        location_id: cloneSource.location_id,
+        spoken_language_code: cloneSource.spoken_language_code,
       }
     : undefined;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
         <Link href={ROUTES.admin.products}>
           <Button variant="ghost" size="icon">

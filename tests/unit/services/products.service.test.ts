@@ -96,6 +96,9 @@ describe("ProductsService", () => {
         duration_minutes: 60,
         min_age: 7,
         max_age: 12,
+        is_remote: true,
+        location_id: null,
+        spoken_language_code: "en",
       };
       const createdProduct = createMockProduct(newProduct);
 

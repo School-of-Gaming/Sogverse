@@ -234,28 +234,72 @@ SELECT * FROM ancestors ORDER BY depth DESC;
 -- Returns: Finland > Uusimaa > Helsinki
 ```
 
-## Future: Linking to Products and Gedus
+## Products and Gedus
 
-Products will have exactly one location (FK on `products` table). Gedus can have multiple locations via a junction table, representing areas where they can substitute.
+Migration 00024 added three columns to `products` and a new `gedu_locations` table, wiring the hierarchy into substitute matching.
+
+### Products
 
 ```sql
--- Products: one location each
-ALTER TABLE products ADD COLUMN location_id UUID REFERENCES locations(id);
+ALTER TABLE products
+  ADD COLUMN is_remote BOOLEAN NOT NULL,
+  ADD COLUMN location_id UUID REFERENCES locations(id) ON DELETE RESTRICT,
+  ADD COLUMN spoken_language_code TEXT NOT NULL REFERENCES spoken_languages(code);
 
--- Gedus: multiple locations
+ALTER TABLE products ADD CONSTRAINT products_location_xor_remote
+  CHECK (
+    (is_remote = true  AND location_id IS NULL) OR
+    (is_remote = false AND location_id IS NOT NULL)
+  );
+```
+
+Every product is either **remote** (no location) or **in-person** (has a location) — enforced by the CHECK. `location_id` is nullable on its own (null for remote), but the combination is constrained.
+
+A `BEFORE INSERT/UPDATE` trigger (`validate_product_location`) additionally enforces that `location_id`, when set, references a row whose `type = 'site'`. Products can only be pinned to leaves — never to a region or city — so the ancestor-walk matching query has a well-defined starting point.
+
+`is_remote` and `spoken_language_code` are both **NOT NULL with no DEFAULT** by design. Admins must pick a value on every new product; there is no silent assumption at any layer. The Zod rule in `ProductForm` is the first line of defence, the CHECK + NOT NULL are the database backstop.
+
+### Gedu Coverage
+
+```sql
 CREATE TABLE gedu_locations (
-  gedu_id     UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  location_id UUID REFERENCES locations(id) ON DELETE CASCADE,
+  gedu_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (gedu_id, location_id)
 );
 ```
 
-### Gedu Location Selection
+Gedus can tick rows at **any level** of the hierarchy — a region, a city, or a specific site. RLS:
 
-Gedus can select locations at **any level** of the hierarchy:
-- Selecting a region (e.g. "Uusimaa") means "I can substitute anywhere in this region"
-- Selecting a municipality (e.g. "Helsinki") means "only in this city"
-- Selecting a site (e.g. "Ressu School") means "only at this specific location"
+- `gedu_manage_own_locations` — a gedu can read/write rows where `gedu_id = auth.uid()` **and** their role is `gedu` (both actor and target checked per the access-control rule).
+- `admin_manage_gedu_locations` — admins can read/write any row, to support the admin user-detail view.
+
+Deleting a gedu profile cascades to their coverage rows; deleting a location cascades to every gedu that ticked it (since the ticks become meaningless if the location is gone).
+
+### Gedu Coverage UI
+
+The coverage editor (`src/components/gedu/gedu-coverage-editor.tsx`) reuses `LocationTree` (`src/components/locations/location-tree.tsx`) in **selectable mode**: every row renders a checkbox instead of the admin hover buttons, and countries start collapsed so gedus drill only into the one they cover.
+
+**Cascade tick semantics** — a single tick represents "I cover this whole subtree":
+- Ticking a parent auto-ticks every descendant row in the DB set.
+- Unticking any descendant removes that descendant **and** every selected ancestor up the chain, because an ancestor's tick meant "I fully cover my subtree" — which is no longer true the moment a child is removed. Sibling branches are unaffected.
+
+Concretely: if a gedu ticks Uusimaa and then unticks Helsinki, Uusimaa comes off but Espoo, Vantaa, and every other Uusimaa-descendant site stays ticked. The net result is "I cover Uusimaa except Helsinki."
+
+An empty selection is valid — the gedu is treated as remote-only.
+
+The editor is mounted at **two** call sites, sharing the same `<GeduCoverageEditor geduId={...} />`:
+1. `src/app/(dashboard)/settings/page.tsx` (gedu self-edit, under a `role === "gedu"` branch)
+2. `src/app/(dashboard)/admin/users/[id]/page.tsx` (admin editing any gedu, under an `isGedu` branch)
+
+### Product Location Picker
+
+The admin product form uses `<ProductLocationPicker>` (`src/components/admin/product-location-picker.tsx`) — a Remote | In-person toggle, and in in-person mode, a chain of cascading dropdowns dynamically built from `SUPPORTED_COUNTRIES[countryCode].hierarchy`. Adding a new country to the table automatically works in the picker with zero code changes.
+
+Each dropdown has a `+` button that opens `LocationFormDialog` inline, letting admins build out Country → Region → City → Site without leaving the product form. After creation, the new row is auto-selected and focus advances.
+
+The picker propagates a non-null `location_id` up to the parent form only when the deepest selection is a `site` (leaf). If the admin stops at a region or city, the product form's Zod `locationRequired` rule keeps the submit button disabled. The DB trigger is the backstop.
 
 ### Substitute Matching
 
@@ -274,5 +318,5 @@ FROM gedu_locations gl
 WHERE gl.location_id IN (SELECT id FROM ancestors);
 ```
 
-A product in Helsinki matches gedus who selected Helsinki, Uusimaa, or Finland.
+A product at `Ressu School` matches every gedu who ticked Ressu School, Helsinki, Uusimaa, **or** Finland — because the cascade-tick semantics guarantee that any of those rows means "I cover everything underneath." Language-matching (`products.spoken_language_code` ∈ `profiles.spoken_languages`) layers on top of this query as an `AND` clause.
 

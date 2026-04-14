@@ -266,6 +266,13 @@
       "noLocationsYet": "No locations yet. Add a country to get started.",
       "noLocationsMatchSearch": "No locations found matching your search."
     },
+    "productLocation": {
+      "locationLabel": "Location",
+      "remote": "Remote",
+      "inPerson": "In-person",
+      "selectLevel": "Select {type}...",
+      "selectSiteHint": "Drill down to a specific site to finish."
+    },
     "testing": {
       "title": "Testing",
       "description": "Internal tools for testing and development",
@@ -387,7 +394,10 @@
       "minAgeMin": "Min age must be 0 or greater",
       "maxAgeMin": "Max age must be 0 or greater",
       "maxAgeGte": "Max age must be greater than or equal to min age",
-      "failedToCreateGame": "Failed to create game"
+      "failedToCreateGame": "Failed to create game",
+      "spokenLanguageLabel": "Language delivered in",
+      "spokenLanguageRequired": "Please pick the language the club is delivered in",
+      "locationRequired": "Please pick a location or mark the club as remote"
     }
   },
   "auth": {
@@ -649,7 +659,20 @@
     "statsGroupsDescription": "Manage your groups",
     "statsGamers": "Gamers",
     "statsGamersDescription": "Across all groups",
-    "latestStudentActivities": "Latest student activities"
+    "latestStudentActivities": "Latest student activities",
+    "coverage": {
+      "title": "Coverage areas",
+      "remoteOnlyNote": "Used to match you as a substitute when another Gedu can't cover their club. Leave empty if you only sub remotely.",
+      "selectedHeading": "Selected ({count})",
+      "noneSelected": "No areas selected",
+      "remove": "Remove {name}",
+      "clearAll": "Clear all",
+      "searchPlaceholder": "Search locations...",
+      "loading": "Loading locations...",
+      "save": "Save",
+      "saving": "Saving...",
+      "saveError": "Failed to save coverage"
+    }
   },
   "groups": {
     "title": "Groups",

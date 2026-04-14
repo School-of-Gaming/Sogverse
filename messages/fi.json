@@ -266,6 +266,13 @@
       "noLocationsYet": "Ei sijainteja vielä. Lisää maa aloittaaksesi.",
       "noLocationsMatchSearch": "Hakuasi vastaavia sijainteja ei löytynyt."
     },
+    "productLocation": {
+      "locationLabel": "Sijainti",
+      "remote": "Etänä",
+      "inPerson": "Paikan päällä",
+      "selectLevel": "Valitse {type}...",
+      "selectSiteHint": "Valitse tietty toimipiste jatkaaksesi."
+    },
     "testing": {
       "title": "Testaus",
       "description": "Sisäiset testaus- ja kehitystyökalut",
@@ -387,7 +394,10 @@
       "minAgeMin": "Vähimmäisiän pitää olla 0 tai enemmän",
       "maxAgeMin": "Enimmäisiän pitää olla 0 tai enemmän",
       "maxAgeGte": "Enimmäisiän pitää olla vähintään yhtä suuri kuin vähimmäisikä",
-      "failedToCreateGame": "Pelin luominen epäonnistui"
+      "failedToCreateGame": "Pelin luominen epäonnistui",
+      "spokenLanguageLabel": "Kerhon kieli",
+      "spokenLanguageRequired": "Valitse kieli, jolla kerho pidetään",
+      "locationRequired": "Valitse sijainti tai merkitse etäkerhoksi"
     }
   },
   "auth": {
@@ -649,7 +659,20 @@
     "statsGroupsDescription": "Hallitse ryhmiäsi",
     "statsGamers": "Pelaajat",
     "statsGamersDescription": "Kaikissa ryhmissä",
-    "latestStudentActivities": "Oppilaiden viimeisimmät toiminnot"
+    "latestStudentActivities": "Oppilaiden viimeisimmät toiminnot",
+    "coverage": {
+      "title": "Kattamasi alueet",
+      "remoteOnlyNote": "Käytetään sijaisen etsimiseen, kun toinen kasvattaja ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos toimit vain etänä.",
+      "selectedHeading": "Valitut ({count})",
+      "noneSelected": "Ei valittuja alueita",
+      "remove": "Poista {name}",
+      "clearAll": "Tyhjennä kaikki",
+      "searchPlaceholder": "Etsi sijainteja...",
+      "loading": "Ladataan sijainteja...",
+      "save": "Tallenna",
+      "saving": "Tallennetaan...",
+      "saveError": "Tallennus epäonnistui"
+    }
   },
   "groups": {
     "title": "Ryhmät",

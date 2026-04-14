@@ -27,7 +27,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-4">
           <div className="h-10 w-10 rounded bg-muted animate-pulse" />
           <div className="space-y-2">
@@ -51,7 +51,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-4">
           <Link href={ROUTES.admin.product(id)}>
             <Button variant="ghost" size="icon">
@@ -65,7 +65,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
         <Link href={`/admin/products/${id}`}>
           <Button variant="ghost" size="icon">
@@ -107,6 +107,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             duration_minutes: product.duration_minutes,
             min_age: product.min_age,
             max_age: product.max_age,
+            is_remote: product.is_remote,
+            location_id: product.location_id,
+            spoken_language_code: product.spoken_language_code,
           }}
           onSubmit={handleSubmit}
           isPending={updateProduct.isPending || isNavigating}

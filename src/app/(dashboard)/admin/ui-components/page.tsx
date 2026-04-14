@@ -475,6 +475,9 @@ const DEMO_PRODUCTS = [
     padlet_url: null,
     created_at: null,
     updated_at: null,
+    is_remote: true,
+    location_id: null,
+    spoken_language_code: "en",
     games: { name: "Minecraft" },
   },
   {
@@ -495,6 +498,9 @@ const DEMO_PRODUCTS = [
     padlet_url: null,
     created_at: null,
     updated_at: null,
+    is_remote: true,
+    location_id: null,
+    spoken_language_code: "en",
     games: { name: "Roblox" },
   },
 ] as const;
