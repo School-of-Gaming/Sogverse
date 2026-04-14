@@ -23,7 +23,6 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
 import { useAuth } from "./auth-provider";
 import {
   detectLocaleFromHeader,
@@ -73,10 +72,6 @@ const LocaleContext = createContext<LocaleContextType | undefined>(
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const { profile, user, refreshProfile } = useAuth();
   const router = useRouter();
-  // next-intl's current request locale — what SSR actually rendered with.
-  // Used to detect when the cookie (and therefore the messages bundle) has
-  // drifted from the user's profile preference.
-  const renderedLocale = useLocale();
   // Start with DEFAULT_LOCALE to match SSR (cookies/navigator aren't
   // available server-side). Synced to the real value after hydration.
   const [locale, setLocaleState] =
@@ -107,23 +102,22 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       ? profileLocale
       : locale;
 
-  // Reconcile the cookie with profile.locale whenever they diverge. Handles
-  // the "signed in on a new device" case: the browser has an Accept-Language
-  // cookie (e.g. "en") but the profile says "fi". Without this, next-intl's
-  // getRequestConfig keeps loading the wrong messages bundle on every SSR
-  // render and the user is stuck in the wrong language.
+  // Reconcile the cookie with profile.locale whenever the profile changes.
+  // Handles the "signed in on a new device" case: the browser has an
+  // Accept-Language cookie (e.g. "en") but the profile says "fi". Without
+  // this, next-intl's getRequestConfig keeps loading the wrong messages
+  // bundle on every SSR render and the user is stuck in the wrong language.
   //
-  // Early-returns when already in sync, so the steady state is a no-op.
+  // When the cookie is out of sync, the SSR-rendered messages bundle is
+  // also out of sync (next-intl reads the cookie), so we always refresh
+  // after writing. Early-returns when already in sync, so steady state is
+  // a no-op.
   useEffect(() => {
     if (!profileLocale || !isSupportedLocale(profileLocale)) return;
     if (getCookie(COOKIE_NAME) === profileLocale) return;
     setCookie(COOKIE_NAME, profileLocale);
-    // If SSR rendered a different bundle than the profile locale, force a
-    // re-render so next-intl picks up the newly-written cookie.
-    if (renderedLocale !== profileLocale) {
-      router.refresh();
-    }
-  }, [profileLocale, renderedLocale, router]);
+    router.refresh();
+  }, [profileLocale, router]);
 
   const setLocale = useCallback(
     (newLocale: SupportedLocale) => {

@@ -14,25 +14,26 @@ vi.mock("@/providers/auth-provider", () => ({
   useAuth: () => mockAuth,
 }));
 
-const mockRefresh = vi.hoisted(() => vi.fn());
+// The real next/navigation useRouter returns a stable object across renders.
+// Returning a fresh literal each call would make it look like a changed
+// dependency to every effect that closes over `router`, which doesn't match
+// production behavior.
+const mockRouter = vi.hoisted(() => ({
+  refresh: vi.fn(),
+  push: vi.fn(),
+  replace: vi.fn(),
+  back: vi.fn(),
+  forward: vi.fn(),
+  prefetch: vi.fn(),
+}));
+const mockRefresh = mockRouter.refresh;
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    refresh: mockRefresh,
-    push: vi.fn(),
-    replace: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-    prefetch: vi.fn(),
-  }),
+  useRouter: () => mockRouter,
   usePathname: () => "/",
   useSearchParams: () => new URLSearchParams(),
 }));
 
-// Simulate SSR having rendered the English messages bundle.
-vi.mock("next-intl", () => ({
-  useLocale: () => "en",
-}));
 
 function clearCookies() {
   for (const cookie of document.cookie.split(";")) {
@@ -78,7 +79,7 @@ describe("LocaleProvider", () => {
     });
   });
 
-  it("calls router.refresh() when the rendered locale differs from the profile", async () => {
+  it("calls router.refresh() after writing the cookie so SSR picks up the new bundle", async () => {
     // Same scenario as above — the SSR-rendered messages bundle is English
     // but the profile is Finnish. Writing the cookie alone isn't enough; the
     // currently-loaded messages bundle won't flip until next-intl re-runs.
@@ -98,7 +99,7 @@ describe("LocaleProvider", () => {
     });
   });
 
-  it("is a no-op when cookie and profile already agree", async () => {
+  it("is a no-op when cookie and profile already agree", () => {
     // Steady state: returning user, cookie already matches profile. The
     // provider must not write the cookie again or trigger a refresh — that
     // would add a redundant render on every page load.
@@ -106,16 +107,51 @@ describe("LocaleProvider", () => {
     mockAuth.profile = { locale: "fi" } as Profile;
     mockAuth.user = { id: "user-1" };
 
+    // render() is wrapped in act(), so mount effects are flushed before it
+    // returns. No timers needed.
     render(
       <LocaleProvider>
         <div>child</div>
       </LocaleProvider>,
     );
 
-    // Let any pending effects flush.
-    await new Promise((resolve) => setTimeout(resolve, 20));
-
     expect(mockRefresh).not.toHaveBeenCalled();
     expect(getCookieValue("locale")).toBe("fi");
+  });
+
+  it("does not roll the cookie back mid-flight when setLocale is in progress", () => {
+    // Regression: when the user picks a new locale in the picker,
+    // setLocale() writes the cookie and calls router.refresh(). The cookie
+    // flips synchronously, but refreshProfile() is async — so for a moment
+    // the cookie says "sv" while profile.locale still says "en". The
+    // reconcile effect must not interpret this as drift and roll the
+    // cookie back to the stale profile value on the next re-render.
+    document.cookie = "locale=en;path=/";
+    mockAuth.profile = { locale: "en" } as Profile;
+    mockAuth.user = { id: "user-1" };
+
+    const { rerender } = render(
+      <LocaleProvider>
+        <div>child</div>
+      </LocaleProvider>,
+    );
+
+    // Mount reconcile already ran inside render()'s act() — everything
+    // agrees, nothing written.
+    expect(getCookieValue("locale")).toBe("en");
+
+    // Simulate setLocale("sv"): the cookie is written, but profile hasn't
+    // been refreshed yet so profileLocale stays "en". rerender() is wrapped
+    // in act(), so any effect commits before rerender() returns.
+    document.cookie = "locale=sv;path=/";
+
+    rerender(
+      <LocaleProvider>
+        <div>child</div>
+      </LocaleProvider>,
+    );
+
+    // The cookie must still be "sv" — not rolled back to "en".
+    expect(getCookieValue("locale")).toBe("sv");
   });
 });
