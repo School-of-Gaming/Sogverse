@@ -419,7 +419,8 @@ export type Database = {
           duration_minutes: number
           game_id: string
           id: string
-          image_url: string
+          image_path: string | null
+          image_url: string | null
           is_remote: boolean
           is_visible: boolean | null
           location_id: string | null
@@ -441,7 +442,8 @@ export type Database = {
           duration_minutes: number
           game_id: string
           id?: string
-          image_url: string
+          image_path?: string | null
+          image_url?: string | null
           is_remote: boolean
           is_visible?: boolean | null
           location_id?: string | null
@@ -463,7 +465,8 @@ export type Database = {
           duration_minutes?: number
           game_id?: string
           id?: string
-          image_url?: string
+          image_path?: string | null
+          image_url?: string | null
           is_remote?: boolean
           is_visible?: boolean | null
           location_id?: string | null
@@ -881,6 +884,7 @@ export type Database = {
           last_charge_session_date: string
           product_description: string
           product_id: string
+          product_image_path: string
           product_image_url: string
           product_max_age: number
           product_min_age: number
@@ -944,7 +948,8 @@ export type Database = {
           duration_minutes: number
           game_id: string
           id: string
-          image_url: string
+          image_path: string | null
+          image_url: string | null
           is_remote: boolean
           is_visible: boolean | null
           location_id: string | null

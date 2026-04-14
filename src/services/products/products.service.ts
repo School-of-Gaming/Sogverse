@@ -3,6 +3,14 @@ import type { Product, ProductInsert, ProductUpdate, Database } from "@/types";
 
 export type ProductWithGame = Product & { games: { name: string } | null };
 
+// Self-hosted images transition (PR 1 of 3): the generated Row type now has
+// image_url: string | null because migration 00027 dropped NOT NULL. Every
+// runtime row still has a non-null image_url — PR 2 flips reads to image_path
+// and removes these casts. See src/types/index.ts "products" override.
+function assertProductShape<T>(row: unknown): T {
+  return row as T;
+}
+
 export class ProductsService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
@@ -14,7 +22,7 @@ export class ProductsService {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data;
+    return assertProductShape<ProductWithGame[]>(data);
   }
 
   async getAllProducts(): Promise<ProductWithGame[]> {
@@ -24,7 +32,7 @@ export class ProductsService {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data;
+    return assertProductShape<ProductWithGame[]>(data);
   }
 
   async getProduct(id: string): Promise<ProductWithGame> {
@@ -35,7 +43,7 @@ export class ProductsService {
       .single();
 
     if (error) throw error;
-    return data;
+    return assertProductShape<ProductWithGame>(data);
   }
 
   async createProduct(product: Omit<ProductInsert, "created_by">): Promise<Product> {
@@ -63,7 +71,7 @@ export class ProductsService {
       .single();
 
     if (error) throw error;
-    return data;
+    return assertProductShape<Product>(data);
   }
 
   async deleteProduct(id: string): Promise<void> {

@@ -45,9 +45,29 @@ export type ParentGamer = Database["public"]["Tables"]["parent_gamer"]["Row"];
 export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["Insert"];
 
 // products
-export type Product = Database["public"]["Tables"]["products"]["Row"];
-export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
-export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
+//
+// Self-hosted images transition (PR 1 of 3):
+//   - Migration 00027 added products.image_path (nullable) and dropped NOT NULL
+//     from products.image_url.
+//   - No application code reads image_path yet (PR 2 will flip reads/writes to it).
+//   - Every existing product row still has a non-null image_url at runtime.
+//
+// These overrides hide image_path and re-assert image_url as NOT NULL so PR 1 is
+// purely additive to the DB — callers compile unchanged. Remove the overrides in
+// PR 2 when code starts reading image_path, and in PR 3 when image_url is dropped.
+type _ProductRow = Database["public"]["Tables"]["products"]["Row"];
+type _ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
+type _ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
+
+export type Product = Omit<_ProductRow, "image_url" | "image_path"> & {
+  image_url: string;
+};
+export type ProductInsert = Omit<_ProductInsert, "image_url" | "image_path"> & {
+  image_url: string;
+};
+export type ProductUpdate = Omit<_ProductUpdate, "image_url" | "image_path"> & {
+  image_url?: string;
+};
 
 // games
 export type Game = Database["public"]["Tables"]["games"]["Row"];
@@ -135,10 +155,13 @@ export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAP
 // Also overrides product_padlet_url which is nullable in the products table but
 // marked non-null by the type generator.
 type _MyGroupGenerated = Database["public"]["Functions"]["get_my_groups"]["Returns"][number];
+// product_image_path is part of the transition (see "products" override above) —
+// it's omitted here so PR 1 callers don't have to provide it. Remove from the
+// Omit in PR 2 when code starts reading it.
 export type MyGroupWithDetails = Omit<
   _MyGroupGenerated,
   | "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
-  | "product_padlet_url" | "last_charge_session_date"
+  | "product_padlet_url" | "last_charge_session_date" | "product_image_path"
 > & {
   enrollment_id: string | null;
   gamer_id: string | null;
