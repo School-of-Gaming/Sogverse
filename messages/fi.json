@@ -1143,7 +1143,7 @@
       "subject": "Nollaa Sogverse-salasanasi",
       "heading": "Nollaa salasanasi",
       "body": "Saimme pyynnön nollata Sogverse-salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
-      "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
+      "expiry": "Tämä linkki vanhenee 72 tunnin kuluttua.",
       "ignore": "Jos et pyytänyt salasanan nollausta, voit jättää tämän sähköpostin huomiotta. Salasanaasi ei muuteta.",
       "button": "Nollaa salasana"
     },

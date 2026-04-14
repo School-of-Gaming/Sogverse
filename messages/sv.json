@@ -1143,7 +1143,7 @@
       "subject": "Återställ ditt Sogverse-lösenord",
       "heading": "Återställ ditt lösenord",
       "body": "Vi har mottagit en begäran om att återställa ditt Sogverse-lösenord. Klicka på knappen nedan för att välja ett nytt lösenord.",
-      "expiry": "Denna länk upphör att gälla om en timme.",
+      "expiry": "Denna länk upphör att gälla om 72 timmar.",
       "ignore": "Om du inte begärde en lösenordsåterställning kan du ignorera detta e-postmeddelande. Ditt lösenord kommer inte att ändras.",
       "button": "Återställ lösenord"
     },

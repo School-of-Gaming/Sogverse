@@ -1143,7 +1143,7 @@
       "subject": "Reset your Sogverse password",
       "heading": "Reset Your Password",
       "body": "We received a request to reset your Sogverse password. Click the button below to choose a new password.",
-      "expiry": "This link will expire in 1 hour.",
+      "expiry": "This link will expire in 72 hours.",
       "ignore": "If you didn\u2019t request a password reset, you can safely ignore this email. Your password will not be changed.",
       "button": "Reset Password"
     },
