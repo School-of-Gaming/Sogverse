@@ -234,8 +234,14 @@
       "sendInvitation": "Skicka en inbjudan via e-post till en ny spelfostrare",
       "newGeduInvitation": "Ny Gedu-inbjudan",
       "geduReceiveEmail": "Gedun kommer att få ett e-postmeddelande med instruktioner för att konfigurera sitt konto.",
+      "inviteLinkExpiryNote": "Inbjudningslänken är giltig i 72 timmar.",
       "emailAddress": "E-postadress",
       "emailPlaceholder": "gedu@example.com",
+      "geduDisplayName": "Visningsnamn",
+      "geduDisplayNamePlaceholder": "t.ex. Jane Smith",
+      "geduDisplayNameHelper": "Visas i välkomstmailets hälsning och förifylls på Geduns profil.",
+      "geduDisplayNameTooShort": "Visningsnamnet måste vara minst 2 tecken",
+      "geduDisplayNameTooLong": "Visningsnamnet får vara högst 32 tecken",
       "inviteLanguage": "Inbjudningsmailets språk",
       "sendInvite": "Skicka inbjudan",
       "sendingInvite": "Skickar...",
@@ -1144,8 +1150,9 @@
     "geduInvite": {
       "subject": "Du är inbjuden till Sogverse",
       "heading": "Välkommen till Sogverse",
+      "greeting": "Hej {name},",
       "body": "Du har blivit inbjuden att gå med i Sogverse som <strong>Gedu</strong>. Klicka på knappen nedan för att skapa ditt konto.",
-      "expiry": "Denna länk upphör att gälla om en timme.",
+      "expiry": "Denna länk upphör att gälla om 72 timmar.",
       "button": "Skapa ditt konto"
     },
     "minecraft": {

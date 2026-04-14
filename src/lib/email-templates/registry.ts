@@ -96,6 +96,7 @@ const passwordResetParamsSchema = z.object({
 
 const geduInviteParamsSchema = z.object({
   setupLink: z.string().url(),
+  displayName: z.string(),
 });
 
 const feedbackParamsSchema = z.object({
@@ -176,10 +177,11 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
   geduInvite: {
     label: "Gedu Invite",
     fields: [
+      { key: "displayName", label: "Display Name", placeholder: "Jane Smith" },
       { key: "setupLink", label: "Setup Link", placeholder: "https://sogverse.sog.gg/setup-account" },
     ],
     schema: geduInviteParamsSchema,
-    build: (p, t, locale) => buildGeduInviteEmail(t, p.setupLink as string, locale),
+    build: (p, t, locale) => buildGeduInviteEmail(t, p.setupLink as string, locale, p.displayName as string),
     subject: (_p, t) => t("geduInvite.subject"),
     fromNameKey: "senderAuth",
   },

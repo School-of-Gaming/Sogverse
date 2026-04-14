@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, UserPlus, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,14 @@ export default function AddUserPage() {
 
   const createGeduSchema = z.object({
     email: z.string().email(t('invalidEmail')),
+    displayName: z.string()
+      .trim()
+      .min(DISPLAY_NAME_MIN, t('geduDisplayNameTooShort'))
+      .max(DISPLAY_NAME_MAX, t('geduDisplayNameTooLong')),
   });
 
   const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [locale, setLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -34,10 +39,11 @@ export default function AddUserPage() {
     setWarning(null);
 
     try {
-      const validatedData = createGeduSchema.parse({ email });
+      const validatedData = createGeduSchema.parse({ email, displayName });
 
       const result = await createGedu.mutateAsync({
         email: validatedData.email,
+        displayName: validatedData.displayName,
         locale,
       });
 
@@ -81,6 +87,7 @@ export default function AddUserPage() {
               <Button onClick={() => {
                 setSuccess(false);
                 setEmail("");
+                setDisplayName("");
                 setWarning(null);
               }}>
                 {t('inviteAnother')}
@@ -131,6 +138,24 @@ export default function AddUserPage() {
             )}
 
             <div className="space-y-2">
+              <Label htmlFor="displayName">{t('geduDisplayName')}</Label>
+              <Input
+                id="displayName"
+                type="text"
+                placeholder={t('geduDisplayNamePlaceholder')}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                disabled={createGedu.isPending}
+                required
+                maxLength={DISPLAY_NAME_MAX}
+                autoComplete="off"
+              />
+              <p className="text-xs text-muted-foreground">
+                {t('geduDisplayNameHelper')}
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="email">{t('emailAddress')}</Label>
               <Input
                 id="email"
@@ -142,6 +167,9 @@ export default function AddUserPage() {
                 required
                 autoComplete="off"
               />
+              <p className="text-xs text-muted-foreground">
+                {t('inviteLinkExpiryNote')}
+              </p>
             </div>
 
             <div className="space-y-2">

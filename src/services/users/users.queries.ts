@@ -108,8 +108,8 @@ export function useCreateGedu() {
   const service = new UsersService(supabase);
 
   return useMutation({
-    mutationFn: ({ email, locale }: { email: string; locale?: string }) =>
-      service.createGedu(email, locale),
+    mutationFn: ({ email, displayName, locale }: { email: string; displayName: string; locale?: string }) =>
+      service.createGedu(email, displayName, locale),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },

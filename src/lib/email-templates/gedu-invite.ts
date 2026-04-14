@@ -6,9 +6,15 @@ import type { EmailTranslator } from "./translator";
 /**
  * Builds the HTML email body for a gedu account invitation.
  */
-export function buildGeduInviteEmail(t: EmailTranslator, setupLink: string, locale: string): string {
+export function buildGeduInviteEmail(
+  t: EmailTranslator,
+  setupLink: string,
+  locale: string,
+  displayName: string,
+): string {
   const content = `
     ${heading(t("geduInvite.heading"))}
+    ${paragraph(t("geduInvite.greeting", { name: displayName }))}
     ${paragraph(t.markup("geduInvite.body", { strong: (chunks) => `<strong class="brand-primary" style="color:${BRAND.primary};">${chunks}</strong>` }))}
     ${paragraph(t("geduInvite.expiry"))}
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0;">

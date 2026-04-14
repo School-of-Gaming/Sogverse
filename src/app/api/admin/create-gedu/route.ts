@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL } from "@/lib/constants";
+import { SENDER_EMAIL, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
 import { buildGeduInviteEmail } from "@/lib/email-templates/gedu-invite";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     });
     if (result instanceof NextResponse) return result;
 
-    const { email, locale: requestedLocale } = await request.json();
+    const { email, locale: requestedLocale, displayName } = await request.json();
 
     if (!email || typeof email !== "string") {
       return NextResponse.json(
@@ -24,13 +24,22 @@ export async function POST(request: Request) {
       );
     }
 
+    if (typeof displayName !== "string" || displayName.trim().length < DISPLAY_NAME_MIN || displayName.trim().length > DISPLAY_NAME_MAX) {
+      return NextResponse.json(
+        { error: `Display name must be ${DISPLAY_NAME_MIN}-${DISPLAY_NAME_MAX} characters` },
+        { status: 400 }
+      );
+    }
+
+    const trimmedDisplayName = displayName.trim();
     const locale = resolveLocale(requestedLocale);
     const origin = new URL(request.url).origin;
     const admin = createAdminClient();
 
     // Step 1: Generate invite link — this creates the user AND returns a signed,
     // time-limited link in one atomic operation. The handle_new_user trigger fires
-    // and assigns customer role by default; display_name defaults to 'New User'.
+    // and reads display_name from raw_user_meta_data (passed via options.data),
+    // then assigns customer role by default.
     // generateLink() has no PKCE challenge, so Supabase's verify endpoint
     // redirects with implicit flow (tokens in URL hash). The setup-account
     // page parses these and calls setSession() manually.
@@ -39,6 +48,7 @@ export async function POST(request: Request) {
       email,
       options: {
         redirectTo: `${origin}${ROUTES.setupAccount}`,
+        data: { display_name: trimmedDisplayName },
       },
     });
 
@@ -72,7 +82,7 @@ export async function POST(request: Request) {
         fromName: t("senderAuth"),
         toEmail: email,
         subject: t("geduInvite.subject"),
-        htmlContent: buildGeduInviteEmail(t, data.properties.action_link, locale),
+        htmlContent: buildGeduInviteEmail(t, data.properties.action_link, locale, trimmedDisplayName),
       });
     } catch (emailError) {
       console.error("Invite email failed, rolling back user:", emailError instanceof Error ? emailError.message : emailError);

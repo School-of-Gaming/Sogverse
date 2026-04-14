@@ -282,8 +282,14 @@
       "sendInvitation": "Gedu chu'vaD QIn ngeH",
       "newGeduInvitation": "Gedu chu' bejmoH",
       "geduReceiveEmail": "Gedu QIn Suq — account chenmoH Hoch ghoj.",
+      "inviteLinkExpiryNote": "ngeH Soch maH cha' rep lo'lu'.",
       "emailAddress": "QIn Daq",
       "emailPlaceholder": "gedu@example.com",
+      "geduDisplayName": "pong",
+      "geduDisplayNamePlaceholder": "DaH: Jane Smith",
+      "geduDisplayNameHelper": "QIn nuqneH lo'lu' 'ej Gedu profile nIS.",
+      "geduDisplayNameTooShort": "pong 2 mu'tlhegh DaghItlh",
+      "geduDisplayNameTooLong": "pong 32 mu'tlhegh law' ghobe'",
       "inviteLanguage": "bejmoH QIn Hol",
       "sendInvite": "bejmoH yIngeH",
       "sendingInvite": "vIngeH...",
@@ -1192,8 +1198,9 @@
     "geduInvite": {
       "subject": "Sogverse bejmoH ngeHlu'",
       "heading": "Sogverse bIghoS!",
+      "greeting": "nuqneH {name},",
       "body": "Sogverse <strong>Gedu</strong> SoH bejlu'. account yIchel.",
-      "expiry": "ngeH wa' rep Qav.",
+      "expiry": "ngeH Soch maH cha' rep Qav.",
       "button": "Account yIchel"
     },
     "minecraft": {

@@ -234,8 +234,14 @@
       "sendInvitation": "Send an invitation email to a new game educator",
       "newGeduInvitation": "New Gedu Invitation",
       "geduReceiveEmail": "The gedu will receive an email with instructions to set up their account.",
+      "inviteLinkExpiryNote": "The invite link will be valid for 72 hours.",
       "emailAddress": "Email Address",
       "emailPlaceholder": "gedu@example.com",
+      "geduDisplayName": "Display Name",
+      "geduDisplayNamePlaceholder": "e.g. Jane Smith",
+      "geduDisplayNameHelper": "Shown in the welcome email greeting and pre-filled on the gedu\u2019s profile.",
+      "geduDisplayNameTooShort": "Display name must be at least 2 characters",
+      "geduDisplayNameTooLong": "Display name must be at most 32 characters",
       "inviteLanguage": "Invite Email Language",
       "sendInvite": "Send Invitation",
       "sendingInvite": "Sending...",
@@ -1144,8 +1150,9 @@
     "geduInvite": {
       "subject": "You\u2019re invited to the Sogverse",
       "heading": "Welcome to the Sogverse",
+      "greeting": "Hi {name},",
       "body": "You\u2019ve been invited to join the Sogverse as a <strong>Gedu</strong>. Click the button below to set up your account.",
-      "expiry": "This link will expire in 1 hour.",
+      "expiry": "This link will expire in 72 hours.",
       "button": "Set Up Your Account"
     },
     "minecraft": {

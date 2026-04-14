@@ -106,7 +106,7 @@ describe("POST /api/admin/create-gedu", () => {
   it("should return 401 when not authenticated", async () => {
     mockUnauthenticated();
 
-    const response = await POST(createRequest({ email: "gedu@example.com" }));
+    const response = await POST(createRequest({ email: "gedu@example.com", displayName: "Jane Smith" }));
 
     expect(response.status).toBe(401);
   });
@@ -114,7 +114,7 @@ describe("POST /api/admin/create-gedu", () => {
   it("should return 403 for customer role", async () => {
     mockNonAdmin("customer");
 
-    const response = await POST(createRequest({ email: "gedu@example.com" }));
+    const response = await POST(createRequest({ email: "gedu@example.com", displayName: "Jane Smith" }));
 
     expect(response.status).toBe(403);
   });
@@ -122,7 +122,7 @@ describe("POST /api/admin/create-gedu", () => {
   it("should return 403 for gedu role", async () => {
     mockNonAdmin("gedu");
 
-    const response = await POST(createRequest({ email: "gedu@example.com" }));
+    const response = await POST(createRequest({ email: "gedu@example.com", displayName: "Jane Smith" }));
 
     expect(response.status).toBe(403);
   });
@@ -130,7 +130,7 @@ describe("POST /api/admin/create-gedu", () => {
   it("should return 403 for gamer role", async () => {
     mockNonAdmin("gamer");
 
-    const response = await POST(createRequest({ email: "gedu@example.com" }));
+    const response = await POST(createRequest({ email: "gedu@example.com", displayName: "Jane Smith" }));
 
     expect(response.status).toBe(403);
   });
@@ -157,23 +157,46 @@ describe("POST /api/admin/create-gedu", () => {
     expect(data.error).toBe("Email is required");
   });
 
-  // -- Happy path --
-
-  it("should create user via generateLink, promote to gedu, and send invite email", async () => {
+  it("should return 400 when displayName is missing", async () => {
     mockAdmin();
 
     const response = await POST(createRequest({ email: "gedu@example.com" }));
     const data = await response.json();
 
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Display name");
+  });
+
+  it("should return 400 when displayName is too short", async () => {
+    mockAdmin();
+
+    const response = await POST(createRequest({ email: "gedu@example.com", displayName: "A" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Display name");
+  });
+
+  // -- Happy path --
+
+  it("should create user via generateLink, promote to gedu, and send invite email", async () => {
+    mockAdmin();
+
+    const response = await POST(createRequest({ email: "gedu@example.com", displayName: "Jane Smith" }));
+    const data = await response.json();
+
     expect(response.status).toBe(200);
     expect(data.user).toEqual(fakeUser);
 
-    // Single atomic operation: creates user + generates invite link
+    // Single atomic operation: creates user + generates invite link.
+    // display_name goes into raw_user_meta_data via options.data, where the
+    // handle_new_user trigger picks it up to populate profiles.display_name.
     expect(mockGenerateLink).toHaveBeenCalledWith({
       type: "invite",
       email: "gedu@example.com",
       options: {
         redirectTo: "http://localhost:3000/setup-account",
+        data: { display_name: "Jane Smith" },
       },
     });
 
@@ -201,7 +224,7 @@ describe("POST /api/admin/create-gedu", () => {
       error: { message: "A user with this email address has already been registered" },
     });
 
-    const response = await POST(createRequest({ email: "existing@example.com" }));
+    const response = await POST(createRequest({ email: "existing@example.com", displayName: "Jane Smith" }));
     const data = await response.json();
 
     expect(response.status).toBe(400);
@@ -214,7 +237,7 @@ describe("POST /api/admin/create-gedu", () => {
     mockAdmin();
     mockUpdateProfile.mockResolvedValue({ error: { message: "DB error" } });
 
-    const response = await POST(createRequest({ email: "gedu@example.com" }));
+    const response = await POST(createRequest({ email: "gedu@example.com", displayName: "Jane Smith" }));
     const data = await response.json();
 
     expect(response.status).toBe(500);
@@ -226,7 +249,7 @@ describe("POST /api/admin/create-gedu", () => {
     mockSendTransactionalEmail.mockRejectedValue(new Error("Brevo API error"));
     mockDeleteUser.mockResolvedValue({ error: null });
 
-    const response = await POST(createRequest({ email: "gedu@example.com" }));
+    const response = await POST(createRequest({ email: "gedu@example.com", displayName: "Jane Smith" }));
     const data = await response.json();
 
     expect(response.status).toBe(500);
