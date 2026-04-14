@@ -234,8 +234,14 @@
       "sendInvitation": "Lähetä kutsu uudelle pelikasvattajalle",
       "newGeduInvitation": "Uusi Gedu-kutsu",
       "geduReceiveEmail": "Gedu saa sähköpostin, jossa on ohjeet tilin luomiseen.",
+      "inviteLinkExpiryNote": "Kutsulinkki on voimassa 72 tuntia.",
       "emailAddress": "Sähköpostiosoite",
       "emailPlaceholder": "gedu@example.com",
+      "geduDisplayName": "Näyttönimi",
+      "geduDisplayNamePlaceholder": "esim. Jane Smith",
+      "geduDisplayNameHelper": "Näkyy tervetulosähköpostin tervehdyksessä ja esitäytetään Gedun profiiliin.",
+      "geduDisplayNameTooShort": "Näyttönimessä on oltava vähintään 2 merkkiä",
+      "geduDisplayNameTooLong": "Näyttönimessä saa olla enintään 32 merkkiä",
       "inviteLanguage": "Kutsusähköpostin kieli",
       "sendInvite": "Lähetä kutsu",
       "sendingInvite": "Lähetetään...",
@@ -1137,15 +1143,16 @@
       "subject": "Nollaa Sogverse-salasanasi",
       "heading": "Nollaa salasanasi",
       "body": "Saimme pyynnön nollata Sogverse-salasanasi. Napsauta alla olevaa painiketta valitaksesi uuden salasanan.",
-      "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
+      "expiry": "Tämä linkki vanhenee 72 tunnin kuluttua.",
       "ignore": "Jos et pyytänyt salasanan nollausta, voit jättää tämän sähköpostin huomiotta. Salasanaasi ei muuteta.",
       "button": "Nollaa salasana"
     },
     "geduInvite": {
       "subject": "Sinut on kutsuttu Sogverseen",
       "heading": "Tervetuloa Sogverseen",
+      "greeting": "Hei {name},",
       "body": "Sinut on kutsuttu liittymään Sogverseen <strong>Geduna</strong>. Napsauta alla olevaa painiketta luodaksesi tilisi.",
-      "expiry": "Tämä linkki vanhenee tunnin kuluttua.",
+      "expiry": "Tämä linkki vanhenee 72 tunnin kuluttua.",
       "button": "Luo tilisi"
     },
     "minecraft": {

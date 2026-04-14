@@ -35,6 +35,7 @@ export function SetupAccountForm() {
   const [phone, setPhone] = useState("");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [inviteInvalid, setInviteInvalid] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
@@ -46,6 +47,12 @@ export function SetupAccountForm() {
   // generateLink() uses implicit flow (tokens in URL hash) because there's
   // no PKCE challenge. The @supabase/ssr client is configured for PKCE mode
   // so it won't detect hash tokens automatically — parse them manually.
+  //
+  // Supabase's /verify endpoint can also redirect here with an error hash
+  // (e.g. #error=access_denied&error_code=otp_expired&...) when the invite
+  // link has expired or been consumed. Treat those as a dead end: show the
+  // "ask admin for a new link" message and don't let the user submit a
+  // form that would 401 on the first API call.
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash) {
@@ -54,6 +61,15 @@ export function SetupAccountForm() {
     }
 
     const params = new URLSearchParams(hash.substring(1));
+
+    if (params.get("error") || params.get("error_code")) {
+      setError(t('setupAccount.inviteLinkExpired'));
+      setInviteInvalid(true);
+      setSessionReady(true);
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
+
     const accessToken = params.get("access_token");
     const refreshToken = params.get("refresh_token");
 
@@ -63,8 +79,16 @@ export function SetupAccountForm() {
         .then(({ data: sessionData, error }) => {
           if (error) {
             setError(t('setupAccount.inviteLinkExpired'));
+            setInviteInvalid(true);
           } else {
             setSessionEmail(sessionData.user?.email ?? "");
+            // Pre-fill the display name from the admin-supplied value in
+            // raw_user_meta_data (set via generateLink's options.data). The
+            // gedu can still edit it before submitting.
+            const metadataName = sessionData.user?.user_metadata.display_name;
+            if (typeof metadataName === "string" && metadataName.length > 0) {
+              setDisplayName(metadataName);
+            }
             // Clear hash from URL without triggering navigation
             window.history.replaceState(null, "", window.location.pathname);
           }
@@ -74,6 +98,11 @@ export function SetupAccountForm() {
       setSessionReady(true);
     }
   }, [supabase.auth, t]);
+
+  const markInviteExpired = () => {
+    setError(t('setupAccount.inviteLinkExpired'));
+    setInviteInvalid(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,18 +123,31 @@ export function SetupAccountForm() {
           body: JSON.stringify({ minecraftUsername: minecraftUsername.trim() }),
         });
         if (!mcResponse.ok) {
+          // 401 means the invite session was never set or has expired since
+          // page load — surface the friendly expired-link message instead of
+          // the bare "Unauthorized" string from requireRole.
+          if (mcResponse.status === 401) {
+            markInviteExpired();
+            return;
+          }
           const mcData = await mcResponse.json();
           setError(mcData.error || t('setupAccount.minecraftSaveFailed'));
           return;
         }
       }
 
-      // Set the password
+      // Set the password. If the client session is gone or expired,
+      // updateUser returns an AuthSessionMissingError — treat the same as
+      // the API 401 above.
       const { error: passwordError } = await supabase.auth.updateUser({
         password: validatedData.password,
       });
 
       if (passwordError) {
+        if (passwordError.name === "AuthSessionMissingError" || passwordError.status === 401) {
+          markInviteExpired();
+          return;
+        }
         setError(passwordError.message);
         return;
       }
@@ -253,7 +295,7 @@ export function SetupAccountForm() {
           />
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full" disabled={isLoading || !sessionReady}>
+          <Button type="submit" className="w-full" disabled={isLoading || !sessionReady || inviteInvalid}>
             {!sessionReady ? c('loading') : isLoading ? t('setupAccount.settingUp') : t('setupAccount.submitButton')}
           </Button>
         </CardFooter>
