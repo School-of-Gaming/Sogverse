@@ -63,6 +63,9 @@ export default function AddProductPage() {
         duration_minutes: cloneSource.duration_minutes,
         min_age: cloneSource.min_age,
         max_age: cloneSource.max_age,
+        is_remote: cloneSource.is_remote,
+        location_id: cloneSource.location_id,
+        spoken_language_code: cloneSource.spoken_language_code,
       }
     : undefined;
 

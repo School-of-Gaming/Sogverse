@@ -24,40 +24,10 @@ import { LocationTree, buildLocationTree } from "@/components/locations/location
 import { useAllLocations } from "@/services/locations";
 import { useGeduLocations, useSetGeduLocations } from "@/services/gedu-locations";
 import type { Location } from "@/types";
+import { buildCoverageRelations, toggleCoverage } from "./coverage-cascade";
 
 interface GeduCoverageEditorProps {
   geduId: string;
-}
-
-/** Build parent/descendant lookup maps from a flat locations list. */
-function buildRelations(locations: Location[]) {
-  const childrenOf = new Map<string, string[]>();
-  for (const loc of locations) {
-    if (loc.parent_id) {
-      const existing = childrenOf.get(loc.parent_id);
-      if (existing) existing.push(loc.id);
-      else childrenOf.set(loc.parent_id, [loc.id]);
-    }
-  }
-
-  const descendantsOf = new Map<string, string[]>();
-  const walk = (id: string): string[] => {
-    const cached = descendantsOf.get(id);
-    if (cached) return cached;
-    const direct = childrenOf.get(id) ?? [];
-    const all = [...direct];
-    for (const child of direct) all.push(...walk(child));
-    descendantsOf.set(id, all);
-    return all;
-  };
-  for (const loc of locations) walk(loc.id);
-
-  const parentOf = new Map<string, string>();
-  for (const loc of locations) {
-    if (loc.parent_id) parentOf.set(loc.id, loc.parent_id);
-  }
-
-  return { descendantsOf, parentOf };
 }
 
 export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
@@ -78,7 +48,7 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   }, [overrides, current]);
 
   const relations = useMemo(
-    () => buildRelations(allLocations ?? []),
+    () => buildCoverageRelations(allLocations ?? []),
     [allLocations],
   );
 
@@ -128,24 +98,7 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
   }, [current, selected]);
 
   function toggle(id: string) {
-    const next = new Set(selected);
-    if (next.has(id)) {
-      // Unticking: remove the node, remove its entire subtree (because "I no
-      // longer cover anything under me"), and remove every selected ancestor
-      // (because the ancestor no longer fully covers its subtree).
-      next.delete(id);
-      for (const d of relations.descendantsOf.get(id) ?? []) next.delete(d);
-      let parent = relations.parentOf.get(id);
-      while (parent) {
-        next.delete(parent);
-        parent = relations.parentOf.get(parent);
-      }
-    } else {
-      // Ticking: add the node and its entire subtree.
-      next.add(id);
-      for (const d of relations.descendantsOf.get(id) ?? []) next.add(d);
-    }
-    setOverrides(next);
+    setOverrides(toggleCoverage(selected, id, relations));
   }
 
   async function handleSave() {

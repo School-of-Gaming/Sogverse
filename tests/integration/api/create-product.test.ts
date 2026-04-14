@@ -411,6 +411,47 @@ describe("POST /api/admin/create-product", () => {
     expect(data.error).toBe("Padlet URL must be a valid URL");
   });
 
+  // location / spoken_language validation (migration 00024)
+
+  it("returns 400 when is_remote=false and location_id is missing", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({
+      ...validBody,
+      is_remote: false,
+      location_id: null,
+    }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("In-person products must have a location");
+  });
+
+  it("returns 400 when is_remote=true and location_id is set", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const response = await POST(createRequest({
+      ...validBody,
+      is_remote: true,
+      location_id: "00000000-0000-0000-0000-000000000203",
+    }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Remote products cannot have a location");
+  });
+
+  it("returns 400 when spoken_language_code is missing", async () => {
+    mockAuthenticatedWithRole("admin");
+
+    const { spoken_language_code: _drop, ...bodyWithoutLanguage } = validBody;
+    const response = await POST(createRequest(bodyWithoutLanguage));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toBe("Spoken language is required");
+  });
+
   // DB error handling
 
   it("returns 400 when database insert fails", async () => {

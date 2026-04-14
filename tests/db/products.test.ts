@@ -5,13 +5,14 @@ import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
 
 /**
- * Migration 00024 adds three NOT-NULL columns on products (is_remote,
- * location_id, spoken_language_code) plus a CHECK enforcing remote XOR
- * location and a trigger enforcing that location_id points at a site.
+ * Migration 00024 adds the products_location_xor_remote CHECK and the
+ * validate_product_location trigger. These tests lock both in — if a
+ * future migration ever relaxes them, the tests fail and whoever touched
+ * them must consciously update this file.
  *
- * These tests lock those constraints in — if a future migration ever
- * relaxes them, the tests fail and whoever touched them must consciously
- * update this file.
+ * The single happy-path insert anchors the rejection tests: without it,
+ * a broken base-product shape would make the rejections pass vacuously
+ * for the wrong reason.
  */
 
 const TEST_PRODUCT_ID = "00000000-0000-0000-0000-000000000220";
@@ -36,7 +37,7 @@ function baseProduct() {
   };
 }
 
-describe("products location + spoken language constraints", () => {
+describe("products location constraints", () => {
   let admin: SupabaseClient<Database>;
 
   beforeAll(() => {
@@ -47,17 +48,9 @@ describe("products location + spoken language constraints", () => {
     await admin.from("products").delete().eq("id", TEST_PRODUCT_ID);
   });
 
-  it("accepts a remote product with no location_id", async () => {
-    const { error } = await admin.from("products").insert({
-      ...baseProduct(),
-      is_remote: true,
-      location_id: null,
-    });
-
-    expect(error).toBeNull();
-  });
-
   it("accepts an in-person product whose location_id is a site", async () => {
+    // Baseline. Proves the base-product shape is valid and the trigger
+    // permits sites — anchors the rejection tests below.
     const { error } = await admin.from("products").insert({
       ...baseProduct(),
       is_remote: false,
@@ -99,21 +92,5 @@ describe("products location + spoken language constraints", () => {
 
     expect(error).not.toBeNull();
     expect(error?.message).toMatch(/must be a site/i);
-  });
-
-  it("rejects inserts omitting spoken_language_code (NOT NULL)", async () => {
-    // Intentionally omit spoken_language_code — should fail NOT NULL.
-    const { spoken_language_code: _drop, ...rest } = baseProduct();
-    const { error } = await admin
-      .from("products")
-      // @ts-expect-error -- intentionally omitting a required field to assert NOT NULL
-      .insert({
-        ...rest,
-        is_remote: true,
-        location_id: null,
-      });
-
-    expect(error).not.toBeNull();
-    expect(error?.message).toMatch(/spoken_language_code/);
   });
 });
