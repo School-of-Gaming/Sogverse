@@ -37,9 +37,12 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
 
     // Step 1: Generate invite link — this creates the user AND returns a signed,
-    // time-limited link in one atomic operation. The handle_new_user trigger fires
-    // and reads display_name from raw_user_meta_data (passed via options.data),
-    // then assigns customer role by default.
+    // time-limited link in one atomic operation. The handle_new_user trigger
+    // fires and seeds profiles.display_name from raw_user_meta_data (passed via
+    // options.data), then assigns customer role by default. The setup-account
+    // form reads the same raw_user_meta_data.display_name to pre-fill its
+    // display-name input — the round-trip exists to hydrate the form, not to
+    // seed the DB (the trigger has already done that).
     // generateLink() has no PKCE challenge, so Supabase's verify endpoint
     // redirects with implicit flow (tokens in URL hash). The setup-account
     // page parses these and calls setSession() manually.

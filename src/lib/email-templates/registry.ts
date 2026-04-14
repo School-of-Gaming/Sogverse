@@ -96,7 +96,7 @@ const passwordResetParamsSchema = z.object({
 
 const geduInviteParamsSchema = z.object({
   setupLink: z.string().url(),
-  displayName: z.string(),
+  displayName: z.string().min(1),
 });
 
 const feedbackParamsSchema = z.object({
