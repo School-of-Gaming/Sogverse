@@ -14,29 +14,11 @@ import {
 import {
   LocationTree,
   buildLocationTree,
+  filterLocationTree,
 } from "@/components/locations/location-tree";
-import type { LocationNode } from "@/components/locations/location-tree";
 import { LocationFormDialog } from "@/components/admin/location-form-dialog";
 import type { LocationFormValues } from "@/components/admin/location-form-dialog";
 import type { Location } from "@/types";
-
-/**
- * Recursively filter a tree, keeping nodes that match and their ancestors.
- * When a node matches, all its descendants are included — searching "Helsinki"
- * shows Helsinki and all its child sites, not just the name match.
- */
-function filterTree(nodes: LocationNode[], query: string): LocationNode[] {
-  const q = query.toLowerCase();
-  return nodes.reduce<LocationNode[]>((acc, node) => {
-    const filteredChildren = filterTree(node.children, query);
-    const selfMatches = node.name.toLowerCase().includes(q);
-
-    if (selfMatches || filteredChildren.length > 0) {
-      acc.push({ ...node, children: selfMatches ? node.children : filteredChildren });
-    }
-    return acc;
-  }, []);
-}
 
 export default function AdminLocationsPage() {
   const t = useTranslations('admin.locations');
@@ -57,7 +39,7 @@ export default function AdminLocationsPage() {
   );
 
   const filteredTree = useMemo(
-    () => (searchQuery ? filterTree(tree, searchQuery) : tree),
+    () => filterLocationTree(tree, searchQuery),
     [tree, searchQuery]
   );
 

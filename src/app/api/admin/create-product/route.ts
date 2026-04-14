@@ -132,6 +132,37 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
 
+    // Preflight location_id so the caller sees a clean 400 instead of a
+    // Postgres "invalid UUID" / trigger error bubbled up as 500.
+    if (locationId) {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(locationId)) {
+        return NextResponse.json(
+          { error: "location_id must be a UUID" },
+          { status: 400 }
+        );
+      }
+      const { data: locationRow, error: locationError } = await admin
+        .from("locations")
+        .select("type")
+        .eq("id", locationId)
+        .maybeSingle();
+      if (locationError) {
+        return NextResponse.json({ error: locationError.message }, { status: 400 });
+      }
+      if (!locationRow) {
+        return NextResponse.json(
+          { error: "location_id does not reference an existing location" },
+          { status: 400 }
+        );
+      }
+      if (locationRow.type !== "site") {
+        return NextResponse.json(
+          { error: "location_id must point at a site (leaf)" },
+          { status: 400 }
+        );
+      }
+    }
+
     const { data, error } = await admin
       .from("products")
       .insert({

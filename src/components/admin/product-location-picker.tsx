@@ -21,6 +21,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { LocationFormDialog, type LocationFormValues } from "@/components/admin/location-form-dialog";
+import { buildAncestorChain } from "@/components/locations/location-tree";
 import { useAllLocations, useCreateLocation } from "@/services/locations";
 import {
   getChildLevel,
@@ -41,18 +42,13 @@ interface ProductLocationPickerProps {
 const selectClassName =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
-function buildAncestorChain(location: Location, all: Location[]): Location[] {
-  const byId = new Map(all.map((l) => [l.id, l]));
-  const chain: Location[] = [location];
-  let current: Location = location;
-  while (current.parent_id) {
-    const parent = byId.get(current.parent_id);
-    if (!parent) break;
-    chain.unshift(parent);
-    current = parent;
-  }
-  return chain;
-}
+const EMPTY_SELECTION: Record<LocationType, string | null> = {
+  country: null,
+  region: null,
+  municipality: null,
+  district: null,
+  site: null,
+};
 
 export function ProductLocationPicker({
   isRemote,
@@ -67,34 +63,26 @@ export function ProductLocationPicker({
   const { data: allLocations } = useAllLocations();
   const createLocation = useCreateLocation();
 
-  // Selection state, one entry per hierarchy level. Derived from `locationId`
-  // on mount by walking ancestors, and updated as the admin clicks through.
-  const [selectedIds, setSelectedIds] = useState<Record<LocationType, string | null>>(() => ({
-    country: null,
-    region: null,
-    municipality: null,
-    district: null,
-    site: null,
-  }));
-  const [hydrated, setHydrated] = useState(false);
+  // Local override that takes effect once the admin starts clicking. Before
+  // that, the visible selection is derived from the incoming `locationId`
+  // prop — so edit mode "hydrates" automatically without a setState-in-render
+  // or setState-in-effect hop.
+  const [localSelectedIds, setLocalSelectedIds] = useState<Record<
+    LocationType,
+    string | null
+  > | null>(null);
 
-  // Hydrate selection from the existing locationId (edit mode) once locations load.
-  if (!hydrated && allLocations && locationId) {
+  const selectedIds = useMemo<Record<LocationType, string | null>>(() => {
+    if (localSelectedIds) return localSelectedIds;
+    if (!allLocations || !locationId) return EMPTY_SELECTION;
     const current = allLocations.find((l) => l.id === locationId);
-    if (current) {
-      const chain = buildAncestorChain(current, allLocations);
-      const next: Record<LocationType, string | null> = {
-        country: null,
-        region: null,
-        municipality: null,
-        district: null,
-        site: null,
-      };
-      for (const loc of chain) next[loc.type] = loc.id;
-      setSelectedIds(next);
+    if (!current) return EMPTY_SELECTION;
+    const next = { ...EMPTY_SELECTION };
+    for (const loc of buildAncestorChain(current, allLocations)) {
+      next[loc.type] = loc.id;
     }
-    setHydrated(true);
-  }
+    return next;
+  }, [allLocations, locationId, localSelectedIds]);
 
   // Dialog state — which parent to create a child under, if any.
   const [dialogParent, setDialogParent] = useState<Location | null>(null);
@@ -144,7 +132,7 @@ export function ProductLocationPicker({
   // Propagate the deepest site selection up to the parent form. If the
   // admin stops short of a site, we pass null so the submit stays disabled.
   function commitLocation(nextSelected: Record<LocationType, string | null>) {
-    setSelectedIds(nextSelected);
+    setLocalSelectedIds(nextSelected);
     const siteId = nextSelected.site;
     onChange({ isRemote: false, locationId: siteId });
   }

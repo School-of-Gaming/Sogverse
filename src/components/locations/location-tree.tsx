@@ -12,6 +12,51 @@ export interface LocationNode extends Location {
   children: LocationNode[];
 }
 
+/**
+ * Walk from a location up to its root, returning the chain ordered root → leaf.
+ * A visited set guards against malformed `parent_id` cycles — a data bug would
+ * otherwise hard-lock any caller that loops over the chain.
+ */
+export function buildAncestorChain(location: Location, all: Location[]): Location[] {
+  const byId = new Map(all.map((l) => [l.id, l]));
+  const chain: Location[] = [location];
+  const visited = new Set<string>([location.id]);
+  let current: Location = location;
+  while (current.parent_id) {
+    const parent = byId.get(current.parent_id);
+    if (!parent || visited.has(parent.id)) break;
+    visited.add(parent.id);
+    chain.unshift(parent);
+    current = parent;
+  }
+  return chain;
+}
+
+/**
+ * Recursively filter a location tree, keeping nodes that match the query and
+ * every ancestor leading to them. When a node itself matches, its entire
+ * subtree is preserved — searching "Helsinki" should show Helsinki and all its
+ * child sites so the user can pick one, not just the name match.
+ */
+export function filterLocationTree(
+  nodes: LocationNode[],
+  query: string,
+): LocationNode[] {
+  if (!query) return nodes;
+  const q = query.toLowerCase();
+  return nodes.reduce<LocationNode[]>((acc, node) => {
+    const filteredChildren = filterLocationTree(node.children, query);
+    const selfMatches = node.name.toLowerCase().includes(q);
+    if (selfMatches || filteredChildren.length > 0) {
+      acc.push({
+        ...node,
+        children: selfMatches ? node.children : filteredChildren,
+      });
+    }
+    return acc;
+  }, []);
+}
+
 /** Build a tree from a flat list of locations. */
 export function buildLocationTree(locations: Location[]): LocationNode[] {
   const map = new Map<string, LocationNode>();

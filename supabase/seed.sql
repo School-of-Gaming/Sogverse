@@ -217,7 +217,7 @@ INSERT INTO products (id, name, description, image_url, is_visible, created_by, 
   6,      -- min age
   12,     -- max age
   2,      -- token cost
-  true,   -- is_remote (test product is remote-only so no location row is needed)
+  true,   -- is_remote (seeded test product is remote — in-person variants are created per-test)
   NULL,   -- location_id
   'en'    -- spoken_language_code (seeded by migration 00018)
 );

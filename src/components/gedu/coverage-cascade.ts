@@ -35,16 +35,21 @@ export function buildCoverageRelations(locations: Location[]): CoverageRelations
   }
 
   const descendantsOf = new Map<string, string[]>();
-  const walk = (id: string): string[] => {
+  // `visiting` guards against malformed parent_id cycles — without it, a
+  // cycle like A → B → A would infinite-recurse and blow the stack.
+  const walk = (id: string, visiting: Set<string>): string[] => {
     const cached = descendantsOf.get(id);
     if (cached) return cached;
+    if (visiting.has(id)) return [];
+    visiting.add(id);
     const direct = childrenOf.get(id) ?? [];
     const all = [...direct];
-    for (const child of direct) all.push(...walk(child));
+    for (const child of direct) all.push(...walk(child, visiting));
+    visiting.delete(id);
     descendantsOf.set(id, all);
     return all;
   };
-  for (const loc of locations) walk(loc.id);
+  for (const loc of locations) walk(loc.id, new Set());
 
   const parentOf = new Map<string, string>();
   for (const loc of locations) {

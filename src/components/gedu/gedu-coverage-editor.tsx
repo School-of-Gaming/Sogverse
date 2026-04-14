@@ -20,7 +20,11 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { LocationTree, buildLocationTree } from "@/components/locations/location-tree";
+import {
+  LocationTree,
+  buildLocationTree,
+  filterLocationTree,
+} from "@/components/locations/location-tree";
 import { useAllLocations } from "@/services/locations";
 import { useGeduLocations, useSetGeduLocations } from "@/services/gedu-locations";
 import type { Location } from "@/types";
@@ -62,22 +66,10 @@ export function GeduCoverageEditor({ geduId }: GeduCoverageEditorProps) {
     [allLocations],
   );
 
-  const filteredTree = useMemo(() => {
-    if (!searchQuery) return tree;
-    const q = searchQuery.toLowerCase();
-    const walk = (nodes: typeof tree): typeof tree => {
-      return nodes
-        .map((node) => {
-          const children = walk(node.children);
-          if (node.name.toLowerCase().includes(q) || children.length > 0) {
-            return { ...node, children };
-          }
-          return null;
-        })
-        .filter((n): n is NonNullable<typeof n> => n !== null);
-    };
-    return walk(tree);
-  }, [tree, searchQuery]);
+  const filteredTree = useMemo(
+    () => filterLocationTree(tree, searchQuery),
+    [tree, searchQuery],
+  );
 
   const selectedList = useMemo(() => {
     const rows: Location[] = [];

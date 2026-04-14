@@ -6,7 +6,8 @@ import { GeduLocationsService } from "./gedu-locations.service";
 
 export const geduLocationKeys = {
   all: ["gedu-locations"] as const,
-  forGedu: (geduId: string) => [...geduLocationKeys.all, geduId] as const,
+  lists: () => [...geduLocationKeys.all, "list"] as const,
+  forGedu: (geduId: string) => [...geduLocationKeys.lists(), geduId] as const,
 };
 
 export function useGeduLocations(geduId: string | null | undefined) {
@@ -32,7 +33,9 @@ export function useSetGeduLocations() {
     // the refetch to complete. Without this the button's in-flight state ends
     // the moment the mutation resolves, before the cache has the new data,
     // causing a one-frame flash where the button re-enables with stale state.
-    onSuccess: (_, { geduId }) =>
-      queryClient.invalidateQueries({ queryKey: geduLocationKeys.forGedu(geduId) }),
+    // Invalidate the whole namespace so any future "who covers X?" query
+    // cached under geduLocationKeys.all also refetches.
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: geduLocationKeys.all }),
   });
 }
