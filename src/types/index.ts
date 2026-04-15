@@ -46,27 +46,26 @@ export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["In
 
 // products
 //
-// Self-hosted images transition (PR 1 of 3):
-//   - Migration 00027 added products.image_path (nullable) and dropped NOT NULL
-//     from products.image_url.
-//   - No application code reads image_path yet (PR 2 will flip reads/writes to it).
-//   - Every existing product row still has a non-null image_url at runtime.
+// Self-hosted images transition (PR 2 of 3):
+//   - Code reads and writes image_path (bucket-relative path).
+//   - image_url still exists on the DB row during the transition but is
+//     no longer read or written from code. PR 3 drops the column.
 //
-// These overrides hide image_path and re-assert image_url as NOT NULL so PR 1 is
-// purely additive to the DB — callers compile unchanged. Remove the overrides in
-// PR 2 when code starts reading image_path, and in PR 3 when image_url is dropped.
+// The override hides image_url from the alias and asserts image_path as
+// non-null. Every product row has a populated image_path after the PR 1
+// manual populate step.
 type _ProductRow = Database["public"]["Tables"]["products"]["Row"];
 type _ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 type _ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
 export type Product = Omit<_ProductRow, "image_url" | "image_path"> & {
-  image_url: string;
+  image_path: string;
 };
 export type ProductInsert = Omit<_ProductInsert, "image_url" | "image_path"> & {
-  image_url: string;
+  image_path: string;
 };
 export type ProductUpdate = Omit<_ProductUpdate, "image_url" | "image_path"> & {
-  image_url?: string;
+  image_path?: string;
 };
 
 // games
@@ -155,13 +154,13 @@ export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAP
 // Also overrides product_padlet_url which is nullable in the products table but
 // marked non-null by the type generator.
 type _MyGroupGenerated = Database["public"]["Functions"]["get_my_groups"]["Returns"][number];
-// product_image_path is part of the transition (see "products" override above) —
-// it's omitted here so PR 1 callers don't have to provide it. Remove from the
-// Omit in PR 2 when code starts reading it.
+// product_image_url still exists on the RPC during the transition (see
+// "products" override above). Omit it here so consumers only see image_path.
+// Remove the Omit entirely in PR 3 when the RPC drops image_url.
 export type MyGroupWithDetails = Omit<
   _MyGroupGenerated,
   | "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
-  | "product_padlet_url" | "last_charge_session_date" | "product_image_path"
+  | "product_padlet_url" | "last_charge_session_date" | "product_image_url"
 > & {
   enrollment_id: string | null;
   gamer_id: string | null;

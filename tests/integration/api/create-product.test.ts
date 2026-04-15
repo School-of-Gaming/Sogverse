@@ -55,7 +55,7 @@ const validBody = {
   name: "Test Product",
   description: "A test product",
   token_cost: 2,
-  image_url: "https://example.com/image.png",
+  image_path: "test.jpg",
   game_id: "00000000-0000-0000-0000-000000000001",
   day_of_week: 2,
   start_time: "16:00",
@@ -175,14 +175,14 @@ describe("POST /api/admin/create-product", () => {
     expect(data.error).toBe("Token cost is required (must be a positive integer)");
   });
 
-  it("returns 400 when image_url is missing", async () => {
+  it("returns 400 when image_path is missing", async () => {
     mockAuthenticatedWithRole("admin");
 
-    const response = await POST(createRequest({ ...validBody, image_url: "" }));
+    const response = await POST(createRequest({ ...validBody, image_path: "" }));
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe("Image URL is required");
+    expect(data.error).toBe("Image is required");
   });
 
   it("returns 400 when game_id is missing", async () => {

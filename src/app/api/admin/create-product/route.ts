@@ -17,8 +17,8 @@ export async function POST(request: Request) {
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
     const tokenCost = typeof body.token_cost === "number" ? body.token_cost : NaN;
-    const imageUrl =
-      typeof body.image_url === "string" ? body.image_url.trim() : "";
+    const imagePath =
+      typeof body.image_path === "string" ? body.image_path.trim() : "";
     const gameId = typeof body.game_id === "string" ? body.game_id : "";
     const dayOfWeek =
       typeof body.day_of_week === "number" ? body.day_of_week : -1;
@@ -58,9 +58,9 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    if (!imageUrl) {
+    if (!imagePath) {
       return NextResponse.json(
-        { error: "Image URL is required" },
+        { error: "Image is required" },
         { status: 400 }
       );
     }
@@ -169,7 +169,7 @@ export async function POST(request: Request) {
         name,
         description,
         token_cost: tokenCost,
-        image_url: imageUrl,
+        image_path: imagePath,
         padlet_url: padletUrl || null,
         created_by: user.id,
         game_id: gameId,

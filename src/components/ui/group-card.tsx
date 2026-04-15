@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { JoinButton } from "@/components/ui/join-button";
 import { cn } from "@/lib/utils";
 import { formatCountdown } from "@/lib/enrollment";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 
 /* ------------------------------------------------------------------ */
 /*  GroupVoiceStatus                                                    */
@@ -70,7 +71,7 @@ export function GroupVoiceStatus({
 
 interface GroupCardProps {
   productName: string;
-  productImageUrl: string;
+  productImagePath: string;
   geduName: string;
   gamerCount: number;
   schedule: { localDay: string; localTime: string; tzAbbrev: string };
@@ -88,7 +89,7 @@ interface GroupCardProps {
  */
 export function GroupCard({
   productName,
-  productImageUrl,
+  productImagePath,
   geduName,
   gamerCount,
   schedule,
@@ -117,14 +118,11 @@ export function GroupCard({
       }}
     >
       <CardContent className="flex items-center gap-4 py-4">
-        <div className="flex h-24 w-24 shrink-0 items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element -- unoptimized external product image URLs get no benefit from next/image, and next/image warns when CSS constrains only one dimension */}
-          <img
-            src={productImageUrl}
-            alt={productName}
-            className="max-h-full max-w-full rounded-md"
-          />
-        </div>
+        <ProductThumbnail
+          imagePath={productImagePath}
+          alt={productName}
+          size="h-24 w-24"
+        />
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">

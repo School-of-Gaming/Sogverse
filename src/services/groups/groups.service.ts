@@ -35,7 +35,7 @@ export interface GeduGroup {
   productId: string;
   productName: string;
   productDescription: string;
-  productImageUrl: string;
+  productImagePath: string;
   productPadletUrl: string | null;
   productMinAge: number;
   productMaxAge: number;
@@ -71,7 +71,7 @@ function reshapeGroupRows(data: MyGroupWithDetails[]): GeduGroup[] {
         productId: row.product_id,
         productName: row.product_name,
         productDescription: row.product_description,
-        productImageUrl: row.product_image_url,
+        productImagePath: row.product_image_path,
         productPadletUrl: row.product_padlet_url,
         productMinAge: row.product_min_age,
         productMaxAge: row.product_max_age,

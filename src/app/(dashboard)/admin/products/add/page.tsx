@@ -55,7 +55,7 @@ export default function AddProductPage() {
         name: `${cloneSource.name} (Copy)`,
         description: cloneSource.description,
         token_cost: cloneSource.token_cost,
-        image_url: cloneSource.image_url,
+        image_path: cloneSource.image_path,
         padlet_url: cloneSource.padlet_url,
         game_id: cloneSource.game_id,
         day_of_week: cloneSource.day_of_week,

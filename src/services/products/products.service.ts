@@ -3,10 +3,11 @@ import type { Product, ProductInsert, ProductUpdate, Database } from "@/types";
 
 export type ProductWithGame = Product & { games: { name: string } | null };
 
-// Self-hosted images transition (PR 1 of 3): the generated Row type now has
-// image_url: string | null because migration 00027 dropped NOT NULL. Every
-// runtime row still has a non-null image_url — PR 2 flips reads to image_path
-// and removes these casts. See src/types/index.ts "products" override.
+// Self-hosted images transition (PR 2 of 3): the generated Row type has
+// image_path: string | null, but every row has a populated path after the
+// PR 1 populate step and the Product alias re-asserts it as non-null.
+// PR 3 drops image_url and these casts collapse to a no-op. See
+// src/types/index.ts "products" override.
 function assertProductShape<T>(row: unknown): T {
   return row as T;
 }
@@ -63,6 +64,19 @@ export class ProductsService {
   }
 
   async updateProduct(id: string, updates: ProductUpdate): Promise<Product> {
+    // When image_path changes, delete the previous object from storage so we
+    // don't accumulate orphans. Admin role has DELETE on storage.objects for
+    // product-images (migration 00027), so this runs on the injected client.
+    let previousImagePath: string | null = null;
+    if (updates.image_path) {
+      const { data: existing } = await this.supabase
+        .from("products")
+        .select("image_path")
+        .eq("id", id)
+        .single();
+      previousImagePath = existing?.image_path ?? null;
+    }
+
     const { data, error } = await this.supabase
       .from("products")
       .update(updates)
@@ -71,6 +85,17 @@ export class ProductsService {
       .single();
 
     if (error) throw error;
+
+    if (
+      previousImagePath &&
+      updates.image_path &&
+      previousImagePath !== updates.image_path
+    ) {
+      await this.supabase.storage
+        .from("product-images")
+        .remove([previousImagePath]);
+    }
+
     return assertProductShape<Product>(data);
   }
 

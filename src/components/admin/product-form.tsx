@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { z } from "zod";
 import { useTranslations, useLocale } from "next-intl";
@@ -14,7 +14,9 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { cn, DAYS_OF_WEEK } from "@/lib/utils";
 import { ProductLocationPicker } from "@/components/admin/product-location-picker";
+import { ProductImagePicker, type ProductImageValue } from "@/components/admin/product-image-picker";
 import { SpokenLanguageRadioGroup } from "@/components/ui/spoken-language-checkboxes";
+import { uploadProductImage } from "@/services/products/upload-product-image";
 
 function createProductSchema(msgs: Record<string, string>) {
   return z.object({
@@ -27,7 +29,7 @@ function createProductSchema(msgs: Record<string, string>) {
       .number({ invalid_type_error: msgs.sorgCostNumber })
       .int(msgs.sorgCostWhole)
       .min(1, msgs.sorgCostMin),
-    imageUrl: z.string().url(msgs.validUrl),
+    imagePath: z.string().min(1, msgs.imageRequired),
     padletUrl: z.union([z.string().url(msgs.validUrl), z.literal("")]).optional(),
     gameId: z.string().uuid(msgs.gameRequired),
     dayOfWeek: z.number().int().min(0).max(6),
@@ -52,7 +54,7 @@ export interface ProductFormValues {
   name: string;
   description: string;
   token_cost: number;
-  image_url: string;
+  image_path: string;
   padlet_url: string | null;
   game_id: string;
   day_of_week: number;
@@ -84,8 +86,8 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const { tokensToCurrencyDisplay } = useTokenRates();
   const validationKeys = [
     "nameRequired", "nameMaxLength", "descriptionRequired", "sorgCostNumber",
-    "sorgCostWhole", "sorgCostMin", "validUrl", "gameRequired", "validTime",
-    "durationMin", "minAgeMin", "maxAgeMin", "maxAgeGte",
+    "sorgCostWhole", "sorgCostMin", "validUrl", "imageRequired", "gameRequired",
+    "validTime", "durationMin", "minAgeMin", "maxAgeMin", "maxAgeGte",
     "locationRequired", "spokenLanguageRequired",
   ] as const;
   const msgs = Object.fromEntries(validationKeys.map((k) => [k, t(k)]));
@@ -94,7 +96,13 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const [name, setName] = useState(initialValues?.name ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
   const [tokenCost, setTokenCost] = useState(initialValues?.token_cost != null ? String(initialValues.token_cost) : "");
-  const [imageUrl, setImageUrl] = useState(initialValues?.image_url ?? "");
+  // File when admin staged a new image (not yet uploaded), string when an
+  // existing bucket path is loaded (edit mode), null when empty. Upload
+  // happens only on form submit so abandoned forms don't orphan bucket files.
+  const [imageValue, setImageValue] = useState<ProductImageValue>(
+    initialValues?.image_path ?? null,
+  );
+  const [submitting, setSubmitting] = useState(false);
   const [padletUrl, setPadletUrl] = useState(initialValues?.padlet_url ?? "");
   const [gameId, setGameId] = useState(initialValues?.game_id ?? "");
   const [newGameName, setNewGameName] = useState("");
@@ -110,27 +118,6 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
     initialValues?.spoken_language_code ?? "",
   );
   const [error, setError] = useState<string | null>(null);
-
-  // Debounced image preview
-  const [previewUrl, setPreviewUrl] = useState(initialValues?.image_url ?? "");
-  const [previewError, setPreviewError] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPreviewError(false);
-      try {
-        if (imageUrl) {
-          new URL(imageUrl);
-          setPreviewUrl(imageUrl);
-        } else {
-          setPreviewUrl("");
-        }
-      } catch {
-        setPreviewUrl("");
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [imageUrl]);
 
   const handleCreateGame = async () => {
     if (!newGameName.trim()) return;
@@ -148,12 +135,26 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
     e.preventDefault();
     setError(null);
 
+    setSubmitting(true);
     try {
+      // Resolve the staged image (File) into a bucket path before the rest of
+      // the form is validated and submitted. Existing edits keep their string
+      // path until the admin replaces the image. Upload happens here — not on
+      // file-select — so abandoned forms don't leave orphans in the bucket.
+      let resolvedImagePath: string;
+      if (imageValue instanceof File) {
+        resolvedImagePath = await uploadProductImage(imageValue);
+      } else if (typeof imageValue === "string") {
+        resolvedImagePath = imageValue;
+      } else {
+        resolvedImagePath = "";
+      }
+
       const validatedData = productSchema.parse({
         name,
         description,
         tokenCost: tokenCost === "" ? undefined : Number(tokenCost),
-        imageUrl,
+        imagePath: resolvedImagePath,
         padletUrl,
         gameId,
         dayOfWeek: Number(dayOfWeek),
@@ -170,7 +171,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         name: validatedData.name,
         description: validatedData.description,
         token_cost: validatedData.tokenCost,
-        image_url: validatedData.imageUrl,
+        image_path: validatedData.imagePath,
         padlet_url: validatedData.padletUrl || null,
         game_id: validatedData.gameId,
         day_of_week: validatedData.dayOfWeek,
@@ -192,6 +193,8 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
       } else {
         setError(c('unexpectedError'));
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -261,32 +264,11 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="imageUrl">{t('imageUrlLabel')}</Label>
-          <Input
-            id="imageUrl"
-            type="url"
-            placeholder="https://example.com/image.png" // eslint-disable-line i18next/no-literal-string -- example URL placeholder, not user-facing copy
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            disabled={isPending}
-            required
-          />
-          {previewUrl && !previewError && (
-            <div className="relative mt-2 h-32 w-full overflow-hidden rounded-md border bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element -- admin-entered arbitrary external URL preview; next/image requires configured remotePatterns which we don't have for this input */}
-              <img
-                src={previewUrl}
-                alt={t('preview')}
-                className="h-full w-full object-contain"
-                onError={() => setPreviewError(true)}
-              />
-            </div>
-          )}
-          {previewError && (
-            <p className="text-xs text-muted-foreground">{t('imagePreviewError')}</p>
-          )}
-        </div>
+        <ProductImagePicker
+          value={imageValue}
+          onChange={setImageValue}
+          disabled={isPending || submitting}
+        />
 
         <div className="space-y-2">
           <Label htmlFor="gameId">{t('gameLabel')}</Label>
@@ -448,9 +430,9 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         <Button
           type="submit"
           className="w-full"
-          disabled={isPending}
+          disabled={isPending || submitting}
         >
-          {isPending ? pendingLabel : submitLabel}
+          {isPending || submitting ? pendingLabel : submitLabel}
         </Button>
       </CardContent>
     </form>

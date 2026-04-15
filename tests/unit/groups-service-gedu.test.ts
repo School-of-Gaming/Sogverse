@@ -17,7 +17,7 @@ describe("GroupsService.getMyGroups()", () => {
         product_id: "p1",
         product_name: "Product A",
         product_description: "Test product",
-        product_image_url: "https://example.com/default.png",
+        product_image_path: "default.jpg",
         product_padlet_url: null,
         product_min_age: 8,
         product_max_age: 14,
@@ -44,7 +44,7 @@ describe("GroupsService.getMyGroups()", () => {
         product_id: "p1",
         product_name: "Product A",
         product_description: "Test product",
-        product_image_url: "https://example.com/default.png",
+        product_image_path: "default.jpg",
         product_padlet_url: null,
         product_min_age: 8,
         product_max_age: 14,
@@ -71,7 +71,7 @@ describe("GroupsService.getMyGroups()", () => {
         product_id: "p2",
         product_name: "Product B",
         product_description: "Test product",
-        product_image_url: "https://example.com/img.png",
+        product_image_path: "img.jpg",
         product_padlet_url: null,
         product_min_age: 8,
         product_max_age: 14,
@@ -113,7 +113,7 @@ describe("GroupsService.getMyGroups()", () => {
     // Second group (display_order 1, no gamers)
     expect(groups[1].groupId).toBe("g2");
     expect(groups[1].productName).toBe("Product B");
-    expect(groups[1].productImageUrl).toBe("https://example.com/img.png");
+    expect(groups[1].productImagePath).toBe("img.jpg");
     expect(groups[1].geduName).toBe("Mr. Jones");
     expect(groups[1].gamers).toHaveLength(0);
     expect(groups[1].voiceRoomId).toBe("vr-2");
@@ -134,7 +134,7 @@ describe("GroupsService.getMyGroups()", () => {
         product_id: "p1",
         product_name: "B",
         product_description: "Test product",
-        product_image_url: "https://example.com/default.png",
+        product_image_path: "default.jpg",
         product_padlet_url: null,
         product_min_age: 8,
         product_max_age: 14,
@@ -161,7 +161,7 @@ describe("GroupsService.getMyGroups()", () => {
         product_id: "p1",
         product_name: "A",
         product_description: "Test product",
-        product_image_url: "https://example.com/default.png",
+        product_image_path: "default.jpg",
         product_padlet_url: null,
         product_min_age: 8,
         product_max_age: 14,

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslations, useLocale } from "next-intl";
 import { ROUTES } from "@/lib/constants";
-import Image from "next/image";
 import {
   ArrowLeft,
   Eye,
@@ -32,6 +31,7 @@ import { GeduGroupsCard, VisibilityWarningBanner } from "@/components/admin/gedu
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { formatScheduleLocal, formatDate } from "@/lib/utils";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 
 export default function ManageProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -114,16 +114,11 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
       {/* Product Summary */}
       <Card>
         <CardContent className="flex items-center gap-6 pt-6">
-          <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center">
-            <Image
-              src={product.image_url}
-              alt={product.name}
-              width={96}
-              height={96}
-              unoptimized
-              className="h-auto w-auto max-h-full max-w-full rounded-md"
-            />
-          </div>
+          <ProductThumbnail
+            imagePath={product.image_path}
+            alt={product.name}
+            size="h-24 w-24"
+          />
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">{product.name}</h1>

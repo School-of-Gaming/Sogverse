@@ -461,7 +461,7 @@ const DEMO_PRODUCTS = [
     id: "prod-1",
     name: "Sogverse Pro",
     description: "Weekly game-based social skills sessions with a certified educator",
-    image_url: "https://upload.wikimedia.org/wikipedia/en/thumb/b/b6/Minecraft_2024_cover_art.png/250px-Minecraft_2024_cover_art.png",
+    image_path: "demo-placeholder.svg",
     is_visible: true,
     token_cost: 50,
     day_of_week: 3,
@@ -484,7 +484,7 @@ const DEMO_PRODUCTS = [
     id: "prod-2",
     name: "Starter Pack",
     description: "Intro sessions for younger gamers — small group, shorter format",
-    image_url: "https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Fortnite_Save_The_World.jpg/250px-Fortnite_Save_The_World.jpg",
+    image_path: "demo-placeholder.svg",
     is_visible: false,
     token_cost: 25,
     day_of_week: 6,
@@ -505,14 +505,17 @@ const DEMO_PRODUCTS = [
   },
 ] as const;
 
-// Demo products: day_of_week (0=Mon–6=Sun), start_time, timezone (IANA)
+// Demo products: day_of_week (0=Mon–6=Sun), start_time, timezone (IANA).
+// `image` is a bucket-relative path. demo-placeholder.svg lives in the
+// product-images bucket and exists solely to back this style guide — don't
+// delete it from the bucket without updating the demo data here.
 const DEMO_GROUPS = [
-  { name: "Thursday Minecraft Club", gedu: "Rachel Morgan", gamers: 4, day: 3, time: "17:30", tz: "Europe/Helsinki", image: "https://placehold.co/80x96" },
-  { name: "Friday Creative Lab",     gedu: "Morgan Ellis",  gamers: 3, day: 4, time: "16:00", tz: "America/New_York", image: "https://placehold.co/200x96" },
-  { name: "Weekend Warriors",        gedu: "Taylor Kim",    gamers: 2, day: 6, time: "15:00", tz: "America/New_York", image: "https://placehold.co/96x96" },
-  { name: "Saturday Adventure Club", gedu: "Jordan Lee",    gamers: 6, day: 5, time: "10:00", tz: "America/New_York", image: "https://placehold.co/80x200" },
-  { name: "Wednesday Roblox Group",  gedu: "Sam Rivera",    gamers: 5, day: 2, time: "17:00", tz: "America/New_York", image: "https://placehold.co/160x90" },
-  { name: "Monday Builders",         gedu: "Alex Chen",     gamers: 3, day: 0, time: "16:00", tz: "America/New_York", image: "https://placehold.co/80x96" },
+  { name: "Thursday Minecraft Club", gedu: "Rachel Morgan", gamers: 4, day: 3, time: "17:30", tz: "Europe/Helsinki",   image: "demo-placeholder.svg" },
+  { name: "Friday Creative Lab",     gedu: "Morgan Ellis",  gamers: 3, day: 4, time: "16:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
+  { name: "Weekend Warriors",        gedu: "Taylor Kim",    gamers: 2, day: 6, time: "15:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
+  { name: "Saturday Adventure Club", gedu: "Jordan Lee",    gamers: 6, day: 5, time: "10:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
+  { name: "Wednesday Roblox Group",  gedu: "Sam Rivera",    gamers: 5, day: 2, time: "17:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
+  { name: "Monday Builders",         gedu: "Alex Chen",     gamers: 3, day: 0, time: "16:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
 ] as const;
 
 /** Defers time-dependent values to after mount so SSR and client render match. */
@@ -547,7 +550,7 @@ function GroupCardDemo() {
           <GroupCard
             key={g.name}
             productName={g.name}
-            productImageUrl={g.image}
+            productImagePath={g.image}
             geduName={g.gedu}
             gamerCount={g.gamers}
             schedule={formatScheduleLocal(g.day, g.time, g.tz, locale)}

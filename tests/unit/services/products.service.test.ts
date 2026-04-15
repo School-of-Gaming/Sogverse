@@ -89,7 +89,7 @@ describe("ProductsService", () => {
         name: "New Product",
         description: "A new product",
         token_cost: 3,
-        image_url: "https://example.com/image.png",
+        image_path: "new.jpg",
         game_id: "00000000-0000-0000-0000-000000000001",
         day_of_week: 0,
         start_time: "16:00",

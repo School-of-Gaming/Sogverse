@@ -79,7 +79,7 @@ export function createMockProduct(overrides: Partial<Product> = {}): Product {
     name: "Test Product",
     description: "A test product description",
     token_cost: 2,
-    image_url: "https://example.com/image.png",
+    image_path: "test-image.jpg",
     is_visible: true,
     created_by: "test-admin-id",
     game_id: "00000000-0000-0000-0000-000000000001",

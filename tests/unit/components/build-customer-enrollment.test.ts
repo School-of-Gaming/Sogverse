@@ -12,7 +12,7 @@ function makeGroup(
     productId: "p1",
     productName: "Test Product",
     productDescription: "",
-    productImageUrl: "",
+    productImagePath: "",
     productPadletUrl: null,
     productMinAge: 8,
     productMaxAge: 14,

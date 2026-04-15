@@ -123,7 +123,7 @@ function GroupCardAdapter({
   return (
     <GroupCard
       productName={group.productName}
-      productImageUrl={group.productImageUrl}
+      productImagePath={group.productImagePath}
       geduName={group.geduName}
       gamerCount={group.gamers.length}
       schedule={schedule}
