@@ -1,5 +1,5 @@
 ---
-name: review
+name: code-review
 description: Focused code review of the current branch against local dev.
 ---
 
