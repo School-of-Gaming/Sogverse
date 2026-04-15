@@ -16,7 +16,6 @@ import { cn, DAYS_OF_WEEK } from "@/lib/utils";
 import { ProductLocationPicker } from "@/components/admin/product-location-picker";
 import { ProductImagePicker, type ProductImageValue } from "@/components/admin/product-image-picker";
 import { SpokenLanguageRadioGroup } from "@/components/ui/spoken-language-checkboxes";
-import { uploadProductImage } from "@/services/products/upload-product-image";
 
 function createProductSchema(msgs: Record<string, string>) {
   return z.object({
@@ -29,7 +28,6 @@ function createProductSchema(msgs: Record<string, string>) {
       .number({ invalid_type_error: msgs.sorgCostNumber })
       .int(msgs.sorgCostWhole)
       .min(1, msgs.sorgCostMin),
-    imagePath: z.string().min(1, msgs.imageRequired),
     padletUrl: z.union([z.string().url(msgs.validUrl), z.literal("")]).optional(),
     gameId: z.string().uuid(msgs.gameRequired),
     dayOfWeek: z.number().int().min(0).max(6),
@@ -54,7 +52,6 @@ export interface ProductFormValues {
   name: string;
   description: string;
   token_cost: number;
-  image_path: string;
   padlet_url: string | null;
   game_id: string;
   day_of_week: number;
@@ -65,10 +62,21 @@ export interface ProductFormValues {
   is_remote: boolean;
   location_id: string | null;
   spoken_language_code: string;
+  /**
+   * New image to upload. `null` means "keep the existing image" — only valid
+   * in edit mode. For create the form enforces a non-null value before
+   * calling onSubmit, so the add page can treat this as guaranteed File.
+   */
+  image: File | null;
+}
+
+export interface ProductFormInitialValues extends Partial<Omit<ProductFormValues, "image">> {
+  /** Current image path in the bucket, used to seed the preview in edit mode. */
+  image_path?: string;
 }
 
 interface ProductFormProps {
-  initialValues?: Partial<ProductFormValues>;
+  initialValues?: ProductFormInitialValues;
   onSubmit: (values: ProductFormValues) => Promise<void>;
   isPending: boolean;
   submitLabel: string;
@@ -97,8 +105,10 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const [description, setDescription] = useState(initialValues?.description ?? "");
   const [tokenCost, setTokenCost] = useState(initialValues?.token_cost != null ? String(initialValues.token_cost) : "");
   // File when admin staged a new image (not yet uploaded), string when an
-  // existing bucket path is loaded (edit mode), null when empty. Upload
-  // happens only on form submit so abandoned forms don't orphan bucket files.
+  // existing bucket path is loaded (edit mode), null when empty. The File is
+  // never uploaded client-side — it's handed to the server along with the
+  // rest of the form in a single multipart request, so a failed create /
+  // update cannot leave an orphan in the bucket.
   const [imageValue, setImageValue] = useState<ProductImageValue>(
     initialValues?.image_path ?? null,
   );
@@ -135,26 +145,20 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
     e.preventDefault();
     setError(null);
 
+    // Image presence check runs outside zod because File isn't a zod-native
+    // type; imageValue is a File (new), a string (existing bucket path in
+    // edit mode — treat as "keep current"), or null (error).
+    if (!imageValue) {
+      setError(t('imageRequired'));
+      return;
+    }
+
     setSubmitting(true);
     try {
-      // Resolve the staged image (File) into a bucket path before the rest of
-      // the form is validated and submitted. Existing edits keep their string
-      // path until the admin replaces the image. Upload happens here — not on
-      // file-select — so abandoned forms don't leave orphans in the bucket.
-      let resolvedImagePath: string;
-      if (imageValue instanceof File) {
-        resolvedImagePath = await uploadProductImage(imageValue);
-      } else if (typeof imageValue === "string") {
-        resolvedImagePath = imageValue;
-      } else {
-        resolvedImagePath = "";
-      }
-
       const validatedData = productSchema.parse({
         name,
         description,
         tokenCost: tokenCost === "" ? undefined : Number(tokenCost),
-        imagePath: resolvedImagePath,
         padletUrl,
         gameId,
         dayOfWeek: Number(dayOfWeek),
@@ -171,7 +175,6 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         name: validatedData.name,
         description: validatedData.description,
         token_cost: validatedData.tokenCost,
-        image_path: validatedData.imagePath,
         padlet_url: validatedData.padletUrl || null,
         game_id: validatedData.gameId,
         day_of_week: validatedData.dayOfWeek,
@@ -182,6 +185,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         is_remote: validatedData.isRemote,
         location_id: validatedData.locationId,
         spoken_language_code: validatedData.spokenLanguageCode,
+        image: imageValue instanceof File ? imageValue : null,
       });
     } catch (err) {
       if (err instanceof z.ZodError) {

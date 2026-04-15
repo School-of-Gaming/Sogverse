@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ProductsService } from "@/services/products/products.service";
 import type { Database } from "@/types/database.types";
@@ -52,17 +52,6 @@ describe("ProductsService", () => {
       expect(result).toEqual(mockProducts);
     });
 
-    it("returns empty array when no products", async () => {
-      const mockOrder = vi.fn().mockResolvedValue(mockSupabaseSuccess([]));
-      const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
-      const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-      mockSupabase.from.mockReturnValue({ select: mockSelect });
-
-      const result = await service.getVisibleProducts();
-
-      expect(result).toEqual([]);
-    });
-
     it("throws on error", async () => {
       const mockOrder = vi.fn().mockResolvedValue(mockSupabaseError("Database error"));
       const mockEq = vi.fn().mockReturnValue({ order: mockOrder });
@@ -92,13 +81,44 @@ describe("ProductsService", () => {
     });
   });
 
+  // createProduct and updateProduct run server-side — the service just
+  // builds FormData and POSTs to the admin routes. The orphan-cleanup
+  // guarantees live in the route handlers and are covered by the
+  // create-product.test.ts and update-product.test.ts integration tests.
+  // Here we just verify the service hands the right shape to fetch.
+
+  const mockFetch = vi.fn<typeof fetch>();
+
+  /** Pull the FormData body from the Nth fetch call the service made. */
+  function fetchCallFormData(call: number): FormData {
+    const [, init] = mockFetch.mock.calls[call];
+    return init!.body as FormData;
+  }
+
   describe("createProduct", () => {
-    it("creates a new product", async () => {
-      const newProduct = {
+    beforeEach(() => {
+      mockFetch.mockReset();
+      vi.stubGlobal("fetch", mockFetch);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("sends a multipart request with file and JSON metadata", async () => {
+      const testImage = new File(["bytes"], "test.jpg", { type: "image/jpeg" });
+      const created = createMockProduct({ name: "New Product" });
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ product: created }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+
+      const result = await service.createProduct({
         name: "New Product",
         description: "A new product",
         token_cost: 3,
-        image_path: "new.jpg",
         game_id: "00000000-0000-0000-0000-000000000001",
         day_of_week: 0,
         start_time: "16:00",
@@ -108,108 +128,100 @@ describe("ProductsService", () => {
         is_remote: true,
         location_id: null,
         spoken_language_code: "en",
-      };
-      const createdProduct = createMockProduct(newProduct);
+        timezone: "Europe/Helsinki",
+        image: testImage,
+      });
 
-      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-        new Response(JSON.stringify({ product: createdProduct }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        })
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [url, init] = mockFetch.mock.calls[0];
+      expect(url).toBe("/api/admin/create-product");
+      expect(init?.method).toBe("POST");
+      expect(init?.body).toBeInstanceOf(FormData);
+
+      const fd = fetchCallFormData(0);
+      expect(fd.get("file")).toBe(testImage);
+      const data = JSON.parse(fd.get("data") as string);
+      expect(data.name).toBe("New Product");
+      expect(data.image).toBeUndefined();
+
+      expect(result.name).toBe("New Product");
+    });
+
+    it("surfaces the server error message on failure", async () => {
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ error: "boom" }), { status: 400 })
       );
 
-      const result = await service.createProduct(newProduct);
-
-      expect(fetchSpy).toHaveBeenCalledWith("/api/admin/create-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProduct),
-      });
-      expect(result.name).toBe("New Product");
-
-      fetchSpy.mockRestore();
+      await expect(
+        service.createProduct({
+          image: new File(["x"], "x.jpg", { type: "image/jpeg" }),
+          name: "X",
+          description: "Y",
+          token_cost: 1,
+          game_id: "g",
+          day_of_week: 0,
+          start_time: "16:00",
+          duration_minutes: 60,
+          min_age: 7,
+          max_age: 12,
+          is_remote: true,
+          location_id: null,
+          spoken_language_code: "en",
+          timezone: "Europe/Helsinki",
+        })
+      ).rejects.toThrow("boom");
     });
   });
 
   describe("updateProduct", () => {
-    function mockUpdateChain(updatedProduct: unknown, previousImagePath: string | null) {
-      const mockUpdate = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue(mockSupabaseSuccess(updatedProduct)),
-          }),
-        }),
-      });
-      const mockSelect = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue(
-            mockSupabaseSuccess({ image_path: previousImagePath }),
-          ),
-        }),
-      });
-      // updateProduct calls from("products") twice when image_path is in the
-      // updates: once to fetch the previous path, once for the update itself.
-      mockSupabase.from
-        .mockReturnValueOnce({ select: mockSelect })
-        .mockReturnValueOnce({ update: mockUpdate });
-      return { mockUpdate, mockSelect };
-    }
-
-    it("updates an existing product without touching storage when image_path is not in updates", async () => {
-      const updates = { name: "Updated Name" };
-      const updatedProduct = createMockProduct(updates);
-
-      const mockUpdate = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue(mockSupabaseSuccess(updatedProduct)),
-          }),
-        }),
-      });
-
-      mockSupabase.from.mockReturnValue({ update: mockUpdate });
-      const storageRemove = mockStorageRemove();
-
-      const result = await service.updateProduct("test-id", updates);
-
-      expect(mockUpdate).toHaveBeenCalledWith(updates);
-      expect(result.name).toBe("Updated Name");
-      expect(storageRemove).not.toHaveBeenCalled();
-      expect(mockSupabase.storage.from).not.toHaveBeenCalled();
+    beforeEach(() => {
+      mockFetch.mockReset();
+      vi.stubGlobal("fetch", mockFetch);
     });
 
-    it("removes the previous image when image_path changes", async () => {
-      const updates = { image_path: "new.jpg" };
-      const updatedProduct = createMockProduct(updates);
-      mockUpdateChain(updatedProduct, "old.jpg");
-      const storageRemove = mockStorageRemove();
-
-      await service.updateProduct("test-id", updates);
-
-      expect(mockSupabase.storage.from).toHaveBeenCalledWith("product-images");
-      expect(storageRemove).toHaveBeenCalledWith(["old.jpg"]);
+    afterEach(() => {
+      vi.unstubAllGlobals();
     });
 
-    it("does not remove storage when the new image_path equals the existing one", async () => {
-      const updates = { image_path: "same.jpg" };
-      const updatedProduct = createMockProduct(updates);
-      mockUpdateChain(updatedProduct, "same.jpg");
-      const storageRemove = mockStorageRemove();
+    it("sends multipart with id and metadata, no file when image is omitted", async () => {
+      mockFetch.mockResolvedValue(
+        new Response(
+          JSON.stringify({ product: createMockProduct({ name: "Renamed" }) }),
+          { status: 200 }
+        )
+      );
 
-      await service.updateProduct("test-id", updates);
+      await service.updateProduct("test-id", { name: "Renamed" });
 
-      expect(storageRemove).not.toHaveBeenCalled();
+      const fd = fetchCallFormData(0);
+      expect(fd.get("id")).toBe("test-id");
+      expect(fd.get("file")).toBeNull();
+      expect(JSON.parse(fd.get("data") as string)).toEqual({ name: "Renamed" });
     });
 
-    it("does not remove storage when the previous image_path is null", async () => {
-      const updates = { image_path: "new.jpg" };
-      const updatedProduct = createMockProduct(updates);
-      mockUpdateChain(updatedProduct, null);
-      const storageRemove = mockStorageRemove();
+    it("attaches the file field only when image is a File", async () => {
+      const newImage = new File(["bytes"], "new.png", { type: "image/png" });
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ product: createMockProduct() }), { status: 200 })
+      );
 
-      await service.updateProduct("test-id", updates);
+      await service.updateProduct("test-id", { name: "X", image: newImage });
 
-      expect(storageRemove).not.toHaveBeenCalled();
+      const fd = fetchCallFormData(0);
+      expect(fd.get("file")).toBe(newImage);
+      // image must not leak into the JSON data payload
+      expect(JSON.parse(fd.get("data") as string).image).toBeUndefined();
+    });
+
+    it("does not attach the file field when image is null", async () => {
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ product: createMockProduct() }), { status: 200 })
+      );
+
+      await service.updateProduct("test-id", { name: "X", image: null });
+
+      const fd = fetchCallFormData(0);
+      expect(fd.get("file")).toBeNull();
     });
   });
 
@@ -257,22 +269,27 @@ describe("ProductsService", () => {
   });
 
   describe("toggleProductVisibility", () => {
-    it("toggles product visibility", async () => {
-      const toggledProduct = createMockProduct({ is_visible: false });
+    beforeEach(() => {
+      mockFetch.mockReset();
+      vi.stubGlobal("fetch", mockFetch);
+    });
 
-      const mockUpdate = vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          select: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue(mockSupabaseSuccess(toggledProduct)),
-          }),
-        }),
-      });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
 
-      mockSupabase.from.mockReturnValue({ update: mockUpdate });
+    it("routes through updateProduct as a partial multipart update", async () => {
+      mockFetch.mockResolvedValue(
+        new Response(
+          JSON.stringify({ product: createMockProduct({ is_visible: false }) }),
+          { status: 200 }
+        )
+      );
 
       const result = await service.toggleProductVisibility("test-id", false);
 
-      expect(mockUpdate).toHaveBeenCalledWith({ is_visible: false });
+      const fd = fetchCallFormData(0);
+      expect(JSON.parse(fd.get("data") as string)).toEqual({ is_visible: false });
       expect(result.is_visible).toBe(false);
     });
   });

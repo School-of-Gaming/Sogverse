@@ -12,6 +12,25 @@ function assertProductShape<T>(row: unknown): T {
   return row as T;
 }
 
+// Shape sent to /api/admin/create-product. The image is a File (required);
+// the server uploads it inside the same request that inserts the row so a
+// failed insert never leaves an orphan in the bucket.
+export type CreateProductInput = Omit<
+  ProductInsert,
+  "created_by" | "image_path" | "image_url"
+> & {
+  image: File;
+};
+
+// Shape sent to /api/admin/update-product. The image is optional — undefined
+// or null means "don't change the current image", a File means "replace".
+export type UpdateProductInput = Omit<
+  ProductUpdate,
+  "image_path" | "image_url"
+> & {
+  image?: File | null;
+};
+
 export class ProductsService {
   constructor(private supabase: SupabaseClient<Database>) {}
 
@@ -47,62 +66,56 @@ export class ProductsService {
     return assertProductShape<ProductWithGame>(data);
   }
 
-  async createProduct(product: Omit<ProductInsert, "created_by">): Promise<Product> {
+  async createProduct(input: CreateProductInput): Promise<Product> {
+    const { image, ...metadata } = input;
+
+    const formData = new FormData();
+    formData.append("file", image);
+    formData.append("data", JSON.stringify(metadata));
+
     const response = await fetch("/api/admin/create-product", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(product),
+      body: formData,
     });
 
     if (!response.ok) {
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       throw new Error(data.error || "Failed to create product");
     }
 
-    const { product: created } = await response.json();
-    return created;
+    const { product } = (await response.json()) as { product: unknown };
+    return assertProductShape<Product>(product);
   }
 
-  async updateProduct(id: string, updates: ProductUpdate): Promise<Product> {
-    // When image_path changes, delete the previous object from storage so we
-    // don't accumulate orphans. Admin role has DELETE on storage.objects for
-    // product-images (migration 00027), so this runs on the injected client.
-    let previousImagePath: string | null = null;
-    if (updates.image_path) {
-      const { data: existing } = await this.supabase
-        .from("products")
-        .select("image_path")
-        .eq("id", id)
-        .single();
-      previousImagePath = existing?.image_path ?? null;
+  async updateProduct(id: string, input: UpdateProductInput): Promise<Product> {
+    const { image, ...metadata } = input;
+
+    const formData = new FormData();
+    formData.append("id", id);
+    formData.append("data", JSON.stringify(metadata));
+    if (image instanceof File) {
+      formData.append("file", image);
     }
 
-    const { data, error } = await this.supabase
-      .from("products")
-      .update(updates)
-      .eq("id", id)
-      .select()
-      .single();
+    const response = await fetch("/api/admin/update-product", {
+      method: "POST",
+      body: formData,
+    });
 
-    if (error) throw error;
-
-    if (
-      previousImagePath &&
-      updates.image_path &&
-      previousImagePath !== updates.image_path
-    ) {
-      await this.supabase.storage
-        .from("product-images")
-        .remove([previousImagePath]);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || "Failed to update product");
     }
 
-    return assertProductShape<Product>(data);
+    const { product } = (await response.json()) as { product: unknown };
+    return assertProductShape<Product>(product);
   }
 
   async deleteProduct(id: string): Promise<void> {
     // Fetch image_path before deleting so we can clean up the bucket object.
-    // If the storage remove later fails, we log and move on — the DB row is
-    // already gone, and one orphan is better than blocking the delete.
+    // If the storage remove later fails, the DB row is already gone — one
+    // orphan is better than blocking the delete, and delete cannot
+    // *introduce* orphans the way create/update can.
     const { data: existing } = await this.supabase
       .from("products")
       .select("image_path")

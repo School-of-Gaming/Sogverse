@@ -1,6 +1,26 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+const EXT_TO_MIME: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  avif: "image/avif",
+  svg: "image/svg+xml",
+};
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+function resolveUploadMeta(file: File): { path: string; contentType: string } | null {
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  const contentType = EXT_TO_MIME[ext];
+  if (!contentType) return null;
+  const normalised = ext === "jpeg" ? "jpg" : ext;
+  return { path: `${randomUUID()}.${normalised}`, contentType };
+}
 
 export async function POST(request: Request) {
   try {
@@ -10,15 +30,59 @@ export async function POST(request: Request) {
     if (result instanceof NextResponse) return result;
     const { user } = result;
 
-    const body = await request.json();
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return NextResponse.json(
+        { error: "Request must be multipart/form-data" },
+        { status: 400 }
+      );
+    }
+
+    const dataField = formData.get("data");
+    if (typeof dataField !== "string") {
+      return NextResponse.json(
+        { error: "Missing 'data' field" },
+        { status: 400 }
+      );
+    }
+    let body: Record<string, unknown>;
+    try {
+      body = JSON.parse(dataField) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json(
+        { error: "'data' field must be valid JSON" },
+        { status: 400 }
+      );
+    }
+
+    const file = formData.get("file");
+    if (!(file instanceof File)) {
+      return NextResponse.json(
+        { error: "Image file is required" },
+        { status: 400 }
+      );
+    }
+    if (file.size > MAX_FILE_BYTES) {
+      return NextResponse.json(
+        { error: "Image must be 5 MB or smaller" },
+        { status: 413 }
+      );
+    }
+    const uploadMeta = resolveUploadMeta(file);
+    if (!uploadMeta) {
+      return NextResponse.json(
+        { error: "Unsupported file type. Use JPEG, PNG, WEBP, AVIF, or SVG." },
+        { status: 415 }
+      );
+    }
 
     // Validate required fields
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
     const tokenCost = typeof body.token_cost === "number" ? body.token_cost : NaN;
-    const imagePath =
-      typeof body.image_path === "string" ? body.image_path.trim() : "";
     const gameId = typeof body.game_id === "string" ? body.game_id : "";
     const dayOfWeek =
       typeof body.day_of_week === "number" ? body.day_of_week : -1;
@@ -55,12 +119,6 @@ export async function POST(request: Request) {
     if (isNaN(tokenCost) || tokenCost < 1 || !Number.isInteger(tokenCost)) {
       return NextResponse.json(
         { error: "Token cost is required (must be a positive integer)" },
-        { status: 400 }
-      );
-    }
-    if (!imagePath) {
-      return NextResponse.json(
-        { error: "Image is required" },
         { status: 400 }
       );
     }
@@ -133,7 +191,8 @@ export async function POST(request: Request) {
     const admin = createAdminClient();
 
     // Preflight location_id so the caller sees a clean 400 instead of a
-    // Postgres "invalid UUID" / trigger error bubbled up as 500.
+    // Postgres "invalid UUID" / trigger error bubbled up as 500. Runs before
+    // the upload so a bad location never touches the bucket.
     if (locationId) {
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(locationId)) {
         return NextResponse.json(
@@ -163,13 +222,26 @@ export async function POST(request: Request) {
       }
     }
 
+    // All metadata is valid. Upload the file, then insert — if the insert
+    // fails for any reason, delete the uploaded object so the bucket never
+    // holds an image for a product row that doesn't exist.
+    const { error: uploadError } = await admin.storage
+      .from("product-images")
+      .upload(uploadMeta.path, file, {
+        contentType: uploadMeta.contentType,
+        upsert: false,
+      });
+    if (uploadError) {
+      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    }
+
     const { data, error } = await admin
       .from("products")
       .insert({
         name,
         description,
         token_cost: tokenCost,
-        image_path: imagePath,
+        image_path: uploadMeta.path,
         padlet_url: padletUrl || null,
         created_by: user.id,
         game_id: gameId,
@@ -187,6 +259,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
+      await admin.storage.from("product-images").remove([uploadMeta.path]);
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 

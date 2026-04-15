@@ -9,7 +9,11 @@ import { ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCreateProduct, useProduct } from "@/services/products";
-import { ProductForm, type ProductFormValues } from "@/components/admin/product-form";
+import {
+  ProductForm,
+  type ProductFormValues,
+  type ProductFormInitialValues,
+} from "@/components/admin/product-form";
 
 export default function AddProductPage() {
   const t = useTranslations('admin.products');
@@ -22,7 +26,13 @@ export default function AddProductPage() {
   const [isNavigating, startTransition] = useTransition();
 
   const handleSubmit = async (values: ProductFormValues) => {
-    const created = await createProduct.mutateAsync(values);
+    // Form requires a File before calling onSubmit, so image is always
+    // present here. Guard anyway to keep the compiler happy.
+    if (!values.image) {
+      throw new Error("Product image is required");
+    }
+    const { image, ...rest } = values;
+    const created = await createProduct.mutateAsync({ ...rest, image });
     startTransition(() => router.push(ROUTES.admin.product(created.id)));
   };
 
@@ -50,7 +60,7 @@ export default function AddProductPage() {
     );
   }
 
-  const initialValues = cloneSource
+  const initialValues: ProductFormInitialValues | undefined = cloneSource
     ? {
         // image_path is intentionally not copied: cloned products would otherwise
         // share a bucket file, and editing one would delete the other's image.

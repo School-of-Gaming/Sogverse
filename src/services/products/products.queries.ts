@@ -2,8 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { ProductsService } from "./products.service";
-import type { ProductInsert, ProductUpdate } from "@/types";
+import {
+  ProductsService,
+  type CreateProductInput,
+  type UpdateProductInput,
+} from "./products.service";
 
 const productKeys = {
   all: ["products"] as const,
@@ -51,7 +54,7 @@ export function useCreateProduct() {
   const service = new ProductsService(supabase);
 
   return useMutation({
-    mutationFn: (product: Omit<ProductInsert, "created_by">) => service.createProduct(product),
+    mutationFn: (product: CreateProductInput) => service.createProduct(product),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
       queryClient.invalidateQueries({ queryKey: productKeys.visible() });
@@ -65,7 +68,7 @@ export function useUpdateProduct() {
   const service = new ProductsService(supabase);
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: ProductUpdate }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: UpdateProductInput }) =>
       service.updateProduct(id, updates),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: productKeys.detail(id) });
