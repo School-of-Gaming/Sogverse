@@ -74,7 +74,7 @@ describe("POST /api/admin/upload-product-image", () => {
     const data = await response.json();
 
     expect(response.status).toBe(415);
-    expect(data.error).toMatch(/JPEG|PNG|WEBP|AVIF/);
+    expect(data.error).toMatch(/JPEG|PNG|WEBP|AVIF|SVG/);
   });
 
   it("uploads allowed file and returns the generated path", async () => {

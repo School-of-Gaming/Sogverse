@@ -9,6 +9,7 @@ const EXT_TO_MIME: Record<string, string> = {
   png: "image/png",
   webp: "image/webp",
   avif: "image/avif",
+  svg: "image/svg+xml",
 };
 
 export async function POST(request: Request) {
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
   const contentType = EXT_TO_MIME[ext];
   if (!contentType) {
     return NextResponse.json(
-      { error: "Unsupported file type. Use JPEG, PNG, WEBP, or AVIF." },
+      { error: "Unsupported file type. Use JPEG, PNG, WEBP, AVIF, or SVG." },
       { status: 415 }
     );
   }

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { productImageUrl } from "@/lib/images/product-image-url";
 import { cn } from "@/lib/utils";
 
-const ACCEPT = "image/jpeg,image/png,image/webp,image/avif";
+const ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/svg+xml";
 
 export type ProductImageValue = File | string | null;
 
