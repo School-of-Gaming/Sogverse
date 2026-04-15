@@ -53,6 +53,7 @@ export function ProductImagePicker({
     e.preventDefault();
     setIsDragging(false);
     if (disabled) return;
+    if (e.dataTransfer.files.length === 0) return;
     const file = e.dataTransfer.files[0];
     if (file.type.startsWith("image/")) {
       onChange(file);
