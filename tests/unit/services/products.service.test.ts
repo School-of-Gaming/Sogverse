@@ -16,7 +16,16 @@ describe("ProductsService", () => {
     return {
       from: vi.fn(),
       rpc: vi.fn(),
+      storage: {
+        from: vi.fn(),
+      },
     };
+  }
+
+  function mockStorageRemove() {
+    const remove = vi.fn().mockResolvedValue({ data: null, error: null });
+    mockSupabase.storage.from.mockReturnValue({ remove });
+    return remove;
   }
 
   beforeEach(() => {
@@ -123,7 +132,30 @@ describe("ProductsService", () => {
   });
 
   describe("updateProduct", () => {
-    it("updates an existing product", async () => {
+    function mockUpdateChain(updatedProduct: unknown, previousImagePath: string | null) {
+      const mockUpdate = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue(mockSupabaseSuccess(updatedProduct)),
+          }),
+        }),
+      });
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(
+            mockSupabaseSuccess({ image_path: previousImagePath }),
+          ),
+        }),
+      });
+      // updateProduct calls from("products") twice when image_path is in the
+      // updates: once to fetch the previous path, once for the update itself.
+      mockSupabase.from
+        .mockReturnValueOnce({ select: mockSelect })
+        .mockReturnValueOnce({ update: mockUpdate });
+      return { mockUpdate, mockSelect };
+    }
+
+    it("updates an existing product without touching storage when image_path is not in updates", async () => {
       const updates = { name: "Updated Name" };
       const updatedProduct = createMockProduct(updates);
 
@@ -136,27 +168,91 @@ describe("ProductsService", () => {
       });
 
       mockSupabase.from.mockReturnValue({ update: mockUpdate });
+      const storageRemove = mockStorageRemove();
 
       const result = await service.updateProduct("test-id", updates);
 
-      expect(mockSupabase.from).toHaveBeenCalledWith("products");
       expect(mockUpdate).toHaveBeenCalledWith(updates);
       expect(result.name).toBe("Updated Name");
+      expect(storageRemove).not.toHaveBeenCalled();
+      expect(mockSupabase.storage.from).not.toHaveBeenCalled();
+    });
+
+    it("removes the previous image when image_path changes", async () => {
+      const updates = { image_path: "new.jpg" };
+      const updatedProduct = createMockProduct(updates);
+      mockUpdateChain(updatedProduct, "old.jpg");
+      const storageRemove = mockStorageRemove();
+
+      await service.updateProduct("test-id", updates);
+
+      expect(mockSupabase.storage.from).toHaveBeenCalledWith("product-images");
+      expect(storageRemove).toHaveBeenCalledWith(["old.jpg"]);
+    });
+
+    it("does not remove storage when the new image_path equals the existing one", async () => {
+      const updates = { image_path: "same.jpg" };
+      const updatedProduct = createMockProduct(updates);
+      mockUpdateChain(updatedProduct, "same.jpg");
+      const storageRemove = mockStorageRemove();
+
+      await service.updateProduct("test-id", updates);
+
+      expect(storageRemove).not.toHaveBeenCalled();
+    });
+
+    it("does not remove storage when the previous image_path is null", async () => {
+      const updates = { image_path: "new.jpg" };
+      const updatedProduct = createMockProduct(updates);
+      mockUpdateChain(updatedProduct, null);
+      const storageRemove = mockStorageRemove();
+
+      await service.updateProduct("test-id", updates);
+
+      expect(storageRemove).not.toHaveBeenCalled();
     });
   });
 
   describe("deleteProduct", () => {
-    it("deletes a product by id", async () => {
+    function mockDeleteChain(previousImagePath: string | null) {
       const mockDelete = vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue(mockSupabaseSuccess(null)),
       });
+      const mockSelect = vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue(
+            mockSupabaseSuccess({ image_path: previousImagePath }),
+          ),
+        }),
+      });
+      // deleteProduct calls from("products") twice: once to read image_path
+      // before the row disappears, once for the actual delete.
+      mockSupabase.from
+        .mockReturnValueOnce({ select: mockSelect })
+        .mockReturnValueOnce({ delete: mockDelete });
+      return { mockDelete, mockSelect };
+    }
 
-      mockSupabase.from.mockReturnValue({ delete: mockDelete });
+    it("deletes the product row and removes the bucket image", async () => {
+      mockDeleteChain("hero.jpg");
+      const storageRemove = mockStorageRemove();
 
       await service.deleteProduct("test-id");
 
-      expect(mockSupabase.from).toHaveBeenCalledWith("products");
-      expect(mockDelete).toHaveBeenCalled();
+      expect(mockSupabase.from).toHaveBeenNthCalledWith(1, "products");
+      expect(mockSupabase.from).toHaveBeenNthCalledWith(2, "products");
+      expect(mockSupabase.storage.from).toHaveBeenCalledWith("product-images");
+      expect(storageRemove).toHaveBeenCalledWith(["hero.jpg"]);
+    });
+
+    it("skips storage.remove when the product has no image_path", async () => {
+      mockDeleteChain(null);
+      const storageRemove = mockStorageRemove();
+
+      await service.deleteProduct("test-id");
+
+      expect(storageRemove).not.toHaveBeenCalled();
+      expect(mockSupabase.storage.from).not.toHaveBeenCalled();
     });
   });
 

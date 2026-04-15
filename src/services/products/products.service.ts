@@ -100,12 +100,27 @@ export class ProductsService {
   }
 
   async deleteProduct(id: string): Promise<void> {
+    // Fetch image_path before deleting so we can clean up the bucket object.
+    // If the storage remove later fails, we log and move on — the DB row is
+    // already gone, and one orphan is better than blocking the delete.
+    const { data: existing } = await this.supabase
+      .from("products")
+      .select("image_path")
+      .eq("id", id)
+      .single();
+
     const { error } = await this.supabase
       .from("products")
       .delete()
       .eq("id", id);
 
     if (error) throw error;
+
+    if (existing?.image_path) {
+      await this.supabase.storage
+        .from("product-images")
+        .remove([existing.image_path]);
+    }
   }
 
   async toggleProductVisibility(id: string, isVisible: boolean): Promise<Product> {
