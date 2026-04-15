@@ -52,10 +52,12 @@ export default function AddProductPage() {
 
   const initialValues = cloneSource
     ? {
+        // image_path is intentionally not copied: cloned products would otherwise
+        // share a bucket file, and editing one would delete the other's image.
+        // The admin is forced to pick a fresh image for the clone.
         name: `${cloneSource.name} (Copy)`,
         description: cloneSource.description,
         token_cost: cloneSource.token_cost,
-        image_path: cloneSource.image_path,
         padlet_url: cloneSource.padlet_url,
         game_id: cloneSource.game_id,
         day_of_week: cloneSource.day_of_week,
