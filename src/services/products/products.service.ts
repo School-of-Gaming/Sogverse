@@ -3,21 +3,12 @@ import type { Product, ProductInsert, ProductUpdate, Database } from "@/types";
 
 export type ProductWithGame = Product & { games: { name: string } | null };
 
-// Self-hosted images transition (PR 2 of 3): the generated Row type has
-// image_path: string | null, but every row has a populated path after the
-// PR 1 populate step and the Product alias re-asserts it as non-null.
-// PR 3 drops image_url and these casts collapse to a no-op. See
-// src/types/index.ts "products" override.
-function assertProductShape<T>(row: unknown): T {
-  return row as T;
-}
-
 // Shape sent to /api/admin/create-product. The image is a File (required);
 // the server uploads it inside the same request that inserts the row so a
 // failed insert never leaves an orphan in the bucket.
 export type CreateProductInput = Omit<
   ProductInsert,
-  "created_by" | "image_path" | "image_url"
+  "created_by" | "image_path"
 > & {
   image: File;
 };
@@ -26,7 +17,7 @@ export type CreateProductInput = Omit<
 // or null means "don't change the current image", a File means "replace".
 export type UpdateProductInput = Omit<
   ProductUpdate,
-  "image_path" | "image_url"
+  "image_path"
 > & {
   image?: File | null;
 };
@@ -42,7 +33,7 @@ export class ProductsService {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return assertProductShape<ProductWithGame[]>(data);
+    return data as ProductWithGame[];
   }
 
   async getAllProducts(): Promise<ProductWithGame[]> {
@@ -52,7 +43,7 @@ export class ProductsService {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return assertProductShape<ProductWithGame[]>(data);
+    return data as ProductWithGame[];
   }
 
   async getProduct(id: string): Promise<ProductWithGame> {
@@ -63,7 +54,7 @@ export class ProductsService {
       .single();
 
     if (error) throw error;
-    return assertProductShape<ProductWithGame>(data);
+    return data as ProductWithGame;
   }
 
   async createProduct(input: CreateProductInput): Promise<Product> {
@@ -84,7 +75,7 @@ export class ProductsService {
     }
 
     const { product } = (await response.json()) as { product: unknown };
-    return assertProductShape<Product>(product);
+    return product as Product;
   }
 
   async updateProduct(id: string, input: UpdateProductInput): Promise<Product> {
@@ -108,7 +99,7 @@ export class ProductsService {
     }
 
     const { product } = (await response.json()) as { product: unknown };
-    return assertProductShape<Product>(product);
+    return product as Product;
   }
 
   async deleteProduct(id: string): Promise<void> {
