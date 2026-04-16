@@ -78,21 +78,6 @@ The send route (`src/app/api/admin/whatsapp/send/route.ts`) and webhook handler 
 
 **Why this matters:** the test drift was a silent quality problem. The `no-unnecessary-condition` lint rule caught it only because we widened lint to `tests/` — the test file had `?.state` chains that TS said were unreachable, which was the thread that led to discovering the duplicated logic. Extracting the parser eliminates the duplication class entirely.
 
-### Make `POST /api/gamers/create` atomic (orphan-gamer bug)
-
-`src/app/api/gamers/create/route.ts` performs six sequential writes via the admin client — `auth.admin.createUser` → `profiles.update` → `customer_profiles.delete` → `gamer_profiles.insert` → optional `minecraft_accounts.insert` → `parent_gamer.insert` — with no transaction wrapping them. If any step after the profile promotion fails, or the Vercel invocation is killed (client abort, cold-start timeout, transient pooler blip), the earlier writes stay committed. The result is a fully-formed gamer profile (role, username, gamer_profiles row) with **no `parent_gamer` link** — an orphan that no customer can see or manage, and whose username squats the namespace so the parent has to retry with a different name.
-
-Confirmed occurrence on staging 2026-04-14 08:36:40 UTC:
-- Parent: `murwelikurrur@gmail.com` / `02689145-646f-4ca7-bd8b-85c3a9ad60c1` (Äitiäitinen)
-- **Orphan gamer:** username `Lapsilapsonen`, id `fc606e50-91b9-4945-991b-f882138aba7b`, display name "Kuckenmeister", created 2026-04-14 08:36:40Z, no `parent_gamer` row, never signed in
-- Parent retried 48 s later with `Lapsilapsonen500` (succeeded) and again at 08:59 with `Lapsilapsonen2` (succeeded) — both properly linked. The first username is now stuck because the orphan owns it.
-- Logs are gone: Vercel Hobby runtime logs retain ~1 h, Supabase Logflare retains ~24 h, and the incident was just outside both windows. We can't recover which step failed for this specific case.
-
-Fix:
-- [ ] Wrap the whole create flow in a single `SECURITY DEFINER` RPC (same pattern as `commit_group_changes`) that does the profile update, `customer_profiles` delete, `gamer_profiles` insert, optional `minecraft_accounts` insert, and `parent_gamer` insert inside one transaction. The route handler calls `auth.admin.createUser` first, then passes the new `gamerId` to the RPC — if the RPC fails, delete the auth user to roll back.
-- [ ] Add integration test(s) that simulate a mid-flow failure (e.g., pass a username that trips `validate_parent_gamer_roles`) and assert no partial state remains in `profiles` / `gamer_profiles`.
-- [ ] After the fix ships, delete the orphan: `Lapsilapsonen` / `fc606e50-91b9-4945-991b-f882138aba7b` (auth user + profile + gamer_profiles row). Kept around for now as a live reference while we're still reproducing and testing the bug.
-
 ### Multi-Parent Gamer Linking
 
 Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`. To support a second parent linking to an existing gamer:

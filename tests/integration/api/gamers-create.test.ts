@@ -9,13 +9,20 @@ vi.mock("@/lib/auth", () => ({
   requireRole: (...args: unknown[]) => mockRequireRole(...args),
 }));
 
+const mockCreateUser = vi.fn();
+const mockAdminFrom = vi.fn();
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({})),
+  createAdminClient: vi.fn(() => ({
+    auth: { admin: { createUser: (...args: unknown[]) => mockCreateUser(...args) } },
+    from: (...args: unknown[]) => mockAdminFrom(...args),
+  })),
 }));
 
+const mockLookupMinecraftUser = vi.fn();
+const mockIsValidMinecraftUsername = vi.fn();
 vi.mock("@/lib/mojang", () => ({
-  lookupMinecraftUser: vi.fn(),
-  isValidMinecraftUsername: vi.fn(() => true),
+  lookupMinecraftUser: (...args: unknown[]) => mockLookupMinecraftUser(...args),
+  isValidMinecraftUsername: (...args: unknown[]) => mockIsValidMinecraftUsername(...args),
 }));
 
 // --- Helpers ---
@@ -43,6 +50,45 @@ const validBody = {
   dateOfBirth: "2015-06-15",
   gender: "boy",
 };
+
+/**
+ * Configure admin.from() chain mocks for the pre-createUser phase.
+ * Only needs to handle "profiles" (username check) and "minecraft_accounts"
+ * (UUID uniqueness check) — tests that use this helper stop before the
+ * post-createUser DB operations.
+ */
+function mockPreCreateChecks(config: {
+  usernameExists?: boolean;
+  uuidExists?: boolean;
+}) {
+  mockAdminFrom.mockImplementation((table: string) => {
+    if (table === "profiles") {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: () => Promise.resolve({
+              data: config.usernameExists ? { id: "existing-id" } : null,
+              error: null,
+            }),
+          }),
+        }),
+      };
+    }
+    if (table === "minecraft_accounts") {
+      return {
+        select: () => ({
+          eq: () => ({
+            maybeSingle: () => Promise.resolve({
+              data: config.uuidExists ? { user_id: "other-user" } : null,
+              error: null,
+            }),
+          }),
+        }),
+      };
+    }
+    return {};
+  });
+}
 
 // --- Tests ---
 
@@ -109,5 +155,86 @@ describe("POST /api/gamers/create — DOB validation", () => {
 
     const response = await POST(createRequest(validBody));
     expect(response.status).toBe(403);
+  });
+});
+
+describe("POST /api/gamers/create — Minecraft UUID ordering", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockIsValidMinecraftUsername.mockImplementation(
+      (u: string) => /^[a-zA-Z0-9_]{3,16}$/.test(u),
+    );
+  });
+
+  it("should return 409 when minecraft UUID is already taken, without creating auth user", async () => {
+    mockAuthenticated();
+    mockLookupMinecraftUser.mockResolvedValue({
+      username: "TakenPlayer",
+      uuid: "already-claimed-uuid",
+    });
+    mockPreCreateChecks({ usernameExists: false, uuidExists: true });
+
+    const response = await POST(
+      createRequest({ ...validBody, minecraftUsername: "TakenPlayer" }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data.error).toBe("This Minecraft account is already linked to another user");
+    expect(mockCreateUser).not.toHaveBeenCalled();
+  });
+
+  it("should proceed to createUser when minecraft UUID is available", async () => {
+    mockAuthenticated();
+    mockLookupMinecraftUser.mockResolvedValue({
+      username: "FreePlayer",
+      uuid: "available-uuid",
+    });
+    mockPreCreateChecks({ usernameExists: false, uuidExists: false });
+    // Let createUser fail so we don't need to mock the rest of the flow
+    mockCreateUser.mockResolvedValue({
+      data: null,
+      error: { message: "mock-stop" },
+    });
+
+    await POST(
+      createRequest({ ...validBody, minecraftUsername: "FreePlayer" }),
+    );
+
+    expect(mockCreateUser).toHaveBeenCalled();
+  });
+
+  it("should skip UUID check when Mojang finds no account (null UUID)", async () => {
+    mockAuthenticated();
+    mockLookupMinecraftUser.mockResolvedValue(null);
+    mockPreCreateChecks({ usernameExists: false });
+    mockCreateUser.mockResolvedValue({
+      data: null,
+      error: { message: "mock-stop" },
+    });
+
+    await POST(
+      createRequest({ ...validBody, minecraftUsername: "unknown_player" }),
+    );
+
+    // Mojang returned null → no UUID to check → no minecraft_accounts query
+    expect(mockCreateUser).toHaveBeenCalled();
+    expect(mockAdminFrom).toHaveBeenCalledWith("profiles");
+    expect(mockAdminFrom).not.toHaveBeenCalledWith("minecraft_accounts");
+  });
+
+  it("should skip minecraft check entirely when no minecraft username provided", async () => {
+    mockAuthenticated();
+    mockPreCreateChecks({ usernameExists: false });
+    mockCreateUser.mockResolvedValue({
+      data: null,
+      error: { message: "mock-stop" },
+    });
+
+    await POST(createRequest(validBody));
+
+    expect(mockCreateUser).toHaveBeenCalled();
+    expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
+    expect(mockAdminFrom).not.toHaveBeenCalledWith("minecraft_accounts");
   });
 });
