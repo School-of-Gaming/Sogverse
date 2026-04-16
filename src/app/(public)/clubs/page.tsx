@@ -10,6 +10,7 @@ import { useVisibleProducts } from "@/services/products";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { formatScheduleLocal } from "@/lib/utils";
+import { productImageUrl } from "@/lib/images/product-image-url";
 
 export default function ProductsPage() {
   const { data: products, isLoading } = useVisibleProducts();
@@ -61,7 +62,7 @@ export default function ProductsPage() {
                 <Card key={product.id} className="flex flex-col">
                   <div className="relative aspect-video overflow-hidden rounded-t-lg bg-muted">
                     <Image
-                      src={product.image_url}
+                      src={productImageUrl(product.image_path)}
                       alt={product.name}
                       fill
                       unoptimized

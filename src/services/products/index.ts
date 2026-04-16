@@ -1,5 +1,9 @@
 export { ProductsService } from "./products.service";
-export type { ProductWithGame } from "./products.service";
+export type {
+  ProductWithGame,
+  CreateProductInput,
+  UpdateProductInput,
+} from "./products.service";
 export {
   useVisibleProducts,
   useAllProducts,

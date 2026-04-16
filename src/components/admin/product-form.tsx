@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { z } from "zod";
 import { useTranslations, useLocale } from "next-intl";
@@ -14,6 +14,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { cn, DAYS_OF_WEEK } from "@/lib/utils";
 import { ProductLocationPicker } from "@/components/admin/product-location-picker";
+import { ProductImagePicker, type ProductImageValue } from "@/components/admin/product-image-picker";
 import { SpokenLanguageRadioGroup } from "@/components/ui/spoken-language-checkboxes";
 
 function createProductSchema(msgs: Record<string, string>) {
@@ -27,7 +28,6 @@ function createProductSchema(msgs: Record<string, string>) {
       .number({ invalid_type_error: msgs.sorgCostNumber })
       .int(msgs.sorgCostWhole)
       .min(1, msgs.sorgCostMin),
-    imageUrl: z.string().url(msgs.validUrl),
     padletUrl: z.union([z.string().url(msgs.validUrl), z.literal("")]).optional(),
     gameId: z.string().uuid(msgs.gameRequired),
     dayOfWeek: z.number().int().min(0).max(6),
@@ -52,7 +52,6 @@ export interface ProductFormValues {
   name: string;
   description: string;
   token_cost: number;
-  image_url: string;
   padlet_url: string | null;
   game_id: string;
   day_of_week: number;
@@ -63,10 +62,21 @@ export interface ProductFormValues {
   is_remote: boolean;
   location_id: string | null;
   spoken_language_code: string;
+  /**
+   * New image to upload. `null` means "keep the existing image" — only valid
+   * in edit mode. For create the form enforces a non-null value before
+   * calling onSubmit, so the add page can treat this as guaranteed File.
+   */
+  image: File | null;
+}
+
+export interface ProductFormInitialValues extends Partial<Omit<ProductFormValues, "image">> {
+  /** Current image path in the bucket, used to seed the preview in edit mode. */
+  image_path?: string;
 }
 
 interface ProductFormProps {
-  initialValues?: Partial<ProductFormValues>;
+  initialValues?: ProductFormInitialValues;
   onSubmit: (values: ProductFormValues) => Promise<void>;
   isPending: boolean;
   submitLabel: string;
@@ -84,8 +94,8 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const { tokensToCurrencyDisplay } = useTokenRates();
   const validationKeys = [
     "nameRequired", "nameMaxLength", "descriptionRequired", "sorgCostNumber",
-    "sorgCostWhole", "sorgCostMin", "validUrl", "gameRequired", "validTime",
-    "durationMin", "minAgeMin", "maxAgeMin", "maxAgeGte",
+    "sorgCostWhole", "sorgCostMin", "validUrl", "imageRequired", "gameRequired",
+    "validTime", "durationMin", "minAgeMin", "maxAgeMin", "maxAgeGte",
     "locationRequired", "spokenLanguageRequired",
   ] as const;
   const msgs = Object.fromEntries(validationKeys.map((k) => [k, t(k)]));
@@ -94,7 +104,15 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const [name, setName] = useState(initialValues?.name ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
   const [tokenCost, setTokenCost] = useState(initialValues?.token_cost != null ? String(initialValues.token_cost) : "");
-  const [imageUrl, setImageUrl] = useState(initialValues?.image_url ?? "");
+  // File when admin staged a new image (not yet uploaded), string when an
+  // existing bucket path is loaded (edit mode), null when empty. The File is
+  // never uploaded client-side — it's handed to the server along with the
+  // rest of the form in a single multipart request, so a failed create /
+  // update cannot leave an orphan in the bucket.
+  const [imageValue, setImageValue] = useState<ProductImageValue>(
+    initialValues?.image_path ?? null,
+  );
+  const [submitting, setSubmitting] = useState(false);
   const [padletUrl, setPadletUrl] = useState(initialValues?.padlet_url ?? "");
   const [gameId, setGameId] = useState(initialValues?.game_id ?? "");
   const [newGameName, setNewGameName] = useState("");
@@ -110,27 +128,6 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
     initialValues?.spoken_language_code ?? "",
   );
   const [error, setError] = useState<string | null>(null);
-
-  // Debounced image preview
-  const [previewUrl, setPreviewUrl] = useState(initialValues?.image_url ?? "");
-  const [previewError, setPreviewError] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPreviewError(false);
-      try {
-        if (imageUrl) {
-          new URL(imageUrl);
-          setPreviewUrl(imageUrl);
-        } else {
-          setPreviewUrl("");
-        }
-      } catch {
-        setPreviewUrl("");
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [imageUrl]);
 
   const handleCreateGame = async () => {
     if (!newGameName.trim()) return;
@@ -148,12 +145,20 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
     e.preventDefault();
     setError(null);
 
+    // Image presence check runs outside zod because File isn't a zod-native
+    // type; imageValue is a File (new), a string (existing bucket path in
+    // edit mode — treat as "keep current"), or null (error).
+    if (!imageValue) {
+      setError(t('imageRequired'));
+      return;
+    }
+
+    setSubmitting(true);
     try {
       const validatedData = productSchema.parse({
         name,
         description,
         tokenCost: tokenCost === "" ? undefined : Number(tokenCost),
-        imageUrl,
         padletUrl,
         gameId,
         dayOfWeek: Number(dayOfWeek),
@@ -170,7 +175,6 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         name: validatedData.name,
         description: validatedData.description,
         token_cost: validatedData.tokenCost,
-        image_url: validatedData.imageUrl,
         padlet_url: validatedData.padletUrl || null,
         game_id: validatedData.gameId,
         day_of_week: validatedData.dayOfWeek,
@@ -181,6 +185,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         is_remote: validatedData.isRemote,
         location_id: validatedData.locationId,
         spoken_language_code: validatedData.spokenLanguageCode,
+        image: imageValue instanceof File ? imageValue : null,
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -192,6 +197,8 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
       } else {
         setError(c('unexpectedError'));
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -261,32 +268,11 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="imageUrl">{t('imageUrlLabel')}</Label>
-          <Input
-            id="imageUrl"
-            type="url"
-            placeholder="https://example.com/image.png" // eslint-disable-line i18next/no-literal-string -- example URL placeholder, not user-facing copy
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            disabled={isPending}
-            required
-          />
-          {previewUrl && !previewError && (
-            <div className="relative mt-2 h-32 w-full overflow-hidden rounded-md border bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element -- admin-entered arbitrary external URL preview; next/image requires configured remotePatterns which we don't have for this input */}
-              <img
-                src={previewUrl}
-                alt={t('preview')}
-                className="h-full w-full object-contain"
-                onError={() => setPreviewError(true)}
-              />
-            </div>
-          )}
-          {previewError && (
-            <p className="text-xs text-muted-foreground">{t('imagePreviewError')}</p>
-          )}
-        </div>
+        <ProductImagePicker
+          value={imageValue}
+          onChange={setImageValue}
+          disabled={isPending || submitting}
+        />
 
         <div className="space-y-2">
           <Label htmlFor="gameId">{t('gameLabel')}</Label>
@@ -448,9 +434,9 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         <Button
           type="submit"
           className="w-full"
-          disabled={isPending}
+          disabled={isPending || submitting}
         >
-          {isPending ? pendingLabel : submitLabel}
+          {isPending || submitting ? pendingLabel : submitLabel}
         </Button>
       </CardContent>
     </form>

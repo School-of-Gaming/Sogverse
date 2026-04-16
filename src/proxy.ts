@@ -21,6 +21,19 @@ const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
  * In development, falls back to unsafe-inline/unsafe-eval because Next.js HMR
  * injects scripts outside the SSR pipeline that can't receive nonces.
  */
+// Pulled from NEXT_PUBLIC_SUPABASE_URL at module load so we don't hardcode the
+// project ref in CSP. Falls back to the wildcard host when the env var is
+// missing (e.g. early in test setup) — production builds always have it set.
+const SUPABASE_HOST = (() => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return "https://*.supabase.co";
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "https://*.supabase.co";
+  }
+})();
+
 function buildCspHeader(nonce: string): string {
   const isProd = process.env.NODE_ENV === "production";
 
@@ -32,7 +45,7 @@ function buildCspHeader(nonce: string): string {
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
       : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://cdn.mouseflow.com",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
+    `img-src 'self' data: blob: ${SUPABASE_HOST}`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting;
     // mouseflow: beta-only session recording (remove with the rest of the Mouseflow integration after Beta)

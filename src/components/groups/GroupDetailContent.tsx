@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Coins, Loader2, Radio, Users } from "lucide-react";
@@ -15,6 +14,7 @@ import { JoinButton } from "@/components/ui/join-button";
 import { GroupVoiceStatus } from "@/components/ui/group-card";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { computeAge, formatScheduleLocal } from "@/lib/utils";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { getRefundEligibility } from "@/lib/enrollment";
 import { UnenrollDialog } from "@/components/enrollment/unenroll-dialog";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
@@ -127,16 +127,11 @@ export function GroupDetailContent({
       {/* Header */}
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center">
-            <Image
-              src={group.productImageUrl}
-              alt={group.productName}
-              width={96}
-              height={96}
-              unoptimized
-              className="h-auto w-auto max-h-full max-w-full rounded-md"
-            />
-          </div>
+          <ProductThumbnail
+            imagePath={group.productImagePath}
+            alt={group.productName}
+            size="h-24 w-24"
+          />
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-3xl font-bold">{group.productName}</h1>

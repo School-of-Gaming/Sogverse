@@ -45,9 +45,28 @@ export type ParentGamer = Database["public"]["Tables"]["parent_gamer"]["Row"];
 export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["Insert"];
 
 // products
-export type Product = Database["public"]["Tables"]["products"]["Row"];
-export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
-export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
+//
+// Self-hosted images transition (PR 2 of 3):
+//   - Code reads and writes image_path (bucket-relative path).
+//   - image_url still exists on the DB row during the transition but is
+//     no longer read or written from code. PR 3 drops the column.
+//
+// The override hides image_url from the alias and asserts image_path as
+// non-null. Every product row has a populated image_path after the PR 1
+// manual populate step.
+type _ProductRow = Database["public"]["Tables"]["products"]["Row"];
+type _ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
+type _ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
+
+export type Product = Omit<_ProductRow, "image_url" | "image_path"> & {
+  image_path: string;
+};
+export type ProductInsert = Omit<_ProductInsert, "image_url" | "image_path"> & {
+  image_path: string;
+};
+export type ProductUpdate = Omit<_ProductUpdate, "image_url" | "image_path"> & {
+  image_path?: string;
+};
 
 // games
 export type Game = Database["public"]["Tables"]["games"]["Row"];
@@ -135,10 +154,13 @@ export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAP
 // Also overrides product_padlet_url which is nullable in the products table but
 // marked non-null by the type generator.
 type _MyGroupGenerated = Database["public"]["Functions"]["get_my_groups"]["Returns"][number];
+// product_image_url still exists on the RPC during the transition (see
+// "products" override above). Omit it here so consumers only see image_path.
+// Remove the Omit entirely in PR 3 when the RPC drops image_url.
 export type MyGroupWithDetails = Omit<
   _MyGroupGenerated,
   | "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
-  | "product_padlet_url" | "last_charge_session_date"
+  | "product_padlet_url" | "last_charge_session_date" | "product_image_url"
 > & {
   enrollment_id: string | null;
   gamer_id: string | null;

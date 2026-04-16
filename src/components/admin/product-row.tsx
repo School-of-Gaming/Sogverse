@@ -1,8 +1,8 @@
-import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { formatScheduleLocal } from "@/lib/utils";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import type { ProductWithGame } from "@/services/products";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 
@@ -27,16 +27,11 @@ export function ProductRow({ product, currency, locale, tokensToCurrencyDisplay 
   return (
     <div className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
       <div className="flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center">
-          <Image
-            src={product.image_url}
-            alt={product.name}
-            width={64}
-            height={64}
-            unoptimized
-            className="h-auto w-auto max-h-full max-w-full rounded-md"
-          />
-        </div>
+        <ProductThumbnail
+          imagePath={product.image_path}
+          alt={product.name}
+          size="h-16 w-16"
+        />
         <div>
           <div className="flex items-center gap-2">
             <p className="font-medium">{product.name}</p>

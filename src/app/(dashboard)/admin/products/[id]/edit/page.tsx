@@ -21,6 +21,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   const [isNavigating, startTransition] = useTransition();
 
   const handleSubmit = async (values: ProductFormValues) => {
+    // `image` is a File when the admin replaced the picture, or null when
+    // they kept the existing one. Either way, hand it to the mutation — the
+    // update route decides whether to touch the bucket.
     await updateProduct.mutateAsync({ id, updates: values });
     startTransition(() => router.push(ROUTES.admin.product(id)));
   };
@@ -99,7 +102,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             name: product.name,
             description: product.description,
             token_cost: product.token_cost,
-            image_url: product.image_url,
+            image_path: product.image_path,
             padlet_url: product.padlet_url,
             game_id: product.game_id,
             day_of_week: product.day_of_week,

