@@ -26,6 +26,7 @@ const eslintConfig = defineConfig([
       "security/detect-object-injection": "off",
       "@typescript-eslint/no-unnecessary-condition": "error",
       "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unnecessary-type-assertion": "error",
       // Every lint suppression (eslint-disable, @ts-expect-error, etc.) must
       // have a `--` description explaining why. Enforces the CLAUDE.md rule.
       "@eslint-community/eslint-comments/require-description": [

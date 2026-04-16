@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object;
         if (session.payment_status !== "paid") break;
 
         const userId = session.metadata?.userId;
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         const { error: rpcError } = await admin.rpc("adjust_token_balance", {
           p_user_id: userId,
           p_amount: tokenAmount,
-          p_type: txType as "purchase" | "subscription",
+          p_type: txType,
           p_description: `Purchased ${tokenAmount} Sorgs`,
           p_stripe_idempotency_key: session.id,
           p_stripe_subscription_id:
@@ -92,7 +92,7 @@ export async function POST(request: Request) {
       }
 
       case "invoice.paid": {
-        const invoice = event.data.object as Stripe.Invoice;
+        const invoice = event.data.object;
         // Only process subscription renewal invoices (not the first one — that's handled by checkout.session.completed)
         if (!invoice.subscription || invoice.billing_reason === "subscription_create") break;
 
@@ -113,7 +113,7 @@ export async function POST(request: Request) {
 
         if (existing && existing.length > 0) break;
 
-        const invoiceCurrency = (invoice.currency as string) || undefined;
+        const invoiceCurrency = invoice.currency || undefined;
         const { error: rpcError } = await admin.rpc("adjust_token_balance", {
           p_user_id: userId,
           p_amount: tokenAmount,
@@ -147,7 +147,7 @@ export async function POST(request: Request) {
       }
 
       case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object;
         const userId = subscription.metadata.userId;
         if (!userId) break;
 
@@ -172,7 +172,7 @@ export async function POST(request: Request) {
       }
 
       case "customer.subscription.deleted": {
-        const subscription = event.data.object as Stripe.Subscription;
+        const subscription = event.data.object;
         const userId = subscription.metadata.userId;
         if (!userId) break;
 

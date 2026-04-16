@@ -9,7 +9,6 @@ import {
   useRef,
   useState,
 } from "react";
-import type DailyIframe from "@daily-co/daily-js";
 import type {
   DailyCall,
   DailyParticipant,
@@ -209,7 +208,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       setJoining(true);
       audio.createAudioContext();
 
-      const Daily = (await import("@daily-co/daily-js")).default as typeof DailyIframe;
+      const Daily = (await import("@daily-co/daily-js")).default;
       const co = Daily.createCallObject({
         audioSource: true,
         videoSource: true,

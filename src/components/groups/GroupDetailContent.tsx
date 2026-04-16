@@ -168,7 +168,7 @@ export function GroupDetailContent({
         </div>
         {onJoinClick
           ? <JoinButton onClick={onJoinClick} disabled={!group.voiceIsOpen} />
-          : <JoinButton href={`${voiceRoute!(group.voiceRoomId)}?groupId=${group.groupId}`} disabled={!group.voiceIsOpen} />
+          : <JoinButton href={`${voiceRoute(group.voiceRoomId)}?groupId=${group.groupId}`} disabled={!group.voiceIsOpen} />
         }
       </div>
 

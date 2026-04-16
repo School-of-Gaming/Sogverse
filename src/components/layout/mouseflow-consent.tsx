@@ -43,9 +43,7 @@ interface MouseflowConsentProps {
 
 export function MouseflowConsent({ nonce }: MouseflowConsentProps) {
   const t = useTranslations("mouseflow");
-  const consent = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot) as
-    | Consent
-    | null;
+  const consent = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   if (consent === null || consent === "declined") return null;
 

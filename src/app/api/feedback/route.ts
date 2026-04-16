@@ -7,7 +7,6 @@ import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { SENDER_EMAIL } from "@/lib/constants";
 import { detectLocaleFromHeader, isSupportedLocale } from "@/lib/constants/locales";
 import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
-import type { UserRole } from "@/types";
 import { z } from "zod";
 
 const feedbackSchema = z.object({
@@ -119,7 +118,7 @@ export async function POST(request: Request) {
       fromEmail: SENDER_EMAIL,
       fromName: t("senderFeedback"),
       toEmail: adminEmails,
-      subject: t("feedback.subject", { displayName, role: t(ROLE_LABEL_KEYS[role as UserRole]) }),
+      subject: t("feedback.subject", { displayName, role: t(ROLE_LABEL_KEYS[role]) }),
       htmlContent,
       replyToEmail: replyToEmail || undefined,
     });
