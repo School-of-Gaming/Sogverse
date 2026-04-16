@@ -86,7 +86,7 @@ export function ProductImagePicker({
               src={previewUrl}
               alt={t("preview")}
               fill
-              priority
+              loading="lazy"
               unoptimized
               className="object-contain"
             />
