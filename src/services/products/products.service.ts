@@ -33,7 +33,7 @@ export class ProductsService {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data as ProductWithGame[];
+    return data;
   }
 
   async getAllProducts(): Promise<ProductWithGame[]> {
@@ -43,7 +43,7 @@ export class ProductsService {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data as ProductWithGame[];
+    return data;
   }
 
   async getProduct(id: string): Promise<ProductWithGame> {
@@ -54,7 +54,7 @@ export class ProductsService {
       .single();
 
     if (error) throw error;
-    return data as ProductWithGame;
+    return data;
   }
 
   async createProduct(input: CreateProductInput): Promise<Product> {
