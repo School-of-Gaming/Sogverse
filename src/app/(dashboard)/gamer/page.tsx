@@ -1,25 +1,30 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Users } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { ROUTES } from "@/lib/constants";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
-export const metadata: Metadata = {
-  title: "Gamer Home",
-  description: "Your gamer dashboard in the Sogverse",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return { title: t("gamerHome"), description: "Your gamer dashboard in the Sogverse" };
+}
 
 export default function GamerDashboardPage() {
+  const t = useTranslations('gamer');
+  const yty = useTranslations('yty');
+
   return (
     <div className="space-y-6">
       <div className="text-center">
         <h1 className="font-display text-3xl font-bold text-primary">
-          Welcome, Gamer!
+          {t('welcome')}
         </h1>
         <p className="text-muted-foreground">
-          Ready to play and learn?
+          {t('subtitle')}
         </p>
       </div>
 
@@ -28,11 +33,11 @@ export default function GamerDashboardPage() {
           <Card key={el.id} className={`bg-gradient-to-br ${el.color.bgGradient}`}>
             <CardHeader className="text-center pb-2">
               <el.icon className={`mx-auto h-8 w-8 ${el.color.accent}`} />
-              <CardTitle className="text-base">{el.name}</CardTitle>
+              <CardTitle className="text-base">{yty(`elements.${el.id}.name`)}</CardTitle>
             </CardHeader>
             <CardContent className="text-center pt-0">
               <p className="text-3xl font-bold">0</p>
-              <p className="text-xs text-muted-foreground">{el.description}</p>
+              <p className="text-xs text-muted-foreground">{yty(`elements.${el.id}.description`)}</p>
             </CardContent>
           </Card>
         ))}
@@ -45,9 +50,9 @@ export default function GamerDashboardPage() {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-medium">My Groups</p>
+              <p className="font-medium">{t('myGroups')}</p>
               <p className="text-sm text-muted-foreground">
-                View your groups and upcoming voice sessions
+                {t('myGroupsDescription')}
               </p>
             </div>
             <NavChevron />
@@ -57,12 +62,12 @@ export default function GamerDashboardPage() {
 
       <Card className="border-secondary/50 bg-secondary/5">
         <CardContent className="flex items-center gap-4 py-4">
+          {/* eslint-disable-next-line i18next/no-literal-string -- decorative emoji, not translatable content */}
           <div className="text-4xl">🎮</div>
           <div>
-            <h3 className="font-medium">Tip of the Day</h3>
+            <h3 className="font-medium">{t('tipOfTheDay')}</h3>
             <p className="text-sm text-muted-foreground">
-              By doing good things — learning new skills, making friends, and joining
-              in — you earn Yty for yourself and for the Sogverse!
+              {t('tipOfTheDayMessage')}
             </p>
           </div>
         </CardContent>

@@ -1,3 +1,4 @@
+/* eslint-disable i18next/no-literal-string -- OG image is rendered to a PNG by next/og at build time; the text is baked into the image, not a runtime UI string */
 import { ImageResponse } from "next/og";
 import { BRAND, DARK_THEME, YTY_ELEMENT } from "@/lib/constants/colors";
 

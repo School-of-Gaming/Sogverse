@@ -1,0 +1,181 @@
+import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database.types";
+import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
+import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
+
+/**
+ * Migration 00024 adds the products_location_xor_remote CHECK and the
+ * validate_product_location trigger. These tests lock both in — if a
+ * future migration ever relaxes them, the tests fail and whoever touched
+ * them must consciously update this file.
+ *
+ * The single happy-path insert anchors the rejection tests: without it,
+ * a broken base-product shape would make the rejections pass vacuously
+ * for the wrong reason.
+ */
+
+const TEST_PRODUCT_ID = "00000000-0000-0000-0000-000000000220";
+
+function baseProduct() {
+  return {
+    id: TEST_PRODUCT_ID,
+    name: "Constraint Test Product",
+    description: "For testing products_location_xor_remote + leaf trigger",
+    image_path: "constraint.jpg",
+    is_visible: false,
+    created_by: TEST_IDS.ADMIN,
+    game_id: TEST_IDS.GAME,
+    day_of_week: 2,
+    start_time: "16:00",
+    timezone: "Europe/Helsinki",
+    duration_minutes: 60,
+    min_age: 7,
+    max_age: 12,
+    token_cost: 1,
+    spoken_language_code: "en",
+  };
+}
+
+describe("products location constraints", () => {
+  let admin: SupabaseClient<Database>;
+
+  beforeAll(() => {
+    admin = createAdminTestClient();
+  });
+
+  afterEach(async () => {
+    await admin.from("products").delete().eq("id", TEST_PRODUCT_ID);
+  });
+
+  it("accepts an in-person product whose location_id is a site", async () => {
+    // Baseline. Proves the base-product shape is valid and the trigger
+    // permits sites — anchors the rejection tests below.
+    const { error } = await admin.from("products").insert({
+      ...baseProduct(),
+      is_remote: false,
+      location_id: TEST_IDS.LOCATION_SITE,
+    });
+
+    expect(error).toBeNull();
+  });
+
+  it("rejects is_remote=false with a null location_id (CHECK)", async () => {
+    const { error } = await admin.from("products").insert({
+      ...baseProduct(),
+      is_remote: false,
+      location_id: null,
+    });
+
+    expect(error).not.toBeNull();
+    expect(error?.message).toMatch(/products_location_xor_remote/);
+  });
+
+  it("rejects is_remote=true with a non-null location_id (CHECK)", async () => {
+    const { error } = await admin.from("products").insert({
+      ...baseProduct(),
+      is_remote: true,
+      location_id: TEST_IDS.LOCATION_SITE,
+    });
+
+    expect(error).not.toBeNull();
+    expect(error?.message).toMatch(/products_location_xor_remote/);
+  });
+
+  it("rejects a location_id that points at a non-site row (trigger)", async () => {
+    // Trying to attach a product to a region instead of drilling down to a site
+    const { error } = await admin.from("products").insert({
+      ...baseProduct(),
+      is_remote: false,
+      location_id: TEST_IDS.LOCATION_REGION,
+    });
+
+    expect(error).not.toBeNull();
+    expect(error?.message).toMatch(/must be a site/i);
+  });
+});
+
+/**
+ * The constraint tests above use service-role, which bypasses both RLS and
+ * GRANTs. These tests exercise the real authenticated-admin path that the
+ * admin edit/delete UI uses — `createAuthenticatedClient` signs in via
+ * Supabase Auth and the resulting client respects both policies and grants.
+ *
+ * A regression here means an admin cannot edit or remove products from the
+ * browser (the symptom: "permission denied for table products").
+ */
+describe("products authenticated admin writes", () => {
+  let admin: SupabaseClient<Database>;
+  let adminClient: SupabaseClient<Database>;
+
+  beforeAll(async () => {
+    admin = createAdminTestClient();
+    adminClient = await createAuthenticatedClient(
+      TEST_CREDENTIALS.ADMIN.email,
+      TEST_CREDENTIALS.ADMIN.password
+    );
+  });
+
+  afterEach(async () => {
+    // Restore the seed padlet_url (null) in case a test modified it
+    await admin
+      .from("products")
+      .update({ padlet_url: null })
+      .eq("id", TEST_IDS.PRODUCT);
+  });
+
+  it("admin can UPDATE padlet_url on the seeded product", async () => {
+    const newUrl = "https://padlet.example.com/test-board";
+
+    const { data, error } = await adminClient
+      .from("products")
+      .update({ padlet_url: newUrl })
+      .eq("id", TEST_IDS.PRODUCT)
+      .select("padlet_url")
+      .single();
+
+    expect(error).toBeNull();
+    expect(data?.padlet_url).toBe(newUrl);
+  });
+
+  it("admin can INSERT and DELETE a product", async () => {
+    const throwawayId = "00000000-0000-0000-0000-000000000221";
+
+    const { error: insertError } = await adminClient.from("products").insert({
+      id: throwawayId,
+      name: "Authenticated Write Test",
+      description: "Inserted by the authenticated-admin regression test",
+      image_path: "auth-write.jpg",
+      is_visible: false,
+      created_by: TEST_IDS.ADMIN,
+      game_id: TEST_IDS.GAME,
+      day_of_week: 3,
+      start_time: "17:00",
+      timezone: "Europe/Helsinki",
+      duration_minutes: 60,
+      min_age: 8,
+      max_age: 12,
+      token_cost: 1,
+      spoken_language_code: "en",
+      is_remote: true,
+      location_id: null,
+    });
+
+    expect(insertError).toBeNull();
+
+    const { error: deleteError } = await adminClient
+      .from("products")
+      .delete()
+      .eq("id", throwawayId);
+
+    expect(deleteError).toBeNull();
+
+    // Confirm the delete really happened (not silently filtered by RLS).
+    const { data: after } = await admin
+      .from("products")
+      .select("id")
+      .eq("id", throwawayId)
+      .maybeSingle();
+    expect(after).toBeNull();
+  });
+});

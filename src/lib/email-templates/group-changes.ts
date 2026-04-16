@@ -1,26 +1,6 @@
 import { wrapInLayout } from "./layout";
 import { heading, paragraph, styledName, styledProductName } from "./utils";
-
-// --- Subjects ---
-
-export const groupChangeSubjects = {
-  groupAdded: (productName: string) =>
-    `You've been assigned to a new group – ${productName}`,
-  groupDeleted: (productName: string) =>
-    `Your group has been removed – ${productName}`,
-  groupReassignedOldGedu: (productName: string) =>
-    `Your group has been reassigned – ${productName}`,
-  groupReassignedNewGedu: (productName: string) =>
-    `You've been assigned to a group – ${productName}`,
-  groupReassignedParent: (gamerName: string, productName: string) =>
-    `Gedu change for ${gamerName} – ${productName}`,
-  gamerMovedParent: (gamerName: string, productName: string) =>
-    `${gamerName} has been moved to a new group – ${productName}`,
-  gamerMovedOldGedu: (gamerName: string, productName: string) =>
-    `${gamerName} has been moved from your group – ${productName}`,
-  gamerMovedNewGedu: (gamerName: string, productName: string) =>
-    `${gamerName} has been moved to your group – ${productName}`,
-};
+import type { EmailTranslator } from "./translator";
 
 // --- Group Added ---
 
@@ -29,13 +9,13 @@ interface GroupAddedEmailOptions {
   productName: string;
 }
 
-export function buildGroupAddedEmail({ geduName, productName }: GroupAddedEmailOptions): string {
+export function buildGroupAddedEmail(t: EmailTranslator, locale: string, { geduName, productName }: GroupAddedEmailOptions): string {
   const content = `
-    ${heading("You've been assigned to a new group")}
-    ${paragraph(`Hi ${styledName(geduName)}, you've been assigned to a new group for ${styledProductName(productName)}.`)}
-    ${paragraph("You'll see this group in your dashboard shortly.")}
+    ${heading(t("groupAdded.heading"))}
+    ${paragraph(t("groupAdded.body", { geduName: styledName(geduName), productName: styledProductName(productName) }))}
+    ${paragraph(t("groupAdded.dashboardNote"))}
   `;
-  return wrapInLayout({ title: "New Group Assignment", content });
+  return wrapInLayout({ title: t("groupAdded.heading"), content, locale, t });
 }
 
 // --- Group Deleted ---
@@ -45,12 +25,12 @@ interface GroupDeletedEmailOptions {
   productName: string;
 }
 
-export function buildGroupDeletedEmail({ geduName, productName }: GroupDeletedEmailOptions): string {
+export function buildGroupDeletedEmail(t: EmailTranslator, locale: string, { geduName, productName }: GroupDeletedEmailOptions): string {
   const content = `
-    ${heading("Your group has been removed")}
-    ${paragraph(`Hi ${styledName(geduName)}, your group for ${styledProductName(productName)} has been removed by an admin.`)}
+    ${heading(t("groupDeleted.heading"))}
+    ${paragraph(t("groupDeleted.body", { geduName: styledName(geduName), productName: styledProductName(productName) }))}
   `;
-  return wrapInLayout({ title: "Group Removed", content });
+  return wrapInLayout({ title: t("groupDeleted.heading"), content, locale, t });
 }
 
 // --- Group Reassigned (Old Gedu) ---
@@ -61,12 +41,12 @@ interface GroupReassignedOldGeduEmailOptions {
   productName: string;
 }
 
-export function buildGroupReassignedOldGeduEmail({ oldGeduName, newGeduName, productName }: GroupReassignedOldGeduEmailOptions): string {
+export function buildGroupReassignedOldGeduEmail(t: EmailTranslator, locale: string, { oldGeduName, newGeduName, productName }: GroupReassignedOldGeduEmailOptions): string {
   const content = `
-    ${heading("Your group has been reassigned")}
-    ${paragraph(`Hi ${styledName(oldGeduName)}, your group for ${styledProductName(productName)} has been reassigned to ${styledName(newGeduName)}.`)}
+    ${heading(t("groupReassignedOldGedu.heading"))}
+    ${paragraph(t("groupReassignedOldGedu.body", { oldGeduName: styledName(oldGeduName), newGeduName: styledName(newGeduName), productName: styledProductName(productName) }))}
   `;
-  return wrapInLayout({ title: "Group Reassigned", content });
+  return wrapInLayout({ title: t("groupReassignedOldGedu.heading"), content, locale, t });
 }
 
 // --- Group Reassigned (New Gedu) ---
@@ -77,12 +57,12 @@ interface GroupReassignedNewGeduEmailOptions {
   productName: string;
 }
 
-export function buildGroupReassignedNewGeduEmail({ oldGeduName, newGeduName, productName }: GroupReassignedNewGeduEmailOptions): string {
+export function buildGroupReassignedNewGeduEmail(t: EmailTranslator, locale: string, { oldGeduName, newGeduName, productName }: GroupReassignedNewGeduEmailOptions): string {
   const content = `
-    ${heading("You've been assigned to a group")}
-    ${paragraph(`Hi ${styledName(newGeduName)}, you've been assigned to a group for ${styledProductName(productName)} (previously led by ${styledName(oldGeduName)}).`)}
+    ${heading(t("groupReassignedNewGedu.heading"))}
+    ${paragraph(t("groupReassignedNewGedu.body", { newGeduName: styledName(newGeduName), productName: styledProductName(productName), oldGeduName: styledName(oldGeduName) }))}
   `;
-  return wrapInLayout({ title: "Group Assignment", content });
+  return wrapInLayout({ title: t("groupReassignedNewGedu.heading"), content, locale, t });
 }
 
 // --- Group Reassigned (Parent) ---
@@ -95,12 +75,12 @@ interface GroupReassignedParentEmailOptions {
   productName: string;
 }
 
-export function buildGroupReassignedParentEmail({ parentName, gamerName, oldGeduName, newGeduName, productName }: GroupReassignedParentEmailOptions): string {
+export function buildGroupReassignedParentEmail(t: EmailTranslator, locale: string, { parentName, gamerName, oldGeduName, newGeduName, productName }: GroupReassignedParentEmailOptions): string {
   const content = `
-    ${heading("Your gamer's Gedu has changed")}
-    ${paragraph(`Hi ${styledName(parentName)}, the Gedu for ${styledName(gamerName)}'s group in ${styledProductName(productName)} has changed from ${styledName(oldGeduName)} to ${styledName(newGeduName)}.`)}
+    ${heading(t("groupReassignedParent.heading"))}
+    ${paragraph(t("groupReassignedParent.body", { parentName: styledName(parentName), gamerName: styledName(gamerName), productName: styledProductName(productName), oldGeduName: styledName(oldGeduName), newGeduName: styledName(newGeduName) }))}
   `;
-  return wrapInLayout({ title: "Gedu Change", content });
+  return wrapInLayout({ title: t("groupReassignedParent.heading"), content, locale, t });
 }
 
 // --- Gamer Moved (Parent) ---
@@ -113,12 +93,12 @@ interface GamerMovedParentEmailOptions {
   productName: string;
 }
 
-export function buildGamerMovedParentEmail({ parentName, gamerName, oldGeduName, newGeduName, productName }: GamerMovedParentEmailOptions): string {
+export function buildGamerMovedParentEmail(t: EmailTranslator, locale: string, { parentName, gamerName, oldGeduName, newGeduName, productName }: GamerMovedParentEmailOptions): string {
   const content = `
-    ${heading("Your child has been moved to a new group")}
-    ${paragraph(`Hi ${styledName(parentName)}, ${styledName(gamerName)} has been moved from ${styledName(oldGeduName)}'s group to ${styledName(newGeduName)}'s group in ${styledProductName(productName)}.`)}
+    ${heading(t("gamerMovedParent.heading"))}
+    ${paragraph(t("gamerMovedParent.body", { parentName: styledName(parentName), gamerName: styledName(gamerName), oldGeduName: styledName(oldGeduName), newGeduName: styledName(newGeduName), productName: styledProductName(productName) }))}
   `;
-  return wrapInLayout({ title: "Group Change", content });
+  return wrapInLayout({ title: t("gamerMovedParent.heading"), content, locale, t });
 }
 
 // --- Gamer Moved (Old Gedu) ---
@@ -130,12 +110,12 @@ interface GamerMovedOldGeduEmailOptions {
   productName: string;
 }
 
-export function buildGamerMovedOldGeduEmail({ geduName, gamerName, newGeduName, productName }: GamerMovedOldGeduEmailOptions): string {
+export function buildGamerMovedOldGeduEmail(t: EmailTranslator, locale: string, { geduName, gamerName, newGeduName, productName }: GamerMovedOldGeduEmailOptions): string {
   const content = `
-    ${heading("A gamer has been moved from your group")}
-    ${paragraph(`Hi ${styledName(geduName)}, ${styledName(gamerName)} has been moved from your group to ${styledName(newGeduName)}'s group in ${styledProductName(productName)}.`)}
+    ${heading(t("gamerMovedOldGedu.heading"))}
+    ${paragraph(t("gamerMovedOldGedu.body", { geduName: styledName(geduName), gamerName: styledName(gamerName), newGeduName: styledName(newGeduName), productName: styledProductName(productName) }))}
   `;
-  return wrapInLayout({ title: "Gamer Moved", content });
+  return wrapInLayout({ title: t("gamerMovedOldGedu.heading"), content, locale, t });
 }
 
 // --- Gamer Moved (New Gedu) ---
@@ -147,10 +127,10 @@ interface GamerMovedNewGeduEmailOptions {
   productName: string;
 }
 
-export function buildGamerMovedNewGeduEmail({ geduName, gamerName, oldGeduName, productName }: GamerMovedNewGeduEmailOptions): string {
+export function buildGamerMovedNewGeduEmail(t: EmailTranslator, locale: string, { geduName, gamerName, oldGeduName, productName }: GamerMovedNewGeduEmailOptions): string {
   const content = `
-    ${heading("A gamer has been moved to your group")}
-    ${paragraph(`Hi ${styledName(geduName)}, ${styledName(gamerName)} has been moved to your group from ${styledName(oldGeduName)}'s group in ${styledProductName(productName)}.`)}
+    ${heading(t("gamerMovedNewGedu.heading"))}
+    ${paragraph(t("gamerMovedNewGedu.body", { geduName: styledName(geduName), gamerName: styledName(gamerName), oldGeduName: styledName(oldGeduName), productName: styledProductName(productName) }))}
   `;
-  return wrapInLayout({ title: "New Gamer in Group", content });
+  return wrapInLayout({ title: t("gamerMovedNewGedu.heading"), content, locale, t });
 }

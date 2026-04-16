@@ -3,14 +3,20 @@
 import { useTransition } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCreateProduct, useProduct } from "@/services/products";
-import { ProductForm, type ProductFormValues } from "@/components/admin/product-form";
+import {
+  ProductForm,
+  type ProductFormValues,
+  type ProductFormInitialValues,
+} from "@/components/admin/product-form";
 
 export default function AddProductPage() {
+  const t = useTranslations('admin.products');
   const router = useRouter();
   const searchParams = useSearchParams();
   const cloneId = searchParams.get("clone");
@@ -20,13 +26,19 @@ export default function AddProductPage() {
   const [isNavigating, startTransition] = useTransition();
 
   const handleSubmit = async (values: ProductFormValues) => {
-    const created = await createProduct.mutateAsync(values);
+    // Form requires a File before calling onSubmit, so image is always
+    // present here. Guard anyway to keep the compiler happy.
+    if (!values.image) {
+      throw new Error("Product image is required");
+    }
+    const { image, ...rest } = values;
+    const created = await createProduct.mutateAsync({ ...rest, image });
     startTransition(() => router.push(ROUTES.admin.product(created.id)));
   };
 
   if (cloneId && cloneLoading) {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-4">
           <div className="h-10 w-10 rounded bg-muted animate-pulse" />
           <div className="space-y-2">
@@ -48,12 +60,14 @@ export default function AddProductPage() {
     );
   }
 
-  const initialValues = cloneSource
+  const initialValues: ProductFormInitialValues | undefined = cloneSource
     ? {
+        // image_path is intentionally not copied: cloned products would otherwise
+        // share a bucket file, and editing one would delete the other's image.
+        // The admin is forced to pick a fresh image for the clone.
         name: `${cloneSource.name} (Copy)`,
         description: cloneSource.description,
         token_cost: cloneSource.token_cost,
-        image_url: cloneSource.image_url,
         padlet_url: cloneSource.padlet_url,
         game_id: cloneSource.game_id,
         day_of_week: cloneSource.day_of_week,
@@ -61,11 +75,14 @@ export default function AddProductPage() {
         duration_minutes: cloneSource.duration_minutes,
         min_age: cloneSource.min_age,
         max_age: cloneSource.max_age,
+        is_remote: cloneSource.is_remote,
+        location_id: cloneSource.location_id,
+        spoken_language_code: cloneSource.spoken_language_code,
       }
     : undefined;
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
         <Link href={ROUTES.admin.products}>
           <Button variant="ghost" size="icon">
@@ -74,12 +91,12 @@ export default function AddProductPage() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold">
-            {cloneSource ? "Clone Product" : "Add a Product"}
+            {cloneSource ? t('cloneProduct') : t('addAProduct')}
           </h1>
           <p className="text-muted-foreground">
             {cloneSource
-              ? `Cloning from "${cloneSource.name}"`
-              : "Create a new recurring event product"}
+              ? t('cloningFrom', { name: cloneSource.name })
+              : t('createNewProduct')}
           </p>
         </div>
       </div>
@@ -91,9 +108,9 @@ export default function AddProductPage() {
               <Package className="h-6 w-6 text-secondary-foreground" />
             </div>
             <div>
-              <CardTitle>New Product</CardTitle>
+              <CardTitle>{t('newProduct')}</CardTitle>
               <CardDescription>
-                Fill in the details for your new product
+                {t('fillDetails')}
               </CardDescription>
             </div>
           </div>
@@ -102,8 +119,8 @@ export default function AddProductPage() {
           initialValues={initialValues}
           onSubmit={handleSubmit}
           isPending={createProduct.isPending || isNavigating}
-          submitLabel="Create Product"
-          pendingLabel="Creating..."
+          submitLabel={t('createProduct')}
+          pendingLabel={t('creating')}
         />
       </Card>
     </div>

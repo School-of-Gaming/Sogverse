@@ -11,6 +11,7 @@ import {
   useDndContext,
 } from "@dnd-kit/core";
 import { Plus, Users, AlertTriangle, Info } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,20 +33,22 @@ interface VisibilityWarningBannerProps {
 }
 
 export function VisibilityWarningBanner({ isVisible, groupCount }: VisibilityWarningBannerProps) {
+  const t = useTranslations('admin.groups');
+
   if (isVisible && groupCount > 0) return null;
 
   let message: string;
   let variant: "warning" | "info";
 
   if (!isVisible && groupCount === 0) {
-    message = "This product is hidden and has no groups assigned. Add groups before making it visible.";
+    message = t('hiddenNoGroups');
     variant = "warning";
   } else if (!isVisible && groupCount > 0) {
-    message = "This product is hidden. Make it visible so parents can see it.";
+    message = t('hiddenWithGroups');
     variant = "info";
   } else {
     // visible but no groups — shouldn't normally happen (blocked by UI), but show warning
-    message = "This product is visible but has no groups. Parents won't be able to enroll.";
+    message = t('visibleNoGroups');
     variant = "warning";
   }
 
@@ -100,6 +103,7 @@ interface GeduGroupsCardProps {
 }
 
 export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
+  const t = useTranslations('admin.groups');
   const queryClient = useQueryClient();
   const { data: serverGroups = [], isLoading } = useProductGroups(productId);
   const { data: allGedus = [] } = useUsersByRole("gedu");
@@ -124,8 +128,8 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
 
   function getGroupLabel(groupId: string): string {
     const idx = activeGroups.findIndex((g) => g.id === groupId);
-    if (idx === -1) return "Group";
-    return `Group ${idx + 1}`;
+    if (idx === -1) return t('group');
+    return t('groupNumber', { number: idx + 1 });
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -161,7 +165,7 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-muted-foreground" />
-            Gedu Groups
+            {t('geduGroups')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -180,7 +184,7 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5 text-muted-foreground" />
-            Gedu Groups
+            {t('geduGroups')}
             {activeGroups.length > 0 && (
               <Badge variant="secondary" className="ml-1">
                 {activeGroups.length}
@@ -193,13 +197,13 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
             onClick={() => setShowAddDialog(true)}
           >
             <Plus className="mr-1 h-4 w-4" />
-            Add Group
+            {t('addGroup')}
           </Button>
         </CardHeader>
         <CardContent>
           {effectiveGroups.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No groups yet. Add a group to assign a gedu.
+              {t('noGroups')}
             </p>
           ) : (
             <DndContext
@@ -213,7 +217,7 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
                     group={group}
                     groupLabel={
                       group.isDeleted
-                        ? `${getGroupLabel(group.id)} (deleted)`
+                        ? t('groupDeleted', { label: getGroupLabel(group.id) })
                         : getGroupLabel(group.id)
                     }
                     gedus={allGedus}
@@ -251,8 +255,8 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
       <GeduPickerDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
-        title="Add Group"
-        description="Select a gedu to assign to the new group."
+        title={t('addGroup')}
+        description={t('selectGeduForGroup')}
         gedus={allGedus}
         excludeIds={usedGeduIds}
         onSelect={(geduId, geduDisplayName) =>

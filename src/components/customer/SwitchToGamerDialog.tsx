@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Info } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,6 +29,8 @@ export function SwitchToGamerDialog({
   gamerDisplayName,
   redirectUrl,
 }: SwitchToGamerDialogProps) {
+  const t = useTranslations('parent');
+  const c = useTranslations('common');
   const [isSwitching, setIsSwitching] = useState(false);
   const [switchError, setSwitchError] = useState<string | null>(null);
 
@@ -44,14 +47,14 @@ export function SwitchToGamerDialog({
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to switch account");
+        throw new Error(data.error || t('switchToGamer.failedSwitch'));
       }
 
       // Full page navigation to force root layout re-hydration with gamer session
       window.location.href = redirectUrl;
     } catch (err) {
       setIsSwitching(false);
-      setSwitchError(err instanceof Error ? err.message : "Something went wrong");
+      setSwitchError(err instanceof Error ? err.message : c('somethingWentWrong'));
     }
   }
 
@@ -61,13 +64,10 @@ export function SwitchToGamerDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Info className="h-5 w-5 text-info" />
-            Join as {gamerDisplayName}?
+            {t('switchToGamer.title', { name: gamerDisplayName })}
           </DialogTitle>
           <DialogDescription>
-            Only gamers can join voice sessions. Continuing will sign you out of
-            your parent account and sign in as{" "}
-            <span className="font-medium text-foreground">{gamerDisplayName}</span>.
-            You&apos;ll need to log in again to return to your parent account.
+            {t.rich('switchToGamer.description', { name: gamerDisplayName, bold: (chunks) => <span className="font-medium text-foreground">{chunks}</span> })}
           </DialogDescription>
         </DialogHeader>
 
@@ -83,14 +83,14 @@ export function SwitchToGamerDialog({
             onClick={() => onOpenChange(false)}
             disabled={isSwitching}
           >
-            Cancel
+            {c('cancel')}
           </Button>
           <Button
             className="bg-info text-info-foreground hover:bg-info/90"
             onClick={handleSwitch}
             disabled={isSwitching}
           >
-            {isSwitching ? "Switching..." : `Sign in as ${gamerDisplayName} & Join`}
+            {isSwitching ? t('switchToGamer.switching') : t('switchToGamer.confirm', { name: gamerDisplayName })}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { ROLE_BADGES } from "@/lib/constants";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
 interface UserRowUser {
@@ -22,6 +23,8 @@ interface UserRowProps {
 }
 
 export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserRowProps) {
+  const t = useTranslations('admin.users');
+  const c = useTranslations('common');
   return (
     <div className="rounded-lg border">
       <Link
@@ -34,7 +37,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
           </Avatar>
           <div>
             <p className="font-medium">
-              {user.display_name || user.username || "Unnamed User"}
+              {user.display_name || user.username || t('unnamedUser')}
             </p>
             <p className="text-sm text-muted-foreground">
               {user.email || user.username}
@@ -42,8 +45,8 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge className={ROLE_BADGES[user.role].className}>
-            {ROLE_BADGES[user.role].label}
+          <Badge className={ROLE_BADGE_STYLES[user.role]}>
+            {c(ROLE_LABEL_KEYS[user.role])}
           </Badge>
           <NavChevron />
         </div>
@@ -51,7 +54,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
 
       {user.role === "customer" && (!linkedGamers || linkedGamers.length === 0) && (
         <div className="border-t bg-muted/30 py-3 pl-14 pr-4">
-          <p className="text-sm text-muted-foreground">No connected gamers</p>
+          <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
         </div>
       )}
 
@@ -68,12 +71,12 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
                   <Identicon id={gamer.id} size={28} />
                 </Avatar>
                 <p className="text-sm font-medium">
-                  {gamer.display_name || gamer.username || "Unnamed Gamer"}
+                  {gamer.display_name || gamer.username || t('unnamedGamer')}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge className={`${ROLE_BADGES.gamer.className} text-[10px] px-2 py-0`}>
-                  {ROLE_BADGES.gamer.label}
+                <Badge className={`${ROLE_BADGE_STYLES.gamer} text-[10px] px-2 py-0`}>
+                  {c("roleGamer")}
                 </Badge>
                 <NavChevron size="sm" />
               </div>

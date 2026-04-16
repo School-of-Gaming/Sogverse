@@ -78,11 +78,11 @@ export class UsersService {
     return data;
   }
 
-  async createGedu(email: string): Promise<{ warning?: string }> {
+  async createGedu(email: string, displayName: string, locale?: string): Promise<{ warning?: string }> {
     const response = await fetch("/api/admin/create-gedu", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, displayName, locale }),
     });
 
     const data = await response.json();

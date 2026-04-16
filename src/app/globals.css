@@ -186,7 +186,9 @@ button,
 a,
 select,
 summary,
-label[for] {
+label[for],
+label:has(input[type="checkbox"]),
+input[type="checkbox"] {
   cursor: pointer;
 }
 
@@ -245,4 +247,22 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
+}
+
+/* react-phone-number-input dark theme overrides */
+.PhoneInputCountrySelect {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+}
+
+.PhoneInputCountrySelect option {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+}
+
+.PhoneInputInput {
+  background: transparent;
+  color: hsl(var(--foreground));
+  border: none;
+  outline: none;
 }

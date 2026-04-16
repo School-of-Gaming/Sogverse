@@ -2,31 +2,19 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from 'next-intl';
 import { Menu, X, LogOut, Settings, Coins } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { useTokenBalance } from "@/services/tokens";
 import { cn } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import { CurrencyPicker } from "@/components/layout/currency-picker";
-
-const publicNavLinks = [
-  { href: ROUTES.home, label: "Home" },
-  { href: ROUTES.products, label: "Clubs" },
-  { href: ROUTES.sorg, label: "Sorg" },
-  { href: ROUTES.yty, label: "Yty" },
-  { href: ROUTES.about, label: "About" },
-];
-
-/** Links short enough to show inline on mobile (≥320px) */
-const mobileInlineLinks = [
-  { href: ROUTES.home, label: "Home" },
-  { href: ROUTES.products, label: "Clubs" },
-  { href: ROUTES.about, label: "About" },
-];
+import { LocalePicker } from "@/components/layout/locale-picker";
 
 export function Header() {
   const pathname = usePathname();
@@ -34,6 +22,22 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const t = useTranslations('header');
+  const c = useTranslations('common');
+
+  const publicNavLinks = [
+    { href: ROUTES.home, label: t('nav.home') },
+    { href: ROUTES.products, label: t('nav.clubs') },
+    { href: ROUTES.sorg, label: t('nav.sorg') },
+    { href: ROUTES.yty, label: t('nav.yty') },
+    { href: ROUTES.about, label: t('nav.about') },
+  ];
+
+  const mobileInlineLinks = [
+    { href: ROUTES.home, label: t('nav.home') },
+    { href: ROUTES.products, label: t('nav.clubs') },
+    { href: ROUTES.about, label: t('nav.about') },
+  ];
 
   const isCustomer = profile?.role === "customer";
   const { data: tokenBalance } = useTokenBalance(
@@ -50,17 +54,7 @@ export function Header() {
     signOut();
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useClickOutside(dropdownRef, () => setDropdownOpen(false));
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -71,7 +65,7 @@ export function Header() {
             SOG
           </span>
           <span className="hidden text-lg font-semibold sm:inline-block">
-            Sogverse
+            {c('appName')}
           </span>
         </Link>
 
@@ -102,10 +96,11 @@ export function Header() {
               {dashboardPath && (
                 <Link href={dashboardPath}>
                   <Button variant="ghost" size="sm" className="cursor-pointer">
-                    Dashboard
+                    {c('dashboard')}
                   </Button>
                 </Link>
               )}
+              <LocalePicker />
               <CurrencyPicker />
               {isCustomer && tokenBalance !== undefined && (
                 <Link
@@ -131,8 +126,8 @@ export function Header() {
                       <p className="text-sm font-medium">
                         {profile?.display_name}
                       </p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {profile?.role}
+                      <p className="text-xs text-muted-foreground">
+                        {profile?.role ? c(ROLE_LABEL_KEYS[profile.role]) : null}
                       </p>
                     </div>
                     <Link
@@ -141,14 +136,14 @@ export function Header() {
                       className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
                     >
                       <Settings className="h-4 w-4" />
-                      Settings
+                      {c('settings')}
                     </Link>
                     <button
                       onClick={handleSignOut}
                       className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-accent-foreground"
                     >
                       <LogOut className="h-4 w-4" />
-                      Sign Out
+                      {c('signOut')}
                     </button>
                   </div>
                 )}
@@ -156,14 +151,15 @@ export function Header() {
             </div>
           ) : (
             <div className="flex items-center gap-2">
+              <LocalePicker />
               <CurrencyPicker />
               <Link href={ROUTES.login}>
                 <Button variant="ghost" size="sm">
-                  Sign In
+                  {c('signIn')}
                 </Button>
               </Link>
               <Link href={ROUTES.register}>
-                <Button size="sm">Get Started</Button>
+                <Button size="sm">{c('getStarted')}</Button>
               </Link>
             </div>
           )}
@@ -191,7 +187,7 @@ export function Header() {
         <button
           className="md:hidden"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
+          aria-label={t('toggleMenu')}
         >
           {mobileMenuOpen ? (
             <X className="h-6 w-6" />
@@ -229,10 +225,11 @@ export function Header() {
                     className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                     onClick={() => setMobileMenuOpen(false)}
                   >
-                    Dashboard
+                    {c('dashboard')}
                   </Link>
                 )}
-                <div className="px-3 py-2">
+                <div className="flex gap-2 px-3 py-2">
+                  <LocalePicker />
                   <CurrencyPicker />
                 </div>
                 {isCustomer && tokenBalance !== undefined && (
@@ -242,7 +239,7 @@ export function Header() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <Coins className="h-4 w-4 text-primary" />
-                    <span>{tokenBalance} Sorgs</span>
+                    <span>{t('tokenBalance', { count: tokenBalance })}</span>
                   </Link>
                 )}
                 <Link
@@ -250,7 +247,7 @@ export function Header() {
                   className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Settings
+                  {c('settings')}
                 </Link>
                 <button
                   onClick={() => {
@@ -259,12 +256,13 @@ export function Header() {
                   }}
                   className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent hover:text-accent-foreground"
                 >
-                  Sign Out
+                  {c('signOut')}
                 </button>
               </>
             ) : (
               <>
-                <div className="px-3 py-2">
+                <div className="flex gap-2 px-3 py-2">
+                  <LocalePicker />
                   <CurrencyPicker />
                 </div>
                 <Link
@@ -272,14 +270,14 @@ export function Header() {
                   className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Sign In
+                  {c('signIn')}
                 </Link>
                 <Link
                   href={ROUTES.register}
                   className="block rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Get Started
+                  {c('getStarted')}
                 </Link>
               </>
             )}

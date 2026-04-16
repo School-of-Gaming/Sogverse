@@ -1,4 +1,8 @@
+import { useTranslations } from 'next-intl';
+
 export function Footer() {
+  const t = useTranslations('footer');
+  const c = useTranslations('common');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -9,14 +13,14 @@ export function Footer() {
             <span className="font-display text-xl font-bold text-primary">
               SOG
             </span>
-            <span className="text-lg font-semibold">Sogverse</span>
+            <span className="text-lg font-semibold">{c('appName')}</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            School of Gaming - Where screen time becomes quality time.
+            {t('tagline')}
           </p>
           <div className="w-full border-t border-border pt-4">
             <p className="text-sm text-muted-foreground">
-              &copy; {currentYear} School of Gaming. All rights reserved.
+              {t('copyright', { year: currentYear })}
             </p>
           </div>
         </div>

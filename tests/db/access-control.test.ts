@@ -79,15 +79,36 @@ describe("Access Control", () => {
     expect(unexpected).toEqual([]);
   });
 
-  it("table-level grants match allowlist (no excess write privileges)", async () => {
+  it("table-level grants match allowlist (bidirectional: no excess, no missing)", async () => {
     // Allowlist of write privileges per table. Tables not listed here
     // should only have SELECT. If a table needs INSERT/UPDATE/DELETE
     // for authenticated users, add it here with the specific privileges.
-    const WRITE_GRANT_ALLOWLIST: Record<string, Set<string>> = {
-      profiles: new Set(["UPDATE"]),
-      parent_gamer: new Set(["DELETE"]),
-      gamer_profiles: new Set(["UPDATE"]),
-    };
+    //
+    // This test is bidirectional:
+    //   - Tables with grants outside the allowlist fail ("excess").
+    //   - Tables in the allowlist missing their declared grants fail ("missing").
+    // The second direction matters because a dropped GRANT leaves the RLS
+    // policy intact but silently breaks every authenticated write against
+    // the table — exactly how products/games writes regressed in the past.
+    // profiles is intentionally NOT in this allowlist: it uses column-level
+    // UPDATE grants on (display_name, phone, spoken_languages) rather than
+    // table-level UPDATE. Column privileges live in information_schema
+    // .column_privileges and are out of scope for _list_table_grants.
+    const WRITE_GRANT_ALLOWLIST = new Map<string, Set<string>>([
+      ["parent_gamer", new Set(["DELETE"])],
+      ["gamer_profiles", new Set(["UPDATE"])],
+      // Admin edits products/games directly from the browser client via
+      // `admin_full_access_{products,games} FOR ALL TO authenticated` — RLS
+      // restricts the authorisation, grants enable the underlying commands.
+      ["products", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["games", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["whatsapp_contacts", new Set(["INSERT", "UPDATE"])],
+      ["whatsapp_messages", new Set(["INSERT", "UPDATE"])],
+      // Gedus write their own coverage rows directly from the browser
+      // (setForGedu uses DELETE + INSERT). RLS enforces self-only access
+      // and the role-is-gedu check on WITH CHECK.
+      ["gedu_locations", new Set(["INSERT", "DELETE"])],
+    ]);
 
     const { data, error } = await admin.rpc("_list_table_grants");
 
@@ -96,13 +117,32 @@ describe("Access Control", () => {
 
     const grants = data as { table_name: string; privilege_type: string }[];
 
-    const unexpected = grants.filter((row) => {
+    const excess = grants.filter((row) => {
       if (row.privilege_type === "SELECT") return false;
-      const allowed = WRITE_GRANT_ALLOWLIST[row.table_name];
+      const allowed = WRITE_GRANT_ALLOWLIST.get(row.table_name);
       return !allowed || !allowed.has(row.privilege_type);
     });
 
-    expect(unexpected).toEqual([]);
+    expect(excess, "tables have write grants not in the allowlist").toEqual([]);
+
+    const actual = new Set(
+      grants
+        .filter((row) => row.privilege_type !== "SELECT")
+        .map((row) => `${row.table_name}.${row.privilege_type}`)
+    );
+
+    const missing: string[] = [];
+    for (const [table, privileges] of WRITE_GRANT_ALLOWLIST) {
+      for (const privilege of privileges) {
+        if (!actual.has(`${table}.${privilege}`)) {
+          missing.push(`${table}.${privilege}`);
+        }
+      }
+    }
+
+    expect(missing, "allowlisted grants are missing from the database").toEqual(
+      []
+    );
   });
 
   it("all SECURITY DEFINER functions have SET search_path", async () => {

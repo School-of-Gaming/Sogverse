@@ -35,6 +35,11 @@ export function formatCurrencyFromCents(
   return formatCurrency(cents / 100, currency, locale);
 }
 
+export function formatTime(date: Date | string, locale?: string): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat(locale ?? "en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(d);
+}
+
 export function formatDate(date: Date | string, locale: string, options?: Intl.DateTimeFormatOptions): string {
   const d = typeof date === "string" ? new Date(date) : date;
   // dateStyle is mutually exclusive with component options (month, day, etc.)
@@ -42,18 +47,6 @@ export function formatDate(date: Date | string, locale: string, options?: Intl.D
   return new Intl.DateTimeFormat(locale, options ?? { dateStyle: "medium" }).format(d);
 }
 
-export function formatRelativeTime(date: Date | string, locale: string): string {
-  const d = typeof date === "string" ? new Date(date) : date;
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000);
-
-  if (diffInSeconds < 60) return "just now";
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-
-  return formatDate(d, locale);
-}
 
 export function generateGamerEmail(username: string): string {
   return `${username.toLowerCase()}@gamer.sogverse.internal`;
@@ -66,6 +59,11 @@ export function extractUsernameFromGamerEmail(email: string): string | null {
 
 export function isGamerEmail(email: string): boolean {
   return email.endsWith("@gamer.sogverse.internal");
+}
+
+/** Strip the leading '+' from an E.164 phone number for DB storage, or return null if empty. */
+export function toE164Digits(phone: string): string | null {
+  return phone ? phone.replace(/^\+/, "") : null;
 }
 
 export function escapeLikePattern(str: string): string {

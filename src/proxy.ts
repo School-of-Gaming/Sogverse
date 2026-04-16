@@ -21,19 +21,35 @@ const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
  * In development, falls back to unsafe-inline/unsafe-eval because Next.js HMR
  * injects scripts outside the SSR pipeline that can't receive nonces.
  */
+// Pulled from NEXT_PUBLIC_SUPABASE_URL at module load so we don't hardcode the
+// project ref in CSP. Falls back to the wildcard host when the env var is
+// missing (e.g. early in test setup) — production builds always have it set.
+const SUPABASE_HOST = (() => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!url) return "https://*.supabase.co";
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "https://*.supabase.co";
+  }
+})();
+
 function buildCspHeader(nonce: string): string {
   const isProd = process.env.NODE_ENV === "production";
 
   return [
     "default-src 'self'",
+    // dev script-src includes https://cdn.mouseflow.com for Beta session recording — remove with the rest of the Mouseflow integration after Beta.
+    // Prod uses strict-dynamic + nonce, which trusts nonce-tagged scripts (via <Script nonce={nonce}>) without needing the cdn allowlisted.
     isProd
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co",
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://cdn.mouseflow.com",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
+    `img-src 'self' data: blob: ${SUPABASE_HOST}`,
     "font-src 'self'",
-    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io",
+    // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting;
+    // mouseflow: beta-only session recording (remove with the rest of the Mouseflow integration after Beta)
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://*.ingest.sentry.io https://*.mouseflow.com",
     "frame-src 'self' https://*.daily.co https://*.stripe.com",
     // blob: workers used by Daily.co for WebRTC media processing
     "worker-src 'self' blob:",

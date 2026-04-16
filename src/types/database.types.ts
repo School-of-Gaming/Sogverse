@@ -177,6 +177,39 @@ export type Database = {
         }
         Relationships: []
       }
+      gedu_locations: {
+        Row: {
+          created_at: string
+          gedu_id: string
+          location_id: string
+        }
+        Insert: {
+          created_at?: string
+          gedu_id: string
+          location_id: string
+        }
+        Update: {
+          created_at?: string
+          gedu_id?: string
+          location_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_locations_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_locations_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_enrollments: {
         Row: {
           created_at: string
@@ -228,6 +261,44 @@ export type Database = {
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          id: string
+          name: string
+          parent_id: string | null
+          type: Database["public"]["Enums"]["location_type"]
+          updated_at: string
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          parent_id?: string | null
+          type: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          parent_id?: string | null
+          type?: Database["public"]["Enums"]["location_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
             referencedColumns: ["id"]
           },
         ]
@@ -348,12 +419,15 @@ export type Database = {
           duration_minutes: number
           game_id: string
           id: string
-          image_url: string
+          image_path: string
+          is_remote: boolean
           is_visible: boolean | null
+          location_id: string | null
           max_age: number
           min_age: number
           name: string
           padlet_url: string | null
+          spoken_language_code: string
           start_time: string
           timezone: string
           token_cost: number
@@ -367,12 +441,15 @@ export type Database = {
           duration_minutes: number
           game_id: string
           id?: string
-          image_url: string
+          image_path: string
+          is_remote: boolean
           is_visible?: boolean | null
+          location_id?: string | null
           max_age: number
           min_age: number
           name: string
           padlet_url?: string | null
+          spoken_language_code: string
           start_time: string
           timezone?: string
           token_cost: number
@@ -386,12 +463,15 @@ export type Database = {
           duration_minutes?: number
           game_id?: string
           id?: string
-          image_url?: string
+          image_path?: string
+          is_remote?: boolean
           is_visible?: boolean | null
+          location_id?: string | null
           max_age?: number
           min_age?: number
           name?: string
           padlet_url?: string | null
+          spoken_language_code?: string
           start_time?: string
           timezone?: string
           token_cost?: number
@@ -412,6 +492,20 @@ export type Database = {
             referencedRelation: "games"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "products_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_spoken_language_code_fkey"
+            columns: ["spoken_language_code"]
+            isOneToOne: false
+            referencedRelation: "spoken_languages"
+            referencedColumns: ["code"]
+          },
         ]
       }
       profiles: {
@@ -421,7 +515,10 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
+          locale: string | null
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: string[]
           updated_at: string
           username: string | null
         }
@@ -431,7 +528,10 @@ export type Database = {
           display_name: string
           email?: string | null
           id: string
+          locale?: string | null
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          spoken_languages?: string[]
           updated_at?: string
           username?: string | null
         }
@@ -441,9 +541,27 @@ export type Database = {
           display_name?: string
           email?: string | null
           id?: string
+          locale?: string | null
+          phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          spoken_languages?: string[]
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      spoken_languages: {
+        Row: {
+          code: string
+          name: string
+        }
+        Insert: {
+          code: string
+          name: string
+        }
+        Update: {
+          code?: string
+          name?: string
         }
         Relationships: []
       }
@@ -539,6 +657,71 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "product_groups"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_contacts: {
+        Row: {
+          created_at: string
+          last_message_at: string
+          phone: string
+          wa_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          last_message_at?: string
+          phone: string
+          wa_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          last_message_at?: string
+          phone?: string
+          wa_name?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          body: string | null
+          created_at: string
+          direction: string
+          id: string
+          message_type: string
+          phone: string
+          raw_payload: Json | null
+          status: string
+          status_error: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          direction: string
+          id: string
+          message_type?: string
+          phone: string
+          raw_payload?: Json | null
+          status: string
+          status_error?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          direction?: string
+          id?: string
+          message_type?: string
+          phone?: string
+          raw_payload?: Json | null
+          status?: string
+          status_error?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_phone_fkey"
+            columns: ["phone"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_contacts"
+            referencedColumns: ["phone"]
           },
         ]
       }
@@ -665,7 +848,10 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
+          locale: string | null
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: string[]
           updated_at: string
           username: string | null
         }[]
@@ -695,7 +881,7 @@ export type Database = {
           last_charge_session_date: string
           product_description: string
           product_id: string
-          product_image_url: string
+          product_image_path: string
           product_max_age: number
           product_min_age: number
           product_name: string
@@ -714,7 +900,10 @@ export type Database = {
           display_name: string
           email: string | null
           id: string
+          locale: string | null
+          phone: string | null
           role: Database["public"]["Enums"]["user_role"]
+          spoken_languages: string[]
           updated_at: string
           username: string | null
         }[]
@@ -755,12 +944,15 @@ export type Database = {
           duration_minutes: number
           game_id: string
           id: string
-          image_url: string
+          image_path: string
+          is_remote: boolean
           is_visible: boolean | null
+          location_id: string | null
           max_age: number
           min_age: number
           name: string
           padlet_url: string | null
+          spoken_language_code: string
           start_time: string
           timezone: string
           token_cost: number
@@ -794,6 +986,7 @@ export type Database = {
     }
     Enums: {
       gender_type: "boy" | "girl" | "non_binary"
+      location_type: "country" | "region" | "municipality" | "district" | "site"
       token_transaction_type:
         | "purchase"
         | "subscription"
@@ -929,6 +1122,7 @@ export const Constants = {
   public: {
     Enums: {
       gender_type: ["boy", "girl", "non_binary"],
+      location_type: ["country", "region", "municipality", "district", "site"],
       token_transaction_type: [
         "purchase",
         "subscription",

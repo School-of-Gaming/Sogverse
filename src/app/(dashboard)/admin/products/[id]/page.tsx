@@ -3,8 +3,8 @@
 import { use, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
 import { ROUTES } from "@/lib/constants";
-import Image from "next/image";
 import {
   ArrowLeft,
   Eye,
@@ -31,13 +31,17 @@ import { GeduGroupsCard, VisibilityWarningBanner } from "@/components/admin/gedu
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { formatScheduleLocal, formatDate } from "@/lib/utils";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 
 export default function ManageProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const t = useTranslations('admin.products');
+  const c = useTranslations('common');
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
   const { data: groups = [] } = useProductGroups(id);
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { tokensToCurrencyDisplay } = useTokenRates();
   const toggleVisibility = useToggleProductVisibility();
   const deleteProduct = useDeleteProduct();
@@ -63,9 +67,9 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
           href={ROUTES.admin.products}
           className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Products
+          <ArrowLeft className="h-4 w-4" /> {t('backToProducts')}
         </Link>
-        <p className="text-muted-foreground">Product not found.</p>
+        <p className="text-muted-foreground">{t('productNotFound')}</p>
       </div>
     );
   }
@@ -81,7 +85,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
 
   const handleToggleVisibility = () => {
     if (!isVisible && groups.length === 0) {
-      setVisibilityError("Add at least one group before making this product visible.");
+      setVisibilityError(t('addGroupBeforeVisible'));
       setConfirmVisibility(false);
       return;
     }
@@ -102,7 +106,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
         href={ROUTES.admin.products}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to Products
+        <ArrowLeft className="h-4 w-4" /> {t('backToProducts')}
       </Link>
 
       <VisibilityWarningBanner isVisible={isVisible} groupCount={groups.length} />
@@ -110,22 +114,17 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
       {/* Product Summary */}
       <Card>
         <CardContent className="flex items-center gap-6 pt-6">
-          <div className="flex h-24 w-24 flex-shrink-0 items-center justify-center">
-            <Image
-              src={product.image_url}
-              alt={product.name}
-              width={96}
-              height={96}
-              unoptimized
-              className="h-auto w-auto max-h-full max-w-full rounded-md"
-            />
-          </div>
+          <ProductThumbnail
+            imagePath={product.image_path}
+            alt={product.name}
+            size="h-24 w-24"
+          />
           <div className="flex-1 space-y-2">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold">{product.name}</h1>
               {!isVisible && (
                 <Badge variant="outline" className="text-muted-foreground">
-                  Hidden
+                  {t('hidden')}
                 </Badge>
               )}
             </div>
@@ -135,21 +134,20 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               {gameName && <span>{gameName}</span>}
               <span>
-                Every {schedule.localDay} at {schedule.localTime}{" "}
-                {schedule.tzAbbrev}
+                {c('schedule', { day: schedule.localDay, time: schedule.localTime, tz: schedule.tzAbbrev })}
               </span>
-              <span>{product.duration_minutes} min</span>
-              <span>Ages {product.min_age}–{product.max_age}</span>
-              <span className="font-semibold text-primary">{product.token_cost} Sorgs ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})/session</span>
+              <span>{product.duration_minutes} {c('minutes')}</span>
+              <span>{c('ages', { min: product.min_age, max: product.max_age })}</span>
+              <span className="font-semibold text-primary">{product.token_cost} {c('sorgs')} ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})/{c('perSession')}</span>
             </div>
             {product.padlet_url && (
               <PadletLink href={product.padlet_url} />
             )}
             <p className="text-xs text-muted-foreground">
-              Created{" "}
+              {t('created')}{" "}
               {product.created_at
                 ? formatDate(product.created_at, locale)
-                : "Unknown"}
+                : t('unknown')}
             </p>
           </div>
         </CardContent>
@@ -158,7 +156,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
       {/* Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Actions</CardTitle>
+          <CardTitle>{t('actions')}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-3">
           {/* Fixed width prevents layout shift when label toggles between Hide/Show */}
@@ -172,18 +170,18 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
             ) : (
               <Eye className="mr-2 h-4 w-4" />
             )}
-            {isVisible ? "Hide Product" : "Show Product"}
+            {isVisible ? t('hideProduct') : t('showProduct')}
           </Button>
           <Link href={ROUTES.admin.productEdit(product.id)}>
             <Button variant="outline">
               <Pencil className="mr-2 h-4 w-4" />
-              Edit
+              {c('edit')}
             </Button>
           </Link>
           <Link href={ROUTES.admin.productClone(product.id)}>
             <Button variant="outline">
               <Copy className="mr-2 h-4 w-4" />
-              Clone
+              {t('clone')}
             </Button>
           </Link>
           <Button
@@ -192,7 +190,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
             disabled={deleteProduct.isPending || isNavigating}
           >
             <Trash className="mr-2 h-4 w-4" />
-            {deleteProduct.isPending || isNavigating ? "Deleting..." : "Delete"}
+            {deleteProduct.isPending || isNavigating ? t('deleting') : c('delete')}
           </Button>
         </CardContent>
       </Card>
@@ -205,20 +203,20 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {isVisible ? "Hide Product" : "Show Product"}
+              {isVisible ? t('hideProduct') : t('showProduct')}
             </DialogTitle>
             <DialogDescription>
               {isVisible
-                ? `Are you sure you want to hide "${product.name}"? It will no longer be visible to parents.`
-                : `Are you sure you want to show "${product.name}"? It will become visible to parents.`}
+                ? t('hideConfirm', { name: product.name })
+                : t('showConfirm', { name: product.name })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmVisibility(false)}>
-              Cancel
+              {c('cancel')}
             </Button>
             <Button onClick={handleToggleVisibility}>
-              {isVisible ? "Hide" : "Show"}
+              {isVisible ? t('hide') : t('show')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -228,11 +226,11 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
       <Dialog open={!!visibilityError} onOpenChange={() => setVisibilityError("")}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Cannot Show Product</DialogTitle>
+            <DialogTitle>{t('cannotShowProduct')}</DialogTitle>
             <DialogDescription>{visibilityError}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => setVisibilityError("")}>OK</Button>
+            <Button onClick={() => setVisibilityError("")}>{t('ok')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -241,18 +239,17 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
       <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Product</DialogTitle>
+            <DialogTitle>{t('deleteProduct')}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &ldquo;{product.name}&rdquo;? This
-              action cannot be undone.
+              {t('deleteConfirm', { name: product.name })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmDelete(false)}>
-              Cancel
+              {c('cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Delete
+              {c('delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

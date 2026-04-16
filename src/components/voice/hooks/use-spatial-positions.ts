@@ -1,7 +1,5 @@
 import { useCallback, useState } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
-import type { DailyParticipant } from "@daily-co/daily-js";
-import type { UserRole } from "@/types";
 import {
   type ZoneId,
   type SpatialPosition,
@@ -10,7 +8,7 @@ import {
   resolveOverlap,
   ejectFromBroadcastZone,
 } from "@/lib/constants/spatial";
-import type { AppMessage, LockState } from "./types";
+import type { AppMessage } from "./types";
 
 interface UseSpatialPositionsParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
@@ -18,9 +16,14 @@ interface UseSpatialPositionsParams {
   onPositionChanged: () => void;
 }
 
-function mapRole(p: DailyParticipant): UserRole {
-  const raw = p.user_name || "";
-  return raw.split("|")[1] as UserRole;
+/** If a non-owner claims the broadcast zone, eject them to the nearest edge.
+ *  Owner status maps to role: owners are admins/gedus, non-owners are gamers. */
+function enforceZoneRestrictions(position: SpatialPosition, isOwner: boolean): SpatialPosition {
+  if (!isOwner && position.zone === "broadcast") {
+    const ejected = ejectFromBroadcastZone(position.x, position.y);
+    return { ...ejected, zone: getZoneAtPosition(ejected.x, ejected.y) };
+  }
+  return position;
 }
 
 export function useSpatialPositions({
@@ -66,11 +69,14 @@ export function useSpatialPositions({
     co.sendAppMessage(msg, "*");
   }, [callObjectRef, positionsRef, onPositionChanged]);
 
-  /** Place local avatar and request positions from existing participants */
+  /** Place local avatar only — the join handshake (sending/replying with
+   *  posUpdate per peer) is orchestrated by VoiceRoomProvider.
+   *  Does NOT broadcast — existing participants send us
+   *  their posUpdate on their participant-joined event (proving the SFU route
+   *  works), and we reply with our own posUpdate then. This avoids the race
+   *  where sendAppMessage("*") immediately after joined-meeting is unreliable
+   *  under high latency because the SFU route may not be established yet. */
   const onJoined = useCallback((localSessionId: string) => {
-    const co = callObjectRef.current;
-    if (!co) return;
-
     const randomPos = getRandomPositionInZone("general");
     const others = Array.from(positionsRef.current.values());
     const pos = resolveOverlap(randomPos.x, randomPos.y, others);
@@ -78,62 +84,39 @@ export function useSpatialPositions({
     const spatialPos: SpatialPosition = { ...pos, zone };
     positionsRef.current.set(localSessionId, spatialPos);
     setLocalZone(zone);
-    broadcastPosition(localSessionId, spatialPos);
-
-    const msg: AppMessage = { type: "requestPositions" };
-    co.sendAppMessage(msg, "*");
-  }, [callObjectRef, positionsRef, broadcastPosition]);
+  }, [positionsRef]);
 
   const onParticipantLeft = useCallback((sessionId: string) => {
     positionsRef.current.delete(sessionId);
   }, [positionsRef]);
 
-  /** Handle spatial app messages. Delegates lock data from positionSync to onLockStatesReceived. */
+  /** Handle spatial app messages (posUpdate, moveUser). */
   const onAppMessage = useCallback((
     msg: AppMessage,
     fromId: string,
     co: DailyCall,
-    onLockStatesReceived?: (locks: Record<string, LockState>) => void,
   ) => {
     switch (msg.type) {
-      case "positionSync": {
-        const localSid = co.participants().local.session_id;
-        for (const [sid, pos] of Object.entries(msg.positions)) {
-          if (sid !== localSid) {
-            positionsRef.current.set(sid, pos);
-          }
-        }
-        if (onLockStatesReceived) {
-          onLockStatesReceived(msg.locks);
-        }
-        onPositionChanged();
-        break;
-      }
       case "posUpdate": {
         // Reject spoofed updates — sender can only update their own position
         if (msg.sessionId !== fromId) break;
         const localSid = co.participants().local.session_id;
         if (msg.sessionId !== localSid) {
-          positionsRef.current.set(msg.sessionId, msg.position);
+          const sender = co.participants()[fromId];
+          positionsRef.current.set(msg.sessionId, enforceZoneRestrictions(msg.position, !!sender.owner));
           onPositionChanged();
         }
         break;
       }
       case "moveUser": {
-        const sender = Object.values(co.participants()).find((p) => p.session_id === fromId);
-        if (!sender?.owner) break;
+        const sender = co.participants()[fromId];
+        if (!sender.owner) break;
 
         const localSid = co.participants().local.session_id;
         if (msg.targetSessionId === localSid) {
           const local = co.participants().local;
-          const role = mapRole(local);
 
-          let finalPos = msg.position;
-          if (role === "gamer" && msg.position.zone === "broadcast") {
-            const ejected = ejectFromBroadcastZone(msg.position.x, msg.position.y);
-            const ejectedZone = getZoneAtPosition(ejected.x, ejected.y);
-            finalPos = { ...ejected, zone: ejectedZone };
-          }
+          const finalPos = enforceZoneRestrictions(msg.position, !!local.owner);
 
           positionsRef.current.set(localSid, finalPos);
           setLocalZone(finalPos.zone);

@@ -1,4 +1,5 @@
 import { ExternalLink } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface PadletLinkProps {
   href: string;
@@ -6,6 +7,8 @@ interface PadletLinkProps {
 }
 
 export function PadletLink({ href, className }: PadletLinkProps) {
+  const t = useTranslations('groups');
+
   return (
     <a
       href={href}
@@ -14,7 +17,7 @@ export function PadletLink({ href, className }: PadletLinkProps) {
       className={className ?? "inline-flex items-center gap-1 text-sm text-primary hover:underline"}
     >
       <ExternalLink className="h-3.5 w-3.5" />
-      Padlet
+      {t('padlet')}
     </a>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, User, Lock, Gamepad2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +17,8 @@ import { useMinecraftAccount } from "@/services/minecraft";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
 
 export default function GamerDetailsPage() {
+  const t = useTranslations('parent');
+  const c = useTranslations('common');
   const { id } = useParams<{ id: string }>();
   const { data: gamers, isLoading } = useMyGamers();
   const { data: mcAccount } = useMinecraftAccount(id);
@@ -68,14 +71,14 @@ export default function GamerDetailsPage() {
         gamerId: gamer.id,
         updates: { displayName: displayName.trim() },
       });
-      setProfileSuccess("Display name updated!");
+      setProfileSuccess(t('gamerDetail.profileUpdated'));
     } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
           : typeof error === "object" && error !== null && "message" in error
             ? String((error as { message: unknown }).message)
-            : "Failed to update display name";
+            : t('gamerDetail.failedUpdateDisplayName');
       setProfileError(message);
     } finally {
       setIsSavingProfile(false);
@@ -89,12 +92,12 @@ export default function GamerDetailsPage() {
     setPasswordError(null);
 
     if (newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters");
+      setPasswordError(c('passwordMinLength', { count: 6 }));
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setPasswordError("Passwords do not match");
+      setPasswordError(t('gamerDetail.passwordsDoNotMatch'));
       return;
     }
 
@@ -105,7 +108,7 @@ export default function GamerDetailsPage() {
         gamerId: gamer.id,
         updates: { password: newPassword },
       });
-      setPasswordSuccess("Password updated!");
+      setPasswordSuccess(t('gamerDetail.passwordUpdated'));
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: unknown) {
@@ -114,7 +117,7 @@ export default function GamerDetailsPage() {
           ? error.message
           : typeof error === "object" && error !== null && "message" in error
             ? String((error as { message: unknown }).message)
-            : "Failed to update password";
+            : t('gamerDetail.failedUpdatePassword');
       setPasswordError(message);
     } finally {
       setIsSavingPassword(false);
@@ -136,8 +139,8 @@ export default function GamerDetailsPage() {
       });
       setMcSuccess(
         mcValue
-          ? "Minecraft username saved!"
-          : "Minecraft username cleared.",
+          ? t('gamerDetail.mcSaved')
+          : t('gamerDetail.mcCleared'),
       );
     } catch (error: unknown) {
       const message =
@@ -145,7 +148,7 @@ export default function GamerDetailsPage() {
           ? error.message
           : typeof error === "object" && error !== null && "message" in error
             ? String((error as { message: unknown }).message)
-            : "Failed to update Minecraft username";
+            : t('gamerDetail.failedUpdateMc');
       setMcError(message);
     } finally {
       setIsSavingMc(false);
@@ -182,16 +185,16 @@ export default function GamerDetailsPage() {
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to My Gamers
+          {t('gamerDetail.backToGamers')}
         </Link>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <h3 className="text-lg font-medium">Gamer Not Found</h3>
+            <h3 className="text-lg font-medium">{t('gamerDetail.notFound.title')}</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              This gamer account could not be found.
+              {t('gamerDetail.notFound.description')}
             </p>
             <Link href={ROUTES.customer.gamers} className="mt-4">
-              <Button variant="outline">Back to My Gamers</Button>
+              <Button variant="outline">{t('gamerDetail.backToGamers')}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -206,13 +209,13 @@ export default function GamerDetailsPage() {
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to My Gamers
+        {t('gamerDetail.backToGamers')}
       </Link>
 
       <div>
-        <h1 className="text-3xl font-bold">Manage Gamer</h1>
+        <h1 className="text-3xl font-bold">{t('gamerDetail.title')}</h1>
         <p className="text-muted-foreground">
-          Update {gamer.display_name}&apos;s account settings
+          {t('gamerDetail.subtitle', { name: gamer.display_name })}
         </p>
       </div>
 
@@ -221,10 +224,10 @@ export default function GamerDetailsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            <CardTitle>Profile</CardTitle>
+            <CardTitle>{c('profile')}</CardTitle>
           </div>
           <CardDescription>
-            Update this gamer&apos;s display name
+            {t('gamerDetail.profileDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -254,18 +257,18 @@ export default function GamerDetailsPage() {
 
           <form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="gamerDisplayName">Display Name</Label>
+              <Label htmlFor="gamerDisplayName">{c('displayName')}</Label>
               <Input
                 id="gamerDisplayName"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Display name"
+                placeholder={c('displayName')}
                 maxLength={DISPLAY_NAME_MAX}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Username</Label>
+              <Label>{c('username')}</Label>
               <Input
                 value={gamer.username}
                 disabled
@@ -277,7 +280,7 @@ export default function GamerDetailsPage() {
               type="submit"
               disabled={isSavingProfile || displayName.trim().length < 2}
             >
-              {isSavingProfile ? "Saving..." : "Save Changes"}
+              {isSavingProfile ? c('saving') : c('saveChanges')}
             </Button>
           </form>
         </CardContent>
@@ -288,10 +291,10 @@ export default function GamerDetailsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Gamepad2 className="h-5 w-5" />
-            <CardTitle>Minecraft Account</CardTitle>
+            <CardTitle>{t('gamerDetail.minecraft.title')}</CardTitle>
           </div>
           <CardDescription>
-            Link this gamer&apos;s Minecraft Java username
+            {t('gamerDetail.minecraft.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -318,7 +321,7 @@ export default function GamerDetailsPage() {
               type="submit"
               disabled={isSavingMc}
             >
-              {isSavingMc ? "Saving..." : "Save Minecraft Username"}
+              {isSavingMc ? c('saving') : t('gamerDetail.minecraft.save')}
             </Button>
           </form>
         </CardContent>
@@ -329,10 +332,10 @@ export default function GamerDetailsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            <CardTitle>Security</CardTitle>
+            <CardTitle>{c('security')}</CardTitle>
           </div>
           <CardDescription>
-            Change this gamer&apos;s login password
+            {t('gamerDetail.security.description')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -351,25 +354,25 @@ export default function GamerDetailsPage() {
           <form onSubmit={(e) => { e.preventDefault(); handleChangePassword(); }} className="space-y-6">
             <input type="text" name="username" autoComplete="username" value={gamer.username} readOnly tabIndex={-1} aria-hidden="true" className="sr-only" />
             <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
+              <Label htmlFor="newPassword">{c('newPassword')}</Label>
               <Input
                 id="newPassword"
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="At least 6 characters"
+                placeholder={t('gamerDetail.security.passwordPlaceholder')}
                 autoComplete="new-password"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
               <Input
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder={t('gamerDetail.security.confirmPlaceholder')}
                 autoComplete="new-password"
               />
             </div>
@@ -379,7 +382,7 @@ export default function GamerDetailsPage() {
               disabled={isSavingPassword || !newPassword}
               variant="outline"
             >
-              {isSavingPassword ? "Updating..." : "Update Password"}
+              {isSavingPassword ? t('gamerDetail.security.updating') : t('gamerDetail.security.updatePassword')}
             </Button>
           </form>
         </CardContent>

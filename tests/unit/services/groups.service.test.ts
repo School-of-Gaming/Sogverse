@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { GroupsService } from "@/services/groups/groups.service";
+import type { Database } from "@/types/database.types";
 import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
 
 describe("GroupsService", () => {
@@ -8,7 +10,7 @@ describe("GroupsService", () => {
 
   beforeEach(() => {
     mockSupabase = { rpc: vi.fn() };
-    service = new GroupsService(mockSupabase as any);
+    service = new GroupsService(mockSupabase as unknown as SupabaseClient<Database>);
   });
 
   describe("getProductGroups", () => {

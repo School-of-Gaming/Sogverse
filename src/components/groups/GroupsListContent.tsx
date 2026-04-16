@@ -3,11 +3,11 @@
 import { useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Users } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { GroupCard } from "@/components/ui/group-card";
 import { LoungeCard } from "@/components/ui/lounge-card";
 import { formatScheduleLocal } from "@/lib/utils";
-import { useCurrency } from "@/hooks/use-currency";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
 export interface LoungeConfig {
@@ -39,12 +39,13 @@ export function GroupsListContent({
   voiceRoute,
   detailRoute,
 }: GroupsListContentProps) {
-  const { locale } = useCurrency();
+  const t = useTranslations('groups');
+  const locale = useLocale();
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Groups</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">{subheading}</p>
       </div>
 
@@ -76,7 +77,7 @@ export function GroupsListContent({
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Users className="h-12 w-12 text-muted-foreground/50" />
-              <h3 className="mt-4 text-lg font-medium">No Groups Yet</h3>
+              <h3 className="mt-4 text-lg font-medium">{t('noGroupsYet')}</h3>
               <p className="mt-2 text-center text-sm text-muted-foreground">
                 {emptyText}
               </p>
@@ -122,13 +123,12 @@ function GroupCardAdapter({
   return (
     <GroupCard
       productName={group.productName}
-      productImageUrl={group.productImageUrl}
+      productImagePath={group.productImagePath}
       geduName={group.geduName}
       gamerCount={group.gamers.length}
       schedule={schedule}
       voiceIsOpen={group.voiceIsOpen}
       voiceNextSessionStart={group.voiceNextSessionStart}
-      locale={locale}
       onJoinClick={handleJoinClick}
       detailHref={detailRoute(group.groupId)}
     />

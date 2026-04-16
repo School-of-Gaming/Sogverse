@@ -201,11 +201,12 @@ INSERT INTO games (id, name) VALUES (
 
 -- Test product (Wednesday = 3, 15:00 Europe/Helsinki, token_cost=2, visible)
 -- Note: is_visible was renamed from is_active in migration 00021
-INSERT INTO products (id, name, description, image_url, is_visible, created_by, game_id, day_of_week, start_time, timezone, duration_minutes, min_age, max_age, token_cost) VALUES (
+-- is_remote/location_id/spoken_language_code added in migration 00024
+INSERT INTO products (id, name, description, image_path, is_visible, created_by, game_id, day_of_week, start_time, timezone, duration_minutes, min_age, max_age, token_cost, is_remote, location_id, spoken_language_code) VALUES (
   '00000000-0000-0000-0000-000000000020',
   'Test Product',
   'A test product for DB integration tests',
-  'https://example.com/test.png',
+  'test-product.jpg',
   true,
   '00000000-0000-0000-0000-000000000001', -- admin created it
   '00000000-0000-0000-0000-000000000010', -- Test Game
@@ -215,7 +216,10 @@ INSERT INTO products (id, name, description, image_url, is_visible, created_by, 
   60,     -- 1 hour
   6,      -- min age
   12,     -- max age
-  2       -- token cost
+  2,      -- token cost
+  true,   -- is_remote (seeded test product is remote — in-person variants are created per-test)
+  NULL,   -- location_id
+  'en'    -- spoken_language_code (seeded by migration 00018)
 );
 
 -- Test group (gedu assigned to the test product)
@@ -239,7 +243,19 @@ INSERT INTO voice_rooms (group_id, room_type, name, daily_room_name) VALUES (
 -- enroll_gamer_in_group RPC. This prevents cross-file interference.
 
 -- =============================================================================
--- 6. Feedback Submissions
+-- 6. Locations (for product-location and gedu-coverage tests)
+-- =============================================================================
+-- Finland -> Uusimaa (region) -> Helsinki (municipality) -> Test School (site).
+-- The site is the leaf referenced by product-location tests.
+
+INSERT INTO locations (id, name, type, parent_id, country_code) VALUES
+  ('00000000-0000-0000-0000-000000000200', 'Finland',     'country',      NULL,                                   'FI'),
+  ('00000000-0000-0000-0000-000000000201', 'Uusimaa',     'region',       '00000000-0000-0000-0000-000000000200', 'FI'),
+  ('00000000-0000-0000-0000-000000000202', 'Helsinki',    'municipality', '00000000-0000-0000-0000-000000000201', 'FI'),
+  ('00000000-0000-0000-0000-000000000203', 'Test School', 'site',         '00000000-0000-0000-0000-000000000202', 'FI');
+
+-- =============================================================================
+-- 7. Feedback Submissions
 -- =============================================================================
 
 INSERT INTO feedback_submissions (user_id, message) VALUES

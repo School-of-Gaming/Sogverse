@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Users, Gamepad2, GraduationCap, ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -28,39 +29,29 @@ const gamerLoginSchema = z.object({
 
 const ROLE_CONFIG: Record<LoginRole, {
   icon: typeof Users;
-  title: string;
-  subtitle: string;
-  description: string;
   accent: string;
   glow: string;
 }> = {
   customer: {
     icon: Users,
-    title: "Parent",
-    subtitle: "Manage your gamers",
-    description: "Sign in to manage purchases and gamer accounts",
     accent: "text-primary border-primary/30 bg-primary/5",
     glow: "hover:shadow-[0_0_20px_rgba(250,169,1,0.15)] hover:border-primary/60",
   },
   gedu: {
     icon: GraduationCap,
-    title: "Gedu",
-    subtitle: "Teach & inspire",
-    description: "Sign in to access your teaching tools",
     accent: "text-primary border-primary/30 bg-gradient-to-r from-primary/5 to-secondary/5",
     glow: "hover:shadow-[0_0_20px_rgba(200,80,120,0.15)] hover:border-secondary/40",
   },
   gamer: {
     icon: Gamepad2,
-    title: "Gamer",
-    subtitle: "Start playing",
-    description: "Sign in with your username to start playing",
     accent: "text-secondary border-secondary/30 bg-secondary/5",
     glow: "hover:shadow-[0_0_20px_rgba(143,0,226,0.15)] hover:border-secondary/60",
   },
 };
 
 export function LoginForm() {
+  const t = useTranslations('auth');
+  const c = useTranslations('common');
   const searchParams = useSearchParams();
   const { redirect, status, navigateAfterAuth } = useAuthRedirect();
 
@@ -115,7 +106,7 @@ export function LoginForm() {
 
       if (signInError) {
         if (isGamer && signInError.message.includes("Invalid login credentials")) {
-          setError("Incorrect username or password. Please try again.");
+          setError(t('login.gamerInvalidCredentials'));
         } else {
           setError(signInError.message);
         }
@@ -149,7 +140,7 @@ export function LoginForm() {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
       } else {
-        setError("An unexpected error occurred");
+        setError(c('unexpectedError'));
       }
     }
 
@@ -172,8 +163,8 @@ export function LoginForm() {
         >
           <div className="space-y-6">
             <div className="text-center space-y-2">
-              <h1 className="text-2xl font-bold">Welcome to the Sogverse</h1>
-              <p className="text-muted-foreground">Choose how you&apos;d like to sign in</p>
+              <h1 className="text-2xl font-bold">{t('login.welcomeTitle')}</h1>
+              <p className="text-muted-foreground">{t('login.chooseRole')}</p>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -195,9 +186,9 @@ export function LoginForm() {
                         "text-lg font-semibold",
                         role === "gamer" && "font-display"
                       )}>
-                        {config.title}
+                        {t(`login.roles.${role}.title`)}
                       </span>
-                      <span className="text-xs text-muted-foreground">{config.subtitle}</span>
+                      <span className="text-xs text-muted-foreground">{t(`login.roles.${role}.subtitle`)}</span>
                     </button>
                   );
                 }
@@ -205,13 +196,16 @@ export function LoginForm() {
             </div>
 
             <div className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link
-                href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
-                className="text-primary hover:underline"
-              >
-                Sign up
-              </Link>
+              {t.rich('login.noAccountSignUp', {
+                link: (chunks) => (
+                  <Link
+                    href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
+                    className="text-primary hover:underline"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
             </div>
           </div>
         </div>
@@ -241,7 +235,7 @@ export function LoginForm() {
                     type="button"
                   >
                     <ArrowLeft className="mr-1 h-4 w-4" />
-                    Back
+                    {c('back')}
                   </Button>
                   <div className="flex justify-center mb-2">
                     <div className={cn("rounded-full p-3", config.accent)}>
@@ -252,10 +246,10 @@ export function LoginForm() {
                     "text-2xl text-center",
                     isGamer && "font-display"
                   )}>
-                    {config.title} Login
+                    {t(`login.roles.${displayRole}.loginTitle`)}
                   </CardTitle>
                   <CardDescription className="text-center">
-                    {config.description}
+                    {t(`login.roles.${displayRole}.description`)}
                   </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
@@ -267,11 +261,11 @@ export function LoginForm() {
                     )}
                     {isGamer ? (
                       <div className="space-y-2">
-                        <Label htmlFor="username">Username</Label>
+                        <Label htmlFor="username">{c('username')}</Label>
                         <Input
                           id="username"
                           type="text"
-                          placeholder="Your gaming username"
+                          placeholder={t('login.gamerUsernamePlaceholder')}
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
                           disabled={isLoading}
@@ -281,11 +275,11 @@ export function LoginForm() {
                       </div>
                     ) : (
                       <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">{c('email')}</Label>
                         <Input
                           id="email"
                           type="email"
-                          placeholder="you@example.com"
+                          placeholder={t('login.emailPlaceholder')}
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           disabled={isLoading}
@@ -296,7 +290,7 @@ export function LoginForm() {
                     )}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="password">{c('password')}</Label>
                         <Link
                           href={ROUTES.forgotPassword}
                           className={cn(
@@ -305,13 +299,13 @@ export function LoginForm() {
                           )}
                           tabIndex={isGamer ? -1 : undefined}
                         >
-                          Forgot password?
+                          {c('forgotPassword')}
                         </Link>
                       </div>
                       <Input
                         id="password"
                         type="password"
-                        placeholder={isGamer ? "Your secret password" : "Enter your password"}
+                        placeholder={isGamer ? t('login.gamerPasswordPlaceholder') : t('login.passwordPlaceholder')}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={isLoading}
@@ -322,22 +316,25 @@ export function LoginForm() {
                   </CardContent>
                   <CardFooter className="flex flex-col space-y-4">
                     <Button type="submit" className="w-full" disabled={isLoading}>
-                      {status ?? (isLoading ? "Signing in..." : isGamer ? "Start Playing!" : "Sign In")}
+                      {status ?? (isLoading ? t('login.signingIn') : isGamer ? t('login.startPlaying') : c('signIn'))}
                     </Button>
                     <div className="text-center text-sm text-muted-foreground">
                       {isGamer ? (
-                        <span>Need help? Ask your parent or guardian.</span>
+                        <span>{t('login.gamerHelp')}</span>
                       ) : isGedu ? (
-                        <span>Gedu accounts are created by an administrator.</span>
+                        <span>{t('login.geduAccountNote')}</span>
                       ) : (
                         <span>
-                          Don&apos;t have an account?{" "}
-                          <Link
-                            href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
-                            className="text-primary hover:underline"
-                          >
-                            Sign up
-                          </Link>
+                          {t.rich('login.noAccountSignUp', {
+                            link: (chunks) => (
+                              <Link
+                                href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
+                                className="text-primary hover:underline"
+                              >
+                                {chunks}
+                              </Link>
+                            ),
+                          })}
                         </span>
                       )}
                     </div>

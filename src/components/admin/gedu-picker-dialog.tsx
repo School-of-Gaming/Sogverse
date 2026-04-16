@@ -12,6 +12,7 @@ import {
   SheetDescription,
   SheetBody,
 } from "@/components/ui/sheet";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,8 @@ export function GeduPickerDialog({
   highlightId,
   onSelect,
 }: GeduPickerDialogProps) {
+  const t = useTranslations("admin.groups");
+  const gt = useTranslations("groups");
   const [search, setSearch] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -75,7 +78,7 @@ export function GeduPickerDialog({
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               ref={searchRef}
-              placeholder="Search by name or email…"
+              placeholder={t("searchByNameOrEmail")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 focus-visible:ring-border"
@@ -119,7 +122,7 @@ export function GeduPickerDialog({
                   </div>
                   {(isCurrent || isAssigned) && (
                     <Badge variant="outline" className="flex-shrink-0">
-                      {isCurrent ? "Current" : "Assigned"}
+                      {isCurrent ? gt("currentGedu") : gt("assignedGedu")}
                     </Badge>
                   )}
                 </button>
@@ -127,9 +130,7 @@ export function GeduPickerDialog({
             })}
             {filtered.length === 0 && (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                {gedus.length === 0
-                  ? "No gedus available."
-                  : "No gedus match your search."}
+                {t("noGedusMatchSearch")}
               </p>
             )}
           </div>

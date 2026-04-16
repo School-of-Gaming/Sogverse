@@ -76,10 +76,25 @@ CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.rand
 
 See `docs/layout-scroll-architecture.md` for the scroll containment model and how dashboard layouts handle overflow.
 
+### Date & Time Formatting
+
+**Rule: Use `Intl` APIs and `next-intl` formatters for date/time/number formatting.** Shared helpers (`formatDate`, `formatTime`, `formatCurrency*`) live in `src/lib/utils.ts`. For relative time, use `useFormatter().relativeTime()` from `next-intl`. For timezone math only (converting between zones), use `date-fns-tz`. The locale for formatting always comes from `useLocale()` (client) or `getLocale()` (server) via `next-intl`.
+
+### Locale vs. Spoken Language
+
+**Rule: Use *locale* for the UI translation system and *spoken language* for human languages.** They are deliberately named differently because they are distinct concepts.
+
+- **Locale** — which translation of the web app the user sees. Owned by `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `LocaleProvider`, `LocalePicker`), backed by `profiles.locale`. This is what next-intl's `useLocale()` returns.
+- **Spoken language** — the human languages a user speaks / a club is delivered in. Owned by the `spoken_languages` reference table and `profiles.spoken_languages` array. UI lives in `src/components/ui/spoken-language-checkboxes.tsx` and `useSpokenLanguages()`.
+
+A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them. See `docs/i18n-architecture.md` § "Two distinct concepts".
+
 ### Styling
 - Use `cn()` utility from `lib/utils.ts` for conditional classes
 - Brand colors: primary yellow `#FAA901`, secondary purple `#8F00E2`
 - Dark mode is default (class-based via next-themes)
+
+**Rule: Never use hardcoded colors or raw Tailwind color classes (e.g. `text-sky-400`, `bg-red-500`).** All colors must come from CSS custom properties defined in `src/app/globals.css` and referenced via semantic Tailwind classes (`text-primary`, `bg-destructive`, etc.). For non-CSS contexts (email templates, canvas), use the hex constants in `src/lib/constants/colors.ts`. This ensures a single source of truth for colors and brand identity.
 
 ### UI Component Reference
 A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
@@ -115,6 +130,7 @@ See `docs/sorg-token-architecture.md` for the full architecture, component map, 
 ### Other Docs
 
 - `docs/email-architecture.md` — Brevo integration, email templates, notifications, deliverability/DNS, and testing UI
+- `docs/i18n-architecture.md` — next-intl setup, locale resolution, translation patterns, adding languages/namespaces
 - `docs/SECURITY_REPORT.md` — Past security audit findings and remediations
 
 ## Environment Variables
@@ -218,6 +234,12 @@ const response = await POST(createRequest({ ... }));
 Mock `requireRole()` to return `{ user, profile, supabase }` for authenticated scenarios or a `NextResponse` error for unauthorized. Mock Supabase clients (`@/lib/supabase/admin`, `@/lib/supabase/server`) with `vi.mock()`.
 
 ## Code Style
+
+### Lint must be clean — treat warnings as design signals
+
+**Rule: `npm run lint` must produce zero errors and zero warnings.** Our lint config is strict on purpose. When lint flags a line, resist the urge to silence it with a one-line patch (a cast, a disable comment, a throwaway rename). Stop and ask: *why* is the linter unhappy? The flagged line is usually a symptom — the real problem is often a design issue one or two levels up (wrong type at the boundary, a function doing two things, state living in the wrong place, a missing abstraction). Fix the underlying cause so the warning goes away naturally.
+
+**Rule: Suppressing a lint rule (`eslint-disable`, `// @ts-expect-error`, etc.) requires strong justification and an inline `--` description explaining it.** Suppression is a last resort, not a shortcut. Only suppress when you've concluded the rule genuinely does not apply to this specific case — and write *why* directly next to the disable comment in the form `// eslint-disable-next-line some-rule -- reason here`. "Lint was noisy" is not a justification. This is mechanically enforced by `@eslint-community/eslint-comments/require-description` — an undescribed disable will fail lint.
 
 ### Non-obvious workarounds need comments
 When code exists to work around a framework bug, environment quirk, or other non-obvious reason, add a comment explaining **why** it's needed. The code should be readable on its own — if someone would look at a line and wonder "why is this here?", it needs a comment.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,8 @@ export function CommitFlowDialog({
   notifyPayload,
   onComplete,
 }: CommitFlowDialogProps) {
+  const t = useTranslations('admin.groups');
+  const c = useTranslations('common');
   const [running, setRunning] = useState(false);
   const [steps, setSteps] = useState<StepItem[]>([]);
   const [done, setDone] = useState(false);
@@ -72,14 +75,14 @@ export function CommitFlowDialog({
 
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
-          setErrorMessage(data.error || `Server error: ${response.status}`);
+          setErrorMessage(data.error || t('serverError', { status: String(response.status) }));
           setDone(true);
           return;
         }
 
         const reader = response.body?.getReader();
         if (!reader) {
-          setErrorMessage("No response stream");
+          setErrorMessage(t('noResponseStream'));
           setDone(true);
           return;
         }
@@ -128,12 +131,12 @@ export function CommitFlowDialog({
                   return next;
                 });
                 if (event.index === 0) {
-                  setErrorMessage(event.error || "Failed to save group changes");
+                  setErrorMessage(event.error || t('failedToSaveChanges'));
                 }
               } else if (event.type === "complete") {
                 setDone(true);
                 if (!event.success) {
-                  setErrorMessage(event.error || "Operation failed");
+                  setErrorMessage(event.error || t('operationFailed'));
                 }
               }
             } catch {
@@ -144,7 +147,7 @@ export function CommitFlowDialog({
         }
       } catch (err) {
         if ((err as Error).name === "AbortError") return;
-        setErrorMessage((err as Error).message || "Network error");
+        setErrorMessage((err as Error).message || t('networkError'));
         setDone(true);
       }
     })();
@@ -164,18 +167,18 @@ export function CommitFlowDialog({
         {!showProgress && (
           <>
             <DialogHeader>
-              <DialogTitle>Confirm Group Changes</DialogTitle>
+              <DialogTitle>{t('confirmGroupChanges')}</DialogTitle>
               <DialogDescription>
-                The following changes will be applied:
+                {t('changesWillBeApplied')}
               </DialogDescription>
             </DialogHeader>
             <ChangeSummaryList lines={summary.lines} />
             <DialogFooter>
               <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={running}>
-                Cancel
+                {c('cancel')}
               </Button>
               <Button onClick={handleConfirm} disabled={running}>
-                {running ? "Saving\u2026" : "Confirm"}
+                {running ? t('saving') : c('confirm')}
               </Button>
             </DialogFooter>
           </>
@@ -185,11 +188,11 @@ export function CommitFlowDialog({
         {showProgress && (
           <>
             <DialogHeader>
-              <DialogTitle>Applying Changes</DialogTitle>
+              <DialogTitle>{t('applyingChanges')}</DialogTitle>
               <DialogDescription>
                 {done
-                  ? errorMessage ? "An error occurred." : "All changes applied."
-                  : "Saving and notifying impacted users..."}
+                  ? errorMessage ? t('errorOccurred') : t('allChangesApplied')
+                  : t('savingAndNotifying')}
               </DialogDescription>
             </DialogHeader>
 
@@ -197,7 +200,7 @@ export function CommitFlowDialog({
 
             <DialogFooter>
               <Button onClick={() => handleOpenChange(false)} disabled={!done}>
-                {done ? "Close" : "Working..."}
+                {done ? c('close') : t('working')}
               </Button>
             </DialogFooter>
           </>

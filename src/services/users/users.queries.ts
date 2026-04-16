@@ -13,6 +13,7 @@ const userKeys = {
   detail: (id: string) => [...userKeys.details(), id] as const,
   byRole: (role: UserRole) => [...userKeys.all, "role", role] as const,
   parentGamerLinks: () => [...userKeys.all, "parent-gamer-links"] as const,
+  spokenLanguages: () => [...userKeys.all, "spoken-languages"] as const,
 };
 
 export function useProfile(userId: string) {
@@ -82,14 +83,33 @@ export function useParentGamerLinks() {
   });
 }
 
+/**
+ * Fetch the reference set of spoken languages (human languages) from the
+ * `spoken_languages` table. Distinct from `useLocaleControl` (UI locale).
+ */
+export function useSpokenLanguages() {
+  const supabase = getClient();
+
+  return useQuery({
+    queryKey: userKeys.spokenLanguages(),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("spoken_languages")
+        .select("code, name");
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
 export function useCreateGedu() {
   const queryClient = useQueryClient();
   const supabase = getClient();
   const service = new UsersService(supabase);
 
   return useMutation({
-    mutationFn: ({ email }: { email: string }) =>
-      service.createGedu(email),
+    mutationFn: ({ email, displayName, locale }: { email: string; displayName: string; locale?: string }) =>
+      service.createGedu(email, displayName, locale),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });
     },

@@ -329,7 +329,7 @@ describe("Row Level Security", () => {
           id: "00000000-0000-0000-0000-000000000099",
           name: "Hidden Product",
           description: "Should not be visible",
-          image_url: "https://example.com/hidden.png",
+          image_path: "hidden.jpg",
           is_visible: false,
           created_by: TEST_IDS.ADMIN,
           game_id: TEST_IDS.GAME,
@@ -340,6 +340,8 @@ describe("Row Level Security", () => {
           min_age: 6,
           max_age: 12,
           token_cost: 1,
+          is_remote: true,
+          spoken_language_code: "en",
         })
         .select("id")
         .single();
@@ -362,7 +364,7 @@ describe("Row Level Security", () => {
       const { error } = await customerClient.from("products").insert({
         name: "Injected",
         description: "Should be denied",
-        image_url: "https://example.com/x.png",
+        image_path: "x.jpg",
         created_by: TEST_IDS.CUSTOMER,
         game_id: TEST_IDS.GAME,
         day_of_week: 1,
@@ -372,6 +374,8 @@ describe("Row Level Security", () => {
         min_age: 6,
         max_age: 12,
         token_cost: 1,
+        is_remote: true,
+        spoken_language_code: "en",
       });
 
       expect(error).not.toBeNull();
@@ -383,7 +387,7 @@ describe("Row Level Security", () => {
         id: "00000000-0000-0000-0000-000000000098",
         name: "Admin-Only Product",
         description: "Hidden from non-admins",
-        image_url: "https://example.com/hidden2.png",
+        image_path: "hidden2.jpg",
         is_visible: false,
         created_by: TEST_IDS.ADMIN,
         game_id: TEST_IDS.GAME,
@@ -394,6 +398,8 @@ describe("Row Level Security", () => {
         min_age: 6,
         max_age: 12,
         token_cost: 1,
+        is_remote: true,
+        spoken_language_code: "en",
       });
 
       const { data, error } = await adminClient

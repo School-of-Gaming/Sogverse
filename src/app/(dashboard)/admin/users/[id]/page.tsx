@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Coins, AlertTriangle, Users } from "lucide-react";
 import { NavChevron } from "@/components/ui/nav-chevron";
@@ -25,15 +26,19 @@ import { useProfile } from "@/services/users";
 import { useLinkedGamers, useLinkedParents } from "@/services/gamers";
 import { useTokenBalance, useTokenTransactions, useAdjustTokens } from "@/services/tokens";
 import { TransactionHistoryTable } from "@/components/tokens";
-import { ROLE_BADGES } from "@/lib/constants";
+import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
+import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { formatCurrencyFromCents, formatDate } from "@/lib/utils";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 
 export default function AdminUserDetailPage() {
+  const t = useTranslations('admin.users');
+  const c = useTranslations('common');
   const params = useParams();
   const userId = params.id as string;
-  const { currency, locale } = useCurrency();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { baseRates } = useTokenRates();
 
   const { data: profile, isLoading: profileLoading } = useProfile(userId);
@@ -46,6 +51,7 @@ export default function AdminUserDetailPage() {
 
   const isCustomer = profile?.role === "customer";
   const isGamer = profile?.role === "gamer";
+  const isGedu = profile?.role === "gedu";
   const { data: linkedGamers } = useLinkedGamers(isCustomer ? userId : "");
   const { data: linkedParents } = useLinkedParents(isGamer ? userId : "");
   const parsedAmount = parseInt(amount, 10);
@@ -69,7 +75,7 @@ export default function AdminUserDetailPage() {
 
   if (profileLoading) {
     return (
-      <div className="space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <div className="h-8 w-32 animate-pulse rounded bg-muted" />
         <div className="h-48 animate-pulse rounded-lg bg-muted" />
       </div>
@@ -78,19 +84,19 @@ export default function AdminUserDetailPage() {
 
   if (!profile) {
     return (
-      <div className="space-y-6">
+      <div className="mx-auto max-w-4xl space-y-6">
         <Link href={ROUTES.admin.users} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Back to Users
+          <ArrowLeft className="h-4 w-4" /> {t('backToUsers')}
         </Link>
-        <p className="text-muted-foreground">User not found.</p>
+        <p className="text-muted-foreground">{t('userNotFound')}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <Link href={ROUTES.admin.users} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-4 w-4" /> Back to Users
+        <ArrowLeft className="h-4 w-4" /> {t('backToUsers')}
       </Link>
 
       {/* User Summary */}
@@ -109,11 +115,11 @@ export default function AdminUserDetailPage() {
               </p>
             </div>
             <div className="mt-2 flex items-center gap-3">
-              <Badge className={ROLE_BADGES[profile.role].className}>
-                {ROLE_BADGES[profile.role].label}
+              <Badge className={ROLE_BADGE_STYLES[profile.role]}>
+                {c(ROLE_LABEL_KEYS[profile.role])}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                Joined {profile.created_at ? formatDate(profile.created_at, locale) : "Unknown"}
+                {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale) : t('unknown')}
               </span>
             </div>
           </div>
@@ -126,7 +132,7 @@ export default function AdminUserDetailPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
-              {isCustomer ? "Linked Gamers" : "Linked Parents"}
+              {isCustomer ? t('linkedGamers') : t('linkedParents')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -144,7 +150,7 @@ export default function AdminUserDetailPage() {
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">
-                          {gamer.display_name || gamer.username || "Unnamed Gamer"}
+                          {gamer.display_name || gamer.username || t('unnamedGamer')}
                         </p>
                         <p className="text-xs text-muted-foreground ">
                           {gamer.username}
@@ -152,8 +158,8 @@ export default function AdminUserDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={ROLE_BADGES.gamer.className}>
-                        {ROLE_BADGES.gamer.label}
+                      <Badge className={ROLE_BADGE_STYLES.gamer}>
+                        {c("roleGamer")}
                       </Badge>
                       <NavChevron size="sm" />
                     </div>
@@ -162,7 +168,7 @@ export default function AdminUserDetailPage() {
               </div>
             )}
             {isCustomer && (!linkedGamers || linkedGamers.length === 0) && (
-              <p className="text-sm text-muted-foreground">No connected gamers</p>
+              <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
             )}
             {isGamer && linkedParents && linkedParents.length > 0 && (
               <div className="space-y-2">
@@ -178,7 +184,7 @@ export default function AdminUserDetailPage() {
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">
-                          {parent.display_name || parent.username || "Unnamed User"}
+                          {parent.display_name || parent.username || t('unnamedUser')}
                         </p>
                         <p className="text-xs text-muted-foreground ">
                           {parent.email}
@@ -186,8 +192,8 @@ export default function AdminUserDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge className={ROLE_BADGES.customer.className}>
-                        {ROLE_BADGES.customer.label}
+                      <Badge className={ROLE_BADGE_STYLES.customer}>
+                        {c("roleParent")}
                       </Badge>
                       <NavChevron size="sm" />
                     </div>
@@ -199,6 +205,9 @@ export default function AdminUserDetailPage() {
         </Card>
       )}
 
+      {/* Gedu coverage areas — substitute matching */}
+      {isGedu && <GeduCoverageEditor geduId={userId} />}
+
       {/* Token Management (customers only) */}
       {isCustomer && (
         <>
@@ -206,38 +215,38 @@ export default function AdminUserDetailPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Coins className="h-5 w-5 text-primary" />
-                Token Balance
+                {t('tokenBalance')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-bold">{balance ?? 0}</span>
-                <span className="text-muted-foreground">Sorgs</span>
+                <span className="text-muted-foreground">{c('sorgs')}</span>
               </div>
 
               <div className="rounded-lg border border-warning/30 bg-warning/10 p-3">
                 <div className="flex items-center gap-2 text-sm text-warning">
                   <AlertTriangle className="h-4 w-4" />
-                  Tokens have monetary value ({formatCurrencyFromCents(baseRate, currency, locale)}/token). All changes are logged.
+                  {t('tokenMonetaryWarning', { rate: formatCurrencyFromCents(baseRate, currency, locale) })}
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (+ to add, - to remove)</Label>
+                  <Label htmlFor="amount">{t('amountLabel')}</Label>
                   <Input
                     id="amount"
                     type="number"
-                    placeholder="e.g. 10 or -5"
+                    placeholder={t('amountPlaceholder')}
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reason">Reason</Label>
+                  <Label htmlFor="reason">{t('reasonLabel')}</Label>
                   <Input
                     id="reason"
-                    placeholder="e.g. Refund for billing error"
+                    placeholder={t('reasonPlaceholder')}
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
                   />
@@ -248,12 +257,12 @@ export default function AdminUserDetailPage() {
                 onClick={() => setConfirmOpen(true)}
                 disabled={!isValidAmount || !reason.trim()}
               >
-                Adjust Balance
+                {t('adjustBalance')}
               </Button>
 
               {adjustMutation.isError && (
                 <p className="text-sm text-destructive">
-                  {adjustMutation.error.message || "Failed to adjust balance"}
+                  {adjustMutation.error.message || t('failedToAdjust')}
                 </p>
               )}
             </CardContent>
@@ -262,7 +271,7 @@ export default function AdminUserDetailPage() {
           {/* Transaction History */}
           <Card>
             <CardHeader>
-              <CardTitle>Transaction History</CardTitle>
+              <CardTitle>{t('transactionHistory')}</CardTitle>
             </CardHeader>
             <CardContent>
               <TransactionHistoryTable transactions={transactions} locale={locale} />
@@ -276,33 +285,36 @@ export default function AdminUserDetailPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {parsedAmount > 0 ? "Add" : "Remove"} {Math.abs(parsedAmount || 0)} Sorgs
+              {t('adjustDialogTitle', { action: parsedAmount > 0 ? t('add') : t('remove'), count: Math.abs(parsedAmount || 0) })}
             </DialogTitle>
             <DialogDescription>
-              {parsedAmount > 0 ? "Add" : "Remove"} {Math.abs(parsedAmount || 0)} Sorgs{" "}
-              {parsedAmount > 0 ? "to" : "from"}{" "}
-              {profile.display_name || profile.username || "this user"}&apos;s balance.
+              {t('adjustDialogDescription', {
+                action: parsedAmount > 0 ? t('add') : t('remove'),
+                count: Math.abs(parsedAmount || 0),
+                direction: parsedAmount > 0 ? t('to') : t('from'),
+                user: profile.display_name || profile.username || t('thisUser'),
+              })}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 text-sm">
             <p>
-              <span className="text-muted-foreground">Monetary value:</span>{" "}
+              <span className="text-muted-foreground">{t('monetaryValue')}:</span>{" "}
               <span className="font-medium">{monetaryValue}</span>
             </p>
             <p>
-              <span className="text-muted-foreground">Reason:</span>{" "}
+              <span className="text-muted-foreground">{t('reasonLabel')}:</span>{" "}
               <span className="font-medium">{reason}</span>
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-              Cancel
+              {c('cancel')}
             </Button>
             <Button
               onClick={handleConfirmAdjust}
               disabled={adjustMutation.isPending}
             >
-              {adjustMutation.isPending ? "Adjusting..." : "Confirm"}
+              {adjustMutation.isPending ? t('adjusting') : c('confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

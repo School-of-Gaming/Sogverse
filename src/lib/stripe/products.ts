@@ -2,6 +2,8 @@ import Stripe from "stripe";
 import { unstable_cache } from "next/cache";
 import { SUPPORTED_CURRENCIES, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import { SUPPORTED_LOCALES } from "@/lib/constants/locales";
+import type { SupportedLocale } from "@/lib/constants/locales";
 import type { StripePackage } from "@/types";
 
 // Re-export pure utilities so server-side consumers can import from one place
@@ -70,10 +72,25 @@ export const getStripeProducts = unstable_cache(
 
       if (!type || Object.keys(priceMap).length === 0) continue;
 
+      // Extract localised name/description from Stripe metadata
+      // (`name_fi`, `description_fi`, ...). English stays in the base
+      // `name`/`description` fields — no `name_en` key needed.
+      const nameI18n: Partial<Record<SupportedLocale, string>> = {};
+      const descriptionI18n: Partial<Record<SupportedLocale, string>> = {};
+      for (const loc of SUPPORTED_LOCALES) {
+        if (loc === "en") continue;
+        const nameValue = product.metadata[`name_${loc}`];
+        if (nameValue) nameI18n[loc] = nameValue;
+        const descValue = product.metadata[`description_${loc}`];
+        if (descValue) descriptionI18n[loc] = descValue;
+      }
+
       packages.push({
         stripeProductId: product.id,
         name: product.name,
         description: product.description,
+        nameI18n,
+        descriptionI18n,
         tokenAmount,
         // Safe cast: all Stripe token products are configured with prices in every supported currency
         prices: priceMap as Record<SupportedCurrency, { priceId: string; unitAmount: number }>,

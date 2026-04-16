@@ -22,12 +22,13 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: () => mockAdminClient,
 }));
 
+
 // --- Helpers ---
 
-function createRequest(body: Record<string, unknown>): Request {
+function createRequest(body: Record<string, unknown>, headers?: Record<string, string>): Request {
   return new Request("http://localhost:3000/api/feedback", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
 }
@@ -248,6 +249,58 @@ describe("POST /api/feedback", () => {
       })
     );
   });
+
+  // -- Accept-Language locale detection --
+
+  it("should use Finnish sender name when Accept-Language has fi as best supported match", async () => {
+    mockAuthenticatedAs("customer");
+    setupHappyPath();
+
+    await POST(createRequest(
+      validBody,
+      { "Accept-Language": "de-DE,fi;q=0.9,en;q=0.8" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromName: "Sogverse-palaute",
+      })
+    );
+  });
+
+  it("should use English sender name when no Accept-Language language is supported", async () => {
+    mockAuthenticatedAs("customer");
+    setupHappyPath();
+
+    await POST(createRequest(
+      validBody,
+      { "Accept-Language": "de-DE,fr;q=0.9" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromName: "Sogverse Feedback",
+      })
+    );
+  });
+
+  it("should prefer stored profile locale over Accept-Language header", async () => {
+    mockAuthenticatedAs("customer", { locale: "fi" });
+    setupHappyPath();
+
+    await POST(createRequest(
+      validBody,
+      { "Accept-Language": "en-US,en;q=0.9" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fromName: "Sogverse-palaute",
+      })
+    );
+  });
+
+  // -- RPC --
 
   it("should call submit_feedback RPC with correct params", async () => {
     mockAuthenticatedAs("customer");

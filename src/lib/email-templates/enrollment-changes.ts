@@ -1,6 +1,7 @@
 import { DARK_THEME, STATUS } from "@/lib/constants/colors";
 import { wrapInLayout } from "./layout";
 import { escapeHtml, heading, paragraph, styledName, styledProductName } from "./utils";
+import type { EmailTranslator } from "./translator";
 
 // --- Minecraft status snippet ---
 
@@ -9,29 +10,16 @@ function minecraftSkinImage(username: string): string {
   return `<div style="text-align:center;margin:8px 0;"><img src="${url}" alt="${escapeHtml(username)}'s Minecraft skin" width="64" style="display:inline-block;" /></div>`;
 }
 
-function minecraftStatusSnippet(username: string | null, uuid: string | null): string {
+function minecraftStatusSnippet(t: EmailTranslator, username: string | null, uuid: string | null): string {
   if (username && uuid) {
-    return paragraph(`Minecraft Username: <span style="color:${STATUS.success};">${escapeHtml(username)} (verified)</span>`) +
+    return paragraph(`${t("minecraft.label")} <span style="color:${STATUS.success};">${t("minecraft.verified", { username: escapeHtml(username) })}</span>`) +
       minecraftSkinImage(username);
   }
   if (username) {
-    return paragraph(`Minecraft Username: <span style="color:${STATUS.warning};">${escapeHtml(username)} (not yet verified)</span>`);
+    return paragraph(`${t("minecraft.label")} <span style="color:${STATUS.warning};">${t("minecraft.unverified", { username: escapeHtml(username) })}</span>`);
   }
-  return paragraph(`Minecraft Username: <span style="color:${DARK_THEME.mutedFg};">Not provided</span>`);
+  return paragraph(`${t("minecraft.label")} <span style="color:${DARK_THEME.mutedFg};">${t("minecraft.notProvided")}</span>`);
 }
-
-// --- Subjects ---
-
-export const enrollmentChangeSubjects = {
-  enrollmentParent: (gamerName: string, productName: string) =>
-    `${gamerName} is now enrolled in ${productName}`,
-  enrollmentGedu: (gamerName: string, productName: string) =>
-    `${gamerName} has joined your group – ${productName}`,
-  unenrollmentParent: (gamerName: string, productName: string) =>
-    `${gamerName} has been unenrolled from ${productName}`,
-  unenrollmentGedu: (gamerName: string, productName: string) =>
-    `${gamerName} has left your group – ${productName}`,
-};
 
 // --- Enrollment Parent ---
 
@@ -44,7 +32,7 @@ interface EnrollmentParentEmailOptions {
   minecraftUuid: string | null;
 }
 
-export function buildEnrollmentParentEmail({
+export function buildEnrollmentParentEmail(t: EmailTranslator, locale: string, {
   parentName,
   gamerName,
   geduName,
@@ -53,11 +41,11 @@ export function buildEnrollmentParentEmail({
   minecraftUuid,
 }: EnrollmentParentEmailOptions): string {
   const content = `
-    ${heading("Enrollment Confirmed")}
-    ${paragraph(`Hi ${styledName(parentName)}, ${styledName(gamerName)} is now enrolled in ${styledProductName(productName)} with Gedu ${styledName(geduName)}.`)}
-    ${minecraftStatusSnippet(minecraftUsername, minecraftUuid)}
+    ${heading(t("enrollmentParent.heading"))}
+    ${paragraph(t("enrollmentParent.body", { parentName: styledName(parentName), gamerName: styledName(gamerName), productName: styledProductName(productName), geduName: styledName(geduName) }))}
+    ${minecraftStatusSnippet(t, minecraftUsername, minecraftUuid)}
   `;
-  return wrapInLayout({ title: "Enrollment Confirmed", content });
+  return wrapInLayout({ title: t("enrollmentParent.heading"), content, locale, t });
 }
 
 // --- Enrollment Gedu ---
@@ -70,7 +58,7 @@ interface EnrollmentGeduEmailOptions {
   minecraftUuid: string | null;
 }
 
-export function buildEnrollmentGeduEmail({
+export function buildEnrollmentGeduEmail(t: EmailTranslator, locale: string, {
   geduName,
   gamerName,
   productName,
@@ -78,11 +66,11 @@ export function buildEnrollmentGeduEmail({
   minecraftUuid,
 }: EnrollmentGeduEmailOptions): string {
   const content = `
-    ${heading("New Gamer in Your Group")}
-    ${paragraph(`Hi ${styledName(geduName)}, ${styledName(gamerName)} has joined your group for ${styledProductName(productName)}.`)}
-    ${minecraftStatusSnippet(minecraftUsername, minecraftUuid)}
+    ${heading(t("enrollmentGedu.heading"))}
+    ${paragraph(t("enrollmentGedu.body", { geduName: styledName(geduName), gamerName: styledName(gamerName), productName: styledProductName(productName) }))}
+    ${minecraftStatusSnippet(t, minecraftUsername, minecraftUuid)}
   `;
-  return wrapInLayout({ title: "New Gamer in Group", content });
+  return wrapInLayout({ title: t("enrollmentGedu.heading"), content, locale, t });
 }
 
 // --- Unenrollment Parent ---
@@ -94,17 +82,17 @@ interface UnenrollmentParentEmailOptions {
   productName: string;
 }
 
-export function buildUnenrollmentParentEmail({
+export function buildUnenrollmentParentEmail(t: EmailTranslator, locale: string, {
   parentName,
   gamerName,
   geduName,
   productName,
 }: UnenrollmentParentEmailOptions): string {
   const content = `
-    ${heading("Unenrollment Confirmed")}
-    ${paragraph(`Hi ${styledName(parentName)}, ${styledName(gamerName)} has been unenrolled from ${styledProductName(productName)} (Gedu: ${styledName(geduName)}).`)}
+    ${heading(t("unenrollmentParent.heading"))}
+    ${paragraph(t("unenrollmentParent.body", { parentName: styledName(parentName), gamerName: styledName(gamerName), productName: styledProductName(productName), geduName: styledName(geduName) }))}
   `;
-  return wrapInLayout({ title: "Unenrollment Confirmed", content });
+  return wrapInLayout({ title: t("unenrollmentParent.heading"), content, locale, t });
 }
 
 // --- Unenrollment Gedu ---
@@ -117,7 +105,7 @@ interface UnenrollmentGeduEmailOptions {
   minecraftUuid: string | null;
 }
 
-export function buildUnenrollmentGeduEmail({
+export function buildUnenrollmentGeduEmail(t: EmailTranslator, locale: string, {
   geduName,
   gamerName,
   productName,
@@ -125,9 +113,9 @@ export function buildUnenrollmentGeduEmail({
   minecraftUuid,
 }: UnenrollmentGeduEmailOptions): string {
   const content = `
-    ${heading("Gamer Left Your Group")}
-    ${paragraph(`Hi ${styledName(geduName)}, ${styledName(gamerName)} has left your group for ${styledProductName(productName)}.`)}
-    ${minecraftStatusSnippet(minecraftUsername, minecraftUuid)}
+    ${heading(t("unenrollmentGedu.heading"))}
+    ${paragraph(t("unenrollmentGedu.body", { geduName: styledName(geduName), gamerName: styledName(gamerName), productName: styledProductName(productName) }))}
+    ${minecraftStatusSnippet(t, minecraftUsername, minecraftUuid)}
   `;
-  return wrapInLayout({ title: "Gamer Left Group", content });
+  return wrapInLayout({ title: t("unenrollmentGedu.heading"), content, locale, t });
 }

@@ -1,0 +1,322 @@
+# Locations Architecture
+
+Hierarchical location system for mapping products and gedus to geographic regions, powering substitute matching, and supporting international expansion.
+
+## Overview
+
+Locations use a self-referential adjacency list: one `locations` table where each row can have a `parent_id` pointing to another row. A `location_type` enum classifies each level of the hierarchy. This keeps the schema simple while supporting arbitrary depth.
+
+The hierarchy is shallow in practice (3-5 levels), so PostgreSQL's `WITH RECURSIVE` CTEs handle ancestor/descendant queries efficiently without needing specialized extensions.
+
+## Location Types
+
+| Type | Description | Examples |
+|------|-------------|----------|
+| `country` | Top-level, no parent | Finland, United States, United Kingdom |
+| `region` | State, province, county, maakunta | Uusimaa, California, England, Maharashtra |
+| `municipality` | City, town, kunta | Helsinki, Houston, Manchester, Mumbai |
+| `district` | School district, borough, neighborhood | LAUSD, Camden, Shinjuku |
+| `site` | Individual school, company, building | Ressu School, Lincoln High School |
+
+Not every country needs every level. Finland may skip `district` entirely. The hierarchy is flexible, not rigid.
+
+## Schema
+
+```sql
+CREATE TYPE location_type AS ENUM (
+  'country', 'region', 'municipality', 'district', 'site'
+);
+
+CREATE TABLE locations (
+  id           UUID PRIMARY KEY,
+  name         TEXT NOT NULL,
+  type         location_type NOT NULL,
+  parent_id    UUID REFERENCES locations(id) ON DELETE RESTRICT,
+  country_code TEXT,  -- ISO 3166-1 alpha-2, denormalized
+  created_at   TIMESTAMPTZ,
+  updated_at   TIMESTAMPTZ
+);
+```
+
+`country_code` is denormalized on every row to avoid recursive lookups for the most common filter (country-level filtering). `ON DELETE RESTRICT` prevents accidentally orphaning child locations.
+
+## International Examples
+
+### Finland
+
+```
+Finland (country, FI)
+├── Uusimaa (region)
+│   ├── Helsinki (municipality)
+│   │   └── Ressu School (site)
+│   ├── Espoo (municipality)
+│   └── Vantaa (municipality)
+├── Pirkanmaa (region)
+│   └── Tampere (municipality)
+└── Varsinais-Suomi (region)
+    └── Turku (municipality)
+```
+
+### United States
+
+```
+USA (country, US)
+├── California (region)
+│   ├── Los Angeles (municipality)
+│   │   ├── LAUSD (district)
+│   │   │   └── Lincoln High School (site)
+│   │   └── Compton USD (district)
+│   └── San Francisco (municipality)
+│       └── SFUSD (district)
+├── Texas (region)
+│   ├── Houston (municipality)
+│   │   └── Houston ISD (district)
+│   └── Austin (municipality)
+│       └── Austin ISD (district)
+└── New York (region)
+    └── New York City (municipality)
+        ├── Manhattan (district)
+        └── Brooklyn (district)
+```
+
+In the US, school districts don't always align with city boundaries (e.g. LAUSD covers parts of multiple cities). A district is parented under whichever municipality it's primarily associated with. If a district truly spans cities, it can be parented at the region level instead.
+
+### United Kingdom
+
+```
+United Kingdom (country, GB)
+├── England (region)
+│   ├── London (municipality)
+│   │   ├── Camden (district)
+│   │   │   └── Regent High School (site)
+│   │   └── Hackney (district)
+│   ├── Manchester (municipality)
+│   └── Birmingham (municipality)
+├── Scotland (region)
+│   ├── Edinburgh (municipality)
+│   └── Glasgow (municipality)
+├── Wales (region)
+│   └── Cardiff (municipality)
+└── Northern Ireland (region)
+    └── Belfast (municipality)
+```
+
+England, Scotland, Wales, and Northern Ireland map to `region`. London boroughs are `district`.
+
+### India
+
+```
+India (country, IN)
+├── Maharashtra (region)
+│   ├── Mumbai (municipality)
+│   │   ├── Andheri (district)
+│   │   └── Bandra (district)
+│   └── Pune (municipality)
+├── Karnataka (region)
+│   ├── Bengaluru (municipality)
+│   └── Mysuru (municipality)
+├── Tamil Nadu (region)
+│   └── Chennai (municipality)
+└── Delhi (region)
+    └── New Delhi (municipality)
+        ├── South Delhi (district)
+        └── Central Delhi (district)
+```
+
+Indian states map to `region`. For large metro areas like Mumbai, neighborhoods or zones become `district`.
+
+### South Africa
+
+```
+South Africa (country, ZA)
+├── Gauteng (region)
+│   ├── Johannesburg (municipality)
+│   │   ├── Sandton (district)
+│   │   └── Soweto (district)
+│   └── Pretoria (municipality)
+├── Western Cape (region)
+│   └── Cape Town (municipality)
+│       ├── City Bowl (district)
+│       └── Cape Flats (district)
+├── KwaZulu-Natal (region)
+│   └── Durban (municipality)
+└── Eastern Cape (region)
+    └── Port Elizabeth (municipality)
+```
+
+South African provinces map to `region`. Metro sub-areas become `district`.
+
+### China
+
+```
+China (country, CN)
+├── Beijing (region)
+│   └── Beijing (municipality)
+│       ├── Haidian (district)
+│       └── Chaoyang (district)
+├── Guangdong (region)
+│   ├── Guangzhou (municipality)
+│   │   └── Tianhe (district)
+│   └── Shenzhen (municipality)
+│       └── Nanshan (district)
+├── Shanghai (region)
+│   └── Shanghai (municipality)
+│       ├── Pudong (district)
+│       └── Jing'an (district)
+└── Zhejiang (region)
+    └── Hangzhou (municipality)
+```
+
+Chinese provinces and direct-controlled municipalities (Beijing, Shanghai) map to `region`. Urban districts map naturally to `district`.
+
+### Japan
+
+```
+Japan (country, JP)
+├── Tokyo (region)
+│   └── Tokyo (municipality)
+│       ├── Shinjuku (district)
+│       ├── Shibuya (district)
+│       └── Minato (district)
+├── Osaka (region)
+│   └── Osaka (municipality)
+│       └── Chuo (district)
+├── Kanagawa (region)
+│   └── Yokohama (municipality)
+└── Kyoto (region)
+    └── Kyoto (municipality)
+```
+
+Japanese prefectures map to `region`. Tokyo's special wards and other city wards map to `district`.
+
+## Type Mapping by Country
+
+| Type | Finland | US | UK | India | South Africa | China | Japan |
+|------|---------|----|----|-------|-------------|-------|-------|
+| country | Finland | USA | United Kingdom | India | South Africa | China | Japan |
+| region | maakunta | state | nation | state | province | province | prefecture |
+| municipality | kunta | city | city | city | metro | city | city |
+| district | -- | school district | borough | zone | sub-area | urban district | ward |
+| site | school | school | school | school | school | school | school |
+
+## Localised Labels
+
+Location type labels (Region, Municipality, Site, etc.) are translated only for the country whose language matches the user's UI language. All other countries display English labels.
+
+**Rationale:** A Finnish admin managing Finland's locations should see "Maakunta" (region) and "Kunta" (municipality) — the natural administrative terms. But when viewing UK locations, "Borough" stays in English because that's the actual British term and translating it to Finnish wouldn't add clarity.
+
+**Implementation:** Each `HierarchyLevel` in `SUPPORTED_COUNTRIES` has an optional `i18n` map keyed by locale. The `resolveLabels(level, locale)` helper picks the localised pair or falls back to the English default. Country names also support `nameI18n` (e.g. Finland → Suomi in Finnish).
+
+**When adding a new country with a supported UI language:** add `i18n` entries to each hierarchy level and a `nameI18n` entry. When adding a country whose language isn't a supported UI language, no `i18n` is needed — English labels are the default.
+
+## UI: Cascading Dropdowns
+
+The hierarchy powers cascading dropdown selectors:
+
+1. Select country: `WHERE parent_id IS NULL AND type = 'country'`
+2. Select region: `WHERE parent_id = :country_id AND type = 'region'`
+3. Select municipality: `WHERE parent_id = :region_id AND type = 'municipality'`
+4. (Optional) Select district: `WHERE parent_id = :municipality_id AND type = 'district'`
+
+Each dropdown filters based on the parent selection. If a level has no children (e.g. Finland has no districts), that dropdown is skipped.
+
+## Breadcrumb / Full Path Query
+
+```sql
+WITH RECURSIVE ancestors AS (
+  SELECT id, name, type, parent_id, 1 AS depth
+  FROM locations WHERE id = :selected_id
+  UNION ALL
+  SELECT l.id, l.name, l.type, l.parent_id, a.depth + 1
+  FROM locations l JOIN ancestors a ON l.id = a.parent_id
+)
+SELECT * FROM ancestors ORDER BY depth DESC;
+-- Returns: Finland > Uusimaa > Helsinki
+```
+
+## Products and Gedus
+
+Migration 00024 added three columns to `products` and a new `gedu_locations` table, wiring the hierarchy into substitute matching.
+
+### Products
+
+```sql
+ALTER TABLE products
+  ADD COLUMN is_remote BOOLEAN NOT NULL,
+  ADD COLUMN location_id UUID REFERENCES locations(id) ON DELETE RESTRICT,
+  ADD COLUMN spoken_language_code TEXT NOT NULL REFERENCES spoken_languages(code);
+
+ALTER TABLE products ADD CONSTRAINT products_location_xor_remote
+  CHECK (
+    (is_remote = true  AND location_id IS NULL) OR
+    (is_remote = false AND location_id IS NOT NULL)
+  );
+```
+
+Every product is either **remote** (no location) or **in-person** (has a location) — enforced by the CHECK. `location_id` is nullable on its own (null for remote), but the combination is constrained.
+
+A `BEFORE INSERT/UPDATE` trigger (`validate_product_location`) additionally enforces that `location_id`, when set, references a row whose `type = 'site'`. Products can only be pinned to leaves — never to a region or city — so the ancestor-walk matching query has a well-defined starting point.
+
+`is_remote` and `spoken_language_code` are both **NOT NULL with no DEFAULT** by design. Admins must pick a value on every new product; there is no silent assumption at any layer. The Zod rule in `ProductForm` is the first line of defence, the CHECK + NOT NULL are the database backstop.
+
+### Gedu Coverage
+
+```sql
+CREATE TABLE gedu_locations (
+  gedu_id     UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  location_id UUID NOT NULL REFERENCES locations(id) ON DELETE CASCADE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (gedu_id, location_id)
+);
+```
+
+Gedus can tick rows at **any level** of the hierarchy — a region, a city, or a specific site. RLS:
+
+- `gedu_manage_own_locations` — a gedu can read/write rows where `gedu_id = auth.uid()` **and** their role is `gedu` (both actor and target checked per the access-control rule).
+- `admin_manage_gedu_locations` — admins can read/write any row, to support the admin user-detail view.
+
+Deleting a gedu profile cascades to their coverage rows; deleting a location cascades to every gedu that ticked it (since the ticks become meaningless if the location is gone).
+
+### Gedu Coverage UI
+
+The coverage editor (`src/components/gedu/gedu-coverage-editor.tsx`) reuses `LocationTree` (`src/components/locations/location-tree.tsx`) in **selectable mode**: every row renders a checkbox instead of the admin hover buttons, and countries start collapsed so gedus drill only into the one they cover.
+
+**Cascade tick semantics** — a single tick represents "I cover this whole subtree":
+- Ticking a parent auto-ticks every descendant row in the DB set.
+- Unticking any descendant removes that descendant **and** every selected ancestor up the chain, because an ancestor's tick meant "I fully cover my subtree" — which is no longer true the moment a child is removed. Sibling branches are unaffected.
+
+Concretely: if a gedu ticks Uusimaa and then unticks Helsinki, Uusimaa comes off but Espoo, Vantaa, and every other Uusimaa-descendant site stays ticked. The net result is "I cover Uusimaa except Helsinki."
+
+An empty selection is valid — the gedu is treated as remote-only.
+
+The editor is mounted at **two** call sites, sharing the same `<GeduCoverageEditor geduId={...} />`:
+1. `src/app/(dashboard)/settings/page.tsx` (gedu self-edit, under a `role === "gedu"` branch)
+2. `src/app/(dashboard)/admin/users/[id]/page.tsx` (admin editing any gedu, under an `isGedu` branch)
+
+### Product Location Picker
+
+The admin product form uses `<ProductLocationPicker>` (`src/components/admin/product-location-picker.tsx`) — a Remote | In-person toggle, and in in-person mode, a chain of cascading dropdowns dynamically built from `SUPPORTED_COUNTRIES[countryCode].hierarchy`. Adding a new country to the table automatically works in the picker with zero code changes.
+
+Each dropdown has a `+` button that opens `LocationFormDialog` inline, letting admins build out Country → Region → City → Site without leaving the product form. After creation, the new row is auto-selected and focus advances.
+
+The picker propagates a non-null `location_id` up to the parent form only when the deepest selection is a `site` (leaf). If the admin stops at a region or city, the product form's Zod `locationRequired` rule keeps the submit button disabled. The DB trigger is the backstop.
+
+### Substitute Matching
+
+Find gedus who can cover a product's location by walking up the ancestor chain:
+
+```sql
+WITH RECURSIVE ancestors AS (
+  SELECT id FROM locations WHERE id = :product_location_id
+  UNION ALL
+  SELECT l.parent_id FROM locations l
+  JOIN ancestors a ON l.id = a.id
+  WHERE l.parent_id IS NOT NULL
+)
+SELECT DISTINCT gl.gedu_id
+FROM gedu_locations gl
+WHERE gl.location_id IN (SELECT id FROM ancestors);
+```
+
+A product at `Ressu School` matches every gedu who ticked Ressu School, Helsinki, Uusimaa, **or** Finland — because the cascade-tick semantics guarantee that any of those rows means "I cover everything underneath." Language-matching (`products.spoken_language_code` ∈ `profiles.spoken_languages`) layers on top of this query as an `AND` clause.
+

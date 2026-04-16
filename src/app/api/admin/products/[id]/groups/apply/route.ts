@@ -3,7 +3,7 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createDailyRoom, deleteDailyRoom } from "@/lib/daily";
 import { sendTransactionalEmail } from "@/lib/brevo";
-import { SENDER_EMAIL, SENDER_NAME_ENROLLMENT } from "@/lib/constants";
+import { SENDER_EMAIL } from "@/lib/constants";
 import {
   buildGroupAddedEmail,
   buildGroupDeletedEmail,
@@ -13,16 +13,17 @@ import {
   buildGamerMovedParentEmail,
   buildGamerMovedOldGeduEmail,
   buildGamerMovedNewGeduEmail,
-  groupChangeSubjects,
 } from "@/lib/email-templates/group-changes";
+import { getEmailTranslator, type EmailTranslator } from "@/lib/email-templates/translator";
+import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import type { BatchGroupChanges } from "@/services/groups";
 import type { NotifyPayload } from "@/hooks/use-group-editor";
 
 const FROM_EMAIL = SENDER_EMAIL;
-const FROM_NAME = SENDER_NAME_ENROLLMENT;
 
 interface EmailJob {
   toEmail: string;
+  fromName: string;
   subject: string;
   htmlContent: string;
   cc?: string[];
@@ -82,15 +83,15 @@ export async function POST(
     geduIds.delete("");
     gamerIds.delete("");
 
-    const geduProfiles = new Map<string, { displayName: string; email: string }>();
+    const geduProfiles = new Map<string, { displayName: string; email: string; locale: SupportedLocale }>();
     if (geduIds.size > 0) {
       const { data: gedus } = await admin
         .from("profiles")
-        .select("id, display_name, email")
+        .select("id, display_name, email, locale")
         .in("id", Array.from(geduIds));
       for (const g of gedus ?? []) {
         if (g.email) {
-          geduProfiles.set(g.id, { displayName: g.display_name, email: g.email });
+          geduProfiles.set(g.id, { displayName: g.display_name, email: g.email, locale: resolveLocale(g.locale) });
         }
       }
     }
@@ -165,15 +166,15 @@ export async function POST(
       for (const { parentId } of map.values()) allParentIds.add(parentId);
     }
 
-    const parentProfiles = new Map<string, { displayName: string; email: string }>();
+    const parentProfiles = new Map<string, { displayName: string; email: string; locale: SupportedLocale }>();
     if (allParentIds.size > 0) {
       const { data: parents } = await admin
         .from("profiles")
-        .select("id, display_name, email")
+        .select("id, display_name, email, locale")
         .in("id", Array.from(allParentIds));
       for (const p of parents ?? []) {
         if (p.email) {
-          parentProfiles.set(p.id, { displayName: p.display_name, email: p.email });
+          parentProfiles.set(p.id, { displayName: p.display_name, email: p.email, locale: resolveLocale(p.locale) });
         }
       }
     }
@@ -186,16 +187,27 @@ export async function POST(
       .map((a: { email: string | null }) => a.email)
       .filter((e: string | null): e is string => !!e);
 
+    // --- Pre-load translators for all unique locales ---
+    const allLocales = new Set<SupportedLocale>();
+    for (const g of geduProfiles.values()) allLocales.add(g.locale);
+    for (const p of parentProfiles.values()) allLocales.add(p.locale);
+    const translators = new Map<SupportedLocale, EmailTranslator>();
+    await Promise.all(
+      [...allLocales].map(async (l) => translators.set(l, await getEmailTranslator(l))),
+    );
+
     // --- Build email jobs ---
     const emailJobs: EmailJob[] = [];
 
     for (const g of notify.addedGroups) {
       const gedu = geduProfiles.get(g.geduId);
       if (!gedu) continue;
+      const t = translators.get(gedu.locale)!;
       emailJobs.push({
         toEmail: gedu.email,
-        subject: groupChangeSubjects.groupAdded(productName),
-        htmlContent: buildGroupAddedEmail({ geduName: gedu.displayName, productName }),
+        fromName: t("senderEnrollment"),
+        subject: t("groupAdded.subject", { productName }),
+        htmlContent: buildGroupAddedEmail(t, gedu.locale, { geduName: gedu.displayName, productName }),
         cc: adminEmails.filter((e) => e !== gedu.email),
         description: `Group added → ${gedu.email}`,
       });
@@ -204,10 +216,12 @@ export async function POST(
     for (const g of notify.deletedGroups) {
       const gedu = geduProfiles.get(g.geduId);
       if (!gedu) continue;
+      const t = translators.get(gedu.locale)!;
       emailJobs.push({
         toEmail: gedu.email,
-        subject: groupChangeSubjects.groupDeleted(productName),
-        htmlContent: buildGroupDeletedEmail({ geduName: gedu.displayName, productName }),
+        fromName: t("senderEnrollment"),
+        subject: t("groupDeleted.subject", { productName }),
+        htmlContent: buildGroupDeletedEmail(t, gedu.locale, { geduName: gedu.displayName, productName }),
         cc: adminEmails.filter((e) => e !== gedu.email),
         description: `Group deleted → ${gedu.email}`,
       });
@@ -218,10 +232,12 @@ export async function POST(
       const newGedu = geduProfiles.get(g.newGeduId);
       if (!oldGedu || !newGedu) continue;
 
+      const oldT = translators.get(oldGedu.locale)!;
       emailJobs.push({
         toEmail: oldGedu.email,
-        subject: groupChangeSubjects.groupReassignedOldGedu(productName),
-        htmlContent: buildGroupReassignedOldGeduEmail({
+        fromName: oldT("senderEnrollment"),
+        subject: oldT("groupReassignedOldGedu.subject", { productName }),
+        htmlContent: buildGroupReassignedOldGeduEmail(oldT, oldGedu.locale, {
           oldGeduName: oldGedu.displayName,
           newGeduName: newGedu.displayName,
           productName,
@@ -230,10 +246,12 @@ export async function POST(
         description: `Reassigned (old gedu) → ${oldGedu.email}`,
       });
 
+      const newT = translators.get(newGedu.locale)!;
       emailJobs.push({
         toEmail: newGedu.email,
-        subject: groupChangeSubjects.groupReassignedNewGedu(productName),
-        htmlContent: buildGroupReassignedNewGeduEmail({
+        fromName: newT("senderEnrollment"),
+        subject: newT("groupReassignedNewGedu.subject", { productName }),
+        htmlContent: buildGroupReassignedNewGeduEmail(newT, newGedu.locale, {
           oldGeduName: oldGedu.displayName,
           newGeduName: newGedu.displayName,
           productName,
@@ -248,10 +266,12 @@ export async function POST(
           const parent = parentProfiles.get(parentId);
           const gamer = gamerProfiles.get(gamerId);
           if (!parent || !gamer) continue;
+          const pT = translators.get(parent.locale)!;
           emailJobs.push({
             toEmail: parent.email,
-            subject: groupChangeSubjects.groupReassignedParent(gamer.displayName, productName),
-            htmlContent: buildGroupReassignedParentEmail({
+            fromName: pT("senderEnrollment"),
+            subject: pT("groupReassignedParent.subject", { gamerName: gamer.displayName, productName }),
+            htmlContent: buildGroupReassignedParentEmail(pT, parent.locale, {
               parentName: parent.displayName,
               gamerName: gamer.displayName,
               oldGeduName: oldGedu.displayName,
@@ -275,10 +295,12 @@ export async function POST(
       if (parentId) {
         const parent = parentProfiles.get(parentId);
         if (parent) {
+          const pT = translators.get(parent.locale)!;
           emailJobs.push({
             toEmail: parent.email,
-            subject: groupChangeSubjects.gamerMovedParent(gamer.displayName, productName),
-            htmlContent: buildGamerMovedParentEmail({
+            fromName: pT("senderEnrollment"),
+            subject: pT("gamerMovedParent.subject", { gamerName: gamer.displayName, productName }),
+            htmlContent: buildGamerMovedParentEmail(pT, parent.locale, {
               parentName: parent.displayName,
               gamerName: gamer.displayName,
               oldGeduName: oldGedu.displayName,
@@ -291,10 +313,12 @@ export async function POST(
         }
       }
 
+      const oldT = translators.get(oldGedu.locale)!;
       emailJobs.push({
         toEmail: oldGedu.email,
-        subject: groupChangeSubjects.gamerMovedOldGedu(gamer.displayName, productName),
-        htmlContent: buildGamerMovedOldGeduEmail({
+        fromName: oldT("senderEnrollment"),
+        subject: oldT("gamerMovedOldGedu.subject", { gamerName: gamer.displayName, productName }),
+        htmlContent: buildGamerMovedOldGeduEmail(oldT, oldGedu.locale, {
           geduName: oldGedu.displayName,
           gamerName: gamer.displayName,
           newGeduName: newGedu.displayName,
@@ -304,10 +328,12 @@ export async function POST(
         description: `Gamer moved (old gedu) → ${oldGedu.email}`,
       });
 
+      const newT = translators.get(newGedu.locale)!;
       emailJobs.push({
         toEmail: newGedu.email,
-        subject: groupChangeSubjects.gamerMovedNewGedu(gamer.displayName, productName),
-        htmlContent: buildGamerMovedNewGeduEmail({
+        fromName: newT("senderEnrollment"),
+        subject: newT("gamerMovedNewGedu.subject", { gamerName: gamer.displayName, productName }),
+        htmlContent: buildGamerMovedNewGeduEmail(newT, newGedu.locale, {
           geduName: newGedu.displayName,
           gamerName: gamer.displayName,
           oldGeduName: oldGedu.displayName,
@@ -405,7 +431,7 @@ export async function POST(
         const promises = emailJobs.map((job, i) =>
           sendTransactionalEmail({
             fromEmail: FROM_EMAIL,
-            fromName: FROM_NAME,
+            fromName: job.fromName,
             toEmail: job.toEmail,
             subject: job.subject,
             htmlContent: job.htmlContent,

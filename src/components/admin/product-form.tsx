@@ -1,46 +1,57 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { z } from "zod";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent } from "@/components/ui/card";
 import { useGames, useCreateGame } from "@/services/games";
+import { useSpokenLanguages } from "@/services/users";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { cn, DAYS_OF_WEEK } from "@/lib/utils";
+import { ProductLocationPicker } from "@/components/admin/product-location-picker";
+import { ProductImagePicker, type ProductImageValue } from "@/components/admin/product-image-picker";
+import { SpokenLanguageRadioGroup } from "@/components/ui/spoken-language-checkboxes";
 
-const productSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Product name is required")
-    .max(100, "Product name must be at most 100 characters"),
-  description: z.string().min(1, "Description is required"),
-  tokenCost: z
-    .number({ invalid_type_error: "Sorg cost must be a number" })
-    .int("Sorg cost must be a whole number")
-    .min(1, "Sorg cost must be at least 1"),
-  imageUrl: z.string().url("Must be a valid URL"),
-  padletUrl: z.union([z.string().url("Must be a valid URL"), z.literal("")]).optional(),
-  gameId: z.string().uuid("Game is required"),
-  dayOfWeek: z.number().int().min(0).max(6),
-  // eslint-disable-next-line security/detect-unsafe-regex -- anchored, fixed-length pattern; no ReDoS risk
-  startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, "Must be a valid time"),
-  durationMinutes: z.number().int().min(1, "Duration must be at least 1 minute"),
-  minAge: z.number().int().min(0, "Min age must be 0 or greater"),
-  maxAge: z.number().int().min(0, "Max age must be 0 or greater"),
-}).refine((data) => data.maxAge >= data.minAge, {
-  message: "Max age must be greater than or equal to min age",
-  path: ["maxAge"],
-});
+function createProductSchema(msgs: Record<string, string>) {
+  return z.object({
+    name: z
+      .string()
+      .min(1, msgs.nameRequired)
+      .max(100, msgs.nameMaxLength),
+    description: z.string().min(1, msgs.descriptionRequired),
+    tokenCost: z
+      .number({ invalid_type_error: msgs.sorgCostNumber })
+      .int(msgs.sorgCostWhole)
+      .min(1, msgs.sorgCostMin),
+    padletUrl: z.union([z.string().url(msgs.validUrl), z.literal("")]).optional(),
+    gameId: z.string().uuid(msgs.gameRequired),
+    dayOfWeek: z.number().int().min(0).max(6),
+    // eslint-disable-next-line security/detect-unsafe-regex -- anchored, fixed-length pattern; no ReDoS risk
+    startTime: z.string().regex(/^\d{2}:\d{2}(:\d{2})?$/, msgs.validTime),
+    durationMinutes: z.number().int().min(1, msgs.durationMin),
+    minAge: z.number().int().min(0, msgs.minAgeMin),
+    maxAge: z.number().int().min(0, msgs.maxAgeMin),
+    isRemote: z.boolean(),
+    locationId: z.string().uuid().nullable(),
+    spokenLanguageCode: z.string().min(1, msgs.spokenLanguageRequired),
+  }).refine((data) => data.maxAge >= data.minAge, {
+    message: msgs.maxAgeGte,
+    path: ["maxAge"],
+  }).refine((data) => data.isRemote ? data.locationId === null : data.locationId !== null, {
+    message: msgs.locationRequired,
+    path: ["locationId"],
+  });
+}
 
 export interface ProductFormValues {
   name: string;
   description: string;
   token_cost: number;
-  image_url: string;
   padlet_url: string | null;
   game_id: string;
   day_of_week: number;
@@ -48,10 +59,24 @@ export interface ProductFormValues {
   duration_minutes: number;
   min_age: number;
   max_age: number;
+  is_remote: boolean;
+  location_id: string | null;
+  spoken_language_code: string;
+  /**
+   * New image to upload. `null` means "keep the existing image" — only valid
+   * in edit mode. For create the form enforces a non-null value before
+   * calling onSubmit, so the add page can treat this as guaranteed File.
+   */
+  image: File | null;
+}
+
+export interface ProductFormInitialValues extends Partial<Omit<ProductFormValues, "image">> {
+  /** Current image path in the bucket, used to seed the preview in edit mode. */
+  image_path?: string;
 }
 
 interface ProductFormProps {
-  initialValues?: Partial<ProductFormValues>;
+  initialValues?: ProductFormInitialValues;
   onSubmit: (values: ProductFormValues) => Promise<void>;
   isPending: boolean;
   submitLabel: string;
@@ -59,15 +84,35 @@ interface ProductFormProps {
 }
 
 export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, pendingLabel }: ProductFormProps) {
+  const t = useTranslations('admin.forms');
+  const c = useTranslations('common');
   const { data: games, isLoading: gamesLoading } = useGames();
   const createGame = useCreateGame();
-  const { currency, locale } = useCurrency();
+  const { data: spokenLanguages } = useSpokenLanguages();
+  const { currency } = useCurrency();
+  const locale = useLocale();
   const { tokensToCurrencyDisplay } = useTokenRates();
+  const validationKeys = [
+    "nameRequired", "nameMaxLength", "descriptionRequired", "sorgCostNumber",
+    "sorgCostWhole", "sorgCostMin", "validUrl", "imageRequired", "gameRequired",
+    "validTime", "durationMin", "minAgeMin", "maxAgeMin", "maxAgeGte",
+    "locationRequired", "spokenLanguageRequired",
+  ] as const;
+  const msgs = Object.fromEntries(validationKeys.map((k) => [k, t(k)]));
+  const productSchema = createProductSchema(msgs);
 
   const [name, setName] = useState(initialValues?.name ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
   const [tokenCost, setTokenCost] = useState(initialValues?.token_cost != null ? String(initialValues.token_cost) : "");
-  const [imageUrl, setImageUrl] = useState(initialValues?.image_url ?? "");
+  // File when admin staged a new image (not yet uploaded), string when an
+  // existing bucket path is loaded (edit mode), null when empty. The File is
+  // never uploaded client-side — it's handed to the server along with the
+  // rest of the form in a single multipart request, so a failed create /
+  // update cannot leave an orphan in the bucket.
+  const [imageValue, setImageValue] = useState<ProductImageValue>(
+    initialValues?.image_path ?? null,
+  );
+  const [submitting, setSubmitting] = useState(false);
   const [padletUrl, setPadletUrl] = useState(initialValues?.padlet_url ?? "");
   const [gameId, setGameId] = useState(initialValues?.game_id ?? "");
   const [newGameName, setNewGameName] = useState("");
@@ -77,28 +122,12 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const [durationMinutes, setDurationMinutes] = useState(String(initialValues?.duration_minutes ?? 60));
   const [minAge, setMinAge] = useState(String(initialValues?.min_age ?? 7));
   const [maxAge, setMaxAge] = useState(String(initialValues?.max_age ?? 12));
+  const [isRemote, setIsRemote] = useState(initialValues?.is_remote ?? true);
+  const [locationId, setLocationId] = useState<string | null>(initialValues?.location_id ?? null);
+  const [spokenLanguageCode, setSpokenLanguageCode] = useState(
+    initialValues?.spoken_language_code ?? "",
+  );
   const [error, setError] = useState<string | null>(null);
-
-  // Debounced image preview
-  const [previewUrl, setPreviewUrl] = useState(initialValues?.image_url ?? "");
-  const [previewError, setPreviewError] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setPreviewError(false);
-      try {
-        if (imageUrl) {
-          new URL(imageUrl);
-          setPreviewUrl(imageUrl);
-        } else {
-          setPreviewUrl("");
-        }
-      } catch {
-        setPreviewUrl("");
-      }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [imageUrl]);
 
   const handleCreateGame = async () => {
     if (!newGameName.trim()) return;
@@ -108,7 +137,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
       setNewGameName("");
       setShowNewGame(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create game");
+      setError(err instanceof Error ? err.message : t('failedToCreateGame'));
     }
   };
 
@@ -116,12 +145,20 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
     e.preventDefault();
     setError(null);
 
+    // Image presence check runs outside zod because File isn't a zod-native
+    // type; imageValue is a File (new), a string (existing bucket path in
+    // edit mode — treat as "keep current"), or null (error).
+    if (!imageValue) {
+      setError(t('imageRequired'));
+      return;
+    }
+
+    setSubmitting(true);
     try {
       const validatedData = productSchema.parse({
         name,
         description,
         tokenCost: tokenCost === "" ? undefined : Number(tokenCost),
-        imageUrl,
         padletUrl,
         gameId,
         dayOfWeek: Number(dayOfWeek),
@@ -129,13 +166,15 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         durationMinutes: durationMinutes === "" ? undefined : Number(durationMinutes),
         minAge: minAge === "" ? undefined : Number(minAge),
         maxAge: maxAge === "" ? undefined : Number(maxAge),
+        isRemote,
+        locationId,
+        spokenLanguageCode,
       });
 
       await onSubmit({
         name: validatedData.name,
         description: validatedData.description,
         token_cost: validatedData.tokenCost,
-        image_url: validatedData.imageUrl,
         padlet_url: validatedData.padletUrl || null,
         game_id: validatedData.gameId,
         day_of_week: validatedData.dayOfWeek,
@@ -143,6 +182,10 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         duration_minutes: validatedData.durationMinutes,
         min_age: validatedData.minAge,
         max_age: validatedData.maxAge,
+        is_remote: validatedData.isRemote,
+        location_id: validatedData.locationId,
+        spoken_language_code: validatedData.spokenLanguageCode,
+        image: imageValue instanceof File ? imageValue : null,
       });
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -152,8 +195,10 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
       } else if (typeof err === "object" && err !== null && "message" in err) {
         setError((err as { message: string }).message);
       } else {
-        setError("An unexpected error occurred");
+        setError(c('unexpectedError'));
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -167,11 +212,11 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         )}
 
         <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
+          <Label htmlFor="name">{t('nameLabel')}</Label>
           <Input
             id="name"
             type="text"
-            placeholder="Product name"
+            placeholder={t('namePlaceholder')}
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={isPending}
@@ -180,10 +225,10 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t('descriptionLabel')}</Label>
           <textarea
             id="description"
-            placeholder="Describe your product"
+            placeholder={t('descriptionPlaceholder')}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             disabled={isPending}
@@ -194,7 +239,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="padletUrl">Padlet URL</Label>
+          <Label htmlFor="padletUrl">{t('padletUrlLabel')}</Label>
           <Input
             id="padletUrl"
             type="url"
@@ -206,7 +251,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="tokenCost">Sorg Cost (per session)</Label>
+          <Label htmlFor="tokenCost">{t('sorgCostLabel')}</Label>
           <Input
             id="tokenCost"
             type="number"
@@ -219,43 +264,22 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
             required
           />
           <p className="text-xs text-muted-foreground">
-            ≈ {tokensToCurrencyDisplay(Number(tokenCost) || 0, currency, locale)} per session
+            {t('approxPerSession', { amount: tokensToCurrencyDisplay(Number(tokenCost) || 0, currency, locale) })}
           </p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="imageUrl">Image URL</Label>
-          <Input
-            id="imageUrl"
-            type="url"
-            placeholder="https://example.com/image.png"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            disabled={isPending}
-            required
-          />
-          {previewUrl && !previewError && (
-            <div className="relative mt-2 h-32 w-full overflow-hidden rounded-md border bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewUrl}
-                alt="Preview"
-                className="h-full w-full object-contain"
-                onError={() => setPreviewError(true)}
-              />
-            </div>
-          )}
-          {previewError && (
-            <p className="text-xs text-muted-foreground">Could not load image preview</p>
-          )}
-        </div>
+        <ProductImagePicker
+          value={imageValue}
+          onChange={setImageValue}
+          disabled={isPending || submitting}
+        />
 
         <div className="space-y-2">
-          <Label htmlFor="gameId">Game</Label>
+          <Label htmlFor="gameId">{t('gameLabel')}</Label>
           {showNewGame ? (
             <div className="flex gap-2">
               <Input
-                placeholder="New game name"
+                placeholder={t('newGameName')}
                 value={newGameName}
                 onChange={(e) => setNewGameName(e.target.value)}
                 disabled={createGame.isPending}
@@ -266,7 +290,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
                 onClick={handleCreateGame}
                 disabled={createGame.isPending || !newGameName.trim()}
               >
-                {createGame.isPending ? "..." : "Add"}
+                {createGame.isPending ? "..." : t('addButton')}
               </Button>
               <Button
                 type="button"
@@ -274,7 +298,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
                 size="sm"
                 onClick={() => setShowNewGame(false)}
               >
-                Cancel
+                {c('cancel')}
               </Button>
             </div>
           ) : (
@@ -287,7 +311,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
                 required
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <option value="">Select a game...</option>
+                <option value="">{t('selectGame')}</option>
                 {games?.map((game) => (
                   <option key={game.id} value={game.id}>
                     {game.name}
@@ -299,7 +323,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
                 variant="outline"
                 size="icon"
                 onClick={() => setShowNewGame(true)}
-                title="Add new game"
+                title={t('addNewGame')}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -307,8 +331,28 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
           )}
         </div>
 
+        <ProductLocationPicker
+          isRemote={isRemote}
+          locationId={locationId}
+          onChange={({ isRemote: nextRemote, locationId: nextId }) => {
+            setIsRemote(nextRemote);
+            setLocationId(nextId);
+          }}
+          disabled={isPending}
+        />
+
         <div className="space-y-2">
-          <Label>Day of Week</Label>
+          <Label>{t('spokenLanguageLabel')}</Label>
+          <SpokenLanguageRadioGroup
+            spokenLanguages={spokenLanguages ?? []}
+            selected={spokenLanguageCode || null}
+            onChange={setSpokenLanguageCode}
+            disabled={isPending}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>{t('dayOfWeekLabel')}</Label>
           <div className="flex rounded-md border border-input">
             {DAYS_OF_WEEK.map((day, i) => (
               <button
@@ -330,7 +374,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="startTime">Start Time</Label>
+          <Label htmlFor="startTime">{t('startTimeLabel')}</Label>
           <Input
             id="startTime"
             type="time"
@@ -340,12 +384,12 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
             required
           />
           <p className="text-xs text-muted-foreground">
-            Enter time in Finland time (Europe/Helsinki). Parents will see this in their local timezone.
+            {t('startTimeHint')}
           </p>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="durationMinutes">Duration (minutes)</Label>
+          <Label htmlFor="durationMinutes">{t('durationLabel')}</Label>
           <Input
             id="durationMinutes"
             type="number"
@@ -360,7 +404,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="minAge">Min Age</Label>
+            <Label htmlFor="minAge">{t('minAgeLabel')}</Label>
             <Input
               id="minAge"
               type="number"
@@ -373,7 +417,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="maxAge">Max Age</Label>
+            <Label htmlFor="maxAge">{t('maxAgeLabel')}</Label>
             <Input
               id="maxAge"
               type="number"
@@ -390,9 +434,9 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         <Button
           type="submit"
           className="w-full"
-          disabled={isPending}
+          disabled={isPending || submitting}
         >
-          {isPending ? pendingLabel : submitLabel}
+          {isPending || submitting ? pendingLabel : submitLabel}
         </Button>
       </CardContent>
     </form>

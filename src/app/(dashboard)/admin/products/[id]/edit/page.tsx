@@ -3,6 +3,7 @@
 import { use, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,19 +13,24 @@ import { ProductForm, type ProductFormValues } from "@/components/admin/product-
 
 export default function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const t = useTranslations('admin.products');
+  const c = useTranslations('common');
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
   const updateProduct = useUpdateProduct();
   const [isNavigating, startTransition] = useTransition();
 
   const handleSubmit = async (values: ProductFormValues) => {
+    // `image` is a File when the admin replaced the picture, or null when
+    // they kept the existing one. Either way, hand it to the mutation — the
+    // update route decides whether to touch the bucket.
     await updateProduct.mutateAsync({ id, updates: values });
     startTransition(() => router.push(ROUTES.admin.product(id)));
   };
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-4">
           <div className="h-10 w-10 rounded bg-muted animate-pulse" />
           <div className="space-y-2">
@@ -48,21 +54,21 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-lg space-y-6">
+      <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-4">
           <Link href={ROUTES.admin.product(id)}>
             <Button variant="ghost" size="icon">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <h1 className="text-2xl font-bold">Product Not Found</h1>
+          <h1 className="text-2xl font-bold">{t('productNotFound')}</h1>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
         <Link href={`/admin/products/${id}`}>
           <Button variant="ghost" size="icon">
@@ -70,9 +76,9 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-bold">Edit Product</h1>
+          <h1 className="text-2xl font-bold">{t('editProduct')}</h1>
           <p className="text-muted-foreground">
-            Update the details for this product
+            {t('updateDetails')}
           </p>
         </div>
       </div>
@@ -86,7 +92,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             <div>
               <CardTitle>{product.name}</CardTitle>
               <CardDescription>
-                Edit the product details below
+                {t('editDetailsBelow')}
               </CardDescription>
             </div>
           </div>
@@ -96,7 +102,7 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             name: product.name,
             description: product.description,
             token_cost: product.token_cost,
-            image_url: product.image_url,
+            image_path: product.image_path,
             padlet_url: product.padlet_url,
             game_id: product.game_id,
             day_of_week: product.day_of_week,
@@ -104,11 +110,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
             duration_minutes: product.duration_minutes,
             min_age: product.min_age,
             max_age: product.max_age,
+            is_remote: product.is_remote,
+            location_id: product.location_id,
+            spoken_language_code: product.spoken_language_code,
           }}
           onSubmit={handleSubmit}
           isPending={updateProduct.isPending || isNavigating}
-          submitLabel="Save Changes"
-          pendingLabel="Saving..."
+          submitLabel={c('saveChanges')}
+          pendingLabel={c('saving')}
         />
       </Card>
     </div>

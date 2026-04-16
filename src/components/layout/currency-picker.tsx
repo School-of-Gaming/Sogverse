@@ -1,28 +1,23 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { ChevronDown } from "lucide-react";
+import { useClickOutside } from "@/hooks/use-click-outside";
 import { useCurrency } from "@/hooks/use-currency";
 import {
   SUPPORTED_CURRENCIES,
   CURRENCY_CONFIG,
 } from "@/lib/constants/currency";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 export function CurrencyPicker({ className }: { className?: string }) {
   const { currency, setCurrency } = useCurrency();
+  const c = useTranslations("common");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  useClickOutside(ref, () => setOpen(false));
 
   const config = CURRENCY_CONFIG[currency];
 
@@ -31,7 +26,7 @@ export function CurrencyPicker({ className }: { className?: string }) {
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1 rounded-md border border-border bg-muted/50 px-2 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
-        aria-label="Select currency"
+        aria-label={c("selectCurrency")}
       >
         <span>{config.symbol}</span>
         <span className="hidden sm:inline">{config.label}</span>

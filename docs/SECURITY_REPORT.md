@@ -623,7 +623,7 @@ CSP is set dynamically per-request in `src/proxy.ts` with a **nonce-based `scrip
 #### Remaining CSP gaps
 
 - **`style-src 'unsafe-inline'`**: Removing `'unsafe-inline'` from `style-src` would require nonce-ing every `<style>` tag. This is impractical with Tailwind CSS v4 (injects `<style>` tags at build time), `next/font` (inline styles for font variables), and JSX `style` props. The attack it prevents — CSS-based data exfiltration via selector side-channels — requires an existing HTML injection point and is an extremely niche vector. Accepted risk.
-- **`img-src https:` wildcard**: Allows any HTTPS image source. Required because admins currently provide arbitrary image URLs for products. Tracked in `TODO.md` — will be tightened to a specific CDN domain when product images move to hosted storage.
+- **`img-src https:` wildcard — CLOSED (2026-04-15).** Previously required because admins pasted arbitrary HTTPS URLs into `products.image_url`. Product images now live in the `product-images` Supabase Storage bucket, and `img-src` is scoped to `'self' data: blob: <supabase-host>` in `src/proxy.ts`. An HTML-injection attacker can no longer beacon visitors' IPs via `<img src="https://evil.example/...">`.
 
 ---
 

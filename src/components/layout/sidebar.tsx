@@ -5,143 +5,76 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
+  AudioLines,
   Package,
   Palette,
   Settings,
   Gamepad2,
   Coins,
   FlaskConical,
+  MessageCircle,
   MessageSquare,
+  MapPin,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers";
-import { ROUTES, ROLE_BADGES } from "@/lib/constants";
+import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
-interface NavItem {
+type SidebarKey =
+  | "dashboard" | "users" | "products" | "groups" | "locations"
+  | "uiComponents" | "whatsapp" | "testing" | "feedback" | "settings"
+  | "sorg" | "myGamers" | "home" | "myGroups";
+
+interface NavItemDef {
   href: string;
-  label: string;
+  labelKey: SidebarKey;
   icon: React.ReactNode;
 }
 
-const navItemsByRole: Record<UserRole, NavItem[]> = {
+const navItemsByRole: Record<UserRole, NavItemDef[]> = {
   admin: [
-    {
-      href: ROUTES.admin.dashboard,
-      label: "Dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-    },
-    { href: ROUTES.admin.users, label: "Users", icon: <Users className="h-5 w-5" /> },
-    {
-      href: ROUTES.admin.products,
-      label: "Products",
-      icon: <Package className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.admin.groups,
-      label: "Groups",
-      icon: <Users className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.admin.uiComponents,
-      label: "UI Components",
-      icon: <Palette className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.admin.testing,
-      label: "Testing",
-      icon: <FlaskConical className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.feedback,
-      label: "Feedback",
-      icon: <MessageSquare className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.settings,
-      label: "Settings",
-      icon: <Settings className="h-5 w-5" />,
-    },
+    { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
+    { href: ROUTES.admin.products, labelKey: "products", icon: <Package className="h-5 w-5" /> },
+    { href: ROUTES.admin.groups, labelKey: "groups", icon: <AudioLines className="h-5 w-5" /> },
+    { href: ROUTES.admin.locations, labelKey: "locations", icon: <MapPin className="h-5 w-5" /> },
+    { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
+    { href: ROUTES.admin.whatsapp, labelKey: "whatsapp", icon: <MessageCircle className="h-5 w-5" /> },
+    { href: ROUTES.admin.testing, labelKey: "testing", icon: <FlaskConical className="h-5 w-5" /> },
+    { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
+    { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
   customer: [
-    {
-      href: ROUTES.customer.dashboard,
-      label: "Dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.customer.sorg,
-      label: "Sorg",
-      icon: <Coins className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.customer.gamers,
-      label: "My Gamers",
-      icon: <Gamepad2 className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.feedback,
-      label: "Feedback",
-      icon: <MessageSquare className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.settings,
-      label: "Settings",
-      icon: <Settings className="h-5 w-5" />,
-    },
+    { href: ROUTES.customer.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { href: ROUTES.customer.sorg, labelKey: "sorg", icon: <Coins className="h-5 w-5" /> },
+    { href: ROUTES.customer.gamers, labelKey: "myGamers", icon: <Gamepad2 className="h-5 w-5" /> },
+    { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
+    { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
   gamer: [
-    {
-      href: ROUTES.gamer.dashboard,
-      label: "Home",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.gamer.groups,
-      label: "My Groups",
-      icon: <Users className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.feedback,
-      label: "Feedback",
-      icon: <MessageSquare className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.settings,
-      label: "Settings",
-      icon: <Settings className="h-5 w-5" />,
-    },
+    { href: ROUTES.gamer.dashboard, labelKey: "home", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { href: ROUTES.gamer.groups, labelKey: "myGroups", icon: <AudioLines className="h-5 w-5" /> },
+    { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
+    { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
   gedu: [
-    {
-      href: ROUTES.gedu.dashboard,
-      label: "Dashboard",
-      icon: <LayoutDashboard className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.gedu.groups,
-      label: "Groups",
-      icon: <Users className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.feedback,
-      label: "Feedback",
-      icon: <MessageSquare className="h-5 w-5" />,
-    },
-    {
-      href: ROUTES.settings,
-      label: "Settings",
-      icon: <Settings className="h-5 w-5" />,
-    },
+    { href: ROUTES.gedu.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
+    { href: ROUTES.gedu.groups, labelKey: "groups", icon: <AudioLines className="h-5 w-5" /> },
+    { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
+    { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
 };
 
 export function Sidebar() {
   const pathname = usePathname();
   const { profile } = useAuth();
+  const t = useTranslations('sidebar');
+  const c = useTranslations('common');
   const [collapsed, setCollapsed] = useState(false);
 
   if (!profile?.role) return null;
@@ -161,7 +94,7 @@ export function Sidebar() {
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="absolute -right-3 top-6 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent md:flex"
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+        aria-label={collapsed ? t('expandSidebar') : t('collapseSidebar')}
       >
         {collapsed ? (
           <ChevronRight className="h-4 w-4" />
@@ -173,6 +106,7 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-hidden p-4">
         {navItems.map((item) => {
+          const label = t(item.labelKey);
           const isActive =
             pathname === item.href ||
             (item.href !== ROUTES.admin.dashboard &&
@@ -192,7 +126,7 @@ export function Sidebar() {
                   ? "bg-sidebar-primary text-sidebar-primary-foreground"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
-              title={item.label}
+              title={label}
             >
               <span className="shrink-0">{item.icon}</span>
               <span
@@ -201,7 +135,7 @@ export function Sidebar() {
                   collapsed ? "max-w-0 opacity-0" : "max-w-0 opacity-0 md:max-w-48 md:opacity-100"
                 )}
               >
-                {item.label}
+                {label}
               </span>
             </Link>
           );
@@ -215,7 +149,7 @@ export function Sidebar() {
             {profile.display_name}
           </p>
           <p className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
-            {ROLE_BADGES[profile.role].label}
+            {c(ROLE_LABEL_KEYS[profile.role])}
           </p>
         </div>
       </div>

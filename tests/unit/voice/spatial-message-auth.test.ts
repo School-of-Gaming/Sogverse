@@ -1,6 +1,6 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import type { DailyCall } from "@daily-co/daily-js";
-import type { AppMessage, LockState } from "@/components/voice/hooks/types";
+import type { AppMessage } from "@/components/voice/hooks/types";
 import type { SpatialPosition } from "@/lib/constants/spatial";
 
 /**

@@ -33,6 +33,7 @@ function createRequest(uuid?: string, apiKey?: string | null): Request {
     ? `http://localhost:3000/api/minecraft/join-check?uuid=${uuid}`
     : "http://localhost:3000/api/minecraft/join-check";
   const headers: Record<string, string> = {};
+  // eslint-disable-next-line security/detect-possible-timing-attacks -- test helper, not an auth comparison; `apiKey !== null` just distinguishes "omit header" (null) from "use this value" (string)
   if (apiKey !== null) {
     headers["Authorization"] = apiKey ?? `Bearer ${API_KEY}`;
   }

@@ -18,6 +18,7 @@ import type { Database } from "./database.types";
 export type UserRole = Database["public"]["Enums"]["user_role"];
 export type TokenTransactionType = Database["public"]["Enums"]["token_transaction_type"];
 export type GenderType = Database["public"]["Enums"]["gender_type"];
+export type LocationType = Database["public"]["Enums"]["location_type"];
 
 // profiles
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -81,6 +82,15 @@ export type AvailableVoiceRoom = Omit<
   enrolled_at: string | null;
 };
 
+// spoken_languages (reference table — the human languages a person speaks /
+// a club is delivered in). Distinct from `locale` (UI translation), which
+// has no DB table and is constrained by SUPPORTED_LOCALES in code.
+export type SpokenLanguage = Database["public"]["Tables"]["spoken_languages"]["Row"];
+
+// locations
+export type Location = Database["public"]["Tables"]["locations"]["Row"];
+export type LocationInsert = Database["public"]["Tables"]["locations"]["Insert"];
+
 // product_groups
 export type ProductGroup = Database["public"]["Tables"]["product_groups"]["Row"];
 export type ProductGroupInsert = Database["public"]["Tables"]["product_groups"]["Insert"];
@@ -89,8 +99,35 @@ export type ProductGroupInsert = Database["public"]["Tables"]["product_groups"][
 export type GroupEnrollment = Database["public"]["Tables"]["group_enrollments"]["Row"];
 export type GroupEnrollmentInsert = Database["public"]["Tables"]["group_enrollments"]["Insert"];
 
+// gedu_locations (a gedu's coverage areas for substitute matching — rows
+// can sit at any level of the location hierarchy)
+export type GeduLocation = Database["public"]["Tables"]["gedu_locations"]["Row"];
+export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"]["Insert"];
+
 // enrollment_charges
 export type EnrollmentCharge = Database["public"]["Tables"]["enrollment_charges"]["Row"];
+
+// whatsapp_contacts
+export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"]["Row"];
+
+// whatsapp_messages
+export type WhatsAppMessage = Database["public"]["Tables"]["whatsapp_messages"]["Row"];
+
+export const WHATSAPP_MESSAGE_STATUS = {
+  PENDING: "pending",
+  SENT: "sent",
+  DELIVERED: "delivered",
+  READ: "read",
+  FAILED: "failed",
+  RECEIVED: "received",
+} as const;
+export type WhatsAppMessageStatus = (typeof WHATSAPP_MESSAGE_STATUS)[keyof typeof WHATSAPP_MESSAGE_STATUS];
+
+export const WHATSAPP_DIRECTION = {
+  INBOUND: "inbound",
+  OUTBOUND: "outbound",
+} as const;
+export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAPP_DIRECTION];
 
 // get_my_groups RPC — the generated type marks nullable LEFT JOIN fields as
 // non-nullable. Override to reflect that groups with no enrollments return null
@@ -132,11 +169,18 @@ export type ProductGroupWithDetails = Omit<
 // ---------------------------------------------------------------------------
 
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import type { SupportedLocale } from "@/lib/constants/locales";
 
 export interface StripePackage {
   stripeProductId: string;
+  /** English name (base). Use `nameI18n[locale] ?? name` for display. */
   name: string;
+  /** English description (base). Use `descriptionI18n[locale] ?? description` for display. */
   description: string | null;
+  /** Localised names from Stripe metadata (`name_fi`, `name_sv`, ...). Sparse — missing locales fall back to `name`. */
+  nameI18n?: Partial<Record<SupportedLocale, string>>;
+  /** Localised descriptions from Stripe metadata (`description_fi`, `description_sv`, ...). Sparse — missing locales fall back to `description`. */
+  descriptionI18n?: Partial<Record<SupportedLocale, string>>;
   tokenAmount: number;
   prices: Record<SupportedCurrency, { priceId: string; unitAmount: number }>;
   type: "one_time" | "subscription";

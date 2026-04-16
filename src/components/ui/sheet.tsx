@@ -3,6 +3,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 
 interface SheetProps {
@@ -76,6 +77,7 @@ function SheetHeader({
   children,
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { onClose?: () => void }) {
+  const c = useTranslations('common');
   return (
     <div
       className={cn(
@@ -88,7 +90,7 @@ function SheetHeader({
       {onClose && (
         <button
           onClick={onClose}
-          aria-label="Close"
+          aria-label={c('close')}
           className="rounded-sm p-1 text-muted-foreground transition-colors hover:text-foreground"
         >
           <X className="h-5 w-5" />

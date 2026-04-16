@@ -17,19 +17,9 @@ import {
   type SupportedCurrency,
 } from "@/lib/constants/currency";
 
+import { getCookie, setCookie } from "@/lib/cookies";
+
 const COOKIE_NAME = "currency";
-const COOKIE_MAX_AGE = 365 * 24 * 60 * 60; // 1 year in seconds
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === "undefined") return undefined;
-  // eslint-disable-next-line security/detect-non-literal-regexp -- `name` is always the hardcoded COOKIE_NAME constant
-  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : undefined;
-}
-
-function setCookie(name: string, value: string) {
-  document.cookie = `${name}=${encodeURIComponent(value)};path=/;max-age=${COOKIE_MAX_AGE};SameSite=Lax`;
-}
 
 function resolveInitialCurrency(profileCurrency: string | null | undefined): SupportedCurrency {
   // 1. Profile preference
@@ -54,12 +44,11 @@ function resolveInitialCurrency(profileCurrency: string | null | undefined): Sup
 interface CurrencyContextType {
   currency: SupportedCurrency;
   setCurrency: (currency: SupportedCurrency) => void;
-  locale: string;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
-export function CurrencyProvider({ children, initialLocale }: { children: ReactNode; initialLocale: string }) {
+export function CurrencyProvider({ children }: { children: ReactNode }) {
   const { profile, user, refreshProfile } = useAuth();
   // Start with DEFAULT_CURRENCY to match SSR (cookies/navigator aren't
   // available server-side). Synced to the real value after hydration.
@@ -74,10 +63,8 @@ export function CurrencyProvider({ children, initialLocale }: { children: ReactN
     if (!hasMounted.current) {
       hasMounted.current = true;
       const resolved = resolveInitialCurrency(profile?.currency);
-      // One-time hydration sync: cookies/navigator aren't available during
-      // SSR so we must defer resolution to the client. Only fires once.
       if (resolved !== DEFAULT_CURRENCY) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration sync; cookies/navigator aren't available during SSR so we must defer resolution to the client. Guarded by hasMounted.current so it only fires once.
         setCurrencyState(resolved);
       }
     }
@@ -117,14 +104,16 @@ export function CurrencyProvider({ children, initialLocale }: { children: ReactN
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ currency: newCurrency }),
-        }).then(() => refreshProfile());
+        })
+          .then(() => refreshProfile())
+          .catch((err) => console.error("Failed to persist currency preference:", err));
       }
     },
     [user, refreshProfile]
   );
 
   return (
-    <CurrencyContext.Provider value={{ currency: derivedCurrency, setCurrency, locale: initialLocale }}>
+    <CurrencyContext.Provider value={{ currency: derivedCurrency, setCurrency }}>
       {children}
     </CurrencyContext.Provider>
   );

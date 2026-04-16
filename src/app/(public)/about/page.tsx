@@ -1,65 +1,65 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { useLocale, useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Heart, Shield, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: "About Us",
-  description: "School of Gaming — where screen time becomes quality time through Minecraft clubs led by professional game educators.",
-  openGraph: {
-    title: "About Sogverse",
-    description: "Learn about Sogverse and our mission to make screen time quality time through Minecraft clubs led by professional game educators.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return {
+    title: t("about"),
+    description: "School of Gaming — where screen time becomes quality time through Minecraft clubs led by professional game educators.",
+    openGraph: {
+      title: "About Sogverse",
+      description: "Learn about Sogverse and our mission to make screen time quality time through Minecraft clubs led by professional game educators.",
+    },
+  };
+}
 
-const values = [
-  {
-    title: "Play Is Essential for Children",
-    description: "Play is a child's work. It is crucial for their wellbeing and development. Our clubs are designed to promote free play that feeds imagination, curiosity, and creativity — powerful tools to face any future.",
-    icon: Sparkles,
-  },
-  {
-    title: "Friends Carry Over Obstacles",
-    description: "No one should be left without a friend. Moments of play and friendship carry kids over any obstacle in life. In our clubs, children build genuine connections through shared adventures.",
-    icon: Heart,
-  },
-  {
-    title: "Keep Children Safe Online",
-    description: "We nurture inclusive, kind, and safe online communities. We grow caring and polite digital citizens who look out for their fellow gamers. Zero tolerance for bullying and toxicity.",
-    icon: Shield,
-  },
-  {
-    title: "Family in the Loop",
-    description: "Parents are partners. You stay in control of your child's gaming experience while they enjoy the freedom to explore, create, and make friends in a safe environment.",
-    icon: Users,
-  },
-];
+const valueIcons = [Sparkles, Heart, Shield, Users];
+const valueKeys = ["playIsEssential", "friendsCarry", "keepChildrenSafe", "familyInTheLoop"] as const;
+
+const easterEggRows = [
+  "brandName", "tagline", "delete", "deleting", "close", "cancel", "getStarted",
+  "password", "error", "english", "ok", "sorg", "copyright", "learnMore",
+] as const;
 
 export default function AboutPage() {
+  const t = useTranslations('about');
+  const c = useTranslations('common');
+  const locale = useLocale();
+
+  const values = valueKeys.map((key, i) => ({
+    key,
+    title: t(`values.${key}.title`),
+    description: t(`values.${key}.description`),
+    icon: valueIcons[i],
+  }));
+
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Hero Section */}
       <div className="mx-auto max-w-3xl text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          About <span className="text-primary">School of Gaming</span>
+          {t.rich('hero.title', {
+            primary: (chunks) => <span className="text-primary">{chunks}</span>,
+          })}
         </h1>
         <p className="mt-6 text-lg leading-8 text-muted-foreground">
-          In our Minecraft clubs, screen time becomes quality time. We bring
-          together children, professional game educators, and the game kids
-          already love — creating playful learning experiences where they make
-          new friends, develop real skills, and have fun.
+          {t('hero.subtitle')}
         </p>
       </div>
 
       {/* Quote */}
       <div className="mx-auto mt-16 max-w-3xl text-center">
         <blockquote className="text-xl italic text-muted-foreground">
-          &ldquo;What is true now, was once just your imagination.&rdquo;
+          {t('quote.text')}
         </blockquote>
         <p className="mt-2 text-sm text-muted-foreground">
-          — The Principal of the School of Gaming
+          {t('quote.attribution')}
         </p>
       </div>
 
@@ -67,14 +67,11 @@ export default function AboutPage() {
       <div className="mx-auto mt-16 max-w-4xl">
         <Card className="bg-gradient-to-r from-primary/5 to-secondary/5">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Our Mission</CardTitle>
+            <CardTitle className="text-2xl">{t('mission.heading')}</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-lg text-muted-foreground">
-              All screen content is not made equal. Gaming is a great hobby when
-              it is treated like all the other hobbies. We use children&apos;s
-              love for games to their advantage — with good friends and a
-              professional game educator who is there to guide and help.
+              {t('mission.text')}
             </p>
           </CardContent>
         </Card>
@@ -82,10 +79,10 @@ export default function AboutPage() {
 
       {/* Values Section */}
       <div className="mx-auto mt-16 max-w-5xl">
-        <h2 className="text-center text-2xl font-bold">Things We Care About</h2>
+        <h2 className="text-center text-2xl font-bold">{t('values.heading')}</h2>
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {values.map((value) => (
-            <Card key={value.title}>
+            <Card key={value.key}>
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
@@ -106,50 +103,21 @@ export default function AboutPage() {
 
       {/* How Clubs Work Section */}
       <div className="mx-auto mt-16 max-w-3xl">
-        <h2 className="text-center text-2xl font-bold">How Our Clubs Work</h2>
+        <h2 className="text-center text-2xl font-bold">{t('howClubsWork.heading')}</h2>
         <div className="mt-8 space-y-6 text-muted-foreground">
-          <p>
-            Each week, our gamers log in and are greeted by their own game
-            educator — a Gedu. The Gedu guides them through the day&apos;s
-            topic, giving children space and freedom to make the adventures
-            their own.
-          </p>
-          <p>
-            Our Gedus are gamers themselves. They understand firsthand that as
-            children and teenagers, identity and friendships are built both
-            online and offline. That understanding shapes every session they
-            lead.
-          </p>
-          <p>
-            All our clubs are built around stories that give space for gamers to
-            explore, create, and imagine. Between weekly sessions, gamers get
-            fun challenges to do online and offline. During holidays we organize
-            camps, and every week there are community events, tournaments, and
-            competitions.
-          </p>
-          <p>
-            Every gamer takes an oath to behave kindly and righteously —
-            whether in-game, on voice chat, or out in the real world. The same
-            values apply everywhere.
-          </p>
+          <p>{t('howClubsWork.paragraph1')}</p>
+          <p>{t('howClubsWork.paragraph2')}</p>
+          <p>{t('howClubsWork.paragraph3')}</p>
+          <p>{t('howClubsWork.paragraph4')}</p>
         </div>
       </div>
 
       {/* Parents Section */}
       <div className="mx-auto mt-16 max-w-3xl">
-        <h2 className="text-center text-2xl font-bold">For Parents</h2>
+        <h2 className="text-center text-2xl font-bold">{t('forParents.heading')}</h2>
         <div className="mt-8 space-y-6 text-muted-foreground">
-          <p>
-            Parental game education is just as important a part of what we do as
-            the clubs themselves. We want to help parents keep up with the
-            ever-changing gaming world so they can support their children with
-            confidence.
-          </p>
-          <p>
-            You stay in control — managing accounts, enrollments, and
-            spending — while your child enjoys a safe environment guided by
-            professionals who care.
-          </p>
+          <p>{t('forParents.paragraph1')}</p>
+          <p>{t('forParents.paragraph2')}</p>
         </div>
       </div>
 
@@ -157,18 +125,17 @@ export default function AboutPage() {
       <div className="mx-auto mt-16 max-w-2xl text-center">
         <Card className="bg-muted/30">
           <CardContent className="py-8">
-            <h3 className="text-xl font-semibold">Join Our Community</h3>
+            <h3 className="text-xl font-semibold">{t('cta.heading')}</h3>
             <p className="mt-2 text-muted-foreground">
-              Give your child a fun, safe place to play, learn, and make
-              friends — guided by a professional game educator.
+              {t('cta.subheading')}
             </p>
             <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">
               <Link href={ROUTES.products}>
-                <Button variant="outline" size="lg">Explore Clubs</Button>
+                <Button variant="outline" size="lg">{c('exploreClubs')}</Button>
               </Link>
               <Link href={ROUTES.register}>
                 <Button size="lg">
-                  Get Started
+                  {c('getStarted')}
                 </Button>
               </Link>
             </div>
@@ -178,14 +145,73 @@ export default function AboutPage() {
 
       {/* Contact Section */}
       <div className="mx-auto mt-16 max-w-2xl text-center">
-        <h2 className="text-2xl font-bold">Get in Touch</h2>
+        <h2 className="text-2xl font-bold">{t('contact.heading')}</h2>
         <p className="mt-4 text-muted-foreground">
-          Have questions? We&apos;d love to hear from you.
+          {t('contact.subheading')}
         </p>
         <p className="mt-4 text-sm text-muted-foreground">
-          Email: kanslia@sog.gg
+          {t('contact.email')}
         </p>
       </div>
+
+      {/* Klingon Easter Egg — only visible when the locale is tlh.
+          Inline hardcoded colours (#d00, #0a0a0a) are intentional here —
+          these are Klingon Empire flag colours for a one-off easter egg,
+          not brand/theme colours that belong in the design system. */}
+      {/* eslint-disable i18next/no-literal-string -- Klingon easter egg: the "English"/"tlhIngan Hol"/"Literal meaning" reference headers are intentionally untranslated since this block only renders when locale === "tlh" */}
+      {locale === "tlh" && (
+        <div className="mx-auto mt-16 max-w-3xl">
+          {/* Styled like a Klingon ship console: dark base, red accents, functional text */}
+          <Card
+            className="overflow-hidden border"
+            style={{ borderColor: 'rgba(221,0,0,0.4)', backgroundColor: '#0a0a0a' }}
+          >
+            <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, #d00, transparent)' }} />
+            <CardHeader className="text-center">
+              {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+              <CardTitle className="text-2xl" style={{ color: '#d00' }}>{t('easterEgg.heading')}</CardTitle>
+              <CardDescription className="text-base text-white/60">
+                {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                {t('easterEgg.intro')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left" style={{ borderColor: 'rgba(221,0,0,0.3)' }}>
+                      <th className="pb-2 pr-4 font-medium text-white/50">English</th>
+                      <th className="pb-2 pr-4 font-medium text-white/50">tlhIngan Hol</th>
+                      <th className="pb-2 font-medium text-white/50">Literal meaning</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {easterEggRows.map((row) => (
+                      <tr key={row} className="border-b" style={{ borderColor: 'rgba(221,0,0,0.1)' }}>
+                        {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                        <td className="py-2 pr-4 text-white/70">{t(`easterEgg.${row}Label`)}</td>
+                        {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                        <td className="py-2 pr-4 font-mono" style={{ color: '#d00' }}>{t(`easterEgg.${row}Value`)}</td>
+                        {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                        <td className="py-2 italic text-white/40">{t(`easterEgg.${row}Meaning`)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-6 text-center text-xs text-white/30">
+                {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                {t('easterEgg.note')}
+              </p>
+              <p className="mt-4 text-center text-2xl font-bold" style={{ color: '#d00' }}>
+                {/* @ts-expect-error — easterEgg keys only exist in tlh locale */}
+                {t('easterEgg.qapla')}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      {/* eslint-enable i18next/no-literal-string -- end of Klingon easter egg block */}
     </div>
   );
 }

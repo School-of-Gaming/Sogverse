@@ -3,8 +3,10 @@ import { requireRole } from "@/lib/auth";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL } from "@/lib/constants";
 import { templateRegistry, type TemplateParams } from "@/lib/email-templates/registry";
+import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { escapeHtml } from "@/lib/email-templates/utils";
 import { parseEmails } from "@/lib/utils";
+import { resolveLocale } from "@/lib/constants/locales";
 import { z } from "zod";
 
 // --- Request schemas ---
@@ -25,6 +27,7 @@ const templateSchema = z.object({
   toEmail: z.string().min(1),
   template: z.string(),
   params: z.record(z.string().nullable()),
+  locale: z.string().optional(),
 });
 
 const requestSchema = z.discriminatedUnion("mode", [customSchema, templateSchema]);
@@ -86,10 +89,13 @@ export async function POST(request: Request) {
         );
       }
 
+      const locale = resolveLocale(parsed.data.locale);
+      const t = await getEmailTranslator(locale);
+
       const validatedParams = paramsParsed.data as TemplateParams;
-      fromName = tmpl.fromName;
-      subject = tmpl.subject(validatedParams);
-      htmlContent = tmpl.build(validatedParams);
+      fromName = t(tmpl.fromNameKey);
+      subject = tmpl.subject(validatedParams, t);
+      htmlContent = tmpl.build(validatedParams, t, locale);
     }
 
     const emailResult = await sendTransactionalEmail({

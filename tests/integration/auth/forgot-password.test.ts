@@ -4,6 +4,7 @@ import { POST } from "@/app/api/auth/forgot-password/route";
 // --- Mocks ---
 
 const mockGenerateLink = vi.fn();
+let mockProfileLocale: string | null = null;
 
 vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
@@ -12,6 +13,16 @@ vi.mock("@/lib/supabase/admin", () => ({
         generateLink: (...args: unknown[]) => mockGenerateLink(...args),
       },
     },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          single: () => Promise.resolve({
+            data: { locale: mockProfileLocale },
+            error: null,
+          }),
+        }),
+      }),
+    }),
   })),
 }));
 
@@ -20,12 +31,13 @@ vi.mock("@/lib/brevo", () => ({
   sendTransactionalEmail: (...args: unknown[]) => mockSendTransactionalEmail(...args),
 }));
 
+
 // --- Helpers ---
 
-function createRequest(body: Record<string, unknown>): Request {
+function createRequest(body: Record<string, unknown>, headers?: Record<string, string>): Request {
   return new Request("http://localhost:3000/api/auth/forgot-password", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
 }
@@ -35,6 +47,7 @@ function createRequest(body: Record<string, unknown>): Request {
 describe("POST /api/auth/forgot-password", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockProfileLocale = null;
     mockGenerateLink.mockResolvedValue({
       data: { properties: { action_link: "https://supabase.co/verify?token=abc" } },
       error: null,
@@ -107,6 +120,49 @@ describe("POST /api/auth/forgot-password", () => {
         toEmail: "user@example.com",
         subject: "Reset your Sogverse password",
         htmlContent: expect.stringContaining("Reset"),
+      })
+    );
+  });
+
+  // -- Accept-Language locale detection --
+
+  it("should send Finnish email when Accept-Language has fi as best supported match", async () => {
+    await POST(createRequest(
+      { email: "user@example.com" },
+      { "Accept-Language": "de-DE,fi;q=0.9,en;q=0.8" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Nollaa Sogverse-salasanasi",
+      })
+    );
+  });
+
+  it("should fall back to English when no Accept-Language language is supported", async () => {
+    await POST(createRequest(
+      { email: "user@example.com" },
+      { "Accept-Language": "de-DE,fr;q=0.9,ja;q=0.8" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Reset your Sogverse password",
+      })
+    );
+  });
+
+  it("should prefer stored profile locale over Accept-Language header", async () => {
+    mockProfileLocale = "fi";
+
+    await POST(createRequest(
+      { email: "user@example.com" },
+      { "Accept-Language": "en-US,en;q=0.9" },
+    ));
+
+    expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "Nollaa Sogverse-salasanasi",
       })
     );
   });

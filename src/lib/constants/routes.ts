@@ -29,6 +29,8 @@ export const ROUTES = {
     voiceSession: (roomId: string) => `/admin/voice/${roomId}`,
     uiComponents: "/admin/ui-components",
     testing: "/admin/testing",
+    whatsapp: "/admin/whatsapp",
+    locations: "/admin/locations",
   },
   customer: {
     dashboard: "/parent",

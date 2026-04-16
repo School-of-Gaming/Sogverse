@@ -1,0 +1,1245 @@
+{
+  "metadata": {
+    "title": "Sogverse \u2013 School of Gaming",
+    "description": "N\u00e4r sk\u00e4rmtid blir kvalitetstid \u2013 Minecraft-klubbar ledda av professionella spelfostrare.",
+    "shortDescription": "School of Gaming \u2013 N\u00e4r sk\u00e4rmtid blir kvalitetstid",
+    "pages": {
+      "signIn": "Logga in",
+      "createAccount": "Skapa konto",
+      "forgotPassword": "Gl\u00f6mt l\u00f6senord",
+      "resetPassword": "\u00c5terst\u00e4ll l\u00f6senord",
+      "setupAccount": "Konfigurera ditt konto",
+      "about": "Om oss",
+      "sorg": "Sogge \u2013 Sogversens valuta",
+      "yty": "Yty \u2013 Sogversens kraft",
+      "minecraftApi": "Minecraft Server API",
+      "adminDashboard": "Administrat\u00f6rspanel",
+      "adminGroups": "Grupper",
+      "adminGroupDetails": "Gruppdetaljer",
+      "parentDashboard": "F\u00f6r\u00e4ldrapanel",
+      "geduDashboard": "Utbildarpanel",
+      "geduGroups": "Grupper",
+      "geduGroupDetails": "Gruppdetaljer",
+      "gamerHome": "Spelarens startsida",
+      "gamerGroups": "Mina grupper",
+      "gamerGroupDetails": "Gruppdetaljer",
+      "voiceSession": "R\u00f6stsession"
+    }
+  },
+  "common": {
+    "appName": "Sogverse",
+    "tagline": "School of Gaming",
+    "loading": "Laddar...",
+    "saving": "Sparar...",
+    "sending": "Skickar...",
+    "back": "Tillbaka",
+    "cancel": "Avbryt",
+    "close": "Stäng",
+    "save": "Spara",
+    "delete": "Radera",
+    "edit": "Redigera",
+    "confirm": "Bekräfta",
+    "continue": "Fortsätt",
+    "submit": "Skicka",
+    "saveChanges": "Spara ändringar",
+    "signIn": "Logga in",
+    "signOut": "Logga ut",
+    "getStarted": "Kom igång",
+    "viewDetails": "Visa detaljer",
+    "learnMore": "Läs mer",
+    "browseClubs": "Bläddra bland klubbar",
+    "exploreClubs": "Utforska klubbar",
+    "createAccount": "Skapa konto",
+    "unexpectedError": "Ett oväntat fel uppstod",
+    "somethingWentWrong": "Något gick fel",
+    "noPermission": "Du har inte behörighet att visa den här sidan.",
+    "sorgs": "Soggar",
+    "perSession": "per session",
+    "minutes": "min",
+    "ages": "Ålder {min}–{max}",
+    "schedule": "Varje {day} kl. {time} {tz}",
+    "duration": "{minutes} minuter",
+    "email": "E-post",
+    "password": "Lösenord",
+    "confirmPassword": "Bekräfta lösenord",
+    "displayName": "Visningsnamn",
+    "username": "Användarnamn",
+    "phoneNumber": "Telefonnummer",
+    "newPassword": "Nytt lösenord",
+    "profile": "Profil",
+    "security": "Säkerhet",
+    "settings": "Inställningar",
+    "dashboard": "Översikt",
+    "backToLogin": "Tillbaka till inloggning",
+    "passwordMinLength": "Måste vara minst {count} tecken",
+    "forgotPassword": "Glömt lösenordet?",
+    "failedToLoad": "Kunde inte ladda data",
+    "alreadyEnrolled": "Redan anmäld",
+    "noRecentActivity": "Ingen senaste aktivitet att visa.",
+    "recentActivity": "Senaste aktivitet",
+    "selectLanguage": "Välj språk",
+    "languageEnglish": "engelska",
+    "languageFinnish": "finska",
+    "languageSwedish": "svenska",
+    "roleAdmin": "Administratör",
+    "roleParent": "Förälder",
+    "roleGamer": "Spelare",
+    "roleGedu": "Gedu",
+    "selectCurrency": "Välj valuta"
+  },
+  "about": {
+    "hero": {
+      "title": "Om <primary>School of Gaming</primary>",
+      "subtitle": "I våra Minecraft-klubbar blir skärmtid kvalitetstid. Vi sammanför barn, professionella spelfostrare och spelet som barnen redan älskar — och skapar lekfulla lärandeupplevelser där de får nya vänner, utvecklar riktiga färdigheter och har roligt."
+    },
+    "quote": {
+      "text": "\"Det som är sant nu, var en gång bara din fantasi.\"",
+      "attribution": "— Rektorn för School of Gaming"
+    },
+    "mission": {
+      "heading": "Vårt uppdrag",
+      "text": "Allt skärminnehåll är inte lika. Spelande är en fantastisk hobby när den behandlas som alla andra hobbyer. Vi använder barnens kärlek till spel till deras fördel — med bra vänner och en professionell spelfostrare som finns där för att vägleda och hjälpa."
+    },
+    "values": {
+      "heading": "Saker vi bryr oss om",
+      "playIsEssential": {
+        "title": "Lek är livsviktigt för barn",
+        "description": "Lek är barnets arbete. Det är avgörande för deras välmående och utveckling. Våra klubbar är utformade för att främja fri lek som ger näring åt fantasi, nyfikenhet och kreativitet — kraftfulla verktyg för att möta vilken framtid som helst."
+      },
+      "friendsCarry": {
+        "title": "Vänner bär över hinder",
+        "description": "Ingen ska lämnas utan en vän. Stunder av lek och vänskap bär barnen över alla hinder i livet. I våra klubbar bygger barnen genuina band genom gemensamma äventyr."
+      },
+      "keepChildrenSafe": {
+        "title": "Håll barn trygga online",
+        "description": "Vi vårdar inkluderande, vänliga och trygga onlinegemenskaper. Vi fostrar omtänksamma och artiga digitala medborgare som ser till sina medspelare. Nolltolerans mot mobbning och toxicitet."
+      },
+      "familyInTheLoop": {
+        "title": "Familjen är delaktig",
+        "description": "Föräldrar är partners. Du har kontroll över ditt barns spelupplevelse medan de njuter av friheten att utforska, skapa och få vänner i en trygg miljö."
+      }
+    },
+    "howClubsWork": {
+      "heading": "Så fungerar våra klubbar",
+      "paragraph1": "Varje vecka loggar våra spelare in och möts av sin egen spelfostrare — en Gedu. Gedun vägleder dem genom dagens tema och ger barnen utrymme och frihet att göra äventyren till sina egna.",
+      "paragraph2": "Våra Gedus är själva spelare. De förstår av egen erfarenhet att som barn och tonåringar byggs identitet och vänskaper både online och offline. Den förståelsen präglar varje session de leder.",
+      "paragraph3": "Alla våra klubbar är byggda kring berättelser som ger utrymme för spelare att utforska, skapa och fantisera. Mellan veckovisa sessioner får spelarna roliga utmaningar att göra online och offline. Under lov arrangerar vi läger, och varje vecka finns det gemenskapsevent, turneringar och tävlingar.",
+      "paragraph4": "Varje spelare avlägger en ed att uppföra sig vänligt och rättvist — oavsett om det är i spelet, i röstchatten eller ute i verkligheten. Samma värderingar gäller överallt."
+    },
+    "forParents": {
+      "heading": "För föräldrar",
+      "paragraph1": "Spelfostran för föräldrar är en lika viktig del av det vi gör som själva klubbarna. Vi vill hjälpa föräldrar att hänga med i den ständigt föränderliga spelvärlden så att de kan stötta sina barn med tillförsikt.",
+      "paragraph2": "Du har kontrollen — du hanterar konton, anmälningar och utgifter — medan ditt barn njuter av en trygg miljö ledd av professionella som bryr sig."
+    },
+    "cta": {
+      "heading": "Gå med i vår gemenskap",
+      "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelfostrare."
+    },
+    "contact": {
+      "heading": "Kontakta oss",
+      "subheading": "Har du frågor? Vi vill gärna höra från dig.",
+      "email": "E-post: kanslia@sog.gg"
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Adminöversikt",
+      "description": "Välkommen till Sogverse adminpanel. Hantera användare, produkter och systeminställningar.",
+      "totalUsers": "Totalt antal användare",
+      "activeAccounts": "Aktiva konton",
+      "products": "Produkter",
+      "activeProducts": "Aktiva produkter",
+      "revenue": "Intäkter",
+      "thisMonth": "Denna månad",
+      "growth": "Tillväxt",
+      "fromLastMonth": "Från förra månaden",
+      "latestEvents": "Senaste händelserna på plattformen"
+    },
+    "products": {
+      "title": "Produkter",
+      "manageCatalog": "Hantera din produktkatalog",
+      "addProduct": "Lägg till produkt",
+      "searchPlaceholder": "Sök produkter...",
+      "noSearchResults": "Inga produkter matchar din sökning.",
+      "noProducts": "Inga produkter ännu. Skapa din första produkt.",
+      "backToProducts": "Tillbaka till produkter",
+      "productNotFound": "Produkten hittades inte.",
+      "hidden": "Dold",
+      "created": "Skapad",
+      "unknown": "Okänd",
+      "actions": "Åtgärder",
+      "hideProduct": "Dölj produkt",
+      "showProduct": "Visa produkt",
+      "hideConfirm": "Är du säker på att du vill dölja \"{name}\"? Den kommer inte längre att synas i katalogen.",
+      "showConfirm": "Är du säker på att du vill visa \"{name}\"? Den kommer att synas i katalogen för föräldrar.",
+      "hide": "Dölj",
+      "show": "Visa",
+      "cannotShowProduct": "Kan inte visa produkt",
+      "addGroupBeforeVisible": "Lägg till minst en Gedu-grupp innan du gör produkten synlig.",
+      "ok": "OK",
+      "deleteProduct": "Radera produkt",
+      "deleteConfirm": "Är du säker på att du vill radera \"{name}\"? Denna åtgärd kan inte ångras.",
+      "deleting": "Raderar...",
+      "clone": "Kopiera",
+      "cloneProduct": "Kopiera produkt",
+      "cloningFrom": "Kopierar från \"{name}\"",
+      "addAProduct": "Ny produkt",
+      "createNewProduct": "Skapa en ny produkt för katalogen",
+      "newProduct": "Ny produkt",
+      "fillDetails": "Fyll i produktdetaljerna nedan.",
+      "createProduct": "Skapa produkt",
+      "creating": "Skapar...",
+      "editProduct": "Redigera produkt",
+      "updateDetails": "Uppdatera produktdetaljerna nedan",
+      "editDetailsBelow": "Redigera detaljerna nedan."
+    },
+    "users": {
+      "title": "Användare",
+      "manageAccounts": "Hantera användarkonton och roller",
+      "inviteGedu": "Bjud in Gedu",
+      "searchPlaceholder": "Sök på namn, e-post eller användarnamn...",
+      "searchAriaLabel": "Sök användare",
+      "roleFilterLabel": "Roll",
+      "all": "Alla",
+      "noFilterResults": "Inga användare matchar dina filter.",
+      "noUsers": "Inga användare hittades.",
+      "backToUsers": "Tillbaka till användare",
+      "userNotFound": "Användaren hittades inte.",
+      "joined": "Gick med",
+      "unknown": "Okänd",
+      "linkedGamers": "Kopplade spelare",
+      "linkedParents": "Kopplade föräldrar",
+      "unnamedGamer": "Namnlös spelare",
+      "unnamedUser": "Namnlös användare",
+      "noConnectedGamers": "Inga kopplade spelare",
+      "tokenBalance": "Sogge-saldo",
+      "tokenMonetaryWarning": "Varje Sogge är värd {rate}. Justeringar påverkar verkligt penningvärde.",
+      "amountLabel": "Belopp (+ för att lägga till, − för att ta bort)",
+      "amountPlaceholder": "t.ex. 10 eller -5",
+      "reasonLabel": "Anledning",
+      "reasonPlaceholder": "t.ex. Kompensation för missad session",
+      "adjustBalance": "Justera saldo",
+      "failedToAdjust": "Kunde inte justera saldot",
+      "transactionHistory": "Transaktionshistorik",
+      "adjustDialogTitle": "{action} {count, plural, one {# Sogge} other {# Soggar}}",
+      "adjustDialogDescription": "Detta kommer att {action} {count, plural, one {# Sogge} other {# Soggar}} {direction} {user}.",
+      "add": "Lägga till",
+      "remove": "Ta bort",
+      "to": "till",
+      "from": "från",
+      "thisUser": "denna användare",
+      "monetaryValue": "Penningvärde",
+      "adjusting": "Justerar...",
+      "inviteNewGedu": "Bjud in ny Gedu",
+      "sendInvitation": "Skicka en inbjudan via e-post till en ny spelfostrare",
+      "newGeduInvitation": "Ny Gedu-inbjudan",
+      "geduReceiveEmail": "Gedun kommer att få ett e-postmeddelande med instruktioner för att konfigurera sitt konto.",
+      "inviteLinkExpiryNote": "Inbjudningslänken är giltig i 72 timmar.",
+      "emailAddress": "E-postadress",
+      "emailPlaceholder": "gedu@example.com",
+      "geduDisplayName": "Visningsnamn",
+      "geduDisplayNamePlaceholder": "t.ex. Jane Smith",
+      "geduDisplayNameHelper": "Visas i välkomstmailets hälsning och förifylls på Geduns profil.",
+      "geduDisplayNameTooShort": "Visningsnamnet måste vara minst 2 tecken",
+      "geduDisplayNameTooLong": "Visningsnamnet får vara högst 32 tecken",
+      "inviteLanguage": "Inbjudningsmailets språk",
+      "sendInvite": "Skicka inbjudan",
+      "sendingInvite": "Skickar...",
+      "inviteSent": "Inbjudan skickad!",
+      "inviteSentDescription": "En inbjudan har skickats till {email}.",
+      "viewAllUsers": "Visa alla användare",
+      "inviteAnother": "Bjud in en till",
+      "invalidEmail": "Ange en giltig e-postadress"
+    },
+    "locations": {
+      "title": "Platser",
+      "description": "Hantera länder, städer och platser",
+      "addCountry": "Lägg till land",
+      "searchPlaceholder": "Sök platser...",
+      "editName": "Redigera {name}",
+      "addChildUnder": "Lägg till {type} under {parent}",
+      "location": "Plats",
+      "pleaseSelectCountry": "Välj ett land",
+      "nameRequired": "Namn krävs",
+      "country": "Land",
+      "selectCountry": "Välj ett land...",
+      "allCountriesAdded": "Alla länder som stöds har redan lagts till.",
+      "name": "Namn",
+      "enterTypeName": "Ange namn för {type}",
+      "enterName": "Ange namn",
+      "adding": "Lägger till...",
+      "addType": "Lägg till {type}",
+      "noLocationsYet": "Inga platser ännu. Lägg till ett land för att komma igång.",
+      "noLocationsMatchSearch": "Inga platser hittades som matchar din sökning."
+    },
+    "productLocation": {
+      "locationLabel": "Plats",
+      "remote": "På distans",
+      "inPerson": "På plats",
+      "selectLevel": "Välj {type}...",
+      "selectSiteHint": "Välj en specifik plats för att fortsätta."
+    },
+    "testing": {
+      "title": "Testning",
+      "description": "Interna verktyg för testning och utveckling",
+      "emailTool": "Verktyg för e-posttestning",
+      "emailToolDescription": "Skicka testmeddelanden via Brevo (SMTP) för att verifiera leverans och mallar.",
+      "provider": "Leverantör",
+      "brevo": "Brevo (SMTP)",
+      "klaviyoComingSoon": "Klaviyo (kommer snart)",
+      "content": "Innehåll",
+      "template": "Mall",
+      "language": "Språk",
+      "custom": "Anpassad",
+      "toEmail": "Mottagare",
+      "toEmailPlaceholder": "mottagare@example.com",
+      "templateParameters": "Mallparametrar",
+      "fromEmail": "Avsändarens e-post",
+      "fromName": "Avsändarens namn",
+      "subject": "Ämne",
+      "subjectPlaceholder": "Ämne för testmeddelande",
+      "body": "Brödtext",
+      "bodyPlaceholder": "Skriv e-postinnehåll (HTML stöds)",
+      "replyTo": "Svara till (valfritt)",
+      "replyToPlaceholder": "svar@example.com",
+      "sendTestEmail": "Skicka testmeddelande",
+      "emailSentSuccess": "E-post skickat! Meddelande-ID: {messageId}",
+      "failedToSendRequest": "Kunde inte skicka förfrågan"
+    },
+    "whatsapp": {
+      "title": "WhatsApp",
+      "description": "Visa och svara på WhatsApp-konversationer",
+      "searchContacts": "Sök kontakter...",
+      "noConversations": "Inga konversationer ännu.",
+      "selectConversation": "Välj en konversation för att börja skicka meddelanden",
+      "typeMessage": "Skriv ett meddelande...",
+      "notDelivered": "Ej levererat",
+      "today": "Idag",
+      "yesterday": "Igår"
+    },
+    "groups": {
+      "pendingChanges": "{count, plural, one {# väntande ändring} other {# väntande ändringar}}",
+      "discard": "Förkasta",
+      "commitChanges": "Verkställ ändringar",
+      "confirmGroupChanges": "Bekräfta gruppändringar",
+      "changesWillBeApplied": "Följande ändringar kommer att tillämpas:",
+      "saving": "Sparar...",
+      "applyingChanges": "Tillämpar ändringar",
+      "errorOccurred": "Ett fel uppstod under operationen.",
+      "allChangesApplied": "Alla ändringar har tillämpats.",
+      "savingAndNotifying": "Sparar ändringar och skickar notifieringar...",
+      "working": "Arbetar...",
+      "serverError": "Serverfel ({status})",
+      "noResponseStream": "Inget svar från servern",
+      "failedToSaveChanges": "Kunde inte spara ändringar",
+      "operationFailed": "Operationen misslyckades",
+      "networkError": "Nätverksfel",
+      "geduGroups": "Gedu-grupper",
+      "addGroup": "Lägg till grupp",
+      "noGroups": "Inga Gedu-grupper ännu. Lägg till en grupp för att tilldela en spelfostrare.",
+      "selectGeduForGroup": "Välj en Gedu för att skapa en ny grupp.",
+      "group": "Grupp",
+      "groupNumber": "Grupp {number}",
+      "groupDeleted": "{label} (raderad)",
+      "hiddenNoGroups": "Denna produkt är dold och har inga grupper. Lägg till minst en grupp och gör den synlig för att föräldrar ska kunna se den.",
+      "hiddenWithGroups": "Denna produkt är dold. Föräldrar kan inte se den i katalogen. Ändra synlighet från åtgärdskortet ovan.",
+      "visibleNoGroups": "Denna produkt är synlig men har inga grupper. Föräldrar kan se den men kan inte anmäla sig.",
+      "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
+      "genderBoy": "Pojke",
+      "genderGirl": "Flicka",
+      "genderNonBinary": "Icke-binär",
+      "boyCount": "{count, plural, one {# pojke} other {# pojkar}}",
+      "girlCount": "{count, plural, one {# flicka} other {# flickor}}",
+      "nonBinaryCount": "{count, plural, one {# icke-binär} other {# icke-binära}}",
+      "ageRangeLabel": "åldersintervall {range}",
+      "reassignGedu": "Omtilldela Gedu",
+      "moveGamersFirst": "Flytta alla spelare först",
+      "deleteGroup": "Radera grupp",
+      "markedForDeletion": "Markerad för radering",
+      "noGamersEnrolled": "Inga spelare anmälda. Dra spelare hit.",
+      "new": "Ny",
+      "deleteGroupConfirmTitle": "Radera {label}?",
+      "deleteGroupConfirmDescription": "Detta tar bort gruppen och dess Gedu-tilldelning. Ändringen träder inte i kraft förrän du verkställer.",
+      "reassignGeduFor": "Omtilldela Gedu för {label}",
+      "selectDifferentGedu": "Välj en annan Gedu för denna grupp.",
+      "searchByNameOrEmail": "Sök på namn eller e-post\u2026",
+      "noGedusMatchSearch": "Inga Gedus matchar din sökning."
+    },
+    "forms": {
+      "nameLabel": "Namn",
+      "namePlaceholder": "Produktnamn",
+      "descriptionLabel": "Beskrivning",
+      "descriptionPlaceholder": "Beskriv din produkt",
+      "padletUrlLabel": "Padlet-URL",
+      "sorgCostLabel": "Sogge-kostnad (per session)",
+      "approxPerSession": "≈ {amount} per session",
+      "imageLabel": "Bild",
+      "preview": "Förhandsgranska",
+      "imagePickerHint": "Dra en bild hit eller välj en fil",
+      "imageChooseFile": "Välj fil",
+      "imageRemove": "Ta bort",
+      "imageRequired": "Produktbild krävs",
+      "gameLabel": "Spel",
+      "newGameName": "Nytt spelnamn",
+      "addButton": "Lägg till",
+      "selectGame": "Välj ett spel...",
+      "addNewGame": "Lägg till nytt spel",
+      "dayOfWeekLabel": "Veckodag",
+      "startTimeLabel": "Starttid",
+      "startTimeHint": "Ange tid i finländsk tid (Europe/Helsinki). Föräldrar ser detta i sin lokala tidszon.",
+      "durationLabel": "Längd (minuter)",
+      "minAgeLabel": "Minimiålder",
+      "maxAgeLabel": "Maxålder",
+      "nameRequired": "Produktnamn krävs",
+      "nameMaxLength": "Produktnamnet får vara högst 100 tecken",
+      "descriptionRequired": "Beskrivning krävs",
+      "sorgCostNumber": "Sogge-kostnaden måste vara ett tal",
+      "sorgCostWhole": "Sogge-kostnaden måste vara ett heltal",
+      "sorgCostMin": "Sogge-kostnaden måste vara minst 1",
+      "validUrl": "Måste vara en giltig URL",
+      "gameRequired": "Spel krävs",
+      "validTime": "Måste vara en giltig tid",
+      "durationMin": "Längden måste vara minst 1 minut",
+      "minAgeMin": "Minimiålder måste vara 0 eller högre",
+      "maxAgeMin": "Maxålder måste vara 0 eller högre",
+      "maxAgeGte": "Maxålder måste vara lika med eller högre än minimiålder",
+      "failedToCreateGame": "Kunde inte skapa spel",
+      "spokenLanguageLabel": "Språk klubben hålls på",
+      "spokenLanguageRequired": "Välj språket klubben hålls på",
+      "locationRequired": "Välj en plats eller markera klubben som distans"
+    }
+  },
+  "auth": {
+    "login": {
+      "welcomeTitle": "Välkommen till Sogverse",
+      "chooseRole": "Välj hur du vill logga in",
+      "noAccountSignUp": "Har du inget konto? <link>Registrera dig</link>",
+      "signingIn": "Loggar in...",
+      "startPlaying": "Börja spela!",
+      "gamerHelp": "Behöver du hjälp? Fråga din förälder eller vårdnadshavare.",
+      "geduAccountNote": "Gedu-konton skapas av en administratör.",
+      "gamerInvalidCredentials": "Felaktigt användarnamn eller lösenord. Försök igen.",
+      "emailPlaceholder": "du@example.com",
+      "passwordPlaceholder": "Ange ditt lösenord",
+      "gamerUsernamePlaceholder": "Ditt spelaranvändarnamn",
+      "gamerPasswordPlaceholder": "Ditt hemliga lösenord",
+      "roles": {
+        "customer": {
+          "title": "Förälder",
+          "subtitle": "Hantera dina spelare",
+          "loginTitle": "Föräldrar loggar in",
+          "description": "Logga in för att hantera köp och spelarkonton"
+        },
+        "gedu": {
+          "title": "Gedu",
+          "subtitle": "Lär ut & inspirera",
+          "loginTitle": "Gedu loggar in",
+          "description": "Logga in för att komma åt dina undervisningsverktyg"
+        },
+        "gamer": {
+          "title": "Spelare",
+          "subtitle": "Börja spela",
+          "loginTitle": "Spelare loggar in",
+          "description": "Logga in med ditt användarnamn för att börja spela"
+        }
+      }
+    },
+    "register": {
+      "title": "Skapa ett konto",
+      "description": "Ange dina uppgifter för att skapa ditt föräldrakonto",
+      "parentAccountAlertTitle": "Detta är ett föräldrakonto",
+      "parentAccountAlertDescription": "Detta konto är för dig, föräldern. Ditt barns spelarkonto är separat och skapas senare när du anmäler dem till en klubb.",
+      "parentDisplayName": "Förälderns visningsnamn",
+      "namePlaceholder": "Ditt namn",
+      "emailPlaceholder": "du@example.com",
+      "passwordPlaceholder": "Skapa ett starkt lösenord",
+      "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
+      "creatingAccount": "Skapar konto...",
+      "accountExists": "Ett konto med denna e-postadress finns redan",
+      "alreadyHaveAccount": "Har du redan ett konto? <link>Logga in</link>"
+    },
+    "forgotPassword": {
+      "title": "Glömt lösenordet?",
+      "description": "Ange din e-postadress så skickar vi en länk för att återställa ditt lösenord.",
+      "emailPlaceholder": "du@example.com",
+      "sendResetLink": "Skicka återställningslänk",
+      "checkEmailTitle": "Kolla din e-post",
+      "checkEmailDescription": "Vi har skickat en länk för lösenordsåterställning till {email}. Kolla din inkorg och klicka på länken för att återställa ditt lösenord."
+    },
+    "resetPassword": {
+      "title": "Återställ ditt lösenord",
+      "description": "Ange ditt nya lösenord nedan.",
+      "newPasswordPlaceholder": "Ange ditt nya lösenord",
+      "confirmPasswordPlaceholder": "Bekräfta ditt nya lösenord",
+      "updating": "Uppdaterar...",
+      "resetButton": "Återställ lösenord",
+      "linkExpired": "Din återställningslänk har gått ut. Begär en ny.",
+      "successTitle": "Lösenordet uppdaterat",
+      "successDescription": "Ditt lösenord har uppdaterats."
+    },
+    "setupAccount": {
+      "title": "Välkommen till Sogverse",
+      "description": "Konfigurera ditt spelutbildarkonto nedan.",
+      "namePlaceholder": "Ditt namn",
+      "passwordPlaceholder": "Minst 8 tecken",
+      "confirmPasswordPlaceholder": "Bekräfta ditt lösenord",
+      "settingUp": "Konfigurerar...",
+      "submitButton": "Konfigurera konto",
+      "inviteLinkExpired": "Din inbjudningslänk har gått ut. Be din administratör att skicka en ny.",
+      "minecraftSaveFailed": "Kunde inte spara Minecraft-användarnamn",
+      "invalidPhone": "Ange ett giltigt telefonnummer",
+      "successTitle": "Allt är klart!",
+      "successDescription": "Ditt konto har konfigurerats."
+    }
+  },
+  "checkout": {
+    "redirecting": "Omdirigerar till kassan...",
+    "error": "Något gick fel vid kassan. <link>Gå tillbaka</link> och försök igen."
+  },
+  "clubs": {
+    "listing": {
+      "heading": "Våra klubbar",
+      "subheading": "Utforska våra Minecraft-klubbar — varje klubb leds av en professionell spelfostrare.",
+      "noClubs": "Inga klubbar tillgängliga",
+      "checkBackSoon": "Kom tillbaka snart för nya klubbar!",
+      "needHelp": "Behöver du hjälp att välja?",
+      "needHelpDescription": "Osäker på vilken klubb som passar din familj? Kontakta oss för personliga rekommendationer baserade på dina barns åldrar och intressen.",
+      "learnMoreAboutUs": "Läs mer om oss"
+    },
+    "tokenCost": "{cost} Soggar",
+    "detail": {
+      "backToClubs": "Tillbaka till klubbar",
+      "notFound": "Klubben hittades inte",
+      "notFoundDescription": "Denna klubb kanske inte längre finns tillgänglig.",
+      "every": "Varje {day}",
+      "enrollment": "Anmälan",
+      "onlyParents": "Bara föräldrakonton kan anmäla spelare till klubbar.",
+      "readyToEnroll": "Redo att anmäla?",
+      "readyToEnrollDescription": "Logga in eller skapa ett konto för att anmäla ditt barn till denna klubb.",
+      "logInToEnroll": "Logga in för att anmäla"
+    }
+  },
+  "docs": {
+    "minecraftApi": {
+      "title": "Minecraft Server API",
+      "description": "Använd detta endpoint för att kontrollera om en anslutande spelare får gå med i Minecraft-världen. Servern skickar spelarens Minecraft-UUID och får ett tillåt/neka-beslut med sessionstiming.",
+      "authentication": {
+        "heading": "Autentisering",
+        "description": "Alla förfrågningar kräver en statisk API-nyckel som skickas som en Bearer-token i <code>Authorization</code>-headern.",
+        "contactNote": "Kontakta Sogverse-teamet om du behöver en nyckel eller behöver rotera den."
+      },
+      "endpoint": {
+        "heading": "Endpoint",
+        "queryParams": "Frågeparametrar",
+        "uuidType": "string (obligatorisk)",
+        "uuidDescription": "Spelarens Minecraft-UUID. Både format med bindestreck (<code1>069a79f4-44e9-4726-a5be-fca90e38aaf5</code1>) och utan bindestreck (<code2>069a79f444e94726a5befca90e38aaf5</code2>) accepteras."
+      },
+      "responses": {
+        "heading": "Svar",
+        "playerAllowed": "Spelaren tillåts",
+        "playerDenied": "Spelaren nekas",
+        "errorResponses": "Felsvar",
+        "deniedDescription": "Spelaren finns i Sogverse men har ingen aktiv session just nu. Inget <code>endTime</code> inkluderas.",
+        "fields": {
+          "allowedTrue": "Spelaren har en aktiv session just nu.",
+          "role": "Spelarens roll i Sogverse.",
+          "displayName": "Spelarens visningsnamn.",
+          "endTime": "När sessionsfönstret stängs (inkluderar en 5-minuters buffert efter schemalagt slut). Använd detta för att schemalägga en kick eller ny kontroll.",
+          "reason": "Läsbar beskrivning: produktnamn och utbildarens namn."
+        },
+        "error401": "Saknad, felformaterad eller ogiltig API-nyckel.",
+        "error400": "Saknad eller ogiltig <code>uuid</code>-frågeparameter.",
+        "error404": "Inget Sogverse-konto kopplat till detta Minecraft-UUID.",
+        "error500": "Serverfel. Försök igen med fördröjning."
+      },
+      "example": {
+        "heading": "Exempel"
+      },
+      "integrationNotes": {
+        "heading": "Integrationsanteckningar",
+        "note1": "Anropa detta endpoint vid varje spelaranslutning. Både Gedus och spelare är sessionsstyrda — de kan bara gå med under sitt schemalagda sessionsfönster.",
+        "note2": "Sessionsfönstret öppnas 5 minuter före schemalagd start och stängs 5 minuter efter schemalagt slut.",
+        "note3": "När <code1>allowed: true</code1>, använd <code2>endTime</code2> för att schemalägga en ny kontroll eller kick. Om det finns sessioner rygg i rygg (t.ex. en slutar 14:00, nästa börjar 14:05) kickas spelaren vid den första sessionens slut och ansluter igen för nästa.",
+        "note4": "En <code>404</code> betyder att spelaren inte har kopplat sitt Minecraft-konto i Sogverse ännu. Du kan visa ett meddelande om att koppla sitt konto i profilinställningarna.",
+        "note5": "Alla felsvar följer formatet <code>'{ \"error\": \"message\" }'</code>."
+      }
+    }
+  },
+  "enrollment": {
+    "wizard": {
+      "title": "Anmäl din spelare",
+      "costDescription": "{cost} Soggar dras för den kommande sessionen",
+      "insufficientBalance": "Otillräckligt saldo",
+      "insufficientBalanceDescription": "Du behöver <strong>{cost} Soggar</strong> för att anmäla men har bara <strong>{balance}</strong>.",
+      "getMoreSorgs": "Skaffa fler Soggar",
+      "chooseGamer": "Välj vilken spelare du vill anmäla:",
+      "createNewGamer": "Skapa ny spelare",
+      "createGamerDescription": "Skapa ett nytt spelarkonto för ditt barn",
+      "chooseGroup": "Välj en grupp för {name}:",
+      "noGroupsAvailable": "Inga grupper tillgängliga för denna klubb ännu. Försök igen senare.",
+      "enrollmentSummary": "Sammanfattning av anmälan",
+      "summaryGamer": "Spelare",
+      "summaryGedu": "Gedu",
+      "summaryCost": "Kostnad",
+      "sorgAmount": "{amount} Soggar",
+      "currentBalance": "Nuvarande saldo",
+      "afterEnrollment": "Efter anmälan",
+      "enrolling": "Anmäler...",
+      "confirmEnrollment": "Bekräfta anmälan",
+      "enrolled": "Anmäld!",
+      "enrolledDescription": "<strong>{gamer}</strong> är nu anmäld i <strong>{club}</strong>.",
+      "newBalance": "Nytt saldo: {balance} Soggar",
+      "howToJoinTitle": "Så ansluter du till en session",
+      "howToJoinDescription": "När en session börjar visas en grön \"Live\"-bricka på gruppkortet i <strong>{name}s</strong> översikt. De kan klicka \"Gå med\" för att ansluta.",
+      "viewMyGamers": "Visa mina spelare",
+      "failedToEnroll": "Anmälan misslyckades",
+      "gamerCount": "{count, plural, one {# spelare} other {# spelare}}"
+    },
+    "gamerForm": {
+      "mustBeLoggedIn": "Du måste vara inloggad",
+      "credentialsAlertTitle": "Dela dessa uppgifter med ditt barn",
+      "credentialsAlertDescription": "Ditt barn använder användarnamnet och lösenordet nedan för att logga in på sitt eget spelarkonto. Det är säkrare än att dela ditt föräldralösenord — spelarkonton kan bara komma åt sina spel och sin profil, inte din fakturering eller kontoinställningar.",
+      "displayNameLabel": "Spelarens visningsnamn",
+      "displayNamePlaceholder": "Hur deras namn visas i spelet",
+      "usernamePlaceholder": "Välj ett unikt användarnamn",
+      "usernameHint": "Bara bokstäver, siffror och understreck",
+      "passwordPlaceholder": "Skapa ett lösenord",
+      "passwordHint": "Minst 6 tecken",
+      "confirmPasswordPlaceholder": "Bekräfta lösenordet",
+      "dateOfBirthLabel": "Födelsedatum",
+      "age": "Ålder: {age} {count, plural, one {år} other {år}}",
+      "genderLabel": "Kön",
+      "genderBoy": "Pojke",
+      "genderGirl": "Flicka",
+      "genderNonBinary": "Icke-binär",
+      "creating": "Skapar...",
+      "createGamer": "Skapa spelare"
+    },
+    "unenroll": {
+      "failedToUnenroll": "Avanmälan misslyckades",
+      "successTitle": "Avanmäld",
+      "successDescription": "<strong>{gamer}</strong> har avanmälts från <strong>{club}</strong>.",
+      "sorgsRefunded": "{amount} Soggar återbetalade",
+      "toYourBalance": "till ditt saldo.",
+      "noRefund": "Ingen återbetalning gjordes.",
+      "newBalance": "Nytt saldo: <strong>{balance} Soggar</strong>",
+      "done": "Klar",
+      "title": "Avanmäl {name}?",
+      "description": "Detta tar bort <strong>{gamer}</strong> från <strong>{club}</strong>.",
+      "club": "Klubb",
+      "gamer": "Spelare",
+      "refundEligible": "Du kommer att få en återbetalning på <strong>{cost} Soggar</strong>.",
+      "noRefundWithinWindow": "Ingen återbetalning görs — nästa session är inom {hours} timmar.",
+      "noChargeNextSession": "Du debiteras inte för nästa session.",
+      "unenrolling": "Avanmäler...",
+      "confirmUnenroll": "Bekräfta avanmälan"
+    }
+  },
+  "feedback": {
+    "title": "Feedback",
+    "subtitle": "Dela dina tankar med oss",
+    "sendFeedback": "Skicka feedback",
+    "feedbackDescription": "Vi vill gärna höra din feedback, dina förslag eller felrapporter.",
+    "gamerReplyNote": "Din utbildare kan följa upp med dig under nästa session.",
+    "message": "Meddelande",
+    "placeholder": "Dela dina tankar, förslag eller rapportera ett fel...",
+    "charactersNeeded": "{count} tecken till behövs",
+    "submitFeedback": "Skicka feedback",
+    "thankYou": "Tack för din feedback! Vi uppskattar att du tog dig tid att dela dina tankar.",
+    "failedToSubmit": "Kunde inte skicka feedback.",
+    "failedToSubmitRetry": "Kunde inte skicka feedback. Försök igen."
+  },
+  "footer": {
+    "tagline": "School of Gaming - Där skärmtid blir kvalitetstid.",
+    "copyright": "© {year} School of Gaming. Alla rättigheter förbehållna."
+  },
+  "gamer": {
+    "welcome": "Välkommen, spelare!",
+    "subtitle": "Redo att spela och lära dig?",
+    "myGroups": "Mina grupper",
+    "myGroupsDescription": "Visa dina grupper och kommande röstsessioner",
+    "tipOfTheDay": "Dagens tips",
+    "tipOfTheDayMessage": "Övning ger färdighet! Gå med i en gruppsession för att höja din nivå."
+  },
+  "gedu": {
+    "title": "Utbildarens översikt",
+    "subtitle": "Hantera dina grupper och elever",
+    "statsGroups": "Grupper",
+    "statsGroupsDescription": "Hantera dina grupper",
+    "statsGamers": "Spelare",
+    "statsGamersDescription": "Över alla grupper",
+    "latestStudentActivities": "Senaste elevaktiviteter",
+    "coverage": {
+      "title": "Områden du täcker",
+      "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan utbildare inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
+      "selectedHeading": "Valda ({count})",
+      "noneSelected": "Inga områden valda",
+      "remove": "Ta bort {name}",
+      "clearAll": "Rensa alla",
+      "searchPlaceholder": "Sök platser...",
+      "loading": "Laddar platser...",
+      "save": "Spara",
+      "saving": "Sparar...",
+      "saveError": "Kunde inte spara"
+    }
+  },
+  "groups": {
+    "title": "Grupper",
+    "backToGroups": "Tillbaka till grupper",
+    "groupNotFound": "Gruppen hittades inte.",
+    "live": "Live",
+    "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
+    "noGamersEnrolled": "Inga spelare anmälda ännu.",
+    "age": "Ålder {age}",
+    "sorgsPerWeek": "{cost} Soggar / vecka",
+    "unenrollGamer": "Avanmäl {name}",
+    "noGroupsYet": "Inga grupper ännu",
+    "nextSession": "Nästa: {date}",
+    "startsIn": "(börjar om {countdown})",
+    "sessionInProgress": "Session pågår",
+    "everyDay": "Varje {day}",
+    "join": "Gå med",
+    "alwaysOpen": "Alltid öppen",
+    "padlet": "Padlet",
+    "allGroupsHeading": "Alla grupper",
+    "allGroupsSubheading": "Alla grupper för alla produkter och utbildare.",
+    "allGroupsEmpty": "Inga grupper har skapats ännu.",
+    "myGroupsHeading": "Mina grupper",
+    "myGroupsSubheading": "Dina anmälda grupper och kommande röstsessioner.",
+    "myGroupsEmpty": "Du är inte anmäld i någon grupp ännu.",
+    "yourGroupsHeading": "Dina grupper",
+    "yourGroupsSubheading": "Dina tilldelade grupper, elever och röstsessioner.",
+    "yourGroupsEmpty": "Grupper visas här när en administratör tilldelar dig till en klubb.",
+    "adminLounge": "Adminloungen",
+    "adminLoungeDescription": "Privat röstkanal för administratörer",
+    "geduLounge": "Geduloungen",
+    "geduLoungeDescription": "Anslut med utbildare när som helst",
+    "geduLoungeDescriptionOther": "Anslut med andra utbildare när som helst",
+    "currentGedu": "Nuvarande",
+    "assignedGedu": "Tilldelad"
+  },
+  "header": {
+    "nav": {
+      "home": "Hem",
+      "clubs": "Klubbar",
+      "sorg": "Sogge",
+      "yty": "Yty",
+      "about": "Om oss"
+    },
+    "toggleMenu": "Växla meny",
+    "tokenBalance": "{count} Soggar"
+  },
+  "sidebar": {
+    "dashboard": "Instrumentpanel",
+    "users": "Användare",
+    "products": "Produkter",
+    "groups": "Grupper",
+    "locations": "Platser",
+    "uiComponents": "UI-komponenter",
+    "whatsapp": "WhatsApp",
+    "testing": "Testning",
+    "feedback": "Feedback",
+    "settings": "Inställningar",
+    "sorg": "Sogge",
+    "myGamers": "Mina spelare",
+    "home": "Hem",
+    "myGroups": "Mina grupper",
+    "expandSidebar": "Expandera sidopanel",
+    "collapseSidebar": "Minimera sidopanel"
+  },
+  "home": {
+    "hero": {
+      "title": "Där<br></br><primary>skärmtid</primary><br></br>blir<br></br><secondary>kvalitetstid</secondary>",
+      "subtitle": "Våra skickligt utformade Minecraft-klubbar främjar hälsosamt spelande som hobby. Professionella spelfostrare i världsklass gör varje session till en lekfull lärandeupplevelse där barn får nya vänner, utvecklar sina unika talanger och har roligt med det de älskar.",
+      "viewClubs": "Visa klubbar"
+    },
+    "features": {
+      "heading": "Gör spelande till en fantastisk hobby",
+      "subheading": "Spelande är en hobby som alla andra — bättre med bra vänner och med en professionell handledare som finns där för att vägleda och hjälpa.",
+      "minecraftClubs": {
+        "title": "Minecraft-klubbar med Gedus",
+        "description": "Våra spelfostrare — Gedus — är själva spelare. De förstår att som barn byggs identitet och vänskaper både online och offline. Varje session leds av någon som verkligen förstår."
+      },
+      "screenTime": {
+        "title": "Skärmtid blir kvalitetstid",
+        "description": "Skickligt utformade klubbar förvandlar spelande till en lekfull lärandeupplevelse där barn utvecklar riktiga färdigheter och har roligt med det de älskar."
+      },
+      "newFriends": {
+        "title": "Nya vänner, äkta band",
+        "description": "Barn bygger genuina, varaktiga vänskaper genom gemensamma äventyr. Ingen lämnas utan en vän. Spelarens ed innebär att behandla varandra med vänlighet — online och offline."
+      },
+      "parents": {
+        "title": "Föräldrar är med",
+        "description": "Spelfostran för föräldrar är lika viktig som själva klubbarna. Vi håller dig informerad, involverad och rustad att stötta ditt barns spelresa."
+      }
+    },
+    "howItWorks": {
+      "heading": "Så fungerar det",
+      "subheading": "Gå med i en Minecraft-klubb i tre enkla steg.",
+      "step1": {
+        "title": "Skapa ditt konto",
+        "description": "Registrera dig som förälder och skapa spelarkonton åt dina barn."
+      },
+      "step2": {
+        "title": "Välj en klubb",
+        "description": "Bläddra bland våra klubbar och anmäl dina spelare till dem som passar deras schema och intressen."
+      },
+      "step3": {
+        "title": "Ge dig ut på äventyr",
+        "description": "Dina spelare loggar in varje vecka, träffar sin Gedu och ger sig ut på Minecraft-äventyr med nya vänner."
+      }
+    },
+    "cta": {
+      "heading": "Redo att förvandla spelande till lärande?",
+      "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelfostrare.",
+      "createFreeAccount": "Skapa gratis konto"
+    }
+  },
+  "minecraft": {
+    "label": "Minecraft-användarnamn",
+    "optional": "(valfritt)",
+    "placeholder": "t.ex. Steve",
+    "verify": "Verifiera",
+    "verifying": "Verifierar...",
+    "notFound": "Minecraft-kontot hittades inte. Kontrollera användarnamnet och försök igen.",
+    "mcHeadsAttribution": "Skin renderat av <link>mc-heads.net</link>"
+  },
+  "parent": {
+    "dashboard": {
+      "welcome": "Föräldraöversikt",
+      "subtitle": "Hantera dina spelare och anmälningar",
+      "quickActions": {
+        "gamers": {
+          "title": "Mina spelare",
+          "description": "Visa och hantera dina spelarkonton"
+        },
+        "sorg": {
+          "title": "Sogge-tokens",
+          "description": "Kontrollera saldo och köp tokens"
+        },
+        "browseClubs": {
+          "title": "Bläddra bland klubbar",
+          "description": "Hitta och anmäl dig till spelklubbar"
+        },
+        "settings": {
+          "title": "Inställningar",
+          "description": "Hantera dina kontoinställningar"
+        }
+      },
+      "gettingStarted": {
+        "title": "Kom igång",
+        "subtitle": "Följ dessa steg för att få din spelare igång",
+        "step1": {
+          "title": "Köp Sogge-tokens",
+          "description": "Sogge-tokens används för att betala för spelsessioner. Gå till Sogge-sidan för att köpa ett paket eller prenumerera."
+        },
+        "step2": {
+          "title": "Bläddra bland klubbar",
+          "description": "Utforska våra spelklubbar och hitta den perfekta passformen för ditt barns ålder och intressen."
+        },
+        "step3": {
+          "title": "Anmäl din spelare",
+          "description": "Skapa ett spelarkonto och anmäl dem till en klubb. De är redo att gå med i sin första session!"
+        }
+      }
+    },
+    "billing": {
+      "error": "Kunde inte öppna faktureringsportalen. Försök igen eller besök <link>Sogge-sidan</link>.",
+      "redirecting": "Omdirigerar till faktureringsportalen..."
+    },
+    "gamers": {
+      "title": "Mina spelare",
+      "subtitle": "Hantera dina spelarkonton och anmälningar",
+      "joined": "Gick med {time}",
+      "noEnrollments": "Inga aktiva anmälningar. <link>Bläddra bland klubbar</link> för att anmäla denna spelare.",
+      "empty": {
+        "title": "Inga spelare ännu",
+        "description": "Skapa ett spelarkonto genom att anmäla dig till en klubb. Ditt barn använder sitt eget användarnamn och lösenord för att logga in."
+      }
+    },
+    "gamerDetail": {
+      "backToGamers": "Tillbaka till mina spelare",
+      "title": "Spelarinställningar",
+      "subtitle": "Hantera inställningar för {name}",
+      "profileDescription": "Uppdatera din spelares visningsnamn och se deras användarnamn.",
+      "profileUpdated": "Visningsnamn uppdaterat!",
+      "failedUpdateDisplayName": "Kunde inte uppdatera visningsnamn",
+      "passwordsDoNotMatch": "Lösenorden matchar inte",
+      "passwordUpdated": "Lösenord uppdaterat!",
+      "failedUpdatePassword": "Kunde inte uppdatera lösenord",
+      "notFound": {
+        "title": "Spelare hittades inte",
+        "description": "Detta spelarkonto kan ha tagits bort eller så har du inte tillgång till det."
+      },
+      "minecraft": {
+        "title": "Minecraft-konto",
+        "description": "Koppla ett Minecraft Java Edition-användarnamn för funktioner i spelet.",
+        "save": "Spara Minecraft-användarnamn"
+      },
+      "mcSaved": "Minecraft-användarnamn sparat!",
+      "mcCleared": "Minecraft-användarnamn borttaget",
+      "failedUpdateMc": "Kunde inte uppdatera Minecraft-användarnamn",
+      "security": {
+        "description": "Ändra lösenordet som din spelare använder för att logga in.",
+        "passwordPlaceholder": "Ange nytt lösenord",
+        "confirmPlaceholder": "Bekräfta nytt lösenord",
+        "updating": "Uppdaterar...",
+        "updatePassword": "Uppdatera lösenord"
+      }
+    },
+    "sorg": {
+      "title": "Sogge-tokens",
+      "subtitle": "Köp tokens och hantera ditt saldo",
+      "transactionHistory": "Transaktionshistorik"
+    },
+    "switchToGamer": {
+      "title": "Byt till {name}?",
+      "description": "Du loggas in som <bold>{name}</bold>. Du kan byta tillbaka till ditt föräldrakonto från spelarens översikt.",
+      "failedSwitch": "Kunde inte byta konto",
+      "switching": "Byter...",
+      "confirm": "Byt till {name}"
+    }
+  },
+  "settings": {
+    "subtitle": "Hantera dina kontoinställningar",
+    "profileDescription": "Uppdatera din personliga information",
+    "roleAccount": "{role}-konto",
+    "displayNamePlaceholder": "Ange ditt visningsnamn",
+    "invalidPhone": "Ange ett giltigt telefonnummer.",
+    "profileUpdated": "Profilen har uppdaterats!",
+    "failedToUpdateProfile": "Kunde inte uppdatera profilen.",
+    "securityDescription": "Hantera ditt lösenord och säkerhetsinställningar",
+    "changePassword": "Byt lösenord",
+    "minecraftAccount": "Minecraft-konto",
+    "minecraftDescription": "Koppla ditt Minecraft Java Edition-konto",
+    "minecraftSaved": "Minecraft-användarnamn sparat!",
+    "minecraftCleared": "Minecraft-användarnamn borttaget.",
+    "failedToUpdateMinecraft": "Kunde inte uppdatera Minecraft-användarnamn.",
+    "saveMinecraft": "Spara Minecraft-användarnamn",
+    "notifications": "Notifieringar",
+    "notificationsDescription": "Konfigurera hur du får notifieringar",
+    "notificationsComingSoon": "Notifieringsinställningar kommer snart.",
+    "appearance": "Utseende",
+    "appearanceDescription": "Anpassa utseendet",
+    "appearanceComingSoon": "Temainställningar kommer snart.",
+    "spokenLanguages": "Talade språk"
+  },
+  "sorg": {
+    "hero": {
+      "title": "Vad är <primary>Sogge</primary>?",
+      "subtitle": "Sogge är valutan som driver ditt barns klubbsessioner i Sogverse. Föräldrar köper Soggar och de används för att betala för veckovisa sessioner — enkelt, transparent och flexibelt."
+    },
+    "overview": {
+      "heading": "Så fungerar det",
+      "text": "Varje klubbsession kostar ett visst antal Soggar. När du anmäler ditt barn till en klubb dras Soggar automatiskt varje vecka för deras session. Köp ett tokenpaket eller prenumerera månadsvis — det som passar din familj bäst."
+    },
+    "benefits": {
+      "heading": "Varför Soggar?",
+      "subheading": "Ett enkelt och rättvist sätt att betala för ditt barns klubbar",
+      "payPerSession": {
+        "title": "Betala per session",
+        "description": "Soggar dras en gång i veckan för varje anmäld klubb. Du betalar bara för sessionerna ditt barn deltar i — inga långtidskontrakt."
+      },
+      "fullTransparency": {
+        "title": "Full transparens",
+        "description": "Se exakt vart varje Sogge går. Din föräldraöversikt visar ditt saldo, transaktionshistorik och kommande debiteringar."
+      },
+      "flexibleTopUps": {
+        "title": "Flexibla påfyllningar",
+        "description": "Köp ett engångspaket med tokens när du behöver det, eller prenumerera för en månatlig tilldelning till bättre pris. Ändra eller avsluta när som helst."
+      },
+      "safeByDesign": {
+        "title": "Säkert av design",
+        "description": "Soggar finns bara inom Sogverse. Bara föräldrar kan se saldon och göra köp — barn exponeras aldrig för valutan. Inga överraskningar."
+      }
+    },
+    "faqs": {
+      "heading": "Vanliga frågor",
+      "isRealMoney": {
+        "question": "Är Sogge riktiga pengar?",
+        "answer": "Soggar köps med riktiga pengar men finns bara inom Sogverse. De kan inte överföras utanför plattformen, men om du vill ha återbetalning på oanvända Soggar, kontakta vårt supportteam."
+      },
+      "howSpent": {
+        "question": "Hur används Soggar?",
+        "answer": "Varje klubbsession kostar ett visst antal Soggar, som visas på klubbsidan. Soggar dras automatiskt en gång i veckan när ditt barns session är schemalagd."
+      },
+      "parentControl": {
+        "question": "Kan föräldrar kontrollera utgifterna?",
+        "answer": "Ja. Soggar är helt osynliga för barn. Bara föräldrar kan se saldon, köpa tokens och se utgiftshistorik i föräldraöversikten."
+      },
+      "doExpire": {
+        "question": "Går Soggar ut?",
+        "answer": "Nej. När de väl är köpta stannar Soggar på ditt konto tills de används för klubbsessioner. Det finns inga utgångsdatum eller dolda avgifter."
+      },
+      "refund": {
+        "question": "Kan jag få återbetalning?",
+        "answer": "Om du avanmäler en spelare minst 24 timmar innan en session börjar, återbetalas Soggar för den sessionen automatiskt till ditt saldo. För allt annat, kontakta vårt supportteam — vi hjälper gärna till."
+      }
+    },
+    "cta": {
+      "heading": "Redo att komma igång?",
+      "subheading": "Skapa ett konto, skaffa lite Soggar och anmäl ditt barn till sin första klubb."
+    }
+  },
+  "tokens": {
+    "balance": {
+      "title": "Sogge-saldo"
+    },
+    "subscription": {
+      "label": "Prenumeration",
+      "tierLabelFull": "{name} — {amount} Soggar/mån",
+      "tierLabelAmount": "{amount} Soggar/mån",
+      "paymentFailed": "Betalning misslyckades",
+      "paymentFailedDescription": "Din senaste betalning misslyckades. <link>Uppdatera din betalningsmetod</link> för att fortsätta din prenumeration.",
+      "nextPayment": "Nästa betalning den {date}",
+      "activeRenews": "Aktiv — förnyas automatiskt",
+      "canceledAccessUntil": "Avslutad — tillgång till {date}",
+      "canceledAccessUntilEnd": "Avslutad — tillgång till slutet av faktureringsperioden",
+      "pastDue": "Betalning förfallen — uppdatera din betalningsmetod",
+      "status": "Status: {status}",
+      "manageBilling": "Hantera fakturering",
+      "resuming": "Återupptar...",
+      "resume": "Återuppta",
+      "cancelSubscription": "Avsluta prenumeration",
+      "cancelDialog": {
+        "title": "Avsluta prenumeration?",
+        "description": "Är du säker på att du vill avsluta din prenumeration?",
+        "loseRate": "Du förlorar ditt nuvarande pris på {rate}/mån.",
+        "keepAccess": "Du behåller tillgången till slutet av din nuvarande faktureringsperiod.",
+        "keep": "Behåll prenumeration",
+        "canceling": "Avslutar...",
+        "confirm": "Ja, avsluta"
+      }
+    },
+    "purchase": {
+      "success": "Betalningen lyckades! Dina Soggar har lagts till på ditt saldo.",
+      "canceled": "Betalningen avbröts. Inga debiteringar gjordes.",
+      "checkoutError": "Kunde inte starta kassan. Försök igen.",
+      "switchError": "Kunde inte byta prenumeration. Försök igen.",
+      "title": "Skaffa Soggar",
+      "subtitle": "Välj ett paket eller en prenumeration för att driva dina spelsessioner",
+      "oneTimePacks": "Engångspaket",
+      "monthlySubscriptions": "Månadsprenumerationer",
+      "legacyTier": "Din nuvarande plan är inte längre tillgänglig. Byt till en ny nivå nedan.",
+      "signInRequired": "Logga in för att köpa Soggar",
+      "switchDialog": {
+        "title": "Byt till {name}?",
+        "description": "Du byter till planen {name} ({amount} Soggar/månad). Ändringen träder i kraft vid din nästa faktureringsperiod.",
+        "resumeNote": "Detta återupptar även din avslutade prenumeration.",
+        "confirm": "Byt plan"
+      }
+    },
+    "package": {
+      "cancelsAtPeriodEnd": "Avslutas vid periodens slut",
+      "currentPlan": "Nuvarande plan",
+      "save": "Spara {amount}{period}",
+      "perMonth": "/mån",
+      "resuming": "Återupptar...",
+      "resumeSubscription": "Återuppta prenumeration",
+      "switching": "Byter...",
+      "switchToPlan": "Byt till plan",
+      "redirectingCheckout": "Omdirigerar till kassan...",
+      "subscribed": "Prenumererar",
+      "subscribe": "Prenumerera",
+      "buyNow": "Köp nu"
+    },
+    "transactions": {
+      "empty": "Inga transaktioner ännu.",
+      "date": "Datum",
+      "amount": "Belopp",
+      "type": "Typ",
+      "description": "Beskrivning",
+      "balanceAfter": "Saldo efter"
+    }
+  },
+  "voice": {
+    "participantsCount": "Deltagare ({count})",
+    "noParticipantsYet": "Inga deltagare ännu",
+    "you": "(du)",
+    "host": "Värd",
+    "mute": "Tysta",
+    "muteMicrophone": "Tysta mikrofon",
+    "camOff": "Kamera av",
+    "disableCamera": "Stäng av kamera",
+    "lockMic": "Lås mikrofon",
+    "unlockMic": "Lås upp mikrofon",
+    "lockMicrophone": "Lås mikrofon",
+    "unlockMicrophone": "Lås upp mikrofon",
+    "lockCam": "Lås kamera",
+    "unlockCam": "Lås upp kamera",
+    "lockCamera": "Lås kamera",
+    "unlockCamera": "Lås upp kamera",
+    "sharerScreen": "{name}s skärm",
+    "stopSharing": "Sluta dela",
+    "voiceRoom": "Röstrum",
+    "live": "Live",
+    "spatialDescription": "Dra din avatar för att flytta mellan zoner. Deltagare i samma zon kan höra varandra.",
+    "leave": "Lämna",
+    "failedToJoinRoom": "Kunde inte gå med i rummet",
+    "sessionEnded": "Sessionen har avslutats",
+    "disconnecting": "Kopplar från...",
+    "connecting": "Ansluter...",
+    "unmuteMicrophone": "Slå på mikrofon",
+    "micLockedByModerator": "Mikrofon låst av moderator",
+    "turnOffCamera": "Stäng av kamera",
+    "turnOnCamera": "Slå på kamera",
+    "cameraLockedByModerator": "Kamera låst av moderator",
+    "shareScreen": "Dela skärm",
+    "stopScreenShare": "Sluta dela skärm",
+    "broadcast": "Sändning"
+  },
+  "yty": {
+    "hero": {
+      "title": "Vad är <primary>Yty</primary>?",
+      "subtitle": "Yty är en magisk kraft som upprätthåller den känsliga balansen i Sogverse-världarna. Genom att göra bra saker — lära sig nya färdigheter, skaffa vänner, uppföra sig väl och delta i gemenskapen — tjänar spelare Yty åt sig själva och åt alla."
+    },
+    "overview": {
+      "heading": "Så fungerar Yty",
+      "paragraph1": "Varje spelare börjar på noll. Från varje session de deltar i, varje utmaning de klarar och varje vänlig handling de visar, tjänar spelare Yty-poäng. Dessa poäng byggs upp över fyra element, som var och ett speglar en del av att växa upp väl.",
+      "paragraph2": "När spelare samlar Yty åt sig själva ökar de också det totala Yty i Sogverse — formar berättelsen och låser upp nya möjligheter för hela gemenskapen."
+    },
+    "elements": {
+      "heading": "Ytys fyra element",
+      "subheading": "Varje element speglar en spelares relation till en del av sin värld",
+      "harmony": {
+        "name": "Harmoni",
+        "description": "Din relation till dig själv",
+        "detail": "Vem är jag? Harmoni handlar om att acceptera dig själv som du är — styrkor och svagheter. Det innebär att lära sig ta hand om sitt välmående, uttrycka sina känslor, fatta bra beslut och förstå varför regler och tillit är viktiga."
+      },
+      "glow": {
+        "name": "Glöd",
+        "description": "Din relation till andra",
+        "detail": "Hur kan jag hjälpa andra? Glöd handlar om empati, vänlighet och att bygga meningsfulla relationer. Det innebär att respektera olikheter, ge utrymme åt andra, kommunicera väl och vara den typen av person som lyfter andra."
+      },
+      "valor": {
+        "name": "Mod",
+        "description": "Din relation till världen",
+        "detail": "Hur kan jag göra skillnad? Mod handlar om att hitta sin plats i världen och ha modet att bidra. Det innebär lagarbete, att uttrycka sina idéer, använda sin fantasi och arbeta mot en bättre framtid — lokalt och globalt."
+      },
+      "wit": {
+        "name": "Vett",
+        "description": "Din relation till media och teknik",
+        "detail": "Hur navigerar jag i den digitala världen? Vett handlar om en hälsosam, kritisk relation till spel, media och teknik. Det innebär att förstå onlinebeteende, tänka kritiskt om information och balansera skärmtid med resten av livet."
+      }
+    },
+    "earning": {
+      "heading": "Hur spelare tjänar Yty",
+      "paragraph1": "Yty-poäng tjänas genom deltagande. Att delta i veckovisa klubbsessioner, klara uppdrag och utmaningar, visa vänlighet mot medspelare, gå med i gemenskapsevent och läger — allt detta bidrar till en spelares Yty.",
+      "paragraph2": "När poäng samlas under specifika prestationsmärken går spelarna upp i nivå på dessa märken — från brons till silver, guld, platina och diamant. Varje poäng bidrar också till deras totala Yty-nivå och elementet det tillhör.",
+      "paragraph3": "Och det är inte bara spelare. Gedus, föräldrar och hela gemenskapen kan delta i att bygga Ytyn i Sogverse genom event och gemensamma aktiviteter."
+    },
+    "cta": {
+      "heading": "Börja din resa",
+      "subheading": "Gå med i Sogverse och börja tjäna Yty. Varje session, varje vänskap, varje vänlig handling gör skillnad."
+    }
+  },
+  "email": {
+    "senderAuth": "Sogverse-teamet",
+    "senderFeedback": "Sogverse Feedback",
+    "senderEnrollment": "Sogverse Anmälan",
+    "footer": "\u00a9 {year} Sogverse. Alla rättigheter förbehållna.",
+    "roleAdmin": "Administratör",
+    "roleParent": "Förälder",
+    "roleGamer": "Spelare",
+    "roleGedu": "Gedu",
+    "passwordReset": {
+      "subject": "Återställ ditt Sogverse-lösenord",
+      "heading": "Återställ ditt lösenord",
+      "body": "Vi har mottagit en begäran om att återställa ditt Sogverse-lösenord. Klicka på knappen nedan för att välja ett nytt lösenord.",
+      "expiry": "Denna länk upphör att gälla om 72 timmar.",
+      "ignore": "Om du inte begärde en lösenordsåterställning kan du ignorera detta e-postmeddelande. Ditt lösenord kommer inte att ändras.",
+      "button": "Återställ lösenord"
+    },
+    "geduInvite": {
+      "subject": "Du är inbjuden till Sogverse",
+      "heading": "Välkommen till Sogverse",
+      "greeting": "Hej {name},",
+      "body": "Du har blivit inbjuden att gå med i Sogverse som <strong>Gedu</strong>. Klicka på knappen nedan för att skapa ditt konto.",
+      "expiry": "Denna länk upphör att gälla om 72 timmar.",
+      "button": "Skapa ditt konto"
+    },
+    "minecraft": {
+      "label": "Minecraft-användarnamn:",
+      "verified": "{username} (verifierad)",
+      "unverified": "{username} (ännu inte verifierad)",
+      "notProvided": "Inte angivet"
+    },
+    "enrollmentParent": {
+      "subject": "{gamerName} är nu anmäld till {productName}",
+      "heading": "Anmälan bekräftad",
+      "body": "Hej {parentName}, {gamerName} är nu anmäld till {productName} med Gedu {geduName}."
+    },
+    "enrollmentGedu": {
+      "subject": "{gamerName} har gått med i din grupp \u2013 {productName}",
+      "heading": "Ny spelare i din grupp",
+      "body": "Hej {geduName}, {gamerName} har gått med i din grupp för {productName}."
+    },
+    "unenrollmentParent": {
+      "subject": "{gamerName} har avregistrerats från {productName}",
+      "heading": "Avregistrering bekräftad",
+      "body": "Hej {parentName}, {gamerName} har avregistrerats från {productName} (Gedu: {geduName})."
+    },
+    "unenrollmentGedu": {
+      "subject": "{gamerName} har lämnat din grupp \u2013 {productName}",
+      "heading": "Spelare har lämnat din grupp",
+      "body": "Hej {geduName}, {gamerName} har lämnat din grupp för {productName}."
+    },
+    "groupAdded": {
+      "subject": "Du har tilldelats en ny grupp \u2013 {productName}",
+      "heading": "Du har tilldelats en ny grupp",
+      "body": "Hej {geduName}, du har tilldelats en ny grupp för {productName}.",
+      "dashboardNote": "Du kommer att se denna grupp i din instrumentpanel inom kort."
+    },
+    "groupDeleted": {
+      "subject": "Din grupp har tagits bort \u2013 {productName}",
+      "heading": "Din grupp har tagits bort",
+      "body": "Hej {geduName}, din grupp för {productName} har tagits bort av en administratör."
+    },
+    "groupReassignedOldGedu": {
+      "subject": "Din grupp har omtilldelats \u2013 {productName}",
+      "heading": "Din grupp har omtilldelats",
+      "body": "Hej {oldGeduName}, din grupp för {productName} har omtilldelats till {newGeduName}."
+    },
+    "groupReassignedNewGedu": {
+      "subject": "Du har tilldelats en grupp \u2013 {productName}",
+      "heading": "Du har tilldelats en grupp",
+      "body": "Hej {newGeduName}, du har tilldelats en grupp för {productName} (tidigare ledd av {oldGeduName})."
+    },
+    "groupReassignedParent": {
+      "subject": "Gedubyte för {gamerName} \u2013 {productName}",
+      "heading": "Din spelares Gedu har ändrats",
+      "body": "Hej {parentName}, Gedun för {gamerName}s grupp i {productName} har ändrats från {oldGeduName} till {newGeduName}."
+    },
+    "gamerMovedParent": {
+      "subject": "{gamerName} har flyttats till en ny grupp \u2013 {productName}",
+      "heading": "Ditt barn har flyttats till en ny grupp",
+      "body": "Hej {parentName}, {gamerName} har flyttats från {oldGeduName}s grupp till {newGeduName}s grupp i {productName}."
+    },
+    "gamerMovedOldGedu": {
+      "subject": "{gamerName} har flyttats från din grupp \u2013 {productName}",
+      "heading": "En spelare har flyttats från din grupp",
+      "body": "Hej {geduName}, {gamerName} har flyttats från din grupp till {newGeduName}s grupp i {productName}."
+    },
+    "gamerMovedNewGedu": {
+      "subject": "{gamerName} har flyttats till din grupp \u2013 {productName}",
+      "heading": "En spelare har flyttats till din grupp",
+      "body": "Hej {geduName}, {gamerName} har flyttats till din grupp från {oldGeduName}s grupp i {productName}."
+    },
+    "feedback": {
+      "subject": "Feedback från {displayName} ({role})",
+      "heading": "Ny feedback mottagen",
+      "from": "Från",
+      "role": "Roll",
+      "emailLabel": "E-post",
+      "sent": "Skickat",
+      "message": "Meddelande",
+      "gamerNote": "Denna feedback kommer från ett spelarkonto. Svar skickas till deras förälder ({parentEmail})."
+    }
+  },
+  "mouseflow": {
+    "title": "Hjälp oss göra Sogverse bättre",
+    "body": "Sogverse är i Beta. För att lära oss hur människor faktiskt använder webbplatsen \u2014 så att vi kan göra den bättre för alla \u2014 skulle vi vilja spela in ditt besök (musrörelser, klick och vilka sidor du besöker). Endast Sogverses administratörer kan se detta, och vi kommer att radera allt när Beta tar slut.",
+    "accept": "Ja, hjälp till att förbättra Sogverse",
+    "decline": "Nej tack"
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL } from "@/lib/constants";
+import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
 import { templateRegistry, type TemplateField } from "@/lib/email-templates/registry";
 
 type EmailProvider = "brevo" | "klaviyo";
@@ -34,6 +36,8 @@ function isSelectField(field: TemplateField): field is Extract<TemplateField, { 
 // --- Page ---
 
 export default function TestingPage() {
+  const t = useTranslations('admin.testing');
+  const c = useTranslations('common');
   const { profile } = useAuth();
 
   const [mode, setMode] = useState<EmailMode>("template");
@@ -52,6 +56,7 @@ export default function TestingPage() {
   const templateKeys = Object.keys(templateRegistry);
   const [templateName, setTemplateName] = useState(templateKeys[0]);
   const [templateParams, setTemplateParams] = useState<Record<string, string>>({});
+  const [templateLocale, setTemplateLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
 
   const selectedTemplate = templateRegistry[templateName];
 
@@ -101,6 +106,7 @@ export default function TestingPage() {
             mode: "template",
             template: templateName,
             toEmail,
+            locale: templateLocale,
             params: (() => {
               const raw = Object.fromEntries(
                 selectedTemplate.fields.map((f) => [
@@ -121,11 +127,11 @@ export default function TestingPage() {
       } else {
         setResult({
           type: "success",
-          message: `Email sent successfully. Message ID: ${data.messageId}`,
+          message: t('emailSentSuccess', { messageId: data.messageId }),
         });
       }
     } catch {
-      setResult({ type: "error", message: "Failed to send request" });
+      setResult({ type: "error", message: t('failedToSendRequest') });
     } finally {
       setSending(false);
     }
@@ -134,9 +140,9 @@ export default function TestingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Testing Utilities</h1>
+        <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
-          Admin-only diagnostic tools for testing integrations.
+          {t('description')}
         </p>
       </div>
 
@@ -144,10 +150,10 @@ export default function TestingPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Mail className="h-5 w-5" />
-            <CardTitle>Email Tool</CardTitle>
+            <CardTitle>{t('emailTool')}</CardTitle>
           </div>
           <CardDescription>
-            Send a test transactional email to verify email delivery and preview templates.
+            {t('emailToolDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -155,68 +161,85 @@ export default function TestingPage() {
             {/* Provider + Mode */}
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="provider">Provider</Label>
+                <Label htmlFor="provider">{t('provider')}</Label>
                 <select
                   id="provider"
                   value={provider}
                   onChange={(e) => setProvider(e.target.value as EmailProvider)}
                   className={selectClass}
                 >
-                  <option value="brevo">Brevo</option>
+                  <option value="brevo">{t('brevo')}</option>
                   <option value="klaviyo" disabled>
-                    Klaviyo (coming soon)
+                    {t('klaviyoComingSoon')}
                   </option>
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="mode">Content</Label>
+                <Label htmlFor="mode">{t('content')}</Label>
                 <select
                   id="mode"
                   value={mode}
                   onChange={(e) => handleModeChange(e.target.value as EmailMode)}
                   className={selectClass}
                 >
-                  <option value="template">Template</option>
-                  <option value="custom">Custom</option>
+                  <option value="template">{t('template')}</option>
+                  <option value="custom">{t('custom')}</option>
                 </select>
               </div>
             </div>
 
             {/* To Email */}
             <div className="space-y-2">
-              <Label htmlFor="toEmail">To Email</Label>
+              <Label htmlFor="toEmail">{t('toEmail')}</Label>
               <Input
                 id="toEmail"
                 type="text"
                 required
                 value={toEmail}
                 onChange={(e) => setToEmail(e.target.value)}
-                placeholder="recipient@example.com, another@example.com"
+                placeholder={t('toEmailPlaceholder')}
               />
             </div>
 
             {/* Template mode fields */}
             {mode === "template" && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="template">Template</Label>
-                  <select
-                    id="template"
-                    value={templateName}
-                    onChange={(e) => handleTemplateChange(e.target.value)}
-                    className={selectClass}
-                  >
-                    {Object.entries(templateRegistry).map(([key, def]) => (
-                      <option key={key} value={key}>
-                        {def.label}
-                      </option>
-                    ))}
-                  </select>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="template">{t('template')}</Label>
+                    <select
+                      id="template"
+                      value={templateName}
+                      onChange={(e) => handleTemplateChange(e.target.value)}
+                      className={selectClass}
+                    >
+                      {Object.entries(templateRegistry).map(([key, def]) => (
+                        <option key={key} value={key}>
+                          {def.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="templateLocale">{t('language')}</Label>
+                    <select
+                      id="templateLocale"
+                      value={templateLocale}
+                      onChange={(e) => setTemplateLocale(e.target.value as SupportedLocale)}
+                      className={selectClass}
+                    >
+                      {SUPPORTED_LOCALES.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {LOCALE_CONFIG[opt].nativeLabel} ({LOCALE_CONFIG[opt].label})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="space-y-3 rounded-md border border-border p-4">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                      Template Parameters
+                      {t('templateParameters')}
                     </p>
                     {selectedTemplate.fields.map((field) => (
                       <div key={field.key} className="space-y-1">
@@ -255,7 +278,7 @@ export default function TestingPage() {
               <>
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="fromEmail">From Email</Label>
+                    <Label htmlFor="fromEmail">{t('fromEmail')}</Label>
                     <Input
                       id="fromEmail"
                       type="email"
@@ -264,7 +287,7 @@ export default function TestingPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="fromName">From Name</Label>
+                    <Label htmlFor="fromName">{t('fromName')}</Label>
                     <Input
                       id="fromName"
                       required
@@ -275,37 +298,37 @@ export default function TestingPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="subject">Subject</Label>
+                  <Label htmlFor="subject">{t('subject')}</Label>
                   <Input
                     id="subject"
                     required
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    placeholder="Test email subject"
+                    placeholder={t('subjectPlaceholder')}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="body">Body</Label>
+                  <Label htmlFor="body">{t('body')}</Label>
                   <textarea
                     id="body"
                     required
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
-                    placeholder="Plain text email body..."
+                    placeholder={t('bodyPlaceholder')}
                     rows={5}
                     className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="replyToEmail">Reply-To (optional)</Label>
+                  <Label htmlFor="replyToEmail">{t('replyTo')}</Label>
                   <Input
                     id="replyToEmail"
                     type="email"
                     value={replyToEmail}
                     onChange={(e) => setReplyToEmail(e.target.value)}
-                    placeholder="reply@example.com"
+                    placeholder={t('replyToPlaceholder')}
                   />
                 </div>
               </>
@@ -325,7 +348,7 @@ export default function TestingPage() {
             )}
 
             <Button type="submit" disabled={sending}>
-              {sending ? "Sending..." : "Send Test Email"}
+              {sending ? c('sending') : t('sendTestEmail')}
             </Button>
           </form>
         </CardContent>
@@ -333,3 +356,4 @@ export default function TestingPage() {
     </div>
   );
 }
+

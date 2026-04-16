@@ -1,6 +1,9 @@
 import { DARK_THEME } from "@/lib/constants/colors";
+import { ROLE_LABEL_KEYS } from "@/lib/constants/roles";
+import type { UserRole } from "@/types";
 import { wrapInLayout } from "./layout";
 import { escapeHtml, heading } from "./utils";
+import type { EmailTranslator } from "./translator";
 
 interface FeedbackEmailOptions {
   userName: string;
@@ -15,16 +18,17 @@ interface FeedbackEmailOptions {
 /**
  * Builds the HTML email body for a feedback submission.
  */
-export function buildFeedbackEmail(opts: FeedbackEmailOptions): string {
+export function buildFeedbackEmail(t: EmailTranslator, locale: string, opts: FeedbackEmailOptions): string {
   const escapedMessage = escapeHtml(opts.message).replace(/\n/g, "<br/>");
   const escapedName = escapeHtml(opts.userName);
-  const escapedRole = escapeHtml(opts.userRole);
+  const roleKey = ROLE_LABEL_KEYS[opts.userRole as UserRole];
+  const escapedRole = escapeHtml(t(roleKey));
   const escapedEmail = escapeHtml(opts.userEmail);
 
   const gamerNote = opts.isGamer && opts.parentEmail
     ? `<tr>
         <td style="padding:12px 0 0;color:${DARK_THEME.mutedFg};font-size:13px;font-style:italic;">
-          This feedback is from a gamer account. Replies will go to their parent (${escapeHtml(opts.parentEmail)}).
+          ${t("feedback.gamerNote", { parentEmail: escapeHtml(opts.parentEmail) })}
         </td>
       </tr>`
     : "";
@@ -32,25 +36,25 @@ export function buildFeedbackEmail(opts: FeedbackEmailOptions): string {
   const content = `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr>
-        <td>${heading("New Feedback Received")}</td>
+        <td>${heading(t("feedback.heading"))}</td>
       </tr>
       <tr>
         <td style="padding-bottom:16px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${DARK_THEME.border};border-radius:8px;">
             <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};width:100px;">From</td>
+              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};width:100px;">${t("feedback.from")}</td>
               <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;border-bottom:1px solid ${DARK_THEME.border};">${escapedName}</td>
             </tr>
             <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};">Role</td>
-              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;border-bottom:1px solid ${DARK_THEME.border};text-transform:capitalize;">${escapedRole}</td>
+              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};">${t("feedback.role")}</td>
+              <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;border-bottom:1px solid ${DARK_THEME.border};">${escapedRole}</td>
             </tr>
             <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};">Email</td>
+              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;border-bottom:1px solid ${DARK_THEME.border};">${t("feedback.emailLabel")}</td>
               <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;border-bottom:1px solid ${DARK_THEME.border};">${escapedEmail}</td>
             </tr>
             <tr>
-              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;">Sent</td>
+              <td style="padding:12px 16px;color:${DARK_THEME.mutedFg};font-size:13px;">${t("feedback.sent")}</td>
               <td style="padding:12px 16px;color:${DARK_THEME.foreground};font-size:14px;">${escapeHtml(opts.sentAt)}</td>
             </tr>
           </table>
@@ -58,7 +62,7 @@ export function buildFeedbackEmail(opts: FeedbackEmailOptions): string {
       </tr>
       <tr>
         <td style="font-size:14px;font-weight:bold;color:${DARK_THEME.foreground};padding-bottom:8px;">
-          Message
+          ${t("feedback.message")}
         </td>
       </tr>
       <tr>
@@ -69,5 +73,5 @@ export function buildFeedbackEmail(opts: FeedbackEmailOptions): string {
       ${gamerNote}
     </table>`;
 
-  return wrapInLayout({ title: "New Feedback", content });
+  return wrapInLayout({ title: t("feedback.heading"), content, locale, t });
 }

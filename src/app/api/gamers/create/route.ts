@@ -79,6 +79,34 @@ export async function POST(request: Request) {
       );
     }
 
+    // Resolve Minecraft account BEFORE creating auth user — the UNIQUE
+    // constraint on minecraft_uuid can reject this, and createUser burns
+    // the username irreversibly. By checking first, the parent can retry
+    // with a different Minecraft name without losing the gamer username.
+    let resolvedMinecraft: { username: string; uuid: string | null } | null = null;
+    if (minecraftUsername) {
+      const mojang = await lookupMinecraftUser(minecraftUsername);
+      resolvedMinecraft = {
+        username: minecraftUsername,
+        uuid: mojang?.uuid ?? null,
+      };
+
+      if (resolvedMinecraft.uuid) {
+        const { data: existingMc } = await admin
+          .from("minecraft_accounts")
+          .select("user_id")
+          .eq("minecraft_uuid", resolvedMinecraft.uuid)
+          .maybeSingle();
+
+        if (existingMc) {
+          return NextResponse.json(
+            { error: "This Minecraft account is already linked to another user" },
+            { status: 409 },
+          );
+        }
+      }
+    }
+
     // Step 1: Create auth user — trigger assigns customer role by default
     const { data: authData, error: authError } =
       await admin.auth.admin.createUser({
@@ -129,21 +157,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // Insert minecraft account separately if username provided
-    if (minecraftUsername) {
-      const mojang = await lookupMinecraftUser(minecraftUsername);
+    if (resolvedMinecraft) {
       const { error: mcError } = await admin
         .from("minecraft_accounts")
         .insert({
           user_id: gamerId,
-          minecraft_username: minecraftUsername,
-          minecraft_uuid: mojang?.uuid ?? null,
+          minecraft_username: resolvedMinecraft.username,
+          minecraft_uuid: resolvedMinecraft.uuid,
         });
 
       if (mcError) {
+        // UNIQUE constraint race (another request claimed the UUID between our check and insert)
+        const message = mcError.code === "23505"
+          ? "This Minecraft account is already linked to another user"
+          : mcError.message;
         return NextResponse.json(
-          { error: mcError.message },
-          { status: 500 }
+          { error: message },
+          { status: mcError.code === "23505" ? 409 : 500 },
         );
       }
     }

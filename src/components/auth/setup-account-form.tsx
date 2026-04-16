@@ -1,14 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { InternationalPhoneInput } from "@/components/ui/phone-input";
+import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
+import { isValidPhoneNumber } from "react-phone-number-input";
 import { getClient } from "@/lib/supabase/client";
+import { toE164Digits } from "@/lib/utils";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { useSpokenLanguages } from "@/services/users";
 
 const setupAccountSchema = z.object({
   displayName: z.string().min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Display name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -20,21 +26,33 @@ const setupAccountSchema = z.object({
 });
 
 export function SetupAccountForm() {
+  const t = useTranslations('auth');
+  const c = useTranslations('common');
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [minecraftUsername, setMinecraftUsername] = useState("");
+  const [phone, setPhone] = useState("");
+  const [spokenLanguages, setSpokenLanguages] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [inviteInvalid, setInviteInvalid] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionReady, setSessionReady] = useState(false);
   const [sessionEmail, setSessionEmail] = useState("");
 
   const supabase = getClient();
+  const { data: availableLanguages } = useSpokenLanguages();
 
   // generateLink() uses implicit flow (tokens in URL hash) because there's
   // no PKCE challenge. The @supabase/ssr client is configured for PKCE mode
   // so it won't detect hash tokens automatically — parse them manually.
+  //
+  // Supabase's /verify endpoint can also redirect here with an error hash
+  // (e.g. #error=access_denied&error_code=otp_expired&...) when the invite
+  // link has expired or been consumed. Treat those as a dead end: show the
+  // "ask admin for a new link" message and don't let the user submit a
+  // form that would 401 on the first API call.
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash) {
@@ -43,6 +61,15 @@ export function SetupAccountForm() {
     }
 
     const params = new URLSearchParams(hash.substring(1));
+
+    if (params.get("error") || params.get("error_code")) {
+      setError(t('setupAccount.inviteLinkExpired'));
+      setInviteInvalid(true);
+      setSessionReady(true);
+      window.history.replaceState(null, "", window.location.pathname);
+      return;
+    }
+
     const accessToken = params.get("access_token");
     const refreshToken = params.get("refresh_token");
 
@@ -51,9 +78,17 @@ export function SetupAccountForm() {
         .setSession({ access_token: accessToken, refresh_token: refreshToken })
         .then(({ data: sessionData, error }) => {
           if (error) {
-            setError("Your invite link has expired. Please ask your admin to send a new one.");
+            setError(t('setupAccount.inviteLinkExpired'));
+            setInviteInvalid(true);
           } else {
             setSessionEmail(sessionData.user?.email ?? "");
+            // Pre-fill the display name from the admin-supplied value in
+            // raw_user_meta_data (set via generateLink's options.data). The
+            // gedu can still edit it before submitting.
+            const metadataName = sessionData.user?.user_metadata.display_name;
+            if (typeof metadataName === "string" && metadataName.length > 0) {
+              setDisplayName(metadataName);
+            }
             // Clear hash from URL without triggering navigation
             window.history.replaceState(null, "", window.location.pathname);
           }
@@ -62,7 +97,12 @@ export function SetupAccountForm() {
     } else {
       setSessionReady(true);
     }
-  }, [supabase.auth]);
+  }, [supabase.auth, t]);
+
+  const markInviteExpired = () => {
+    setError(t('setupAccount.inviteLinkExpired'));
+    setInviteInvalid(true);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,18 +123,31 @@ export function SetupAccountForm() {
           body: JSON.stringify({ minecraftUsername: minecraftUsername.trim() }),
         });
         if (!mcResponse.ok) {
+          // 401 means the invite session was never set or has expired since
+          // page load — surface the friendly expired-link message instead of
+          // the bare "Unauthorized" string from requireRole.
+          if (mcResponse.status === 401) {
+            markInviteExpired();
+            return;
+          }
           const mcData = await mcResponse.json();
-          setError(mcData.error || "Failed to save Minecraft username");
+          setError(mcData.error || t('setupAccount.minecraftSaveFailed'));
           return;
         }
       }
 
-      // Set the password
+      // Set the password. If the client session is gone or expired,
+      // updateUser returns an AuthSessionMissingError — treat the same as
+      // the API 401 above.
       const { error: passwordError } = await supabase.auth.updateUser({
         password: validatedData.password,
       });
 
       if (passwordError) {
+        if (passwordError.name === "AuthSessionMissingError" || passwordError.status === 401) {
+          markInviteExpired();
+          return;
+        }
         setError(passwordError.message);
         return;
       }
@@ -102,9 +155,18 @@ export function SetupAccountForm() {
       // Update display name on the profile
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        if (phone && !isValidPhoneNumber(phone)) {
+          setError(t('setupAccount.invalidPhone'));
+          return;
+        }
+
         const { error: profileError } = await supabase
           .from("profiles")
-          .update({ display_name: validatedData.displayName })
+          .update({
+            display_name: validatedData.displayName,
+            phone: toE164Digits(phone),
+            spoken_languages: spokenLanguages,
+          })
           .eq("id", user.id);
 
         if (profileError) {
@@ -123,7 +185,7 @@ export function SetupAccountForm() {
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
       } else {
-        setError("An unexpected error occurred");
+        setError(c('unexpectedError'));
       }
     } finally {
       setIsLoading(false);
@@ -134,9 +196,9 @@ export function SetupAccountForm() {
     return (
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl">You&apos;re all set!</CardTitle>
+          <CardTitle className="text-2xl">{t('setupAccount.successTitle')}</CardTitle>
           <CardDescription>
-            Your account has been set up successfully.
+            {t('setupAccount.successDescription')}
           </CardDescription>
         </CardHeader>
         <CardFooter>
@@ -144,7 +206,7 @@ export function SetupAccountForm() {
             className="w-full"
             onClick={() => { window.location.href = ROUTES.login; }}
           >
-            Continue
+            {c('continue')}
           </Button>
         </CardFooter>
       </Card>
@@ -154,9 +216,9 @@ export function SetupAccountForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl text-center">Welcome to the Sogverse</CardTitle>
+        <CardTitle className="text-2xl text-center">{t('setupAccount.title')}</CardTitle>
         <CardDescription className="text-center">
-          Set up your game educator account below.
+          {t('setupAccount.description')}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -169,11 +231,11 @@ export function SetupAccountForm() {
           {/* Hidden email field so Chrome saves the password against the correct email */}
           <input type="email" autoComplete="username" value={sessionEmail} readOnly hidden />
           <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
+            <Label htmlFor="displayName">{c('displayName')}</Label>
             <Input
               id="displayName"
               type="text"
-              placeholder="Your name"
+              placeholder={t('setupAccount.namePlaceholder')}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               disabled={isLoading}
@@ -183,11 +245,11 @@ export function SetupAccountForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{c('password')}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder={t('setupAccount.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -195,15 +257,15 @@ export function SetupAccountForm() {
               autoComplete="new-password"
             />
             <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters
+              {c('passwordMinLength', { count: 8 })}
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder={t('setupAccount.confirmPasswordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}
@@ -217,10 +279,24 @@ export function SetupAccountForm() {
             disabled={isLoading}
             optional
           />
+          <div className="space-y-2">
+            <Label htmlFor="phone">{c('phoneNumber')}</Label>
+            <InternationalPhoneInput
+              id="phone"
+              value={phone || undefined}
+              onChange={(value) => setPhone(value ?? "")}
+            />
+          </div>
+          <SpokenLanguageCheckboxes
+            spokenLanguages={availableLanguages ?? []}
+            selected={spokenLanguages}
+            onChange={setSpokenLanguages}
+            disabled={isLoading}
+          />
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full" disabled={isLoading || !sessionReady}>
-            {!sessionReady ? "Loading..." : isLoading ? "Setting up..." : "Set Up Account"}
+          <Button type="submit" className="w-full" disabled={isLoading || !sessionReady || inviteInvalid}>
+            {!sessionReady ? c('loading') : isLoading ? t('setupAccount.settingUp') : t('setupAccount.submitButton')}
           </Button>
         </CardFooter>
       </form>

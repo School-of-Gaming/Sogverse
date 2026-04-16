@@ -1,6 +1,7 @@
 "use client";
 
 import { Megaphone } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import {
   type ZoneRect,
@@ -8,6 +9,15 @@ import {
   CANVAS_HEIGHT,
   ZONE_COLORS,
 } from "@/lib/constants/spatial";
+import { YTY_ELEMENTS } from "@/lib/constants/yty";
+
+/** Map breakout zone ids to YTY element translation keys. */
+const BREAKOUT_KEY = {
+  breakout_1: `elements.${YTY_ELEMENTS[0].id}.name`,
+  breakout_2: `elements.${YTY_ELEMENTS[1].id}.name`,
+  breakout_3: `elements.${YTY_ELEMENTS[2].id}.name`,
+  breakout_4: `elements.${YTY_ELEMENTS[3].id}.name`,
+} as const;
 
 interface ZoneProps {
   zone: ZoneRect;
@@ -15,8 +25,14 @@ interface ZoneProps {
 }
 
 export function Zone({ zone, isActive }: ZoneProps) {
+  const voice = useTranslations("voice");
+  const yty = useTranslations("yty");
   const colors = ZONE_COLORS[zone.id];
   const isBroadcast = zone.id === "broadcast";
+
+  const label = isBroadcast
+    ? voice("broadcast")
+    : yty(BREAKOUT_KEY[zone.id as keyof typeof BREAKOUT_KEY]);
 
   return (
     <div
@@ -46,7 +62,7 @@ export function Zone({ zone, isActive }: ZoneProps) {
       >
         {isBroadcast && <Megaphone className="h-3 w-3" />}
         {zone.icon && <zone.icon className="h-6 w-6" />}
-        {zone.label}
+        {label}
       </div>
     </div>
   );

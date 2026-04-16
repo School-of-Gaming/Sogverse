@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
+import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export const metadata: Metadata = {
-  title: "Minecraft Server API",
-  description: "API documentation for the Sogverse Minecraft server join-check endpoint.",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata.pages");
+  return {
+    title: t("minecraftApi"),
+    description: "API documentation for the Sogverse Minecraft server join-check endpoint.",
+    robots: { index: false, follow: false },
+  };
+}
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
@@ -50,51 +55,52 @@ function Field({
 
 export default function MinecraftApiDocsPage() {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+  const t = useTranslations('docs.minecraftApi');
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
       <h1 className="text-3xl font-bold tracking-tight">
-        Minecraft Server API
+        {t('title')}
       </h1>
       <p className="mt-4 text-lg text-muted-foreground">
-        Use this endpoint to check whether a connecting player is allowed to join
-        the Minecraft world. The server sends the player&apos;s Minecraft UUID
-        and receives an allow/deny decision with session timing.
+        {t('description')}
       </p>
 
       {/* Authentication */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">Authentication</h2>
+        <h2 className="text-2xl font-semibold">{t('authentication.heading')}</h2>
         <p className="mt-3 text-muted-foreground">
-          All requests require a static API key passed as a Bearer token in the{" "}
-          <Code>Authorization</Code> header.
+          {t.rich('authentication.description', {
+            code: (chunks) => <Code>{chunks}</Code>,
+          })}
         </p>
         <CodeBlock>{`Authorization: Bearer <MINECRAFT_SERVER_API_KEY>`}</CodeBlock>
         <p className="mt-3 text-sm text-muted-foreground">
-          Contact the Sogverse team if you need a key or need it rotated.
+          {t('authentication.contactNote')}
         </p>
       </section>
 
       {/* Endpoint */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">Endpoint</h2>
+        <h2 className="text-2xl font-semibold">{t('endpoint.heading')}</h2>
         <div className="mt-4">
           <CodeBlock>{`GET ${baseUrl}/api/minecraft/join-check?uuid=<minecraft-uuid>`}</CodeBlock>
         </div>
 
-        <h3 className="mt-6 text-lg font-medium">Query Parameters</h3>
+        <h3 className="mt-6 text-lg font-medium">{t('endpoint.queryParams')}</h3>
         <div className="mt-2">
-          <Field name="uuid" type="string (required)">
-            The player&apos;s Minecraft UUID. Both dashed
-            (<Code>069a79f4-44e9-4726-a5be-fca90e38aaf5</Code>) and undashed
-            (<Code>069a79f444e94726a5befca90e38aaf5</Code>) formats are accepted.
+          <Field name="uuid" type={t('endpoint.uuidType')}>
+            {t.rich('endpoint.uuidDescription', {
+              code1: (chunks) => <Code>{chunks}</Code>,
+              code2: (chunks) => <Code>{chunks}</Code>,
+            })}
           </Field>
         </div>
       </section>
 
       {/* Responses */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">Responses</h2>
+        <h2 className="text-2xl font-semibold">{t('responses.heading')}</h2>
 
         <div className="mt-6 space-y-6">
           {/* 200 Allowed */}
@@ -104,7 +110,7 @@ export default function MinecraftApiDocsPage() {
                 <span className="rounded bg-success/10 px-2 py-0.5 text-xs font-semibold text-success">
                   200
                 </span>
-                Player Allowed
+                {t('responses.playerAllowed')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -117,22 +123,19 @@ export default function MinecraftApiDocsPage() {
 }`}</CodeBlock>
               <div className="mt-4">
                 <Field name="allowed" type="true">
-                  Player has an active session right now.
+                  {t('responses.fields.allowedTrue')}
                 </Field>
                 <Field name="role" type={`"gamer" | "gedu"`}>
-                  The player&apos;s role in Sogverse.
+                  {t('responses.fields.role')}
                 </Field>
                 <Field name="displayName" type="string">
-                  The player&apos;s display name.
+                  {t('responses.fields.displayName')}
                 </Field>
                 <Field name="endTime" type="ISO 8601 string">
-                  When the session window closes (includes a 5-minute buffer
-                  after the scheduled end). Use this to schedule a kick or
-                  re-check.
+                  {t('responses.fields.endTime')}
                 </Field>
                 <Field name="reason" type="string">
-                  Human-readable description: the product name and educator
-                  name.
+                  {t('responses.fields.reason')}
                 </Field>
               </div>
             </CardContent>
@@ -145,7 +148,7 @@ export default function MinecraftApiDocsPage() {
                 <span className="rounded bg-warning/10 px-2 py-0.5 text-xs font-semibold text-warning">
                   200
                 </span>
-                Player Denied
+                {t('responses.playerDenied')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -156,8 +159,9 @@ export default function MinecraftApiDocsPage() {
   "reason": "No active session"
 }`}</CodeBlock>
               <p className="mt-4 text-sm text-muted-foreground">
-                The player exists in Sogverse but has no active session right
-                now. No <Code>endTime</Code> is included.
+                {t.rich('responses.deniedDescription', {
+                  code: (chunks) => <Code>{chunks}</Code>,
+                })}
               </p>
             </CardContent>
           </Card>
@@ -165,7 +169,7 @@ export default function MinecraftApiDocsPage() {
           {/* Error responses */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Error Responses</CardTitle>
+              <CardTitle className="text-base">{t('responses.errorResponses')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-3">
@@ -173,7 +177,7 @@ export default function MinecraftApiDocsPage() {
                   401
                 </span>
                 <p className="text-sm text-muted-foreground">
-                  Missing, malformed, or invalid API key.
+                  {t('responses.error401')}
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -181,7 +185,9 @@ export default function MinecraftApiDocsPage() {
                   400
                 </span>
                 <p className="text-sm text-muted-foreground">
-                  Missing or invalid <Code>uuid</Code> query parameter.
+                  {t.rich('responses.error400', {
+                    code: (chunks) => <Code>{chunks}</Code>,
+                  })}
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -189,7 +195,7 @@ export default function MinecraftApiDocsPage() {
                   404
                 </span>
                 <p className="text-sm text-muted-foreground">
-                  No Sogverse account linked to this Minecraft UUID.
+                  {t('responses.error404')}
                 </p>
               </div>
               <div className="flex items-start gap-3">
@@ -197,7 +203,7 @@ export default function MinecraftApiDocsPage() {
                   500
                 </span>
                 <p className="text-sm text-muted-foreground">
-                  Server error. Retry with backoff.
+                  {t('responses.error500')}
                 </p>
               </div>
             </CardContent>
@@ -207,8 +213,9 @@ export default function MinecraftApiDocsPage() {
 
       {/* Example */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">Example</h2>
+        <h2 className="text-2xl font-semibold">{t('example.heading')}</h2>
         <div className="mt-4">
+          {/* eslint-disable-next-line i18next/no-literal-string -- curl code sample; code is never translated */}
           <CodeBlock title="curl">{`curl -H "Authorization: Bearer <key>" \\
   "${baseUrl}/api/minecraft/join-check?uuid=069a79f4-44e9-4726-a5be-fca90e38aaf5"`}</CodeBlock>
         </div>
@@ -216,31 +223,25 @@ export default function MinecraftApiDocsPage() {
 
       {/* Integration Notes */}
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">Integration Notes</h2>
+        <h2 className="text-2xl font-semibold">{t('integrationNotes.heading')}</h2>
         <ul className="mt-4 list-inside list-disc space-y-3 text-muted-foreground">
+          <li>{t('integrationNotes.note1')}</li>
+          <li>{t('integrationNotes.note2')}</li>
           <li>
-            Call this endpoint on every player join. Both gedus and gamers are
-            session-gated &mdash; they can only join during their scheduled
-            session window.
+            {t.rich('integrationNotes.note3', {
+              code1: (chunks) => <Code>{chunks}</Code>,
+              code2: (chunks) => <Code>{chunks}</Code>,
+            })}
           </li>
           <li>
-            The session window opens 5 minutes before the scheduled start and
-            closes 5 minutes after the scheduled end.
+            {t.rich('integrationNotes.note4', {
+              code: (chunks) => <Code>{chunks}</Code>,
+            })}
           </li>
           <li>
-            When <Code>allowed: true</Code>, use <Code>endTime</Code> to
-            schedule a re-check or kick. If back-to-back sessions exist (e.g.
-            one ends 14:00, next starts 14:05), the player gets kicked at the
-            first session&apos;s end and rejoins for the next.
-          </li>
-          <li>
-            A <Code>404</Code> means the player hasn&apos;t linked their
-            Minecraft account in Sogverse yet. You can show them a message to
-            link their account in their profile settings.
-          </li>
-          <li>
-            All error responses follow the shape{" "}
-            <Code>{`{ "error": "message" }`}</Code>.
+            {t.rich('integrationNotes.note5', {
+              code: (chunks) => <Code>{chunks}</Code>,
+            })}
           </li>
         </ul>
       </section>

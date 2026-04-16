@@ -164,7 +164,6 @@ describe("POST /api/checkout/tokens", () => {
     mockAuthenticatedWithRole("gedu");
 
     const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
-    const data = await response.json();
 
     expect(response.status).toBe(403);
   });
@@ -173,7 +172,6 @@ describe("POST /api/checkout/tokens", () => {
     mockAuthenticatedWithRole("admin");
 
     const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "usd" }));
-    const data = await response.json();
 
     expect(response.status).toBe(403);
   });
@@ -214,6 +212,7 @@ describe("POST /api/checkout/tokens", () => {
     const data = await response.json();
 
     expect(response.status).toBe(409);
+    expect(data.error).toBe("You already have an active subscription");
   });
 
   it("should allow one-time purchase even with active subscription", async () => {
@@ -339,7 +338,6 @@ describe("POST /api/checkout/tokens", () => {
     });
 
     const response = await POST(createRequest({ priceId: "price_starter_usd" }));
-    const data = await response.json();
 
     expect(response.status).toBe(200);
 
@@ -355,7 +353,6 @@ describe("POST /api/checkout/tokens", () => {
     });
 
     const response = await POST(createRequest({ priceId: "price_starter_usd", currency: "xyz" }));
-    const data = await response.json();
 
     expect(response.status).toBe(200);
 

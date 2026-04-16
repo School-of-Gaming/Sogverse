@@ -53,7 +53,7 @@ double_confirm_changes = true
 enable_confirmations = false
 secure_password_change = true
 max_frequency = "1s"
-otp_expiry = 3600  # 1 hour — keep in sync with password-reset.ts email copy
+otp_expiry = 259200  # 72 hours — shared across all email OTPs (invite, password reset, magic link). Sized for gedu invites so they survive a weekend; password-reset.ts email copy still says "1 hour" to encourage fast action on credential resets. See TODO.md for the long-term fix (custom invite table with its own TTL so password reset can drop back to 1h).
 
 [auth.sms]
 enable_signup = false

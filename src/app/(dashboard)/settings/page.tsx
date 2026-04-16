@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Lock, Bell, Palette, Gamepad2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,20 +11,32 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
+import { InternationalPhoneInput } from "@/components/ui/phone-input";
+import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
+import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useAuth } from "@/providers";
-import { useUpdateProfile } from "@/services/users";
+import { isValidPhoneNumber } from "react-phone-number-input";
+import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
+import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
+import type { ProfileUpdate } from "@/types";
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
+  const c = useTranslations('common');
   const { user, profile, refreshProfile } = useAuth();
   const updateProfile = useUpdateProfile();
   const router = useRouter();
   const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
+  const isGedu = profile?.role === "gedu";
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
+  const { data: availableLanguages } = useSpokenLanguages();
 
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
+  const [phone, setPhone] = useState(profile?.phone ? `+${profile.phone}` : "");
+  const [spokenLanguages, setSpokenLanguages] = useState<string[]>(profile?.spoken_languages ?? []);
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -48,19 +61,27 @@ export default function SettingsPage() {
     setErrorMessage(null);
 
     try {
-      await updateProfile.mutateAsync({
-        userId: user.id,
-        updates: { display_name: displayName },
-      });
+      if (phone && !isValidPhoneNumber(phone)) {
+        setErrorMessage(t('invalidPhone'));
+        setIsSaving(false);
+        return;
+      }
+
+      const updates: ProfileUpdate = {
+        display_name: displayName,
+        phone: toE164Digits(phone),
+        spoken_languages: spokenLanguages,
+      };
+      await updateProfile.mutateAsync({ userId: user.id, updates });
       await refreshProfile();
-      setSuccessMessage("Profile updated successfully!");
+      setSuccessMessage(t('profileUpdated'));
     } catch (error: unknown) {
       const message =
         error instanceof Error
           ? error.message
           : typeof error === "object" && error !== null && "message" in error
             ? String((error as { message: unknown }).message)
-            : "Failed to update profile";
+            : t('failedToUpdateProfile');
       setErrorMessage(message);
     } finally {
       setIsSaving(false);
@@ -81,8 +102,8 @@ export default function SettingsPage() {
       await updateMyMc.mutateAsync(mcValue);
       setMcSuccess(
         mcValue
-          ? "Minecraft username saved!"
-          : "Minecraft username cleared.",
+          ? t('minecraftSaved')
+          : t('minecraftCleared'),
       );
     } catch (error: unknown) {
       const message =
@@ -90,7 +111,7 @@ export default function SettingsPage() {
           ? error.message
           : typeof error === "object" && error !== null && "message" in error
             ? String((error as { message: unknown }).message)
-            : "Failed to update Minecraft username";
+            : t('failedToUpdateMinecraft');
       setMcError(message);
     } finally {
       setIsSavingMc(false);
@@ -98,11 +119,11 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Settings</h1>
+        <h1 className="text-3xl font-bold">{c('settings')}</h1>
         <p className="text-muted-foreground">
-          Manage your account settings and preferences
+          {t('subtitle')}
         </p>
       </div>
 
@@ -111,10 +132,10 @@ export default function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <User className="h-5 w-5" />
-            <CardTitle>Profile</CardTitle>
+            <CardTitle>{c('profile')}</CardTitle>
           </div>
           <CardDescription>
-            Update your personal information
+            {t('profileDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -130,7 +151,7 @@ export default function SettingsPage() {
                 {profile?.email || `@${profile?.username}`}
               </p>
               <p className="text-xs text-muted-foreground capitalize">
-                {profile?.role} account
+                {t('roleAccount', { role: profile?.role ?? '' })}
               </p>
             </div>
           </div>
@@ -148,18 +169,33 @@ export default function SettingsPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
+            <Label htmlFor="displayName">{c('displayName')}</Label>
             <Input
               id="displayName"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your display name"
+              placeholder={t('displayNamePlaceholder')}
               maxLength={DISPLAY_NAME_MAX}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Email</Label>
+            <Label htmlFor="phone">{c('phoneNumber')}</Label>
+            <InternationalPhoneInput
+              id="phone"
+              value={phone || undefined}
+              onChange={(value) => setPhone(value ?? "")}
+            />
+          </div>
+
+          <SpokenLanguageCheckboxes
+            spokenLanguages={availableLanguages ?? []}
+            selected={spokenLanguages}
+            onChange={setSpokenLanguages}
+          />
+
+          <div className="space-y-2">
+            <Label>{c('email')}</Label>
             <Input
               value={profile?.email || ""}
               disabled
@@ -169,7 +205,7 @@ export default function SettingsPage() {
 
           {profile?.username && (
             <div className="space-y-2">
-              <Label>Username</Label>
+              <Label>{c('username')}</Label>
               <Input
                 value={profile.username}
                 disabled
@@ -179,7 +215,7 @@ export default function SettingsPage() {
           )}
 
           <Button onClick={handleSaveProfile} disabled={isSaving}>
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? c('saving') : c('saveChanges')}
           </Button>
         </CardContent>
       </Card>
@@ -189,10 +225,10 @@ export default function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Lock className="h-5 w-5" />
-            <CardTitle>Security</CardTitle>
+            <CardTitle>{c('security')}</CardTitle>
           </div>
           <CardDescription>
-            Manage your password and security settings
+            {t('securityDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -200,10 +236,13 @@ export default function SettingsPage() {
             variant="outline"
             onClick={handleChangePassword}
           >
-            Change Password
+            {t('changePassword')}
           </Button>
         </CardContent>
       </Card>
+
+      {/* Gedu coverage areas — where they can substitute in-person */}
+      {isGedu && user && <GeduCoverageEditor geduId={user.id} />}
 
       {/* Minecraft Account (gamers and gedus) */}
       {showMinecraft && (
@@ -211,10 +250,10 @@ export default function SettingsPage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Gamepad2 className="h-5 w-5" />
-              <CardTitle>Minecraft Account</CardTitle>
+              <CardTitle>{t('minecraftAccount')}</CardTitle>
             </div>
             <CardDescription>
-              Link your Minecraft Java username
+              {t('minecraftDescription')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -241,7 +280,7 @@ export default function SettingsPage() {
                 type="submit"
                 disabled={isSavingMc}
               >
-                {isSavingMc ? "Saving..." : "Save Minecraft Username"}
+                {isSavingMc ? c('saving') : t('saveMinecraft')}
               </Button>
             </form>
           </CardContent>
@@ -253,15 +292,15 @@ export default function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            <CardTitle>Notifications</CardTitle>
+            <CardTitle>{t('notifications')}</CardTitle>
           </div>
           <CardDescription>
-            Configure your notification preferences
+            {t('notificationsDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Notification settings coming soon.
+            {t('notificationsComingSoon')}
           </p>
         </CardContent>
       </Card>
@@ -271,15 +310,15 @@ export default function SettingsPage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
-            <CardTitle>Appearance</CardTitle>
+            <CardTitle>{t('appearance')}</CardTitle>
           </div>
           <CardDescription>
-            Customize how Sogverse looks
+            {t('appearanceDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Theme settings coming soon. Currently using dark theme.
+            {t('appearanceComingSoon')}
           </p>
         </CardContent>
       </Card>

@@ -7,12 +7,21 @@ export const USER_ROLES = {
 
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
+/** Translation keys in the `common` namespace for each role's display name. */
+export const ROLE_LABEL_KEYS = {
+  admin: "roleAdmin",
+  customer: "roleParent",
+  gamer: "roleGamer",
+  gedu: "roleGedu",
+} as const satisfies Record<UserRole, string>;
 
-export const ROLE_BADGES: Record<UserRole, { label: string; className: string }> = {
-  gamer: { label: "Gamer", className: "bg-primary text-primary-foreground" },
-  customer: { label: "Parent", className: "bg-secondary text-secondary-foreground" },
-  gedu: { label: "Gedu", className: "bg-gradient-to-r from-primary to-secondary text-white" },
-  admin: { label: "Admin", className: "bg-white text-black" },
+export type RoleLabelKey = (typeof ROLE_LABEL_KEYS)[UserRole];
+
+export const ROLE_BADGE_STYLES: Record<UserRole, string> = {
+  gamer: "bg-primary text-primary-foreground",
+  customer: "bg-secondary text-secondary-foreground",
+  gedu: "bg-gradient-to-r from-primary to-secondary text-white",
+  admin: "bg-white text-black",
 };
 
 export const ROLE_DASHBOARD_PATHS: Record<UserRole, string> = {
