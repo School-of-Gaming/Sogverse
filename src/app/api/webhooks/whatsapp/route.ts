@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { WHATSAPP_DIRECTION, WHATSAPP_MESSAGE_STATUS } from "@/types";
+import type { WhatsAppMessageUpdate } from "@/types";
 
 const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN!;
 const appSecret = process.env.WHATSAPP_APP_SECRET!;
@@ -151,7 +152,7 @@ export async function POST(request: Request) {
         ];
         if (!trackableStatuses.includes(statusValue)) continue;
 
-        const update: Record<string, unknown> = { status: statusValue };
+        const update: WhatsAppMessageUpdate = { status: statusValue };
 
         if (statusValue === WHATSAPP_MESSAGE_STATUS.FAILED) {
           const errorCode = status.errors?.[0]?.code;

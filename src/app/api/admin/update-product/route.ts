@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import type { ProductUpdate } from "@/types";
 
 const EXT_TO_MIME: Record<string, string> = {
   jpg: "image/jpeg",
@@ -100,10 +101,10 @@ export async function POST(request: Request) {
       }
     }
 
-    const updates: Record<string, unknown> = {};
+    const updates: Partial<ProductUpdate> = {};
     for (const field of UPDATABLE_FIELDS) {
       if (field in body) {
-        updates[field] = body[field];
+        (updates as Record<string, unknown>)[field] = body[field];
       }
     }
 

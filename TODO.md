@@ -78,6 +78,33 @@ The send route (`src/app/api/admin/whatsapp/send/route.ts`) and webhook handler 
 
 **Why this matters:** the test drift was a silent quality problem. The `no-unnecessary-condition` lint rule caught it only because we widened lint to `tests/` — the test file had `?.state` chains that TS said were unreachable, which was the thread that led to discovering the duplicated logic. Extracting the parser eliminates the duplication class entirely.
 
+### Refactor SpatialVoiceRoom screen-share animation off render-time ref I/O
+
+`src/components/voice/SpatialVoiceRoom.tsx` uses a `staleSharerRef` to keep showing the previous screen sharer during the exit animation after `screenSharerSessionId` flips to `null`. The current implementation mutates the ref during render (line ~44), reads it during render in JSX (line ~113), and uses `setState` inside the synchronizing `useEffect` (line ~50). All three are flagged by `eslint-plugin-react-hooks@7` (the React-Compiler-aware rules `react-hooks/refs` and `react-hooks/set-state-in-effect`) — currently suppressed with inline `eslint-disable-next-line` comments pointing here.
+
+These are real anti-patterns, not false positives. They happened to work but will become hostile under the React Compiler / future React 19+ behavior, which can re-render or skip renders in ways that break ref-during-render invariants.
+
+- [ ] Replace the render-time ref mutation with derived state: track the "last known sharer id" in `useState`, updated inside the existing `useEffect` (or a small dedicated one) when `screenSharerSessionId` becomes truthy
+- [ ] Remove `staleSharerRef` entirely; `<ScreenShareDisplay sharerSessionIdOverride={...}>` reads from the new state
+- [ ] Reconsider the `setScreenShareMounted(true)` + double `requestAnimationFrame` pattern — likely cleaner as a CSS-driven mount/unmount via `data-` attribute or as an effect that sets visibility on the next paint without nested rAFs
+- [ ] Once the suppressions are removed, delete the three `eslint-disable-next-line` comments referencing this TODO
+
+**Why this is shelved for now:** the file works in production and the lint failures only appeared after we bumped `eslint-config-next` 16.1.6 → 16.2.4, which transitively pulled in `eslint-plugin-react-hooks@7`. Suppressing unblocked CI without rewriting working animation logic mid-other-work.
+
+### Audit setState-in-effect violations from eslint-plugin-react-hooks@7
+
+Three additional files trip the new `react-hooks/set-state-in-effect` rule with the same "set state once on mount" shape (currently suppressed inline pointing here):
+
+- `src/app/(dashboard)/admin/ui-components/page.tsx` — `useEffect(() => setMounted(true), [])` for the canonical post-hydration flag
+- `src/components/auth/reset-password-form.tsx` — parses `window.location.hash` once on mount, calls `setSessionReady(true)` if no hash present
+- `src/components/auth/setup-account-form.tsx` — same hash-parse pattern
+
+The rule's preferred patterns: derive from props/`useMemo`, use `useSyncExternalStore` for SSR-safe mount detection, or move the one-shot logic into an initializer / event handler. None of these rewrites are urgent — the current code works and the rule's concern (cascading renders) is mild for one-shot mount setup — but they should be revisited when touching these files.
+
+- [ ] Replace `useEffect(() => setMounted(true), [])` with `useSyncExternalStore` or an SSR-safe equivalent in `ui-components/page.tsx`
+- [ ] Move `window.location.hash` parsing in the auth forms out of `useEffect` (e.g., into a `useState` initializer guarded by `typeof window`, or a top-level helper called from an event handler)
+- [ ] Once each is rewritten, drop its `eslint-disable-next-line` comment
+
 ### Multi-Parent Gamer Linking
 
 Currently the only way to link a parent to a gamer is when the parent creates the gamer via `POST /api/gamers/create`. To support a second parent linking to an existing gamer:
