@@ -27,6 +27,11 @@ import {
   pad2,
 } from "../../_mock/format";
 
+// Shared between PreOpenPanel and NotOpenSkeleton so the load→ready
+// transition doesn't add or remove a line of text under the submit button.
+const PRE_OPEN_HELPER_TEXT =
+  "Pick your child and agree to the rules for a one-click registration.";
+
 export default function ClubDetailPage() {
   const { code, clubId } = useParams<{ code: string; clubId: string }>();
   const school = getSchool(code);
@@ -227,7 +232,10 @@ function NotOpenSkeleton() {
         <p className="invisible text-center text-xs text-muted-foreground">
           placeholder for opens-at date
         </p>
-        <RegistrationFormSkeleton idleLabel="Not yet open" />
+        <RegistrationFormSkeleton
+          idleLabel="Not yet open"
+          helperText={PRE_OPEN_HELPER_TEXT}
+        />
         <SeatCounterSkeleton />
       </CardContent>
     </Card>
@@ -309,16 +317,19 @@ function WaitlistSkeleton({ club }: { club: Club }) {
 function RegistrationFormSkeleton({
   idleLabel,
   variant = "default",
+  helperText,
 }: {
   idleLabel: string;
   variant?: "default" | "secondary";
+  helperText?: string;
 }) {
   return (
     <div className="space-y-4">
       <div className="rounded-md border bg-muted/30 p-4">
-        <h3 className="invisible text-sm font-semibold">
-          Who are you registering?
-        </h3>
+        <h3 className="text-sm font-semibold">Who are you registering?</h3>
+        {helperText && (
+          <p className="mt-1 text-xs text-muted-foreground">{helperText}</p>
+        )}
         <div className="mt-3 space-y-2">
           {MOCK_GAMERS.map((g) => (
             <div
@@ -329,14 +340,14 @@ function RegistrationFormSkeleton({
           <div className="h-[38px] rounded-md border border-dashed border-input" />
         </div>
       </div>
-      <div className="invisible flex items-start gap-2 text-xs">
-        <input type="checkbox" className="mt-0.5" readOnly />
-        <span>
+      <label className="flex items-start gap-2 text-xs">
+        <input type="checkbox" className="mt-0.5" disabled />
+        <span className="text-muted-foreground">
           I agree to the club&apos;s code of conduct and understand that
           repeated unexcused absences may open my child&apos;s seat for the
           next family on the waitlist.
         </span>
-      </div>
+      </label>
       <Button
         size="lg"
         variant={variant}
@@ -411,7 +422,7 @@ function PreOpenPanel({
           readyLabel={isOpen ? "Register now →" : "Ready — waiting for open"}
           // Constant across the cd.done transition so the paragraph doesn't
           // disappear and push the submit button up under the user's cursor.
-          helperText="Pick your child and agree to the rules for a one-click registration."
+          helperText={PRE_OPEN_HELPER_TEXT}
           onSubmit={handleRegister}
         />
         <SeatCounter club={club} seatsRemaining={state.seatsRemaining} />
