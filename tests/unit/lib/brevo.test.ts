@@ -6,6 +6,7 @@ import { sendTransactionalEmail } from "@/lib/brevo";
 const mockFetch = vi.fn();
 
 beforeEach(() => {
+  mockFetch.mockClear();
   vi.stubGlobal("fetch", mockFetch);
   vi.stubEnv("BREVO_API_KEY", "test-brevo-key");
 });

@@ -11,11 +11,13 @@ const { mockStripeSessionCreate } = vi.hoisted(() => ({
 }));
 
 vi.mock("stripe", () => ({
-  default: vi.fn(() => ({
-    checkout: {
-      sessions: { create: mockStripeSessionCreate },
-    },
-  })),
+  default: vi.fn(function () {
+    return {
+      checkout: {
+        sessions: { create: mockStripeSessionCreate },
+      },
+    };
+  }),
 }));
 
 const mockRequireRole = vi.fn();
