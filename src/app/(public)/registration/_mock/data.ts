@@ -121,6 +121,31 @@ const MODULE_LOAD_TIME = typeof window !== "undefined" ? Date.now() : 0;
 
 export const CLUBS: Club[] = [
   {
+    // Registration flips from countdown → open in ~30 seconds so the team
+    // can quickly review the transition without waiting minutes.
+    id: "tap-mc-redstone",
+    schoolCode: "TAPIOLA26",
+    name: "Minecraft Redstone -kerho",
+    description:
+      "Redstone-kaapelointia, logiikkaportteja ja automaatiota Minecraftissa. Rakennetaan yhdessä pieniä koneita ja opitaan, miten sähköpiirit toimivat pelin sisällä.",
+    game: "Minecraft",
+    language: "Finnish",
+    isOnline: true,
+    dayOfWeek: 2,
+    startTime: "15:30",
+    endTime: "17:00",
+    seasonStartIso: "2026-01-14",
+    seasonEndIso: "2026-05-27",
+    opensOffsetMs: 30 * 1000,
+    seatCount: 10,
+    seatsTaken: 0,
+    waitlistCount: 0,
+    skipped: STANDARD_SKIPS,
+    gedu: MIKKO,
+    minAge: 9,
+    maxAge: 13,
+  },
+  {
     id: "tap-mc-survival",
     schoolCode: "TAPIOLA26",
     name: "Minecraft Survival -kerho",

@@ -188,7 +188,14 @@ function RegistrationPanel({
     // loading → ready transition doesn't shift the layout.
     return <RegistrationPanelSkeleton club={club} />;
   }
-  if (state.status === "not_open") {
+  // Route by the club's INITIAL shape (stable club property), not by the
+  // live state.status. Critical: when the countdown ends, state.status flips
+  // from "not_open" → "available", but we keep rendering the same
+  // PreOpenPanel component so React reuses the same instance. The
+  // RegistrationForm inside keeps its state (selected gamer, checked rules)
+  // and the layout stays put. Swapping panel components here would unmount
+  // the form and reset it.
+  if (club.opensOffsetMs > 0) {
     return <PreOpenPanel club={club} state={state} now={now} schoolCode={schoolCode} />;
   }
   if (state.status === "full") {
@@ -210,7 +217,7 @@ function NotOpenSkeleton() {
   const zero = { done: false, days: 0, hours: 0, minutes: 0, seconds: 0, totalMs: 0 };
   return (
     <Card className="overflow-hidden" aria-busy="true">
-      <div className="bg-muted px-6 py-3 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="bg-muted px-6 py-3 text-center text-sm font-semibold text-muted-foreground">
         Registration opens in
       </div>
       <CardContent className="space-y-5 p-6">
@@ -380,11 +387,14 @@ function PreOpenPanel({
 
   return (
     <Card className={`overflow-hidden ${isOpen ? "border-primary" : ""}`}>
+      {/* Banner keeps identical text-sm sizing in both states so the flip from
+          countdown → open doesn't push the content (and the submit button)
+          down a few pixels under the user's cursor. */}
       <div
-        className={`px-6 py-3 text-center ${
+        className={`px-6 py-3 text-center text-sm font-semibold ${
           isOpen
-            ? "bg-primary text-sm font-semibold text-primary-foreground"
-            : "bg-muted text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            ? "bg-primary text-primary-foreground"
+            : "bg-muted text-muted-foreground"
         }`}
       >
         {isOpen ? "Registration is OPEN" : "Registration opens in"}
@@ -399,11 +409,9 @@ function PreOpenPanel({
           canSubmit={isOpen}
           idleLabel={isOpen ? "Register now →" : "Not yet open"}
           readyLabel={isOpen ? "Register now →" : "Ready — waiting for open"}
-          helperText={
-            isOpen
-              ? undefined
-              : "Pick your child and agree to the rules now. When the timer hits zero, a single click registers you."
-          }
+          // Constant across the cd.done transition so the paragraph doesn't
+          // disappear and push the submit button up under the user's cursor.
+          helperText="Pick your child and agree to the rules for a one-click registration."
           onSubmit={handleRegister}
         />
         <SeatCounter club={club} seatsRemaining={state.seatsRemaining} />
