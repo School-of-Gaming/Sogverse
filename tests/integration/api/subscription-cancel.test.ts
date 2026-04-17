@@ -10,9 +10,11 @@ const { mockSubscriptionsUpdate } = vi.hoisted(() => ({
 }));
 
 vi.mock("stripe", () => ({
-  default: vi.fn(() => ({
-    subscriptions: { update: mockSubscriptionsUpdate },
-  })),
+  default: vi.fn(function () {
+    return {
+      subscriptions: { update: mockSubscriptionsUpdate },
+    };
+  }),
 }));
 
 const mockRequireRole = vi.fn();

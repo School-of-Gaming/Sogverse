@@ -2,10 +2,12 @@ import { describe, it, expect, vi } from "vitest";
 
 // Mock Stripe to prevent initialization error when importing from stripe/products
 vi.mock("stripe", () => ({
-  default: vi.fn(() => ({
-    products: { list: vi.fn() },
-    prices: { list: vi.fn() },
-  })),
+  default: vi.fn(function () {
+    return {
+      products: { list: vi.fn() },
+      prices: { list: vi.fn() },
+    };
+  }),
 }));
 
 import { getPackageSavings, tokensToCurrencyDisplay } from "@/lib/stripe/products";

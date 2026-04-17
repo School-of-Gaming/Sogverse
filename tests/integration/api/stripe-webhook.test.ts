@@ -10,10 +10,12 @@ const { mockConstructEvent, mockSubscriptionsRetrieve } = vi.hoisted(() => ({
 }));
 
 vi.mock("stripe", () => ({
-  default: vi.fn(() => ({
-    webhooks: { constructEvent: mockConstructEvent },
-    subscriptions: { retrieve: mockSubscriptionsRetrieve },
-  })),
+  default: vi.fn(function () {
+    return {
+      webhooks: { constructEvent: mockConstructEvent },
+      subscriptions: { retrieve: mockSubscriptionsRetrieve },
+    };
+  }),
 }));
 
 const mockAdminFrom = vi.fn();

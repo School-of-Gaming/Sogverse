@@ -9,9 +9,7 @@ export default defineConfig({
     setupFiles: ["./tests/db/setup.ts"],
     include: ["tests/db/**/*.test.ts"],
     pool: "forks",
-    poolOptions: {
-      forks: { singleFork: true },
-    },
+    fileParallelism: false,
     testTimeout: 15_000,
     globals: true,
   },

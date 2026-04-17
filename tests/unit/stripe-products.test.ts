@@ -7,10 +7,12 @@ const { mockProductsList, mockPricesList } = vi.hoisted(() => ({
 }));
 
 vi.mock("stripe", () => ({
-  default: vi.fn(() => ({
-    products: { list: mockProductsList },
-    prices: { list: mockPricesList },
-  })),
+  default: vi.fn(function () {
+    return {
+      products: { list: mockProductsList },
+      prices: { list: mockPricesList },
+    };
+  }),
 }));
 
 // Mock unstable_cache to pass through to the inner function (no caching in tests)

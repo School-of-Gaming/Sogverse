@@ -14,12 +14,14 @@ const { mockSubscriptionsRetrieve, mockSubscriptionsUpdate } = vi.hoisted(() => 
 }));
 
 vi.mock("stripe", () => ({
-  default: vi.fn(() => ({
-    subscriptions: {
-      retrieve: mockSubscriptionsRetrieve,
-      update: mockSubscriptionsUpdate,
-    },
-  })),
+  default: vi.fn(function () {
+    return {
+      subscriptions: {
+        retrieve: mockSubscriptionsRetrieve,
+        update: mockSubscriptionsUpdate,
+      },
+    };
+  }),
 }));
 
 const mockRequireRole = vi.fn();
