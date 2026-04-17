@@ -64,6 +64,16 @@ const eslintConfig = defineConfig([
       }],
     },
   },
+  // UI-only prototype for school-club parent registration. Copy is hardcoded
+  // so the product team can iterate on wording before we wire up i18n or a
+  // real backend. Remove this override when the feature graduates out of
+  // mockup status.
+  {
+    files: ["src/app/(public)/registration/**/*.{ts,tsx}"],
+    rules: {
+      "i18next/no-literal-string": "off",
+    },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
