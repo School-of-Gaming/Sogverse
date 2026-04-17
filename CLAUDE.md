@@ -76,6 +76,10 @@ CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.rand
 
 See `docs/layout-scroll-architecture.md` for the scroll containment model and how dashboard layouts handle overflow.
 
+**Rule: Don't move clickable or readable elements between loading and ready states on the same page.** When a page transitions from loading to ready (or any state change that happens without user interaction), interactive elements (buttons, links, inputs) and content the user is reading must not shift position. Shifts make the UI feel janky and — worse — cause fast users to mis-click when buttons move out from under their cursor. The skeleton doesn't need to match the real content's size pixel-for-pixel — decorative/background regions can resize when data arrives. What matters is that the elements the user is trying to interact with or read land in the same place they were a moment ago. A reserved placeholder or hidden element (one that occupies its box in the DOM whether or not its content is visible) is often all it takes.
+
+Layout changes on the same page *after* user interaction (e.g. clicking a button that reveals more content) are more acceptable but still not ideal — prefer an animated transition over a jump when you do need to reflow. Navigating to a new page is fine; this rule is about in-place shifts. If you're unsure how to reconcile the design with this rule, or hit a genuine edge case (e.g. a countdown timer that must update continuously), check in with me. One reasonable escape hatch for unavoidable reflow is to place clickable elements somewhere the shifting region won't push them.
+
 ### Date & Time Formatting
 
 **Rule: Use `Intl` APIs and `next-intl` formatters for date/time/number formatting.** Shared helpers (`formatDate`, `formatTime`, `formatCurrency*`) live in `src/lib/utils.ts`. For relative time, use `useFormatter().relativeTime()` from `next-intl`. For timezone math only (converting between zones), use `date-fns-tz`. The locale for formatting always comes from `useLocale()` (client) or `getLocale()` (server) via `next-intl`.
