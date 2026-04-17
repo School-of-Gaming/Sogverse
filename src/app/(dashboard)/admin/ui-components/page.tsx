@@ -523,6 +523,7 @@ function GroupCardDemo() {
   const locale = useLocale();
 
   const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- canonical post-hydration flag; see TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
   useEffect(() => setMounted(true), []);
 
   if (!mounted) return null;

@@ -56,6 +56,7 @@ export function SetupAccountForm() {
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount-time URL hash parse; see TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
       setSessionReady(true);
       return;
     }

@@ -41,12 +41,14 @@ export function SpatialVoiceRoom({
   const exitTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   if (screenSharerSessionId) {
+    // eslint-disable-next-line react-hooks/refs -- TODO: refactor stale-sharer tracking off render-time ref I/O — see TODO.md "Refactor SpatialVoiceRoom screen-share animation"
     staleSharerRef.current = screenSharerSessionId;
   }
 
   useEffect(() => {
     if (screenSharerSessionId) {
       if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO: see TODO.md "Refactor SpatialVoiceRoom screen-share animation"
       setScreenShareMounted(true);
       // Trigger enter animation on the next frame so the DOM has the 0-height state first
       requestAnimationFrame(() => {
@@ -110,6 +112,7 @@ export function SpatialVoiceRoom({
             <div className="overflow-hidden">
               {screenShareMounted && (
                 <ScreenShareDisplay
+                  // eslint-disable-next-line react-hooks/refs -- TODO: see TODO.md "Refactor SpatialVoiceRoom screen-share animation"
                   sharerSessionIdOverride={staleSharerRef.current}
                 />
               )}

@@ -112,6 +112,7 @@ export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"][
 
 // whatsapp_messages
 export type WhatsAppMessage = Database["public"]["Tables"]["whatsapp_messages"]["Row"];
+export type WhatsAppMessageUpdate = Database["public"]["Tables"]["whatsapp_messages"]["Update"];
 
 export const WHATSAPP_MESSAGE_STATUS = {
   PENDING: "pending",
