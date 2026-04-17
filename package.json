@@ -2,13 +2,18 @@
   "name": "sogverse-app",
   "version": "0.1.0",
   "private": true,
+  "workspaces": [
+    "services/*"
+  ],
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:stripe": "concurrently --names next,stripe --prefix-colors blue,magenta \"next dev --turbopack\" \"stripe listen --forward-to localhost:3000/api/webhooks/stripe\"",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src/ tests/",
-    "type-check": "tsc --noEmit",
+    "lint": "eslint src/ tests/ services/",
+    "type-check": "tsc --noEmit && npm run type-check --workspaces --if-present",
+    "portal:dev": "npm run dev --workspace=sogverse-bedrock-portal",
+    "portal:start": "npm run start --workspace=sogverse-bedrock-portal",
     "test": "vitest --run",
     "test:ui": "vitest --ui",
     "test:db": "vitest --run --config vitest.config.db.mts",
