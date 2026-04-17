@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+services/*/node_modules
+services/*/dist
 services/*/.auth-cache
 /.pnp
 .pnp.*
@@ -64,6 +66,8 @@ logs
 # Keep example env files for reference
 !.env.local.example
 !.env.test.local.example
+!.env.example
+!services/*/.env.example
 
 .vercel
 .env*.local
