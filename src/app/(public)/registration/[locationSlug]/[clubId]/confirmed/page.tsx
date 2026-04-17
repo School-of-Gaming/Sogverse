@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { getClub, getSchool } from "../../../_mock/data";
+import { getClub, getClubVenueLabel, getLocation } from "../../../_mock/data";
 import {
   formatDayEn,
   formatIsoDate,
@@ -12,16 +12,16 @@ import {
 } from "../../../_mock/format";
 
 export default function ConfirmedPage() {
-  const params = useParams<{ code: string; clubId: string }>();
+  const params = useParams<{ locationSlug: string; clubId: string }>();
   const searchParams = useSearchParams();
   const status = searchParams.get("status");
   const gamer = searchParams.get("gamer") ?? "your child";
   const position = searchParams.get("position");
 
-  const school = getSchool(params.code);
+  const location = getLocation(params.locationSlug);
   const club = getClub(params.clubId);
 
-  if (!school || !club) {
+  if (!location || !club) {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
         <h1 className="text-2xl font-semibold">Not found</h1>
@@ -31,6 +31,8 @@ export default function ConfirmedPage() {
       </div>
     );
   }
+
+  const venue = getClubVenueLabel(club);
 
   const isWaitlist = status === "waitlisted";
 
@@ -63,9 +65,7 @@ export default function ConfirmedPage() {
         <CardContent className="space-y-4 p-6">
           <div>
             <h2 className="text-sm font-semibold">{club.name}</h2>
-            <p className="text-xs text-muted-foreground">
-              {school.name} · {school.municipality}
-            </p>
+            <p className="text-xs text-muted-foreground">{location.name}</p>
           </div>
 
           <dl className="grid gap-3 text-sm sm:grid-cols-2">
@@ -77,8 +77,8 @@ export default function ConfirmedPage() {
               {formatIsoDate(club.seasonStartIso)} –{" "}
               {formatIsoDate(club.seasonEndIso)}
             </Info>
-            <Info label={club.isOnline ? "Location" : "Room"}>
-              {club.isOnline ? "Online" : (club.locationName ?? "TBD")}
+            <Info label={club.isOnline ? "Location" : "Venue"}>
+              {club.isOnline ? "Online" : (venue ?? "TBD")}
             </Info>
             <Info label="Gedu">{club.gedu.name}</Info>
           </dl>
@@ -120,7 +120,7 @@ export default function ConfirmedPage() {
                 <li>
                   • Drop-off is at{" "}
                   <strong className="text-foreground">
-                    {club.locationName}
+                    {venue ?? "the venue announced with your confirmation email"}
                   </strong>
                   .
                 </li>
@@ -135,9 +135,9 @@ export default function ConfirmedPage() {
       </Card>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-        <Link href={`/registration/${school.code}`}>
+        <Link href={`/registration/${location.slug}`}>
           <Button variant="outline" className="w-full sm:w-auto">
-            Back to {school.name}
+            Back to {location.name}
           </Button>
         </Link>
         <Link href="/">

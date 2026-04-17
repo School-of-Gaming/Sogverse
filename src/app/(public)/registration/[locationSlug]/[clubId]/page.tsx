@@ -12,7 +12,8 @@ import {
   MOCK_GAMERS,
   getClub,
   getClubState,
-  getSchool,
+  getClubVenueLabel,
+  getLocation,
   type Club,
   type ClubRuntimeState,
 } from "../../_mock/data";
@@ -33,8 +34,11 @@ const PRE_OPEN_HELPER_TEXT =
   "Pick your child and agree to the rules for a one-click registration.";
 
 export default function ClubDetailPage() {
-  const { code, clubId } = useParams<{ code: string; clubId: string }>();
-  const school = getSchool(code);
+  const { locationSlug, clubId } = useParams<{
+    locationSlug: string;
+    clubId: string;
+  }>();
+  const location = getLocation(locationSlug);
   const club = getClub(clubId);
   const now = useNow();
 
@@ -43,7 +47,7 @@ export default function ClubDetailPage() {
     [club, now],
   );
 
-  if (!school || !club) {
+  if (!location || !club) {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
         <h1 className="text-2xl font-semibold">Club not found</h1>
@@ -58,10 +62,10 @@ export default function ClubDetailPage() {
     <div className="container mx-auto px-4 py-10">
       <div className="mb-4 flex items-center justify-between gap-4">
         <Link
-          href={`/registration/${school.code}`}
+          href={`/registration/${location.slug}`}
           className="text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
-          ← Back to {school.name}
+          ← Back to {location.name}
         </Link>
         <ServerClock now={now} />
       </div>
@@ -69,7 +73,12 @@ export default function ClubDetailPage() {
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <ClubOverview club={club} />
         <div className="space-y-4">
-          <RegistrationPanel club={club} state={state} now={now} schoolCode={school.code} />
+          <RegistrationPanel
+            club={club}
+            state={state}
+            now={now}
+            locationSlug={location.slug}
+          />
           <Card>
             <CardContent className="p-5 text-sm">
               <h3 className="text-sm font-semibold">About registration</h3>
@@ -88,6 +97,7 @@ export default function ClubDetailPage() {
 }
 
 function ClubOverview({ club }: { club: Club }) {
+  const venue = getClubVenueLabel(club);
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
@@ -108,10 +118,10 @@ function ClubOverview({ club }: { club: Club }) {
         <InfoRow label="Term">
           {formatIsoDate(club.seasonStartIso)} – {formatIsoDate(club.seasonEndIso)}
         </InfoRow>
-        <InfoRow label={club.isOnline ? "Location" : "Room"}>
+        <InfoRow label={club.isOnline ? "Location" : "Venue"}>
           {club.isOnline
             ? "Online voice room (joined from your child's account)"
-            : (club.locationName ?? "TBD")}
+            : (venue ?? "TBD")}
         </InfoRow>
         <InfoRow label="Language">{club.language}</InfoRow>
         <InfoRow label="Gedu">
@@ -180,12 +190,12 @@ function RegistrationPanel({
   club,
   state,
   now,
-  schoolCode,
+  locationSlug,
 }: {
   club: Club;
   state: ClubRuntimeState | null;
   now: number | null;
-  schoolCode: string;
+  locationSlug: string;
 }) {
   if (!state || now === null) {
     // The club's opensOffsetMs + seat counts tell us which shape the final
@@ -201,12 +211,19 @@ function RegistrationPanel({
   // and the layout stays put. Swapping panel components here would unmount
   // the form and reset it.
   if (club.opensOffsetMs > 0) {
-    return <PreOpenPanel club={club} state={state} now={now} schoolCode={schoolCode} />;
+    return (
+      <PreOpenPanel
+        club={club}
+        state={state}
+        now={now}
+        locationSlug={locationSlug}
+      />
+    );
   }
   if (state.status === "full") {
-    return <WaitlistPanel club={club} schoolCode={schoolCode} />;
+    return <WaitlistPanel club={club} locationSlug={locationSlug} />;
   }
-  return <OpenPanel club={club} state={state} schoolCode={schoolCode} />;
+  return <OpenPanel club={club} state={state} locationSlug={locationSlug} />;
 }
 
 function RegistrationPanelSkeleton({ club }: { club: Club }) {
@@ -380,12 +397,12 @@ function PreOpenPanel({
   club,
   state,
   now,
-  schoolCode,
+  locationSlug,
 }: {
   club: Club;
   state: ClubRuntimeState;
   now: number;
-  schoolCode: string;
+  locationSlug: string;
 }) {
   const router = useRouter();
   const cd = buildCountdown(state.opensAt, now);
@@ -393,7 +410,7 @@ function PreOpenPanel({
 
   function handleRegister(gamerName: string) {
     const query = new URLSearchParams({ status: "registered", gamer: gamerName });
-    router.push(`/registration/${schoolCode}/${club.id}/confirmed?${query.toString()}`);
+    router.push(`/registration/${locationSlug}/${club.id}/confirmed?${query.toString()}`);
   }
 
   return (
@@ -434,18 +451,18 @@ function PreOpenPanel({
 function OpenPanel({
   club,
   state,
-  schoolCode,
+  locationSlug,
 }: {
   club: Club;
   state: ClubRuntimeState;
-  schoolCode: string;
+  locationSlug: string;
 }) {
   const router = useRouter();
   const urgent = state.status === "almost_full";
 
   function handleRegister(gamerName: string) {
     const query = new URLSearchParams({ status: "registered", gamer: gamerName });
-    router.push(`/registration/${schoolCode}/${club.id}/confirmed?${query.toString()}`);
+    router.push(`/registration/${locationSlug}/${club.id}/confirmed?${query.toString()}`);
   }
 
   return (
@@ -475,10 +492,10 @@ function OpenPanel({
 
 function WaitlistPanel({
   club,
-  schoolCode,
+  locationSlug,
 }: {
   club: Club;
-  schoolCode: string;
+  locationSlug: string;
 }) {
   const router = useRouter();
 
@@ -488,7 +505,7 @@ function WaitlistPanel({
       gamer: gamerName,
       position: String(club.waitlistCount + 1),
     });
-    router.push(`/registration/${schoolCode}/${club.id}/confirmed?${query.toString()}`);
+    router.push(`/registration/${locationSlug}/${club.id}/confirmed?${query.toString()}`);
   }
 
   return (

@@ -6,9 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  getClubsForSchool,
-  getSchool,
+  getAncestors,
+  getClubsForLocation,
   getClubState,
+  getClubVenueLabel,
+  getLocation,
   type Club,
   type ClubRuntimeState,
 } from "../_mock/data";
@@ -22,26 +24,30 @@ import {
   pad2,
 } from "../_mock/format";
 
-export default function SchoolPage() {
-  const { code } = useParams<{ code: string }>();
+export default function LocationPage() {
+  const { locationSlug } = useParams<{ locationSlug: string }>();
   const now = useNow();
-  const school = getSchool(code);
+  const location = getLocation(locationSlug);
 
-  if (!school) {
+  if (!location) {
     return (
       <div className="container mx-auto px-4 py-24 text-center">
-        <h1 className="text-2xl font-semibold">School not found</h1>
+        <h1 className="text-2xl font-semibold">Municipality not found</h1>
         <p className="mt-2 text-muted-foreground">
-          We couldn&apos;t find a school with code &quot;{code}&quot;.
+          We couldn&apos;t find a municipality at &quot;{locationSlug}&quot;.
         </p>
         <Link href="/registration" className="mt-6 inline-block">
-          <Button variant="outline">Try another code</Button>
+          <Button variant="outline">Back to search</Button>
         </Link>
       </div>
     );
   }
 
-  const clubs = getClubsForSchool(code);
+  const clubs = getClubsForLocation(location.id);
+  const breadcrumb = getAncestors(location.id)
+    .filter((a) => a.type !== "country" && a.id !== location.id)
+    .map((a) => a.name)
+    .join(" · ");
 
   return (
     <div className="container mx-auto px-4 py-10">
@@ -50,22 +56,28 @@ export default function SchoolPage() {
           href="/registration"
           className="text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
-          ← Back to school lookup
+          ← Back to search
         </Link>
       </div>
 
       <div className="border-b pb-6">
-        <p className="text-sm text-muted-foreground">{school.municipality}</p>
+        {breadcrumb && (
+          <p className="text-sm text-muted-foreground">{breadcrumb}</p>
+        )}
         <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
-          {school.name}
+          {location.name}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">{school.address}</p>
-        <p className="mt-4 text-sm">
-          <span className="font-medium">{school.termLabel}</span>{" "}
-          <span className="text-muted-foreground">
-            ({formatIsoDate(school.termStartIso)} – {formatIsoDate(school.termEndIso)})
-          </span>
-        </p>
+        {location.termLabel && (
+          <p className="mt-4 text-sm">
+            <span className="font-medium">{location.termLabel}</span>{" "}
+            {location.termStartIso && location.termEndIso && (
+              <span className="text-muted-foreground">
+                ({formatIsoDate(location.termStartIso)} –{" "}
+                {formatIsoDate(location.termEndIso)})
+              </span>
+            )}
+          </p>
+        )}
       </div>
 
       <div className="mt-8">
@@ -79,14 +91,20 @@ export default function SchoolPage() {
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {clubs.map((club) => (
-          <ClubListCard key={club.id} club={club} now={now} schoolCode={school.code} />
+          <ClubListCard
+            key={club.id}
+            club={club}
+            now={now}
+            locationSlug={location.slug}
+          />
         ))}
       </div>
 
       {clubs.length === 0 && (
         <Card className="mt-6">
           <CardContent className="py-12 text-center text-muted-foreground">
-            No clubs are being offered this term. Check back next semester.
+            No clubs are being offered in {location.name} this term. Check
+            back next semester.
           </CardContent>
         </Card>
       )}
@@ -97,13 +115,14 @@ export default function SchoolPage() {
 function ClubListCard({
   club,
   now,
-  schoolCode,
+  locationSlug,
 }: {
   club: Club;
   now: number | null;
-  schoolCode: string;
+  locationSlug: string;
 }) {
   const state = now !== null ? getClubState(club, now) : null;
+  const venue = getClubVenueLabel(club);
   return (
     <Card className="flex flex-col">
       <CardContent className="flex flex-1 flex-col gap-4 p-6">
@@ -130,13 +149,14 @@ function ClubListCard({
             label="Term"
             value={`${formatIsoDate(club.seasonStartIso)} – ${formatIsoDate(club.seasonEndIso)}`}
           />
+          {venue && <Row label="Venue" value={venue} />}
           <Row label="Gedu" value={club.gedu.name} />
           <Row label="Ages" value={`${club.minAge}–${club.maxAge}`} />
         </dl>
 
         <div className="mt-auto flex items-center justify-between gap-3">
           <StateChip club={club} state={state} now={now} />
-          <Link href={`/registration/${schoolCode}/${club.id}`}>
+          <Link href={`/registration/${locationSlug}/${club.id}`}>
             <Button size="sm">View club</Button>
           </Link>
         </div>
