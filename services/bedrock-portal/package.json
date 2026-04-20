@@ -13,7 +13,8 @@
   },
   "dependencies": {
     "bedrock-portal": "^2.1.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "prismarine-auth": "github:LucienHH/prismarine-auth#playfab"
   },
   "devDependencies": {
     "@types/node": "^20.19.32",
