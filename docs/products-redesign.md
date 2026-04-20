@@ -179,7 +179,29 @@ site_details
 
 **Scope:** events at libraries, malls, offices, or partner venues are `site`-type locations we don't operate. No separate "venue" concept needed — a "site we operate" vs "site we visit" distinction, if ever required, can be a boolean flag on `site_details` later.
 
-### 4.9 Voice rooms are online-only
+### 4.9 Online products still have a location — just not a site
+
+A product's `location_id` is its **jurisdictional home** in the hierarchy, not necessarily a physical venue:
+
+- **In-person products** (`is_remote = false`) — `location_id` must be a `site`. This is the venue.
+- **Online products** (`is_remote = true`) — `location_id` can be any level: country, region, municipality, or site. There is no physical venue; this is purely a browse / filter anchor.
+
+The parent experience that motivates this: *"I live in Helsinki. I can see a club that's offered by my municipality. That club happens to be online."* Without a non-site `location_id`, an online municipality club has no natural home in the tree — the municipality paid for it, but it isn't hosted at any one school. Forcing a site pick would be arbitrary and wrong.
+
+How this plays out per product type:
+
+| Product type | Typical online `location_id` | Typical in-person `location_id` |
+|---|---|---|
+| Consumer club | Any level — usually a region or country for broad online clubs | Site |
+| Municipality club | The municipality that paid for it | Site within that municipality |
+| Summer camp | Same as consumer clubs | Site |
+| Event | Any level — country for nationwide webinars, site for local demos | Site |
+
+**Browse filtering.** Parents search by their location (e.g., Helsinki). The query matches any product whose `location_id` is at-or-under Helsinki — sites under Helsinki, Helsinki itself, Uusimaa, Finland. An online Helsinki-municipality club (`location_id = helsinki`) appears when the parent filters by Helsinki. An online Finland-wide event (`location_id = finland`) appears for any Finnish parent.
+
+**Admin UX.** The location picker's pickability mode flips with `is_remote`: when in-person, only sites are selectable; when online, any level is. The in-person mode also lets the admin create a new site under a municipality inline — site creation does not live on the product page in the real admin, but the inline affordance avoids a context switch mid-form.
+
+### 4.10 Voice rooms are online-only
 
 A voice room (Daily.co) exists iff `products.is_remote = true`. In-person products — a summer camp at a school site, a Pokémon GO walk, a library webinar delivered face-to-face — have no voice room, no Daily.co provisioning, and no voice-room UI elements.
 
@@ -213,7 +235,8 @@ products
   image_path            text
   padlet_url            text
 
-  location_id           uuid → locations.id  (must be a site)
+  location_id           uuid → locations.id  -- site when is_remote=false;
+                                              -- any level when is_remote=true
   is_remote             bool
 
   start_date            date             -- first calendar date the product runs
@@ -237,6 +260,8 @@ products
   --   billing_mode IN (paid_*)          → price_tokens IS NOT NULL
   --   product_type='event'              → end_date = start_date (one-off)
   --   product_type != 'consumer_club'   → end_date IS NOT NULL
+  --   is_remote=false                   → locations.type = 'site' at location_id
+  --   (is_remote=true permits any level — site, municipality, region, country)
 
 schedule_slots
   id                    uuid pk

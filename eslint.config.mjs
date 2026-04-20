@@ -64,12 +64,18 @@ const eslintConfig = defineConfig([
       }],
     },
   },
-  // UI-only prototype for school-club parent registration. Copy is hardcoded
-  // so the product team can iterate on wording before we wire up i18n or a
-  // real backend. Remove this override when the feature graduates out of
-  // mockup status.
+  // UI-only prototypes under (public). Copy is hardcoded so the product team
+  // can iterate on wording before we wire up i18n or a real backend. Remove
+  // each folder from this override when its feature graduates out of mockup
+  // status.
+  //   - registration: parent-facing school-clubs registration flow
+  //   - admin-mockup:   admin-facing "add product" flow under the new
+  //                     four-type model (see docs/products-redesign.md)
   {
-    files: ["src/app/(public)/registration/**/*.{ts,tsx}"],
+    files: [
+      "src/app/(public)/registration/**/*.{ts,tsx}",
+      "src/app/(public)/admin-mockup/**/*.{ts,tsx}",
+    ],
     rules: {
       "i18next/no-literal-string": "off",
     },
