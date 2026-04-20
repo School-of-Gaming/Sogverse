@@ -11,7 +11,7 @@
 export type ProductType =
   | "consumer-club"
   | "municipality-club"
-  | "summer-camp"
+  | "camp"
   | "event";
 
 export type BillingMode =
@@ -43,10 +43,10 @@ export const PRODUCT_TYPES: ProductTypeDef[] = [
     blurb:
       "Parents enroll their child and pay in Sorg tokens per session. Clubs run week after week with no end date unless you set one.",
     traits: [
-      "Recurring · one day per week",
+      "Weekly · one day per week",
       "No end date by default",
       "Parents pay per session (Sorg tokens)",
-      "Seats capped; waitlist when full",
+      "Fixed seat count, with a waitlist",
     ],
     billingMode: "paid_per_session",
     scheduleShape: "weekly_ongoing",
@@ -62,10 +62,10 @@ export const PRODUCT_TYPES: ProductTypeDef[] = [
     blurb:
       "A Finnish municipality or school pays up front for a block of seats. Parents register their child for free; the registration window opens at a fixed moment like a concert ticket drop.",
     traits: [
-      "Recurring · one day per week",
-      "Season window (start + end dates)",
-      "Municipality pays off-platform",
-      "Fixed seat count, ordered waitlist",
+      "Weekly · one day per week",
+      "Runs between a start and end date",
+      "School of Gaming invoices the municipality",
+      "Fixed seat count, with a waitlist",
     ],
     billingMode: "external_contract",
     scheduleShape: "weekly_bounded",
@@ -74,17 +74,17 @@ export const PRODUCT_TYPES: ProductTypeDef[] = [
     seatCountOptional: false,
   },
   {
-    slug: "summer-camp",
-    name: "Summer camp",
+    slug: "camp",
+    name: "Camp",
     shortName: "Camp",
-    tagline: "Multi-day, bounded, paid upfront in Sorg tokens.",
+    tagline: "Runs across several days for a set period. Parents pay upfront.",
     blurb:
-      "A camp runs across several days of the week for a set period. Parents pay the full price in Sorg tokens once, at signup. Refundable within a cutoff window.",
+      "A camp runs across several days of the week for a set period — any time of year. Parents pay the full price in Sorg tokens once, at signup. Refundable up to a cutoff before the camp starts.",
     traits: [
       "Several days per week (each with its own time)",
-      "Bounded by start + end dates",
-      "Parents pay up-front (Sorg tokens)",
-      "Refund cutoff before the first session",
+      "Runs between a start and end date",
+      "Parents pay upfront (Sorg tokens)",
+      "Refundable before the camp starts",
     ],
     billingMode: "paid_upfront",
     scheduleShape: "multi_day_bounded",
@@ -96,13 +96,13 @@ export const PRODUCT_TYPES: ProductTypeDef[] = [
     slug: "event",
     name: "Event",
     shortName: "Event",
-    tagline: "One-off date. Free, or a one-time token charge.",
+    tagline: "A single date. Free, or a one-time Sorg token charge.",
     blurb:
-      "A one-time event on a specific date. Good for demo days, community walks, webinars, tournaments. Free events can be uncapped; paid events must set a seat count.",
+      "A one-time event on a specific date. Good for demo days, community walks, webinars, tournaments. Free events can have no seat limit; paid events always have a seat count.",
     traits: [
       "Single date, single start time",
       "Free or paid upfront (Sorg tokens)",
-      "Optional waitlist · free events can be uncapped",
+      "Free events can have no seat limit",
       "Great for demos, webinars, tournaments",
     ],
     billingMode: "choose_free_or_paid",

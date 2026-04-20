@@ -149,8 +149,8 @@ export function LocationPicker({ value, onChange, pickable = "site" }: LocationP
                 )}
                 {!isSite && (
                   <p className="mt-2 text-xs text-muted-foreground">
-                    No physical venue. Parents browsing at-or-under {selected.name}
-                    {" "}will see this product in their results.
+                    No physical venue. Parents browsing in {selected.name}
+                    {" "}— or any smaller area inside it — will see this product.
                   </p>
                 )}
               </div>
@@ -174,8 +174,8 @@ export function LocationPicker({ value, onChange, pickable = "site" }: LocationP
               </div>
               <p className="mt-1 text-sm">{selected.accessNotes}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Edit these on the site&apos;s location record — they&apos;re shared
-                by every product at this site.
+                Shared by every product at this site. To change them, open the
+                site in Admin · Locations.
               </p>
             </div>
           )}
@@ -265,7 +265,7 @@ export function LocationPicker({ value, onChange, pickable = "site" }: LocationP
         <span className="text-muted-foreground">
           {pickable === "site"
             ? "Pick a site. Missing one? Add it inline under its municipality."
-            : "Pick a country, region, or municipality. Online products don't bind to a physical site."}
+            : "Pick a country, region, or municipality. Online products don't have a physical venue."}
         </span>
         {selected && (
           <button
@@ -339,7 +339,14 @@ function TreeRow({
       ? null
       : childTypeFor(node);
 
-  const childLabel = childCountLabel(node);
+  // In jurisdiction mode, sites are filtered out of the tree, so every
+  // municipality's children list is empty — showing "no sites yet" would be
+  // wrong and misleading. Suppress the label entirely for munis in that mode;
+  // the admin is picking the municipality itself, not drilling into it.
+  const childLabel =
+    pickable === "jurisdiction" && node.type === "municipality"
+      ? null
+      : childCountLabel(node);
 
   const handleClick = () => {
     if (isPickable && (isSite || !hasChildren)) {
@@ -553,10 +560,10 @@ function AddLocationDialog({ target, onOpenChange, onCreated }: AddLocationDialo
             {parentName
               ? `Creating a new ${typeLabel} under ${parentName}.`
               : childType === "country"
-                ? "Creating a new country at the root of the location tree."
+                ? "Creating a new country."
                 : ""}
             {childType === "site" &&
-              " These details live on the site itself and are shared by every product hosted there."}
+              " These details are shared by every product hosted at this site."}
           </DialogDescription>
         </DialogHeader>
 

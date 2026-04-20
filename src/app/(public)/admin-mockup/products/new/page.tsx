@@ -8,7 +8,7 @@ import { PRODUCT_TYPES, type ProductType } from "./_mock/data";
 const ICON_FOR_TYPE: Record<ProductType, React.ComponentType<{ className?: string }>> = {
   "consumer-club": Repeat,
   "municipality-club": CalendarRange,
-  "summer-camp": CalendarClock,
+  camp: CalendarClock,
   event: PartyPopper,
 };
 
@@ -27,8 +27,8 @@ export default function ProductTypePickerPage() {
           </h1>
           <p className="mt-3 text-muted-foreground sm:text-base">
             Pick the product type that best fits what you&apos;re setting up. You
-            can still change most details later — this mostly picks the right
-            shape for the form.
+            can still change most details later — this just changes what the
+            form asks for next.
           </p>
         </div>
 
@@ -72,13 +72,6 @@ export default function ProductTypePickerPage() {
           })}
         </div>
 
-        <div className="mx-auto mt-10 max-w-2xl rounded-md border border-dashed border-border bg-muted/30 px-4 py-3 text-center text-xs text-muted-foreground">
-          <span className="font-medium">Not sure?</span> See{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-[11px]">
-            docs/products-redesign.md
-          </code>{" "}
-          for the full four-type taxonomy.
-        </div>
       </div>
     </div>
   );

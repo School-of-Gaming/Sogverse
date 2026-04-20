@@ -1,6 +1,6 @@
 # Products Redesign — Unifying Clubs, Camps, and Events
 
-Forward-looking architecture proposal that redesigns the `products` domain to cleanly support **four product types**: consumer clubs, municipality clubs, summer camps, and events. Not yet implemented.
+Forward-looking architecture proposal that redesigns the `products` domain to cleanly support **four product types**: consumer clubs, municipality clubs, camps, and events. Not yet implemented.
 
 Status: **design / pre-implementation**. Supersedes `school-clubs-design.md`. Rename to `products-architecture.md` when this ships.
 
@@ -20,7 +20,7 @@ Because all current data is staging-only, the migration is a **greenfield cutove
 
 ## 2. The four product types
 
-| | **Consumer club** | **Municipality club** | **Summer camp** | **Event** |
+| | **Consumer club** | **Municipality club** | **Camp** | **Event** |
 |---|---|---|---|---|
 | **UI verb (parent)** | Enroll | Register | Sign up | Join |
 | **Who pays us** | Parent, ongoing | Municipality, off-platform | Parent, upfront | Parent (upfront) or free |
@@ -48,7 +48,7 @@ Four different verbs per product type:
 |---|---|
 | Consumer club | **Enroll** |
 | Municipality club | **Register** |
-| Summer camp | **Sign up** |
+| Camp | **Sign up** |
 | Event | **Join** |
 
 These are copy choices that reflect how each product feels to a parent. They do **not** propagate into the schema, query keys, RPC names, or URLs.
@@ -149,7 +149,7 @@ All mutations go through `SECURITY DEFINER` RPCs with `SELECT ... FOR UPDATE` ro
 
 ### 4.7 Product type as label, not switch
 
-`products.product_type` is a flat enum `{consumer_club, municipality_club, summer_camp, event}`. It is used **for labeling and filtering only**. Business logic branches on the orthogonal fields — `billing_mode`, `schedule` shape, `seat_count`, refund policy — not on `product_type` directly.
+`products.product_type` is a flat enum `{consumer_club, municipality_club, camp, event}`. It is used **for labeling and filtering only**. Business logic branches on the orthogonal fields — `billing_mode`, `schedule` shape, `seat_count`, refund policy — not on `product_type` directly.
 
 Why: adding a 5th product type in the future should be a matter of picking the right combination of orthogonal fields plus a new label, not a fork in the code.
 
@@ -194,7 +194,7 @@ How this plays out per product type:
 |---|---|---|
 | Consumer club | Region or country for broad online clubs; municipality if it's town-specific | Site |
 | Municipality club | The municipality that paid for it | Site within that municipality |
-| Summer camp | Region or country (or municipality if locally scoped) | Site |
+| Camp | Region or country (or municipality if locally scoped) | Site |
 | Event | Country for nationwide webinars, municipality for local online demos | Site |
 
 **Browse filtering.** Parents search by their location (e.g., Helsinki). The query matches any product whose `location_id` is at-or-under Helsinki — sites under Helsinki, Helsinki itself, Uusimaa, Finland. An online Helsinki-municipality club (`location_id = helsinki`) surfaces for Helsinki parents. An online Finland-wide event (`location_id = finland`) surfaces for any Finnish parent.
@@ -209,7 +209,7 @@ Both modes let the admin create new locations inline (add a region, municipality
 
 ### 4.10 Voice rooms are online-only
 
-A voice room (Daily.co) exists iff `products.is_remote = true`. In-person products — a summer camp at a school site, a Pokémon GO walk, a library webinar delivered face-to-face — have no voice room, no Daily.co provisioning, and no voice-room UI elements.
+A voice room (Daily.co) exists iff `products.is_remote = true`. In-person products — a camp at a school site, a Pokémon GO walk, a library webinar delivered face-to-face — have no voice room, no Daily.co provisioning, and no voice-room UI elements.
 
 **Implications for the schema and code:**
 
@@ -228,7 +228,7 @@ A voice room (Daily.co) exists iff `products.is_remote = true`. In-person produc
 -- One row per cohort (was: products × groups)
 products
   id                    uuid pk
-  product_type          enum('consumer_club','municipality_club','summer_camp','event')
+  product_type          enum('consumer_club','municipality_club','camp','event')
   billing_mode          enum('paid_per_session','paid_upfront','free','external_contract')
   price_tokens          int              -- required when paid_*, null otherwise
 
@@ -530,7 +530,7 @@ Prove the unified shape against the two product lines we actually have users for
 - Migrate current consumer club data into the new shape (staging reset).
 - Notifications: email + WhatsApp for waitlist → active promotion (reuse existing pipeline).
 
-### Phase 2 — summer camps and events
+### Phase 2 — camps and events
 
 - Multi-day schedule slots with per-day timing.
 - Upfront token debit path with refund window.

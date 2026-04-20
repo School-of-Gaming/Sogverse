@@ -166,7 +166,6 @@ export default function AdminAddProductMockPage() {
 
         {submitted ? (
           <SuccessPanel
-            productType={productType.slug}
             name={name}
             onReset={() => setSubmitted(false)}
           />
@@ -314,7 +313,7 @@ export default function AdminAddProductMockPage() {
 
               <Field
                 label="Tags"
-                hint="Zero or more. Drives parent-facing filters and internal search."
+                hint="Optional. Helps parents filter products when they're browsing."
               >
                 <div className="flex flex-wrap items-center gap-2">
                   {[...TAGS, ...customTags].map((tag) => {
@@ -417,7 +416,7 @@ export default function AdminAddProductMockPage() {
               <Field
                 label="Padlet URL"
                 htmlFor="padlet"
-                hint="Optional. Shared with enrolled families after signup."
+                hint="Optional. Shared with families after they sign up."
               >
                 <Input
                   id="padlet"
@@ -510,11 +509,11 @@ export default function AdminAddProductMockPage() {
 
               <div className="mt-3 space-y-4">
                 <Field
-                  label={isRemote ? "Jurisdictional home" : "Site"}
+                  label={isRemote ? "Area this is for" : "Site"}
                   required
                   hint={
                     isRemote
-                      ? "Who this product belongs to in the location tree. An online Helsinki-municipality club picks Helsinki. An online nationally-available event picks Finland. There's no physical venue — just a browse home for parents."
+                      ? "Since this is online there's no physical venue. Pick the area it's offered to — a city, region, or country. Parents in that area (or anywhere smaller inside it) will see it when they browse."
                       : "Where sessions physically happen."
                   }
                 >
@@ -528,7 +527,7 @@ export default function AdminAddProductMockPage() {
                 {isRemote && (
                   <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                    <span>A voice room will be provisioned for this product automatically.</span>
+                    <span>A voice room will be set up for this product automatically.</span>
                   </div>
                 )}
               </div>
@@ -600,7 +599,7 @@ export default function AdminAddProductMockPage() {
               {productType.slug !== "event" && (
                 <Field
                   label="Holiday calendars"
-                  hint="Dates on any subscribed calendar are skipped. Update the calendar once and every subscribed product updates too."
+                  hint="No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically."
                 >
                   <div className="space-y-2">
                     {HOLIDAY_CALENDARS.map((cal) => {
@@ -643,7 +642,7 @@ export default function AdminAddProductMockPage() {
 
             <FormSection
               title="Team"
-              description="One primary Gedu leads the product. Assistants can share the voice room and help out."
+              description="One primary Gedu runs the product. Assistants can help out."
             >
               <Field label="Primary Gedu" required>
                 {primaryGedu ? (
@@ -669,7 +668,7 @@ export default function AdminAddProductMockPage() {
 
               <Field
                 label="Assistant Gedus"
-                hint="Optional. Can join the voice room and help run the session."
+                hint="Optional. Join the sessions and help the primary Gedu."
               >
                 <div className="space-y-2">
                   {assistantGedus.map((g) => (
@@ -714,7 +713,7 @@ export default function AdminAddProductMockPage() {
                 open={assistantSheetOpen}
                 onOpenChange={setAssistantSheetOpen}
                 title="Add assistant Gedu"
-                description="Assistants share the voice room and can help run the session."
+                description="Assistants join the sessions and help the primary Gedu run them."
                 excludeIds={[
                   ...(primaryGeduId ? [primaryGeduId] : []),
                   ...assistantGeduIds,
@@ -732,7 +731,7 @@ export default function AdminAddProductMockPage() {
               description={capacityBillingDescription(productType.slug)}
             >
               {productType.billingMode === "choose_free_or_paid" && (
-                <Field label="Billing" hint="Free events can be uncapped. Paid events always have a seat count.">
+                <Field label="Billing" hint="Free events can have no seat limit. Paid events always have a seat count.">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label
                       className={cn(
@@ -792,10 +791,11 @@ export default function AdminAddProductMockPage() {
                 <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
                   <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                   <div>
-                    <div className="font-medium">Billed via municipal contract</div>
+                    <div className="font-medium">Paid by the municipality</div>
                     <div className="text-xs text-muted-foreground">
-                      No Sorg tokens involved. Invoicing is handled off-platform.
-                      On-platform municipality billing is planned for a later phase.
+                      No Sorg tokens. School of Gaming invoices the municipality
+                      directly. In the future, municipalities will be able to
+                      manage payments inside this system.
                     </div>
                   </div>
                 </div>
@@ -812,7 +812,7 @@ export default function AdminAddProductMockPage() {
                   required
                   hint={
                     effectiveBillingMode === "paid_per_session"
-                      ? "Charged each session the child attends (weekly cron)."
+                      ? "Charged for each session the child attends. Billed automatically each week."
                       : "Charged once at signup."
                   }
                 >
@@ -836,7 +836,7 @@ export default function AdminAddProductMockPage() {
                   required={!productType.seatCountOptional || !canUncap || !uncapped}
                   hint={
                     canUncap
-                      ? "Free events can be left uncapped (e.g. a webinar, a public walk)."
+                      ? "Free events can have no seat limit (e.g. a webinar, a public walk)."
                       : "When full, new signups go to the waitlist."
                   }
                 >
@@ -847,7 +847,7 @@ export default function AdminAddProductMockPage() {
                     value={seatInputDisabled ? "" : seatCount}
                     onChange={(e) => setSeatCount(e.target.value)}
                     disabled={seatInputDisabled}
-                    placeholder={seatInputDisabled ? "Uncapped" : undefined}
+                    placeholder={seatInputDisabled ? "No limit" : undefined}
                     required={!seatInputDisabled}
                   />
                 </Field>
@@ -861,7 +861,7 @@ export default function AdminAddProductMockPage() {
                         onChange={(e) => setUncapped(e.target.checked)}
                         className="h-4 w-4"
                       />
-                      <span>Uncapped (no seat limit)</span>
+                      <span>No seat limit</span>
                     </label>
                   </div>
                 )}
@@ -883,7 +883,7 @@ export default function AdminAddProductMockPage() {
                 <Field
                   label="Refund cutoff (days before start)"
                   htmlFor="refundDays"
-                  hint="Parents can self-refund up to this many days before the first session. After that, admin action is required."
+                  hint="Parents can cancel and get a refund up to this many days before the first session. After that, they need to contact an admin."
                 >
                   <Input
                     id="refundDays"
@@ -902,8 +902,8 @@ export default function AdminAddProductMockPage() {
                 title="Registration timing"
                 description={
                   productType.hasRegistrationOpensAt === "required"
-                    ? "When the seat-grab opens. Parents browsing before this time see a countdown."
-                    : "Optional. If set, parents see a countdown; otherwise signup opens immediately."
+                    ? "When registration opens. Parents browsing before this moment see a countdown."
+                    : "Optional. If you set a time, parents see a countdown until then. Otherwise signup is open right away."
                 }
               >
                 <Field
@@ -937,8 +937,9 @@ export default function AdminAddProductMockPage() {
                 <div className="min-w-0 flex-1 text-sm">
                   <div className="font-medium">Visible to parents</div>
                   <div className="text-xs text-muted-foreground">
-                    Uncheck to keep the product hidden while you prepare it. Flip it
-                    on when you&apos;re ready for parents to see it.
+                    Uncheck to keep the product hidden while you&apos;re still
+                    setting it up. Turn it on when you&apos;re ready for parents
+                    to see it.
                   </div>
                 </div>
               </label>
@@ -970,7 +971,7 @@ function defaultSeats(type: ProductType): string {
       return "10";
     case "municipality-club":
       return "12";
-    case "summer-camp":
+    case "camp":
       return "16";
     case "event":
       return "30";
@@ -978,7 +979,7 @@ function defaultSeats(type: ProductType): string {
 }
 
 function defaultSlots(type: ProductType): SlotDraft[] {
-  if (type === "summer-camp") {
+  if (type === "camp") {
     return [
       { weekday: 0, startTime: "10:00", durationMinutes: 180 },
       { weekday: 2, startTime: "10:00", durationMinutes: 180 },
@@ -992,7 +993,7 @@ function defaultSlots(type: ProductType): SlotDraft[] {
 }
 
 function defaultHolidayCals(type: ProductType): string[] {
-  if (type === "municipality-club" || type === "summer-camp") {
+  if (type === "municipality-club" || type === "camp") {
     return ["cal-fi-national"];
   }
   return [];
@@ -1008,8 +1009,8 @@ function namePlaceholder(type: ProductType): string {
       return "e.g. Minecraft Redstone kerho";
     case "municipality-club":
       return "e.g. Tapiola Minecraft Club · Spring 2026";
-    case "summer-camp":
-      return "e.g. Roblox Builders Summer Camp · Week 26";
+    case "camp":
+      return "e.g. Game Design Camp · Autumn break";
     case "event":
       return "e.g. Pokémon GO community walk · Helsinki";
   }
@@ -1021,7 +1022,7 @@ function descriptionPlaceholder(type: ProductType): string {
       return "What happens each week, who it's for, what they'll learn.";
     case "municipality-club":
       return "Hosted at which school, run during which term, delivered in which language.";
-    case "summer-camp":
+    case "camp":
       return "Days, total hours, theme of the week.";
     case "event":
       return "One-line pitch for the event — what, where, for whom.";
@@ -1031,13 +1032,13 @@ function descriptionPlaceholder(type: ProductType): string {
 function whereDescription(type: ProductType): string {
   switch (type) {
     case "consumer-club":
-      return "Online or in person. For online clubs, pick a jurisdictional home (municipality, region, or country).";
+      return "Online or in person. For online clubs, pick the area it's offered to — a city, region, or country.";
     case "municipality-club":
-      return "Owned by a specific municipality that pays off-platform. Online clubs pick the municipality directly; in-person clubs pick a site within the municipality.";
-    case "summer-camp":
-      return "Online or in person. Online camps pick a jurisdictional home; in-person camps pick a site.";
+      return "Paid for by a specific municipality. Online clubs pick the municipality directly; in-person clubs pick a site within it.";
+    case "camp":
+      return "Online or in person. For online camps, pick the area it's offered to; for in-person, pick the site.";
     case "event":
-      return "Online or in person. Events can happen at libraries, malls, offices, schools — anywhere a site is registered.";
+      return "Online or in person. Events can happen at libraries, malls, offices, schools — anywhere you have a site in the system.";
   }
 }
 
@@ -1046,11 +1047,11 @@ function scheduleDescription(type: ProductType): string {
     case "consumer-club":
       return "One day per week, one time. Leave the end date blank for an ongoing club.";
     case "municipality-club":
-      return "One day per week, one time. Runs during the season window.";
-    case "summer-camp":
+      return "One day per week, one time. Runs between the start and end dates.";
+    case "camp":
       return "Multiple days per week, each with its own start time and duration.";
     case "event":
-      return "A single date and start time. No recurrence.";
+      return "A single date and start time.";
   }
 }
 
@@ -1064,7 +1065,7 @@ function endDateLabel(type: ProductType): string {
       return "End date (optional)";
     case "municipality-club":
       return "Season end date";
-    case "summer-camp":
+    case "camp":
       return "Camp end date";
     case "event":
       return "End date";
@@ -1072,7 +1073,7 @@ function endDateLabel(type: ProductType): string {
 }
 
 function slotsLabel(type: ProductType): string {
-  if (type === "summer-camp") return "Days & times";
+  if (type === "camp") return "Days & times";
   if (type === "event") return "Time";
   return "Day & time";
 }
@@ -1080,13 +1081,13 @@ function slotsLabel(type: ProductType): string {
 function capacityBillingDescription(type: ProductType): string {
   switch (type) {
     case "consumer-club":
-      return "Parents pay in Sorg tokens each session their child attends. Weekly cron handles the charges.";
+      return "Parents pay in Sorg tokens for each session their child attends. Billing happens automatically each week.";
     case "municipality-club":
-      return "Municipality pays off-platform. Parents register their child for free up to the seat limit.";
-    case "summer-camp":
+      return "School of Gaming invoices the municipality directly. Parents register their child for free, up to the seat limit.";
+    case "camp":
       return "Parents pay the total price in Sorg tokens once, at signup. Refundable up to a cutoff.";
     case "event":
-      return "Events can be free (optionally uncapped) or paid up-front.";
+      return "Events can be free (with or without a seat limit) or paid upfront.";
   }
 }
 
@@ -1148,7 +1149,7 @@ function ScheduleSlotsEditor({
   slots: SlotDraft[];
   onChange: (s: SlotDraft[]) => void;
 }) {
-  const multiDay = productType === "summer-camp";
+  const multiDay = productType === "camp";
   const singleSlot = productType === "event" || !multiDay;
 
   const updateSlot = (index: number, patch: Partial<SlotDraft>) => {
@@ -1249,7 +1250,7 @@ function TypeSummaryCard({ type }: { type: ProductType }) {
   const verbs: Record<ProductType, string> = {
     "consumer-club": "Enroll",
     "municipality-club": "Register",
-    "summer-camp": "Sign up",
+    "camp": "Sign up",
     event: "Join",
   };
   return (
@@ -1262,11 +1263,9 @@ function TypeSummaryCard({ type }: { type: ProductType }) {
 }
 
 function SuccessPanel({
-  productType,
   name,
   onReset,
 }: {
-  productType: ProductType;
   name: string;
   onReset: () => void;
 }) {
@@ -1293,10 +1292,6 @@ function SuccessPanel({
             </span>
           </Link>
         </div>
-        <p className="mt-6 text-xs text-muted-foreground">
-          <X className="mr-1 inline h-3 w-3" />
-          Product type: <code className="rounded bg-muted px-1">{productType}</code>
-        </p>
       </CardContent>
     </Card>
   );
