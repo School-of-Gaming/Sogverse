@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -79,6 +79,22 @@ export function LocationPicker({ value, onChange, pickable = "site" }: LocationP
     [extraLocations],
   );
   const tree = useMemo(() => buildLocationTree(allLocations), [allLocations]);
+
+  // When the pickable mode tightens (e.g. user flips the form from online to
+  // in-person), silently clear a selection that no longer qualifies. Without
+  // this, a region picked while online would linger as the "site" for an
+  // in-person product, which the schema doesn't allow.
+  useEffect(() => {
+    if (!value) return;
+    const current = allLocations.find((l) => l.id === value);
+    if (!current) {
+      onChange(null);
+      return;
+    }
+    if (pickable === "site" && current.type !== "site") {
+      onChange(null);
+    }
+  }, [pickable, value, allLocations, onChange]);
   const filtered = useMemo(
     () => filterLocationTree(tree, query),
     [tree, query],

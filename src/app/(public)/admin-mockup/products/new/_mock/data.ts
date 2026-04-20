@@ -3,10 +3,10 @@
 //
 // Mirrors the direction in docs/products-redesign.md:
 //  - Four product types, one unified form that adapts.
-//  - billing_mode is the real behavior switch, not product_type.
-//  - Topics + tags replace the legacy "games" concept.
-//  - Schedule is one-or-more (product, weekday, start_time, duration) slots.
-//  - Seat count is always on the product (no more elastic groups).
+//  - billing_mode drives behavior; product_type is just a label.
+//  - Topics + tags describe what a product is about.
+//  - Schedule is one-or-more (weekday, start_time, duration) slots.
+//  - Seat count lives on the product.
 
 export type ProductType =
   | "consumer-club"

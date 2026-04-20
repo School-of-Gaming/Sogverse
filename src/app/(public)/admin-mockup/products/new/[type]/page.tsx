@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { GeduPickerSheet } from "../_components/gedu-picker-sheet";
+import { ImagePickerMock } from "../_components/image-picker-mock";
 import { LocationPicker } from "../_components/location-picker";
 import {
   GEDUS,
@@ -63,6 +64,9 @@ export default function AdminAddProductMockPage() {
   const [maxAge, setMaxAge] = useState("12");
   const [languageCode, setLanguageCode] = useState("fi");
 
+  // Image (mockup only — nothing persisted)
+  const [image, setImage] = useState<File | null>(null);
+
   // Location
   const [isRemote, setIsRemote] = useState(true);
   const [siteId, setSiteId] = useState<string>("");
@@ -71,6 +75,7 @@ export default function AdminAddProductMockPage() {
   const [customTopics, setCustomTopics] = useState<typeof TOPICS>([]);
   const [showNewTopic, setShowNewTopic] = useState(false);
   const [newTopicName, setNewTopicName] = useState("");
+  const [newTopicKind, setNewTopicKind] = useState<"game" | "subject">("game");
 
   const [customTags, setCustomTags] = useState<typeof TAGS>([]);
   const [showNewTag, setShowNewTag] = useState(false);
@@ -193,49 +198,81 @@ export default function AdminAddProductMockPage() {
                 />
               </Field>
 
+              <ImagePickerMock value={image} onChange={setImage} />
+
               <Field
                 label="Topic"
                 htmlFor="topic"
                 required
-                hint="The primary subject — one per product. Replaces the old 'game' field."
+                hint="The primary subject — one per product. What the sessions are actually about."
               >
                 {showNewTopic ? (
-                  <div className="flex gap-2">
+                  <div className="space-y-2 rounded-md border border-input bg-muted/20 p-3">
                     <Input
                       placeholder="New topic name (e.g. Among Us, Digital wellness)"
                       value={newTopicName}
                       onChange={(e) => setNewTopicName(e.target.value)}
                       autoFocus
                     />
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={!newTopicName.trim()}
-                      onClick={() => {
-                        const name = newTopicName.trim();
-                        const id = `t-custom-${Date.now()}`;
-                        setCustomTopics((prev) => [
-                          ...prev,
-                          { id, name, kind: "subject" },
-                        ]);
-                        setTopicId(id);
-                        setNewTopicName("");
-                        setShowNewTopic(false);
-                      }}
-                    >
-                      Add
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setNewTopicName("");
-                        setShowNewTopic(false);
-                      }}
-                    >
-                      Cancel
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Group this under:</span>
+                      <button
+                        type="button"
+                        onClick={() => setNewTopicKind("game")}
+                        className={cn(
+                          "rounded-md border px-3 py-1 text-xs transition-colors",
+                          newTopicKind === "game"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-input text-muted-foreground hover:border-foreground hover:text-foreground",
+                        )}
+                      >
+                        Game
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNewTopicKind("subject")}
+                        className={cn(
+                          "rounded-md border px-3 py-1 text-xs transition-colors",
+                          newTopicKind === "subject"
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-input text-muted-foreground hover:border-foreground hover:text-foreground",
+                        )}
+                      >
+                        Subject
+                      </button>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-1">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setNewTopicName("");
+                          setShowNewTopic(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={!newTopicName.trim()}
+                        onClick={() => {
+                          const name = newTopicName.trim();
+                          const id = `t-custom-${Date.now()}`;
+                          setCustomTopics((prev) => [
+                            ...prev,
+                            { id, name, kind: newTopicKind },
+                          ]);
+                          setTopicId(id);
+                          setNewTopicName("");
+                          setNewTopicKind("game");
+                          setShowNewTopic(false);
+                        }}
+                      >
+                        Add topic
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex gap-2">
