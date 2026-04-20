@@ -23,7 +23,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        uses: ./.github/actions/install-deps
 
       - name: Check translations
         run: npm run check-translations
@@ -47,7 +47,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        uses: ./.github/actions/install-deps
 
       - name: Run tests
         run: npm run test -- --coverage
@@ -71,7 +71,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        uses: ./.github/actions/install-deps
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
@@ -119,7 +119,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        uses: ./.github/actions/install-deps
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
@@ -159,7 +159,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm ci
+        uses: ./.github/actions/install-deps
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
