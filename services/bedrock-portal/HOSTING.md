@@ -61,6 +61,18 @@ Won't build these now, but the list so we know what's ahead:
 5. **Deploy path** — either `az webapp deploy` from CI, or a GitHub Actions workflow. Either way, zip up just `services/bedrock-portal/` + `node_modules` (or install on the host).
 6. **First-run device-code auth** — tail logs, grab the microsoft.com/link code, sign in via browser. Alternative: pre-auth locally and `scp` the `.auth-cache` directory up (fewer eyes on logs).
 
+## Keeping current with Minecraft releases
+
+`bedrock-portal` and `bedrock-portal-nethernet` bake the NetherNet signalling protocol into the package, so when Mojang ships a protocol bump (roughly 2–3× a year), we need a fresh release of both packages or mobile joins start failing with `InitialConnection-1`. LucienHH usually ships within days of an MC update.
+
+Hands-off option for when we do deploy:
+
+- **Dependabot** watching `services/bedrock-portal/package.json` → opens a PR whenever either package publishes. Free, GitHub-native, just a `.github/dependabot.yml` entry.
+- **Continuous deploy on `main`** → merging the Dependabot PR redeploys the service.
+- Recommended middle path: semi-automatic — Dependabot opens the PR, we glance and merge. ~30 sec every couple months with a gate in case a dep regression ships. Full auto-merge only makes sense once there's a smoke test (boot headless, wait for `sessionCreated`, exit).
+
+Note: the advertised `world.version` string in `src/index.ts` (currently `"1.21.0"`) is code, so Dependabot won't touch it. If we care about keeping the session card in sync with real MC versions, either promote it to an env var (`PORTAL_WORLD_VERSION`) — hosting config, not a code change — or accept that it's cosmetic and let it drift.
+
 ## Fallback: Oracle Cloud Always Free
 
 Kept as an option in case Azure ever becomes unavailable or MPN credits dry up.
