@@ -1,0 +1,22 @@
+name: Install dependencies
+description: >
+  Run `npm ci` and fall back to `npm install` when the lockfile is rejected.
+  Works around npm/cli#4828: Windows npm occasionally drops nested strict pins
+  (e.g. @rolldown/binding-wasm32-wasi → @emnapi) during rehoist, producing a
+  lockfile that `npm ci` refuses on Linux even though the dep graph is fine.
+  The fallback heals the lockfile for the CI run and surfaces the heal as a
+  warning so silent drift doesn't hide real mismatches.
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        if ! npm ci; then
+          echo "::warning::npm ci rejected the lockfile — falling back to npm install (likely npm/cli#4828). If this fires for a commit that didn't touch deps on Windows, investigate."
+          npm install
+          if ! git diff --quiet package-lock.json; then
+            echo "::notice::Lockfile was healed during install. Diff:"
+            git diff --stat package-lock.json
+          fi
+        fi
