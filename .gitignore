@@ -66,8 +66,6 @@ logs
 # Keep example env files for reference
 !.env.local.example
 !.env.test.local.example
-!.env.example
-!services/*/.env.example
 
 .vercel
 .env*.local
