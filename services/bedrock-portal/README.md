@@ -72,3 +72,23 @@ On first run, prismarine-auth prints a URL (e.g. https://microsoft.com/link) and
 ## Deployment (later)
 
 See [HOSTING.md](./HOSTING.md) for the current plan, options considered, and prereqs for the eventual deploy.
+
+---
+
+## Dependency notes
+
+### `axios` override in root `package.json`
+
+The root `package.json` has:
+
+```json
+"overrides": { "axios": "^1.7.9" }
+```
+
+This exists because `prismarine-auth` (pinned to the `LucienHH/prismarine-auth#playfab` fork) pulls in `@xboxreplay/xboxlive-auth@3.3.3`, which declares `axios@^0.21.1` — a version with 7 open high-severity advisories (SSRF, CSRF, proto-pollution DoS, NO_PROXY bypass, cloud metadata exfiltration). Most aren't practically exploitable here — this service only makes outbound HTTPS calls to hardcoded Microsoft OAuth endpoints with no attacker-controlled input — but the override is cheap and gets `npm audit` to a clean 0.
+
+The API surface `xboxlive-auth` uses (`axios.post(url, body, { headers })`, `response.status/data`, `err.response.status`) is stable between 0.21 and 1.x, so forcing the axios 1.x line is safe without needing to fork xboxlive-auth.
+
+`npm ls axios` will show `invalid: "^0.21.1"` against the overridden copy — that's the override doing its job, not a real problem.
+
+**When to revisit:** if the `LucienHH/prismarine-auth` fork ever updates to `@xboxreplay/xboxlive-auth@5.x` (zero-dep, uses native fetch), the override becomes a no-op and can be removed.
