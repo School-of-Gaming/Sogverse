@@ -71,4 +71,4 @@ On first run, prismarine-auth prints a URL (e.g. https://microsoft.com/link) and
 
 ## Deployment (later)
 
-Target: Oracle Cloud Always Free (Ampere A1 ARM). When deploying, open the Bedrock server's UDP port in Oracle VCN **and** the host firewall — but only for the server instance. This portal service itself needs no inbound ports, only outbound HTTPS. Mount a persistent volume at `PORTAL_AUTH_CACHE_DIR` so token cache survives restarts.
+See [HOSTING.md](./HOSTING.md) for the current plan, options considered, and prereqs for the eventual deploy.
