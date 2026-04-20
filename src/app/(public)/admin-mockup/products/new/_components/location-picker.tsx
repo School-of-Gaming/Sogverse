@@ -56,12 +56,13 @@ interface LocationPickerProps {
   value: string | null;
   onChange: (locationId: string | null) => void;
   /**
-   * "site" — only sites may be picked (used for in-person products).
-   * "any"  — sites, municipalities, regions, or countries may be picked
-   *          (used for online products — an online club can be "owned by
-   *          Helsinki municipality" without a physical venue).
+   * "site"         — only sites may be picked (in-person products).
+   * "jurisdiction" — countries, regions, or municipalities may be picked;
+   *                  sites are hidden entirely. Used for online products:
+   *                  a site implies a physical venue, and online products
+   *                  don't have one.
    */
-  pickable?: "site" | "any";
+  pickable?: "site" | "jurisdiction";
 }
 
 export function LocationPicker({ value, onChange, pickable = "site" }: LocationPickerProps) {
@@ -78,7 +79,16 @@ export function LocationPicker({ value, onChange, pickable = "site" }: LocationP
     () => [...LOCATIONS, ...extraLocations],
     [extraLocations],
   );
-  const tree = useMemo(() => buildLocationTree(allLocations), [allLocations]);
+  // In jurisdiction mode sites are hidden from the tree entirely — they
+  // aren't valid picks and would just be clutter.
+  const treeSource = useMemo(
+    () =>
+      pickable === "jurisdiction"
+        ? allLocations.filter((l) => l.type !== "site")
+        : allLocations,
+    [allLocations, pickable],
+  );
+  const tree = useMemo(() => buildLocationTree(treeSource), [treeSource]);
 
   // When the pickable mode tightens (e.g. user flips the form from online to
   // in-person), silently clear a selection that no longer qualifies. Without
@@ -92,6 +102,9 @@ export function LocationPicker({ value, onChange, pickable = "site" }: LocationP
       return;
     }
     if (pickable === "site" && current.type !== "site") {
+      onChange(null);
+    }
+    if (pickable === "jurisdiction" && current.type === "site") {
       onChange(null);
     }
   }, [pickable, value, allLocations, onChange]);
@@ -180,7 +193,10 @@ export function LocationPicker({ value, onChange, pickable = "site" }: LocationP
   const handleLocationCreated = (loc: MockLocation) => {
     setExtraLocations((prev) => [...prev, loc]);
     // Auto-select only when the new location is a valid pick for this mode.
-    if (pickable === "any" || loc.type === "site") {
+    const validPick =
+      (pickable === "site" && loc.type === "site") ||
+      (pickable === "jurisdiction" && loc.type !== "site");
+    if (validPick) {
       onChange(loc.id);
       setBrowsing(false);
       setQuery("");
@@ -248,8 +264,8 @@ export function LocationPicker({ value, onChange, pickable = "site" }: LocationP
       <div className="flex items-center justify-between text-xs">
         <span className="text-muted-foreground">
           {pickable === "site"
-            ? "Pick a site. You can add any level — country, region, municipality, or site — inline if it's missing."
-            : "Pick any level — country, region, municipality, or site. Missing a region or municipality? Add it inline."}
+            ? "Pick a site. Missing one? Add it inline under its municipality."
+            : "Pick a country, region, or municipality. Online products don't bind to a physical site."}
         </span>
         {selected && (
           <button
@@ -294,7 +310,7 @@ interface TreeRowProps {
   depth: number;
   query: string;
   selectedId: string | null;
-  pickable: "site" | "any";
+  pickable: "site" | "jurisdiction";
   onPick: (location: MockLocation) => void;
   onAddChildUnder: (parent: MockLocation) => void;
 }
@@ -314,9 +330,14 @@ function TreeRow({
   const isExpanded = query ? true : expanded;
   const hasChildren = node.children.length > 0;
   const isSite = node.type === "site";
-  const isPickable = pickable === "any" || isSite;
+  const isPickable = pickable === "site" ? isSite : !isSite;
   const isSelected = isPickable && selectedId === node.id;
-  const childType = childTypeFor(node);
+  // Suppress "Add site" in jurisdiction mode: sites are hidden from the tree,
+  // and creating one here would never surface.
+  const childType =
+    pickable === "jurisdiction" && node.type === "municipality"
+      ? null
+      : childTypeFor(node);
 
   const childLabel = childCountLabel(node);
 
@@ -334,7 +355,10 @@ function TreeRow({
 
   // Non-site rows in "any" mode get a small "Pick this" button so clicking the
   // row still expands but an explicit action is available.
-  const showPickButton = pickable === "any" && !isSite;
+  // In jurisdiction mode, non-site rows expand on click (so admins can drill
+  // down to more specific jurisdictions). The explicit Pick button gives
+  // them a committal action on any non-leaf level.
+  const showPickButton = pickable === "jurisdiction" && !isSite;
 
   const hasHoverActions = showPickButton || childType !== null;
 

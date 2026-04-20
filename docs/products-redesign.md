@@ -179,27 +179,33 @@ site_details
 
 **Scope:** events at libraries, malls, offices, or partner venues are `site`-type locations we don't operate. No separate "venue" concept needed — a "site we operate" vs "site we visit" distinction, if ever required, can be a boolean flag on `site_details` later.
 
-### 4.9 Online products still have a location — just not a site
+### 4.9 Online and in-person take different slices of the location tree
 
-A product's `location_id` is its **jurisdictional home** in the hierarchy, not necessarily a physical venue:
+A product's `location_id` is its **jurisdictional home** in the location hierarchy. Online and in-person pick from disjoint slices of the tree:
 
-- **In-person products** (`is_remote = false`) — `location_id` must be a `site`. This is the venue.
-- **Online products** (`is_remote = true`) — `location_id` can be any level: country, region, municipality, or site. There is no physical venue; this is purely a browse / filter anchor.
+- **In-person products** (`is_remote = false`) — `location_id` **must be a `site`**. A site is the physical venue.
+- **Online products** (`is_remote = true`) — `location_id` **must be a country, region, or municipality — not a site**. There is no physical venue, so picking a site would be semantically wrong. The chosen jurisdiction is purely a browse / filter anchor.
 
-The parent experience that motivates this: *"I live in Helsinki. I can see a club that's offered by my municipality. That club happens to be online."* Without a non-site `location_id`, an online municipality club has no natural home in the tree — the municipality paid for it, but it isn't hosted at any one school. Forcing a site pick would be arbitrary and wrong.
+The parent experience that motivates online's rule: *"I live in Helsinki. I can see a club that's offered by my municipality. That club happens to be online."* The owning municipality captures this cleanly; a site (a building) does not.
 
 How this plays out per product type:
 
 | Product type | Typical online `location_id` | Typical in-person `location_id` |
 |---|---|---|
-| Consumer club | Any level — usually a region or country for broad online clubs | Site |
+| Consumer club | Region or country for broad online clubs; municipality if it's town-specific | Site |
 | Municipality club | The municipality that paid for it | Site within that municipality |
-| Summer camp | Same as consumer clubs | Site |
-| Event | Any level — country for nationwide webinars, site for local demos | Site |
+| Summer camp | Region or country (or municipality if locally scoped) | Site |
+| Event | Country for nationwide webinars, municipality for local online demos | Site |
 
-**Browse filtering.** Parents search by their location (e.g., Helsinki). The query matches any product whose `location_id` is at-or-under Helsinki — sites under Helsinki, Helsinki itself, Uusimaa, Finland. An online Helsinki-municipality club (`location_id = helsinki`) appears when the parent filters by Helsinki. An online Finland-wide event (`location_id = finland`) appears for any Finnish parent.
+**Browse filtering.** Parents search by their location (e.g., Helsinki). The query matches any product whose `location_id` is at-or-under Helsinki — sites under Helsinki, Helsinki itself, Uusimaa, Finland. An online Helsinki-municipality club (`location_id = helsinki`) surfaces for Helsinki parents. An online Finland-wide event (`location_id = finland`) surfaces for any Finnish parent.
 
-**Admin UX.** The location picker's pickability mode flips with `is_remote`: when in-person, only sites are selectable; when online, any level is. The in-person mode also lets the admin create a new site under a municipality inline — site creation does not live on the product page in the real admin, but the inline affordance avoids a context switch mid-form.
+**Admin UX.** The location picker flips between two disjoint modes based on `is_remote`:
+- **Site mode** — the tree shows every level; only site rows are pickable; non-site rows expand-on-click so admins can drill down.
+- **Jurisdiction mode** — site rows are filtered out of the tree entirely; country / region / municipality rows are pickable. A hover-revealed "Pick" button lets admins commit at any level without drilling further.
+
+The picker auto-clears a stale selection when the admin flips modes (e.g., a region picked while online is cleared when switching to in-person, since the schema won't allow it).
+
+Both modes let the admin create new locations inline (add a region, municipality, or country) — missing infrastructure shouldn't block a product create. Site creation is offered only in site mode, since a newly-created site wouldn't be reachable in jurisdiction mode.
 
 ### 4.10 Voice rooms are online-only
 
@@ -236,7 +242,8 @@ products
   padlet_url            text
 
   location_id           uuid → locations.id  -- site when is_remote=false;
-                                              -- any level when is_remote=true
+                                              -- country / region / municipality
+                                              -- (never a site) when is_remote=true
   is_remote             bool
 
   start_date            date             -- first calendar date the product runs
@@ -261,7 +268,9 @@ products
   --   product_type='event'              → end_date = start_date (one-off)
   --   product_type != 'consumer_club'   → end_date IS NOT NULL
   --   is_remote=false                   → locations.type = 'site' at location_id
-  --   (is_remote=true permits any level — site, municipality, region, country)
+  --   is_remote=true                    → locations.type != 'site' at location_id
+  --                                       (country, region, or municipality only —
+  --                                        online products have no physical venue)
 
 schedule_slots
   id                    uuid pk

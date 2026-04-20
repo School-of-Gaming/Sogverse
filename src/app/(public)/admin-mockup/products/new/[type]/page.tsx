@@ -521,7 +521,7 @@ export default function AdminAddProductMockPage() {
                   <LocationPicker
                     value={siteId || null}
                     onChange={(id) => setSiteId(id ?? "")}
-                    pickable={isRemote ? "any" : "site"}
+                    pickable={isRemote ? "jurisdiction" : "site"}
                   />
                 </Field>
 
