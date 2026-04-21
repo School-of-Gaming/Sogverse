@@ -284,6 +284,21 @@ No deadline-enforcement engine. No product-type branches in the threshold logic.
 
 **Parent-facing copy** on a `pending` product with a threshold set: "5 of 8 spots needed to start." Honest about the uncertainty and creates a motivational signup loop without promising a specific start date.
 
+**Admin UX — three start modes selected via radio.** The schema allows any combination of `start_date` and `signup_threshold`, but three named modes cover the real cases and keep the "Create product" form uncluttered:
+
+1. **On a specific date** — `start_date` set, `signup_threshold` null. The product runs on that date regardless of headcount. (The classic case.)
+2. **On a specific date, only if enough sign up** — both `start_date` and `signup_threshold` set. Scheduled for the date; cancelled + refunded if the minimum isn't reached by then. Parents see the date *and* a live "X of Y needed" counter.
+3. **When enough gamers sign up** — `start_date` null, `signup_threshold` set. No fixed start date yet. Admin picks the date once the threshold is met (via `start_product(..., start_date)`). Parents see only the counter and are told they'll be contacted when ready.
+
+Per-type UX defaults — hide the modes that don't realistically fit the product type, but keep the schema flat:
+
+| Product type | Modes offered |
+|---|---|
+| Consumer club | all three |
+| Camp | 1 and 2 (camps are tied to the calendar) |
+| Event | all three |
+| Municipality club | 1 only — no radio rendered, just a fixed date |
+
 ---
 
 ## 5. Data model

@@ -45,6 +45,14 @@ type SlotDraft = {
   durationMinutes: number;
 };
 
+type GroupDraft = {
+  id: string;
+  name: string;
+  geduIds: string[];
+};
+
+type StartTrigger = "date" | "date_and_threshold" | "threshold";
+
 type PaidMode = "free" | "paid";
 
 export default function AdminAddProductMockPage() {
@@ -81,27 +89,30 @@ export default function AdminAddProductMockPage() {
   const [showNewTag, setShowNewTag] = useState(false);
   const [newTagName, setNewTagName] = useState("");
 
-  // Team
-  const [primaryGeduId, setPrimaryGeduId] = useState("");
-  const [assistantGeduIds, setAssistantGeduIds] = useState<string[]>([]);
-  const [primarySheetOpen, setPrimarySheetOpen] = useState(false);
-  const [assistantSheetOpen, setAssistantSheetOpen] = useState(false);
-  const primaryGedu = GEDUS.find((g) => g.id === primaryGeduId);
-  const assistantGedus = assistantGeduIds
-    .map((id) => GEDUS.find((g) => g.id === id))
-    .filter((g): g is (typeof GEDUS)[number] => Boolean(g));
+  // Groups (admin-facing cohort layer; parents don't see groups)
+  const [groups, setGroups] = useState<GroupDraft[]>([]);
+  const [activeGroupSheetId, setActiveGroupSheetId] = useState<string | null>(null);
+  const activeGroup = activeGroupSheetId
+    ? (groups.find((g) => g.id === activeGroupSheetId) ?? null)
+    : null;
 
   // Capacity
   const [seatCount, setSeatCount] = useState(() => defaultSeats(productType.slug));
   const [uncapped, setUncapped] = useState(false); // only meaningful when seatCountOptional
   const [waitlistEnabled, setWaitlistEnabled] = useState(true);
+  const [signupThreshold, setSignupThreshold] = useState("");
 
   // Schedule
+  const [startTrigger, setStartTrigger] = useState<StartTrigger>("date");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [timezone, setTimezone] = useState("Europe/Helsinki");
   const [slots, setSlots] = useState<SlotDraft[]>(() => defaultSlots(productType.slug));
   const [holidayCalIds, setHolidayCalIds] = useState<string[]>(() => defaultHolidayCals(productType.slug));
+
+  const startTriggerOptions = availableStartTriggers(productType.slug);
+  const showDateInputs = startTrigger === "date" || startTrigger === "date_and_threshold";
+  const showThresholdInput = startTrigger === "date_and_threshold" || startTrigger === "threshold";
 
   // Billing
   const [paidMode, setPaidMode] = useState<PaidMode>(() => defaultPaidMode(productType.slug));
@@ -537,42 +548,111 @@ export default function AdminAddProductMockPage() {
               title="When"
               description={scheduleDescription(productType.slug)}
             >
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label={startDateLabel(productType.slug)} htmlFor="startDate" required>
+              {startTriggerOptions.length > 1 && (
+                <Field label="How does this start?">
+                  <div className="space-y-2">
+                    {startTriggerOptions.map((option) => (
+                      <label
+                        key={option}
+                        className={cn(
+                          "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
+                          startTrigger === option
+                            ? "border-primary bg-primary/5"
+                            : "border-input hover:border-foreground/30",
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="startTrigger"
+                          checked={startTrigger === option}
+                          onChange={() => {
+                            setStartTrigger(option);
+                            // Clear hidden fields so stale values don't
+                            // submit and the UI feels consistent.
+                            if (option === "date") {
+                              setSignupThreshold("");
+                            }
+                            if (option === "threshold") {
+                              setStartDate("");
+                              setEndDate("");
+                            }
+                          }}
+                          className="mt-1 h-4 w-4"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium">{startTriggerLabel(option)}</div>
+                          <div className="mt-0.5 text-xs text-muted-foreground">
+                            {startTriggerDescription(option)}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </Field>
+              )}
+
+              {showDateInputs && (
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Field label={startDateLabel(productType.slug)} htmlFor="startDate" required>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      required
+                    />
+                  </Field>
+                  {productType.slug === "event" ? (
+                    <div className="flex items-end text-xs text-muted-foreground">
+                      <Info className="mr-1.5 inline h-3.5 w-3.5" />
+                      Events happen on a single date.
+                    </div>
+                  ) : (
+                    <Field
+                      label={endDateLabel(productType.slug)}
+                      htmlFor="endDate"
+                      hint={
+                        productType.slug === "consumer-club"
+                          ? "Leave blank for an ongoing club with no end date."
+                          : undefined
+                      }
+                      required={productType.slug !== "consumer-club"}
+                    >
+                      <Input
+                        id="endDate"
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        required={productType.slug !== "consumer-club"}
+                      />
+                    </Field>
+                  )}
+                </div>
+              )}
+
+              {showThresholdInput && (
+                <Field
+                  label="Signups needed to start"
+                  htmlFor="threshold"
+                  required
+                  hint={
+                    startTrigger === "threshold"
+                      ? "No fixed start date yet. Parents will see a \"X of Y needed\" counter while this is pending. You manually press Start once you have enough signups and pick the first session date then."
+                      : "If fewer than this many gamers have signed up by the start date, you'll need to cancel and refund from the product page."
+                  }
+                >
                   <Input
-                    id="startDate"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    id="threshold"
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 8"
+                    value={signupThreshold}
+                    onChange={(e) => setSignupThreshold(e.target.value)}
+                    className="max-w-[220px]"
                     required
                   />
                 </Field>
-                {productType.slug === "event" ? (
-                  <div className="flex items-end text-xs text-muted-foreground">
-                    <Info className="mr-1.5 inline h-3.5 w-3.5" />
-                    Events happen on a single date.
-                  </div>
-                ) : (
-                  <Field
-                    label={endDateLabel(productType.slug)}
-                    htmlFor="endDate"
-                    hint={
-                      productType.slug === "consumer-club"
-                        ? "Leave blank for an ongoing club with no end date."
-                        : undefined
-                    }
-                    required={productType.slug !== "consumer-club"}
-                  >
-                    <Input
-                      id="endDate"
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      required={productType.slug !== "consumer-club"}
-                    />
-                  </Field>
-                )}
-              </div>
+              )}
 
               <Field label="Timezone" htmlFor="timezone" required>
                 <select
@@ -641,86 +721,104 @@ export default function AdminAddProductMockPage() {
             </FormSection>
 
             <FormSection
-              title="Team"
-              description="One primary Gedu runs the product. Assistants can help out."
+              title="Groups"
+              description="Admins use groups to organize participants inside a product. Parents don't see groups — they see the product."
             >
-              <Field label="Primary Gedu" required>
-                {primaryGedu ? (
-                  <GeduChip
-                    gedu={primaryGedu}
-                    onChange={() => setPrimarySheetOpen(true)}
-                    onRemove={() => {
-                      setPrimaryGeduId("");
-                    }}
-                  />
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setPrimarySheetOpen(true)}
-                    className="w-full justify-start gap-2 font-normal"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    <span className="text-muted-foreground">Pick a Gedu…</span>
-                  </Button>
-                )}
-              </Field>
+              <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>
+                  Add groups now if you already know how you want to organize
+                  this — or leave this empty and add them later from the product
+                  page, once you see how many gamers sign up.
+                </span>
+              </div>
 
-              <Field
-                label="Assistant Gedus"
-                hint="Optional. Join the sessions and help the primary Gedu."
-              >
-                <div className="space-y-2">
-                  {assistantGedus.map((g) => (
-                    <GeduChip
-                      key={g.id}
-                      gedu={g}
-                      onRemove={() =>
-                        setAssistantGeduIds((prev) =>
-                          prev.filter((id) => id !== g.id),
+              {groups.length === 0 ? (
+                <div className="rounded-md border border-dashed border-input px-4 py-6 text-center">
+                  <p className="text-sm font-medium">No groups yet.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Parents can still sign up. Their gamer will land in an
+                    &quot;unassigned&quot; inbox until you place them into a group.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {groups.map((group, i) => (
+                    <GroupCard
+                      key={group.id}
+                      group={group}
+                      index={i}
+                      onNameChange={(name) =>
+                        setGroups((prev) =>
+                          prev.map((g) =>
+                            g.id === group.id ? { ...g, name } : g,
+                          ),
                         )
+                      }
+                      onRemoveGedu={(geduId) =>
+                        setGroups((prev) =>
+                          prev.map((g) =>
+                            g.id === group.id
+                              ? {
+                                  ...g,
+                                  geduIds: g.geduIds.filter(
+                                    (id) => id !== geduId,
+                                  ),
+                                }
+                              : g,
+                          ),
+                        )
+                      }
+                      onAddGedu={() => setActiveGroupSheetId(group.id)}
+                      onRemove={() =>
+                        setGroups((prev) => prev.filter((g) => g.id !== group.id))
                       }
                     />
                   ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setAssistantSheetOpen(true)}
-                    className="gap-1.5"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add assistant Gedu
-                  </Button>
                 </div>
-              </Field>
+              )}
 
-              <GeduPickerSheet
-                open={primarySheetOpen}
-                onOpenChange={setPrimarySheetOpen}
-                title="Primary Gedu"
-                description="The main host for this product. Shown to parents in search results."
-                highlightId={primaryGeduId || undefined}
-                excludeIds={assistantGeduIds}
-                onSelect={(id) => {
-                  setPrimaryGeduId(id);
-                  // If the newly-picked primary was in assistants, drop it there.
-                  setAssistantGeduIds((prev) => prev.filter((x) => x !== id));
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const letter = String.fromCharCode(65 + groups.length);
+                  setGroups((prev) => [
+                    ...prev,
+                    {
+                      id: `g-${Date.now()}-${prev.length}`,
+                      name: `Group ${letter}`,
+                      geduIds: [],
+                    },
+                  ]);
                 }}
-              />
+                className="gap-1.5"
+              >
+                <Plus className="h-4 w-4" />
+                Add a group
+              </Button>
 
               <GeduPickerSheet
-                open={assistantSheetOpen}
-                onOpenChange={setAssistantSheetOpen}
-                title="Add assistant Gedu"
-                description="Assistants join the sessions and help the primary Gedu run them."
-                excludeIds={[
-                  ...(primaryGeduId ? [primaryGeduId] : []),
-                  ...assistantGeduIds,
-                ]}
+                open={activeGroupSheetId !== null}
+                onOpenChange={(open) => {
+                  if (!open) setActiveGroupSheetId(null);
+                }}
+                title={
+                  activeGroup
+                    ? `Add Gedu to ${activeGroup.name}`
+                    : "Add Gedu to group"
+                }
+                description="Gedus assigned to this group run its sessions. For online products they can also hop into other groups' voice rooms in the same product when needed."
+                excludeIds={activeGroup?.geduIds ?? []}
                 onSelect={(id) => {
-                  setAssistantGeduIds((prev) =>
-                    prev.includes(id) ? prev : [...prev, id],
+                  if (!activeGroupSheetId) return;
+                  setGroups((prev) =>
+                    prev.map((g) =>
+                      g.id === activeGroupSheetId
+                        ? { ...g, geduIds: [...g.geduIds, id] }
+                        : g,
+                    ),
                   );
                 }}
               />
@@ -1078,6 +1176,44 @@ function slotsLabel(type: ProductType): string {
   return "Day & time";
 }
 
+function availableStartTriggers(type: ProductType): StartTrigger[] {
+  switch (type) {
+    case "consumer-club":
+      return ["date", "date_and_threshold", "threshold"];
+    case "camp":
+      // Camps are tied to the calendar, so a threshold-only mode (no date)
+      // doesn't fit — offer mode 1 and 2 only.
+      return ["date", "date_and_threshold"];
+    case "event":
+      return ["date", "date_and_threshold", "threshold"];
+    case "municipality-club":
+      // Municipality clubs always run on the school calendar — no radio.
+      return ["date"];
+  }
+}
+
+function startTriggerLabel(trigger: StartTrigger): string {
+  switch (trigger) {
+    case "date":
+      return "On a specific date";
+    case "date_and_threshold":
+      return "On a specific date, only if enough sign up";
+    case "threshold":
+      return "When enough gamers have signed up";
+  }
+}
+
+function startTriggerDescription(trigger: StartTrigger): string {
+  switch (trigger) {
+    case "date":
+      return "Runs on the selected date, regardless of signup count.";
+    case "date_and_threshold":
+      return "Scheduled for the selected date, but only runs if the signup minimum is reached in time. Otherwise you cancel and refunds fire automatically.";
+    case "threshold":
+      return "No fixed start date. You pick the first session date once signups hit the minimum — parents see a live counter and know you'll contact them when it's ready.";
+  }
+}
+
 function capacityBillingDescription(type: ProductType): string {
   switch (type) {
     case "consumer-club":
@@ -1301,6 +1437,87 @@ function MockupRibbon() {
   return (
     <div className="mx-auto mb-6 max-w-md rounded-md border border-dashed border-primary/50 bg-primary/10 px-4 py-2 text-center text-xs text-primary">
       Mockup · all data is fake · for product-team review
+    </div>
+  );
+}
+
+function GroupCard({
+  group,
+  index,
+  onNameChange,
+  onAddGedu,
+  onRemoveGedu,
+  onRemove,
+}: {
+  group: GroupDraft;
+  index: number;
+  onNameChange: (name: string) => void;
+  onAddGedu: () => void;
+  onRemoveGedu: (geduId: string) => void;
+  onRemove: () => void;
+}) {
+  const gedus = group.geduIds
+    .map((id) => GEDUS.find((g) => g.id === id))
+    .filter((g): g is (typeof GEDUS)[number] => Boolean(g));
+
+  return (
+    <div className="rounded-md border border-input bg-card p-4">
+      <div className="flex items-end gap-2">
+        <div className="flex-1 space-y-1.5">
+          <Label
+            htmlFor={`group-${group.id}-name`}
+            className="text-xs uppercase tracking-wide text-muted-foreground"
+          >
+            Group {index + 1}
+          </Label>
+          <Input
+            id={`group-${group.id}-name`}
+            value={group.name}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder="Group name"
+          />
+        </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onRemove}
+          aria-label="Remove group"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <div className="mt-4 space-y-2">
+        <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+          Assigned Gedus
+        </Label>
+        {gedus.length === 0 ? (
+          <p className="text-xs text-muted-foreground">
+            None yet. A group with no Gedus is fine — you can assign them later.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {gedus.map((gedu) => (
+              <GeduChip
+                key={gedu.id}
+                gedu={gedu}
+                onRemove={() => onRemoveGedu(gedu.id)}
+              />
+            ))}
+          </div>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={onAddGedu}
+          className="gap-1.5"
+        >
+          <UserPlus className="h-4 w-4" />
+          Assign a Gedu
+        </Button>
+      </div>
     </div>
   );
 }
