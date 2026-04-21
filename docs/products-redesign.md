@@ -8,6 +8,23 @@ Related: `groups-architecture.md`, `customer-enrollment-architecture.md`, `locat
 
 ---
 
+## How to use this document (doc vs. mockups)
+
+Treat this doc as the canonical spec. Two UX mockups live alongside it on the `feature/school-clubs-mockup` branch:
+
+- **Admin create-product mockup** at `/admin-mockup/products/new` — sketches the admin flow for all four product types, including the location tree, Gedu picker, group cards, and three-mode start trigger.
+- **Parent registration mockup** at `/registration` — sketches the parent flow for municipality-club discovery and signup: location-based search, ticket-drop countdown, one-click registration, waitlist experience.
+
+Both mockups are deliberately built **without** i18n, RBAC, real data queries, or the real design-system patterns of the codebase — they exist so the product team can click through and react to flows.
+
+When we implement this for real, the doc is expected to travel into the dev branch on its own while the mockups stay behind as visual references:
+
+- **Doc is the source of truth** for business rules, schema, RPCs, per-type behavior, and permission topology. Anything production needs that the mockups don't model — auth, RLS, query invalidation, accessibility, i18n, dark-mode contrast — lives in the doc. If it's in the doc, build it; if it's not, flag it and update the doc before coding.
+- **Mockups are sketches** for UX patterns (location picker modes, Gedu filtering, group cards, start-trigger radio, ticket-drop countdown, location-first search, waitlist confirmation, etc.). Look at them while building those screens; don't port them line-by-line. Their fake-data shape, state management, icon choices, and copy are starting points, not specifications.
+- **If the doc and a mockup disagree, the doc wins.** Any business case visible in either mockup should also be captured here — if a gap surfaces during implementation, update the doc (and file a PR) before building around it.
+
+---
+
 ## 1. Why redesign
 
 Today's `products` schema is built for a single product line — weekly consumer clubs paid in Sorg tokens. A `product_groups` layer exists to organize participants and Gedus within a product, and `group_enrollments` + `enrollment_charges` drive per-session billing. Groups stay under the new design (§4.1); the schema around them is reshaped so all four product types use them uniformly.
@@ -31,6 +48,9 @@ Because all current data is staging-only, the migration is a **greenfield cutove
 | **Waitlist** | Yes | Yes | Yes | Optional |
 | **Gated access** | No (v1) | No (v1 — simplification) | No | No |
 | **Refunds** | Session-window | None (municipality-paid) | Cutoff before start; admin after | Cutoff before start |
+| **Registration opens at** | Never (always open) | **Required** — "ticket drop" moment | Optional | Optional |
+| **Holiday calendars** | Applies | Applies | Applies | N/A (single-date) |
+| **Start trigger modes offered** (§4.11) | All three | Fixed date only | Fixed date; fixed date + minimum | All three |
 
 ### The unifying observation
 
@@ -127,6 +147,19 @@ Rendering converts `(session_date, start_time, product.timezone)` into an absolu
 - **`product_tags`** — many per product. Controlled vocabulary. Examples: `neurodiversity-friendly`, `competitive`, `chill`, `beginner`, `advanced`. Drives parent-facing filters and internal search.
 
 The `games` concept (and table, if any) is retired. A "game" is just a topic that happens to be a game.
+
+**Topic kind — games vs subjects.** Topics carry a `kind` classification:
+
+- `game` — a named video game (Minecraft, Fortnite, Roblox, Valorant, Super Smash Bros., Pokémon GO, …).
+- `subject` — a non-game topic (Game Design, Online Safety, Esports Fundamentals, Coding for Gamers, …).
+
+Kind drives UI grouping wherever topics are listed — topic pickers separate "Games" from "Subjects" in two optgroups; parent browse surfaces can split or filter by kind; reporting can count games vs subjects independently. Kind is **not** a branch in business logic — it's a presentation-layer dimension on an otherwise-flat topic set.
+
+**Inline creation during product create.** Both `topics` and `tags` are admin-managed tables, but the create-product flow must let admins add a new topic or tag **without leaving the form**. The UX reason is practical: admins will routinely want a topic or tag that doesn't yet exist ("Among Us didn't exist as a topic last month; I want to add it and use it"), and forcing a round-trip through a separate admin screen interrupts the create flow. The new row is committed immediately so the topic/tag becomes available to other admins and future products.
+
+- Inline topic creation requires `name` and `kind` (UI: radio or dropdown between "Game" and "Subject").
+- Inline tag creation requires `name`; `description` is optional.
+- Slugs are auto-derived from the name server-side; uniqueness conflicts surface as a create error with a "did you mean X?" suggestion when a near-match exists.
 
 ### 4.5 Billing modes — explicit, no free-by-accident
 
@@ -320,7 +353,8 @@ products
   max_age               int
   spoken_language_code  text
   image_path            text
-  padlet_url            text
+  padlet_url            text             -- optional; shared with families ONLY after
+                                          -- they sign up (never on public browse pages)
 
   location_id           uuid → locations.id  -- site when is_remote=false;
                                               -- country / region / municipality
@@ -376,6 +410,7 @@ topics
   id                    uuid pk
   slug                  text unique      -- 'minecraft', 'online-security'
   name                  text
+  kind                  enum('game','subject')   -- drives UI grouping only
   description           text
   icon_path             text
 
@@ -604,6 +639,39 @@ Products with genuinely different attributes (different weekday, different start
 
 Each of the four product types also has a filtered view (`/clubs`, `/municipality-clubs`, `/camps`, `/events`) for marketing / direct links. Each is just the unified page with the `product_type` filter pre-applied.
 
+### 7.4 Location-first discovery (entry point for municipality-club parents)
+
+For municipality clubs specifically, parents rarely browse "all clubs in Finland" — they want clubs offered by **their municipality** (usually because their school has announced one). The public entry point therefore supports a location-first search flow:
+
+- A search / browse page that matches against the `locations` tree by name across all levels. Typing "Ressu" resolves to a school site; "Helsinki" to the municipality; "Uusimaa" to the region. All three navigate to the same kind of "products at-or-under this location" page, just anchored at different levels of the tree.
+- **Default browse order: municipality rows first.** When there is no query, surface municipalities before sites or regions — "what most parents are looking for."
+- **Search result sort: municipality > site > region.** When the parent has typed something, keep municipalities at the top within matches, then sites, then regions.
+- Only locations that have at least one in-scope product at-or-under them appear in the list. Empty locations never surface.
+
+The **location page** (`/registration/[locationSlug]` in the mockup) lists every product whose `location_id` is at-or-under the anchor location, with breadcrumb ancestors shown for context (e.g., "Uusimaa" above "Helsinki"). This page is the one a school announcement would link directly to.
+
+This flow is municipality-first because that's the case the mockup was built for, but nothing about it is hard-wired to `product_type = 'municipality_club'`. Any product whose `location_id` is under the anchor qualifies — a Helsinki-scoped consumer club or a Helsinki camp would show on the Helsinki page too. `/registration` is one entry point among several; the unified `/browse` (§7.1) is the other.
+
+### 7.5 Registration timing and ticket-drop UX
+
+For products with `registration_opens_at` set (required for municipality clubs, optional for camps and events), the detail page renders three distinct states:
+
+1. **Pre-open** — `now < registration_opens_at`. The signup form is present but disabled, with a **live countdown** to the open moment. Parents see "Opens in 2 days 14:32:08" or similar, updating in place. The form is pre-populated where possible (gamer picker, rules checkbox) so that opening moment is a one-click submit. Show an authoritative "server time" indicator near the countdown so parents understand the countdown is not client-drifted.
+2. **Open** — `registration_opens_at ≤ now`, seats available. Form is enabled, submits `create_participation`.
+3. **Closed / waitlist** — seats are full. Form posts to the waitlist lane (if `waitlist_enabled`); otherwise it's read-only with a "full" indicator.
+
+**Layout stability across state transitions.** The pre-open → open flip happens without user interaction, so interactive elements (submit button, gamer picker, rules checkbox) must **not shift position** when the countdown collapses to "Open now." Keep the countdown region a reserved height; fade the state transition rather than reflowing. Same rule for form state — don't reset gamer/checkbox selections across the flip. (This is the project-wide layout-stability rule from `CLAUDE.md`.)
+
+### 7.6 Parent-visible product detail
+
+On a product detail page the parent sees, in addition to the basics (name, description, image, Gedu(s), schedule):
+
+- **Seat state** — e.g. "8 of 10 seats · 3 on waitlist." Make the waitlist count honest: parents should know what they're getting into before clicking Register.
+- **Schedule, with skipped dates surfaced.** Upcoming session dates are computed from `schedule_slots` minus subscribed holiday calendars minus `session_overrides.cancelled=true`. Any skipped dates in the computed window should be visible ("No session on Dec 24, Dec 31 — Christmas break") so parents can plan.
+- **Venue detail for in-person products** — the site's name plus any `site_details.access_notes` content (e.g., "Room 204, second floor · entrance via back door after 5pm"). There is no separate `venue_name` free-text field on products; room-level specificity lives in `access_notes`.
+- **Threshold status** when a threshold is set (§4.11) — "5 of 8 signups needed to start" on pending products.
+- **Post-signup confirmation page** — confirms seat vs. waitlist, shows waitlist position if applicable (e.g., "#3 on the waitlist"), surfaces the padlet URL (§5.1), and echoes the first session date.
+
 ---
 
 ## 8. Admin UX
@@ -614,6 +682,7 @@ Each of the four product types also has a filtered view (`/clubs`, `/municipalit
   - One column per group, showing its name, assigned Gedus, and placed participations.
   - Drag-and-drop (existing UI) for moving gamers between inbox ↔ groups, and between groups.
   - Add/rename/delete group controls; add/remove Gedu controls per group.
+- **Gedu picker** (used when assigning a Gedu to a group, here and in the create-product form) must support search by name/email/bio and a language filter sourced from `profiles.spoken_languages`. With ~30+ Gedus in the system, a flat dropdown is unusable — admins filter to "Gedus who speak Swedish" when assigning to a Swedish-language club.
 - **Calendar view** per product shows computed sessions with overrides applied; admins can cancel/reschedule/assign substitutes directly from the calendar.
 - **Holiday calendar management** is a separate admin screen; products subscribe via a multi-select.
 - **Lifecycle actions** on each pending product: "Start product" (with confirm dialog if under threshold) and "Cancel product" (auto-refunds for `paid_upfront`). Admin home highlights threshold-hit notifications — "Tuesday Minecraft has 8 signups — ready to start" — so admins aren't polling every product page.
@@ -720,7 +789,12 @@ Deferred from v1 because the customer base is small and trusted; gating adds sch
 
 ### 12.2 Mockup lineage
 
-The current public mockup at `/registration` (from the superseded `school-clubs-design.md`) modeled only the municipality club flow. When this redesign lands in phase 1, the mockup is either promoted to the real unified-browse page or retired in favor of live queries against the new schema.
+Two UX mockups live on the `feature/school-clubs-mockup` branch and informed this design:
+
+- **Parent registration mockup** at `/registration` — originally from the superseded `school-clubs-design.md`, modeling the municipality-club flow. Covers location-first discovery, ticket-drop countdown, one-click registration, and waitlist confirmation. Its business-rule implications are captured in §7.4–§7.6.
+- **Admin create-product mockup** at `/admin-mockup/products/new` — built alongside this redesign, covering all four product types. Covers the location picker (dual site/jurisdiction modes), Gedu picker with language filter, group cards, billing-mode chooser, three-mode start trigger, and registration timing. Its business-rule implications are captured throughout §4, §5, §7, and §8.
+
+Both mockups are sketches, not implementations (see the "How to use this document" note at the top). When this redesign lands, they are either promoted (copy, flow shape, component ideas reused) or retired — see §7.4 for the location-first entry point specifically.
 
 ### 12.3 Why we kept Gedu Groups (and generalized them to every product type)
 
