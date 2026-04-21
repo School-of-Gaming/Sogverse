@@ -173,6 +173,18 @@ the hover state (which is full `bg-accent`). Considered but kept — the
 two-level stack (always-on /50, hover full) is working as designed.
 **Assessment:** intentional. Leave.
 
+**Reviewer pushback (2026-04-21):** the "working as designed" reasoning held
+when `--accent` was brand yellow — `bg-accent/50` over a 10%-card was a very
+visible yellow wash marking "you." Under the new neutral accent,
+`bg-accent/50` over a 10%-card computes to ~11.5% — a 1.5-point lift over
+the surrounding card surface, essentially invisible. The persistent self-cue
+is gone unless the row is being hovered. The `(you)` text label survives, so
+functionally the user isn't lost, but the strong visual anchor is. If the
+intent is "subtle persistent self-highlight," `bg-primary/10` or a
+`border-primary` treatment retains the affordance and survives the token
+retune. Worth a design call rather than a flat "leave" — flagged here, not
+fixed.
+
 ### `src/components/layout/currency-picker.tsx:28` and `locale-picker.tsx:75`
 ```tsx
 className="... bg-muted/50 px-2 py-1 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
@@ -232,6 +244,75 @@ PR #14 codified the rule "phase out brand primary on hover" but the sweep focuse
 
 ---
 
+## Category 12 — Non-hover uses of `bg-accent` after the token retune
+
+PR #14 changed `--accent` from brand yellow to a neutral hover surface. Most of
+the codebase's `bg-accent` uses are on `hover:`, which reads correctly under
+the new token. A couple of places use `bg-accent` (or interact with it via
+`bg-muted`) as a *persistent* state — active nav, selected row — and those
+now produce weak or backwards affordances. Surfaced during review of PR #14
+after merge; not caught by the original sweep because the sweep focused on
+hover-surface migrations, not on pre-existing persistent `bg-accent` usage.
+
+### `src/components/layout/header.tsx:211` — mobile nav active state collapses into hover
+
+```tsx
+className={cn(
+  "block rounded-md px-3 py-2 text-sm font-medium",
+  pathname === link.href
+    ? "bg-accent text-accent-foreground"
+    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+)}
+```
+
+Before PR #14: active = yellow, hover = yellow — already ambiguous but loud.
+After PR #14: active = neutral (13% dark / 96% light), hover = same token. A
+user opening the mobile menu cannot tell which page they're on without hovering
+alternatives for comparison, and even then the contrast between "active" and
+"hover" is zero. The desktop nav uses a different pattern (`text-primary`
+underline) and is unaffected — this is mobile-only.
+
+**Fix:** give the active state a distinct token. `bg-primary/10 text-primary`
+keeps brand identity; `bg-muted text-foreground` is the quieter shadcn-convention
+option. Hover stays on `bg-accent`.
+
+**Assessment:** real regression. Fix when next touching `header.tsx`.
+
+### `src/app/(dashboard)/admin/whatsapp/page.tsx:113-116` — hovering a selected contact darkens it
+
+```tsx
+className={cn(
+  "flex w-full items-center gap-3 border-b border-border px-4 py-3 text-left transition-colors hover:bg-accent hover:text-accent-foreground",
+  selectedPhone === contact.phone && "bg-muted"
+)}
+```
+
+Selected row = `bg-muted` (15%). Hover = `bg-accent` (13%). `:hover` specificity
+beats unprefixed `bg-muted`, so hovering an already-selected contact drops it
+from 15% → 13% — a *darker* state than when not hovered. Intuitively backwards:
+hover should reinforce (or at minimum preserve) the selection cue, not weaken
+it. The text-foreground flip (`hover:text-accent-foreground`) also applies to
+the selected row, so the selection-plus-hover state visually reads "deselected
+on hover."
+
+Secondary issue: 15% vs 13% is a 2-point gap in dark mode. The selected row
+is barely distinguishable from unselected rows when nothing is being hovered.
+
+**Fix:** either bump the selected state to something clearly stronger
+(`bg-primary/10 border-l-2 border-primary`), or at minimum prevent hover from
+overriding selection:
+
+```tsx
+selectedPhone === contact.phone
+  ? "bg-primary/10 text-foreground"
+  : "hover:bg-accent hover:text-accent-foreground"
+```
+
+**Assessment:** real interaction bug. Low-traffic admin page so not urgent,
+but fix when next touching `whatsapp/page.tsx`.
+
+---
+
 ## Summary
 
 - No category 1–5 (hard-fix) violations remain after the audit commit.
@@ -239,4 +320,5 @@ PR #14 codified the rule "phase out brand primary on hover" but the sweep focuse
   we deliberately do not touch, runtime SVG/canvas fills, or style judgments
   that need a design call.
 - Category 11 is a code-pattern hazard surfaced after PR #14: the token cascade is correct, but three files still carry a `hover:border-primary` class that could reactivate the yellow-on-hover bug if their baseline is ever re-tinted.
+- Category 12 is two concrete regressions that PR #14's sweep missed: persistent `bg-accent` uses (mobile nav active state) and `bg-muted`/`bg-accent` selection+hover interactions that are now backwards under the neutral accent token. Neither is urgent but both are real. The ParticipantRow entry in Category 9 has an attached pushback on the same theme — the "/50 over card" math makes the persistent self-highlight near-invisible under the new accent.
 - The codebase is in very good shape token-wise. PR #14's sweep was thorough.
