@@ -654,6 +654,8 @@ This flow is municipality-first because that's the case the mockup was built for
 
 ### 7.5 Registration timing and ticket-drop UX
 
+The "ticket drop" countdown was specifically validated by the product team during mockup review — they compared it favorably to the Taylor-Swift-concert-tickets experience. Treat the countdown as a required part of the municipality-club flow, not a nice-to-have.
+
 For products with `registration_opens_at` set (required for municipality clubs, optional for camps and events), the detail page renders three distinct states:
 
 1. **Pre-open** — `now < registration_opens_at`. The signup form is present but disabled, with a **live countdown** to the open moment. Parents see "Opens in 2 days 14:32:08" or similar, updating in place. The form is pre-populated where possible (gamer picker, rules checkbox) so that opening moment is a one-click submit. Show an authoritative "server time" indicator near the countdown so parents understand the countdown is not client-drifted.
