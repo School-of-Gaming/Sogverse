@@ -248,7 +248,7 @@ export function EnrollmentWizard({ product }: EnrollmentWizardProps) {
                         className={`group flex w-full items-center gap-3 rounded-md border border-border p-3 text-left transition-colors ${
                           alreadyEnrolled
                             ? "opacity-50"
-                            : "hover:bg-muted/50"
+                            : "hover:bg-accent hover:text-accent-foreground"
                         }`}
                       >
                         <Avatar className="h-10 w-10">

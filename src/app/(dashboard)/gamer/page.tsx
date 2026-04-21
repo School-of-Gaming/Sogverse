@@ -44,7 +44,7 @@ export default function GamerDashboardPage() {
       </div>
 
       <Link href={ROUTES.gamer.groups} className="block">
-        <Card className="group cursor-pointer transition-colors hover:bg-muted/50">
+        <Card className="group cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground">
           <CardContent className="flex items-center gap-4 py-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
               <Users className="h-5 w-5 text-primary" />
