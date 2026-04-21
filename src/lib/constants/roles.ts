@@ -20,8 +20,8 @@ export type RoleLabelKey = (typeof ROLE_LABEL_KEYS)[UserRole];
 export const ROLE_BADGE_STYLES: Record<UserRole, string> = {
   gamer: "bg-primary text-primary-foreground",
   customer: "bg-secondary text-secondary-foreground",
-  gedu: "bg-gradient-to-r from-primary to-secondary text-white",
-  admin: "bg-white text-black",
+  gedu: "bg-gradient-to-r from-primary to-secondary text-secondary-foreground",
+  admin: "bg-foreground text-background",
 };
 
 export const ROLE_DASHBOARD_PATHS: Record<UserRole, string> = {
