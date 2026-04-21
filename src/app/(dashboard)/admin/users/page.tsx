@@ -134,7 +134,7 @@ export default function AdminUsersPage() {
               className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 roleFilter === null
                   ? "bg-info text-info-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {t('all')}
@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                   roleFilter === rf.value
                     ? ROLE_BADGE_STYLES[rf.value]
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    : "bg-muted text-muted-foreground"
                 }`}
               >
                 {rf.label}
