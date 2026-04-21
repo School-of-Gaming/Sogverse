@@ -457,6 +457,11 @@ No `role` column on assignments — a Gedu is just "on this group". Cross-group 
 
 Substitute coverage for a specific date is **not** an assignment — it's a `session_overrides.substitute_gedu_id` value for that date.
 
+**Changes from today's `product_groups` table.** The current schema has `product_groups` with `gedu_id` as a column (one-Gedu-per-group, no name). The redesign changes two things:
+
+- **`name` is new and required.** Today's groups are anonymous — the admin UI shows them as "Group 1 / Group 2" by index. The redesign adds a human-meaningful name (e.g. "Adam's group", "Tuesday 17:00 A", "Beginners") so admins can refer to groups unambiguously across rosters, dashboards, and conversations. The add-product and group-management UIs expose this as an editable field and default it to "Group A / B / C…" for new rows.
+- **Gedus move out to a separate join table.** `product_groups.gedu_id` is dropped; many-to-many goes through `gedu_group_assignments`. A group can now have 0, 1, or many Gedus, and a Gedu can be on multiple groups in the same product. This is what enables cross-group voice mobility (§4.10) and "empty group, Gedus TBD" (§4.1).
+
 ### 5.5 Participations
 
 ```sql
