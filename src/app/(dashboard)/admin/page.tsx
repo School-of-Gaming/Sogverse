@@ -67,7 +67,7 @@ export default function AdminDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground group-hover:text-accent-foreground/70">
+                <p className="text-xs text-muted-foreground">
                   {stat.description}
                 </p>
               </CardContent>

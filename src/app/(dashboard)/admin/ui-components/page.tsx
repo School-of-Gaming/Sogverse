@@ -1232,11 +1232,11 @@ export default function AdminUIComponentsPage() {
                   <CardTitle className="text-sm font-medium">
                     {stat.title}
                   </CardTitle>
-                  <stat.icon className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground/70" />
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground group-hover:text-accent-foreground/70">
+                  <p className="text-xs text-muted-foreground">
                     {stat.description}
                   </p>
                 </CardContent>
