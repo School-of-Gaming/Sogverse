@@ -164,7 +164,7 @@ function ResultRow({
   return (
     <Link
       href={`/registration/${location.slug}`}
-      className="block rounded-md border border-input bg-card transition-colors hover:border-primary/50 hover:bg-accent"
+      className="block rounded-md border border-input bg-card transition-colors hover:bg-accent hover:text-accent-foreground"
     >
       <div className="flex items-center justify-between px-4 py-3">
         <div className="min-w-0">

@@ -41,7 +41,7 @@ export default function ProductTypePickerPage() {
                 href={`/admin-mockup/products/new/${type.slug}`}
                 className="group block"
               >
-                <Card className="h-full transition-colors group-hover:border-primary/50 group-hover:bg-accent">
+                <Card className="h-full transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">

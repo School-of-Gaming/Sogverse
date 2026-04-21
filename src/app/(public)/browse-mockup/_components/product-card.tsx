@@ -26,7 +26,7 @@ export function ProductCard({ product }: { product: Product }) {
       href={`/browse-mockup/${product.slug}`}
       className="group block h-full"
     >
-      <Card className="flex h-full flex-col transition-colors group-hover:border-primary/50 group-hover:bg-accent">
+      <Card className="flex h-full flex-col transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
         <CardContent className="flex h-full flex-col p-5">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">

@@ -112,7 +112,7 @@ function Hero() {
       <div className="mx-auto mt-10 grid gap-4 sm:grid-cols-2">
         <Link
           href="/browse-mockup/quiz"
-          className="group relative block rounded-xl border border-primary/40 p-6 text-left transition-colors hover:border-primary hover:bg-accent"
+          className="group relative block rounded-xl border border-primary/40 p-6 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
         >
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
@@ -133,7 +133,7 @@ function Hero() {
 
         <a
           href="#browse"
-          className="group relative block rounded-xl border border-input bg-card p-6 text-left transition-colors hover:border-primary/50 hover:bg-accent"
+          className="group relative block rounded-xl border border-input bg-card p-6 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
         >
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">

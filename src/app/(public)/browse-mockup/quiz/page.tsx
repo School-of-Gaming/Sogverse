@@ -201,7 +201,7 @@ function AgeStep({
               "rounded-lg border px-3 py-4 text-lg font-semibold transition-colors",
               state.age === age
                 ? "border-primary bg-primary/10 text-primary"
-                : "border-input text-foreground hover:border-primary/50 hover:bg-accent",
+                : "border-input text-foreground hover:bg-accent hover:text-accent-foreground",
             )}
           >
             {age === 17 ? "17+" : age}
@@ -326,7 +326,7 @@ function InterestChip({
         "flex items-start gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
         active
           ? "border-primary bg-primary/10 text-primary"
-          : "border-input hover:border-primary/50 hover:bg-accent",
+          : "border-input hover:bg-accent hover:text-accent-foreground",
       )}
     >
       <CheckCircle2
@@ -463,7 +463,7 @@ function ChoiceCard({
         "rounded-xl border p-5 text-center transition-colors",
         active
           ? "border-primary bg-primary/10"
-          : "border-input hover:border-primary/50 hover:bg-accent",
+          : "border-input hover:bg-accent hover:text-accent-foreground",
       )}
     >
       {children}
