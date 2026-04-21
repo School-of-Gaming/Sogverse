@@ -41,7 +41,7 @@ export default function ProductTypePickerPage() {
                 href={`/admin-mockup/products/new/${type.slug}`}
                 className="group block"
               >
-                <Card className="h-full transition-colors group-hover:border-primary group-hover:bg-primary/5">
+                <Card className="h-full transition-colors group-hover:border-primary/50 group-hover:bg-accent">
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -50,7 +50,7 @@ export default function ProductTypePickerPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
                           <h2 className="font-semibold">{type.name}</h2>
-                          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
                           {type.tagline}

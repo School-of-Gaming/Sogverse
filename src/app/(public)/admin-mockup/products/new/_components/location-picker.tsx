@@ -375,7 +375,7 @@ function TreeRow({
         onClick={handleClick}
         className={cn(
           "group flex cursor-pointer items-start gap-2 rounded-md px-2 py-1.5 text-sm transition-colors",
-          isPickable ? "hover:bg-primary/10" : "hover:bg-muted",
+          isPickable ? "hover:bg-accent" : "hover:bg-muted",
           isSelected && "bg-primary/10 text-primary",
         )}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}

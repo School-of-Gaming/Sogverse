@@ -9,6 +9,7 @@ export const ROUTES = {
   docs: "/docs",
   registration: "/registration",
   adminMockup: "/admin-mockup",
+  browseMockup: "/browse-mockup",
   login: "/login",
   register: "/register",
   forgotPassword: "/forgot-password",

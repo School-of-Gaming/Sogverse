@@ -68,13 +68,16 @@ const eslintConfig = defineConfig([
   // can iterate on wording before we wire up i18n or a real backend. Remove
   // each folder from this override when its feature graduates out of mockup
   // status.
-  //   - registration: parent-facing school-clubs registration flow
+  //   - registration:   parent-facing school-clubs registration flow
   //   - admin-mockup:   admin-facing "add product" flow under the new
   //                     four-type model (see docs/products-redesign.md)
+  //   - browse-mockup:  parent-facing discovery flow — browse + help-me-decide
+  //                     wizard across all four product types
   {
     files: [
       "src/app/(public)/registration/**/*.{ts,tsx}",
       "src/app/(public)/admin-mockup/**/*.{ts,tsx}",
+      "src/app/(public)/browse-mockup/**/*.{ts,tsx}",
     ],
     rules: {
       "i18next/no-literal-string": "off",
