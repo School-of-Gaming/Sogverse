@@ -786,7 +786,6 @@ export default function AdminUIComponentsPage() {
             <Swatch label="Success" className="bg-success" />
             <Swatch label="Info" className="bg-info" />
             <Swatch label="Warning" className="bg-warning" />
-            <Swatch label="Accent" className="bg-accent" />
           </div>
         </SubSection>
 
@@ -795,6 +794,7 @@ export default function AdminUIComponentsPage() {
             <Swatch label="Background" className="bg-background" />
             <Swatch label="Card" className="bg-card" />
             <Swatch label="Muted" className="bg-muted" />
+            <Swatch label="Accent" className="bg-accent" />
             <Swatch label="Border" className="bg-border" />
             <Swatch label="Ring" className="bg-ring" />
           </div>
