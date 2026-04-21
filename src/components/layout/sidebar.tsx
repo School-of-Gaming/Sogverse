@@ -93,7 +93,7 @@ export function Sidebar() {
       {/* Collapse Toggle — desktop only, mobile is always icon-only via CSS */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-6 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent md:flex"
+        className="absolute -right-3 top-6 z-10 hidden h-6 w-6 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:flex"
         aria-label={collapsed ? t('expandSidebar') : t('collapseSidebar')}
       >
         {collapsed ? (

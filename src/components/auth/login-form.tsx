@@ -29,22 +29,22 @@ const gamerLoginSchema = z.object({
 
 const ROLE_CONFIG: Record<LoginRole, {
   icon: typeof Users;
-  accent: string;
+  brand: string;
   glow: string;
 }> = {
   customer: {
     icon: Users,
-    accent: "text-primary border-primary/30 bg-primary/5",
+    brand: "text-primary border-primary/30 bg-primary/5",
     glow: "hover:shadow-[0_0_20px_rgba(250,169,1,0.15)] hover:border-primary/60",
   },
   gedu: {
     icon: GraduationCap,
-    accent: "text-primary border-primary/30 bg-gradient-to-r from-primary/5 to-secondary/5",
+    brand: "text-primary border-primary/30 bg-gradient-to-r from-primary/5 to-secondary/5",
     glow: "hover:shadow-[0_0_20px_rgba(200,80,120,0.15)] hover:border-secondary/40",
   },
   gamer: {
     icon: Gamepad2,
-    accent: "text-secondary border-secondary/30 bg-secondary/5",
+    brand: "text-secondary border-secondary/30 bg-secondary/5",
     glow: "hover:shadow-[0_0_20px_rgba(143,0,226,0.15)] hover:border-secondary/60",
   },
 };
@@ -177,7 +177,7 @@ export function LoginForm() {
                       onClick={() => { setSelectedRole(role); setDisplayRole(role); }}
                       className={cn(
                         "flex flex-col items-center gap-2 rounded-lg border p-5 text-center transition-all duration-200",
-                        config.accent,
+                        config.brand,
                         config.glow,
                       )}
                     >
@@ -238,7 +238,7 @@ export function LoginForm() {
                     {c('back')}
                   </Button>
                   <div className="flex justify-center mb-2">
-                    <div className={cn("rounded-full p-3", config.accent)}>
+                    <div className={cn("rounded-full p-3", config.brand)}>
                       <Icon className="h-8 w-8" />
                     </div>
                   </div>

@@ -15,16 +15,10 @@ Pick what you want from this list and file follow-ups. Nothing here blocks PR #1
 
 ## Category 6 — Missing foreground pairs
 
-### `src/components/layout/sidebar.tsx:96`
-```tsx
-className="... bg-sidebar-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent md:flex"
-```
-The sidebar collapse toggle sets `hover:bg-sidebar-accent` without the matching
-`hover:text-sidebar-accent-foreground`. The text color stays
-`text-sidebar-foreground` on hover. In practice `sidebar-foreground` and
-`sidebar-accent-foreground` are the same HSL today, so there's no visible
-regression — but if either token is ever re-tuned the pair will drift.
-**Assessment:** minor, purely-defensive fix. Add `hover:text-sidebar-accent-foreground`.
+### ~~`src/components/layout/sidebar.tsx:96`~~ (fixed)
+
+Added `hover:text-sidebar-accent-foreground` to the sidebar collapse toggle's
+hover so the foreground pair can follow `--sidebar-accent` if it's ever re-tuned.
 
 ### `src/components/voice/SpatialVoiceRoom.tsx:91`
 ```tsx
@@ -212,15 +206,11 @@ would probably read more "initial placeholder." This is a style call, not a
 bug.
 **Assessment:** style choice. Leave.
 
-### `src/components/auth/login-form.tsx:37`
-```ts
-accent: "text-primary border-primary/30 bg-primary/5",
-```
-Named `accent` here but actually the brand/primary scheme. After PR #14,
-`accent` is the neutral hover surface; this local variable name predates that
-rename and is slightly misleading. Consider renaming to `brand` or `primary`
-in a follow-up — no visual impact.
-**Assessment:** stale naming. Leave, file separately if desired.
+### ~~`src/components/auth/login-form.tsx:37`~~ (fixed)
+
+Local field on `ROLE_CONFIG` was named `accent` but held the brand/primary
+scheme. Renamed to `brand` to match what it actually describes and to avoid
+confusion with the `--accent` token, which is now a neutral hover surface.
 
 ---
 
