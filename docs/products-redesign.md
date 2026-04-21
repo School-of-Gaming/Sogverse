@@ -49,7 +49,7 @@ Because all current data is staging-only, the migration is a **greenfield cutove
 | **Gated access** | No (v1) | No (v1 — simplification) | No | No |
 | **Refunds** | Session-window | None (municipality-paid) | Cutoff before start; admin after | Cutoff before start |
 | **Registration opens at** | Never (always open) | **Required** — "ticket drop" moment | Optional | Optional |
-| **Holiday calendars** | Applies | Applies | Applies | N/A (single-date) |
+| **Holiday calendars** | Applies | Applies | **N/A** (camps run *during* school breaks) | N/A (single-date) |
 | **Start trigger modes offered** (§4.11) | All three | Fixed date only | Fixed date; fixed date + minimum | All three |
 
 ### The unifying observation
@@ -220,33 +220,35 @@ site_details
 
 **Scope:** events at libraries, malls, offices, or partner venues are `site`-type locations we don't operate. No separate "venue" concept needed — a "site we operate" vs "site we visit" distinction, if ever required, can be a boolean flag on `site_details` later.
 
-### 4.9 Online and in-person take different slices of the location tree
+### 4.9 Location rules — site for in-person, jurisdiction only for online municipality clubs
 
-A product's `location_id` is its **jurisdictional home** in the location hierarchy. Online and in-person pick from disjoint slices of the tree:
+A product's `location_id` has different meanings depending on delivery mode and product type:
 
-- **In-person products** (`is_remote = false`) — `location_id` **must be a `site`**. A site is the physical venue.
-- **Online products** (`is_remote = true`) — `location_id` **must be a country, region, or municipality — not a site**. There is no physical venue, so picking a site would be semantically wrong. The chosen jurisdiction is purely a browse / filter anchor.
+- **In-person products** (`is_remote = false`, any product type) — `location_id` is **required** and **must be a `site`**. The site is the physical venue.
+- **Online municipality clubs** (`is_remote = true, product_type = 'municipality_club'`) — `location_id` is **required** and **must be a country, region, or municipality — not a site**. A municipality club is jurisdiction-scoped by definition: the municipality paid for it, so it shows to parents from that municipality (or at-or-under the jurisdiction's subtree). Picking a site would be semantically wrong — there's no physical venue.
+- **Online consumer clubs, camps, and events** (`is_remote = true, product_type != 'municipality_club'`) — `location_id` is **NULL**. These products are offered to anyone online and have no jurisdictional anchor. They surface in global / "online, available anywhere" browse contexts, not in location-filtered views. The admin form doesn't show a location picker for this combination.
 
-The parent experience that motivates online's rule: *"I live in Helsinki. I can see a club that's offered by my municipality. That club happens to be online."* The owning municipality captures this cleanly; a site (a building) does not.
+The motivating parent experience is unchanged for the municipality case: *"I live in Helsinki. My municipality offered a club. It happens to be online — still my municipality's club."* The other three online product types don't have a "my municipality offered this" angle — an online camp run by Sogverse is just offered on the internet, to whoever wants in.
 
 How this plays out per product type:
 
-| Product type | Typical online `location_id` | Typical in-person `location_id` |
+| Product type | In-person `location_id` | Online `location_id` |
 |---|---|---|
-| Consumer club | Region or country for broad online clubs; municipality if it's town-specific | Site |
-| Municipality club | The municipality that paid for it | Site within that municipality |
-| Camp | Region or country (or municipality if locally scoped) | Site |
-| Event | Country for nationwide webinars, municipality for local online demos | Site |
+| Consumer club | Site (required) | **NULL** — no location anchor |
+| Municipality club | Site within the owning municipality (required) | The municipality that paid for it (required) |
+| Camp | Site (required) | **NULL** — no location anchor |
+| Event | Site (required) | **NULL** — no location anchor |
 
-**Browse filtering.** Parents search by their location (e.g., Helsinki). The query matches any product whose `location_id` is at-or-under Helsinki — sites under Helsinki, Helsinki itself, Uusimaa, Finland. An online Helsinki-municipality club (`location_id = helsinki`) surfaces for Helsinki parents. An online Finland-wide event (`location_id = finland`) surfaces for any Finnish parent.
+**Browse filtering.** Parents searching by their location (e.g., "Helsinki") see any product whose `location_id` is at-or-under Helsinki, plus any in-person Helsinki-sited product. Online non-muni products don't surface in location-scoped views at all — they appear only in the global browse, the per-type landing pages (§7.3), or topic/tag filters. Online municipality clubs surface for parents from that municipality (or at-or-under its subtree), same as any other Helsinki-anchored product.
 
-**Admin UX.** The location picker flips between two disjoint modes based on `is_remote`:
-- **Site mode** — the tree shows every level; only site rows are pickable; non-site rows expand-on-click so admins can drill down.
-- **Jurisdiction mode** — site rows are filtered out of the tree entirely; country / region / municipality rows are pickable. A hover-revealed "Pick" button lets admins commit at any level without drilling further.
+**Admin UX.** The location picker is only rendered when the current (`is_remote`, `product_type`) combination requires it:
+- **Site mode** — shown when `is_remote = false`. The tree shows every level; only site rows are pickable; non-site rows expand-on-click so admins can drill down.
+- **Jurisdiction mode** — shown only for `is_remote = true AND product_type = 'municipality_club'`. Site rows are filtered out of the tree entirely; country / region / municipality rows are pickable. A hover-revealed "Pick" button lets admins commit at any level without drilling further.
+- **Not shown** — for `is_remote = true AND product_type != 'municipality_club'`. Instead the admin form shows a brief info note ("Online and available to anyone — no location needed").
 
-The picker auto-clears a stale selection when the admin flips modes (e.g., a region picked while online is cleared when switching to in-person, since the schema won't allow it).
+The picker auto-clears a stale selection when the applicable mode changes (e.g., a region picked while the product was an online muni club is cleared if the admin switches to in-person, since the schema won't allow a region there).
 
-Both modes let the admin create new locations inline (add a region, municipality, or country) — missing infrastructure shouldn't block a product create. Site creation is offered only in site mode, since a newly-created site wouldn't be reachable in jurisdiction mode.
+Both visible modes let the admin create new locations inline (add a region, municipality, or country) — missing infrastructure shouldn't block a product create. Site creation is offered only in site mode, since a newly-created site wouldn't be reachable in jurisdiction mode.
 
 ### 4.10 Voice rooms are online-only, and live at the group level
 
@@ -356,9 +358,11 @@ products
   padlet_url            text             -- optional; shared with families ONLY after
                                           -- they sign up (never on public browse pages)
 
-  location_id           uuid → locations.id  -- site when is_remote=false;
-                                              -- country / region / municipality
-                                              -- (never a site) when is_remote=true
+  location_id           uuid → locations.id  -- NULLABLE — see §4.9:
+                                              --   is_remote=false: must be a site
+                                              --   is_remote=true, muni-club: must be
+                                              --     country/region/municipality (not site)
+                                              --   is_remote=true, non-muni: NULL
   is_remote             bool
 
   status                enum('draft','pending','running','completed','cancelled')
@@ -387,10 +391,16 @@ products
   --   billing_mode IN (paid_*)          → price_tokens IS NOT NULL
   --   product_type='event'              → end_date = start_date (one-off; once both are set)
   --   product_type != 'consumer_club'   → end_date IS NOT NULL once status != 'draft'
-  --   is_remote=false                   → locations.type = 'site' at location_id
-  --   is_remote=true                    → locations.type != 'site' at location_id
-  --                                       (country, region, or municipality only —
-  --                                        online products have no physical venue)
+  --   is_remote=false                   → location_id IS NOT NULL
+  --                                         AND locations.type = 'site' at location_id
+  --   is_remote=true AND product_type = 'municipality_club'
+  --                                      → location_id IS NOT NULL
+  --                                         AND locations.type != 'site' at location_id
+  --                                         (country, region, or municipality only)
+  --   is_remote=true AND product_type != 'municipality_club'
+  --                                      → location_id IS NULL
+  --                                         (online non-muni products have no
+  --                                          jurisdictional anchor — §4.9)
   --   status = 'running'                → start_date IS NOT NULL
   --   signup_threshold IS NOT NULL
   --     AND seat_count IS NOT NULL      → signup_threshold <= seat_count

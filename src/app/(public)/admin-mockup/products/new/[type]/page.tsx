@@ -55,6 +55,14 @@ type StartTrigger = "date" | "date_and_threshold" | "threshold";
 
 type PaidMode = "free" | "paid";
 
+// Chrome's native <input type="time"> picker ignores the `step` attribute in
+// its dropdown (only form validation respects it), so the time field is
+// split into two selects: hour + 15-minute-interval minute.
+const HOUR_OPTIONS: string[] = Array.from({ length: 24 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
+const MINUTE_OPTIONS: string[] = ["00", "15", "30", "45"];
+
 export default function AdminAddProductMockPage() {
   const { type } = useParams<{ type: string }>();
   const productType = getProductType(type);
@@ -519,21 +527,31 @@ export default function AdminAddProductMockPage() {
               </div>
 
               <div className="mt-3 space-y-4">
-                <Field
-                  label={isRemote ? "Area this is for" : "Site"}
-                  required
-                  hint={
-                    isRemote
-                      ? "Since this is online there's no physical venue. Pick the area it's offered to — a city, region, or country. Parents in that area (or anywhere smaller inside it) will see it when they browse."
-                      : "Where sessions physically happen."
-                  }
-                >
-                  <LocationPicker
-                    value={siteId || null}
-                    onChange={(id) => setSiteId(id ?? "")}
-                    pickable={isRemote ? "jurisdiction" : "site"}
-                  />
-                </Field>
+                {showLocationPicker(productType.slug, isRemote) ? (
+                  <Field
+                    label={isRemote ? "Municipality this is for" : "Site"}
+                    required
+                    hint={
+                      isRemote
+                        ? "Municipality clubs are always tied to a specific municipality — the one paying for it. Parents from that municipality (or anywhere smaller inside it) will see it when they browse."
+                        : "Where sessions physically happen."
+                    }
+                  >
+                    <LocationPicker
+                      value={siteId || null}
+                      onChange={(id) => setSiteId(id ?? "")}
+                      pickable={isRemote ? "jurisdiction" : "site"}
+                    />
+                  </Field>
+                ) : (
+                  <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                    <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Online and available to anyone — no location needed. Any
+                      parent browsing will see this, no matter where they live.
+                    </span>
+                  </div>
+                )}
 
                 {isRemote && (
                   <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
@@ -637,8 +655,8 @@ export default function AdminAddProductMockPage() {
                   required
                   hint={
                     startTrigger === "threshold"
-                      ? "No fixed start date yet. Parents will see a \"X of Y needed\" counter while this is pending. You manually press Start once you have enough signups and pick the first session date then."
-                      : "If fewer than this many gamers have signed up by the start date, you'll need to cancel and refund from the product page."
+                      ? "No fixed start date yet. Parents see a \"X of Y needed\" counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then."
+                      : "If fewer than this many parents sign up by the start date, you'll need to cancel and refund from the product's page."
                   }
                 >
                   <Input
@@ -676,7 +694,8 @@ export default function AdminAddProductMockPage() {
                 />
               </div>
 
-              {productType.slug !== "event" && (
+              {(productType.slug === "consumer-club" ||
+                productType.slug === "municipality-club") && (
                 <Field
                   label="Holiday calendars"
                   hint="No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically."
@@ -1091,7 +1110,9 @@ function defaultSlots(type: ProductType): SlotDraft[] {
 }
 
 function defaultHolidayCals(type: ProductType): string[] {
-  if (type === "municipality-club" || type === "camp") {
+  // Camps run during school holidays by design, so they don't use holiday
+  // calendars at all — §2 matrix in docs/products-redesign.md.
+  if (type === "municipality-club") {
     return ["cal-fi-national"];
   }
   return [];
@@ -1127,16 +1148,24 @@ function descriptionPlaceholder(type: ProductType): string {
   }
 }
 
+function showLocationPicker(type: ProductType, isRemote: boolean): boolean {
+  // Any in-person product needs a site. For online products, only
+  // municipality clubs carry a jurisdictional anchor — the other three
+  // types are just "online, available to anyone". §4.9.
+  if (!isRemote) return true;
+  return type === "municipality-club";
+}
+
 function whereDescription(type: ProductType): string {
   switch (type) {
     case "consumer-club":
-      return "Online or in person. For online clubs, pick the area it's offered to — a city, region, or country.";
+      return "Online or in person. Online clubs are offered to anyone — no location needed. In-person clubs run at a specific site.";
     case "municipality-club":
       return "Paid for by a specific municipality. Online clubs pick the municipality directly; in-person clubs pick a site within it.";
     case "camp":
-      return "Online or in person. For online camps, pick the area it's offered to; for in-person, pick the site.";
+      return "Online or in person. Online camps are offered to anyone — no location needed. In-person camps run at a specific site.";
     case "event":
-      return "Online or in person. Events can happen at libraries, malls, offices, schools — anywhere you have a site in the system.";
+      return "Online or in person. Online events are offered to anyone — no location needed. In-person events run at a specific site.";
   }
 }
 
@@ -1206,11 +1235,11 @@ function startTriggerLabel(trigger: StartTrigger): string {
 function startTriggerDescription(trigger: StartTrigger): string {
   switch (trigger) {
     case "date":
-      return "Runs on the selected date, regardless of signup count.";
+      return "Runs on the selected date, no matter how many parents sign up.";
     case "date_and_threshold":
-      return "Scheduled for the selected date, but only runs if the signup minimum is reached in time. Otherwise you cancel and refunds fire automatically.";
+      return "Scheduled for the selected date, but only runs if enough parents sign up in time. Otherwise you cancel it and parents are refunded automatically.";
     case "threshold":
-      return "No fixed start date. You pick the first session date once signups hit the minimum — parents see a live counter and know you'll contact them when it's ready.";
+      return "No fixed start date. You pick the first session date once enough parents have signed up — parents see a live counter and know you'll contact them when it's ready.";
   }
 }
 
@@ -1326,12 +1355,36 @@ function ScheduleSlotsEditor({
               </select>
             )}
           </div>
-          <div className="col-span-6 sm:col-span-3">
-            <Input
-              type="time"
-              value={slot.startTime}
-              onChange={(e) => updateSlot(i, { startTime: e.target.value })}
-            />
+          <div className="col-span-6 flex items-center gap-1 sm:col-span-3">
+            <select
+              aria-label="Hour"
+              value={slot.startTime.slice(0, 2)}
+              onChange={(e) =>
+                updateSlot(i, {
+                  startTime: `${e.target.value}:${slot.startTime.slice(3, 5)}`,
+                })
+              }
+              className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+            >
+              {HOUR_OPTIONS.map((h) => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+            <span className="text-muted-foreground">:</span>
+            <select
+              aria-label="Minute"
+              value={slot.startTime.slice(3, 5)}
+              onChange={(e) =>
+                updateSlot(i, {
+                  startTime: `${slot.startTime.slice(0, 2)}:${e.target.value}`,
+                })
+              }
+              className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+            >
+              {MINUTE_OPTIONS.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </div>
           <div className="col-span-5 sm:col-span-3">
             <div className="flex items-center gap-1">
