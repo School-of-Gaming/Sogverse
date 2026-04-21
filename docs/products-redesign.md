@@ -710,6 +710,26 @@ Staging only. No real-customer data to preserve. The migration is a **cutover** 
 
 If/when this ships and real customer data exists, a proper scripted backfill is required — out of scope for this doc.
 
+### 9.1 The DROPs must be a dedicated migration file, not hand-run SQL
+
+The wipe-and-recreate pattern has a specific failure mode that has burned backend teams before: the redesign works flawlessly on staging because staging was already reset to empty, but the first prod deploy fails because prod still has the old tables sitting around, colliding with the new `CREATE` statements.
+
+**The rule:** every drop of an old object goes into a dedicated migration file committed with the redesign. Approximately:
+
+```
+supabase/migrations/
+  <ts>_drop_legacy_product_domain.sql   -- explicit DROPs for every retired object
+  <ts>_create_new_product_domain.sql    -- CREATEs for §5 tables
+  <ts>_create_new_product_rpcs.sql      -- RPCs from §6
+  <ts>_seed_new_product_domain.sql      -- optional re-seed (staging only, gated)
+```
+
+That way prod and staging apply the exact same sequence, deterministically: drop the old, create the new, re-seed if applicable. No hand-run SQL, no `supabase db reset` as a substitute for real migration files, no "oh we also need to run this one command" checklist entries at cutover.
+
+**Before prod push**, dry-run the migration sequence against a **clone of prod's current schema** — not against an already-empty staging. A prod-clone dry-run is the only way to verify the DROP targets match what's actually in prod, and that nothing unexpected breaks (RLS policy ordering, FK cascade depth, function signature mismatches, etc.).
+
+**Rationale for including the DROPs as migration history** rather than, say, adding `DROP IF EXISTS` guards to each CREATE: a dedicated drop migration keeps concerns separate (create migrations create; drop migrations drop), reads cleanly, and surfaces exactly what's retired in one place. Scattered `IF EXISTS` guards accumulate as noise and make create migrations harder to audit.
+
 ---
 
 ## 10. Phased plan
