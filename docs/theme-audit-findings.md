@@ -214,10 +214,29 @@ confusion with the `--accent` token, which is now a neutral hover surface.
 
 ---
 
+## Category 11 — `hover:border-primary` stragglers (code-pattern hazard, not a visible bug today)
+
+PR #14 codified the rule "phase out brand primary on hover" but the sweep focused on background surfaces. Grep-level search afterward surfaced three real-app files still using `hover:border-primary` / `/50` / `/60`:
+
+- `src/components/enrollment/enrollment-wizard.tsx:470` — `GroupCard` (shown at the "Choose a group" step). `border border-border ... hover:border-primary hover:bg-accent`.
+- `src/components/enrollment/inline-gamer-form.tsx:250` — inactive gamer tile inside the add-a-gamer form. `border-border hover:border-primary/50`.
+- `src/components/auth/login-form.tsx:38` — role-selection card glow on `/login`. `hover:border-primary/60`.
+
+**Why this is *not* a visible bug today:** each is paired with a neutral baseline border (`border-border`), so the hover shift to primary-yellow on a 1px border is visually absorbed into the grey hover surface next to it. Browser-tested — `GroupCard` renders as a neutral grey hover, no yellow flash.
+
+**Why it still deserves a code-level fix:** the pattern is copy-paste bait. Our mock CTAs used the same class pattern combined with a *tinted* baseline border (`border-primary/40`), and the hover activated into a very visible yellow flash — the exact problem PR #14 was trying to eliminate. Anyone who copies this pattern into a context with even a slightly tinted baseline reintroduces the bug. And if the baseline on one of these three files is ever tweaked to include a primary tint, the pattern activates in place.
+
+**Fix when next touching these files:** replace `hover:border-primary/*` with the surface-only shadcn idiom `hover:bg-accent hover:text-accent-foreground` (no border shift). For the login-form glow, keep the shadow-glow but drop the border-color change.
+
+**Assessment:** code hygiene follow-up, low-priority.
+
+---
+
 ## Summary
 
 - No category 1–5 (hard-fix) violations remain after the audit commit.
 - The soft findings above are either documented exceptions, shadcn primitives
   we deliberately do not touch, runtime SVG/canvas fills, or style judgments
   that need a design call.
+- Category 11 is a code-pattern hazard surfaced after PR #14: the token cascade is correct, but three files still carry a `hover:border-primary` class that could reactivate the yellow-on-hover bug if their baseline is ever re-tinted.
 - The codebase is in very good shape token-wise. PR #14's sweep was thorough.
