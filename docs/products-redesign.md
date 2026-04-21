@@ -234,6 +234,56 @@ A voice room (Daily.co) exists iff `products.is_remote = true`. In-person produc
 - Voice-chat RPCs and hooks check `products.is_remote` and the user's group membership (or Gedu-on-product derivation) to decide which rooms are reachable. In-person products short-circuit — no voice room, no error.
 - The Gedu dashboard surfaces a "Join voice room" action for every group in an online product they're on. Their own group is highlighted; siblings are reachable but clearly distinct.
 
+### 4.11 Lifecycle status and threshold-triggered start
+
+Products have an explicit lifecycle state. Making it explicit (rather than derived from dates + flags) lets us cleanly support "start when signups reach a threshold" and keeps admin actions like "start now" and "cancel" as first-class RPCs.
+
+```
+products.status ∈ {
+  draft,      -- admin is still setting up; invisible to parents.
+  pending,    -- published, accepting signups, not yet running.
+              --   Parents can sign up and hold a seat.
+  running,    -- started; sessions are happening.
+  completed,  -- past end_date; archive state.
+              --   Daily job transitions running → completed once end_date is in the past.
+  cancelled   -- admin killed it. Refunds fired for paid_upfront participations.
+}
+```
+
+`is_visible` stays orthogonal: an admin can temporarily unlist a pending or running product without changing lifecycle state (e.g. "hide while I fix the description").
+
+**Signup threshold — a single mechanism for all four product types.** Add `products.signup_threshold` (nullable int). When set, the product stays in `pending` until admin manually starts it — it does not auto-start when the threshold is met. Instead, admins get a notification ("Tuesday Minecraft has 8 active signups — ready to start"), and can:
+
+- **Start now** once the threshold is met (the common path), or
+- **Start under threshold** with a simple confirm dialog ("Start with 7 signups instead of 8?") — admins know their context, and the UI clearly shows the actual count, so no reason dialog is needed, or
+- **Wait longer**, indefinitely — there is no automatic cutoff or fail state.
+
+Separately, admins can **cancel** a pending product at any time. For `paid_upfront` products, cancelling auto-refunds all active participations through the existing refund path.
+
+**Why one mechanism is enough for all four types.** Although consumer clubs and camps feel different ("delay start" vs "don't run at all unless enough sign up"), the distinction is not in the schema — it's in admin behavior on the calendar:
+
+- **Consumer club.** No firm start date. Admin waits as long as they want for the threshold to be met; clicks start whenever.
+- **Camp, paid event.** Has a concrete target start date. Admin watches signups approach that date and, if the threshold isn't met in time, clicks cancel + refund. If admin wants to run it under threshold, they click start early.
+- **Free event.** Same as camp, minus the refund.
+- **Municipality club.** Threshold doesn't apply — school calendar fixes the start, and the municipality has already paid regardless of headcount. `signup_threshold IS NULL` on these products.
+
+No deadline-enforcement engine. No product-type branches in the threshold logic. Admin judgment on the calendar substitutes for both.
+
+**Billing behavior during `pending`:**
+
+- `paid_per_session` — no charges accrue (no sessions compute until `running`).
+- `paid_upfront` — parents are charged at signup. If the product is later cancelled in `pending`, all active participations are auto-refunded. Parent-facing copy at checkout makes this explicit: "Fully refunded if we can't run this."
+- `external_contract` — no platform charges at any time.
+- `free` — no charges at any time.
+
+**Implications for other fields:**
+
+- `start_date` becomes **nullable** — a consumer club with a threshold won't know its first session date until admin presses start. Camp / event admins will usually set it at creation time anyway, so it's nullable-in-principle but populated-in-practice.
+- CHECK: `status = 'running'` → `start_date IS NOT NULL`. The RPC enforces this before flipping status.
+- CHECK: `signup_threshold <= seat_count` when both are set. A threshold that exceeds capacity is a configuration error.
+
+**Parent-facing copy** on a `pending` product with a threshold set: "5 of 8 spots needed to start." Honest about the uncertainty and creates a motivational signup loop without promising a specific start date.
+
 ---
 
 ## 5. Data model
@@ -262,7 +312,12 @@ products
                                               -- (never a site) when is_remote=true
   is_remote             bool
 
-  start_date            date             -- first calendar date the product runs
+  status                enum('draft','pending','running','completed','cancelled')
+                                          -- lifecycle (§4.11)
+  signup_threshold      int              -- nullable; minimum active participations needed
+                                          -- before admin starts the product (§4.11)
+
+  start_date            date             -- nullable: known when admin presses Start
   end_date              date             -- nullable (ongoing) for consumer_club only
   timezone              text             -- IANA, e.g. 'Europe/Helsinki'
 
@@ -272,7 +327,7 @@ products
   registration_opens_at timestamptz      -- nullable; 'ticket drop' moment (municipality clubs)
   refund_policy_days    int              -- nullable; days-before-start cutoff for self-refund
 
-  is_visible            bool
+  is_visible            bool             -- orthogonal to status; an admin unlist flag
   created_by            uuid → profiles.id
   created_at, updated_at
 
@@ -281,12 +336,15 @@ products
   --   billing_mode='external_contract'  → product_type='municipality_club'
   --   billing_mode='free'               → price_tokens IS NULL; seat_count MAY be NULL
   --   billing_mode IN (paid_*)          → price_tokens IS NOT NULL
-  --   product_type='event'              → end_date = start_date (one-off)
-  --   product_type != 'consumer_club'   → end_date IS NOT NULL
+  --   product_type='event'              → end_date = start_date (one-off; once both are set)
+  --   product_type != 'consumer_club'   → end_date IS NOT NULL once status != 'draft'
   --   is_remote=false                   → locations.type = 'site' at location_id
   --   is_remote=true                    → locations.type != 'site' at location_id
   --                                       (country, region, or municipality only —
   --                                        online products have no physical venue)
+  --   status = 'running'                → start_date IS NOT NULL
+  --   signup_threshold IS NOT NULL
+  --     AND seat_count IS NOT NULL      → signup_threshold <= seat_count
 
 schedule_slots
   id                    uuid pk
@@ -486,7 +544,13 @@ Keep the existing `commit_group_changes` RPC (see `docs/groups-architecture.md`)
 
 `process_session_charges()` runs daily. Finds all `participations` with `status='active'` on products where `billing_mode='paid_per_session'`. For each, for each computed session date since the last charge, writes a `token_charges` row with `kind='per_session'`. Idempotent on `(participation_id, kind, session_date)`.
 
-### 6.4 Retired
+### 6.4 Lifecycle transitions (§4.11)
+
+- **`start_product(product_id, start_date)`** — admin-initiated. Requires `status = 'pending'`. Validates `start_date IS NOT NULL` (either passed in or already on the row). Transitions to `running`. Does **not** check `signup_threshold` — the admin is explicitly overriding when they click Start. If no charges have run yet for `paid_per_session` products, this is when the weekly cron begins picking them up.
+- **`cancel_product(product_id, reason)`** — admin-initiated. Valid from `draft`, `pending`, or `running`. Transitions to `cancelled`. For `paid_upfront` products with `active` participations, fires refunds through the existing `token_charges` refund path. Waitlisted participations are marked cancelled without any charge motion.
+- **`finalize_completed_products()`** — daily job. Transitions `running → completed` for any product whose `end_date` has passed.
+
+### 6.5 Retired
 
 - `unenroll_gamer` — folded into `cancel_participation`.
 - `process_enrollment_charges` — replaced by `process_session_charges`.
@@ -532,6 +596,7 @@ Each of the four product types also has a filtered view (`/clubs`, `/municipalit
   - Add/rename/delete group controls; add/remove Gedu controls per group.
 - **Calendar view** per product shows computed sessions with overrides applied; admins can cancel/reschedule/assign substitutes directly from the calendar.
 - **Holiday calendar management** is a separate admin screen; products subscribe via a multi-select.
+- **Lifecycle actions** on each pending product: "Start product" (with confirm dialog if under threshold) and "Cancel product" (auto-refunds for `paid_upfront`). Admin home highlights threshold-hit notifications — "Tuesday Minecraft has 8 signups — ready to start" — so admins aren't polling every product page.
 
 ---
 
