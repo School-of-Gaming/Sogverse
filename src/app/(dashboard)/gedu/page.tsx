@@ -43,7 +43,7 @@ export default function GeduDashboardPage() {
       <div className="grid gap-4 md:grid-cols-2">
         {stats.map((stat) => (
           <Link key={stat.title} href={stat.href}>
-            <Card className="group transition-colors hover:bg-muted/50">
+            <Card className="group transition-colors hover:bg-accent hover:text-accent-foreground">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {stat.title}
@@ -52,7 +52,7 @@ export default function GeduDashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-muted-foreground group-hover:text-foreground/70">
+                <p className="text-xs text-muted-foreground">
                   {stat.description}
                 </p>
               </CardContent>

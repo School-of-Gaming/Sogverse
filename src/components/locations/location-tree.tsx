@@ -128,7 +128,7 @@ function LocationTreeNode({
     <div>
       <div
         className={cn(
-          "group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-muted/50",
+          "group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-accent hover:text-accent-foreground",
           hasChildren && "cursor-pointer",
         )}
         style={{ paddingLeft: `${depth * 20 + 8}px` }}

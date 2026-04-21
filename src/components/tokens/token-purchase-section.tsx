@@ -128,7 +128,7 @@ function PackageCard({
         </div>
       ) : savings > 0 ? (
         <div className="absolute -top-3 right-4">
-          <Badge className="bg-success text-primary-foreground hover:bg-success">
+          <Badge className="bg-success text-success-foreground">
             {t('package.save', { amount: formatCurrencyFromCents(savings, currency, locale), period: isSubscription ? t('package.perMonth') : "" })}
           </Badge>
         </div>

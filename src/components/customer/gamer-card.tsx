@@ -13,7 +13,7 @@ interface GamerCardProps {
 
 export function GamerCard({ id, displayName, username, subtitle }: GamerCardProps) {
   return (
-    <Card className="group transition-colors hover:bg-muted/50">
+    <Card className="group transition-colors hover:bg-accent hover:text-accent-foreground">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">

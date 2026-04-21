@@ -786,7 +786,6 @@ export default function AdminUIComponentsPage() {
             <Swatch label="Success" className="bg-success" />
             <Swatch label="Info" className="bg-info" />
             <Swatch label="Warning" className="bg-warning" />
-            <Swatch label="Accent" className="bg-accent" />
           </div>
         </SubSection>
 
@@ -795,6 +794,7 @@ export default function AdminUIComponentsPage() {
             <Swatch label="Background" className="bg-background" />
             <Swatch label="Card" className="bg-card" />
             <Swatch label="Muted" className="bg-muted" />
+            <Swatch label="Accent" className="bg-accent" />
             <Swatch label="Border" className="bg-border" />
             <Swatch label="Ring" className="bg-ring" />
           </div>
@@ -1232,11 +1232,11 @@ export default function AdminUIComponentsPage() {
                   <CardTitle className="text-sm font-medium">
                     {stat.title}
                   </CardTitle>
-                  <stat.icon className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground/70" />
+                  <stat.icon className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stat.value}</div>
-                  <p className="text-xs text-muted-foreground group-hover:text-accent-foreground/70">
+                  <p className="text-xs text-muted-foreground">
                     {stat.description}
                   </p>
                 </CardContent>
