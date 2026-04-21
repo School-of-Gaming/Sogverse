@@ -10,7 +10,7 @@ Related: `groups-architecture.md`, `customer-enrollment-architecture.md`, `locat
 
 ## 1. Why redesign
 
-Today's `products` schema is built for a single product line — weekly consumer clubs paid in Sorg tokens. A `product_groups` layer exists to absorb elastic demand (add groups → add capacity), and `group_enrollments` + `enrollment_charges` drive per-session billing.
+Today's `products` schema is built for a single product line — weekly consumer clubs paid in Sorg tokens. A `product_groups` layer exists to organize participants and Gedus within a product, and `group_enrollments` + `enrollment_charges` drive per-session billing. Groups stay under the new design (§4.1); the schema around them is reshaped so all four product types use them uniformly.
 
 Now we are adding three more product types. Trying to extend the existing shape with discriminator columns would leak concepts across product lines and force every RPC to branch on type. This document proposes a ground-up reshape of the products domain that accepts all four types as first-class citizens with minimal branching.
 
@@ -63,20 +63,28 @@ This replaces today's `group_enrollments` and the `school_registrations` that `s
 
 ## 4. Key design decisions
 
-### 4.1 One product = one cohort = 1+ Gedus
+### 4.1 Gedu Groups: admin-only cohort layer, used by every product type
 
-The `product_groups` layer is retired. Each product row represents a single cohort: one capacity, one set of participations, one primary Gedu, optional assistant Gedu(s), and — when `is_remote = true` — one voice room. In-person products (camps at a site, library events, etc.) have no voice room at all.
+The `product_groups` layer is **kept** and generalized. Every product type uses groups.
 
-**When a club needs parallel cohorts** (e.g., 3 × Tuesday-17:00 Minecraft, each with a different Gedu), admins use a **Clone** action to create a sibling product row. The cohorts are separate products with their own participations.
+**The model:**
 
-**Why this is worth retiring groups:**
+- A product has **0 or more Gedu Groups**. Admins create groups when and how they want to. An admin can create groups up-front during product creation, but the typical flow is: create the product → wait for seats to sell → decide the right number of groups based on actual demand → create them then.
+- Each group has a **name**, **0 or more assigned Gedus**, and **0 or more participations** (gamers who've been placed into it).
+- **Parents never see groups.** They see the product. The group layer is an internal, admin-facing abstraction for organizing participants and Gedus.
+- **Groups have no seat cap.** Capacity lives on the product. Admins balance participants across groups manually using the existing drag-and-drop UI. A group can be arbitrarily under- or over-populated relative to its siblings; that's an admin judgment call.
+- A group with **zero Gedus** is valid (admin decided structure before picking people).
+- A group with **zero participations** is valid (admin set up capacity before gamers bought in).
 
-- Solves the "Bob helps out in Adam's online club" problem — today, only Adam can be in Adam's voice room because assignments are on the group. Under the new model, `product_gedu_assignments` lets both Bob and Adam be assigned to the same product.
-- Attendance, notes, charges, voice rooms (when present), and Gedu dashboards all hang off `product_id` directly. No cross-group aggregation.
-- Municipality / camp / event products naturally fit: they always have exactly one cohort.
-- Consumer clubs fit too, with cloning substituting for the old "add a group" flow.
+**Gedus attach to groups, not products.** A Gedu may be assigned to multiple groups in the same product. The set of "Gedus on product X" is derived: `DISTINCT gedu_id FROM gedu_group_assignments JOIN product_groups ON …`.
 
-**Parent-facing grouping of parallel cohorts is heuristic** for v1. The browse UI groups products matching on `(topic_id, weekday_set, start_time, duration, location_id, age_range, spoken_language, billing_mode)`. Admin keeps the shared fields in sync manually. If heuristic grouping breaks down, we add a `product_series` parent table later — the cohorts-are-products shape doesn't preclude it.
+**Cross-group voice mobility (online products).** All Gedus assigned to any group within the same product can join any sibling group's voice room. This solves the "Adam has to step away for 10 minutes; Bob covers for him" case naturally. Gamers cannot hop — a gamer can only see and join their own group's voice room.
+
+**Unassigned participations queue.** When a parent buys a seat, the participation lands with `group_id = NULL` — an "unassigned" inbox that admins work through, placing each gamer into a suitable group. Admins should do this promptly; later phases will add notifications (email / WhatsApp / in-app) so no gamer is left unplaced for long. The existing drag-and-drop UI is extended to include this unassigned column.
+
+**Single-group products.** When a product has exactly one group, an admin might reasonably want new participations to auto-assign into it (no unassigned queue shuffle). We haven't decided whether to build this for v1 — see §11.
+
+**Parallel cohorts.** Cohorts that differ *only in Gedu / voice room* are modeled as multiple groups within one product. Cohorts that differ in schedule (different weekday / start time) are modeled as separate products. Parents see the latter as separate browse results; the former as a single "one product, many seats" card.
 
 ### 4.2 Dynamic session computation
 
@@ -141,7 +149,7 @@ billing_mode ∈ {
 
 ### 4.6 Capacity and waitlist
 
-- `products.seat_count` — nullable. `NULL` means uncapped (only valid when `billing_mode = 'free'`).
+- `products.seat_count` — nullable. `NULL` means uncapped (only valid when `billing_mode = 'free'`). Capacity lives **only** at the product level. Groups have no seat cap — admins balance across groups manually.
 - When a participation is requested and seats are full, it becomes `waitlisted` with a `waitlist_position`.
 - When an active participant leaves or is removed, the lowest-position waitlisted row is atomically promoted.
 
@@ -207,16 +215,24 @@ The picker auto-clears a stale selection when the admin flips modes (e.g., a reg
 
 Both modes let the admin create new locations inline (add a region, municipality, or country) — missing infrastructure shouldn't block a product create. Site creation is offered only in site mode, since a newly-created site wouldn't be reachable in jurisdiction mode.
 
-### 4.10 Voice rooms are online-only
+### 4.10 Voice rooms are online-only, and live at the group level
 
 A voice room (Daily.co) exists iff `products.is_remote = true`. In-person products — a camp at a school site, a Pokémon GO walk, a library webinar delivered face-to-face — have no voice room, no Daily.co provisioning, and no voice-room UI elements.
 
+**For online products, rooms are per-group.** Each `product_groups` row in an online product gets its own Daily.co room. This is what makes groups a real subdivision of a product rather than a purely organizational label: Adam's group has its own voice room, Bob's group has its own, and gamers joining the product enter the room belonging to the group they've been placed in.
+
+**Permissions follow the group → product topology:**
+
+- **Gamers** can see and join only the voice room of the group they're assigned to.
+- **Gedus** can see and join any voice room on any group within a product, as long as they're assigned to at least one group in that product. This makes the "Adam steps out, Bob covers" flow natural.
+- An unassigned participation (gamer in the inbox, not yet placed) has **no** voice room access — the admin must place them into a group first.
+
 **Implications for the schema and code:**
 
-- A `product_voice_rooms` table (or equivalent wiring to Daily.co room IDs) is populated **only** for online products. Reading voice-room state for an in-person product returns nothing — not an error, just absence.
-- Voice-chat RPCs, hooks, and UI panels check `products.is_remote` and short-circuit for in-person products rather than treating "no voice room" as a failure mode.
-- The Gedu dashboard surfaces a "Join voice room" action only when the product they're viewing is online.
-- Provisioning: creating an online product triggers Daily.co room creation (idempotent on `product_id`). Flipping `is_remote` from false to true on an existing product is a rare admin action that provisions a room lazily; flipping true to false is disallowed once participations exist (ambiguous what the in-person location would be).
+- Room provisioning is keyed on `product_group_id`, not `product_id`. Creating a group in an online product triggers Daily.co room creation (idempotent on the group id). Deleting a group deletes its room.
+- Flipping `products.is_remote` from false to true provisions rooms for the product's existing groups. Flipping true to false is disallowed once participations exist.
+- Voice-chat RPCs and hooks check `products.is_remote` and the user's group membership (or Gedu-on-product derivation) to decide which rooms are reachable. In-person products short-circuit — no voice room, no error.
+- The Gedu dashboard surfaces a "Join voice room" action for every group in an online product they're on. Their own group is highlighted; siblings are reachable but clearly distinct.
 
 ---
 
@@ -343,17 +359,28 @@ session_overrides
 
 A session exists on a date iff: schedule rules include that date, no linked holiday calendar contains it, AND no override row sets `cancelled=true`. A helper function `product_has_session(product_id, date) → bool` encapsulates this check.
 
-### 5.4 Gedu assignment
+### 5.4 Groups and Gedu assignment
+
+Groups are the admin-facing cohort layer (see §4.1). Gedus attach to groups, not products. The set of Gedus on a product is derived via `DISTINCT gedu_id` across its groups' assignments.
 
 ```sql
-product_gedu_assignments
-  product_id            uuid → products.id
+product_groups
+  id                    uuid pk
+  product_id            uuid → products.id ON DELETE CASCADE
+  name                  text                         -- admin-facing, e.g. "Group A" or "Adam's group"
+  created_at, updated_at
+  -- voice_room_id / daily_room_name lives here for online products
+  -- (populated iff products.is_remote = true for the parent product)
+  unique(product_id, name)
+
+gedu_group_assignments
+  group_id              uuid → product_groups.id ON DELETE CASCADE
   gedu_id               uuid → profiles.id
-  role                  enum('primary','assistant')
   assigned_at           timestamptz
-  primary key (product_id, gedu_id)
-  -- CHECK: at most one row per product with role='primary'
+  primary key (group_id, gedu_id)
 ```
+
+No `role` column on assignments — a Gedu is just "on this group". Cross-group voice mobility within a product (§4.10) is enforced by the voice-chat permission check walking group → product → sibling groups, not by a table-level role.
 
 Substitute coverage for a specific date is **not** an assignment — it's a `session_overrides.substitute_gedu_id` value for that date.
 
@@ -363,15 +390,19 @@ Substitute coverage for a specific date is **not** an assignment — it's a `ses
 participations
   id                    uuid pk
   product_id            uuid → products.id
+  group_id              uuid → product_groups.id    -- nullable: NULL = unassigned inbox
   gamer_id              uuid → profiles.id
-  customer_id           uuid → profiles.id     -- the parent who signed up the gamer
+  customer_id           uuid → profiles.id          -- the parent who signed up the gamer
   status                enum('active','waitlisted','cancelled','completed','removed')
-  waitlist_position     int                    -- populated iff status='waitlisted'
+  waitlist_position     int                         -- populated iff status='waitlisted'
   signed_up_at          timestamptz
   cancelled_at          timestamptz
-  cancel_reason         text                   -- 'customer_cancelled','admin_removed','attendance_removed'
-  unique(product_id, gamer_id)                 -- one participation per gamer per product
+  cancel_reason         text                        -- 'customer_cancelled','admin_removed','attendance_removed'
+  unique(product_id, gamer_id)                      -- one participation per gamer per product
+  -- CHECK: group_id's product_id (if set) must match this row's product_id
 ```
+
+`group_id IS NULL` is the "unassigned inbox" state — a real first-class state, not a special group row. The drag-and-drop UI renders this as a dedicated column; admins move gamers from the inbox into an actual group. Deleting a group (admin action) resets its participations to `group_id = NULL` (re-enters the inbox); we don't want to lose the participations themselves.
 
 ### 5.6 Session-level records
 
@@ -429,7 +460,7 @@ All `SECURITY DEFINER`, private by default, row-locking where financial.
 ### 6.1 Participation lifecycle
 
 - **`create_participation(product_id, gamer_id, customer_id)`**
-  Validates age/language match, checks `registration_opens_at`, locks product + participation rows, decides `active` vs `waitlisted` based on `seat_count` and current counts. For `paid_upfront`: synchronously debits tokens and writes `token_charges`. For `paid_per_session`: no charge yet. For `external_contract` / `free`: no charge.
+  Validates age/language match, checks `registration_opens_at`, locks product + participation rows, decides `active` vs `waitlisted` based on `seat_count` and current counts. New participations start with `group_id = NULL` (unassigned inbox); admins place them into a group later. For `paid_upfront`: synchronously debits tokens and writes `token_charges`. For `paid_per_session`: no charge yet. For `external_contract` / `free`: no charge.
 
 - **`cancel_participation(participation_id, reason)`**
   Transitions to `cancelled`. If product was `paid_upfront` and cancellation is before `start_date - refund_policy_days`: refund through `token_charges`. If `paid_per_session`: refund any future session charges in window. Promotes lowest waitlist position if vacated seat was `active`.
@@ -439,6 +470,10 @@ All `SECURITY DEFINER`, private by default, row-locking where financial.
 
 - **`promote_from_waitlist(product_id)`**
   Internal helper, called by the two above.
+
+### 6.1a Group mutations
+
+Keep the existing `commit_group_changes` RPC (see `docs/groups-architecture.md`) as the sole write path for `product_groups`, `gedu_group_assignments`, and `participations.group_id`. All admin edits — create/rename/delete group, assign/unassign Gedu, move gamer between groups, move gamer from inbox into group — go through this RPC atomically. It already handles the drag-and-drop UI mutations; extending it for the inbox column is additive.
 
 ### 6.2 Session-level operations
 
@@ -453,9 +488,10 @@ All `SECURITY DEFINER`, private by default, row-locking where financial.
 
 ### 6.4 Retired
 
-- `commit_group_changes` — groups are gone.
 - `unenroll_gamer` — folded into `cancel_participation`.
 - `process_enrollment_charges` — replaced by `process_session_charges`.
+
+`commit_group_changes` is **kept** — groups are retained for all product types (§4.1).
 
 ---
 
@@ -474,11 +510,11 @@ One public page, filterable by:
 7. Schedule (weekday preference, time-of-day)
 8. Price (free / paid)
 
-### 7.2 Parallel-cohort grouping
+### 7.2 Parents see products, not groups
 
-Products matching on the heuristic key `(topic_id, weekday_set, start_time, duration, location_id, age_range, spoken_language, billing_mode)` render as a single card ("Tuesdays 17:00 Minecraft at Tapiola — 3 cohorts available"). Clicking through shows cohort picker (Gedu name, remaining seats) or auto-assigns if the parent doesn't care.
+Cohort subdivision within a single schedule is handled by Gedu Groups, which are invisible to parents (§4.1). A product with 3 groups × 25 seats each shows to the parent as a single product with 75 seats. Parents pick the product; admins decide which group the gamer ends up in.
 
-If admins diverge on any grouping field, the products split into separate cards.
+Products with genuinely different attributes (different weekday, different start time, different site) are still separate products, and the browse UI renders them as separate cards. No cohort picker, no heuristic grouping layer — the group layer inside a product is strictly an admin concern.
 
 ### 7.3 Per-product-type landing pages
 
@@ -488,9 +524,12 @@ Each of the four product types also has a filtered view (`/clubs`, `/municipalit
 
 ## 8. Admin UX
 
-- Single **"Create product"** form with a product type selector. Form reveals/hides fields based on selection (`end_date` required except for consumer clubs; `registration_opens_at` prominent for municipality; `schedule_slots` repeater for camps; etc.).
-- **Clone** action on any product creates a new row with the same content and a prompt to pick the Gedu and tweak capacity.
-- **Gedu assignment** panel lets admins add primary + assistants per product.
+- Single **"Create product"** form with a product type selector. Form reveals/hides fields based on selection (`end_date` required except for consumer clubs; `registration_opens_at` prominent for municipality; `schedule_slots` repeater for camps; etc.). The form also lets admins optionally pre-create **0 or more Gedu Groups**, each with **0 or more Gedus** — see §4.1. The typical flow is to create the product with zero groups and add them later once demand is known.
+- **Product management page** per product has a **Groups panel** with:
+  - An "Unassigned" column (participations with `group_id = NULL`) acting as an inbox.
+  - One column per group, showing its name, assigned Gedus, and placed participations.
+  - Drag-and-drop (existing UI) for moving gamers between inbox ↔ groups, and between groups.
+  - Add/rename/delete group controls; add/remove Gedu controls per group.
 - **Calendar view** per product shows computed sessions with overrides applied; admins can cancel/reschedule/assign substitutes directly from the calendar.
 - **Holiday calendar management** is a separate admin screen; products subscribe via a multi-select.
 
@@ -525,7 +564,7 @@ Prove the unified shape against the two product lines we actually have users for
 
 - Schema: all tables from §5.
 - RPCs: participation lifecycle, session operations, weekly charge cron.
-- Admin UI: create/edit/clone product; Gedu assignment; calendar view; holiday-calendar management.
+- Admin UI: create/edit product; Groups panel (inbox + per-group columns, drag-and-drop, Gedu assignment per group); calendar view; holiday-calendar management.
 - Parent UI: unified browse page with all filters; cohort-grouped cards; per-product detail page with signup form.
 - Migrate current consumer club data into the new shape (staging reset).
 - Notifications: email + WhatsApp for waitlist → active promotion (reuse existing pipeline).
@@ -572,7 +611,8 @@ Deferred from v1 because the customer base is small and trusted; gating adds sch
 
 ## 11. Open questions
 
-- **Series table.** If the heuristic grouping of parallel cohorts is painful to maintain (shared descriptions drift, admins forget to keep them in sync), introduce `product_series` as an optional parent row. Not worth the schema cost up front.
+- **Single-group auto-assign.** When a product has exactly one group, should `create_participation` auto-assign the new participation into it (skip the inbox)? Cleanest for events that are "always one group by definition", but it's a special case, and we'd probably want a "move all unassigned to Group X" shortcut anyway for the case where the admin *later* decides a product only needs one group. Defer deciding until we see how the inbox feels in real use.
+- **Unassigned inbox notifications.** Gamers should not sit in the inbox for long. Future phase: in-app notifications, WhatsApp / email nudges to admins (and maybe Gedus) when the inbox has been non-empty for N hours.
 - **Attendance → removal policy.** What's the N-unexcused-absences threshold that flags a participation for admin review? Who approves removal? Is there an appeal path? Defer until attendance tracking ships.
 - **Per-session charges and DST / tz edge cases.** When a camp crosses a DST boundary, does the session that "would have been" at 17:00 local still bill at the same token amount? (Probably yes — billing is per-session, not per-hour.)
 - **Event account requirement for truly free events.** We require an account for all participations (v1 simplification). If friction is too high for casual events like mall demos, consider a magic-link + gamer-only capture flow.
@@ -585,7 +625,7 @@ Deferred from v1 because the customer base is small and trusted; gating adds sch
 
 ### 12.1 Cross-references
 
-- Groups & `commit_group_changes` (**retired under this redesign**): `docs/groups-architecture.md`
+- Groups & `commit_group_changes` (**kept and generalized to every product type under this redesign — see §4.1**): `docs/groups-architecture.md`
 - Current consumer billing (**replaced by §5.7 + §6.3**): `docs/customer-enrollment-architecture.md`
 - Location hierarchy & site binding: `docs/locations-architecture.md`
 - Voice-room wiring for online products: `docs/voice-chat-architecture.md`
@@ -597,6 +637,18 @@ Deferred from v1 because the customer base is small and trusted; gating adds sch
 
 The current public mockup at `/registration` (from the superseded `school-clubs-design.md`) modeled only the municipality club flow. When this redesign lands in phase 1, the mockup is either promoted to the real unified-browse page or retired in favor of live queries against the new schema.
 
-### 12.3 Why we're retiring `product_groups`
+### 12.3 Why we kept Gedu Groups (and generalized them to every product type)
 
-The elastic-capacity benefit of `product_groups` (add a group → add capacity without touching the product row) is better served by a **clone-product** admin flow under the new model. Every downstream system — voice room (online only), attendance, Gedu dashboards, charges — becomes simpler when "cohort" and "product" are the same thing. The helper-Gedu use case ("Bob helps Adam") works naturally because multiple Gedus can be assigned to one product. Loss of the abstraction is a net win.
+An earlier version of this doc retired `product_groups` in favor of cloning whole products. Product-team feedback pushed back: groups are the right abstraction for admins organizing who-runs-what-with-whom inside a product, and they should apply to all four product types, not just consumer clubs.
+
+What kept groups is:
+
+- **Demand is often unknown up-front.** An admin advertises a camp with 100 seats and waits to see how many sell. Deciding on 1, 3, or 4 groups *after* 75 people bought in is a better workflow than pre-committing to a subdivision. Groups let the admin decide later without restructuring the product.
+- **The "Bob covers for Adam" use case works naturally.** Gedus cross-hop voice rooms within a product (§4.10) via group membership, without needing a new flat product-level Gedu list.
+- **Existing drag-and-drop already works.** The current admin UI for moving gamers between groups is real and good; retiring groups would have thrown it out and re-built a worse version. Extending it with an inbox column is cheap.
+
+What made generalizing them safe:
+
+- **Parents don't see groups.** The abstraction's cost is entirely admin-facing. Parents still see one product, one seat count, one signup button.
+- **Capacity stays product-level.** Groups don't introduce a second place to reason about "how many seats are left." Admins balance manually; no per-group waitlists, no per-group overflow logic.
+- **Events are forgiving.** An event with a single group and no subdivision is the degenerate case — the group UI shrinks to a single column and gets out of the way.
