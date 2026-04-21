@@ -39,7 +39,7 @@ export default function CustomerDashboardPage() {
           const secondary = i >= 2;
           return (
           <Link key={href} href={href}>
-            <Card className="group h-full transition-colors hover:bg-muted/50">
+            <Card className="group h-full transition-colors hover:bg-accent hover:text-accent-foreground">
               <CardHeader>
                 <div className="flex items-center gap-4">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-lg ${secondary ? "bg-secondary/10" : "bg-primary/10"}`}>

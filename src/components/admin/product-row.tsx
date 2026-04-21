@@ -25,7 +25,7 @@ export function ProductRow({ product, currency, locale, tokensToCurrencyDisplay 
   const gameName = product.games?.name;
 
   return (
-    <div className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-muted/50">
+    <div className="group flex items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground">
       <div className="flex items-center gap-4">
         <ProductThumbnail
           imagePath={product.image_path}

@@ -142,7 +142,7 @@ export default function AdminUserDetailPage() {
                   <Link
                     key={gamer.id}
                     href={ROUTES.admin.user(gamer.id)}
-                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
@@ -176,7 +176,7 @@ export default function AdminUserDetailPage() {
                   <Link
                     key={parent.id}
                     href={ROUTES.admin.user(parent.id)}
-                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
                   >
                     <div className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
