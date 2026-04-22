@@ -59,6 +59,12 @@ export class ProductsService {
 
   async createProduct(input: CreateProductInput): Promise<Product> {
     const { image, ...metadata } = input;
+    console.log("[DBG products.service] createProduct:enter", {
+      metadata,
+      imageName: image.name,
+      imageSize: image.size,
+      imageType: image.type,
+    });
 
     const formData = new FormData();
     formData.append("file", image);
@@ -68,13 +74,20 @@ export class ProductsService {
       method: "POST",
       body: formData,
     });
+    console.log("[DBG products.service] createProduct:response", {
+      status: response.status,
+      ok: response.ok,
+      contentType: response.headers.get("content-type"),
+    });
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
+      console.log("[DBG products.service] createProduct:error body", data);
       throw new Error(data.error || "Failed to create product");
     }
 
     const { product } = (await response.json()) as { product: unknown };
+    console.log("[DBG products.service] createProduct:success", { product });
     return product as Product;
   }
 

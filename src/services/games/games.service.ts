@@ -15,18 +15,26 @@ export class GamesService {
   }
 
   async createGame(name: string): Promise<Game> {
+    console.log("[DBG games.service] createGame:enter", { name });
     const response = await fetch("/api/admin/create-game", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
+    console.log("[DBG games.service] createGame:response", {
+      status: response.status,
+      ok: response.ok,
+      contentType: response.headers.get("content-type"),
+    });
 
     if (!response.ok) {
       const data = await response.json();
+      console.log("[DBG games.service] createGame:error body", data);
       throw new Error(data.error || "Failed to create game");
     }
 
-    const { game } = await response.json();
-    return game;
+    const body = await response.json();
+    console.log("[DBG games.service] createGame:success body", body);
+    return body.game;
   }
 }
