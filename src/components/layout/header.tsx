@@ -18,7 +18,7 @@ import { LocalePicker } from "@/components/layout/locale-picker";
 
 export function Header() {
   const pathname = usePathname();
-  const { user, profile, signOut, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -48,11 +48,6 @@ export function Header() {
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
     : null;
-
-  const handleSignOut = () => {
-    setDropdownOpen(false);
-    signOut();
-  };
 
   useClickOutside(dropdownRef, () => setDropdownOpen(false));
 
@@ -138,13 +133,15 @@ export function Header() {
                       <Settings className="h-4 w-4" />
                       {c('settings')}
                     </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      {c('signOut')}
-                    </button>
+                    <form action="/api/auth/signout" method="post">
+                      <button
+                        type="submit"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        {c('signOut')}
+                      </button>
+                    </form>
                   </div>
                 )}
               </div>
@@ -249,15 +246,14 @@ export function Header() {
                 >
                   {c('settings')}
                 </Link>
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    handleSignOut();
-                  }}
-                  className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent hover:text-accent-foreground"
-                >
-                  {c('signOut')}
-                </button>
+                <form action="/api/auth/signout" method="post">
+                  <button
+                    type="submit"
+                    className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent hover:text-accent-foreground"
+                  >
+                    {c('signOut')}
+                  </button>
+                </form>
               </>
             ) : (
               <>
