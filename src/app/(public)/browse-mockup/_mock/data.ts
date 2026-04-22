@@ -1,11 +1,15 @@
-// UI-only mockup data for the parent product-discovery flow.
+// UI-only mockup data for the parent-facing discovery + signup flow.
 // No DB, no API. Edit freely during product-team review.
 //
 // Mirrors docs/products-redesign.md §7:
 //  - Four product types shown on one unified browse page.
 //  - Parents filter by age, language, type, online/in-person, topic.
-//  - Card shows a derived "seat state" so parents can scan quickly.
+//  - Card shows a derived seat state so parents can scan quickly.
 //  - No cohort picker; cohort subdivision (groups) is an admin concern.
+//
+// This file also backs the /registration location-first entry point. Both
+// /browse-mockup and /registration read from the same product catalog and
+// converge at /browse-mockup/[productSlug] for the signup itself.
 
 export type ProductType =
   | "consumer-club"
@@ -25,13 +29,18 @@ export type Topic = {
   id: string;
   name: string;
   kind: "game" | "subject";
-  blurb: string; // one-liner parent-friendly description
+  blurb: string;
 };
 
 export type Tag = {
   id: string;
   name: string;
   description: string;
+};
+
+export type SkippedSession = {
+  date: string; // YYYY-MM-DD
+  reason: string;
 };
 
 export type Product = {
@@ -47,13 +56,28 @@ export type Product = {
   minAge: number;
   maxAge: number;
   isOnline: boolean;
-  // Human label: "Online", "Ressun peruskoulu, Helsinki", "Sogverse HQ".
-  locationLabel: string;
+  // The jurisdictional owner for location-first discovery. Can be any level:
+  // municipality / site / region. NULL for online-anywhere products that
+  // aren't scoped to any location (most consumer clubs, most camps, most
+  // events). See docs/products-redesign.md §4.9.
+  locationId: string | null;
+  // Free-text override when the site name alone isn't specific enough
+  // ("Room 204, Tapiolan koulu"). Also used when an online muni club needs
+  // a label like "Online · for Helsinki residents".
+  venueName?: string;
   // One-line schedule summary for cards.
   scheduleSummary: string;
   // Multi-line detail — days + times + any notes.
   scheduleDetail: string[];
+  // Human text for the start / date range, shown on cards and the detail page.
   dateRange?: string;
+  // First-session date — powers the post-signup confirmation line
+  // "The first session starts <date>." Empty for events (event date is in
+  // scheduleSummary itself).
+  firstSessionIso?: string;
+  // Skipped dates inside the term (bank holidays, school breaks). Mostly
+  // relevant for clubs + muni clubs.
+  skipped?: SkippedSession[];
   price: PriceInfo;
   seatCount: number | null;
   seatsTaken: number;
@@ -67,6 +91,7 @@ export type Product = {
   signupThreshold?: number;
   primaryGeduName: string;
   primaryGeduBio: string;
+  assistantGeduName?: string;
 };
 
 // ---------- Topics, tags ----------
@@ -103,6 +128,161 @@ export function getTag(id: string): Tag | undefined {
   return TAGS.find((t) => t.id === id);
 }
 
+// ---------- Locations ----------
+
+export type LocationType = "country" | "region" | "municipality" | "site";
+
+export type Location = {
+  id: string;
+  slug: string;
+  name: string;
+  type: LocationType;
+  parentId: string | null;
+  address?: string;
+  accessNotes?: string;
+  termLabel?: string;
+  termStartIso?: string;
+  termEndIso?: string;
+};
+
+const STANDARD_TERM = {
+  termLabel: "Kevätlukukausi 2026 · Spring term 2026",
+  termStartIso: "2026-01-12",
+  termEndIso: "2026-05-30",
+};
+
+export const LOCATIONS: Location[] = [
+  { id: "fi", slug: "finland", name: "Finland", type: "country", parentId: null },
+
+  // Regions
+  { id: "uusimaa", slug: "uusimaa", name: "Uusimaa", type: "region", parentId: "fi" },
+  { id: "pirkanmaa", slug: "pirkanmaa", name: "Pirkanmaa", type: "region", parentId: "fi" },
+
+  // Uusimaa municipalities
+  { id: "espoo", slug: "espoo", name: "Espoo", type: "municipality", parentId: "uusimaa", ...STANDARD_TERM },
+  { id: "helsinki", slug: "helsinki", name: "Helsinki", type: "municipality", parentId: "uusimaa", ...STANDARD_TERM },
+  { id: "vantaa", slug: "vantaa", name: "Vantaa", type: "municipality", parentId: "uusimaa", ...STANDARD_TERM },
+
+  // Pirkanmaa municipalities
+  { id: "tampere", slug: "tampere", name: "Tampere", type: "municipality", parentId: "pirkanmaa", ...STANDARD_TERM },
+
+  // Espoo sites
+  {
+    id: "tapiolan-koulu",
+    slug: "tapiolan-koulu",
+    name: "Tapiolan koulu",
+    type: "site",
+    parentId: "espoo",
+    address: "Opintie 1, 02100 Espoo",
+    accessNotes: "Enter via back door on the east side. Gate code 4231.",
+  },
+  {
+    id: "leppavaaran-kirjasto",
+    slug: "leppavaaran-kirjasto",
+    name: "Leppävaaran kirjasto",
+    type: "site",
+    parentId: "espoo",
+    address: "Leppävaarankatu 9, 02600 Espoo",
+    accessNotes: "Meeting room 2B on the second floor. Check in at the main desk.",
+  },
+
+  // Helsinki sites
+  {
+    id: "ressun-peruskoulu",
+    slug: "ressun-peruskoulu",
+    name: "Ressun peruskoulu",
+    type: "site",
+    parentId: "helsinki",
+    address: "Snellmaninkatu 18, 00170 Helsinki",
+    accessNotes: "Computer room A · check in at the main desk on arrival.",
+  },
+  {
+    id: "munkkivuoren-ala-aste",
+    slug: "munkkivuoren-ala-aste",
+    name: "Munkkivuoren ala-aste",
+    type: "site",
+    parentId: "helsinki",
+    address: "Laajalahdentie 21, 00330 Helsinki",
+  },
+  {
+    id: "oodi",
+    slug: "oodi-kirjasto",
+    name: "Oodi library",
+    type: "site",
+    parentId: "helsinki",
+    address: "Töölönlahdenkatu 4, 00100 Helsinki",
+    accessNotes:
+      "3rd floor · Kuutio / The Cube room. Staff unlocks it 15 minutes before start.",
+  },
+  {
+    id: "sogverse-hq",
+    slug: "sogverse-hq",
+    name: "Sogverse office",
+    type: "site",
+    parentId: "helsinki",
+    address: "Iso Roobertinkatu 1, 00120 Helsinki",
+    accessNotes: "Buzz 'Sogverse' at the main door. 4th floor.",
+  },
+
+  // Tampere sites
+  {
+    id: "tampere-metso",
+    slug: "tampere-metso",
+    name: "Tampereen pääkirjasto Metso",
+    type: "site",
+    parentId: "tampere",
+    address: "Pirkankatu 2, 33230 Tampere",
+    accessNotes: "Lasten osasto · check in at the info desk.",
+  },
+];
+
+export function getLocation(idOrSlug: string): Location | undefined {
+  const n = idOrSlug.toLowerCase();
+  return LOCATIONS.find((l) => l.id === n || l.slug === n);
+}
+
+/** Walk from a location up to its root, root → leaf. */
+export function getAncestors(locationId: string): Location[] {
+  const byId = new Map(LOCATIONS.map((l) => [l.id, l] as const));
+  const chain: Location[] = [];
+  let current = byId.get(locationId);
+  const seen = new Set<string>();
+  while (current && !seen.has(current.id)) {
+    seen.add(current.id);
+    chain.unshift(current);
+    current = current.parentId ? byId.get(current.parentId) : undefined;
+  }
+  return chain;
+}
+
+function collectDescendantIds(locationId: string): Set<string> {
+  const ids = new Set<string>([locationId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const loc of LOCATIONS) {
+      if (loc.parentId && ids.has(loc.parentId) && !ids.has(loc.id)) {
+        ids.add(loc.id);
+        changed = true;
+      }
+    }
+  }
+  return ids;
+}
+
+/**
+ * Products whose `locationId` is at-or-under the given location. Online
+ * products with `locationId = null` are *not* returned — they aren't scoped
+ * to any particular place. (Online muni clubs scoped to e.g. Helsinki DO
+ * return, because their locationId is the municipality.)
+ */
+export function getProductsForLocation(locationId: string): Product[] {
+  const descendants = collectDescendantIds(locationId);
+  return PRODUCTS.filter(
+    (p) => p.locationId !== null && descendants.has(p.locationId),
+  );
+}
+
 // ---------- Products ----------
 
 const MINUTE = 60 * 1000;
@@ -112,8 +292,14 @@ const DAY = 24 * HOUR;
 export const MODULE_LOAD_TIME =
   typeof window !== "undefined" ? Date.now() : 0;
 
+const STANDARD_SKIPS: SkippedSession[] = [
+  { date: "2026-02-24", reason: "Talviloma / winter break" },
+  { date: "2026-04-07", reason: "Pääsiäisloma / Easter" },
+  { date: "2026-05-01", reason: "Vappu" },
+];
+
 export const PRODUCTS: Product[] = [
-  // ---------- Consumer clubs (per-session, online) ----------
+  // ---------- Consumer clubs ----------
   {
     id: "mc-redstone",
     slug: "minecraft-redstone",
@@ -128,9 +314,11 @@ export const PRODUCTS: Product[] = [
     minAge: 9,
     maxAge: 13,
     isOnline: true,
-    locationLabel: "Online",
+    locationId: null,
     scheduleSummary: "Tuesdays · 15:30–17:00",
     scheduleDetail: ["Every Tuesday 15:30–17:00", "Ongoing — join any time"],
+    skipped: STANDARD_SKIPS,
+    firstSessionIso: "2026-01-13",
     price: { mode: "per_session", tokens: 8 },
     seatCount: 10,
     seatsTaken: 6,
@@ -153,9 +341,11 @@ export const PRODUCTS: Product[] = [
     minAge: 8,
     maxAge: 12,
     isOnline: true,
-    locationLabel: "Online",
+    locationId: null,
     scheduleSummary: "Wednesdays · 16:00–17:30",
     scheduleDetail: ["Every Wednesday 16:00–17:30", "Ongoing — join any time"],
+    skipped: STANDARD_SKIPS,
+    firstSessionIso: "2026-01-14",
     price: { mode: "per_session", tokens: 8 },
     seatCount: 12,
     seatsTaken: 9,
@@ -178,9 +368,11 @@ export const PRODUCTS: Product[] = [
     minAge: 11,
     maxAge: 15,
     isOnline: true,
-    locationLabel: "Online",
+    locationId: null,
     scheduleSummary: "Mondays · 17:00–18:30",
     scheduleDetail: ["Every Monday 17:00–18:30", "Ongoing — join any time"],
+    skipped: STANDARD_SKIPS,
+    firstSessionIso: "2026-01-12",
     price: { mode: "per_session", tokens: 10 },
     seatCount: 10,
     seatsTaken: 9,
@@ -203,9 +395,11 @@ export const PRODUCTS: Product[] = [
     minAge: 7,
     maxAge: 10,
     isOnline: true,
-    locationLabel: "Online",
+    locationId: null,
     scheduleSummary: "Saturdays · 10:00–11:30",
     scheduleDetail: ["Every Saturday 10:00–11:30", "Starts once 8 kids have signed up"],
+    skipped: STANDARD_SKIPS,
+    firstSessionIso: "2026-02-07",
     price: { mode: "per_session", tokens: 8 },
     seatCount: 14,
     seatsTaken: 4,
@@ -229,9 +423,11 @@ export const PRODUCTS: Product[] = [
     minAge: 9,
     maxAge: 12,
     isOnline: true,
-    locationLabel: "Online",
+    locationId: null,
     scheduleSummary: "Thursdays · 16:00–17:30",
     scheduleDetail: ["Every Thursday 16:00–17:30", "Ongoing — join any time"],
+    skipped: STANDARD_SKIPS,
+    firstSessionIso: "2026-01-15",
     price: { mode: "per_session", tokens: 10 },
     seatCount: 10,
     seatsTaken: 3,
@@ -254,12 +450,15 @@ export const PRODUCTS: Product[] = [
     minAge: 8,
     maxAge: 14,
     isOnline: false,
-    locationLabel: "Helsinki · meeting spot in Esplanadi",
+    locationId: "helsinki",
+    venueName: "Meeting at Esplanadi fountain, Helsinki",
     scheduleSummary: "Saturdays · 13:00–14:30",
     scheduleDetail: [
       "Every Saturday 13:00–14:30",
-      "Meet at the Esplanadi fountain. Brings phone + water.",
+      "Meet at the Esplanadi fountain. Bring a phone + water.",
     ],
+    skipped: STANDARD_SKIPS,
+    firstSessionIso: "2026-01-17",
     price: { mode: "per_session", tokens: 6 },
     seatCount: 20,
     seatsTaken: 11,
@@ -268,8 +467,63 @@ export const PRODUCTS: Product[] = [
     primaryGeduName: "Oskar Manninen",
     primaryGeduBio: "Pokémon GO community lead.",
   },
+  {
+    id: "mc-redstone-advanced",
+    slug: "minecraft-redstone-advanced",
+    type: "consumer-club",
+    name: "Minecraft Redstone · Advanced",
+    tagline: "Deep-end redstone for kids who already love circuits.",
+    description:
+      "For kids who've outgrown the basics. Piston machines, silent automation, minor programming. This club is full right now — the waitlist moves a seat every few weeks.",
+    topicIds: ["t-minecraft", "t-coding"],
+    tagIds: ["tag-advanced", "tag-creative"],
+    languages: ["fi"],
+    minAge: 11,
+    maxAge: 14,
+    isOnline: true,
+    locationId: null,
+    scheduleSummary: "Mondays · 17:30–19:00",
+    scheduleDetail: ["Every Monday 17:30–19:00", "Ongoing — waitlist only"],
+    skipped: STANDARD_SKIPS,
+    firstSessionIso: "2026-01-12",
+    price: { mode: "per_session", tokens: 10 },
+    seatCount: 10,
+    seatsTaken: 10,
+    waitlistCount: 4,
+    status: "running",
+    primaryGeduName: "Ville Nieminen",
+    primaryGeduBio: "Minecraft redstone & automation.",
+    assistantGeduName: "Juho Laine",
+  },
+  {
+    id: "mc-svenska",
+    slug: "minecraft-pa-svenska",
+    type: "consumer-club",
+    name: "Minecraft på svenska",
+    tagline: "Ett avslappnat Minecraft-kerho på svenska.",
+    description:
+      "Ett avslappnat Minecraft-kerho på svenska. Vi bygger tillsammans och spelar. Perfekt för barn som vill leka på svenska efter skolan.",
+    topicIds: ["t-minecraft"],
+    tagIds: ["tag-chill", "tag-beginner", "tag-creative"],
+    languages: ["sv"],
+    minAge: 8,
+    maxAge: 12,
+    isOnline: true,
+    locationId: null,
+    scheduleSummary: "Wednesdays · 15:30–17:00",
+    scheduleDetail: ["Every Wednesday 15:30–17:00", "Ongoing — join any time"],
+    skipped: STANDARD_SKIPS,
+    firstSessionIso: "2026-01-14",
+    price: { mode: "per_session", tokens: 8 },
+    seatCount: 10,
+    seatsTaken: 4,
+    waitlistCount: 0,
+    status: "running",
+    primaryGeduName: "Saga Grönlund",
+    primaryGeduBio: "Swedish-speaking club host.",
+  },
 
-  // ---------- Municipality clubs (in-person or online, free to parent) ----------
+  // ---------- Municipality clubs ----------
   {
     id: "muni-ressu-mc",
     slug: "ressu-minecraft",
@@ -284,7 +538,7 @@ export const PRODUCTS: Product[] = [
     minAge: 9,
     maxAge: 13,
     isOnline: false,
-    locationLabel: "Ressun peruskoulu, Helsinki",
+    locationId: "ressun-peruskoulu",
     scheduleSummary: "Wednesdays · 14:30–16:00",
     scheduleDetail: [
       "Every Wednesday 14:30–16:00",
@@ -292,11 +546,15 @@ export const PRODUCTS: Product[] = [
       "Spring term · Jan 14 – May 27, 2026",
     ],
     dateRange: "Jan 14 – May 27, 2026",
+    firstSessionIso: "2026-01-14",
+    skipped: STANDARD_SKIPS,
     price: { mode: "external_contract" },
     seatCount: 14,
     seatsTaken: 0,
     waitlistCount: 0,
-    registrationOpensOffsetMs: 45 * 1000, // ~45s: demo-friendly drop
+    // Flips to open in ~45s so product-team review can quickly see the
+    // countdown → open transition without waiting.
+    registrationOpensOffsetMs: 45 * 1000,
     status: "running",
     primaryGeduName: "Mikko Virtanen",
     primaryGeduBio: "Minecraft pedagogy, 6 years with kids' clubs.",
@@ -315,7 +573,7 @@ export const PRODUCTS: Product[] = [
     minAge: 8,
     maxAge: 12,
     isOnline: false,
-    locationLabel: "Oodi library, Helsinki",
+    locationId: "oodi",
     scheduleSummary: "Tuesdays · 15:30–17:00",
     scheduleDetail: [
       "Every Tuesday 15:30–17:00",
@@ -323,6 +581,8 @@ export const PRODUCTS: Product[] = [
       "Spring term · Jan 13 – May 26, 2026",
     ],
     dateRange: "Jan 13 – May 26, 2026",
+    firstSessionIso: "2026-01-13",
+    skipped: STANDARD_SKIPS,
     price: { mode: "external_contract" },
     seatCount: 12,
     seatsTaken: 0,
@@ -346,7 +606,8 @@ export const PRODUCTS: Product[] = [
     minAge: 12,
     maxAge: 15,
     isOnline: true,
-    locationLabel: "Online · for Helsinki residents",
+    locationId: "helsinki",
+    venueName: "Online · for Helsinki residents",
     scheduleSummary: "Fridays · 16:00–17:30",
     scheduleDetail: [
       "Every Friday 16:00–17:30",
@@ -354,6 +615,8 @@ export const PRODUCTS: Product[] = [
       "Spring term · Jan 16 – May 29, 2026",
     ],
     dateRange: "Jan 16 – May 29, 2026",
+    firstSessionIso: "2026-01-16",
+    skipped: STANDARD_SKIPS,
     price: { mode: "external_contract" },
     seatCount: 16,
     seatsTaken: 11,
@@ -362,6 +625,72 @@ export const PRODUCTS: Product[] = [
     status: "running",
     primaryGeduName: "Daniel Ahonen",
     primaryGeduBio: "English-first esports fundamentals.",
+  },
+  {
+    id: "muni-munkki-fortnite",
+    slug: "munkki-fortnite",
+    type: "municipality-club",
+    name: "Fortnite Strategy · Munkkivuoren ala-aste",
+    tagline: "Already full — join the waitlist for a chance.",
+    description:
+      "Last term's bestseller. All seats are taken this term, but families sometimes drop off the first few weeks — the waitlist usually moves one or two spots in the first month.",
+    topicIds: ["t-fortnite", "t-esports"],
+    tagIds: ["tag-competitive", "tag-teams"],
+    languages: ["fi"],
+    minAge: 11,
+    maxAge: 14,
+    isOnline: false,
+    locationId: "munkkivuoren-ala-aste",
+    scheduleSummary: "Thursdays · 14:30–16:00",
+    scheduleDetail: [
+      "Every Thursday 14:30–16:00",
+      "Tietokoneluokka, Munkkivuoren ala-aste",
+      "Spring term · Jan 15 – May 28, 2026",
+    ],
+    dateRange: "Jan 15 – May 28, 2026",
+    firstSessionIso: "2026-01-15",
+    skipped: STANDARD_SKIPS,
+    price: { mode: "external_contract" },
+    seatCount: 14,
+    seatsTaken: 14,
+    waitlistCount: 7,
+    registrationOpensOffsetMs: -5 * DAY,
+    status: "running",
+    primaryGeduName: "Emilia Mäkinen",
+    primaryGeduBio: "Game educator, Fortnite strategist.",
+  },
+  {
+    id: "muni-tampere-mc",
+    slug: "tampere-minecraft",
+    type: "municipality-club",
+    name: "Minecraft · Tampereen pääkirjasto",
+    tagline: "A new Tampere club at Metso library.",
+    description:
+      "Our first Tampere school club, running at the Metso library children's floor. Free to Tampere families. Registration is about to open.",
+    topicIds: ["t-minecraft"],
+    tagIds: ["tag-beginner", "tag-creative"],
+    languages: ["fi"],
+    minAge: 9,
+    maxAge: 12,
+    isOnline: false,
+    locationId: "tampere-metso",
+    scheduleSummary: "Mondays · 15:00–16:30",
+    scheduleDetail: [
+      "Every Monday 15:00–16:30",
+      "Lasten osasto · Tampereen pääkirjasto Metso",
+      "Spring term · Jan 19 – May 25, 2026",
+    ],
+    dateRange: "Jan 19 – May 25, 2026",
+    firstSessionIso: "2026-01-19",
+    skipped: STANDARD_SKIPS,
+    price: { mode: "external_contract" },
+    seatCount: 12,
+    seatsTaken: 0,
+    waitlistCount: 0,
+    registrationOpensOffsetMs: 12 * HOUR,
+    status: "running",
+    primaryGeduName: "Juho Laine",
+    primaryGeduBio: "Multi-game club host.",
   },
 
   // ---------- Camps ----------
@@ -379,7 +708,7 @@ export const PRODUCTS: Product[] = [
     minAge: 8,
     maxAge: 12,
     isOnline: false,
-    locationLabel: "Sogverse HQ, Helsinki",
+    locationId: "sogverse-hq",
     scheduleSummary: "Jun 8–12 · weekdays 10:00–15:00",
     scheduleDetail: [
       "Mon–Fri · June 8 – June 12, 2026",
@@ -387,6 +716,7 @@ export const PRODUCTS: Product[] = [
       "At Sogverse HQ, Iso Roobertinkatu 1, Helsinki",
     ],
     dateRange: "Jun 8–12, 2026",
+    firstSessionIso: "2026-06-08",
     price: { mode: "upfront", tokens: 120 },
     seatCount: 16,
     seatsTaken: 5,
@@ -409,7 +739,7 @@ export const PRODUCTS: Product[] = [
     minAge: 10,
     maxAge: 14,
     isOnline: false,
-    locationLabel: "Leppävaaran kirjasto, Espoo",
+    locationId: "leppavaaran-kirjasto",
     scheduleSummary: "Oct 20–24 · weekdays 10:00–15:00",
     scheduleDetail: [
       "Mon–Fri · October 20 – October 24, 2026",
@@ -417,6 +747,7 @@ export const PRODUCTS: Product[] = [
       "Meeting room 2B, Leppävaaran kirjasto",
     ],
     dateRange: "Oct 20–24, 2026",
+    firstSessionIso: "2026-10-20",
     price: { mode: "upfront", tokens: 90 },
     seatCount: 12,
     seatsTaken: 3,
@@ -439,7 +770,7 @@ export const PRODUCTS: Product[] = [
     minAge: 9,
     maxAge: 13,
     isOnline: true,
-    locationLabel: "Online",
+    locationId: null,
     scheduleSummary: "Jul 15–19 · weekdays 14:00–17:00",
     scheduleDetail: [
       "Mon–Fri · July 15 – July 19, 2026",
@@ -447,6 +778,7 @@ export const PRODUCTS: Product[] = [
       "Online via Daily.co",
     ],
     dateRange: "Jul 15–19, 2026",
+    firstSessionIso: "2026-07-15",
     price: { mode: "upfront", tokens: 75 },
     seatCount: 20,
     seatsTaken: 18,
@@ -454,6 +786,38 @@ export const PRODUCTS: Product[] = [
     status: "running",
     primaryGeduName: "Alex Saarinen",
     primaryGeduBio: "English-language all-rounder.",
+  },
+  {
+    id: "camp-winter-workshop",
+    slug: "winter-break-workshop-camp",
+    type: "camp",
+    name: "Winter Break Workshop Camp · Online",
+    tagline: "Three afternoons of game-making over winter break.",
+    description:
+      "A shorter, cheaper camp that runs during winter break. We start once 6 kids sign up — if we don't hit that by Feb 15, we refund everyone.",
+    topicIds: ["t-game-design", "t-coding", "t-roblox"],
+    tagIds: ["tag-beginner", "tag-chill"],
+    languages: ["fi"],
+    minAge: 9,
+    maxAge: 13,
+    isOnline: true,
+    locationId: null,
+    scheduleSummary: "Feb 23–25 · 14:00–16:30",
+    scheduleDetail: [
+      "Mon–Wed · February 23 – February 25, 2026",
+      "Daily 14:00–16:30",
+      "Online via Daily.co",
+    ],
+    dateRange: "Feb 23–25, 2026",
+    firstSessionIso: "2026-02-23",
+    price: { mode: "upfront", tokens: 45 },
+    seatCount: 16,
+    seatsTaken: 3,
+    waitlistCount: 0,
+    status: "pending",
+    signupThreshold: 6,
+    primaryGeduName: "Laura Salo",
+    primaryGeduBio: "Game-design educator.",
   },
 
   // ---------- Events ----------
@@ -471,7 +835,7 @@ export const PRODUCTS: Product[] = [
     minAge: 10,
     maxAge: 16,
     isOnline: false,
-    locationLabel: "Sogverse HQ, Helsinki",
+    locationId: "sogverse-hq",
     scheduleSummary: "Sat Jun 14 · 13:00–17:00",
     scheduleDetail: [
       "Saturday, June 14, 2026",
@@ -479,6 +843,7 @@ export const PRODUCTS: Product[] = [
       "Iso Roobertinkatu 1, Helsinki",
     ],
     dateRange: "Jun 14, 2026",
+    firstSessionIso: "2026-06-14",
     price: { mode: "free" },
     seatCount: 32,
     seatsTaken: 12,
@@ -501,7 +866,7 @@ export const PRODUCTS: Product[] = [
     minAge: 8,
     maxAge: 14,
     isOnline: true,
-    locationLabel: "Online",
+    locationId: null,
     scheduleSummary: "Sat May 17 · 10:00–12:00",
     scheduleDetail: [
       "Saturday, May 17, 2026",
@@ -509,6 +874,7 @@ export const PRODUCTS: Product[] = [
       "Online via Daily.co",
     ],
     dateRange: "May 17, 2026",
+    firstSessionIso: "2026-05-17",
     price: { mode: "free" },
     seatCount: null, // unlimited
     seatsTaken: 42,
@@ -531,7 +897,7 @@ export const PRODUCTS: Product[] = [
     minAge: 13,
     maxAge: 17,
     isOnline: true,
-    locationLabel: "Online",
+    locationId: null,
     scheduleSummary: "Fri Jun 27 · 18:00–20:00",
     scheduleDetail: [
       "Friday, June 27, 2026",
@@ -539,6 +905,7 @@ export const PRODUCTS: Product[] = [
       "Online via Daily.co",
     ],
     dateRange: "Jun 27, 2026",
+    firstSessionIso: "2026-06-27",
     price: { mode: "upfront", tokens: 10 },
     seatCount: 24,
     seatsTaken: 6,
@@ -547,6 +914,37 @@ export const PRODUCTS: Product[] = [
     status: "running",
     primaryGeduName: "Pekka Heinonen",
     primaryGeduBio: "Competitive Valorant coach.",
+  },
+  {
+    id: "event-girls-meetup",
+    slug: "girls-gaming-meetup",
+    type: "event",
+    name: "Girls' Gaming Meetup",
+    tagline: "A free afternoon meetup for girls who game.",
+    description:
+      "Free afternoon meetup at Oodi library for girls 10–14 who play games — whatever game. Chill hangout, bring a friend, bring a Switch.",
+    topicIds: [],
+    tagIds: ["tag-girls", "tag-chill"],
+    languages: ["fi", "en"],
+    minAge: 10,
+    maxAge: 14,
+    isOnline: false,
+    locationId: "oodi",
+    scheduleSummary: "Sun Apr 19 · 13:00–16:00",
+    scheduleDetail: [
+      "Sunday, April 19, 2026",
+      "13:00–16:00",
+      "3rd floor · Kuutio room, Oodi library",
+    ],
+    dateRange: "Apr 19, 2026",
+    firstSessionIso: "2026-04-19",
+    price: { mode: "free" },
+    seatCount: 24,
+    seatsTaken: 24,
+    waitlistCount: 3,
+    status: "running",
+    primaryGeduName: "Henna Laakso",
+    primaryGeduBio: "Girls-only Minecraft lead.",
   },
 ];
 
@@ -566,7 +964,7 @@ export type ProductRuntimeState = {
   registration: RegistrationStatus;
   opensAt: Date | null;
   isOpen: boolean;
-  seatsRemaining: number | null; // null when seatCount is null (unlimited)
+  seatsRemaining: number | null;
 };
 
 export function getProductState(
@@ -602,14 +1000,40 @@ export function getProductState(
   return { registration: "available", opensAt, isOpen, seatsRemaining };
 }
 
+/**
+ * Pretty "where it happens" label. For online products either the
+ * locationId-derived jurisdiction label (muni clubs) or a plain "Online"
+ * (for unscoped online products). For in-person, the venue override falls
+ * back to the site name + municipality context.
+ */
+export function getLocationLabel(product: Product): string {
+  if (product.isOnline) {
+    if (product.venueName) return product.venueName;
+    if (!product.locationId) return "Online";
+    const loc = getLocation(product.locationId);
+    return loc ? `Online · for ${loc.name} residents` : "Online";
+  }
+  // In person
+  if (product.venueName) return product.venueName;
+  if (!product.locationId) return "In person · venue TBD";
+  const loc = getLocation(product.locationId);
+  if (!loc) return "In person · venue TBD";
+  if (loc.type === "site") {
+    const ancestors = getAncestors(loc.id);
+    const muni = ancestors.find((a) => a.type === "municipality");
+    return muni ? `${loc.name}, ${muni.name}` : loc.name;
+  }
+  return loc.name;
+}
+
 // ---------- Filter helpers ----------
 
 export type Filters = {
   age: number | null;
-  languages: Language[]; // empty = any
-  types: ProductType[]; // empty = any
+  languages: Language[];
+  types: ProductType[];
   format: "any" | "online" | "in_person";
-  topicIds: string[]; // empty = any
+  topicIds: string[];
 };
 
 export const EMPTY_FILTERS: Filters = {
@@ -644,9 +1068,12 @@ export function filterProducts(
 
 export type ProductTypeDef = {
   slug: ProductType;
-  name: string; // parent-facing — NOT "consumer club"
+  name: string;
   plural: string;
   shortBlurb: string;
+  // CTA verb tuned per type. "Sign up" for clubs, "Enroll" for camps,
+  // "Get a spot" for events. Shown in the signup panel button.
+  signupVerb: string;
 };
 
 export const PRODUCT_TYPE_DEFS: ProductTypeDef[] = [
@@ -655,24 +1082,28 @@ export const PRODUCT_TYPE_DEFS: ProductTypeDef[] = [
     name: "Club",
     plural: "Clubs",
     shortBlurb: "Weekly, ongoing. Pay per session.",
+    signupVerb: "Sign up",
   },
   {
     slug: "municipality-club",
     name: "School club",
     plural: "School clubs",
     shortBlurb: "After-school, paid for by your municipality. Free to you.",
+    signupVerb: "Register",
   },
   {
     slug: "camp",
     name: "Camp",
     plural: "Camps",
     shortBlurb: "A full week (or more) during school breaks.",
+    signupVerb: "Enroll",
   },
   {
     slug: "event",
     name: "One-off event",
     plural: "Events",
     shortBlurb: "A single date — tournament, workshop, or demo.",
+    signupVerb: "Get a spot",
   },
 ];
 
@@ -702,3 +1133,20 @@ export const LANGUAGE_NAMES: Record<Language, string> = {
 };
 
 export const LANGUAGE_ORDER: Language[] = ["fi", "en", "sv"];
+
+// ---------- Mock gamers ----------
+// Pretend these are already on the parent's account — used by the signup
+// flow's "Who are you signing up?" picker.
+
+export type Gamer = {
+  id: string;
+  name: string;
+  age: number;
+  favoriteGame: string;
+};
+
+export const MOCK_GAMERS: Gamer[] = [
+  { id: "g1", name: "Oona", age: 10, favoriteGame: "Minecraft" },
+  { id: "g2", name: "Aino", age: 8, favoriteGame: "Roblox" },
+  { id: "g3", name: "Eelis", age: 13, favoriteGame: "Fortnite" },
+];

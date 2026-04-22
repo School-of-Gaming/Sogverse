@@ -560,9 +560,9 @@ function ResultsView({
               <Button variant="outline" onClick={onBack}>
                 Go back
               </Button>
-              <Button variant="ghost" asChild>
-                <Link href="/browse-mockup">Browse everything instead</Link>
-              </Button>
+              <Link href="/browse-mockup">
+                <Button variant="ghost">Browse everything instead</Button>
+              </Link>
             </div>
           </CardContent>
         </Card>

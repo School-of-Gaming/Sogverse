@@ -658,9 +658,9 @@ For municipality clubs specifically, parents rarely browse "all clubs in Finland
 - **Search result sort: municipality > site > region.** When the parent has typed something, keep municipalities at the top within matches, then sites, then regions.
 - Only locations that have at least one in-scope product at-or-under them appear in the list. Empty locations never surface.
 
-The **location page** (`/registration/[locationSlug]` in the mockup) lists every product whose `location_id` is at-or-under the anchor location, with breadcrumb ancestors shown for context (e.g., "Uusimaa" above "Helsinki"). This page is the one a school announcement would link directly to.
+The **location page** (`/registration/[locationSlug]` in the mockup) lists every product whose `location_id` is at-or-under the anchor location, grouped by product type (school clubs, camps, events), with breadcrumb ancestors shown for context (e.g., "Uusimaa" above "Helsinki"). This page is the one a school announcement would link directly to. Each product card deep-links into the unified detail + signup page (`/browse-mockup/[productSlug]`) — there is no separate registration-flavored detail page. Signup mechanics (countdown, gamer picker, waitlist) live in one place, so a parent who came from `/registration` and a parent who came from `/browse-mockup` hit the same form.
 
-This flow is municipality-first because that's the case the mockup was built for, but nothing about it is hard-wired to `product_type = 'municipality_club'`. Any product whose `location_id` is under the anchor qualifies — a Helsinki-scoped consumer club or a Helsinki camp would show on the Helsinki page too. `/registration` is one entry point among several; the unified `/browse` (§7.1) is the other.
+This flow is municipality-first because that's the case the location-first entry was designed around, but nothing about it is hard-wired to `product_type = 'municipality_club'`. Any product whose `location_id` is under the anchor qualifies — a Helsinki-scoped consumer club or a Helsinki camp would show on the Helsinki page too. `/registration` is one entry point among several; the unified `/browse` (§7.1) is the other.
 
 ### 7.5 Registration timing and ticket-drop UX
 
@@ -673,6 +673,8 @@ For products with `registration_opens_at` set (required for municipality clubs, 
 3. **Closed / waitlist** — seats are full. Form posts to the waitlist lane (if `waitlist_enabled`); otherwise it's read-only with a "full" indicator.
 
 **Layout stability across state transitions.** The pre-open → open flip happens without user interaction, so interactive elements (submit button, gamer picker, rules checkbox) must **not shift position** when the countdown collapses to "Open now." Keep the countdown region a reserved height; fade the state transition rather than reflowing. Same rule for form state — don't reset gamer/checkbox selections across the flip. (This is the project-wide layout-stability rule from `CLAUDE.md`.)
+
+**One shared countdown component.** The countdown clock, the pre-populated signup form, and the pre-open → open flip are a single reusable package. Every place a product with a future `registration_opens_at` appears — the product detail page, product cards on the location listing page, product cards on `/browse`, and anywhere else we decide to surface a ticket-drop — uses the same component (or a compact label variant backed by the same countdown math). The mockups don't all wire the compact card variant yet (the `ProductCard` pill just says "Opens soon"), but the real implementation must: losing the per-card live countdown is a regression, not an intentional choice. Rule of thumb: if you find yourself writing countdown math in a second place, extract the existing one instead.
 
 ### 7.6 Parent-visible product detail
 
@@ -821,12 +823,13 @@ Deferred from v1 because the customer base is small and trusted; gating adds sch
 
 ### 12.2 Mockup lineage
 
-Two UX mockups live on the `feature/school-clubs-mockup` branch and informed this design:
+Three UX mockups live on the `feature/school-clubs-mockup` branch and informed this design. The two parent-facing mocks share one product catalog (`src/app/(public)/browse-mockup/_mock/data.ts`) and converge at a single detail + signup page at `/browse-mockup/[productSlug]`.
 
-- **Parent registration mockup** at `/registration` — originally from the superseded `school-clubs-design.md`, modeling the municipality-club flow. Covers location-first discovery, ticket-drop countdown, one-click registration, and waitlist confirmation. Its business-rule implications are captured in §7.4–§7.6.
-- **Admin create-product mockup** at `/admin-mockup/products/new` — built alongside this redesign, covering all four product types. Covers the location picker (dual site/jurisdiction modes), Gedu picker with language filter, group cards, billing-mode chooser, three-mode start trigger, and registration timing. Its business-rule implications are captured throughout §4, §5, §7, and §8.
+- **Parent browse mockup** at `/browse-mockup` — product-first discovery across all four types. Covers the unified filter bar (age / language / kind / format / topic), the "help-me-decide" quiz wizard, per-type signup verbs (*Sign up* / *Register* / *Enroll* / *Get a spot*), and a single detail page that adapts its signup panel by product shape (pre-open countdown, open form, waitlist, threshold-pending reservation). Its business-rule implications are captured in §7.1–§7.6.
+- **Parent registration mockup** at `/registration` — location-first entry point for parents who arrived via a school or municipality link. Searches the locations tree by name across all levels, lists every product (all four types) at-or-under the chosen location, and deep-links into the same `/browse-mockup/[productSlug]` detail page. Its business-rule implications are captured in §7.4.
+- **Admin create-product mockup** at `/admin-mockup/products/new` — admin-facing flow, covering all four product types. Covers the location picker (dual site/jurisdiction modes), Gedu picker with language filter, group cards, billing-mode chooser, three-mode start trigger, and registration timing. Its business-rule implications are captured throughout §4, §5, §7, and §8.
 
-Both mockups are sketches, not implementations (see the "How to use this document" note at the top). When this redesign lands, they are either promoted (copy, flow shape, component ideas reused) or retired — see §7.4 for the location-first entry point specifically.
+All three mockups are sketches, not implementations (see the "How to use this document" note at the top). When this redesign lands, they are either promoted (copy, flow shape, component ideas reused) or retired.
 
 ### 12.3 Why we kept Gedu Groups (and generalized them to every product type)
 

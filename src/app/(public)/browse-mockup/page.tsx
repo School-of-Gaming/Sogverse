@@ -152,6 +152,16 @@ function Hero() {
           </div>
         </a>
       </div>
+
+      <div className="mt-6 text-center text-xs text-muted-foreground">
+        Got a link from your child&apos;s school?{" "}
+        <Link
+          href="/registration"
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Find your town or school &rarr;
+        </Link>
+      </div>
     </div>
   );
 }

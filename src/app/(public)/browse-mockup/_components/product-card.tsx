@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   LANGUAGE_NAMES,
+  getLocationLabel,
   getProductState,
   getProductTypeDef,
   priceLabel,
@@ -51,7 +52,7 @@ export function ProductCard({ product }: { product: Product }) {
               {product.dateRange ? <span> · {product.dateRange}</span> : null}
             </Row>
             <Row icon={product.isOnline ? Globe : MapPin}>
-              {product.locationLabel}
+              {getLocationLabel(product)}
             </Row>
             <Row label="Ages">
               {product.minAge}–{product.maxAge}

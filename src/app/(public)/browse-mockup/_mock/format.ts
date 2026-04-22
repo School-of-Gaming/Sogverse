@@ -1,13 +1,12 @@
-// Formatting helpers scoped to the registration mockup.
+// Formatting helpers scoped to the browse + signup mockup.
 
-const DAY_EN = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-export function formatDayEn(day: number): string {
-  return DAY_EN[day] ?? "";
-}
-
-export function formatRange(startTime: string, endTime: string): string {
-  return `${startTime}–${endTime}`;
+export function formatIsoDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 // "Apr 20, 2026 at 18:00 EEST"
@@ -41,15 +40,6 @@ export function formatServerClock(d: Date): string {
       .split(" ")
       .pop() ?? "";
   return `${time} ${tz}`;
-}
-
-export function formatIsoDate(iso: string): string {
-  const d = new Date(`${iso}T00:00:00`);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 }
 
 export type Countdown = {
