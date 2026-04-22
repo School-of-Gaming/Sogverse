@@ -101,7 +101,9 @@ The `product_groups` layer is **kept** and generalized. Every product type uses 
 - A group with **zero Gedus** is valid (admin decided structure before picking people).
 - A group with **zero participations** is valid (admin set up capacity before gamers bought in).
 
-**Gedus attach to groups, not products.** A Gedu may be assigned to multiple groups in the same product. The set of "Gedus on product X" is derived: `DISTINCT gedu_id FROM gedu_group_assignments JOIN product_groups ON …`.
+**Gedus attach to groups, not products.** A Gedu is assigned to **at most one group per product** (enforced at the schema level — see §5.4). A Gedu can still be on multiple *different* products simultaneously. The set of "Gedus on product X" is derived: `DISTINCT gedu_id FROM gedu_group_assignments JOIN product_groups ON …`, though given the one-group-per-product rule the DISTINCT is belt-and-braces.
+
+**Admins also manually avoid scheduling conflicts across products** — a Gedu shouldn't be on two groups whose computed sessions overlap in time. For v1 this is a human-enforced discipline; the system does not validate it and an admin mistake will cause a real scheduling clash with no warning. See §11 for the planned conflict-prevention constraint.
 
 **Cross-group voice mobility (online products).** All Gedus assigned to any group within the same product can join any sibling group's voice room. This solves the "Adam has to step away for 10 minutes; Bob covers for him" case naturally. Gamers cannot hop — a gamer can only see and join their own group's voice room.
 
@@ -183,6 +185,17 @@ billing_mode ∈ {
 
 **Future concepts** (first-session-free, promo codes, intro discounts) layer on top as orthogonal features, not as mutations of the base price.
 
+**Refund window per billing mode.** Each mode has a different refund rule:
+
+| `billing_mode` | Refund window |
+|---|---|
+| `paid_per_session` | Fixed 24h before each session (system-wide constant, carried forward from the existing consumer-club enrollment logic). Three-case eligibility — see §6.1. |
+| `paid_upfront` | Configurable per product via `products.refund_policy_days` — days before `start_date`. |
+| `free` | N/A (no money moved). |
+| `external_contract` | N/A (billed offline to the municipality). |
+
+`refund_policy_days` (§5.1) only applies to `paid_upfront`; it must be NULL for all other modes. `paid_per_session` does **not** use this column — the window is a fixed system-wide constant, not per-product configurable.
+
 **Future: on-platform municipality billing.** For v1, `external_contract` means "we invoice the municipality offline; the platform records no money movement." Eventually we want a school / municipality coordinator to manage seat payments **inside** our system — purchase orders, per-seat pricing, invoices, approvals, usage reporting — without routing through individual parent accounts or Sorg tokens. When this lands it becomes a new billing mode (e.g., `municipality_account`) with its own charge ledger and payer entity (a `municipality_accounts` table with POs, balances, billing contacts), and the current `external_contract` mode is either retired or kept as an "offline invoicing" escape hatch. Design now: avoid hardcoding "municipality = no billing" anywhere — branch on `billing_mode`, not on `product_type`.
 
 ### 4.6 Capacity and waitlist
@@ -192,7 +205,11 @@ billing_mode ∈ {
 - When a participation is requested on a capped product and seats are full, it becomes `waitlisted` with a `waitlist_position`.
 - When an active participant leaves or is removed, the lowest-position waitlisted row is atomically promoted.
 
-All mutations go through `SECURITY DEFINER` RPCs with `SELECT ... FOR UPDATE` row locking on the product and its participations to prevent race conditions during "ticket drops."
+All participation mutations go through `SECURITY DEFINER` RPCs that begin with `SELECT 1 FROM products WHERE id = $1 FOR UPDATE`. This **product-row lock is the signup gate** — concurrent `create_participation` / `cancel_participation` / waitlist-promotion calls on the same product serialize on it, so seat-count reads and waitlist arithmetic inside the transaction are race-free.
+
+Locking the existing `participations` rows does not serialize signups (you can't `FOR UPDATE` rows that don't exist yet — another transaction can still INSERT). The product row is the one shared object every signup must touch, so that's where the gate lives.
+
+**Do not use `FOR UPDATE SKIP LOCKED` or `NOWAIT`.** The point is to block briefly, not to fail fast. Concurrent callers must wait for the lock so each sees a consistent post-commit state. At our scale (~50 signups per 15-minute window at peak), lock contention is effectively invisible — the lock holds for ~10ms per RPC.
 
 ### 4.7 Product type as label, not switch
 
@@ -272,15 +289,19 @@ A voice room (Daily.co) exists iff `products.is_remote = true`. In-person produc
 **Permissions follow the group → product topology:**
 
 - **Gamers** can see and join only the voice room of the group they're assigned to.
-- **Gedus** can see and join any voice room on any group within a product, as long as they're assigned to at least one group in that product. This makes the "Adam steps out, Bob covers" flow natural.
+- **Gedus** can see and join any voice room on any group within a product, as long as they're assigned to at least one group in that product. This is **emergency coverage** — Adam steps out for 10 minutes, Bob from the sibling group pops in. It is not meant to support "one Gedu runs multiple groups at once" — per §4.1 a Gedu is on at most one group per product.
+- A substitute Gedu (set via `session_substitutions.substitute_gedu_id` — see §5.3) gains voice-room access on the covered (group, session_date) for the substitution date only. The voice-chat permission check unions ongoing `gedu_group_assignments` with date-scoped substitutions. Substitutes also inherit cross-group mobility for that date — the "Bob covers, Bob steps out, Carla covers Bob" chain is a real case (§5.3 chained substitutions).
 - An unassigned participation (gamer in the inbox, not yet placed) has **no** voice room access — the admin must place them into a group first.
+
+**Effective Gedu resolution.** For a given (group, date), the effective set of authorized voice-chat Gedus is computed by walking `session_substitutions` forward from each ongoing `gedu_group_assignments` member. A recursive CTE handles chained substitutions; terminal-substitute IDs are the effective set. An unfilled substitution row (`substitute_gedu_id IS NULL`) produces a coverage gap the admin dashboard should surface.
 
 **Implications for the schema and code:**
 
-- Room provisioning is keyed on `product_group_id`, not `product_id`. Creating a group in an online product triggers Daily.co room creation (idempotent on the group id). Deleting a group deletes its room.
+- Room provisioning is keyed on `product_group_id`, not `product_id`. Creating a group in an online product triggers Daily.co room creation. Deletion of a group deletes its room.
+- Room creation is idempotent and **lazily reattempted at first join** if initial provisioning failed — the caller doesn't have to block on the Daily.co API being up when the group is created. This mirrors the existing voice-chat behavior.
 - Flipping `products.is_remote` from false to true provisions rooms for the product's existing groups. Flipping true to false is disallowed once participations exist.
-- Voice-chat RPCs and hooks check `products.is_remote` and the user's group membership (or Gedu-on-product derivation) to decide which rooms are reachable. In-person products short-circuit — no voice room, no error.
-- The Gedu dashboard surfaces a "Join voice room" action for every group in an online product they're on. Their own group is highlighted; siblings are reachable but clearly distinct.
+- Voice-chat RPCs and hooks check `products.is_remote` and the effective-Gedu set (for Gedus) or participation's `group_id` (for gamers) to decide which rooms are reachable. In-person products short-circuit — no voice room, no error.
+- The Gedu dashboard surfaces a "Join voice room" action for every group in an online product they're effectively on for the current session. Their own group is highlighted; siblings are reachable but clearly distinct.
 
 ### 4.11 Lifecycle status and threshold-triggered start
 
@@ -300,7 +321,7 @@ products.status ∈ {
 
 `is_visible` stays orthogonal: an admin can temporarily unlist a pending or running product without changing lifecycle state (e.g. "hide while I fix the description").
 
-**Signup threshold — a single mechanism for all four product types.** Add `products.signup_threshold` (nullable int). When set, the product stays in `pending` until admin manually starts it — it does not auto-start when the threshold is met. Instead, admins get a notification ("Tuesday Minecraft has 8 active signups — ready to start"), and can:
+**Signup threshold — a single mechanism for all four product types.** Add `products.signup_threshold` (nullable int). Threshold counts **`status='active'` participations only** — waitlisted rows don't count (and at typical configs where `signup_threshold ≤ seat_count`, no waitlist exists below threshold anyway). When set, the product stays in `pending` until admin manually starts it — it does not auto-start when the threshold is met. Instead, admins get a notification ("Tuesday Minecraft has 8 active signups — ready to start"), and can:
 
 - **Start now** once the threshold is met (the common path), or
 - **Start under threshold** with a simple confirm dialog ("Start with 7 signups instead of 8?") — admins know their context, and the UI clearly shows the actual count, so no reason dialog is needed, or
@@ -368,8 +389,12 @@ products
   max_age               int
   spoken_language_code  text
   image_path            text
-  padlet_url            text             -- optional; shared with families ONLY after
-                                          -- they sign up (never on public browse pages)
+  padlet_url            text             -- optional; public URL. UI hides it on public
+                                          -- browse pages and only surfaces it post-signup.
+                                          -- Not treated as sensitive at the DB layer — the
+                                          -- value is a public URL anyway. Deprecated
+                                          -- direction: will be replaced by an internal
+                                          -- resources system that doesn't link off-site.
 
   location_id           uuid → locations.id  -- NULLABLE — see §4.9:
                                               --   is_remote=false: must be a site
@@ -391,7 +416,10 @@ products
   waitlist_enabled      bool             -- default true when seat_count is set
 
   registration_opens_at timestamptz      -- nullable; 'ticket drop' moment (municipality clubs)
-  refund_policy_days    int              -- nullable; days-before-start cutoff for self-refund
+  refund_policy_days    int              -- nullable; days-before-start cutoff for self-refund.
+                                          -- Only meaningful for billing_mode='paid_upfront';
+                                          -- must be NULL for other modes. paid_per_session
+                                          -- uses a fixed 24h per-session window (see §4.5).
 
   is_visible            bool             -- orthogonal to status; an admin unlist flag
   created_by            uuid → profiles.id
@@ -417,6 +445,7 @@ products
   --   status = 'running'                → start_date IS NOT NULL
   --   signup_threshold IS NOT NULL
   --     AND seat_count IS NOT NULL      → signup_threshold <= seat_count
+  --   refund_policy_days IS NOT NULL    → billing_mode = 'paid_upfront'
 
 schedule_slots
   id                    uuid pk
@@ -471,7 +500,12 @@ product_holiday_calendars
   primary key (product_id, calendar_id)
 ```
 
-### 5.3 Session overrides (sparse)
+### 5.3 Session overrides and substitutions
+
+Two separate tables, because the two concepts have different grains:
+
+- **`session_overrides`** — *product-level* modifications to a session: cancel it entirely, reschedule its time, attach an admin note. One row per (product, date), affecting all groups of that product on that date.
+- **`session_substitutions`** — *group-level, per-Gedu* coverage changes: "Gedu X on Group A can't make the Tuesday session; Gedu Y is covering." Keyed on (group, date, original Gedu), allowing one row per Gedu being replaced.
 
 ```sql
 session_overrides
@@ -481,14 +515,32 @@ session_overrides
   cancelled                 bool default false
   override_start_time       time             -- rescheduled within the same day
   override_duration_minutes int
-  substitute_gedu_id        uuid → profiles.id  -- covering for the primary Gedu
   admin_note                text
   created_by                uuid → profiles.id
   created_at, updated_at
   unique(product_id, session_date)
+
+session_substitutions
+  id                    uuid pk
+  group_id              uuid → product_groups.id ON DELETE CASCADE
+  session_date          date
+  original_gedu_id      uuid → profiles.id    -- the Gedu who's out
+  substitute_gedu_id    uuid → profiles.id    -- covering; NULL until filled
+  reason                text                  -- optional: 'sick','holiday','personal'
+  requested_by          uuid → profiles.id    -- admin or the original Gedu themselves
+  requested_at          timestamptz
+  filled_by             uuid → profiles.id    -- who assigned the substitute (nullable)
+  filled_at             timestamptz           -- nullable until filled
+  unique(group_id, session_date, original_gedu_id)
+  -- trigger: reject if product_has_session(group.product_id, session_date) is false
+  -- trigger: original_gedu_id must be on gedu_group_assignments for group_id
 ```
 
-A session exists on a date iff: schedule rules include that date, no linked holiday calendar contains it, AND no override row sets `cancelled=true`. A helper function `product_has_session(product_id, date) → bool` encapsulates this check.
+A session exists on a date iff: schedule rules include that date, no linked holiday calendar contains it, AND no `session_overrides` row sets `cancelled=true`. A helper function `product_has_session(product_id, date) → bool` encapsulates this check.
+
+**Chained substitutions are supported.** Subs can sub for subs: Adam→Bob, then Bob→Carla on the same (group, date) are two separate rows (different `original_gedu_id` values). The voice-chat permission check walks the chain via a recursive CTE (see §4.10).
+
+**Unfilled substitutions** (`substitute_gedu_id IS NULL`) represent a coverage gap — the original Gedu flagged themselves out, the system hasn't found a replacement yet. The admin dashboard surfaces these as action items.
 
 ### 5.4 Groups and Gedu assignment
 
@@ -507,18 +559,23 @@ product_groups
 gedu_group_assignments
   group_id              uuid → product_groups.id ON DELETE CASCADE
   gedu_id               uuid → profiles.id
+  product_id            uuid → products.id                -- denormalized (see below)
   assigned_at           timestamptz
   primary key (group_id, gedu_id)
+  unique (gedu_id, product_id)                            -- one group per Gedu per product (§4.1)
+  -- BEFORE INSERT/UPDATE trigger: validate product_id = (SELECT product_id FROM product_groups WHERE id = group_id)
 ```
 
-No `role` column on assignments — a Gedu is just "on this group". Cross-group voice mobility within a product (§4.10) is enforced by the voice-chat permission check walking group → product → sibling groups, not by a table-level role.
+No `role` column on assignments — a Gedu is just "on this group". Cross-group voice mobility within a product (§4.10) is enforced by the voice-chat permission check, not by a table-level role.
 
-Substitute coverage for a specific date is **not** an assignment — it's a `session_overrides.substitute_gedu_id` value for that date.
+**Denormalized `product_id` on `gedu_group_assignments`.** This column doesn't add new information — it's derivable from `product_groups.product_id` via `group_id` — but it's required for the `unique (gedu_id, product_id)` constraint that enforces one-group-per-Gedu-per-product (§4.1). A `BEFORE INSERT/UPDATE` trigger validates the denormalized value stays consistent with the parent `product_groups` row so it can't drift. An admin trying to add Bob to Group B of Minecraft Tuesdays, when Bob is already on Group A of the same product, gets a unique-violation error from the schema — no silent double-assignment.
+
+Substitute coverage for a specific date is **not** an assignment — it's a `session_substitutions` row (see §5.3).
 
 **Changes from today's `product_groups` table.** The current schema has `product_groups` with `gedu_id` as a column (one-Gedu-per-group, no name). The redesign changes two things:
 
 - **`name` is new and required.** Today's groups are anonymous — the admin UI shows them as "Group 1 / Group 2" by index. The redesign adds a human-meaningful name (e.g. "Adam's group", "Tuesday 17:00 A", "Beginners") so admins can refer to groups unambiguously across rosters, dashboards, and conversations. The add-product and group-management UIs expose this as an editable field and default it to "Group A / B / C…" for new rows.
-- **Gedus move out to a separate join table.** `product_groups.gedu_id` is dropped; many-to-many goes through `gedu_group_assignments`. A group can now have 0, 1, or many Gedus, and a Gedu can be on multiple groups in the same product. This is what enables cross-group voice mobility (§4.10) and "empty group, Gedus TBD" (§4.1).
+- **Gedus move out to a separate join table.** `product_groups.gedu_id` is dropped; assignment goes through `gedu_group_assignments`. A group can now have 0, 1, or many Gedus. A Gedu, however, is on **at most one group per product** (the unique constraint above). This still enables cross-group voice mobility (§4.10) and "empty group, Gedus TBD" (§4.1) — the mobility use case is one Gedu popping into a *sibling* group temporarily, not holding standing assignments on two.
 
 ### 5.5 Participations
 
@@ -529,14 +586,14 @@ participations
   group_id              uuid → product_groups.id    -- nullable: NULL = unassigned inbox
   gamer_id              uuid → profiles.id
   customer_id           uuid → profiles.id          -- the parent who signed up the gamer
-  status                enum('active','waitlisted','cancelled','completed','removed')
+  status                enum('active','waitlisted','completed')
   waitlist_position     int                         -- populated iff status='waitlisted'
   signed_up_at          timestamptz
-  cancelled_at          timestamptz
-  cancel_reason         text                        -- 'customer_cancelled','admin_removed','attendance_removed'
   unique(product_id, gamer_id)                      -- one participation per gamer per product
   -- CHECK: group_id's product_id (if set) must match this row's product_id
 ```
+
+**Hard-delete on cancellation.** The `status` enum has no `cancelled` or `removed` values — cancellation (customer- or admin-initiated) hard-deletes the row via `cancel_participation` / `admin_remove_participation` (see §6.1). We explicitly chose this over a soft-delete + `cancelled_at` / `cancel_reason` pattern for v1: the codebase has been bitten before by queries that forget to filter `status`, and a live table that physically can't contain cancelled rows removes that class of bug. If the product team later needs an audit trail of cancellations, we add it as an archive table then — outbound emails currently serve as the informal record. The `UNIQUE(product_id, gamer_id)` works as-is because cancelled rows are simply gone; re-signup after cancel just inserts a fresh row.
 
 `group_id IS NULL` is the "unassigned inbox" state — a real first-class state, not a special group row. The drag-and-drop UI renders this as a dedicated column; admins move gamers from the inbox into an actual group. Deleting a group (admin action) resets its participations to `group_id = NULL` (re-enters the inbox); we don't want to lose the participations themselves.
 
@@ -572,7 +629,7 @@ Replaces `enrollment_charges` with a unified table that covers all three paid bi
 ```sql
 token_charges
   id                        uuid pk
-  participation_id          uuid → participations.id
+  participation_id          uuid → participations.id ON DELETE SET NULL  -- nullable (see below)
   product_id                uuid → products.id          -- denormalized for reporting
   gamer_id                  uuid → profiles.id          -- denormalized
   customer_id               uuid → profiles.id          -- denormalized
@@ -583,9 +640,49 @@ token_charges
   stripe_idempotency_key    text                        -- for reconciliation
   created_at
   unique(participation_id, kind, session_date)          -- prevents double-charging a session
+                                                        -- (NULL participation_id rows from
+                                                        --  post-cancel history are not
+                                                        --  affected by this constraint)
 ```
 
+**`participation_id` is `ON DELETE SET NULL`.** §5.5 hard-deletes a `participations` row on cancellation. If `token_charges.participation_id` cascaded, refund history would vanish. Setting it to NULL instead preserves the charge trail — the denormalized `product_id`, `gamer_id`, `customer_id` columns let admin reporting, reconciliation, and the customer's own "my token history" view remain complete even after the participation is gone.
+
 Per-session charges are driven by the existing weekly cron (now reading from `participations` with `billing_mode='paid_per_session'`). Upfront charges happen synchronously during signup RPC.
+
+### 5.8 Row Level Security
+
+Every new table has RLS enabled. Policies follow a consistent shape across the redesign:
+
+- **Admin = full access.** Every table has a `get_user_role() = 'admin'` USING/WITH CHECK policy. Matches the existing codebase convention (55 uses of `get_user_role()` across current migrations vs. 8 of `is_admin()`).
+- **Writes are RPC-gated.** For tables where mutations go through `SECURITY DEFINER` RPCs (participations, token_charges, group/assignment mutations via `commit_group_changes`, substitutions), no INSERT/UPDATE/DELETE policies are granted to `authenticated` — the RPCs run with elevated privilege and the table-level grants are REVOKEd.
+- **`auth.uid()` and `get_user_role()` are always wrapped in `(select ...)`** for the Postgres initplan optimization already in use throughout the existing migrations (evaluated once per query, not once per row).
+
+Baseline SELECT policies per role:
+
+| Table | anon / public | customer | gamer | gedu |
+|---|---|---|---|---|
+| `products` | `status IN ('pending','running') AND is_visible = true` | public-union-own-participations-products | public-union-own-participations-products | any product where the Gedu has a `gedu_group_assignments` row (regardless of status/visibility) |
+| `schedule_slots`, `session_overrides` | — | follows products | follows products | follows products |
+| `site_details` | public _(pending product-team decision on `access_notes` gating — §11)_ | — | — | — |
+| `topics`, `tags`, `product_tags` | all SELECT | — | — | — |
+| `holiday_calendars`, `calendar_holidays`, `product_holiday_calendars` | all SELECT | — | — | — |
+| `product_groups` | ✗ | ✗ (parents never see groups — §4.1) | own group only | any group in a product the Gedu is on |
+| `gedu_group_assignments` | ✗ | assignments on products where a gamer of theirs participates (for Gedu-list derivation) | own group only | own + colleagues on assigned products |
+| `participations` | ✗ | `customer_id = auth.uid()` | `gamer_id = auth.uid()` | participations on products the Gedu is assigned to |
+| `session_substitutions` | ✗ | via products of own gamers | via own group | on assigned products |
+| `session_attendance` | ✗ | for own gamers | own rows | on assigned products |
+| `session_notes` | ✗ | `visibility = 'participants'` on own gamers' products | same | `gedu_only` + `participants` on assigned products |
+| `token_charges` | ✗ | `customer_id = auth.uid()` | ✗ (gamers have no token visibility) | ✗ |
+
+**Non-obvious rules worth calling out:**
+
+- **Parents never see `product_groups`, `session_substitutions`, or the per-group Gedu roster directly.** Group structure is an admin-only abstraction. The Gedu list on a product's parent-facing detail page is derived via `DISTINCT gedu_id` across the product's groups — parents read `gedu_group_assignments` only for the purpose of flattening, not to see which specific group anyone is on.
+- **Gedus read products regardless of `is_visible` / `status`.** A Gedu assigned to a draft or cancelled product still needs to see it in their dashboard. The public SELECT policy filters unlisted products; the Gedu policy unions in everything they're assigned to, unconditionally.
+- **Gamers are strictly scoped to their own group.** No sibling-group roster visibility. Voice-room reachability is further restricted at the app layer (gamers can only join their own group's room, per §4.10) — but the RLS floor is already "own group only."
+- **`token_charges` is completely invisible to gamers.** Gamers have no token concept in the product. Customers see their own rows via `customer_id = auth.uid()`; the denormalized `customer_id` column is what makes this efficient.
+- **Hard-delete on cancellation (§5.5) means no status-filtering footguns.** Customer policies are `customer_id = auth.uid()` with no `AND status NOT IN (...)` to forget. Cancelled participations are gone at the row level, not hidden by a WHERE clause.
+
+Access-control test coverage (following the existing `tests/db/access-control.test.ts` pattern) must assert for every new table: RLS is enabled, no non-allowlisted function is callable by anon/authenticated, and policies behave as described above.
 
 ---
 
@@ -595,17 +692,27 @@ All `SECURITY DEFINER`, private by default, row-locking where financial.
 
 ### 6.1 Participation lifecycle
 
-- **`create_participation(product_id, gamer_id, customer_id)`**
-  Validates age/language match, checks `registration_opens_at`, locks product + participation rows, decides `active` vs `waitlisted` based on `seat_count` and current counts. New participations start with `group_id = NULL` (unassigned inbox); admins place them into a group later. For `paid_upfront`: synchronously debits tokens and writes `token_charges`. For `paid_per_session`: no charge yet. For `external_contract` / `free`: no charge.
+All three RPCs begin with `SELECT 1 FROM products WHERE id = $1 FOR UPDATE` as the per-product signup/cancellation gate (§4.6). Do not use `SKIP LOCKED` or `NOWAIT` on this lock.
 
-- **`cancel_participation(participation_id, reason)`**
-  Transitions to `cancelled`. If product was `paid_upfront` and cancellation is before `start_date - refund_policy_days`: refund through `token_charges`. If `paid_per_session`: refund any future session charges in window. Promotes lowest waitlist position if vacated seat was `active`.
+- **`create_participation(product_id, gamer_id, customer_id)`**
+  After taking the gate lock: validates age/language match, checks `registration_opens_at`, verifies product status permits signup (`status IN ('pending','running')`), counts current `active` participations to decide `active` vs `waitlisted` (based on `seat_count`). New participations start with `group_id = NULL` (unassigned inbox); admins place them into a group later. For `paid_upfront`: synchronously debits tokens via `adjust_token_balance` and writes a `token_charges` row with `kind='upfront'`. For `paid_per_session`: no charge yet — the first charge happens on the weekly cron's next pass (§6.3). For `external_contract` / `free`: no charge at any time.
+
+- **`cancel_participation(participation_id)`**
+  Customer-initiated. After taking the gate lock: **hard-DELETEs** the participations row (§5.5), then promotes the lowest `waitlist_position` row to `active` atomically. Refund logic by billing mode:
+
+  | Mode | Refund rule |
+  |---|---|
+  | `paid_upfront` | Full refund if `now < start_date - refund_policy_days` (in product tz). Otherwise no refund. Refund written as a negative-amount `token_charges` row with `reason='refund_cancel'` or `refund_within_window`. |
+  | `paid_per_session` | Three-case eligibility, matching the existing consumer-club enrollment logic verbatim (see `customer-enrollment-architecture.md` § "Refund eligibility — two-stage check"). Look up the most recent `token_charges` row of kind `per_session` for this participation, then: (1) if that session has already started → no refund (`session_past`); (2) if the next session is within `PARTICIPATION_CHARGE_WINDOW_HOURS` (24h) → no refund (`within_window`); (3) otherwise full refund as a negative `token_charges` row with `reason='refund_within_window'`. There is never more than one refundable charge — the cron charges 24h ahead, so at most one "next session" is ever pre-paid. |
+  | `free` / `external_contract` | No refund ever. |
+
+  Cancelled participations that were `waitlisted` simply hard-delete with no refund (they were never charged) and no promotion (no seat was vacated).
 
 - **`admin_remove_participation(participation_id, reason)`**
-  Admin-initiated removal, same downstream behavior; sets `cancel_reason='admin_removed'`.
+  Admin-initiated removal. Same behavior as `cancel_participation` including gate lock, hard-DELETE, waitlist promotion, and refund eligibility — with one override: admins can force a refund outside the normal window (`reason='refund_admin'` on the `token_charges` row). The `reason` parameter is recorded on the refund row, not the deleted participation (which is gone).
 
 - **`promote_from_waitlist(product_id)`**
-  Internal helper, called by the two above.
+  Internal helper, called inside the cancellation RPCs after delete. Assumes the gate lock is already held.
 
 ### 6.1a Group mutations
 
@@ -613,10 +720,15 @@ Keep the existing `commit_group_changes` RPC (see `docs/groups-architecture.md`)
 
 ### 6.2 Session-level operations
 
+Product-level overrides (cancel / reschedule / note) write to `session_overrides`. Per-Gedu substitutions write to `session_substitutions` (§5.3).
+
 - **`cancel_session(product_id, session_date, reason)`** — upserts `session_overrides` with `cancelled=true`.
-- **`reschedule_session(product_id, session_date, new_start_time, new_duration_minutes)`** — upserts override.
-- **`assign_substitute(product_id, session_date, gedu_id)`** — upserts override.
+- **`reschedule_session(product_id, session_date, new_start_time, new_duration_minutes)`** — upserts `session_overrides` with the new time/duration.
+- **`request_substitute(group_id, session_date, original_gedu_id, reason)`** — inserts a `session_substitutions` row with `substitute_gedu_id = NULL` (unfilled). Callable by admin, or by the original Gedu themselves when they flag out. Supports chained requests (a substitute flagging out creates a second row with `original_gedu_id = previous_substitute_id`).
+- **`assign_substitute(substitution_id, substitute_gedu_id)`** — fills an unfilled row: sets `substitute_gedu_id`, `filled_by`, `filled_at`. Admin-only. A combined `set_substitute(group_id, session_date, original_gedu_id, substitute_gedu_id)` convenience RPC upserts in one step for the admin "pick the replacement directly" path.
 - **`record_attendance(product_id, session_date, gamer_id, status)`** — validates against `product_has_session`.
+
+The previous `assign_substitute(product_id, session_date, gedu_id)` signature is retired — wrong granularity (a product can have multiple groups, each with a distinct original Gedu being replaced). See §5.3 for the rationale.
 
 ### 6.3 Weekly charge cron
 
@@ -625,7 +737,7 @@ Keep the existing `commit_group_changes` RPC (see `docs/groups-architecture.md`)
 ### 6.4 Lifecycle transitions (§4.11)
 
 - **`start_product(product_id, start_date)`** — admin-initiated. Requires `status = 'pending'`. Validates `start_date IS NOT NULL` (either passed in or already on the row). Transitions to `running`. Does **not** check `signup_threshold` — the admin is explicitly overriding when they click Start. If no charges have run yet for `paid_per_session` products, this is when the weekly cron begins picking them up.
-- **`cancel_product(product_id, reason)`** — admin-initiated. Valid from `draft`, `pending`, or `running`. Transitions to `cancelled`. For `paid_upfront` products with `active` participations, fires refunds through the existing `token_charges` refund path. Waitlisted participations are marked cancelled without any charge motion.
+- **`cancel_product(product_id, reason)`** — admin-initiated. Valid from `draft`, `pending`, or `running`. Transitions the product's `status` to `cancelled`. For `paid_upfront` products with `active` participations, fires refunds through the `token_charges` refund path (one negative row per active participation, `reason='refund_cancel'`) and **hard-deletes all participation rows** (matching the §5.5 hard-delete model — active and waitlisted alike). The resulting `token_charges` rows have `participation_id = NULL` (per the FK's `ON DELETE SET NULL`) but retain the denormalized `product_id` / `gamer_id` / `customer_id` so the refund trail is self-contained. Waitlisted rows hard-delete with no charge motion.
 - **`finalize_completed_products()`** — daily job. Transitions `running → completed` for any product whose `end_date` has passed.
 
 ### 6.5 Retired
@@ -747,7 +859,16 @@ Staging only. No real-customer data to preserve. The migration is a **cutover** 
 3. Apply the new migration set (tables from §5, RPCs from §6).
 4. Re-seed staging with representative data covering all four product types.
 5. Retire `docs/school-clubs-design.md` (content folded here).
-6. Rename relevant React Query key factories, service classes, and URL paths to generic terms (`participationsKeys`, `ProductsService`, etc.).
+6. Rename relevant React Query key factories, service classes, URL paths, and constants to generic terms. Among others:
+   - `enrollmentsKeys` → `participationsKeys`
+   - `EnrollmentsService` → `ParticipationsService`
+   - `useEnrollGamer` / `useUnenrollGamer` → `useCreateParticipation` / `useCancelParticipation`
+   - `/api/enrollments/*` → `/api/participations/*`
+   - `ENROLLMENT_CHARGE_WINDOW_HOURS` → `PARTICIPATION_CHARGE_WINDOW_HOURS` (constant in `src/lib/constants/`, and the mirrored SQL local — see `customer-enrollment-architecture.md` § "Charge window constant sync")
+   - `enroll_gamer_in_group` → `create_participation`
+   - `unenroll_gamer` → `cancel_participation`
+   - `process_enrollment_charges` → `process_session_charges`
+   - `enrollment_charges` → `token_charges`
 7. Admins manually re-create any archived products worth keeping, using the new create-product flow. The archive is the reference; no scripted import.
 
 If/when this ships and real customer data exists, a proper scripted backfill is required — out of scope for this doc.
@@ -836,6 +957,8 @@ Deferred from v1 because the customer base is small and trusted; gating adds sch
 - **Event account requirement for truly free events.** We require an account for all participations (v1 simplification). If friction is too high for casual events like mall demos, consider a magic-link + gamer-only capture flow.
 - **Topic taxonomy depth.** Will "Minecraft" ever need sub-topics (Minecraft — Survival, Minecraft — Redstone)? If so, add `topics.parent_id`. Not needed until it is.
 - **Calendar view as a first-class parent feature.** A parent viewing "everything my kids are doing this week" across multiple products is obvious v2 UX. Design the calendar data layer (per-gamer session query) to support this even if we don't ship the UI in phase 1.
+- **Gedu schedule-conflict prevention.** §4.1 enforces at-most-one-group-per-product via a unique constraint on `gedu_group_assignments (gedu_id, product_id)`. That catches the in-product collision, but a Gedu can still be assigned across two products whose computed sessions overlap in time (e.g., Monday 17:00 Minecraft club *and* Monday 17:00 Fortnite camp). For v1 admins manually avoid this; the system does not validate it and mistakes cause real scheduling clashes with no warning. Future work: either a DB-level constraint (materialized per-Gedu schedule view + EXCLUDE constraint, or a trigger-based check on insert/update) or an application-layer validator in the assignment RPC. Complexity is non-trivial because session dates are computed (§4.2), not stored — "conflict" means the computed session sets of two groups have a non-empty intersection, which requires expanding schedule_slots minus holidays minus cancellation overrides for both sides.
+- **`site_details.access_notes` visibility.** Gate codes, back-door directions, and similar site-access instructions currently default to public SELECT along with the rest of `site_details`. Product-team confirmation pending on whether these need to be gated to signed-up participants (and admins/Gedus) instead. If yes, split `access_notes` to a more restrictive policy or move it to a sub-table with a participation-or-admin-or-gedu policy.
 
 ---
 
@@ -844,7 +967,7 @@ Deferred from v1 because the customer base is small and trusted; gating adds sch
 ### 12.1 Cross-references
 
 - Groups & `commit_group_changes` (**kept and generalized to every product type under this redesign — see §4.1**): `docs/groups-architecture.md`
-- Current consumer billing (**replaced by §5.7 + §6.3**): `docs/customer-enrollment-architecture.md`
+- Current consumer billing (**partially replaced by §5.7 + §6.3; three-case refund logic and the 24h `PARTICIPATION_CHARGE_WINDOW_HOURS` preserved verbatim — see §6.1 and §9 rename list**): `docs/customer-enrollment-architecture.md`
 - Location hierarchy & site binding: `docs/locations-architecture.md`
 - Voice-room wiring for online products: `docs/voice-chat-architecture.md`
 - Token mechanics (`adjust_token_balance`): `docs/sorg-token-architecture.md`
