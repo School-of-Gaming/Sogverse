@@ -130,25 +130,71 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const [error, setError] = useState<string | null>(null);
 
   const handleCreateGame = async () => {
-    if (!newGameName.trim()) return;
+    console.log("[DBG product-form] handleCreateGame:enter", {
+      newGameName,
+      trimmed: newGameName.trim(),
+      gameIdBefore: gameId,
+      showNewGame,
+    });
+    if (!newGameName.trim()) {
+      console.log("[DBG product-form] handleCreateGame:abort empty name");
+      return;
+    }
     try {
       const game = await createGame.mutateAsync(newGameName.trim());
+      console.log("[DBG product-form] handleCreateGame:mutateAsync resolved", {
+        game,
+      });
       setGameId(game.id);
       setNewGameName("");
       setShowNewGame(false);
+      console.log("[DBG product-form] handleCreateGame:state updates scheduled", {
+        scheduledGameId: game.id,
+      });
     } catch (err) {
+      console.log("[DBG product-form] handleCreateGame:error", {
+        errName: err instanceof Error ? err.name : typeof err,
+        errMessage: err instanceof Error ? err.message : String(err),
+      });
       setError(err instanceof Error ? err.message : t('failedToCreateGame'));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("[DBG product-form] handleSubmit:enter", {
+      name,
+      description: description.slice(0, 40),
+      tokenCost,
+      gameId,
+      gameIdLength: gameId.length,
+      showNewGame,
+      newGameName,
+      createGameIsPending: createGame.isPending,
+      dayOfWeek,
+      startTime,
+      durationMinutes,
+      minAge,
+      maxAge,
+      isRemote,
+      locationId,
+      spokenLanguageCode,
+      imageValueKind:
+        imageValue === null
+          ? "null"
+          : imageValue instanceof File
+          ? `File(name=${imageValue.name},size=${imageValue.size},type=${imageValue.type})`
+          : `string(${imageValue})`,
+      gamesListHas: games?.some((g) => g.id === gameId) ?? null,
+      gamesListLength: games?.length ?? null,
+    });
     setError(null);
 
     // Image presence check runs outside zod because File isn't a zod-native
     // type; imageValue is a File (new), a string (existing bucket path in
     // edit mode — treat as "keep current"), or null (error).
     if (!imageValue) {
+      console.log("[DBG product-form] handleSubmit:abort no image");
       setError(t('imageRequired'));
       return;
     }
@@ -170,6 +216,9 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         locationId,
         spokenLanguageCode,
       });
+      console.log("[DBG product-form] handleSubmit:zod passed", {
+        gameId: validatedData.gameId,
+      });
 
       await onSubmit({
         name: validatedData.name,
@@ -187,7 +236,14 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
         spoken_language_code: validatedData.spokenLanguageCode,
         image: imageValue instanceof File ? imageValue : null,
       });
+      console.log("[DBG product-form] handleSubmit:onSubmit resolved");
     } catch (err) {
+      console.log("[DBG product-form] handleSubmit:error", {
+        isZod: err instanceof z.ZodError,
+        zodIssues: err instanceof z.ZodError ? err.errors : undefined,
+        errName: err instanceof Error ? err.name : typeof err,
+        errMessage: err instanceof Error ? err.message : String(err),
+      });
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
       } else if (err instanceof Error) {
