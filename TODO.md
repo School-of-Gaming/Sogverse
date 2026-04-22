@@ -16,6 +16,8 @@
   5. Remove the `"mouseflow"` namespace from `messages/en.json`, `messages/fi.json`, and `messages/sv.json`
   6. Delete all recorded sessions in the Mouseflow dashboard and close/downgrade the Mouseflow account
   7. Sanity check: `git grep -i mouseflow` should return nothing
+- [ ] **Retire `public.is_admin()` in favour of inline `get_user_role() = 'admin'`.** Both functions exist today (`supabase/migrations/00002_profiles.sql`) and are behaviourally identical — `is_admin()` is a thin wrapper. Current usage is already skewed toward the inline form (~55 uses of `get_user_role() = 'admin'` vs. ~8 of `is_admin()`). Standardising on the inline comparison reads consistently with customer/gedu/gamer role checks (which must use `get_user_role()` since there's no per-role wrapper) and eliminates a redundant primitive. Mechanical change: replace `is_admin()` call sites, drop the function, run `tests/db/access-control.test.ts`. Low-value cleanup — do when someone's already in the RLS files.
+- [ ] **Consider moving role into JWT claims to eliminate the per-query DB lookup in RLS.** Today every policy call to `get_user_role()` runs `SELECT role FROM profiles WHERE id = auth.uid()` — `STABLE` so it's cached per query, but still one extra lookup on first eval. Modern Supabase pattern: a custom access-token hook writes `role` into `app_metadata` at token mint time, and RLS reads `(auth.jwt() -> 'app_metadata' ->> 'role') = 'admin'` with zero DB cost. Bigger win than the `is_admin()` cleanup but also a bigger change (hook + migration of every policy). Independent from the cleanup above — do one, both, or neither.
 
 ### E2E Tests with Local Supabase
 
