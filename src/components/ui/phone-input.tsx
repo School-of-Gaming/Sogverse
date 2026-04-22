@@ -1,6 +1,7 @@
 "use client";
 
 import PhoneInput from "react-phone-number-input";
+import flags from "react-phone-number-input/flags";
 import "react-phone-number-input/style.css";
 
 /**
@@ -26,6 +27,7 @@ export function InternationalPhoneInput({
       defaultCountry="FI"
       countries={["FI", "GB", "SE", "US"]}
       addInternationalOption={true}
+      flags={flags}
       value={value}
       onChange={onChange}
       className={
