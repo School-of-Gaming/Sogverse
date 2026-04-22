@@ -30,8 +30,11 @@ import {
   type ProductType,
   type Topic,
 } from "../_mock/data";
-import { MockupRibbon } from "../_components/mockup-ribbon";
 import { ProductCard } from "../_components/product-card";
+
+// Quiz surfaces the consumer catalog only — municipality clubs live on
+// /registration and require a location match, which this quiz doesn't ask for.
+const QUIZ_PRODUCTS = PRODUCTS.filter((p) => p.type !== "municipality-club");
 
 type Commitment = "weekly" | "camp" | "event" | "any";
 
@@ -111,7 +114,6 @@ export default function QuizPage() {
   if (done) {
     return (
       <div className="container mx-auto px-4 py-12">
-        <MockupRibbon />
         <ResultsView state={state} onReset={reset} onBack={back} />
       </div>
     );
@@ -119,8 +121,6 @@ export default function QuizPage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <MockupRibbon />
-
       <div className="mx-auto max-w-2xl">
         <div className="text-center">
           <Link
@@ -475,7 +475,7 @@ function ChoiceCard({
 
 function commitmentToTypes(c: Commitment | null): ProductType[] {
   if (c === null || c === "any") return [];
-  if (c === "weekly") return ["consumer-club", "municipality-club"];
+  if (c === "weekly") return ["consumer-club"];
   if (c === "camp") return ["camp"];
   return ["event"];
 }
@@ -496,7 +496,7 @@ function ResultsView({
 }) {
   const matches = useMemo(() => {
     const types = commitmentToTypes(state.commitment);
-    const filtered = filterProducts(PRODUCTS, {
+    const filtered = filterProducts(QUIZ_PRODUCTS, {
       age: state.age,
       languages: state.languages,
       types,

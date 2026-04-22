@@ -9,9 +9,9 @@ import {
   getLocationLabel,
   getProductBySlug,
   getProductTypeDef,
+  productDetailPath,
 } from "../../_mock/data";
 import { formatIsoDate } from "../../_mock/format";
-import { MockupRibbon } from "../../_components/mockup-ribbon";
 
 type ConfirmedStatus = "signed_up" | "waitlisted" | "reserved";
 
@@ -40,8 +40,6 @@ export default function ConfirmedPage() {
 
   return (
     <div className="container mx-auto px-4 py-10">
-      <MockupRibbon />
-
       <div className="mx-auto max-w-xl">
         <div className="text-center">
           <HeroIcon status={status} position={position} />
@@ -110,14 +108,17 @@ export default function ConfirmedPage() {
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <Link
-            href={`/browse-mockup/${product.slug}`}
+            href={productDetailPath(product)}
             className="w-full sm:w-auto"
           >
             <Button variant="outline" className="w-full">
               Back to the {typeDef.name.toLowerCase()}
             </Button>
           </Link>
-          <Link href="/browse-mockup" className="w-full sm:w-auto">
+          <Link
+            href={product.type === "municipality-club" ? "/registration" : "/browse-mockup"}
+            className="w-full sm:w-auto"
+          >
             <Button className="w-full">Find something else</Button>
           </Link>
         </div>

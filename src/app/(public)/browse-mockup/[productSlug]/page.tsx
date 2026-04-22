@@ -27,6 +27,7 @@ import {
   getTag,
   getTopic,
   priceLabel,
+  productDetailPath,
   type Product,
   type ProductRuntimeState,
 } from "../_mock/data";
@@ -38,7 +39,6 @@ import {
   formatWhen,
   pad2,
 } from "../_mock/format";
-import { MockupRibbon } from "../_components/mockup-ribbon";
 import { TYPE_ICON } from "../_components/type-icon";
 
 // Kept identical across the load→ready and pre-open→open transitions so the
@@ -67,18 +67,24 @@ export default function ProductDetailPage() {
   const typeDef = getProductTypeDef(product.type);
   const Icon = TYPE_ICON[product.type];
 
+  // Send the parent back to the entry point they came from. Municipality
+  // clubs live on /registration; everything else lives on /browse-mockup.
+  const isMuni = product.type === "municipality-club";
+  const backHref = isMuni ? "/registration" : "/browse-mockup";
+  const backLabel = isMuni
+    ? "All municipality clubs"
+    : "All clubs, camps, and events";
+
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
-      <MockupRibbon />
-
       <div className="mx-auto max-w-5xl">
         <div className="flex items-start justify-between gap-4">
           <Link
-            href="/browse-mockup"
+            href={backHref}
             className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            All clubs, camps, and events
+            {backLabel}
           </Link>
           <ServerClock />
         </div>
@@ -389,7 +395,7 @@ function PreOpenPanel({
 
   function handleSubmit(gamer: string) {
     const q = new URLSearchParams({ status: "signed_up", gamer });
-    router.push(`/browse-mockup/${product.slug}/confirmed?${q.toString()}`);
+    router.push(`${productDetailPath(product)}/confirmed?${q.toString()}`);
   }
 
   return (
@@ -437,7 +443,7 @@ function OpenPanel({
 
   function handleSubmit(gamer: string) {
     const q = new URLSearchParams({ status: "signed_up", gamer });
-    router.push(`/browse-mockup/${product.slug}/confirmed?${q.toString()}`);
+    router.push(`${productDetailPath(product)}/confirmed?${q.toString()}`);
   }
 
   return (
@@ -463,7 +469,7 @@ function OpenPanel({
         <div className="text-center">
           <p className="text-3xl font-bold tabular-nums">{product.seatsTaken}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            already signed up · no seat limit
+            already signed up · all welcome
           </p>
         </div>
       )}
@@ -488,7 +494,7 @@ function WaitlistPanel({ product }: { product: Product }) {
       gamer,
       position: String(product.waitlistCount + 1),
     });
-    router.push(`/browse-mockup/${product.slug}/confirmed?${q.toString()}`);
+    router.push(`${productDetailPath(product)}/confirmed?${q.toString()}`);
   }
 
   return (
@@ -546,7 +552,7 @@ function ThresholdPanel({
       gamer,
       threshold: String(threshold),
     });
-    router.push(`/browse-mockup/${product.slug}/confirmed?${q.toString()}`);
+    router.push(`${productDetailPath(product)}/confirmed?${q.toString()}`);
   }
 
   const canSubmit = state !== null; // always true once clock ticks

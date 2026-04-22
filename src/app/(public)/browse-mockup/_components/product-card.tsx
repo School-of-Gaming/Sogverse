@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Clock, Globe, MapPin } from "lucide-react";
+import { ArrowRight, Clock, Globe, ImageIcon, MapPin } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
@@ -10,6 +10,7 @@ import {
   getProductState,
   getProductTypeDef,
   priceLabel,
+  productDetailPath,
   type Product,
 } from "../_mock/data";
 import { useNow } from "../_mock/use-now";
@@ -24,10 +25,11 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <Link
-      href={`/browse-mockup/${product.slug}`}
+      href={productDetailPath(product)}
       className="group block h-full"
     >
-      <Card className="flex h-full flex-col transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
+      <Card className="flex h-full flex-col overflow-hidden transition-colors group-hover:bg-accent group-hover:text-accent-foreground">
+        <ImagePlaceholder product={product} />
         <CardContent className="flex h-full flex-col p-5">
           <div className="flex items-start gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
@@ -73,6 +75,28 @@ export function ProductCard({ product }: { product: Product }) {
         </CardContent>
       </Card>
     </Link>
+  );
+}
+
+function ImagePlaceholder({ product }: { product: Product }) {
+  const Icon = TYPE_ICON[product.type];
+  return (
+    <div
+      className={cn(
+        "relative flex aspect-[16/9] w-full items-center justify-center overflow-hidden border-b border-border bg-gradient-to-br",
+        product.type === "consumer-club" && "from-primary/10 to-primary/5",
+        product.type === "municipality-club" && "from-secondary/15 to-secondary/5",
+        product.type === "camp" && "from-primary/10 via-secondary/10 to-secondary/5",
+        product.type === "event" && "from-muted to-muted/40",
+      )}
+      aria-hidden
+    >
+      <Icon className="h-10 w-10 text-muted-foreground" />
+      <span className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-background/70 px-2 py-0.5 text-[10px] font-medium text-muted-foreground backdrop-blur-sm">
+        <ImageIcon className="h-3 w-3" />
+        Photo
+      </span>
+    </div>
   );
 }
 
@@ -136,7 +160,7 @@ function SeatBadge({
   }
 
   if (state.seatsRemaining === null) {
-    return <SeatPill variant="open">No seat limit</SeatPill>;
+    return <SeatPill variant="open">All welcome</SeatPill>;
   }
 
   if (state.registration === "almost_full") {

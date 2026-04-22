@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import {
   ArrowRight,
   CalendarClock,
-  Monitor,
+  SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react";
@@ -26,72 +26,90 @@ import {
   type ProductType,
   type Topic,
 } from "./_mock/data";
-import { MockupRibbon } from "./_components/mockup-ribbon";
+
+// Browse is the *consumer* entry point — parents who buy clubs, camps, or
+// events directly from us. Municipality clubs are a fundamentally different
+// UX: they're city-funded, free to the family, and scoped to a specific
+// school or town. Parents who want those arrive via /registration instead,
+// typically from a link their school sent them. See the secondary hero link.
+const BROWSE_PRODUCTS = PRODUCTS.filter((p) => p.type !== "municipality-club");
+const BROWSE_TYPE_DEFS = PRODUCT_TYPE_DEFS.filter(
+  (d) => d.slug !== "municipality-club",
+);
 import { ProductCard } from "./_components/product-card";
 import { TYPE_ICON } from "./_components/type-icon";
 
 export default function BrowseMockupPage() {
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
 
-  const filtered = useMemo(() => filterProducts(PRODUCTS, filters), [filters]);
+  const filtered = useMemo(
+    () => filterProducts(BROWSE_PRODUCTS, filters),
+    [filters],
+  );
 
   const grouped = useMemo(() => {
-    return PRODUCT_TYPE_DEFS.map((def) => ({
+    return BROWSE_TYPE_DEFS.map((def) => ({
       def,
       items: filtered.filter((p) => p.type === def.slug),
     })).filter((g) => g.items.length > 0);
   }, [filtered]);
 
-  const hasActiveFilter = useMemo(() => {
-    return (
-      filters.age !== null ||
-      filters.languages.length > 0 ||
-      filters.types.length > 0 ||
-      filters.format !== "any" ||
-      filters.topicIds.length > 0
-    );
+  const activeFilterCount = useMemo(() => {
+    let n = 0;
+    if (filters.age !== null) n += 1;
+    n += filters.languages.length;
+    n += filters.types.length;
+    if (filters.format !== "any") n += 1;
+    n += filters.topicIds.length;
+    return n;
   }, [filters]);
 
+  const clear = () => setFilters(EMPTY_FILTERS);
+
   return (
-    <div className="container mx-auto px-4 py-12">
-      <MockupRibbon />
+    <div>
+      <div className="container mx-auto px-4 py-12">
+        <Hero />
+      </div>
 
-      <Hero />
+      <div id="browse" className="flex items-start border-t border-sidebar-border">
+        <aside className="sticky top-0 h-screen w-72 shrink-0 overflow-y-auto border-r border-sidebar-border bg-sidebar-background">
+          <FilterPanel
+            filters={filters}
+            onChange={setFilters}
+            onClear={clear}
+            activeCount={activeFilterCount}
+            resultCount={filtered.length}
+          />
+        </aside>
 
-      <div id="browse" className="mx-auto mt-12 max-w-6xl">
-        <FilterBar
-          filters={filters}
-          onChange={setFilters}
-          onClear={() => setFilters(EMPTY_FILTERS)}
-          hasActiveFilter={hasActiveFilter}
-          count={filtered.length}
-        />
-
-        <div className="mt-8 space-y-10">
-          {grouped.map(({ def, items }) => (
-            <section key={def.slug}>
-              <div className="flex items-baseline justify-between gap-2 border-b border-border pb-3">
-                <div className="flex items-center gap-2">
-                  <TypeBadge type={def.slug} />
-                  <h2 className="text-lg font-semibold">{def.plural}</h2>
-                  <span className="text-sm text-muted-foreground">
-                    {items.length}
-                  </span>
+        <div className="min-w-0 flex-1">
+          <div className="space-y-10 px-8 py-8">
+            {grouped.map(({ def, items }) => (
+              <section key={def.slug}>
+                <div className="flex items-baseline justify-between gap-2 border-b border-border pb-3">
+                  <div className="flex items-center gap-2">
+                    <TypeBadge type={def.slug} />
+                    <h2 className="text-lg font-semibold">{def.plural}</h2>
+                    <span className="text-sm text-muted-foreground">
+                      {items.length}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {def.shortBlurb}
+                  </p>
                 </div>
-                <p className="hidden text-xs text-muted-foreground sm:block">
-                  {def.shortBlurb}
-                </p>
-              </div>
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {items.map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
-              </div>
-            </section>
-          ))}
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {items.map((p) => (
+                    <ProductCard key={p.id} product={p} />
+                  ))}
+                </div>
+              </section>
+            ))}
 
-          {grouped.length === 0 && <EmptyState onReset={() => setFilters(EMPTY_FILTERS)} />}
+            {grouped.length === 0 && <EmptyState onReset={clear} />}
+          </div>
         </div>
       </div>
     </div>
@@ -100,84 +118,48 @@ export default function BrowseMockupPage() {
 
 function Hero() {
   return (
-    <div className="mx-auto max-w-4xl text-center">
+    <div className="mx-auto max-w-2xl text-center">
       <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
         Find the right thing for your gamer
       </h1>
-      <p className="mx-auto mt-4 max-w-2xl text-muted-foreground sm:text-lg">
+      <p className="mx-auto mt-4 text-muted-foreground sm:text-lg">
         Sogverse runs weekly clubs, school-holiday camps, and one-off events —
-        online and across Finland. Pick the path that fits you.
+        online and across Finland. Scroll to browse below, or let us help if
+        it feels like a lot.
       </p>
 
-      <div className="mx-auto mt-10 grid gap-4 sm:grid-cols-2">
-        <Link
-          href="/browse-mockup/quiz"
-          className="group relative block rounded-xl border border-primary/40 p-6 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
-        >
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-              <Sparkles className="h-6 w-6" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="font-semibold">Not sure what fits?</h2>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Answer five quick questions about your gamer. We&apos;ll shortlist
-                the clubs, camps, and events that match.
-              </p>
-            </div>
-          </div>
-        </Link>
-
-        <a
-          href="#browse"
-          className="group relative block rounded-xl border border-input bg-card p-6 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
-        >
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
-              <Monitor className="h-6 w-6" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="font-semibold">I know what I want</h2>
-                <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Browse everything on offer. Narrow by age, language, type, or
-                game.
-              </p>
-            </div>
-          </div>
-        </a>
-      </div>
-
-      <div className="mt-6 text-center text-xs text-muted-foreground">
-        Got a link from your child&apos;s school?{" "}
-        <Link
-          href="/registration"
-          className="font-medium text-primary underline-offset-4 hover:underline"
-        >
-          Find your town or school &rarr;
-        </Link>
-      </div>
+      <Link
+        href="/browse-mockup/quiz"
+        className="group mx-auto mt-8 flex max-w-md items-center gap-4 rounded-xl border border-primary/40 bg-primary/5 p-5 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
+      >
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+          <Sparkles className="h-6 w-6" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold">Feeling overwhelmed? Take the quiz.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Five quick questions about your gamer. We&apos;ll shortlist what
+            fits.
+          </p>
+        </div>
+        <ArrowRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+      </Link>
     </div>
   );
 }
 
-function FilterBar({
+function FilterPanel({
   filters,
   onChange,
   onClear,
-  hasActiveFilter,
-  count,
+  activeCount,
+  resultCount,
 }: {
   filters: Filters;
   onChange: (f: Filters) => void;
   onClear: () => void;
-  hasActiveFilter: boolean;
-  count: number;
+  activeCount: number;
+  resultCount: number;
 }) {
   const toggleLanguage = (lang: Language) => {
     onChange({
@@ -207,10 +189,38 @@ function FilterBar({
   };
 
   return (
-    <Card>
-      <CardContent className="space-y-4 p-4 sm:p-6">
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-4">
-          <FieldLabel label="Your gamer's age">
+    <div className="flex h-full flex-col bg-sidebar-background text-sidebar-foreground">
+      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border px-5 py-4">
+        <div className="flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4 text-sidebar-foreground/70" />
+          <p className="text-sm font-semibold">Filters</p>
+          {activeCount > 0 && (
+            <span className="rounded-full bg-sidebar-primary/15 px-2 py-0.5 text-xs text-sidebar-primary">
+              {activeCount}
+            </span>
+          )}
+        </div>
+        {activeCount > 0 && (
+          <button
+            type="button"
+            onClick={onClear}
+            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+          >
+            <X className="h-3.5 w-3.5" />
+            Clear
+          </button>
+        )}
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 py-5">
+        <p className="text-xs text-sidebar-foreground/60">
+          {resultCount === 0
+            ? "No matches"
+            : `${resultCount} ${resultCount === 1 ? "option" : "options"} match`}
+        </p>
+
+        <div className="mt-6 space-y-6">
+          <Section label="Your gamer's age">
             <Input
               type="number"
               min={4}
@@ -225,27 +235,13 @@ function FilterBar({
                   age: raw === "" ? null : Number(raw),
                 });
               }}
-              className="w-28"
+              className="w-full"
             />
-          </FieldLabel>
+          </Section>
 
-          <FieldLabel label="Language">
+          <Section label="Kind">
             <ChipRow>
-              {LANGUAGE_ORDER.map((code) => (
-                <Chip
-                  key={code}
-                  active={filters.languages.includes(code)}
-                  onClick={() => toggleLanguage(code)}
-                >
-                  {LANGUAGE_NAMES[code]}
-                </Chip>
-              ))}
-            </ChipRow>
-          </FieldLabel>
-
-          <FieldLabel label="Kind">
-            <ChipRow>
-              {PRODUCT_TYPE_DEFS.map((def) => (
+              {BROWSE_TYPE_DEFS.map((def) => (
                 <Chip
                   key={def.slug}
                   active={filters.types.includes(def.slug)}
@@ -255,9 +251,9 @@ function FilterBar({
                 </Chip>
               ))}
             </ChipRow>
-          </FieldLabel>
+          </Section>
 
-          <FieldLabel label="Where">
+          <Section label="Where">
             <ChipRow>
               <Chip
                 active={filters.format === "any"}
@@ -278,47 +274,41 @@ function FilterBar({
                 In person
               </Chip>
             </ChipRow>
-          </FieldLabel>
-        </div>
+          </Section>
 
-        <div>
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-            Games &amp; interests
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {TOPICS.map((t) => (
-              <TopicChip
-                key={t.id}
-                topic={t}
-                active={filters.topicIds.includes(t.id)}
-                onClick={() => toggleTopic(t.id)}
-              />
-            ))}
-          </div>
-        </div>
+          <Section label="Language">
+            <ChipRow>
+              {LANGUAGE_ORDER.map((code) => (
+                <Chip
+                  key={code}
+                  active={filters.languages.includes(code)}
+                  onClick={() => toggleLanguage(code)}
+                >
+                  {LANGUAGE_NAMES[code]}
+                </Chip>
+              ))}
+            </ChipRow>
+          </Section>
 
-        <div className="flex items-center justify-between border-t border-border pt-3 text-sm">
-          <p className="text-muted-foreground">
-            {count === 0 ? "No matches" : `Showing ${count} ${count === 1 ? "option" : "options"}`}
-          </p>
-          {hasActiveFilter && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClear}
-              className="text-muted-foreground"
-            >
-              <X className="h-4 w-4" />
-              Clear filters
-            </Button>
-          )}
+          <Section label="Games & interests">
+            <ChipRow>
+              {TOPICS.map((t) => (
+                <TopicChip
+                  key={t.id}
+                  topic={t}
+                  active={filters.topicIds.includes(t.id)}
+                  onClick={() => toggleTopic(t.id)}
+                />
+              ))}
+            </ChipRow>
+          </Section>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
-function FieldLabel({
+function Section({
   label,
   children,
 }: {
@@ -327,7 +317,7 @@ function FieldLabel({
 }) {
   return (
     <div>
-      <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60">
         {label}
       </p>
       {children}
@@ -355,8 +345,8 @@ function Chip({
       className={cn(
         "rounded-full border px-3 py-1 text-sm transition-colors",
         active
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-input text-foreground hover:bg-accent",
+          ? "border-sidebar-primary bg-sidebar-primary/15 text-sidebar-primary"
+          : "border-sidebar-border text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       )}
     >
       {children}
@@ -378,19 +368,14 @@ function TopicChip({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-full border px-3 py-1 text-sm transition-colors",
+        "rounded-full border px-3 py-1 text-xs transition-colors",
         active
-          ? "border-primary bg-primary/10 text-primary"
-          : "border-input text-muted-foreground hover:bg-accent hover:text-foreground",
+          ? "border-sidebar-primary bg-sidebar-primary/15 text-sidebar-primary"
+          : "border-sidebar-border text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       )}
       title={topic.blurb}
     >
       {topic.name}
-      {topic.kind === "subject" && (
-        <span className="ml-1.5 text-[10px] uppercase tracking-wider opacity-60">
-          topic
-        </span>
-      )}
     </button>
   );
 }
@@ -422,4 +407,3 @@ function EmptyState({ onReset }: { onReset: () => void }) {
     </Card>
   );
 }
-
