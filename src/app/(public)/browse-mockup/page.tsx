@@ -28,10 +28,9 @@ import {
 } from "./_mock/data";
 
 // Browse is the *consumer* entry point — parents who buy clubs, camps, or
-// events directly from us. Municipality clubs are a fundamentally different
-// UX: they're city-funded, free to the family, and scoped to a specific
-// school or town. Parents who want those arrive via /registration instead,
-// typically from a link their school sent them. See the secondary hero link.
+// events directly from us. Municipality clubs live on /registration as a
+// separate discovery path; the two paths never cross-link (docs/products-
+// redesign.md §7.1).
 const BROWSE_PRODUCTS = PRODUCTS.filter((p) => p.type !== "municipality-club");
 const BROWSE_TYPE_DEFS = PRODUCT_TYPE_DEFS.filter(
   (d) => d.slug !== "municipality-club",

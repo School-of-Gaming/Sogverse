@@ -2041,7 +2041,7 @@ export const PRODUCT_TYPE_DEFS: ProductTypeDef[] = [
     name: "Club",
     plural: "Clubs",
     shortBlurb: "Weekly, ongoing. Pay per session.",
-    signupVerb: "Sign up",
+    signupVerb: "Enroll",
   },
   {
     slug: "municipality-club",
@@ -2056,14 +2056,14 @@ export const PRODUCT_TYPE_DEFS: ProductTypeDef[] = [
     name: "Camp",
     plural: "Camps",
     shortBlurb: "A full week (or more) during school breaks.",
-    signupVerb: "Enroll",
+    signupVerb: "Sign up",
   },
   {
     slug: "event",
     name: "One-off event",
     plural: "Events",
     shortBlurb: "A single date — tournament, workshop, or demo.",
-    signupVerb: "Get a spot",
+    signupVerb: "Join",
   },
 ];
 

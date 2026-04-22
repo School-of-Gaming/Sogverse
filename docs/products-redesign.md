@@ -10,10 +10,11 @@ Related: `groups-architecture.md`, `customer-enrollment-architecture.md`, `locat
 
 ## How to use this document (doc vs. mockups)
 
-Treat this doc as the canonical spec. Two UX mockups live alongside it on the `feature/school-clubs-mockup` branch:
+Treat this doc as the canonical spec. Three UX mockups live alongside it on the `feature/school-clubs-mockup` branch:
 
 - **Admin create-product mockup** at `/admin-mockup/products/new` — sketches the admin flow for all four product types, including the location tree, Gedu picker, group cards, and three-mode start trigger.
-- **Parent registration mockup** at `/registration` — sketches the parent flow for municipality-club discovery and signup: location-based search, ticket-drop countdown, one-click registration, waitlist experience.
+- **Parent browse mockup** at `/browse-mockup` — sketches the consumer catalog (clubs / camps / events, muni clubs excluded): filter bar, help-me-decide quiz, and the shared detail + signup page.
+- **Parent registration mockup** at `/registration` — sketches the municipality-club-only flow: location-first search across the `locations` tree, muni-only listings per location, ticket-drop countdown, one-click registration, waitlist experience. Detail URL is `/registration/club/[slug]` — never cross-linked to `/browse-mockup`.
 
 Both mockups are deliberately built **without** i18n, RBAC, real data queries, or the real design-system patterns of the codebase — they exist so the product team can click through and react to flows.
 
@@ -59,6 +60,10 @@ The four types share **~80%** of the operational model: schedule, location, topi
 ---
 
 ## 3. Terminology
+
+### "Municipality club," not "school club"
+
+The customer-facing and internal name is **municipality club** (schema value `municipality_club`). These clubs are run at whatever venue the municipality prefers — school computer rooms, library meeting rooms, community centres — so anchoring the name to "school" is inaccurate and confuses parents whose muni club isn't held at a school. Do not introduce "school club" / "school-club" as a synonym in UI copy, URLs, schema, or docs. The legacy `school-clubs-design.md` file is retired (see §9) and the earlier `school_registrations` table proposed there was never built (see "Schema noun" below).
 
 ### UI verbs (parent-facing copy)
 
@@ -182,8 +187,9 @@ billing_mode ∈ {
 
 ### 4.6 Capacity and waitlist
 
-- `products.seat_count` — nullable. `NULL` means uncapped (only valid when `billing_mode = 'free'`). Capacity lives **only** at the product level. Groups have no seat cap — admins balance across groups manually.
-- When a participation is requested and seats are full, it becomes `waitlisted` with a `waitlist_position`.
+- `products.seat_count` — nullable. `NULL` means **uncapped / all welcome** — there is no capacity limit, no waitlist, and no "full" state. Only valid when `billing_mode = 'free'` (a paid product with no seat ceiling is a billing footgun we don't support). Capacity lives **only** at the product level. Groups have no seat cap — admins balance across groups manually.
+- Parent-facing surfaces render `seat_count = NULL` as an explicit **"unlimited" / "all welcome"** affordance — never a missing number or a zero. Cards and the detail page skip the "X of Y seats" line entirely for these products and show no waitlist CTA.
+- When a participation is requested on a capped product and seats are full, it becomes `waitlisted` with a `waitlist_position`.
 - When an active participant leaves or is removed, the lowest-position waitlisted row is atomically promoted.
 
 All mutations go through `SECURITY DEFINER` RPCs with `SELECT ... FOR UPDATE` row locking on the product and its participations to prevent race conditions during "ticket drops."
@@ -230,6 +236,8 @@ A product's `location_id` has different meanings depending on delivery mode and 
 
 The motivating parent experience is unchanged for the municipality case: *"I live in Helsinki. My municipality offered a club. It happens to be online — still my municipality's club."* The other three online product types don't have a "my municipality offered this" angle — an online camp run by Sogverse is just offered on the internet, to whoever wants in.
 
+**Residency rule (intent, not v1 enforcement).** Municipality clubs are only for kids who live in the owning municipality — the city paid for those seats on that understanding. All muni-club parent-facing copy must state this ("only open to kids living in that town"). v1 does **not** enforce residency at signup; the honour-system copy is the only check. If abuse materialises, residency gating can layer on later (§11 / Phase 5) without schema changes — `location_id` already holds the jurisdiction. Do not use `product_type = 'municipality_club'` elsewhere as a proxy for "free to all" or "available to anyone" — it isn't.
+
 How this plays out per product type:
 
 | Product type | In-person `location_id` | Online `location_id` |
@@ -239,7 +247,12 @@ How this plays out per product type:
 | Camp | Site (required) | **NULL** — no location anchor |
 | Event | Site (required) | **NULL** — no location anchor |
 
-**Browse filtering.** Parents searching by their location (e.g., "Helsinki") see any product whose `location_id` is at-or-under Helsinki, plus any in-person Helsinki-sited product. Online non-muni products don't surface in location-scoped views at all — they appear only in the global browse, the per-type landing pages (§7.3), or topic/tag filters. Online municipality clubs surface for parents from that municipality (or at-or-under its subtree), same as any other Helsinki-anchored product.
+**Browse filtering.** The two discovery paths (§7.1) treat `location_id` differently:
+
+- **`/registration` location pages** are muni-only (§7.4). A location page for "Helsinki" lists only `product_type = 'municipality_club'` at-or-under Helsinki — online muni clubs scoped to the municipality and in-person muni clubs sited within it. Consumer clubs, camps, and events anchored under the same location do not show here.
+- **Consumer browse (`/browse`)** has an optional location filter (city / online). When a parent narrows to "Helsinki", they see any in-person consumer-browse product sited in Helsinki. Online consumer-browse products have `location_id = NULL` and surface in the "online" filter, not under any city.
+
+Online non-muni products don't surface in city-filtered views at all — they appear in the global browse, per-type landing pages (§7.3), or topic/tag filters. Municipality clubs never surface in consumer-browse filters, city or otherwise, because they aren't on `/browse` at all.
 
 **Admin UX.** The location picker is only rendered when the current (`is_remote`, `product_type`) combination requires it:
 - **Site mode** — shown when `is_remote = false`. The tree shows every level; only site rows are pickable; non-site rows expand-on-click so admins can drill down.
@@ -626,14 +639,25 @@ Keep the existing `commit_group_changes` RPC (see `docs/groups-architecture.md`)
 
 ## 7. Parent browse UX
 
-### 7.1 Unified "what does SoG offer?" page
+### 7.1 Two parallel entry points, never cross-linked
 
-One public page, filterable by:
+Parents arrive through **one of two** top-level discovery paths — never both at once, and the two paths never link to each other:
+
+- **Consumer browse** (`/browse` in the app, `/browse-mockup` in the mockup) — the *"I'm shopping for my kid"* catalog. Covers consumer clubs, camps, and events. Filterable and quiz-searchable. Canonical product URL: `/browse/[slug]`.
+- **Municipality-club registration** (`/registration`) — the *"my city offers this for free"* catalog. Covers **only** municipality clubs. Location-first search against the `locations` tree. Canonical product URL: `/registration/club/[slug]`.
+
+**Why they stay separate.** The two paths serve two incompatible mental models. A parent on `/browse` is picking a product and paying for it; a parent on `/registration` is claiming a subsidised seat their municipality has already funded and for which their child must be eligible (§7.4). Merging them into one filterable list forces every parent to confront an irrelevant half of the catalog and buries the residency rule under a filter pill. Keeping them separate means each page's copy, CTAs, and urgency model can be tuned to its audience.
+
+**Rule: no cross-links between the two paths.** No "try the other path" banner, no muni clubs mixed into `/browse` results, no consumer products mixed into `/registration` results. A parent who's on the wrong path should discover the other path through marketing / school comms / the app's home page — not through a hedge banner in the UI.
+
+**Canonical URLs are enforced in one place.** A single helper (`productDetailPath(product)` in the mock, the production equivalent in the real code) maps a product to its canonical URL based on `product_type`. Every link in the app — cards, search results, emails, WhatsApp deep-links — must go through this helper. Hand-writing a `/browse/[slug]` URL for a product that turns out to be a muni club is the exact bug this helper prevents.
+
+**Consumer browse filters:**
 
 1. Age of child
 2. Location (online / proximity to site)
 3. Spoken language
-4. Product type (club / camp / event)
+4. Product type (consumer club / camp / event — muni clubs excluded)
 5. Topic
 6. Tags (chill, competitive, neurodiversity-friendly, …)
 7. Schedule (weekday preference, time-of-day)
@@ -647,20 +671,26 @@ Products with genuinely different attributes (different weekday, different start
 
 ### 7.3 Per-product-type landing pages
 
-Each of the four product types also has a filtered view (`/clubs`, `/municipality-clubs`, `/camps`, `/events`) for marketing / direct links. Each is just the unified page with the `product_type` filter pre-applied.
+The three consumer-browse types also have filtered views (`/clubs`, `/camps`, `/events`) for marketing / direct links. Each is just the consumer browse with the `product_type` filter pre-applied. Municipality clubs do **not** get a `/municipality-clubs` view under the consumer browse — their entry point is `/registration` (§7.4), and mixing them into a consumer-browse-flavoured list would re-introduce the mental-model conflict §7.1 exists to avoid.
 
-### 7.4 Location-first discovery (entry point for municipality-club parents)
+**Rule: any parent-facing discovery surface that doesn't collect a location cannot surface municipality clubs.** The consumer browse's help-me-decide **quiz**, topic landing pages, email discovery blocks, and any future recommendation surface that doesn't know where the child lives must exclude `product_type = 'municipality_club'` from their results. Muni clubs are residency-restricted (§7.4) — surfacing them to a parent who may live outside the municipality is a teaser for a seat they can't claim. Location-aware surfaces (the `/registration` tree, a future "clubs near me" widget that asks for a postcode) are free to include them.
 
-For municipality clubs specifically, parents rarely browse "all clubs in Finland" — they want clubs offered by **their municipality** (usually because their school has announced one). The public entry point therefore supports a location-first search flow:
+### 7.4 Location-first discovery — the municipality-club entry point
 
-- A search / browse page that matches against the `locations` tree by name across all levels. Typing "Ressu" resolves to a school site; "Helsinki" to the municipality; "Uusimaa" to the region. All three navigate to the same kind of "products at-or-under this location" page, just anchored at different levels of the tree.
+`/registration` is the municipality-club-only entry point. Parents arrive from a school or municipality link and want to know *what their city has on offer for their kid* — not to browse the Finnish consumer catalog.
+
+**What appears on `/registration`:**
+
+- A search / browse page that matches against the `locations` tree by name across **all levels**. Typing "Ressu" resolves to a school site; "Helsinki" to the municipality; "Uusimaa" to the region. All three navigate to the same kind of "muni clubs at-or-under this location" page, just anchored at different levels of the tree.
 - **Default browse order: municipality rows first.** When there is no query, surface municipalities before sites or regions — "what most parents are looking for."
 - **Search result sort: municipality > site > region.** When the parent has typed something, keep municipalities at the top within matches, then sites, then regions.
-- Only locations that have at least one in-scope product at-or-under them appear in the list. Empty locations never surface.
+- Only locations that have at least one **municipality club** at-or-under them appear. Regions and sites that happen to host a consumer club or camp but no muni club do not surface here — those belong to `/browse`.
 
-The **location page** (`/registration/[locationSlug]` in the mockup) lists every product whose `location_id` is at-or-under the anchor location, grouped by product type (school clubs, camps, events), with breadcrumb ancestors shown for context (e.g., "Uusimaa" above "Helsinki"). This page is the one a school announcement would link directly to. Each product card deep-links into the unified detail + signup page (`/browse-mockup/[productSlug]`) — there is no separate registration-flavored detail page. Signup mechanics (countdown, gamer picker, waitlist) live in one place, so a parent who came from `/registration` and a parent who came from `/browse-mockup` hit the same form.
+**Location page** (`/registration/[locationSlug]`) lists **only `product_type = 'municipality_club'`** products whose `location_id` is at-or-under the anchor location, with breadcrumb ancestors shown for context (e.g., "Uusimaa" above "Helsinki"). This page is the one a school announcement links directly to. Any consumer club, camp, or event anchored under the same location does *not* show here; those live on `/browse`. The two catalogs remain disjoint on purpose (§7.1).
 
-This flow is municipality-first because that's the case the location-first entry was designed around, but nothing about it is hard-wired to `product_type = 'municipality_club'`. Any product whose `location_id` is under the anchor qualifies — a Helsinki-scoped consumer club or a Helsinki camp would show on the Helsinki page too. `/registration` is one entry point among several; the unified `/browse` (§7.1) is the other.
+**Product detail URL on this path is `/registration/club/[productSlug]`** — *not* `/browse/[productSlug]`. A parent who entered via `/registration` stays in the `/registration` URL space all the way through signup and confirmation; breadcrumbs and "back" links never kick them onto the consumer browse. The detail-page *component* is shared with `/browse/[slug]` (the signup mechanics — countdown, gamer picker, waitlist — are identical), but the route is distinct. `productDetailPath(product)` is the single source of truth for which URL a product takes (§7.1).
+
+**Residency is the intent, even without enforcement in v1.** Municipality clubs are only for kids who live in that town — the municipality paid for seats on the understanding that they go to residents. The `/registration` landing copy states this explicitly ("only open to kids living in that town"). v1 does **not** enforce residency at signup — honor-system in copy is the entire check. Future phases may add proof-of-residency gating (§11 / Phase 5) if abuse becomes a real problem; the business rule is already in place so the UI never implies anyone can sign up.
 
 ### 7.5 Registration timing and ticket-drop UX
 
@@ -753,7 +783,7 @@ Prove the unified shape against the two product lines we actually have users for
 - Schema: all tables from §5.
 - RPCs: participation lifecycle, session operations, weekly charge cron.
 - Admin UI: create/edit product; Groups panel (inbox + per-group columns, drag-and-drop, Gedu assignment per group); calendar view; holiday-calendar management.
-- Parent UI: unified browse page with all filters; cohort-grouped cards; per-product detail page with signup form.
+- Parent UI: both discovery paths from §7.1 — consumer browse at `/browse` (clubs / camps / events with full filter bar and quiz) and municipality-club registration at `/registration` (location-first search, muni-only listings at `/registration/[locationSlug]`, detail at `/registration/club/[slug]`). Shared detail-page component; canonical URL chosen by `productDetailPath(product)`.
 - Migrate current consumer club data into the new shape (staging reset).
 - Notifications: email + WhatsApp for waitlist → active promotion (reuse existing pipeline).
 
@@ -823,11 +853,11 @@ Deferred from v1 because the customer base is small and trusted; gating adds sch
 
 ### 12.2 Mockup lineage
 
-Three UX mockups live on the `feature/school-clubs-mockup` branch and informed this design. The two parent-facing mocks share one product catalog (`src/app/(public)/browse-mockup/_mock/data.ts`) and converge at a single detail + signup page at `/browse-mockup/[productSlug]`.
+Three UX mockups live on the `feature/school-clubs-mockup` branch and informed this design. The two parent-facing mocks share one product catalog (`src/app/(public)/browse-mockup/_mock/data.ts`) but deliberately stay on separate URLs — one for each of the two discovery paths in §7.1. The detail-page *component* is shared (signup mechanics are identical) but the route differs by product type. A single helper, `productDetailPath()`, is the source of truth for which URL a product takes.
 
-- **Parent browse mockup** at `/browse-mockup` — product-first discovery across all four types. Covers the unified filter bar (age / language / kind / format / topic), the "help-me-decide" quiz wizard, per-type signup verbs (*Sign up* / *Register* / *Enroll* / *Get a spot*), and a single detail page that adapts its signup panel by product shape (pre-open countdown, open form, waitlist, threshold-pending reservation). Its business-rule implications are captured in §7.1–§7.6.
-- **Parent registration mockup** at `/registration` — location-first entry point for parents who arrived via a school or municipality link. Searches the locations tree by name across all levels, lists every product (all four types) at-or-under the chosen location, and deep-links into the same `/browse-mockup/[productSlug]` detail page. Its business-rule implications are captured in §7.4.
-- **Admin create-product mockup** at `/admin-mockup/products/new` — admin-facing flow, covering all four product types. Covers the location picker (dual site/jurisdiction modes), Gedu picker with language filter, group cards, billing-mode chooser, three-mode start trigger, and registration timing. Its business-rule implications are captured throughout §4, §5, §7, and §8.
+- **Parent browse mockup** at `/browse-mockup` — consumer catalog. Consumer clubs, camps, and events only; muni clubs are filtered out (both from the grid and from the quiz). Covers the filter bar (age / language / type / format / topic), the consumer-only "help-me-decide" quiz wizard, per-type signup verbs (*Sign up* / *Enroll* / *Get a spot*), and a detail page at `/browse-mockup/[productSlug]` that adapts its signup panel by product shape (pre-open countdown, open form, waitlist, threshold-pending reservation). Business-rule implications captured in §7.1, §7.2, §7.3, §7.5, §7.6.
+- **Parent registration mockup** at `/registration` — municipality-club entry point. Location-first search across the full `locations` tree (name match at any level). Location pages list **only** muni clubs at-or-under the anchor. Product detail lives at `/registration/club/[productSlug]` — a separate route from the consumer browse, even though the detail-page component is shared. No cross-links back to `/browse-mockup`. Business-rule implications captured in §7.1 and §7.4.
+- **Admin create-product mockup** at `/admin-mockup/products/new` — admin-facing flow, covering all four product types. Covers the location picker (dual site/jurisdiction modes), Gedu picker with language filter, group cards, billing-mode chooser, three-mode start trigger, and registration timing. Business-rule implications captured throughout §4, §5, §7, and §8.
 
 All three mockups are sketches, not implementations (see the "How to use this document" note at the top). When this redesign lands, they are either promoted (copy, flow shape, component ideas reused) or retired.
 
