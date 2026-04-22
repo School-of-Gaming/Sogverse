@@ -62,7 +62,9 @@ Each feature in `src/services/` follows a two-file pattern:
 ### Auth Architecture
 Proxy (`src/proxy.ts`) refreshes tokens server-side on every request and enforces role-based routing. The browser client also auto-refreshes tokens — standard `@supabase/ssr` dual-refresh model.
 
-**Rule: After any auth state change (sign-in, sign-out), navigate with `window.location.href`, not `router.push()`**. The root layout passes `initialUser`/`initialProfile` to AuthProvider via server-side `getUserWithProfile()`. React's `useState` ignores new initial values after mount, so client-side navigation won't update auth state. Full page navigation forces the root layout to re-run and hydrate correctly.
+**Rule: After any auth state change (sign-in, sign-out, account switch), the browser must do a full-page navigation — `window.location.href`, a form POST that the server answers with a redirect, or any other nav that unloads the document. `router.push()` is not enough.** The browser Supabase client keeps its session in an in-memory singleton seeded from cookies at construction time. Cookies changed by a server response (the `/api/auth/signout` route, OAuth callback, `/api/auth/switch-to-gamer`, password reset completion) don't fire `onAuthStateChange`, so the singleton stays stale until the document reloads. A soft navigation leaves the stale singleton in place and the UI keeps thinking the user is signed in (or signed in as the wrong person).
+
+The canonical sign-out shape is an HTML `<form method="post" action="/api/auth/signout">` — the route calls `supabase.auth.signOut()` server-side and returns a 303, the browser follows it as a full-page GET. No client-side fetch, no React state transition on the outgoing page, no intermediate "sidebar gone but still on dashboard" frame.
 
 **Rule: Never make Supabase data queries inside `onAuthStateChange` callbacks.** Only do synchronous React state updates in the callback.
 

@@ -646,7 +646,7 @@ The `/api/auth/signout` endpoint uses HTTP GET, which has a side effect (signing
 
 #### Fix Applied
 
-The server-side signout API route was removed entirely. Sign-out now uses the browser Supabase client's `signOut()` method, which calls the Supabase Auth API with the access token in the Authorization header (not cookies) — there is no endpoint to CSRF. Full page navigation via `window.location.href = "/"` wipes all client state.
+Changed `/api/auth/signout` from GET to POST (commit c7b4388, 2026-03-04). `SameSite=Lax` cookies are not sent on cross-origin top-level POST navigations, so a malicious page can't trigger sign-out by linking or redirecting to the endpoint. The route was briefly removed entirely in commit 0042653 (auth client-side simplification), but was reinstated when client-side `signOut()` + `window.location.href` was found to cause a race on iOS Safari (in-flight `POST /auth/v1/logout` fetch aborted by navigation, logged as a fetch error in the console) and a multi-frame "sidebar disappears, then navigate" flash on all browsers. The canonical Supabase + Next.js App Router pattern — form POST to a route handler that calls `signOut()` server-side and returns a 303 — is both CSRF-safe and race-free, and is what the codebase uses now. See `src/app/api/auth/signout/route.ts` and the sign-out rule in `CLAUDE.md`.
 
 ---
 
