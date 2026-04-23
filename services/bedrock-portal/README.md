@@ -1,6 +1,6 @@
 # bedrock-portal service
 
-Creates an Xbox Live game session under an **alt Microsoft account** so console Minecraft Bedrock players can see that account online in their friends list and "join" — which redirects them to our actual Bedrock server.
+Creates an Xbox Live game session under an **alt Microsoft account** so console Minecraft Bedrock players can see that account online in their friends list and "join" — which redirects them to our **GeyserMC proxy**, which in turn bridges them to our Java Minecraft server.
 
 Wraps [LucienHH/bedrock-portal](https://github.com/LucienHH/bedrock-portal).
 
@@ -35,7 +35,7 @@ On first run, prismarine-auth prints a URL (e.g. https://microsoft.com/link) and
 
 - Console prints `[portal] session live — redirecting joins to …`
 - The alt account shows as **Online — Playing Minecraft** in Xbox / Minecraft friends lists
-- A console player who's friends (or friends-of-friends, depending on `PORTAL_JOINABILITY`) with the alt account can click its profile → Join Game, and end up on our Bedrock server
+- A console player who's friends (or friends-of-friends, depending on `PORTAL_JOINABILITY`) with the alt account can click its profile → Join Game, get routed to our Geyser proxy, and end up on our Java server
 
 ---
 
@@ -43,8 +43,8 @@ On first run, prismarine-auth prints a URL (e.g. https://microsoft.com/link) and
 
 | Env var | Required | Default | Purpose |
 |---|---|---|---|
-| `BEDROCK_SERVER_IP` | yes | — | Public IP/hostname of the target Bedrock server |
-| `BEDROCK_SERVER_PORT` | no | `19132` | UDP port of the target server |
+| `BEDROCK_SERVER_IP` | yes | — | Public IP/hostname of the GeyserMC proxy (which fronts the Java server) |
+| `BEDROCK_SERVER_PORT` | no | `19132` | UDP port Geyser listens on for Bedrock clients |
 | `PORTAL_ACCOUNT_USERNAME` | yes | — | Cache-key label for prismarine-auth (any stable string; identity is set via browser on first run) |
 | `PORTAL_JOINABILITY` | no | `FriendsOfFriends` | `FriendsOfFriends` \| `FriendsOnly` \| `InviteOnly` |
 | `PORTAL_WORLD_NAME` | no | `Bedrock Portal` | Shown as world name in session card |
@@ -56,7 +56,7 @@ On first run, prismarine-auth prints a URL (e.g. https://microsoft.com/link) and
 ## Ports
 
 - This process makes **outbound HTTPS only** (to Xbox Live). No inbound ports required on the machine running this service.
-- The target Bedrock server (`BEDROCK_SERVER_IP:BEDROCK_SERVER_PORT`) must be publicly reachable — that's where players are redirected once they accept the join.
+- The GeyserMC proxy (`BEDROCK_SERVER_IP:BEDROCK_SERVER_PORT`) must be publicly reachable on UDP — that's where players are redirected once they accept the join. Geyser then translates Bedrock protocol to Java protocol and relays to the backend Java Minecraft server.
 
 ---
 
@@ -65,13 +65,102 @@ On first run, prismarine-auth prints a URL (e.g. https://microsoft.com/link) and
 - **"Session live" but nobody can join** → verify the alt account is actually friends with the test console account (or friends-of-friends). For first tests, set `PORTAL_JOINABILITY=FriendsOnly` and manually friend the alt from your test console.
 - **Auth prompt re-appears every run** → `PORTAL_AUTH_CACHE_DIR` isn't persisting (e.g. running inside a container without a mounted volume). Cache at a stable path.
 - **Mobile player sees "NetherNet InitialConnection-1" on join (Xbox joins fine on the same account)** → In the Minecraft app on the mobile device: Settings → Profile → enable both **"Allow mobile data for online play"** AND **"Enable WebSockets"**. Both are required — NetherNet's signaling WebSocket to `wss://signal.franchise.minecraft-services.net/...` is the first step of the join handshake, and without these toggles the client aborts before the portal ever sees the connection. "Require encrypted websockets" does not matter (Microsoft's endpoint is already `wss://`). On iOS, also confirm iPhone Settings → Cellular → Minecraft is enabled. Xbox consoles bypass these toggles because Xbox platform networking handles WebSockets at the OS level, which is why Xbox-works-but-mobile-fails is the signature of this issue rather than a portal or version-pin bug. Toggle names may vary slightly across Android / iOS versions. Switch / PlayStation are untested but expected to "just work" the same way Xbox does, since consoles don't expose these user-facing network toggles.
-- **Want verbose logs** → run with `DEBUG=bedrock-portal* npm run dev`.
+- **Want verbose logs** → locally, `DEBUG=bedrock-portal* npm run dev`. On the server, add `Environment=DEBUG=bedrock-portal*` under `[Service]` in the unit file, then `systemctl --user daemon-reload && systemctl --user restart bedrock-portal`.
 
 ---
 
-## Deployment (later)
+## Hosting
 
-See [HOSTING.md](./HOSTING.md) for the current plan, options considered, and prereqs for the eventual deploy.
+Running on a **Google Cloud Compute Engine** VM as a **systemd user service** with linger enabled so it survives SSH disconnect and reboot.
+
+| Detail | Value |
+|---|---|
+| GCP project | `sogverse` |
+| Instance name | `bedrock-portal` |
+| Zone | `us-central1-a` |
+| Machine type | `e2-micro` (shared-core, 2 vCPU burstable, ~1 GB RAM) |
+| CPU platform | AMD Rome (x86_64) |
+| OS | Debian 12 (bookworm) |
+
+The `e2-micro` falls inside GCP's Always Free tier in `us-central1`, so compute is $0/month. The portal's steady-state footprint (~64 MB RAM, ~0% CPU) leaves comfortable headroom.
+
+### Runtime layout
+
+| Piece | Path |
+|---|---|
+| Node 20 (user-local install) | `~/.local/bin/node` |
+| Repo checkout | `/home/kyle_hutchinson/Sogverse` |
+| Compiled entry point | `services/bedrock-portal/dist/index.js` |
+| Env file | `services/bedrock-portal/.env` |
+| Auth cache (Xbox refresh tokens) | `services/bedrock-portal/.auth-cache/` |
+| systemd unit | `~/.config/systemd/user/bedrock-portal.service` |
+| Linger marker | `/var/lib/systemd/linger/kyle_hutchinson` (created by `loginctl enable-linger`) |
+
+The unit runs `node dist/index.js` directly — no `tsx watch`, no npm wrapper — with `Restart=always` and `RestartSec=5`. Memory footprint is ~64 MB.
+
+### Commands to remember
+
+```bash
+systemctl --user status bedrock-portal           # is it running?
+systemctl --user restart bedrock-portal          # apply code/env changes
+systemctl --user stop bedrock-portal             # temporary stop
+systemctl --user start bedrock-portal            # start again
+systemctl --user disable --now bedrock-portal    # stop and don't auto-start
+systemctl --user enable --now bedrock-portal     # re-enable
+journalctl --user -u bedrock-portal -f           # tail logs
+journalctl --user -u bedrock-portal -n 200       # last 200 lines
+journalctl --user -u bedrock-portal --since "1 hour ago"
+```
+
+### Updating the code on the server
+
+The service runs compiled JS from `dist/`, so source edits have no effect until rebuilt. After pulling:
+
+```bash
+cd ~/Sogverse
+git pull
+npm install                                              # only if deps changed
+npm run build --workspace=sogverse-bedrock-portal        # tsc → dist/
+systemctl --user restart bedrock-portal
+journalctl --user -u bedrock-portal -n 30                # confirm "session live"
+```
+
+Expected healthy log after restart:
+
+```
+[portal] session live — redirecting joins to en.mc.sog.gg:19132
+[portal] started as "Sogverse" | joinability=FriendsOnly
+```
+
+### Changing configuration
+
+Env lives in `services/bedrock-portal/.env`. Edit the file, then:
+
+```bash
+systemctl --user restart bedrock-portal
+```
+
+### Re-authenticating the alt account
+
+The Microsoft refresh token in `.auth-cache/` lasts ~90 days and auto-refreshes while the service runs. If it ever expires (long downtime, Microsoft invalidation, cache wiped), the service will crash-loop on startup with a device-code prompt that systemd can't respond to. To re-auth:
+
+```bash
+systemctl --user stop bedrock-portal
+cd ~/Sogverse/services/bedrock-portal
+node dist/index.js                    # prints "microsoft.com/link" URL + code
+# open URL in a browser, sign in with the ALT account, wait for "session live"
+# Ctrl+C once you see it
+systemctl --user start bedrock-portal
+```
+
+### If the unit file itself changes
+
+After editing `~/.config/systemd/user/bedrock-portal.service`:
+
+```bash
+systemctl --user daemon-reload
+systemctl --user restart bedrock-portal
+```
 
 ---
 
