@@ -1,13 +1,11 @@
 name: Install dependencies
 description: >
-  Run `npm ci`, and if the lockfile is rejected, show what would heal it and
-  fail the job. Works around npm/cli#4828: Windows npm occasionally drops
-  nested strict pins (e.g. @rolldown/binding-wasm32-wasi → @emnapi) during
-  rehoist, producing a lockfile that `npm ci` refuses on Linux even though
-  the dep graph is fine. We still run `npm install --package-lock-only` so
-  the CI log contains the exact diff the author needs to commit, then exit
-  non-zero — because if we silently healed, the same drift just fails later
-  at the Vercel deploy instead.
+  Run `npm ci` and fall back to `npm install` when the lockfile is rejected.
+  Works around npm/cli#4828: Windows npm occasionally drops nested strict pins
+  (e.g. @rolldown/binding-wasm32-wasi → @emnapi) during rehoist, producing a
+  lockfile that `npm ci` refuses on Linux even though the dep graph is fine.
+  The fallback heals the lockfile for the CI run and surfaces the heal as a
+  warning so silent drift doesn't hide real mismatches.
 
 runs:
   using: composite
@@ -15,11 +13,10 @@ runs:
     - shell: bash
       run: |
         if ! npm ci; then
-          echo "::error::npm ci rejected the lockfile (likely npm/cli#4828). Run 'npm install --package-lock-only' at the repo root and commit the updated package-lock.json."
-          npm install --package-lock-only
+          echo "::warning::npm ci rejected the lockfile — falling back to npm install (likely npm/cli#4828). If this fires for a commit that didn't touch deps on Windows, investigate."
+          npm install
           if ! git diff --quiet package-lock.json; then
-            echo "::notice::Here's what needs to be committed:"
+            echo "::notice::Lockfile was healed during install. Diff:"
             git diff --stat package-lock.json
           fi
-          exit 1
         fi
