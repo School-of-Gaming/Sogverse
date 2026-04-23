@@ -1,6 +1,11 @@
 import path from "node:path";
 import { config as loadEnv } from "dotenv";
 import { BedrockPortal, Joinability, Modules } from "bedrock-portal";
+import { ping as bedrockPing } from "bedrock-protocol";
+// Deep import: bedrock-portal-nethernet's package entry only exports Server,
+// so we pull CURRENT_VERSION from its options module. Used as the fallback
+// world.version when the live ping can't reach the target server at boot.
+import { CURRENT_VERSION } from "bedrock-portal-nethernet/dist/options";
 import { Authflow, Titles } from "prismarine-auth";
 
 loadEnv();
@@ -50,6 +55,27 @@ async function main() {
     flow: "live",
   });
 
+  // Seed world.version and member counts from a live ping of the target
+  // Bedrock/Geyser endpoint so the session card matches reality instead of a
+  // hardcoded value that rots on every MC update. Falls back to nethernet's
+  // CURRENT_VERSION if the target is unreachable at boot (the card would
+  // otherwise show a bogus default).
+  let worldVersion = CURRENT_VERSION;
+  // Portal session always counts the alt account itself as a member, so
+  // memberCount must be >= 1 (BedrockPortal.validateOptions rejects 0).
+  let memberCount = 1;
+  let maxMemberCount = 40;
+  try {
+    const pong = await bedrockPing({ host: serverIp, port: serverPort });
+    worldVersion = pong.version;
+    memberCount = Math.max(1, Number(pong.playersOnline) || 0);
+    maxMemberCount = Math.max(memberCount, Number(pong.playersMax) || maxMemberCount);
+  } catch (err) {
+    console.warn(
+      `[portal] initial ping to ${serverIp}:${serverPort} failed (${(err as Error).message}); using fallback world version "${worldVersion}"`
+    );
+  }
+
   const portal = new BedrockPortal({
     ip: serverIp,
     port: serverPort,
@@ -58,13 +84,17 @@ async function main() {
     world: {
       hostName,
       name: worldName,
-      version: "1.21.0",
-      memberCount: 1,
-      maxMemberCount: 40,
+      version: worldVersion,
+      memberCount,
+      maxMemberCount,
     },
   });
 
   portal.use(Modules.AutoFriendAccept, { inviteOnAdd: true });
+  portal.use(Modules.UpdateMemberCount, {
+    updateInterval: 60_000,
+    updateMaxMemberCount: true,
+  });
 
   portal.on("sessionCreated", () => {
     console.log(
