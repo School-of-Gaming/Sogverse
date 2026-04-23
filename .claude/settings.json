@@ -16,6 +16,8 @@
       "Bash(npm run check-translations)",
       "Bash(npm run type-check:*)",
       "Bash(npm audit *)",
+      "Bash(npm view *)",
+      "Bash(npm ls *)",
       "Bash(npx playwright test)",
       "Bash(npx playwright:*)",
       "Bash(npx vitest:*)",
