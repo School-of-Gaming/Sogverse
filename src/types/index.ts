@@ -107,6 +107,57 @@ export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"][
 // enrollment_charges
 export type EnrollmentCharge = Database["public"]["Tables"]["enrollment_charges"]["Row"];
 
+// ---------------------------------------------------------------------------
+// products v2 (parallel-phase schema — see docs/products-redesign.md)
+// Suffixes are stripped at cutover (§9).
+// ---------------------------------------------------------------------------
+
+// Enums
+export type ProductTypeV2 = Database["public"]["Enums"]["product_type_v2"];
+export type BillingModeV2 = Database["public"]["Enums"]["billing_mode_v2"];
+export type ProductStatusV2 = Database["public"]["Enums"]["product_status_v2"];
+export type TopicKindV2 = Database["public"]["Enums"]["topic_kind_v2"];
+
+// products_v2
+export type ProductV2 = Database["public"]["Tables"]["products_v2"]["Row"];
+export type ProductV2Insert = Database["public"]["Tables"]["products_v2"]["Insert"];
+export type ProductV2Update = Database["public"]["Tables"]["products_v2"]["Update"];
+
+// schedule_slots_v2
+export type ScheduleSlotV2 = Database["public"]["Tables"]["schedule_slots_v2"]["Row"];
+export type ScheduleSlotV2Insert = Database["public"]["Tables"]["schedule_slots_v2"]["Insert"];
+
+// topics_v2
+export type TopicV2 = Database["public"]["Tables"]["topics_v2"]["Row"];
+export type TopicV2Insert = Database["public"]["Tables"]["topics_v2"]["Insert"];
+
+// tags_v2
+export type TagV2 = Database["public"]["Tables"]["tags_v2"]["Row"];
+export type TagV2Insert = Database["public"]["Tables"]["tags_v2"]["Insert"];
+
+// product_tags_v2
+export type ProductTagV2 = Database["public"]["Tables"]["product_tags_v2"]["Row"];
+export type ProductTagV2Insert = Database["public"]["Tables"]["product_tags_v2"]["Insert"];
+
+// product_prices_v2
+export type ProductPriceV2 = Database["public"]["Tables"]["product_prices_v2"]["Row"];
+export type ProductPriceV2Insert = Database["public"]["Tables"]["product_prices_v2"]["Insert"];
+export type ProductPriceV2Update = Database["public"]["Tables"]["product_prices_v2"]["Update"];
+
+// holiday_calendars_v2 + calendar_holidays_v2 + product_holiday_calendars_v2
+export type HolidayCalendarV2 = Database["public"]["Tables"]["holiday_calendars_v2"]["Row"];
+export type HolidayCalendarV2Insert = Database["public"]["Tables"]["holiday_calendars_v2"]["Insert"];
+export type CalendarHolidayV2 = Database["public"]["Tables"]["calendar_holidays_v2"]["Row"];
+export type CalendarHolidayV2Insert = Database["public"]["Tables"]["calendar_holidays_v2"]["Insert"];
+export type ProductHolidayCalendarV2 = Database["public"]["Tables"]["product_holiday_calendars_v2"]["Row"];
+export type ProductHolidayCalendarV2Insert = Database["public"]["Tables"]["product_holiday_calendars_v2"]["Insert"];
+
+// site_details_v2 (member-visible) + site_staff_details_v2 (admin + Gedu only)
+export type SiteDetailsV2 = Database["public"]["Tables"]["site_details_v2"]["Row"];
+export type SiteDetailsV2Insert = Database["public"]["Tables"]["site_details_v2"]["Insert"];
+export type SiteStaffDetailsV2 = Database["public"]["Tables"]["site_staff_details_v2"]["Row"];
+export type SiteStaffDetailsV2Insert = Database["public"]["Tables"]["site_staff_details_v2"]["Insert"];
+
 // whatsapp_contacts
 export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"]["Row"];
 
