@@ -253,21 +253,28 @@ All participation mutations go through `SECURITY DEFINER` RPCs that begin with `
 
 ### 4.8 Locations
 
-Keep the existing `locations` hierarchy untouched. Put site-specific fields in an extension table (`site_details_v2`), not on `locations` itself — country / region / municipality / district rows have no address, no parking, no wifi info, and should not carry nullable columns that never apply to them.
+Keep the existing `locations` hierarchy untouched. Put site-specific fields in **two** extension tables — one per visibility tier — not on `locations` itself. Country / region / municipality / district rows have no address, no parking, no wifi info, no gate codes, and should not carry nullable columns that never apply to them. Splitting into two tables rather than column-level permissions keeps RLS clean (Postgres RLS is row-level; gating columns by role requires awkward views or grants).
 
 ```sql
-site_details_v2
+site_details_v2        -- member-visible. Parent-facing product detail page.
   location_id    uuid pk, fk → locations.id ON DELETE CASCADE
   address        text
-  access_notes   text              -- gate codes, back-entrance directions, parking
+  notes          text              -- parking, accessibility, wifi, opening hours
   -- future: parking_info, accessibility_features, opening_hours, wifi_*, allergen_info, ...
+  created_at, updated_at
+  -- enforced: row may exist only for locations where type = 'site'
+
+site_staff_details_v2  -- admin + Gedu only. Never leaves staff surfaces.
+  location_id    uuid pk, fk → locations.id ON DELETE CASCADE
+  notes          text              -- gate codes, back-entrance directions, keys, ops notes
   created_at, updated_at
   -- enforced: row may exist only for locations where type = 'site'
 ```
 
 **Reads:**
 - Hierarchy queries read `locations` alone — no join.
-- Product detail / directions join once: `locations JOIN site_details_v2 USING (location_id)`.
+- Parent-facing product detail joins `locations JOIN site_details_v2 USING (location_id)`.
+- Admin/Gedu staff screens join both: `locations JOIN site_details_v2 USING (location_id) LEFT JOIN site_staff_details_v2 USING (location_id)`.
 
 ### 4.9 Location rules — site for in-person, jurisdiction only for online municipality clubs
 
@@ -707,7 +714,8 @@ Baseline SELECT policies per role:
 | `schedule_slots_v2`, `session_overrides_v2` | — | follows products | follows products | follows products |
 | `product_prices_v2` | all (public catalog) | all | all | all |
 | `product_subscription_prices_v2` | ✗ | own customer's path only | ✗ | ✗ |
-| `site_details_v2` | public *(access_notes gating still open — §11)* | — | — | — |
+| `site_details_v2` | public (member-visible info — address, parking, wifi) | — | — | — |
+| `site_staff_details_v2` | ✗ | ✗ | ✗ | Gedus assigned to a product at this site *(fine-grained gating lands with `gedu_group_assignments_v2`; placeholder is any Gedu)* |
 | `topics_v2`, `tags_v2`, `product_tags_v2` | all | — | — | — |
 | `holiday_calendars_v2`, `calendar_holidays_v2`, `product_holiday_calendars_v2` | all | — | — | — |
 | `product_groups_v2` | ✗ | ✗ (parents never see groups) | own group only | any group on products Gedu is on |
@@ -1006,7 +1014,7 @@ Flagged inline as `OPEN` in the sections they affect.
 - **Topic taxonomy depth.** Sub-topics (Minecraft — Survival vs Redstone) — add `topics_v2.parent_id` if needed. Not yet.
 - **Calendar view as a first-class parent feature.** "Everything my kids are doing this week" across products is obvious v2 UX. Design the per-gamer session query to support it.
 - **Gedu schedule-conflict prevention.** §4.1 enforces one-group-per-product via unique on `gedu_group_assignments_v2`. Cross-product time conflicts are human-enforced in v1.
-- **`site_details_v2.access_notes` visibility.** Publicly SELECT-able by default. Pending decision on whether to gate to signed-up participants.
+- ~~**`site_details_v2.access_notes` visibility.**~~ *Resolved:* split into two tables — `site_details_v2` (member-visible: address, parking, wifi) is publicly SELECT-able; `site_staff_details_v2` (gate codes, back-entrance directions, ops notes) is admin + Gedu only. See §4.8.
 
 ---
 

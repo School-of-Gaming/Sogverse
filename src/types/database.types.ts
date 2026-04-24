@@ -14,6 +14,35 @@ export type Database = {
   }
   public: {
     Tables: {
+      calendar_holidays_v2: {
+        Row: {
+          calendar_id: string
+          date: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          calendar_id: string
+          date: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          calendar_id?: string
+          date?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_holidays_v2_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_calendars_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_profiles: {
         Row: {
           stripe_customer_id: string | null
@@ -265,6 +294,30 @@ export type Database = {
           },
         ]
       }
+      holiday_calendars_v2: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          timezone: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       locations: {
         Row: {
           country_code: string | null
@@ -410,6 +463,107 @@ export type Database = {
           },
         ]
       }
+      product_holiday_calendars_v2: {
+        Row: {
+          calendar_id: string
+          created_at: string
+          product_id: string
+        }
+        Insert: {
+          calendar_id: string
+          created_at?: string
+          product_id: string
+        }
+        Update: {
+          calendar_id?: string
+          created_at?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_holiday_calendars_v2_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "holiday_calendars_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_holiday_calendars_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_prices_v2: {
+        Row: {
+          created_at: string
+          currency: string
+          price_per_month: number
+          price_per_session: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          price_per_month: number
+          price_per_session: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          price_per_month?: number
+          price_per_session?: number
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_prices_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_tags_v2: {
+        Row: {
+          created_at: string
+          product_id: string
+          tag_id: string
+        }
+        Insert: {
+          created_at?: string
+          product_id: string
+          tag_id: string
+        }
+        Update: {
+          created_at?: string
+          product_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_tags_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_tags_v2_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           created_at: string | null
@@ -508,6 +662,122 @@ export type Database = {
           },
         ]
       }
+      products_v2: {
+        Row: {
+          billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
+          created_at: string
+          created_by: string
+          description: string
+          end_date: string | null
+          id: string
+          image_path: string | null
+          is_remote: boolean
+          is_visible: boolean
+          location_id: string | null
+          max_age: number
+          min_age: number
+          name: string
+          padlet_url: string | null
+          product_type: Database["public"]["Enums"]["product_type_v2"]
+          refund_policy_days: number | null
+          registration_opens_at: string | null
+          seat_count: number | null
+          signup_threshold: number | null
+          spoken_language_code: string
+          start_date: string | null
+          status: Database["public"]["Enums"]["product_status_v2"]
+          timezone: string
+          topic_id: string
+          updated_at: string
+          waitlist_enabled: boolean
+        }
+        Insert: {
+          billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
+          created_at?: string
+          created_by: string
+          description: string
+          end_date?: string | null
+          id?: string
+          image_path?: string | null
+          is_remote: boolean
+          is_visible?: boolean
+          location_id?: string | null
+          max_age: number
+          min_age: number
+          name: string
+          padlet_url?: string | null
+          product_type: Database["public"]["Enums"]["product_type_v2"]
+          refund_policy_days?: number | null
+          registration_opens_at?: string | null
+          seat_count?: number | null
+          signup_threshold?: number | null
+          spoken_language_code: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["product_status_v2"]
+          timezone: string
+          topic_id: string
+          updated_at?: string
+          waitlist_enabled?: boolean
+        }
+        Update: {
+          billing_mode?: Database["public"]["Enums"]["billing_mode_v2"]
+          created_at?: string
+          created_by?: string
+          description?: string
+          end_date?: string | null
+          id?: string
+          image_path?: string | null
+          is_remote?: boolean
+          is_visible?: boolean
+          location_id?: string | null
+          max_age?: number
+          min_age?: number
+          name?: string
+          padlet_url?: string | null
+          product_type?: Database["public"]["Enums"]["product_type_v2"]
+          refund_policy_days?: number | null
+          registration_opens_at?: string | null
+          seat_count?: number | null
+          signup_threshold?: number | null
+          spoken_language_code?: string
+          start_date?: string | null
+          status?: Database["public"]["Enums"]["product_status_v2"]
+          timezone?: string
+          topic_id?: string
+          updated_at?: string
+          waitlist_enabled?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_v2_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_v2_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_v2_spoken_language_code_fkey"
+            columns: ["spoken_language_code"]
+            isOneToOne: false
+            referencedRelation: "spoken_languages"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "products_v2_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -550,6 +820,105 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_slots_v2: {
+        Row: {
+          created_at: string
+          duration_minutes: number
+          id: string
+          product_id: string
+          start_time: string
+          updated_at: string
+          weekday: number
+        }
+        Insert: {
+          created_at?: string
+          duration_minutes: number
+          id?: string
+          product_id: string
+          start_time: string
+          updated_at?: string
+          weekday: number
+        }
+        Update: {
+          created_at?: string
+          duration_minutes?: number
+          id?: string
+          product_id?: string
+          start_time?: string
+          updated_at?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_slots_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_details_v2: {
+        Row: {
+          address: string | null
+          created_at: string
+          location_id: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          location_id: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          location_id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_details_v2_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: true
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_staff_details_v2: {
+        Row: {
+          created_at: string
+          location_id: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          location_id: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          location_id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_staff_details_v2_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: true
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       spoken_languages: {
         Row: {
           code: string
@@ -562,6 +931,33 @@ export type Database = {
         Update: {
           code?: string
           name?: string
+        }
+        Relationships: []
+      }
+      tags_v2: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -621,6 +1017,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      topics_v2: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon_path: string | null
+          id: string
+          kind: Database["public"]["Enums"]["topic_kind_v2"]
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon_path?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["topic_kind_v2"]
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon_path?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["topic_kind_v2"]
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       voice_rooms: {
         Row: {
@@ -985,14 +1414,23 @@ export type Database = {
       }
     }
     Enums: {
+      billing_mode_v2: "paid" | "free" | "external_contract"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
+      product_status_v2:
+        | "draft"
+        | "pending"
+        | "running"
+        | "completed"
+        | "cancelled"
+      product_type_v2: "consumer_club" | "municipality_club" | "camp" | "event"
       token_transaction_type:
         | "purchase"
         | "subscription"
         | "admin_adjustment"
         | "enrollment"
         | "enrollment_refund"
+      topic_kind_v2: "game" | "subject"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -1121,8 +1559,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      billing_mode_v2: ["paid", "free", "external_contract"],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],
+      product_status_v2: [
+        "draft",
+        "pending",
+        "running",
+        "completed",
+        "cancelled",
+      ],
+      product_type_v2: ["consumer_club", "municipality_club", "camp", "event"],
       token_transaction_type: [
         "purchase",
         "subscription",
@@ -1130,6 +1577,7 @@ export const Constants = {
         "enrollment",
         "enrollment_refund",
       ],
+      topic_kind_v2: ["game", "subject"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },
