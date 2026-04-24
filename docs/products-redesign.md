@@ -502,6 +502,10 @@ product_holiday_calendars_v2
   primary key (product_id, calendar_id)
 ```
 
+**v1: admins enter holidays manually.** The many-to-many shape lets a product subscribe to multiple calendars (e.g. "Finnish national holidays" + "Finnish school term breaks"), so concerns can be split without schema changes.
+
+**Future enhancement — auto-sync national holidays.** A per-calendar admin "Sync from Nager.Date" button could populate `calendar_holidays_v2` from `https://date.nager.at/api/v3/PublicHolidays/{year}/{countryCode}` (free, no key, covers FI / GB / US and most countries). Filter the response to entries whose `types` include `Public` to drop observances like Mother's Day that don't close schools. Requires adding `country_code` to `holiday_calendars_v2`. Keep the sync additive — show a diff and let the admin confirm removals so hand-curated quirks aren't wiped. Does not solve school-term breaks (syysloma, hiihtoloma, half-terms) — those remain admin-maintained, or sourced from OpenHolidays API if coverage proves reliable.
+
 ### 5.3 Session overrides and substitutions
 
 ```sql

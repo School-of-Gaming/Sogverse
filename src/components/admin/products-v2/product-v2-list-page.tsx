@@ -1,0 +1,139 @@
+"use client";
+
+import Link from "next/link";
+import { useTranslations } from "next-intl";
+import { Plus, Calendar, Users, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useProductsV2ByType } from "@/services/products-v2";
+import { productImageUrl } from "@/lib/images/product-image-url";
+import { PRODUCT_TYPE_CONFIG } from "./product-v2-type-config";
+import type { ProductTypeV2 } from "@/types";
+
+interface ProductV2ListPageProps {
+  productType: ProductTypeV2;
+}
+
+const STATUS_STYLE: Record<string, string> = {
+  draft: "bg-muted text-muted-foreground",
+  pending: "bg-primary/20 text-primary",
+  running: "bg-primary text-primary-foreground",
+  completed: "bg-muted text-muted-foreground",
+  cancelled: "bg-destructive/20 text-destructive",
+};
+
+export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
+  const config = PRODUCT_TYPE_CONFIG[productType];
+  const t = useTranslations("admin.productsV2");
+  const label = t(`types.${config.i18nKey}.label`);
+  const plural = t(`types.${config.i18nKey}.plural`);
+  const { data: products, isLoading } = useProductsV2ByType(productType);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">{plural}</h1>
+          <p className="text-muted-foreground">
+            {t("list.subtitle", { plural })}
+          </p>
+        </div>
+        <Link href={`/admin/${config.routeSlug}/new`}>
+          <Button>
+            <Plus className="mr-1 h-4 w-4" />
+            {t("list.new", { label })}
+          </Button>
+        </Link>
+      </div>
+
+      {isLoading && (
+        <div className="space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="h-20 animate-pulse rounded-lg border border-input bg-muted"
+            />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && products && products.length === 0 && (
+        <Card>
+          <CardContent className="py-8 text-center text-muted-foreground">
+            {t("list.empty", { plural, label })}
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoading && products && products.length > 0 && (
+        <div className="space-y-2">
+          {products.map((p) => {
+            const thumbnailUrl = p.image_path
+              ? productImageUrl(p.image_path)
+              : null;
+            return (
+              <Card key={p.id}>
+                <CardContent className="flex items-center gap-4 py-3">
+                  <div className="relative h-14 w-14 overflow-hidden rounded-md border bg-muted">
+                    {thumbnailUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- admin list only; next/image unoptimized not worth the ceremony here
+                      <img
+                        src={thumbnailUrl}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="truncate font-medium">{p.name}</span>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-xs ${
+                          STATUS_STYLE[p.status] ?? STATUS_STYLE.draft
+                        }`}
+                      >
+                        {t(`status.${p.status}`)}
+                      </span>
+                      {!p.is_visible && (
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          {t("list.hidden")}
+                        </span>
+                      )}
+                    </div>
+                    <p className="truncate text-sm text-muted-foreground">
+                      {p.description}
+                    </p>
+                    <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {t("list.ageRange", {
+                          min: p.min_age,
+                          max: p.max_age,
+                        })}
+                      </span>
+                      {p.start_date && (
+                        <span className="inline-flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {p.start_date}
+                          {p.end_date && p.end_date !== p.start_date
+                            ? ` → ${p.end_date}`
+                            : ""}
+                        </span>
+                      )}
+                      {p.seat_count !== null && (
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {t("list.seats", { count: p.seat_count })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

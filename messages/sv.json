@@ -193,6 +193,124 @@
       "updateDetails": "Uppdatera produktdetaljerna nedan",
       "editDetailsBelow": "Redigera detaljerna nedan."
     },
+    "productsV2": {
+      "types": {
+        "consumerClub": { "label": "Konsumentklubb", "plural": "Konsumentklubbar" },
+        "municipalityClub": { "label": "Kommunklubb", "plural": "Kommunklubbar" },
+        "camp": { "label": "Läger", "plural": "Läger" },
+        "event": { "label": "Evenemang", "plural": "Evenemang" }
+      },
+      "list": {
+        "subtitle": "Hantera {plural} som administratörer har skapat.",
+        "new": "Nytt {label}",
+        "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
+        "ageRange": "{min}–{max} år",
+        "seats": "{count} platser",
+        "hidden": "dold"
+      },
+      "newPage": {
+        "back": "Tillbaka till {plural}",
+        "title": "Nytt {label}"
+      },
+      "sections": {
+        "identity": "Identitet",
+        "audience": "Målgrupp",
+        "location": "Plats",
+        "when": "När",
+        "billing": "Kapacitet och fakturering",
+        "registration": "Registrering"
+      },
+      "labels": {
+        "name": "Namn",
+        "description": "Beskrivning",
+        "topic": "Ämne",
+        "tags": "Taggar",
+        "padletUrl": "Padlet-URL (valfri)",
+        "minAge": "Min ålder",
+        "maxAge": "Max ålder",
+        "spokenLanguage": "Talat språk",
+        "online": "Online",
+        "inPerson": "På plats",
+        "municipality": "Kommun",
+        "site": "Lokal",
+        "startDate": "Startdatum",
+        "date": "Datum",
+        "endDate": "Slutdatum",
+        "endDateOptional": "Slutdatum (valfritt)",
+        "schedule": "Schema",
+        "holidayCalendars": "Lovkalendrar",
+        "pricing": "Prissättning",
+        "free": "Gratis",
+        "paid": "Betalt",
+        "seatCount": "Antal platser",
+        "seatCountOptionalFree": "Antal platser (valfritt för gratis)",
+        "waitlistToggle": "Aktivera väntelista när full",
+        "signupThreshold": "Antal anmälningar för att starta (valfritt)",
+        "pricePerSession": "Pris per tillfälle (EUR-cent)",
+        "pricePerMonth": "Pris per månad (EUR-cent)",
+        "refundWindow": "Återbetalningsfönster (dagar före start)",
+        "registrationOpensAt": "Registrering öppnar (valfritt)"
+      },
+      "placeholders": {
+        "selectTopic": "Välj ett ämne",
+        "selectSite": "Välj en lokal",
+        "selectMunicipality": "Välj en kommun"
+      },
+      "hints": {
+        "noTopics": "Inga ämnen än. Lägg till minst ett i topics_v2 innan du skapar produkter.",
+        "noLocations": "Inga matchande platser. Skapa en i /admin/locations först.",
+        "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs.",
+        "eventWeekdayDerived": "Evenemangets veckodag härleds automatiskt från datumet.",
+        "holidaySkips": "Tillfällen på kalenderns lovdagar hoppas över.",
+        "registrationOpensHint": "Lämna tomt för att acceptera anmälningar direkt när publicerat.",
+        "draftPublishLater": "Produkter skapas som utkast och är dolda. Publicera från redigeringssidan när produkten är klar."
+      },
+      "errors": {
+        "nameRequired": "Namn krävs",
+        "descriptionRequired": "Beskrivning krävs",
+        "topicRequired": "Ämne krävs",
+        "spokenLanguageRequired": "Talat språk krävs",
+        "minAgeInvalid": "Min ålder måste vara ett icke-negativt heltal",
+        "maxAgeInvalid": "Max ålder måste vara större än eller lika med min ålder",
+        "municipalityRequired": "Kommun krävs för online-kommunklubbar",
+        "siteRequired": "Lokal krävs för produkter på plats",
+        "scheduleRequired": "Minst en schemarad krävs",
+        "padletInvalid": "Padlet-URL måste vara en giltig URL",
+        "startDateRequired": "Startdatum krävs",
+        "endDateRequired": "Slutdatum krävs",
+        "seatCountInvalid": "Antal platser måste vara ett positivt heltal",
+        "priceSessionInvalid": "Pris per tillfälle måste vara ett icke-negativt heltal (cent)",
+        "priceMonthInvalid": "Pris per månad måste vara ett icke-negativt heltal (cent)",
+        "createFailed": "Det gick inte att skapa produkten"
+      },
+      "actions": {
+        "cancel": "Avbryt",
+        "createLabel": "Skapa {label}"
+      },
+      "status": {
+        "draft": "utkast",
+        "pending": "väntar",
+        "running": "pågår",
+        "completed": "avslutat",
+        "cancelled": "avbrutet"
+      },
+      "schedule": {
+        "day": "Dag",
+        "startTime": "Starttid",
+        "durationMin": "Längd (min)",
+        "addDay": "Lägg till dag",
+        "removeSlot": "Ta bort tid"
+      },
+      "weekdays": {
+        "mon": "Mån",
+        "tue": "Tis",
+        "wed": "Ons",
+        "thu": "Tor",
+        "fri": "Fre",
+        "sat": "Lör",
+        "sun": "Sön"
+      }
+    },
     "users": {
       "title": "Användare",
       "manageAccounts": "Hantera användarkonton och roller",
@@ -732,7 +850,11 @@
   "sidebar": {
     "dashboard": "Instrumentpanel",
     "users": "Användare",
-    "products": "Produkter",
+    "products": "Produkter (äldre)",
+    "consumerClubs": "Konsumentklubbar",
+    "municipalityClubs": "Kommunklubbar",
+    "camps": "Läger",
+    "events": "Evenemang",
     "groups": "Grupper",
     "locations": "Platser",
     "uiComponents": "UI-komponenter",

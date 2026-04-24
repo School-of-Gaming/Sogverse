@@ -193,6 +193,124 @@
       "updateDetails": "Update the product details below",
       "editDetailsBelow": "Edit the details below."
     },
+    "productsV2": {
+      "types": {
+        "consumerClub": { "label": "Consumer Club", "plural": "Consumer Clubs" },
+        "municipalityClub": { "label": "Municipality Club", "plural": "Municipality Clubs" },
+        "camp": { "label": "Camp", "plural": "Camps" },
+        "event": { "label": "Event", "plural": "Events" }
+      },
+      "list": {
+        "subtitle": "Manage {plural} that admins have created.",
+        "new": "New {label}",
+        "empty": "No {plural} yet. Click New {label} to create one.",
+        "ageRange": "{min}–{max} yrs",
+        "seats": "{count} seats",
+        "hidden": "hidden"
+      },
+      "newPage": {
+        "back": "Back to {plural}",
+        "title": "New {label}"
+      },
+      "sections": {
+        "identity": "Identity",
+        "audience": "Audience",
+        "location": "Location",
+        "when": "When",
+        "billing": "Capacity & billing",
+        "registration": "Registration"
+      },
+      "labels": {
+        "name": "Name",
+        "description": "Description",
+        "topic": "Topic",
+        "tags": "Tags",
+        "padletUrl": "Padlet URL (optional)",
+        "minAge": "Min age",
+        "maxAge": "Max age",
+        "spokenLanguage": "Spoken language",
+        "online": "Online",
+        "inPerson": "In person",
+        "municipality": "Municipality",
+        "site": "Site",
+        "startDate": "Start date",
+        "date": "Date",
+        "endDate": "End date",
+        "endDateOptional": "End date (optional)",
+        "schedule": "Schedule",
+        "holidayCalendars": "Holiday calendars",
+        "pricing": "Pricing",
+        "free": "Free",
+        "paid": "Paid",
+        "seatCount": "Seat count",
+        "seatCountOptionalFree": "Seat count (optional for free)",
+        "waitlistToggle": "Enable waitlist when full",
+        "signupThreshold": "Signups needed to start (optional)",
+        "pricePerSession": "Price per session (EUR cents)",
+        "pricePerMonth": "Price per month (EUR cents)",
+        "refundWindow": "Refund window (days before start)",
+        "registrationOpensAt": "Registration opens at (optional)"
+      },
+      "placeholders": {
+        "selectTopic": "Select a topic",
+        "selectSite": "Select a site",
+        "selectMunicipality": "Select a municipality"
+      },
+      "hints": {
+        "noTopics": "No topics yet. Seed at least one in topics_v2 before creating products.",
+        "noLocations": "No matching locations. Create one in /admin/locations first.",
+        "onlineNoLocation": "Online and available to anyone — no location needed.",
+        "eventWeekdayDerived": "Event weekday is derived from the date automatically.",
+        "holidaySkips": "Sessions on calendar dates are skipped.",
+        "registrationOpensHint": "Leave blank to accept signups immediately once published.",
+        "draftPublishLater": "Products are created as drafts and hidden from customers. Publish from the edit page once the product is ready."
+      },
+      "errors": {
+        "nameRequired": "Name is required",
+        "descriptionRequired": "Description is required",
+        "topicRequired": "Topic is required",
+        "spokenLanguageRequired": "Spoken language is required",
+        "minAgeInvalid": "Min age must be a non-negative integer",
+        "maxAgeInvalid": "Max age must be greater than or equal to min age",
+        "municipalityRequired": "Municipality is required for online municipality clubs",
+        "siteRequired": "Site is required for in-person products",
+        "scheduleRequired": "At least one schedule slot is required",
+        "padletInvalid": "Padlet URL must be a valid URL",
+        "startDateRequired": "Start date is required",
+        "endDateRequired": "End date is required",
+        "seatCountInvalid": "Seat count must be a positive integer",
+        "priceSessionInvalid": "Price per session must be a non-negative integer (in cents)",
+        "priceMonthInvalid": "Price per month must be a non-negative integer (in cents)",
+        "createFailed": "Failed to create product"
+      },
+      "actions": {
+        "cancel": "Cancel",
+        "createLabel": "Create {label}"
+      },
+      "status": {
+        "draft": "draft",
+        "pending": "pending",
+        "running": "running",
+        "completed": "completed",
+        "cancelled": "cancelled"
+      },
+      "schedule": {
+        "day": "Day",
+        "startTime": "Start time",
+        "durationMin": "Duration (min)",
+        "addDay": "Add day",
+        "removeSlot": "Remove slot"
+      },
+      "weekdays": {
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat",
+        "sun": "Sun"
+      }
+    },
     "users": {
       "title": "Users",
       "manageAccounts": "Manage user accounts and roles",
@@ -732,7 +850,11 @@
   "sidebar": {
     "dashboard": "Dashboard",
     "users": "Users",
-    "products": "Products",
+    "products": "Products (Legacy)",
+    "consumerClubs": "Consumer Clubs",
+    "municipalityClubs": "Municipality Clubs",
+    "camps": "Camps",
+    "events": "Events",
     "groups": "Groups",
     "locations": "Locations",
     "uiComponents": "UI Components",

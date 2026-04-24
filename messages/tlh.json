@@ -241,6 +241,124 @@
       "updateDetails": "De' Qatlh yIchoH",
       "editDetailsBelow": "Qatlh yIchoH."
     },
+    "productsV2": {
+      "types": {
+        "consumerClub": { "label": "ghomHom tlhIngan", "plural": "ghomHom tlhIngan" },
+        "municipalityClub": { "label": "ghomHom veng", "plural": "ghomHom veng" },
+        "camp": { "label": "pa' Qugh", "plural": "pa' Qugh" },
+        "event": { "label": "Qu'", "plural": "Qu'mey" }
+      },
+      "list": {
+        "subtitle": "{plural} yIQI'.",
+        "new": "{label} chu'",
+        "empty": "{plural} pagh. {label} chu' yIchu'.",
+        "ageRange": "{min}–{max} DIS",
+        "seats": "{count} pa'",
+        "hidden": "So'lu'"
+      },
+      "newPage": {
+        "back": "{plural} vIcheghmoH",
+        "title": "{label} chu'"
+      },
+      "sections": {
+        "identity": "pong",
+        "audience": "ghom",
+        "location": "Daq",
+        "when": "poH",
+        "billing": "pa' je Huch",
+        "registration": "ghItlh"
+      },
+      "labels": {
+        "name": "pong",
+        "description": "QIn",
+        "topic": "mu'meH",
+        "tags": "ngoQmey",
+        "padletUrl": "Padlet URL (vItlhutlh)",
+        "minAge": "DIS mach",
+        "maxAge": "DIS tIn",
+        "spokenLanguage": "Hol",
+        "online": "rurmey",
+        "inPerson": "Daq",
+        "municipality": "veng",
+        "site": "Daq",
+        "startDate": "jaj tagh",
+        "date": "jaj",
+        "endDate": "jaj van",
+        "endDateOptional": "jaj van (vItlhutlh)",
+        "schedule": "poH",
+        "holidayCalendars": "jajmey Do'",
+        "pricing": "Huch",
+        "free": "Huch pagh",
+        "paid": "Huch",
+        "seatCount": "pa' mI'",
+        "seatCountOptionalFree": "pa' mI' (Huch pagh)",
+        "waitlistToggle": "poQ tetlh teb",
+        "signupThreshold": "ghItlh mI' taghmeH (vItlhutlh)",
+        "pricePerSession": "Huch per qaStaHvIS (EUR-cent)",
+        "pricePerMonth": "Huch per jar (EUR-cent)",
+        "refundWindow": "Huch cheghmoH (jaj tagh pagh)",
+        "registrationOpensAt": "ghItlh tagh (vItlhutlh)"
+      },
+      "placeholders": {
+        "selectTopic": "mu'meH yIwIv",
+        "selectSite": "Daq yIwIv",
+        "selectMunicipality": "veng yIwIv"
+      },
+      "hints": {
+        "noTopics": "mu'meH pagh. topics_v2 yItogh.",
+        "noLocations": "Dap Qap pagh. /admin/locations Daq yIchu'.",
+        "onlineNoLocation": "rurmey — Daq poQ pagh.",
+        "eventWeekdayDerived": "Qu' jaj tIq jaj vo' yItlhutlh.",
+        "holidaySkips": "jajmey Do' qaStaHvIS qaS pagh.",
+        "registrationOpensHint": "chIm yIdaj, ghItlh DaH tagh.",
+        "draftPublishLater": "De' chu' lu'chu' 'ej So'lu'. chogh yIchoH ghItlh yIghItlhtaH."
+      },
+      "errors": {
+        "nameRequired": "pong poQ",
+        "descriptionRequired": "QIn poQ",
+        "topicRequired": "mu'meH poQ",
+        "spokenLanguageRequired": "Hol poQ",
+        "minAgeInvalid": "DIS mach mI' 'oHnIS",
+        "maxAgeInvalid": "DIS tIn DIS mach tIn 'oHnIS",
+        "municipalityRequired": "veng poQ rurmey ghomHom veng",
+        "siteRequired": "Daq poQ Daq pa' De'mey",
+        "scheduleRequired": "wa' poH mach poQ",
+        "padletInvalid": "Padlet URL val 'oHnIS",
+        "startDateRequired": "jaj tagh poQ",
+        "endDateRequired": "jaj van poQ",
+        "seatCountInvalid": "pa' mI' positiv 'oHnIS",
+        "priceSessionInvalid": "Huch per qaStaHvIS mI' 'oHnIS (cent)",
+        "priceMonthInvalid": "Huch per jar mI' 'oHnIS (cent)",
+        "createFailed": "De' chu' Qap pagh"
+      },
+      "actions": {
+        "cancel": "pegh",
+        "createLabel": "{label} yIchu'"
+      },
+      "status": {
+        "draft": "chu'Ha'",
+        "pending": "loS",
+        "running": "qaS",
+        "completed": "rIn",
+        "cancelled": "chIm"
+      },
+      "schedule": {
+        "day": "jaj",
+        "startTime": "poH tagh",
+        "durationMin": "poH nab (min)",
+        "addDay": "jaj chu'",
+        "removeSlot": "poH teq"
+      },
+      "weekdays": {
+        "mon": "wa'",
+        "tue": "cha'",
+        "wed": "wej",
+        "thu": "loS",
+        "fri": "vagh",
+        "sat": "jav",
+        "sun": "Soch"
+      }
+    },
     "users": {
       "title": "lo'wI'pu'",
       "manageAccounts": "lo'wI' accountmey je Qu'mey tI'ang",
@@ -780,7 +898,11 @@
   "sidebar": {
     "dashboard": "QaD",
     "users": "lo'wI'pu'",
-    "products": "De'mey",
+    "products": "De'mey (wa'Hu')",
+    "consumerClubs": "ghomHom tlhIngan",
+    "municipalityClubs": "ghomHom veng",
+    "camps": "pa' Qugh",
+    "events": "Qu'mey",
     "groups": "ghom'a'mey",
     "locations": "Dapmey",
     "uiComponents": "UI ngoQmey",
