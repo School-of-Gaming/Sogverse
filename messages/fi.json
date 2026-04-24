@@ -193,6 +193,124 @@
       "updateDetails": "Päivitä tuotetiedot alla",
       "editDetailsBelow": "Muokkaa tietoja alla."
     },
+    "productsV2": {
+      "types": {
+        "consumerClub": { "label": "Kuluttajakerho", "plural": "Kuluttajakerhot" },
+        "municipalityClub": { "label": "Kuntakerho", "plural": "Kuntakerhot" },
+        "camp": { "label": "Leiri", "plural": "Leirit" },
+        "event": { "label": "Tapahtuma", "plural": "Tapahtumat" }
+      },
+      "list": {
+        "subtitle": "Hallinnoi ylläpitäjien luomia kohteita ({plural}).",
+        "new": "Uusi {label}",
+        "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
+        "ageRange": "{min}–{max} v",
+        "seats": "{count} paikkaa",
+        "hidden": "piilotettu"
+      },
+      "newPage": {
+        "back": "Takaisin: {plural}",
+        "title": "Uusi {label}"
+      },
+      "sections": {
+        "identity": "Perustiedot",
+        "audience": "Kohdeyleisö",
+        "location": "Sijainti",
+        "when": "Ajankohta",
+        "billing": "Paikat ja hinnoittelu",
+        "registration": "Ilmoittautuminen"
+      },
+      "labels": {
+        "name": "Nimi",
+        "description": "Kuvaus",
+        "topic": "Aihe",
+        "tags": "Tunnisteet",
+        "padletUrl": "Padlet-osoite (valinnainen)",
+        "minAge": "Alaikäraja",
+        "maxAge": "Yläikäraja",
+        "spokenLanguage": "Kieli",
+        "online": "Verkossa",
+        "inPerson": "Paikan päällä",
+        "municipality": "Kunta",
+        "site": "Toimipiste",
+        "startDate": "Alkupäivä",
+        "date": "Päivämäärä",
+        "endDate": "Loppupäivä",
+        "endDateOptional": "Loppupäivä (valinnainen)",
+        "schedule": "Aikataulu",
+        "holidayCalendars": "Loma-kalenterit",
+        "pricing": "Hinnoittelu",
+        "free": "Ilmainen",
+        "paid": "Maksullinen",
+        "seatCount": "Paikkamäärä",
+        "seatCountOptionalFree": "Paikkamäärä (valinnainen ilmaisessa)",
+        "waitlistToggle": "Käytä jonotuslistaa, kun täynnä",
+        "signupThreshold": "Ilmoittautumisraja aloitukseen (valinnainen)",
+        "pricePerSession": "Hinta per kerta (EUR-senttiä)",
+        "pricePerMonth": "Hinta per kuukausi (EUR-senttiä)",
+        "refundWindow": "Palautusikkuna (päivää ennen alkua)",
+        "registrationOpensAt": "Ilmoittautuminen alkaa (valinnainen)"
+      },
+      "placeholders": {
+        "selectTopic": "Valitse aihe",
+        "selectSite": "Valitse toimipiste",
+        "selectMunicipality": "Valitse kunta"
+      },
+      "hints": {
+        "noTopics": "Ei vielä aiheita. Lisää vähintään yksi topics_v2-tauluun ennen tuotteiden luomista.",
+        "noLocations": "Ei sopivia sijainteja. Luo ensin /admin/locations-sivulla.",
+        "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita.",
+        "eventWeekdayDerived": "Tapahtuman viikonpäivä päätellään automaattisesti päivämäärästä.",
+        "holidaySkips": "Kalenterin lomapäivät ohitetaan.",
+        "registrationOpensHint": "Jätä tyhjäksi, jos ilmoittautuminen alkaa heti julkaisun jälkeen.",
+        "draftPublishLater": "Tuote luodaan luonnoksena ja piilotettuna. Julkaise muokkaussivulta, kun tuote on valmis."
+      },
+      "errors": {
+        "nameRequired": "Nimi vaaditaan",
+        "descriptionRequired": "Kuvaus vaaditaan",
+        "topicRequired": "Aihe vaaditaan",
+        "spokenLanguageRequired": "Kieli vaaditaan",
+        "minAgeInvalid": "Alaikärajan on oltava ei-negatiivinen kokonaisluku",
+        "maxAgeInvalid": "Yläikärajan on oltava vähintään alaikärajan suuruinen",
+        "municipalityRequired": "Kunta vaaditaan verkossa toteutettaville kuntakerhoille",
+        "siteRequired": "Toimipiste vaaditaan paikan päällä toteutettaville tuotteille",
+        "scheduleRequired": "Vähintään yksi aikatauluväli vaaditaan",
+        "padletInvalid": "Padlet-osoitteen on oltava kelvollinen URL",
+        "startDateRequired": "Alkupäivä vaaditaan",
+        "endDateRequired": "Loppupäivä vaaditaan",
+        "seatCountInvalid": "Paikkamäärän on oltava positiivinen kokonaisluku",
+        "priceSessionInvalid": "Hinta per kerta: ei-negatiivinen kokonaisluku (senttiä)",
+        "priceMonthInvalid": "Hinta per kuukausi: ei-negatiivinen kokonaisluku (senttiä)",
+        "createFailed": "Tuotteen luonti epäonnistui"
+      },
+      "actions": {
+        "cancel": "Peruuta",
+        "createLabel": "Luo {label}"
+      },
+      "status": {
+        "draft": "luonnos",
+        "pending": "odottaa",
+        "running": "käynnissä",
+        "completed": "päättynyt",
+        "cancelled": "peruttu"
+      },
+      "schedule": {
+        "day": "Päivä",
+        "startTime": "Alkuaika",
+        "durationMin": "Kesto (min)",
+        "addDay": "Lisää päivä",
+        "removeSlot": "Poista aikataulu"
+      },
+      "weekdays": {
+        "mon": "Ma",
+        "tue": "Ti",
+        "wed": "Ke",
+        "thu": "To",
+        "fri": "Pe",
+        "sat": "La",
+        "sun": "Su"
+      }
+    },
     "users": {
       "title": "Käyttäjät",
       "manageAccounts": "Hallitse käyttäjätilejä ja rooleja",
@@ -732,7 +850,11 @@
   "sidebar": {
     "dashboard": "Hallintapaneeli",
     "users": "Käyttäjät",
-    "products": "Tuotteet",
+    "products": "Tuotteet (vanha)",
+    "consumerClubs": "Kuluttajakerhot",
+    "municipalityClubs": "Kuntakerhot",
+    "camps": "Leirit",
+    "events": "Tapahtumat",
     "groups": "Ryhmät",
     "locations": "Sijainnit",
     "uiComponents": "UI-komponentit",

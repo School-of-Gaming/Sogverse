@@ -17,6 +17,10 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
+  Joystick,
+  School,
+  Tent,
+  CalendarDays,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
@@ -28,7 +32,8 @@ import type { UserRole } from "@/types";
 type SidebarKey =
   | "dashboard" | "users" | "products" | "groups" | "locations"
   | "uiComponents" | "whatsapp" | "testing" | "feedback" | "settings"
-  | "sorg" | "myGamers" | "home" | "myGroups";
+  | "sorg" | "myGamers" | "home" | "myGroups"
+  | "consumerClubs" | "municipalityClubs" | "camps" | "events";
 
 interface NavItemDef {
   href: string;
@@ -41,6 +46,10 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
     { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
     { href: ROUTES.admin.products, labelKey: "products", icon: <Package className="h-5 w-5" /> },
+    { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: <Joystick className="h-5 w-5" /> },
+    { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: <School className="h-5 w-5" /> },
+    { href: ROUTES.admin.camps, labelKey: "camps", icon: <Tent className="h-5 w-5" /> },
+    { href: ROUTES.admin.events, labelKey: "events", icon: <CalendarDays className="h-5 w-5" /> },
     { href: ROUTES.admin.groups, labelKey: "groups", icon: <AudioLines className="h-5 w-5" /> },
     { href: ROUTES.admin.locations, labelKey: "locations", icon: <MapPin className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },

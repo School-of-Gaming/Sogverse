@@ -21,6 +21,8 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "get_enrollment_groups",
   "commit_group_changes",
   "get_my_groups",
+
+  "create_product_v2",
 ]);
 
 /**
