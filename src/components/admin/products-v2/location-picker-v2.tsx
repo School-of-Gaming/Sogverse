@@ -6,16 +6,22 @@ import {
   ChevronRight,
   MapPin,
   Pencil,
+  Plus,
   Search,
   X,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useAllLocations } from "@/services/locations";
+import { useAllLocations, useCreateLocation } from "@/services/locations";
 import { useSiteDetailsV2 } from "@/services/products-v2";
-import type { Location, LocationType } from "@/types";
+import {
+  LocationFormDialog,
+  type LocationFormValues,
+} from "@/components/admin/location-form-dialog";
+import { getChildLevel, resolveLabels } from "@/lib/constants";
+import type { Location } from "@/types";
 
 type PickableMode = "site" | "jurisdiction";
 
@@ -98,9 +104,23 @@ export function LocationPickerV2({
   const t = useTranslations("admin.productsV2.locationPicker");
   const [query, setQuery] = useState("");
   const [browsing, setBrowsing] = useState(false);
+  // Null = dialog closed. "root" = creating a new country at the tree root.
+  // Otherwise the parent location we're adding a child under.
+  const [addUnder, setAddUnder] = useState<Location | "root" | null>(null);
 
   const { data: locations } = useAllLocations();
+  const createLocation = useCreateLocation();
   const all = useMemo(() => locations ?? [], [locations]);
+
+  const existingCountryCodes = useMemo(
+    () =>
+      new Set(
+        all
+          .filter((l) => l.type === "country" && l.country_code)
+          .map((l) => l.country_code as string)
+      ),
+    [all]
+  );
 
   const treeSource = useMemo(
     () =>
@@ -147,6 +167,22 @@ export function LocationPickerV2({
     setQuery("");
   }
 
+  async function handleDialogSubmit(values: LocationFormValues) {
+    const created = await createLocation.mutateAsync(values);
+    setAddUnder(null);
+    // Auto-select when the newly created location is a valid pick for the
+    // current mode. Otherwise leave selection untouched — admin was just
+    // scaffolding the tree on the way to the real pick.
+    const validPick =
+      (pickable === "site" && created.type === "site") ||
+      (pickable === "jurisdiction" && created.type !== "site");
+    if (validPick) {
+      onChange(created.id);
+      setBrowsing(false);
+      setQuery("");
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="relative">
@@ -185,10 +221,23 @@ export function LocationPickerV2({
                 selectedId={value}
                 pickable={pickable}
                 onPick={pickNode}
+                onAddChild={(parent) => setAddUnder(parent)}
               />
             ))}
           </div>
         )}
+        <div className="mt-2 border-t border-border pt-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setAddUnder("root")}
+            className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Plus className="h-3 w-3" />
+            {t("addCountry")}
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center justify-between text-xs">
@@ -205,6 +254,17 @@ export function LocationPickerV2({
           </button>
         )}
       </div>
+
+      <LocationFormDialog
+        open={addUnder !== null}
+        onOpenChange={(open) => {
+          if (!open) setAddUnder(null);
+        }}
+        onSubmit={handleDialogSubmit}
+        isPending={createLocation.isPending}
+        parent={addUnder === "root" ? null : addUnder}
+        existingCountryCodes={existingCountryCodes}
+      />
     </div>
   );
 }
@@ -216,6 +276,7 @@ interface TreeRowProps {
   selectedId: string | null;
   pickable: PickableMode;
   onPick: (node: LocationNode) => void;
+  onAddChild: (parent: LocationNode) => void;
 }
 
 function TreeRow({
@@ -225,19 +286,36 @@ function TreeRow({
   selectedId,
   pickable,
   onPick,
+  onAddChild,
 }: TreeRowProps) {
   const t = useTranslations("admin.productsV2.locationPicker");
+  const tLoc = useTranslations("admin.locations");
+  const locale = useLocale();
   const [expanded, setExpanded] = useState(depth === 0);
   const isExpanded = query ? true : expanded;
   const hasChildren = node.children.length > 0;
   const isSite = node.type === "site";
   const isPickable = pickable === "site" ? isSite : !isSite;
   const isSelected = isPickable && selectedId === node.id;
-  const childLabel =
+  const showPickButton = pickable === "jurisdiction" && !isSite;
+  // Suppress "Add site" in jurisdiction mode — sites are hidden from the
+  // tree entirely, so creating one here would never surface. Otherwise
+  // look up the next level from the country's configured hierarchy so
+  // countries with different levels (FI: Maakunta/Kunta, JP: Prefecture/
+  // City/Ward) all render using the country's own terminology.
+  const childLevel =
     pickable === "jurisdiction" && node.type === "municipality"
       ? null
-      : childCountLabel(node, t);
-  const showPickButton = pickable === "jurisdiction" && !isSite;
+      : node.country_code
+        ? getChildLevel(node.country_code, node.type)
+        : null;
+  const childLabels = childLevel ? resolveLabels(childLevel, locale) : null;
+  // Sibling count hint — "3 regions" / "2 Kuntaa" — uses the same child
+  // hierarchy lookup for country-accurate terminology.
+  const childCountText =
+    pickable === "jurisdiction" && node.type === "municipality"
+      ? null
+      : childCountLabel(node, childLabels);
 
   function handleClick() {
     if (isPickable && (isSite || !hasChildren)) {
@@ -275,27 +353,48 @@ function TreeRow({
             <span className={cn("truncate", isSite && "font-medium")}>
               {node.name}
             </span>
-            {childLabel && (
+            {childCountText && (
               <span className="shrink-0 text-xs text-muted-foreground">
-                {childLabel}
+                {childCountText}
               </span>
             )}
           </div>
         </div>
-        {showPickButton && (
+        {(showPickButton || childLabels) && (
           <span className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1 px-2 text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPick(node);
-              }}
-            >
-              {t("pick")}
-            </Button>
+            {showPickButton && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 px-2 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPick(node);
+                }}
+              >
+                {t("pick")}
+              </Button>
+            )}
+            {childLabels && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 px-2 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAddChild(node);
+                }}
+                title={tLoc("addChildUnder", {
+                  type: childLabels.label,
+                  parent: node.name,
+                })}
+              >
+                <Plus className="h-3 w-3" />
+                {childLabels.label}
+              </Button>
+            )}
           </span>
         )}
       </div>
@@ -310,6 +409,7 @@ function TreeRow({
               selectedId={selectedId}
               pickable={pickable}
               onPick={onPick}
+              onAddChild={onAddChild}
             />
           ))}
         </div>
@@ -318,31 +418,20 @@ function TreeRow({
   );
 }
 
-const CHILD_SINGULAR: Record<Exclude<LocationType, "site">, string> = {
-  country: "region",
-  region: "municipality",
-  municipality: "site",
-  district: "site",
-};
-
 function childCountLabel(
   node: LocationNode,
-  t: ReturnType<typeof useTranslations>
+  childLabels: { label: string; pluralLabel: string } | null
 ): string | null {
   if (node.type === "site") return null;
+  // No child labels = leaf of the configured hierarchy (e.g. a muni in
+  // Spain) OR an unsupported country. Either way, no count suffix to show.
+  if (!childLabels) return null;
   const count = node.children.length;
   if (count === 0) {
-    if (node.type === "municipality") return t("noSitesYet");
-    return null;
+    // "no Sites yet" etc. — nudges admin that this parent is empty.
+    return `no ${childLabels.pluralLabel.toLowerCase()} yet`;
   }
-  if (node.type === "district") return null;
-  const word = CHILD_SINGULAR[node.type];
-  return `${count} ${count === 1 ? word : pluralize(word)}`;
-}
-
-function pluralize(word: string): string {
-  if (word.endsWith("y")) return `${word.slice(0, -1)}ies`;
-  return `${word}s`;
+  return `${count} ${count === 1 ? childLabels.label : childLabels.pluralLabel}`;
 }
 
 interface SelectedSiteCardProps {
