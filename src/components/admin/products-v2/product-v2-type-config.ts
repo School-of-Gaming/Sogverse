@@ -13,6 +13,11 @@ export type ScheduleShape =
   | "multi_day_bounded"  // camp: multiple weekdays, start/end dates
   | "single_date";       // event: single date, single slot
 
+// Three start triggers from doc §4.11. Types list only the ones that make
+// sense — muni clubs are ticket-drop only ("date"), camps always have a
+// bounded schedule so they can't be threshold-only ("threshold" disallowed).
+export type StartMode = "date" | "date_and_threshold" | "threshold";
+
 export type BillingOption =
   | { mode: "paid"; required: true }                                    // consumer_club, camp
   | { mode: "external_contract"; required: true }                       // municipality_club
@@ -30,7 +35,8 @@ export interface ProductTypeConfig {
   requiresMunicipalityWhenOnline: boolean;
   hasHolidayCalendars: boolean;
   hasRefundWindow: boolean;
-  hasSignupThreshold: boolean;
+  /** Start triggers admin can choose from. First entry is the default. */
+  allowedStartModes: StartMode[];
   defaultBillingMode: BillingModeV2;
 }
 
@@ -46,7 +52,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     hasHolidayCalendars: true,
     hasRefundWindow: false,
-    hasSignupThreshold: true,
+    allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "paid",
   },
   municipality_club: {
@@ -60,7 +66,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: true,
     hasHolidayCalendars: true,
     hasRefundWindow: false,
-    hasSignupThreshold: false,
+    allowedStartModes: ["date"],
     defaultBillingMode: "external_contract",
   },
   camp: {
@@ -74,7 +80,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     hasHolidayCalendars: false,
     hasRefundWindow: true,
-    hasSignupThreshold: true,
+    allowedStartModes: ["date", "date_and_threshold"],
     defaultBillingMode: "paid",
   },
   event: {
@@ -88,7 +94,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     requiresMunicipalityWhenOnline: false,
     hasHolidayCalendars: false,
     hasRefundWindow: true,
-    hasSignupThreshold: false,
+    allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "free",
   },
 };

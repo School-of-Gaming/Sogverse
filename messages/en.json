@@ -218,7 +218,8 @@
         "location": "Location",
         "when": "When",
         "billing": "Capacity & billing",
-        "registration": "Registration"
+        "registration": "Registration",
+        "visibility": "Visibility"
       },
       "labels": {
         "name": "Name",
@@ -239,22 +240,69 @@
         "endDateOptional": "End date (optional)",
         "schedule": "Schedule",
         "holidayCalendars": "Holiday calendars",
+        "holidayNoUpcoming": "No upcoming dates — this calendar needs dates before it's useful.",
         "pricing": "Pricing",
         "free": "Free",
         "paid": "Paid",
         "seatCount": "Seat count",
         "seatCountOptionalFree": "Seat count (optional for free)",
         "waitlistToggle": "Enable waitlist when full",
-        "signupThreshold": "Signups needed to start (optional)",
-        "pricePerSession": "Price per session (EUR cents)",
-        "pricePerMonth": "Price per month (EUR cents)",
+        "signupThreshold": "Signups needed to start",
+        "pricePerSession": "Price per session (EUR)",
+        "pricePerMonth": "Price per month (EUR)",
         "refundWindow": "Refund window (days before start)",
-        "registrationOpensAt": "Registration opens at (optional)"
+        "registrationOpensAt": "Registration opens at (optional)",
+        "makeVisible": "Make visible to parents now"
       },
       "placeholders": {
         "selectTopic": "Select a topic",
         "selectSite": "Select a site",
         "selectMunicipality": "Select a municipality"
+      },
+      "topicKinds": {
+        "game": "Games",
+        "subject": "Subjects"
+      },
+      "locationPicker": {
+        "searchPlaceholder": "Search by country, region, municipality, or site…",
+        "clearSearch": "Clear search",
+        "noResults": "No locations match \"{query}\".",
+        "hintSite": "Pick a site. Create new ones in /admin/locations.",
+        "hintJurisdiction": "Pick a country, region, or municipality. Online products don't have a physical venue.",
+        "change": "Change",
+        "cancel": "Cancel",
+        "pick": "Pick",
+        "noVenueHint": "No physical venue. Parents browsing in {name} — or any smaller area inside it — will see this product.",
+        "noSitesYet": "no sites yet",
+        "memberNotesLabel": "Member-visible notes",
+        "memberNotesHint": "Shown to parents and gamers on the product detail page.",
+        "staffNotesLabel": "Staff notes (admin + Gedu only)",
+        "staffNotesHint": "Never shown to parents or gamers.",
+        "addressLabel": "Address",
+        "noMemberNotes": "No member-visible notes for this site.",
+        "noStaffNotes": "No staff notes for this site.",
+        "editInLocations": "Edit in /admin/locations."
+      },
+      "pricing": {
+        "currencyPickerLabel": "Currency",
+        "fxSuggested": "Suggested from today's EUR rate ({rate}). Edit to override.",
+        "fxUnavailable": "Couldn't fetch today's FX rate — enter manually.",
+        "bundleHeading": "What parents pay for bundles",
+        "bundleSingle": "Single session",
+        "bundleMulti": "{size} sessions (save {discount}%)",
+        "subHeading": "What parents pay for subscriptions",
+        "subMonthly": "Monthly",
+        "subQuarterly": "Quarterly (save {discount}%)",
+        "subYearly": "Yearly (save {discount}%)"
+      },
+      "startModes": {
+        "label": "How does this start?",
+        "date": "On a specific date",
+        "date_and_threshold": "On a specific date, only if enough sign up",
+        "threshold": "When enough gamers have signed up",
+        "dateDescription": "Runs on the selected date, no matter how many parents sign up.",
+        "date_and_thresholdDescription": "Scheduled for the selected date, but only runs if enough parents sign up in time. Otherwise you cancel it and parents are refunded automatically.",
+        "thresholdDescription": "No fixed start date. You pick the first session date once enough parents have signed up — parents see a live counter and know you'll contact them when it's ready."
       },
       "hints": {
         "noTopics": "No topics yet. Seed at least one in topics_v2 before creating products.",
@@ -263,7 +311,7 @@
         "eventWeekdayDerived": "Event weekday is derived from the date automatically.",
         "holidaySkips": "Sessions on calendar dates are skipped.",
         "registrationOpensHint": "Leave blank to accept signups immediately once published.",
-        "draftPublishLater": "Products are created as drafts and hidden from customers. Publish from the edit page once the product is ready."
+        "visibleHint": "Visible products appear in parent browse pages. Leave unchecked to keep as a draft."
       },
       "errors": {
         "nameRequired": "Name is required",
@@ -279,8 +327,9 @@
         "startDateRequired": "Start date is required",
         "endDateRequired": "End date is required",
         "seatCountInvalid": "Seat count must be a positive integer",
-        "priceSessionInvalid": "Price per session must be a non-negative integer (in cents)",
-        "priceMonthInvalid": "Price per month must be a non-negative integer (in cents)",
+        "priceSessionInvalid": "Price per session must be a non-negative number ({currency})",
+        "priceMonthInvalid": "Price per month must be a non-negative number ({currency})",
+        "thresholdInvalid": "Signups needed to start must be a positive integer",
         "createFailed": "Failed to create product"
       },
       "actions": {
