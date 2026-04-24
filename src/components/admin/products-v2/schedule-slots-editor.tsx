@@ -14,6 +14,18 @@ export interface ScheduleSlotDraft {
 
 const WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
 
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = [0, 15, 30, 45];
+
+function parseTime(hhmm: string): { hour: number; minute: number } {
+  const [h, m] = hhmm.split(":").map(Number);
+  return { hour: h, minute: m };
+}
+
+function formatTime(hour: number, minute: number): string {
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
 interface ScheduleSlotsEditorProps {
   slots: ScheduleSlotDraft[];
   onChange: (slots: ScheduleSlotDraft[]) => void;
@@ -73,15 +85,46 @@ export function ScheduleSlotsEditor({
             </select>
           </div>
           <div className="space-y-1">
-            <Label htmlFor={`slot-time-${idx}`}>{t("startTime")}</Label>
-            <Input
-              id={`slot-time-${idx}`}
-              type="time"
-              value={slot.start_time.slice(0, 5)}
-              onChange={(e) => updateSlot(idx, { start_time: e.target.value })}
-              disabled={disabled}
-              className="w-32"
-            />
+            <Label htmlFor={`slot-hour-${idx}`}>{t("startTime")}</Label>
+            <div className="flex items-center gap-1">
+              <select
+                id={`slot-hour-${idx}`}
+                value={parseTime(slot.start_time).hour}
+                onChange={(e) => {
+                  const { minute } = parseTime(slot.start_time);
+                  updateSlot(idx, {
+                    start_time: formatTime(Number(e.target.value), minute),
+                  });
+                }}
+                disabled={disabled}
+                className="flex h-10 rounded-md border border-input bg-background px-2 py-2 text-sm"
+              >
+                {HOURS.map((h) => (
+                  <option key={h} value={h}>
+                    {String(h).padStart(2, "0")}
+                  </option>
+                ))}
+              </select>
+              <span className="text-muted-foreground">:</span>
+              <select
+                aria-label={t("startTime")}
+                value={parseTime(slot.start_time).minute}
+                onChange={(e) => {
+                  const { hour } = parseTime(slot.start_time);
+                  updateSlot(idx, {
+                    start_time: formatTime(hour, Number(e.target.value)),
+                  });
+                }}
+                disabled={disabled}
+                className="flex h-10 rounded-md border border-input bg-background px-2 py-2 text-sm"
+              >
+                {MINUTES.map((m) => (
+                  <option key={m} value={m}>
+                    {String(m).padStart(2, "0")}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="space-y-1">
             <Label htmlFor={`slot-duration-${idx}`}>{t("durationMin")}</Label>

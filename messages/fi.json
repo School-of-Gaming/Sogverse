@@ -218,7 +218,8 @@
         "location": "Sijainti",
         "when": "Ajankohta",
         "billing": "Paikat ja hinnoittelu",
-        "registration": "Ilmoittautuminen"
+        "registration": "Ilmoittautuminen",
+        "visibility": "Näkyvyys"
       },
       "labels": {
         "name": "Nimi",
@@ -239,22 +240,69 @@
         "endDateOptional": "Loppupäivä (valinnainen)",
         "schedule": "Aikataulu",
         "holidayCalendars": "Loma-kalenterit",
+        "holidayNoUpcoming": "Ei tulevia päivämääriä — tätä kalenteria ei voi käyttää ilman niitä.",
         "pricing": "Hinnoittelu",
         "free": "Ilmainen",
         "paid": "Maksullinen",
         "seatCount": "Paikkamäärä",
         "seatCountOptionalFree": "Paikkamäärä (valinnainen ilmaisessa)",
         "waitlistToggle": "Käytä jonotuslistaa, kun täynnä",
-        "signupThreshold": "Ilmoittautumisraja aloitukseen (valinnainen)",
-        "pricePerSession": "Hinta per kerta (EUR-senttiä)",
-        "pricePerMonth": "Hinta per kuukausi (EUR-senttiä)",
+        "signupThreshold": "Ilmoittautumisraja aloitukseen",
+        "pricePerSession": "Hinta per kerta (EUR)",
+        "pricePerMonth": "Hinta per kuukausi (EUR)",
         "refundWindow": "Palautusikkuna (päivää ennen alkua)",
-        "registrationOpensAt": "Ilmoittautuminen alkaa (valinnainen)"
+        "registrationOpensAt": "Ilmoittautuminen alkaa (valinnainen)",
+        "makeVisible": "Näytä vanhemmille heti"
       },
       "placeholders": {
         "selectTopic": "Valitse aihe",
         "selectSite": "Valitse toimipiste",
         "selectMunicipality": "Valitse kunta"
+      },
+      "topicKinds": {
+        "game": "Pelit",
+        "subject": "Aineet"
+      },
+      "locationPicker": {
+        "searchPlaceholder": "Hae maan, alueen, kunnan tai toimipisteen mukaan…",
+        "clearSearch": "Tyhjennä haku",
+        "noResults": "Hakuehdolla \"{query}\" ei löytynyt sijainteja.",
+        "hintSite": "Valitse toimipiste. Luo uusia osoitteessa /admin/locations.",
+        "hintJurisdiction": "Valitse maa, alue tai kunta. Verkkotuotteilla ei ole fyysistä toimipistettä.",
+        "change": "Vaihda",
+        "cancel": "Peruuta",
+        "pick": "Valitse",
+        "noVenueHint": "Ei fyysistä toimipaikkaa. Vanhemmat, jotka selaavat alueella {name} — tai missä tahansa sen sisällä — näkevät tämän tuotteen.",
+        "noSitesYet": "ei vielä toimipisteitä",
+        "memberNotesLabel": "Jäsenille näkyvät tiedot",
+        "memberNotesHint": "Näkyvät vanhemmille ja pelaajille tuotesivulla.",
+        "staffNotesLabel": "Henkilökunnan tiedot (vain ylläpitäjä + Gedu)",
+        "staffNotesHint": "Ei koskaan näytetä vanhemmille tai pelaajille.",
+        "addressLabel": "Osoite",
+        "noMemberNotes": "Ei jäsenille näkyviä tietoja tälle toimipisteelle.",
+        "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle.",
+        "editInLocations": "Muokkaa kohteessa /admin/locations."
+      },
+      "pricing": {
+        "currencyPickerLabel": "Valuutta",
+        "fxSuggested": "Ehdotus tämän päivän EUR-kurssilla ({rate}). Muokkaa halutessasi.",
+        "fxUnavailable": "Valuuttakurssia ei saatu haettua — syötä manuaalisesti.",
+        "bundleHeading": "Mitä vanhemmat maksavat paketeista",
+        "bundleSingle": "Yksittäinen kerta",
+        "bundleMulti": "{size} kertaa (säästö {discount}%)",
+        "subHeading": "Mitä vanhemmat maksavat tilauksista",
+        "subMonthly": "Kuukausittain",
+        "subQuarterly": "Neljännesvuosittain (säästö {discount}%)",
+        "subYearly": "Vuosittain (säästö {discount}%)"
+      },
+      "startModes": {
+        "label": "Miten tämä alkaa?",
+        "date": "Tiettynä päivänä",
+        "date_and_threshold": "Tiettynä päivänä, jos tarpeeksi ilmoittautuu",
+        "threshold": "Kun tarpeeksi pelaajia on ilmoittautunut",
+        "dateDescription": "Alkaa valittuna päivänä riippumatta ilmoittautuneiden määrästä.",
+        "date_and_thresholdDescription": "Suunniteltu valitulle päivälle, mutta alkaa vain jos riittävästi vanhempia ilmoittautuu ajoissa. Muussa tapauksessa perut sen ja vanhemmille palautetaan automaattisesti.",
+        "thresholdDescription": "Ei kiinteää alkupäivää. Valitset ensimmäisen tapaamisen päivän, kun tarpeeksi vanhempia on ilmoittautunut — vanhemmat näkevät laskurin ja tietävät, että otat yhteyttä."
       },
       "hints": {
         "noTopics": "Ei vielä aiheita. Lisää vähintään yksi topics_v2-tauluun ennen tuotteiden luomista.",
@@ -263,7 +311,7 @@
         "eventWeekdayDerived": "Tapahtuman viikonpäivä päätellään automaattisesti päivämäärästä.",
         "holidaySkips": "Kalenterin lomapäivät ohitetaan.",
         "registrationOpensHint": "Jätä tyhjäksi, jos ilmoittautuminen alkaa heti julkaisun jälkeen.",
-        "draftPublishLater": "Tuote luodaan luonnoksena ja piilotettuna. Julkaise muokkaussivulta, kun tuote on valmis."
+        "visibleHint": "Näkyvät tuotteet näkyvät vanhempien selaussivuilla. Jätä valitsematta pitääksesi luonnoksena."
       },
       "errors": {
         "nameRequired": "Nimi vaaditaan",
@@ -279,8 +327,9 @@
         "startDateRequired": "Alkupäivä vaaditaan",
         "endDateRequired": "Loppupäivä vaaditaan",
         "seatCountInvalid": "Paikkamäärän on oltava positiivinen kokonaisluku",
-        "priceSessionInvalid": "Hinta per kerta: ei-negatiivinen kokonaisluku (senttiä)",
-        "priceMonthInvalid": "Hinta per kuukausi: ei-negatiivinen kokonaisluku (senttiä)",
+        "priceSessionInvalid": "Hinta per kerta: ei-negatiivinen luku ({currency})",
+        "priceMonthInvalid": "Hinta per kuukausi: ei-negatiivinen luku ({currency})",
+        "thresholdInvalid": "Ilmoittautumisrajan on oltava positiivinen kokonaisluku",
         "createFailed": "Tuotteen luonti epäonnistui"
       },
       "actions": {

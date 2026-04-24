@@ -218,7 +218,8 @@
         "location": "Plats",
         "when": "När",
         "billing": "Kapacitet och fakturering",
-        "registration": "Registrering"
+        "registration": "Registrering",
+        "visibility": "Synlighet"
       },
       "labels": {
         "name": "Namn",
@@ -239,22 +240,69 @@
         "endDateOptional": "Slutdatum (valfritt)",
         "schedule": "Schema",
         "holidayCalendars": "Lovkalendrar",
+        "holidayNoUpcoming": "Inga kommande datum — denna kalender behöver datum innan den är användbar.",
         "pricing": "Prissättning",
         "free": "Gratis",
         "paid": "Betalt",
         "seatCount": "Antal platser",
         "seatCountOptionalFree": "Antal platser (valfritt för gratis)",
         "waitlistToggle": "Aktivera väntelista när full",
-        "signupThreshold": "Antal anmälningar för att starta (valfritt)",
-        "pricePerSession": "Pris per tillfälle (EUR-cent)",
-        "pricePerMonth": "Pris per månad (EUR-cent)",
+        "signupThreshold": "Antal anmälningar för att starta",
+        "pricePerSession": "Pris per tillfälle (EUR)",
+        "pricePerMonth": "Pris per månad (EUR)",
         "refundWindow": "Återbetalningsfönster (dagar före start)",
-        "registrationOpensAt": "Registrering öppnar (valfritt)"
+        "registrationOpensAt": "Registrering öppnar (valfritt)",
+        "makeVisible": "Visa för föräldrar nu"
       },
       "placeholders": {
         "selectTopic": "Välj ett ämne",
         "selectSite": "Välj en lokal",
         "selectMunicipality": "Välj en kommun"
+      },
+      "topicKinds": {
+        "game": "Spel",
+        "subject": "Ämnen"
+      },
+      "locationPicker": {
+        "searchPlaceholder": "Sök efter land, region, kommun eller lokal…",
+        "clearSearch": "Rensa sökning",
+        "noResults": "Inga platser matchar \"{query}\".",
+        "hintSite": "Välj en lokal. Skapa nya i /admin/locations.",
+        "hintJurisdiction": "Välj ett land, en region eller en kommun. Onlineprodukter har ingen fysisk lokal.",
+        "change": "Ändra",
+        "cancel": "Avbryt",
+        "pick": "Välj",
+        "noVenueHint": "Ingen fysisk lokal. Föräldrar som söker i {name} — eller i ett mindre område inom det — ser denna produkt.",
+        "noSitesYet": "inga lokaler ännu",
+        "memberNotesLabel": "Medlemssynliga anteckningar",
+        "memberNotesHint": "Visas för föräldrar och spelare på produktsidan.",
+        "staffNotesLabel": "Personalanteckningar (endast admin + Gedu)",
+        "staffNotesHint": "Visas aldrig för föräldrar eller spelare.",
+        "addressLabel": "Adress",
+        "noMemberNotes": "Inga medlemssynliga anteckningar för denna lokal.",
+        "noStaffNotes": "Inga personalanteckningar för denna lokal.",
+        "editInLocations": "Redigera i /admin/locations."
+      },
+      "pricing": {
+        "currencyPickerLabel": "Valuta",
+        "fxSuggested": "Förslag från dagens EUR-kurs ({rate}). Redigera vid behov.",
+        "fxUnavailable": "Kunde inte hämta dagens valutakurs — ange manuellt.",
+        "bundleHeading": "Vad föräldrar betalar för paket",
+        "bundleSingle": "Ett tillfälle",
+        "bundleMulti": "{size} tillfällen (spara {discount}%)",
+        "subHeading": "Vad föräldrar betalar för prenumerationer",
+        "subMonthly": "Månadsvis",
+        "subQuarterly": "Kvartalsvis (spara {discount}%)",
+        "subYearly": "Årligen (spara {discount}%)"
+      },
+      "startModes": {
+        "label": "Hur startar detta?",
+        "date": "På ett specifikt datum",
+        "date_and_threshold": "På ett specifikt datum, endast om tillräckligt många anmäler sig",
+        "threshold": "När tillräckligt många spelare har anmält sig",
+        "dateDescription": "Körs på det valda datumet, oavsett hur många föräldrar som anmäler sig.",
+        "date_and_thresholdDescription": "Schemalagd för det valda datumet, men körs bara om tillräckligt många föräldrar anmäler sig i tid. Annars ställer du in den och föräldrar återbetalas automatiskt.",
+        "thresholdDescription": "Inget fast startdatum. Du väljer första tillfället när tillräckligt många föräldrar anmält sig — föräldrar ser en räknare och vet att du kontaktar dem."
       },
       "hints": {
         "noTopics": "Inga ämnen än. Lägg till minst ett i topics_v2 innan du skapar produkter.",
@@ -263,7 +311,7 @@
         "eventWeekdayDerived": "Evenemangets veckodag härleds automatiskt från datumet.",
         "holidaySkips": "Tillfällen på kalenderns lovdagar hoppas över.",
         "registrationOpensHint": "Lämna tomt för att acceptera anmälningar direkt när publicerat.",
-        "draftPublishLater": "Produkter skapas som utkast och är dolda. Publicera från redigeringssidan när produkten är klar."
+        "visibleHint": "Synliga produkter visas på föräldrarnas bläddringssidor. Lämna oförkryssat för att hålla som utkast."
       },
       "errors": {
         "nameRequired": "Namn krävs",
@@ -279,8 +327,9 @@
         "startDateRequired": "Startdatum krävs",
         "endDateRequired": "Slutdatum krävs",
         "seatCountInvalid": "Antal platser måste vara ett positivt heltal",
-        "priceSessionInvalid": "Pris per tillfälle måste vara ett icke-negativt heltal (cent)",
-        "priceMonthInvalid": "Pris per månad måste vara ett icke-negativt heltal (cent)",
+        "priceSessionInvalid": "Pris per tillfälle måste vara ett icke-negativt tal ({currency})",
+        "priceMonthInvalid": "Pris per månad måste vara ett icke-negativt tal ({currency})",
+        "thresholdInvalid": "Antal anmälningar för att starta måste vara ett positivt heltal",
         "createFailed": "Det gick inte att skapa produkten"
       },
       "actions": {

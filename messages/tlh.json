@@ -266,7 +266,8 @@
         "location": "Daq",
         "when": "poH",
         "billing": "pa' je Huch",
-        "registration": "ghItlh"
+        "registration": "ghItlh",
+        "visibility": "leghlu'"
       },
       "labels": {
         "name": "pong",
@@ -287,22 +288,69 @@
         "endDateOptional": "jaj van (vItlhutlh)",
         "schedule": "poH",
         "holidayCalendars": "jajmey Do'",
+        "holidayNoUpcoming": "jaj pagh — jaj poQ.",
         "pricing": "Huch",
         "free": "Huch pagh",
         "paid": "Huch",
         "seatCount": "pa' mI'",
         "seatCountOptionalFree": "pa' mI' (Huch pagh)",
         "waitlistToggle": "poQ tetlh teb",
-        "signupThreshold": "ghItlh mI' taghmeH (vItlhutlh)",
-        "pricePerSession": "Huch per qaStaHvIS (EUR-cent)",
-        "pricePerMonth": "Huch per jar (EUR-cent)",
+        "signupThreshold": "ghItlh mI' taghmeH",
+        "pricePerSession": "Huch per qaStaHvIS (EUR)",
+        "pricePerMonth": "Huch per jar (EUR)",
         "refundWindow": "Huch cheghmoH (jaj tagh pagh)",
-        "registrationOpensAt": "ghItlh tagh (vItlhutlh)"
+        "registrationOpensAt": "ghItlh tagh (vItlhutlh)",
+        "makeVisible": "vavmey 'e' yIcha'"
       },
       "placeholders": {
         "selectTopic": "mu'meH yIwIv",
         "selectSite": "Daq yIwIv",
         "selectMunicipality": "veng yIwIv"
+      },
+      "topicKinds": {
+        "game": "QujmeH",
+        "subject": "paQDI'norgh"
+      },
+      "locationPicker": {
+        "searchPlaceholder": "Sepjup, Sep, veng, Daq yInej…",
+        "clearSearch": "nejmey yIteq",
+        "noResults": "\"{query}\" Daq pagh.",
+        "hintSite": "Daq yIwIv. /admin/locations Daq chu' yIchenmoH.",
+        "hintJurisdiction": "Sepjup, Sep, veng yIwIv. rurmey De' Daq ghajbe'.",
+        "change": "choH",
+        "cancel": "pegh",
+        "pick": "wIv",
+        "noVenueHint": "Daq pagh. {name} vavmey — qoj qo'Daq Sovmey — De' cha'.",
+        "noSitesYet": "Daq pagh",
+        "memberNotesLabel": "ghom De' (vavmey je ghItlh)",
+        "memberNotesHint": "tuq 'ej ghom lu'leghlu'.",
+        "staffNotesLabel": "Qu' De' (ra'wI' je Gedu neH)",
+        "staffNotesHint": "vavmey 'ej ghom luleghbe'.",
+        "addressLabel": "Daq mIw",
+        "noMemberNotes": "ghom De' pagh.",
+        "noStaffNotes": "Qu' De' pagh.",
+        "editInLocations": "/admin/locations Daq yIchoH."
+      },
+      "pricing": {
+        "currencyPickerLabel": "Huch mIw",
+        "fxSuggested": "DaHjaj EUR mI' vo' ({rate}). yIchoH DaneHchugh.",
+        "fxUnavailable": "DaHjaj Huch mI' Suqmeylu'be' — yIngu'.",
+        "bundleHeading": "vavmey Huch DIghaj",
+        "bundleSingle": "wa' qaStaHvIS",
+        "bundleMulti": "{size} qaStaHvISmey ({discount}% cheghlu')",
+        "subHeading": "vavmey Huch ghItlhmey",
+        "subMonthly": "jar",
+        "subQuarterly": "wejmaH jaj ({discount}% cheghlu')",
+        "subYearly": "DIS ({discount}% cheghlu')"
+      },
+      "startModes": {
+        "label": "chay' tagh?",
+        "date": "jaj tagh vIngu'",
+        "date_and_threshold": "jaj tagh vIngu', chaq law' ghItlh",
+        "threshold": "qaStaHvIS law' ghItlh",
+        "dateDescription": "jaj tagh qaS, ghItlh mI' Sov pagh.",
+        "date_and_thresholdDescription": "jaj tagh vIngu' 'ach ghItlh law' neH qaS. ghoS Huch chegh lu'.",
+        "thresholdDescription": "jaj tagh pagh. ghItlh law' ghoS, qaSlaHmey jaj tagh yIngu'."
       },
       "hints": {
         "noTopics": "mu'meH pagh. topics_v2 yItogh.",
@@ -311,7 +359,7 @@
         "eventWeekdayDerived": "Qu' jaj tIq jaj vo' yItlhutlh.",
         "holidaySkips": "jajmey Do' qaStaHvIS qaS pagh.",
         "registrationOpensHint": "chIm yIdaj, ghItlh DaH tagh.",
-        "draftPublishLater": "De' chu' lu'chu' 'ej So'lu'. chogh yIchoH ghItlh yIghItlhtaH."
+        "visibleHint": "De' cha' vavmey Qul lop. chIm chu'Ha' 'oH."
       },
       "errors": {
         "nameRequired": "pong poQ",
@@ -327,8 +375,9 @@
         "startDateRequired": "jaj tagh poQ",
         "endDateRequired": "jaj van poQ",
         "seatCountInvalid": "pa' mI' positiv 'oHnIS",
-        "priceSessionInvalid": "Huch per qaStaHvIS mI' 'oHnIS (cent)",
-        "priceMonthInvalid": "Huch per jar mI' 'oHnIS (cent)",
+        "priceSessionInvalid": "Huch per qaStaHvIS mI' 'oHnIS ({currency})",
+        "priceMonthInvalid": "Huch per jar mI' 'oHnIS ({currency})",
+        "thresholdInvalid": "ghItlh mI' taghmeH positiv 'oHnIS",
         "createFailed": "De' chu' Qap pagh"
       },
       "actions": {
