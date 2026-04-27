@@ -294,7 +294,7 @@
           "event": "Evenemang kan vara gratis (med eller utan platsgräns) eller förbetalda."
         },
         "registration": "Registreringstid",
-        "registrationDescription": "Valfritt. Om du sätter en tid ser föräldrar en nedräkning till den. Annars är anmälan öppen direkt.",
+        "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
         "visibility": "Synlighet",
         "visibilityDescription": "Bestäm om föräldrar kan se detta medan du fortfarande arbetar på det."
       },
@@ -334,7 +334,6 @@
         "noSeatLimit": "Ingen platsgräns",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
         "signupThreshold": "Antal anmälningar för att starta",
-        "registrationOpensAt": "Registrering öppnar",
         "makeVisible": "Synlig för föräldrar"
       },
       "placeholders": {
@@ -417,6 +416,13 @@
         "date_and_thresholdDescription": "Schemalagd för det valda datumet, men körs bara om tillräckligt många föräldrar anmäler sig i tid. Annars ställer du in den och föräldrar återbetalas automatiskt.",
         "thresholdDescription": "Inget fast startdatum. Du väljer första tillfället när tillräckligt många föräldrar anmält sig — föräldrar ser en räknare och vet att du kontaktar dem."
       },
+      "registrationModes": {
+        "label": "När öppnar anmälan?",
+        "immediately": "Direkt",
+        "immediatelyDescription": "Föräldrar kan anmäla sig så snart produkten blir synlig.",
+        "scheduled": "Vid en specifik tid",
+        "scheduledDescription": "Föräldrar ser en nedräkning till dess. Användbart för biljettsläpp-liknande lanseringar."
+      },
       "hints": {
         "noTopics": "Inga ämnen än. Lägg till ett med + -knappen bredvid väljaren.",
         "topicHint": "Det primära ämnet — ett per produkt. Vad tillfällena faktiskt handlar om.",
@@ -446,7 +452,6 @@
         "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
         "seatHint": "När fullt går nya anmälningar till väntelistan.",
         "seatCanUncap": "Gratis evenemang behöver ingen platsgräns (t.ex. ett webbinarium, en offentlig promenad).",
-        "registrationOpensHint": "Lokal tid i tidszonen Europe/Helsinki. Lämna tomt för att acceptera anmälningar direkt när publicerat.",
         "visibleHint": "Avmarkera för att hålla produkten dold medan du fortfarande arbetar på den. Slå på när du är redo att föräldrar ska se den."
       },
       "errors": {
@@ -467,6 +472,7 @@
         "priceSessionInvalid": "Pris per tillfälle måste vara ett icke-negativt tal ({currency})",
         "priceMonthInvalid": "Pris per månad måste vara ett icke-negativt tal ({currency})",
         "thresholdInvalid": "Antal anmälningar för att starta måste vara ett positivt heltal",
+        "registrationOpensDateRequired": "Välj ett datum då anmälan ska öppnas",
         "createFailed": "Det gick inte att skapa produkten"
       },
       "actions": {

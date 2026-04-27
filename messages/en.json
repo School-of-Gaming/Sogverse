@@ -294,7 +294,7 @@
           "event": "Events can be free (with or without a seat limit) or paid upfront."
         },
         "registration": "Registration timing",
-        "registrationDescription": "Optional. If you set a time, parents see a countdown until then. Otherwise signup is open right away.",
+        "registrationDescription": "Pick when parents can start signing up.",
         "visibility": "Visibility",
         "visibilityDescription": "Control whether parents can see this while you're still setting it up."
       },
@@ -334,7 +334,6 @@
         "noSeatLimit": "No seat limit",
         "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "registrationOpensAt": "Registration opens at",
         "makeVisible": "Visible to parents"
       },
       "placeholders": {
@@ -417,6 +416,13 @@
         "date_and_thresholdDescription": "Scheduled for the selected date, but only runs if enough parents sign up in time. Otherwise you cancel it and parents are refunded automatically.",
         "thresholdDescription": "No fixed start date. You pick the first session date once enough parents have signed up — parents see a live counter and know you'll contact them when it's ready."
       },
+      "registrationModes": {
+        "label": "When does registration open?",
+        "immediately": "Right away",
+        "immediatelyDescription": "Parents can sign up the moment this product becomes visible.",
+        "scheduled": "At a specific time",
+        "scheduledDescription": "Parents see a countdown until then. Useful for ticket-drop style launches."
+      },
       "hints": {
         "noTopics": "No topics yet. Add one with the + button next to the picker.",
         "topicHint": "The primary subject — one per product. What the sessions are actually about.",
@@ -446,7 +452,6 @@
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
         "seatHint": "When full, new signups go to the waitlist.",
         "seatCanUncap": "Free events can have no seat limit (e.g. a webinar, a public walk).",
-        "registrationOpensHint": "Local time in Europe/Helsinki. Leave blank to accept signups immediately once published.",
         "visibleHint": "Uncheck to keep the product hidden while you're still setting it up. Turn it on when you're ready for parents to see it."
       },
       "errors": {
@@ -467,6 +472,7 @@
         "priceSessionInvalid": "Price per session must be a non-negative number ({currency})",
         "priceMonthInvalid": "Price per month must be a non-negative number ({currency})",
         "thresholdInvalid": "Signups needed to start must be a positive integer",
+        "registrationOpensDateRequired": "Pick a date when registration should open",
         "createFailed": "Failed to create product"
       },
       "actions": {

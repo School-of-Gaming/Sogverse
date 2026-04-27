@@ -342,7 +342,7 @@
           "event": "Qu'mey Huch pagh (pa' mI' Sub qoj pagh) qoj Huch nob 'oHlaH."
         },
         "registration": "ghItlh poH",
-        "registrationDescription": "vItlhutlh. poH ngu'chugh, vavmey loS DIS lulegh. ghaytan ghItlh DaH tagh.",
+        "registrationDescription": "ghItlh tagh poH yIwIv.",
         "visibility": "leghlu'",
         "visibilityDescription": "DochlIj DachenmoHtaHvIS, vavmey legh 'e' yIqotlh."
       },
@@ -382,7 +382,6 @@
         "noSeatLimit": "pa' mI' Sub pagh",
         "waitlistToggle": "pa' tebDI', tetlh teb yIchu'",
         "signupThreshold": "ghItlh mI' taghmeH",
-        "registrationOpensAt": "ghItlh tagh",
         "makeVisible": "vavmey legh"
       },
       "placeholders": {
@@ -465,6 +464,13 @@
         "date_and_thresholdDescription": "jaj tagh vIngu' 'ach ghItlh law' neH qaS. ghoS Huch chegh lu'.",
         "thresholdDescription": "jaj tagh pagh. ghItlh law' ghoS, qaSlaHmey jaj tagh yIngu'."
       },
+      "registrationModes": {
+        "label": "ghaytan ghItlh tagh?",
+        "immediately": "DaH",
+        "immediatelyDescription": "DochlIj leghlu'DI', vavmey ghItlh laH.",
+        "scheduled": "poH ngu'lu'pu'bogh",
+        "scheduledDescription": "vavmey ghItlh tagh DIS lulegh."
+      },
       "hints": {
         "noTopics": "mu'meH pagh. + chu'wI' lo'.",
         "topicHint": "mu'meH pIn — wa' per De'. Doch qaStaHvISmey lop.",
@@ -494,7 +500,6 @@
         "pricingUpfront": "ghItlh wa' Huch lo'. poH nab Sov pagh, Huch rapchu'.",
         "seatHint": "tebDI', ghItlh chu'mey tetlh teb Daq jaH.",
         "seatCanUncap": "Huch pagh Qu' pa' mI' Sub poQbe' (e.g. webinar, ghom yIt).",
-        "registrationOpensHint": "Europe/Helsinki Daq poH. chIm yIdaj, ghItlh DaH tagh.",
         "visibleHint": "DochlIj DachenmoHtaHvIS, So'lu' yIchu'Ha'. naDevDaq vavmey lulegh, yIchu'."
       },
       "errors": {
@@ -515,6 +520,7 @@
         "priceSessionInvalid": "Huch per qaStaHvIS mI' 'oHnIS ({currency})",
         "priceMonthInvalid": "Huch per jar mI' 'oHnIS ({currency})",
         "thresholdInvalid": "ghItlh mI' taghmeH positiv 'oHnIS",
+        "registrationOpensDateRequired": "ghItlh tagh jaj yIwIv",
         "createFailed": "De' chu' Qap pagh"
       },
       "actions": {

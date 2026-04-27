@@ -294,7 +294,7 @@
           "event": "Tapahtumat voivat olla ilmaisia (paikkarajalla tai ilman) tai etukäteen maksettuja."
         },
         "registration": "Ilmoittautumisaika",
-        "registrationDescription": "Valinnainen. Jos asetat ajan, vanhemmat näkevät lähtölaskennan siihen asti. Muuten ilmo on heti auki.",
+        "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
         "visibility": "Näkyvyys",
         "visibilityDescription": "Hallitse, näkevätkö vanhemmat tämän vielä tekeillä olevana."
       },
@@ -334,7 +334,6 @@
         "noSeatLimit": "Ei paikkarajaa",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
         "signupThreshold": "Ilmoittautumisraja aloitukseen",
-        "registrationOpensAt": "Ilmoittautuminen alkaa",
         "makeVisible": "Näkyy vanhemmille"
       },
       "placeholders": {
@@ -417,6 +416,13 @@
         "date_and_thresholdDescription": "Suunniteltu valitulle päivälle, mutta alkaa vain jos riittävästi vanhempia ilmoittautuu ajoissa. Muussa tapauksessa perut sen ja vanhemmille palautetaan automaattisesti.",
         "thresholdDescription": "Ei kiinteää alkupäivää. Valitset ensimmäisen tapaamisen päivän, kun tarpeeksi vanhempia on ilmoittautunut — vanhemmat näkevät laskurin ja tietävät, että otat yhteyttä."
       },
+      "registrationModes": {
+        "label": "Milloin ilmoittautuminen avautuu?",
+        "immediately": "Heti",
+        "immediatelyDescription": "Vanhemmat voivat ilmoittautua heti, kun tuote tulee näkyviin.",
+        "scheduled": "Tiettyyn aikaan",
+        "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
+      },
       "hints": {
         "noTopics": "Ei vielä aiheita. Lisää uusi valitsimen vieressä olevalla + -painikkeella.",
         "topicHint": "Pääaihe — yksi per tuote. Mistä kerrat oikeasti kertovat.",
@@ -446,7 +452,6 @@
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
         "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
         "seatCanUncap": "Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa (esim. webinaari, julkinen kävely).",
-        "registrationOpensHint": "Paikallinen aika aikavyöhykkeellä Europe/Helsinki. Jätä tyhjäksi, jos ilmoittautuminen alkaa heti julkaisun jälkeen.",
         "visibleHint": "Poista valinta pitääksesi tuote piilossa, kun se on vielä tekeillä. Laita päälle, kun olet valmis vanhempien näkemään sen."
       },
       "errors": {
@@ -467,6 +472,7 @@
         "priceSessionInvalid": "Hinta per kerta: ei-negatiivinen luku ({currency})",
         "priceMonthInvalid": "Hinta per kuukausi: ei-negatiivinen luku ({currency})",
         "thresholdInvalid": "Ilmoittautumisrajan on oltava positiivinen kokonaisluku",
+        "registrationOpensDateRequired": "Valitse päivämäärä, jolloin ilmoittautuminen avautuu",
         "createFailed": "Tuotteen luonti epäonnistui"
       },
       "actions": {
