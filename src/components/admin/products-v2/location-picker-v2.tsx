@@ -22,6 +22,7 @@ import {
 } from "@/components/admin/location-form-dialog";
 import { getChildLevel, resolveLabels } from "@/lib/constants";
 import type { Location } from "@/types";
+import { SiteNotesEditor } from "./site-notes-editor";
 
 type PickableMode = "site" | "jurisdiction";
 
@@ -160,7 +161,6 @@ export function LocationPickerV2({
     );
   }
 
-  // Tree browser.
   function pickNode(node: LocationNode) {
     onChange(node.id);
     setBrowsing(false);
@@ -192,6 +192,7 @@ export function LocationPickerV2({
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("searchPlaceholder")}
           className="pl-10"
+          autoFocus={browsing}
         />
         {query && (
           <button
@@ -428,7 +429,6 @@ function childCountLabel(
   if (!childLabels) return null;
   const count = node.children.length;
   if (count === 0) {
-    // "no Sites yet" etc. — nudges admin that this parent is empty.
     return `no ${childLabels.pluralLabel.toLowerCase()} yet`;
   }
   return `${count} ${count === 1 ? childLabels.label : childLabels.pluralLabel}`;
@@ -496,51 +496,17 @@ function SelectedSiteCard({
 
       {isSite && (
         <>
-          {/* Member-visible notes: address + notes from site_details_v2. */}
-          <div className="rounded-md border border-input bg-background p-3 text-sm">
-            <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {t("memberNotesLabel")}
-            </div>
-            {details?.member?.address ? (
-              <div className="mt-1">
-                <span className="text-xs font-medium text-muted-foreground">
-                  {t("addressLabel")}:
-                </span>{" "}
-                <span>{details.member.address}</span>
-              </div>
-            ) : null}
-            {details?.member?.notes ? (
-              <p className="mt-1 whitespace-pre-wrap">
-                {details.member.notes}
-              </p>
-            ) : null}
-            {!details?.member?.address && !details?.member?.notes && (
-              <p className="mt-1 text-muted-foreground">
-                {t("noMemberNotes")}
-              </p>
-            )}
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t("memberNotesHint")}
-            </p>
-          </div>
-
-          {/* Staff-only notes: site_staff_details_v2. RLS returns null for
-              non-admin/Gedu callers. */}
-          <div className="rounded-md border border-input bg-background p-3 text-sm">
-            <div className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              {t("staffNotesLabel")}
-            </div>
-            {details?.staff?.notes ? (
-              <p className="mt-1 whitespace-pre-wrap">{details.staff.notes}</p>
-            ) : (
-              <p className="mt-1 text-muted-foreground">
-                {t("noStaffNotes")}
-              </p>
-            )}
-            <p className="mt-2 text-xs text-muted-foreground">
-              {t("staffNotesHint")}
-            </p>
-          </div>
+          <SiteNotesEditor
+            locationId={selected.id}
+            tier="member"
+            address={details?.member?.address ?? null}
+            notes={details?.member?.notes ?? null}
+          />
+          <SiteNotesEditor
+            locationId={selected.id}
+            tier="staff"
+            notes={details?.staff?.notes ?? null}
+          />
         </>
       )}
     </div>

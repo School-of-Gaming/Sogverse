@@ -23,13 +23,21 @@ export type BillingOption =
   | { mode: "external_contract"; required: true }                       // municipality_club
   | { mode: "free_or_paid" };                                           // event
 
+// Pricing shape — drives the Capacity & billing card. Only consumer clubs
+// run on a recurring per-session model with a subscription option, so they
+// need both `price_per_session` AND `price_per_month`. Camps and events are
+// upfront-only, so they collect a single total. Municipality clubs are
+// invoiced off-site; the form shows an info card instead of a price input.
+export type PricingShape = "session_and_month" | "upfront_total" | "external" | "none";
+
 export interface ProductTypeConfig {
   productType: ProductTypeV2;
-  /** i18n key under admin.productsV2.types (label + plural) */
+  /** i18n key under admin.productsV2.types (label + plural + tagline + blurb + traits) */
   i18nKey: "consumerClub" | "municipalityClub" | "camp" | "event";
   routeSlug: string; // "consumer-clubs"
   scheduleShape: ScheduleShape;
   billing: BillingOption;
+  pricingShape: PricingShape;
   allowsRemote: boolean;
   allowsInPerson: boolean;
   requiresMunicipalityWhenOnline: boolean;
@@ -47,6 +55,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     routeSlug: "consumer-clubs",
     scheduleShape: "weekly_ongoing",
     billing: { mode: "paid", required: true },
+    pricingShape: "session_and_month",
     allowsRemote: true,
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
@@ -61,6 +70,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     routeSlug: "municipality-clubs",
     scheduleShape: "weekly_bounded",
     billing: { mode: "external_contract", required: true },
+    pricingShape: "external",
     allowsRemote: true,
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: true,
@@ -75,6 +85,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     routeSlug: "camps",
     scheduleShape: "multi_day_bounded",
     billing: { mode: "paid", required: true },
+    pricingShape: "upfront_total",
     allowsRemote: true,
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
@@ -87,6 +98,9 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     productType: "event",
     i18nKey: "event",
     routeSlug: "events",
+    // Events default to free; switching to paid uses upfront_total. The
+    // pricing card only renders when billing_mode === "paid".
+    pricingShape: "upfront_total",
     scheduleShape: "single_date",
     billing: { mode: "free_or_paid" },
     allowsRemote: true,

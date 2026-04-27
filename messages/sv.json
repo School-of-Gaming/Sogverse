@@ -195,10 +195,54 @@
     },
     "productsV2": {
       "types": {
-        "consumerClub": { "label": "Konsumentklubb", "plural": "Konsumentklubbar" },
-        "municipalityClub": { "label": "Kommunklubb", "plural": "Kommunklubbar" },
-        "camp": { "label": "Läger", "plural": "Läger" },
-        "event": { "label": "Evenemang", "plural": "Evenemang" }
+        "consumerClub": {
+          "label": "Konsumentklubb",
+          "plural": "Konsumentklubbar",
+          "tagline": "Veckovis, pågående, föräldrar betalar per tillfälle.",
+          "blurb": "Föräldrar anmäler sitt barn och betalar per tillfälle. Klubbar pågår vecka efter vecka utan slutdatum, om du inte sätter ett.",
+          "traits": {
+            "1": "Veckovis · en dag i veckan",
+            "2": "Inget slutdatum som standard",
+            "3": "Föräldrar betalar per tillfälle, valfri prenumeration",
+            "4": "Fast antal platser, med väntelista"
+          }
+        },
+        "municipalityClub": {
+          "label": "Kommunklubb",
+          "plural": "Kommunklubbar",
+          "tagline": "Terminsbaserad, kommunbetald, biljettsläpps­anmälan.",
+          "blurb": "En kommun eller skola betalar i förskott för en serie platser. Föräldrar anmäler sitt barn gratis; anmälningsfönstret öppnar vid en specifik tidpunkt som ett biljettsläpp.",
+          "traits": {
+            "1": "Veckovis · en dag i veckan",
+            "2": "Pågår mellan ett start- och slutdatum",
+            "3": "School of Gaming fakturerar kommunen",
+            "4": "Fast antal platser, med väntelista"
+          }
+        },
+        "camp": {
+          "label": "Läger",
+          "plural": "Läger",
+          "tagline": "Flera dagar under en bestämd period. Föräldrar betalar i förskott.",
+          "blurb": "Ett läger pågår över flera dagar i veckan under en bestämd period — när som helst på året. Föräldrar betalar hela priset en gång vid anmälan. Återbetalas fram till en gräns innan lägret startar.",
+          "traits": {
+            "1": "Flera dagar i veckan (var och en med egen tid)",
+            "2": "Pågår mellan ett start- och slutdatum",
+            "3": "Föräldrar betalar i förskott",
+            "4": "Återbetalas innan lägret startar"
+          }
+        },
+        "event": {
+          "label": "Evenemang",
+          "plural": "Evenemang",
+          "tagline": "Ett enda datum. Gratis eller en engångsavgift.",
+          "blurb": "Ett enstaka evenemang ett specifikt datum. Bra för demodagar, gemenskaps­promenader, webbinarier, turneringar. Gratis evenemang behöver ingen platsgräns; betalda har alltid en.",
+          "traits": {
+            "1": "Ett datum, en starttid",
+            "2": "Gratis eller förbetalt",
+            "3": "Gratis evenemang behöver ingen platsgräns",
+            "4": "Bra för demos, webbinarier, turneringar"
+          }
+        }
       },
       "list": {
         "subtitle": "Hantera {plural} som administratörer har skapat.",
@@ -210,58 +254,111 @@
       },
       "newPage": {
         "back": "Tillbaka till {plural}",
+        "kicker": "Nytt {label}",
         "title": "Nytt {label}"
       },
       "sections": {
         "identity": "Identitet",
+        "identityDescription": "Vad det ska heta och vad det handlar om.",
         "audience": "Målgrupp",
-        "location": "Plats",
+        "audienceDescription": "Vem detta är till för.",
+        "where": "Var",
+        "whereDescription": {
+          "consumerClub": "Online eller på plats. Onlineklubbar är öppna för alla — ingen plats behövs. Klubbar på plats körs i en specifik lokal.",
+          "municipalityClub": "Bekostas av en specifik kommun. Onlineklubbar väljer kommunen direkt; klubbar på plats väljer en lokal inom den.",
+          "camp": "Online eller på plats. Onlineläger är öppna för alla — ingen plats behövs. Läger på plats körs i en specifik lokal.",
+          "event": "Online eller på plats. Onlineevenemang är öppna för alla — ingen plats behövs. Evenemang på plats körs i en specifik lokal."
+        },
         "when": "När",
+        "whenDescription": {
+          "consumerClub": "En dag i veckan, en tid. Lämna slutdatumet tomt för en pågående klubb.",
+          "municipalityClub": "En dag i veckan, en tid. Pågår mellan start- och slutdatum.",
+          "camp": "Flera dagar i veckan, var och en med egen starttid och längd.",
+          "event": "Ett enda datum och en starttid."
+        },
+        "groups": "Grupper",
+        "groupsDescription": "Administratörer använder grupper för att organisera deltagare inuti en produkt. Föräldrar ser inga grupper — de ser produkten.",
         "billing": "Kapacitet och fakturering",
-        "registration": "Registrering",
-        "visibility": "Synlighet"
+        "billingDescription": {
+          "consumerClub": "Föräldrar betalar för varje tillfälle barnet deltar. Faktureringen sker automatiskt varje vecka.",
+          "municipalityClub": "School of Gaming fakturerar kommunen direkt. Föräldrar anmäler sitt barn gratis upp till platsgränsen.",
+          "camp": "Föräldrar betalar hela priset en gång vid anmälan. Återbetalas fram till en gräns.",
+          "event": "Evenemang kan vara gratis (med eller utan platsgräns) eller förbetalda."
+        },
+        "registration": "Registreringstid",
+        "registrationDescription": "Valfritt. Om du sätter en tid ser föräldrar en nedräkning till den. Annars är anmälan öppen direkt.",
+        "visibility": "Synlighet",
+        "visibilityDescription": "Bestäm om föräldrar kan se detta medan du fortfarande arbetar på det."
       },
       "labels": {
         "name": "Namn",
         "description": "Beskrivning",
         "topic": "Ämne",
         "tags": "Taggar",
-        "padletUrl": "Padlet-URL (valfri)",
+        "padletUrl": "Padlet-URL",
         "minAge": "Min ålder",
         "maxAge": "Max ålder",
         "spokenLanguage": "Talat språk",
+        "deliveredIn": "Genomförs på",
         "online": "Online",
         "inPerson": "På plats",
-        "municipality": "Kommun",
+        "municipality": "Vilken kommun detta är för",
         "site": "Lokal",
         "startDate": "Startdatum",
         "date": "Datum",
         "endDate": "Slutdatum",
         "endDateOptional": "Slutdatum (valfritt)",
+        "eventDate": "Evenemangsdatum",
+        "seasonEndDate": "Terminens slutdatum",
         "schedule": "Schema",
+        "dayAndTime": "Dag & tid",
+        "daysAndTimes": "Dagar & tider",
+        "time": "Tid",
         "holidayCalendars": "Lovkalendrar",
         "holidayNoUpcoming": "Inga kommande datum — denna kalender behöver datum innan den är användbar.",
-        "pricing": "Prissättning",
+        "pricing": "Pris",
         "free": "Gratis",
         "paid": "Betalt",
+        "billing": "Fakturering",
+        "paidByMunicipality": "Betalas av kommunen",
+        "groupTopicUnder": "Gruppera under:",
         "seatCount": "Antal platser",
-        "seatCountOptionalFree": "Antal platser (valfritt för gratis)",
-        "waitlistToggle": "Aktivera väntelista när full",
+        "noSeatLimit": "Ingen platsgräns",
+        "waitlistToggle": "Aktivera väntelista när platserna är fulla",
         "signupThreshold": "Antal anmälningar för att starta",
-        "pricePerSession": "Pris per tillfälle (EUR)",
-        "pricePerMonth": "Pris per månad (EUR)",
-        "refundWindow": "Återbetalningsfönster (dagar före start)",
-        "registrationOpensAt": "Registrering öppnar (valfritt)",
-        "makeVisible": "Visa för föräldrar nu"
+        "refundCutoff": "Återbetalningsgräns (dagar före start)",
+        "registrationOpensAt": "Registrering öppnar",
+        "makeVisible": "Synlig för föräldrar"
       },
       "placeholders": {
-        "selectTopic": "Välj ett ämne",
+        "selectTopic": "Välj ett ämne…",
         "selectSite": "Välj en lokal",
-        "selectMunicipality": "Välj en kommun"
+        "selectMunicipality": "Välj en kommun",
+        "newTopicName": "Nytt ämne (t.ex. Among Us, Digital balans)",
+        "newTagName": "Taggens namn",
+        "padletUrl": "https://padlet.com/...",
+        "threshold": "t.ex. 8",
+        "noLimit": "Ingen gräns",
+        "name": {
+          "consumerClub": "t.ex. Minecraft Redstone-klubb",
+          "municipalityClub": "t.ex. Tapiola Minecraft-klubb · Vår 2026",
+          "camp": "t.ex. Speldesignläger · Höstlovet",
+          "event": "t.ex. Pokémon GO-promenad · Helsingfors"
+        },
+        "description": {
+          "consumerClub": "Vad som händer varje vecka, vem det är för, vad de lär sig.",
+          "municipalityClub": "På vilken skola, under vilken termin, på vilket språk.",
+          "camp": "Dagar, totalt antal timmar, veckans tema.",
+          "event": "En kort sammanfattning av evenemanget — vad, var, för vem."
+        }
       },
       "topicKinds": {
         "game": "Spel",
         "subject": "Ämnen"
+      },
+      "topicKindSingular": {
+        "game": "Spel",
+        "subject": "Ämne"
       },
       "locationPicker": {
         "searchPlaceholder": "Sök efter land, region, kommun eller lokal…",
@@ -271,23 +368,31 @@
         "hintJurisdiction": "Välj ett land, en region eller en kommun. Onlineprodukter har ingen fysisk lokal.",
         "addCountry": "Lägg till nytt land",
         "change": "Ändra",
+        "edit": "Redigera",
         "cancel": "Avbryt",
         "pick": "Välj",
         "noVenueHint": "Ingen fysisk lokal. Föräldrar som söker i {name} — eller i ett mindre område inom det — ser denna produkt.",
         "noSitesYet": "inga lokaler ännu",
         "memberNotesLabel": "Medlemssynliga anteckningar",
+        "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
+        "memberNotesPlaceholder": "Adressdetaljer, parkering, tillgänglighet — allt föräldrar behöver veta.",
         "memberNotesHint": "Visas för föräldrar och spelare på produktsidan.",
         "staffNotesLabel": "Personalanteckningar (endast admin + Gedu)",
+        "staffNotesFieldLabel": "Endast personal",
+        "staffNotesPlaceholder": "Portkoder, baksidesinformation, rumsnycklar, vem man frågar i receptionen.",
         "staffNotesHint": "Visas aldrig för föräldrar eller spelare.",
         "addressLabel": "Adress",
+        "addressPlaceholder": "Gata, postnummer, ort",
         "noMemberNotes": "Inga medlemssynliga anteckningar för denna lokal.",
-        "noStaffNotes": "Inga personalanteckningar för denna lokal.",
-        "editInLocations": "Redigera i /admin/locations."
+        "noStaffNotes": "Inga personalanteckningar för denna lokal."
       },
       "pricing": {
         "currencyPickerLabel": "Valuta",
         "fxSuggested": "Förslag från dagens EUR-kurs ({rate}). Redigera vid behov.",
         "fxUnavailable": "Kunde inte hämta dagens valutakurs — ange manuellt.",
+        "perSessionLabel": "Pris per tillfälle",
+        "perMonthLabel": "Pris per månad",
+        "totalLabel": "Totalpris",
         "bundleHeading": "Vad föräldrar betalar för paket",
         "bundleSingle": "Ett tillfälle",
         "bundleMulti": "{size} tillfällen (spara {discount}%)",
@@ -306,13 +411,37 @@
         "thresholdDescription": "Inget fast startdatum. Du väljer första tillfället när tillräckligt många föräldrar anmält sig — föräldrar ser en räknare och vet att du kontaktar dem."
       },
       "hints": {
-        "noTopics": "Inga ämnen än. Lägg till minst ett i topics_v2 innan du skapar produkter.",
-        "noLocations": "Inga matchande platser. Skapa en i /admin/locations först.",
-        "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs.",
+        "noTopics": "Inga ämnen än. Lägg till ett med + -knappen bredvid väljaren.",
+        "topicHint": "Det primära ämnet — ett per produkt. Vad tillfällena faktiskt handlar om.",
+        "tagsHint": "Valfritt. Hjälper föräldrar filtrera produkter när de bläddrar.",
+        "padletHint": "Valfritt. Delas med familjer efter att de anmält sig.",
+        "deliveredInHint": "Det primära språk som används under tillfällena.",
+        "noLocations": "Inga matchande platser. Skapa en med + -knappen.",
+        "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
+        "voiceRoomAuto": "Ett röstrum skapas automatiskt för denna produkt.",
+        "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik kommun — den som betalar. Föräldrar från den kommunen (eller mindre område inom den) ser den när de bläddrar.",
+        "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventWeekdayDerived": "Evenemangets veckodag härleds automatiskt från datumet.",
+        "eventSingleDay": "Evenemang äger rum ett enda datum.",
+        "endDateOpt": "Lämna tomt för en pågående klubb utan slutdatum.",
+        "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare \"X av Y behövs\" medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
+        "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
+        "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "holidaySkips": "Tillfällen på kalenderns lovdagar hoppas över.",
-        "registrationOpensHint": "Lämna tomt för att acceptera anmälningar direkt när publicerat.",
-        "visibleHint": "Synliga produkter visas på föräldrarnas bläddringssidor. Lämna oförkryssat för att hålla som utkast."
+        "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
+        "groupsHint": "Lägg till grupper nu om du redan vet hur du vill organisera detta — eller lämna tomt och lägg till senare från produktsidan, när du ser hur många spelare som anmäler sig.",
+        "groupsNotWired": "Gruppgränssnittet finns på plats men är ännu inte kopplat till backend — dina gruppval sparas inte vid skicka. Kommer snart.",
+        "billingHint": "Gratis evenemang behöver ingen platsgräns. Betalda har alltid en.",
+        "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
+        "paidDetail": "Engångsavgift vid anmälan.",
+        "paidByMunicipality": "Ingen kundfakturering inom detta system. School of Gaming fakturerar kommunen direkt.",
+        "pricingPerSession": "Debiteras för varje tillfälle barnet deltar. Månadspriset är vad prenumeranter ser — härleds vecko-/månadsvis från detta tal.",
+        "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
+        "seatHint": "När fullt går nya anmälningar till väntelistan.",
+        "seatCanUncap": "Gratis evenemang behöver ingen platsgräns (t.ex. ett webbinarium, en offentlig promenad).",
+        "refundHint": "Föräldrar kan avboka och få återbetalning upp till så här många dagar före första tillfället. Därefter behöver de kontakta en administratör.",
+        "registrationOpensHint": "Lokal tid i tidszonen Europe/Helsinki. Lämna tomt för att acceptera anmälningar direkt när publicerat.",
+        "visibleHint": "Avmarkera för att hålla produkten dold medan du fortfarande arbetar på den. Slå på när du är redo att föräldrar ska se den."
       },
       "errors": {
         "nameRequired": "Namn krävs",
@@ -335,7 +464,11 @@
       },
       "actions": {
         "cancel": "Avbryt",
-        "createLabel": "Skapa {label}"
+        "createLabel": "Skapa {label}",
+        "addTopic": "Lägg till ämne",
+        "addNewTopic": "Lägg till nytt ämne",
+        "addNewTag": "Lägg till ny tagg",
+        "addTagShort": "Lägg till"
       },
       "status": {
         "draft": "utkast",
@@ -346,10 +479,16 @@
       },
       "schedule": {
         "day": "Dag",
+        "hour": "Timme",
+        "minute": "Minut",
         "startTime": "Starttid",
         "durationMin": "Längd (min)",
-        "addDay": "Lägg till dag",
-        "removeSlot": "Ta bort tid"
+        "minSuffix": "min",
+        "addDay": "Lägg till en dag till",
+        "removeSlot": "Ta bort",
+        "sameAsEventDate": "Samma som evenemangsdatum",
+        "oneSessionEvent": "Ett tillfälle på evenemangsdatumet.",
+        "oneSessionPerWeek": "Ett tillfälle per vecka."
       },
       "weekdays": {
         "mon": "Mån",
@@ -358,7 +497,48 @@
         "thu": "Tor",
         "fri": "Fre",
         "sat": "Lör",
-        "sun": "Sön"
+        "sun": "Sön",
+        "monLong": "Måndag",
+        "tueLong": "Tisdag",
+        "wedLong": "Onsdag",
+        "thuLong": "Torsdag",
+        "friLong": "Fredag",
+        "satLong": "Lördag",
+        "sunLong": "Söndag"
+      },
+      "imagePicker": {
+        "label": "Bild",
+        "previewAlt": "Förhandsgranskning",
+        "dropPrompt": "Släpp en bild här eller klicka för att välja.",
+        "formats": "JPG, PNG, WebP, AVIF eller SVG.",
+        "chooseFile": "Välj fil",
+        "remove": "Ta bort",
+        "hint": "Visas på produktkortet när föräldrar bläddrar."
+      },
+      "geduPicker": {
+        "searchPlaceholder": "Sök namn eller e-post…",
+        "speaks": "Talar",
+        "any": "Alla",
+        "countSummary": "Visar {filtered} av {total} Geduer",
+        "noResults": "Inga Geduer matchar din sökning.",
+        "current": "Nuvarande",
+        "alreadyAssigned": "Redan tilldelad"
+      },
+      "groups": {
+        "groupNumber": "Grupp {n}",
+        "groupNamePlaceholder": "Gruppnamn",
+        "removeGroup": "Ta bort grupp",
+        "assignedGedus": "Tilldelade Geduer",
+        "noGedusYet": "Inga än. En grupp utan Geduer fungerar — du kan tilldela senare.",
+        "assignGedu": "Tilldela en Gedu",
+        "removeGedu": "Ta bort Gedu",
+        "noGroupsYet": "Inga grupper än.",
+        "noGroupsDetail": "Föräldrar kan ändå anmäla sig. Deras spelare hamnar i en \"otilldelad\"-inkorg tills du placerar dem i en grupp.",
+        "defaultName": "Grupp {letter}",
+        "addGroup": "Lägg till en grupp",
+        "addGeduTo": "Lägg till Gedu i {name}",
+        "addGeduGeneric": "Lägg till Gedu i grupp",
+        "addGeduDescription": "Geduer som tilldelats denna grupp kör dess tillfällen. För onlineprodukter kan de även hoppa in i andra gruppers röstrum inom samma produkt vid behov."
       }
     },
     "users": {

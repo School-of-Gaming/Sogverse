@@ -3,89 +3,151 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
 import {
-  BundlePricePreview,
-  SubscriptionPricePreview,
-} from "./price-previews";
-import { HolidayCalendarOption } from "./holiday-calendar-option";
+  Check,
+  CircleDollarSign,
+  Gift,
+  Info,
+  Loader2,
+  Plus,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ProductImagePicker } from "@/components/admin/product-image-picker";
-import { SpokenLanguageRadioGroup } from "@/components/ui/spoken-language-checkboxes";
-import { useSpokenLanguages } from "@/services/users";
-import { LocationPickerV2 } from "./location-picker-v2";
+import { cn } from "@/lib/utils";
 import {
-  useTopicsV2,
-  useTagsV2,
-  useHolidayCalendarsV2,
-  useCreateProductV2,
-  useFxRatesFromEur,
-  type CreateProductV2Input,
-} from "@/services/products-v2";
-import {
-  SUPPORTED_CURRENCIES,
-  CURRENCY_CONFIG,
   DEFAULT_CURRENCY,
+  SUPPORTED_CURRENCIES,
   type SupportedCurrency,
 } from "@/lib/constants";
+import {
+  useCreateProductV2,
+  useCreateTagV2,
+  useCreateTopicV2,
+  useFxRatesFromEur,
+  useHolidayCalendarsV2,
+  useTagsV2,
+  useTopicsV2,
+  type CreateProductV2Input,
+} from "@/services/products-v2";
+import { useSpokenLanguages } from "@/services/users";
+import { GeduPickerSheetV2 } from "./gedu-picker-sheet-v2";
+import { GroupCard, type GroupDraft } from "./group-card";
+import { HolidayCalendarOption } from "./holiday-calendar-option";
+import { ImagePickerV2 } from "./image-picker-v2";
+import { LocationPickerV2 } from "./location-picker-v2";
+import { PricingBlock } from "./pricing-block";
+import {
+  ScheduleSlotsEditor,
+  type ScheduleSlotDraft,
+} from "./schedule-slots-editor";
 import {
   PRODUCT_TYPE_CONFIG,
   type ProductTypeConfig,
   type StartMode,
 } from "./product-v2-type-config";
-import {
-  ScheduleSlotsEditor,
-  type ScheduleSlotDraft,
-} from "./schedule-slots-editor";
 import type { ProductTypeV2 } from "@/types";
 
-const DEFAULT_TIMEZONE = "Europe/Helsinki";
+const FIXED_TIMEZONE = "Europe/Helsinki";
 
-const BILLING_TOGGLE_VALUES: Array<"free" | "paid"> = ["free", "paid"];
+// Module-level constants — listed here rather than inline so the lint rule
+// against literal strings (i18n) doesn't fire for these structural keys.
+const PAID_MODE_VALUES = ["paid", "free"] as const;
+const TOPIC_KIND_ORDER = ["game", "subject"] as const;
 
-const TOPIC_KIND_ORDER: Array<"game" | "subject"> = ["game", "subject"];
+type PaidMode = (typeof PAID_MODE_VALUES)[number];
 
-const SELECT_CLASS =
-  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+// ===== Form state =====
 
 interface FormState {
+  // Identity
   name: string;
   description: string;
   topicId: string;
   tagIds: Set<string>;
   padletUrl: string;
   image: File | null;
+
+  // Inline topic create
+  showNewTopic: boolean;
+  newTopicName: string;
+  newTopicKind: "game" | "subject";
+
+  // Inline tag create
+  showNewTag: boolean;
+  newTagName: string;
+
+  // Audience
   minAge: string;
   maxAge: string;
   spokenLanguageCode: string;
+
+  // Where
   isRemote: boolean;
   locationId: string | null;
+
+  // When
   startMode: StartMode;
   startDate: string;
   endDate: string;
   scheduleSlots: ScheduleSlotDraft[];
   holidayCalendarIds: Set<string>;
-  seatCount: string;
-  waitlistEnabled: boolean;
   signupThreshold: string;
-  billingMode: "paid" | "free" | "external_contract";
+
+  // Groups (UI-only — not wired to backend yet)
+  groups: GroupDraft[];
+  activeGroupSheetId: string | null;
+
+  // Capacity & billing
+  paidMode: PaidMode;
   prices: Record<SupportedCurrency, { session: string; month: string }>;
-  /**
-   * Currencies the admin has landed on at least once. Non-EUR tabs get
-   * auto-filled from today's FX rate the first time they're visited with
-   * EUR already set — but only once, so switching back doesn't overwrite
-   * manual edits.
-   */
   fxFilled: Set<SupportedCurrency>;
   activeCurrency: SupportedCurrency;
+  seatCount: string;
+  uncapped: boolean;
+  waitlistEnabled: boolean;
   refundPolicyDays: string;
+
+  // Registration timing
   registrationOpensAt: string;
+
+  // Visibility
   isVisible: boolean;
 }
 
+function defaultSeats(productType: ProductTypeV2): string {
+  switch (productType) {
+    case "consumer_club":
+      return "10";
+    case "municipality_club":
+      return "12";
+    case "camp":
+      return "16";
+    case "event":
+      return "30";
+  }
+}
+
+function defaultSlots(config: ProductTypeConfig): ScheduleSlotDraft[] {
+  if (config.scheduleShape === "multi_day_bounded") {
+    return [
+      { weekday: 0, start_time: "10:00", duration_minutes: 180 },
+      { weekday: 2, start_time: "10:00", duration_minutes: 180 },
+      { weekday: 4, start_time: "10:00", duration_minutes: 180 },
+    ];
+  }
+  if (config.scheduleShape === "single_date") {
+    return [{ weekday: 0, start_time: "18:00", duration_minutes: 90 }];
+  }
+  return [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }];
+}
+
 function initialState(config: ProductTypeConfig): FormState {
+  // Events default to free; everything else has a real billing mode already.
+  const initialPaidMode: PaidMode =
+    config.billing.mode === "free_or_paid" ? "free" : "paid";
   return {
     name: "",
     description: "",
@@ -93,6 +155,11 @@ function initialState(config: ProductTypeConfig): FormState {
     tagIds: new Set(),
     padletUrl: "",
     image: null,
+    showNewTopic: false,
+    newTopicName: "",
+    newTopicKind: "game",
+    showNewTag: false,
+    newTagName: "",
     minAge: "7",
     maxAge: "12",
     spokenLanguageCode: "",
@@ -101,15 +168,12 @@ function initialState(config: ProductTypeConfig): FormState {
     startMode: config.allowedStartModes[0],
     startDate: "",
     endDate: "",
-    scheduleSlots:
-      config.scheduleShape === "single_date"
-        ? [{ weekday: 0, start_time: "17:00", duration_minutes: 60 }]
-        : [{ weekday: 2, start_time: "16:00", duration_minutes: 60 }],
+    scheduleSlots: defaultSlots(config),
     holidayCalendarIds: new Set(),
-    seatCount: "10",
-    waitlistEnabled: true,
     signupThreshold: "",
-    billingMode: config.defaultBillingMode,
+    groups: [],
+    activeGroupSheetId: null,
+    paidMode: initialPaidMode,
     prices: {
       eur: { session: "", month: "" },
       gbp: { session: "", month: "" },
@@ -117,6 +181,9 @@ function initialState(config: ProductTypeConfig): FormState {
     },
     fxFilled: new Set([DEFAULT_CURRENCY]),
     activeCurrency: DEFAULT_CURRENCY,
+    seatCount: defaultSeats(config.productType),
+    uncapped: false,
+    waitlistEnabled: true,
     refundPolicyDays: config.hasRefundWindow ? "7" : "",
     registrationOpensAt: "",
     isVisible: false,
@@ -131,6 +198,7 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
   const config = PRODUCT_TYPE_CONFIG[productType];
   const router = useRouter();
   const t = useTranslations("admin.productsV2");
+  const c = useTranslations("common");
   const label = t(`types.${config.i18nKey}.label`);
 
   const [state, setState] = useState<FormState>(() => initialState(config));
@@ -140,7 +208,41 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
   const { data: tags } = useTagsV2();
   const { data: calendars } = useHolidayCalendarsV2();
   const { data: spokenLanguages } = useSpokenLanguages();
+  const createTopic = useCreateTopicV2();
+  const createTag = useCreateTagV2();
   const createProduct = useCreateProductV2();
+  const fxRatesQuery = useFxRatesFromEur(true);
+
+  // ===== Derived =====
+
+  const effectiveBillingMode: "paid" | "free" | "external_contract" =
+    config.billing.mode === "free_or_paid"
+      ? state.paidMode === "free"
+        ? "free"
+        : "paid"
+      : config.billing.mode === "external_contract"
+        ? "external_contract"
+        : "paid";
+  const isPaid = effectiveBillingMode === "paid";
+  const showRefund = config.hasRefundWindow && isPaid;
+  const showPricing = isPaid && config.pricingShape !== "external";
+  const pricingShape =
+    config.pricingShape === "session_and_month"
+      ? "session_and_month"
+      : "upfront_total";
+  const showExternalInfo = effectiveBillingMode === "external_contract";
+
+  const startTriggerOptions = config.allowedStartModes;
+  const usesDate =
+    state.startMode === "date" || state.startMode === "date_and_threshold";
+  const usesThreshold =
+    state.startMode === "threshold" ||
+    state.startMode === "date_and_threshold";
+
+  // Free events can have no seat limit; the rest always do.
+  const canUncap =
+    productType === "event" && effectiveBillingMode === "free";
+  const seatInputDisabled = canUncap && state.uncapped;
 
   // For online products we only show a location picker for municipality
   // clubs (they need a jurisdiction anchor). For in-person products we
@@ -152,25 +254,16 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
     : "site";
 
   const showLocationPicker = pickerMode !== null;
-  const showPrices = state.billingMode === "paid";
-  const usesDate =
-    state.startMode === "date" || state.startMode === "date_and_threshold";
-  const usesThreshold =
-    state.startMode === "threshold" ||
-    state.startMode === "date_and_threshold";
   const showHolidayCalendars = config.hasHolidayCalendars;
-  const showRefund = config.hasRefundWindow && state.billingMode === "paid";
-  const allowRemoteToggle = config.allowsRemote && config.allowsInPerson;
-  const allowMultipleSlots =
-    config.scheduleShape === "weekly_ongoing" ||
-    config.scheduleShape === "weekly_bounded" ||
-    config.scheduleShape === "multi_day_bounded";
+
+  // ===== Validation =====
 
   function validate(): string | null {
     if (!state.name.trim()) return t("errors.nameRequired");
     if (!state.description.trim()) return t("errors.descriptionRequired");
     if (!state.topicId) return t("errors.topicRequired");
     if (!state.spokenLanguageCode) return t("errors.spokenLanguageRequired");
+
     const minAge = Number(state.minAge);
     const maxAge = Number(state.maxAge);
     if (!Number.isInteger(minAge) || minAge < 0)
@@ -182,6 +275,7 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
         ? t("errors.municipalityRequired")
         : t("errors.siteRequired");
     if (state.scheduleSlots.length === 0) return t("errors.scheduleRequired");
+
     if (state.padletUrl.trim()) {
       try {
         new URL(state.padletUrl);
@@ -190,9 +284,6 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       }
     }
     if (usesDate) {
-      // Only bounded/single-date types require start_date in the form even
-      // for consumer clubs under "date" or "date_and_threshold" modes,
-      // because if the admin picked "date" we expect them to fill it in.
       if (!state.startDate) return t("errors.startDateRequired");
       if (
         config.scheduleShape !== "single_date" &&
@@ -206,29 +297,41 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       if (!Number.isInteger(thr) || thr < 1)
         return t("errors.thresholdInvalid");
     }
-    if (state.billingMode !== "free") {
+
+    // Seat count required unless explicitly "no limit" on free events.
+    if (!seatInputDisabled) {
       const seat = Number(state.seatCount);
       if (!Number.isInteger(seat) || seat < 1)
         return t("errors.seatCountInvalid");
     }
-    if (showPrices) {
+
+    if (showPricing) {
       for (const currency of SUPPORTED_CURRENCIES) {
         const row = state.prices[currency];
-        const per = Number(row.session);
-        const mon = Number(row.month);
-        const currencyLabel = CURRENCY_CONFIG[currency].label;
-        if (row.session === "" || !Number.isFinite(per) || per < 0)
-          return t("errors.priceSessionInvalid", { currency: currencyLabel });
-        if (row.month === "" || !Number.isFinite(mon) || mon < 0)
-          return t("errors.priceMonthInvalid", { currency: currencyLabel });
+        const session = Number(row.session);
+        if (row.session === "" || !Number.isFinite(session) || session < 0)
+          return t("errors.priceSessionInvalid", {
+            currency: currency.toUpperCase(),
+          });
+        if (pricingShape === "session_and_month") {
+          const month = Number(row.month);
+          if (row.month === "" || !Number.isFinite(month) || month < 0)
+            return t("errors.priceMonthInvalid", {
+              currency: currency.toUpperCase(),
+            });
+        }
       }
     }
+
     return null;
   }
+
+  // ===== Submit =====
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+
     const validationError = validate();
     if (validationError) {
       setError(validationError);
@@ -237,13 +340,10 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
 
     const minAge = Number(state.minAge);
     const maxAge = Number(state.maxAge);
-    const seat =
-      state.billingMode === "free" && !state.seatCount
-        ? null
-        : Number(state.seatCount);
+    const seat = seatInputDisabled ? null : Number(state.seatCount);
 
-    // For single-date (event), derive weekday from start_date to keep the
-    // schedule_slot.weekday consistent with the actual event date.
+    // For single-date (event), derive weekday from start_date so the
+    // schedule_slot row matches the actual event date.
     let finalSlots = state.scheduleSlots;
     if (config.scheduleShape === "single_date" && state.startDate) {
       const dayOfWeek = new Date(state.startDate).getDay();
@@ -254,7 +354,7 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
 
     const input: CreateProductV2Input = {
       product_type: productType,
-      billing_mode: state.billingMode,
+      billing_mode: effectiveBillingMode,
       name: state.name.trim(),
       description: state.description.trim(),
       topic_id: state.topicId,
@@ -265,11 +365,10 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       location_id: state.locationId,
       is_remote: state.isRemote,
       // Visibility + status move together. RLS `public_read_products_v2`
-      // requires both `status IN ('pending', 'running')` AND `is_visible`, so
-      // checking "make visible" has to publish the draft to pending at the
-      // same time. Admin can roll back to draft from the edit page later.
+      // requires both `status IN ('pending', 'running')` AND `is_visible`,
+      // so checking "make visible" has to publish the draft to pending at
+      // the same time. Admin can roll back to draft from the edit page.
       status: state.isVisible ? "pending" : "draft",
-      // Start mode gates which of start_date / signup_threshold are sent.
       signup_threshold:
         usesThreshold && state.signupThreshold
           ? Number(state.signupThreshold)
@@ -280,7 +379,7 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
         : config.scheduleShape === "single_date"
           ? state.startDate || null
           : state.endDate || null,
-      timezone: DEFAULT_TIMEZONE,
+      timezone: FIXED_TIMEZONE,
       seat_count: seat,
       waitlist_enabled: state.waitlistEnabled,
       registration_opens_at: state.registrationOpensAt
@@ -293,19 +392,23 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       is_visible: state.isVisible,
       schedule_slots: finalSlots,
       tag_ids: Array.from(state.tagIds),
-      // DB stores integer cents; the form collects decimals for admin UX.
-      // One row per supported currency — schema allows blank-currency rows
-      // to be omitted but we require all three today (see §4.5 of the doc).
-      prices: showPrices
-        ? SUPPORTED_CURRENCIES.map((currency) => ({
-            currency,
-            price_per_session: Math.round(
-              Number(state.prices[currency].session) * 100
-            ),
-            price_per_month: Math.round(
-              Number(state.prices[currency].month) * 100
-            ),
-          }))
+      // For paid_upfront, we only collect a single total (per currency); we
+      // store it in price_per_session and put 0 in price_per_month. Downstream
+      // billing code branches on billing_mode to know which is meaningful.
+      prices: showPricing
+        ? SUPPORTED_CURRENCIES.map((currency) => {
+            const row = state.prices[currency];
+            const sessionCents = Math.round(Number(row.session) * 100);
+            const monthCents =
+              pricingShape === "session_and_month"
+                ? Math.round(Number(row.month) * 100)
+                : 0;
+            return {
+              currency,
+              price_per_session: sessionCents,
+              price_per_month: monthCents,
+            };
+          })
         : [],
       holiday_calendar_ids: Array.from(state.holidayCalendarIds),
       image: state.image,
@@ -319,247 +422,485 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
     }
   }
 
+  // ===== Inline create handlers =====
+
+  async function handleCreateTopic() {
+    const name = state.newTopicName.trim();
+    if (!name) return;
+    setError(null);
+    try {
+      const created = await createTopic.mutateAsync({
+        name,
+        kind: state.newTopicKind,
+      });
+      setState((s) => ({
+        ...s,
+        topicId: created.id,
+        showNewTopic: false,
+        newTopicName: "",
+        newTopicKind: "game",
+      }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("errors.createFailed"));
+    }
+  }
+
+  async function handleCreateTag() {
+    const name = state.newTagName.trim();
+    if (!name) return;
+    setError(null);
+    try {
+      const created = await createTag.mutateAsync({ name });
+      setState((s) => {
+        const next = new Set(s.tagIds);
+        next.add(created.id);
+        return {
+          ...s,
+          tagIds: next,
+          showNewTag: false,
+          newTagName: "",
+        };
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("errors.createFailed"));
+    }
+  }
+
+  // ===== Groups =====
+
+  const activeGroup = state.activeGroupSheetId
+    ? state.groups.find((g) => g.id === state.activeGroupSheetId) ?? null
+    : null;
+
+  // ===== Render =====
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Identity */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">{t("sections.identity")}</h2>
-        <div className="space-y-2">
-          <Label htmlFor="p-name">{t("labels.name")}</Label>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <FormSection
+        title={t("sections.identity")}
+        description={t("sections.identityDescription")}
+      >
+        <Field label={t("labels.name")} htmlFor="p-name" required>
           <Input
             id="p-name"
-            maxLength={100}
             value={state.name}
+            placeholder={t(`placeholders.name.${config.i18nKey}`)}
             onChange={(e) => setState({ ...state, name: e.target.value })}
             required
+            maxLength={100}
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="p-description">{t("labels.description")}</Label>
+        </Field>
+
+        <Field
+          label={t("labels.description")}
+          htmlFor="p-description"
+          required
+        >
           <textarea
             id="p-description"
-            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            placeholder={t(`placeholders.description.${config.i18nKey}`)}
             value={state.description}
             onChange={(e) =>
               setState({ ...state, description: e.target.value })
             }
+            rows={3}
             required
+            className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="p-topic">{t("labels.topic")}</Label>
-          <select
-            id="p-topic"
-            className={SELECT_CLASS}
-            value={state.topicId}
-            onChange={(e) => setState({ ...state, topicId: e.target.value })}
-            required
-          >
-            <option value="">{t("placeholders.selectTopic")}</option>
-            {TOPIC_KIND_ORDER.map((kind) => {
-              const group = topics?.filter((topic) => topic.kind === kind) ?? [];
-              if (group.length === 0) return null;
-              return (
-                <optgroup key={kind} label={t(`topicKinds.${kind}`)}>
-                  {group.map((topic) => (
-                    <option key={topic.id} value={topic.id}>
-                      {topic.name}
-                    </option>
-                  ))}
-                </optgroup>
-              );
-            })}
-          </select>
-          {topics && topics.length === 0 && (
-            <p className="text-xs text-muted-foreground">
-              {t("hints.noTopics")}
-            </p>
+        </Field>
+
+        <ImagePickerV2
+          value={state.image}
+          onChange={(v) => setState({ ...state, image: v })}
+        />
+
+        <Field
+          label={t("labels.topic")}
+          htmlFor="p-topic"
+          required
+          hint={t("hints.topicHint")}
+        >
+          {state.showNewTopic ? (
+            <div className="space-y-2 rounded-md border border-input bg-muted/20 p-3">
+              <Input
+                placeholder={t("placeholders.newTopicName")}
+                value={state.newTopicName}
+                onChange={(e) =>
+                  setState({ ...state, newTopicName: e.target.value })
+                }
+                autoFocus
+                disabled={createTopic.isPending}
+              />
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {t("labels.groupTopicUnder")}
+                </span>
+                {TOPIC_KIND_ORDER.map((kind) => (
+                  <button
+                    key={kind}
+                    type="button"
+                    onClick={() =>
+                      setState({ ...state, newTopicKind: kind })
+                    }
+                    disabled={createTopic.isPending}
+                    className={cn(
+                      "rounded-md border px-3 py-1 text-xs transition-colors",
+                      state.newTopicKind === kind
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-input text-muted-foreground hover:border-foreground hover:text-foreground"
+                    )}
+                  >
+                    {t(`topicKindSingular.${kind}`)}
+                  </button>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2 pt-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={createTopic.isPending}
+                  onClick={() =>
+                    setState({
+                      ...state,
+                      newTopicName: "",
+                      showNewTopic: false,
+                    })
+                  }
+                >
+                  {c("cancel")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!state.newTopicName.trim() || createTopic.isPending}
+                  onClick={handleCreateTopic}
+                >
+                  {createTopic.isPending && (
+                    <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                  )}
+                  {t("actions.addTopic")}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <select
+                id="p-topic"
+                value={state.topicId}
+                onChange={(e) =>
+                  setState({ ...state, topicId: e.target.value })
+                }
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="">{t("placeholders.selectTopic")}</option>
+                {TOPIC_KIND_ORDER.map((kind) => {
+                  const group = topics?.filter((topic) => topic.kind === kind) ?? [];
+                  if (group.length === 0) return null;
+                  return (
+                    <optgroup key={kind} label={t(`topicKinds.${kind}`)}>
+                      {group.map((topic) => (
+                        <option key={topic.id} value={topic.id}>
+                          {topic.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
+              </select>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setState({ ...state, showNewTopic: true })}
+                title={t("actions.addNewTopic")}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           )}
-        </div>
-        <div className="space-y-2">
-          <Label>{t("labels.tags")}</Label>
-          <div className="flex flex-wrap gap-2">
+        </Field>
+
+        <Field label={t("labels.tags")} hint={t("hints.tagsHint")}>
+          <div className="flex flex-wrap items-center gap-2">
             {tags?.map((tag) => {
-              const checked = state.tagIds.has(tag.id);
+              const selected = state.tagIds.has(tag.id);
               return (
                 <button
                   key={tag.id}
                   type="button"
                   onClick={() => {
                     const next = new Set(state.tagIds);
-                    if (checked) next.delete(tag.id);
+                    if (selected) next.delete(tag.id);
                     else next.add(tag.id);
                     setState({ ...state, tagIds: next });
                   }}
-                  className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                    checked
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-input hover:bg-accent"
-                  }`}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs transition-colors",
+                    selected
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-input text-muted-foreground hover:border-foreground hover:text-foreground"
+                  )}
+                  title={tag.description ?? undefined}
                 >
+                  {selected && <Check className="mr-1 inline h-3 w-3" />}
                   {tag.name}
                 </button>
               );
             })}
+
+            {state.showNewTag ? (
+              <span className="inline-flex items-center gap-1">
+                <Input
+                  value={state.newTagName}
+                  onChange={(e) =>
+                    setState({ ...state, newTagName: e.target.value })
+                  }
+                  placeholder={t("placeholders.newTagName")}
+                  autoFocus
+                  className="h-7 w-40 text-xs"
+                  disabled={createTag.isPending}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void handleCreateTag();
+                    }
+                    if (e.key === "Escape") {
+                      setState({ ...state, newTagName: "", showNewTag: false });
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={!state.newTagName.trim() || createTag.isPending}
+                  onClick={handleCreateTag}
+                >
+                  {createTag.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    t("actions.addTagShort")
+                  )}
+                </Button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setState({ ...state, newTagName: "", showNewTag: false })
+                  }
+                  className="rounded p-1 text-muted-foreground hover:text-foreground"
+                  aria-label={c("cancel")}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setState({ ...state, showNewTag: true })}
+                className="inline-flex items-center gap-1 rounded-full border border-dashed border-input px-3 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground"
+              >
+                <Plus className="h-3 w-3" />
+                {t("actions.addNewTag")}
+              </button>
+            )}
           </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="p-padlet">{t("labels.padletUrl")}</Label>
+        </Field>
+
+        <Field
+          label={t("labels.padletUrl")}
+          htmlFor="p-padlet"
+          hint={t("hints.padletHint")}
+        >
           <Input
             id="p-padlet"
             type="url"
+            placeholder={t("placeholders.padletUrl")}
             value={state.padletUrl}
             onChange={(e) => setState({ ...state, padletUrl: e.target.value })}
           />
-        </div>
-        <ProductImagePicker
-          value={state.image}
-          onChange={(v) =>
-            setState({ ...state, image: v instanceof File ? v : null })
-          }
-        />
-      </section>
+        </Field>
+      </FormSection>
 
-      {/* Audience */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">{t("sections.audience")}</h2>
+      <FormSection
+        title={t("sections.audience")}
+        description={t("sections.audienceDescription")}
+      >
         <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="p-min-age">{t("labels.minAge")}</Label>
+          <Field label={t("labels.minAge")} htmlFor="p-min-age" required>
             <Input
               id="p-min-age"
               type="number"
               min={0}
               value={state.minAge}
               onChange={(e) => setState({ ...state, minAge: e.target.value })}
+              required
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="p-max-age">{t("labels.maxAge")}</Label>
+          </Field>
+          <Field label={t("labels.maxAge")} htmlFor="p-max-age" required>
             <Input
               id="p-max-age"
               type="number"
               min={0}
               value={state.maxAge}
               onChange={(e) => setState({ ...state, maxAge: e.target.value })}
+              required
             />
-          </div>
+          </Field>
         </div>
+
         {spokenLanguages && (
-          <div className="space-y-2">
-            <Label>{t("labels.spokenLanguage")}</Label>
-            <SpokenLanguageRadioGroup
-              spokenLanguages={spokenLanguages}
-              selected={state.spokenLanguageCode || null}
-              onChange={(v) => setState({ ...state, spokenLanguageCode: v })}
-            />
-          </div>
-        )}
-      </section>
-
-      {/* Location */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">{t("sections.location")}</h2>
-        {allowRemoteToggle && (
-          <div
-            className="flex w-fit rounded-md border border-input"
-            role="radiogroup"
+          <Field
+            label={t("labels.deliveredIn")}
+            hint={t("hints.deliveredInHint")}
           >
-            {[
-              { value: true, label: t("labels.online") },
-              { value: false, label: t("labels.inPerson") },
-            ].map((opt) => {
-              const active = opt.value === state.isRemote;
-              return (
+            <div className="flex flex-wrap gap-2">
+              {spokenLanguages.map((lang) => (
                 <button
-                  key={String(opt.value)}
+                  key={lang.code}
                   type="button"
-                  role="radio"
-                  aria-checked={active}
                   onClick={() =>
-                    setState({
-                      ...state,
-                      isRemote: opt.value,
-                      locationId: null,
-                    })
+                    setState({ ...state, spokenLanguageCode: lang.code })
                   }
-                  className={`px-3 py-1.5 text-sm font-medium first:rounded-l-md last:rounded-r-md ${
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "hover:bg-accent"
-                  }`}
+                  className={cn(
+                    "rounded-md border px-3 py-1.5 text-sm transition-colors",
+                    state.spokenLanguageCode === lang.code
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-input text-muted-foreground hover:border-foreground hover:text-foreground"
+                  )}
                 >
-                  {opt.label}
+                  {lang.name}
                 </button>
-              );
-            })}
-          </div>
-        )}
-        {pickerMode ? (
-          <div className="space-y-2">
-            <Label>
-              {state.isRemote ? t("labels.municipality") : t("labels.site")}
-            </Label>
-            <LocationPickerV2
-              value={state.locationId}
-              onChange={(id) => setState({ ...state, locationId: id })}
-              pickable={pickerMode}
-            />
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            {t("hints.onlineNoLocation")}
-          </p>
-        )}
-      </section>
-
-      {/* When */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">{t("sections.when")}</h2>
-        {config.allowedStartModes.length > 1 && (
-          <div className="space-y-2">
-            <Label>{t("startModes.label")}</Label>
-            <div className="space-y-2">
-              {config.allowedStartModes.map((mode) => {
-                const active = state.startMode === mode;
-                return (
-                  <label
-                    key={mode}
-                    className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors ${
-                      active
-                        ? "border-primary bg-primary/5"
-                        : "border-input hover:border-foreground/30"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="start-mode"
-                      checked={active}
-                      onChange={() => setState({ ...state, startMode: mode })}
-                      className="mt-1 h-4 w-4"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium">
-                        {t(`startModes.${mode}`)}
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {t(`startModes.${mode}Description`)}
-                      </div>
-                    </div>
-                  </label>
-                );
-              })}
+              ))}
             </div>
-          </div>
+          </Field>
         )}
-        {usesDate && (
-          <div className="grid grid-cols-2 gap-4">
+      </FormSection>
+
+      <FormSection
+        title={t("sections.where")}
+        description={t(`sections.whereDescription.${config.i18nKey}`)}
+      >
+        {config.allowsRemote && config.allowsInPerson ? (
+          <div className="inline-flex rounded-md border border-input p-1">
+            <button
+              type="button"
+              onClick={() => setState({ ...state, isRemote: true })}
+              className={cn(
+                "rounded px-4 py-1.5 text-sm transition-colors",
+                state.isRemote
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t("labels.online")}
+            </button>
+            <button
+              type="button"
+              onClick={() => setState({ ...state, isRemote: false })}
+              className={cn(
+                "rounded px-4 py-1.5 text-sm transition-colors",
+                !state.isRemote
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {t("labels.inPerson")}
+            </button>
+          </div>
+        ) : null}
+
+        <div className="mt-3 space-y-4">
+          {showLocationPicker ? (
+            <Field
+              label={
+                state.isRemote
+                  ? t("labels.municipality")
+                  : t("labels.site")
+              }
+              required
+              hint={
+                state.isRemote
+                  ? t("hints.municipalityHint")
+                  : t("hints.siteHint")
+              }
+            >
+              <LocationPickerV2
+                value={state.locationId}
+                onChange={(id) => setState({ ...state, locationId: id })}
+                pickable={pickerMode}
+              />
+            </Field>
+          ) : (
+            <InfoCallout text={t("hints.onlineNoLocation")} />
+          )}
+
+          {state.isRemote && (
+            <InfoCallout text={t("hints.voiceRoomAuto")} />
+          )}
+        </div>
+      </FormSection>
+
+      <FormSection
+        title={t("sections.when")}
+        description={t(`sections.whenDescription.${config.i18nKey}`)}
+      >
+        {startTriggerOptions.length > 1 && (
+          <Field label={t("startModes.label")}>
             <div className="space-y-2">
-              <Label htmlFor="p-start-date">
-                {config.scheduleShape === "single_date"
-                  ? t("labels.date")
-                  : t("labels.startDate")}
-              </Label>
+              {startTriggerOptions.map((option) => (
+                <label
+                  key={option}
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
+                    state.startMode === option
+                      ? "border-primary bg-primary/5"
+                      : "border-input hover:border-foreground/30"
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="startTrigger"
+                    checked={state.startMode === option}
+                    onChange={() =>
+                      setState({
+                        ...state,
+                        startMode: option,
+                        signupThreshold:
+                          option === "date" ? "" : state.signupThreshold,
+                        startDate:
+                          option === "threshold" ? "" : state.startDate,
+                        endDate: option === "threshold" ? "" : state.endDate,
+                      })
+                    }
+                    className="mt-1 h-4 w-4"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium">
+                      {t(`startModes.${option}`)}
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {t(`startModes.${option}Description`)}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </Field>
+        )}
+
+        {usesDate && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Field
+              label={
+                productType === "event"
+                  ? t("labels.eventDate")
+                  : t("labels.startDate")
+              }
+              htmlFor="p-start-date"
+              required
+            >
               <Input
                 id="p-start-date"
                 type="date"
@@ -567,15 +908,31 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
                 onChange={(e) =>
                   setState({ ...state, startDate: e.target.value })
                 }
+                required
               />
-            </div>
-            {config.scheduleShape !== "single_date" && (
-              <div className="space-y-2">
-                <Label htmlFor="p-end-date">
-                  {config.scheduleShape === "weekly_ongoing"
+            </Field>
+            {productType === "event" ? (
+              <div className="flex items-end text-xs text-muted-foreground">
+                <Info className="mr-1.5 inline h-3.5 w-3.5" />
+                {t("hints.eventSingleDay")}
+              </div>
+            ) : (
+              <Field
+                label={
+                  productType === "consumer_club"
                     ? t("labels.endDateOptional")
-                    : t("labels.endDate")}
-                </Label>
+                    : productType === "municipality_club"
+                      ? t("labels.seasonEndDate")
+                      : t("labels.endDate")
+                }
+                htmlFor="p-end-date"
+                hint={
+                  productType === "consumer_club"
+                    ? t("hints.endDateOpt")
+                    : undefined
+                }
+                required={productType !== "consumer_club"}
+              >
                 <Input
                   id="p-end-date"
                   type="date"
@@ -583,365 +940,488 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
                   onChange={(e) =>
                     setState({ ...state, endDate: e.target.value })
                   }
+                  required={productType !== "consumer_club"}
                 />
-              </div>
+              </Field>
             )}
           </div>
         )}
+
         {usesThreshold && (
-          <div className="space-y-2">
-            <Label htmlFor="p-signup-threshold">
-              {t("labels.signupThreshold")}
-            </Label>
+          <Field
+            label={t("labels.signupThreshold")}
+            htmlFor="p-threshold"
+            required
+            hint={
+              state.startMode === "threshold"
+                ? t("hints.thresholdOnly")
+                : t("hints.thresholdWithDate")
+            }
+          >
             <Input
-              id="p-signup-threshold"
+              id="p-threshold"
               type="number"
-              min={1}
+              min="1"
+              placeholder={t("placeholders.threshold")}
               value={state.signupThreshold}
               onChange={(e) =>
                 setState({ ...state, signupThreshold: e.target.value })
               }
+              className="max-w-[220px]"
+              required
             />
-          </div>
+          </Field>
         )}
-        <div className="space-y-2">
-          <Label>{t("labels.schedule")}</Label>
-          <ScheduleSlotsEditor
-            slots={state.scheduleSlots}
-            onChange={(slots) => setState({ ...state, scheduleSlots: slots })}
-            allowMultiple={allowMultipleSlots}
-          />
-          {config.scheduleShape === "single_date" && (
-            <p className="text-xs text-muted-foreground">
-              {t("hints.eventWeekdayDerived")}
-            </p>
-          )}
-        </div>
-        {showHolidayCalendars && (
-          <div className="space-y-2">
-            <Label>{t("labels.holidayCalendars")}</Label>
-            <div className="space-y-2">
-              {calendars?.map((cal) => {
-                const checked = state.holidayCalendarIds.has(cal.id);
-                return (
-                  <HolidayCalendarOption
-                    key={cal.id}
-                    calendar={cal}
-                    checked={checked}
-                    onToggle={() => {
-                      const next = new Set(state.holidayCalendarIds);
-                      if (checked) next.delete(cal.id);
-                      else next.add(cal.id);
-                      setState({ ...state, holidayCalendarIds: next });
-                    }}
-                  />
-                );
-              })}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("hints.holidaySkips")}
-            </p>
-          </div>
-        )}
-      </section>
 
-      {/* Billing */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">{t("sections.billing")}</h2>
-        {config.billing.mode === "free_or_paid" && (
-          <div className="space-y-2">
-            <Label>{t("labels.pricing")}</Label>
-            <div
-              className="flex w-fit rounded-md border border-input"
-              role="radiogroup"
-            >
-              {BILLING_TOGGLE_VALUES.map((value) => {
-                const active = value === state.billingMode;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setState({ ...state, billingMode: value })}
-                    className={`px-3 py-1.5 text-sm font-medium first:rounded-l-md last:rounded-r-md ${
-                      active
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent"
-                    }`}
-                  >
-                    {t(`labels.${value}`)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <InfoCallout text={t("hints.timezoneFixedHelsinki")} />
+
         <div className="space-y-2">
-          <Label htmlFor="p-seat-count">
-            {state.billingMode === "free"
-              ? t("labels.seatCountOptionalFree")
-              : t("labels.seatCount")}
+          <Label>
+            {productType === "camp"
+              ? t("labels.daysAndTimes")
+              : productType === "event"
+                ? t("labels.time")
+                : t("labels.dayAndTime")}
           </Label>
-          <Input
-            id="p-seat-count"
-            type="number"
-            min={1}
-            value={state.seatCount}
-            onChange={(e) => setState({ ...state, seatCount: e.target.value })}
-          />
-        </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={state.waitlistEnabled}
-            onChange={(e) =>
-              setState({ ...state, waitlistEnabled: e.target.checked })
+          <ScheduleSlotsEditor
+            productType={productType}
+            slots={state.scheduleSlots}
+            onChange={(slots) =>
+              setState({ ...state, scheduleSlots: slots })
             }
           />
-          {t("labels.waitlistToggle")}
-        </label>
-        {showPrices && (
-          <PricingBlock state={state} setState={setState} />
+        </div>
+
+        {showHolidayCalendars && (
+          <Field
+            label={t("labels.holidayCalendars")}
+            hint={t("hints.holidayHint")}
+          >
+            <div className="space-y-2">
+              {calendars?.map((cal) => (
+                <HolidayCalendarOption
+                  key={cal.id}
+                  calendar={cal}
+                  checked={state.holidayCalendarIds.has(cal.id)}
+                  onToggle={() => {
+                    const next = new Set(state.holidayCalendarIds);
+                    if (next.has(cal.id)) next.delete(cal.id);
+                    else next.add(cal.id);
+                    setState({ ...state, holidayCalendarIds: next });
+                  }}
+                />
+              ))}
+            </div>
+          </Field>
         )}
-        {showRefund && (
-          <div className="space-y-2">
-            <Label htmlFor="p-refund-days">{t("labels.refundWindow")}</Label>
+      </FormSection>
+
+      <FormSection
+        title={t("sections.groups")}
+        description={t("sections.groupsDescription")}
+      >
+        <InfoCallout text={t("hints.groupsHint")} />
+
+        <InfoCallout text={t("hints.groupsNotWired")} variant="warn" />
+
+        {state.groups.length === 0 ? (
+          <div className="rounded-md border border-dashed border-input px-4 py-6 text-center">
+            <p className="text-sm font-medium">{t("groups.noGroupsYet")}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("groups.noGroupsDetail")}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {state.groups.map((group, i) => (
+              <GroupCard
+                key={group.id}
+                group={group}
+                index={i}
+                onNameChange={(name) =>
+                  setState({
+                    ...state,
+                    groups: state.groups.map((g) =>
+                      g.id === group.id ? { ...g, name } : g
+                    ),
+                  })
+                }
+                onRemoveGedu={(geduId) =>
+                  setState({
+                    ...state,
+                    groups: state.groups.map((g) =>
+                      g.id === group.id
+                        ? {
+                            ...g,
+                            geduIds: g.geduIds.filter((id) => id !== geduId),
+                          }
+                        : g
+                    ),
+                  })
+                }
+                onAddGedu={() =>
+                  setState({ ...state, activeGroupSheetId: group.id })
+                }
+                onRemove={() =>
+                  setState({
+                    ...state,
+                    groups: state.groups.filter((g) => g.id !== group.id),
+                  })
+                }
+              />
+            ))}
+          </div>
+        )}
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const letter = String.fromCharCode(65 + state.groups.length);
+            setState({
+              ...state,
+              groups: [
+                ...state.groups,
+                {
+                  id: `g-${Date.now()}-${state.groups.length}`,
+                  name: t("groups.defaultName", { letter }),
+                  geduIds: [],
+                },
+              ],
+            });
+          }}
+          className="gap-1.5"
+        >
+          <Plus className="h-4 w-4" />
+          {t("groups.addGroup")}
+        </Button>
+
+        {/* Only mount the picker while it's open. Sheet uses createPortal
+            against document.body, which crashes during SSR — and conditional
+            mounting matches the convention in src/components/admin/group-card.tsx
+            (line 272) for the same reason. */}
+        {activeGroup && (
+          <GeduPickerSheetV2
+            open
+            onOpenChange={(open) => {
+              if (!open) setState({ ...state, activeGroupSheetId: null });
+            }}
+            title={t("groups.addGeduTo", { name: activeGroup.name })}
+            description={t("groups.addGeduDescription")}
+            excludeIds={activeGroup.geduIds}
+            onSelect={(geduId) => {
+              setState({
+                ...state,
+                groups: state.groups.map((g) =>
+                  g.id === activeGroup.id
+                    ? { ...g, geduIds: [...g.geduIds, geduId] }
+                    : g
+                ),
+              });
+            }}
+          />
+        )}
+      </FormSection>
+
+      <FormSection
+        title={t("sections.billing")}
+        description={t(`sections.billingDescription.${config.i18nKey}`)}
+      >
+        {config.billing.mode === "free_or_paid" && (
+          <Field
+            label={t("labels.billing")}
+            hint={t("hints.billingHint")}
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              {PAID_MODE_VALUES.map((mode) => {
+                const active = state.paidMode === mode;
+                const Icon = mode === "free" ? Gift : CircleDollarSign;
+                return (
+                  <label
+                    key={mode}
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors",
+                      active
+                        ? "border-primary bg-primary/5"
+                        : "border-input hover:border-foreground/30"
+                    )}
+                  >
+                    <input
+                      type="radio"
+                      name="paidMode"
+                      checked={active}
+                      onChange={() =>
+                        setState({ ...state, paidMode: mode })
+                      }
+                      className="mt-1"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 font-medium">
+                        <Icon className="h-4 w-4 text-primary" />
+                        {t(`labels.${mode}`)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {t(`hints.${mode}Detail`)}
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </Field>
+        )}
+
+        {showExternalInfo && (
+          <div className="flex items-start gap-2 rounded-md border border-dashed border-border bg-muted/30 px-3 py-2 text-sm">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <div>
+              <div className="font-medium">{t("labels.paidByMunicipality")}</div>
+              <div className="text-xs text-muted-foreground">
+                {t("hints.paidByMunicipality")}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showPricing && (
+          <Field
+            label={t("labels.pricing")}
+            hint={
+              pricingShape === "session_and_month"
+                ? t("hints.pricingPerSession")
+                : t("hints.pricingUpfront")
+            }
+          >
+            <PricingBlock
+              shape={pricingShape}
+              state={{
+                prices: state.prices,
+                fxFilled: state.fxFilled,
+                activeCurrency: state.activeCurrency,
+              }}
+              onChange={(next) => setState({ ...state, ...next })}
+              fxRates={fxRatesQuery.data}
+            />
+          </Field>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field
+            label={t("labels.seatCount")}
+            htmlFor="p-seat"
+            required={!seatInputDisabled}
+            hint={
+              canUncap
+                ? t("hints.seatCanUncap")
+                : t("hints.seatHint")
+            }
+          >
             <Input
-              id="p-refund-days"
+              id="p-seat"
               type="number"
-              min={0}
+              min="1"
+              value={seatInputDisabled ? "" : state.seatCount}
+              onChange={(e) =>
+                setState({ ...state, seatCount: e.target.value })
+              }
+              disabled={seatInputDisabled}
+              placeholder={
+                seatInputDisabled ? t("placeholders.noLimit") : undefined
+              }
+              required={!seatInputDisabled}
+            />
+          </Field>
+
+          {canUncap && (
+            <div className="flex items-end pb-2">
+              <label className="flex cursor-pointer items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={state.uncapped}
+                  onChange={(e) =>
+                    setState({ ...state, uncapped: e.target.checked })
+                  }
+                  className="h-4 w-4"
+                />
+                <span>{t("labels.noSeatLimit")}</span>
+              </label>
+            </div>
+          )}
+        </div>
+
+        {!seatInputDisabled && (
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={state.waitlistEnabled}
+              onChange={(e) =>
+                setState({ ...state, waitlistEnabled: e.target.checked })
+              }
+              className="h-4 w-4"
+            />
+            <span>{t("labels.waitlistToggle")}</span>
+          </label>
+        )}
+
+        {showRefund && (
+          <Field
+            label={t("labels.refundCutoff")}
+            htmlFor="p-refund"
+            hint={t("hints.refundHint")}
+          >
+            <Input
+              id="p-refund"
+              type="number"
+              min="0"
               value={state.refundPolicyDays}
               onChange={(e) =>
                 setState({ ...state, refundPolicyDays: e.target.value })
               }
+              className="max-w-[160px]"
             />
-          </div>
+          </Field>
         )}
-      </section>
+      </FormSection>
 
-      {/* Registration */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">{t("sections.registration")}</h2>
-        <div className="space-y-2">
-          <Label htmlFor="p-reg-opens">
-            {t("labels.registrationOpensAt")}
-          </Label>
+      <FormSection
+        title={t("sections.registration")}
+        description={t("sections.registrationDescription")}
+      >
+        <Field
+          label={t("labels.registrationOpensAt")}
+          htmlFor="p-opens-at"
+          hint={t("hints.registrationOpensHint")}
+        >
           <Input
-            id="p-reg-opens"
+            id="p-opens-at"
             type="datetime-local"
             value={state.registrationOpensAt}
             onChange={(e) =>
               setState({ ...state, registrationOpensAt: e.target.value })
             }
           />
-          <p className="text-xs text-muted-foreground">
-            {t("hints.registrationOpensHint")}
-          </p>
-        </div>
-      </section>
+        </Field>
+      </FormSection>
 
-      {/* Visibility — its own prominent section so admins don't miss the
-          publish step. */}
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">{t("sections.visibility")}</h2>
-        <label
-          className={`flex cursor-pointer items-start gap-3 rounded-md border-2 p-4 transition-colors ${
-            state.isVisible
-              ? "border-primary bg-primary/5"
-              : "border-input hover:bg-accent/50"
-          }`}
-        >
+      <FormSection
+        title={t("sections.visibility")}
+        description={t("sections.visibilityDescription")}
+      >
+        <label className="flex cursor-pointer items-start gap-3 rounded-md border border-input p-3">
           <input
             type="checkbox"
             checked={state.isVisible}
             onChange={(e) =>
               setState({ ...state, isVisible: e.target.checked })
             }
-            className="mt-0.5 h-5 w-5"
+            className="mt-0.5 h-4 w-4"
           />
-          <div className="space-y-1">
-            <div className="text-base font-medium">
-              {t("labels.makeVisible")}
-            </div>
-            <p className="text-sm text-muted-foreground">
+          <div className="min-w-0 flex-1 text-sm">
+            <div className="font-medium">{t("labels.makeVisible")}</div>
+            <div className="text-xs text-muted-foreground">
               {t("hints.visibleHint")}
-            </p>
+            </div>
           </div>
         </label>
-      </section>
+      </FormSection>
 
       {error && (
-        <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {error}
         </div>
       )}
 
-      <div className="flex justify-end gap-2">
+      <div className="flex items-center justify-between gap-4 border-t pt-6">
         <Button
           type="button"
-          variant="outline"
-          onClick={() => router.back()}
-          disabled={createProduct.isPending}
+          variant="ghost"
+          onClick={() => router.push(`/admin/${config.routeSlug}`)}
         >
-          {t("actions.cancel")}
+          {c("cancel")}
         </Button>
-        <Button type="submit" disabled={createProduct.isPending}>
+        <Button type="submit" size="lg" disabled={createProduct.isPending}>
           {createProduct.isPending && (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
           )}
-          {t("actions.createLabel", { label })}
+          {t("actions.createLabel", { label: label.toLowerCase() })}
         </Button>
       </div>
     </form>
   );
 }
 
-interface PricingBlockProps {
-  state: FormState;
-  setState: (s: FormState) => void;
+// ===== Reusable layout primitives =====
+
+function FormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="mb-4">
+          <h2 className="text-base font-semibold">{title}</h2>
+          {description && (
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {description}
+            </p>
+          )}
+        </div>
+        <div className="space-y-4">{children}</div>
+      </CardContent>
+    </Card>
+  );
 }
 
-function PricingBlock({ state, setState }: PricingBlockProps) {
-  const t = useTranslations("admin.productsV2");
-  const tPricing = useTranslations("admin.productsV2.pricing");
-  const { data: fxRates, isError: fxError } = useFxRatesFromEur(true);
-
-  const active = state.activeCurrency;
-  const activeRow = state.prices[active];
-  const isEur = active === DEFAULT_CURRENCY;
-  const fxRate = fxRates?.[active];
-  const eurRow = state.prices[DEFAULT_CURRENCY];
-
-  function switchCurrency(next: SupportedCurrency) {
-    // Auto-fill from EUR on first visit to a non-EUR currency when we have
-    // a rate and the target is still empty. `fxFilled` guards against
-    // overwriting manual edits if the admin tabs back and forth.
-    if (next === active) return;
-    const already = state.fxFilled.has(next);
-    const target = state.prices[next];
-    const shouldSuggest =
-      next !== DEFAULT_CURRENCY &&
-      !already &&
-      target.session === "" &&
-      target.month === "" &&
-      fxRates &&
-      (eurRow.session !== "" || eurRow.month !== "");
-
-    if (shouldSuggest) {
-      const rate = fxRates[next];
-      const suggested = {
-        session:
-          eurRow.session === ""
-            ? ""
-            : (Number(eurRow.session) * rate).toFixed(2),
-        month:
-          eurRow.month === ""
-            ? ""
-            : (Number(eurRow.month) * rate).toFixed(2),
-      };
-      const nextFxFilled = new Set(state.fxFilled);
-      nextFxFilled.add(next);
-      setState({
-        ...state,
-        activeCurrency: next,
-        prices: { ...state.prices, [next]: suggested },
-        fxFilled: nextFxFilled,
-      });
-      return;
-    }
-
-    const nextFxFilled = new Set(state.fxFilled);
-    nextFxFilled.add(next);
-    setState({
-      ...state,
-      activeCurrency: next,
-      fxFilled: nextFxFilled,
-    });
-  }
-
-  function setField(field: "session" | "month", value: string) {
-    setState({
-      ...state,
-      prices: {
-        ...state.prices,
-        [active]: { ...activeRow, [field]: value },
-      },
-    });
-  }
-
+function Field({
+  label,
+  htmlFor,
+  required,
+  hint,
+  children,
+}: {
+  label: string;
+  htmlFor?: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="space-y-3">
-      <div
-        className="flex w-fit rounded-md border border-input"
-        role="tablist"
-        aria-label={tPricing("currencyPickerLabel")}
-      >
-        {SUPPORTED_CURRENCIES.map((c) => {
-          const isActive = c === active;
-          return (
-            <button
-              key={c}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              onClick={() => switchCurrency(c)}
-              className={`px-3 py-1.5 text-sm font-medium first:rounded-l-md last:rounded-r-md ${
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
-              }`}
-            >
-              {CURRENCY_CONFIG[c].label}
-            </button>
-          );
-        })}
-      </div>
-
-      {!isEur && fxError && (
-        <p className="text-xs text-muted-foreground">
-          {tPricing("fxUnavailable")}
-        </p>
-      )}
-      {!isEur && fxRate !== undefined && (
-        <p className="text-xs text-muted-foreground">
-          {tPricing("fxSuggested", { rate: fxRate.toFixed(4) })}
-        </p>
-      )}
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="p-price-session">
-            {t("labels.pricePerSession")}
-          </Label>
-          <Input
-            id="p-price-session"
-            type="number"
-            min={0}
-            step="0.01"
-            inputMode="decimal"
-            value={activeRow.session}
-            onChange={(e) => setField("session", e.target.value)}
-          />
-          <BundlePricePreview value={activeRow.session} currency={active} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="p-price-month">
-            {t("labels.pricePerMonth")}
-          </Label>
-          <Input
-            id="p-price-month"
-            type="number"
-            min={0}
-            step="0.01"
-            inputMode="decimal"
-            value={activeRow.month}
-            onChange={(e) => setField("month", e.target.value)}
-          />
-          <SubscriptionPricePreview value={activeRow.month} currency={active} />
-        </div>
-      </div>
+    <div className="space-y-1.5">
+      <Label htmlFor={htmlFor}>
+        {label}
+        {required && <span className="ml-0.5 text-destructive">*</span>}
+      </Label>
+      {children}
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
 
+function InfoCallout({
+  text,
+  variant = "info",
+}: {
+  text: string;
+  variant?: "info" | "warn";
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-start gap-2 rounded-md border border-dashed px-3 py-2 text-xs",
+        variant === "info"
+          ? "border-border bg-muted/30 text-muted-foreground"
+          : "border-primary/40 bg-primary/5 text-foreground"
+      )}
+    >
+      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+      <span>{text}</span>
+    </div>
+  );
+}

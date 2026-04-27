@@ -195,10 +195,54 @@
     },
     "productsV2": {
       "types": {
-        "consumerClub": { "label": "Consumer Club", "plural": "Consumer Clubs" },
-        "municipalityClub": { "label": "Municipality Club", "plural": "Municipality Clubs" },
-        "camp": { "label": "Camp", "plural": "Camps" },
-        "event": { "label": "Event", "plural": "Events" }
+        "consumerClub": {
+          "label": "Consumer club",
+          "plural": "Consumer clubs",
+          "tagline": "Weekly, ongoing, parents pay per session.",
+          "blurb": "Parents enroll their child and pay per session. Clubs run week after week with no end date unless you set one.",
+          "traits": {
+            "1": "Weekly · one day per week",
+            "2": "No end date by default",
+            "3": "Parents pay per session, with optional subscription rate",
+            "4": "Fixed seat count, with a waitlist"
+          }
+        },
+        "municipalityClub": {
+          "label": "Municipality club",
+          "plural": "Municipality clubs",
+          "tagline": "Term-based, school-paid, ticket-drop registration.",
+          "blurb": "A municipality or school pays up front for a block of seats. Parents register their child for free; the registration window opens at a fixed moment like a concert ticket drop.",
+          "traits": {
+            "1": "Weekly · one day per week",
+            "2": "Runs between a start and end date",
+            "3": "School of Gaming invoices the municipality",
+            "4": "Fixed seat count, with a waitlist"
+          }
+        },
+        "camp": {
+          "label": "Camp",
+          "plural": "Camps",
+          "tagline": "Multiple days for a set period. Parents pay upfront.",
+          "blurb": "A camp runs across several days of the week for a set period — any time of year. Parents pay the full price once, at signup. Refundable up to a cutoff before the camp starts.",
+          "traits": {
+            "1": "Several days per week (each with its own time)",
+            "2": "Runs between a start and end date",
+            "3": "Parents pay upfront",
+            "4": "Refundable before the camp starts"
+          }
+        },
+        "event": {
+          "label": "Event",
+          "plural": "Events",
+          "tagline": "A single date. Free, or a one-time charge.",
+          "blurb": "A one-time event on a specific date. Good for demo days, community walks, webinars, tournaments. Free events can have no seat limit; paid events always have a seat count.",
+          "traits": {
+            "1": "Single date, single start time",
+            "2": "Free or paid upfront",
+            "3": "Free events can have no seat limit",
+            "4": "Great for demos, webinars, tournaments"
+          }
+        }
       },
       "list": {
         "subtitle": "Manage {plural} that admins have created.",
@@ -210,58 +254,111 @@
       },
       "newPage": {
         "back": "Back to {plural}",
+        "kicker": "New {label}",
         "title": "New {label}"
       },
       "sections": {
         "identity": "Identity",
+        "identityDescription": "What to call this and what it's about.",
         "audience": "Audience",
-        "location": "Location",
+        "audienceDescription": "Who this is intended for.",
+        "where": "Where",
+        "whereDescription": {
+          "consumerClub": "Online or in person. Online clubs are offered to anyone — no location needed. In-person clubs run at a specific site.",
+          "municipalityClub": "Paid for by a specific municipality. Online clubs pick the municipality directly; in-person clubs pick a site within it.",
+          "camp": "Online or in person. Online camps are offered to anyone — no location needed. In-person camps run at a specific site.",
+          "event": "Online or in person. Online events are offered to anyone — no location needed. In-person events run at a specific site."
+        },
         "when": "When",
+        "whenDescription": {
+          "consumerClub": "One day per week, one time. Leave the end date blank for an ongoing club.",
+          "municipalityClub": "One day per week, one time. Runs between the start and end dates.",
+          "camp": "Multiple days per week, each with its own start time and duration.",
+          "event": "A single date and start time."
+        },
+        "groups": "Groups",
+        "groupsDescription": "Admins use groups to organize participants inside a product. Parents don't see groups — they see the product.",
         "billing": "Capacity & billing",
-        "registration": "Registration",
-        "visibility": "Visibility"
+        "billingDescription": {
+          "consumerClub": "Parents pay per session their child attends. Billing happens automatically each week.",
+          "municipalityClub": "School of Gaming invoices the municipality directly. Parents register their child for free, up to the seat limit.",
+          "camp": "Parents pay the total price once, at signup. Refundable up to a cutoff.",
+          "event": "Events can be free (with or without a seat limit) or paid upfront."
+        },
+        "registration": "Registration timing",
+        "registrationDescription": "Optional. If you set a time, parents see a countdown until then. Otherwise signup is open right away.",
+        "visibility": "Visibility",
+        "visibilityDescription": "Control whether parents can see this while you're still setting it up."
       },
       "labels": {
         "name": "Name",
         "description": "Description",
         "topic": "Topic",
         "tags": "Tags",
-        "padletUrl": "Padlet URL (optional)",
+        "padletUrl": "Padlet URL",
         "minAge": "Min age",
         "maxAge": "Max age",
         "spokenLanguage": "Spoken language",
+        "deliveredIn": "Delivered in",
         "online": "Online",
         "inPerson": "In person",
-        "municipality": "Municipality",
+        "municipality": "Municipality this is for",
         "site": "Site",
         "startDate": "Start date",
         "date": "Date",
         "endDate": "End date",
         "endDateOptional": "End date (optional)",
+        "eventDate": "Event date",
+        "seasonEndDate": "Season end date",
         "schedule": "Schedule",
+        "dayAndTime": "Day & time",
+        "daysAndTimes": "Days & times",
+        "time": "Time",
         "holidayCalendars": "Holiday calendars",
         "holidayNoUpcoming": "No upcoming dates — this calendar needs dates before it's useful.",
-        "pricing": "Pricing",
+        "pricing": "Price",
         "free": "Free",
         "paid": "Paid",
+        "billing": "Billing",
+        "paidByMunicipality": "Paid by the municipality",
+        "groupTopicUnder": "Group this under:",
         "seatCount": "Seat count",
-        "seatCountOptionalFree": "Seat count (optional for free)",
-        "waitlistToggle": "Enable waitlist when full",
+        "noSeatLimit": "No seat limit",
+        "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "pricePerSession": "Price per session (EUR)",
-        "pricePerMonth": "Price per month (EUR)",
-        "refundWindow": "Refund window (days before start)",
-        "registrationOpensAt": "Registration opens at (optional)",
-        "makeVisible": "Make visible to parents now"
+        "refundCutoff": "Refund cutoff (days before start)",
+        "registrationOpensAt": "Registration opens at",
+        "makeVisible": "Visible to parents"
       },
       "placeholders": {
-        "selectTopic": "Select a topic",
+        "selectTopic": "Select a topic…",
         "selectSite": "Select a site",
-        "selectMunicipality": "Select a municipality"
+        "selectMunicipality": "Select a municipality",
+        "newTopicName": "New topic name (e.g. Among Us, Digital wellness)",
+        "newTagName": "Tag name",
+        "padletUrl": "https://padlet.com/...",
+        "threshold": "e.g. 8",
+        "noLimit": "No limit",
+        "name": {
+          "consumerClub": "e.g. Minecraft Redstone kerho",
+          "municipalityClub": "e.g. Tapiola Minecraft Club · Spring 2026",
+          "camp": "e.g. Game Design Camp · Autumn break",
+          "event": "e.g. Pokémon GO community walk · Helsinki"
+        },
+        "description": {
+          "consumerClub": "What happens each week, who it's for, what they'll learn.",
+          "municipalityClub": "Hosted at which school, run during which term, delivered in which language.",
+          "camp": "Days, total hours, theme of the week.",
+          "event": "One-line pitch for the event — what, where, for whom."
+        }
       },
       "topicKinds": {
         "game": "Games",
         "subject": "Subjects"
+      },
+      "topicKindSingular": {
+        "game": "Game",
+        "subject": "Subject"
       },
       "locationPicker": {
         "searchPlaceholder": "Search by country, region, municipality, or site…",
@@ -271,23 +368,31 @@
         "hintJurisdiction": "Pick a country, region, or municipality. Online products don't have a physical venue.",
         "addCountry": "Add a new country",
         "change": "Change",
+        "edit": "Edit",
         "cancel": "Cancel",
         "pick": "Pick",
         "noVenueHint": "No physical venue. Parents browsing in {name} — or any smaller area inside it — will see this product.",
         "noSitesYet": "no sites yet",
         "memberNotesLabel": "Member-visible notes",
+        "memberNotesFieldLabel": "Notes shown to parents and gamers",
+        "memberNotesPlaceholder": "Address details, parking, accessibility — anything parents need to know.",
         "memberNotesHint": "Shown to parents and gamers on the product detail page.",
         "staffNotesLabel": "Staff notes (admin + Gedu only)",
+        "staffNotesFieldLabel": "Staff-only notes",
+        "staffNotesPlaceholder": "Gate codes, back-entrance details, room keys, who to ask at the front desk.",
         "staffNotesHint": "Never shown to parents or gamers.",
         "addressLabel": "Address",
+        "addressPlaceholder": "Street, postal code, city",
         "noMemberNotes": "No member-visible notes for this site.",
-        "noStaffNotes": "No staff notes for this site.",
-        "editInLocations": "Edit in /admin/locations."
+        "noStaffNotes": "No staff notes for this site."
       },
       "pricing": {
         "currencyPickerLabel": "Currency",
         "fxSuggested": "Suggested from today's EUR rate ({rate}). Edit to override.",
         "fxUnavailable": "Couldn't fetch today's FX rate — enter manually.",
+        "perSessionLabel": "Price per session",
+        "perMonthLabel": "Price per month",
+        "totalLabel": "Total price",
         "bundleHeading": "What parents pay for bundles",
         "bundleSingle": "Single session",
         "bundleMulti": "{size} sessions (save {discount}%)",
@@ -306,13 +411,37 @@
         "thresholdDescription": "No fixed start date. You pick the first session date once enough parents have signed up — parents see a live counter and know you'll contact them when it's ready."
       },
       "hints": {
-        "noTopics": "No topics yet. Seed at least one in topics_v2 before creating products.",
-        "noLocations": "No matching locations. Create one in /admin/locations first.",
-        "onlineNoLocation": "Online and available to anyone — no location needed.",
+        "noTopics": "No topics yet. Add one with the + button next to the picker.",
+        "topicHint": "The primary subject — one per product. What the sessions are actually about.",
+        "tagsHint": "Optional. Helps parents filter products when they're browsing.",
+        "padletHint": "Optional. Shared with families after they sign up.",
+        "deliveredInHint": "The primary language used during sessions.",
+        "noLocations": "No matching locations. Create one inline with the + button.",
+        "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
+        "voiceRoomAuto": "A voice room will be set up for this product automatically.",
+        "municipalityHint": "Municipality clubs are always tied to a specific municipality — the one paying for it. Parents from that municipality (or anywhere smaller inside it) will see it when they browse.",
+        "siteHint": "Where sessions physically happen.",
         "eventWeekdayDerived": "Event weekday is derived from the date automatically.",
+        "eventSingleDay": "Events happen on a single date.",
+        "endDateOpt": "Leave blank for an ongoing club with no end date.",
+        "thresholdOnly": "No fixed start date yet. Parents see a \"X of Y needed\" counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
+        "thresholdWithDate": "If fewer than this many parents sign up by the start date, you'll need to cancel and refund from the product's page.",
+        "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
         "holidaySkips": "Sessions on calendar dates are skipped.",
-        "registrationOpensHint": "Leave blank to accept signups immediately once published.",
-        "visibleHint": "Visible products appear in parent browse pages. Leave unchecked to keep as a draft."
+        "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
+        "groupsHint": "Add groups now if you already know how you want to organize this — or leave this empty and add them later from the product page, once you see how many gamers sign up.",
+        "groupsNotWired": "Groups UI is in place but not yet wired to the backend — your group choices won't be saved on submit. Coming soon.",
+        "billingHint": "Free events can have no seat limit. Paid events always have a seat count.",
+        "freeDetail": "No charge. Anyone can join with one click.",
+        "paidDetail": "One-time charge at signup.",
+        "paidByMunicipality": "No customer billing inside this system. School of Gaming invoices the municipality directly.",
+        "pricingPerSession": "Charged for each session the child attends. The monthly rate is what subscribers see — derived weekly/monthly from this number.",
+        "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
+        "seatHint": "When full, new signups go to the waitlist.",
+        "seatCanUncap": "Free events can have no seat limit (e.g. a webinar, a public walk).",
+        "refundHint": "Parents can cancel and get a refund up to this many days before the first session. After that, they need to contact an admin.",
+        "registrationOpensHint": "Local time in Europe/Helsinki. Leave blank to accept signups immediately once published.",
+        "visibleHint": "Uncheck to keep the product hidden while you're still setting it up. Turn it on when you're ready for parents to see it."
       },
       "errors": {
         "nameRequired": "Name is required",
@@ -335,7 +464,11 @@
       },
       "actions": {
         "cancel": "Cancel",
-        "createLabel": "Create {label}"
+        "createLabel": "Create {label}",
+        "addTopic": "Add topic",
+        "addNewTopic": "Add new topic",
+        "addNewTag": "Add new tag",
+        "addTagShort": "Add"
       },
       "status": {
         "draft": "draft",
@@ -346,10 +479,16 @@
       },
       "schedule": {
         "day": "Day",
+        "hour": "Hour",
+        "minute": "Minute",
         "startTime": "Start time",
         "durationMin": "Duration (min)",
-        "addDay": "Add day",
-        "removeSlot": "Remove slot"
+        "minSuffix": "min",
+        "addDay": "Add another day",
+        "removeSlot": "Remove",
+        "sameAsEventDate": "Same as event date",
+        "oneSessionEvent": "One session on the event date.",
+        "oneSessionPerWeek": "One session per week."
       },
       "weekdays": {
         "mon": "Mon",
@@ -358,7 +497,48 @@
         "thu": "Thu",
         "fri": "Fri",
         "sat": "Sat",
-        "sun": "Sun"
+        "sun": "Sun",
+        "monLong": "Monday",
+        "tueLong": "Tuesday",
+        "wedLong": "Wednesday",
+        "thuLong": "Thursday",
+        "friLong": "Friday",
+        "satLong": "Saturday",
+        "sunLong": "Sunday"
+      },
+      "imagePicker": {
+        "label": "Image",
+        "previewAlt": "Preview",
+        "dropPrompt": "Drop an image here or click to choose.",
+        "formats": "JPG, PNG, WebP, AVIF, or SVG.",
+        "chooseFile": "Choose file",
+        "remove": "Remove",
+        "hint": "Shown on the product card when parents are browsing."
+      },
+      "geduPicker": {
+        "searchPlaceholder": "Search name or email…",
+        "speaks": "Speaks",
+        "any": "Any",
+        "countSummary": "Showing {filtered} of {total} Gedus",
+        "noResults": "No Gedus match your search.",
+        "current": "Current",
+        "alreadyAssigned": "Already assigned"
+      },
+      "groups": {
+        "groupNumber": "Group {n}",
+        "groupNamePlaceholder": "Group name",
+        "removeGroup": "Remove group",
+        "assignedGedus": "Assigned Gedus",
+        "noGedusYet": "None yet. A group with no Gedus is fine — you can assign them later.",
+        "assignGedu": "Assign a Gedu",
+        "removeGedu": "Remove Gedu",
+        "noGroupsYet": "No groups yet.",
+        "noGroupsDetail": "Parents can still sign up. Their gamer will land in an \"unassigned\" inbox until you place them into a group.",
+        "defaultName": "Group {letter}",
+        "addGroup": "Add a group",
+        "addGeduTo": "Add Gedu to {name}",
+        "addGeduGeneric": "Add Gedu to group",
+        "addGeduDescription": "Gedus assigned to this group run its sessions. For online products they can also hop into other groups' voice rooms in the same product when needed."
       }
     },
     "users": {
