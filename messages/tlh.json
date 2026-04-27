@@ -374,7 +374,6 @@
         "noSeatLimit": "pa' mI' Sub pagh",
         "waitlistToggle": "pa' tebDI', tetlh teb yIchu'",
         "signupThreshold": "ghItlh mI' taghmeH",
-        "refundCutoff": "Huch chegh van (jaj tagh pagh)",
         "registrationOpensAt": "ghItlh tagh",
         "makeVisible": "vavmey legh"
       },
@@ -487,7 +486,6 @@
         "pricingUpfront": "ghItlh wa' Huch lo'. poH nab Sov pagh, Huch rapchu'.",
         "seatHint": "tebDI', ghItlh chu'mey tetlh teb Daq jaH.",
         "seatCanUncap": "Huch pagh Qu' pa' mI' Sub poQbe' (e.g. webinar, ghom yIt).",
-        "refundHint": "vavmey luvang 'ej Huch lucheghlaH jaj qaStaHvIS pagh — jaj poQ. tagh, ra'wI' luqalqu'lu'.",
         "registrationOpensHint": "Europe/Helsinki Daq poH. chIm yIdaj, ghItlh DaH tagh.",
         "visibleHint": "DochlIj DachenmoHtaHvIS, So'lu' yIchu'Ha'. naDevDaq vavmey lulegh, yIchu'."
       },

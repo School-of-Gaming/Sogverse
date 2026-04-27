@@ -326,7 +326,6 @@
         "noSeatLimit": "Ei paikkarajaa",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
         "signupThreshold": "Ilmoittautumisraja aloitukseen",
-        "refundCutoff": "Palautusraja (päivää ennen alkua)",
         "registrationOpensAt": "Ilmoittautuminen alkaa",
         "makeVisible": "Näkyy vanhemmille"
       },
@@ -439,7 +438,6 @@
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
         "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
         "seatCanUncap": "Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa (esim. webinaari, julkinen kävely).",
-        "refundHint": "Vanhemmat voivat perua ja saada palautuksen tämän monta päivää ennen ensimmäistä kertaa. Sen jälkeen heidän pitää ottaa yhteyttä ylläpitäjään.",
         "registrationOpensHint": "Paikallinen aika aikavyöhykkeellä Europe/Helsinki. Jätä tyhjäksi, jos ilmoittautuminen alkaa heti julkaisun jälkeen.",
         "visibleHint": "Poista valinta pitääksesi tuote piilossa, kun se on vielä tekeillä. Laita päälle, kun olet valmis vanhempien näkemään sen."
       },

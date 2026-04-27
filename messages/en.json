@@ -326,7 +326,6 @@
         "noSeatLimit": "No seat limit",
         "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "refundCutoff": "Refund cutoff (days before start)",
         "registrationOpensAt": "Registration opens at",
         "makeVisible": "Visible to parents"
       },
@@ -439,7 +438,6 @@
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
         "seatHint": "When full, new signups go to the waitlist.",
         "seatCanUncap": "Free events can have no seat limit (e.g. a webinar, a public walk).",
-        "refundHint": "Parents can cancel and get a refund up to this many days before the first session. After that, they need to contact an admin.",
         "registrationOpensHint": "Local time in Europe/Helsinki. Leave blank to accept signups immediately once published.",
         "visibleHint": "Uncheck to keep the product hidden while you're still setting it up. Turn it on when you're ready for parents to see it."
       },

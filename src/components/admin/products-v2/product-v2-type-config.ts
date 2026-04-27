@@ -42,7 +42,6 @@ export interface ProductTypeConfig {
   allowsInPerson: boolean;
   requiresMunicipalityWhenOnline: boolean;
   hasHolidayCalendars: boolean;
-  hasRefundWindow: boolean;
   /** Start triggers admin can choose from. First entry is the default. */
   allowedStartModes: StartMode[];
   defaultBillingMode: BillingModeV2;
@@ -60,7 +59,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
     hasHolidayCalendars: true,
-    hasRefundWindow: false,
     allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "paid",
   },
@@ -75,7 +73,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: true,
     hasHolidayCalendars: true,
-    hasRefundWindow: false,
     allowedStartModes: ["date"],
     defaultBillingMode: "external_contract",
   },
@@ -90,7 +87,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
     hasHolidayCalendars: false,
-    hasRefundWindow: true,
     allowedStartModes: ["date", "date_and_threshold"],
     defaultBillingMode: "paid",
   },
@@ -107,7 +103,6 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductTypeV2, ProductTypeConfig> = {
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,
     hasHolidayCalendars: false,
-    hasRefundWindow: true,
     allowedStartModes: ["date", "date_and_threshold", "threshold"],
     defaultBillingMode: "free",
   },
