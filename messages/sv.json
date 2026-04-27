@@ -326,7 +326,6 @@
         "noSeatLimit": "Ingen platsgräns",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
         "signupThreshold": "Antal anmälningar för att starta",
-        "refundCutoff": "Återbetalningsgräns (dagar före start)",
         "registrationOpensAt": "Registrering öppnar",
         "makeVisible": "Synlig för föräldrar"
       },
@@ -439,7 +438,6 @@
         "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
         "seatHint": "När fullt går nya anmälningar till väntelistan.",
         "seatCanUncap": "Gratis evenemang behöver ingen platsgräns (t.ex. ett webbinarium, en offentlig promenad).",
-        "refundHint": "Föräldrar kan avboka och få återbetalning upp till så här många dagar före första tillfället. Därefter behöver de kontakta en administratör.",
         "registrationOpensHint": "Lokal tid i tidszonen Europe/Helsinki. Lämna tomt för att acceptera anmälningar direkt när publicerat.",
         "visibleHint": "Avmarkera för att hålla produkten dold medan du fortfarande arbetar på den. Slå på när du är redo att föräldrar ska se den."
       },

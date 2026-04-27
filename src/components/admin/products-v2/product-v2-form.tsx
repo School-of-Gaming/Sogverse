@@ -108,7 +108,6 @@ interface FormState {
   seatCount: string;
   uncapped: boolean;
   waitlistEnabled: boolean;
-  refundPolicyDays: string;
 
   // Registration timing
   registrationOpensAt: string;
@@ -184,7 +183,6 @@ function initialState(config: ProductTypeConfig): FormState {
     seatCount: defaultSeats(config.productType),
     uncapped: false,
     waitlistEnabled: true,
-    refundPolicyDays: config.hasRefundWindow ? "7" : "",
     registrationOpensAt: "",
     isVisible: false,
   };
@@ -224,7 +222,6 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
         ? "external_contract"
         : "paid";
   const isPaid = effectiveBillingMode === "paid";
-  const showRefund = config.hasRefundWindow && isPaid;
   const showPricing = isPaid && config.pricingShape !== "external";
   const pricingShape =
     config.pricingShape === "session_and_month"
@@ -385,10 +382,6 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       registration_opens_at: state.registrationOpensAt
         ? new Date(state.registrationOpensAt).toISOString()
         : null,
-      refund_policy_days:
-        showRefund && state.refundPolicyDays
-          ? Number(state.refundPolicyDays)
-          : null,
       is_visible: state.isVisible,
       schedule_slots: finalSlots,
       tag_ids: Array.from(state.tagIds),
@@ -1262,25 +1255,6 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
             />
             <span>{t("labels.waitlistToggle")}</span>
           </label>
-        )}
-
-        {showRefund && (
-          <Field
-            label={t("labels.refundCutoff")}
-            htmlFor="p-refund"
-            hint={t("hints.refundHint")}
-          >
-            <Input
-              id="p-refund"
-              type="number"
-              min="0"
-              value={state.refundPolicyDays}
-              onChange={(e) =>
-                setState({ ...state, refundPolicyDays: e.target.value })
-              }
-              className="max-w-[160px]"
-            />
-          </Field>
         )}
       </FormSection>
 

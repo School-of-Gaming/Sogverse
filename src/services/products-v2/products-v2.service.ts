@@ -49,7 +49,6 @@ export type CreateProductV2Input = {
   seat_count: number | null;
   waitlist_enabled: boolean;
   registration_opens_at: string | null;
-  refund_policy_days: number | null;
   is_visible: boolean;
   schedule_slots: ScheduleSlotInput[];
   tag_ids: string[];
