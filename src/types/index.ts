@@ -135,6 +135,16 @@ export type TopicV2Insert = Database["public"]["Tables"]["topics_v2"]["Insert"];
 export type TagV2 = Database["public"]["Tables"]["tags_v2"]["Row"];
 export type TagV2Insert = Database["public"]["Tables"]["tags_v2"]["Insert"];
 
+// Translation tables — one row per (parent_id, locale). Parents (products_v2,
+// topics_v2, tags_v2) no longer carry name/description directly; the reader
+// resolves a locale via resolveTranslation() in src/lib/i18n/resolve-translation.ts.
+export type ProductTranslationV2 = Database["public"]["Tables"]["product_translations_v2"]["Row"];
+export type ProductTranslationV2Insert = Database["public"]["Tables"]["product_translations_v2"]["Insert"];
+export type TopicTranslationV2 = Database["public"]["Tables"]["topic_translations_v2"]["Row"];
+export type TopicTranslationV2Insert = Database["public"]["Tables"]["topic_translations_v2"]["Insert"];
+export type TagTranslationV2 = Database["public"]["Tables"]["tag_translations_v2"]["Row"];
+export type TagTranslationV2Insert = Database["public"]["Tables"]["tag_translations_v2"]["Insert"];
+
 // product_tags_v2
 export type ProductTagV2 = Database["public"]["Tables"]["product_tags_v2"]["Row"];
 export type ProductTagV2Insert = Database["public"]["Tables"]["product_tags_v2"]["Insert"];

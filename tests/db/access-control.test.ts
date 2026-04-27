@@ -125,6 +125,9 @@ describe("Access Control", () => {
       ["product_holiday_calendars_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_details_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_staff_details_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["product_translations_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["topic_translations_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["tag_translations_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
     ]);
 
     const { data, error } = await admin.rpc("_list_table_grants");

@@ -250,7 +250,15 @@
         "empty": "Inga {plural} än. Klicka på Nytt {label} för att skapa ett.",
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
-        "hidden": "dold"
+        "hidden": "dold",
+        "untitled": "(utan titel)"
+      },
+      "translations": {
+        "label": "Språk",
+        "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett av engelska eller finska krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska eller finska.",
+        "addLocale": "+ Lägg till språk",
+        "removeLocale": "Ta bort {locale}",
+        "inlineCreateHint": "Sparas på {locale}. Översättningar till andra språk kan läggas till senare i ämne- och tagghanteringen."
       },
       "newPage": {
         "back": "Tillbaka till {plural}",
@@ -442,8 +450,9 @@
         "visibleHint": "Avmarkera för att hålla produkten dold medan du fortfarande arbetar på den. Slå på när du är redo att föräldrar ska se den."
       },
       "errors": {
-        "nameRequired": "Namn krävs",
-        "descriptionRequired": "Beskrivning krävs",
+        "translationRequired": "Minst ett språk med namn och beskrivning krävs",
+        "translationsMustHaveEnOrFi": "Lägg till en översättning på engelska eller finska — varje produkt behöver minst en av dem.",
+        "translationIncomplete": "Fyll i både namn och beskrivning för fliken {locale}, eller ta bort den.",
         "topicRequired": "Ämne krävs",
         "spokenLanguageRequired": "Talat språk krävs",
         "minAgeInvalid": "Min ålder måste vara ett icke-negativt heltal",

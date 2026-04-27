@@ -250,7 +250,15 @@
         "empty": "No {plural} yet. Click New {label} to create one.",
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
-        "hidden": "hidden"
+        "hidden": "hidden",
+        "untitled": "(untitled)"
+      },
+      "translations": {
+        "label": "Languages",
+        "hint": "Add the languages you want parents to be able to read this in. At least one of English or Finnish is required. Parents see this product in their UI language if available, otherwise in English, then Finnish.",
+        "addLocale": "+ Add language",
+        "removeLocale": "Remove {locale}",
+        "inlineCreateHint": "Saved in {locale}. Translations for other languages can be added later from topic & tag management."
       },
       "newPage": {
         "back": "Back to {plural}",
@@ -442,8 +450,9 @@
         "visibleHint": "Uncheck to keep the product hidden while you're still setting it up. Turn it on when you're ready for parents to see it."
       },
       "errors": {
-        "nameRequired": "Name is required",
-        "descriptionRequired": "Description is required",
+        "translationRequired": "At least one language with name and description is required",
+        "translationsMustHaveEnOrFi": "Add a translation in English or Finnish — every product needs at least one of those.",
+        "translationIncomplete": "Fill in both name and description for the {locale} tab, or remove it.",
         "topicRequired": "Topic is required",
         "spokenLanguageRequired": "Spoken language is required",
         "minAgeInvalid": "Min age must be a non-negative integer",

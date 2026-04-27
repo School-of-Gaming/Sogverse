@@ -480,6 +480,40 @@ product_subscription_prices_v2
   -- existing subs retain their original rate until they cancel and re-subscribe.
 ```
 
+### 5.1b Translations — products, topics, tags
+
+User-visible text on `products_v2`, `topics_v2`, `tags_v2` lives in per-locale child tables, not on the parent rows. The parent carries only structural data (id, slug, kind, FKs). Admins decide which locales to provide; not every parent has every locale.
+
+```sql
+product_translations_v2
+  product_id   uuid → products_v2.id ON DELETE CASCADE
+  locale       text NOT NULL                 -- matches SUPPORTED_LOCALES in src/lib/constants/locales.ts
+  name         text NOT NULL
+  description  text NOT NULL
+  primary key (product_id, locale)
+
+topic_translations_v2 (same shape; description nullable)
+tag_translations_v2   (same shape; description nullable)
+```
+
+**Resolution rule.** The reader picks one row per parent for display, walking the fallback chain in `src/lib/i18n/resolve-translation.ts`:
+
+```
+user's UI locale → en → fi → first available
+```
+
+Sending all available translations to the client is intentional — payloads stay small (2 short fields per locale, max 4 locales) and a future "view this product in another language" UI is trivial. The browser just calls `resolveTranslation(parent.product_translations_v2, useLocale())`.
+
+**Must-have-en-or-fi rule for products.** Every product must keep at least one of (en, fi) translations at all times. Enforced two ways:
+- `create_product_v2()` rejects an `p_translations` payload that has no en or fi entry.
+- A BEFORE-DELETE trigger on `product_translations_v2` raises if the delete would leave the product without any en/fi row. (CASCADE on parent delete is allowed via a "parent gone?" check.)
+
+Topics and tags are not subject to the rule — they're shared reference data that may exist in only one locale at first.
+
+**Inline create stays single-locale.** When the admin clicks "+ Create new topic" / "+ Create new tag" in the product form, the new row is written with one translation — the admin's current UI locale. Other-locale translations for shared reference data get added later via a "Manage topic & tag translations" admin UI (not yet built — tracked as a follow-up).
+
+The product form itself is multi-locale: a language tabs strip in the Identity card lets the admin add/remove locales and edit per-locale name + description. Initial tab is the admin's UI locale.
+
 ### 5.2 Holiday calendars
 
 ```sql
@@ -986,6 +1020,7 @@ Prove the unified shape against the two product lines closest to real users.
 - Term / season templates.
 - Sibling-discount tier ladder (expand the flat `FAMILY_DISCOUNT_PERCENT` into a multi-tier lookup) if business wants it.
 - First-session-free / promo codes.
+- **Manage topic & tag translations admin UI.** Inline-create from the product form writes a single translation in the admin's current UI locale (see §5.1b). To complete the multi-locale story for shared reference data, add an admin page that lists all topics + tags with their existing translations and lets an admin add/edit translations for additional locales. Until this exists, parents on a locale that lacks a topic/tag translation see the fallback (en → fi → first available).
 
 ### Phase 4 — on-platform municipality billing
 

@@ -564,6 +564,41 @@ export type Database = {
           },
         ]
       }
+      product_translations_v2: {
+        Row: {
+          created_at: string
+          description: string
+          locale: string
+          name: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          locale: string
+          name: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          locale?: string
+          name?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_translations_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           created_at: string | null
@@ -667,7 +702,6 @@ export type Database = {
           billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
           created_at: string
           created_by: string
-          description: string
           end_date: string | null
           id: string
           image_path: string | null
@@ -676,7 +710,6 @@ export type Database = {
           location_id: string | null
           max_age: number
           min_age: number
-          name: string
           padlet_url: string | null
           product_type: Database["public"]["Enums"]["product_type_v2"]
           refund_policy_days: number | null
@@ -695,7 +728,6 @@ export type Database = {
           billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
           created_at?: string
           created_by: string
-          description: string
           end_date?: string | null
           id?: string
           image_path?: string | null
@@ -704,7 +736,6 @@ export type Database = {
           location_id?: string | null
           max_age: number
           min_age: number
-          name: string
           padlet_url?: string | null
           product_type: Database["public"]["Enums"]["product_type_v2"]
           refund_policy_days?: number | null
@@ -723,7 +754,6 @@ export type Database = {
           billing_mode?: Database["public"]["Enums"]["billing_mode_v2"]
           created_at?: string
           created_by?: string
-          description?: string
           end_date?: string | null
           id?: string
           image_path?: string | null
@@ -732,7 +762,6 @@ export type Database = {
           location_id?: string | null
           max_age?: number
           min_age?: number
-          name?: string
           padlet_url?: string | null
           product_type?: Database["public"]["Enums"]["product_type_v2"]
           refund_policy_days?: number | null
@@ -934,28 +963,57 @@ export type Database = {
         }
         Relationships: []
       }
-      tags_v2: {
+      tag_translations_v2: {
         Row: {
           created_at: string
           description: string | null
-          id: string
+          locale: string
           name: string
-          slug: string
+          tag_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           description?: string | null
-          id?: string
+          locale: string
           name: string
-          slug: string
+          tag_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string | null
-          id?: string
+          locale?: string
           name?: string
+          tag_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tag_translations_v2_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "tags_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tags_v2: {
+        Row: {
+          created_at: string
+          id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
           slug?: string
           updated_at?: string
         }
@@ -1018,34 +1076,63 @@ export type Database = {
           },
         ]
       }
-      topics_v2: {
+      topic_translations_v2: {
         Row: {
           created_at: string
           description: string | null
-          icon_path: string | null
-          id: string
-          kind: Database["public"]["Enums"]["topic_kind_v2"]
+          locale: string
           name: string
-          slug: string
+          topic_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           description?: string | null
-          icon_path?: string | null
-          id?: string
-          kind: Database["public"]["Enums"]["topic_kind_v2"]
+          locale: string
           name: string
-          slug: string
+          topic_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           description?: string | null
+          locale?: string
+          name?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_translations_v2_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topics_v2: {
+        Row: {
+          created_at: string
+          icon_path: string | null
+          id: string
+          kind: Database["public"]["Enums"]["topic_kind_v2"]
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          icon_path?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["topic_kind_v2"]
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
           icon_path?: string | null
           id?: string
           kind?: Database["public"]["Enums"]["topic_kind_v2"]
-          name?: string
           slug?: string
           updated_at?: string
         }
@@ -1231,7 +1318,6 @@ export type Database = {
       create_product_v2: {
         Args: {
           p_billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
-          p_description: string
           p_end_date?: string
           p_holiday_calendar_ids?: string[]
           p_image_path?: string
@@ -1240,7 +1326,6 @@ export type Database = {
           p_location_id?: string
           p_max_age: number
           p_min_age: number
-          p_name: string
           p_padlet_url?: string
           p_prices?: Json
           p_product_type: Database["public"]["Enums"]["product_type_v2"]
@@ -1255,6 +1340,7 @@ export type Database = {
           p_tag_ids?: string[]
           p_timezone: string
           p_topic_id: string
+          p_translations: Json
           p_waitlist_enabled?: boolean
         }
         Returns: string

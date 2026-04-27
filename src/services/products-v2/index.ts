@@ -1,6 +1,7 @@
 export { ProductsV2Service } from "./products-v2.service";
 export type {
-  ProductV2WithTopic,
+  ProductV2WithDetails,
+  ProductTranslationInput,
   ScheduleSlotInput,
   PriceInput,
   CreateProductV2Input,
