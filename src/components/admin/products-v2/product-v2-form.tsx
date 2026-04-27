@@ -63,8 +63,17 @@ const FIXED_TIMEZONE = "Europe/Helsinki";
 // against literal strings (i18n) doesn't fire for these structural keys.
 const PAID_MODE_VALUES = ["paid", "free"] as const;
 const TOPIC_KIND_ORDER = ["game", "subject"] as const;
+const REGISTRATION_OPENS_MODE_VALUES = ["immediately", "scheduled"] as const;
+
+// 15-minute-interval time picker — same pattern as schedule-slots-editor.tsx,
+// where the rationale comment lives (Chrome's <input type="time"> ignores `step`).
+const HOUR_OPTIONS = Array.from({ length: 24 }, (_, i) =>
+  String(i).padStart(2, "0"),
+);
+const MINUTE_OPTIONS = ["00", "15", "30", "45"] as const;
 
 type PaidMode = (typeof PAID_MODE_VALUES)[number];
+type RegistrationOpensMode = (typeof REGISTRATION_OPENS_MODE_VALUES)[number];
 
 type TranslationDraft = { name: string; description: string };
 
@@ -124,8 +133,14 @@ interface FormState {
   uncapped: boolean;
   waitlistEnabled: boolean;
 
-  // Registration timing
-  registrationOpensAt: string;
+  // Registration timing — `immediately` accepts signups as soon as the
+  // product is published; `scheduled` opens at the picked Helsinki-local
+  // date+time. The date/hour/minute fields are kept around even when mode
+  // is `immediately` so toggling back doesn't lose what was typed.
+  registrationOpensMode: RegistrationOpensMode;
+  registrationOpensDate: string;
+  registrationOpensHour: string;
+  registrationOpensMinute: string;
 
   // Visibility
   isVisible: boolean;
@@ -201,7 +216,10 @@ function initialState(
     seatCount: defaultSeats(config.productType),
     uncapped: false,
     waitlistEnabled: true,
-    registrationOpensAt: "",
+    registrationOpensMode: "immediately",
+    registrationOpensDate: "",
+    registrationOpensHour: "10",
+    registrationOpensMinute: "00",
     isVisible: false,
   };
 }
@@ -396,6 +414,12 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
         return t("errors.seatCountInvalid");
     }
 
+    if (
+      state.registrationOpensMode === "scheduled" &&
+      !state.registrationOpensDate
+    )
+      return t("errors.registrationOpensDateRequired");
+
     if (showPricing) {
       for (const currency of SUPPORTED_CURRENCIES) {
         const row = state.prices[currency];
@@ -480,9 +504,13 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       timezone: FIXED_TIMEZONE,
       seat_count: seat,
       waitlist_enabled: state.waitlistEnabled,
-      registration_opens_at: state.registrationOpensAt
-        ? new Date(state.registrationOpensAt).toISOString()
-        : null,
+      registration_opens_at:
+        state.registrationOpensMode === "scheduled" &&
+        state.registrationOpensDate
+          ? new Date(
+              `${state.registrationOpensDate}T${state.registrationOpensHour}:${state.registrationOpensMinute}`,
+            ).toISOString()
+          : null,
       is_visible: state.isVisible,
       schedule_slots: finalSlots,
       tag_ids: Array.from(state.tagIds),
@@ -1456,20 +1484,104 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
         title={t("sections.registration")}
         description={t("sections.registrationDescription")}
       >
-        <Field
-          label={t("labels.registrationOpensAt")}
-          htmlFor="p-opens-at"
-          hint={t("hints.registrationOpensHint")}
-        >
-          <Input
-            id="p-opens-at"
-            type="datetime-local"
-            value={state.registrationOpensAt}
-            onChange={(e) =>
-              setState({ ...state, registrationOpensAt: e.target.value })
-            }
-          />
+        <Field label={t("registrationModes.label")}>
+          <div className="space-y-2">
+            {REGISTRATION_OPENS_MODE_VALUES.map((option) => (
+              <label
+                key={option}
+                className={cn(
+                  "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
+                  state.registrationOpensMode === option
+                    ? "border-primary bg-primary/5"
+                    : "border-input hover:border-foreground/30"
+                )}
+              >
+                <input
+                  type="radio"
+                  name="registrationOpensMode"
+                  checked={state.registrationOpensMode === option}
+                  onChange={() =>
+                    setState({ ...state, registrationOpensMode: option })
+                  }
+                  className="mt-1 h-4 w-4"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium">
+                    {t(`registrationModes.${option}`)}
+                  </div>
+                  <div className="mt-0.5 text-xs text-muted-foreground">
+                    {t(`registrationModes.${option}Description`)}
+                  </div>
+                </div>
+              </label>
+            ))}
+          </div>
         </Field>
+
+        {state.registrationOpensMode === "scheduled" && (
+          <>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field
+                label={t("labels.date")}
+                htmlFor="p-opens-date"
+                required
+              >
+                <Input
+                  id="p-opens-date"
+                  type="date"
+                  value={state.registrationOpensDate}
+                  onChange={(e) =>
+                    setState({
+                      ...state,
+                      registrationOpensDate: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </Field>
+              <Field label={t("labels.time")}>
+                <div className="flex items-center gap-1">
+                  <select
+                    aria-label={t("schedule.hour")}
+                    value={state.registrationOpensHour}
+                    onChange={(e) =>
+                      setState({
+                        ...state,
+                        registrationOpensHour: e.target.value,
+                      })
+                    }
+                    className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    {HOUR_OPTIONS.map((h) => (
+                      <option key={h} value={h}>
+                        {h}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-muted-foreground">:</span>
+                  <select
+                    aria-label={t("schedule.minute")}
+                    value={state.registrationOpensMinute}
+                    onChange={(e) =>
+                      setState({
+                        ...state,
+                        registrationOpensMinute: e.target.value,
+                      })
+                    }
+                    className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
+                  >
+                    {MINUTE_OPTIONS.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </Field>
+            </div>
+            <InfoCallout text={t("hints.timezoneFixedHelsinki")} />
+          </>
+        )}
       </FormSection>
 
       <FormSection
