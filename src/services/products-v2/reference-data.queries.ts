@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import type {
   CalendarHolidayV2,
@@ -104,6 +104,91 @@ export function useSiteDetailsV2(locationId: string | null) {
       if (member.error) throw member.error;
       if (staff.error) throw staff.error;
       return { member: member.data, staff: staff.data };
+    },
+  });
+}
+
+export interface CreateTopicV2Input {
+  name: string;
+  kind: "game" | "subject";
+  description?: string | null;
+}
+
+export function useCreateTopicV2() {
+  const queryClient = useQueryClient();
+
+  return useMutation<TopicV2, Error, CreateTopicV2Input>({
+    mutationFn: async (input) => {
+      const res = await fetch("/api/admin/topics-v2/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Failed to create topic");
+      }
+      return (await res.json()) as TopicV2;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: referenceKeys.topics });
+    },
+  });
+}
+
+export interface CreateTagV2Input {
+  name: string;
+  description?: string | null;
+}
+
+export function useCreateTagV2() {
+  const queryClient = useQueryClient();
+
+  return useMutation<TagV2, Error, CreateTagV2Input>({
+    mutationFn: async (input) => {
+      const res = await fetch("/api/admin/tags-v2/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Failed to create tag");
+      }
+      return (await res.json()) as TagV2;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: referenceKeys.tags });
+    },
+  });
+}
+
+export interface UpdateSiteNotesV2Input {
+  location_id: string;
+  member?: { address?: string | null; notes?: string | null };
+  staff?: { notes?: string | null };
+}
+
+export function useUpdateSiteNotesV2() {
+  const queryClient = useQueryClient();
+
+  return useMutation<{ ok: true }, Error, UpdateSiteNotesV2Input>({
+    mutationFn: async (input) => {
+      const res = await fetch("/api/admin/site-notes-v2", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error ?? "Failed to update site notes");
+      }
+      return (await res.json()) as { ok: true };
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: referenceKeys.siteDetails(vars.location_id),
+      });
     },
   });
 }

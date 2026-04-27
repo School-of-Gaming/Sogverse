@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProductsV2ByType } from "@/services/products-v2";
 import { productImageUrl } from "@/lib/images/product-image-url";
+import { ProductTypeInfoCard } from "./product-type-info-card";
 import { PRODUCT_TYPE_CONFIG } from "./product-v2-type-config";
 import type { ProductTypeV2 } from "@/types";
 
@@ -45,6 +46,8 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
           </Button>
         </Link>
       </div>
+
+      <ProductTypeInfoCard productType={productType} />
 
       {isLoading && (
         <div className="space-y-3">
