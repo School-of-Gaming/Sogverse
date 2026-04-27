@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Plus, Calendar, Users, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useProductsV2ByType } from "@/services/products-v2";
 import { productImageUrl } from "@/lib/images/product-image-url";
+import { resolveLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { ProductTypeInfoCard } from "./product-type-info-card";
 import { PRODUCT_TYPE_CONFIG } from "./product-v2-type-config";
 import type { ProductTypeV2 } from "@/types";
@@ -26,6 +28,7 @@ const STATUS_STYLE: Record<string, string> = {
 export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
   const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.productsV2");
+  const uiLocale = resolveLocale(useLocale());
   const label = t(`types.${config.i18nKey}.label`);
   const plural = t(`types.${config.i18nKey}.plural`);
   const { data: products, isLoading } = useProductsV2ByType(productType);
@@ -74,6 +77,7 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
             const thumbnailUrl = p.image_path
               ? productImageUrl(p.image_path)
               : null;
+            const tr = resolveTranslation(p.product_translations_v2, uiLocale);
             return (
               <Card key={p.id}>
                 <CardContent className="flex items-center gap-4 py-3">
@@ -89,7 +93,9 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="truncate font-medium">{p.name}</span>
+                      <span className="truncate font-medium">
+                        {tr?.name ?? t("list.untitled")}
+                      </span>
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs ${
                           STATUS_STYLE[p.status] ?? STATUS_STYLE.draft
@@ -104,7 +110,7 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
                       )}
                     </div>
                     <p className="truncate text-sm text-muted-foreground">
-                      {p.description}
+                      {tr?.description ?? ""}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1">

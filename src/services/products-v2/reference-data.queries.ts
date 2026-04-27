@@ -7,12 +7,27 @@ import type {
   HolidayCalendarV2,
   SiteDetailsV2,
   SiteStaffDetailsV2,
+  TagTranslationV2,
   TagV2,
+  TopicTranslationV2,
   TopicV2,
 } from "@/types";
+import type { SupportedLocale } from "@/lib/constants/locales";
 
 export type HolidayCalendarWithDates = HolidayCalendarV2 & {
   calendar_holidays_v2: Pick<CalendarHolidayV2, "date" | "reason">[];
+};
+
+// Topics and tags carry their translations alongside — pickers and lists
+// resolve the user's locale via resolveTranslation(). Admins manage
+// reference-data translations in a separate UI (not yet built); inline
+// create only writes the admin's current locale.
+export type TopicV2WithTranslations = TopicV2 & {
+  topic_translations_v2: TopicTranslationV2[];
+};
+
+export type TagV2WithTranslations = TagV2 & {
+  tag_translations_v2: TagTranslationV2[];
 };
 
 export const referenceKeys = {
@@ -31,15 +46,18 @@ export type SiteDetailsBundle = {
 export function useTopicsV2() {
   const supabase = getClient();
 
-  return useQuery<TopicV2[]>({
+  // Order by slug for stable, deterministic ordering. The visible label is
+  // resolved from translations on the client; sorting in the user's locale
+  // happens there too if needed.
+  return useQuery<TopicV2WithTranslations[]>({
     queryKey: referenceKeys.topics,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("topics_v2")
-        .select("*")
-        .order("name");
+        .select("*, topic_translations_v2(*)")
+        .order("slug");
       if (error) throw error;
-      return data;
+      return data as TopicV2WithTranslations[];
     },
   });
 }
@@ -47,15 +65,15 @@ export function useTopicsV2() {
 export function useTagsV2() {
   const supabase = getClient();
 
-  return useQuery<TagV2[]>({
+  return useQuery<TagV2WithTranslations[]>({
     queryKey: referenceKeys.tags,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("tags_v2")
-        .select("*")
-        .order("name");
+        .select("*, tag_translations_v2(*)")
+        .order("slug");
       if (error) throw error;
-      return data;
+      return data as TagV2WithTranslations[];
     },
   });
 }
@@ -112,6 +130,10 @@ export interface CreateTopicV2Input {
   name: string;
   kind: "game" | "subject";
   description?: string | null;
+  /** UI locale at creation time — the row is written under this locale only.
+   *  Other-locale names get added later in the (yet-to-be-built) reference-data
+   *  translation manager. See docs/products-redesign.md "Translations". */
+  locale: SupportedLocale;
 }
 
 export function useCreateTopicV2() {
@@ -139,6 +161,8 @@ export function useCreateTopicV2() {
 export interface CreateTagV2Input {
   name: string;
   description?: string | null;
+  /** UI locale at creation time. See CreateTopicV2Input.locale. */
+  locale: SupportedLocale;
 }
 
 export function useCreateTagV2() {

@@ -250,7 +250,15 @@
         "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
-        "hidden": "piilotettu"
+        "hidden": "piilotettu",
+        "untitled": "(nimetön)"
+      },
+      "translations": {
+        "label": "Kielet",
+        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään englanti tai suomi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai suomeksi.",
+        "addLocale": "+ Lisää kieli",
+        "removeLocale": "Poista {locale}",
+        "inlineCreateHint": "Tallennetaan kielellä {locale}. Muiden kielten käännökset voi lisätä myöhemmin aiheiden ja tunnisteiden hallinnasta."
       },
       "newPage": {
         "back": "Takaisin: {plural}",
@@ -442,8 +450,9 @@
         "visibleHint": "Poista valinta pitääksesi tuote piilossa, kun se on vielä tekeillä. Laita päälle, kun olet valmis vanhempien näkemään sen."
       },
       "errors": {
-        "nameRequired": "Nimi vaaditaan",
-        "descriptionRequired": "Kuvaus vaaditaan",
+        "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",
+        "translationsMustHaveEnOrFi": "Lisää käännös englanniksi tai suomeksi — jokaisella tuotteella on oltava vähintään toinen niistä.",
+        "translationIncomplete": "Täytä sekä nimi että kuvaus välilehdellä {locale} tai poista välilehti.",
         "topicRequired": "Aihe vaaditaan",
         "spokenLanguageRequired": "Kieli vaaditaan",
         "minAgeInvalid": "Alaikärajan on oltava ei-negatiivinen kokonaisluku",

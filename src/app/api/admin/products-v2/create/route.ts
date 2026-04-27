@@ -81,8 +81,7 @@ export async function POST(request: Request) {
   const rpcArgs: RpcArgs = {
     p_product_type: body.product_type as RpcArgs["p_product_type"],
     p_billing_mode: body.billing_mode as RpcArgs["p_billing_mode"],
-    p_name: body.name as string,
-    p_description: body.description as string,
+    p_translations: body.translations as RpcArgs["p_translations"],
     p_topic_id: body.topic_id as string,
     p_min_age: body.min_age as number,
     p_max_age: body.max_age as number,

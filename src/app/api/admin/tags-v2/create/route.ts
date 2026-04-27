@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { isSupportedLocale } from "@/lib/constants/locales";
 
+// See topics-v2/create/route.ts for the slug rationale — same locale-agnostic
+// approach since tags are also used as URL filters in browse.
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -17,7 +20,7 @@ export async function POST(request: Request) {
   if (result instanceof NextResponse) return result;
   const { supabase } = result;
 
-  let body: { name?: string; description?: string };
+  let body: { name?: string; description?: string; locale?: string };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -25,7 +28,14 @@ export async function POST(request: Request) {
   }
 
   const name = body.name?.trim() ?? "";
+  const locale = body.locale;
   if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
+  if (!isSupportedLocale(locale)) {
+    return NextResponse.json(
+      { error: "locale must be a supported locale" },
+      { status: 400 },
+    );
+  }
 
   const slug = slugify(name);
   if (!slug) {
@@ -35,20 +45,30 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data, error } = await supabase
+  const { data: tag, error: tagError } = await supabase
     .from("tags_v2")
-    .insert({
-      name,
-      slug,
-      description: body.description?.trim() || null,
-    })
+    .insert({ slug })
     .select("*")
     .single();
 
-  if (error) {
-    const status = error.code === "23505" ? 409 : 400;
-    return NextResponse.json({ error: error.message }, { status });
+  if (tagError) {
+    const status = tagError.code === "23505" ? 409 : 400;
+    return NextResponse.json({ error: tagError.message }, { status });
   }
 
-  return NextResponse.json(data);
+  const { error: translationError } = await supabase
+    .from("tag_translations_v2")
+    .insert({
+      tag_id: tag.id,
+      locale,
+      name,
+      description: body.description?.trim() || null,
+    });
+
+  if (translationError) {
+    await supabase.from("tags_v2").delete().eq("id", tag.id);
+    return NextResponse.json({ error: translationError.message }, { status: 400 });
+  }
+
+  return NextResponse.json(tag);
 }

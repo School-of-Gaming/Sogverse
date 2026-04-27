@@ -298,7 +298,15 @@
         "empty": "{plural} pagh. {label} chu' yIchu'.",
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa'",
-        "hidden": "So'lu'"
+        "hidden": "So'lu'",
+        "untitled": "(pong pagh)"
+      },
+      "translations": {
+        "label": "Hol",
+        "hint": "Hol DIchu'. wa' DoS DIchu' — DIvI' Hol pagh Suomey Hol. vavmey Hol vIqIm pagh DIvI' Hol pagh Suomey Hol.",
+        "addLocale": "+ Hol chu'",
+        "removeLocale": "{locale} pe'",
+        "inlineCreateHint": "{locale} 'ay'wIj. latlh Hol chajwIj DaH ngeb."
       },
       "newPage": {
         "back": "{plural} vIcheghmoH",
@@ -490,8 +498,9 @@
         "visibleHint": "DochlIj DachenmoHtaHvIS, So'lu' yIchu'Ha'. naDevDaq vavmey lulegh, yIchu'."
       },
       "errors": {
-        "nameRequired": "pong poQ",
-        "descriptionRequired": "QIn poQ",
+        "translationRequired": "wa' Hol pong QIn je poQ",
+        "translationsMustHaveEnOrFi": "DIvI' Hol pagh Suomey Hol — wa' poQ.",
+        "translationIncomplete": "{locale} chajDaq pong QIn je yIchov, pagh yIpe'.",
         "topicRequired": "mu'meH poQ",
         "spokenLanguageRequired": "Hol poQ",
         "minAgeInvalid": "DIS mach mI' 'oHnIS",

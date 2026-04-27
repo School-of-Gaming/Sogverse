@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Check,
   CircleDollarSign,
@@ -22,6 +22,13 @@ import {
   SUPPORTED_CURRENCIES,
   type SupportedCurrency,
 } from "@/lib/constants";
+import {
+  LOCALE_CONFIG,
+  SUPPORTED_LOCALES,
+  resolveLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   useCreateProductV2,
   useCreateTagV2,
@@ -59,18 +66,26 @@ const TOPIC_KIND_ORDER = ["game", "subject"] as const;
 
 type PaidMode = (typeof PAID_MODE_VALUES)[number];
 
+type TranslationDraft = { name: string; description: string };
+
 // ===== Form state =====
 
 interface FormState {
-  // Identity
-  name: string;
-  description: string;
+  // Per-locale name + description. Admin starts with one tab (their UI locale)
+  // and can add more. Submission writes one product_translations_v2 row per
+  // locale present in this map. At least one of (en, fi) is required.
+  translations: Partial<Record<SupportedLocale, TranslationDraft>>;
+  activeLocale: SupportedLocale;
+
+  // Identity (non-translated)
   topicId: string;
   tagIds: Set<string>;
   padletUrl: string;
   image: File | null;
 
-  // Inline topic create
+  // Inline topic create — single-locale (admin's current UI locale).
+  // Other-locale names get added later in the (yet-to-be-built) reference-data
+  // translation manager. See docs/products-redesign.md.
   showNewTopic: boolean;
   newTopicName: string;
   newTopicKind: "game" | "subject";
@@ -143,13 +158,16 @@ function defaultSlots(config: ProductTypeConfig): ScheduleSlotDraft[] {
   return [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }];
 }
 
-function initialState(config: ProductTypeConfig): FormState {
+function initialState(
+  config: ProductTypeConfig,
+  uiLocale: SupportedLocale,
+): FormState {
   // Events default to free; everything else has a real billing mode already.
   const initialPaidMode: PaidMode =
     config.billing.mode === "free_or_paid" ? "free" : "paid";
   return {
-    name: "",
-    description: "",
+    translations: { [uiLocale]: { name: "", description: "" } },
+    activeLocale: uiLocale,
     topicId: "",
     tagIds: new Set(),
     padletUrl: "",
@@ -197,9 +215,13 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
   const router = useRouter();
   const t = useTranslations("admin.productsV2");
   const c = useTranslations("common");
+  const rawLocale = useLocale();
+  const uiLocale = resolveLocale(rawLocale);
   const label = t(`types.${config.i18nKey}.label`);
 
-  const [state, setState] = useState<FormState>(() => initialState(config));
+  const [state, setState] = useState<FormState>(() =>
+    initialState(config, uiLocale),
+  );
   const [error, setError] = useState<string | null>(null);
 
   const { data: topics } = useTopicsV2();
@@ -212,6 +234,16 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
   const fxRatesQuery = useFxRatesFromEur(true);
 
   // ===== Derived =====
+
+  const addedLocales = SUPPORTED_LOCALES.filter(
+    (l) => state.translations[l] !== undefined,
+  );
+  const addableLocales = SUPPORTED_LOCALES.filter(
+    (l) => state.translations[l] === undefined,
+  );
+  const activeDraft: TranslationDraft = state.translations[
+    state.activeLocale
+  ] ?? { name: "", description: "" };
 
   const effectiveBillingMode: "paid" | "free" | "external_contract" =
     config.billing.mode === "free_or_paid"
@@ -253,11 +285,73 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
   const showLocationPicker = pickerMode !== null;
   const showHolidayCalendars = config.hasHolidayCalendars;
 
+  // ===== Translation tab helpers =====
+
+  function setActiveTranslation(patch: Partial<TranslationDraft>) {
+    setState((s) => ({
+      ...s,
+      translations: {
+        ...s.translations,
+        [s.activeLocale]: {
+          ...(s.translations[s.activeLocale] ?? { name: "", description: "" }),
+          ...patch,
+        },
+      },
+    }));
+  }
+
+  function addLocaleTab(locale: SupportedLocale) {
+    setState((s) => ({
+      ...s,
+      translations: {
+        ...s.translations,
+        [locale]: { name: "", description: "" },
+      },
+      activeLocale: locale,
+    }));
+  }
+
+  function removeLocaleTab(locale: SupportedLocale) {
+    setState((s) => {
+      const next = { ...s.translations };
+      delete next[locale];
+      const remaining = SUPPORTED_LOCALES.filter((l) => next[l] !== undefined);
+      return {
+        ...s,
+        translations: next,
+        activeLocale:
+          s.activeLocale === locale
+            ? (remaining[0] ?? uiLocale)
+            : s.activeLocale,
+      };
+    });
+  }
+
   // ===== Validation =====
 
   function validate(): string | null {
-    if (!state.name.trim()) return t("errors.nameRequired");
-    if (!state.description.trim()) return t("errors.descriptionRequired");
+    const filledLocales = (
+      Object.entries(state.translations) as [SupportedLocale, TranslationDraft][]
+    ).filter(([, v]) => v.name.trim() && v.description.trim())
+      .map(([k]) => k);
+
+    if (filledLocales.length === 0) return t("errors.translationRequired");
+    if (!filledLocales.includes("en") && !filledLocales.includes("fi"))
+      return t("errors.translationsMustHaveEnOrFi");
+
+    // Any locale tab that's been added must be filled in completely — partial
+    // entries are almost always user error (added a tab, forgot to type).
+    for (const [locale, v] of Object.entries(state.translations) as [
+      SupportedLocale,
+      TranslationDraft,
+    ][]) {
+      if (!v.name.trim() || !v.description.trim()) {
+        return t("errors.translationIncomplete", {
+          locale: LOCALE_CONFIG[locale].label,
+        });
+      }
+    }
+
     if (!state.topicId) return t("errors.topicRequired");
     if (!state.spokenLanguageCode) return t("errors.spokenLanguageRequired");
 
@@ -349,11 +443,18 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       finalSlots = [{ ...state.scheduleSlots[0], weekday }];
     }
 
+    const translations = (
+      Object.entries(state.translations) as [SupportedLocale, TranslationDraft][]
+    ).map(([locale, v]) => ({
+      locale,
+      name: v.name.trim(),
+      description: v.description.trim(),
+    }));
+
     const input: CreateProductV2Input = {
       product_type: productType,
       billing_mode: effectiveBillingMode,
-      name: state.name.trim(),
-      description: state.description.trim(),
+      translations,
       topic_id: state.topicId,
       min_age: minAge,
       max_age: maxAge,
@@ -425,6 +526,7 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       const created = await createTopic.mutateAsync({
         name,
         kind: state.newTopicKind,
+        locale: uiLocale,
       });
       setState((s) => ({
         ...s,
@@ -443,7 +545,7 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
     if (!name) return;
     setError(null);
     try {
-      const created = await createTag.mutateAsync({ name });
+      const created = await createTag.mutateAsync({ name, locale: uiLocale });
       setState((s) => {
         const next = new Set(s.tagIds);
         next.add(created.id);
@@ -473,12 +575,80 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
         title={t("sections.identity")}
         description={t("sections.identityDescription")}
       >
-        <Field label={t("labels.name")} htmlFor="p-name" required>
+        {/* Language tabs — at least one of (en, fi) required. The hint below
+            spells the rule out. Switching tabs preserves what's typed in each. */}
+        <div className="space-y-2">
+          <Label>
+            {t("translations.label")}
+            <span className="ml-0.5 text-destructive">*</span>
+          </Label>
+          <div className="flex flex-wrap items-center gap-1 border-b border-border">
+            {addedLocales.map((locale) => {
+              const isActive = state.activeLocale === locale;
+              const canRemove = addedLocales.length > 1;
+              return (
+                <span
+                  key={locale}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-t-md border-b-2 px-3 py-1.5 text-sm transition-colors",
+                    isActive
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setState({ ...state, activeLocale: locale })}
+                  >
+                    {LOCALE_CONFIG[locale].nativeLabel}
+                  </button>
+                  {canRemove && (
+                    <button
+                      type="button"
+                      onClick={() => removeLocaleTab(locale)}
+                      className="rounded p-0.5 text-muted-foreground hover:text-destructive"
+                      aria-label={t("translations.removeLocale", {
+                        locale: LOCALE_CONFIG[locale].label,
+                      })}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </span>
+              );
+            })}
+            {addableLocales.length > 0 && (
+              <select
+                value=""
+                onChange={(e) => {
+                  if (e.target.value) addLocaleTab(e.target.value as SupportedLocale);
+                }}
+                className="ml-1 mb-1 h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+              >
+                <option value="">{t("translations.addLocale")}</option>
+                {addableLocales.map((l) => (
+                  <option key={l} value={l}>
+                    {LOCALE_CONFIG[l].label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {t("translations.hint")}
+          </p>
+        </div>
+
+        <Field
+          label={t("labels.name")}
+          htmlFor={`p-name-${state.activeLocale}`}
+          required
+        >
           <Input
-            id="p-name"
-            value={state.name}
+            id={`p-name-${state.activeLocale}`}
+            value={activeDraft.name}
             placeholder={t(`placeholders.name.${config.i18nKey}`)}
-            onChange={(e) => setState({ ...state, name: e.target.value })}
+            onChange={(e) => setActiveTranslation({ name: e.target.value })}
             required
             maxLength={100}
           />
@@ -486,15 +656,15 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
 
         <Field
           label={t("labels.description")}
-          htmlFor="p-description"
+          htmlFor={`p-description-${state.activeLocale}`}
           required
         >
           <textarea
-            id="p-description"
+            id={`p-description-${state.activeLocale}`}
             placeholder={t(`placeholders.description.${config.i18nKey}`)}
-            value={state.description}
+            value={activeDraft.description}
             onChange={(e) =>
-              setState({ ...state, description: e.target.value })
+              setActiveTranslation({ description: e.target.value })
             }
             rows={3}
             required
@@ -547,6 +717,11 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-muted-foreground">
+                {t("translations.inlineCreateHint", {
+                  locale: LOCALE_CONFIG[uiLocale].nativeLabel,
+                })}
+              </p>
               <div className="flex justify-end gap-2 pt-1">
                 <Button
                   type="button"
@@ -593,11 +768,17 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
                   if (group.length === 0) return null;
                   return (
                     <optgroup key={kind} label={t(`topicKinds.${kind}`)}>
-                      {group.map((topic) => (
-                        <option key={topic.id} value={topic.id}>
-                          {topic.name}
-                        </option>
-                      ))}
+                      {group.map((topic) => {
+                        const tr = resolveTranslation(
+                          topic.topic_translations_v2,
+                          uiLocale,
+                        );
+                        return (
+                          <option key={topic.id} value={topic.id}>
+                            {tr?.name ?? topic.slug}
+                          </option>
+                        );
+                      })}
                     </optgroup>
                   );
                 })}
@@ -619,6 +800,12 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
           <div className="flex flex-wrap items-center gap-2">
             {tags?.map((tag) => {
               const selected = state.tagIds.has(tag.id);
+              const tr = resolveTranslation(
+                tag.tag_translations_v2,
+                uiLocale,
+              );
+              const tagName = tr?.name ?? tag.slug;
+              const tagDescription = tr?.description ?? null;
               return (
                 <button
                   key={tag.id}
@@ -635,10 +822,10 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-input text-muted-foreground hover:border-foreground hover:text-foreground"
                   )}
-                  title={tag.description ?? undefined}
+                  title={tagDescription ?? undefined}
                 >
                   {selected && <Check className="mr-1 inline h-3 w-3" />}
-                  {tag.name}
+                  {tagName}
                 </button>
               );
             })}
@@ -699,6 +886,13 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
               </button>
             )}
           </div>
+          {state.showNewTag && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {t("translations.inlineCreateHint", {
+                locale: LOCALE_CONFIG[uiLocale].nativeLabel,
+              })}
+            </p>
+          )}
         </Field>
 
         <Field
