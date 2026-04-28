@@ -2,9 +2,9 @@
 
 Forward-looking architecture proposal that redesigns the `products` domain to cleanly support **four product types** (consumer clubs, municipality clubs, camps, events), **replaces the Sorg token system with real-currency pricing**, and **ships in parallel with the existing schema** under a `_v2` naming convention until a human-triggered cutover. Not yet implemented.
 
-Status: **design / pre-implementation**. Supersedes `school-clubs-design.md`. Rename to `products-architecture.md` at cutover (§9).
+Status: **Phase 1 in progress** — DB foundation and admin create UI shipped on `feat/products-v2-mock-port`; participation, payments, sessions, and parent-facing surfaces still pending. See §10 for the per-bullet status and `docs/products-v2-architecture.md` for the as-built component map. Supersedes `school-clubs-design.md`. Rename to `products-architecture.md` at cutover (§9).
 
-Related: `groups-architecture.md`, `customer-enrollment-architecture.md`, `locations-architecture.md`, `voice-chat-architecture.md`, `email-architecture.md`, `whatsapp-automated-flow.md`. `sorg-token-architecture.md` is retired by this redesign at cutover.
+Related: `products-v2-architecture.md` (as-built doc for what shipped on this branch), `groups-architecture.md`, `customer-enrollment-architecture.md`, `locations-architecture.md`, `voice-chat-architecture.md`, `email-architecture.md`, `whatsapp-automated-flow.md`. `sorg-token-architecture.md` is retired by this redesign at cutover.
 
 ---
 
@@ -1004,14 +1004,67 @@ If cutover happens after production launches with real customers on Sorg tokens,
 
 ### Phase 1 — MVP (consumer + municipality) in parallel
 
-Prove the unified shape against the two product lines closest to real users.
+Prove the unified shape against the two product lines closest to real users. Status legend below: ✓ shipped, ◐ partially shipped, ○ not started.
 
-- Schema: all tables from §5 with `_v2` suffixes.
-- RPCs: participation lifecycle, session operations, hourly credit cron, subscription management, lifecycle transitions — all `_v2`.
-- Admin UI: new create/edit product form at `/admin/products-v2/*`, per-currency pricing inputs, Groups panel, calendar view, holiday-calendar management.
-- Parent UI: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator.
-- Stripe: `_v2` Checkout endpoints, lazy-created Prices for subs, webhook handlers that write `payments_v2` / `refunds_v2`, family-coupon application.
-- Existing Sorg system untouched.
+**Schema (§5)** — `_v2` tables.
+- ✓ `products_v2` + per-locale `product_translations_v2` (en/fi-keep rule enforced via `BEFORE DELETE` trigger and RPC payload validation).
+- ✓ `topics_v2`, `tags_v2`, `product_tags_v2` + per-locale `topic_translations_v2`, `tag_translations_v2`.
+- ✓ `schedule_slots_v2`.
+- ✓ `holiday_calendars_v2`, `calendar_holidays_v2`, `product_holiday_calendars_v2`.
+- ✓ `product_prices_v2` (per-currency base prices).
+- ✓ `site_details_v2` (member-visible) + `site_staff_details_v2` (admin/Gedu only) — the §4.8 split.
+- ✓ `registration_opens_at` is NOT NULL (§7.5); "Right away" resolves to creation time.
+- ✓ `products_v2` lifecycle status enum stores admin facts only; effective `running` / `completed` derived at read time.
+- ○ `product_groups_v2` (form captures groups in local state but does not persist yet; UI surfaces a "not wired" warning).
+- ○ `gedu_group_assignments_v2`.
+- ○ `participations_v2`.
+- ○ `payments_v2`, `refunds_v2`.
+- ○ `family_subscriptions_v2`, `family_subscription_items_v2`, `product_subscription_prices_v2`.
+- ○ `session_overrides_v2`, `session_substitutions_v2`, `session_attendance_v2`, `session_notes_v2`, `session_cancellations_v2`, `credit_deductions_v2`.
+
+**RPCs (§6)** — `_v2`.
+- ✓ `create_product_v2` — atomic insert across products + translations + schedule slots + tags + prices + holiday calendars; rejects payloads missing en/fi.
+- ◐ Effective-status derivation — TS helper (`src/components/admin/products-v2/effective-status.ts`) ships; SQL twin `effective_status_v2(product_id)` not yet built (deferred until DB-side filters need it).
+- ○ Participation lifecycle (`create_participation_v2`, `cancel_participation_v2`, `admin_remove_participation_v2`, `promote_from_waitlist_v2`).
+- ○ Session operations (`cancel_session_v2`, `reschedule_session_v2`, `request_substitute_v2`, `assign_substitute_v2`, `record_attendance_v2`).
+- ○ Hourly credit cron (`process_session_credits_v2`).
+- ○ Subscription management (`subscribe_to_product_v2`, `unsubscribe_from_product_v2`, `switch_subscription_frequency_v2`).
+- ○ Lifecycle transitions (`start_product_v2`, `cancel_product_v2`, `finalize_completed_products_v2`).
+- ○ Group mutations (`commit_group_changes_v2`).
+
+**Admin UI** — at `/admin/{consumer-clubs,municipality-clubs,camps,events}{,/new}`.
+- ✓ List page per product type (`ProductV2ListPage`, type-discriminated).
+- ✓ Create form per product type sharing one shell (`product-v2-form.tsx`) split into per-section components — identity, audience, when, where, billing, registration, groups, visibility (`src/components/admin/products-v2/sections/*`).
+- ✓ Per-currency pricing block with live FX auto-fill (`pricing-block.tsx` + `pricing-block-fx.ts`, FX rates proxied via `/api/admin/fx-rates` cached 6h) and rendered price previews.
+- ✓ Country-aware location picker with inline create (`location-picker-v2.tsx` + `/api/admin/locations/{create,[id]}`).
+- ✓ Inline-create for topics and tags (single-locale, in admin's current UI locale) via `/api/admin/{topics-v2,tags-v2}/create`.
+- ✓ Site notes editor — separate member-visible vs staff-only fields against `site_details_v2` / `site_staff_details_v2` (`/api/admin/site-notes-v2`).
+- ✓ Holiday-calendar checkbox selector on the form (read-only against existing rows; no admin CRUD UI for managing calendars yet).
+- ✓ Type-specific helper card on list pages (`product-type-info-card.tsx`).
+- ✓ Image picker + upload (`image-picker-v2.tsx`).
+- ◐ Groups panel — captured in form state but not persisted (see schema bullet); no per-product management page yet.
+- ○ Edit-product form (only create exists today).
+- ○ Calendar view with computed sessions, overrides, substitutions.
+- ○ Standalone holiday-calendar management screen.
+- ○ Lifecycle action buttons ("Start product" / "Cancel product"), threshold-hit notifications, payment reporting dashboard.
+- ○ Manage topic & tag translations admin UI (Phase 3 — see §10 Phase 3).
+
+**Form internals.**
+- ✓ State + reducers extracted to `product-v2-form-state.ts`; build pipeline (form state → RPC payload) extracted to `product-v2-build.ts`; per-type field availability + scheduling shape + pricing shape configured in `product-v2-type-config.ts`.
+- ✓ Multi-locale tabs strip in the Identity card (matching SUPPORTED_LOCALES); initial tab is the admin's UI locale.
+- ✓ Translation resolver (`src/lib/i18n/resolve-translation.ts`) with `user locale → en → fi → first available` fallback.
+- ✓ Cents helper + currency-aware formatting in `src/lib/constants/{currency,pricing}.ts` and `src/lib/utils.ts`.
+
+**Tests.**
+- ✓ Unit: `products-v2-build`, `effective-status-v2`, `pricing-block-fx`, `pricing`, `resolve-translation`.
+- ✓ Integration: `tests/integration/api/products-v2-create.test.ts` (route → RPC → DB).
+- ✓ DB access-control: `products_v2` family covered by `tests/db/access-control.test.ts`.
+
+**Parent UI**: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator. ○ Not started.
+
+**Stripe**: `_v2` Checkout endpoints, lazy-created Prices for subs, webhook handlers that write `payments_v2` / `refunds_v2`, family-coupon application. ○ Not started.
+
+**Existing Sorg system**: untouched.
 
 ### Phase 2 — camps and events
 
