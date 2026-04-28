@@ -53,6 +53,16 @@ On first run, prismarine-auth prints a URL (e.g. https://microsoft.com/link) and
 
 ---
 
+## Friend handling
+
+The portal enables bedrock-portal's `AutoFriendAdd` module. Every 30s it polls the alt account's Xbox Live followers; any account that isn't followed back yet gets `addXboxFriend()` called on it and an immediate session invite (`inviteOnAdd: true`). The same loop also removes anyone from the friends list who has stopped following the alt, keeping it self-cleaning.
+
+**Why `AutoFriendAdd` and not `AutoFriendAccept`:** only Xbox-platform friend requests fire as true Xbox Live friend requests. When a PlayStation/Switch/mobile player sends a friend request from inside Minecraft, the alt's Xbox Live identity sees it as a one-way **follow**, not an incoming friend request — so `AutoFriendAccept` (which listens for the friend-request RTA event) never sees them and they get stuck as a permanent follower. Polling followers covers Xbox and non-Xbox platforms uniformly.
+
+**Player-side flow:** send a friend request to the alt's gamertag from inside Minecraft on any platform → within ~30s the alt follows back, completing the friendship → the alt's profile shows "Online — Playing Minecraft" with a Join Game button that redirects to our Geyser proxy.
+
+---
+
 ## Ports
 
 - This process makes **outbound HTTPS only** (to Xbox Live). No inbound ports required on the machine running this service.
@@ -62,7 +72,7 @@ On first run, prismarine-auth prints a URL (e.g. https://microsoft.com/link) and
 
 ## Troubleshooting
 
-- **"Session live" but nobody can join** → verify the alt account is actually friends with the test console account (or friends-of-friends). For first tests, set `PORTAL_JOINABILITY=FriendsOnly` and manually friend the alt from your test console.
+- **"Session live" but nobody can join** → verify the player is actually friends with the alt (or friends-of-friends). After they send the friend request, give the portal up to 30s to follow back — the `AutoFriendAdd` poll runs on that interval. If still not friends after a minute, tail logs (`journalctl --user -u bedrock-portal -f`) and look for `Adding N account(s)` lines. For first tests, set `PORTAL_JOINABILITY=FriendsOnly` so friends-of-friends visibility doesn't mask a missing direct friendship.
 - **Auth prompt re-appears every run** → `PORTAL_AUTH_CACHE_DIR` isn't persisting (e.g. running inside a container without a mounted volume). Cache at a stable path.
 - **Mobile player sees "NetherNet InitialConnection-1" on join (Xbox joins fine on the same account)** → In the Minecraft app on the mobile device: Settings → Profile → enable both **"Allow mobile data for online play"** AND **"Enable WebSockets"**. Both are required — NetherNet's signaling WebSocket to `wss://signal.franchise.minecraft-services.net/...` is the first step of the join handshake, and without these toggles the client aborts before the portal ever sees the connection. "Require encrypted websockets" does not matter (Microsoft's endpoint is already `wss://`). On iOS, also confirm iPhone Settings → Cellular → Minecraft is enabled. Xbox consoles bypass these toggles because Xbox platform networking handles WebSockets at the OS level, which is why Xbox-works-but-mobile-fails is the signature of this issue rather than a portal or version-pin bug. Toggle names may vary slightly across Android / iOS versions. Switch / PlayStation are untested but expected to "just work" the same way Xbox does, since consoles don't expose these user-facing network toggles.
 - **Want verbose logs** → locally, `DEBUG=bedrock-portal* npm run dev`. On the server, add `Environment=DEBUG=bedrock-portal*` under `[Service]` in the unit file, then `systemctl --user daemon-reload && systemctl --user restart bedrock-portal`.

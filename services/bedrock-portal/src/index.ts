@@ -90,7 +90,7 @@ async function main() {
     },
   });
 
-  portal.use(Modules.AutoFriendAccept, { inviteOnAdd: true });
+  portal.use(Modules.AutoFriendAdd, { inviteOnAdd: true });
   portal.use(Modules.UpdateMemberCount, {
     updateInterval: 60_000,
     updateMaxMemberCount: true,
