@@ -21,7 +21,7 @@ export type PricingShapeUI = "session_and_month" | "upfront_total";
 
 export interface PricingBlockState {
   prices: Record<SupportedCurrency, { session: string; month: string }>;
-  fxFilled: Set<SupportedCurrency>;
+  manualEdits: Set<SupportedCurrency>;
   activeCurrency: SupportedCurrency;
 }
 
@@ -39,18 +39,15 @@ export function PricingBlock({
   fxRates,
 }: PricingBlockProps) {
   const t = useTranslations("admin.productsV2.pricing");
-  const { prices, fxFilled, activeCurrency } = state;
+  const { prices, manualEdits, activeCurrency } = state;
 
-  // Auto-fill from EUR rate the first time the admin lands on a non-EUR
-  // tab — only if EUR has at least one value set and the target tab hasn't
-  // been auto-filled or manually edited yet. Once `fxFilled` includes the
-  // target, subsequent visits don't overwrite manual edits.
+  // Re-fill every non-EUR currency from EUR × today's rate whenever EUR
+  // changes — except currencies the admin has manually overridden. The
+  // effect doesn't add the auto-filled currencies to `manualEdits`, so
+  // future EUR edits keep propagating to them. Manual override is one-way
+  // (set in `setRow`).
   useEffect(() => {
-    if (activeCurrency === DEFAULT_CURRENCY) return;
-    if (fxFilled.has(activeCurrency)) return;
     if (!fxRates) return;
-    const rate = fxRates[activeCurrency];
-    if (!rate) return;
 
     const eurSession = Number(prices.eur.session);
     const eurMonth = Number(prices.eur.month);
@@ -60,20 +57,35 @@ export function PricingBlock({
       prices.eur.month !== "" && Number.isFinite(eurMonth);
     if (!eurSessionFilled && !eurMonthFilled) return;
 
+    const targets = SUPPORTED_CURRENCIES.filter(
+      (c) => c !== DEFAULT_CURRENCY && !manualEdits.has(c) && fxRates[c]
+    );
+    if (targets.length === 0) return;
+
     const next: PricingBlockState["prices"] = { ...prices };
-    next[activeCurrency] = {
-      session: eurSessionFilled ? (eurSession * rate).toFixed(2) : "",
-      month:
+    let anyChanged = false;
+    for (const c of targets) {
+      const rate = fxRates[c];
+      const nextSession = eurSessionFilled
+        ? (eurSession * rate).toFixed(2)
+        : "";
+      const nextMonth =
         shape === "session_and_month" && eurMonthFilled
           ? (eurMonth * rate).toFixed(2)
-          : "",
-    };
-    onChange({
-      ...state,
-      prices: next,
-      fxFilled: new Set([...fxFilled, activeCurrency]),
-    });
-  }, [activeCurrency, fxRates, prices, fxFilled, shape, state, onChange]);
+          : "";
+      if (
+        next[c].session !== nextSession ||
+        next[c].month !== nextMonth
+      ) {
+        next[c] = { session: nextSession, month: nextMonth };
+        anyChanged = true;
+      }
+    }
+    // Skip the onChange if nothing actually moved — otherwise the effect
+    // re-fires on its own state update and we burn a render cycle.
+    if (!anyChanged) return;
+    onChange({ ...state, prices: next });
+  }, [fxRates, prices, manualEdits, shape, state, onChange]);
 
   const setActive = (currency: SupportedCurrency) => {
     if (currency === activeCurrency) return;
@@ -91,15 +103,17 @@ export function PricingBlock({
         ...prices,
         [currency]: { ...prices[currency], [field]: value },
       },
-      // Mark the tab as "manually filled" so the FX auto-fill won't
-      // overwrite the value next time we land on it.
-      fxFilled: new Set([...fxFilled, currency]),
+      // Lock this currency from FX auto-fill so subsequent EUR changes
+      // don't overwrite the admin's manual value.
+      manualEdits: new Set([...manualEdits, currency]),
     });
   };
 
+  // FX note shows on non-EUR tabs that the admin hasn't overridden, as
+  // long as we have rates to display.
   const showSubFxNote =
     activeCurrency !== DEFAULT_CURRENCY &&
-    fxFilled.has(activeCurrency) &&
+    !manualEdits.has(activeCurrency) &&
     Boolean(fxRates);
 
   const sessionLabel =

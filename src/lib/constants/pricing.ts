@@ -29,16 +29,17 @@ export const BUNDLE_DISCOUNTS: Record<number, number> = {
 export const BUNDLE_SIZES: readonly number[] = [1, 4, 10];
 
 /**
- * Subscription frequency discounts. Ladder is monotonic: longer commitment
- * gets a bigger discount, and every tier beats the comparable one-off
- * bundle so subs are always the better deal at equal duration.
+ * Subscription frequency discounts off the base monthly price the admin
+ * enters. Monthly is the base rate (no further discount); longer-commitment
+ * tiers (quarterly, yearly) get a percent off the equivalent number of
+ * months at that base rate.
  *
- *   monthly   (~4 sessions)  > bundle 4  (5%)  → 10%
- *   quarterly (~12 sessions) > bundle 10 (12%) → 20%
- *   yearly    (~52 sessions)                   → 30%
+ *   monthly   → 0  (parents pay exactly what the admin entered)
+ *   quarterly → 20% off (3 × monthly × 0.80)
+ *   yearly    → 30% off (12 × monthly × 0.70)
  */
 export const SUBSCRIPTION_DISCOUNTS: Record<SubscriptionFrequency, number> = {
-  monthly: 0.10,
+  monthly: 0,
   quarterly: 0.20,
   yearly: 0.30,
 };

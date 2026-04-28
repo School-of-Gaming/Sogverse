@@ -108,7 +108,7 @@ export function BillingSection({
             shape={pricingShape}
             state={{
               prices: state.prices,
-              fxFilled: state.fxFilled,
+              manualEdits: state.manualEdits,
               activeCurrency: state.activeCurrency,
             }}
             onChange={(next) => setState({ ...state, ...next })}

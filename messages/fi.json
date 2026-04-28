@@ -251,7 +251,14 @@
         "ageRange": "{min}–{max} v",
         "seats": "{count} paikkaa",
         "hidden": "piilotettu",
-        "untitled": "(nimetön)"
+        "untitled": "(nimetön)",
+        "pendingHint": {
+          "registrationOpens": "Ilmoittautuminen aukeaa {date}",
+          "startDate": "Alkaa {date}",
+          "threshold": "Alkaa kun {count, plural, one {# huoltaja ilmoittautuu} other {# huoltajaa on ilmoittautunut}}",
+          "dateAndThreshold": "Alkaa {date}, jos {count, plural, one {# huoltaja ilmoittautuu} other {# huoltajaa on ilmoittautunut}}",
+          "pastDateThreshold": "Aloituspäivä mennyt — odotetaan {count, plural, one {# ilmoittautumista} other {# ilmoittautumista}}"
+        }
       },
       "translations": {
         "label": "Kielet",
@@ -469,8 +476,10 @@
         "startDateRequired": "Alkupäivä vaaditaan",
         "endDateRequired": "Loppupäivä vaaditaan",
         "seatCountInvalid": "Paikkamäärän on oltava positiivinen kokonaisluku",
-        "priceSessionInvalid": "Hinta per kerta: ei-negatiivinen luku ({currency})",
-        "priceMonthInvalid": "Hinta per kuukausi: ei-negatiivinen luku ({currency})",
+        "priceSessionMissing": "Anna kertahinta valuutassa {currency}",
+        "priceSessionNegative": "Kertahinta valuutassa {currency} ei voi olla negatiivinen",
+        "priceMonthMissing": "Anna kuukausihinta valuutassa {currency}",
+        "priceMonthNegative": "Kuukausihinta valuutassa {currency} ei voi olla negatiivinen",
         "thresholdInvalid": "Ilmoittautumisrajan on oltava positiivinen kokonaisluku",
         "registrationOpensDateRequired": "Valitse päivämäärä, jolloin ilmoittautuminen avautuu",
         "createFailed": "Tuotteen luonti epäonnistui"
@@ -484,11 +493,11 @@
         "addTagShort": "Lisää"
       },
       "status": {
-        "draft": "luonnos",
-        "pending": "odottaa",
-        "running": "käynnissä",
-        "completed": "päättynyt",
-        "cancelled": "peruttu"
+        "draft": "Luonnos",
+        "pending": "Odottaa alkua",
+        "running": "Käynnissä",
+        "completed": "Päättynyt",
+        "cancelled": "Peruttu"
       },
       "schedule": {
         "day": "Päivä",

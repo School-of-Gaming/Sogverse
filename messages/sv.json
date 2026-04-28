@@ -251,7 +251,14 @@
         "ageRange": "{min}–{max} år",
         "seats": "{count} platser",
         "hidden": "dold",
-        "untitled": "(utan titel)"
+        "untitled": "(utan titel)",
+        "pendingHint": {
+          "registrationOpens": "Anmälan öppnar {date}",
+          "startDate": "Startar {date}",
+          "threshold": "Startar när {count, plural, one {# förälder anmäler} other {# föräldrar anmäler}} sig",
+          "dateAndThreshold": "Startar {date} om {count, plural, one {# förälder anmäler} other {# föräldrar anmäler}} sig",
+          "pastDateThreshold": "Startdatum passerat — väntar på {count, plural, one {# anmälan} other {# anmälningar}}"
+        }
       },
       "translations": {
         "label": "Språk",
@@ -469,8 +476,10 @@
         "startDateRequired": "Startdatum krävs",
         "endDateRequired": "Slutdatum krävs",
         "seatCountInvalid": "Antal platser måste vara ett positivt heltal",
-        "priceSessionInvalid": "Pris per tillfälle måste vara ett icke-negativt tal ({currency})",
-        "priceMonthInvalid": "Pris per månad måste vara ett icke-negativt tal ({currency})",
+        "priceSessionMissing": "Ange ett pris per tillfälle i {currency}",
+        "priceSessionNegative": "Pris per tillfälle i {currency} kan inte vara negativt",
+        "priceMonthMissing": "Ange ett månadspris i {currency}",
+        "priceMonthNegative": "Månadspris i {currency} kan inte vara negativt",
         "thresholdInvalid": "Antal anmälningar för att starta måste vara ett positivt heltal",
         "registrationOpensDateRequired": "Välj ett datum då anmälan ska öppnas",
         "createFailed": "Det gick inte att skapa produkten"
@@ -484,11 +493,11 @@
         "addTagShort": "Lägg till"
       },
       "status": {
-        "draft": "utkast",
-        "pending": "väntar",
-        "running": "pågår",
-        "completed": "avslutat",
-        "cancelled": "avbrutet"
+        "draft": "Utkast",
+        "pending": "Väntar på start",
+        "running": "Pågår",
+        "completed": "Avslutat",
+        "cancelled": "Avbrutet"
       },
       "schedule": {
         "day": "Dag",

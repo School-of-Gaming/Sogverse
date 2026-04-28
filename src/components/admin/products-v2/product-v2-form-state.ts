@@ -80,7 +80,11 @@ export interface FormState {
   // Capacity & billing
   paidMode: PaidMode;
   prices: Record<SupportedCurrency, { session: string; month: string }>;
-  fxFilled: Set<SupportedCurrency>;
+  // Currencies the admin has manually typed into. When EUR changes, every
+  // non-EUR currency NOT in this set is re-filled from the EUR value via
+  // FX. Adding to this set is a one-way "lock" — auto-fill won't overwrite
+  // a value the admin has edited.
+  manualEdits: Set<SupportedCurrency>;
   activeCurrency: SupportedCurrency;
   seatCount: string;
   uncapped: boolean;
@@ -164,7 +168,7 @@ export function initialState(
       gbp: { session: "", month: "" },
       usd: { session: "", month: "" },
     },
-    fxFilled: new Set([DEFAULT_CURRENCY]),
+    manualEdits: new Set(),
     activeCurrency: DEFAULT_CURRENCY,
     seatCount: defaultSeats(config.productType),
     uncapped: false,
