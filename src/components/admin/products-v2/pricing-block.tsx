@@ -15,6 +15,7 @@ import {
   BundlePricePreview,
   SubscriptionPricePreview,
 } from "./price-previews";
+import { applyFxAutoFill } from "./pricing-block-fx";
 import type { FxRates } from "@/services/products-v2";
 
 export type PricingShapeUI = "session_and_month" | "upfront_total";
@@ -45,46 +46,11 @@ export function PricingBlock({
   // changes — except currencies the admin has manually overridden. The
   // effect doesn't add the auto-filled currencies to `manualEdits`, so
   // future EUR edits keep propagating to them. Manual override is one-way
-  // (set in `setRow`).
+  // (set in `setRow`). The decision logic lives in `applyFxAutoFill` so
+  // it can be unit-tested without rendering.
   useEffect(() => {
-    if (!fxRates) return;
-
-    const eurSession = Number(prices.eur.session);
-    const eurMonth = Number(prices.eur.month);
-    const eurSessionFilled =
-      prices.eur.session !== "" && Number.isFinite(eurSession);
-    const eurMonthFilled =
-      prices.eur.month !== "" && Number.isFinite(eurMonth);
-    if (!eurSessionFilled && !eurMonthFilled) return;
-
-    const targets = SUPPORTED_CURRENCIES.filter(
-      (c) => c !== DEFAULT_CURRENCY && !manualEdits.has(c) && fxRates[c]
-    );
-    if (targets.length === 0) return;
-
-    const next: PricingBlockState["prices"] = { ...prices };
-    let anyChanged = false;
-    for (const c of targets) {
-      const rate = fxRates[c];
-      const nextSession = eurSessionFilled
-        ? (eurSession * rate).toFixed(2)
-        : "";
-      const nextMonth =
-        shape === "session_and_month" && eurMonthFilled
-          ? (eurMonth * rate).toFixed(2)
-          : "";
-      if (
-        next[c].session !== nextSession ||
-        next[c].month !== nextMonth
-      ) {
-        next[c] = { session: nextSession, month: nextMonth };
-        anyChanged = true;
-      }
-    }
-    // Skip the onChange if nothing actually moved — otherwise the effect
-    // re-fires on its own state update and we burn a render cycle.
-    if (!anyChanged) return;
-    onChange({ ...state, prices: next });
+    const next = applyFxAutoFill({ prices, manualEdits, shape, fxRates });
+    if (next) onChange({ ...state, prices: next });
   }, [fxRates, prices, manualEdits, shape, state, onChange]);
 
   const setActive = (currency: SupportedCurrency) => {
