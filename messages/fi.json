@@ -497,7 +497,8 @@
         "pending": "Odottaa alkua",
         "running": "Käynnissä",
         "completed": "Päättynyt",
-        "cancelled": "Peruttu"
+        "cancelled": "Peruttu",
+        "expired": "Vanhentunut"
       },
       "schedule": {
         "day": "Päivä",

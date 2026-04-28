@@ -116,13 +116,9 @@ The `BEFORE DELETE` trigger on `product_translations_v2` enforces ≥1 of (en, f
 
 **Fix:** Add a `BEFORE UPDATE OF locale` trigger that runs the same en/fi check, or forbid `UPDATE OF locale` entirely and require admins to delete + insert.
 
-### `effective_status_v2` end-of-day uses UTC midnight, not the product's timezone
+### `effective_status_v2` SQL twin to mirror the TS helper
 
-A Helsinki event with `end_date = today` flips to `completed` at 00:00 UTC = 02:00 / 03:00 Helsinki time — i.e. on the morning of the event itself. Same drift in the TS twin (`effective-status.ts`).
-
-**Impact:** Fine while status is admin-only. Becomes user-visible the moment customer detail pages start displaying it (per `docs/products-redesign.md` §7.5, they will).
-
-**Fix:** Use `date-fns-tz` with `p.timezone` (already on the row) on both sides. Apply matching fix in the SQL function so DB-side filters agree with client.
+The TS helper (`effective-status.ts`) uses `date-fns-tz` to compare `start_date` / `end_date` against `now` in the product's timezone, and it derives an `expired` state for pending products whose end_date passed without ever satisfying the start conditions. The matching SQL function `effective_status_v2(product_id)` doesn't exist yet (the design doc anticipates it). When DB-side filters need to match the client (e.g. "show me running products"), build the SQL function with the same rule: project `now()` into `products_v2.timezone`, compare to date-only fields, and emit the same `expired` derived state.
 
 ### Manage topic & tag translations admin UI
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { formatCurrencyFromCents } from "@/lib/utils";
+import { decimalToCents, formatCurrencyFromCents } from "@/lib/utils";
 import {
   BUNDLE_DISCOUNTS,
   BUNDLE_SIZES,
@@ -13,13 +13,6 @@ import {
 } from "@/lib/constants";
 
 const EMPTY = "—";
-
-function parseCents(value: string): number | null {
-  if (value.trim() === "") return null;
-  const n = Number(value);
-  if (!Number.isFinite(n) || n < 0) return null;
-  return Math.round(n * 100);
-}
 
 /** One row of the preview: left-aligned label, right-aligned price. */
 function PriceRow({ label, price }: { label: string; price: string }) {
@@ -39,7 +32,7 @@ interface PricePreviewProps {
 export function BundlePricePreview({ value, currency }: PricePreviewProps) {
   const t = useTranslations("admin.productsV2.pricing");
   const locale = useLocale();
-  const cents = parseCents(value);
+  const cents = decimalToCents(value);
 
   return (
     <div className="rounded-md bg-muted/40 p-2 text-xs">
@@ -77,7 +70,7 @@ export function SubscriptionPricePreview({
 }: PricePreviewProps) {
   const t = useTranslations("admin.productsV2.pricing");
   const locale = useLocale();
-  const cents = parseCents(value);
+  const cents = decimalToCents(value);
 
   return (
     <div className="rounded-md bg-muted/40 p-2 text-xs">

@@ -345,7 +345,12 @@ describe("validate", () => {
 });
 
 describe("buildCreateInput", () => {
-  it("converts prices to cents, rounding half-cents away from zero", () => {
+  it("converts prices to cents via the shared decimalToCents helper", () => {
+    // The same helper drives the admin pricing preview, so the cents value
+    // displayed and the cents value sent to Stripe agree by construction.
+    // Float precision means individual half-cent inputs may round either
+    // direction (10.005→1001, 1.005→100); what matters is that all consumers
+    // round identically. See decimalToCents in src/lib/utils.ts.
     const s = validConsumerState();
     s.prices.eur = { session: "10.005", month: "30.99" };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);

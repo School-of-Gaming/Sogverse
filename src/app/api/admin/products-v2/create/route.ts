@@ -17,6 +17,20 @@ const EXT_TO_MIME: Record<string, string> = {
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
+function friendlyRpcError(err: { code?: string; message: string }): string {
+  switch (err.code) {
+    case "23503": // foreign_key_violation
+      return "Something you selected (topic, location, tag, or holiday calendar) is no longer available. Please refresh the page and try again.";
+    case "23505": // unique_violation
+      return "A product with these details already exists. Please change something and try again.";
+    default:
+      // RAISE EXCEPTION messages from our own RPCs are already friendly
+      // ("Only admins can create products", "Each product must keep at
+      // least one of (en, fi) translations", etc.). Pass them through.
+      return err.message;
+  }
+}
+
 function resolveUploadMeta(
   file: File
 ): { path: string; contentType: string } | null {
@@ -117,7 +131,15 @@ export async function POST(request: Request) {
   );
 
   if (rpcError) {
-    return NextResponse.json({ error: rpcError.message }, { status: 400 });
+    // The form validates everything client-side, so RPC errors here are
+    // mostly race conditions (an admin deleted a topic / location / tag
+    // between page load and submit). Translate Postgres native error
+    // codes to actionable messages; RAISE EXCEPTION messages from our
+    // own functions are already user-friendly and pass through.
+    return NextResponse.json(
+      { error: friendlyRpcError(rpcError) },
+      { status: 400 }
+    );
   }
   if (!productId) {
     return NextResponse.json(

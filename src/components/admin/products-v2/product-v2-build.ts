@@ -14,6 +14,7 @@ import {
   LOCALE_CONFIG,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { decimalToCents } from "@/lib/utils";
 import type { CreateProductV2Input } from "@/services/products-v2";
 import type { ProductTypeV2 } from "@/types";
 import {
@@ -295,10 +296,13 @@ export function buildCreateInput(
     prices: showPricing
       ? SUPPORTED_CURRENCIES.map((currency) => {
           const row = state.prices[currency];
-          const sessionCents = Math.round(Number(row.session) * 100);
+          // `validate()` blocks submit when these are blank/invalid, so the
+          // null fallback is unreachable in practice. The shared helper is
+          // what the admin preview also uses — display = Stripe charge.
+          const sessionCents = decimalToCents(row.session) ?? 0;
           const monthCents =
             pricingShape === "session_and_month"
-              ? Math.round(Number(row.month) * 100)
+              ? (decimalToCents(row.month) ?? 0)
               : 0;
           return {
             currency,
