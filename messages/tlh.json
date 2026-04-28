@@ -545,7 +545,8 @@
         "pending": "taghbe'",
         "running": "qaS",
         "completed": "rIn",
-        "cancelled": "chIm"
+        "cancelled": "chIm",
+        "expired": "lI'be'"
       },
       "schedule": {
         "day": "jaj",

@@ -20,6 +20,7 @@ function lifecycle(over: Partial<LifecycleInputs>): LifecycleInputs {
     start_date: null,
     end_date: null,
     signup_threshold: null,
+    timezone: "Europe/Helsinki",
     ...over,
   };
 }
@@ -62,6 +63,13 @@ describe("effectiveStatus", () => {
       const p = lifecycle({ status: "pending" });
       expect(effectiveStatus(p, NOW, 0)).toBe("pending");
     });
+
+    it("becomes expired if end_date passes (manual start window closed)", () => {
+      // No date, no threshold, but end_date is set and has passed.
+      // Admin can never manually start now — the window is gone.
+      const p = lifecycle({ status: "pending", end_date: "2026-01-01" });
+      expect(effectiveStatus(p, NOW, 0)).toBe("expired");
+    });
   });
 
   describe("pending → running upgrade", () => {
@@ -102,13 +110,83 @@ describe("effectiveStatus", () => {
   });
 
   describe("pending → running → completed (skip)", () => {
-    it("upgrades pending straight to completed when start passed and end also passed", () => {
+    it("skips straight to completed when start passed AND end passed AND no threshold", () => {
       const p = lifecycle({
         status: "pending",
         start_date: "2026-01-01",
         end_date: "2026-02-01",
       });
       expect(effectiveStatus(p, NOW, 0)).toBe("completed");
+    });
+
+    it("skips to completed when both dates passed AND threshold was met", () => {
+      const p = lifecycle({
+        status: "pending",
+        start_date: "2026-01-01",
+        end_date: "2026-02-01",
+        signup_threshold: 10,
+      });
+      expect(effectiveStatus(p, NOW, 10)).toBe("completed");
+    });
+  });
+
+  describe("pending → expired (start window closed without ever running)", () => {
+    it("threshold-bearing product whose start passed and end passed without enough signups → expired", () => {
+      // The bug fix case: this used to silently stay "pending" forever.
+      const p = lifecycle({
+        status: "pending",
+        start_date: "2026-01-01",
+        end_date: "2026-02-01",
+        signup_threshold: 10,
+      });
+      expect(effectiveStatus(p, NOW, 5)).toBe("expired");
+    });
+
+    it("threshold-only product whose end passed without enough signups → expired", () => {
+      const p = lifecycle({
+        status: "pending",
+        end_date: "2026-02-01",
+        signup_threshold: 10,
+      });
+      expect(effectiveStatus(p, NOW, 5)).toBe("expired");
+    });
+  });
+
+  describe("timezone-correct date comparisons", () => {
+    // start_date and end_date are date-only strings; they're compared
+    // against `now` projected into the product's timezone, not UTC.
+    it("an event ending today stays running through end-of-day in product TZ", () => {
+      // Helsinki is UTC+2 in winter / UTC+3 in summer. 2026-04-28T12:00:00Z
+      // is afternoon in Helsinki — same calendar day. So end_date=today
+      // (2026-04-28) has NOT yet passed.
+      const p = lifecycle({
+        status: "running",
+        end_date: "2026-04-28",
+      });
+      expect(effectiveStatus(p, NOW, 0)).toBe("running");
+    });
+
+    it("end_date is past once the next day starts in product TZ", () => {
+      // Late evening UTC: 2026-04-28T22:00:00Z = 2026-04-29T01:00 Helsinki
+      // (DST). end_date = 2026-04-28 has now passed in Helsinki.
+      const lateNight = new Date("2026-04-28T22:00:00Z");
+      const p = lifecycle({
+        status: "running",
+        end_date: "2026-04-28",
+      });
+      expect(effectiveStatus(p, lateNight, 0)).toBe("completed");
+    });
+
+    it("a Pacific-timezone product compared at the same UTC moment is still running today", () => {
+      // 2026-04-28T22:00:00Z = 2026-04-28T15:00 Los Angeles. Same calendar
+      // day in LA, so end_date=today hasn't passed yet there.
+      const lateNight = new Date("2026-04-28T22:00:00Z");
+      const p = lifecycle({
+        status: "running",
+        end_date: "2026-04-28",
+        timezone: "America/Los_Angeles",
+      });
+      expect(effectiveStatus(p, lateNight, 0)).toBe("running");
     });
   });
 });
@@ -124,6 +202,7 @@ function pending(over: Partial<PendingHintInputs>): PendingHintInputs {
     // registration_opens_at is NOT NULL in the schema; a past timestamp
     // means "open since" and lets the other branches show through.
     registration_opens_at: "1970-01-01T00:00:00Z",
+    timezone: "Europe/Helsinki",
     ...over,
   };
 }
@@ -191,5 +270,13 @@ describe("pendingHintKey", () => {
   it("past startDate alone → null (nothing meaningful to say)", () => {
     const p = pending({ start_date: "2026-01-01" });
     expect(pendingHintKey(p, NOW)).toBeNull();
+  });
+
+  it("compares startDate against the product's local calendar day, not UTC", () => {
+    // 2026-04-28T22:00Z = 2026-04-29 in Helsinki. start_date=2026-04-29
+    // is "today" in Helsinki, not in the future, so → null (no hint).
+    const lateNight = new Date("2026-04-28T22:00:00Z");
+    const p = pending({ start_date: "2026-04-29" });
+    expect(pendingHintKey(p, lateNight)).toBeNull();
   });
 });

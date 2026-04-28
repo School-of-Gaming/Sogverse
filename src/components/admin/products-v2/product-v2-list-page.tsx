@@ -25,6 +25,7 @@ const STATUS_STYLE: Record<string, string> = {
   running: "bg-primary text-primary-foreground",
   completed: "bg-muted text-muted-foreground",
   cancelled: "bg-destructive/20 text-destructive",
+  expired: "bg-muted text-muted-foreground",
 };
 
 // `pendingHintKey` lives in effective-status.ts (UI-free decision tree). This
@@ -60,6 +61,9 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
   const label = t(`types.${config.i18nKey}.label`);
   const plural = t(`types.${config.i18nKey}.plural`);
   const { data: products, isLoading } = useProductsV2ByType(productType);
+  // One Date for the whole render so every row derives status from the
+  // same instant — avoids a row-level boundary on the day a status flips.
+  const now = new Date();
 
   return (
     <div className="space-y-6">
@@ -108,7 +112,6 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
             const tr = resolveTranslation(p.product_translations_v2, uiLocale);
             // TODO: thread real active-participation count when participations_v2
             // ships. Until then threshold-bearing products read as pending.
-            const now = new Date();
             const status = effectiveStatus(p, now, 0);
             const hint =
               status === "pending"

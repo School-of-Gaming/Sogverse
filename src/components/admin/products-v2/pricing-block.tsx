@@ -63,15 +63,19 @@ export function PricingBlock({
     field: "session" | "month",
     value: string
   ) => {
+    // EUR is the FX source — it's never auto-filled, so it never needs
+    // to be locked. Only non-EUR keystrokes mark a currency as manual.
+    const nextManualEdits =
+      currency === DEFAULT_CURRENCY
+        ? manualEdits
+        : new Set([...manualEdits, currency]);
     onChange({
       ...state,
       prices: {
         ...prices,
         [currency]: { ...prices[currency], [field]: value },
       },
-      // Lock this currency from FX auto-fill so subsequent EUR changes
-      // don't overwrite the admin's manual value.
-      manualEdits: new Set([...manualEdits, currency]),
+      manualEdits: nextManualEdits,
     });
   };
 
