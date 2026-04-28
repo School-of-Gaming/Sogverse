@@ -1,5 +1,25 @@
 import type { ProductStatusV2, ProductV2 } from "@/types";
 
+// Lifecycle inputs needed to explain *why* a product is still pending —
+// used by the admin list to add a "starts when..." caption under the row.
+export type PendingHintInputs = Pick<
+  ProductV2,
+  "start_date" | "signup_threshold" | "registration_opens_at"
+>;
+
+export type PendingHintKey =
+  | "registrationOpens"
+  | "dateAndThreshold"
+  | "startDate"
+  | "pastDateThreshold"
+  | "threshold";
+
+export interface PendingHint {
+  key: PendingHintKey;
+  /** Values to interpolate into the message, raw — caller formats dates. */
+  values: { date?: string; count?: number };
+}
+
 // Lifecycle decisions only need these four columns. Keeping the input
 // type narrow lets callers project a smaller select without losing
 // type-safety.
@@ -61,4 +81,60 @@ export function effectiveStatus(
     return endPassed ? "completed" : "running";
   }
   return "pending";
+}
+
+/**
+ * Decide which "still pending because..." caption applies to a product
+ * whose effective status is `pending`. Returns null if there's nothing
+ * meaningful to say (no scheduled open, no start date, no threshold).
+ *
+ * Order of precedence is deliberate:
+ *   1. Registration not yet open (no one can sign up at all).
+ *   2. Future start date — combined with threshold if set, else date-only.
+ *   3. Past start date but threshold unmet (post-launch wait).
+ *   4. Threshold-only (no date involved).
+ *
+ * The function returns a structural { key, values } so the list page can
+ * map it through next-intl's t() and format the date in the user locale.
+ */
+export function pendingHintKey(
+  p: PendingHintInputs,
+  now: Date,
+): PendingHint | null {
+  const nowMs = now.getTime();
+
+  if (
+    p.registration_opens_at &&
+    new Date(p.registration_opens_at).getTime() > nowMs
+  ) {
+    return {
+      key: "registrationOpens",
+      values: { date: p.registration_opens_at },
+    };
+  }
+
+  const startInFuture =
+    p.start_date !== null && new Date(p.start_date).getTime() > nowMs;
+  const startInPast =
+    p.start_date !== null && new Date(p.start_date).getTime() <= nowMs;
+
+  if (startInFuture && p.signup_threshold) {
+    return {
+      key: "dateAndThreshold",
+      values: { date: p.start_date!, count: p.signup_threshold },
+    };
+  }
+  if (startInFuture) {
+    return { key: "startDate", values: { date: p.start_date! } };
+  }
+  if (startInPast && p.signup_threshold) {
+    return {
+      key: "pastDateThreshold",
+      values: { count: p.signup_threshold },
+    };
+  }
+  if (p.signup_threshold) {
+    return { key: "threshold", values: { count: p.signup_threshold } };
+  }
+  return null;
 }
