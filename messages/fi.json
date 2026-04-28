@@ -193,6 +193,377 @@
       "updateDetails": "Päivitä tuotetiedot alla",
       "editDetailsBelow": "Muokkaa tietoja alla."
     },
+    "productsV2": {
+      "types": {
+        "consumerClub": {
+          "label": "Kuluttajakerho",
+          "plural": "Kuluttajakerhot",
+          "tagline": "Viikoittainen, jatkuva, vanhemmat maksavat per kerta.",
+          "blurb": "Vanhemmat ilmoittavat lapsensa ja maksavat per kerta. Kerhot jatkuvat viikko toisensa jälkeen ilman päättymispäivää, ellet aseta sitä.",
+          "traits": {
+            "1": "Viikoittain · yksi päivä viikossa",
+            "2": "Ei oletuksena loppupäivää",
+            "3": "Maksu per kerta, valinnainen kk-tilaus",
+            "4": "Kiinteä paikkamäärä, jonotuslista"
+          }
+        },
+        "municipalityClub": {
+          "label": "Kuntakerho",
+          "plural": "Kuntakerhot",
+          "tagline": "Lukukauteen sidottu, kunnan maksama, lipunmyyntimäinen ilmo.",
+          "blurb": "Kunta tai koulu maksaa etukäteen paikoista. Vanhemmat ilmoittavat lapsensa maksutta; ilmoittautumisikkuna avautuu tiettynä hetkenä kuin lipunmyynti.",
+          "traits": {
+            "1": "Viikoittain · yksi päivä viikossa",
+            "2": "Käynnissä alku- ja loppupäivän välillä",
+            "3": "School of Gaming laskuttaa kuntaa",
+            "4": "Kiinteä paikkamäärä, jonotuslista"
+          }
+        },
+        "camp": {
+          "label": "Leiri",
+          "plural": "Leirit",
+          "tagline": "Useita päiviä tietyssä jaksossa. Vanhemmat maksavat etukäteen.",
+          "blurb": "Leiri kestää useita päiviä viikossa rajatun jakson ajan — milloin tahansa vuodessa. Vanhemmat maksavat koko hinnan kerralla ilmoittautuessaan. Palautettavissa tiettyyn hetkeen asti ennen alkua.",
+          "traits": {
+            "1": "Useita päiviä viikossa (jokaisella oma aika)",
+            "2": "Käynnissä alku- ja loppupäivän välillä",
+            "3": "Vanhemmat maksavat etukäteen",
+            "4": "Palautettavissa ennen leirin alkua"
+          }
+        },
+        "event": {
+          "label": "Tapahtuma",
+          "plural": "Tapahtumat",
+          "tagline": "Yksi päivä. Ilmainen tai kertamaksullinen.",
+          "blurb": "Yksittäinen tapahtuma tiettynä päivänä. Sopii esittelypäiviin, yhteisökävelyihin, webinaareihin, turnauksiin. Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa; maksullisilla on aina.",
+          "traits": {
+            "1": "Yksi päivä, yksi alkamisaika",
+            "2": "Ilmainen tai etukäteen maksettu",
+            "3": "Ilmaisissa ei tarvita paikkarajaa",
+            "4": "Sopii esittelyihin, webinaareihin, turnauksiin"
+          }
+        }
+      },
+      "list": {
+        "subtitle": "Hallinnoi ylläpitäjien luomia kohteita ({plural}).",
+        "new": "Uusi {label}",
+        "empty": "Ei vielä kohteita ({plural}). Luo uusi painamalla Uusi {label}.",
+        "ageRange": "{min}–{max} v",
+        "seats": "{count} paikkaa",
+        "hidden": "piilotettu",
+        "untitled": "(nimetön)",
+        "pendingHint": {
+          "registrationOpens": "Ilmoittautuminen aukeaa {date}",
+          "startDate": "Alkaa {date}",
+          "threshold": "Alkaa kun {count, plural, one {# huoltaja ilmoittautuu} other {# huoltajaa on ilmoittautunut}}",
+          "dateAndThreshold": "Alkaa {date}, jos {count, plural, one {# huoltaja ilmoittautuu} other {# huoltajaa on ilmoittautunut}}",
+          "pastDateThreshold": "Aloituspäivä mennyt — odotetaan {count, plural, one {# ilmoittautumista} other {# ilmoittautumista}}"
+        }
+      },
+      "translations": {
+        "label": "Kielet",
+        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään englanti tai suomi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai suomeksi.",
+        "addLocale": "+ Lisää kieli",
+        "removeLocale": "Poista {locale}",
+        "inlineCreateHint": "Tallennetaan kielellä {locale}. Muiden kielten käännökset voi lisätä myöhemmin aiheiden ja tunnisteiden hallinnasta."
+      },
+      "newPage": {
+        "back": "Takaisin: {plural}",
+        "kicker": "Uusi {label}",
+        "title": "Uusi {label}"
+      },
+      "sections": {
+        "identity": "Perustiedot",
+        "identityDescription": "Mikä tämän nimi on ja mistä se kertoo.",
+        "audience": "Kohdeyleisö",
+        "audienceDescription": "Kenelle tämä on tarkoitettu.",
+        "where": "Missä",
+        "whereDescription": {
+          "consumerClub": "Verkossa tai paikan päällä. Verkkokerhot ovat avoimia kaikille — sijaintia ei tarvita. Lähikerhot pidetään tietyssä toimipisteessä.",
+          "municipalityClub": "Tietty kunta maksaa. Verkkokerhoissa valitaan kunta suoraan; lähikerhoissa toimipiste sen sisältä.",
+          "camp": "Verkossa tai paikan päällä. Verkkoleirit ovat avoimia kaikille — sijaintia ei tarvita. Lähileirit pidetään tietyssä toimipisteessä.",
+          "event": "Verkossa tai paikan päällä. Verkkotapahtumat ovat avoimia kaikille — sijaintia ei tarvita. Lähitapahtumat pidetään tietyssä toimipisteessä."
+        },
+        "when": "Ajankohta",
+        "whenDescription": {
+          "consumerClub": "Yksi päivä viikossa, yksi aika. Jätä loppupäivä tyhjäksi jatkuvalle kerholle.",
+          "municipalityClub": "Yksi päivä viikossa, yksi aika. Käynnissä alku- ja loppupäivän välillä.",
+          "camp": "Useita päiviä viikossa, jokaisella oma alkamisaika ja kesto.",
+          "event": "Yksi päivä ja alkamisaika."
+        },
+        "groups": "Ryhmät",
+        "groupsDescription": "Ylläpitäjät käyttävät ryhmiä tuotteen sisäiseen jakoon. Vanhemmat eivät näe ryhmiä — vain tuotteen.",
+        "billing": "Paikat ja hinnoittelu",
+        "billingDescription": {
+          "consumerClub": "Vanhemmat maksavat jokaisesta lapsen osallistumiskerrasta. Laskutus tapahtuu automaattisesti viikoittain.",
+          "municipalityClub": "School of Gaming laskuttaa kuntaa suoraan. Vanhemmat ilmoittavat lapsensa maksutta paikkarajaan saakka.",
+          "camp": "Vanhemmat maksavat koko hinnan kerralla ilmoittautuessaan. Palautettavissa tiettyyn hetkeen asti.",
+          "event": "Tapahtumat voivat olla ilmaisia (paikkarajalla tai ilman) tai etukäteen maksettuja."
+        },
+        "registration": "Ilmoittautumisaika",
+        "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
+        "visibility": "Näkyvyys",
+        "visibilityDescription": "Hallitse, näkevätkö vanhemmat tämän vielä tekeillä olevana."
+      },
+      "labels": {
+        "name": "Nimi",
+        "description": "Kuvaus",
+        "topic": "Aihe",
+        "tags": "Tunnisteet",
+        "padletUrl": "Padlet-osoite",
+        "minAge": "Alaikäraja",
+        "maxAge": "Yläikäraja",
+        "spokenLanguage": "Kieli",
+        "deliveredIn": "Toteutuksen kieli",
+        "online": "Verkossa",
+        "inPerson": "Paikan päällä",
+        "municipality": "Mille kunnalle tämä on",
+        "site": "Toimipiste",
+        "startDate": "Alkupäivä",
+        "date": "Päivämäärä",
+        "endDate": "Loppupäivä",
+        "endDateOptional": "Loppupäivä (valinnainen)",
+        "eventDate": "Tapahtumapäivä",
+        "seasonEndDate": "Lukukauden loppupäivä",
+        "schedule": "Aikataulu",
+        "dayAndTime": "Päivä & aika",
+        "daysAndTimes": "Päivät & ajat",
+        "time": "Aika",
+        "holidayCalendars": "Loma-kalenterit",
+        "holidayNoUpcoming": "Ei tulevia päivämääriä — tätä kalenteria ei voi käyttää ilman niitä.",
+        "pricing": "Hinta",
+        "free": "Ilmainen",
+        "paid": "Maksullinen",
+        "billing": "Laskutus",
+        "paidByMunicipality": "Kunta maksaa",
+        "groupTopicUnder": "Ryhmittele:",
+        "seatCount": "Paikkamäärä",
+        "noSeatLimit": "Ei paikkarajaa",
+        "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
+        "signupThreshold": "Ilmoittautumisraja aloitukseen",
+        "makeVisible": "Näkyy vanhemmille"
+      },
+      "placeholders": {
+        "selectTopic": "Valitse aihe…",
+        "selectSite": "Valitse toimipiste",
+        "selectMunicipality": "Valitse kunta",
+        "newTopicName": "Uuden aiheen nimi (esim. Among Us, Digihyvinvointi)",
+        "newTagName": "Tunnisteen nimi",
+        "padletUrl": "https://padlet.com/...",
+        "threshold": "esim. 8",
+        "noLimit": "Ei rajaa",
+        "name": {
+          "consumerClub": "esim. Minecraft Redstone -kerho",
+          "municipalityClub": "esim. Tapiolan Minecraft-kerho · Kevät 2026",
+          "camp": "esim. Pelisuunnitteluleiri · Syysloma",
+          "event": "esim. Pokémon GO -yhteisökävely · Helsinki"
+        },
+        "description": {
+          "consumerClub": "Mitä joka viikko tapahtuu, kenelle, mitä opitaan.",
+          "municipalityClub": "Missä koulussa, minkä lukukauden aikana, millä kielellä.",
+          "camp": "Päivät, kokonaistunnit, viikon teema.",
+          "event": "Yksirivinen kuvaus tapahtumasta — mitä, missä, kenelle."
+        }
+      },
+      "topicKinds": {
+        "game": "Pelit",
+        "subject": "Aineet"
+      },
+      "topicKindSingular": {
+        "game": "Peli",
+        "subject": "Aine"
+      },
+      "locationPicker": {
+        "searchPlaceholder": "Hae maan, alueen, kunnan tai toimipisteen mukaan…",
+        "clearSearch": "Tyhjennä haku",
+        "noResults": "Hakuehdolla \"{query}\" ei löytynyt sijainteja.",
+        "hintSite": "Valitse toimipiste. Puuttuuko jokin? Lisää se kunnan alle tästä.",
+        "hintJurisdiction": "Valitse maa, alue tai kunta. Verkkotuotteilla ei ole fyysistä toimipistettä.",
+        "addCountry": "Lisää uusi maa",
+        "change": "Vaihda",
+        "edit": "Muokkaa",
+        "cancel": "Peruuta",
+        "pick": "Valitse",
+        "noVenueHint": "Ei fyysistä toimipaikkaa. Vanhemmat, jotka selaavat alueella {name} — tai missä tahansa sen sisällä — näkevät tämän tuotteen.",
+        "noSitesYet": "ei vielä toimipisteitä",
+        "memberNotesLabel": "Jäsenille näkyvät tiedot",
+        "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
+        "memberNotesPlaceholder": "Osoitetiedot, parkkipaikka, esteettömyys — kaikki mitä vanhempien on hyvä tietää.",
+        "memberNotesHint": "Näkyvät vanhemmille ja pelaajille tuotesivulla.",
+        "staffNotesLabel": "Henkilökunnan tiedot (vain ylläpitäjä + Gedu)",
+        "staffNotesFieldLabel": "Vain henkilökunnalle",
+        "staffNotesPlaceholder": "Porttikoodit, takaoven yksityiskohdat, huoneavaimet, keneltä kysyä neuvontatiskillä.",
+        "staffNotesHint": "Ei koskaan näytetä vanhemmille tai pelaajille.",
+        "addressLabel": "Osoite",
+        "addressPlaceholder": "Katu, postinumero, kaupunki",
+        "noMemberNotes": "Ei jäsenille näkyviä tietoja tälle toimipisteelle.",
+        "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle."
+      },
+      "pricing": {
+        "currencyPickerLabel": "Valuutta",
+        "fxSuggested": "Ehdotus tämän päivän EUR-kurssilla ({rate}). Muokkaa halutessasi.",
+        "fxUnavailable": "Valuuttakurssia ei saatu haettua — syötä manuaalisesti.",
+        "perSessionLabel": "Hinta per kerta",
+        "perMonthLabel": "Hinta per kuukausi",
+        "totalLabel": "Kokonaishinta",
+        "bundleHeading": "Mitä vanhemmat maksavat paketeista",
+        "bundleSingle": "Yksittäinen kerta",
+        "bundleMulti": "{size} kertaa (säästö {discount}%)",
+        "subHeading": "Mitä vanhemmat maksavat tilauksista",
+        "subMonthly": "Kuukausittain",
+        "subQuarterly": "Neljännesvuosittain (säästö {discount}%)",
+        "subYearly": "Vuosittain (säästö {discount}%)"
+      },
+      "startModes": {
+        "label": "Miten tämä alkaa?",
+        "date": "Tiettynä päivänä",
+        "date_and_threshold": "Tiettynä päivänä, jos tarpeeksi ilmoittautuu",
+        "threshold": "Kun tarpeeksi pelaajia on ilmoittautunut",
+        "dateDescription": "Alkaa valittuna päivänä riippumatta ilmoittautuneiden määrästä.",
+        "date_and_thresholdDescription": "Suunniteltu valitulle päivälle, mutta alkaa vain jos riittävästi vanhempia ilmoittautuu ajoissa. Muussa tapauksessa perut sen ja vanhemmille palautetaan automaattisesti.",
+        "thresholdDescription": "Ei kiinteää alkupäivää. Valitset ensimmäisen tapaamisen päivän, kun tarpeeksi vanhempia on ilmoittautunut — vanhemmat näkevät laskurin ja tietävät, että otat yhteyttä."
+      },
+      "registrationModes": {
+        "label": "Milloin ilmoittautuminen avautuu?",
+        "immediately": "Heti",
+        "immediatelyDescription": "Vanhemmat voivat ilmoittautua heti, kun tuote tulee näkyviin.",
+        "scheduled": "Tiettyyn aikaan",
+        "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
+      },
+      "hints": {
+        "noTopics": "Ei vielä aiheita. Lisää uusi valitsimen vieressä olevalla + -painikkeella.",
+        "topicHint": "Pääaihe — yksi per tuote. Mistä kerrat oikeasti kertovat.",
+        "tagsHint": "Valinnainen. Auttaa vanhempia suodattamaan tuotteita selatessaan.",
+        "padletHint": "Valinnainen. Jaetaan perheille ilmoittautumisen jälkeen.",
+        "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
+        "noLocations": "Ei sopivia sijainteja. Luo uusi + -painikkeella.",
+        "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
+        "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
+        "municipalityHint": "Kuntakerhot ovat aina sidottu tiettyyn kuntaan — siihen joka sen maksaa. Sen kunnan (tai sen sisällä olevan pienemmän alueen) vanhemmat näkevät sen selatessaan.",
+        "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
+        "eventWeekdayDerived": "Tapahtuman viikonpäivä päätellään automaattisesti päivämäärästä.",
+        "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
+        "endDateOpt": "Jätä tyhjäksi jatkuvalle kerholle ilman loppupäivää.",
+        "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät \"X / Y tarvitaan\" -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
+        "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
+        "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
+        "holidaySkips": "Kalenterin päivinä kertoja ei pidetä.",
+        "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
+        "groupsHint": "Lisää ryhmät nyt jos tiedät jo, miten haluat tämän järjestää — tai jätä tyhjäksi ja lisää myöhemmin tuotesivulta, kun näet ilmoittautuneiden määrän.",
+        "groupsNotWired": "Ryhmien käyttöliittymä on paikoillaan, mutta sitä ei ole vielä yhdistetty taustajärjestelmään — ryhmävalintojasi ei tallenneta lähetyksessä. Tulossa pian.",
+        "billingHint": "Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa. Maksullisilla on aina.",
+        "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
+        "paidDetail": "Kertamaksu ilmoittautumisen yhteydessä.",
+        "paidByMunicipality": "Ei asiakaslaskutusta tämän järjestelmän sisällä. School of Gaming laskuttaa kuntaa suoraan.",
+        "pricingPerSession": "Veloitetaan jokaisesta lapsen osallistumiskerrasta. Kk-hinta näkyy tilaajille — johdetaan tästä luvusta viikoittain/kuukausittain.",
+        "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
+        "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
+        "seatCanUncap": "Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa (esim. webinaari, julkinen kävely).",
+        "visibleHint": "Poista valinta pitääksesi tuote piilossa, kun se on vielä tekeillä. Laita päälle, kun olet valmis vanhempien näkemään sen."
+      },
+      "errors": {
+        "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",
+        "translationsMustHaveEnOrFi": "Lisää käännös englanniksi tai suomeksi — jokaisella tuotteella on oltava vähintään toinen niistä.",
+        "translationIncomplete": "Täytä sekä nimi että kuvaus välilehdellä {locale} tai poista välilehti.",
+        "topicRequired": "Aihe vaaditaan",
+        "spokenLanguageRequired": "Kieli vaaditaan",
+        "minAgeInvalid": "Alaikärajan on oltava ei-negatiivinen kokonaisluku",
+        "maxAgeInvalid": "Yläikärajan on oltava vähintään alaikärajan suuruinen",
+        "municipalityRequired": "Kunta vaaditaan verkossa toteutettaville kuntakerhoille",
+        "siteRequired": "Toimipiste vaaditaan paikan päällä toteutettaville tuotteille",
+        "scheduleRequired": "Vähintään yksi aikatauluväli vaaditaan",
+        "padletInvalid": "Padlet-osoitteen on oltava kelvollinen URL",
+        "startDateRequired": "Alkupäivä vaaditaan",
+        "endDateRequired": "Loppupäivä vaaditaan",
+        "seatCountInvalid": "Paikkamäärän on oltava positiivinen kokonaisluku",
+        "priceSessionMissing": "Anna kertahinta valuutassa {currency}",
+        "priceSessionNegative": "Kertahinta valuutassa {currency} ei voi olla negatiivinen",
+        "priceMonthMissing": "Anna kuukausihinta valuutassa {currency}",
+        "priceMonthNegative": "Kuukausihinta valuutassa {currency} ei voi olla negatiivinen",
+        "thresholdInvalid": "Ilmoittautumisrajan on oltava positiivinen kokonaisluku",
+        "registrationOpensDateRequired": "Valitse päivämäärä, jolloin ilmoittautuminen avautuu",
+        "createFailed": "Tuotteen luonti epäonnistui"
+      },
+      "actions": {
+        "cancel": "Peruuta",
+        "createLabel": "Luo {label}",
+        "addTopic": "Lisää aihe",
+        "addNewTopic": "Lisää uusi aihe",
+        "addNewTag": "Lisää uusi tunniste",
+        "addTagShort": "Lisää"
+      },
+      "status": {
+        "draft": "Luonnos",
+        "pending": "Odottaa alkua",
+        "running": "Käynnissä",
+        "completed": "Päättynyt",
+        "cancelled": "Peruttu",
+        "expired": "Vanhentunut"
+      },
+      "schedule": {
+        "day": "Päivä",
+        "hour": "Tunti",
+        "minute": "Minuutti",
+        "startTime": "Alkuaika",
+        "durationMin": "Kesto (min)",
+        "minSuffix": "min",
+        "addDay": "Lisää toinen päivä",
+        "removeSlot": "Poista",
+        "sameAsEventDate": "Sama kuin tapahtumapäivä",
+        "oneSessionEvent": "Yksi kerta tapahtumapäivänä.",
+        "oneSessionPerWeek": "Yksi kerta viikossa."
+      },
+      "weekdays": {
+        "mon": "Ma",
+        "tue": "Ti",
+        "wed": "Ke",
+        "thu": "To",
+        "fri": "Pe",
+        "sat": "La",
+        "sun": "Su",
+        "monLong": "Maanantai",
+        "tueLong": "Tiistai",
+        "wedLong": "Keskiviikko",
+        "thuLong": "Torstai",
+        "friLong": "Perjantai",
+        "satLong": "Lauantai",
+        "sunLong": "Sunnuntai"
+      },
+      "imagePicker": {
+        "label": "Kuva",
+        "previewAlt": "Esikatselu",
+        "dropPrompt": "Pudota kuva tähän tai napsauta valitaksesi.",
+        "formats": "JPG, PNG, WebP, AVIF tai SVG.",
+        "chooseFile": "Valitse tiedosto",
+        "remove": "Poista",
+        "hint": "Näkyy tuotekortissa, kun vanhemmat selaavat."
+      },
+      "geduPicker": {
+        "searchPlaceholder": "Hae nimellä tai sähköpostilla…",
+        "speaks": "Puhuu",
+        "any": "Mikä tahansa",
+        "countSummary": "Näytetään {filtered} / {total} Geduja",
+        "noResults": "Hakuehdoilla ei löytynyt Geduja.",
+        "current": "Nykyinen",
+        "alreadyAssigned": "Jo nimetty"
+      },
+      "groups": {
+        "groupNumber": "Ryhmä {n}",
+        "groupNamePlaceholder": "Ryhmän nimi",
+        "removeGroup": "Poista ryhmä",
+        "assignedGedus": "Nimetyt Gedut",
+        "noGedusYet": "Ei vielä yhtään. Ryhmä ilman Geduja on ihan ok — voit nimetä myöhemmin.",
+        "assignGedu": "Nimeä Gedu",
+        "removeGedu": "Poista Gedu",
+        "noGroupsYet": "Ei vielä ryhmiä.",
+        "noGroupsDetail": "Vanhemmat voivat silti ilmoittautua. Heidän pelaajansa päätyy \"nimeämättä\"-laatikkoon, kunnes asetat hänet ryhmään.",
+        "defaultName": "Ryhmä {letter}",
+        "addGroup": "Lisää ryhmä",
+        "addGeduTo": "Lisää Gedu ryhmään {name}",
+        "addGeduGeneric": "Lisää Gedu ryhmään",
+        "addGeduDescription": "Tähän ryhmään nimetyt Gedut ohjaavat sen kerrat. Verkossa toteutettavissa tuotteissa he voivat tarvittaessa hypätä myös muiden ryhmien puhehuoneisiin saman tuotteen sisällä."
+      }
+    },
     "users": {
       "title": "Käyttäjät",
       "manageAccounts": "Hallitse käyttäjätilejä ja rooleja",
@@ -732,7 +1103,11 @@
   "sidebar": {
     "dashboard": "Hallintapaneeli",
     "users": "Käyttäjät",
-    "products": "Tuotteet",
+    "products": "Tuotteet (vanha)",
+    "consumerClubs": "Kuluttajakerhot",
+    "municipalityClubs": "Kuntakerhot",
+    "camps": "Leirit",
+    "events": "Tapahtumat",
     "groups": "Ryhmät",
     "locations": "Sijainnit",
     "uiComponents": "UI-komponentit",

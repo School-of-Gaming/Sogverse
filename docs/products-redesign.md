@@ -2,9 +2,9 @@
 
 Forward-looking architecture proposal that redesigns the `products` domain to cleanly support **four product types** (consumer clubs, municipality clubs, camps, events), **replaces the Sorg token system with real-currency pricing**, and **ships in parallel with the existing schema** under a `_v2` naming convention until a human-triggered cutover. Not yet implemented.
 
-Status: **design / pre-implementation**. Supersedes `school-clubs-design.md`. Rename to `products-architecture.md` at cutover (§9).
+Status: **Phase 1 in progress** — DB foundation and admin create UI shipped on `feat/products-v2-mock-port`; participation, payments, sessions, and parent-facing surfaces still pending. See §10 for the per-bullet status and `docs/products-v2-architecture.md` for the as-built component map. Supersedes `school-clubs-design.md`. Rename to `products-architecture.md` at cutover (§9).
 
-Related: `groups-architecture.md`, `customer-enrollment-architecture.md`, `locations-architecture.md`, `voice-chat-architecture.md`, `email-architecture.md`, `whatsapp-automated-flow.md`. `sorg-token-architecture.md` is retired by this redesign at cutover.
+Related: `products-v2-architecture.md` (as-built doc for what shipped on this branch), `groups-architecture.md`, `customer-enrollment-architecture.md`, `locations-architecture.md`, `voice-chat-architecture.md`, `email-architecture.md`, `whatsapp-automated-flow.md`. `sorg-token-architecture.md` is retired by this redesign at cutover.
 
 ---
 
@@ -58,7 +58,7 @@ This keeps staging usable throughout the redesign and lets us ship the new syste
 | **Waitlist** | Yes | Yes | Yes | Optional |
 | **Gated access** | No (v1) | No (v1 — simplification) | No | No |
 | **Refunds** | 24h session-window on credit deduction | None (municipality-paid) | Cutoff before start; admin after | Cutoff before start |
-| **Registration opens at** | Never (always open) | **Required** — "ticket drop" moment | Optional | Optional |
+| **Registration opens at** | Always set (immediate or scheduled) | Always set; muni clubs lean on it for the "ticket drop" moment | Always set (immediate or scheduled) | Always set (immediate or scheduled) |
 | **Holiday calendars** | Applies | Applies | **N/A** (camps run *during* school breaks) | N/A (single-date) |
 | **Start trigger modes offered** (§4.11) | All three | Fixed date only | Fixed date; fixed date + minimum | All three |
 
@@ -253,21 +253,28 @@ All participation mutations go through `SECURITY DEFINER` RPCs that begin with `
 
 ### 4.8 Locations
 
-Keep the existing `locations` hierarchy untouched. Put site-specific fields in an extension table (`site_details_v2`), not on `locations` itself — country / region / municipality / district rows have no address, no parking, no wifi info, and should not carry nullable columns that never apply to them.
+Keep the existing `locations` hierarchy untouched. Put site-specific fields in **two** extension tables — one per visibility tier — not on `locations` itself. Country / region / municipality / district rows have no address, no parking, no wifi info, no gate codes, and should not carry nullable columns that never apply to them. Splitting into two tables rather than column-level permissions keeps RLS clean (Postgres RLS is row-level; gating columns by role requires awkward views or grants).
 
 ```sql
-site_details_v2
+site_details_v2        -- member-visible. Parent-facing product detail page.
   location_id    uuid pk, fk → locations.id ON DELETE CASCADE
   address        text
-  access_notes   text              -- gate codes, back-entrance directions, parking
+  notes          text              -- parking, accessibility, wifi, opening hours
   -- future: parking_info, accessibility_features, opening_hours, wifi_*, allergen_info, ...
+  created_at, updated_at
+  -- enforced: row may exist only for locations where type = 'site'
+
+site_staff_details_v2  -- admin + Gedu only. Never leaves staff surfaces.
+  location_id    uuid pk, fk → locations.id ON DELETE CASCADE
+  notes          text              -- gate codes, back-entrance directions, keys, ops notes
   created_at, updated_at
   -- enforced: row may exist only for locations where type = 'site'
 ```
 
 **Reads:**
 - Hierarchy queries read `locations` alone — no join.
-- Product detail / directions join once: `locations JOIN site_details_v2 USING (location_id)`.
+- Parent-facing product detail joins `locations JOIN site_details_v2 USING (location_id)`.
+- Admin/Gedu staff screens join both: `locations JOIN site_details_v2 USING (location_id) LEFT JOIN site_staff_details_v2 USING (location_id)`.
 
 ### 4.9 Location rules — site for in-person, jurisdiction only for online municipality clubs
 
@@ -314,22 +321,29 @@ A voice room (Daily.co) exists iff `products_v2.is_remote = true`. In-person pro
 ```
 products_v2.status ∈ {
   draft,      -- admin setting up; invisible to parents.
-  pending,    -- published, accepting signups, not yet running.
-  running,    -- started; sessions are happening.
-  completed,  -- past end_date; archive state.
+  pending,    -- published, accepting signups, conditions not (yet) met.
+  running,    -- admin under-threshold override (see below).
+  completed,  -- end_date passed for a stored 'running'.
   cancelled   -- admin killed it. Refunds fired as appropriate.
 }
 ```
 
 `is_visible` stays orthogonal to status.
 
-**Signup threshold — a single mechanism for all four product types.** `products_v2.signup_threshold` (nullable int) counts active participations only. When set, the product stays `pending` until admin manually starts it — it does not auto-start. Admins get a notification ("Tuesday Minecraft has 8 active signups — ready to start") and can:
+**Effective status is derived, not cron-driven.** The `status` column stores admin-driven facts only — `draft`, `pending`, `cancelled`, and the override `running`. `pending → running` and `running → completed` are computed at read time from the stored facts plus `now()`:
 
-- **Start now** once the threshold is met, or
-- **Start under threshold** with a confirm dialog, or
-- **Wait longer**, indefinitely.
+- `pending` upgrades to `running` when **start_date has been reached** AND **any signup_threshold is met** (active participations ≥ threshold; counts use `participations_v2.status='active'`). With neither condition set, the product stays `pending` until admin manually starts it.
+- A stored or derived `running` downgrades to `completed` once `end_date` has passed.
+
+This avoids a fragile pending-tick cron and a stale-status class of bug. The DB stores facts; the application derives state. The TypeScript helper (`src/components/admin/products-v2/effective-status.ts`) and a sibling SQL function `effective_status_v2(product_id)` share the same rule — the SQL form is what RLS / list queries call when they need to filter by effective state.
+
+**Signup threshold — a single mechanism for all four product types.** `products_v2.signup_threshold` (nullable int) counts active participations only. When set, the threshold gates the derived transition above. Admins get a notification ("Tuesday Minecraft has 8 active signups — ready to start") for visibility — the transition is automatic once the count reaches the threshold, no admin click required.
+
+The admin's only manual lever on lifecycle is the **under-threshold override**: `start_product_v2(product_id, start_date)` writes `status='running'` directly, bypassing the threshold rule. Used when the admin wants to run a club despite missing signups (or wants to start before the planned `start_date`). UI surfaces this as a "Start now under threshold" button with a confirm dialog. The persisted `status='running'` is what tells the derived rule to skip the threshold check on subsequent reads.
 
 Separately, admins can **cancel** a pending product. Cancellation refunds are handled per §6.4.
+
+**Active participation counts.** The derived rule needs `active_participation_count` per product. When `participations_v2` ships, materialize the count on `products_v2` (one int column, default 0, bumped by `create_participation_v2` / decremented by `cancel_participation_v2`) so list queries don't need a join. Until then the helper accepts a count parameter; admin views pass `0` (so threshold-bearing products read as pending), and that's accurate because no parent UI exists to create participations yet.
 
 **Billing behavior during `pending`:**
 
@@ -389,7 +403,7 @@ products_v2
   seat_count            int               -- nullable (uncapped — only allowed for free)
   waitlist_enabled      bool              -- default true when seat_count is set
 
-  registration_opens_at timestamptz       -- nullable; required for municipality_club
+  registration_opens_at timestamptz       -- NOT NULL; "Right away" resolves to creation time
   refund_policy_days    int               -- nullable; only for one-shot paid products (camp/event).
                                             -- Bundle/subscription sessions use the 24h window.
 
@@ -473,6 +487,40 @@ product_subscription_prices_v2
   -- existing subs retain their original rate until they cancel and re-subscribe.
 ```
 
+### 5.1b Translations — products, topics, tags
+
+User-visible text on `products_v2`, `topics_v2`, `tags_v2` lives in per-locale child tables, not on the parent rows. The parent carries only structural data (id, slug, kind, FKs). Admins decide which locales to provide; not every parent has every locale.
+
+```sql
+product_translations_v2
+  product_id   uuid → products_v2.id ON DELETE CASCADE
+  locale       text NOT NULL                 -- matches SUPPORTED_LOCALES in src/lib/constants/locales.ts
+  name         text NOT NULL
+  description  text NOT NULL
+  primary key (product_id, locale)
+
+topic_translations_v2 (same shape; description nullable)
+tag_translations_v2   (same shape; description nullable)
+```
+
+**Resolution rule.** The reader picks one row per parent for display, walking the fallback chain in `src/lib/i18n/resolve-translation.ts`:
+
+```
+user's UI locale → en → fi → first available
+```
+
+Sending all available translations to the client is intentional — payloads stay small (2 short fields per locale, max 4 locales) and a future "view this product in another language" UI is trivial. The browser just calls `resolveTranslation(parent.product_translations_v2, useLocale())`.
+
+**Must-have-en-or-fi rule for products.** Every product must keep at least one of (en, fi) translations at all times. Enforced two ways:
+- `create_product_v2()` rejects an `p_translations` payload that has no en or fi entry.
+- A BEFORE-DELETE trigger on `product_translations_v2` raises if the delete would leave the product without any en/fi row. (CASCADE on parent delete is allowed via a "parent gone?" check.)
+
+Topics and tags are not subject to the rule — they're shared reference data that may exist in only one locale at first.
+
+**Inline create stays single-locale.** When the admin clicks "+ Create new topic" / "+ Create new tag" in the product form, the new row is written with one translation — the admin's current UI locale. Other-locale translations for shared reference data get added later via a "Manage topic & tag translations" admin UI (not yet built — tracked as a follow-up).
+
+The product form itself is multi-locale: a language tabs strip in the Identity card lets the admin add/remove locales and edit per-locale name + description. Initial tab is the admin's UI locale.
+
 ### 5.2 Holiday calendars
 
 ```sql
@@ -494,6 +542,10 @@ product_holiday_calendars_v2
   calendar_id           uuid → holiday_calendars_v2.id ON DELETE CASCADE
   primary key (product_id, calendar_id)
 ```
+
+**v1: admins enter holidays manually.** The many-to-many shape lets a product subscribe to multiple calendars (e.g. "Finnish national holidays" + "Finnish school term breaks"), so concerns can be split without schema changes.
+
+**Future enhancement — auto-sync national holidays.** A per-calendar admin "Sync from Nager.Date" button could populate `calendar_holidays_v2` from `https://date.nager.at/api/v3/PublicHolidays/{year}/{countryCode}` (free, no key, covers FI / GB / US and most countries). Filter the response to entries whose `types` include `Public` to drop observances like Mother's Day that don't close schools. Requires adding `country_code` to `holiday_calendars_v2`. Keep the sync additive — show a diff and let the admin confirm removals so hand-curated quirks aren't wiped. Does not solve school-term breaks (syysloma, hiihtoloma, half-terms) — those remain admin-maintained, or sourced from OpenHolidays API if coverage proves reliable.
 
 ### 5.3 Session overrides and substitutions
 
@@ -707,7 +759,8 @@ Baseline SELECT policies per role:
 | `schedule_slots_v2`, `session_overrides_v2` | — | follows products | follows products | follows products |
 | `product_prices_v2` | all (public catalog) | all | all | all |
 | `product_subscription_prices_v2` | ✗ | own customer's path only | ✗ | ✗ |
-| `site_details_v2` | public *(access_notes gating still open — §11)* | — | — | — |
+| `site_details_v2` | public (member-visible info — address, parking, wifi) | — | — | — |
+| `site_staff_details_v2` | ✗ | ✗ | ✗ | Gedus assigned to a product at this site *(fine-grained gating lands with `gedu_group_assignments_v2`; placeholder is any Gedu)* |
 | `topics_v2`, `tags_v2`, `product_tags_v2` | all | — | — | — |
 | `holiday_calendars_v2`, `calendar_holidays_v2`, `product_holiday_calendars_v2` | all | — | — | — |
 | `product_groups_v2` | ✗ | ✗ (parents never see groups) | own group only | any group on products Gedu is on |
@@ -861,7 +914,7 @@ A product with 3 groups × 25 seats shows as one product with 75 seats. Parents 
 
 ### 7.5 Registration timing and ticket-drop UX
 
-For products with `registration_opens_at` set (required for muni clubs, optional for camps/events), the detail page has three states: **pre-open** (disabled form with live countdown), **open** (form enabled), **closed/waitlist**.
+Every product has `registration_opens_at` set — admins pick "Right away" (resolves to creation time) or a specific Helsinki-local moment. The detail page has three states: **pre-open** (disabled form with live countdown), **open** (form enabled), **closed/waitlist**. A product opened "Right away" is created with an already-past timestamp, so it skips straight to **open** with no countdown — same code path, no special-casing.
 
 **Layout stability across state transitions** — elements must not shift position when the countdown collapses to "Open now."
 
@@ -951,14 +1004,67 @@ If cutover happens after production launches with real customers on Sorg tokens,
 
 ### Phase 1 — MVP (consumer + municipality) in parallel
 
-Prove the unified shape against the two product lines closest to real users.
+Prove the unified shape against the two product lines closest to real users. Status legend below: ✓ shipped, ◐ partially shipped, ○ not started.
 
-- Schema: all tables from §5 with `_v2` suffixes.
-- RPCs: participation lifecycle, session operations, hourly credit cron, subscription management, lifecycle transitions — all `_v2`.
-- Admin UI: new create/edit product form at `/admin/products-v2/*`, per-currency pricing inputs, Groups panel, calendar view, holiday-calendar management.
-- Parent UI: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator.
-- Stripe: `_v2` Checkout endpoints, lazy-created Prices for subs, webhook handlers that write `payments_v2` / `refunds_v2`, family-coupon application.
-- Existing Sorg system untouched.
+**Schema (§5)** — `_v2` tables.
+- ✓ `products_v2` + per-locale `product_translations_v2` (en/fi-keep rule enforced via `BEFORE DELETE` trigger and RPC payload validation).
+- ✓ `topics_v2`, `tags_v2`, `product_tags_v2` + per-locale `topic_translations_v2`, `tag_translations_v2`.
+- ✓ `schedule_slots_v2`.
+- ✓ `holiday_calendars_v2`, `calendar_holidays_v2`, `product_holiday_calendars_v2`.
+- ✓ `product_prices_v2` (per-currency base prices).
+- ✓ `site_details_v2` (member-visible) + `site_staff_details_v2` (admin/Gedu only) — the §4.8 split.
+- ✓ `registration_opens_at` is NOT NULL (§7.5); "Right away" resolves to creation time.
+- ✓ `products_v2` lifecycle status enum stores admin facts only; effective `running` / `completed` derived at read time.
+- ○ `product_groups_v2` (form captures groups in local state but does not persist yet; UI surfaces a "not wired" warning).
+- ○ `gedu_group_assignments_v2`.
+- ○ `participations_v2`.
+- ○ `payments_v2`, `refunds_v2`.
+- ○ `family_subscriptions_v2`, `family_subscription_items_v2`, `product_subscription_prices_v2`.
+- ○ `session_overrides_v2`, `session_substitutions_v2`, `session_attendance_v2`, `session_notes_v2`, `session_cancellations_v2`, `credit_deductions_v2`.
+
+**RPCs (§6)** — `_v2`.
+- ✓ `create_product_v2` — atomic insert across products + translations + schedule slots + tags + prices + holiday calendars; rejects payloads missing en/fi.
+- ◐ Effective-status derivation — TS helper (`src/components/admin/products-v2/effective-status.ts`) ships; SQL twin `effective_status_v2(product_id)` not yet built (deferred until DB-side filters need it).
+- ○ Participation lifecycle (`create_participation_v2`, `cancel_participation_v2`, `admin_remove_participation_v2`, `promote_from_waitlist_v2`).
+- ○ Session operations (`cancel_session_v2`, `reschedule_session_v2`, `request_substitute_v2`, `assign_substitute_v2`, `record_attendance_v2`).
+- ○ Hourly credit cron (`process_session_credits_v2`).
+- ○ Subscription management (`subscribe_to_product_v2`, `unsubscribe_from_product_v2`, `switch_subscription_frequency_v2`).
+- ○ Lifecycle transitions (`start_product_v2`, `cancel_product_v2`, `finalize_completed_products_v2`).
+- ○ Group mutations (`commit_group_changes_v2`).
+
+**Admin UI** — at `/admin/{consumer-clubs,municipality-clubs,camps,events}{,/new}`.
+- ✓ List page per product type (`ProductV2ListPage`, type-discriminated).
+- ✓ Create form per product type sharing one shell (`product-v2-form.tsx`) split into per-section components — identity, audience, when, where, billing, registration, groups, visibility (`src/components/admin/products-v2/sections/*`).
+- ✓ Per-currency pricing block with live FX auto-fill (`pricing-block.tsx` + `pricing-block-fx.ts`, FX rates proxied via `/api/admin/fx-rates` cached 6h) and rendered price previews.
+- ✓ Country-aware location picker with inline create (`location-picker-v2.tsx` + `/api/admin/locations/{create,[id]}`).
+- ✓ Inline-create for topics and tags (single-locale, in admin's current UI locale) via `/api/admin/{topics-v2,tags-v2}/create`.
+- ✓ Site notes editor — separate member-visible vs staff-only fields against `site_details_v2` / `site_staff_details_v2` (`/api/admin/site-notes-v2`).
+- ✓ Holiday-calendar checkbox selector on the form (read-only against existing rows; no admin CRUD UI for managing calendars yet).
+- ✓ Type-specific helper card on list pages (`product-type-info-card.tsx`).
+- ✓ Image picker + upload (`image-picker-v2.tsx`).
+- ◐ Groups panel — captured in form state but not persisted (see schema bullet); no per-product management page yet.
+- ○ Edit-product form (only create exists today).
+- ○ Calendar view with computed sessions, overrides, substitutions.
+- ○ Standalone holiday-calendar management screen.
+- ○ Lifecycle action buttons ("Start product" / "Cancel product"), threshold-hit notifications, payment reporting dashboard.
+- ○ Manage topic & tag translations admin UI (Phase 3 — see §10 Phase 3).
+
+**Form internals.**
+- ✓ State + reducers extracted to `product-v2-form-state.ts`; build pipeline (form state → RPC payload) extracted to `product-v2-build.ts`; per-type field availability + scheduling shape + pricing shape configured in `product-v2-type-config.ts`.
+- ✓ Multi-locale tabs strip in the Identity card (matching SUPPORTED_LOCALES); initial tab is the admin's UI locale.
+- ✓ Translation resolver (`src/lib/i18n/resolve-translation.ts`) with `user locale → en → fi → first available` fallback.
+- ✓ Cents helper + currency-aware formatting in `src/lib/constants/{currency,pricing}.ts` and `src/lib/utils.ts`.
+
+**Tests.**
+- ✓ Unit: `products-v2-build`, `effective-status-v2`, `pricing-block-fx`, `pricing`, `resolve-translation`.
+- ✓ Integration: `tests/integration/api/products-v2-create.test.ts` (route → RPC → DB).
+- ✓ DB access-control: `products_v2` family covered by `tests/db/access-control.test.ts`.
+
+**Parent UI**: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator. ○ Not started.
+
+**Stripe**: `_v2` Checkout endpoints, lazy-created Prices for subs, webhook handlers that write `payments_v2` / `refunds_v2`, family-coupon application. ○ Not started.
+
+**Existing Sorg system**: untouched.
 
 ### Phase 2 — camps and events
 
@@ -974,6 +1080,7 @@ Prove the unified shape against the two product lines closest to real users.
 - Term / season templates.
 - Sibling-discount tier ladder (expand the flat `FAMILY_DISCOUNT_PERCENT` into a multi-tier lookup) if business wants it.
 - First-session-free / promo codes.
+- **Manage topic & tag translations admin UI.** Inline-create from the product form writes a single translation in the admin's current UI locale (see §5.1b). To complete the multi-locale story for shared reference data, add an admin page that lists all topics + tags with their existing translations and lets an admin add/edit translations for additional locales. Until this exists, parents on a locale that lacks a topic/tag translation see the fallback (en → fi → first available).
 
 ### Phase 4 — on-platform municipality billing
 
@@ -1006,7 +1113,7 @@ Flagged inline as `OPEN` in the sections they affect.
 - **Topic taxonomy depth.** Sub-topics (Minecraft — Survival vs Redstone) — add `topics_v2.parent_id` if needed. Not yet.
 - **Calendar view as a first-class parent feature.** "Everything my kids are doing this week" across products is obvious v2 UX. Design the per-gamer session query to support it.
 - **Gedu schedule-conflict prevention.** §4.1 enforces one-group-per-product via unique on `gedu_group_assignments_v2`. Cross-product time conflicts are human-enforced in v1.
-- **`site_details_v2.access_notes` visibility.** Publicly SELECT-able by default. Pending decision on whether to gate to signed-up participants.
+- ~~**`site_details_v2.access_notes` visibility.**~~ *Resolved:* split into two tables — `site_details_v2` (member-visible: address, parking, wifi) is publicly SELECT-able; `site_staff_details_v2` (gate codes, back-entrance directions, ops notes) is admin + Gedu only. See §4.8.
 
 ---
 
