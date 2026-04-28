@@ -58,7 +58,7 @@ This keeps staging usable throughout the redesign and lets us ship the new syste
 | **Waitlist** | Yes | Yes | Yes | Optional |
 | **Gated access** | No (v1) | No (v1 — simplification) | No | No |
 | **Refunds** | 24h session-window on credit deduction | None (municipality-paid) | Cutoff before start; admin after | Cutoff before start |
-| **Registration opens at** | Never (always open) | **Required** — "ticket drop" moment | Optional | Optional |
+| **Registration opens at** | Always set (immediate or scheduled) | Always set; muni clubs lean on it for the "ticket drop" moment | Always set (immediate or scheduled) | Always set (immediate or scheduled) |
 | **Holiday calendars** | Applies | Applies | **N/A** (camps run *during* school breaks) | N/A (single-date) |
 | **Start trigger modes offered** (§4.11) | All three | Fixed date only | Fixed date; fixed date + minimum | All three |
 
@@ -403,7 +403,7 @@ products_v2
   seat_count            int               -- nullable (uncapped — only allowed for free)
   waitlist_enabled      bool              -- default true when seat_count is set
 
-  registration_opens_at timestamptz       -- nullable; required for municipality_club
+  registration_opens_at timestamptz       -- NOT NULL; "Right away" resolves to creation time
   refund_policy_days    int               -- nullable; only for one-shot paid products (camp/event).
                                             -- Bundle/subscription sessions use the 24h window.
 
@@ -914,7 +914,7 @@ A product with 3 groups × 25 seats shows as one product with 75 seats. Parents 
 
 ### 7.5 Registration timing and ticket-drop UX
 
-For products with `registration_opens_at` set (required for muni clubs, optional for camps/events), the detail page has three states: **pre-open** (disabled form with live countdown), **open** (form enabled), **closed/waitlist**.
+Every product has `registration_opens_at` set — admins pick "Right away" (resolves to creation time) or a specific Helsinki-local moment. The detail page has three states: **pre-open** (disabled form with live countdown), **open** (form enabled), **closed/waitlist**. A product opened "Right away" is created with an already-past timestamp, so it skips straight to **open** with no countdown — same code path, no special-casing.
 
 **Layout stability across state transitions** — elements must not shift position when the countdown collapses to "Open now."
 

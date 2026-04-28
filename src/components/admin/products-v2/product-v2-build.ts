@@ -8,6 +8,7 @@
 // string so this module stays React/next-intl-free. The caller maps the key
 // through t() (see product-v2-form.tsx).
 
+import { fromZonedTime } from "date-fns-tz";
 import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import {
   LOCALE_CONFIG,
@@ -191,6 +192,28 @@ export function validate(
 }
 
 /**
+ * "Right away" (mode=immediately) resolves to *now*, "Specific time" to the
+ * picked Helsinki-local moment. Always returns a real ISO string — every
+ * product type has a single ticket-drop concept (`registration_opens_at`
+ * is NOT NULL in the schema). `fromZonedTime` interprets the local string
+ * as Helsinki time regardless of the admin's browser timezone, so a Tokyo
+ * admin and a Helsinki admin produce the same UTC for the same picker
+ * input.
+ */
+function resolveRegistrationOpensAt(state: FormState): string {
+  if (
+    state.registrationOpensMode === "scheduled" &&
+    state.registrationOpensDate
+  ) {
+    return fromZonedTime(
+      `${state.registrationOpensDate}T${state.registrationOpensHour}:${state.registrationOpensMinute}:00`,
+      FIXED_TIMEZONE,
+    ).toISOString();
+  }
+  return new Date().toISOString();
+}
+
+/**
  * Build the request payload for /api/admin/products-v2/create from the
  * form state. Assumes `validate(state, config)` has already returned null
  * — the function trusts numeric fields parse, locales are filled, etc.
@@ -265,13 +288,7 @@ export function buildCreateInput(
     timezone: FIXED_TIMEZONE,
     seat_count: seat,
     waitlist_enabled: state.waitlistEnabled,
-    registration_opens_at:
-      state.registrationOpensMode === "scheduled" &&
-      state.registrationOpensDate
-        ? new Date(
-            `${state.registrationOpensDate}T${state.registrationOpensHour}:${state.registrationOpensMinute}`,
-          ).toISOString()
-        : null,
+    registration_opens_at: resolveRegistrationOpensAt(state),
     is_visible: state.isVisible,
     schedule_slots: finalSlots,
     tag_ids: Array.from(state.tagIds),

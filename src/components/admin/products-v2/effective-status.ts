@@ -103,10 +103,7 @@ export function pendingHintKey(
 ): PendingHint | null {
   const nowMs = now.getTime();
 
-  if (
-    p.registration_opens_at &&
-    new Date(p.registration_opens_at).getTime() > nowMs
-  ) {
+  if (new Date(p.registration_opens_at).getTime() > nowMs) {
     return {
       key: "registrationOpens",
       values: { date: p.registration_opens_at },

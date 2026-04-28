@@ -121,7 +121,9 @@ function pending(over: Partial<PendingHintInputs>): PendingHintInputs {
   return {
     start_date: null,
     signup_threshold: null,
-    registration_opens_at: null,
+    // registration_opens_at is NOT NULL in the schema; a past timestamp
+    // means "open since" and lets the other branches show through.
+    registration_opens_at: "1970-01-01T00:00:00Z",
     ...over,
   };
 }
