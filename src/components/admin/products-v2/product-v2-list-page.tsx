@@ -159,9 +159,9 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
                       {p.start_date && (
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {p.start_date}
+                          {formatDate(p.start_date, uiLocale)}
                           {p.end_date && p.end_date !== p.start_date
-                            ? ` → ${p.end_date}`
+                            ? ` → ${formatDate(p.end_date, uiLocale)}`
                             : ""}
                         </span>
                       )}

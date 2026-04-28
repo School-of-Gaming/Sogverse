@@ -15,8 +15,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { useUsersByRole } from "@/services/users";
-import { useSpokenLanguages } from "@/services/users";
+import { useUsersByRole, useSpokenLanguages } from "@/services/users";
 import { cn } from "@/lib/utils";
 import type { Profile } from "@/types";
 

@@ -6,8 +6,10 @@ import { requireRole } from "@/lib/auth";
 // reference rates — good enough for the admin pricing suggestion in
 // product-v2-form.tsx. Admin-only because this endpoint is a ~cheap~
 // leverage point for frankfurter traffic if exposed publicly.
-
-export const revalidate = 21600; // 6 hours — rates shift slowly
+//
+// The route itself is dynamic (reads cookies for the admin auth check),
+// so the cache that actually does work is the inner fetch's `next.revalidate`
+// below — Next.js's data cache, keyed by URL.
 
 interface FrankfurterResponse {
   base: string;
