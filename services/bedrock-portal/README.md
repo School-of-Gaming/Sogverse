@@ -124,23 +124,7 @@ journalctl --user -u bedrock-portal --since "1 hour ago"
 
 ### Updating the code on the server
 
-The service runs compiled JS from `dist/`, so source edits have no effect until rebuilt. After pulling:
-
-```bash
-cd ~/Sogverse
-git pull
-npm install                                              # only if deps changed
-npm run build --workspace=sogverse-bedrock-portal        # tsc → dist/
-systemctl --user restart bedrock-portal
-journalctl --user -u bedrock-portal -n 30                # confirm "session live"
-```
-
-Expected healthy log after restart:
-
-```
-[portal] session live — redirecting joins to en.mc.sog.gg:19132
-[portal] started as "Sogverse" | joinability=FriendsOnly
-```
+See [DEPLOY.md](./DEPLOY.md) for the full deploy procedure — both the remote one-shot via `gcloud` (the preferred path, and what Claude Code should use) and the interactive variant for when you're already SSH'd in.
 
 ### Changing configuration
 
