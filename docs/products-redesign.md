@@ -321,22 +321,29 @@ A voice room (Daily.co) exists iff `products_v2.is_remote = true`. In-person pro
 ```
 products_v2.status ∈ {
   draft,      -- admin setting up; invisible to parents.
-  pending,    -- published, accepting signups, not yet running.
-  running,    -- started; sessions are happening.
-  completed,  -- past end_date; archive state.
+  pending,    -- published, accepting signups, conditions not (yet) met.
+  running,    -- admin under-threshold override (see below).
+  completed,  -- end_date passed for a stored 'running'.
   cancelled   -- admin killed it. Refunds fired as appropriate.
 }
 ```
 
 `is_visible` stays orthogonal to status.
 
-**Signup threshold — a single mechanism for all four product types.** `products_v2.signup_threshold` (nullable int) counts active participations only. When set, the product stays `pending` until admin manually starts it — it does not auto-start. Admins get a notification ("Tuesday Minecraft has 8 active signups — ready to start") and can:
+**Effective status is derived, not cron-driven.** The `status` column stores admin-driven facts only — `draft`, `pending`, `cancelled`, and the override `running`. `pending → running` and `running → completed` are computed at read time from the stored facts plus `now()`:
 
-- **Start now** once the threshold is met, or
-- **Start under threshold** with a confirm dialog, or
-- **Wait longer**, indefinitely.
+- `pending` upgrades to `running` when **start_date has been reached** AND **any signup_threshold is met** (active participations ≥ threshold; counts use `participations_v2.status='active'`). With neither condition set, the product stays `pending` until admin manually starts it.
+- A stored or derived `running` downgrades to `completed` once `end_date` has passed.
+
+This avoids a fragile pending-tick cron and a stale-status class of bug. The DB stores facts; the application derives state. The TypeScript helper (`src/components/admin/products-v2/effective-status.ts`) and a sibling SQL function `effective_status_v2(product_id)` share the same rule — the SQL form is what RLS / list queries call when they need to filter by effective state.
+
+**Signup threshold — a single mechanism for all four product types.** `products_v2.signup_threshold` (nullable int) counts active participations only. When set, the threshold gates the derived transition above. Admins get a notification ("Tuesday Minecraft has 8 active signups — ready to start") for visibility — the transition is automatic once the count reaches the threshold, no admin click required.
+
+The admin's only manual lever on lifecycle is the **under-threshold override**: `start_product_v2(product_id, start_date)` writes `status='running'` directly, bypassing the threshold rule. Used when the admin wants to run a club despite missing signups (or wants to start before the planned `start_date`). UI surfaces this as a "Start now under threshold" button with a confirm dialog. The persisted `status='running'` is what tells the derived rule to skip the threshold check on subsequent reads.
 
 Separately, admins can **cancel** a pending product. Cancellation refunds are handled per §6.4.
+
+**Active participation counts.** The derived rule needs `active_participation_count` per product. When `participations_v2` ships, materialize the count on `products_v2` (one int column, default 0, bumped by `create_participation_v2` / decremented by `cancel_participation_v2`) so list queries don't need a join. Until then the helper accepts a count parameter; admin views pass `0` (so threshold-bearing products read as pending), and that's accurate because no parent UI exists to create participations yet.
 
 **Billing behavior during `pending`:**
 

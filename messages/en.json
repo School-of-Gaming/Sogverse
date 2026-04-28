@@ -251,7 +251,14 @@
         "ageRange": "{min}–{max} yrs",
         "seats": "{count} seats",
         "hidden": "hidden",
-        "untitled": "(untitled)"
+        "untitled": "(untitled)",
+        "pendingHint": {
+          "registrationOpens": "Registration opens {date}",
+          "startDate": "Starts {date}",
+          "threshold": "Starts when {count, plural, one {# parent signs} other {# parents sign}} up",
+          "dateAndThreshold": "Starts {date} if {count, plural, one {# parent signs} other {# parents sign}} up",
+          "pastDateThreshold": "Past start date — awaiting {count, plural, one {# sign-up} other {# sign-ups}}"
+        }
       },
       "translations": {
         "label": "Languages",
@@ -469,8 +476,10 @@
         "startDateRequired": "Start date is required",
         "endDateRequired": "End date is required",
         "seatCountInvalid": "Seat count must be a positive integer",
-        "priceSessionInvalid": "Price per session must be a non-negative number ({currency})",
-        "priceMonthInvalid": "Price per month must be a non-negative number ({currency})",
+        "priceSessionMissing": "Enter a price per session in {currency}",
+        "priceSessionNegative": "Price per session in {currency} can't be negative",
+        "priceMonthMissing": "Enter a monthly price in {currency}",
+        "priceMonthNegative": "Monthly price in {currency} can't be negative",
         "thresholdInvalid": "Signups needed to start must be a positive integer",
         "registrationOpensDateRequired": "Pick a date when registration should open",
         "createFailed": "Failed to create product"
@@ -484,11 +493,11 @@
         "addTagShort": "Add"
       },
       "status": {
-        "draft": "draft",
-        "pending": "pending",
-        "running": "running",
-        "completed": "completed",
-        "cancelled": "cancelled"
+        "draft": "Draft",
+        "pending": "Awaiting start",
+        "running": "Running",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
       },
       "schedule": {
         "day": "Day",

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { SUPPORTED_CURRENCIES } from "@/lib/constants";
+import { SUPPORTED_CURRENCIES, type SupportedCurrency } from "@/lib/constants";
 import { LOCALE_CONFIG, resolveLocale } from "@/lib/constants/locales";
 import {
   useCreateProductV2,
@@ -56,15 +56,24 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
 
   // ===== Validation =====
 
-  function validate(): string | null {
+  // Validate returns a structured failure so submit can not only show the
+  // message but also focus the offending input — e.g. switch the pricing
+  // block to the currency tab whose price is missing.
+  type ValidationFailure = {
+    message: string;
+    focusCurrency?: SupportedCurrency;
+  };
+
+  function validate(): ValidationFailure | null {
     const filledLocales = (
       Object.entries(state.translations) as [SupportedLocale, TranslationDraft][]
     ).filter(([, v]) => v.name.trim() && v.description.trim())
       .map(([k]) => k);
 
-    if (filledLocales.length === 0) return t("errors.translationRequired");
+    if (filledLocales.length === 0)
+      return { message: t("errors.translationRequired") };
     if (!filledLocales.includes("en") && !filledLocales.includes("fi"))
-      return t("errors.translationsMustHaveEnOrFi");
+      return { message: t("errors.translationsMustHaveEnOrFi") };
 
     // Any locale tab that's been added must be filled in completely — partial
     // entries are almost always user error (added a tab, forgot to type).
@@ -73,54 +82,61 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       TranslationDraft,
     ][]) {
       if (!v.name.trim() || !v.description.trim()) {
-        return t("errors.translationIncomplete", {
-          locale: LOCALE_CONFIG[locale].label,
-        });
+        return {
+          message: t("errors.translationIncomplete", {
+            locale: LOCALE_CONFIG[locale].label,
+          }),
+        };
       }
     }
 
-    if (!state.topicId) return t("errors.topicRequired");
-    if (!state.spokenLanguageCode) return t("errors.spokenLanguageRequired");
+    if (!state.topicId) return { message: t("errors.topicRequired") };
+    if (!state.spokenLanguageCode)
+      return { message: t("errors.spokenLanguageRequired") };
 
     const minAge = Number(state.minAge);
     const maxAge = Number(state.maxAge);
     if (!Number.isInteger(minAge) || minAge < 0)
-      return t("errors.minAgeInvalid");
+      return { message: t("errors.minAgeInvalid") };
     if (!Number.isInteger(maxAge) || maxAge < minAge)
-      return t("errors.maxAgeInvalid");
+      return { message: t("errors.maxAgeInvalid") };
 
     const showLocationPicker =
       locationPickerMode(config, state.isRemote) !== null;
     if (showLocationPicker && !state.locationId)
-      return state.isRemote
-        ? t("errors.municipalityRequired")
-        : t("errors.siteRequired");
+      return {
+        message: state.isRemote
+          ? t("errors.municipalityRequired")
+          : t("errors.siteRequired"),
+      };
 
-    if (state.scheduleSlots.length === 0) return t("errors.scheduleRequired");
+    if (state.scheduleSlots.length === 0)
+      return { message: t("errors.scheduleRequired") };
 
     if (state.padletUrl.trim()) {
       try {
         new URL(state.padletUrl);
       } catch {
-        return t("errors.padletInvalid");
+        return { message: t("errors.padletInvalid") };
       }
     }
 
     const usesDate = startModeUsesDate(state.startMode);
     const usesThreshold = startModeUsesThreshold(state.startMode);
     if (usesDate) {
-      if (!state.startDate) return t("errors.startDateRequired");
+      if (!state.startDate)
+        return { message: t("errors.startDateRequired") };
       if (
         config.scheduleShape !== "single_date" &&
         config.scheduleShape !== "weekly_ongoing" &&
         !state.endDate
       )
-        return t("errors.endDateRequired");
+        return { message: t("errors.endDateRequired") };
     }
     if (usesThreshold) {
       const thr = Number(state.signupThreshold);
       if (!Number.isInteger(thr) || thr < 1)
-        return t("errors.thresholdInvalid");
+        return { message: t("errors.thresholdInvalid") };
     }
 
     const billingMode = effectiveBillingMode(config, state.paidMode);
@@ -132,7 +148,7 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
     if (!seatInputDisabled) {
       const seat = Number(state.seatCount);
       if (!Number.isInteger(seat) || seat < 1)
-        return t("errors.seatCountInvalid");
+        return { message: t("errors.seatCountInvalid") };
     }
 
     const showPricing =
@@ -141,17 +157,32 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
     if (showPricing) {
       for (const currency of SUPPORTED_CURRENCIES) {
         const row = state.prices[currency];
-        const session = Number(row.session);
-        if (row.session === "" || !Number.isFinite(session) || session < 0)
-          return t("errors.priceSessionInvalid", {
-            currency: currency.toUpperCase(),
-          });
+        const currencyLabel = currency.toUpperCase();
+        const sessionTrimmed = row.session.trim();
+        if (sessionTrimmed === "")
+          return {
+            message: t("errors.priceSessionMissing", { currency: currencyLabel }),
+            focusCurrency: currency,
+          };
+        const session = Number(sessionTrimmed);
+        if (!Number.isFinite(session) || session < 0)
+          return {
+            message: t("errors.priceSessionNegative", { currency: currencyLabel }),
+            focusCurrency: currency,
+          };
         if (pricingShape === "session_and_month") {
-          const month = Number(row.month);
-          if (row.month === "" || !Number.isFinite(month) || month < 0)
-            return t("errors.priceMonthInvalid", {
-              currency: currency.toUpperCase(),
-            });
+          const monthTrimmed = row.month.trim();
+          if (monthTrimmed === "")
+            return {
+              message: t("errors.priceMonthMissing", { currency: currencyLabel }),
+              focusCurrency: currency,
+            };
+          const month = Number(monthTrimmed);
+          if (!Number.isFinite(month) || month < 0)
+            return {
+              message: t("errors.priceMonthNegative", { currency: currencyLabel }),
+              focusCurrency: currency,
+            };
         }
       }
     }
@@ -160,7 +191,7 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       state.registrationOpensMode === "scheduled" &&
       !state.registrationOpensDate
     )
-      return t("errors.registrationOpensDateRequired");
+      return { message: t("errors.registrationOpensDateRequired") };
 
     return null;
   }
@@ -173,7 +204,15 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
 
     const validationError = validate();
     if (validationError) {
-      setError(validationError);
+      setError(validationError.message);
+      // Switch the pricing block to the failing currency tab so the admin
+      // sees an empty/invalid field where the message says it is.
+      if (validationError.focusCurrency) {
+        setState((prev) => ({
+          ...prev,
+          activeCurrency: validationError.focusCurrency!,
+        }));
+      }
       return;
     }
 

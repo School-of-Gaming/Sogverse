@@ -299,7 +299,14 @@
         "ageRange": "{min}–{max} DIS",
         "seats": "{count} pa'",
         "hidden": "So'lu'",
-        "untitled": "(pong pagh)"
+        "untitled": "(pong pagh)",
+        "pendingHint": {
+          "registrationOpens": "{date}: ghIt poSchoH",
+          "startDate": "{date}: tagh",
+          "threshold": "{count, plural, one {# vav qaSchoH} other {# vavpu' qaSchoH}}DI' tagh",
+          "dateAndThreshold": "{count, plural, one {# vav qaSchoHchugh} other {# vavpu' qaSchoHchugh}} {date}: tagh",
+          "pastDateThreshold": "vorgh tagh jaj — {count, plural, one {# vav loS} other {# vavpu' loS}}"
+        }
       },
       "translations": {
         "label": "Hol",
@@ -517,8 +524,10 @@
         "startDateRequired": "jaj tagh poQ",
         "endDateRequired": "jaj van poQ",
         "seatCountInvalid": "pa' mI' positiv 'oHnIS",
-        "priceSessionInvalid": "Huch per qaStaHvIS mI' 'oHnIS ({currency})",
-        "priceMonthInvalid": "Huch per jar mI' 'oHnIS ({currency})",
+        "priceSessionMissing": "{currency} per qaStaHvIS Huch yIqon",
+        "priceSessionNegative": "{currency} per qaStaHvIS Huch nIQbe' net poQ",
+        "priceMonthMissing": "{currency} per jar Huch yIqon",
+        "priceMonthNegative": "{currency} per jar Huch nIQbe' net poQ",
         "thresholdInvalid": "ghItlh mI' taghmeH positiv 'oHnIS",
         "registrationOpensDateRequired": "ghItlh tagh jaj yIwIv",
         "createFailed": "De' chu' Qap pagh"
@@ -533,7 +542,7 @@
       },
       "status": {
         "draft": "chu'Ha'",
-        "pending": "loS",
+        "pending": "taghbe'",
         "running": "qaS",
         "completed": "rIn",
         "cancelled": "chIm"
