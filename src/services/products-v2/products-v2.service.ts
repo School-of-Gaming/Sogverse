@@ -67,7 +67,7 @@ export type CreateProductV2Input = {
   timezone: string;
   seat_count: number | null;
   waitlist_enabled: boolean;
-  registration_opens_at: string | null;
+  registration_opens_at: string;
   is_visible: boolean;
   schedule_slots: ScheduleSlotInput[];
   tag_ids: string[];

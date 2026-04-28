@@ -713,7 +713,7 @@ export type Database = {
           padlet_url: string | null
           product_type: Database["public"]["Enums"]["product_type_v2"]
           refund_policy_days: number | null
-          registration_opens_at: string | null
+          registration_opens_at: string
           seat_count: number | null
           signup_threshold: number | null
           spoken_language_code: string
@@ -739,7 +739,7 @@ export type Database = {
           padlet_url?: string | null
           product_type: Database["public"]["Enums"]["product_type_v2"]
           refund_policy_days?: number | null
-          registration_opens_at?: string | null
+          registration_opens_at: string
           seat_count?: number | null
           signup_threshold?: number | null
           spoken_language_code: string
@@ -765,7 +765,7 @@ export type Database = {
           padlet_url?: string | null
           product_type?: Database["public"]["Enums"]["product_type_v2"]
           refund_policy_days?: number | null
-          registration_opens_at?: string | null
+          registration_opens_at?: string
           seat_count?: number | null
           signup_threshold?: number | null
           spoken_language_code?: string
@@ -1330,7 +1330,7 @@ export type Database = {
           p_prices?: Json
           p_product_type: Database["public"]["Enums"]["product_type_v2"]
           p_refund_policy_days?: number
-          p_registration_opens_at?: string
+          p_registration_opens_at: string
           p_schedule_slots?: Json
           p_seat_count?: number
           p_signup_threshold?: number

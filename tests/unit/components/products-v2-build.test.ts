@@ -453,30 +453,29 @@ describe("buildCreateInput", () => {
   });
 
   describe("registration_opens_at assembly", () => {
-    it("assembles a Helsinki-local timestamp into ISO when scheduled", () => {
+    it("interprets the picked time as Helsinki, not the runner's timezone", () => {
       const s = validConsumerState();
       s.registrationOpensMode = "scheduled";
       s.registrationOpensDate = "2026-09-01";
       s.registrationOpensHour = "10";
       s.registrationOpensMinute = "30";
       const out = buildCreateInput(s, "consumer_club", consumerConfig);
-      // Assembly uses local time (no timezone suffix), so we just sanity-check
-      // that the date round-trips. The exact ISO depends on the test runner's
-      // timezone; we lock the local-time fields.
-      expect(out.registration_opens_at).not.toBeNull();
-      const d = new Date(out.registration_opens_at!);
-      expect(d.toString()).not.toBe("Invalid Date");
-      expect(`${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`).toBe(
-        "10:30",
-      );
+      // 2026-09-01 10:30 Helsinki = EEST (UTC+3) → 07:30 UTC. Asserting the
+      // exact ISO would silently start passing if we accidentally reverted
+      // to browser-local parsing in any non-UTC test runner.
+      expect(out.registration_opens_at).toBe("2026-09-01T07:30:00.000Z");
     });
 
-    it("emits null when registration opens immediately", () => {
+    it("resolves immediate mode to ~now", () => {
       const s = validConsumerState();
       s.registrationOpensMode = "immediately";
       s.registrationOpensDate = "2026-09-01"; // ignored
+      const before = Date.now();
       const out = buildCreateInput(s, "consumer_club", consumerConfig);
-      expect(out.registration_opens_at).toBeNull();
+      const after = Date.now();
+      const t = new Date(out.registration_opens_at).getTime();
+      expect(t).toBeGreaterThanOrEqual(before);
+      expect(t).toBeLessThanOrEqual(after);
     });
   });
 

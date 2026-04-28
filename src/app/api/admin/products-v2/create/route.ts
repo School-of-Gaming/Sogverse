@@ -98,8 +98,7 @@ export async function POST(request: Request) {
     p_start_date: (body.start_date as string | null) ?? undefined,
     p_end_date: (body.end_date as string | null) ?? undefined,
     p_seat_count: (body.seat_count as number | null) ?? undefined,
-    p_registration_opens_at:
-      (body.registration_opens_at as string | null) ?? undefined,
+    p_registration_opens_at: body.registration_opens_at as string,
     p_refund_policy_days:
       (body.refund_policy_days as number | null) ?? undefined,
     p_schedule_slots: body.schedule_slots as RpcArgs["p_schedule_slots"],
