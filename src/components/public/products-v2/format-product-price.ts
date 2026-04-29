@@ -1,7 +1,4 @@
-import {
-  computeBundleCents,
-  computeSubscriptionCents,
-} from "@/lib/constants/pricing";
+import { computeSubscriptionCents } from "@/lib/constants/pricing";
 import {
   CURRENCY_CONFIG,
   type SupportedCurrency,
@@ -11,7 +8,7 @@ import type { BillingModeV2, ProductPriceV2, ProductTypeV2 } from "@/types";
 
 // Browse-card price preview. Centralising the math here keeps the card
 // rendering rule-free: the card switches on `kind` and looks up the
-// matching `productBrowse.card.from*` i18n key.
+// matching `productBrowse.card.*` i18n key.
 //
 // Authoritative source for amounts is the per-currency row in
 // `product_prices_v2` × the platform-wide constants in
@@ -49,16 +46,13 @@ export function formatProductPrice({
   }
 
   if (productType === "consumer_club") {
-    // "From" shows the cheapest per-session and per-month figures across
-    // discount tiers — i.e. the largest bundle and (for now) monthly.
-    // Quarterly is cheaper per month after discount but reads strangely
-    // when the parent hasn't picked a frequency yet; we surface that on
-    // the detail page later.
-    const tenBundleTotal = computeBundleCents(row.price_per_session, 10);
-    const perSessionDiscounted = Math.round(tenBundleTotal / 10);
+    // Show base monthly + base per-session. Bundle/sub discounts surface
+    // on the detail / checkout pages (this card is a glance) — that's
+    // also why the figure here matches a single drop-in session, not the
+    // discounted bundle price.
     return {
       kind: "bundle_or_sub",
-      perSession: formatCurrencyFromCents(perSessionDiscounted, currency, locale),
+      perSession: formatCurrencyFromCents(row.price_per_session, currency, locale),
       perMonth: formatCurrencyFromCents(
         computeSubscriptionCents(row.price_per_month, "monthly"),
         currency,

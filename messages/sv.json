@@ -1102,49 +1102,56 @@
   },
   "productBrowse": {
     "headings": {
-      "consumer_club": "Bläddra bland klubbar",
-      "camp": "Bläddra bland läger",
-      "event": "Bläddra bland evenemang"
+      "consumer_club": "Våra klubbar",
+      "camp": "Våra läger",
+      "event": "Våra evenemang"
     },
     "subheadings": {
-      "consumer_club": "Hitta en regelbunden veckoklubb för ditt barn.",
-      "camp": "Välj ett läger för kommande skollov.",
-      "event": "Anslut till ett enskilt evenemang – workshops, turneringar, fester."
+      "consumer_club": "Veckovisa klubbar där din spelare spelar sina favoritspel med nya vänner och en Gedu som verkligen fattar.",
+      "camp": "Skollov förvandlade till spelfyllda äventyr – nya vänner, riktiga färdigheter och en Gedu med på resan.",
+      "event": "Workshops, turneringar och fester – hoppa in när något fångar din spelares blick."
     },
     "purchasedHeadings": {
-      "consumer_club": "Dina klubbar",
-      "camp": "Dina läger",
-      "event": "Dina evenemang"
+      "consumer_club": "Dina spelares klubbar",
+      "camp": "Dina spelares läger",
+      "event": "Dina spelares evenemang"
     },
     "filters": {
       "topic": "Ämne",
-      "tag": "Tagg",
-      "clearAll": "Rensa filter",
-      "results": "{count, plural, =0 {Inga träffar} one {# träff} other {# träffar}}"
+      "tag": "Stil",
+      "clearAll": "Rensa",
+      "results": "{count, plural, =0 {Inga träffar} one {# träff} other {# träffar}}",
+      "filterBy": "Filtrera"
     },
     "card": {
       "ages": "Ålder {min}–{max}",
-      "fromPerSession": "Från {price} / pass",
-      "fromPerMonth": "Från {price} / mån",
-      "fromUpfront": "Från {price}",
+      "perSession": "{price} / pass",
+      "perMonth": "{price} / mån",
+      "orChoice": "eller",
+      "upfrontTotal": "{price}",
       "free": "Gratis",
       "externalContract": "Finansieras av din kommun",
-      "notAvailableInCurrency": "Inte tillgänglig i {currency}",
-      "viewDetails": "Visa mer",
+      "notAvailableInCurrency": "Inte i {currency}",
+      "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
+      "seatsLimited": "Begränsat antal platser",
+      "waitlistAvailable": "Väntelista finns",
+      "endedBadge": "Avslutad",
+      "endedNote": "Den här är slut — håll utkik efter nästa.",
+      "viewDetails": "Visa",
       "manage": "Hantera",
-      "scheduleEvery": "Varje {day} kl {time}",
+      "scheduleEvery": "Varje {day} · {time}",
       "scheduleRange": "{startDate} – {endDate}",
-      "scheduleSingle": "{date} kl {time}",
+      "scheduleSingle": "{date} · {time}",
       "tzNote": "({tz})",
       "verbConsumerClub": "Anmäld",
       "verbMunicipalityClub": "Registrerad",
       "verbCamp": "Anmäld",
       "verbEvent": "Med",
-      "nextSession": "Nästa pass: {when}",
+      "nextSession": "Nästa: {when}",
       "gamersLabel": "För {names}"
     },
     "empty": {
-      "noProducts": "Inga produkter att visa just nu – titta in igen snart.",
+      "noProducts": "Inget här ännu – nya är på väg.",
       "noMatches": "Inga träffar. Prova att rensa filtren."
     }
   },

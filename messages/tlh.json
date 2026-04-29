@@ -1150,49 +1150,56 @@
   },
   "productBrowse": {
     "headings": {
-      "consumer_club": "ghom'a'mey nej",
-      "camp": "raghmey nej",
-      "event": "wanI'mey nej"
+      "consumer_club": "ghom'a'meymaj",
+      "camp": "raghmeymaj",
+      "event": "wanI'meymaj"
     },
     "subheadings": {
-      "consumer_club": "puqlI'vaD ghom'a' yInej.",
-      "camp": "QongDaq lopno' raghmey yIwIv.",
-      "event": "wa' wanI' yIqaH."
+      "consumer_club": "Hoch hogh ghom'a': QujmeyDaj Quj puqlI', juppu' tlhej, ghoj'wI' qoqDaq.",
+      "camp": "QongDaq lopno' raghmey: Qujmey, juppu', ghoj'wI'pu' Dun.",
+      "event": "wanI'mey wa': qep, qoH, lopno' — reH wanI' tu'lu'."
     },
     "purchasedHeadings": {
-      "consumer_club": "ghom'a'mey lIj",
-      "camp": "raghmey lIj",
-      "event": "wanI'mey lIj"
+      "consumer_club": "DIvI'lI' ghom'a'meyDaj",
+      "camp": "DIvI'lI' raghmeyDaj",
+      "event": "DIvI'lI' wanI'meyDaj"
     },
     "filters": {
       "topic": "mu'qaD",
-      "tag": "DoSmey",
-      "clearAll": "Hoch yISay'moH",
-      "results": "{count, plural, =0 {pagh} one {# Sam} other {# Sam}}"
+      "tag": "Segh",
+      "clearAll": "yISay'moH",
+      "results": "{count, plural, =0 {pagh} one {# Sam} other {# Sam}}",
+      "filterBy": "yIH'lu'"
     },
     "card": {
       "ages": "ben {min}–{max}",
-      "fromPerSession": "{price} / wanI'",
-      "fromPerMonth": "{price} / jar",
-      "fromUpfront": "{price}",
+      "perSession": "{price} / wanI'",
+      "perMonth": "{price} / jar",
+      "orChoice": "qoj",
+      "upfrontTotal": "{price}",
       "free": "Huch Hutlh",
       "externalContract": "yejquv DIl",
       "notAvailableInCurrency": "{currency} ghajbe'",
+      "seatsCapacity": "{count, plural, one {# quS} other {# quS}}",
+      "seatsLimited": "puS quS",
+      "waitlistAvailable": "loS tetlh tu'lu'",
+      "endedBadge": "rIn",
+      "endedNote": "rInpu' – veb yIloS.",
       "viewDetails": "yIlegh",
       "manage": "yIche'",
-      "scheduleEvery": "Hoch {day} {time}",
+      "scheduleEvery": "Hoch {day} · {time}",
       "scheduleRange": "{startDate} – {endDate}",
-      "scheduleSingle": "{date} {time}",
+      "scheduleSingle": "{date} · {time}",
       "tzNote": "({tz})",
       "verbConsumerClub": "ghoSta'",
       "verbMunicipalityClub": "ghoSta'",
       "verbCamp": "ghoSta'",
       "verbEvent": "ghoSta'",
-      "nextSession": "wanI' veb: {when}",
+      "nextSession": "veb: {when}",
       "gamersLabel": "{names} vaD"
     },
     "empty": {
-      "noProducts": "DaH pagh tu'lu' — pIj yIlegh.",
+      "noProducts": "DaH pagh tu'lu' — chu' chenmoH.",
       "noMatches": "pagh Sam. tetlh yISay'moH."
     }
   },

@@ -1102,50 +1102,57 @@
   },
   "productBrowse": {
     "headings": {
-      "consumer_club": "Browse clubs",
-      "camp": "Browse camps",
-      "event": "Browse events"
+      "consumer_club": "Our Clubs",
+      "camp": "Our Camps",
+      "event": "Our Events"
     },
     "subheadings": {
-      "consumer_club": "Find a regular weekly club for your gamer.",
-      "camp": "Pick a camp for an upcoming school break.",
-      "event": "Join a one-off session — workshops, tournaments, parties."
+      "consumer_club": "Weekly clubs where your gamer plays the games they love with new friends and a Gedu who actually gets it.",
+      "camp": "School breaks turned into game-filled adventures — new friends, real skills, and a Gedu along for the ride.",
+      "event": "Workshops, tournaments and parties — drop in whenever something catches your gamer's eye."
     },
     "purchasedHeadings": {
-      "consumer_club": "Your enrolled clubs",
-      "camp": "Your camp sign-ups",
-      "event": "Your event registrations"
+      "consumer_club": "Your Gamers' Clubs",
+      "camp": "Your Gamers' Camps",
+      "event": "Your Gamers' Events"
     },
     "filters": {
       "topic": "Topic",
-      "tag": "Tag",
-      "clearAll": "Clear filters",
-      "results": "{count, plural, =0 {No matches} one {# match} other {# matches}}"
+      "tag": "Vibe",
+      "clearAll": "Clear",
+      "results": "{count, plural, =0 {No matches} one {# match} other {# matches}}",
+      "filterBy": "Filter by"
     },
     "card": {
       "ages": "Ages {min}–{max}",
-      "fromPerSession": "From {price} / session",
-      "fromPerMonth": "From {price} / month",
-      "fromUpfront": "From {price}",
+      "perSession": "{price} / session",
+      "perMonth": "{price} / month",
+      "orChoice": "or",
+      "upfrontTotal": "{price}",
       "free": "Free",
       "externalContract": "Funded by your municipality",
-      "notAvailableInCurrency": "Not available in {currency}",
-      "viewDetails": "View details",
+      "notAvailableInCurrency": "Not in {currency}",
+      "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
+      "seatsLimited": "Limited seats",
+      "waitlistAvailable": "Waitlist available",
+      "endedBadge": "Ended",
+      "endedNote": "This one's wrapped — keep an eye out for the next one.",
+      "viewDetails": "View",
       "manage": "Manage",
-      "scheduleEvery": "Every {day} at {time}",
+      "scheduleEvery": "Every {day} · {time}",
       "scheduleRange": "{startDate} – {endDate}",
-      "scheduleSingle": "{date} at {time}",
+      "scheduleSingle": "{date} · {time}",
       "tzNote": "({tz})",
       "verbConsumerClub": "Enrolled",
       "verbMunicipalityClub": "Registered",
       "verbCamp": "Signed up",
       "verbEvent": "Joined",
-      "nextSession": "Next session: {when}",
+      "nextSession": "Next: {when}",
       "gamersLabel": "For {names}"
     },
     "empty": {
-      "noProducts": "No products to show right now — check back soon.",
-      "noMatches": "No matches. Try clearing filters."
+      "noProducts": "Nothing here yet — new ones are on the way.",
+      "noMatches": "No matches. Try clearing your filters."
     }
   },
   "sidebar": {

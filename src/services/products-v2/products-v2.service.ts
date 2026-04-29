@@ -99,6 +99,12 @@ export class ProductsV2Service {
   // admins (who can see everything) call this same hook from the public
   // pages without seeing draft/cancelled rows. Joins everything the browse
   // card needs in one round trip.
+  //
+  // We deliberately *don't* filter on end_date — a `running` row whose
+  // end_date has already passed still comes back here. The card layer
+  // calls effectiveStatus() to surface those as "Ended" with a muted
+  // visual treatment instead of letting them masquerade as live. Once the
+  // cron flips them to `completed`, RLS hides them entirely.
   async listVisibleByType(type: ProductTypeV2): Promise<ProductV2BrowseRow[]> {
     const { data, error } = await this.supabase
       .from("products_v2")

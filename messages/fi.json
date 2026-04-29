@@ -1102,49 +1102,56 @@
   },
   "productBrowse": {
     "headings": {
-      "consumer_club": "Selaa kerhoja",
-      "camp": "Selaa leirejä",
-      "event": "Selaa tapahtumia"
+      "consumer_club": "Kerhomme",
+      "camp": "Leirimme",
+      "event": "Tapahtumamme"
     },
     "subheadings": {
-      "consumer_club": "Löydä viikoittainen kerho lapsellesi.",
-      "camp": "Valitse leiri tulevalle koululomalle.",
-      "event": "Liity yksittäiseen tapahtumaan – työpajoihin, turnauksiin ja juhliin."
+      "consumer_club": "Viikoittaiset kerhot, joissa pelaajasi pelaa lempipelejään uusien kavereiden ja Gedun kanssa.",
+      "camp": "Koululomat täynnä peliseikkailuja – uusia kavereita, oikeita taitoja ja Gedu mukana matkassa.",
+      "event": "Työpajat, turnaukset ja juhlat – pudottaudu mukaan, kun jokin kiinnostaa."
     },
     "purchasedHeadings": {
-      "consumer_club": "Omat kerhosi",
-      "camp": "Omat leirisi",
-      "event": "Omat tapahtumasi"
+      "consumer_club": "Pelaajiesi kerhot",
+      "camp": "Pelaajiesi leirit",
+      "event": "Pelaajiesi tapahtumat"
     },
     "filters": {
       "topic": "Aihe",
-      "tag": "Tunniste",
-      "clearAll": "Tyhjennä suodattimet",
-      "results": "{count, plural, =0 {Ei osumia} one {# osuma} other {# osumaa}}"
+      "tag": "Tyyli",
+      "clearAll": "Tyhjennä",
+      "results": "{count, plural, =0 {Ei osumia} one {# osuma} other {# osumaa}}",
+      "filterBy": "Suodata"
     },
     "card": {
       "ages": "Ikä {min}–{max}",
-      "fromPerSession": "Alkaen {price} / kerta",
-      "fromPerMonth": "Alkaen {price} / kk",
-      "fromUpfront": "Alkaen {price}",
+      "perSession": "{price} / kerta",
+      "perMonth": "{price} / kk",
+      "orChoice": "tai",
+      "upfrontTotal": "{price}",
       "free": "Maksuton",
       "externalContract": "Kuntasi rahoittama",
-      "notAvailableInCurrency": "Ei saatavilla valuutassa {currency}",
-      "viewDetails": "Lisätietoja",
+      "notAvailableInCurrency": "Ei valuutassa {currency}",
+      "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
+      "seatsLimited": "Rajoitettu paikkamäärä",
+      "waitlistAvailable": "Jonotuslista käytössä",
+      "endedBadge": "Päättynyt",
+      "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
+      "viewDetails": "Katso",
       "manage": "Hallitse",
-      "scheduleEvery": "Joka {day} klo {time}",
+      "scheduleEvery": "Joka {day} · {time}",
       "scheduleRange": "{startDate} – {endDate}",
-      "scheduleSingle": "{date} klo {time}",
+      "scheduleSingle": "{date} · {time}",
       "tzNote": "({tz})",
       "verbConsumerClub": "Ilmoittautunut",
       "verbMunicipalityClub": "Rekisteröity",
       "verbCamp": "Mukana",
       "verbEvent": "Mukana",
-      "nextSession": "Seuraava kerta: {when}",
+      "nextSession": "Seuraava: {when}",
       "gamersLabel": "Pelaajille: {names}"
     },
     "empty": {
-      "noProducts": "Ei tuotteita näytettäväksi juuri nyt – tarkista pian uudelleen.",
+      "noProducts": "Täällä ei ole vielä mitään – uusia on tulossa.",
       "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
     }
   },
