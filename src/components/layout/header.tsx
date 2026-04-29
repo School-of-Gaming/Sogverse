@@ -25,12 +25,10 @@ export function Header() {
   const c = useTranslations('common');
 
   const publicNavLinks = [
-    { href: ROUTES.home, label: t('nav.home') },
     { href: ROUTES.products, label: t('nav.clubs') },
   ];
 
   const mobileInlineLinks = [
-    { href: ROUTES.home, label: t('nav.home') },
     { href: ROUTES.products, label: t('nav.clubs') },
   ];
 
@@ -38,14 +36,26 @@ export function Header() {
     ? ROLE_DASHBOARD_PATHS[profile.role]
     : null;
 
+  const isHome = pathname === ROUTES.home;
+
   useClickOutside(dropdownRef, () => setDropdownOpen(false));
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="font-display text-xl font-bold text-primary">
+        {/* Logo — glows and is visually "active" when on home,
+            replacing the explicit "Home" nav link. */}
+        <Link
+          href="/"
+          className="flex items-center gap-2"
+          aria-current={isHome ? "page" : undefined}
+        >
+          <span
+            className={cn(
+              "font-display text-xl font-bold text-primary transition-all duration-300",
+              isHome && "drop-shadow-[0_0_12px_currentColor]"
+            )}
+          >
             SOG
           </span>
           <span className="hidden text-lg font-semibold sm:inline-block">
