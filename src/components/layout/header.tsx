@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from 'next-intl';
-import { Menu, X, LogOut, Settings, Coins } from "lucide-react";
+import { Menu, X, LogOut, Settings } from "lucide-react";
 import { useState, useRef } from "react";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
-import { useTokenBalance } from "@/services/tokens";
 import { cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS, ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import { CurrencyPicker } from "@/components/layout/currency-picker";
@@ -28,19 +27,12 @@ export function Header() {
   const publicNavLinks = [
     { href: ROUTES.home, label: t('nav.home') },
     { href: ROUTES.products, label: t('nav.clubs') },
-    { href: ROUTES.sorg, label: t('nav.sorg') },
   ];
 
   const mobileInlineLinks = [
     { href: ROUTES.home, label: t('nav.home') },
     { href: ROUTES.products, label: t('nav.clubs') },
   ];
-
-  const isCustomer = profile?.role === "customer";
-  const { data: tokenBalance } = useTokenBalance(
-    profile?.id ?? "",
-    isCustomer
-  );
 
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
@@ -94,15 +86,6 @@ export function Header() {
               )}
               <LocalePicker />
               <CurrencyPicker />
-              {isCustomer && tokenBalance !== undefined && (
-                <Link
-                  href={ROUTES.customer.sorg}
-                  className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium"
-                >
-                  <Coins className="h-4 w-4 text-primary" />
-                  <span>{tokenBalance}</span>
-                </Link>
-              )}
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -226,16 +209,6 @@ export function Header() {
                   <LocalePicker />
                   <CurrencyPicker />
                 </div>
-                {isCustomer && tokenBalance !== undefined && (
-                  <Link
-                    href={ROUTES.customer.sorg}
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Coins className="h-4 w-4 text-primary" />
-                    <span>{t('tokenBalance', { count: tokenBalance })}</span>
-                  </Link>
-                )}
                 <Link
                   href={ROUTES.settings}
                   className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
