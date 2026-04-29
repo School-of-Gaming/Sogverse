@@ -34,7 +34,7 @@ export default function HomePage() {
         <section className="relative -mt-16 overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-16">
           <div className="container mx-auto px-4 py-24 sm:py-32">
             <div className="mx-auto max-w-3xl text-center">
-              <h1 className="font-display text-4xl font-bold tracking-tight sm:text-6xl">
+              <h1 className="font-display text-2xl font-bold tracking-tight md:text-6xl">
                 {t.rich('hero.title', {
                   br: () => <br />,
                   primary: (chunks) => <span className="text-primary">{chunks}</span>,
