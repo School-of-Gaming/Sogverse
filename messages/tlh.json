@@ -135,11 +135,6 @@
       "heading": "DIvI' yImuv",
       "subheading": "SoHvaD puq QaQ Daq toy'a', ghojmoH, je jupwI' Suq — Gedu' tIqqu' tI'ang."
     },
-    "contact": {
-      "heading": "maqIH",
-      "subheading": "De' DaneH'a'? maqIH maHvaD.",
-      "email": "QIn: kanslia@sog.gg"
-    },
     "easterEgg": {
       "heading": "You found the Klingon translation!",
       "intro": "This interface has been translated into tlhIngan Hol as a tribute to Star Trek and its fans. Here are some of our favourite translations:",
@@ -1070,7 +1065,10 @@
   },
   "footer": {
     "tagline": "toy'wI' ghom - DaH bIQam, batlh yIghoS.",
-    "copyright": "© {year} toy'wI' ghom. Hoch batlh."
+    "copyright": "© {year} toy'wI' ghom. Hoch batlh.",
+    "contact": {
+      "email": "QIn: kanslia@sog.gg"
+    }
   },
   "gamer": {
     "welcome": "nuqneH, toy'wI'!",

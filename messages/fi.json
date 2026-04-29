@@ -134,11 +134,6 @@
     "cta": {
       "heading": "Liity yhteisöömme",
       "subheading": "Anna lapsellesi hauska ja turvallinen paikka pelata, oppia ja saada ystäviä — ammattimaisen pelikasvattajan ohjaamana."
-    },
-    "contact": {
-      "heading": "Ota yhteyttä",
-      "subheading": "Onko kysyttävää? Kuulemme mielellämme sinusta.",
-      "email": "Sähköposti: kanslia@sog.gg"
     }
   },
   "admin": {
@@ -1022,7 +1017,10 @@
   },
   "footer": {
     "tagline": "School of Gaming – Ruutuaika muuttuu laatuajaksi.",
-    "copyright": "© {year} School of Gaming. Kaikki oikeudet pidätetään."
+    "copyright": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",
+    "contact": {
+      "email": "Sähköposti: kanslia@sog.gg"
+    }
   },
   "gamer": {
     "welcome": "Tervetuloa, pelaaja!",

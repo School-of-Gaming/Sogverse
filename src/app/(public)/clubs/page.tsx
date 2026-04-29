@@ -11,6 +11,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { useTokenRates } from "@/providers/token-rate-provider";
 import { formatScheduleLocal } from "@/lib/utils";
 import { productImageUrl } from "@/lib/images/product-image-url";
+import { ROUTES } from "@/lib/constants";
 
 export default function ProductsPage() {
   const { data: products, isLoading } = useVisibleProducts();
@@ -124,7 +125,7 @@ export default function ProductsPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               {t('listing.needHelpDescription')}
             </p>
-            <Link href="/about">
+            <Link href={ROUTES.about}>
               <Button variant="outline" className="mt-4">
                 {t('listing.learnMoreAboutUs')}
               </Button>

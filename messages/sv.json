@@ -134,11 +134,6 @@
     "cta": {
       "heading": "Gå med i vår gemenskap",
       "subheading": "Ge ditt barn en rolig, trygg plats att spela, lära sig och få vänner — under ledning av en professionell spelfostrare."
-    },
-    "contact": {
-      "heading": "Kontakta oss",
-      "subheading": "Har du frågor? Vi vill gärna höra från dig.",
-      "email": "E-post: kanslia@sog.gg"
     }
   },
   "admin": {
@@ -1022,7 +1017,10 @@
   },
   "footer": {
     "tagline": "School of Gaming - Där skärmtid blir kvalitetstid.",
-    "copyright": "© {year} School of Gaming. Alla rättigheter förbehållna."
+    "copyright": "© {year} School of Gaming. Alla rättigheter förbehållna.",
+    "contact": {
+      "email": "E-post: kanslia@sog.gg"
+    }
   },
   "gamer": {
     "welcome": "Välkommen, spelare!",
