@@ -1091,12 +1091,62 @@
     "nav": {
       "home": "Home",
       "clubs": "Clubs",
+      "camps": "Camps",
+      "events": "Events",
       "sorg": "Sorg",
       "yty": "Yty",
       "about": "About"
     },
     "toggleMenu": "Toggle menu",
     "tokenBalance": "{count} Sorgs"
+  },
+  "productBrowse": {
+    "headings": {
+      "consumer_club": "Browse clubs",
+      "camp": "Browse camps",
+      "event": "Browse events"
+    },
+    "subheadings": {
+      "consumer_club": "Find a regular weekly club for your gamer.",
+      "camp": "Pick a camp for an upcoming school break.",
+      "event": "Join a one-off session — workshops, tournaments, parties."
+    },
+    "purchasedHeadings": {
+      "consumer_club": "Your enrolled clubs",
+      "camp": "Your camp sign-ups",
+      "event": "Your event registrations"
+    },
+    "filters": {
+      "topic": "Topic",
+      "tag": "Tag",
+      "clearAll": "Clear filters",
+      "results": "{count, plural, =0 {No matches} one {# match} other {# matches}}"
+    },
+    "card": {
+      "ages": "Ages {min}–{max}",
+      "fromPerSession": "From {price} / session",
+      "fromPerMonth": "From {price} / month",
+      "fromUpfront": "From {price}",
+      "free": "Free",
+      "externalContract": "Funded by your municipality",
+      "notAvailableInCurrency": "Not available in {currency}",
+      "viewDetails": "View details",
+      "manage": "Manage",
+      "scheduleEvery": "Every {day} at {time}",
+      "scheduleRange": "{startDate} – {endDate}",
+      "scheduleSingle": "{date} at {time}",
+      "tzNote": "({tz})",
+      "verbConsumerClub": "Enrolled",
+      "verbMunicipalityClub": "Registered",
+      "verbCamp": "Signed up",
+      "verbEvent": "Joined",
+      "nextSession": "Next session: {when}",
+      "gamersLabel": "For {names}"
+    },
+    "empty": {
+      "noProducts": "No products to show right now — check back soon.",
+      "noMatches": "No matches. Try clearing filters."
+    }
   },
   "sidebar": {
     "dashboard": "Dashboard",

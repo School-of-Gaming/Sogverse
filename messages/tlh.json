@@ -1139,12 +1139,62 @@
     "nav": {
       "home": "juH",
       "clubs": "ghom'a'mey",
+      "camps": "raghmey",
+      "events": "wanI'mey",
       "sorg": "darsek",
       "yty": "Yty",
       "about": "maH"
     },
     "toggleMenu": "HeDmey choH",
     "tokenBalance": "{count} darsekmey"
+  },
+  "productBrowse": {
+    "headings": {
+      "consumer_club": "ghom'a'mey nej",
+      "camp": "raghmey nej",
+      "event": "wanI'mey nej"
+    },
+    "subheadings": {
+      "consumer_club": "puqlI'vaD ghom'a' yInej.",
+      "camp": "QongDaq lopno' raghmey yIwIv.",
+      "event": "wa' wanI' yIqaH."
+    },
+    "purchasedHeadings": {
+      "consumer_club": "ghom'a'mey lIj",
+      "camp": "raghmey lIj",
+      "event": "wanI'mey lIj"
+    },
+    "filters": {
+      "topic": "mu'qaD",
+      "tag": "DoSmey",
+      "clearAll": "Hoch yISay'moH",
+      "results": "{count, plural, =0 {pagh} one {# Sam} other {# Sam}}"
+    },
+    "card": {
+      "ages": "ben {min}–{max}",
+      "fromPerSession": "{price} / wanI'",
+      "fromPerMonth": "{price} / jar",
+      "fromUpfront": "{price}",
+      "free": "Huch Hutlh",
+      "externalContract": "yejquv DIl",
+      "notAvailableInCurrency": "{currency} ghajbe'",
+      "viewDetails": "yIlegh",
+      "manage": "yIche'",
+      "scheduleEvery": "Hoch {day} {time}",
+      "scheduleRange": "{startDate} – {endDate}",
+      "scheduleSingle": "{date} {time}",
+      "tzNote": "({tz})",
+      "verbConsumerClub": "ghoSta'",
+      "verbMunicipalityClub": "ghoSta'",
+      "verbCamp": "ghoSta'",
+      "verbEvent": "ghoSta'",
+      "nextSession": "wanI' veb: {when}",
+      "gamersLabel": "{names} vaD"
+    },
+    "empty": {
+      "noProducts": "DaH pagh tu'lu' — pIj yIlegh.",
+      "noMatches": "pagh Sam. tetlh yISay'moH."
+    }
   },
   "sidebar": {
     "dashboard": "QaD",

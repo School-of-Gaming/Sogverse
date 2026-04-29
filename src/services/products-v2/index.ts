@@ -9,6 +9,7 @@ export type {
 export {
   productV2Keys,
   useProductsV2ByType,
+  useVisibleProductsV2ByType,
   useCreateProductV2,
 } from "./products-v2.queries";
 export {

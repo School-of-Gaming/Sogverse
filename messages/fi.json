@@ -1091,12 +1091,62 @@
     "nav": {
       "home": "Etusivu",
       "clubs": "Kerhot",
+      "camps": "Leirit",
+      "events": "Tapahtumat",
       "sorg": "Sorgga",
       "yty": "Yty",
       "about": "Tietoa"
     },
     "toggleMenu": "Vaihda valikko",
     "tokenBalance": "{count} Sorggaa"
+  },
+  "productBrowse": {
+    "headings": {
+      "consumer_club": "Selaa kerhoja",
+      "camp": "Selaa leirejä",
+      "event": "Selaa tapahtumia"
+    },
+    "subheadings": {
+      "consumer_club": "Löydä viikoittainen kerho lapsellesi.",
+      "camp": "Valitse leiri tulevalle koululomalle.",
+      "event": "Liity yksittäiseen tapahtumaan – työpajoihin, turnauksiin ja juhliin."
+    },
+    "purchasedHeadings": {
+      "consumer_club": "Omat kerhosi",
+      "camp": "Omat leirisi",
+      "event": "Omat tapahtumasi"
+    },
+    "filters": {
+      "topic": "Aihe",
+      "tag": "Tunniste",
+      "clearAll": "Tyhjennä suodattimet",
+      "results": "{count, plural, =0 {Ei osumia} one {# osuma} other {# osumaa}}"
+    },
+    "card": {
+      "ages": "Ikä {min}–{max}",
+      "fromPerSession": "Alkaen {price} / kerta",
+      "fromPerMonth": "Alkaen {price} / kk",
+      "fromUpfront": "Alkaen {price}",
+      "free": "Maksuton",
+      "externalContract": "Kuntasi rahoittama",
+      "notAvailableInCurrency": "Ei saatavilla valuutassa {currency}",
+      "viewDetails": "Lisätietoja",
+      "manage": "Hallitse",
+      "scheduleEvery": "Joka {day} klo {time}",
+      "scheduleRange": "{startDate} – {endDate}",
+      "scheduleSingle": "{date} klo {time}",
+      "tzNote": "({tz})",
+      "verbConsumerClub": "Ilmoittautunut",
+      "verbMunicipalityClub": "Rekisteröity",
+      "verbCamp": "Mukana",
+      "verbEvent": "Mukana",
+      "nextSession": "Seuraava kerta: {when}",
+      "gamersLabel": "Pelaajille: {names}"
+    },
+    "empty": {
+      "noProducts": "Ei tuotteita näytettäväksi juuri nyt – tarkista pian uudelleen.",
+      "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
+    }
   },
   "sidebar": {
     "dashboard": "Hallintapaneeli",

@@ -168,6 +168,37 @@ export type SiteDetailsV2Insert = Database["public"]["Tables"]["site_details_v2"
 export type SiteStaffDetailsV2 = Database["public"]["Tables"]["site_staff_details_v2"]["Row"];
 export type SiteStaffDetailsV2Insert = Database["public"]["Tables"]["site_staff_details_v2"]["Insert"];
 
+// Joined shape consumed by the parent-facing browse pages
+// (src/components/public/products-v2/product-browse-page.tsx). The card
+// renderer expects everything it needs to draw itself in one row — topic
+// label, all product translations, tag chips, prices per supported currency,
+// and weekly schedule slots. Single source so the component props mirror
+// the SELECT shape exactly.
+export type ProductV2BrowseRow = ProductV2 & {
+  topics_v2:
+    | {
+        slug: string;
+        kind: TopicKindV2;
+        icon_path: string | null;
+        topic_translations_v2: TopicTranslationV2[];
+      }
+    | null;
+  product_translations_v2: ProductTranslationV2[];
+  product_tags_v2: {
+    tags_v2:
+      | {
+          slug: string;
+          tag_translations_v2: TagTranslationV2[];
+        }
+      | null;
+  }[];
+  product_prices_v2: ProductPriceV2[];
+  schedule_slots_v2: Pick<
+    ScheduleSlotV2,
+    "weekday" | "start_time" | "duration_minutes"
+  >[];
+};
+
 // whatsapp_contacts
 export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"]["Row"];
 

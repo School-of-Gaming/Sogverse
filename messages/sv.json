@@ -1091,12 +1091,62 @@
     "nav": {
       "home": "Hem",
       "clubs": "Klubbar",
+      "camps": "Läger",
+      "events": "Evenemang",
       "sorg": "Sogge",
       "yty": "Yty",
       "about": "Om oss"
     },
     "toggleMenu": "Växla meny",
     "tokenBalance": "{count} Soggar"
+  },
+  "productBrowse": {
+    "headings": {
+      "consumer_club": "Bläddra bland klubbar",
+      "camp": "Bläddra bland läger",
+      "event": "Bläddra bland evenemang"
+    },
+    "subheadings": {
+      "consumer_club": "Hitta en regelbunden veckoklubb för ditt barn.",
+      "camp": "Välj ett läger för kommande skollov.",
+      "event": "Anslut till ett enskilt evenemang – workshops, turneringar, fester."
+    },
+    "purchasedHeadings": {
+      "consumer_club": "Dina klubbar",
+      "camp": "Dina läger",
+      "event": "Dina evenemang"
+    },
+    "filters": {
+      "topic": "Ämne",
+      "tag": "Tagg",
+      "clearAll": "Rensa filter",
+      "results": "{count, plural, =0 {Inga träffar} one {# träff} other {# träffar}}"
+    },
+    "card": {
+      "ages": "Ålder {min}–{max}",
+      "fromPerSession": "Från {price} / pass",
+      "fromPerMonth": "Från {price} / mån",
+      "fromUpfront": "Från {price}",
+      "free": "Gratis",
+      "externalContract": "Finansieras av din kommun",
+      "notAvailableInCurrency": "Inte tillgänglig i {currency}",
+      "viewDetails": "Visa mer",
+      "manage": "Hantera",
+      "scheduleEvery": "Varje {day} kl {time}",
+      "scheduleRange": "{startDate} – {endDate}",
+      "scheduleSingle": "{date} kl {time}",
+      "tzNote": "({tz})",
+      "verbConsumerClub": "Anmäld",
+      "verbMunicipalityClub": "Registrerad",
+      "verbCamp": "Anmäld",
+      "verbEvent": "Med",
+      "nextSession": "Nästa pass: {when}",
+      "gamersLabel": "För {names}"
+    },
+    "empty": {
+      "noProducts": "Inga produkter att visa just nu – titta in igen snart.",
+      "noMatches": "Inga träffar. Prova att rensa filtren."
+    }
   },
   "sidebar": {
     "dashboard": "Instrumentpanel",

@@ -2,6 +2,8 @@
 export const ROUTES = {
   home: "/",
   products: "/clubs",
+  camps: "/camps",
+  events: "/events",
   sorg: "/sorg",
   yty: "/#yty",
   checkout: "/checkout",
