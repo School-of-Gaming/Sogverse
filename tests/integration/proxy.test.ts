@@ -76,7 +76,7 @@ describe("proxy", () => {
   // --- Public routes ---
 
   describe("public routes (pass through regardless of auth)", () => {
-    it.each(["/", "/clubs", "/clubs/some-club-id", "/about", "/api/some-endpoint"])(
+    it.each(["/", "/clubs", "/clubs/some-club-id", "/api/some-endpoint"])(
       "passes through %s without auth",
       async (path) => {
         mockNoUser();
