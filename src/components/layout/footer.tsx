@@ -18,6 +18,12 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             {t('tagline')}
           </p>
+          <a
+            href="mailto:kanslia@sog.gg"
+            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            {t('contact.email')}
+          </a>
           <div className="w-full border-t border-border pt-4">
             <p className="text-sm text-muted-foreground">
               {t('copyright', { year: currentYear })}

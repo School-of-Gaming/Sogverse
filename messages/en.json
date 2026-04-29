@@ -134,11 +134,6 @@
     "cta": {
       "heading": "Join Our Community",
       "subheading": "Give your child a fun, safe place to play, learn, and make friends — guided by a professional game educator."
-    },
-    "contact": {
-      "heading": "Get in Touch",
-      "subheading": "Have questions? We'd love to hear from you.",
-      "email": "Email: kanslia@sog.gg"
     }
   },
   "admin": {
@@ -1022,7 +1017,10 @@
   },
   "footer": {
     "tagline": "School of Gaming - Where screen time becomes quality time.",
-    "copyright": "© {year} School of Gaming. All rights reserved."
+    "copyright": "© {year} School of Gaming. All rights reserved.",
+    "contact": {
+      "email": "Email: kanslia@sog.gg"
+    }
   },
   "gamer": {
     "welcome": "Welcome, Gamer!",

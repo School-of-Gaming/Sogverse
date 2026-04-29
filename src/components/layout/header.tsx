@@ -29,14 +29,11 @@ export function Header() {
     { href: ROUTES.home, label: t('nav.home') },
     { href: ROUTES.products, label: t('nav.clubs') },
     { href: ROUTES.sorg, label: t('nav.sorg') },
-    { href: ROUTES.yty, label: t('nav.yty') },
-    { href: ROUTES.about, label: t('nav.about') },
   ];
 
   const mobileInlineLinks = [
     { href: ROUTES.home, label: t('nav.home') },
     { href: ROUTES.products, label: t('nav.clubs') },
-    { href: ROUTES.about, label: t('nav.about') },
   ];
 
   const isCustomer = profile?.role === "customer";
