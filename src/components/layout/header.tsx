@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from 'next-intl';
-import { Menu, X, LogOut, Settings, Coins } from "lucide-react";
+import { Menu, X, LogOut, Settings } from "lucide-react";
 import { useState, useRef } from "react";
 import { useClickOutside } from "@/hooks/use-click-outside";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
-import { useTokenBalance } from "@/services/tokens";
 import { cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS, ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import { CurrencyPicker } from "@/components/layout/currency-picker";
@@ -26,37 +25,37 @@ export function Header() {
   const c = useTranslations('common');
 
   const publicNavLinks = [
-    { href: ROUTES.home, label: t('nav.home') },
     { href: ROUTES.products, label: t('nav.clubs') },
-    { href: ROUTES.sorg, label: t('nav.sorg') },
-    { href: ROUTES.yty, label: t('nav.yty') },
-    { href: ROUTES.about, label: t('nav.about') },
   ];
 
   const mobileInlineLinks = [
-    { href: ROUTES.home, label: t('nav.home') },
     { href: ROUTES.products, label: t('nav.clubs') },
-    { href: ROUTES.about, label: t('nav.about') },
   ];
-
-  const isCustomer = profile?.role === "customer";
-  const { data: tokenBalance } = useTokenBalance(
-    profile?.id ?? "",
-    isCustomer
-  );
 
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
     : null;
+
+  const isHome = pathname === ROUTES.home;
 
   useClickOutside(dropdownRef, () => setDropdownOpen(false));
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <span className="font-display text-xl font-bold text-primary">
+        {/* Logo — glows and is visually "active" when on home,
+            replacing the explicit "Home" nav link. */}
+        <Link
+          href="/"
+          className="flex items-center gap-2"
+          aria-current={isHome ? "page" : undefined}
+        >
+          <span
+            className={cn(
+              "font-display text-xl font-bold text-primary transition-all duration-300",
+              isHome && "drop-shadow-[0_0_12px_currentColor]"
+            )}
+          >
             SOG
           </span>
           <span className="hidden text-lg font-semibold sm:inline-block">
@@ -97,15 +96,6 @@ export function Header() {
               )}
               <LocalePicker />
               <CurrencyPicker />
-              {isCustomer && tokenBalance !== undefined && (
-                <Link
-                  href={ROUTES.customer.sorg}
-                  className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium"
-                >
-                  <Coins className="h-4 w-4 text-primary" />
-                  <span>{tokenBalance}</span>
-                </Link>
-              )}
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -229,16 +219,6 @@ export function Header() {
                   <LocalePicker />
                   <CurrencyPicker />
                 </div>
-                {isCustomer && tokenBalance !== undefined && (
-                  <Link
-                    href={ROUTES.customer.sorg}
-                    className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Coins className="h-4 w-4 text-primary" />
-                    <span>{t('tokenBalance', { count: tokenBalance })}</span>
-                  </Link>
-                )}
                 <Link
                   href={ROUTES.settings}
                   className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
