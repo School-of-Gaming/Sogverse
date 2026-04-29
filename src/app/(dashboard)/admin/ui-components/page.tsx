@@ -60,6 +60,20 @@ import { computeGlowStyle } from "@/lib/constants/spatial.config";
 import type { ChangeSegment } from "@/hooks/use-group-editor";
 import { ChangeSummaryList, StepProgressPanel } from "@/components/admin/commit-flow-parts";
 import type { StepItem } from "@/components/admin/commit-flow-parts";
+import {
+  ProductBrowseCardView,
+  type ProductBrowseCardViewProps,
+} from "@/components/public/products-v2/product-browse-card-view";
+import {
+  ProductPurchasedCardView,
+  type ProductPurchasedCardViewProps,
+} from "@/components/public/products-v2/product-purchased-card-view";
+import {
+  RegistrationPill,
+  PILL_VARIANTS,
+  type RegistrationPillVariant,
+} from "@/components/public/products-v2/registration-pill";
+import type { RegistrationState } from "@/components/public/products-v2/derive-registration-state";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -760,6 +774,304 @@ function CommitFlowDialogDemo() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Products v2 (browse + purchased cards, registration pill)          */
+/* ------------------------------------------------------------------ */
+
+// Every state where the pill earns a row. Default-open is intentionally
+// excluded — the pill returns null in that case (the Sign-up button
+// alone says everything a parent needs).
+const DEMO_REGISTRATION_STATES: { label: string; state: RegistrationState }[] = [
+  {
+    label: "Almost full · 2 spots left",
+    state: { kind: "open", seatCount: 8, seatsLeft: 2, waitlistEnabled: false },
+  },
+  {
+    label: "Needs more sign-ups (threshold)",
+    state: { kind: "pending_thr", threshold: 6, count: 2 },
+  },
+  {
+    label: "Full · waitlist open",
+    state: { kind: "full_waitlist", seatCount: 8 },
+  },
+  {
+    label: "Full · closed",
+    state: { kind: "full_closed", seatCount: 8 },
+  },
+  {
+    label: "Sign-ups open later",
+    state: { kind: "closed_pre", opensAt: "2026-05-15T00:00:00Z" },
+  },
+  {
+    label: "Already started (camp/event)",
+    state: { kind: "running_late" },
+  },
+  {
+    label: "Ended",
+    state: { kind: "ended" },
+  },
+];
+
+// One sample of each price shape so the price block is exercised across
+// the demo browse cards.
+const SAMPLE_PRICE_BUNDLE: ProductBrowseCardViewProps["price"] = {
+  kind: "bundle_or_sub",
+  perSession: "€18.00",
+  perMonth: "€55.00",
+};
+const SAMPLE_PRICE_UPFRONT: ProductBrowseCardViewProps["price"] = {
+  kind: "upfront",
+  total: "€120.00",
+};
+const SAMPLE_PRICE_FREE: ProductBrowseCardViewProps["price"] = { kind: "free" };
+
+// Browse-card display props for each state we want to render in full.
+const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] = [
+  {
+    label: "Default · plenty of seats (no pill)",
+    props: {
+      name: "Tuesday Minecraft Builders",
+      description:
+        "Weekly creative sessions where your gamer collaborates with new friends and a Gedu who really gets it.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "MINECRAFT",
+      scheduleLine: "Every Tuesday · 17:00 (EET)",
+      ageLine: "Ages 8–12",
+      seatsHint: { kind: "capacity", count: 8 },
+      tagLabels: ["Creative", "Friendly", "Beginner-OK"],
+      price: SAMPLE_PRICE_BUNDLE,
+      state: { kind: "open", seatCount: 8, seatsLeft: 6, waitlistEnabled: false },
+    },
+  },
+  {
+    label: "Almost full · 2 spots left",
+    props: {
+      name: "Wednesday Roblox Crew",
+      description:
+        "Build, race, and collab with your crew — small group with regular faces every week.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "ROBLOX",
+      scheduleLine: "Every Wednesday · 17:00 (EET)",
+      ageLine: "Ages 9–13",
+      seatsHint: { kind: "capacity", count: 8 },
+      tagLabels: ["Small group"],
+      price: SAMPLE_PRICE_BUNDLE,
+      state: { kind: "open", seatCount: 8, seatsLeft: 2, waitlistEnabled: false },
+    },
+  },
+  {
+    label: "Needs more sign-ups",
+    props: {
+      name: "Spring Roblox Build-Off",
+      description:
+        "Group challenge that runs once enough builders sign up — gather your crew and we'll lock in a start date.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "ROBLOX",
+      scheduleLine: "24–28 March · 10:00–14:00 (EET)",
+      ageLine: "Ages 9–14",
+      seatsHint: null,
+      tagLabels: ["Group", "Tournament"],
+      price: SAMPLE_PRICE_UPFRONT,
+      state: { kind: "pending_thr", threshold: 6, count: 2 },
+    },
+  },
+  {
+    label: "Full · waitlist open",
+    props: {
+      name: "Friday Family Fortnite",
+      description:
+        "Drop-in event for parents and gamers — light competition, lots of laughter.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "FORTNITE",
+      scheduleLine: "Friday 12 April · 18:00–20:00 (EET)",
+      ageLine: "Ages 10+",
+      seatsHint: { kind: "capacity", count: 12 },
+      tagLabels: ["Family", "Casual"],
+      price: SAMPLE_PRICE_FREE,
+      state: { kind: "full_waitlist", seatCount: 12 },
+    },
+  },
+  {
+    label: "Sign-ups open later",
+    props: {
+      name: "Summer Adventure Camp",
+      description:
+        "A week-long story-driven adventure across multiple games. Sign-ups open soon.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "ADVENTURE",
+      scheduleLine: "12–16 August · 10:00–15:00 (EET)",
+      ageLine: "Ages 9–13",
+      seatsHint: { kind: "capacity", count: 16 },
+      tagLabels: ["Camp", "Story-driven"],
+      price: SAMPLE_PRICE_UPFRONT,
+      state: { kind: "closed_pre", opensAt: "2026-05-15T00:00:00Z" },
+    },
+  },
+  {
+    label: "Already started (camp)",
+    props: {
+      name: "April Roblox Camp",
+      description:
+        "Already underway — late joins aren't supported once a camp is running.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "ROBLOX",
+      scheduleLine: "20–24 April · 10:00–14:00 (EET)",
+      ageLine: "Ages 8–12",
+      seatsHint: { kind: "capacity", count: 10 },
+      tagLabels: ["Camp"],
+      price: SAMPLE_PRICE_UPFRONT,
+      state: { kind: "running_late" },
+    },
+  },
+  {
+    label: "Ended",
+    props: {
+      name: "March Holiday Tournament",
+      description: "This event has wrapped — keep an eye out for the next one.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "FORTNITE",
+      scheduleLine: "Saturday 22 March · 14:00–17:00 (EET)",
+      ageLine: "Ages 10+",
+      seatsHint: null,
+      tagLabels: ["Tournament"],
+      price: SAMPLE_PRICE_UPFRONT,
+      state: { kind: "ended" },
+    },
+  },
+];
+
+const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProps }[] = [
+  {
+    label: "Consumer club · two gamers enrolled",
+    props: {
+      name: "Tuesday Minecraft Builders",
+      imagePath: null,
+      topicLabel: "MINECRAFT",
+      verbLabel: "Enrolled",
+      gamers: [
+        { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
+        { displayName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
+      ],
+      scheduleSummary: "Every Tuesday · 17:00 (Helsinki)",
+      nextSession: "Tomorrow, 17:00",
+      showManagePayment: true,
+    },
+  },
+  {
+    label: "Camp · three gamers signed up (clip-stack overlap)",
+    props: {
+      name: "Spring Break Roblox Camp",
+      imagePath: null,
+      topicLabel: "ROBLOX",
+      verbLabel: "Signed up",
+      gamers: [
+        { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
+        { displayName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
+        { displayName: "Aino", seed: "86d1eed7-8d73-4de1-a654-064a62b60bc6" },
+      ],
+      scheduleSummary: "24–28 March · 10:00–14:00 (Helsinki)",
+      nextSession: "Mon 24 Mar, 10:00",
+      showManagePayment: true,
+    },
+  },
+];
+
+function PillVariantsGrid() {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
+            <th className="py-2 pr-4 font-medium">State</th>
+            {PILL_VARIANTS.map((v) => (
+              <th key={v} className="px-3 py-2 font-medium">{v}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {DEMO_REGISTRATION_STATES.map(({ label, state }) => (
+            <tr key={label} className="border-b last:border-b-0">
+              <td className="py-2 pr-4 text-xs text-muted-foreground">
+                {label}
+              </td>
+              {PILL_VARIANTS.map((variant) => (
+                <td key={variant} className="px-3 py-2 align-middle">
+                  <RegistrationPill state={state} variant={variant} />
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function BrowseCardsByVariant({ variant }: { variant: RegistrationPillVariant }) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {BROWSE_DEMO_CARDS.map(({ label, props }) => (
+        <div key={label} className="space-y-2">
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <ProductBrowseCardView {...props} pillVariant={variant} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProductsV2Demo() {
+  const [variant, setVariant] = useState<RegistrationPillVariant>("outline");
+
+  return (
+    <div className="space-y-8">
+      <SubSection title="Pill — every state × every visual variant">
+        <p className="text-sm text-muted-foreground mb-3">
+          Compare treatments side-by-side. Each row is one registration state derived by
+          {" "}<code className="font-mono text-xs">deriveRegistrationState</code>; each column is
+          one visual variant exposed by{" "}
+          <code className="font-mono text-xs">RegistrationPill</code>. Pick the
+          treatment that scans best in the grid above and we&rsquo;ll prune the rest.
+        </p>
+        <PillVariantsGrid />
+      </SubSection>
+
+      <SubSection title="Browse cards (in context)">
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-xs text-muted-foreground">Pill variant:</span>
+          {PILL_VARIANTS.map((v) => (
+            <Button
+              key={v}
+              size="sm"
+              variant={variant === v ? "default" : "outline"}
+              onClick={() => setVariant(v)}
+            >
+              {v}
+            </Button>
+          ))}
+        </div>
+        <BrowseCardsByVariant variant={variant} />
+      </SubSection>
+
+      <SubSection title="Purchased cards">
+        <p className="text-sm text-muted-foreground mb-3">
+          The &ldquo;your enrolled / signed up&rdquo; surface — appears above the browse grid on
+          /clubs, /camps, /events when ?mock=1 is set. The verb badge already
+          conveys &ldquo;you&rsquo;re in&rdquo;, so these cards don&rsquo;t carry a registration pill.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {PURCHASED_DEMO_CARDS.map(({ label, props }) => (
+            <div key={label} className="space-y-2">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <ProductPurchasedCardView {...props} />
+            </div>
+          ))}
+        </div>
+      </SubSection>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Page                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -1313,6 +1625,18 @@ export default function AdminUIComponentsPage() {
             ))}
           </div>
         </SubSection>
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 11: Products v2 (parent browse + purchased)           */}
+      {/* ============================================================ */}
+      <Section title="Products v2 — Browse & Purchased Cards">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Parent-facing card surfaces for products_v2 (/clubs, /camps, /events).
+          The registration pill below is the new piece — pick a variant and we&rsquo;ll
+          delete the others.
+        </p>
+        <ProductsV2Demo />
       </Section>
 
     </div>
