@@ -1236,8 +1236,7 @@
       "weekdaySun": "Soch",
       "legendSession": "qaStaHvIS",
       "legendSkipped": "qIl",
-      "skipLine": "{date} · {reason}",
-      "skipExplainer": "qIl jaj — lopno' jaj joq ghoH jaj. jajvam Huch nobbe' toy'wI'lI'."
+      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "bannerOpen": "DaH {verb}",

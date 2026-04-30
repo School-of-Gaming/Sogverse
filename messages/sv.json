@@ -1188,8 +1188,7 @@
       "weekdaySun": "Sön",
       "legendSession": "Pass",
       "legendSkipped": "Inställt",
-      "skipLine": "{date} · {reason}",
-      "skipExplainer": "Inställda pass är helgdagar eller lov. Din spelare debiteras inte för dessa datum."
+      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "bannerOpen": "{verb} nu",

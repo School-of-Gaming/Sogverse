@@ -1188,8 +1188,7 @@
       "weekdaySun": "Su",
       "legendSession": "Tapaaminen",
       "legendSkipped": "Ei tapaamista",
-      "skipLine": "{date} · {reason}",
-      "skipExplainer": "Tapaamattomat päivät ovat juhlapäiviä tai lomia. Pelaajaltasi ei veloiteta näistä päivistä."
+      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "bannerOpen": "{verb} nyt",

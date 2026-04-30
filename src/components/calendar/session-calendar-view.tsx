@@ -15,10 +15,9 @@ import {
 //
 // Visual rules:
 //  - Months scroll horizontally with snap-stops; the next month always
-//    peeks past the right edge so users see there's more to scroll. The
-//    `-mx`/`px` pair bleeds the track to the parent card's inner edges
-//    while keeping the surrounding legend / explainer aligned with the
-//    card padding.
+//    peeks past the right edge so users see there's more to scroll.
+//    Inline padding on the scroller gives breathing room at scrollLeft=0
+//    so the leftmost tile's outline doesn't kiss the card's content edge.
 //  - Each month is its own 7-column grid (Mon-first per Finnish convention).
 //  - Session dates are filled circles tinted with the primary color.
 //  - Skipped dates are an outlined circle with a strikethrough number.
@@ -51,8 +50,6 @@ export function SessionCalendarView({
   locale,
   todayIso,
 }: SessionCalendarViewProps) {
-  const t = useTranslations("productDetail.calendar");
-
   const sessionSet = new Set(sessions.map((s) => s.date));
   const skipMap = new Map<string, string>();
   for (const s of skips) skipMap.set(s.date, s.reason);
@@ -63,11 +60,15 @@ export function SessionCalendarView({
     <div className="space-y-5">
       <Legend />
       <div className="relative">
-        <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-2 sm:-mx-6 sm:px-6">
+        {/* `scroll-px-3` on the scroller mirrors `px-3` so snap-start
+            aligns with the content edge — without it `snap-mandatory`
+            anchors children to the padding-box edge and the scrollbar
+            thumb sits slightly off-leftmost even at scrollLeft=0. */}
+        <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-3 pb-2 scroll-px-3">
           {months.map((monthStart) => (
             <div
               key={monthStart}
-              className="w-[260px] flex-shrink-0 snap-start"
+              className="flex w-[260px] shrink-0 snap-start"
             >
               <MonthGrid
                 monthStart={monthStart}
@@ -79,18 +80,15 @@ export function SessionCalendarView({
             </div>
           ))}
         </div>
-        {/* Right-edge fade hints there's more to scroll. Sits over the
-            track but is pointer-events-none so it doesn't eat scroll
-            gestures or clicks on the last visible month. Sized to match
-            the card's inner padding so it lines up with the card edge. */}
+        {/* Right-edge fade hints there's more to scroll. The negative
+            offset bleeds the gradient past the CardContent padding so
+            it lines up with the card's outline, not the inner content
+            edge. `pointer-events-none` keeps it from eating clicks. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 -right-5 w-12 bg-gradient-to-l from-card to-transparent sm:-right-6"
+          className="pointer-events-none absolute inset-y-0 -right-5 w-16 bg-gradient-to-l from-card to-transparent sm:-right-6"
         />
       </div>
-      {skips.length > 0 && (
-        <p className="text-xs text-muted-foreground">{t("skipExplainer")}</p>
-      )}
     </div>
   );
 }
@@ -135,7 +133,10 @@ function MonthGrid({
   const skipReasons = monthSkipReasons(monthStart, skipMap);
 
   return (
-    <div className="rounded-lg border border-border p-3">
+    // `h-full` + the wrapper's `flex` make every tile take the row's
+    // tallest height so the bottom borders line up across months,
+    // even when only some months have a skip-reasons list.
+    <div className="flex h-full w-full flex-col rounded-lg border border-border p-3">
       <h3 className="text-sm font-semibold capitalize">{monthLabel}</h3>
       <div className="mt-3 grid grid-cols-7 gap-1 text-center text-[10px] uppercase tracking-wide text-muted-foreground">
         {WEEKDAY_KEYS.map((key) => (

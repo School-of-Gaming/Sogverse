@@ -1188,8 +1188,7 @@
       "weekdaySun": "Sun",
       "legendSession": "Session",
       "legendSkipped": "Skipped",
-      "skipLine": "{date} · {reason}",
-      "skipExplainer": "Skipped sessions are public holidays or breaks. Your gamer's plan won't be charged for these dates."
+      "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
       "bannerOpen": "{verb} now",
