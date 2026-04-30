@@ -69,7 +69,7 @@ export function ProductDetailPageBody({
 
         <BackLink productType={product.product_type} />
 
-        <div className="mt-6 grid gap-6 sm:grid-cols-[140px_1fr] sm:items-start">
+        <div className="mt-6 grid grid-cols-[96px_1fr] items-start gap-x-4 gap-y-3 sm:grid-cols-[140px_1fr] sm:gap-x-6">
           <ProductThumbnail
             imagePath={product.image_path ?? ""}
             alt={tr?.name ?? ""}
@@ -84,10 +84,21 @@ export function ProductDetailPageBody({
             <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
               {tr?.name}
             </h1>
+            {/* Description on its own row at mobile width — squeezing it
+                next to a 96px thumbnail makes it 4-5 cramped lines.
+                Spans both columns from sm+ via the `sm:hidden` swap. */}
             {tr?.description && (
-              <p className="mt-2 text-muted-foreground">{tr.description}</p>
+              <p className="mt-2 hidden text-muted-foreground sm:block">
+                {tr.description}
+              </p>
             )}
           </div>
+
+          {tr?.description && (
+            <p className="col-span-2 text-muted-foreground sm:hidden">
+              {tr.description}
+            </p>
+          )}
         </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
@@ -142,22 +153,12 @@ function MainColumn({
   const t = useTranslations("productDetail");
   const uiLocale = resolveLocale(useLocale());
 
-  const tr = resolveTranslation(product.product_translations_v2, uiLocale);
   const tagLabels = resolveTagLabels(product.product_tags_v2, uiLocale);
   const schedule = formatProductSchedule({ product, locale: uiLocale });
   const scheduleLine = renderScheduleLine(schedule);
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="p-5 sm:p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("sections.about")}
-          </h2>
-          <p className="mt-3 leading-relaxed">{tr?.description ?? ""}</p>
-        </CardContent>
-      </Card>
-
       <Card>
         <CardContent className="space-y-3 p-5 sm:p-6 text-sm">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
