@@ -103,10 +103,14 @@ describe("site_details_v2 RLS", () => {
       .select("address")
       .eq("location_id", TEST_IDS.LOCATION_SITE);
 
-    // RLS returns 0 rows rather than an error for SELECT, regardless of
-    // whether the policy denies the row or the GRANT is missing.
-    expect(error).toBeNull();
-    expect(data).toEqual([]);
+    // anon doesn't have a SELECT grant — Postgres rejects the query
+    // before RLS even runs. 42501 ("insufficient_privilege") is the
+    // strongest possible deny: tightening to a row-filter policy
+    // (which would return data: []) would be a regression worth
+    // catching, so we assert the error code rather than just the
+    // absence of rows.
+    expect(error?.code).toBe("42501");
+    expect(data).toBeNull();
   });
 
   it("customer without an enrollment cannot read site_details_v2", async () => {
@@ -115,6 +119,8 @@ describe("site_details_v2 RLS", () => {
       .select("address")
       .eq("location_id", TEST_IDS.LOCATION_SITE);
 
+    // Customer is `authenticated` (has the GRANT), but no policy
+    // matches — RLS silently filters to 0 rows.
     expect(error).toBeNull();
     expect(data).toEqual([]);
   });
