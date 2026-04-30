@@ -87,6 +87,25 @@ Per-locale child tables hold user-visible text. The parent rows hold only struct
 - **Topics and tags are not subject to the en/fi rule** — they're shared reference data and may exist in only one locale at first. Inline-create from the product form writes a single translation in the admin's current UI locale.
 - **Sending all available translations to the client is intentional** — payloads stay small (max 4 locales × 2 short fields), and a future "view this product in another language" UI is trivial.
 
+## Status vs. visibility
+
+These are **two orthogonal concepts** even though they look related at a glance.
+
+- **`is_visible`** — should parents see this product on browse pages? Pure UX gate. Toggleable at any time.
+- **`status`** — what lifecycle state is the product in? `draft`, `pending`, `cancelled`, or the `running` override (with `completed` and `expired` derived from dates).
+
+A product can be in any combination **except one**: a `draft` product must always be hidden. Published-to-parents and incomplete are mutually exclusive — if it's visible, it's no longer a draft. Enforced at the DB by `chk_products_v2_draft_implies_hidden` (migration 00036). The other combinations are all valid: `pending + visible` (the normal published state), `pending + hidden` (complete but the admin is staging), `cancelled + visible` (still listed with an "Ended" treatment), and so on.
+
+### What `draft` means
+
+`draft` means *the product's mandatory fields are not yet filled in*. Not "hidden", not "unpublished" — **incomplete**. The schema honors this by giving `draft` rows escape hatches on the constraints that require `end_date`, `registration_opens_at`, etc., so an admin can save a half-finished sketch and come back to it.
+
+**`draft` is reserved, not active today.** The current admin create form runs full `validate()` before submitting, so it only ever produces fully-populated rows. It emits `status: "pending"` unconditionally — visibility is the sole knob it exposes. No row created via the UI today should land in `draft`. The state stays in the schema for a future "Save as draft" admin action that deliberately bypasses validation.
+
+The list page reflects this contract: when the future flow lands, a `draft` row will be implicitly hidden (you wouldn't expose an incomplete product to parents), and the list UI suppresses the redundant "Hidden" pill on rows whose status is `draft`. So a draft row reads as "Draft" only; a non-draft hidden row reads as "Hidden" only.
+
+History: prior to migration `00035_decouple_draft_from_hidden.sql`, the form tied `is_visible = false` to `status = 'draft'`. That conflation made every hidden product look like an incomplete draft in the admin list. The form was changed to always emit `pending`, existing rows were re-aligned, and the dual semantics were preserved for the future flow.
+
 ## Effective status
 
 `status` stores admin-driven facts only — `draft`, `pending`, `cancelled`, and the `running` override. `pending → running → completed` are derived at read time from stored facts plus `now()`:
