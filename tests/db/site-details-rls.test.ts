@@ -15,7 +15,9 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  * v2 enrollments don't exist yet, so there's no predicate to test
  * against. When that table lands, extend the policy AND this test
  * together (positive: enrolled-family customer can read; negative:
- * customer with no enrollment cannot).
+ * customer with no enrollment cannot). See
+ * docs/products-v2-architecture.md § "Extend site_details_v2 read
+ * policy to purchasing customers" for the planned policy shape.
  */
 
 const supabaseUrl =

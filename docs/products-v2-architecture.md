@@ -325,6 +325,30 @@ Every browse + purchased card state is rendered on `/admin/ui-components` under 
 
 These are known gaps tracked here so they aren't lost. None are blocking the current admin-only flow.
 
+### Extend `site_details_v2` read policy to purchasing customers
+
+Migration `00038_site_details_restrict_to_staff.sql` tightened `site_details_v2` to admin + gedu only. The original handoff intent was admin + gedu + **customers who have purchased a product at that site**, but there's no v2 enrollment / participation table yet to write that predicate against (legacy `group_enrollments` references `products`, not `products_v2`). Until that lands, post-purchase address visibility has to go through an out-of-band channel (admin-rendered confirmation page, transactional email).
+
+**Fix when v2 enrollments ship:** add a third policy on `site_details_v2`:
+
+```sql
+CREATE POLICY "purchasing_customer_read_site_details_v2"
+  ON site_details_v2 FOR SELECT TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM <v2_enrollment_table> e
+    JOIN products_v2 p ON p.id = e.product_id
+    WHERE p.location_id = site_details_v2.location_id
+      AND e.customer_id = auth.uid()  -- or via parent_gamer chain
+      AND e.status = 'active'
+  ));
+```
+
+Extend `tests/db/site-details-rls.test.ts` in the same migration with two cases:
+- positive: customer with an active enrollment at this site **can** read the address.
+- negative: customer **without** an enrollment at this site still **cannot** read it (the existing negative covers this today; keep it once the positive is added).
+
+The same logic applies to `site_staff_details_v2` only if customers ever need to see staff-only fields (gate codes, back-entrance directions) — which they shouldn't. Leave that table admin + gedu only.
+
 ### Inline topic / tag create can leave orphan parent rows on transient failure
 
 `POST /api/admin/topics-v2/create` and `POST /api/admin/tags-v2/create` insert the parent row in `topics_v2` / `tags_v2`, then insert the translation row in `topic_translations_v2` / `tag_translations_v2`, then on translation failure issue a JS-level rollback delete of the parent.
