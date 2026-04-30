@@ -8,7 +8,11 @@ import type { ProductV2BrowseRow } from "@/types";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { formatProductLocation } from "./format-product-location";
 import { formatProductPrice } from "./format-product-price";
-import { formatProductSchedule } from "./format-product-schedule";
+import {
+  formatProductSchedule,
+  type ProductScheduleSummary,
+  type ScheduleTimeGroup,
+} from "./format-product-schedule";
 import {
   ProductBrowseCardView,
   type LocationLine,
@@ -24,12 +28,6 @@ interface ProductBrowseCardProps {
 // participation lookups happen here so the View stays purely
 // presentational — that's what lets the UI Components page render every
 // state by hand without forging a full BrowseRow.
-//
-// Helper functions for schedule-line text are inlined inside the
-// component so they can use the closure-bound `t` — passing
-// `ReturnType<typeof useTranslations>` across function boundaries trips
-// next-intl's typed-message-key inference into TS2589 ("excessively
-// deep") on this path.
 export function ProductBrowseCard({ product }: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
   const uiLocale = resolveLocale(useLocale());
@@ -60,39 +58,7 @@ export function ProductBrowseCard({ product }: ProductBrowseCardProps) {
     locale: uiLocale,
   });
 
-  const scheduleLine = (() => {
-    switch (schedule.kind) {
-      case "every": {
-        const main = t("scheduleEvery", {
-          day: schedule.day,
-          time: schedule.time,
-        });
-        return schedule.tz
-          ? `${main} ${t("tzNote", { tz: schedule.tz })}`
-          : main;
-      }
-      case "range": {
-        const main = t("scheduleRange", {
-          startDate: schedule.startDate,
-          endDate: schedule.endDate,
-        });
-        return schedule.tz
-          ? `${main} ${t("tzNote", { tz: schedule.tz })}`
-          : main;
-      }
-      case "single": {
-        const main = t("scheduleSingle", {
-          date: schedule.date,
-          time: schedule.time,
-        });
-        return schedule.tz
-          ? `${main} ${t("tzNote", { tz: schedule.tz })}`
-          : main;
-      }
-      case "tbd":
-        return "";
-    }
-  })();
+  const scheduleLines = scheduleLinesForCard(schedule);
 
   const seatsHint: SeatsHint | null =
     product.seat_count !== null
@@ -109,7 +75,7 @@ export function ProductBrowseCard({ product }: ProductBrowseCardProps) {
       description={tr?.description ?? null}
       imagePath={product.image_path}
       topicLabel={topicTr?.name ?? null}
-      scheduleLine={scheduleLine}
+      scheduleLines={scheduleLines}
       ageLine={t("ages", { min: product.min_age, max: product.max_age })}
       seatsHint={seatsHint}
       locationLine={locationLine}
@@ -161,4 +127,54 @@ function resolveTagLabels(
       return tr?.name ?? pt.tags_v2.slug;
     })
     .filter((s): s is string => Boolean(s));
+}
+
+// Card line count follows what's typical for each product type. Camps
+// usually run multiple days per week with the same daily hours, so we
+// split: line 1 is the date range, line 2 is the daily hours. Clubs
+// usually run one weekday, so a single line fits — multi-weekday clubs
+// are rare and fold onto the same line (line-clamp-1 truncates if it
+// gets long; the detail page carries the full picture). Events are
+// single date + time, one line.
+function scheduleLinesForCard(schedule: ProductScheduleSummary): string[] {
+  switch (schedule.kind) {
+    case "tbd":
+      return [];
+    case "recurring": {
+      const main = joinGroups(schedule.groups);
+      return [withTz(main, schedule.tz)];
+    }
+    case "ranged": {
+      const dateLine = withTz(
+        `${schedule.startDate} – ${schedule.endDate}`,
+        schedule.tz,
+      );
+      if (schedule.groups.length === 0) return [dateLine];
+      // Common case (single time-bucket across all camp days): drop the
+      // weekday list — the date range above already covers the calendar
+      // shape, and "09:00–15:00" alone reads cleanly as "daily hours".
+      // Multi-bucket camps keep weekday labels so the info isn't lost.
+      const timeLine =
+        schedule.groups.length === 1
+          ? `${schedule.groups[0].startTime}–${schedule.groups[0].endTime}`
+          : joinGroups(schedule.groups);
+      return [dateLine, timeLine];
+    }
+    case "single": {
+      const timeSuffix = schedule.time
+        ? ` · ${schedule.time.start}–${schedule.time.end}`
+        : "";
+      return [withTz(`${schedule.date}${timeSuffix}`, schedule.tz)];
+    }
+  }
+}
+
+function joinGroups(groups: readonly ScheduleTimeGroup[]): string {
+  return groups
+    .map((g) => `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`)
+    .join(", ");
+}
+
+function withTz(line: string, tz: string): string {
+  return tz ? `${line} (${tz})` : line;
 }

@@ -25,7 +25,12 @@ export interface ProductBrowseCardViewProps {
   description: string | null;
   imagePath: string | null;
   topicLabel: string | null;
-  scheduleLine: string;
+  /**
+   * Pre-formatted lines describing when the product runs. Typically 1
+   * (clubs/events) or 2 (camps). The adapter — `scheduleLinesForCard`
+   * in `product-browse-card.tsx` — owns the splitting rule.
+   */
+  scheduleLines: readonly string[];
   ageLine: string;
   /** Pre-formatted "{count} seats" / "Waitlist available" / null. */
   seatsHint: SeatsHint | null;
@@ -57,7 +62,7 @@ export function ProductBrowseCardView({
   description,
   imagePath,
   topicLabel,
-  scheduleLine,
+  scheduleLines,
   ageLine,
   seatsHint,
   locationLine,
@@ -110,7 +115,11 @@ export function ProductBrowseCardView({
             </div>
 
             <ul className="space-y-0.5 text-xs text-muted-foreground">
-              {scheduleLine && <li className="line-clamp-1">{scheduleLine}</li>}
+              {scheduleLines.map((line, idx) => (
+                <li key={idx} className="line-clamp-1">
+                  {line}
+                </li>
+              ))}
               <li className="flex items-center gap-1 line-clamp-1">
                 {locationLine.kind === "in_person" ? (
                   <MapPin className="h-3 w-3 shrink-0" aria-hidden />

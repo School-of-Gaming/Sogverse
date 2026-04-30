@@ -16,7 +16,10 @@ import type {
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
 import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
 import { formatProductLocation } from "./format-product-location";
-import { formatProductSchedule } from "./format-product-schedule";
+import {
+  formatProductSchedule,
+  type ProductScheduleSummary,
+} from "./format-product-schedule";
 import type { RegistrationState } from "./derive-registration-state";
 import { SignupPanel } from "./signup-panel";
 import type { AuthState } from "./signup-panel-view";
@@ -164,7 +167,7 @@ function MainColumn({
 
   const tagLabels = resolveTagLabels(product.product_tags_v2, uiLocale);
   const schedule = formatProductSchedule({ product, locale: uiLocale });
-  const scheduleLine = renderScheduleLine(schedule);
+  const scheduleLines = renderScheduleLinesForDetail(schedule);
   const location = formatProductLocation(product);
 
   return (
@@ -175,7 +178,15 @@ function MainColumn({
             {t("sections.whenWhere")}
           </h2>
           <DetailRow icon={Clock} label={t("info.schedule")}>
-            {scheduleLine}
+            {scheduleLines.length === 1 ? (
+              scheduleLines[0]
+            ) : (
+              <ul className="space-y-0.5">
+                {scheduleLines.map((line, idx) => (
+                  <li key={idx}>{line}</li>
+                ))}
+              </ul>
+            )}
           </DetailRow>
           <DetailRow
             icon={product.is_remote && location?.kind !== "muni" ? Globe : MapPin}
@@ -324,19 +335,45 @@ function renderLocationLine({
   }
 }
 
-function renderScheduleLine(
-  schedule: ReturnType<typeof formatProductSchedule>,
-): string {
+// Detail page has the room to break per-time-group lines apart, so a
+// multi-day camp ("Apr 30 – May 5" + "Mon, Wed, Fri · 09:00–15:00") and a
+// rare multi-time club (one line per group) both surface their full
+// shape here, with the card carrying the typical-case summary.
+//
+// Timezone label appears once on the lead line — repeating it on each
+// group reads as noise; readers infer same-tz for the whole schedule.
+function renderScheduleLinesForDetail(
+  schedule: ProductScheduleSummary,
+): string[] {
   switch (schedule.kind) {
-    case "every":
-      return `${schedule.day} · ${schedule.time}${schedule.tz ? ` (${schedule.tz})` : ""}`;
-    case "range":
-      return `${schedule.startDate} – ${schedule.endDate}${schedule.tz ? ` (${schedule.tz})` : ""}`;
-    case "single":
-      return `${schedule.date} · ${schedule.time}${schedule.tz ? ` (${schedule.tz})` : ""}`;
     case "tbd":
-      return "—";
+      return ["—"];
+    case "recurring":
+      return schedule.groups.map((g, idx) => {
+        const line = `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`;
+        return idx === 0 ? withTz(line, schedule.tz) : line;
+      });
+    case "ranged": {
+      const dateLine = withTz(
+        `${schedule.startDate} – ${schedule.endDate}`,
+        schedule.tz,
+      );
+      const groupLines = schedule.groups.map(
+        (g) => `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`,
+      );
+      return [dateLine, ...groupLines];
+    }
+    case "single": {
+      const time = schedule.time
+        ? ` · ${schedule.time.start}–${schedule.time.end}`
+        : "";
+      return [withTz(`${schedule.date}${time}`, schedule.tz)];
+    }
   }
+}
+
+function withTz(line: string, tz: string): string {
+  return tz ? `${line} (${tz})` : line;
 }
 
 function resolveTagLabels(
