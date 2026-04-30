@@ -1657,6 +1657,20 @@ function ProductDetailDemo() {
   );
 }
 
+// Plain-English labels for each PreviewStateKind. The state key is the
+// internal code name (matches `RegistrationState["kind"]`); the label is
+// what an admin reading this page should see at a glance.
+const STATE_LABELS: Record<PreviewStateKind, string> = {
+  closed_pre: "Pre-launch — registration not yet open",
+  open: "Open for sign-ups",
+  open_almost_full: "Open — almost full",
+  pending_thr: "Pending threshold — needs more sign-ups",
+  full_waitlist: "Full — waitlist available",
+  full_closed: "Full — waitlist closed",
+  running_late: "Already running — no late joins",
+  ended: "Ended",
+};
+
 function ProductDetailPanelTile({
   productType,
   stateKind,
@@ -1669,13 +1683,18 @@ function ProductDetailPanelTile({
 
   return (
     <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-mono text-muted-foreground">{stateKind}</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-medium leading-tight">
+            {STATE_LABELS[stateKind]}
+          </p>
+          <p className="text-xs font-mono text-muted-foreground">{stateKind}</p>
+        </div>
         <a
           href={fullPageHref}
           target="_blank"
           rel="noreferrer"
-          className="text-xs font-medium text-primary hover:underline"
+          className="shrink-0 text-xs font-medium text-primary hover:underline"
         >
           Preview full page →
         </a>
@@ -1685,7 +1704,6 @@ function ProductDetailPanelTile({
           product={fixture.product}
           state={fixture.state}
           authState={fixture.authState}
-          fixedNowMs={fixture.fixedNowMs}
         />
       </div>
     </div>

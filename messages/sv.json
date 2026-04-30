@@ -1228,10 +1228,10 @@
       "endedNote": "Den här är redan avslutad. Håll utkik efter nästa omgång.",
       "runningLateNote": "Vi har redan börjat – anmälan är stängd. Nästa omgång öppnar snart.",
       "rules": {
-        "consumer_club": "Jag godkänner klubbens regler och förstår att upprepad ogiltig frånvaro kan öppna mitt barns plats för nästa familj på väntelistan.",
-        "municipality_club": "Jag godkänner klubbens regler.",
-        "camp": "Jag godkänner lägrets regler och förstår avbokningsvillkoren.",
-        "event": "Jag har läst evenemangets information och förstår att mitt barn kan behöva en vårdnadshavare närvarande beroende på ålder."
+        "consumer_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
+        "municipality_club": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende, samt att upprepad oanmäld frånvaro kan göra att mitt barns plats erbjuds nästa familj på väntelistan.",
+        "camp": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
+        "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende."
       },
       "whoAreYouSigningUp": "Vem anmäler du?",
       "selectGamer": "Välj",

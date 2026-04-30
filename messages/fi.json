@@ -1228,10 +1228,10 @@
       "endedNote": "Tämä on jo päättynyt. Pidä silmällä seuraavaa kierrosta.",
       "runningLateNote": "Olemme jo aloittaneet – ilmoittautuminen on suljettu. Seuraava kierros avautuu pian.",
       "rules": {
-        "consumer_club": "Hyväksyn kerhon säännöt ja ymmärrän, että toistuvat selittämättömät poissaolot voivat avata lapseni paikan jonotuslistan seuraavalle perheelle.",
-        "municipality_club": "Hyväksyn kerhon säännöt.",
-        "camp": "Hyväksyn leirin säännöt ja ymmärrän peruutusehdot.",
-        "event": "Olen lukenut tapahtuman tiedot ja ymmärrän, että lapseni iästä riippuen huoltajan läsnäolo voi olla tarpeen."
+        "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
+        "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
+        "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
+        "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä."
       },
       "whoAreYouSigningUp": "Kenet ilmoitat?",
       "selectGamer": "Valitse",

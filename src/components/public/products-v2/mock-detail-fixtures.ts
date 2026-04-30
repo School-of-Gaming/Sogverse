@@ -1,4 +1,5 @@
 import type { ProductTypeV2 } from "@/types";
+import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductV2DetailRow } from "@/services/products-v2";
 import type { RegistrationState } from "./derive-registration-state";
 import type { AuthState } from "./signup-panel-view";
@@ -7,9 +8,11 @@ import type { AuthState } from "./signup-panel-view";
 // Used by the `/preview/products-v2/[type]/[state]` route + the
 // /admin/ui-components page. Real visitors never land on these.
 //
-// Two stable anchors so the preview is deterministic:
-//  - `FIXED_NOW_MS` — the "now" the detail page is rendered against.
-//  - `OPENS_SOON_MS` / `OPENED_RECENTLY_MS` — relative to FIXED_NOW_MS.
+// `closed_pre` anchors its `opensAt` on `Date.now()` at build time so the
+// countdown shows a live, ticking 2-day-ish window regardless of when an
+// admin loads the page. The other dates (start_date, end_date, holidays)
+// are static reference fixtures — fine for visual review even when the
+// calendar drifts past today.
 //
 // Pick the type / state in the URL; the fixture is built on demand. The
 // returned object is shape-compatible with what the live data fetch
@@ -43,7 +46,10 @@ export const PREVIEW_TYPES: ProductTypeV2[] = [
   "event",
 ];
 
-export const FIXED_NOW_MS = Date.UTC(2026, 0, 5, 12, 0, 0); // Mon 5 Jan 2026, 12:00 UTC
+// Static reference instant for non-ticking dates (start_date, end_date,
+// timestamps on the row). The countdown's `opensAt` is *not* anchored
+// here — see `pickRegistrationOpensAt` for live-time handling.
+const STATIC_REF_MS = Date.UTC(2026, 0, 5, 12, 0, 0); // Mon 5 Jan 2026, 12:00 UTC
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
@@ -52,15 +58,18 @@ interface BuildFixtureResult {
   product: ProductV2DetailRow;
   state: RegistrationState;
   authState: AuthState;
-  fixedNowMs: number;
 }
 
 export function buildDetailFixture(
   productType: ProductTypeV2,
   stateKind: PreviewStateKind,
 ): BuildFixtureResult {
-  const product = buildBaseProduct(productType, stateKind);
-  const state = buildRegistrationState(productType, stateKind);
+  // Capture once so the product row and the registration state agree on
+  // the same "opens at" instant — otherwise the panel countdown could
+  // tick against one timestamp while the row reports another.
+  const nowMs = Date.now();
+  const product = buildBaseProduct(productType, stateKind, nowMs);
+  const state = buildRegistrationState(productType, stateKind, nowMs);
   const authState: AuthState = {
     kind: "ready",
     gamers: [
@@ -69,7 +78,7 @@ export function buildDetailFixture(
     ],
     selectedGamerId: "mock-g-1",
   };
-  return { product, state, authState, fixedNowMs: FIXED_NOW_MS };
+  return { product, state, authState };
 }
 
 // ---------- Base product shape ----------
@@ -77,6 +86,7 @@ export function buildDetailFixture(
 function buildBaseProduct(
   productType: ProductTypeV2,
   stateKind: PreviewStateKind,
+  nowMs: number,
 ): ProductV2DetailRow {
   const billingMode = pickBillingMode(productType);
   const seatCount = stateKind === "pending_thr" ? null : 12;
@@ -88,7 +98,7 @@ function buildBaseProduct(
   // are date-bound; pick small ranges that produce a readable calendar.
   const { startDate, endDate, scheduleSlots } = pickSchedule(productType);
 
-  const registrationOpensAt = pickRegistrationOpensAt(stateKind);
+  const registrationOpensAt = pickRegistrationOpensAt(stateKind, nowMs);
   const status = pickStatus(productType, stateKind);
 
   // Cast through unknown — the mock only fills the fields the detail
@@ -115,8 +125,8 @@ function buildBaseProduct(
     registration_opens_at: registrationOpensAt,
     image_path: null,
     topic_id: "mock-topic-1",
-    created_at: new Date(FIXED_NOW_MS - 30 * DAY_MS).toISOString(),
-    updated_at: new Date(FIXED_NOW_MS - 30 * DAY_MS).toISOString(),
+    created_at: new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString(),
+    updated_at: new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString(),
     topics_v2: {
       slug: "minecraft",
       kind: "game",
@@ -158,14 +168,7 @@ function buildBaseProduct(
     product_prices_v2:
       billingMode === "free" || billingMode === "external_contract"
         ? []
-        : [
-            {
-              product_id: `mock-${productType}-${stateKind}`,
-              currency: "EUR",
-              price_per_session: productType === "consumer_club" ? 1000 : 9000,
-              price_per_month: 3600,
-            } as never,
-          ],
+        : buildPriceRows(productType, stateKind),
     schedule_slots_v2: scheduleSlots,
     holidays: pickHolidays(productType),
   } as unknown as ProductV2DetailRow;
@@ -272,16 +275,45 @@ function pickBillingMode(
   }
 }
 
+// ---------- Price rows ----------
+
+// The admin create form requires a row per supported currency (validated
+// in product-v2-build.ts), so the mock has to as well — otherwise the
+// panel falls into the "Pricing isn't available in {currency}" branch
+// when the viewer's currency picker is on GBP or USD.
+//
+// Static FX-ish rates are fine here: this is a visual reference fixture,
+// not a checkout.
+const FX_FROM_EUR = { eur: 1, gbp: 0.86, usd: 1.08 } as const;
+
+function buildPriceRows(
+  productType: ProductTypeV2,
+  stateKind: PreviewStateKind,
+): unknown[] {
+  const eurSession = productType === "consumer_club" ? 1000 : 9000;
+  const eurMonth = 3600;
+  return SUPPORTED_CURRENCIES.map((currency) => ({
+    product_id: `mock-${productType}-${stateKind}`,
+    currency,
+    price_per_session: Math.round(eurSession * FX_FROM_EUR[currency]),
+    price_per_month: Math.round(eurMonth * FX_FROM_EUR[currency]),
+  }));
+}
+
 // ---------- Registration drop instant ----------
 
-function pickRegistrationOpensAt(stateKind: PreviewStateKind): string {
+function pickRegistrationOpensAt(
+  stateKind: PreviewStateKind,
+  nowMs: number,
+): string {
   switch (stateKind) {
     case "closed_pre":
-      // 2 days, 4 hrs ahead — gives the countdown enough digits.
-      return new Date(FIXED_NOW_MS + 2 * DAY_MS + 4 * HOUR_MS).toISOString();
+      // 2 days, 4 hrs ahead of *now* — gives the countdown enough digits
+      // and ensures it actually ticks for an admin reviewing the mock.
+      return new Date(nowMs + 2 * DAY_MS + 4 * HOUR_MS).toISOString();
     default:
       // Already open in every other state.
-      return new Date(FIXED_NOW_MS - DAY_MS).toISOString();
+      return new Date(nowMs - DAY_MS).toISOString();
   }
 }
 
@@ -310,13 +342,14 @@ function pickStatus(
 function buildRegistrationState(
   productType: ProductTypeV2,
   stateKind: PreviewStateKind,
+  nowMs: number,
 ): RegistrationState {
   void productType;
   switch (stateKind) {
     case "closed_pre":
       return {
         kind: "closed_pre",
-        opensAt: new Date(FIXED_NOW_MS + 2 * DAY_MS + 4 * HOUR_MS).toISOString(),
+        opensAt: new Date(nowMs + 2 * DAY_MS + 4 * HOUR_MS).toISOString(),
       };
     case "open":
       return {

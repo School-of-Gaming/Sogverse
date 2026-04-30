@@ -375,3 +375,21 @@ For events it's wrong. A Friday 18:00 Fortnite party becomes `running_late` at F
 - Worth a small unit test: an event at `start_date=2026-04-12` / `start_time=18:00:00` / timezone `Europe/Helsinki` is `open` at 17:59 local but `running_late` at 18:00 local.
 
 **Side note:** the `running_late` card today still renders the price block but no CTA, so the parent sees an orphaned price. When this fix lands, also clean up the bottom block — show a soft "this one's already underway" line for `running_late`, parallel to the `ended` treatment, instead of a price floating with no action.
+
+### CTA stays active when a price row is missing for the viewer's currency
+
+The admin create form validates that every paid product has a row in EUR, GBP, and USD before submit (`product-v2-build.ts:163`), but the database does not enforce it — `product_prices_v2` is just a `(product_id, currency)` PK with no count constraint, and the `create_product_v2` RPC inserts whatever the form sends. The "currencies always complete" invariant is form-side only.
+
+When a product *does* end up with a missing currency (manual SQL insert, future migration that adds a 4th currency before backfilling existing rows, a relaxed form), the surfaces handle it like this:
+
+- **Browse card** (`product-browse-card-view.tsx`, `PriceBlock` `case "unavailable"`) renders "Not in {currency}" in the price slot.
+- **Detail page panel** (`pricing-panel-view.tsx`, `SingleRow` `case "unavailable"`) renders "Not available in {currency}" in the pricing block.
+
+In both places the **CTA button stays active**. On the card the CTA is derived from `useRegistrationCta(state)` — purely registration state, blind to price availability. On the detail panel, `priceForCta` (`signup-panel-view.tsx`) returns `null` for `kind: "unavailable"`, which only drops the price suffix from the label; the button itself isn't disabled.
+
+**Impact:** Today's checkout is UI-only, so the click is a no-op and the issue is invisible. Once Stripe Checkout is wired, a parent could click "Sign up" on a product they literally cannot purchase in their currency, hit a server-side price-validation failure, and get a generic error — a confusing dead end. Likelihood is low because the admin form is the only mutation path and it enforces all three currencies.
+
+**Fix sketch:**
+- Plumb price availability into the CTA decision. The pricing-options builder already returns `defaultKey: "unavailable"` and `single: { kind: "unavailable" }` in this case — the View can read that and render a disabled button (or hide it entirely) with a one-line "Switch to {available currency} to sign up" hint.
+- Same hook on the browse card: when `formatProductPrice` returns `kind: "unavailable"`, render the price-block fallback as today but skip the CTA, parallel to the `ended` treatment.
+- Optional follow-on: a more aggressive variant filters the product out of the browse list entirely for that currency, on the theory that "exists but unbuyable" is worse than "doesn't appear." Decide based on whether we expect partial-currency products to be a real ops scenario or strictly a defensive fallback.

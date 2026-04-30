@@ -1228,10 +1228,10 @@
       "endedNote": "This one already wrapped. Keep an eye out for the next one.",
       "runningLateNote": "We've already started — sign-up is closed. The next round will open soon.",
       "rules": {
-        "consumer_club": "I agree to the club's code of conduct and understand that repeated unexcused absences may open my child's seat for the next family on the waitlist.",
-        "municipality_club": "I agree to the club's code of conduct.",
-        "camp": "I agree to the camp's code of conduct and understand the cancellation window.",
-        "event": "I've read the event details and understand my child may need a parent or guardian present depending on age."
+        "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
+        "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child's seat for the next family on the waitlist.",
+        "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
+        "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
       },
       "whoAreYouSigningUp": "Who are you signing up?",
       "selectGamer": "Select",
