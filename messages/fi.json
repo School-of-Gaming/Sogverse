@@ -308,7 +308,6 @@
         "padletUrl": "Padlet-osoite",
         "minAge": "Alaikäraja",
         "maxAge": "Yläikäraja",
-        "spokenLanguage": "Kieli",
         "deliveredIn": "Toteutuksen kieli",
         "online": "Verkossa",
         "inPerson": "Paikan päällä",
@@ -340,8 +339,6 @@
       },
       "placeholders": {
         "selectTopic": "Valitse aihe…",
-        "selectSite": "Valitse toimipiste",
-        "selectMunicipality": "Valitse kunta",
         "newTopicName": "Uuden aiheen nimi (esim. Among Us, Digihyvinvointi)",
         "newTagName": "Tunnisteen nimi",
         "padletUrl": "https://padlet.com/...",
@@ -380,7 +377,6 @@
         "cancel": "Peruuta",
         "pick": "Valitse",
         "noVenueHint": "Ei fyysistä toimipaikkaa. Vanhemmat, jotka selaavat alueella {name} — tai missä tahansa sen sisällä — näkevät tämän tuotteen.",
-        "noSitesYet": "ei vielä toimipisteitä",
         "memberNotesLabel": "Jäsenille näkyvät tiedot",
         "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
         "memberNotesPlaceholder": "Osoitetiedot, parkkipaikka, esteettömyys — kaikki mitä vanhempien on hyvä tietää.",
@@ -397,7 +393,6 @@
       "pricing": {
         "currencyPickerLabel": "Valuutta",
         "fxSuggested": "Ehdotus tämän päivän EUR-kurssilla ({rate}). Muokkaa halutessasi.",
-        "fxUnavailable": "Valuuttakurssia ei saatu haettua — syötä manuaalisesti.",
         "perSessionLabel": "Hinta per kerta",
         "perMonthLabel": "Hinta per kuukausi",
         "totalLabel": "Kokonaishinta",
@@ -426,23 +421,19 @@
         "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
       },
       "hints": {
-        "noTopics": "Ei vielä aiheita. Lisää uusi valitsimen vieressä olevalla + -painikkeella.",
         "topicHint": "Pääaihe — yksi per tuote. Mistä kerrat oikeasti kertovat.",
         "tagsHint": "Valinnainen. Auttaa vanhempia suodattamaan tuotteita selatessaan.",
         "padletHint": "Valinnainen. Jaetaan perheille ilmoittautumisen jälkeen.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
-        "noLocations": "Ei sopivia sijainteja. Luo uusi + -painikkeella.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
         "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
         "municipalityHint": "Kuntakerhot ovat aina sidottu tiettyyn kuntaan — siihen joka sen maksaa. Sen kunnan (tai sen sisällä olevan pienemmän alueen) vanhemmat näkevät sen selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
-        "eventWeekdayDerived": "Tapahtuman viikonpäivä päätellään automaattisesti päivämäärästä.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
         "endDateOpt": "Jätä tyhjäksi jatkuvalle kerholle ilman loppupäivää.",
         "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät \"X / Y tarvitaan\" -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
-        "holidaySkips": "Kalenterin päivinä kertoja ei pidetä.",
         "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
         "groupsHint": "Lisää ryhmät nyt jos tiedät jo, miten haluat tämän järjestää — tai jätä tyhjäksi ja lisää myöhemmin tuotesivulta, kun näet ilmoittautuneiden määrän.",
         "groupsNotWired": "Ryhmien käyttöliittymä on paikoillaan, mutta sitä ei ole vielä yhdistetty taustajärjestelmään — ryhmävalintojasi ei tallenneta lähetyksessä. Tulossa pian.",
@@ -555,7 +546,6 @@
         "defaultName": "Ryhmä {letter}",
         "addGroup": "Lisää ryhmä",
         "addGeduTo": "Lisää Gedu ryhmään {name}",
-        "addGeduGeneric": "Lisää Gedu ryhmään",
         "addGeduDescription": "Tähän ryhmään nimetyt Gedut ohjaavat sen kerrat. Verkossa toteutettavissa tuotteissa he voivat tarvittaessa hypätä myös muiden ryhmien puhehuoneisiin saman tuotteen sisällä."
       }
     },
@@ -863,15 +853,6 @@
     "error": "Jokin meni pieleen kassalle siirryttäessä. <link>Palaa takaisin</link> ja yritä uudelleen."
   },
   "clubs": {
-    "listing": {
-      "heading": "Kerhomme",
-      "subheading": "Tutustu Minecraft-kerhoihimme — jokaista johtaa ammattimainen pelikasvattaja.",
-      "noClubs": "Kerhoja ei saatavilla",
-      "checkBackSoon": "Palaa pian katsomaan uusia kerhoja!",
-      "needHelp": "Tarvitsetko apua valinnassa?",
-      "needHelpDescription": "Etkö ole varma, mikä kerho sopii perheellesi? Ota yhteyttä niin annamme henkilökohtaisia suosituksia lastesi iän ja kiinnostusten perusteella.",
-      "learnMoreAboutUs": "Lue lisää meistä"
-    },
     "tokenCost": "{cost} Sorggaa",
     "detail": {
       "backToClubs": "Takaisin kerhoihin",
@@ -1133,7 +1114,6 @@
       "externalContract": "Kuntasi rahoittama",
       "notAvailableInCurrency": "Ei valuutassa {currency}",
       "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
-      "seatsLimited": "Rajoitettu paikkamäärä",
       "waitlistAvailable": "Jonotuslista käytössä",
       "endedBadge": "Päättynyt",
       "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",

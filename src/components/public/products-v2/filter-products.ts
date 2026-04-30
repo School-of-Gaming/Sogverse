@@ -13,6 +13,12 @@ import type { ProductV2BrowseRow } from "@/types";
 //
 // Filters AND together: a product must pass every active filter.
 // Empty filter values are no-ops, so unset filters always pass.
+//
+// Slug invariant: incoming filter values are pre-lowercased by
+// `use-browse-filters.ts`, and topic/tag slugs are written lowercase by
+// `slugify()` in their create routes. Comparisons here assume both sides
+// are lowercase — if a slug ever lands in the DB with mixed case (raw
+// SQL, seed data) the filter will silently drop matching rows.
 
 export interface BrowseFilters {
   topics: string[];

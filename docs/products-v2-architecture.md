@@ -239,3 +239,27 @@ The TS helper (`effective-status.ts`) uses `date-fns-tz` to compare `start_date`
 ### Manage topic & tag translations admin UI
 
 Inline-create writes a single translation in the admin's current UI locale (intentional simplification). Topics and tags are not subject to the en/fi rule. Until a "Manage topic & tag translations" admin page ships, parents on a locale that lacks a topic/tag translation see the resolver fallback.
+
+### Browse page gates entire surface on three queries
+
+`ProductBrowsePage` (`src/components/public/products-v2/product-browse-page.tsx`) waits on `useVisibleProductsV2ByType`, `useTopicsV2`, and `useTagsV2` together before rendering anything below the heading. Topics and tags are platform-wide, almost always cached, and not needed to render the product grid — gating on them blocks the cold-cache visitor on the slowest of three independent queries for no reason.
+
+**Impact:** Low — the topics/tags queries are very fast and the catalog is small. Visible only on the first cold load. Filed here so we don't forget to peel apart if the surface ever feels sluggish.
+
+**Fix:** Scope the spinner to `productsLoading` only. Render the purchased rail (mock or real) immediately, render `<ProductBrowseFilters>` with empty chip rows while topics/tags are loading, and let the chips fill in as their queries return — the row position is already reserved so no layout shift.
+
+### Events should remain purchasable on their start day until the actual start time
+
+Today, `deriveRegistrationState` (`src/components/public/products-v2/derive-registration-state.ts`) returns `running_late` for any camp or event whose `effectiveStatus` is `running` — and `effectiveStatus` flips to `running` at 00:00 local on the `start_date`, since `start_date` is a date-only column. The card then hides the CTA for the rest of the day.
+
+For camps this is fine — a 5-day Roblox camp starting Tuesday shouldn't take a new sign-up Tuesday morning, the cohort already started together. CPO has confirmed: keep camps locked at the start-of-day boundary.
+
+For events it's wrong. A Friday 18:00 Fortnite party becomes `running_late` at Friday 00:00 — 18 hours before it actually starts — and a parent browsing Friday morning can't sign their kid up for tonight. The lockout boundary should be the event's actual start time, not midnight.
+
+**Fix sketch:**
+- Project the event's start moment in its timezone: combine `start_date` with the first `schedule_slots_v2.start_time` (events have a single slot per redesign §5.1) to get an instant.
+- For `event` only, the deriver returns `running_late` once `now >= startInstant` — not when `effectiveStatus` flips to `running`.
+- Camps keep the current "running ⇒ running_late" behaviour (`LATE_JOIN_LOCKED.camp = true`, no time component needed).
+- Worth a small unit test: an event at `start_date=2026-04-12` / `start_time=18:00:00` / timezone `Europe/Helsinki` is `open` at 17:59 local but `running_late` at 18:00 local.
+
+**Side note:** the `running_late` card today still renders the price block but no CTA, so the parent sees an orphaned price. When this fix lands, also clean up the bottom block — show a soft "this one's already underway" line for `running_late`, parallel to the `ended` treatment, instead of a price floating with no action.

@@ -31,17 +31,14 @@ export interface FormatScheduleArgs {
   locale: string;
 }
 
-// Monday is weekday 0 in our schema (per redesign §5.1: "0=Mon..6=Sun").
-// Use a known Monday as the seed date so we can ask Intl to format the
-// resulting day name in the user's locale.
-const SCHEMA_WEEKDAY_OFFSET_FROM_UTC = [1, 2, 3, 4, 5, 6, 0] as const;
+// Schema labels Monday as 0 (per redesign §5.1: "0=Mon..6=Sun"). Seed a
+// known Monday so adding `weekday` directly walks forward through the
+// week, then ask Intl to render the day name in the user's locale.
 const WEEKDAY_SEED = new Date(Date.UTC(2024, 0, 1)); // a Monday
 
 export function formatWeekday(weekday: number, locale: string): string {
-  const utcDay = SCHEMA_WEEKDAY_OFFSET_FROM_UTC[weekday] ?? 1;
   const d = new Date(WEEKDAY_SEED);
-  // Shift forward (Mon → Mon..Sun) — works because seed is a Monday.
-  d.setUTCDate(WEEKDAY_SEED.getUTCDate() + ((utcDay + 6) % 7));
+  d.setUTCDate(WEEKDAY_SEED.getUTCDate() + weekday);
   return new Intl.DateTimeFormat(locale, { weekday: "long" }).format(d);
 }
 

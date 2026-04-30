@@ -308,7 +308,6 @@
         "padletUrl": "Padlet-URL",
         "minAge": "Min ålder",
         "maxAge": "Max ålder",
-        "spokenLanguage": "Talat språk",
         "deliveredIn": "Genomförs på",
         "online": "Online",
         "inPerson": "På plats",
@@ -340,8 +339,6 @@
       },
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
-        "selectSite": "Välj en lokal",
-        "selectMunicipality": "Välj en kommun",
         "newTopicName": "Nytt ämne (t.ex. Among Us, Digital balans)",
         "newTagName": "Taggens namn",
         "padletUrl": "https://padlet.com/...",
@@ -380,7 +377,6 @@
         "cancel": "Avbryt",
         "pick": "Välj",
         "noVenueHint": "Ingen fysisk lokal. Föräldrar som söker i {name} — eller i ett mindre område inom det — ser denna produkt.",
-        "noSitesYet": "inga lokaler ännu",
         "memberNotesLabel": "Medlemssynliga anteckningar",
         "memberNotesFieldLabel": "Anteckningar för föräldrar och spelare",
         "memberNotesPlaceholder": "Adressdetaljer, parkering, tillgänglighet — allt föräldrar behöver veta.",
@@ -397,7 +393,6 @@
       "pricing": {
         "currencyPickerLabel": "Valuta",
         "fxSuggested": "Förslag från dagens EUR-kurs ({rate}). Redigera vid behov.",
-        "fxUnavailable": "Kunde inte hämta dagens valutakurs — ange manuellt.",
         "perSessionLabel": "Pris per tillfälle",
         "perMonthLabel": "Pris per månad",
         "totalLabel": "Totalpris",
@@ -426,23 +421,19 @@
         "scheduledDescription": "Föräldrar ser en nedräkning till dess. Användbart för biljettsläpp-liknande lanseringar."
       },
       "hints": {
-        "noTopics": "Inga ämnen än. Lägg till ett med + -knappen bredvid väljaren.",
         "topicHint": "Det primära ämnet — ett per produkt. Vad tillfällena faktiskt handlar om.",
         "tagsHint": "Valfritt. Hjälper föräldrar filtrera produkter när de bläddrar.",
         "padletHint": "Valfritt. Delas med familjer efter att de anmält sig.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",
-        "noLocations": "Inga matchande platser. Skapa en med + -knappen.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
         "voiceRoomAuto": "Ett röstrum skapas automatiskt för denna produkt.",
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik kommun — den som betalar. Föräldrar från den kommunen (eller mindre område inom den) ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
-        "eventWeekdayDerived": "Evenemangets veckodag härleds automatiskt från datumet.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
         "endDateOpt": "Lämna tomt för en pågående klubb utan slutdatum.",
         "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare \"X av Y behövs\" medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
-        "holidaySkips": "Tillfällen på kalenderns lovdagar hoppas över.",
         "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
         "groupsHint": "Lägg till grupper nu om du redan vet hur du vill organisera detta — eller lämna tomt och lägg till senare från produktsidan, när du ser hur många spelare som anmäler sig.",
         "groupsNotWired": "Gruppgränssnittet finns på plats men är ännu inte kopplat till backend — dina gruppval sparas inte vid skicka. Kommer snart.",
@@ -555,7 +546,6 @@
         "defaultName": "Grupp {letter}",
         "addGroup": "Lägg till en grupp",
         "addGeduTo": "Lägg till Gedu i {name}",
-        "addGeduGeneric": "Lägg till Gedu i grupp",
         "addGeduDescription": "Geduer som tilldelats denna grupp kör dess tillfällen. För onlineprodukter kan de även hoppa in i andra gruppers röstrum inom samma produkt vid behov."
       }
     },
@@ -863,15 +853,6 @@
     "error": "Något gick fel vid kassan. <link>Gå tillbaka</link> och försök igen."
   },
   "clubs": {
-    "listing": {
-      "heading": "Våra klubbar",
-      "subheading": "Utforska våra Minecraft-klubbar — varje klubb leds av en professionell spelfostrare.",
-      "noClubs": "Inga klubbar tillgängliga",
-      "checkBackSoon": "Kom tillbaka snart för nya klubbar!",
-      "needHelp": "Behöver du hjälp att välja?",
-      "needHelpDescription": "Osäker på vilken klubb som passar din familj? Kontakta oss för personliga rekommendationer baserade på dina barns åldrar och intressen.",
-      "learnMoreAboutUs": "Läs mer om oss"
-    },
     "tokenCost": "{cost} Soggar",
     "detail": {
       "backToClubs": "Tillbaka till klubbar",
@@ -1133,7 +1114,6 @@
       "externalContract": "Finansieras av din kommun",
       "notAvailableInCurrency": "Inte i {currency}",
       "seatsCapacity": "{count, plural, one {# plats} other {# platser}}",
-      "seatsLimited": "Begränsat antal platser",
       "waitlistAvailable": "Väntelista finns",
       "endedBadge": "Avslutad",
       "endedNote": "Den här är slut — håll utkik efter nästa.",

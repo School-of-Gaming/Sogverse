@@ -356,7 +356,6 @@
         "padletUrl": "Padlet URL",
         "minAge": "DIS mach",
         "maxAge": "DIS tIn",
-        "spokenLanguage": "Hol",
         "deliveredIn": "Hol lo'lu'bogh",
         "online": "rurmey",
         "inPerson": "Daq",
@@ -388,8 +387,6 @@
       },
       "placeholders": {
         "selectTopic": "mu'meH yIwIv…",
-        "selectSite": "Daq yIwIv",
-        "selectMunicipality": "veng yIwIv",
         "newTopicName": "mu'meH chu' (e.g. Among Us, De' yIn)",
         "newTagName": "ngoQ pong",
         "padletUrl": "https://padlet.com/...",
@@ -428,7 +425,6 @@
         "cancel": "pegh",
         "pick": "wIv",
         "noVenueHint": "Daq pagh. {name} vavmey — qoj qo'Daq Sovmey — De' cha'.",
-        "noSitesYet": "Daq pagh",
         "memberNotesLabel": "ghom De' (vavmey je ghItlh)",
         "memberNotesFieldLabel": "vavmey je ghItlh De'",
         "memberNotesPlaceholder": "Daq mIw, mIv pa', baH — vavmey poQ.",
@@ -445,7 +441,6 @@
       "pricing": {
         "currencyPickerLabel": "Huch mIw",
         "fxSuggested": "DaHjaj EUR mI' vo' ({rate}). yIchoH DaneHchugh.",
-        "fxUnavailable": "DaHjaj Huch mI' Suqmeylu'be' — yIngu'.",
         "perSessionLabel": "Huch per qaStaHvIS",
         "perMonthLabel": "Huch per jar",
         "totalLabel": "Huch Hoch",
@@ -474,23 +469,19 @@
         "scheduledDescription": "vavmey ghItlh tagh DIS lulegh."
       },
       "hints": {
-        "noTopics": "mu'meH pagh. + chu'wI' lo'.",
         "topicHint": "mu'meH pIn — wa' per De'. Doch qaStaHvISmey lop.",
         "tagsHint": "vItlhutlh. vavmey nej De'mey rar.",
         "padletHint": "vItlhutlh. ghItlh ghu'pu'vaD.",
         "deliveredInHint": "qaStaHvISmeyDaq Hol pIn.",
-        "noLocations": "Daq pagh. + chu'wI' lo'.",
         "onlineNoLocation": "rurmey — Daq poQbe'. Hoch vavmey nej Hoch lulegh, qo'Daq pagh.",
         "voiceRoomAuto": "voice room chenmoHlu'.",
         "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey (qoj qo'Daq Sov vengDaq) lulegh.",
         "siteHint": "qaStaHvIS Daq mab.",
-        "eventWeekdayDerived": "Qu' jaj tIq jaj vo' yItlhutlh.",
         "eventSingleDay": "Qu'mey wa' jaj qaS.",
         "endDateOpt": "ghomHom taH 'e' yIyajchugh, chIm yIdaj.",
         "thresholdOnly": "jaj tagh DaH pagh. vavmey \"X / Y poQ\" laSvargh lulegh teb. ghItlh law' tIghaj 'ej tagh yIqotlh, jaj tagh yIngu' qIb.",
         "thresholdWithDate": "jaj taghDaq ghItlh law' pumchugh, De' Daq tlhotlh 'ej Huch chegh.",
         "timezoneFixedHelsinki": "poHmey Europe/Helsinki Daq. vavmey Daq poHchaj choHlu'.",
-        "holidaySkips": "jajmey Do' qaStaHvIS qaS pagh.",
         "holidayHint": "jajmey Do' qaStaHvIS pagh qaS. wa' jajmey Do' DachoHchugh, Hoch ghor De'.",
         "groupsHint": "DaH ghommey yIchu' tIghaj 'e' yIyajchugh — qoj chIm yIdaj 'ej tlhe'lu' De' Daq, ghItlh law' lulegh.",
         "groupsNotWired": "ghom De'wI' Daq 'ach backend rarbe' — ghom wIvmey poljbe' pol. tagh DaH.",
@@ -603,7 +594,6 @@
         "defaultName": "ghom {letter}",
         "addGroup": "ghom yIchu'",
         "addGeduTo": "{name} ghomvaD Gedu yIchu'",
-        "addGeduGeneric": "ghomvaD Gedu yIchu'",
         "addGeduDescription": "ghom Gedu ngu'lu' qaStaHvISmey lo'. rurmey De'mey, ghom voicemey latlh ghom rar."
       }
     },
@@ -911,15 +901,6 @@
     "error": "checkout Dabe'lu'. <link>peghegh</link> je boq."
   },
   "clubs": {
-    "listing": {
-      "heading": "maH ghom'a'mey",
-      "subheading": "Minecraft ghom'a'mey yInej — Gedu' Dun Hoch.",
-      "noClubs": "ghom'a'mey tu'be'lu'",
-      "checkBackSoon": "pIq ghom'a'mey chu' ghoS!",
-      "needHelp": "DaQaHnIS'a'?",
-      "needHelpDescription": "ghom'a' nIvbe' DaSovbe''a'? maqIH — DIS je ngoQ Daj qel.",
-      "learnMoreAboutUs": "maH tIqel"
-    },
     "tokenCost": "{cost} darsekmey",
     "detail": {
       "backToClubs": "ghom'a'mey yIchegh",
@@ -1181,7 +1162,6 @@
       "externalContract": "yejquv DIl",
       "notAvailableInCurrency": "{currency} ghajbe'",
       "seatsCapacity": "{count, plural, one {# quS} other {# quS}}",
-      "seatsLimited": "puS quS",
       "waitlistAvailable": "loS tetlh tu'lu'",
       "endedBadge": "rIn",
       "endedNote": "rInpu' – veb yIloS.",
