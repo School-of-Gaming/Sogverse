@@ -80,6 +80,7 @@ export function ProductBrowseCard({ product }: ProductBrowseCardProps) {
       seatsHint={seatsHint}
       locationLine={locationLine}
       tagLabels={resolveTagLabels(product, uiLocale)}
+      spokenLanguageCode={product.spoken_language_code}
       price={price}
       state={state}
       detailHref={detailHref(product.product_type, product.id)}

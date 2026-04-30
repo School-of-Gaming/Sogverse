@@ -96,10 +96,10 @@ export function ProductBrowsePage({
 
   const allLoaded = !productsLoading && !topicsLoading && !tagsLoading;
 
-  const { topics, tags, format } = useBrowseFilters();
+  const { topics, tags, format, languages } = useBrowseFilters();
   const filtered = useMemo(
-    () => filterProducts(products ?? [], { topics, tags, format }),
-    [products, topics, tags, format],
+    () => filterProducts(products ?? [], { topics, tags, format, languages }),
+    [products, topics, tags, format, languages],
   );
 
   const purchasedRows = showMock

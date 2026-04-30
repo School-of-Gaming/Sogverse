@@ -4,7 +4,9 @@ import { useTranslations, useLocale } from "next-intl";
 import { Sliders, X, Globe, MapPin } from "lucide-react";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { LanguageFlag } from "@/components/ui/language-flag";
 import { useTopicsV2, useTagsV2 } from "@/services/products-v2";
+import { useSpokenLanguages } from "@/services/users";
 import { cn } from "@/lib/utils";
 import { useBrowseFilters } from "./use-browse-filters";
 
@@ -24,14 +26,17 @@ export function ProductBrowseFilters() {
   const uiLocale = resolveLocale(useLocale());
   const { data: topics } = useTopicsV2();
   const { data: tags } = useTagsV2();
+  const { data: spokenLanguages } = useSpokenLanguages();
   const {
     topics: selectedTopics,
     tags: selectedTags,
     format: selectedFormat,
+    languages: selectedLanguages,
     hasAny,
     toggleTopic,
     toggleTag,
     toggleFormat,
+    toggleLanguage,
     clear,
   } = useBrowseFilters();
 
@@ -39,6 +44,7 @@ export function ProductBrowseFilters() {
   const subjects = (topics ?? []).filter((tp) => tp.kind === "subject");
   const hasTopicRow = games.length > 0 || subjects.length > 0;
   const hasTagRow = (tags?.length ?? 0) > 0;
+  const hasLanguageRow = (spokenLanguages?.length ?? 0) > 0;
 
   return (
     <div className="rounded-xl border bg-card/50 p-3 sm:p-4">
@@ -126,6 +132,20 @@ export function ProductBrowseFilters() {
             onToggle={() => toggleFormat("in_person")}
           />
         </FilterRow>
+
+        {hasLanguageRow && (
+          <FilterRow label={t("language")}>
+            {spokenLanguages!.map((lang) => (
+              <Chip
+                key={lang.code}
+                icon={<LanguageFlag code={lang.code} showCode={false} title={lang.name} />}
+                label={lang.code.toUpperCase()}
+                active={selectedLanguages.includes(lang.code.toLowerCase())}
+                onToggle={() => toggleLanguage(lang.code)}
+              />
+            ))}
+          </FilterRow>
+        )}
       </div>
     </div>
   );

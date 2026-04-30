@@ -1103,6 +1103,7 @@
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "In person",
+      "language": "Language",
       "clearAll": "Clear",
       "filterBy": "Filter by"
     },
@@ -1205,6 +1206,7 @@
       "ctaPreOpenIdle": "{verb} — not yet open",
       "ctaPreOpenReady": "Ready when sign-up opens",
       "ctaActive": "{verb} now →",
+      "ctaActiveWithPrice": "{verb} now · {price} →",
       "ctaWaitlist": "Join the waitlist",
       "ctaThreshold": "Reserve a spot",
       "ctaSignIn": "Sign in to register",

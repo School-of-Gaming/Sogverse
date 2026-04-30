@@ -1103,6 +1103,7 @@
       "format": "Muoto",
       "formatOnline": "Verkossa",
       "formatInPerson": "Paikan päällä",
+      "language": "Kieli",
       "clearAll": "Tyhjennä",
       "filterBy": "Suodata"
     },
@@ -1205,6 +1206,7 @@
       "ctaPreOpenIdle": "{verb} – ei vielä avoinna",
       "ctaPreOpenReady": "Valmis – odotetaan avaamista",
       "ctaActive": "{verb} nyt →",
+      "ctaActiveWithPrice": "{verb} nyt · {price} →",
       "ctaWaitlist": "Liity jonotuslistalle",
       "ctaThreshold": "Varaa paikka",
       "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",

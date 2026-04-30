@@ -8,6 +8,7 @@ import type { ProductFormat } from "./filter-products";
 const TOPIC_PARAM = "topic";
 const TAG_PARAM = "tag";
 const FORMAT_PARAM = "format";
+const LANGUAGE_PARAM = "lang";
 
 function parseList(raw: string | null): string[] {
   if (!raw) return [];
@@ -48,13 +49,22 @@ export function useBrowseFilters() {
     () => parseFormat(searchParams.get(FORMAT_PARAM)),
     [searchParams],
   );
-  const hasAny = topics.length > 0 || tags.length > 0 || format !== null;
+  const languages = useMemo(
+    () => parseList(searchParams.get(LANGUAGE_PARAM)),
+    [searchParams],
+  );
+  const hasAny =
+    topics.length > 0 ||
+    tags.length > 0 ||
+    format !== null ||
+    languages.length > 0;
 
   const writeNext = useCallback(
     (next: {
       topics?: string[];
       tags?: string[];
       format?: ProductFormat | null;
+      languages?: string[];
     }) => {
       const params = new URLSearchParams(searchParams.toString());
       if (next.topics !== undefined) {
@@ -68,6 +78,10 @@ export function useBrowseFilters() {
       if (next.format !== undefined) {
         if (next.format === null) params.delete(FORMAT_PARAM);
         else params.set(FORMAT_PARAM, next.format);
+      }
+      if (next.languages !== undefined) {
+        if (next.languages.length === 0) params.delete(LANGUAGE_PARAM);
+        else params.set(LANGUAGE_PARAM, next.languages.join(","));
       }
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
@@ -104,18 +118,31 @@ export function useBrowseFilters() {
     [format, writeNext],
   );
 
+  const toggleLanguage = useCallback(
+    (code: string) => {
+      const lower = code.toLowerCase();
+      const next = languages.includes(lower)
+        ? languages.filter((l) => l !== lower)
+        : [...languages, lower];
+      writeNext({ languages: next });
+    },
+    [languages, writeNext],
+  );
+
   const clear = useCallback(() => {
-    writeNext({ topics: [], tags: [], format: null });
+    writeNext({ topics: [], tags: [], format: null, languages: [] });
   }, [writeNext]);
 
   return {
     topics,
     tags,
     format,
+    languages,
     hasAny,
     toggleTopic,
     toggleTag,
     toggleFormat,
+    toggleLanguage,
     clear,
   };
 }

@@ -1151,6 +1151,7 @@
       "format": "rurmeH",
       "formatOnline": "QumDaq",
       "formatInPerson": "Daqvam",
+      "language": "Hol",
       "clearAll": "yISay'moH",
       "filterBy": "yIH'lu'"
     },
@@ -1253,6 +1254,7 @@
       "ctaPreOpenIdle": "{verb} — DaH poSbe'",
       "ctaPreOpenReady": "qonta' poSDI' SuD",
       "ctaActive": "DaH {verb} →",
+      "ctaActiveWithPrice": "DaH {verb} · {price} →",
       "ctaWaitlist": "tetlh DaqaD",
       "ctaThreshold": "pa' yIpol",
       "ctaSignIn": "qonmeH yI'el",

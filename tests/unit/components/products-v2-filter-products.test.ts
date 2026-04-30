@@ -9,10 +9,12 @@ function row(overrides: {
   topicSlug: string | null;
   tagSlugs: string[];
   isRemote?: boolean;
+  spokenLanguageCode?: string;
 }): ProductV2BrowseRow {
   return {
     id: overrides.id,
     is_remote: overrides.isRemote ?? false,
+    spoken_language_code: overrides.spokenLanguageCode ?? "en",
     topics_v2: overrides.topicSlug
       ? {
           slug: overrides.topicSlug,
@@ -36,19 +38,28 @@ const A = row({
   topicSlug: "minecraft",
   tagSlugs: ["beginner"],
   isRemote: true,
+  spokenLanguageCode: "en",
 });
 const B = row({
   id: "b",
   topicSlug: "fortnite",
   tagSlugs: ["competitive", "neurodiversity-friendly"],
   isRemote: false,
+  spokenLanguageCode: "fi",
 });
-const C = row({ id: "c", topicSlug: "pokemon-go", tagSlugs: [], isRemote: true });
+const C = row({
+  id: "c",
+  topicSlug: "pokemon-go",
+  tagSlugs: [],
+  isRemote: true,
+  spokenLanguageCode: "fi",
+});
 const NO_TOPIC = row({
   id: "d",
   topicSlug: null,
   tagSlugs: ["beginner"],
   isRemote: false,
+  spokenLanguageCode: "sv",
 });
 
 const ALL = [A, B, C, NO_TOPIC];
@@ -56,7 +67,7 @@ const ALL = [A, B, C, NO_TOPIC];
 describe("filterProducts", () => {
   it("returns everything when filters are empty", () => {
     expect(
-      filterProducts(ALL, { topics: [], tags: [], format: null }),
+      filterProducts(ALL, { topics: [], tags: [], format: null, languages: [] }),
     ).toEqual(ALL);
   });
 
@@ -66,6 +77,7 @@ describe("filterProducts", () => {
         topics: ["minecraft"],
         tags: [],
         format: null,
+        languages: [],
       }).map((p) => p.id),
     ).toEqual(["a"]);
   });
@@ -75,6 +87,7 @@ describe("filterProducts", () => {
       topics: ["minecraft", "fortnite"],
       tags: [],
       format: null,
+      languages: [],
     }).map((p) => p.id);
     expect(ids).toEqual(["a", "b"]);
   });
@@ -84,6 +97,7 @@ describe("filterProducts", () => {
       topics: ["minecraft"],
       tags: [],
       format: null,
+      languages: [],
     }).map((p) => p.id);
     expect(ids).not.toContain("d");
   });
@@ -94,6 +108,7 @@ describe("filterProducts", () => {
         topics: [],
         tags: ["competitive"],
         format: null,
+        languages: [],
       }).map((p) => p.id),
     ).toEqual(["b"]);
   });
@@ -103,6 +118,7 @@ describe("filterProducts", () => {
       topics: [],
       tags: ["beginner", "competitive"],
       format: null,
+      languages: [],
     }).map((p) => p.id);
     // A has beginner, B has competitive, D has beginner. C has neither.
     expect(ids.sort()).toEqual(["a", "b", "d"]);
@@ -113,6 +129,7 @@ describe("filterProducts", () => {
       topics: ["minecraft", "fortnite"],
       tags: ["competitive"],
       format: null,
+      languages: [],
     }).map((p) => p.id);
     // Only B passes both: topic ∈ set AND has 'competitive'.
     expect(ids).toEqual(["b"]);
@@ -120,7 +137,12 @@ describe("filterProducts", () => {
 
   it("returns nothing when no product matches", () => {
     expect(
-      filterProducts(ALL, { topics: ["roblox"], tags: [], format: null }),
+      filterProducts(ALL, {
+        topics: ["roblox"],
+        tags: [],
+        format: null,
+        languages: [],
+      }),
     ).toEqual([]);
   });
 
@@ -129,6 +151,7 @@ describe("filterProducts", () => {
       topics: [],
       tags: [],
       format: "online",
+      languages: [],
     }).map((p) => p.id);
     // A and C are remote.
     expect(ids.sort()).toEqual(["a", "c"]);
@@ -139,6 +162,7 @@ describe("filterProducts", () => {
       topics: [],
       tags: [],
       format: "in_person",
+      languages: [],
     }).map((p) => p.id);
     // B and D are in-person.
     expect(ids.sort()).toEqual(["b", "d"]);
@@ -149,8 +173,42 @@ describe("filterProducts", () => {
       topics: ["minecraft", "fortnite"],
       tags: ["beginner", "competitive"],
       format: "online",
+      languages: [],
     }).map((p) => p.id);
     // A passes topic+tag and is online; B passes but is in-person.
+    expect(ids).toEqual(["a"]);
+  });
+
+  it("matches a single spoken-language code", () => {
+    const ids = filterProducts(ALL, {
+      topics: [],
+      tags: [],
+      format: null,
+      languages: ["fi"],
+    }).map((p) => p.id);
+    // B and C are Finnish.
+    expect(ids.sort()).toEqual(["b", "c"]);
+  });
+
+  it("OR-combines language codes", () => {
+    const ids = filterProducts(ALL, {
+      topics: [],
+      tags: [],
+      format: null,
+      languages: ["fi", "sv"],
+    }).map((p) => p.id);
+    // B, C are fi; D is sv.
+    expect(ids.sort()).toEqual(["b", "c", "d"]);
+  });
+
+  it("ANDs language with topic / tag / format filters", () => {
+    const ids = filterProducts(ALL, {
+      topics: ["minecraft", "fortnite"],
+      tags: [],
+      format: null,
+      languages: ["en"],
+    }).map((p) => p.id);
+    // A is minecraft + en; B is fortnite but fi.
     expect(ids).toEqual(["a"]);
   });
 });

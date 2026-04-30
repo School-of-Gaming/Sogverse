@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft, Clock, Globe, MapPin, Sparkles, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LanguageFlag } from "@/components/ui/language-flag";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -207,7 +208,7 @@ function MainColumn({
             {t("info.ages", { min: product.min_age, max: product.max_age })}
           </DetailRow>
           <DetailRow icon={Sparkles} label={t("info.language")}>
-            {product.spoken_language_code.toUpperCase()}
+            <LanguageFlag code={product.spoken_language_code} />
           </DetailRow>
         </CardContent>
       </Card>

@@ -568,10 +568,12 @@ function useVerb(productType: ProductTypeV2): string {
   return t(productType);
 }
 
-// Returns the active-state CTA label, optionally suffixing the price the
-// parent will be charged (e.g. "Enroll now · €86"). Inlined to keep the
-// closure-bound `t` from crossing function boundaries (next-intl's typed
-// message inference trips on that — see products-v2 architecture doc).
+// Returns the active-state CTA label, optionally weaving in the price the
+// parent will be charged. The two ICU strings keep the trailing arrow at
+// the end of the label rather than between the verb and the price (which
+// is what plain string concatenation produced previously). Inlined to
+// keep the closure-bound `t` from crossing function boundaries (next-intl's
+// typed message inference trips on that — see products-v2 architecture doc).
 function useActiveCtaLabel(
   verb: string,
   pricingTracks: PricingTracks,
@@ -582,9 +584,8 @@ function useActiveCtaLabel(
   const t = useTranslations("productDetail.signupPanel");
   const option = findOption(pricingTracks, selectedKey);
   const price = priceForCta(option, currency, locale);
-  const base = t("ctaActive", { verb });
-  if (price === null) return base;
-  return `${base} · ${price}`;
+  if (price === null) return t("ctaActive", { verb });
+  return t("ctaActiveWithPrice", { verb, price });
 }
 
 function priceForCta(

@@ -6,6 +6,7 @@ import { Users, Hourglass, MapPin, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LanguageFlag } from "@/components/ui/language-flag";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
 import type { ProductPriceLine } from "./format-product-price";
@@ -42,6 +43,13 @@ export interface ProductBrowseCardViewProps {
    */
   locationLine: LocationLine;
   tagLabels: readonly string[];
+  /**
+   * Spoken-language code (`fi` / `en` / `sv`) the product is delivered in.
+   * Rendered as flag + uppercase code on the topic row so parents can see
+   * delivery language at a glance — same flag treatment as the locale
+   * picker in the site header.
+   */
+  spokenLanguageCode: string;
   price: ProductPriceLine;
   state: RegistrationState;
   /** Detail-page URL. The card's CTA + the whole card surface link here. */
@@ -67,6 +75,7 @@ export function ProductBrowseCardView({
   seatsHint,
   locationLine,
   tagLabels,
+  spokenLanguageCode,
   price,
   state,
   detailHref,
@@ -131,6 +140,10 @@ export function ProductBrowseCardView({
               <li className="flex flex-wrap items-center gap-x-2">
                 <span>{ageLine}</span>
                 <SeatsHintLine hint={seatsHint} />
+                {/* Delivery language sits here — short row, never
+                    squeezed. Same flag treatment as the locale picker
+                    in the site header so parents recognise it. */}
+                <LanguageFlag code={spokenLanguageCode} />
               </li>
             </ul>
           </div>
