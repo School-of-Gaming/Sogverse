@@ -1,0 +1,229 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+import { Users, Hourglass } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { cn } from "@/lib/utils";
+import type { ProductPriceLine } from "./format-product-price";
+import { RegistrationPill, useRegistrationCta } from "./registration-pill";
+import type { RegistrationState } from "./derive-registration-state";
+
+// Pure presentational browse card. Takes already-resolved display props —
+// the adapter (`product-browse-card.tsx`) does the locale / currency /
+// schedule / price / registration-state resolution before calling this.
+//
+// Splitting along this boundary lets the UI Components page render any
+// combination of states + variants by hand, without faking a
+// ProductV2BrowseRow that satisfies the type checker.
+
+export interface ProductBrowseCardViewProps {
+  name: string;
+  description: string | null;
+  imagePath: string | null;
+  topicLabel: string | null;
+  scheduleLine: string;
+  ageLine: string;
+  /** Pre-formatted "{count} seats" / "Waitlist available" / null. */
+  seatsHint: SeatsHint | null;
+  tagLabels: readonly string[];
+  price: ProductPriceLine;
+  state: RegistrationState;
+}
+
+export type SeatsHint =
+  | { kind: "capacity"; count: number }
+  | { kind: "waitlist" };
+
+export function ProductBrowseCardView({
+  name,
+  description,
+  imagePath,
+  topicLabel,
+  scheduleLine,
+  ageLine,
+  seatsHint,
+  tagLabels,
+  price,
+  state,
+}: ProductBrowseCardViewProps) {
+  const t = useTranslations("productBrowse.card");
+  const cta = useRegistrationCta(state);
+  const isEnded = state.kind === "ended";
+
+  return (
+    <Card
+      className={cn(
+        "flex h-full flex-col overflow-hidden transition-colors",
+        isEnded && "opacity-70 grayscale-[40%]",
+      )}
+    >
+      <CardContent className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex gap-3">
+          <ProductThumbnail
+            imagePath={imagePath ?? ""}
+            alt={name}
+            size="h-20 w-20 sm:h-24 sm:w-24"
+            className={cn(
+              "rounded-md bg-muted [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover",
+              !imagePath && "[&>img]:hidden",
+            )}
+          />
+
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex items-start gap-2">
+              <h3 className="line-clamp-2 flex-1 text-sm font-semibold sm:text-base">
+                {name}
+              </h3>
+            </div>
+
+            {/* Topic label + registration pill share the row directly under
+                the title (option B per the spec). The pill keeps a
+                consistent right-edge anchor regardless of topic length. */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {topicLabel && (
+                <p className="text-xs font-medium uppercase tracking-wide text-primary">
+                  {topicLabel}
+                </p>
+              )}
+              <RegistrationPill state={state} />
+            </div>
+
+            <ul className="space-y-0.5 text-xs text-muted-foreground">
+              {scheduleLine && <li className="line-clamp-1">{scheduleLine}</li>}
+              <li className="flex flex-wrap items-center gap-x-2">
+                <span>{ageLine}</span>
+                <SeatsHintLine hint={seatsHint} />
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {description && (
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {description}
+          </p>
+        )}
+
+        <TagChips labels={tagLabels} />
+
+        <div className="mt-auto border-t pt-3">
+          {isEnded ? (
+            <p className="text-xs italic text-muted-foreground">
+              {t("endedNote")}
+            </p>
+          ) : (
+            <div className="flex items-end justify-between gap-2">
+              <PriceBlock price={price} />
+              {cta && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={
+                    cta.kind === "primary"
+                      ? "default"
+                      : cta.kind === "secondary"
+                        ? "secondary"
+                        : "outline"
+                  }
+                  disabled={cta.kind === "disabled"}
+                  onClick={() => {
+                    /* noop: detail page lands in a follow-up */
+                  }}
+                >
+                  {cta.labelText}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SeatsHintLine({ hint }: { hint: SeatsHint | null }) {
+  const t = useTranslations("productBrowse.card");
+  if (!hint) return null;
+  if (hint.kind === "capacity") {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <Users className="h-3 w-3" aria-hidden />
+        {t("seatsCapacity", { count: hint.count })}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Hourglass className="h-3 w-3" aria-hidden />
+      {t("waitlistAvailable")}
+    </span>
+  );
+}
+
+function PriceBlock({ price }: { price: ProductPriceLine }) {
+  const t = useTranslations("productBrowse.card");
+
+  switch (price.kind) {
+    case "free":
+      return (
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+          {t("free")}
+        </span>
+      );
+    case "external":
+      return (
+        <span className="text-xs text-muted-foreground">
+          {t("externalContract")}
+        </span>
+      );
+    case "bundle_or_sub":
+      // Two distinct billing models — pay-per-session for flexibility,
+      // monthly subscription for commitment (often a better effective
+      // rate). The explicit "or" divider with hairlines makes the
+      // alternative clear; without it, two stacked prices read as a
+      // single thing in two formats.
+      return (
+        <div className="flex flex-col items-start gap-1 leading-tight">
+          <span className="text-sm font-semibold text-foreground">
+            {t("perSession", { price: price.perSession })}
+          </span>
+          <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <span aria-hidden className="h-px w-3 bg-border" />
+            {t("orChoice")}
+            <span aria-hidden className="h-px w-3 bg-border" />
+          </span>
+          <span className="text-sm font-semibold text-foreground">
+            {t("perMonth", { price: price.perMonth })}
+          </span>
+        </div>
+      );
+    case "upfront":
+      return (
+        <span className="text-base font-semibold text-foreground">
+          {t("upfrontTotal", { price: price.total })}
+        </span>
+      );
+    case "unavailable":
+      return (
+        <span className="text-xs text-muted-foreground">
+          {t("notAvailableInCurrency", { currency: price.currency })}
+        </span>
+      );
+  }
+}
+
+function TagChips({ labels }: { labels: readonly string[] }) {
+  if (labels.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {labels.map((label) => (
+        <Badge key={label} variant="outline" className="text-[10px]">
+          {label}
+        </Badge>
+      ))}
+    </div>
+  );
+}

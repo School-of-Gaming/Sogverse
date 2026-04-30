@@ -142,7 +142,7 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
                       >
                         {t(`status.${status}`)}
                       </span>
-                      {!p.is_visible && (
+                      {!p.is_visible && status !== "draft" && (
                         <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                           {t("list.hidden")}
                         </span>

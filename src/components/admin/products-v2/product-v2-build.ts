@@ -225,8 +225,11 @@ function resolveRegistrationOpensAt(state: FormState): string {
  *     is 0=Sun..6=Sat; our schema is 0=Mon..6=Sun, hence (d+6)%7.
  *   - end_date for single_date events mirrors start_date so list/detail
  *     code only has to look at end_date for "is it over".
- *   - is_visible toggles drive `status`: visible ⇒ pending (RLS public-read
- *     requires both); hidden ⇒ draft. Edit page can roll either way later.
+ *   - The form always creates products as `pending` regardless of visibility.
+ *     `is_visible` is the sole knob the form exposes for "should parents see
+ *     this?". `draft` is reserved in the schema for a future "save incomplete
+ *     product" flow — it means *fields are missing*, not *hidden*. See
+ *     docs/products-v2-architecture.md § "Status vs. visibility".
  *   - Prices are stored in *cents*. For upfront_total products we put the
  *     whole total in price_per_session and 0 in price_per_month; downstream
  *     billing branches on billing_mode.
@@ -275,7 +278,7 @@ export function buildCreateInput(
     padlet_url: state.padletUrl.trim() || null,
     location_id: state.locationId,
     is_remote: state.isRemote,
-    status: state.isVisible ? "pending" : "draft",
+    status: "pending",
     signup_threshold:
       usesThreshold && state.signupThreshold
         ? Number(state.signupThreshold)

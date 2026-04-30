@@ -439,8 +439,11 @@ describe("buildCreateInput", () => {
     });
   });
 
-  describe("status / visibility pairing", () => {
-    it("visible product is published as pending", () => {
+  describe("status / visibility independence", () => {
+    // `draft` is reserved for a future "save incomplete product" flow.
+    // The form only ever creates fully-validated products, so it always
+    // emits `status: "pending"` — visibility is its own knob.
+    it("visible product is created as pending", () => {
       const s = validConsumerState();
       s.isVisible = true;
       const out = buildCreateInput(s, "consumer_club", consumerConfig);
@@ -448,12 +451,12 @@ describe("buildCreateInput", () => {
       expect(out.status).toBe("pending");
     });
 
-    it("hidden product stays as draft", () => {
+    it("hidden product is also created as pending (not draft)", () => {
       const s = validConsumerState();
       s.isVisible = false;
       const out = buildCreateInput(s, "consumer_club", consumerConfig);
       expect(out.is_visible).toBe(false);
-      expect(out.status).toBe("draft");
+      expect(out.status).toBe("pending");
     });
   });
 

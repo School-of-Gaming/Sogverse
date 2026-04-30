@@ -26,10 +26,14 @@ export function Header() {
 
   const publicNavLinks = [
     { href: ROUTES.products, label: t('nav.clubs') },
+    { href: ROUTES.camps, label: t('nav.camps') },
+    { href: ROUTES.events, label: t('nav.events') },
   ];
 
   const mobileInlineLinks = [
     { href: ROUTES.products, label: t('nav.clubs') },
+    { href: ROUTES.camps, label: t('nav.camps') },
+    { href: ROUTES.events, label: t('nav.events') },
   ];
 
   const dashboardPath = profile?.role

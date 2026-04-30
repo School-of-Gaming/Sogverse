@@ -13,6 +13,8 @@ export const productV2Keys = {
   lists: () => [...productV2Keys.all, "list"] as const,
   listByType: (type: ProductTypeV2) =>
     [...productV2Keys.lists(), { type }] as const,
+  visibleByType: (type: ProductTypeV2) =>
+    [...productV2Keys.lists(), "visible", { type }] as const,
 };
 
 export function useProductsV2ByType(type: ProductTypeV2) {
@@ -22,6 +24,16 @@ export function useProductsV2ByType(type: ProductTypeV2) {
   return useQuery({
     queryKey: productV2Keys.listByType(type),
     queryFn: () => service.listByType(type),
+  });
+}
+
+export function useVisibleProductsV2ByType(type: ProductTypeV2) {
+  const supabase = getClient();
+  const service = new ProductsV2Service(supabase);
+
+  return useQuery({
+    queryKey: productV2Keys.visibleByType(type),
+    queryFn: () => service.listVisibleByType(type),
   });
 }
 

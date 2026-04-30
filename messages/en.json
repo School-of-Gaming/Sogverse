@@ -308,7 +308,6 @@
         "padletUrl": "Padlet URL",
         "minAge": "Min age",
         "maxAge": "Max age",
-        "spokenLanguage": "Spoken language",
         "deliveredIn": "Delivered in",
         "online": "Online",
         "inPerson": "In person",
@@ -340,8 +339,6 @@
       },
       "placeholders": {
         "selectTopic": "Select a topic…",
-        "selectSite": "Select a site",
-        "selectMunicipality": "Select a municipality",
         "newTopicName": "New topic name (e.g. Among Us, Digital wellness)",
         "newTagName": "Tag name",
         "padletUrl": "https://padlet.com/...",
@@ -380,7 +377,6 @@
         "cancel": "Cancel",
         "pick": "Pick",
         "noVenueHint": "No physical venue. Parents browsing in {name} — or any smaller area inside it — will see this product.",
-        "noSitesYet": "no sites yet",
         "memberNotesLabel": "Member-visible notes",
         "memberNotesFieldLabel": "Notes shown to parents and gamers",
         "memberNotesPlaceholder": "Address details, parking, accessibility — anything parents need to know.",
@@ -397,7 +393,6 @@
       "pricing": {
         "currencyPickerLabel": "Currency",
         "fxSuggested": "Suggested from today's EUR rate ({rate}). Edit to override.",
-        "fxUnavailable": "Couldn't fetch today's FX rate — enter manually.",
         "perSessionLabel": "Price per session",
         "perMonthLabel": "Price per month",
         "totalLabel": "Total price",
@@ -426,23 +421,19 @@
         "scheduledDescription": "Parents see a countdown until then. Useful for ticket-drop style launches."
       },
       "hints": {
-        "noTopics": "No topics yet. Add one with the + button next to the picker.",
         "topicHint": "The primary subject — one per product. What the sessions are actually about.",
         "tagsHint": "Optional. Helps parents filter products when they're browsing.",
         "padletHint": "Optional. Shared with families after they sign up.",
         "deliveredInHint": "The primary language used during sessions.",
-        "noLocations": "No matching locations. Create one inline with the + button.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
         "voiceRoomAuto": "A voice room will be set up for this product automatically.",
         "municipalityHint": "Municipality clubs are always tied to a specific municipality — the one paying for it. Parents from that municipality (or anywhere smaller inside it) will see it when they browse.",
         "siteHint": "Where sessions physically happen.",
-        "eventWeekdayDerived": "Event weekday is derived from the date automatically.",
         "eventSingleDay": "Events happen on a single date.",
         "endDateOpt": "Leave blank for an ongoing club with no end date.",
         "thresholdOnly": "No fixed start date yet. Parents see a \"X of Y needed\" counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you'll need to cancel and refund from the product's page.",
         "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
-        "holidaySkips": "Sessions on calendar dates are skipped.",
         "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
         "groupsHint": "Add groups now if you already know how you want to organize this — or leave this empty and add them later from the product page, once you see how many gamers sign up.",
         "groupsNotWired": "Groups UI is in place but not yet wired to the backend — your group choices won't be saved on submit. Coming soon.",
@@ -555,7 +546,6 @@
         "defaultName": "Group {letter}",
         "addGroup": "Add a group",
         "addGeduTo": "Add Gedu to {name}",
-        "addGeduGeneric": "Add Gedu to group",
         "addGeduDescription": "Gedus assigned to this group run its sessions. For online products they can also hop into other groups' voice rooms in the same product when needed."
       }
     },
@@ -863,15 +853,6 @@
     "error": "Something went wrong starting checkout. Please <link>go back</link> and try again."
   },
   "clubs": {
-    "listing": {
-      "heading": "Our Clubs",
-      "subheading": "Explore our Minecraft clubs — each one led by a professional game educator.",
-      "noClubs": "No Clubs Available",
-      "checkBackSoon": "Check again soon for new clubs!",
-      "needHelp": "Need Help Choosing?",
-      "needHelpDescription": "Not sure which club is right for your family? Contact us for personalised recommendations based on your children's ages and interests.",
-      "learnMoreAboutUs": "Learn More About Us"
-    },
     "tokenCost": "{cost} Sorgs",
     "detail": {
       "backToClubs": "Back to Clubs",
@@ -1091,12 +1072,77 @@
     "nav": {
       "home": "Home",
       "clubs": "Clubs",
+      "camps": "Camps",
+      "events": "Events",
       "sorg": "Sorg",
       "yty": "Yty",
       "about": "About"
     },
     "toggleMenu": "Toggle menu",
     "tokenBalance": "{count} Sorgs"
+  },
+  "productBrowse": {
+    "headings": {
+      "consumer_club": "Our Clubs",
+      "camp": "Our Camps",
+      "event": "Our Events"
+    },
+    "subheadings": {
+      "consumer_club": "Weekly clubs where your gamer plays the games they love with new friends and a Gedu who actually gets it.",
+      "camp": "School breaks turned into game-filled adventures — new friends, real skills, and a Gedu along for the ride.",
+      "event": "Workshops, tournaments and parties — drop in whenever something catches your gamer's eye."
+    },
+    "purchasedHeadings": {
+      "consumer_club": "Your Gamers' Clubs",
+      "camp": "Your Gamers' Camps",
+      "event": "Your Gamers' Events"
+    },
+    "filters": {
+      "topic": "Topic",
+      "tag": "Vibe",
+      "clearAll": "Clear",
+      "results": "{count, plural, =0 {No matches} one {# match} other {# matches}}",
+      "filterBy": "Filter by"
+    },
+    "card": {
+      "ages": "Ages {min}–{max}",
+      "perSession": "{price} / session",
+      "perMonth": "{price} / month",
+      "orChoice": "or",
+      "upfrontTotal": "{price}",
+      "free": "Free",
+      "externalContract": "Funded by your municipality",
+      "notAvailableInCurrency": "Not in {currency}",
+      "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
+      "waitlistAvailable": "Waitlist available",
+      "endedBadge": "Ended",
+      "endedNote": "This one's wrapped — keep an eye out for the next one.",
+      "viewDetails": "View",
+      "manage": "Manage",
+      "pillSpotsLeft": "{count, plural, one {Only # spot left} other {Only # spots left}}",
+      "pillNeedsMore": "{count, plural, one {Need # more to start} other {Need # more to start}}",
+      "pillFull": "Full",
+      "pillFullWaitlist": "Full — waitlist open",
+      "pillOpensOn": "Opens {date}",
+      "pillStarted": "Already started",
+      "joinWaitlist": "Join waitlist",
+      "fullDisabled": "Full",
+      "opensOnDate": "Opens {date}",
+      "scheduleEvery": "Every {day} · {time}",
+      "scheduleRange": "{startDate} – {endDate}",
+      "scheduleSingle": "{date} · {time}",
+      "tzNote": "({tz})",
+      "verbConsumerClub": "Enrolled",
+      "verbMunicipalityClub": "Registered",
+      "verbCamp": "Signed up",
+      "verbEvent": "Joined",
+      "nextSession": "Next: {when}",
+      "gamersLabel": "For {names}"
+    },
+    "empty": {
+      "noProducts": "Nothing here yet — new ones are on the way.",
+      "noMatches": "No matches. Try clearing your filters."
+    }
   },
   "sidebar": {
     "dashboard": "Dashboard",

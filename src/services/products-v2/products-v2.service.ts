@@ -6,6 +6,7 @@ import type {
   ProductTypeV2,
   BillingModeV2,
   ProductStatusV2,
+  ProductV2BrowseRow,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
@@ -90,6 +91,33 @@ export class ProductsV2Service {
 
     if (error) throw error;
     return data as ProductV2WithDetails[];
+  }
+
+  // Parent-facing list: only visible products in a parent-relevant lifecycle
+  // state. RLS already restricts anon/customer reads to the same predicate
+  // (per redesign §5.8) — the explicit filters here are defensive and let
+  // admins (who can see everything) call this same hook from the public
+  // pages without seeing draft/cancelled rows. Joins everything the browse
+  // card needs in one round trip.
+  //
+  // We deliberately *don't* filter on end_date — a `running` row whose
+  // end_date has already passed still comes back here. The card layer
+  // calls effectiveStatus() to surface those as "Ended" with a muted
+  // visual treatment instead of letting them masquerade as live. Once the
+  // cron flips them to `completed`, RLS hides them entirely.
+  async listVisibleByType(type: ProductTypeV2): Promise<ProductV2BrowseRow[]> {
+    const { data, error } = await this.supabase
+      .from("products_v2")
+      .select(
+        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes)"
+      )
+      .eq("product_type", type)
+      .eq("is_visible", true)
+      .in("status", ["pending", "running"])
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data as ProductV2BrowseRow[];
   }
 
   async createProduct(input: CreateProductV2Input): Promise<string> {
