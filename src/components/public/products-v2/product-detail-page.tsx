@@ -34,7 +34,9 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   const { data: product, isLoading: productLoading, isError } =
     useProductV2Detail(productId);
 
-  const { data: gamers, isLoading: gamersLoading } = useMyGamers();
+  const { data: gamers, isLoading: gamersLoading } = useMyGamers({
+    enabled: isCustomer,
+  });
 
   if (productLoading || authLoading || (isCustomer && gamersLoading)) {
     return <DetailLoadingSkeleton />;

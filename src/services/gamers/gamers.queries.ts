@@ -20,13 +20,18 @@ export const gamerKeys = {
     [...gamerKeys.all, "gamer-profile", gamerId] as const,
 };
 
-export function useMyGamers() {
+// Defaults to enabled so dashboard call sites (which are already gated to
+// signed-in customers by the proxy) can call it with no argument. Public
+// surfaces must pass `enabled: isCustomer` — the underlying RPC is
+// granted only to `authenticated`, so calling it logged-out throws a 401.
+export function useMyGamers({ enabled = true }: { enabled?: boolean } = {}) {
   const supabase = getClient();
   const service = new GamerService(supabase);
 
   return useQuery({
     queryKey: gamerKeys.myGamers(),
     queryFn: () => service.getMyGamers(),
+    enabled,
   });
 }
 
