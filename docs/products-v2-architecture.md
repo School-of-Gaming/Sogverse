@@ -211,6 +211,80 @@ The same pill component covers both eras — when the real count goes live, the 
 
 RLS only returns `pending` and `running` rows to anon/customer. `completed` is hidden at the DB. The browse card still renders the "Ended" pill because `effectiveStatus()` catches `running` rows whose `end_date` has passed (cron lag between the wall clock crossing midnight and a `running → completed` flip). Do **not** add `completed` to the service filter — see the comment in `products-v2.service.ts:listVisibleByType`.
 
+## Parent detail page
+
+### Routes
+
+- `/clubs/[id]` — both consumer-club and municipality-club rows render here. Consumer clubs reach this from `/clubs`; muni clubs reach it via the future `/registration` location-first entry point (out of scope for this PR but the body is reusable as-is).
+- `/camps/[id]` — camp detail.
+- `/events/[id]` — event detail.
+
+### Component map
+
+```
+src/components/public/products-v2/  (detail-page additions)
+├── product-detail-page.tsx          — Route adapter: fetches, resolves auth, derives state
+├── product-detail-page-body.tsx     — Page body: hero, layout, calendar card, signup-panel slot
+├── signup-panel.tsx                 — Adapter: form state (gamer / agreed / pricing)
+├── signup-panel-view.tsx            — View: per-state panel + auth overlays
+├── pricing-panel-view.tsx           — Two-track stacked list (Subscribe / Pay-as-you-go)
+├── pricing-options.ts               — Pure builder for pricing tracks + options
+├── countdown-clock.tsx              — Live ticking clock + useCountdownDone()
+└── mock-detail-fixtures.ts          — buildDetailFixture(type, state) for the preview route
+
+src/components/calendar/             (new shared primitive)
+├── compute-product-sessions.ts      — Pure: walks the term, marks holidays as skips
+├── session-calendar-view.tsx        — Pure: stacked mini-month grids
+└── product-session-calendar.tsx     — Adapter: project → SessionCalendarView
+
+src/app/(public)/preview/products-v2/[type]/[state]/
+├── page.tsx                         — Public sandbox route, fixture-only, robots: noindex
+└── preview-client.tsx               — Client child rendering the body with the fixture
+```
+
+### Layout
+
+Hero is a 1:1 product image (reuses `ProductThumbnail`) plus the type label, name, and tagline. The two-column body stacks below: the left column carries description, when-and-where, the session calendar, and the topics/tags card; the right column is a 380px sticky signup panel on desktop that drops below the main column on mobile. **No gedu surface on the parent detail page** — gedu / group identity is a SOG-internal concern and abstracted away from parents.
+
+### Pricing — two-track stacked list
+
+Consumer clubs render six rows: three subscriptions (monthly / quarterly / yearly with the `SUBSCRIPTION_DISCOUNTS` ladder) and three bundles (1 / 4 / 10 sessions with the `BUNDLE_DISCOUNTS` ladder). The default selection is **quarterly** — middle of the commitment ladder, a clear improvement over monthly without asking for a 12-month commitment. Selecting a row updates the CTA label so the action and the price live in the same eyeline.
+
+Camps, events, and the rare paid muni rows show a single price line (upfront total). Free / external_contract products show a single non-clickable hint row.
+
+Family-discount UI is intentionally **not** shipped here — there's nothing to wire up yet. When the family-subscription Stripe coupon work lands, surface "Save another 10% with 2+ kids" as a small note below the picker.
+
+### Signup-panel registration states
+
+The same `deriveRegistrationState` that powers browse cards drives the panel:
+
+| State | Panel shape | CTA |
+|---|---|---|
+| `closed_pre` | Live countdown clock + the form pre-fillable | Disabled "{verb} — not yet open"; flips to active at zero without remounting the form |
+| `open` | Optional almost-full warning banner when `seatsLeft ≤ 3`; seat-counter bar | Active "{verb} now → · €X" with the chosen price |
+| `pending_thr` | Threshold progress bar + reserve-a-spot copy | "Reserve a spot" |
+| `full_waitlist` | "How the waitlist works" explainer | Secondary "Join the waitlist" |
+| `full_closed` | Pricing visible but disabled | Disabled "Fully booked" |
+| `running_late` | "Already underway" muted note, no form | — |
+| `ended` | "This one wrapped" muted note, no form | — |
+
+Auth overlays sit on top: unauthenticated visitors see the panel info but the form area shows a "Sign in to register" / "Create account" pair (with `?redirect=...` back to this page). Customers with no gamers see "Add a child first" linking to `/parent/gamers`. Non-customer roles see an explainer note instead of the form.
+
+### Preview / mock route
+
+`/preview/products-v2/[type]/[state]` renders the body with a `buildDetailFixture(type, state)` payload. Public route inside `(public)` so it picks up the parent-eye chrome (header + footer) instead of the admin sidebar; never indexed (`metadata.robots = { index: false, follow: false }`); reachable only via `/admin/ui-components` "Preview full page →" links. Designers can poke at all 32 (type × state) cells without seeding any data.
+
+### Click target — UI-only phase
+
+The active CTA is a no-op for now. When Stripe Checkout wires up, the same handler will redirect to a Checkout Session created with the parent's selected pricing key + selected gamer.
+
+### Future improvements (detail-page surfaces)
+
+- **Admin-cancel-session UI.** `session_overrides_v2` is designed but not shipped. When it lands, extend `computeProductSessions` to merge those rows into `skips` — the calendar View needs no change.
+- **Show family discount.** Surface a "Save another 10% with 2+ kids" note below the pricing picker once the family-subscription Stripe coupon ships.
+- **Image hero + lightbox.** Today the image renders as a 1:1 thumbnail in the hero. A future "tap to enlarge" wouldn't break the layout.
+- **Real participation counts.** The panel reads `participationsCount: 0` until `participations_v2` ships. The deriver auto-promotes to richer states (`pending_thr` with real progress, `full_*`, urgent-low-seats) the moment that wires up.
+
 ### `?mock=1` purchased section
 
 The "your enrolled" surface above the browse grid is gated behind `?mock=1` until participation rows are live. Mock data lives in `mock-purchased.ts` — five hand-curated rows with stable identicon seeds. Real visitors never see it; design review hits e.g. `/clubs?mock=1` to inspect the unified-management surface alongside the live browse grid. Delete `mock-purchased.ts` and replace its consumers with a real `useMyParticipations` hook when participations land.
@@ -266,6 +340,25 @@ Inline-create writes a single translation in the admin's current UI locale (inte
 **Impact:** Low — the topics/tags queries are very fast and the catalog is small. Visible only on the first cold load. Filed here so we don't forget to peel apart if the surface ever feels sluggish.
 
 **Fix:** Scope the spinner to `productsLoading` only. Render the purchased rail (mock or real) immediately, render `<ProductBrowseFilters>` with empty chip rows while topics/tags are loading, and let the chips fill in as their queries return — the row position is already reserved so no layout shift.
+
+### Use Stripe `capture_method: "manual"` to handle the seat-race at registration drops
+
+Popular drops (the "Taylor Swift ticket" model — countdown to a specific instant when registration opens) create a fairness problem under the chosen first-paid-wins seat-allocation rule. Two parents can both tap Enroll within the same second; one finishes Stripe Checkout before the other; the slower parent's payment lands against an already-full seat count. The naive options are both bad:
+
+- **Charge then refund** — parent sees a charge appear and disappear on their statement; looks like a billing bug.
+- **Force into waitlist after charging** — parent paid for a seat and got the waitlist instead. Double-disappointment.
+
+**Use Stripe's manual capture instead.** When creating the Stripe Checkout Session, pass `payment_intent_data: { capture_method: "manual" }`. The card is **authorized** at Checkout completion (held against the customer's available credit, not charged). Our webhook then decides what to do based on real-time seat state at the moment authorization completes:
+
+- **Seat available** → `stripe.paymentIntents.capture(pi.id)` finalizes the charge, allocate the seat. ✓
+- **Seat already taken** → `stripe.paymentIntents.cancel(pi.id)` voids the auth. The hold drops off the parent's available credit within a few days; no charge ever appears on their statement. We then offer the waitlist as an opt-in, not a forced re-route.
+
+Trade-offs to bake into the implementation when we wire payment:
+- Stripe holds an auth for ~7 days; we must capture or cancel within that window.
+- Manual capture is supported on Stripe Checkout via `payment_intent_data.capture_method` for one-time payments. It is **not** supported for subscriptions (recurring charges always auto-capture). For consumer clubs on a subscription tier, the seat-race is naturally less acute (subscriptions are an open-ended commitment, not a single-seat scarcity event) — first-paid-wins is fine. The manual-capture pattern applies primarily to camps + events sold upfront, and to one-shot bundle purchases against a capped club seat.
+- 3DS challenges complete *before* authorization, so manual capture composes correctly with SCA.
+
+This is the deferred-but-decided answer to "what happens to the parent who paid 0.5s later and the seat went?" — we never charge their card.
 
 ### Events should remain purchasable on their start day until the actual start time
 

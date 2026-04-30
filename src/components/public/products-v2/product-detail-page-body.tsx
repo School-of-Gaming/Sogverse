@@ -1,0 +1,314 @@
+"use client";
+
+import Link from "next/link";
+import { useLocale, useTranslations } from "next-intl";
+import { ArrowLeft, Clock, Globe, MapPin, Sparkles, Users } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { resolveLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import type {
+  ProductV2BrowseRow,
+  ProductTypeV2,
+  TagTranslationV2,
+} from "@/types";
+import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
+import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
+import { formatProductSchedule } from "./format-product-schedule";
+import type { RegistrationState } from "./derive-registration-state";
+import { SignupPanel } from "./signup-panel";
+import type { AuthState } from "./signup-panel-view";
+
+// Page body — same role as the cards' "View": layout + presentation,
+// with sub-adapters handling their own state. Owns nothing about
+// fetching. The route-level adapter (`ProductDetailPage`) and the
+// mockup preview route both render this directly.
+//
+// Layout: full-width container, image hero (1:1 product image), name +
+// tagline, then a 2-column grid on desktop (3:1 main : panel) that
+// stacks on mobile. Right panel is sticky on desktop so a scrolling
+// parent never loses the CTA.
+
+export interface ProductDetailPageBodyProps {
+  product: ProductV2BrowseRow & {
+    holidays?: { date: string; reason: string }[];
+  };
+  state: RegistrationState;
+  authState: AuthState;
+  /** Render the panel frozen at this instant for deterministic mocks. */
+  fixedNowMs?: number;
+  /** Mockup preview banner is shown if this is true (preview route). */
+  previewBanner?: boolean;
+}
+
+export function ProductDetailPageBody({
+  product,
+  state,
+  authState,
+  fixedNowMs,
+  previewBanner,
+}: ProductDetailPageBodyProps) {
+  const uiLocale = resolveLocale(useLocale());
+  const t = useTranslations("productDetail");
+
+  const tr = resolveTranslation(product.product_translations_v2, uiLocale);
+  const topicTr = resolveTranslation(
+    product.topics_v2?.topic_translations_v2,
+    uiLocale,
+  );
+
+  return (
+    <div className="container mx-auto px-4 py-8 sm:py-12">
+      <div className="mx-auto max-w-5xl">
+        {previewBanner && (
+          <div className="mb-4 rounded-md border border-warning/60 bg-warning/10 px-3 py-2 text-center text-xs font-medium text-warning">
+            {t("preview.banner")}
+          </div>
+        )}
+
+        <BackLink productType={product.product_type} />
+
+        <div className="mt-6 grid gap-6 sm:grid-cols-[140px_1fr] sm:items-start">
+          <ProductThumbnail
+            imagePath={product.image_path ?? ""}
+            alt={tr?.name ?? ""}
+            size="aspect-square w-full"
+            className="rounded-lg [&>img]:aspect-square [&>img]:h-full [&>img]:w-full [&>img]:object-cover"
+          />
+
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {t(`typeLabel.${product.product_type}`)}
+            </p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
+              {tr?.name}
+            </h1>
+            {tr?.description && (
+              <p className="mt-2 text-muted-foreground">{tr.description}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
+          <MainColumn product={product} topicLabel={topicTr?.name ?? null} />
+          <div className="lg:sticky lg:top-6 lg:self-start">
+            <SignupPanel
+              product={product}
+              state={state}
+              authState={authState}
+              fixedNowMs={fixedNowMs}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BackLink({ productType }: { productType: ProductTypeV2 }) {
+  const t = useTranslations("productDetail.back");
+  const href = backHref(productType);
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+    >
+      <ArrowLeft className="h-3.5 w-3.5" />
+      {t(productType)}
+    </Link>
+  );
+}
+
+function backHref(productType: ProductTypeV2): string {
+  switch (productType) {
+    case "consumer_club":
+    case "municipality_club":
+      return "/clubs";
+    case "camp":
+      return "/camps";
+    case "event":
+      return "/events";
+  }
+}
+
+function MainColumn({
+  product,
+  topicLabel,
+}: {
+  product: ProductDetailPageBodyProps["product"];
+  topicLabel: string | null;
+}) {
+  const t = useTranslations("productDetail");
+  const uiLocale = resolveLocale(useLocale());
+
+  const tr = resolveTranslation(product.product_translations_v2, uiLocale);
+  const tagLabels = resolveTagLabels(product.product_tags_v2, uiLocale);
+  const schedule = formatProductSchedule({ product, locale: uiLocale });
+  const scheduleLine = renderScheduleLine(schedule);
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="p-5 sm:p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("sections.about")}
+          </h2>
+          <p className="mt-3 leading-relaxed">{tr?.description ?? ""}</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-3 p-5 sm:p-6 text-sm">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("sections.whenWhere")}
+          </h2>
+          <DetailRow icon={Clock} label={t("info.schedule")}>
+            {scheduleLine}
+          </DetailRow>
+          <DetailRow
+            icon={product.is_remote ? Globe : MapPin}
+            label={product.is_remote ? t("info.format") : t("info.where")}
+          >
+            {product.is_remote ? t("info.online") : t("info.tbd")}
+          </DetailRow>
+          <DetailRow icon={Users} label={t("info.ageRange")}>
+            {t("info.ages", { min: product.min_age, max: product.max_age })}
+          </DetailRow>
+          <DetailRow icon={Sparkles} label={t("info.language")}>
+            {product.spoken_language_code.toUpperCase()}
+          </DetailRow>
+        </CardContent>
+      </Card>
+
+      <CalendarCard product={product} />
+
+      {(topicLabel || tagLabels.length > 0) && (
+        <Card>
+          <CardContent className="p-5 sm:p-6">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+              {t("sections.tags")}
+            </h2>
+            {topicLabel && (
+              <div className="mt-3">
+                <p className="text-xs text-muted-foreground">
+                  {t("sections.topicsLabel")}
+                </p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                    {topicLabel}
+                  </span>
+                </div>
+              </div>
+            )}
+            {tagLabels.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs text-muted-foreground">
+                  {t("sections.tagsLabel")}
+                </p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {tagLabels.map((label) => (
+                    <Badge key={label} variant="outline" className="text-[10px]">
+                      {label}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function CalendarCard({
+  product,
+}: {
+  product: ProductDetailPageBodyProps["product"];
+}) {
+  const t = useTranslations("productDetail.sections");
+  const uiLocale = resolveLocale(useLocale());
+
+  const result = computeProductSessions({
+    productType: product.product_type,
+    startDate: product.start_date,
+    endDate: product.end_date,
+    scheduleSlots: product.schedule_slots_v2,
+    holidays: product.holidays ?? [],
+  });
+  if (!result) return null;
+
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  return (
+    <Card>
+      <CardContent className="p-5 sm:p-6">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          {t("calendar")}
+        </h2>
+        <div className="mt-4">
+          <SessionCalendarView
+            rangeStart={result.rangeStart}
+            rangeEnd={result.rangeEnd}
+            sessions={result.sessions}
+            skips={result.skips}
+            locale={uiLocale}
+            todayIso={todayIso}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DetailRow({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex gap-3">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+      <div className="min-w-0">
+        <dt className="text-xs text-muted-foreground">{label}</dt>
+        <dd className="mt-0.5">{children}</dd>
+      </div>
+    </div>
+  );
+}
+
+function renderScheduleLine(
+  schedule: ReturnType<typeof formatProductSchedule>,
+): string {
+  switch (schedule.kind) {
+    case "every":
+      return `${schedule.day} · ${schedule.time}${schedule.tz ? ` (${schedule.tz})` : ""}`;
+    case "range":
+      return `${schedule.startDate} – ${schedule.endDate}${schedule.tz ? ` (${schedule.tz})` : ""}`;
+    case "single":
+      return `${schedule.date} · ${schedule.time}${schedule.tz ? ` (${schedule.tz})` : ""}`;
+    case "tbd":
+      return "—";
+  }
+}
+
+function resolveTagLabels(
+  productTags: ProductV2BrowseRow["product_tags_v2"],
+  uiLocale: ReturnType<typeof resolveLocale>,
+): string[] {
+  return productTags
+    .map((pt) => {
+      if (!pt.tags_v2) return null;
+      const tr = resolveTranslation<TagTranslationV2>(
+        pt.tags_v2.tag_translations_v2,
+        uiLocale,
+      );
+      return tr?.name ?? pt.tags_v2.slug;
+    })
+    .filter((s): s is string => Boolean(s));
+}

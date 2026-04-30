@@ -1192,6 +1192,144 @@
       "noMatches": "pagh Sam. tetlh yISay'moH."
     }
   },
+  "productDetail": {
+    "back": {
+      "consumer_club": "Hoch ghom'a'mey yIchegh",
+      "municipality_club": "Hoch veng ghom'a'mey yIchegh",
+      "camp": "Hoch raghmey yIchegh",
+      "event": "Hoch wanI'mey yIchegh"
+    },
+    "typeLabel": {
+      "consumer_club": "ghom'a'",
+      "municipality_club": "veng ghom'a'",
+      "camp": "ragh",
+      "event": "wanI'"
+    },
+    "sections": {
+      "about": "De'",
+      "whenWhere": "ghorgh & nuqDaq",
+      "calendar": "jaj tetlh",
+      "tags": "nuq Daloy",
+      "topicsLabel": "mu'qaD",
+      "tagsLabel": "Segh"
+    },
+    "info": {
+      "schedule": "jaj tetlh",
+      "where": "Daq",
+      "format": "rurmeH",
+      "ages": "qan {min}–{max}",
+      "ageRange": "qan SaH",
+      "language": "Hol",
+      "online": "QumDaq",
+      "atVenue": "{venue}Daq",
+      "tbd": "Sov pagh"
+    },
+    "calendar": {
+      "weekdayMon": "wa'",
+      "weekdayTue": "cha'",
+      "weekdayWed": "wej",
+      "weekdayThu": "loS",
+      "weekdayFri": "vagh",
+      "weekdaySat": "jav",
+      "weekdaySun": "Soch",
+      "legendSession": "qaStaHvIS",
+      "legendSkipped": "qIl",
+      "skipLine": "{date} · {reason}",
+      "skipExplainer": "qIl jaj — lopno' jaj joq ghoH jaj. jajvam Huch nobbe' toy'wI'lI'."
+    },
+    "signupPanel": {
+      "bannerOpen": "DaH {verb}",
+      "bannerAlmostFull": "nom — pa' puS neH",
+      "bannerCountdown": "qonta' poSlaw'",
+      "bannerCountdownDone": "qonta' poS",
+      "bannerThreshold": "buy'meH tagh",
+      "bannerWaitlist": "DaH buy'",
+      "bannerFullClosed": "buy'",
+      "bannerRunningLate": "taghta'",
+      "bannerEnded": "rIn",
+      "verb": {
+        "consumer_club": "yImuv",
+        "municipality_club": "yIqon",
+        "camp": "yImuv",
+        "event": "yImuv"
+      },
+      "ctaPreOpenIdle": "{verb} — DaH poSbe'",
+      "ctaPreOpenReady": "qonta' poSDI' SuD",
+      "ctaActive": "DaH {verb} →",
+      "ctaWaitlist": "tetlh DaqaD",
+      "ctaThreshold": "pa' yIpol",
+      "ctaSignIn": "qonmeH yI'el",
+      "ctaCreateAccount": "Account chu' chenmoH",
+      "ctaAddGamer": "puq yIchel",
+      "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
+      "preOpenHelper": "puqlI' yIwIv 'ej chutmey yIlaj — qonta' poSDI' wa' tlhopwI' lo'meH.",
+      "thresholdHelper": "{count} puqpu' qonta'DI' tagh. DaH pa' yIpol — buy'DI' qaja' SoH.",
+      "thresholdProgress": "{current} / {threshold}",
+      "thresholdRemaining": "{count, plural, =0 {Hoch ghaj} one {# vIneH taghmeH} other {# vIneH taghmeH}}",
+      "seatsRemaining": "{count, plural, one {# / {total} pa' ratlh} other {# / {total} pa' ratlh}}",
+      "seatsRemainingShort": "{count, plural, one {# ratlh} other {# ratlh}}",
+      "waitlistCount": "{count, plural, =0 {SoH SoSDaq #1} one {# qorDu' tlhopDaq — SoSDaq #{position}} other {# qorDu'pu' tlhopDaq — SoSDaq #{position}}}",
+      "waitlistHowTitle": "tetlh teb Qu'",
+      "waitlistHowItem1": "DIS naQ tetlh DaqaDtaHbogh.",
+      "waitlistHowItem2": "qorDu' chegh chugh, latlh qorDu' poH puS lo' laH.",
+      "waitlistHowItem3": "DaH 'aw' tetlh DaH'el laH.",
+      "endedNote": "rIn. latlh boqDI' yI'aHta'.",
+      "runningLateNote": "taghta' — qonta' SoQ. latlh boq DaH poSlaw'.",
+      "rules": {
+        "consumer_club": "ghom'a' chutmey vIlaj 'ej qaSpa' choHmeH puqwI' DaH lop laH latlh qorDu' tetlh teb 'oHbogh, jIlaj.",
+        "municipality_club": "ghom'a' chutmey vIlaj.",
+        "camp": "ragh chutmey vIlaj 'ej qIl Hutlh vIlaj.",
+        "event": "wanI' De' vIlaD 'ej qan SaH puq vavnI' joq SoSnI' poQ laH, jIlaj."
+      },
+      "whoAreYouSigningUp": "'Iv qonbogh SoH?",
+      "selectGamer": "yIwIv",
+      "selected": "wIvlu'",
+      "agePill": "qan {age}",
+      "noGamersTitle": "tlhIH account puq yIchel",
+      "noGamersDescription": "'Iv DaqonneS SaH wIneHbogh. nung puq yIchel — tup wa' poH neH."
+    },
+    "pricing": {
+      "title": "Huch",
+      "subscribeHeading": "rar (pIm Huch nIQ)",
+      "bundleHeading": "pagh Huch wa'logh ngIp",
+      "perSession": "{price} / qaStaHvIS",
+      "subscribeMonthly": "jar Hoch",
+      "subscribeQuarterly": "wej jar Hoch",
+      "subscribeYearly": "DIS Hoch",
+      "bundleSingle": "wa' qaStaHvIS",
+      "bundleN": "{count} qaStaHvIS",
+      "savings": "{percent} % nIQ",
+      "bestValue": "Huch QaQ",
+      "free": "Huch pagh",
+      "freeHint": "Huch poQbe'.",
+      "external": "Huch pagh SoH · veng Huch nob",
+      "externalHint": "Huch poQbe' — veng Huch nob.",
+      "upfrontTotal": "{price}",
+      "upfrontHint": "wa'logh Huch.",
+      "notAvailable": "{currency} Huch DaH ghajbe'.",
+      "ctaActiveLabel": "{price} {verb} →",
+      "ctaActiveLabelSub": "{price} {cadence} {verb} →",
+      "cadenceMonth": "/ jar",
+      "cadenceQuarter": "wej jar Hoch",
+      "cadenceYear": "DIS Hoch"
+    },
+    "countdown": {
+      "days": "jaj",
+      "hours": "rep",
+      "minutes": "tup",
+      "seconds": "lup",
+      "opensWhen": "{when} poS"
+    },
+    "loading": "loS...",
+    "notFound": {
+      "title": "tu'be'lu'",
+      "description": "luchHa'lu'pu' joq link motlhHa'. bIH tu'lu'bogh yIleng.",
+      "cta": "leng yIchegh"
+    },
+    "preview": {
+      "banner": "mocku' · ngeD lan'be'."
+    }
+  },
   "sidebar": {
     "dashboard": "QaD",
     "users": "lo'wI'pu'",

@@ -1144,6 +1144,144 @@
       "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
     }
   },
+  "productDetail": {
+    "back": {
+      "consumer_club": "Kaikki kerhot",
+      "municipality_club": "Kaikki kuntakerhot",
+      "camp": "Kaikki leirit",
+      "event": "Kaikki tapahtumat"
+    },
+    "typeLabel": {
+      "consumer_club": "Kerho",
+      "municipality_club": "Kuntakerho",
+      "camp": "Leiri",
+      "event": "Tapahtuma"
+    },
+    "sections": {
+      "about": "Kuvaus",
+      "whenWhere": "Milloin ja missä",
+      "calendar": "Aikataulu",
+      "tags": "Mitä odottaa",
+      "topicsLabel": "Aihe",
+      "tagsLabel": "Tunnelma"
+    },
+    "info": {
+      "schedule": "Aikataulu",
+      "where": "Missä",
+      "format": "Muoto",
+      "ages": "Ikä {min}–{max}",
+      "ageRange": "Ikähaarukka",
+      "language": "Kieli",
+      "online": "Verkossa",
+      "atVenue": "Paikassa {venue}",
+      "tbd": "Vahvistetaan myöhemmin"
+    },
+    "calendar": {
+      "weekdayMon": "Ma",
+      "weekdayTue": "Ti",
+      "weekdayWed": "Ke",
+      "weekdayThu": "To",
+      "weekdayFri": "Pe",
+      "weekdaySat": "La",
+      "weekdaySun": "Su",
+      "legendSession": "Tapaaminen",
+      "legendSkipped": "Ei tapaamista",
+      "skipLine": "{date} · {reason}",
+      "skipExplainer": "Tapaamattomat päivät ovat juhlapäiviä tai lomia. Pelaajaltasi ei veloiteta näistä päivistä."
+    },
+    "signupPanel": {
+      "bannerOpen": "{verb} nyt",
+      "bannerAlmostFull": "Paikat täyttyvät – vain muutama jäljellä",
+      "bannerCountdown": "Ilmoittautuminen avautuu",
+      "bannerCountdownDone": "Ilmoittautuminen on auki",
+      "bannerThreshold": "Alkaa, kun paikat täyttyvät",
+      "bannerWaitlist": "Tällä hetkellä täynnä",
+      "bannerFullClosed": "Täynnä",
+      "bannerRunningLate": "Tämä on jo käynnissä",
+      "bannerEnded": "Tämä on päättynyt",
+      "verb": {
+        "consumer_club": "Ilmoittaudu",
+        "municipality_club": "Rekisteröidy",
+        "camp": "Ilmoittaudu",
+        "event": "Liity"
+      },
+      "ctaPreOpenIdle": "{verb} – ei vielä avoinna",
+      "ctaPreOpenReady": "Valmis – odotetaan avaamista",
+      "ctaActive": "{verb} nyt →",
+      "ctaWaitlist": "Liity jonotuslistalle",
+      "ctaThreshold": "Varaa paikka",
+      "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",
+      "ctaCreateAccount": "Luo tili",
+      "ctaAddGamer": "Lisää lapsi ensin",
+      "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
+      "preOpenHelper": "Valitse lapsi ja hyväksy säännöt, niin ilmoittautuminen onnistuu yhdellä napautuksella heti, kun se avautuu.",
+      "thresholdHelper": "Aloitamme heti, kun {count} lasta on ilmoittautunut. Varaa paikka nyt – ilmoitamme heti, kun ryhmä on kasassa.",
+      "thresholdProgress": "{current} / {threshold}",
+      "thresholdRemaining": "{count, plural, =0 {Raja saavutettu} one {# vielä alkamiseen} other {# vielä alkamiseen}}",
+      "seatsRemaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
+      "seatsRemainingShort": "{count, plural, one {# jäljellä} other {# jäljellä}}",
+      "waitlistCount": "{count, plural, =0 {Olisit #1} one {# perhe edellä – olisit #{position}} other {# perhettä edellä – olisit #{position}}}",
+      "waitlistHowTitle": "Näin jonotuslista toimii",
+      "waitlistHowItem1": "Pidät paikkasi jonossa koko kauden ajan.",
+      "waitlistHowItem2": "Jos joku perhe peruu, seuraavalle annetaan lyhyt aika ottaa paikka vastaan.",
+      "waitlistHowItem3": "Voit poistua jonotuslistalta milloin tahansa tililtäsi.",
+      "endedNote": "Tämä on jo päättynyt. Pidä silmällä seuraavaa kierrosta.",
+      "runningLateNote": "Olemme jo aloittaneet – ilmoittautuminen on suljettu. Seuraava kierros avautuu pian.",
+      "rules": {
+        "consumer_club": "Hyväksyn kerhon säännöt ja ymmärrän, että toistuvat selittämättömät poissaolot voivat avata lapseni paikan jonotuslistan seuraavalle perheelle.",
+        "municipality_club": "Hyväksyn kerhon säännöt.",
+        "camp": "Hyväksyn leirin säännöt ja ymmärrän peruutusehdot.",
+        "event": "Olen lukenut tapahtuman tiedot ja ymmärrän, että lapseni iästä riippuen huoltajan läsnäolo voi olla tarpeen."
+      },
+      "whoAreYouSigningUp": "Kenet ilmoitat?",
+      "selectGamer": "Valitse",
+      "selected": "Valittu",
+      "agePill": "Ikä {age}",
+      "noGamersTitle": "Lisää lapsi tilillesi",
+      "noGamersDescription": "Meidän on tiedettävä, kenet ilmoitat. Lisää lapsi ensin – se vie minuutin."
+    },
+    "pricing": {
+      "title": "Hinta",
+      "subscribeHeading": "Tilaus (säästät enemmän)",
+      "bundleHeading": "Tai osta kerralla",
+      "perSession": "{price} / kerta",
+      "subscribeMonthly": "Kuukausi",
+      "subscribeQuarterly": "Kolme kuukautta",
+      "subscribeYearly": "Vuosi",
+      "bundleSingle": "Yksittäinen kerta",
+      "bundleN": "{count} kertaa",
+      "savings": "Säästä {percent} %",
+      "bestValue": "Paras tarjous",
+      "free": "Maksuton",
+      "freeHint": "Maksua ei tarvita.",
+      "external": "Sinulle maksuton · kuntasi maksaa",
+      "externalHint": "Maksua ei tarvita – kuntasi kattaa kustannukset.",
+      "upfrontTotal": "{price}",
+      "upfrontHint": "Kertamaksu.",
+      "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
+      "ctaActiveLabel": "{verb} hintaan {price} →",
+      "ctaActiveLabelSub": "{verb} hintaan {price} {cadence} →",
+      "cadenceMonth": "/ kk",
+      "cadenceQuarter": "/ 3 kk",
+      "cadenceYear": "/ vuosi"
+    },
+    "countdown": {
+      "days": "pv",
+      "hours": "h",
+      "minutes": "min",
+      "seconds": "s",
+      "opensWhen": "Avautuu {when}"
+    },
+    "loading": "Ladataan…",
+    "notFound": {
+      "title": "Sivua ei löytynyt",
+      "description": "Se on ehkä poistettu tai linkki on virheellinen. Selaa muita vaihtoehtoja alta.",
+      "cta": "Takaisin selaamaan"
+    },
+    "preview": {
+      "banner": "Mallinäkymä · toiminnot eivät ole vielä kytkettyinä"
+    }
+  },
   "sidebar": {
     "dashboard": "Hallintapaneeli",
     "users": "Käyttäjät",

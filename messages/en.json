@@ -1144,6 +1144,144 @@
       "noMatches": "No matches. Try clearing your filters."
     }
   },
+  "productDetail": {
+    "back": {
+      "consumer_club": "All clubs",
+      "municipality_club": "All municipality clubs",
+      "camp": "All camps",
+      "event": "All events"
+    },
+    "typeLabel": {
+      "consumer_club": "Club",
+      "municipality_club": "Municipality club",
+      "camp": "Camp",
+      "event": "Event"
+    },
+    "sections": {
+      "about": "About",
+      "whenWhere": "When & where",
+      "calendar": "Schedule",
+      "tags": "What to expect",
+      "topicsLabel": "Focus",
+      "tagsLabel": "Vibe"
+    },
+    "info": {
+      "schedule": "Schedule",
+      "where": "Where",
+      "format": "Format",
+      "ages": "Ages {min}–{max}",
+      "ageRange": "Age range",
+      "language": "Language",
+      "online": "Online",
+      "atVenue": "At {venue}",
+      "tbd": "To be confirmed"
+    },
+    "calendar": {
+      "weekdayMon": "Mon",
+      "weekdayTue": "Tue",
+      "weekdayWed": "Wed",
+      "weekdayThu": "Thu",
+      "weekdayFri": "Fri",
+      "weekdaySat": "Sat",
+      "weekdaySun": "Sun",
+      "legendSession": "Session",
+      "legendSkipped": "Skipped",
+      "skipLine": "{date} · {reason}",
+      "skipExplainer": "Skipped sessions are public holidays or breaks. Your gamer's plan won't be charged for these dates."
+    },
+    "signupPanel": {
+      "bannerOpen": "{verb} now",
+      "bannerAlmostFull": "Going fast — only a few seats left",
+      "bannerCountdown": "Sign-up opens in",
+      "bannerCountdownDone": "Sign-up is now open",
+      "bannerThreshold": "Starts when it fills up",
+      "bannerWaitlist": "Fully booked right now",
+      "bannerFullClosed": "Fully booked",
+      "bannerRunningLate": "This one's already underway",
+      "bannerEnded": "This one's wrapped",
+      "verb": {
+        "consumer_club": "Enroll",
+        "municipality_club": "Register",
+        "camp": "Sign up",
+        "event": "Join"
+      },
+      "ctaPreOpenIdle": "{verb} — not yet open",
+      "ctaPreOpenReady": "Ready when sign-up opens",
+      "ctaActive": "{verb} now →",
+      "ctaWaitlist": "Join the waitlist",
+      "ctaThreshold": "Reserve a spot",
+      "ctaSignIn": "Sign in to register",
+      "ctaCreateAccount": "Create account",
+      "ctaAddGamer": "Add a child first",
+      "nonCustomerNote": "Only parents can register a gamer here.",
+      "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
+      "thresholdHelper": "We'll start once {count} kids have signed up. Reserve a spot now and we'll let you know the moment we have enough.",
+      "thresholdProgress": "{current} of {threshold}",
+      "thresholdRemaining": "{count, plural, =0 {Threshold reached} one {# more to start} other {# more to start}}",
+      "seatsRemaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
+      "seatsRemainingShort": "{count, plural, one {# left} other {# left}}",
+      "waitlistCount": "{count, plural, =0 {You'd be #1} one {# family ahead — you'd be #{position}} other {# families ahead — you'd be #{position}}}",
+      "waitlistHowTitle": "How the waitlist works",
+      "waitlistHowItem1": "You keep your spot in line for the whole term.",
+      "waitlistHowItem2": "If a family cancels, the next person gets a short window to accept.",
+      "waitlistHowItem3": "You can leave the waitlist anytime from your account.",
+      "endedNote": "This one already wrapped. Keep an eye out for the next one.",
+      "runningLateNote": "We've already started — sign-up is closed. The next round will open soon.",
+      "rules": {
+        "consumer_club": "I agree to the club's code of conduct and understand that repeated unexcused absences may open my child's seat for the next family on the waitlist.",
+        "municipality_club": "I agree to the club's code of conduct.",
+        "camp": "I agree to the camp's code of conduct and understand the cancellation window.",
+        "event": "I've read the event details and understand my child may need a parent or guardian present depending on age."
+      },
+      "whoAreYouSigningUp": "Who are you signing up?",
+      "selectGamer": "Select",
+      "selected": "Selected",
+      "agePill": "Age {age}",
+      "noGamersTitle": "Add a child to your account",
+      "noGamersDescription": "We need to know who to sign up. Add a child first — it takes a minute."
+    },
+    "pricing": {
+      "title": "Pricing",
+      "subscribeHeading": "Subscribe (saves more)",
+      "bundleHeading": "Or pay as you go",
+      "perSession": "{price} / session",
+      "subscribeMonthly": "Monthly",
+      "subscribeQuarterly": "Every 3 months",
+      "subscribeYearly": "Yearly",
+      "bundleSingle": "Single session",
+      "bundleN": "{count} sessions",
+      "savings": "Save {percent}%",
+      "bestValue": "Best value",
+      "free": "Free",
+      "freeHint": "No payment needed.",
+      "external": "Free to you · paid by your municipality",
+      "externalHint": "No payment needed — your municipality covers the cost.",
+      "upfrontTotal": "{price}",
+      "upfrontHint": "One-time payment.",
+      "notAvailable": "Pricing isn't available in {currency} yet.",
+      "ctaActiveLabel": "{verb} for {price} →",
+      "ctaActiveLabelSub": "{verb} for {price} {cadence} →",
+      "cadenceMonth": "/ month",
+      "cadenceQuarter": "every 3 months",
+      "cadenceYear": "every year"
+    },
+    "countdown": {
+      "days": "days",
+      "hours": "hrs",
+      "minutes": "min",
+      "seconds": "sec",
+      "opensWhen": "Opens {when}"
+    },
+    "loading": "Loading…",
+    "notFound": {
+      "title": "We couldn't find that",
+      "description": "It may have been removed or the link is wrong. Browse what's available below.",
+      "cta": "Back to browse"
+    },
+    "preview": {
+      "banner": "Mockup preview · interactions are not wired up"
+    }
+  },
   "sidebar": {
     "dashboard": "Dashboard",
     "users": "Users",

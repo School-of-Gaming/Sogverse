@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Users, Hourglass } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,8 @@ export interface ProductBrowseCardViewProps {
   tagLabels: readonly string[];
   price: ProductPriceLine;
   state: RegistrationState;
+  /** Detail-page URL. The card's CTA + the whole card surface link here. */
+  detailHref?: string;
 }
 
 export type SeatsHint =
@@ -48,6 +51,7 @@ export function ProductBrowseCardView({
   tagLabels,
   price,
   state,
+  detailHref,
 }: ProductBrowseCardViewProps) {
   const t = useTranslations("productBrowse.card");
   const cta = useRegistrationCta(state);
@@ -58,6 +62,7 @@ export function ProductBrowseCardView({
       className={cn(
         "flex h-full flex-col overflow-hidden transition-colors",
         isEnded && "opacity-70 grayscale-[40%]",
+        detailHref && !isEnded && "hover:border-primary/40",
       )}
     >
       <CardContent className="flex flex-1 flex-col gap-3 p-4">
@@ -117,25 +122,32 @@ export function ProductBrowseCardView({
           ) : (
             <div className="flex items-end justify-between gap-2">
               <PriceBlock price={price} />
-              {cta && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={
-                    cta.kind === "primary"
-                      ? "default"
-                      : cta.kind === "secondary"
-                        ? "secondary"
-                        : "outline"
-                  }
-                  disabled={cta.kind === "disabled"}
-                  onClick={() => {
-                    /* noop: detail page lands in a follow-up */
-                  }}
-                >
-                  {cta.labelText}
-                </Button>
-              )}
+              {cta &&
+                (detailHref && cta.kind !== "disabled" ? (
+                  <Link href={detailHref}>
+                    <Button
+                      size="sm"
+                      variant={cta.kind === "primary" ? "default" : "secondary"}
+                    >
+                      {cta.labelText}
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={
+                      cta.kind === "primary"
+                        ? "default"
+                        : cta.kind === "secondary"
+                          ? "secondary"
+                          : "outline"
+                    }
+                    disabled={cta.kind === "disabled"}
+                  >
+                    {cta.labelText}
+                  </Button>
+                ))}
             </div>
           )}
         </div>

@@ -70,6 +70,13 @@ import {
 } from "@/components/public/products-v2/product-purchased-card-view";
 import { RegistrationPill } from "@/components/public/products-v2/registration-pill";
 import type { RegistrationState } from "@/components/public/products-v2/derive-registration-state";
+import { SignupPanel } from "@/components/public/products-v2/signup-panel";
+import {
+  buildDetailFixture,
+  PREVIEW_STATES,
+  PREVIEW_TYPES,
+  type PreviewStateKind,
+} from "@/components/public/products-v2/mock-detail-fixtures";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -1604,6 +1611,83 @@ export default function AdminUIComponentsPage() {
         <ProductsV2Demo />
       </Section>
 
+      {/* ============================================================ */}
+      {/* Section 12: Products v2 — Detail Page                          */}
+      {/* ============================================================ */}
+      <Section title="Products v2 — Detail Page">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Per-type detail pages (/clubs/[id], /camps/[id], /events/[id]).
+          The right-side signup panel switches across registration states
+          (countdown / open / waitlist / threshold / ended). Each tile here
+          shows the panel inline; the &ldquo;Preview full page &rarr;&rdquo;
+          link opens the route in the public layout exactly as a parent
+          would see it.
+        </p>
+        <ProductDetailDemo />
+      </Section>
+
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Section 12: Products v2 — Detail Page                              */
+/* ------------------------------------------------------------------ */
+
+function ProductDetailDemo() {
+  return (
+    <div className="space-y-6">
+      {PREVIEW_TYPES.map((productType) => (
+        <SubSection
+          key={productType}
+          title={productType.replace(/_/g, " ").toUpperCase()}
+        >
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {PREVIEW_STATES.map((stateKind) => (
+              <ProductDetailPanelTile
+                key={`${productType}-${stateKind}`}
+                productType={productType}
+                stateKind={stateKind}
+              />
+            ))}
+          </div>
+        </SubSection>
+      ))}
+    </div>
+  );
+}
+
+function ProductDetailPanelTile({
+  productType,
+  stateKind,
+}: {
+  productType: (typeof PREVIEW_TYPES)[number];
+  stateKind: PreviewStateKind;
+}) {
+  const fixture = buildDetailFixture(productType, stateKind);
+  const fullPageHref = `/preview/products-v2/${productType}/${stateKind}`;
+
+  return (
+    <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-mono text-muted-foreground">{stateKind}</p>
+        <a
+          href={fullPageHref}
+          target="_blank"
+          rel="noreferrer"
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          Preview full page →
+        </a>
+      </div>
+      <div className="rounded-md bg-background p-3">
+        <SignupPanel
+          product={fixture.product}
+          state={fixture.state}
+          authState={fixture.authState}
+          fixedNowMs={fixture.fixedNowMs}
+        />
+      </div>
     </div>
   );
 }

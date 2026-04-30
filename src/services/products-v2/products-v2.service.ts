@@ -25,6 +25,16 @@ export type ProductV2WithDetails = ProductV2 & {
   product_translations_v2: ProductTranslationV2[];
 };
 
+// Parent-facing single-product detail. Shares the browse row's joins
+// and adds a flattened `holidays` array — every (date, reason) pair
+// pulled from the product's linked holiday calendars. The reason
+// falls back to the calendar's `name` if the admin didn't set a
+// per-date one. Consumed by the detail page calendar widget. The
+// signup panel also reads `product_prices_v2` off this row.
+export type ProductV2DetailRow = ProductV2BrowseRow & {
+  holidays: { date: string; reason: string }[];
+};
+
 export type ProductTranslationInput = {
   locale: SupportedLocale;
   name: string;
@@ -118,6 +128,60 @@ export class ProductsV2Service {
 
     if (error) throw error;
     return data as ProductV2BrowseRow[];
+  }
+
+  // Single-product detail fetch for the parent-facing detail page
+  // (`/clubs/[id]`, `/camps/[id]`, `/events/[id]`). Returns the same shape
+  // as `listVisibleByType` plus a flattened `holidays` array sourced from
+  // the linked holiday calendars — that's everything the calendar widget
+  // and the signup panel need to render.
+  //
+  // RLS: parent-facing read; only `is_visible = true` AND status in
+  // (pending, running) products are returned. Returns null on miss so the
+  // page can render a clean "not found" state.
+  async getDetailById(
+    id: string,
+  ): Promise<ProductV2DetailRow | null> {
+    const { data, error } = await this.supabase
+      .from("products_v2")
+      .select(
+        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), product_holiday_calendars_v2(holiday_calendars_v2(name, calendar_holidays_v2(date, reason)))",
+      )
+      .eq("id", id)
+      .eq("is_visible", true)
+      .in("status", ["pending", "running"])
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    type RawRow = ProductV2BrowseRow & {
+      product_holiday_calendars_v2?: {
+        holiday_calendars_v2: {
+          name: string;
+          calendar_holidays_v2: { date: string; reason: string | null }[];
+        } | null;
+      }[];
+    };
+    const row = data as unknown as RawRow;
+
+    // Flatten linked-calendar holidays into a single array. Each row keeps
+    // its per-date `reason` if the admin filled one in; otherwise the
+    // calendar's own `name` is the fallback (e.g., "Finnish national
+    // holidays" reads better than a blank row in the UI).
+    const holidays: { date: string; reason: string }[] = [];
+    for (const link of row.product_holiday_calendars_v2 ?? []) {
+      const cal = link.holiday_calendars_v2;
+      if (!cal) continue;
+      for (const h of cal.calendar_holidays_v2) {
+        holidays.push({ date: h.date, reason: h.reason ?? cal.name });
+      }
+    }
+
+    return {
+      ...row,
+      holidays,
+    } as ProductV2DetailRow;
   }
 
   async createProduct(input: CreateProductV2Input): Promise<string> {

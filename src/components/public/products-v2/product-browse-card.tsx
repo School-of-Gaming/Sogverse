@@ -111,8 +111,21 @@ export function ProductBrowseCard({ product }: ProductBrowseCardProps) {
       tagLabels={resolveTagLabels(product, uiLocale)}
       price={price}
       state={state}
+      detailHref={detailHref(product.product_type, product.id)}
     />
   );
+}
+
+function detailHref(productType: ProductV2BrowseRow["product_type"], id: string): string {
+  switch (productType) {
+    case "consumer_club":
+    case "municipality_club":
+      return `/clubs/${id}`;
+    case "camp":
+      return `/camps/${id}`;
+    case "event":
+      return `/events/${id}`;
+  }
 }
 
 function resolveTagLabels(
