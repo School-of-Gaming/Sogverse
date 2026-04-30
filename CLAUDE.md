@@ -135,6 +135,8 @@ See `docs/sorg-token-architecture.md` for the full architecture, component map, 
 
 ### Other Docs
 
+- `docs/products-v2-architecture.md` — Unified products_v2 system: admin form, parent browse pages, registration pill, View+adapter card split
+- `docs/products-redesign.md` — Design rationale for the v2 product redesign
 - `docs/email-architecture.md` — Brevo integration, email templates, notifications, deliverability/DNS, and testing UI
 - `docs/i18n-architecture.md` — next-intl setup, locale resolution, translation patterns, adding languages/namespaces
 - `docs/SECURITY_REPORT.md` — Past security audit findings and remediations

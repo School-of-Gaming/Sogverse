@@ -1,16 +1,27 @@
 # Products v2 Architecture
 
-The next-generation product system covering four product types — consumer clubs, municipality clubs, camps, events — as a single, unified shape. Currently admin-only (creation UI). Parent / customer / gamer surfaces ship in later phases.
+The next-generation product system covering four product types — consumer clubs, municipality clubs, camps, events — as a single, unified shape. Admin creation/list UI and parent-facing browse pages have shipped; customer enrollment and gamer surfaces ship in later phases.
 
-For the design rationale, see `docs/products-redesign.md`. This doc covers what was built on the `feat/products-v2-mock-port` branch and where it's headed.
+For the design rationale, see `docs/products-redesign.md`. This doc covers what's built today and where it's headed.
 
-## Scope on this branch
+## What ships today
+
+**Admin (created on `feat/products-v2-mock-port`):**
 
 - DB foundation: `products_v2`, `topics_v2`, `tags_v2`, translation child tables (`product_translations_v2`, `topic_translations_v2`, `tag_translations_v2`), holiday calendars, schedule slots, prices, groups, and the `site_details_v2` / `site_staff_details_v2` split for location extension data.
 - Admin creation UI for all four product types at `/admin/{consumer-clubs,municipality-clubs,camps,events}/new`, sharing one form with type-specific config (`product-v2-type-config.ts`).
 - Admin list pages for the same four types.
 - Server-side `create_product_v2` RPC plus inline-create routes for tags, topics, locations, FX rates, and site notes.
 - Effective-status derivation (TS + SQL twin) — `pending → running → completed` is computed at read time from stored facts, not driven by cron.
+
+**Parent browse (created on `feat/products-v2-browse-pages`):**
+
+- Public browse pages at `/clubs`, `/camps`, `/events` (consolidates consumer + municipality enrollment under `/clubs`; muni gets no browse landing per redesign §7.3).
+- Filter chips by topic and tag (URL-driven via `useBrowseFilters` so deep-links work).
+- Browse + purchased card pair, each split into a presentational **View** and a thin data **adapter** so every card state can be rendered by hand on `/admin/ui-components` without forging a full DB row.
+- Parent-voice **registration pill** that only surfaces when there's something actionable to say ("Only 2 spots left", "Need 3 more to start", "Full — waitlist open", "Opens 15 May", "Already started", "Ended"). Default-open carries no pill.
+- `deriveRegistrationState` — pure function that maps a product to a discriminated state union, with 16 unit tests covering the decision tree and the today-vs-future degradation when `participations_v2` ships.
+- "Your enrolled" mock section gated behind `?mock=1` for design review of the unified-management surface; deleted when real participation rows land.
 
 ## Component map
 
@@ -93,6 +104,111 @@ Site-specific fields live in two extension tables, not on `locations` itself:
 - `site_staff_details_v2` — admin + Gedu only (gate codes, back-entrance directions, ops notes).
 
 Splitting by visibility tier keeps RLS clean (row-level, not column-level).
+
+## Parent browse surfaces
+
+### Routes
+
+- `/clubs` — consumer + municipality enrollment surface. Browse grid is consumer-club only; an enrolled muni club shows up in the "your enrolled" section above the grid (see `?mock=1` below) so a parent who registered through their city sees one unified list.
+- `/camps` — single-type browse + enrolled section.
+- `/events` — single-type browse + enrolled section.
+
+### Component map
+
+```
+src/components/public/products-v2/
+├── product-browse-page.tsx           — Page orchestrator: heading, filters, "your enrolled" section, browse grid, empty states
+├── product-browse-filters.tsx        — Topic / tag chips, result count, clear-all
+├── product-browse-card.tsx           — Browse-card adapter: ProductV2BrowseRow → display props
+├── product-browse-card-view.tsx      — Browse-card View: pure-presentational
+├── product-purchased-card.tsx        — Purchased-card adapter
+├── product-purchased-card-view.tsx   — Purchased-card View
+├── registration-pill.tsx             — RegistrationPill (outline chip) + useRegistrationCta hook
+├── derive-registration-state.ts      — Pure state-machine: product + now + participation count → RegistrationState
+├── format-product-schedule.ts        — Pure schedule formatter (every weekday / range / single)
+├── format-product-price.ts           — Pure price formatter (free / external / bundle_or_sub / upfront)
+├── filter-products.ts                — Pure topic / tag filter
+├── use-browse-filters.ts             — URL-backed filter state (deep-linkable)
+└── mock-purchased.ts                 — Hand-curated rows for the ?mock=1 section
+```
+
+### View + adapter split
+
+Each card is two files. The **View** takes already-resolved display props (strings, numbers, the registration state) and is pure presentational. The **adapter** of the same name resolves a `ProductV2BrowseRow` (or future participation row) into those props — locale, currency, schedule, price, registration state, tag labels.
+
+Why: the UI Components style guide at `/admin/ui-components` renders every card state by hand for design review. With a single combined component, you'd need to forge a full `ProductV2BrowseRow` (joined topic translations, tag translations, prices array, schedule slots) for each variant. The split lets the demo pass a half-dozen plain strings instead.
+
+### Registration pill (parent voice, only when notable)
+
+`RegistrationPill` only renders when there's something **actionable or urgency-creating** to say. Default-open (plenty of seats, sign-ups open) returns `null` — the Sign-up button alone already says everything a parent needs.
+
+| State (from `deriveRegistrationState`) | Renders | Pill copy |
+|---|---|---|
+| `open` with `seatsLeft` ≤ 3 | yes | "Only N spots left" |
+| `open` with more headroom | **no** | (Sign-up button does the talking) |
+| `pending_thr` | yes | "Need N more to start" |
+| `full_waitlist` | yes | "Full — waitlist open" |
+| `full_closed` | yes | "Full" |
+| `closed_pre` | yes | "Opens 15 May" |
+| `running_late` | yes | "Already started" |
+| `ended` | yes | "Ended" |
+
+Visual treatment is a small rounded outline chip with a tinted state icon. The dot/filled treatments were prototyped on `/admin/ui-components` for design review and removed once the outline was chosen.
+
+`useRegistrationCta(state)` returns matching `{ kind, labelText }` for the card's CTA — primary "Sign up" for actionable states, secondary "Join waitlist" for `full_waitlist`, disabled "Full" / "Opens 15 May", or `null` to hide the CTA entirely (`running_late`, `ended`).
+
+### `deriveRegistrationState` decision tree
+
+Top-down, first match wins. Lives in `derive-registration-state.ts` alongside the format helpers — same shape as `formatProductSchedule` / `formatProductPrice`.
+
+```
+ended         ← effectiveStatus in { completed, expired, cancelled }
+closed_pre    ← registration_opens_at > now
+running_late  ← effectiveStatus = running AND product_type in { camp, event }
+pending_thr   ← raw status = pending AND signup_threshold IS NOT NULL
+                  AND participations_count < signup_threshold
+full_waitlist ← seat_count IS NOT NULL
+                  AND participations_count >= seat_count
+                  AND waitlist_enabled
+full_closed   ← seat_count IS NOT NULL
+                  AND participations_count >= seat_count
+                  AND NOT waitlist_enabled
+open          ← otherwise (carries seatCount + seatsLeft + waitlistEnabled)
+```
+
+Muni clubs are intentionally not modelled — they don't get a browse page and their purchased card uses the verb badge + hidden "Manage payment" button to convey "registered through your city". No status pill.
+
+### Today-vs-future degradation
+
+`participations_v2` hasn't shipped. Every adapter passes `participationsCount: 0` to the deriver today. Consequences:
+
+- `pending_thr` shows "Need N more to start" with N == threshold (no progress). Once participations are live, it'll show the real remaining count.
+- `full_*` never selected (count is always 0).
+- `open` reports `seatsLeft = seat_count` (no real consumption yet), so the urgency pill ("Only 2 spots left") is currently driven by admin-set caps, not real signups.
+
+The same pill component covers both eras — when the real count goes live, the richer states light up automatically.
+
+### RLS / effectiveStatus interplay
+
+RLS only returns `pending` and `running` rows to anon/customer. `completed` is hidden at the DB. The browse card still renders the "Ended" pill because `effectiveStatus()` catches `running` rows whose `end_date` has passed (cron lag between the wall clock crossing midnight and a `running → completed` flip). Do **not** add `completed` to the service filter — see the comment in `products-v2.service.ts:listVisibleByType`.
+
+### `?mock=1` purchased section
+
+The "your enrolled" surface above the browse grid is gated behind `?mock=1` until participation rows are live. Mock data lives in `mock-purchased.ts` — five hand-curated rows with stable identicon seeds. Real visitors never see it; design review hits e.g. `/clubs?mock=1` to inspect the unified-management surface alongside the live browse grid. Delete `mock-purchased.ts` and replace its consumers with a real `useMyParticipations` hook when participations land.
+
+### Filter UX
+
+Filter chips are URL-driven via `useBrowseFilters` — deep-links like `/clubs?topic=minecraft&tag=creative` reproduce a filter state. `filterProducts` is a pure function over `(rows, { topics, tags })`. Result count is rendered next to the filters and the empty state distinguishes "nothing matches your filters" from "no products in this category yet".
+
+### Style guide / design review surface
+
+Every browse + purchased card state is rendered on `/admin/ui-components` under "Products v2 — Browse & Purchased Cards". The page imports the `*View` components directly so every state is exercised without faking DB rows. CLAUDE.md's "Reference this page before creating new UI patterns" rule applies — when adding a new state, also add it to the demo so design review can see it.
+
+### Non-obvious gotchas
+
+- **`useTranslations` types don't cross function boundaries.** Helper functions that take `ReturnType<typeof useTranslations<"productBrowse.card">>` as a parameter trip TS2589 ("excessively deep") on this path. The pattern: closure-bind `t` inside the component and write small literal-key dispatcher helpers (see `headingFor` in `product-browse-page.tsx`, `decorationFor` in `registration-pill.tsx`).
+- **Lucide icons must not be aliased to a local variable in render.** `react-hooks/static-components` flags `const Icon = iconFor(state)` as dynamic component creation. Wrap the switch in a tiny component (`<StateIcon state={state} className=... />`) instead — the className flows through as a JSX attribute, which the i18n literal-string rule allows-lists.
+- **The View shouldn't depend on the currency provider.** Currency lookup happens in the adapter; the View receives an already-formatted `ProductPriceLine`. Same rule for locale-aware date formatting on `closed_pre.opensAt` — the Pill formats it with `useFormatter` since the pill itself is locale-aware, but anything else handed to the View should be pre-formatted.
 
 ## Future improvements
 
