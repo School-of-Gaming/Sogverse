@@ -1,4 +1,4 @@
-import type { ProductTypeV2 } from "@/types";
+import type { BrowseRowLocation, ProductTypeV2 } from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductV2DetailRow } from "@/services/products-v2";
 import type { RegistrationState } from "./derive-registration-state";
@@ -104,6 +104,8 @@ function buildBaseProduct(
   // Cast through unknown — the mock only fills the fields the detail
   // body reads, and we don't care about the `created_at` / `updated_at`
   // metadata the database would otherwise populate.
+  const locationFixture = pickLocationFixture(productType);
+
   return {
     id: `mock-${productType}-${stateKind}`,
     product_type: productType,
@@ -114,7 +116,8 @@ function buildBaseProduct(
     min_age: 8,
     max_age: 12,
     spoken_language_code: "fi",
-    location_id: null,
+    location_id: locationFixture?.id ?? null,
+    locations: locationFixture,
     padlet_url: null,
     signup_threshold: stateKind === "pending_thr" ? 8 : null,
     start_date: startDate,
@@ -246,6 +249,39 @@ function pickSchedule(productType: ProductTypeV2): {
           { weekday: 4, start_time: "18:00:00", duration_minutes: 120 },
         ],
       };
+  }
+}
+
+// Static location fixtures. The detail-body and card both render
+// "site, parent" for in-person and "muni" for online municipality_clubs;
+// the IDs are placeholders that mock detail rows reference via
+// location_id. None of these UUIDs ever hit the DB — the preview route
+// renders straight from this fixture.
+const MOCK_LOC_TAPIOLA: BrowseRowLocation = {
+  id: "mock-loc-tapiolan-koulu",
+  name: "Tapiolan koulu",
+  type: "site",
+  parent: { id: "mock-loc-espoo", name: "Espoo", type: "municipality" },
+};
+const MOCK_LOC_SOG_HQ: BrowseRowLocation = {
+  id: "mock-loc-sog-hq",
+  name: "Sogverse HQ",
+  type: "site",
+  parent: { id: "mock-loc-helsinki", name: "Helsinki", type: "municipality" },
+};
+
+function pickLocationFixture(
+  productType: ProductTypeV2,
+): BrowseRowLocation | null {
+  switch (productType) {
+    case "consumer_club":
+      // Online consumer club, no muni — no joined location.
+      return null;
+    case "municipality_club":
+      return MOCK_LOC_TAPIOLA;
+    case "camp":
+    case "event":
+      return MOCK_LOC_SOG_HQ;
   }
 }
 

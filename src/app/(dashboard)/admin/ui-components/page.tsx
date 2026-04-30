@@ -1,7 +1,7 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only style guide; all content is copy-paste component examples, not user-facing text that ships in any locale */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
   Plus,
   Pencil,
@@ -82,6 +82,48 @@ import {
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Lets SubSection prefix its anchor id with the parent Section's slug, so
+// duplicated subsection titles (e.g. "Variants" under both Button and Badge)
+// don't collide.
+const SectionSlugContext = createContext<string | null>(null);
+
+function AnchorHeading({
+  as,
+  id,
+  className,
+  children,
+}: {
+  as: "h2" | "h3";
+  id: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const Tag = as;
+  return (
+    <Tag id={id} className={`group scroll-mt-4 ${className}`}>
+      <a
+        href={`#${id}`}
+        className="inline-flex items-center gap-2 hover:underline"
+      >
+        {children}
+        <span
+          aria-hidden
+          className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+        >
+          #
+        </span>
+      </a>
+    </Tag>
+  );
+}
+
 function Section({
   title,
   children,
@@ -89,11 +131,16 @@ function Section({
   title: string;
   children: React.ReactNode;
 }) {
+  const slug = slugify(title);
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-bold">{title}</h2>
-      <div className="rounded-lg border p-6 space-y-6">{children}</div>
-    </section>
+    <SectionSlugContext.Provider value={slug}>
+      <section className="space-y-4">
+        <AnchorHeading as="h2" id={slug} className="text-2xl font-bold">
+          {title}
+        </AnchorHeading>
+        <div className="rounded-lg border p-6 space-y-6">{children}</div>
+      </section>
+    </SectionSlugContext.Provider>
   );
 }
 
@@ -104,11 +151,17 @@ function SubSection({
   title: string;
   children: React.ReactNode;
 }) {
+  const parentSlug = useContext(SectionSlugContext);
+  const slug = parentSlug ? `${parentSlug}-${slugify(title)}` : slugify(title);
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+      <AnchorHeading
+        as="h3"
+        id={slug}
+        className="text-sm font-semibold text-muted-foreground uppercase tracking-wider"
+      >
         {title}
-      </h3>
+      </AnchorHeading>
       {children}
     </div>
   );
@@ -840,6 +893,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       scheduleLine: "Every Tuesday · 17:00 (EET)",
       ageLine: "Ages 8–12",
       seatsHint: { kind: "capacity", count: 8 },
+      locationLine: { kind: "online", label: "Online" },
       tagLabels: ["Creative", "Friendly", "Beginner-OK"],
       price: SAMPLE_PRICE_BUNDLE,
       state: { kind: "open", seatCount: 8, seatsLeft: 6, waitlistEnabled: false },
@@ -856,6 +910,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       scheduleLine: "Every Wednesday · 17:00 (EET)",
       ageLine: "Ages 9–13",
       seatsHint: { kind: "capacity", count: 8 },
+      locationLine: { kind: "in_person", label: "Tapiolan koulu" },
       tagLabels: ["Small group"],
       price: SAMPLE_PRICE_BUNDLE,
       state: { kind: "open", seatCount: 8, seatsLeft: 2, waitlistEnabled: false },
@@ -872,6 +927,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       scheduleLine: "24–28 March · 10:00–14:00 (EET)",
       ageLine: "Ages 9–14",
       seatsHint: null,
+      locationLine: { kind: "online_muni", label: "Espoo" },
       tagLabels: ["Group", "Tournament"],
       price: SAMPLE_PRICE_UPFRONT,
       state: { kind: "pending_thr", threshold: 6, count: 2 },
@@ -888,6 +944,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       scheduleLine: "Friday 12 April · 18:00–20:00 (EET)",
       ageLine: "Ages 10+",
       seatsHint: { kind: "capacity", count: 12 },
+      locationLine: { kind: "in_person", label: "Iso Omena" },
       tagLabels: ["Family", "Casual"],
       price: SAMPLE_PRICE_FREE,
       state: { kind: "full_waitlist", seatCount: 12 },
@@ -904,6 +961,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       scheduleLine: "12–16 August · 10:00–15:00 (EET)",
       ageLine: "Ages 9–13",
       seatsHint: { kind: "capacity", count: 16 },
+      locationLine: { kind: "in_person", label: "Sogverse HQ" },
       tagLabels: ["Camp", "Story-driven"],
       price: SAMPLE_PRICE_UPFRONT,
       state: { kind: "closed_pre", opensAt: "2026-05-15T00:00:00Z" },
@@ -920,6 +978,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       scheduleLine: "20–24 April · 10:00–14:00 (EET)",
       ageLine: "Ages 8–12",
       seatsHint: { kind: "capacity", count: 10 },
+      locationLine: { kind: "in_person", label: "Ressun peruskoulu" },
       tagLabels: ["Camp"],
       price: SAMPLE_PRICE_UPFRONT,
       state: { kind: "running_late" },
@@ -935,6 +994,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       scheduleLine: "Saturday 22 March · 14:00–17:00 (EET)",
       ageLine: "Ages 10+",
       seatsHint: null,
+      locationLine: { kind: "in_person", label: "Tampere-talo" },
       tagLabels: ["Tournament"],
       price: SAMPLE_PRICE_UPFRONT,
       state: { kind: "ended" },
@@ -1048,6 +1108,19 @@ function ProductsV2Demo() {
 /* ------------------------------------------------------------------ */
 
 export default function AdminUIComponentsPage() {
+  // The dashboard scroll container is <main overflow-auto>, not the document.
+  // The browser's native hash jump runs before this client component has
+  // rendered, so it lands in the wrong scroll context. Re-apply the scroll
+  // after mount.
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const raf = requestAnimationFrame(() => {
+      document.getElementById(hash)?.scrollIntoView({ block: "start" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
     <div className="space-y-8">
       <div>

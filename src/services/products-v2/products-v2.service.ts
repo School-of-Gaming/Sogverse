@@ -119,7 +119,7 @@ export class ProductsV2Service {
     const { data, error } = await this.supabase
       .from("products_v2")
       .select(
-        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes)"
+        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:locations!parent_id(id, name, type))"
       )
       .eq("product_type", type)
       .eq("is_visible", true)
@@ -145,7 +145,7 @@ export class ProductsV2Service {
     const { data, error } = await this.supabase
       .from("products_v2")
       .select(
-        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), product_holiday_calendars_v2(holiday_calendars_v2(name, calendar_holidays_v2(date, reason)))",
+        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:locations!parent_id(id, name, type)), product_holiday_calendars_v2(holiday_calendars_v2(name, calendar_holidays_v2(date, reason)))",
       )
       .eq("id", id)
       .eq("is_visible", true)

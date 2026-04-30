@@ -1,23 +1,25 @@
 "use client";
 
 import { useTranslations, useLocale } from "next-intl";
-import { Sliders, X } from "lucide-react";
+import { Sliders, X, Globe, MapPin } from "lucide-react";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicsV2, useTagsV2 } from "@/services/products-v2";
 import { cn } from "@/lib/utils";
 import { useBrowseFilters } from "./use-browse-filters";
 
-interface ProductBrowseFiltersProps {
-  resultCount: number;
-}
-
-// Filter strip — two horizontally-scrollable chip rows (topic, tag) plus
-// a result count and a "Clear" affordance shown only when something is
-// selected. Chips are pill-shaped with a clear active state (filled
+// Filter strip — three horizontally-scrollable chip rows (topic, tag,
+// format). Chips are pill-shaped with a clear active state (filled
 // primary) so taps register on small phone screens; rows are scrollable
 // rather than wrapping so they never push the cards down on overflow.
-export function ProductBrowseFilters({ resultCount }: ProductBrowseFiltersProps) {
+//
+// Format is single-valued — the parent picks Online OR In-person, not
+// both. Toggling the active chip clears the filter back to "either".
+//
+// No match-count display: the visible card grid already conveys that
+// information at a glance, and surfacing a count next to a "Clear"
+// button made the meta row's height jump when the button appeared.
+export function ProductBrowseFilters() {
   const t = useTranslations("productBrowse.filters");
   const uiLocale = resolveLocale(useLocale());
   const { data: topics } = useTopicsV2();
@@ -25,9 +27,11 @@ export function ProductBrowseFilters({ resultCount }: ProductBrowseFiltersProps)
   const {
     topics: selectedTopics,
     tags: selectedTags,
+    format: selectedFormat,
     hasAny,
     toggleTopic,
     toggleTag,
+    toggleFormat,
     clear,
   } = useBrowseFilters();
 
@@ -43,19 +47,22 @@ export function ProductBrowseFilters({ resultCount }: ProductBrowseFiltersProps)
           <Sliders className="h-3.5 w-3.5" aria-hidden />
           {t("filterBy")}
         </div>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{t("results", { count: resultCount })}</span>
-          {hasAny && (
-            <button
-              type="button"
-              onClick={clear}
-              className="inline-flex items-center gap-1 rounded-full border border-input px-2 py-0.5 font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-            >
-              <X className="h-3 w-3" aria-hidden />
-              {t("clearAll")}
-            </button>
+        {/* Clear is always rendered so the row's height doesn't shift
+            when a filter becomes active — `invisible` keeps the box,
+            hides the pixels. */}
+        <button
+          type="button"
+          onClick={clear}
+          aria-hidden={!hasAny}
+          tabIndex={hasAny ? 0 : -1}
+          className={cn(
+            "inline-flex items-center gap-1 rounded-full border border-input px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+            !hasAny && "invisible pointer-events-none",
           )}
-        </div>
+        >
+          <X className="h-3 w-3" aria-hidden />
+          {t("clearAll")}
+        </button>
       </div>
 
       <div className="space-y-2">
@@ -104,6 +111,21 @@ export function ProductBrowseFilters({ resultCount }: ProductBrowseFiltersProps)
             })}
           </FilterRow>
         )}
+
+        <FilterRow label={t("format")}>
+          <Chip
+            icon={<Globe className="h-3 w-3" aria-hidden />}
+            label={t("formatOnline")}
+            active={selectedFormat === "online"}
+            onToggle={() => toggleFormat("online")}
+          />
+          <Chip
+            icon={<MapPin className="h-3 w-3" aria-hidden />}
+            label={t("formatInPerson")}
+            active={selectedFormat === "in_person"}
+            onToggle={() => toggleFormat("in_person")}
+          />
+        </FilterRow>
       </div>
     </div>
   );
@@ -132,10 +154,12 @@ function Chip({
   label,
   active,
   onToggle,
+  icon,
 }: {
   label: string;
   active: boolean;
   onToggle: () => void;
+  icon?: React.ReactNode;
 }) {
   return (
     <button
@@ -143,12 +167,13 @@ function Chip({
       onClick={onToggle}
       aria-pressed={active}
       className={cn(
-        "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
         active
           ? "border-primary bg-primary text-primary-foreground shadow-sm"
           : "border-input bg-background text-foreground/80 hover:border-primary/40 hover:bg-accent",
       )}
     >
+      {icon}
       {label}
     </button>
   );

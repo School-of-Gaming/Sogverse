@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Users, Hourglass } from "lucide-react";
+import { Users, Hourglass, MapPin, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,12 +29,24 @@ export interface ProductBrowseCardViewProps {
   ageLine: string;
   /** Pre-formatted "{count} seats" / "Waitlist available" / null. */
   seatsHint: SeatsHint | null;
+  /**
+   * Single-line location/format label. Always present on browse cards so
+   * every card carries the same meta row — the icon swaps between MapPin
+   * (in-person) and Globe (online / online-muni) and the label says where
+   * the session happens.
+   */
+  locationLine: LocationLine;
   tagLabels: readonly string[];
   price: ProductPriceLine;
   state: RegistrationState;
   /** Detail-page URL. The card's CTA + the whole card surface link here. */
   detailHref?: string;
 }
+
+export type LocationLine = {
+  kind: "in_person" | "online" | "online_muni";
+  label: string;
+};
 
 export type SeatsHint =
   | { kind: "capacity"; count: number }
@@ -48,6 +60,7 @@ export function ProductBrowseCardView({
   scheduleLine,
   ageLine,
   seatsHint,
+  locationLine,
   tagLabels,
   price,
   state,
@@ -98,6 +111,14 @@ export function ProductBrowseCardView({
 
             <ul className="space-y-0.5 text-xs text-muted-foreground">
               {scheduleLine && <li className="line-clamp-1">{scheduleLine}</li>}
+              <li className="flex items-center gap-1 line-clamp-1">
+                {locationLine.kind === "in_person" ? (
+                  <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+                ) : (
+                  <Globe className="h-3 w-3 shrink-0" aria-hidden />
+                )}
+                <span className="truncate">{locationLine.label}</span>
+              </li>
               <li className="flex flex-wrap items-center gap-x-2">
                 <span>{ageLine}</span>
                 <SeatsHintLine hint={seatsHint} />

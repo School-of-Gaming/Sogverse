@@ -8,9 +8,11 @@ function row(overrides: {
   id: string;
   topicSlug: string | null;
   tagSlugs: string[];
+  isRemote?: boolean;
 }): ProductV2BrowseRow {
   return {
     id: overrides.id,
+    is_remote: overrides.isRemote ?? false,
     topics_v2: overrides.topicSlug
       ? {
           slug: overrides.topicSlug,
@@ -25,28 +27,46 @@ function row(overrides: {
     product_translations_v2: [],
     product_prices_v2: [],
     schedule_slots_v2: [],
+    locations: null,
   } as unknown as ProductV2BrowseRow;
 }
 
-const A = row({ id: "a", topicSlug: "minecraft", tagSlugs: ["beginner"] });
+const A = row({
+  id: "a",
+  topicSlug: "minecraft",
+  tagSlugs: ["beginner"],
+  isRemote: true,
+});
 const B = row({
   id: "b",
   topicSlug: "fortnite",
   tagSlugs: ["competitive", "neurodiversity-friendly"],
+  isRemote: false,
 });
-const C = row({ id: "c", topicSlug: "pokemon-go", tagSlugs: [] });
-const NO_TOPIC = row({ id: "d", topicSlug: null, tagSlugs: ["beginner"] });
+const C = row({ id: "c", topicSlug: "pokemon-go", tagSlugs: [], isRemote: true });
+const NO_TOPIC = row({
+  id: "d",
+  topicSlug: null,
+  tagSlugs: ["beginner"],
+  isRemote: false,
+});
 
 const ALL = [A, B, C, NO_TOPIC];
 
 describe("filterProducts", () => {
   it("returns everything when filters are empty", () => {
-    expect(filterProducts(ALL, { topics: [], tags: [] })).toEqual(ALL);
+    expect(
+      filterProducts(ALL, { topics: [], tags: [], format: null }),
+    ).toEqual(ALL);
   });
 
   it("matches a single topic slug", () => {
     expect(
-      filterProducts(ALL, { topics: ["minecraft"], tags: [] }).map((p) => p.id),
+      filterProducts(ALL, {
+        topics: ["minecraft"],
+        tags: [],
+        format: null,
+      }).map((p) => p.id),
     ).toEqual(["a"]);
   });
 
@@ -54,6 +74,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: ["minecraft", "fortnite"],
       tags: [],
+      format: null,
     }).map((p) => p.id);
     expect(ids).toEqual(["a", "b"]);
   });
@@ -62,6 +83,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: ["minecraft"],
       tags: [],
+      format: null,
     }).map((p) => p.id);
     expect(ids).not.toContain("d");
   });
@@ -71,6 +93,7 @@ describe("filterProducts", () => {
       filterProducts(ALL, {
         topics: [],
         tags: ["competitive"],
+        format: null,
       }).map((p) => p.id),
     ).toEqual(["b"]);
   });
@@ -79,6 +102,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: [],
       tags: ["beginner", "competitive"],
+      format: null,
     }).map((p) => p.id);
     // A has beginner, B has competitive, D has beginner. C has neither.
     expect(ids.sort()).toEqual(["a", "b", "d"]);
@@ -88,6 +112,7 @@ describe("filterProducts", () => {
     const ids = filterProducts(ALL, {
       topics: ["minecraft", "fortnite"],
       tags: ["competitive"],
+      format: null,
     }).map((p) => p.id);
     // Only B passes both: topic ∈ set AND has 'competitive'.
     expect(ids).toEqual(["b"]);
@@ -95,7 +120,37 @@ describe("filterProducts", () => {
 
   it("returns nothing when no product matches", () => {
     expect(
-      filterProducts(ALL, { topics: ["roblox"], tags: [] }),
+      filterProducts(ALL, { topics: ["roblox"], tags: [], format: null }),
     ).toEqual([]);
+  });
+
+  it("format=online keeps only remote products", () => {
+    const ids = filterProducts(ALL, {
+      topics: [],
+      tags: [],
+      format: "online",
+    }).map((p) => p.id);
+    // A and C are remote.
+    expect(ids.sort()).toEqual(["a", "c"]);
+  });
+
+  it("format=in_person keeps only in-person products", () => {
+    const ids = filterProducts(ALL, {
+      topics: [],
+      tags: [],
+      format: "in_person",
+    }).map((p) => p.id);
+    // B and D are in-person.
+    expect(ids.sort()).toEqual(["b", "d"]);
+  });
+
+  it("ANDs format with topic and tag filters", () => {
+    const ids = filterProducts(ALL, {
+      topics: ["minecraft", "fortnite"],
+      tags: ["beginner", "competitive"],
+      format: "online",
+    }).map((p) => p.id);
+    // A passes topic+tag and is online; B passes but is in-person.
+    expect(ids).toEqual(["a"]);
   });
 });

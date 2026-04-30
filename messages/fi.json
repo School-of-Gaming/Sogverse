@@ -1100,8 +1100,10 @@
     "filters": {
       "topic": "Aihe",
       "tag": "Tyyli",
+      "format": "Muoto",
+      "formatOnline": "Verkossa",
+      "formatInPerson": "Paikan päällä",
       "clearAll": "Tyhjennä",
-      "results": "{count, plural, =0 {Ei osumia} one {# osuma} other {# osumaa}}",
       "filterBy": "Suodata"
     },
     "card": {
@@ -1132,6 +1134,7 @@
       "scheduleRange": "{startDate} – {endDate}",
       "scheduleSingle": "{date} · {time}",
       "tzNote": "({tz})",
+      "online": "Verkossa",
       "verbConsumerClub": "Ilmoittautunut",
       "verbMunicipalityClub": "Rekisteröity",
       "verbCamp": "Mukana",

@@ -1100,8 +1100,10 @@
     "filters": {
       "topic": "Ämne",
       "tag": "Stil",
+      "format": "Format",
+      "formatOnline": "Online",
+      "formatInPerson": "På plats",
       "clearAll": "Rensa",
-      "results": "{count, plural, =0 {Inga träffar} one {# träff} other {# träffar}}",
       "filterBy": "Filtrera"
     },
     "card": {
@@ -1132,6 +1134,7 @@
       "scheduleRange": "{startDate} – {endDate}",
       "scheduleSingle": "{date} · {time}",
       "tzNote": "({tz})",
+      "online": "Online",
       "verbConsumerClub": "Anmäld",
       "verbMunicipalityClub": "Registrerad",
       "verbCamp": "Anmäld",

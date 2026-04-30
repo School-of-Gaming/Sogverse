@@ -3,8 +3,11 @@
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import type { ProductFormat } from "./filter-products";
+
 const TOPIC_PARAM = "topic";
 const TAG_PARAM = "tag";
+const FORMAT_PARAM = "format";
 
 function parseList(raw: string | null): string[] {
   if (!raw) return [];
@@ -14,11 +17,19 @@ function parseList(raw: string | null): string[] {
     .filter(Boolean);
 }
 
-// URL-state hook for the topic + tag chip filters.
+function parseFormat(raw: string | null): ProductFormat | null {
+  if (raw === "online" || raw === "in_person") return raw;
+  return null;
+}
+
+// URL-state hook for the topic + tag + format chip filters.
 //
 // Toggling a chip writes via `router.replace({ scroll: false })` so chip
 // taps don't push history entries or jerk the scroll position. Other
 // query params (e.g. `?mock=1`) are preserved across writes.
+//
+// Format is single-valued — toggling a chip on with the other one active
+// replaces, not adds. Selecting the active chip clears the filter.
 
 export function useBrowseFilters() {
   const router = useRouter();
@@ -33,10 +44,18 @@ export function useBrowseFilters() {
     () => parseList(searchParams.get(TAG_PARAM)),
     [searchParams],
   );
-  const hasAny = topics.length > 0 || tags.length > 0;
+  const format = useMemo(
+    () => parseFormat(searchParams.get(FORMAT_PARAM)),
+    [searchParams],
+  );
+  const hasAny = topics.length > 0 || tags.length > 0 || format !== null;
 
   const writeNext = useCallback(
-    (next: { topics?: string[]; tags?: string[] }) => {
+    (next: {
+      topics?: string[];
+      tags?: string[];
+      format?: ProductFormat | null;
+    }) => {
       const params = new URLSearchParams(searchParams.toString());
       if (next.topics !== undefined) {
         if (next.topics.length === 0) params.delete(TOPIC_PARAM);
@@ -45,6 +64,10 @@ export function useBrowseFilters() {
       if (next.tags !== undefined) {
         if (next.tags.length === 0) params.delete(TAG_PARAM);
         else params.set(TAG_PARAM, next.tags.join(","));
+      }
+      if (next.format !== undefined) {
+        if (next.format === null) params.delete(FORMAT_PARAM);
+        else params.set(FORMAT_PARAM, next.format);
       }
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
@@ -74,9 +97,25 @@ export function useBrowseFilters() {
     [tags, writeNext],
   );
 
+  const toggleFormat = useCallback(
+    (value: ProductFormat) => {
+      writeNext({ format: format === value ? null : value });
+    },
+    [format, writeNext],
+  );
+
   const clear = useCallback(() => {
-    writeNext({ topics: [], tags: [] });
+    writeNext({ topics: [], tags: [], format: null });
   }, [writeNext]);
 
-  return { topics, tags, hasAny, toggleTopic, toggleTag, clear };
+  return {
+    topics,
+    tags,
+    format,
+    hasAny,
+    toggleTopic,
+    toggleTag,
+    toggleFormat,
+    clear,
+  };
 }

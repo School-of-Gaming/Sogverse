@@ -15,6 +15,7 @@ import type {
 } from "@/types";
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
 import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
+import { formatProductLocation } from "./format-product-location";
 import { formatProductSchedule } from "./format-product-schedule";
 import type { RegistrationState } from "./derive-registration-state";
 import { SignupPanel } from "./signup-panel";
@@ -156,6 +157,7 @@ function MainColumn({
   const tagLabels = resolveTagLabels(product.product_tags_v2, uiLocale);
   const schedule = formatProductSchedule({ product, locale: uiLocale });
   const scheduleLine = renderScheduleLine(schedule);
+  const location = formatProductLocation(product);
 
   return (
     <div className="space-y-6">
@@ -168,10 +170,19 @@ function MainColumn({
             {scheduleLine}
           </DetailRow>
           <DetailRow
-            icon={product.is_remote ? Globe : MapPin}
-            label={product.is_remote ? t("info.format") : t("info.where")}
+            icon={product.is_remote && location?.kind !== "muni" ? Globe : MapPin}
+            label={
+              product.is_remote && location?.kind !== "muni"
+                ? t("info.format")
+                : t("info.where")
+            }
           >
-            {product.is_remote ? t("info.online") : t("info.tbd")}
+            {renderLocationLine({
+              location,
+              isRemote: product.is_remote,
+              tOnline: t("info.online"),
+              tTbd: t("info.tbd"),
+            })}
           </DetailRow>
           <DetailRow icon={Users} label={t("info.ageRange")}>
             {t("info.ages", { min: product.min_age, max: product.max_age })}
@@ -281,6 +292,28 @@ function DetailRow({
       </div>
     </div>
   );
+}
+
+function renderLocationLine({
+  location,
+  isRemote,
+  tOnline,
+  tTbd,
+}: {
+  location: ReturnType<typeof formatProductLocation>;
+  isRemote: boolean;
+  tOnline: string;
+  tTbd: string;
+}): string {
+  if (!location) return isRemote ? tOnline : tTbd;
+  switch (location.kind) {
+    case "site":
+      return location.parent
+        ? `${location.site}, ${location.parent}`
+        : location.site;
+    case "muni":
+      return location.name;
+  }
 }
 
 function renderScheduleLine(

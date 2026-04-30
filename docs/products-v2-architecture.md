@@ -124,6 +124,18 @@ Site-specific fields live in two extension tables, not on `locations` itself:
 
 Splitting by visibility tier keeps RLS clean (row-level, not column-level).
 
+The `locations` table itself (just the name + type + parent chain) is anon-readable as of migration `00037_locations_anon_read.sql` so the parent-facing browse and detail pages can render "Tapiolan koulu, Espoo" before sign-in. `site_details_v2` and `site_staff_details_v2` keep their own (existing) policies; making the bare hierarchy public doesn't expose addresses or staff notes.
+
+### Schema invariants enforced by `validate_products_v2_location`
+
+| Variant | `location_id` | Required `locations.type` |
+|---|---|---|
+| In-person (any product type) | required | `site` |
+| Online + `municipality_club` | required | `country` / `region` / `municipality` (NOT `site`) |
+| Online + non-muni | must be NULL | — |
+
+The browse list / detail queries join `locations(id, name, type, parent:locations!parent_id(id, name, type))` — exactly one parent level. The detail page renders `"{site}, {parent}"` for in-person and `"{muni}"` for online muni clubs. The browse card shows `{site}` only (no parent — saves the row width) and a generic "Online" label for the online non-muni case so every card carries the same meta line. The parallel structure keeps card heights stable across formats.
+
 ## Parent browse surfaces
 
 ### Routes
@@ -137,7 +149,7 @@ Splitting by visibility tier keeps RLS clean (row-level, not column-level).
 ```
 src/components/public/products-v2/
 ├── product-browse-page.tsx           — Page orchestrator: heading, filters, "your enrolled" section, browse grid, empty states
-├── product-browse-filters.tsx        — Topic / tag chips, result count, clear-all
+├── product-browse-filters.tsx        — Topic / tag / format chips + clear-all
 ├── product-browse-card.tsx           — Browse-card adapter: ProductV2BrowseRow → display props
 ├── product-browse-card-view.tsx      — Browse-card View: pure-presentational
 ├── product-purchased-card.tsx        — Purchased-card adapter
@@ -146,7 +158,8 @@ src/components/public/products-v2/
 ├── derive-registration-state.ts      — Pure state-machine: product + now + participation count → RegistrationState
 ├── format-product-schedule.ts        — Pure schedule formatter (every weekday / range / single)
 ├── format-product-price.ts           — Pure price formatter (free / external / bundle_or_sub / upfront)
-├── filter-products.ts                — Pure topic / tag filter
+├── format-product-location.ts        — Pure location formatter (site+parent / muni / null)
+├── filter-products.ts                — Pure topic / tag / format filter
 ├── use-browse-filters.ts             — URL-backed filter state (deep-linkable)
 └── mock-purchased.ts                 — Hand-curated rows for the ?mock=1 section
 ```
@@ -291,7 +304,12 @@ The "your enrolled" surface above the browse grid is gated behind `?mock=1` unti
 
 ### Filter UX
 
-Filter chips are URL-driven via `useBrowseFilters` — deep-links like `/clubs?topic=minecraft&tag=creative` reproduce a filter state. `filterProducts` is a pure function over `(rows, { topics, tags })`. Result count is rendered next to the filters and the empty state distinguishes "nothing matches your filters" from "no products in this category yet".
+Filter chips are URL-driven via `useBrowseFilters` — deep-links like `/clubs?topic=minecraft&tag=creative&format=in_person` reproduce a filter state. `filterProducts` is a pure function over `(rows, { topics, tags, format })`. Empty state distinguishes "nothing matches your filters" from "no products in this category yet".
+
+- **Topic / tag** — multi-select, slug-based, OR-within-row + AND-across-rows.
+- **Format** — single-select, `online` / `in_person`, maps directly to `products_v2.is_remote`. Toggling the active chip clears the filter.
+
+The result count was removed from the meta row: the visible card grid already conveys it at a glance, and pairing the count with the conditional Clear button caused the row's height to jump when the button appeared. Clear is now always rendered (`invisible` when there's nothing to clear) so the row's box height is constant.
 
 ### Style guide / design review surface
 

@@ -1148,8 +1148,10 @@
     "filters": {
       "topic": "mu'qaD",
       "tag": "Segh",
+      "format": "rurmeH",
+      "formatOnline": "QumDaq",
+      "formatInPerson": "Daqvam",
       "clearAll": "yISay'moH",
-      "results": "{count, plural, =0 {pagh} one {# Sam} other {# Sam}}",
       "filterBy": "yIH'lu'"
     },
     "card": {
@@ -1180,6 +1182,7 @@
       "scheduleRange": "{startDate} – {endDate}",
       "scheduleSingle": "{date} · {time}",
       "tzNote": "({tz})",
+      "online": "QumDaq",
       "verbConsumerClub": "ghoSta'",
       "verbMunicipalityClub": "ghoSta'",
       "verbCamp": "ghoSta'",

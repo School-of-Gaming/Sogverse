@@ -1100,8 +1100,10 @@
     "filters": {
       "topic": "Topic",
       "tag": "Vibe",
+      "format": "Format",
+      "formatOnline": "Online",
+      "formatInPerson": "In person",
       "clearAll": "Clear",
-      "results": "{count, plural, =0 {No matches} one {# match} other {# matches}}",
       "filterBy": "Filter by"
     },
     "card": {
@@ -1132,6 +1134,7 @@
       "scheduleRange": "{startDate} – {endDate}",
       "scheduleSingle": "{date} · {time}",
       "tzNote": "({tz})",
+      "online": "Online",
       "verbConsumerClub": "Enrolled",
       "verbMunicipalityClub": "Registered",
       "verbCamp": "Signed up",
