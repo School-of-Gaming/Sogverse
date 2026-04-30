@@ -9,11 +9,16 @@ import {
   type SkippedSessionDate,
 } from "./compute-product-sessions";
 
-// Mini-month grids stacked vertically. Pure presentational — takes
-// pre-computed session and skip arrays so a UI Components mock can render
-// any state without faking schedule slots / holidays.
+// Mini-month grids in a horizontal snap-scroller. Pure presentational —
+// takes pre-computed session and skip arrays so a UI Components mock can
+// render any state without faking schedule slots / holidays.
 //
 // Visual rules:
+//  - Months scroll horizontally with snap-stops; the next month always
+//    peeks past the right edge so users see there's more to scroll. The
+//    `-mx`/`px` pair bleeds the track to the parent card's inner edges
+//    while keeping the surrounding legend / explainer aligned with the
+//    card padding.
 //  - Each month is its own 7-column grid (Mon-first per Finnish convention).
 //  - Session dates are filled circles tinted with the primary color.
 //  - Skipped dates are an outlined circle with a strikethrough number.
@@ -57,17 +62,31 @@ export function SessionCalendarView({
   return (
     <div className="space-y-5">
       <Legend />
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-        {months.map((monthStart) => (
-          <MonthGrid
-            key={monthStart}
-            monthStart={monthStart}
-            sessionSet={sessionSet}
-            skipMap={skipMap}
-            locale={locale}
-            todayIso={todayIso}
-          />
-        ))}
+      <div className="relative">
+        <div className="-mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-5 pb-2 sm:-mx-6 sm:px-6">
+          {months.map((monthStart) => (
+            <div
+              key={monthStart}
+              className="w-[260px] flex-shrink-0 snap-start"
+            >
+              <MonthGrid
+                monthStart={monthStart}
+                sessionSet={sessionSet}
+                skipMap={skipMap}
+                locale={locale}
+                todayIso={todayIso}
+              />
+            </div>
+          ))}
+        </div>
+        {/* Right-edge fade hints there's more to scroll. Sits over the
+            track but is pointer-events-none so it doesn't eat scroll
+            gestures or clicks on the last visible month. Sized to match
+            the card's inner padding so it lines up with the card edge. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 -right-5 w-12 bg-gradient-to-l from-card to-transparent sm:-right-6"
+        />
       </div>
       {skips.length > 0 && (
         <p className="text-xs text-muted-foreground">{t("skipExplainer")}</p>

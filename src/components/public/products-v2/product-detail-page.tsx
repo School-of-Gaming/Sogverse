@@ -101,7 +101,7 @@ function DetailLoadingSkeleton() {
             <div className="h-4 w-full animate-pulse rounded bg-muted" />
           </div>
         </div>
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
           <div className="space-y-6">
             <div className="h-32 animate-pulse rounded-lg bg-muted" />
             <div className="h-40 animate-pulse rounded-lg bg-muted" />

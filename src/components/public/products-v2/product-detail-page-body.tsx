@@ -102,7 +102,15 @@ export function ProductDetailPageBody({
           )}
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
+        {/* `minmax(0,…)` on every breakpoint (via `grid-cols-1` on
+            mobile, which is shorthand for `minmax(0,1fr)`, and the
+            explicit form on lg+) lets the main column shrink below
+            its content's intrinsic width. Required because the
+            calendar inside is a horizontal scroller whose children
+            would otherwise expand the grid track and blow out the
+            page width. Without this on mobile the default implicit
+            track is `auto`, which sizes to content. */}
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
           <MainColumn product={product} topicLabel={topicTr?.name ?? null} />
           <div className="lg:sticky lg:top-6 lg:self-start">
             <SignupPanel
