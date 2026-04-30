@@ -68,11 +68,7 @@ import {
   ProductPurchasedCardView,
   type ProductPurchasedCardViewProps,
 } from "@/components/public/products-v2/product-purchased-card-view";
-import {
-  RegistrationPill,
-  PILL_VARIANTS,
-  type RegistrationPillVariant,
-} from "@/components/public/products-v2/registration-pill";
+import { RegistrationPill } from "@/components/public/products-v2/registration-pill";
 import type { RegistrationState } from "@/components/public/products-v2/derive-registration-state";
 
 /* ------------------------------------------------------------------ */
@@ -975,93 +971,62 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
   },
 ];
 
-function PillVariantsGrid() {
+// Caption above each card in the demo grid. Uses the same uppercase
+// micro-label treatment as the topic chip inside the card so it reads
+// as meta information, not card content — keeps it from blending into
+// the title and looking like overlap.
+function DemoCaption({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b text-left text-xs uppercase tracking-wider text-muted-foreground">
-            <th className="py-2 pr-4 font-medium">State</th>
-            {PILL_VARIANTS.map((v) => (
-              <th key={v} className="px-3 py-2 font-medium">{v}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {DEMO_REGISTRATION_STATES.map(({ label, state }) => (
-            <tr key={label} className="border-b last:border-b-0">
-              <td className="py-2 pr-4 text-xs text-muted-foreground">
-                {label}
-              </td>
-              {PILL_VARIANTS.map((variant) => (
-                <td key={variant} className="px-3 py-2 align-middle">
-                  <RegistrationPill state={state} variant={variant} />
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function BrowseCardsByVariant({ variant }: { variant: RegistrationPillVariant }) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {BROWSE_DEMO_CARDS.map(({ label, props }) => (
-        <div key={label} className="space-y-2">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <ProductBrowseCardView {...props} pillVariant={variant} />
-        </div>
-      ))}
-    </div>
+    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      {children}
+    </p>
   );
 }
 
 function ProductsV2Demo() {
-  const [variant, setVariant] = useState<RegistrationPillVariant>("outline");
-
   return (
     <div className="space-y-8">
-      <SubSection title="Pill — every state × every visual variant">
+      <SubSection title="Pill — every state">
         <p className="text-sm text-muted-foreground mb-3">
-          Compare treatments side-by-side. Each row is one registration state derived by
-          {" "}<code className="font-mono text-xs">deriveRegistrationState</code>; each column is
-          one visual variant exposed by{" "}
-          <code className="font-mono text-xs">RegistrationPill</code>. Pick the
-          treatment that scans best in the grid above and we&rsquo;ll prune the rest.
+          The pill speaks parent voice and only renders when there&rsquo;s something
+          actionable or urgency-creating to say. Default-open (&ldquo;you can sign up&rdquo;)
+          gets no pill — the Sign-up button alone says everything a parent needs.
         </p>
-        <PillVariantsGrid />
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          {DEMO_REGISTRATION_STATES.map(({ label, state }) => (
+            <div key={label} className="flex flex-col gap-1.5">
+              <DemoCaption>{label}</DemoCaption>
+              <RegistrationPill state={state} />
+            </div>
+          ))}
+        </div>
       </SubSection>
 
       <SubSection title="Browse cards (in context)">
-        <div className="flex flex-wrap items-center gap-2 mb-4">
-          <span className="text-xs text-muted-foreground">Pill variant:</span>
-          {PILL_VARIANTS.map((v) => (
-            <Button
-              key={v}
-              size="sm"
-              variant={variant === v ? "default" : "outline"}
-              onClick={() => setVariant(v)}
-            >
-              {v}
-            </Button>
+        <p className="text-sm text-muted-foreground mb-4">
+          Full card with the pill inline next to the topic label. Each example
+          renders one of the registration states the deriver returns.
+        </p>
+        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          {BROWSE_DEMO_CARDS.map(({ label, props }) => (
+            <div key={label} className="flex flex-col gap-2">
+              <DemoCaption>{label}</DemoCaption>
+              <ProductBrowseCardView {...props} />
+            </div>
           ))}
         </div>
-        <BrowseCardsByVariant variant={variant} />
       </SubSection>
 
       <SubSection title="Purchased cards">
-        <p className="text-sm text-muted-foreground mb-3">
+        <p className="text-sm text-muted-foreground mb-4">
           The &ldquo;your enrolled / signed up&rdquo; surface — appears above the browse grid on
           /clubs, /camps, /events when ?mock=1 is set. The verb badge already
           conveys &ldquo;you&rsquo;re in&rdquo;, so these cards don&rsquo;t carry a registration pill.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
           {PURCHASED_DEMO_CARDS.map(({ label, props }) => (
-            <div key={label} className="space-y-2">
-              <p className="text-xs text-muted-foreground">{label}</p>
+            <div key={label} className="flex flex-col gap-2">
+              <DemoCaption>{label}</DemoCaption>
               <ProductPurchasedCardView {...props} />
             </div>
           ))}
@@ -1633,8 +1598,8 @@ export default function AdminUIComponentsPage() {
       <Section title="Products v2 — Browse & Purchased Cards">
         <p className="text-sm text-muted-foreground -mt-2">
           Parent-facing card surfaces for products_v2 (/clubs, /camps, /events).
-          The registration pill below is the new piece — pick a variant and we&rsquo;ll
-          delete the others.
+          The registration pill speaks parent voice and only appears when
+          there&rsquo;s something actionable to say.
         </p>
         <ProductsV2Demo />
       </Section>

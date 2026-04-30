@@ -8,11 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
 import type { ProductPriceLine } from "./format-product-price";
-import {
-  RegistrationPill,
-  type RegistrationPillVariant,
-  useRegistrationCta,
-} from "./registration-pill";
+import { RegistrationPill, useRegistrationCta } from "./registration-pill";
 import type { RegistrationState } from "./derive-registration-state";
 
 // Pure presentational browse card. Takes already-resolved display props —
@@ -35,8 +31,6 @@ export interface ProductBrowseCardViewProps {
   tagLabels: readonly string[];
   price: ProductPriceLine;
   state: RegistrationState;
-  /** Defaults to "dot" — UI Components page sets this to compare options. */
-  pillVariant?: RegistrationPillVariant;
 }
 
 export type SeatsHint =
@@ -54,7 +48,6 @@ export function ProductBrowseCardView({
   tagLabels,
   price,
   state,
-  pillVariant = "outline",
 }: ProductBrowseCardViewProps) {
   const t = useTranslations("productBrowse.card");
   const cta = useRegistrationCta(state);
@@ -95,7 +88,7 @@ export function ProductBrowseCardView({
                   {topicLabel}
                 </p>
               )}
-              <RegistrationPill state={state} variant={pillVariant} />
+              <RegistrationPill state={state} />
             </div>
 
             <ul className="space-y-0.5 text-xs text-muted-foreground">

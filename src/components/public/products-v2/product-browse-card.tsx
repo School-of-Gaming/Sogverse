@@ -12,16 +12,9 @@ import {
   ProductBrowseCardView,
   type SeatsHint,
 } from "./product-browse-card-view";
-import type { RegistrationPillVariant } from "./registration-pill";
 
 interface ProductBrowseCardProps {
   product: ProductV2BrowseRow;
-  /**
-   * Visual treatment for the registration pill. Real pages stick with
-   * the default; the UI Components style guide passes alternatives so
-   * variants can be compared side-by-side.
-   */
-  pillVariant?: RegistrationPillVariant;
 }
 
 // Adapter: resolves a `ProductV2BrowseRow` into the display props
@@ -35,10 +28,7 @@ interface ProductBrowseCardProps {
 // `ReturnType<typeof useTranslations>` across function boundaries trips
 // next-intl's typed-message-key inference into TS2589 ("excessively
 // deep") on this path.
-export function ProductBrowseCard({
-  product,
-  pillVariant,
-}: ProductBrowseCardProps) {
+export function ProductBrowseCard({ product }: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
   const uiLocale = resolveLocale(useLocale());
   const { currency } = useCurrency();
@@ -121,7 +111,6 @@ export function ProductBrowseCard({
       tagLabels={resolveTagLabels(product, uiLocale)}
       price={price}
       state={state}
-      pillVariant={pillVariant}
     />
   );
 }

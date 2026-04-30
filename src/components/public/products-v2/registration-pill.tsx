@@ -13,55 +13,23 @@ import { cn } from "@/lib/utils";
 import type { RegistrationState } from "./derive-registration-state";
 
 // Presentational pill that surfaces a product's registration state
-// inline next to the topic label. The pill is parent-voice and only
-// renders when there's something *actionable or urgency-creating* to
-// say — the default "this is a club, you can sign up" leaves the row
-// blank and lets the CTA do the talking.
+// inline next to the topic label. Speaks parent voice ("Only 2 spots
+// left", "Need 3 more to start") and only renders when there's
+// something *actionable or urgency-creating* to say — the default
+// "this is a club, you can sign up" leaves the row blank and lets the
+// CTA do the talking.
 //
-// Three visual variants are exposed so design review can pick the
-// treatment that scans best:
-//   `dot`     — coloured dot + label. Reads as a status indicator.
-//   `filled`  — solid pill in the state's tone. Loudest variant; best
-//               for grids where availability is the deciding factor.
-//   `outline` — border + tinted text + icon. Quieter but still legible
-//               against a busy thumbnail.
-//
-// Only an "almost full" open product earns a pill; anything more
-// open than that returns null and lets the row breathe.
-
-export type RegistrationPillVariant = "dot" | "filled" | "outline";
-
-export const PILL_VARIANTS: readonly RegistrationPillVariant[] = [
-  "dot",
-  "filled",
-  "outline",
-] as const;
-
-// Threshold at or below which an `open` product earns the
-// "Only N spots left" urgency pill. Anything above stays pill-less.
-const URGENCY_SEATS_LEFT = 3;
+// Visual treatment is a small rounded outline chip with a tinted icon
+// + label. Quiet enough to sit next to a busy thumbnail but legible
+// at a glance.
 
 interface RegistrationPillProps {
   state: RegistrationState;
-  variant?: RegistrationPillVariant;
   className?: string;
 }
 
-// Semantic tone per state. Keeps the colour decision in one place
-// independent of the chosen visual treatment.
+// Semantic tone per state. Keeps the colour decision in one place.
 type Tone = "warning" | "info" | "muted";
-
-const TONE_DOT: Record<Tone, string> = {
-  warning: "bg-warning",
-  info: "bg-info",
-  muted: "bg-muted-foreground",
-};
-
-const TONE_FILLED: Record<Tone, string> = {
-  warning: "bg-warning text-warning-foreground",
-  info: "bg-info text-info-foreground",
-  muted: "bg-muted text-muted-foreground",
-};
 
 const TONE_OUTLINE: Record<Tone, string> = {
   warning: "border-warning/50 text-warning",
@@ -69,67 +37,33 @@ const TONE_OUTLINE: Record<Tone, string> = {
   muted: "border-border text-muted-foreground",
 };
 
+// Threshold at or below which an `open` product earns the
+// "Only N spots left" urgency pill. Anything above stays pill-less.
+const URGENCY_SEATS_LEFT = 3;
+
 // `null` here means "no pill — the row's empty space is the message."
 // The card layer handles that case by not reserving a slot.
 type Decoration = { tone: Tone; label: string };
 
-export function RegistrationPill({
-  state,
-  variant = "outline",
-  className,
-}: RegistrationPillProps) {
+export function RegistrationPill({ state, className }: RegistrationPillProps) {
   const t = useTranslations("productBrowse.card");
   const format = useFormatter();
   const decoration = decorationFor(state, t, format);
 
   if (!decoration) return null;
 
-  const { tone, label } = decoration;
-
-  switch (variant) {
-    case "dot":
-      return (
-        <span
-          className={cn(
-            "inline-flex items-center gap-1.5 text-xs font-medium text-foreground",
-            className,
-          )}
-        >
-          <span
-            aria-hidden
-            className={cn("h-2 w-2 rounded-full", TONE_DOT[tone])}
-          />
-          {label}
-        </span>
-      );
-
-    case "filled":
-      return (
-        <span
-          className={cn(
-            "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-            TONE_FILLED[tone],
-            className,
-          )}
-        >
-          {label}
-        </span>
-      );
-
-    case "outline":
-      return (
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 text-[10px] font-medium",
-            TONE_OUTLINE[tone],
-            className,
-          )}
-        >
-          <StateIcon state={state} className="h-3 w-3" />
-          {label}
-        </span>
-      );
-  }
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 text-[10px] font-medium",
+        TONE_OUTLINE[decoration.tone],
+        className,
+      )}
+    >
+      <StateIcon state={state} className="h-3 w-3" />
+      {decoration.label}
+    </span>
+  );
 }
 
 // Returning a component (not aliasing one to a local variable) keeps
