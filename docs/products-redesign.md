@@ -95,6 +95,26 @@ The database uses **one** generic noun for the participation record: **`particip
 
 All new tables, RPCs, enums, service classes, constants, query keys, and API routes introduced by this redesign carry a `_v2` suffix until cutover (§9). This is a deliberate convention to keep the old and new systems visually distinct in code, not a hint that a v3 is planned. At cutover the suffixes are stripped mechanically and the final schema has no versioning noise.
 
+**Carve-out for net-new code that has no legacy peer.** Code paths that only exist in the v2 world — the new Stripe webhook endpoint, the new Checkout creation routes, the new participation services, internal types — are domain-named, not version-named. The webhook lives at `/api/webhooks/stripe/products`, not `/api/webhooks/stripe/v2`. The service is `ParticipationsService`, not `ParticipationsV2Service`. The cutover migration *deletes* the legacy Sorg endpoint at `/api/webhooks/stripe`; no rename is needed on the new side, which avoids a Stripe-dashboard reconfiguration step that's easy to miss.
+
+DB tables still need the `_v2` suffix because they live alongside the legacy tables (`products` vs `products_v2`) — no escape there until cutover.
+
+### Participation state vocabulary
+
+A purchased participation is in one of three states. These are the canonical names everywhere — code, types, copy mappings, design discussions, doc cross-references. Parents never see these labels; they're internal names for a state that's derived from the row, not stored.
+
+| State | Schema | Meaning |
+|---|---|---|
+| `waitlisted` | `status = 'waitlisted'` | On the waitlist. Card not charged. |
+| `unassigned` | `status = 'active' AND group_id IS NULL` | Has a spot. Admin hasn't placed the gamer in a group yet. |
+| `assigned` | `status = 'active' AND group_id IS NOT NULL` | Has a spot. Placed in a group. |
+
+```ts
+export type ParticipationState = "waitlisted" | "unassigned" | "assigned";
+```
+
+Resolved from the row at read time. Parent-facing copy maps off this state — for the launch, both `unassigned` and `assigned` render the same "Confirmed" badge so parents experience them as one state ("you have a spot"), with the detail line shifting to surface the next session date once an admin places the gamer. The state is exposed in admin surfaces and in the UI Components style guide so all three branches are testable.
+
 ---
 
 ## 4. Key design decisions
@@ -201,21 +221,55 @@ The server recomputes the final charge from the product's stored base price + th
 - **Camps / paid events**: inline `price_data` Checkout Session, same shape as bundles but one-shot for one seat.
 - **Currency stickiness on subs**: once a family subscribes in GBP, that Stripe subscription is GBP forever. Frequency switches (`switch_subscription_frequency`) resolve the target Price in the subscription's existing currency — same pattern as today's token sub-switch route (`src/app/api/checkout/subscription/switch/route.ts`). No parent-facing warning; handled silently in code.
 
-**Refund windows:**
+**Cancellation and refund windows:**
 
 | Purchase shape | Rule |
 |---|---|
-| Session from a bundle | Cancel ≥ 24h before the session → 1 credit is not deducted. Cancel < 24h or no-show → 1 credit deducted. No money movement on bundle-session cancellation; it's a balance adjustment only. |
-| Session covered by a subscription | Same 24h rule — cancel in time, no deduction against the sub's next period. No partial-period subscription refunds. |
-| Camp / paid event | Configurable per-product `refund_policy_days` — days before `start_date`. Full Stripe refund inside the window, none outside. |
-| Admin-initiated cancellation of a product | Full refund per §6.4 (refund unused bundle value via Stripe, refund pro-rata current-period sub charges via Stripe, full camp/event refunds via Stripe). |
-| Admin-initiated removal of a gamer | Admin can force a refund outside the normal window — `reason='admin_refund'` on the `refunds_v2` row. |
+| Session from a bundle | Cancel ≥ 24h before the session → no credit deducted at session start. Cancel < 24h or no-show → 1 credit deducted. No money movement on bundle-session cancellation; it's a balance adjustment only. |
+| Session covered by a subscription | Cancel ≥ 24h before the session → +1 credit accrues at session start, *if the participation is still sub-covered at that moment*. Cancel < 24h or no-show → no motion. The credit is held on the same `credits_remaining` field; it sits idle while the sub is active (sub covers attendance) and becomes spendable when the sub is cancelled. |
+| Customer-initiated cancellation of a club participation | "Leave this club" — hard-deletes the participation. Banked credits forfeit (no Stripe refund). For consumer-club parents who want to walk away with value, the path is "cancel sub but stay in the club" — sub stops at period end, credits remain spendable until depleted. See §4.5c. |
+| Customer-initiated cancellation of a camp / paid event | Not self-serve in v1. Parents contact customer support; admin issues the refund (or doesn't) via `admin_remove_participation_v2`. |
+| Admin-initiated cancellation of a whole product | Full refund per §6.4 (refund unused bundle value via Stripe, refund pro-rata current-period sub charges via Stripe, full camp/event refunds via Stripe). |
+| Admin-initiated removal of a single gamer | Admin can force a Stripe refund outside the normal window — `reason='admin_refund'` on the `refunds_v2` row. |
 
 The 24h window is a platform-wide constant `PARTICIPATION_CHARGE_WINDOW_HOURS` in `src/lib/constants/`, mirrored server-side in SQL for RPC use (same pattern as the existing `ENROLLMENT_CHARGE_WINDOW_HOURS` — renamed at cutover).
 
-**Session credit deduction timing — parent-legible.** When a gamer's session starts and they were not admin-cancelled and did not cancel ≥ 24h before, their `credits_remaining` for that product decrements by 1. Deduction runs on an hourly cron (§6.3) — reusing the existing hourly Sorg-era cron, not a new one. The UI computes the *displayed* balance at read time as `credits_remaining − count(sessions_started_but_not_yet_deducted)`, so the parent-facing number updates instantly at session start even if the DB catches up within the next hour.
+**Session credit movement — single number, no optimistic display.** `credits_remaining` is a single int on the participation. It only moves when a credit is actually earned or spent — no "scheduled" or "pending" tier in the parent UI. The cron (§6.3) is the only thing that moves it.
 
-This is intentionally simpler than the Sorg token model, which deducted tokens at the 24h cutoff before each session — confusing UX ("where did my tokens go? I haven't had that session yet"). Under the new model the balance decrements at session start, matching the parent's mental model of "I attended, so I used one."
+At each session boundary, the cron resolves coverage at *that* moment and applies one of four rules:
+
+| Coverage at session start | Cancellation status | Motion |
+|---|---|---|
+| Sub-covered | Cancelled ≥ 24h ahead | **+1 credit** (banked) |
+| Sub-covered | Not cancelled in time / attended | 0 (sub covers) |
+| Bundle-covered | Cancelled ≥ 24h ahead | 0 (no deduction) |
+| Bundle-covered | Not cancelled in time / attended | **−1 credit** |
+
+Because credits only accrue *at session start time when the sub is actually paying for that session*, a parent who cancels future sessions and then cancels their sub gets nothing for sessions beyond their paid period — the participation has flipped to bundle-covered by the time those sessions tick over, so the cron applies bundle rules. This is the load-bearing rule that makes "cancel anything in advance" safe to ship without a cap on lookahead.
+
+**Why no optimistic display.** An earlier draft of this section had the UI show a forecast — "scheduled credits" the parent had cancelled but not yet earned — alongside the actual balance. It was rejected on UX grounds: parents don't think in two-tier credit balances, and the gap between "what the forecast says" and "what survives if I cancel my sub" creates a disappearing-balance moment at sub cancellation that destroys trust. The single-number rule shifts the explanation from *forecast vs reality* (confusing and unfair-feeling) to *cause and effect* (a one-line confirmation at the moment of cancellation: "Cancelled. You'll get a credit on **14 June** as long as your subscription is still active.").
+
+The product detail page's session calendar is the natural place to surface state for cancelled-but-not-yet-credited sessions: each cancelled session renders with a marker that reads as "cancelled — credit lands [date]". The card and balance number stay simple; the calendar carries the per-session detail.
+
+This is intentionally simpler than the Sorg token model, which deducted tokens at the 24h cutoff before each session — confusing UX ("where did my tokens go? I haven't had that session yet"). Under the new model the balance only ever moves at session start, in the parent's favour as often as not, matching the mental model of "I attended → I used one" and "I cancelled in time → I got one back."
+
+### 4.5c Cancel subscription vs. leave a club — a parent must understand the difference
+
+"Cancel my subscription" and "Leave this club" are two distinct actions with different consequences for the parent's banked credits. The detail page (out of scope for the v2 launch PR; this is forward-looking spec) must surface them as visibly separate decisions.
+
+| Action | What stops | What happens to credits |
+|---|---|---|
+| **Cancel subscription** | The Stripe sub stops at period end. Participations stay alive. | Banked credits stay. Future sessions become bundle-covered; gamer keeps attending until credits run out. |
+| **Leave this club** | The participation is hard-deleted. The corresponding sub item is removed from Stripe (and the sub itself if this was the last item). | Banked credits forfeit. No Stripe refund. |
+
+**The distinction only matters when balance > 0.** When `credits_remaining = 0`, the two actions are functionally identical — either way the gamer stops attending immediately. The detail page can collapse to a single "Leave this club" button in that case. When `credits_remaining > 0`, both actions must be present and the confirm dialog for each must spell out exactly what happens to the credits, with the count visible.
+
+The dialog copy is the load-bearing UX — a parent who cancels their sub and *thinks* they've left the club entirely will be confused weeks later when their child is still expected to show up (or when they still see the club on their dashboard). Confirm-dialog wording for the eventual implementation:
+
+- **Cancel subscription** confirm: *"Cancel monthly subscription? You'll keep attending {Club Name} until {period end} using your sub. After that, you'll have **N credits** to spend at your own pace. Your child still has a spot — leave the club separately if you want to give it up."*
+- **Leave this club** confirm: *"Leave {Club Name}? Your child loses their spot, your **N credits forfeit**, and your subscription continues for any other clubs."*
+
+Wording will iterate during the detail-page design pass; the rule the wording must satisfy is in this section.
 
 ### 4.5a Design principle for pricing code: keep the first pass simple
 
@@ -246,6 +300,27 @@ Bundles are independent of this structure. A bundle purchase is a one-off Stripe
 All participation mutations go through `SECURITY DEFINER` RPCs that begin with `SELECT 1 FROM products_v2 WHERE id = $1 FOR UPDATE`. This **product-row lock is the signup gate** — concurrent `create_participation_v2` / `cancel_participation_v2` / waitlist-promotion calls on the same product serialize on it, so seat-count reads and waitlist arithmetic inside the transaction are race-free.
 
 **Do not use `FOR UPDATE SKIP LOCKED` or `NOWAIT`.** Concurrent callers must wait for the lock so each sees a consistent post-commit state. At our scale (~50 signups per 15-minute window at peak), lock contention is invisible.
+
+### 4.6a Seat reservation — hold the seat *before* sending to Stripe
+
+The lock above is a *gate*, not a *hold*. By itself it serializes seat-count reads inside one transaction — but that transaction returns before Stripe Checkout has even loaded for the parent. Without an additional mechanism, two parents on a 1-seat product can both pass the gate, both proceed to Stripe, and one of them wins the seat while the other gets stuck with a charge against an already-full club.
+
+The chosen mechanism is a **reserving participation row**, not a held card authorization:
+
+1. Parent clicks the type-specific signup verb. The client calls a `create_participation_v2` API route with `(product_id, gamer_id, purchase_shape, currency)`.
+2. The RPC takes the gate lock, counts seats (active + non-expired-reserving rows), then either:
+   - **Seat available** — inserts a `participations_v2` row with `status='reserving'` and `reserved_until = now() + 30 minutes`, returns a Stripe Checkout URL whose metadata is keyed to that row.
+   - **No seat** — returns `{ full: true }`. The client flips the CTA to "Join the waitlist". No Stripe call ever made.
+3. Parent completes Stripe Checkout → webhook flips the reserving row to `status='active'` and writes `payments_v2`.
+4. Parent abandons → reservation expires after 30 min. The next signup attempt's seat-count query ignores expired reserving rows; the seat returns to the pool.
+
+This pattern works uniformly for **all** purchase shapes — bundles, single-payment camps/events, and family subs. The same gate decides who proceeds to Stripe; nobody is sent through Checkout without a held seat.
+
+**Why 30 min, not shorter.** The reservation lifetime is matched to Stripe Checkout's session lifetime (also 30 min by default). A shorter reservation would create a window where Stripe still accepts the parent's payment but our reservation has lapsed, forcing a "completed after expired" branch that's complex to test and confusing when it fires. 30 min eliminates the gap entirely: if Stripe says the payment is valid, the seat is theirs. The trade-off is slightly slower seat-return for parents who abandon — acceptable, since the alternative is occasional billed-but-no-seat surprises.
+
+**Subscriptions and the manual-capture gap.** Stripe doesn't support `capture_method: "manual"` for recurring charges, which complicates the "auth-then-decide" pattern an earlier draft of this doc suggested for one-shot bundles. The reservation row sidesteps this entirely: the seat is held in our DB before any Stripe transaction starts, so subs and one-offs follow the same path. The manual-capture future improvement (previously listed under `products-v2-architecture.md`) is **obsolete** under this model.
+
+**Waitlist sits outside Stripe.** A parent who joins the waitlist has *not* been charged and is *not* pre-authorised. When a seat opens (active participation removed), `promote_from_waitlist_v2` picks the lowest-position waitlisted row and sends a transactional email with a re-checkout link. Promotion is opt-in — the parent has to click and complete a fresh Checkout. Stripe's auth windows (~7 days) aren't long enough to cover realistic waitlist gaps, so we don't try to use them.
 
 ### 4.7 Product type as label, not switch
 
@@ -791,24 +866,31 @@ All `SECURITY DEFINER`, private by default, row-locking where financial.
 
 ### 6.1 Participation lifecycle
 
-All three RPCs begin with `SELECT 1 FROM products_v2 WHERE id = $1 FOR UPDATE` (the gate lock — §4.6).
+All RPCs in this section begin with `SELECT 1 FROM products_v2 WHERE id = $1 FOR UPDATE` (the gate lock — §4.6).
 
 - **`create_participation_v2(product_id, gamer_id, customer_id, purchase_shape, currency)`**
-  After the gate lock: validates age/language match, checks `registration_opens_at`, verifies status permits signup, counts current `active` participations to decide `active` vs `waitlisted`. Behavior by `purchase_shape`:
-  - `bundle_1` / `bundle_4` / `bundle_10` — creates a Stripe Checkout Session with inline `price_data` for `bundle_size × price_per_session × (1 − bundle_discount) × currency`. Returns the Checkout URL. On successful payment, the `checkout.session.completed` webhook creates the participation with `credits_remaining = bundle_size` and writes the `payments_v2` row.
-  - `subscription_monthly` / `subscription_quarterly` — resolves or creates the Stripe Price for `(product_id, frequency, currency)`. Finds or creates a `family_subscriptions_v2` row for `(customer_id, frequency, currency)`. Adds a subscription item aligned to the existing `billing_cycle_anchor`. Creates the participation with `credits_remaining = NULL`. Re-evaluates the family coupon. The initial prorated charge is collected by Stripe.
-  - `single_payment` (camp / paid event) — inline Checkout Session; webhook creates participation on completion.
-  - `free` — creates participation directly; no Stripe.
+  After the gate lock: validates age/language match, checks `registration_opens_at`, verifies effective status (via `effective_status_v2()`) permits signup, counts current `active` + non-expired `reserving` participations to decide whether a seat is available. Behaviour by `purchase_shape`:
+  - `bundle_1` / `bundle_4` / `bundle_10` — if a seat is available, inserts a `participations_v2` row with `status='reserving'` and `reserved_until = now() + 30 minutes`. Creates a Stripe Checkout Session with inline `price_data` for `bundle_size × price_per_session × (1 − bundle_discount) × currency`, metadata keyed to the reserving row's id. Returns the Checkout URL. On successful payment, `checkout.session.completed` webhook flips the row to `status='active'` with `credits_remaining = bundle_size` and writes the `payments_v2` row. If full, returns `{ full: true }` — UI offers `join_waitlist_v2` instead.
+  - `subscription_monthly` / `subscription_quarterly` — same reservation pattern. If a seat is available, inserts the `reserving` row, then resolves or creates the Stripe Price for `(product_id, frequency, currency)`, creates a Stripe Checkout Session in subscription mode keyed to the reserving row, returns the Checkout URL. The `checkout.session.completed` webhook finds or creates the `family_subscriptions_v2` row for `(customer_id, frequency, currency)`, attaches the subscription item aligned to the existing `billing_cycle_anchor`, flips the reserving row to `active` with `credits_remaining = 0`, and re-evaluates the family coupon.
+  - `single_payment` (camp / paid event) — same pattern with one-shot Checkout; webhook flips reserving → active on completion.
+  - `free` — directly inserts `status='active'`, no reservation, no Stripe.
+
+  The reservation-row insert is the *seat-holding* mechanism (§4.6a). Without it, two parents can both pass the gate, both proceed to Stripe, and one is stuck with a charge against an already-full club.
+
+- **`join_waitlist_v2(product_id, gamer_id, customer_id)`**
+  After the gate lock: inserts a `participations_v2` row with `status='waitlisted'` and the next `waitlist_position`. No Stripe call, no charge, no pre-authorization. Returns the position so the UI can confirm.
 
 - **`cancel_participation_v2(participation_id)`**
-  Customer-initiated. After the gate lock: hard-DELETEs the participation, then promotes the lowest-position waitlisted row to `active`. Refund logic by what covered the seat:
+  Customer-initiated "Leave this club" action. After the gate lock: hard-DELETEs the participation, removes any linked `family_subscription_items_v2` row from Stripe (cancels the sub at period end if this was the last item, re-evaluates the family coupon), then promotes the lowest-position waitlisted row by emailing them — promotion is opt-in, not auto-charge. No Stripe refunds in any branch:
 
   | Coverage | Rule |
   |---|---|
-  | Bundle (`credits_remaining > 0`) | Unused credits expire with the participation. No money is refunded — parents prepaid the bundle and the per-session price is forfeit once bundled. (Rationale: bundles are discounted; refunding per-session at full rate would gamify cancellation. If this is too harsh, revisit — it's a policy knob, not a schema gate.) |
-  | Subscription item | Remove the item from Stripe. No refund on the current period; the family keeps paid-through access until the period end per Stripe's default. If this was the last item on the sub, cancel the sub at period end. Re-evaluate the family coupon. |
-  | Single payment (camp / event) | Full Stripe refund if `now < start_date − refund_policy_days` (in product tz). Otherwise no refund. Write `refunds_v2` row. |
+  | Bundle (any `credits_remaining`) | Banked credits forfeit. No Stripe refund. The user's mental model is "I'm leaving this club" — credits are tied to the participation, so the participation's deletion takes them. |
+  | Subscription item | Remove item from Stripe. No refund on the current period; the family keeps paid-through access until period end per Stripe's default. Banked credits on the participation forfeit alongside the row. |
+  | Single payment (camp / event) | No customer-initiated refund. Parents contact customer support; admin uses `admin_remove_participation_v2` to issue a refund if appropriate. |
   | Free / external_contract | No money movement. |
+
+  See §4.5c for the parent-facing UX rule that distinguishes "Leave this club" from "Cancel my subscription" — they must be visibly separate actions on the (out-of-scope) detail page.
 
 - **`admin_remove_participation_v2(participation_id, reason)`**
   Admin-initiated. Same as `cancel_participation_v2` including hard-DELETE and waitlist promotion, with the ability to force a Stripe refund outside the normal window — `reason='admin_refund'` on the `refunds_v2` row. For bundle-covered seats, admin can optionally issue a goodwill refund for unused credits; configurable per-cancellation.
@@ -828,20 +910,26 @@ Keep the existing `commit_group_changes` pattern (see `docs/groups-architecture.
 - **`assign_substitute_v2(substitution_id, substitute_gedu_id)`** — admin fills an unfilled row. A combined `set_substitute_v2(group_id, session_date, original_gedu_id, substitute_gedu_id)` is a one-step admin convenience.
 - **`record_attendance_v2(product_id, session_date, gamer_id, status)`** — validates against `product_has_session_v2`.
 
-### 6.3 Session credit deduction cron
+### 6.3 Session credit cron
 
-**`process_session_credits_v2()` — runs hourly.** This **reuses the existing hourly Sorg-era cron slot**; it does not introduce a new schedule. Per §4.5 the UI computes displayed balance at read time, so DB lag is invisible.
+**`process_session_credits_v2()` — runs hourly.** This **reuses the existing hourly Sorg-era cron slot**; it does not introduce a new schedule. The cron is the *only* thing that moves `credits_remaining` — see §4.5 for the four-rule table the cron implements.
 
 Logic per run:
-1. Find all `participations_v2` with `status='active'` and `credits_remaining IS NOT NULL` on products whose `billing_mode='paid'` and `product_type='consumer_club'`.
-2. For each, find sessions in `[now − 1h − small buffer, now − small buffer]` where `product_has_session_v2` is true (not admin-cancelled), the gamer did not cancel ≥ 24h before (via an attendance-intent check — see below), and no deduction row exists for `(gamer_id, product_id, session_date)`.
-3. For each such session, decrement `credits_remaining` by 1 and write a deduction audit row (`credit_deductions_v2` — a thin append-only ledger keyed by `(gamer_id, product_id, session_date)` with UNIQUE).
+1. Find all `participations_v2` with `status='active'` on products whose `billing_mode='paid'` and `product_type='consumer_club'`.
+2. For each, find sessions in `[now − 1h − small buffer, now − small buffer]` where `product_has_session_v2` is true (not admin-cancelled), and no `credit_deductions_v2` row already exists for `(gamer_id, product_id, session_date)`.
+3. For each such session, resolve coverage *at that moment* (does a live `family_subscription_items_v2` row point at the participation?), then apply one of the four §4.5 rules:
+   - **Sub-covered + cancelled-in-window** → `credits_remaining += 1`. Write a `credit_deductions_v2` row with `delta = +1`, `reason = 'sub_cancel_credit'`.
+   - **Sub-covered + not cancelled in time** → no motion. Write a deduction row with `delta = 0`, `reason = 'sub_covered'` so the cron is idempotent and we have an audit trail.
+   - **Bundle-covered + cancelled-in-window** → no motion. Write `delta = 0`, `reason = 'bundle_cancel_no_charge'`.
+   - **Bundle-covered + not cancelled in time** → `credits_remaining -= 1`. Write `delta = -1`, `reason = 'bundle_attended_or_no_show'`.
 
-Idempotent: the UNIQUE constraint prevents double-deduction on re-run.
+Idempotent: the UNIQUE on `credit_deductions_v2(gamer_id, product_id, session_date)` prevents double-processing on re-run.
 
-**"Did they cancel in time?"** — Customer-initiated cancellation of a single session (not of the whole participation) writes a row to `session_cancellations_v2(gamer_id, product_id, session_date, cancelled_at)` with UNIQUE per triple. The cron checks: if `cancelled_at <= session_start − PARTICIPATION_CHARGE_WINDOW_HOURS`, skip the deduction. Otherwise deduct.
+The bundle-attended branch's underflow is prevented by the participation's coverage flipping to "no spend" once `credits_remaining = 0` — see the under-zero rule in §4.5b. (At v1 the simplest behaviour is the cron raising on a `credits_remaining < 0` attempt and the supervising job auto-pausing the participation; the parent gets an out-of-credits notification.)
 
-Subscription-covered participations (`credits_remaining IS NULL`) are skipped entirely by this cron — Stripe handles their billing on its subscription cycle.
+**"Did they cancel in time?"** — Customer-initiated cancellation of a single session (out of scope for the v2 launch PR; surfaced on the future detail page) writes a row to `session_cancellations_v2(gamer_id, product_id, session_date, cancelled_at)` with UNIQUE per triple. The cron checks `cancelled_at <= session_start − PARTICIPATION_CHARGE_WINDOW_HOURS` to decide which branch above applies. The table ships in this PR even though the cancel-session UI does not — leaves the cron's branch logic unable to fire spuriously, and means the cancel-session UI lands later as a UI-only PR.
+
+**No optimistic motion.** The cron is the only writer of `credits_remaining` post-purchase. Cancellation rows in `session_cancellations_v2` do not move `credits_remaining` directly — the credit (or saved deduction) only materialises when the cron processes the session boundary, with coverage resolved at *that* moment. This is the load-bearing rule that prevents the "cancel sub then bank credits for unpaid future periods" exploit (§4.5).
 
 ### 6.4 Lifecycle transitions
 
@@ -1098,11 +1186,11 @@ School-code gating, private beta for specific municipalities, regional locks. De
 
 Flagged inline as `OPEN` in the sections they affect.
 
-- **Subscription semantics: top-up balance vs rolling access.** Does an active sub top up `credits_remaining` by N at each renewal (top-up model), or confer unlimited attendance during the active period with `credits_remaining = NULL` (rolling model, as this doc currently assumes)? `OPEN — pending CFO call`. Impact: if top-up, add a webhook-driven topup on `invoice.paid`. If rolling (current assumption), no change needed.
+- ~~**Subscription semantics: top-up balance vs rolling access.**~~ *Resolved:* **rolling**, with a wrinkle. `credits_remaining` is a single int (not nullable) on every paid participation, defaulting to 0 for sub-covered seats. While the sub is active, attendance is unlimited and the cron records `delta = 0` deduction-rows on session boundaries. Cancellations ≥ 24h ahead during a sub-covered period accrue `+1` at session start (§4.5, §6.3). When the sub is cancelled, the same `credits_remaining` field carries forward as bundle credits — sub and bundle share one balance. This is functionally a hybrid: rolling access while subbed, with a credit pot that fills only via cancel-in-window and survives sub cancellation.
 - **Exact value of `FAMILY_DISCOUNT_PERCENT`.** One flat tier, number not yet chosen. `OPEN — pick at v1-build time`.
 - **Exact value of `SUBSCRIPTION_DISCOUNTS.yearly`.** Yearly is reserved, not v1. `OPEN — future phase`.
 - **Grace window length when `credits_remaining = 0`.** Parent is notified; gamer is held out of sessions; seat held for some period before admin reclaims it. `OPEN — defer to v1-build time`.
-- **Bundle-refund policy on `cancel_participation_v2`.** Current policy: unused credits expire with the participation; no Stripe refund. Alternative: pro-rata Stripe refund for unused credits. `OPEN — policy call`. Intentionally harsh in this doc because the bundle discount already reflects pre-commitment; softening later is easy.
+- ~~**Bundle-refund policy on `cancel_participation_v2`.**~~ *Resolved:* **no Stripe refund on customer-initiated participation cancellation**, ever. "Leave this club" forfeits banked credits (§4.5c). The right path for a parent who wants value back from a sub is "cancel sub" (sub stops at period end, credits remain spendable), not "leave the club". For camps and paid events, customer-initiated cancellation is not self-serve — parents contact support and admin uses `admin_remove_participation_v2` to issue a refund if appropriate. This sidesteps the gamification risk of pro-rata refunds entirely.
 - **Mixing bundle and subscription on the same (gamer, product).** Disallowed in v1 — parent must cancel one mode before buying another. `OPEN — revisit if parents complain`.
 - **Subscription currency change UX.** Stripe subs are currency-sticky; code handles silently (same pattern as Sorg). No parent-facing warning. `OPEN — revisit if support complaints`.
 - **Single-group auto-assign.** When a product has exactly one group, auto-assign new participations instead of routing through the inbox? Defer until we see inbox in real use.

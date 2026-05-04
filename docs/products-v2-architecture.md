@@ -382,7 +382,9 @@ Inline-create writes a single translation in the admin's current UI locale (inte
 
 **Fix:** Scope the spinner to `productsLoading` only. Render the purchased rail (mock or real) immediately, render `<ProductBrowseFilters>` with empty chip rows while topics/tags are loading, and let the chips fill in as their queries return — the row position is already reserved so no layout shift.
 
-### Use Stripe `capture_method: "manual"` to handle the seat-race at registration drops
+### ~~Use Stripe `capture_method: "manual"` to handle the seat-race at registration drops~~ — superseded
+
+**Superseded by the seat-reservation flow** (`docs/products-redesign.md` §4.6a). The chosen race-protection mechanism is a `reserving` participation row inserted before any Stripe transaction starts, held for 30 min (matched to Stripe Checkout's session lifetime). This works uniformly for bundles, subscriptions, and one-shot camps/events — including subscriptions, which Stripe doesn't support manual-capture for. The original concern below is preserved for historical context but the manual-capture path will not be implemented.
 
 Popular drops (the "Taylor Swift ticket" model — countdown to a specific instant when registration opens) create a fairness problem under the chosen first-paid-wins seat-allocation rule. Two parents can both tap Enroll within the same second; one finishes Stripe Checkout before the other; the slower parent's payment lands against an already-full seat count. The naive options are both bad:
 
