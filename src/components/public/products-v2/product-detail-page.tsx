@@ -1,17 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/providers/auth-provider";
-import { useProductV2Detail } from "@/services/products-v2";
+import { useProductV2Detail, productV2Keys } from "@/services/products-v2";
 import { useMyGamers } from "@/services/gamers";
+import {
+  participationKeys,
+  useParticipationCounts,
+  useProductSeatCountsRealtime,
+} from "@/services/participations";
 import type { ProductTypeV2 } from "@/types";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { ProductDetailPageBody } from "./product-detail-page-body";
-import type { AuthState } from "./signup-panel-view";
+import type { AuthState, MyParticipationState } from "./signup-panel-view";
 
 // Route-level adapter: fetches the product, resolves the auth state
 // (signed-in customer with gamers / customer with no gamers / non-
@@ -26,7 +33,9 @@ interface ProductDetailPageProps {
 
 export function ProductDetailPage({ productId, productType }: ProductDetailPageProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
+  const queryClient = useQueryClient();
 
   const { user, profile, isLoading: authLoading } = useAuth();
   const isCustomer = profile?.role === "customer";
@@ -37,6 +46,29 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   const { data: gamers, isLoading: gamersLoading } = useMyGamers({
     enabled: isCustomer,
   });
+
+  const { data: counts } = useParticipationCounts(
+    product ? [product.id] : [],
+  );
+  const myCount = counts?.[0];
+
+  // Live seat-count updates for this single product. Browse pages don't
+  // subscribe per-card (a 30-card grid is too many channels) — detail page
+  // is the only realtime subscriber. Per CLAUDE.md the callback only
+  // invalidates queries; never run a Supabase data query inside it.
+  useProductSeatCountsRealtime(product?.id);
+
+  // Stripe Checkout success bounce-back: invalidate to close the gap between
+  // the webhook flipping the reservation to active and the browser learning
+  // about it. Realtime usually catches it first, but cellular networks can
+  // drop the channel — explicit invalidation here is the belt-and-suspenders.
+  const signupResult = searchParams.get("signup");
+  useEffect(() => {
+    if (signupResult === "success") {
+      queryClient.invalidateQueries({ queryKey: participationKeys.all });
+      queryClient.invalidateQueries({ queryKey: productV2Keys.all });
+    }
+  }, [signupResult, queryClient]);
 
   if (productLoading || authLoading || (isCustomer && gamersLoading)) {
     return <DetailLoadingSkeleton />;
@@ -70,17 +102,32 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
     };
   })();
 
+  // Seat math feeds active+reserving for the seat-left pill. Reserving rows
+  // count against the seat too — they're held for 30 min while the parent
+  // is in Stripe Checkout. The threshold check uses the same number; the
+  // small over-count for in-flight reservations is acceptable in v1.
+  const participationsCount =
+    (myCount?.activeCount ?? 0) + (myCount?.reservingCount ?? 0);
+
   const state = deriveRegistrationState({
     product,
     now: new Date(),
-    participationsCount: 0,
+    participationsCount,
   });
+
+  // Already-signed-up override: if any of the customer's gamers has a row
+  // on this product, replace the signup form with the status panel.
+  const myParticipationState: MyParticipationState | null =
+    myCount?.mySignupState && myCount.mySignupState !== "none"
+      ? myCount.mySignupState
+      : null;
 
   return (
     <ProductDetailPageBody
       product={product}
       state={state}
       authState={authState}
+      myParticipationState={myParticipationState}
     />
   );
 }

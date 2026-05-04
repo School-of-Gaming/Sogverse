@@ -1,15 +1,18 @@
 "use client";
 
 import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useVisibleProductsV2ByType, useTopicsV2, useTagsV2 } from "@/services/products-v2";
+import {
+  useMyParticipations,
+  useParticipationCounts,
+  type ParticipationCounts,
+} from "@/services/participations";
 import type { ProductTypeV2 } from "@/types";
 import { filterProducts } from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
-import { MOCK_PURCHASED } from "./mock-purchased";
 import { ProductBrowseCard } from "./product-browse-card";
 import { ProductBrowseFilters } from "./product-browse-filters";
 import { ProductPurchasedCard } from "./product-purchased-card";
@@ -83,8 +86,6 @@ export function ProductBrowsePage({
   purchasedTypes,
 }: ProductBrowsePageProps) {
   const t = useTranslations("productBrowse");
-  const searchParams = useSearchParams();
-  const showMock = searchParams.get("mock") === "1";
 
   const { data: products, isLoading: productsLoading } =
     useVisibleProductsV2ByType(browseType);
@@ -94,6 +95,32 @@ export function ProductBrowsePage({
   const { isLoading: topicsLoading } = useTopicsV2();
   const { isLoading: tagsLoading } = useTagsV2();
 
+  // Pre-fetch participation counts for every product in one query so each
+  // card doesn't issue its own request. Cards read counts via the shared
+  // map below — the counts query is the single source of truth.
+  const productIds = useMemo(
+    () => (products ?? []).map((p) => p.id),
+    [products],
+  );
+  const { data: counts } = useParticipationCounts(productIds);
+  const countsByProduct = useMemo(() => {
+    const map = new Map<string, ParticipationCounts>();
+    for (const c of counts ?? []) {
+      map.set(c.productId, c);
+    }
+    return map;
+  }, [counts]);
+
+  // Real "your enrolled" rail (replaces the prior ?mock=1 gate).
+  const { data: myParticipations } = useMyParticipations();
+  const purchasedRows = useMemo(() => {
+    if (!myParticipations) return [];
+    return myParticipations.filter(
+      (p) =>
+        p.product !== null && purchasedTypes.includes(p.product.product_type),
+    );
+  }, [myParticipations, purchasedTypes]);
+
   const allLoaded = !productsLoading && !topicsLoading && !tagsLoading;
 
   const { topics, tags, format, languages } = useBrowseFilters();
@@ -101,10 +128,6 @@ export function ProductBrowsePage({
     () => filterProducts(products ?? [], { topics, tags, format, languages }),
     [products, topics, tags, format, languages],
   );
-
-  const purchasedRows = showMock
-    ? purchasedTypes.flatMap((pt) => MOCK_PURCHASED[pt])
-    : [];
 
   const headingKey = HEADING_KEYS[browseType];
 
@@ -133,7 +156,7 @@ export function ProductBrowsePage({
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {purchasedRows.map((row) => (
-                    <ProductPurchasedCard key={row.id} row={row} />
+                    <ProductPurchasedCard key={row.id} participation={row} />
                   ))}
                 </div>
               </section>
@@ -145,7 +168,11 @@ export function ProductBrowsePage({
               {filtered.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {filtered.map((p) => (
-                    <ProductBrowseCard key={p.id} product={p} />
+                    <ProductBrowseCard
+                      key={p.id}
+                      product={p}
+                      counts={countsByProduct.get(p.id) ?? null}
+                    />
                   ))}
                 </div>
               ) : (
