@@ -691,27 +691,30 @@ participations_v2
   group_id              uuid → product_groups_v2.id        -- nullable = unassigned inbox
   gamer_id              uuid → profiles.id
   customer_id           uuid → profiles.id                 -- parent who signed up the gamer
-  status                enum('active','waitlisted','completed')
+  status                enum('reserving','active','waitlisted','completed')
+  reserved_until        timestamptz                        -- populated iff status='reserving' (§4.6a)
   waitlist_position     int                                -- populated iff status='waitlisted'
-  credits_remaining     int                                -- nullable:
-                                                            --   NULL  = subscription-covered OR
-                                                            --           single-payment (camp/event) OR
-                                                            --           free / external_contract
-                                                            --   int>=0 = bundle-covered; decremented
-                                                            --           by hourly cron (§6.3)
+  credits_remaining     int NOT NULL DEFAULT 0             -- single shared balance:
+                                                            --   bundle  → set to bundle size at fulfillment
+                                                            --   sub     → 0 baseline; +1 on cancel-in-window
+                                                            --             at session start (§6.3)
+                                                            --   single  → 0 (camp/event/free; no per-session
+                                                            --             motion)
   signed_up_at          timestamptz
   unique(product_id, gamer_id)
   -- CHECK: group_id's product_id (if set) matches row's product_id
-  -- CHECK: credits_remaining >= 0 when NOT NULL
+  -- CHECK: credits_remaining >= 0
+  -- CHECK: status='reserving' → reserved_until IS NOT NULL
+  -- CHECK: status='waitlisted' → waitlist_position IS NOT NULL
 ```
 
 **Hard-delete on cancellation** — same as prior draft. Cancellation (customer- or admin-initiated) hard-deletes the row via `cancel_participation_v2` / `admin_remove_participation_v2`. No soft-delete column; cancelled rows are physically gone so `UNIQUE(product_id, gamer_id)` works on re-signup.
 
 `group_id IS NULL` is the unassigned inbox state. Deleting a group resets its participations to `group_id = NULL`.
 
-**Subscription-covered vs bundle-covered**, determined at signup:
-- If the parent purchases a bundle → `credits_remaining` is set to the bundle size.
-- If the parent adds this product to a family sub → `credits_remaining = NULL`; access is driven by the existence of a `family_subscription_items_v2` row pointing to this participation.
+**Subscription-covered vs bundle-covered.** Coverage is determined by the existence of a live `family_subscription_items_v2` row pointing at the participation, *not* by a column on the participation. While a sub item exists, the participation is sub-covered (unlimited attendance, cancel-in-window banks credits, cron writes `delta=0` deduction rows). When the sub item is removed (sub cancelled, item dropped, etc.), the participation flips to bundle-covered automatically — the same `credits_remaining` field is now spendable, decremented by the cron on attendance. See §4.5.
+
+`credits_remaining` is **non-nullable, defaulting to 0**. There is no NULL-encodes-sub semantics — it's a single int, always queryable. The earlier draft used NULL to encode sub-covered, which fragmented the schema (two motion paths) and broke the cancel-sub-keeps-credits flow.
 
 Changing mode (e.g. convert a bundle remainder into a sub, or vice versa) is not supported in v1 — parents cancel and re-sign up. Revisit if it becomes a real request.
 
