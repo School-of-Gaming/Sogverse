@@ -1,7 +1,7 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only style guide; all content is copy-paste component examples, not user-facing text that ships in any locale */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
   Plus,
   Pencil,
@@ -70,10 +70,59 @@ import {
 } from "@/components/public/products-v2/product-purchased-card-view";
 import { RegistrationPill } from "@/components/public/products-v2/registration-pill";
 import type { RegistrationState } from "@/components/public/products-v2/derive-registration-state";
+import { SignupPanel } from "@/components/public/products-v2/signup-panel";
+import {
+  buildDetailFixture,
+  PREVIEW_STATES,
+  PREVIEW_TYPES,
+  type PreviewStateKind,
+} from "@/components/public/products-v2/mock-detail-fixtures";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Lets SubSection prefix its anchor id with the parent Section's slug, so
+// duplicated subsection titles (e.g. "Variants" under both Button and Badge)
+// don't collide.
+const SectionSlugContext = createContext<string | null>(null);
+
+function AnchorHeading({
+  as,
+  id,
+  className,
+  children,
+}: {
+  as: "h2" | "h3";
+  id: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const Tag = as;
+  return (
+    <Tag id={id} className={`group scroll-mt-4 ${className}`}>
+      <a
+        href={`#${id}`}
+        className="inline-flex items-center gap-2 hover:underline"
+      >
+        {children}
+        <span
+          aria-hidden
+          className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+        >
+          #
+        </span>
+      </a>
+    </Tag>
+  );
+}
 
 function Section({
   title,
@@ -82,11 +131,16 @@ function Section({
   title: string;
   children: React.ReactNode;
 }) {
+  const slug = slugify(title);
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-bold">{title}</h2>
-      <div className="rounded-lg border p-6 space-y-6">{children}</div>
-    </section>
+    <SectionSlugContext.Provider value={slug}>
+      <section className="space-y-4">
+        <AnchorHeading as="h2" id={slug} className="text-2xl font-bold">
+          {title}
+        </AnchorHeading>
+        <div className="rounded-lg border p-6 space-y-6">{children}</div>
+      </section>
+    </SectionSlugContext.Provider>
   );
 }
 
@@ -97,11 +151,17 @@ function SubSection({
   title: string;
   children: React.ReactNode;
 }) {
+  const parentSlug = useContext(SectionSlugContext);
+  const slug = parentSlug ? `${parentSlug}-${slugify(title)}` : slugify(title);
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+      <AnchorHeading
+        as="h3"
+        id={slug}
+        className="text-sm font-semibold text-muted-foreground uppercase tracking-wider"
+      >
         {title}
-      </h3>
+      </AnchorHeading>
       {children}
     </div>
   );
@@ -830,10 +890,12 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
         "Weekly creative sessions where your gamer collaborates with new friends and a Gedu who really gets it.",
       imagePath: "demo-placeholder.svg",
       topicLabel: "MINECRAFT",
-      scheduleLine: "Every Tuesday · 17:00 (EET)",
+      scheduleLines: ["Tuesday · 17:00–18:30 (EET)"],
       ageLine: "Ages 8–12",
       seatsHint: { kind: "capacity", count: 8 },
+      locationLine: { kind: "online", label: "Online" },
       tagLabels: ["Creative", "Friendly", "Beginner-OK"],
+      spokenLanguageCode: "fi",
       price: SAMPLE_PRICE_BUNDLE,
       state: { kind: "open", seatCount: 8, seatsLeft: 6, waitlistEnabled: false },
     },
@@ -846,10 +908,12 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
         "Build, race, and collab with your crew — small group with regular faces every week.",
       imagePath: "demo-placeholder.svg",
       topicLabel: "ROBLOX",
-      scheduleLine: "Every Wednesday · 17:00 (EET)",
+      scheduleLines: ["Wednesday · 17:00–18:30 (EET)"],
       ageLine: "Ages 9–13",
       seatsHint: { kind: "capacity", count: 8 },
+      locationLine: { kind: "in_person", label: "Tapiolan koulu" },
       tagLabels: ["Small group"],
+      spokenLanguageCode: "en",
       price: SAMPLE_PRICE_BUNDLE,
       state: { kind: "open", seatCount: 8, seatsLeft: 2, waitlistEnabled: false },
     },
@@ -862,10 +926,12 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
         "Group challenge that runs once enough builders sign up — gather your crew and we'll lock in a start date.",
       imagePath: "demo-placeholder.svg",
       topicLabel: "ROBLOX",
-      scheduleLine: "24–28 March · 10:00–14:00 (EET)",
+      scheduleLines: ["24–28 March (EET)", "10:00–14:00"],
       ageLine: "Ages 9–14",
       seatsHint: null,
+      locationLine: { kind: "online_muni", label: "Espoo" },
       tagLabels: ["Group", "Tournament"],
+      spokenLanguageCode: "fi",
       price: SAMPLE_PRICE_UPFRONT,
       state: { kind: "pending_thr", threshold: 6, count: 2 },
     },
@@ -878,10 +944,12 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
         "Drop-in event for parents and gamers — light competition, lots of laughter.",
       imagePath: "demo-placeholder.svg",
       topicLabel: "FORTNITE",
-      scheduleLine: "Friday 12 April · 18:00–20:00 (EET)",
+      scheduleLines: ["Friday 12 April · 18:00–20:00 (EET)"],
       ageLine: "Ages 10+",
       seatsHint: { kind: "capacity", count: 12 },
+      locationLine: { kind: "in_person", label: "Iso Omena" },
       tagLabels: ["Family", "Casual"],
+      spokenLanguageCode: "en",
       price: SAMPLE_PRICE_FREE,
       state: { kind: "full_waitlist", seatCount: 12 },
     },
@@ -894,10 +962,12 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
         "A week-long story-driven adventure across multiple games. Sign-ups open soon.",
       imagePath: "demo-placeholder.svg",
       topicLabel: "ADVENTURE",
-      scheduleLine: "12–16 August · 10:00–15:00 (EET)",
+      scheduleLines: ["12–16 August (EET)", "10:00–15:00"],
       ageLine: "Ages 9–13",
       seatsHint: { kind: "capacity", count: 16 },
+      locationLine: { kind: "in_person", label: "Sogverse HQ" },
       tagLabels: ["Camp", "Story-driven"],
+      spokenLanguageCode: "sv",
       price: SAMPLE_PRICE_UPFRONT,
       state: { kind: "closed_pre", opensAt: "2026-05-15T00:00:00Z" },
     },
@@ -910,10 +980,12 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
         "Already underway — late joins aren't supported once a camp is running.",
       imagePath: "demo-placeholder.svg",
       topicLabel: "ROBLOX",
-      scheduleLine: "20–24 April · 10:00–14:00 (EET)",
+      scheduleLines: ["20–24 April (EET)", "10:00–14:00"],
       ageLine: "Ages 8–12",
       seatsHint: { kind: "capacity", count: 10 },
+      locationLine: { kind: "in_person", label: "Ressun peruskoulu" },
       tagLabels: ["Camp"],
+      spokenLanguageCode: "fi",
       price: SAMPLE_PRICE_UPFRONT,
       state: { kind: "running_late" },
     },
@@ -925,10 +997,12 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       description: "This event has wrapped — keep an eye out for the next one.",
       imagePath: "demo-placeholder.svg",
       topicLabel: "FORTNITE",
-      scheduleLine: "Saturday 22 March · 14:00–17:00 (EET)",
+      scheduleLines: ["Saturday 22 March · 14:00–17:00 (EET)"],
       ageLine: "Ages 10+",
       seatsHint: null,
+      locationLine: { kind: "in_person", label: "Tampere-talo" },
       tagLabels: ["Tournament"],
+      spokenLanguageCode: "en",
       price: SAMPLE_PRICE_UPFRONT,
       state: { kind: "ended" },
     },
@@ -1041,6 +1115,19 @@ function ProductsV2Demo() {
 /* ------------------------------------------------------------------ */
 
 export default function AdminUIComponentsPage() {
+  // The dashboard scroll container is <main overflow-auto>, not the document.
+  // The browser's native hash jump runs before this client component has
+  // rendered, so it lands in the wrong scroll context. Re-apply the scroll
+  // after mount.
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const raf = requestAnimationFrame(() => {
+      document.getElementById(hash)?.scrollIntoView({ block: "start" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   return (
     <div className="space-y-8">
       <div>
@@ -1604,6 +1691,101 @@ export default function AdminUIComponentsPage() {
         <ProductsV2Demo />
       </Section>
 
+      {/* ============================================================ */}
+      {/* Section 12: Products v2 — Detail Page                          */}
+      {/* ============================================================ */}
+      <Section title="Products v2 — Detail Page">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Per-type detail pages (/clubs/[id], /camps/[id], /events/[id]).
+          The right-side signup panel switches across registration states
+          (countdown / open / waitlist / threshold / ended). Each tile here
+          shows the panel inline; the &ldquo;Preview full page &rarr;&rdquo;
+          link opens the route in the public layout exactly as a parent
+          would see it.
+        </p>
+        <ProductDetailDemo />
+      </Section>
+
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Section 12: Products v2 — Detail Page                              */
+/* ------------------------------------------------------------------ */
+
+function ProductDetailDemo() {
+  return (
+    <div className="space-y-6">
+      {PREVIEW_TYPES.map((productType) => (
+        <SubSection
+          key={productType}
+          title={productType.replace(/_/g, " ").toUpperCase()}
+        >
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {PREVIEW_STATES.map((stateKind) => (
+              <ProductDetailPanelTile
+                key={`${productType}-${stateKind}`}
+                productType={productType}
+                stateKind={stateKind}
+              />
+            ))}
+          </div>
+        </SubSection>
+      ))}
+    </div>
+  );
+}
+
+// Plain-English labels for each PreviewStateKind. The state key is the
+// internal code name (matches `RegistrationState["kind"]`); the label is
+// what an admin reading this page should see at a glance.
+const STATE_LABELS: Record<PreviewStateKind, string> = {
+  closed_pre: "Pre-launch — registration not yet open",
+  open: "Open for sign-ups",
+  open_almost_full: "Open — almost full",
+  pending_thr: "Pending threshold — needs more sign-ups",
+  full_waitlist: "Full — waitlist available",
+  full_closed: "Full — waitlist closed",
+  running_late: "Already running — no late joins",
+  ended: "Ended",
+};
+
+function ProductDetailPanelTile({
+  productType,
+  stateKind,
+}: {
+  productType: (typeof PREVIEW_TYPES)[number];
+  stateKind: PreviewStateKind;
+}) {
+  const fixture = buildDetailFixture(productType, stateKind);
+  const fullPageHref = `/preview/products-v2/${productType}/${stateKind}`;
+
+  return (
+    <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-medium leading-tight">
+            {STATE_LABELS[stateKind]}
+          </p>
+          <p className="text-xs font-mono text-muted-foreground">{stateKind}</p>
+        </div>
+        <a
+          href={fullPageHref}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 text-xs font-medium text-primary hover:underline"
+        >
+          Preview full page →
+        </a>
+      </div>
+      <div className="rounded-md bg-background p-3">
+        <SignupPanel
+          product={fixture.product}
+          state={fixture.state}
+          authState={fixture.authState}
+        />
+      </div>
     </div>
   );
 }

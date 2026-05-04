@@ -168,6 +168,15 @@ export async function proxy(request: NextRequest) {
     return supabaseResponse;
   }
 
+  // /preview/* are admin-only mock surfaces linked from /admin/ui-components.
+  // They live in the (public) layout group so the page renders in the
+  // parent-facing chrome (header + footer, no admin sidebar) — but only
+  // admins should be able to reach them. Non-admins bounce to their own
+  // dashboard; unauthenticated users were already redirected to /login above.
+  if (pathname.startsWith("/preview/") && userRole !== "admin") {
+    return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
+  }
+
   // Check if user has access to the requested route
   for (const [role, basePath] of Object.entries(ROLE_DASHBOARD_PATHS)) {
     if (pathname.startsWith(basePath)) {

@@ -96,10 +96,10 @@ export function ProductBrowsePage({
 
   const allLoaded = !productsLoading && !topicsLoading && !tagsLoading;
 
-  const { topics, tags } = useBrowseFilters();
+  const { topics, tags, format, languages } = useBrowseFilters();
   const filtered = useMemo(
-    () => filterProducts(products ?? [], { topics, tags }),
-    [products, topics, tags],
+    () => filterProducts(products ?? [], { topics, tags, format, languages }),
+    [products, topics, tags, format, languages],
   );
 
   const purchasedRows = showMock
@@ -140,7 +140,7 @@ export function ProductBrowsePage({
             )}
 
             <section className="space-y-3">
-              <ProductBrowseFilters resultCount={filtered.length} />
+              <ProductBrowseFilters />
 
               {filtered.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

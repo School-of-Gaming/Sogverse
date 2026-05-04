@@ -1148,8 +1148,11 @@
     "filters": {
       "topic": "mu'qaD",
       "tag": "Segh",
+      "format": "rurmeH",
+      "formatOnline": "QumDaq",
+      "formatInPerson": "Daqvam",
+      "language": "Hol",
       "clearAll": "yISay'moH",
-      "results": "{count, plural, =0 {pagh} one {# Sam} other {# Sam}}",
       "filterBy": "yIH'lu'"
     },
     "card": {
@@ -1176,10 +1179,7 @@
       "joinWaitlist": "tetlh DaqaD",
       "fullDisabled": "buy'",
       "opensOnDate": "{date} poSmoH",
-      "scheduleEvery": "Hoch {day} · {time}",
-      "scheduleRange": "{startDate} – {endDate}",
-      "scheduleSingle": "{date} · {time}",
-      "tzNote": "({tz})",
+      "online": "QumDaq",
       "verbConsumerClub": "ghoSta'",
       "verbMunicipalityClub": "ghoSta'",
       "verbCamp": "ghoSta'",
@@ -1190,6 +1190,136 @@
     "empty": {
       "noProducts": "DaH pagh tu'lu' — chu' chenmoH.",
       "noMatches": "pagh Sam. tetlh yISay'moH."
+    }
+  },
+  "productDetail": {
+    "back": {
+      "consumer_club": "Hoch ghom'a'mey yIchegh",
+      "municipality_club": "Hoch veng ghom'a'mey yIchegh",
+      "camp": "Hoch raghmey yIchegh",
+      "event": "Hoch wanI'mey yIchegh"
+    },
+    "typeLabel": {
+      "consumer_club": "ghom'a'",
+      "municipality_club": "veng ghom'a'",
+      "camp": "ragh",
+      "event": "wanI'"
+    },
+    "sections": {
+      "whenWhere": "ghorgh & nuqDaq",
+      "calendar": "jaj tetlh",
+      "tags": "nuq Daloy",
+      "topicsLabel": "mu'qaD",
+      "tagsLabel": "Segh"
+    },
+    "info": {
+      "schedule": "jaj tetlh",
+      "where": "Daq",
+      "format": "rurmeH",
+      "ages": "qan {min}–{max}",
+      "ageRange": "qan SaH",
+      "language": "Hol",
+      "online": "QumDaq",
+      "atVenue": "{venue}Daq",
+      "tbd": "Sov pagh"
+    },
+    "calendar": {
+      "weekdayMon": "wa'",
+      "weekdayTue": "cha'",
+      "weekdayWed": "wej",
+      "weekdayThu": "loS",
+      "weekdayFri": "vagh",
+      "weekdaySat": "jav",
+      "weekdaySun": "Soch",
+      "legendSession": "qaStaHvIS",
+      "legendSkipped": "qIl",
+      "skipLine": "{date} · {reason}"
+    },
+    "signupPanel": {
+      "bannerOpen": "DaH {verb}",
+      "bannerAlmostFull": "nom — pa' puS neH",
+      "bannerCountdown": "qonta' poSlaw'",
+      "bannerCountdownDone": "qonta' poS",
+      "bannerThreshold": "buy'meH tagh",
+      "bannerWaitlist": "DaH buy'",
+      "bannerFullClosed": "buy'",
+      "bannerRunningLate": "taghta'",
+      "bannerEnded": "rIn",
+      "verb": {
+        "consumer_club": "yImuv",
+        "municipality_club": "yIqon",
+        "camp": "yImuv",
+        "event": "yImuv"
+      },
+      "ctaPreOpenIdle": "{verb} — DaH poSbe'",
+      "ctaPreOpenReady": "qonta' poSDI' SuD",
+      "ctaPreOpenChooseChild": "wa' puq yIwIv",
+      "ctaActive": "DaH {verb}",
+      "ctaActiveWithPrice": "DaH {verb} {price}",
+      "ctaWaitlist": "tetlh DaqaD",
+      "ctaThreshold": "pa' yIpol",
+      "ctaSignIn": "qonmeH yI'el",
+      "ctaCreateAccount": "Account chu' chenmoH",
+      "ctaAddGamer": "puq yIchel",
+      "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
+      "preOpenHelper": "puqlI' yIwIv 'ej chutmey yIlaj — qonta' poSDI' wa' tlhopwI' lo'meH.",
+      "thresholdHelper": "{count} puqpu' qonta'DI' tagh. DaH pa' yIpol — buy'DI' qaja' SoH.",
+      "thresholdProgress": "{current} / {threshold}",
+      "thresholdRemaining": "{count, plural, =0 {Hoch ghaj} one {# vIneH taghmeH} other {# vIneH taghmeH}}",
+      "seatsRemaining": "{count, plural, one {# / {total} pa' ratlh} other {# / {total} pa' ratlh}}",
+      "waitlistHowTitle": "tetlh teb Qu'",
+      "waitlistHowItem1": "DIS naQ tetlh DaqaDtaHbogh.",
+      "waitlistHowItem2": "qorDu' chegh chugh, latlh qorDu' poH puS lo' laH.",
+      "waitlistHowItem3": "DaH 'aw' tetlh DaH'el laH.",
+      "endedNote": "rIn. latlh boqDI' yI'aHta'.",
+      "runningLateNote": "taghta' — qonta' SoQ. latlh boq DaH poSlaw'.",
+      "rules": {
+        "consumer_club": "qIp 'ej tlhejHa' vuvbe' School of Gaming, jIyaj.",
+        "municipality_club": "qIp 'ej tlhejHa' vuvbe' School of Gaming, 'ej qaSpa' choHmeH puqwI' DaH lop laH latlh qorDu' tetlh teb 'oHbogh, jIyaj.",
+        "camp": "qIp 'ej tlhejHa' vuvbe' School of Gaming, jIyaj.",
+        "event": "qIp 'ej tlhejHa' vuvbe' School of Gaming, jIyaj."
+      },
+      "whoAreYouSigningUp": "'Iv qonbogh SoH?",
+      "selected": "wIvlu'",
+      "agePill": "qan {age}",
+      "noGamersTitle": "tlhIH account puq yIchel",
+      "noGamersDescription": "'Iv DaqonneS SaH wIneHbogh. nung puq yIchel — tup wa' poH neH."
+    },
+    "pricing": {
+      "title": "Huch",
+      "subscribeHeading": "rar (pIm Huch nIQ)",
+      "bundleHeading": "pagh Huch wa'logh ngIp",
+      "perSession": "{price} / qaStaHvIS",
+      "subscribeMonthly": "jar Hoch",
+      "subscribeQuarterly": "wej jar Hoch",
+      "subscribeYearly": "DIS Hoch",
+      "bundleSingle": "wa' qaStaHvIS",
+      "bundleN": "{count} qaStaHvIS",
+      "savings": "{percent} % nIQ",
+      "free": "Huch pagh",
+      "freeHint": "Huch poQbe'.",
+      "external": "Huch pagh SoH · veng Huch nob",
+      "externalHint": "Huch poQbe' — veng Huch nob.",
+      "upfrontHint": "wa'logh Huch.",
+      "notAvailable": "{currency} Huch DaH ghajbe'.",
+      "cadenceMonth": "/ jar",
+      "cadenceQuarter": "wej jar Hoch",
+      "cadenceYear": "DIS Hoch"
+    },
+    "countdown": {
+      "days": "jaj",
+      "hours": "rep",
+      "minutes": "tup",
+      "seconds": "lup"
+    },
+    "loading": "loS...",
+    "notFound": {
+      "title": "tu'be'lu'",
+      "description": "luchHa'lu'pu' joq link motlhHa'. bIH tu'lu'bogh yIleng.",
+      "cta": "leng yIchegh"
+    },
+    "preview": {
+      "banner": "mocku' · ngeD lan'be'."
     }
   },
   "sidebar": {
@@ -1604,7 +1734,7 @@
     "senderAuth": "Sogverse ghom",
     "senderFeedback": "Sogverse QIn",
     "senderEnrollment": "Sogverse qo' ghoH",
-    "footer": "\u00a9 {year} Sogverse. Hoch batlh.",
+    "footer": "© {year} Sogverse. Hoch batlh.",
     "roleAdmin": "Admin",
     "roleParent": "vav/SoS",
     "roleGamer": "toy'wI'",
@@ -1705,7 +1835,7 @@
   },
   "mouseflow": {
     "title": "Sogverse yIDubmoH",
-    "body": "Sogverse Beta 'oH. nuq Dalo'? 'e' wIyajqu' wIneH \u2014 vaj Hoch chaH yIDubmoH. Daqonta'bogh wIqonchugh maQap (DaQwI' vIH, jonta', je paq DaghoSpu'bogh). Sogverse pIn'a'pu' neH lulegh, je Beta rInchugh, Hoch wIteq.",
+    "body": "Sogverse Beta 'oH. nuq Dalo'? 'e' wIyajqu' wIneH — vaj Hoch chaH yIDubmoH. Daqonta'bogh wIqonchugh maQap (DaQwI' vIH, jonta', je paq DaghoSpu'bogh). Sogverse pIn'a'pu' neH lulegh, je Beta rInchugh, Hoch wIteq.",
     "accept": "HIja', Sogverse yIDubmoH",
     "decline": "ghobe'"
   }

@@ -15,7 +15,20 @@ export const productV2Keys = {
     [...productV2Keys.lists(), { type }] as const,
   visibleByType: (type: ProductTypeV2) =>
     [...productV2Keys.lists(), "visible", { type }] as const,
+  detail: (id: string | undefined) =>
+    [...productV2Keys.all, "detail", id] as const,
 };
+
+export function useProductV2Detail(id: string | undefined) {
+  const supabase = getClient();
+  const service = new ProductsV2Service(supabase);
+
+  return useQuery({
+    queryKey: productV2Keys.detail(id),
+    queryFn: () => service.getDetailById(id!),
+    enabled: !!id,
+  });
+}
 
 export function useProductsV2ByType(type: ProductTypeV2) {
   const supabase = getClient();

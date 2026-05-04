@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "title": "Sogverse \u2013 School of Gaming",
+    "title": "Sogverse – School of Gaming",
     "description": "Where screen time becomes quality time through Minecraft clubs led by professional game educators.",
-    "shortDescription": "School of Gaming \u2013 Where screen time becomes quality time",
+    "shortDescription": "School of Gaming – Where screen time becomes quality time",
     "pages": {
       "signIn": "Sign In",
       "createAccount": "Create Account",
@@ -10,8 +10,8 @@
       "resetPassword": "Reset Password",
       "setupAccount": "Set Up Your Account",
       "about": "About Us",
-      "sorg": "Sorg \u2013 the Sogverse Currency",
-      "yty": "Yty \u2013 the Force of the Sogverse",
+      "sorg": "Sorg – the Sogverse Currency",
+      "yty": "Yty – the Force of the Sogverse",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin Dashboard",
       "adminGroups": "Groups",
@@ -595,7 +595,7 @@
       "emailPlaceholder": "gedu@example.com",
       "geduDisplayName": "Display Name",
       "geduDisplayNamePlaceholder": "e.g. Jane Smith",
-      "geduDisplayNameHelper": "Shown in the welcome email greeting and pre-filled on the gedu\u2019s profile.",
+      "geduDisplayNameHelper": "Shown in the welcome email greeting and pre-filled on the gedu’s profile.",
       "geduDisplayNameTooShort": "Display name must be at least 2 characters",
       "geduDisplayNameTooLong": "Display name must be at most 32 characters",
       "inviteLanguage": "Invite Email Language",
@@ -718,7 +718,7 @@
       "deleteGroupConfirmDescription": "This will remove the group and its gedu assignment. This change won’t take effect until you commit.",
       "reassignGeduFor": "Reassign Gedu for {label}",
       "selectDifferentGedu": "Select a different gedu for this group.",
-      "searchByNameOrEmail": "Search by name or email\u2026",
+      "searchByNameOrEmail": "Search by name or email…",
       "noGedusMatchSearch": "No gedus match your search."
     },
     "forms": {
@@ -1056,7 +1056,7 @@
     "allGroupsEmpty": "No groups have been created yet.",
     "myGroupsHeading": "My Groups",
     "myGroupsSubheading": "Your enrolled groups and upcoming voice sessions.",
-    "myGroupsEmpty": "You\u2019re not enrolled in any groups yet.",
+    "myGroupsEmpty": "You’re not enrolled in any groups yet.",
     "yourGroupsHeading": "Your Groups",
     "yourGroupsSubheading": "Your assigned groups, students, and voice sessions.",
     "yourGroupsEmpty": "Groups will appear here when an admin assigns you to a club.",
@@ -1100,8 +1100,11 @@
     "filters": {
       "topic": "Topic",
       "tag": "Vibe",
+      "format": "Format",
+      "formatOnline": "Online",
+      "formatInPerson": "In person",
+      "language": "Language",
       "clearAll": "Clear",
-      "results": "{count, plural, =0 {No matches} one {# match} other {# matches}}",
       "filterBy": "Filter by"
     },
     "card": {
@@ -1128,10 +1131,7 @@
       "joinWaitlist": "Join waitlist",
       "fullDisabled": "Full",
       "opensOnDate": "Opens {date}",
-      "scheduleEvery": "Every {day} · {time}",
-      "scheduleRange": "{startDate} – {endDate}",
-      "scheduleSingle": "{date} · {time}",
-      "tzNote": "({tz})",
+      "online": "Online",
       "verbConsumerClub": "Enrolled",
       "verbMunicipalityClub": "Registered",
       "verbCamp": "Signed up",
@@ -1142,6 +1142,136 @@
     "empty": {
       "noProducts": "Nothing here yet — new ones are on the way.",
       "noMatches": "No matches. Try clearing your filters."
+    }
+  },
+  "productDetail": {
+    "back": {
+      "consumer_club": "All clubs",
+      "municipality_club": "All municipality clubs",
+      "camp": "All camps",
+      "event": "All events"
+    },
+    "typeLabel": {
+      "consumer_club": "Club",
+      "municipality_club": "Municipality club",
+      "camp": "Camp",
+      "event": "Event"
+    },
+    "sections": {
+      "whenWhere": "When & where",
+      "calendar": "Schedule",
+      "tags": "What to expect",
+      "topicsLabel": "Focus",
+      "tagsLabel": "Vibe"
+    },
+    "info": {
+      "schedule": "Schedule",
+      "where": "Where",
+      "format": "Format",
+      "ages": "Ages {min}–{max}",
+      "ageRange": "Age range",
+      "language": "Language",
+      "online": "Online",
+      "atVenue": "At {venue}",
+      "tbd": "To be confirmed"
+    },
+    "calendar": {
+      "weekdayMon": "Mon",
+      "weekdayTue": "Tue",
+      "weekdayWed": "Wed",
+      "weekdayThu": "Thu",
+      "weekdayFri": "Fri",
+      "weekdaySat": "Sat",
+      "weekdaySun": "Sun",
+      "legendSession": "Session",
+      "legendSkipped": "Skipped",
+      "skipLine": "{date} · {reason}"
+    },
+    "signupPanel": {
+      "bannerOpen": "{verb} now",
+      "bannerAlmostFull": "Going fast — only a few seats left",
+      "bannerCountdown": "Sign-up opens in",
+      "bannerCountdownDone": "Sign-up is now open",
+      "bannerThreshold": "Starts when it fills up",
+      "bannerWaitlist": "Fully booked right now",
+      "bannerFullClosed": "Fully booked",
+      "bannerRunningLate": "This one's already underway",
+      "bannerEnded": "This one's wrapped",
+      "verb": {
+        "consumer_club": "Enroll",
+        "municipality_club": "Register",
+        "camp": "Sign up",
+        "event": "Join"
+      },
+      "ctaPreOpenIdle": "{verb} — not yet open",
+      "ctaPreOpenReady": "Ready when sign-up opens",
+      "ctaPreOpenChooseChild": "Pick a child first",
+      "ctaActive": "{verb} now",
+      "ctaActiveWithPrice": "{verb} now {price}",
+      "ctaWaitlist": "Join the waitlist",
+      "ctaThreshold": "Reserve a spot",
+      "ctaSignIn": "Sign in to register",
+      "ctaCreateAccount": "Create account",
+      "ctaAddGamer": "Add a child first",
+      "nonCustomerNote": "Only parents can register a gamer here.",
+      "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
+      "thresholdHelper": "We'll start once {count} kids have signed up. Reserve a spot now and we'll let you know the moment we have enough.",
+      "thresholdProgress": "{current} of {threshold}",
+      "thresholdRemaining": "{count, plural, =0 {Threshold reached} one {# more to start} other {# more to start}}",
+      "seatsRemaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
+      "waitlistHowTitle": "How the waitlist works",
+      "waitlistHowItem1": "You keep your spot in line for the whole term.",
+      "waitlistHowItem2": "If a family cancels, the next person gets a short window to accept.",
+      "waitlistHowItem3": "You can leave the waitlist anytime from your account.",
+      "endedNote": "This one already wrapped. Keep an eye out for the next one.",
+      "runningLateNote": "We've already started — sign-up is closed. The next round will open soon.",
+      "rules": {
+        "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
+        "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child's seat for the next family on the waitlist.",
+        "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
+        "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
+      },
+      "whoAreYouSigningUp": "Who are you signing up?",
+      "selected": "Selected",
+      "agePill": "Age {age}",
+      "noGamersTitle": "Add a child to your account",
+      "noGamersDescription": "We need to know who to sign up. Add a child first — it takes a minute."
+    },
+    "pricing": {
+      "title": "Pricing",
+      "subscribeHeading": "Subscribe (saves more)",
+      "bundleHeading": "Or pay as you go",
+      "perSession": "{price} / session",
+      "subscribeMonthly": "Monthly",
+      "subscribeQuarterly": "Every 3 months",
+      "subscribeYearly": "Yearly",
+      "bundleSingle": "Single session",
+      "bundleN": "{count} sessions",
+      "savings": "Save {percent}%",
+      "free": "Free",
+      "freeHint": "No payment needed.",
+      "external": "Free to you · paid by your municipality",
+      "externalHint": "No payment needed — your municipality covers the cost.",
+      "upfrontHint": "One-time payment.",
+      "notAvailable": "Pricing isn't available in {currency} yet.",
+      "cadenceMonth": "/ month",
+      "cadenceQuarter": "every 3 months",
+      "cadenceYear": "every year"
+    },
+    "countdown": {
+      "days": "days",
+      "hours": "hrs",
+      "minutes": "min",
+      "seconds": "sec"
+    },
+    "loading": "Loading…",
+    "notFound": {
+      "title": "We couldn't find that",
+      "description": "It may have been removed or the link is wrong. Browse what's available below.",
+      "cta": "Back to browse"
+    },
+    "preview": {
+      "banner": "Mockup preview · interactions are not wired up"
     }
   },
   "sidebar": {
@@ -1556,7 +1686,7 @@
     "senderAuth": "Sogverse Team",
     "senderFeedback": "Sogverse Feedback",
     "senderEnrollment": "Sogverse Enrolment",
-    "footer": "\u00a9 {year} Sogverse. All rights reserved.",
+    "footer": "© {year} Sogverse. All rights reserved.",
     "roleAdmin": "Admin",
     "roleParent": "Parent",
     "roleGamer": "Gamer",
@@ -1566,14 +1696,14 @@
       "heading": "Reset Your Password",
       "body": "We received a request to reset your Sogverse password. Click the button below to choose a new password.",
       "expiry": "This link will expire in 72 hours.",
-      "ignore": "If you didn\u2019t request a password reset, you can safely ignore this email. Your password will not be changed.",
+      "ignore": "If you didn’t request a password reset, you can safely ignore this email. Your password will not be changed.",
       "button": "Reset Password"
     },
     "geduInvite": {
-      "subject": "You\u2019re invited to the Sogverse",
+      "subject": "You’re invited to the Sogverse",
       "heading": "Welcome to the Sogverse",
       "greeting": "Hi {name},",
-      "body": "You\u2019ve been invited to join the Sogverse as a <strong>Gedu</strong>. Click the button below to set up your account.",
+      "body": "You’ve been invited to join the Sogverse as a <strong>Gedu</strong>. Click the button below to set up your account.",
       "expiry": "This link will expire in 72 hours.",
       "button": "Set Up Your Account"
     },
@@ -1589,7 +1719,7 @@
       "body": "Hi {parentName}, {gamerName} is now enrolled in {productName} with Gedu {geduName}."
     },
     "enrollmentGedu": {
-      "subject": "{gamerName} has joined your group \u2013 {productName}",
+      "subject": "{gamerName} has joined your group – {productName}",
       "heading": "New Gamer in Your Group",
       "body": "Hi {geduName}, {gamerName} has joined your group for {productName}."
     },
@@ -1599,50 +1729,50 @@
       "body": "Hi {parentName}, {gamerName} has been unenrolled from {productName} (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
-      "subject": "{gamerName} has left your group \u2013 {productName}",
+      "subject": "{gamerName} has left your group – {productName}",
       "heading": "Gamer Left Your Group",
       "body": "Hi {geduName}, {gamerName} has left your group for {productName}."
     },
     "groupAdded": {
-      "subject": "You\u2019ve been assigned to a new group \u2013 {productName}",
-      "heading": "You\u2019ve been assigned to a new group",
-      "body": "Hi {geduName}, you\u2019ve been assigned to a new group for {productName}.",
-      "dashboardNote": "You\u2019ll see this group in your dashboard shortly."
+      "subject": "You’ve been assigned to a new group – {productName}",
+      "heading": "You’ve been assigned to a new group",
+      "body": "Hi {geduName}, you’ve been assigned to a new group for {productName}.",
+      "dashboardNote": "You’ll see this group in your dashboard shortly."
     },
     "groupDeleted": {
-      "subject": "Your group has been removed \u2013 {productName}",
+      "subject": "Your group has been removed – {productName}",
       "heading": "Your group has been removed",
       "body": "Hi {geduName}, your group for {productName} has been removed by an admin."
     },
     "groupReassignedOldGedu": {
-      "subject": "Your group has been reassigned \u2013 {productName}",
+      "subject": "Your group has been reassigned – {productName}",
       "heading": "Your group has been reassigned",
       "body": "Hi {oldGeduName}, your group for {productName} has been reassigned to {newGeduName}."
     },
     "groupReassignedNewGedu": {
-      "subject": "You\u2019ve been assigned to a group \u2013 {productName}",
-      "heading": "You\u2019ve been assigned to a group",
-      "body": "Hi {newGeduName}, you\u2019ve been assigned to a group for {productName} (previously led by {oldGeduName})."
+      "subject": "You’ve been assigned to a group – {productName}",
+      "heading": "You’ve been assigned to a group",
+      "body": "Hi {newGeduName}, you’ve been assigned to a group for {productName} (previously led by {oldGeduName})."
     },
     "groupReassignedParent": {
-      "subject": "Gedu change for {gamerName} \u2013 {productName}",
-      "heading": "Your gamer\u2019s Gedu has changed",
-      "body": "Hi {parentName}, the Gedu for {gamerName}\u2019s group in {productName} has changed from {oldGeduName} to {newGeduName}."
+      "subject": "Gedu change for {gamerName} – {productName}",
+      "heading": "Your gamer’s Gedu has changed",
+      "body": "Hi {parentName}, the Gedu for {gamerName}’s group in {productName} has changed from {oldGeduName} to {newGeduName}."
     },
     "gamerMovedParent": {
-      "subject": "{gamerName} has been moved to a new group \u2013 {productName}",
+      "subject": "{gamerName} has been moved to a new group – {productName}",
       "heading": "Your child has been moved to a new group",
-      "body": "Hi {parentName}, {gamerName} has been moved from {oldGeduName}\u2019s group to {newGeduName}\u2019s group in {productName}."
+      "body": "Hi {parentName}, {gamerName} has been moved from {oldGeduName}’s group to {newGeduName}’s group in {productName}."
     },
     "gamerMovedOldGedu": {
-      "subject": "{gamerName} has been moved from your group \u2013 {productName}",
+      "subject": "{gamerName} has been moved from your group – {productName}",
       "heading": "A gamer has been moved from your group",
-      "body": "Hi {geduName}, {gamerName} has been moved from your group to {newGeduName}\u2019s group in {productName}."
+      "body": "Hi {geduName}, {gamerName} has been moved from your group to {newGeduName}’s group in {productName}."
     },
     "gamerMovedNewGedu": {
-      "subject": "{gamerName} has been moved to your group \u2013 {productName}",
+      "subject": "{gamerName} has been moved to your group – {productName}",
       "heading": "A gamer has been moved to your group",
-      "body": "Hi {geduName}, {gamerName} has been moved to your group from {oldGeduName}\u2019s group in {productName}."
+      "body": "Hi {geduName}, {gamerName} has been moved to your group from {oldGeduName}’s group in {productName}."
     },
     "feedback": {
       "subject": "Feedback from {displayName} ({role})",
@@ -1657,7 +1787,7 @@
   },
   "mouseflow": {
     "title": "Help us improve Sogverse",
-    "body": "Sogverse is in Beta. To learn how people actually use the site \u2014 so we can make it better for everyone \u2014 we'd like to record your visit (mouse movements, clicks, and which pages you visit). Only Sogverse admins can see this, and we will delete all of it once Beta ends.",
+    "body": "Sogverse is in Beta. To learn how people actually use the site — so we can make it better for everyone — we'd like to record your visit (mouse movements, clicks, and which pages you visit). Only Sogverse admins can see this, and we will delete all of it once Beta ends.",
     "accept": "Yes, help improve Sogverse",
     "decline": "No thanks"
   }

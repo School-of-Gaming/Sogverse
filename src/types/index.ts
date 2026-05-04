@@ -168,12 +168,27 @@ export type SiteDetailsV2Insert = Database["public"]["Tables"]["site_details_v2"
 export type SiteStaffDetailsV2 = Database["public"]["Tables"]["site_staff_details_v2"]["Row"];
 export type SiteStaffDetailsV2Insert = Database["public"]["Tables"]["site_staff_details_v2"]["Insert"];
 
+// Joined location shape shared by browse rows. The detail / card layers
+// only need the name + type plus one level of parent for display
+// ("Tapiolan koulu, Espoo"). Walk the chain via `parent` if a deeper
+// hierarchy is ever needed — the SELECT only fetches one level today.
+export type BrowseRowLocation = {
+  id: string;
+  name: string;
+  type: LocationType;
+  parent: {
+    id: string;
+    name: string;
+    type: LocationType;
+  } | null;
+};
+
 // Joined shape consumed by the parent-facing browse pages
 // (src/components/public/products-v2/product-browse-page.tsx). The card
 // renderer expects everything it needs to draw itself in one row — topic
 // label, all product translations, tag chips, prices per supported currency,
-// and weekly schedule slots. Single source so the component props mirror
-// the SELECT shape exactly.
+// weekly schedule slots, and the joined location for in-person products.
+// Single source so the component props mirror the SELECT shape exactly.
 export type ProductV2BrowseRow = ProductV2 & {
   topics_v2:
     | {
@@ -197,6 +212,7 @@ export type ProductV2BrowseRow = ProductV2 & {
     ScheduleSlotV2,
     "weekday" | "start_time" | "duration_minutes"
   >[];
+  locations: BrowseRowLocation | null;
 };
 
 // whatsapp_contacts

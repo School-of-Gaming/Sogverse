@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Users, Hourglass } from "lucide-react";
+import { Users, Hourglass, MapPin, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LanguageFlag } from "@/components/ui/language-flag";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
 import type { ProductPriceLine } from "./format-product-price";
@@ -24,14 +26,40 @@ export interface ProductBrowseCardViewProps {
   description: string | null;
   imagePath: string | null;
   topicLabel: string | null;
-  scheduleLine: string;
+  /**
+   * Pre-formatted lines describing when the product runs. Typically 1
+   * (clubs/events) or 2 (camps). The adapter — `scheduleLinesForCard`
+   * in `product-browse-card.tsx` — owns the splitting rule.
+   */
+  scheduleLines: readonly string[];
   ageLine: string;
   /** Pre-formatted "{count} seats" / "Waitlist available" / null. */
   seatsHint: SeatsHint | null;
+  /**
+   * Single-line location/format label. Always present on browse cards so
+   * every card carries the same meta row — the icon swaps between MapPin
+   * (in-person) and Globe (online / online-muni) and the label says where
+   * the session happens.
+   */
+  locationLine: LocationLine;
   tagLabels: readonly string[];
+  /**
+   * Spoken-language code (`fi` / `en` / `sv`) the product is delivered in.
+   * Rendered as flag + uppercase code on the topic row so parents can see
+   * delivery language at a glance — same flag treatment as the locale
+   * picker in the site header.
+   */
+  spokenLanguageCode: string;
   price: ProductPriceLine;
   state: RegistrationState;
+  /** Detail-page URL. The card's CTA + the whole card surface link here. */
+  detailHref?: string;
 }
+
+export type LocationLine = {
+  kind: "in_person" | "online" | "online_muni";
+  label: string;
+};
 
 export type SeatsHint =
   | { kind: "capacity"; count: number }
@@ -42,12 +70,15 @@ export function ProductBrowseCardView({
   description,
   imagePath,
   topicLabel,
-  scheduleLine,
+  scheduleLines,
   ageLine,
   seatsHint,
+  locationLine,
   tagLabels,
+  spokenLanguageCode,
   price,
   state,
+  detailHref,
 }: ProductBrowseCardViewProps) {
   const t = useTranslations("productBrowse.card");
   const cta = useRegistrationCta(state);
@@ -58,6 +89,7 @@ export function ProductBrowseCardView({
       className={cn(
         "flex h-full flex-col overflow-hidden transition-colors",
         isEnded && "opacity-70 grayscale-[40%]",
+        detailHref && !isEnded && "hover:border-primary/40",
       )}
     >
       <CardContent className="flex flex-1 flex-col gap-3 p-4">
@@ -92,10 +124,26 @@ export function ProductBrowseCardView({
             </div>
 
             <ul className="space-y-0.5 text-xs text-muted-foreground">
-              {scheduleLine && <li className="line-clamp-1">{scheduleLine}</li>}
+              {scheduleLines.map((line, idx) => (
+                <li key={idx} className="line-clamp-1">
+                  {line}
+                </li>
+              ))}
+              <li className="flex items-center gap-1 line-clamp-1">
+                {locationLine.kind === "in_person" ? (
+                  <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+                ) : (
+                  <Globe className="h-3 w-3 shrink-0" aria-hidden />
+                )}
+                <span className="truncate">{locationLine.label}</span>
+              </li>
               <li className="flex flex-wrap items-center gap-x-2">
                 <span>{ageLine}</span>
                 <SeatsHintLine hint={seatsHint} />
+                {/* Delivery language sits here — short row, never
+                    squeezed. Same flag treatment as the locale picker
+                    in the site header so parents recognise it. */}
+                <LanguageFlag code={spokenLanguageCode} />
               </li>
             </ul>
           </div>
@@ -117,25 +165,32 @@ export function ProductBrowseCardView({
           ) : (
             <div className="flex items-end justify-between gap-2">
               <PriceBlock price={price} />
-              {cta && (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={
-                    cta.kind === "primary"
-                      ? "default"
-                      : cta.kind === "secondary"
-                        ? "secondary"
-                        : "outline"
-                  }
-                  disabled={cta.kind === "disabled"}
-                  onClick={() => {
-                    /* noop: detail page lands in a follow-up */
-                  }}
-                >
-                  {cta.labelText}
-                </Button>
-              )}
+              {cta &&
+                (detailHref && cta.kind !== "disabled" ? (
+                  <Link href={detailHref}>
+                    <Button
+                      size="sm"
+                      variant={cta.kind === "primary" ? "default" : "secondary"}
+                    >
+                      {cta.labelText}
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={
+                      cta.kind === "primary"
+                        ? "default"
+                        : cta.kind === "secondary"
+                          ? "secondary"
+                          : "outline"
+                    }
+                    disabled={cta.kind === "disabled"}
+                  >
+                    {cta.labelText}
+                  </Button>
+                ))}
             </div>
           )}
         </div>

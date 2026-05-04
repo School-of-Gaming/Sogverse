@@ -124,6 +124,18 @@ Site-specific fields live in two extension tables, not on `locations` itself:
 
 Splitting by visibility tier keeps RLS clean (row-level, not column-level).
 
+The `locations` table itself (just the name + type + parent chain) is anon-readable as of migration `00037_locations_anon_read.sql` so the parent-facing browse and detail pages can render "Tapiolan koulu, Espoo" before sign-in. `site_details_v2` and `site_staff_details_v2` keep their own (existing) policies; making the bare hierarchy public doesn't expose addresses or staff notes.
+
+### Schema invariants enforced by `validate_products_v2_location`
+
+| Variant | `location_id` | Required `locations.type` |
+|---|---|---|
+| In-person (any product type) | required | `site` |
+| Online + `municipality_club` | required | `country` / `region` / `municipality` (NOT `site`) |
+| Online + non-muni | must be NULL | — |
+
+The browse list / detail queries join `locations(id, name, type, parent:locations!parent_id(id, name, type))` — exactly one parent level. The detail page renders `"{site}, {parent}"` for in-person and `"{muni}"` for online muni clubs. The browse card shows `{site}` only (no parent — saves the row width) and a generic "Online" label for the online non-muni case so every card carries the same meta line. The parallel structure keeps card heights stable across formats.
+
 ## Parent browse surfaces
 
 ### Routes
@@ -137,7 +149,7 @@ Splitting by visibility tier keeps RLS clean (row-level, not column-level).
 ```
 src/components/public/products-v2/
 ├── product-browse-page.tsx           — Page orchestrator: heading, filters, "your enrolled" section, browse grid, empty states
-├── product-browse-filters.tsx        — Topic / tag chips, result count, clear-all
+├── product-browse-filters.tsx        — Topic / tag / format chips + clear-all
 ├── product-browse-card.tsx           — Browse-card adapter: ProductV2BrowseRow → display props
 ├── product-browse-card-view.tsx      — Browse-card View: pure-presentational
 ├── product-purchased-card.tsx        — Purchased-card adapter
@@ -146,7 +158,8 @@ src/components/public/products-v2/
 ├── derive-registration-state.ts      — Pure state-machine: product + now + participation count → RegistrationState
 ├── format-product-schedule.ts        — Pure schedule formatter (every weekday / range / single)
 ├── format-product-price.ts           — Pure price formatter (free / external / bundle_or_sub / upfront)
-├── filter-products.ts                — Pure topic / tag filter
+├── format-product-location.ts        — Pure location formatter (site+parent / muni / null)
+├── filter-products.ts                — Pure topic / tag / format filter
 ├── use-browse-filters.ts             — URL-backed filter state (deep-linkable)
 └── mock-purchased.ts                 — Hand-curated rows for the ?mock=1 section
 ```
@@ -211,13 +224,91 @@ The same pill component covers both eras — when the real count goes live, the 
 
 RLS only returns `pending` and `running` rows to anon/customer. `completed` is hidden at the DB. The browse card still renders the "Ended" pill because `effectiveStatus()` catches `running` rows whose `end_date` has passed (cron lag between the wall clock crossing midnight and a `running → completed` flip). Do **not** add `completed` to the service filter — see the comment in `products-v2.service.ts:listVisibleByType`.
 
+## Parent detail page
+
+### Routes
+
+- `/clubs/[id]` — both consumer-club and municipality-club rows render here. Consumer clubs reach this from `/clubs`; muni clubs reach it via the future `/registration` location-first entry point (out of scope for this PR but the body is reusable as-is).
+- `/camps/[id]` — camp detail.
+- `/events/[id]` — event detail.
+
+### Component map
+
+```
+src/components/public/products-v2/  (detail-page additions)
+├── product-detail-page.tsx          — Route adapter: fetches, resolves auth, derives state
+├── product-detail-page-body.tsx     — Page body: hero, layout, calendar card, signup-panel slot
+├── signup-panel.tsx                 — Adapter: form state (gamer / agreed / pricing)
+├── signup-panel-view.tsx            — View: per-state panel + auth overlays
+├── pricing-panel-view.tsx           — Two-track stacked list (Subscribe / Pay-as-you-go)
+├── pricing-options.ts               — Pure builder for pricing tracks + options
+├── countdown-clock.tsx              — Live ticking clock + useCountdownDone()
+└── mock-detail-fixtures.ts          — buildDetailFixture(type, state) for the preview route
+
+src/components/calendar/             (new shared primitive)
+├── compute-product-sessions.ts      — Pure: walks the term, marks holidays as skips
+└── session-calendar-view.tsx        — Pure: stacked mini-month grids
+
+src/app/(public)/preview/products-v2/[type]/[state]/
+├── page.tsx                         — Public sandbox route, fixture-only, robots: noindex
+└── preview-client.tsx               — Client child rendering the body with the fixture
+```
+
+### Layout
+
+Hero is a 1:1 product image (reuses `ProductThumbnail`) plus the type label, name, and tagline. The two-column body stacks below: the left column carries description, when-and-where, the session calendar, and the topics/tags card; the right column is a 380px sticky signup panel on desktop that drops below the main column on mobile. **No gedu surface on the parent detail page** — gedu / group identity is a SOG-internal concern and abstracted away from parents.
+
+### Pricing — two-track stacked list
+
+Consumer clubs render six rows: three subscriptions (monthly / quarterly / yearly with the `SUBSCRIPTION_DISCOUNTS` ladder) and three bundles (1 / 4 / 10 sessions with the `BUNDLE_DISCOUNTS` ladder). The default selection is **quarterly** — middle of the commitment ladder, a clear improvement over monthly without asking for a 12-month commitment. Selecting a row updates the CTA label so the action and the price live in the same eyeline.
+
+Camps, events, and the rare paid muni rows show a single price line (upfront total). Free / external_contract products show a single non-clickable hint row.
+
+Family-discount UI is intentionally **not** shipped here — there's nothing to wire up yet. When the family-subscription Stripe coupon work lands, surface "Save another 10% with 2+ kids" as a small note below the picker.
+
+### Signup-panel registration states
+
+The same `deriveRegistrationState` that powers browse cards drives the panel:
+
+| State | Panel shape | CTA |
+|---|---|---|
+| `closed_pre` | Live countdown clock + the form pre-fillable | Disabled "{verb} — not yet open"; flips to active at zero without remounting the form |
+| `open` | Optional almost-full warning banner when `seatsLeft ≤ 3`; seat-counter bar | Active "{verb} now → · €X" with the chosen price |
+| `pending_thr` | Threshold progress bar + reserve-a-spot copy | "Reserve a spot" |
+| `full_waitlist` | "How the waitlist works" explainer | Secondary "Join the waitlist" |
+| `full_closed` | Pricing visible but disabled | Disabled "Fully booked" |
+| `running_late` | "Already underway" muted note, no form | — |
+| `ended` | "This one wrapped" muted note, no form | — |
+
+Auth overlays sit on top: unauthenticated visitors see the panel info but the form area shows a "Sign in to register" / "Create account" pair (with `?redirect=...` back to this page). Customers with no gamers see "Add a child first" linking to `/parent/gamers`. Non-customer roles see an explainer note instead of the form.
+
+### Preview / mock route
+
+`/preview/products-v2/[type]/[state]` renders the body with a `buildDetailFixture(type, state)` payload. Public route inside `(public)` so it picks up the parent-eye chrome (header + footer) instead of the admin sidebar; never indexed (`metadata.robots = { index: false, follow: false }`); reachable only via `/admin/ui-components` "Preview full page →" links. Designers can poke at all 32 (type × state) cells without seeding any data.
+
+### Click target — UI-only phase
+
+The active CTA is a no-op for now. When Stripe Checkout wires up, the same handler will redirect to a Checkout Session created with the parent's selected pricing key + selected gamer.
+
+### Future improvements (detail-page surfaces)
+
+- **Admin-cancel-session UI.** `session_overrides_v2` is designed but not shipped. When it lands, extend `computeProductSessions` to merge those rows into `skips` — the calendar View needs no change.
+- **Show family discount.** Surface a "Save another 10% with 2+ kids" note below the pricing picker once the family-subscription Stripe coupon ships.
+- **Image hero + lightbox.** Today the image renders as a 1:1 thumbnail in the hero. A future "tap to enlarge" wouldn't break the layout.
+- **Real participation counts.** The panel reads `participationsCount: 0` until `participations_v2` ships. The deriver auto-promotes to richer states (`pending_thr` with real progress, `full_*`, urgent-low-seats) the moment that wires up.
+
 ### `?mock=1` purchased section
 
 The "your enrolled" surface above the browse grid is gated behind `?mock=1` until participation rows are live. Mock data lives in `mock-purchased.ts` — five hand-curated rows with stable identicon seeds. Real visitors never see it; design review hits e.g. `/clubs?mock=1` to inspect the unified-management surface alongside the live browse grid. Delete `mock-purchased.ts` and replace its consumers with a real `useMyParticipations` hook when participations land.
 
 ### Filter UX
 
-Filter chips are URL-driven via `useBrowseFilters` — deep-links like `/clubs?topic=minecraft&tag=creative` reproduce a filter state. `filterProducts` is a pure function over `(rows, { topics, tags })`. Result count is rendered next to the filters and the empty state distinguishes "nothing matches your filters" from "no products in this category yet".
+Filter chips are URL-driven via `useBrowseFilters` — deep-links like `/clubs?topic=minecraft&tag=creative&format=in_person` reproduce a filter state. `filterProducts` is a pure function over `(rows, { topics, tags, format })`. Empty state distinguishes "nothing matches your filters" from "no products in this category yet".
+
+- **Topic / tag** — multi-select, slug-based, OR-within-row + AND-across-rows.
+- **Format** — single-select, `online` / `in_person`, maps directly to `products_v2.is_remote`. Toggling the active chip clears the filter.
+
+The result count was removed from the meta row: the visible card grid already conveys it at a glance, and pairing the count with the conditional Clear button caused the row's height to jump when the button appeared. Clear is now always rendered (`invisible` when there's nothing to clear) so the row's box height is constant.
 
 ### Style guide / design review surface
 
@@ -232,6 +323,30 @@ Every browse + purchased card state is rendered on `/admin/ui-components` under 
 ## Future improvements
 
 These are known gaps tracked here so they aren't lost. None are blocking the current admin-only flow.
+
+### Extend `site_details_v2` read policy to purchasing customers
+
+Migration `00038_site_details_restrict_to_staff.sql` tightened `site_details_v2` to admin + gedu only. The original handoff intent was admin + gedu + **customers who have purchased a product at that site**, but there's no v2 enrollment / participation table yet to write that predicate against (legacy `group_enrollments` references `products`, not `products_v2`). Until that lands, post-purchase address visibility has to go through an out-of-band channel (admin-rendered confirmation page, transactional email).
+
+**Fix when v2 enrollments ship:** add a third policy on `site_details_v2`:
+
+```sql
+CREATE POLICY "purchasing_customer_read_site_details_v2"
+  ON site_details_v2 FOR SELECT TO authenticated
+  USING (EXISTS (
+    SELECT 1 FROM <v2_enrollment_table> e
+    JOIN products_v2 p ON p.id = e.product_id
+    WHERE p.location_id = site_details_v2.location_id
+      AND e.customer_id = auth.uid()  -- or via parent_gamer chain
+      AND e.status = 'active'
+  ));
+```
+
+Extend `tests/db/site-details-rls.test.ts` in the same migration with two cases:
+- positive: customer with an active enrollment at this site **can** read the address.
+- negative: customer **without** an enrollment at this site still **cannot** read it (the existing negative covers this today; keep it once the positive is added).
+
+The same logic applies to `site_staff_details_v2` only if customers ever need to see staff-only fields (gate codes, back-entrance directions) — which they shouldn't. Leave that table admin + gedu only.
 
 ### Inline topic / tag create can leave orphan parent rows on transient failure
 
@@ -267,6 +382,25 @@ Inline-create writes a single translation in the admin's current UI locale (inte
 
 **Fix:** Scope the spinner to `productsLoading` only. Render the purchased rail (mock or real) immediately, render `<ProductBrowseFilters>` with empty chip rows while topics/tags are loading, and let the chips fill in as their queries return — the row position is already reserved so no layout shift.
 
+### Use Stripe `capture_method: "manual"` to handle the seat-race at registration drops
+
+Popular drops (the "Taylor Swift ticket" model — countdown to a specific instant when registration opens) create a fairness problem under the chosen first-paid-wins seat-allocation rule. Two parents can both tap Enroll within the same second; one finishes Stripe Checkout before the other; the slower parent's payment lands against an already-full seat count. The naive options are both bad:
+
+- **Charge then refund** — parent sees a charge appear and disappear on their statement; looks like a billing bug.
+- **Force into waitlist after charging** — parent paid for a seat and got the waitlist instead. Double-disappointment.
+
+**Use Stripe's manual capture instead.** When creating the Stripe Checkout Session, pass `payment_intent_data: { capture_method: "manual" }`. The card is **authorized** at Checkout completion (held against the customer's available credit, not charged). Our webhook then decides what to do based on real-time seat state at the moment authorization completes:
+
+- **Seat available** → `stripe.paymentIntents.capture(pi.id)` finalizes the charge, allocate the seat. ✓
+- **Seat already taken** → `stripe.paymentIntents.cancel(pi.id)` voids the auth. The hold drops off the parent's available credit within a few days; no charge ever appears on their statement. We then offer the waitlist as an opt-in, not a forced re-route.
+
+Trade-offs to bake into the implementation when we wire payment:
+- Stripe holds an auth for ~7 days; we must capture or cancel within that window.
+- Manual capture is supported on Stripe Checkout via `payment_intent_data.capture_method` for one-time payments. It is **not** supported for subscriptions (recurring charges always auto-capture). For consumer clubs on a subscription tier, the seat-race is naturally less acute (subscriptions are an open-ended commitment, not a single-seat scarcity event) — first-paid-wins is fine. The manual-capture pattern applies primarily to camps + events sold upfront, and to one-shot bundle purchases against a capped club seat.
+- 3DS challenges complete *before* authorization, so manual capture composes correctly with SCA.
+
+This is the deferred-but-decided answer to "what happens to the parent who paid 0.5s later and the seat went?" — we never charge their card.
+
 ### Events should remain purchasable on their start day until the actual start time
 
 Today, `deriveRegistrationState` (`src/components/public/products-v2/derive-registration-state.ts`) returns `running_late` for any camp or event whose `effectiveStatus` is `running` — and `effectiveStatus` flips to `running` at 00:00 local on the `start_date`, since `start_date` is a date-only column. The card then hides the CTA for the rest of the day.
@@ -282,3 +416,21 @@ For events it's wrong. A Friday 18:00 Fortnite party becomes `running_late` at F
 - Worth a small unit test: an event at `start_date=2026-04-12` / `start_time=18:00:00` / timezone `Europe/Helsinki` is `open` at 17:59 local but `running_late` at 18:00 local.
 
 **Side note:** the `running_late` card today still renders the price block but no CTA, so the parent sees an orphaned price. When this fix lands, also clean up the bottom block — show a soft "this one's already underway" line for `running_late`, parallel to the `ended` treatment, instead of a price floating with no action.
+
+### CTA stays active when a price row is missing for the viewer's currency
+
+The admin create form validates that every paid product has a row in EUR, GBP, and USD before submit (`product-v2-build.ts:163`), but the database does not enforce it — `product_prices_v2` is just a `(product_id, currency)` PK with no count constraint, and the `create_product_v2` RPC inserts whatever the form sends. The "currencies always complete" invariant is form-side only.
+
+When a product *does* end up with a missing currency (manual SQL insert, future migration that adds a 4th currency before backfilling existing rows, a relaxed form), the surfaces handle it like this:
+
+- **Browse card** (`product-browse-card-view.tsx`, `PriceBlock` `case "unavailable"`) renders "Not in {currency}" in the price slot.
+- **Detail page panel** (`pricing-panel-view.tsx`, `SingleRow` `case "unavailable"`) renders "Not available in {currency}" in the pricing block.
+
+In both places the **CTA button stays active**. On the card the CTA is derived from `useRegistrationCta(state)` — purely registration state, blind to price availability. On the detail panel, `priceForCta` (`signup-panel-view.tsx`) returns `null` for `kind: "unavailable"`, which only drops the price suffix from the label; the button itself isn't disabled.
+
+**Impact:** Today's checkout is UI-only, so the click is a no-op and the issue is invisible. Once Stripe Checkout is wired, a parent could click "Sign up" on a product they literally cannot purchase in their currency, hit a server-side price-validation failure, and get a generic error — a confusing dead end. Likelihood is low because the admin form is the only mutation path and it enforces all three currencies.
+
+**Fix sketch:**
+- Plumb price availability into the CTA decision. The pricing-options builder already returns `defaultKey: "unavailable"` and `single: { kind: "unavailable" }` in this case — the View can read that and render a disabled button (or hide it entirely) with a one-line "Switch to {available currency} to sign up" hint.
+- Same hook on the browse card: when `formatProductPrice` returns `kind: "unavailable"`, render the price-block fallback as today but skip the CTA, parallel to the `ended` treatment.
+- Optional follow-on: a more aggressive variant filters the product out of the browse list entirely for that currency, on the theory that "exists but unbuyable" is worse than "doesn't appear." Decide based on whether we expect partial-currency products to be a real ops scenario or strictly a defensive fallback.
