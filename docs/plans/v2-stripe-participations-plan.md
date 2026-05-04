@@ -240,7 +240,8 @@ If any of these already exist in `src/lib/constants/pricing.ts` (the existing v1
 
 ### Phase 2 verification
 
-- Local Stripe CLI listens to `/api/webhooks/stripe/products` per `docs/stripe-testing.md`. **The user (Kyle) configures the new webhook endpoint in the Stripe Dashboard manually after deploy** — the CLI handles local. Add a note in the PR description.
+- Local Stripe CLI listens to `/api/webhooks/stripe/products` per `docs/stripe-testing.md` — `stripe listen` prints an ephemeral `whsec_...` for local dev that does **not** need to land in `.env.local` long-term.
+- Hosted environments each get their own webhook endpoint + signing secret. See **"Stripe webhook deployment across environments"** below for the exact CLI commands to run at preview / staging / production.
 - Manual test in dev: detail page → Stripe test card → return → participation appears.
 - Integration tests in `tests/integration/api/`:
   - `participations-create-bundle.test.ts`
@@ -536,7 +537,98 @@ Before opening the PR:
 - [ ] `?mock=1` is no longer parsed anywhere on parent surfaces.
 - [ ] `STRIPE_PRODUCTS_WEBHOOK_SECRET` documented in env-var schema.
 - [ ] PR description includes a "what's NOT in this PR" section pointing to the deferred follow-ups below.
-- [ ] PR description tells Kyle (the operator) to configure the new webhook endpoint in the Stripe Dashboard pointing at `/api/webhooks/stripe/products` with the new signing secret before merging to production.
+- [ ] Webhook endpoint + signing secret rolled forward to each Vercel environment per **"Stripe webhook deployment across environments"** below — preview at PR open, staging on merge to `dev`, live mode on cut to `main`.
+
+---
+
+## Stripe webhook deployment across environments
+
+Three Vercel environments → three webhook endpoints. Stripe distinguishes test vs live mode; Vercel distinguishes preview / production. The two axes intersect like this:
+
+| Vercel target | Vercel URL | Stripe mode | Webhook scope |
+|---|---|---|---|
+| Preview (feature branch) | `sogverse-git-<branch>-kyle-sogs-projects.vercel.app` | test | one endpoint per long-lived branch |
+| Preview (`dev` branch → staging) | `sogverse-git-dev-kyle-sogs-projects.vercel.app` | test | one endpoint that sticks for staging |
+| Production (`main`) | the production custom domain | **live** | one endpoint, separate signing secret |
+
+The Vercel CLI defaults to no branch scope (env var applies to *all* preview deployments). The Stripe CLI defaults to **test** mode (must pass `--live` for production). Both defaults are intentional here — don't override them without a reason.
+
+The path is always `/api/webhooks/stripe/products`. The events are always:
+
+```
+checkout.session.completed
+checkout.session.expired
+invoice.paid
+customer.subscription.updated
+customer.subscription.deleted
+charge.refunded
+```
+
+### 1. Preview (feature branch on PR open)
+
+Done for `feat/v2-stripe-participations` on 2026-05-04. Repeat this if a future feature branch needs its own webhook.
+
+```bash
+# Test-mode webhook pointing at the branch preview URL
+stripe webhook_endpoints create \
+  --url "https://sogverse-git-<branch>-kyle-sogs-projects.vercel.app/api/webhooks/stripe/products" \
+  --description "v2 products webhook (preview)" \
+  -d "enabled_events[]=checkout.session.completed" \
+  -d "enabled_events[]=checkout.session.expired" \
+  -d "enabled_events[]=invoice.paid" \
+  -d "enabled_events[]=customer.subscription.updated" \
+  -d "enabled_events[]=customer.subscription.deleted" \
+  -d "enabled_events[]=charge.refunded"
+
+# Capture the whsec_... from the response, then:
+printf '%s' 'whsec_...' | vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET preview --sensitive
+
+# Trigger a redeploy of the preview so the env var lands (empty commit or dashboard "Redeploy")
+```
+
+### 2. Staging (when this PR merges to `dev`)
+
+The `dev` branch's preview URL is stable, but it's a different host than the feature-branch preview, so the existing webhook needs to be re-pointed (or a fresh one created and the old one deleted). Re-pointing is simpler — the signing secret stays the same and Vercel needs no change.
+
+```bash
+# Re-aim the existing test-mode endpoint at the staging URL
+stripe webhook_endpoints update we_<id-from-step-1> \
+  -d "url=https://sogverse-git-dev-kyle-sogs-projects.vercel.app/api/webhooks/stripe/products"
+```
+
+If the feature-branch preview also still needs to work (e.g. another PR is open against `dev` and we want both to fire), create a second endpoint instead of updating, and add the new secret to Vercel preview *scoped to that branch*: `vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET preview <git-branch> --sensitive`. Branch-scoped overrides take precedence over the unscoped preview value.
+
+After the merge, smoke-test against staging: bundle purchase, sub purchase, waitlist join, refund.
+
+### 3. Production (cut from `dev` to `main`)
+
+Brand new live-mode endpoint, brand new signing secret in Vercel's `production` env. Do **not** reuse the test-mode secret in production.
+
+```bash
+# Live-mode webhook against the production domain
+stripe webhook_endpoints create --live \
+  --url "https://<prod-domain>/api/webhooks/stripe/products" \
+  --description "v2 products webhook (production)" \
+  -d "enabled_events[]=checkout.session.completed" \
+  -d "enabled_events[]=checkout.session.expired" \
+  -d "enabled_events[]=invoice.paid" \
+  -d "enabled_events[]=customer.subscription.updated" \
+  -d "enabled_events[]=customer.subscription.deleted" \
+  -d "enabled_events[]=charge.refunded"
+
+# Capture the live whsec_... and store it in Vercel production
+printf '%s' 'whsec_...' | vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET production --sensitive
+
+# Redeploy production so the env var binds
+vercel redeploy <prod-deployment-url> --prod
+```
+
+After cut-over, send one real `$0.50`-class purchase through to confirm the live webhook is wired before announcing.
+
+### What `.env.local` does NOT need
+
+- `STRIPE_PRODUCTS_WEBHOOK_SECRET` is **not** required in `.env.local` for normal local dev. `stripe listen --forward-to localhost:3000/api/webhooks/stripe/products` prints a fresh `whsec_...` per session — paste that into the running process's env or your shell, not into committed-template files.
+- `.env.local.example` documents the variable name only, with a comment pointing at this section. Do **not** check in any real `whsec_...` value.
 
 ---
 
@@ -550,7 +642,6 @@ Use this list verbatim in the PR description's "Future work":
 - `finalize_completed_products_v2` daily job.
 - Promote-from-waitlist email delivery (Brevo).
 - Family discount coupon (`FAMILY_DISCOUNT_PERCENT`) — value undecided per redesign §11.
-- Yearly subscription frequency (`SUBSCRIPTION_DISCOUNTS.yearly`).
 - Payment reporting dashboards.
 - Purchased-product detail page itself.
 
