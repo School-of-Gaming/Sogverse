@@ -76,7 +76,6 @@ export function buildDetailFixture(
       { id: "mock-g-1", name: "Oona", age: 10 },
       { id: "mock-g-2", name: "Aino", age: 8 },
     ],
-    selectedGamerId: "mock-g-1",
   };
   return { product, state, authState };
 }

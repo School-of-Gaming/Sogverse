@@ -67,7 +67,6 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
         name: g.username,
         age: null,
       })),
-      selectedGamerId: gamers[0]?.id ?? null,
     };
   })();
 

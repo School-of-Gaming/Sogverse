@@ -105,18 +105,16 @@ function pad2(n: number): string {
  * Used by SignupPanel to swap the CTA from disabled to active without
  * unmounting the form.
  *
- * `now` is captured into state by a lazy initializer (single read of
- * `Date.now()` at mount, no impure call during render) and refreshed by
- * an interval. The effect itself never calls setState synchronously —
- * the interval callback is the only updater.
+ * Hydration parity: both server and client start at `targetMs - 1` so the
+ * first render returns `false` everywhere. The interval refreshes `now`
+ * after mount, picking up the real time on the first tick (within 1s).
+ * Same SSR-safe shape as `CountdownClock` above.
  */
 export function useCountdownDone(
   targetMs: number,
   fixedNowMs?: number,
 ): boolean {
-  const [now, setNow] = useState<number>(
-    () => fixedNowMs ?? (typeof window === "undefined" ? targetMs - 1 : Date.now()),
-  );
+  const [now, setNow] = useState<number>(() => fixedNowMs ?? targetMs - 1);
 
   useEffect(() => {
     if (fixedNowMs !== undefined) return;

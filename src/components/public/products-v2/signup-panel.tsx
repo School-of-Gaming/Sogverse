@@ -84,13 +84,11 @@ export function SignupPanel({ product, state, authState, fixedNowMs }: SignupPan
   const viewProps: SignupPanelViewProps = {
     productType: product.product_type,
     state,
-    authState:
-      authState.kind === "ready"
-        ? { ...authState, selectedGamerId }
-        : authState,
+    authState,
     pricingTracks: tracks,
     selectedPricingKey,
     onSelectPricing: setUserPickedKey,
+    selectedGamerId,
     onSelectGamer: setUserPickedGamerId,
     agreed,
     onAgreedChange: setAgreed,

@@ -1,29 +1,29 @@
 {
   "metadata": {
-    "title": "Sogverse \u2013 School of Gaming",
-    "description": "N\u00e4r sk\u00e4rmtid blir kvalitetstid \u2013 Minecraft-klubbar ledda av professionella spelfostrare.",
-    "shortDescription": "School of Gaming \u2013 N\u00e4r sk\u00e4rmtid blir kvalitetstid",
+    "title": "Sogverse – School of Gaming",
+    "description": "När skärmtid blir kvalitetstid – Minecraft-klubbar ledda av professionella spelfostrare.",
+    "shortDescription": "School of Gaming – När skärmtid blir kvalitetstid",
     "pages": {
       "signIn": "Logga in",
       "createAccount": "Skapa konto",
-      "forgotPassword": "Gl\u00f6mt l\u00f6senord",
-      "resetPassword": "\u00c5terst\u00e4ll l\u00f6senord",
+      "forgotPassword": "Glömt lösenord",
+      "resetPassword": "Återställ lösenord",
       "setupAccount": "Konfigurera ditt konto",
       "about": "Om oss",
-      "sorg": "Sogge \u2013 Sogversens valuta",
-      "yty": "Yty \u2013 Sogversens kraft",
+      "sorg": "Sogge – Sogversens valuta",
+      "yty": "Yty – Sogversens kraft",
       "minecraftApi": "Minecraft Server API",
-      "adminDashboard": "Administrat\u00f6rspanel",
+      "adminDashboard": "Administratörspanel",
       "adminGroups": "Grupper",
       "adminGroupDetails": "Gruppdetaljer",
-      "parentDashboard": "F\u00f6r\u00e4ldrapanel",
+      "parentDashboard": "Föräldrapanel",
       "geduDashboard": "Utbildarpanel",
       "geduGroups": "Grupper",
       "geduGroupDetails": "Gruppdetaljer",
       "gamerHome": "Spelarens startsida",
       "gamerGroups": "Mina grupper",
       "gamerGroupDetails": "Gruppdetaljer",
-      "voiceSession": "R\u00f6stsession"
+      "voiceSession": "Röstsession"
     }
   },
   "common": {
@@ -718,7 +718,7 @@
       "deleteGroupConfirmDescription": "Detta tar bort gruppen och dess Gedu-tilldelning. Ändringen träder inte i kraft förrän du verkställer.",
       "reassignGeduFor": "Omtilldela Gedu för {label}",
       "selectDifferentGedu": "Välj en annan Gedu för denna grupp.",
-      "searchByNameOrEmail": "Sök på namn eller e-post\u2026",
+      "searchByNameOrEmail": "Sök på namn eller e-post…",
       "noGedusMatchSearch": "Inga Gedus matchar din sökning."
     },
     "forms": {
@@ -1218,8 +1218,6 @@
       "thresholdProgress": "{current} av {threshold}",
       "thresholdRemaining": "{count, plural, =0 {Tröskel uppnådd} one {# till för att starta} other {# till för att starta}}",
       "seatsRemaining": "{count, plural, one {# av {total} plats kvar} other {# av {total} platser kvar}}",
-      "seatsRemainingShort": "{count, plural, one {# kvar} other {# kvar}}",
-      "waitlistCount": "{count, plural, =0 {Du blir #1} one {# familj före – du blir #{position}} other {# familjer före – du blir #{position}}}",
       "waitlistHowTitle": "Så fungerar väntelistan",
       "waitlistHowItem1": "Du behåller din plats i kön under hela terminen.",
       "waitlistHowItem2": "Om en familj avbokar får nästa person en kort tid att tacka ja.",
@@ -1233,7 +1231,6 @@
         "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende."
       },
       "whoAreYouSigningUp": "Vem anmäler du?",
-      "selectGamer": "Välj",
       "selected": "Vald",
       "agePill": "Ålder {age}",
       "noGamersTitle": "Lägg till ett barn på ditt konto",
@@ -1250,16 +1247,12 @@
       "bundleSingle": "Enstaka pass",
       "bundleN": "{count} pass",
       "savings": "Spara {percent} %",
-      "bestValue": "Bästa värdet",
       "free": "Gratis",
       "freeHint": "Ingen betalning behövs.",
       "external": "Gratis för dig · betalas av din kommun",
       "externalHint": "Ingen betalning behövs – din kommun täcker kostnaden.",
-      "upfrontTotal": "{price}",
       "upfrontHint": "Engångsbetalning.",
       "notAvailable": "Pris inte tillgängligt i {currency} ännu.",
-      "ctaActiveLabel": "{verb} för {price} →",
-      "ctaActiveLabelSub": "{verb} för {price} {cadence} →",
       "cadenceMonth": "/ mån",
       "cadenceQuarter": "var 3:e mån",
       "cadenceYear": "per år"
@@ -1268,8 +1261,7 @@
       "days": "dagar",
       "hours": "tim",
       "minutes": "min",
-      "seconds": "sek",
-      "opensWhen": "Öppnar {when}"
+      "seconds": "sek"
     },
     "loading": "Laddar…",
     "notFound": {
@@ -1693,7 +1685,7 @@
     "senderAuth": "Sogverse-teamet",
     "senderFeedback": "Sogverse Feedback",
     "senderEnrollment": "Sogverse Anmälan",
-    "footer": "\u00a9 {year} Sogverse. Alla rättigheter förbehållna.",
+    "footer": "© {year} Sogverse. Alla rättigheter förbehållna.",
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
@@ -1726,7 +1718,7 @@
       "body": "Hej {parentName}, {gamerName} är nu anmäld till {productName} med Gedu {geduName}."
     },
     "enrollmentGedu": {
-      "subject": "{gamerName} har gått med i din grupp \u2013 {productName}",
+      "subject": "{gamerName} har gått med i din grupp – {productName}",
       "heading": "Ny spelare i din grupp",
       "body": "Hej {geduName}, {gamerName} har gått med i din grupp för {productName}."
     },
@@ -1736,48 +1728,48 @@
       "body": "Hej {parentName}, {gamerName} har avregistrerats från {productName} (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
-      "subject": "{gamerName} har lämnat din grupp \u2013 {productName}",
+      "subject": "{gamerName} har lämnat din grupp – {productName}",
       "heading": "Spelare har lämnat din grupp",
       "body": "Hej {geduName}, {gamerName} har lämnat din grupp för {productName}."
     },
     "groupAdded": {
-      "subject": "Du har tilldelats en ny grupp \u2013 {productName}",
+      "subject": "Du har tilldelats en ny grupp – {productName}",
       "heading": "Du har tilldelats en ny grupp",
       "body": "Hej {geduName}, du har tilldelats en ny grupp för {productName}.",
       "dashboardNote": "Du kommer att se denna grupp i din instrumentpanel inom kort."
     },
     "groupDeleted": {
-      "subject": "Din grupp har tagits bort \u2013 {productName}",
+      "subject": "Din grupp har tagits bort – {productName}",
       "heading": "Din grupp har tagits bort",
       "body": "Hej {geduName}, din grupp för {productName} har tagits bort av en administratör."
     },
     "groupReassignedOldGedu": {
-      "subject": "Din grupp har omtilldelats \u2013 {productName}",
+      "subject": "Din grupp har omtilldelats – {productName}",
       "heading": "Din grupp har omtilldelats",
       "body": "Hej {oldGeduName}, din grupp för {productName} har omtilldelats till {newGeduName}."
     },
     "groupReassignedNewGedu": {
-      "subject": "Du har tilldelats en grupp \u2013 {productName}",
+      "subject": "Du har tilldelats en grupp – {productName}",
       "heading": "Du har tilldelats en grupp",
       "body": "Hej {newGeduName}, du har tilldelats en grupp för {productName} (tidigare ledd av {oldGeduName})."
     },
     "groupReassignedParent": {
-      "subject": "Gedubyte för {gamerName} \u2013 {productName}",
+      "subject": "Gedubyte för {gamerName} – {productName}",
       "heading": "Din spelares Gedu har ändrats",
       "body": "Hej {parentName}, Gedun för {gamerName}s grupp i {productName} har ändrats från {oldGeduName} till {newGeduName}."
     },
     "gamerMovedParent": {
-      "subject": "{gamerName} har flyttats till en ny grupp \u2013 {productName}",
+      "subject": "{gamerName} har flyttats till en ny grupp – {productName}",
       "heading": "Ditt barn har flyttats till en ny grupp",
       "body": "Hej {parentName}, {gamerName} har flyttats från {oldGeduName}s grupp till {newGeduName}s grupp i {productName}."
     },
     "gamerMovedOldGedu": {
-      "subject": "{gamerName} har flyttats från din grupp \u2013 {productName}",
+      "subject": "{gamerName} har flyttats från din grupp – {productName}",
       "heading": "En spelare har flyttats från din grupp",
       "body": "Hej {geduName}, {gamerName} har flyttats från din grupp till {newGeduName}s grupp i {productName}."
     },
     "gamerMovedNewGedu": {
-      "subject": "{gamerName} har flyttats till din grupp \u2013 {productName}",
+      "subject": "{gamerName} har flyttats till din grupp – {productName}",
       "heading": "En spelare har flyttats till din grupp",
       "body": "Hej {geduName}, {gamerName} har flyttats till din grupp från {oldGeduName}s grupp i {productName}."
     },
@@ -1794,7 +1786,7 @@
   },
   "mouseflow": {
     "title": "Hjälp oss göra Sogverse bättre",
-    "body": "Sogverse är i Beta. För att lära oss hur människor faktiskt använder webbplatsen \u2014 så att vi kan göra den bättre för alla \u2014 skulle vi vilja spela in ditt besök (musrörelser, klick och vilka sidor du besöker). Endast Sogverses administratörer kan se detta, och vi kommer att radera allt när Beta tar slut.",
+    "body": "Sogverse är i Beta. För att lära oss hur människor faktiskt använder webbplatsen — så att vi kan göra den bättre för alla — skulle vi vilja spela in ditt besök (musrörelser, klick och vilka sidor du besöker). Endast Sogverses administratörer kan se detta, och vi kommer att radera allt när Beta tar slut.",
     "accept": "Ja, hjälp till att förbättra Sogverse",
     "decline": "Nej tack"
   }

@@ -37,7 +37,6 @@ export type AuthState =
   | {
       kind: "ready";
       gamers: readonly { id: string; name: string; age: number | null }[];
-      selectedGamerId: string | null;
     };
 
 export interface SignupPanelViewProps {
@@ -47,6 +46,8 @@ export interface SignupPanelViewProps {
   pricingTracks: PricingTracks;
   selectedPricingKey: PricingOption["key"];
   onSelectPricing: (key: PricingOption["key"]) => void;
+  /** Resolved by the adapter; null while the user has no gamer selected. */
+  selectedGamerId: string | null;
   onSelectGamer: (gamerId: string) => void;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
@@ -326,6 +327,11 @@ function OpenPanel(props: SignupPanelViewProps) {
       tone={urgent ? "warning" : "primary"}
     >
       {props.state.seatCount !== null && (
+        // TODO(participations_v2): drop the `?? seatCount` fallback once
+        // real seatsLeft counts are threaded through. Today seatsLeft is
+        // always null (no participations table yet), so the bar fills 100%.
+        // Once enrollments start landing, this fallback will lie about
+        // remaining capacity until participations_v2 ships.
         <SeatCounter
           seatCount={props.state.seatCount}
           seatsLeft={props.state.seatsLeft ?? props.state.seatCount}
@@ -406,13 +412,9 @@ function FormOrAuth(props: FormOrAuthProps) {
     case "no_gamers":
       return <NoGamersOverlay addGamerHref={props.authState.addGamerHref} />;
     case "ready":
-      return (
-        <SignupForm
-          {...props}
-          gamers={props.authState.gamers}
-          selectedGamerId={props.authState.selectedGamerId}
-        />
-      );
+      // selectedGamerId comes through `props` (it's a top-level View prop,
+      // not part of the AuthState union — see SignupPanelViewProps).
+      return <SignupForm {...props} gamers={props.authState.gamers} />;
   }
 }
 
@@ -471,7 +473,6 @@ function NoGamersOverlay({ addGamerHref }: { addGamerHref: string }) {
 function SignupForm(
   props: FormOrAuthProps & {
     gamers: readonly { id: string; name: string; age: number | null }[];
-    selectedGamerId: string | null;
   },
 ) {
   const t = useTranslations("productDetail.signupPanel");

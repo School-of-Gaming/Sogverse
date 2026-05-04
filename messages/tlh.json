@@ -1266,8 +1266,6 @@
       "thresholdProgress": "{current} / {threshold}",
       "thresholdRemaining": "{count, plural, =0 {Hoch ghaj} one {# vIneH taghmeH} other {# vIneH taghmeH}}",
       "seatsRemaining": "{count, plural, one {# / {total} pa' ratlh} other {# / {total} pa' ratlh}}",
-      "seatsRemainingShort": "{count, plural, one {# ratlh} other {# ratlh}}",
-      "waitlistCount": "{count, plural, =0 {SoH SoSDaq #1} one {# qorDu' tlhopDaq — SoSDaq #{position}} other {# qorDu'pu' tlhopDaq — SoSDaq #{position}}}",
       "waitlistHowTitle": "tetlh teb Qu'",
       "waitlistHowItem1": "DIS naQ tetlh DaqaDtaHbogh.",
       "waitlistHowItem2": "qorDu' chegh chugh, latlh qorDu' poH puS lo' laH.",
@@ -1281,7 +1279,6 @@
         "event": "qIp 'ej tlhejHa' vuvbe' School of Gaming, jIyaj."
       },
       "whoAreYouSigningUp": "'Iv qonbogh SoH?",
-      "selectGamer": "yIwIv",
       "selected": "wIvlu'",
       "agePill": "qan {age}",
       "noGamersTitle": "tlhIH account puq yIchel",
@@ -1298,16 +1295,12 @@
       "bundleSingle": "wa' qaStaHvIS",
       "bundleN": "{count} qaStaHvIS",
       "savings": "{percent} % nIQ",
-      "bestValue": "Huch QaQ",
       "free": "Huch pagh",
       "freeHint": "Huch poQbe'.",
       "external": "Huch pagh SoH · veng Huch nob",
       "externalHint": "Huch poQbe' — veng Huch nob.",
-      "upfrontTotal": "{price}",
       "upfrontHint": "wa'logh Huch.",
       "notAvailable": "{currency} Huch DaH ghajbe'.",
-      "ctaActiveLabel": "{price} {verb} →",
-      "ctaActiveLabelSub": "{price} {cadence} {verb} →",
       "cadenceMonth": "/ jar",
       "cadenceQuarter": "wej jar Hoch",
       "cadenceYear": "DIS Hoch"
@@ -1316,8 +1309,7 @@
       "days": "jaj",
       "hours": "rep",
       "minutes": "tup",
-      "seconds": "lup",
-      "opensWhen": "{when} poS"
+      "seconds": "lup"
     },
     "loading": "loS...",
     "notFound": {
@@ -1741,7 +1733,7 @@
     "senderAuth": "Sogverse ghom",
     "senderFeedback": "Sogverse QIn",
     "senderEnrollment": "Sogverse qo' ghoH",
-    "footer": "\u00a9 {year} Sogverse. Hoch batlh.",
+    "footer": "© {year} Sogverse. Hoch batlh.",
     "roleAdmin": "Admin",
     "roleParent": "vav/SoS",
     "roleGamer": "toy'wI'",
@@ -1842,7 +1834,7 @@
   },
   "mouseflow": {
     "title": "Sogverse yIDubmoH",
-    "body": "Sogverse Beta 'oH. nuq Dalo'? 'e' wIyajqu' wIneH \u2014 vaj Hoch chaH yIDubmoH. Daqonta'bogh wIqonchugh maQap (DaQwI' vIH, jonta', je paq DaghoSpu'bogh). Sogverse pIn'a'pu' neH lulegh, je Beta rInchugh, Hoch wIteq.",
+    "body": "Sogverse Beta 'oH. nuq Dalo'? 'e' wIyajqu' wIneH — vaj Hoch chaH yIDubmoH. Daqonta'bogh wIqonchugh maQap (DaQwI' vIH, jonta', je paq DaghoSpu'bogh). Sogverse pIn'a'pu' neH lulegh, je Beta rInchugh, Hoch wIteq.",
     "accept": "HIja', Sogverse yIDubmoH",
     "decline": "ghobe'"
   }
