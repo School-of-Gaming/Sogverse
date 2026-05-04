@@ -155,6 +155,9 @@ export class ProductsV2Service {
     if (error) throw error;
     if (!data) return null;
 
+    // One direct cast to the row shape we read — same pattern as
+    // listVisibleByType above. `RawRow` extends ProductV2BrowseRow with
+    // the holiday-calendars join included in this query's select.
     type RawRow = ProductV2BrowseRow & {
       product_holiday_calendars_v2?: {
         holiday_calendars_v2: {
@@ -163,7 +166,7 @@ export class ProductsV2Service {
         } | null;
       }[];
     };
-    const row = data as unknown as RawRow;
+    const row = data as RawRow;
 
     // Flatten linked-calendar holidays into a single array. Each row keeps
     // its per-date `reason` if the admin filled one in; otherwise the
@@ -178,10 +181,7 @@ export class ProductsV2Service {
       }
     }
 
-    return {
-      ...row,
-      holidays,
-    } as ProductV2DetailRow;
+    return { ...row, holidays };
   }
 
   async createProduct(input: CreateProductV2Input): Promise<string> {
