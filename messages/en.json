@@ -1225,8 +1225,6 @@
       "ctaCreateAccount": "Create account",
       "ctaAddGamer": "Add a child first",
       "ctaViewMyProducts": "View my products",
-      "alreadySignedUpReservingBanner": "Finishing your sign-up",
-      "alreadySignedUpReservingNote": "Check your email for the Stripe receipt — your seat will be confirmed in a moment.",
       "alreadySignedUpWaitlistBanner": "You're on the waitlist",
       "alreadySignedUpWaitlistNote": "We'll email you when a seat opens.",
       "alreadySignedUpActiveBanner": "You're signed up",

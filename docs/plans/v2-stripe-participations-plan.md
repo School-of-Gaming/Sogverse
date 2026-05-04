@@ -69,6 +69,33 @@ Before writing any code, read:
 
 ---
 
+## Movie-ticket reservation model
+
+The reservation row is the seat. Once a parent clicks Sign Up, a `reserving` row is held for the full 30-min lifetime and is not released by any user action — only by webhook expiry or successful payment. Retries by the same parent reuse the same row.
+
+Concrete consequences:
+
+- **Cancel in Stripe Checkout = no DB action.** The session's `cancel_url` brings the parent back to the product page. We do nothing to the row. The unpaid Stripe session dies on its own at `expires_at` (= `reserved_until`). No money moved → no refund needed → no cleanup required.
+- **Retry = reuse the held seat.** When the parent clicks Sign Up a second time and a reserving row already exists for `(product, gamer, customer)`, the route skips `create_participation_v2` and creates a fresh Stripe Checkout Session against the same `reservationId`. The new session's metadata carries the latest `purchaseShape`, so a parent can switch from bundle_4 → bundle_10 between attempts.
+- **Pay-twice race is bounded.** Parent keeps the original Stripe tab open *and* pays the new one: first webhook flips the row to `active`; second webhook hits the existing `lost_seat` path and refunds the duplicate. Defined recovery, charge-then-refund on statement. Rare; not worth engineering away.
+- **No "Finishing your sign-up" UI on `/clubs/[id]`.** Since success redirects the parent to the browse page (not back to the product detail page), there's no post-payment race window to cover. The reserving variant of `AlreadySignedUpPanel` is deleted; only `active` and `waitlisted` remain.
+- **Held seat = visible to other parents as taken.** A canceled-but-not-paid reservation reduces the displayed seat count for up to 30 min until the webhook's `checkout.session.expired` cleans it up. UX cost only matters on tiny-capacity products; ignored for v1.
+
+The `expire_reservation_v2` RPC stays around — the webhook calls it on `checkout.session.expired` — but is **never** invoked from a customer-facing API route. We deleted the `/api/participations/expire-reservation` wrapper that had briefly existed.
+
+---
+
+## `/clubs/[id]`, `/camps/[id]`, `/events/[id]` — same route, two layouts
+
+There is one URL per product. Marketing emails, share links, and search results all keep working with the canonical detail URL. The page renders **substantially different layouts** depending on whether the viewing parent has at least one of their gamers enrolled in this product:
+
+- **Marketing layout** (no enrolled gamers) — what's there today. Hero, description, pricing picker, signup form. The Sign Up CTA is the page's reason for being.
+- **Purchased layout** (at least one enrolled gamer) — *not built yet, future work*. Sub management, session calendar with cancelled-session markers, attendance status per gamer, "add another gamer to this club" affordance, leave-club / cancel-sub confirms. The current `AlreadySignedUpPanel` (active variant) is the v1 placeholder for this layout — minimum viable until the real purchased-state UI is built.
+
+Today's v1 fallback for "add another gamer to a club I already have one in": parent revisits the browse page, picks the club, the gamer-picker in the signup panel offers the un-enrolled gamer. Clunky but functional. The proper affordance lives inside the purchased layout when that lands.
+
+---
+
 ## Phase 1 — Schema, RPCs, RLS
 
 Single migration file: `supabase/migrations/00039_participations_payments_v2.sql`.
@@ -200,7 +227,8 @@ If any of these already exist in `src/lib/constants/pricing.ts` (the existing v1
 - Auth: `requireRole('customer')`.
 - Body: `{ productId, gamerId, purchaseShape, currency }`.
 - Validates: customer owns the gamer, `purchaseShape` is in the allowed set, `currency` is supported.
-- Calls `create_participation_v2`. Branches:
+- **Retry prelude (movie-ticket model):** before calling the RPC, look up an existing `status='reserving'` row for `(product, gamer, customer)`. If one exists, reuse its id and skip the RPC entirely — the seat is already held. Free products skip the prelude (no retry semantics). See "Movie-ticket reservation model" above.
+- Calls `create_participation_v2` (only when no existing reservation). Branches:
   - `{ kind: 'full' }` → returns `{ status: 'full' }` so the UI flips to a waitlist CTA.
   - `{ kind: 'free_active' }` → returns `{ status: 'free_confirmed', participationId }`. UI redirects to a success state. No Stripe.
   - `{ kind: 'reserving' }` → builds the Checkout Session per `purchaseShape`, returns `{ status: 'redirect', checkoutUrl }`.
@@ -213,7 +241,8 @@ If any of these already exist in `src/lib/constants/pricing.ts` (the existing v1
   - `adaptive_pricing: { enabled: false }`.
   - `customer = stripeCustomerId` (existing or created).
   - `metadata: { reservationId, customerId, gamerId, productId, purchaseShape }` and matching `subscription_data.metadata` for subs.
-  - `success_url` and `cancel_url` back to the originating product detail page with appropriate query params.
+  - `success_url` → the type-appropriate **browse page** (`/clubs`, `/camps`, `/events`) with `?signup=success`. Not the product detail page — that's how we keep the post-payment race window off the marketing layout.
+  - `cancel_url` → back to the **product detail page** (no query params needed beyond `?signup=canceled` if we want a banner). The reservation row stays held; the parent retries by clicking Sign Up again.
 
 ### Route — `POST /api/participations/waitlist`
 
@@ -636,7 +665,8 @@ After cut-over, send one real `$0.50`-class purchase through to confirm the live
 
 Use this list verbatim in the PR description's "Future work":
 
-- Customer-facing self-cancel flows (cancel-sub, leave-club, cancel-session) on the future purchased-product detail page.
+- **Purchased-state layout for `/clubs/[id]` (and camps/events).** Same route as the marketing page, substantially different UI when the viewer has at least one enrolled gamer. Includes: sub management, session calendar with cancelled-session markers, per-gamer attendance, **add-another-gamer affordance**, leave-club / cancel-sub confirms. The current `AlreadySignedUpPanel` (active variant) is the v1 placeholder until this lands.
+- Customer-facing self-cancel flows (cancel-sub, leave-club, cancel-session) on the purchased-state layout.
 - `switch_subscription_frequency_v2` — change monthly ⇄ quarterly.
 - `admin_remove_participation_v2`, `cancel_product_v2` cascade with refunds.
 - `finalize_completed_products_v2` daily job.

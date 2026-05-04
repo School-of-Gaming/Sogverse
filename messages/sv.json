@@ -1225,8 +1225,6 @@
       "ctaCreateAccount": "Skapa konto",
       "ctaAddGamer": "Lägg till ett barn först",
       "ctaViewMyProducts": "Visa mina produkter",
-      "alreadySignedUpReservingBanner": "Slutför din anmälan",
-      "alreadySignedUpReservingNote": "Kolla mejlen för Stripe-kvittot – din plats bekräftas inom kort.",
       "alreadySignedUpWaitlistBanner": "Du är på väntelistan",
       "alreadySignedUpWaitlistNote": "Vi mejlar dig när en plats blir ledig.",
       "alreadySignedUpActiveBanner": "Du är anmäld",

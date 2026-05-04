@@ -58,10 +58,12 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   // invalidates queries; never run a Supabase data query inside it.
   useProductSeatCountsRealtime(product?.id);
 
-  // Stripe Checkout success bounce-back: invalidate to close the gap between
-  // the webhook flipping the reservation to active and the browser learning
-  // about it. Realtime usually catches it first, but cellular networks can
-  // drop the channel — explicit invalidation here is the belt-and-suspenders.
+  // Stripe Checkout bounce-back. Success goes to the browse page (handled
+  // upstream), so a `signup=success` here only happens on legacy or copied
+  // URLs — invalidate just in case the realtime channel missed the rollup.
+  // We deliberately do NOT free the seat on `signup=canceled`: the
+  // movie-ticket model holds the seat for the full reservation lifetime, and
+  // the parent retries by clicking Sign Up again.
   const signupResult = searchParams.get("signup");
   useEffect(() => {
     if (signupResult === "success") {
@@ -96,7 +98,7 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
       kind: "ready",
       gamers: gamers.map((g) => ({
         id: g.id,
-        name: g.username,
+        name: g.display_name || g.username,
         age: null,
       })),
     };
@@ -115,10 +117,16 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
     participationsCount,
   });
 
-  // Already-signed-up override: if any of the customer's gamers has a row
-  // on this product, replace the signup form with the status panel.
+  // Already-signed-up override: if any of the customer's gamers has an
+  // active or waitlisted row on this product, replace the signup form with
+  // the status panel. Reserving rows are deliberately not surfaced — the
+  // movie-ticket model treats the held seat as the parent's to retry against
+  // (they just click Sign Up again), not as a "you're already signed up"
+  // state. See docs/plans/v2-stripe-participations-plan.md "Movie-ticket
+  // reservation model".
   const myParticipationState: MyParticipationState | null =
-    myCount?.mySignupState && myCount.mySignupState !== "none"
+    myCount?.mySignupState === "active" ||
+    myCount?.mySignupState === "waitlisted"
       ? myCount.mySignupState
       : null;
 

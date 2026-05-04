@@ -6,7 +6,7 @@ import {
   isSupportedCurrency,
   type SupportedCurrency,
 } from "@/lib/constants/currency";
-import type { PurchaseShape } from "@/types";
+import type { ProductTypeV2, PurchaseShape } from "@/types";
 import {
   bundleSizeFromShape,
   computeBundleAmount,
@@ -130,60 +130,99 @@ export async function POST(request: Request) {
     );
   }
 
-  // RPC takes the gate lock, validates parent-gamer link / effective status /
-  // seat count, and either inserts a reserving row, returns full, or (free)
-  // inserts active. SECURITY DEFINER bypasses RLS for the read.
-  const { data: rpcResult, error: rpcErr } = await admin.rpc(
-    "create_participation_v2",
-    {
-      p_product_id: productId,
-      p_gamer_id: gamerId,
-      p_customer_id: user.id,
-      p_purchase_shape: purchaseShape,
-      p_currency: currency,
-    },
-  );
+  // Movie-ticket retry prelude. If this gamer already has a held reservation
+  // on this product (parent canceled or abandoned a previous Stripe session),
+  // reuse the row rather than creating a second one — the seat is theirs for
+  // the full 30-min lifetime regardless of how many retries. The new Stripe
+  // Checkout session carries the latest `purchaseShape` in metadata.
+  //
+  // The old Stripe session is left to die on its own — it expires at the
+  // same `expires_at` we set on the original (= reserved_until) and no money
+  // moved through it, so there's nothing to refund. The webhook will fire
+  // `checkout.session.expired` for it; the handler is a no-op for already-
+  // completed reservations.
+  //
+  // Edge case: parent kept the original Stripe tab open and pays both the
+  // old and new sessions. First webhook flips the row to `active`; second
+  // webhook hits the existing `lost_seat` path and refunds the duplicate.
+  // Rare; defined recovery.
+  //
+  // Free products skip the prelude — they have no "retry" notion (the RPC
+  // inserts an active row directly, no Stripe round-trip).
+  let reservationId: string;
+  let existingReservationId: string | null = null;
+  if (purchaseShape !== "free") {
+    const { data: existingReserving } = await admin
+      .from("participations_v2")
+      .select("id")
+      .eq("product_id", productId)
+      .eq("gamer_id", gamerId)
+      .eq("customer_id", user.id)
+      .eq("status", "reserving")
+      .maybeSingle();
+    if (existingReserving) {
+      existingReservationId = existingReserving.id;
+    }
+  }
 
-  if (rpcErr) {
-    return NextResponse.json(
-      { error: rpcErr.message },
-      { status: rpcErr.code === "23505" ? 409 : 400 },
+  if (existingReservationId !== null) {
+    reservationId = existingReservationId;
+  } else {
+    // Normal path: RPC takes the gate lock, validates parent-gamer link /
+    // effective status / seat count, and either inserts a reserving row,
+    // returns full, or (free) inserts active. SECURITY DEFINER bypasses RLS.
+    const { data: rpcResult, error: rpcErr } = await admin.rpc(
+      "create_participation_v2",
+      {
+        p_product_id: productId,
+        p_gamer_id: gamerId,
+        p_customer_id: user.id,
+        p_purchase_shape: purchaseShape,
+        p_currency: currency,
+      },
     );
-  }
 
-  const rpcJson = rpcResult as {
-    kind: "free_active" | "reserving" | "full";
-    participation_id?: string;
-    reserved_until?: string;
-  };
+    if (rpcErr) {
+      return NextResponse.json(
+        { error: rpcErr.message },
+        { status: rpcErr.code === "23505" ? 409 : 400 },
+      );
+    }
 
-  if (rpcJson.kind === "full") {
-    const respBody: CreateResponseBody = { status: "full" };
-    return NextResponse.json(respBody);
-  }
+    const rpcJson = rpcResult as {
+      kind: "free_active" | "reserving" | "full";
+      participation_id?: string;
+      reserved_until?: string;
+    };
 
-  if (rpcJson.kind === "free_active") {
+    if (rpcJson.kind === "full") {
+      const respBody: CreateResponseBody = { status: "full" };
+      return NextResponse.json(respBody);
+    }
+
+    if (rpcJson.kind === "free_active") {
+      if (!rpcJson.participation_id) {
+        return NextResponse.json(
+          { error: "RPC returned no participation id" },
+          { status: 500 },
+        );
+      }
+      const respBody: CreateResponseBody = {
+        status: "free_confirmed",
+        participationId: rpcJson.participation_id,
+      };
+      return NextResponse.json(respBody);
+    }
+
+    // kind === 'reserving'
     if (!rpcJson.participation_id) {
       return NextResponse.json(
-        { error: "RPC returned no participation id" },
+        { error: "RPC returned no reservation id" },
         { status: 500 },
       );
     }
-    const respBody: CreateResponseBody = {
-      status: "free_confirmed",
-      participationId: rpcJson.participation_id,
-    };
-    return NextResponse.json(respBody);
+    reservationId = rpcJson.participation_id;
   }
-
-  // kind === 'reserving'
-  if (!rpcJson.participation_id) {
-    return NextResponse.json(
-      { error: "RPC returned no reservation id" },
-      { status: 500 },
-    );
-  }
-  const reservationId = rpcJson.participation_id;
 
   const stripeCustomerId = await getOrCreateStripeCustomer(admin, user.id);
 
@@ -314,7 +353,18 @@ export async function POST(request: Request) {
     typeof returnPath === "string" && returnPath.startsWith("/")
       ? returnPath
       : `/clubs/${productId}`;
-  const successUrl = `${origin}${safeReturnPath}?signup=success&pid=${reservationId}`;
+  // Success goes to the type-appropriate browse page (the one with the
+  // "purchased" rail) — not back to the product detail page. Sending the
+  // parent to detail meant they'd land in a 1–3s race window between Stripe's
+  // redirect and our webhook flipping the reservation to active, forcing us
+  // to show a "Finishing your sign-up" panel. Browse-page redirect skips that
+  // entirely. Eventually this becomes the purchased-product detail page.
+  const successPath = browsePathForType(product.product_type);
+  const successUrl = `${origin}${successPath}?signup=success`;
+  // Cancel bounces back to the product page. We do NOT free the seat — the
+  // reservation stays held for its full 30-min lifetime (movie-ticket model).
+  // The same parent can click Sign Up again to retry against the same held
+  // seat; that retry path is handled by the existing-row prelude above.
   const cancelUrl = `${origin}${safeReturnPath}?signup=canceled`;
 
   const metadata = {
@@ -429,6 +479,18 @@ function pickProductName(
   if (fi) return fi.name;
   if (translations.length > 0) return translations[0].name;
   return "School of Gaming product";
+}
+
+function browsePathForType(productType: ProductTypeV2): string {
+  switch (productType) {
+    case "consumer_club":
+    case "municipality_club":
+      return "/clubs";
+    case "camp":
+      return "/camps";
+    case "event":
+      return "/events";
+  }
 }
 
 async function rollbackReservation(

@@ -232,6 +232,15 @@ RLS only returns `pending` and `running` rows to anon/customer. `completed` is h
 - `/camps/[id]` — camp detail.
 - `/events/[id]` — event detail.
 
+### Same route, two layouts
+
+There is **one URL per product**. Marketing emails, share links, search results, and parent-to-parent forwards all keep working with the canonical detail URL — we deliberately did not split `/clubs/[id]` from `/my/clubs/[id]`. The page renders different layouts depending on whether the viewing parent has at least one of their gamers enrolled:
+
+- **Marketing layout** (no enrolled gamers) — what's described in the rest of this section. Hero, description, pricing picker, signup form. The Sign Up CTA is the page's reason for being.
+- **Purchased layout** (at least one enrolled gamer) — *not yet built; tracked under "Future improvements" below*. Substantially different surface: sub management, session calendar with cancelled-session markers, per-gamer attendance, **add-another-gamer affordance**, leave-club / cancel-sub confirms. The current `AlreadySignedUpPanel` (active variant in `signup-panel-view.tsx`) is the v1 placeholder until that layout lands — minimum viable while the marketing surface gets all the attention.
+
+The today fallback for "add another gamer to a club I already have one in": parent revisits the browse page, picks the club, the gamer-picker offers their un-enrolled gamer. Clunky but functional. The proper affordance lives inside the purchased layout when it's built.
+
 ### Component map
 
 ```
@@ -286,16 +295,30 @@ Auth overlays sit on top: unauthenticated visitors see the panel info but the fo
 
 `/preview/products-v2/[type]/[state]` renders the body with a `buildDetailFixture(type, state)` payload. Public route inside `(public)` so it picks up the parent-eye chrome (header + footer) instead of the admin sidebar; never indexed (`metadata.robots = { index: false, follow: false }`); reachable only via `/admin/ui-components` "Preview full page →" links. Designers can poke at all 32 (type × state) cells without seeding any data.
 
-### Click target — UI-only phase
+### Movie-ticket reservation model
 
-The active CTA is a no-op for now. When Stripe Checkout wires up, the same handler will redirect to a Checkout Session created with the parent's selected pricing key + selected gamer.
+The `participations_v2` row **is** the seat. Once a parent clicks Sign Up, a `reserving` row is held for its full 30-min lifetime and is not released by any user action — only by webhook expiry or successful payment. Retries by the same parent reuse the same row.
+
+Concrete behaviors that fall out of this model:
+
+- **Cancel in Stripe Checkout = no DB action.** The session's `cancel_url` brings the parent back to the product page. We do nothing to the row. The unpaid Stripe session dies on its own at `expires_at` (= `reserved_until`); no money moved → no refund needed → no cleanup required.
+- **Retry = reuse the held seat.** The route's prelude (`src/app/api/checkout/products/create/route.ts`) looks up an existing `status='reserving'` row for `(product, gamer, customer)` and, if found, skips `create_participation_v2` and creates a fresh Stripe Checkout Session against the same `reservationId`. The new session's metadata carries the latest `purchaseShape`, so a parent can switch from `bundle_4` → `bundle_10` between attempts.
+- **Pay-twice race is bounded.** Parent kept the original Stripe tab open *and* paid the new one: first webhook flips the row to `active`; second webhook hits the existing `lost_seat` path and refunds the duplicate. Defined recovery, charge-then-refund on statement. Rare; not engineered away.
+- **Success redirects to the browse page, not back to the detail page.** This intentionally moves the post-payment race window off `/clubs/[id]`, so we don't need a "Finishing your sign-up" panel here. The reserving variant of `AlreadySignedUpPanel` was deleted for the same reason — no scenario surfaces it on the marketing layout.
+- **Held seat = visible to other parents as taken.** A canceled-but-not-paid reservation reduces the displayed seat count for up to 30 min until the webhook's `checkout.session.expired` cleans it up. UX cost only matters on tiny-capacity products.
+
+The `expire_reservation_v2` RPC stays around — the webhook calls it on `checkout.session.expired` — but is **never** invoked from a customer-facing API route.
+
+### Click target
+
+The active CTA POSTs to `/api/checkout/products/create` with `{ productId, gamerId, purchaseShape, currency }`. The route returns one of `redirect` (Stripe Checkout URL), `subscribed` (inline-add to existing family sub, no redirect), `free_confirmed` (free event, no Stripe), or `full` (UI flips to waitlist CTA). See `docs/plans/v2-stripe-participations-plan.md` while it exists, or read the route directly.
 
 ### Future improvements (detail-page surfaces)
 
+- **Purchased-state layout for `/clubs/[id]` (and camps/events).** The big one. Same route, substantially different UI when the viewer has at least one enrolled gamer. Includes: sub management (frequency switch, cancel sub, see next billing date), session calendar with cancelled-session markers and per-gamer attendance, **add-another-gamer affordance** (the gap left by today's "go back to browse and pick a different gamer" workaround), leave-club / cancel-session confirms, refund disclosure when a session was cancelled in-window. The current `AlreadySignedUpPanel` (active variant) is the v1 placeholder — keep it pointing at the parent's products list until the real layout ships.
 - **Admin-cancel-session UI.** `session_overrides_v2` is designed but not shipped. When it lands, extend `computeProductSessions` to merge those rows into `skips` — the calendar View needs no change.
 - **Show family discount.** Surface a "Save another 10% with 2+ kids" note below the pricing picker once the family-subscription Stripe coupon ships.
 - **Image hero + lightbox.** Today the image renders as a 1:1 thumbnail in the hero. A future "tap to enlarge" wouldn't break the layout.
-- **Real participation counts.** The panel reads `participationsCount: 0` until `participations_v2` ships. The deriver auto-promotes to richer states (`pending_thr` with real progress, `full_*`, urgent-low-seats) the moment that wires up.
 
 ### `?mock=1` purchased section
 

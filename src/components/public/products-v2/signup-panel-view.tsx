@@ -40,12 +40,16 @@ export type AuthState =
     };
 
 /**
- * One of the customer's gamers already has a seat (or is on the waitlist /
- * reserving) on this product. The detail page detects this via
+ * One of the customer's gamers already has a seat or is on the waitlist for
+ * this product. The detail page detects this via
  * `useParticipationCounts(...).mySignupState` and passes it through; when
  * non-null, the panel replaces the signup form with a status panel.
+ *
+ * `reserving` is intentionally not part of this union — the movie-ticket
+ * reservation model treats a held seat as the parent's to retry against
+ * (they just click Sign Up again), not as an "already signed up" state.
  */
-export type MyParticipationState = "reserving" | "waitlisted" | "active";
+export type MyParticipationState = "waitlisted" | "active";
 
 /**
  * CTA copy hint for subscriptions. `inline_add` triggers "Add to subscription
@@ -127,15 +131,6 @@ function AlreadySignedUpPanel({
   myProductsHref: string;
 }) {
   const t = useTranslations("productDetail.signupPanel");
-  if (kind === "reserving") {
-    return (
-      <PanelShell banner={t("alreadySignedUpReservingBanner")} tone="muted">
-        <p className="text-sm text-muted-foreground">
-          {t("alreadySignedUpReservingNote")}
-        </p>
-      </PanelShell>
-    );
-  }
   if (kind === "waitlisted") {
     return (
       <PanelShell banner={t("alreadySignedUpWaitlistBanner")} tone="secondary">
