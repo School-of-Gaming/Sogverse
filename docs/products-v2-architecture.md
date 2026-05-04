@@ -247,8 +247,7 @@ src/components/public/products-v2/  (detail-page additions)
 
 src/components/calendar/             (new shared primitive)
 ├── compute-product-sessions.ts      — Pure: walks the term, marks holidays as skips
-├── session-calendar-view.tsx        — Pure: stacked mini-month grids
-└── product-session-calendar.tsx     — Adapter: project → SessionCalendarView
+└── session-calendar-view.tsx        — Pure: stacked mini-month grids
 
 src/app/(public)/preview/products-v2/[type]/[state]/
 ├── page.tsx                         — Public sandbox route, fixture-only, robots: noindex

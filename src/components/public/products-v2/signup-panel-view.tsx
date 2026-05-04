@@ -294,7 +294,14 @@ function PreOpenPanel(props: SignupPanelViewProps) {
       <FormOrAuth
         {...props}
         helperText={t("preOpenHelper")}
-        ctaLabelIdle={t("ctaPreOpenIdle", { verb })}
+        // Idle copy flips with the countdown: pre-zero we tell the parent
+        // registration isn't open yet; post-zero (countdown done but the
+        // form isn't filled in) we tell them what's left to do, otherwise
+        // the button would still read "not yet open" after the clock has
+        // visibly hit zero — which contradicts the banner above.
+        ctaLabelIdle={
+          isOpen ? t("ctaPreOpenChooseChild") : t("ctaPreOpenIdle", { verb })
+        }
         ctaLabelActive={isOpen ? activeLabel : t("ctaPreOpenReady")}
         active={isOpen}
       />
@@ -482,17 +489,25 @@ function SignupForm(
   return (
     <div className="space-y-4">
       <div className="rounded-md border border-border bg-muted/30 p-4">
-        <h3 className="text-sm font-semibold">{t("whoAreYouSigningUp")}</h3>
+        <h3 id="gamer-picker-label" className="text-sm font-semibold">
+          {t("whoAreYouSigningUp")}
+        </h3>
         {props.helperText && (
           <p className="mt-1 text-xs text-muted-foreground">{props.helperText}</p>
         )}
-        <div className="mt-3 space-y-2">
+        <div
+          role="radiogroup"
+          aria-labelledby="gamer-picker-label"
+          className="mt-3 space-y-2"
+        >
           {props.gamers.map((g) => {
             const selected = props.selectedGamerId === g.id;
             return (
               <button
                 key={g.id}
                 type="button"
+                role="radio"
+                aria-checked={selected}
                 onClick={() => props.onSelectGamer(g.id)}
                 className={cn(
                   "flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors",

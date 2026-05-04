@@ -88,7 +88,12 @@ Layout changes on the same page *after* user interaction (clicking a button that
 
 ### Date & Time Formatting
 
-**Rule: Use `Intl` APIs and `next-intl` formatters for date/time/number formatting.** Shared helpers (`formatDate`, `formatTime`, `formatCurrency*`) live in `src/lib/utils.ts`. For relative time, use `useFormatter().relativeTime()` from `next-intl`. For timezone math only (converting between zones), use `date-fns-tz`. The locale for formatting always comes from `useLocale()` (client) or `getLocale()` (server) via `next-intl`.
+**Rule: Pick the right tool for the date/time operation, and never use UTC as a stand-in for someone's local date.**
+
+- **Display formatting.** `Intl` APIs and `next-intl` formatters. Shared helpers (`formatDate`, `formatTime`, `formatCurrency*`) live in `src/lib/utils.ts`. For relative time, `useFormatter().relativeTime()` from `next-intl`. The locale always comes from `useLocale()` (client) or `getLocale()` (server).
+- **Local-date strings** (calendar keys, "today" markers, anything `YYYY-MM-DD`-shaped that means *today in someone's zone*). Use `formatInTimeZone(new Date(), tz, "yyyy-MM-dd")` from `date-fns-tz`. Pick the timezone deliberately: usually the entity's zone (e.g. `product.timezone`) for entity-local rendering, or the viewer's local zone (no explicit `timeZone`) for personal data. Never both implicitly.
+- **Zone-to-zone conversion.** `fromZonedTime` / `toZonedTime` from `date-fns-tz` (already a project dep — see `src/lib/utils.ts`, `effective-status.ts`).
+- **Anti-pattern: never write `new Date().toISOString().slice(0, 10)`.** That's the date in UTC, not anyone's local date — for any non-UTC viewer it's off-by-one near midnight and silently wrong everywhere else without anyone noticing. If you find yourself reaching for it, you want `formatInTimeZone` with an explicit zone instead.
 
 ### Locale vs. Spoken Language
 

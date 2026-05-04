@@ -1205,6 +1205,7 @@
       },
       "ctaPreOpenIdle": "{verb} — not yet open",
       "ctaPreOpenReady": "Ready when sign-up opens",
+      "ctaPreOpenChooseChild": "Pick a child first",
       "ctaActive": "{verb} now",
       "ctaActiveWithPrice": "{verb} now {price}",
       "ctaWaitlist": "Join the waitlist",

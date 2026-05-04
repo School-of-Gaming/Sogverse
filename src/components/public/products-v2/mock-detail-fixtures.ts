@@ -359,7 +359,12 @@ function pickStatus(
   void productType;
   switch (stateKind) {
     case "ended":
-      return "cancelled"; // RLS-friendly proxy for "ended" in the mock
+      // Real ended products keep stored status = 'running' and reach
+      // "ended" via end_date in the past — the deriver flips them to
+      // effectiveStatus = 'completed'. The fixture's panel state is
+      // hardcoded to { kind: 'ended' } so the deriver doesn't run, but
+      // matching the real stored shape avoids confusing future readers.
+      return "running";
     case "running_late":
     case "open":
     case "open_almost_full":

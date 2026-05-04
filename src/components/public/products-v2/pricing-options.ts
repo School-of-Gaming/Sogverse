@@ -30,7 +30,6 @@ export type PricingOption =
       kind: "subscription";
       frequency: SubscriptionFrequency;
       totalCents: number;
-      perSessionCents: null;
       savingsPercent: number;
     }
   | {
@@ -38,7 +37,6 @@ export type PricingOption =
       kind: "bundle";
       bundleSize: number;
       totalCents: number;
-      perSessionCents: number;
       savingsPercent: number;
     }
   | {
@@ -124,21 +122,18 @@ export function buildPricingOptions({
       kind: "subscription" as const,
       frequency: freq,
       totalCents,
-      perSessionCents: null,
       savingsPercent: Math.round(savings * 100),
     };
   });
 
   const bundles = BUNDLE_SIZES.map((size) => {
     const totalCents = computeBundleCents(row.price_per_session, size);
-    const perSessionCents = Math.round(totalCents / size);
     const discount = BUNDLE_DISCOUNTS[size] ?? 0;
     return {
       key: `bundle:${size}` as const,
       kind: "bundle" as const,
       bundleSize: size,
       totalCents,
-      perSessionCents,
       savingsPercent: Math.round(discount * 100),
     };
   });

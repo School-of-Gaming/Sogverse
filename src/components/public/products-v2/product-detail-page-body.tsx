@@ -14,6 +14,7 @@ import type {
   ProductTypeV2,
   TagTranslationV2,
 } from "@/types";
+import { formatInTimeZone } from "date-fns-tz";
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
 import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
 import { formatProductLocation } from "./format-product-location";
@@ -271,7 +272,10 @@ function CalendarCard({
   });
   if (!result) return null;
 
-  const todayIso = new Date().toISOString().slice(0, 10);
+  // "Today" must be derived from the product's timezone — using UTC
+  // (`new Date().toISOString().slice(0, 10)`) lands on the wrong day for
+  // any non-UTC viewer near midnight. See CLAUDE.md "Date & Time".
+  const todayIso = formatInTimeZone(new Date(), product.timezone, "yyyy-MM-dd");
 
   return (
     <Card>

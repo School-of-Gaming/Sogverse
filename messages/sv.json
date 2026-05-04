@@ -1205,6 +1205,7 @@
       },
       "ctaPreOpenIdle": "{verb} – inte öppen ännu",
       "ctaPreOpenReady": "Redo när anmälan öppnar",
+      "ctaPreOpenChooseChild": "Välj ett barn först",
       "ctaActive": "{verb} nu",
       "ctaActiveWithPrice": "{verb} nu {price}",
       "ctaWaitlist": "Gå med på väntelistan",

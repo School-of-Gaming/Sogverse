@@ -1253,6 +1253,7 @@
       },
       "ctaPreOpenIdle": "{verb} — DaH poSbe'",
       "ctaPreOpenReady": "qonta' poSDI' SuD",
+      "ctaPreOpenChooseChild": "wa' puq yIwIv",
       "ctaActive": "DaH {verb}",
       "ctaActiveWithPrice": "DaH {verb} {price}",
       "ctaWaitlist": "tetlh DaqaD",

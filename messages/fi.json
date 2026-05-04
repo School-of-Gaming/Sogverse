@@ -1205,6 +1205,7 @@
       },
       "ctaPreOpenIdle": "{verb} – ei vielä avoinna",
       "ctaPreOpenReady": "Valmis – odotetaan avaamista",
+      "ctaPreOpenChooseChild": "Valitse lapsi ensin",
       "ctaActive": "{verb} nyt",
       "ctaActiveWithPrice": "{verb} nyt {price}",
       "ctaWaitlist": "Liity jonotuslistalle",
