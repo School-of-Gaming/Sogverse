@@ -26,12 +26,14 @@ const PRODUCT_RACE_1SEAT  = "00000000-0000-0000-0000-0000000005b1";
 const PRODUCT_EXPIRED_RES = "00000000-0000-0000-0000-0000000005b2";
 const PRODUCT_CONFIRM     = "00000000-0000-0000-0000-0000000005b3";
 const PRODUCT_WAITLIST    = "00000000-0000-0000-0000-0000000005b4";
+const PRODUCT_FREE_CAP    = "00000000-0000-0000-0000-0000000005b5";
 
 const ALL_TEST_PRODUCTS = [
   PRODUCT_RACE_1SEAT,
   PRODUCT_EXPIRED_RES,
   PRODUCT_CONFIRM,
   PRODUCT_WAITLIST,
+  PRODUCT_FREE_CAP,
 ];
 
 describe("participations_v2 race + idempotency", () => {
@@ -381,6 +383,56 @@ describe("participations_v2 race + idempotency", () => {
         .select("id")
         .eq("product_id", PRODUCT_WAITLIST)
         .eq("gamer_id", TEST_IDS.GAMER);
+      expect(rows?.length).toBe(1);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Free products honor seat_count
+  // ---------------------------------------------------------------------------
+  //
+  // The schema permits free products to have an explicit seat_count
+  // (chk_products_v2_seat_count_null_requires_free only requires NOT NULL
+  // when billing_mode<>'free'). Before 00043, create_participation_v2's free
+  // path INSERTed an active row before any seat-count check, so a free
+  // product with seat_count=1 silently accepted the second signup. The
+  // gate now sits above the free branch.
+
+  describe("create_participation_v2 — free product with seat_count enforces cap", () => {
+    beforeAll(async () => {
+      await createV2TestProduct(admin, {
+        id: PRODUCT_FREE_CAP,
+        billingMode: "free",
+        seatCount: 1,
+      });
+    });
+
+    it("first free signup activates; second returns 'full'", async () => {
+      const first = await admin.rpc("create_participation_v2", {
+        p_product_id: PRODUCT_FREE_CAP,
+        p_gamer_id: TEST_IDS.GAMER,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_purchase_shape: "free",
+        p_currency: "eur",
+      });
+      expect(first.error).toBeNull();
+      expect((first.data as { kind: string }).kind).toBe("free_active");
+
+      const second = await admin.rpc("create_participation_v2", {
+        p_product_id: PRODUCT_FREE_CAP,
+        p_gamer_id: TEST_IDS.GAMER_2,
+        p_customer_id: TEST_IDS.CUSTOMER,
+        p_purchase_shape: "free",
+        p_currency: "eur",
+      });
+      expect(second.error).toBeNull();
+      expect((second.data as { kind: string }).kind).toBe("full");
+
+      // Sanity: only one row exists for the product.
+      const { data: rows } = await admin
+        .from("participations_v2")
+        .select("id")
+        .eq("product_id", PRODUCT_FREE_CAP);
       expect(rows?.length).toBe(1);
     });
   });

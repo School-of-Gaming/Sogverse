@@ -41,12 +41,17 @@ const CHARGE_WINDOW_HOURS = 24;
 // Distinct product per rule so each runs in isolation and the cron's
 // "already processed?" check on (participation_id, session_date) doesn't
 // interfere across tests.
-const PRODUCT_RULE_1 = "00000000-0000-0000-0000-0000000005d1";
-const PRODUCT_RULE_2 = "00000000-0000-0000-0000-0000000005d2";
-const PRODUCT_RULE_3 = "00000000-0000-0000-0000-0000000005d3";
-const PRODUCT_RULE_4 = "00000000-0000-0000-0000-0000000005d4";
-const PRODUCT_IDEMP  = "00000000-0000-0000-0000-0000000005d5";
-const PRODUCT_UNDER  = "00000000-0000-0000-0000-0000000005d6";
+const PRODUCT_RULE_1   = "00000000-0000-0000-0000-0000000005d1";
+const PRODUCT_RULE_2   = "00000000-0000-0000-0000-0000000005d2";
+const PRODUCT_RULE_3   = "00000000-0000-0000-0000-0000000005d3";
+const PRODUCT_RULE_4   = "00000000-0000-0000-0000-0000000005d4";
+const PRODUCT_IDEMP    = "00000000-0000-0000-0000-0000000005d5";
+const PRODUCT_UNDER    = "00000000-0000-0000-0000-0000000005d6";
+const PRODUCT_HOLIDAY  = "00000000-0000-0000-0000-0000000005d7";
+const PRODUCT_MULTI    = "00000000-0000-0000-0000-0000000005d8";
+const PRODUCT_LATECXL  = "00000000-0000-0000-0000-0000000005d9";
+
+const HOLIDAY_CALENDAR = "00000000-0000-0000-0000-0000000005da";
 
 const ALL_PRODUCTS = [
   PRODUCT_RULE_1,
@@ -55,6 +60,9 @@ const ALL_PRODUCTS = [
   PRODUCT_RULE_4,
   PRODUCT_IDEMP,
   PRODUCT_UNDER,
+  PRODUCT_HOLIDAY,
+  PRODUCT_MULTI,
+  PRODUCT_LATECXL,
 ];
 
 interface SessionTiming {
@@ -409,5 +417,152 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
       .eq("id", participationId)
       .single();
     expect(row?.credits_remaining).toBe(0); // no negative drift
+  });
+
+  // ---------------------------------------------------------------------------
+  // Late-cancel branch (bundle, cancellation row outside the 24h window)
+  // ---------------------------------------------------------------------------
+  //
+  // 00043 split this out of the no-show branch: same delta=-1, distinct
+  // reason ('bundle_late_cancel_charged') so a parent disputing a charge
+  // can see in the audit trail that the cancellation happened but landed
+  // too late.
+
+  it("rule 4b: bundle + cancelled past 24h window charges with late-cancel reason", async () => {
+    const participationId = await seedActiveParticipation(
+      admin,
+      PRODUCT_LATECXL,
+      TEST_IDS.GAMER,
+      4,
+    );
+
+    // Cancellation entered AFTER the 24h cutoff — within (sessionStart-24h, sessionStart).
+    const cancelledAt = new Date(timing.sessionStart.getTime() - 60 * 60_000);
+    await admin.from("session_cancellations_v2").insert({
+      participation_id: participationId,
+      session_date: timing.sessionDate,
+      cancelled_at: cancelledAt.toISOString(),
+    });
+
+    await runCron(admin);
+
+    const { data: deduction } = await admin
+      .from("credit_deductions_v2")
+      .select("delta, reason")
+      .eq("participation_id", participationId)
+      .single();
+    expect(deduction?.delta).toBe(-1);
+    expect(deduction?.reason).toBe("bundle_late_cancel_charged");
+
+    const { data: row } = await admin
+      .from("participations_v2")
+      .select("credits_remaining")
+      .eq("id", participationId)
+      .single();
+    expect(row?.credits_remaining).toBe(3);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Holiday calendar
+  // ---------------------------------------------------------------------------
+  //
+  // product_has_session_v2 returns false when the session_date is on a
+  // holiday the product subscribes to. The cron must skip the row (no
+  // deduction, no charge).
+
+  it("a session_date that falls on a subscribed holiday is skipped", async () => {
+    // Create the calendar + holiday + link from the cron's product to it.
+    await admin.from("holiday_calendars_v2").upsert({
+      id: HOLIDAY_CALENDAR,
+      name: "v2-cron-test-holidays",
+      timezone: "UTC",
+    });
+    await admin
+      .from("calendar_holidays_v2")
+      .delete()
+      .eq("calendar_id", HOLIDAY_CALENDAR);
+    await admin.from("calendar_holidays_v2").insert({
+      calendar_id: HOLIDAY_CALENDAR,
+      date: timing.sessionDate,
+      reason: "test holiday",
+    });
+    await admin.from("product_holiday_calendars_v2").upsert({
+      product_id: PRODUCT_HOLIDAY,
+      calendar_id: HOLIDAY_CALENDAR,
+    });
+
+    await seedActiveParticipation(admin, PRODUCT_HOLIDAY, TEST_IDS.GAMER, 4);
+
+    await runCron(admin);
+
+    const { data: deductions } = await admin
+      .from("credit_deductions_v2")
+      .select("id")
+      .eq("product_id", PRODUCT_HOLIDAY)
+      .eq("session_date", timing.sessionDate);
+    expect(deductions?.length).toBe(0);
+
+    // Cleanup so the calendar doesn't leak into other tests.
+    await admin
+      .from("product_holiday_calendars_v2")
+      .delete()
+      .eq("product_id", PRODUCT_HOLIDAY);
+    await admin
+      .from("calendar_holidays_v2")
+      .delete()
+      .eq("calendar_id", HOLIDAY_CALENDAR);
+    await admin
+      .from("holiday_calendars_v2")
+      .delete()
+      .eq("id", HOLIDAY_CALENDAR);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Multi-slot products
+  // ---------------------------------------------------------------------------
+  //
+  // A product with two schedule slots on different weekdays produces two
+  // rows in the cron's outer loop iteration for the same participation.
+  // Only the slot whose computed session_start lands in the lookback
+  // window should result in a credit_deductions_v2 row this hour.
+
+  it("multi-slot product: only the in-window slot produces a deduction", async () => {
+    // Add a second slot 3 days off from the in-window slot — it can't
+    // possibly land in the (NOW-1h, NOW) window for this run.
+    const otherWeekday = (timing.weekday + 3) % 7;
+    await admin.from("schedule_slots_v2").insert({
+      product_id: PRODUCT_MULTI,
+      weekday: otherWeekday,
+      start_time: "09:00:00",
+      duration_minutes: 60,
+    });
+
+    const participationId = await seedActiveParticipation(
+      admin,
+      PRODUCT_MULTI,
+      TEST_IDS.GAMER,
+      4,
+    );
+
+    await runCron(admin);
+
+    const { data: deductions } = await admin
+      .from("credit_deductions_v2")
+      .select("delta, reason, session_date")
+      .eq("participation_id", participationId);
+
+    // Exactly one row, for the in-window session_date, charging the bundle.
+    expect(deductions?.length).toBe(1);
+    expect(deductions![0].session_date).toBe(timing.sessionDate);
+    expect(deductions![0].delta).toBe(-1);
+    expect(deductions![0].reason).toBe("bundle_attended_or_no_show");
+
+    // Cleanup so this product is left with only the standard slot for
+    // any subsequent test runs.
+    await admin
+      .from("schedule_slots_v2")
+      .delete()
+      .eq("product_id", PRODUCT_MULTI)
+      .eq("weekday", otherWeekday);
   });
 });
