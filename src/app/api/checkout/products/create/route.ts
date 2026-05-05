@@ -16,6 +16,7 @@ import {
   getOrCreateSubscriptionPrice,
 } from "@/lib/stripe/participation-prices";
 import { RESERVATION_LIFETIME_MINUTES } from "@/lib/constants/participations";
+import { getOrigin } from "@/lib/url";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -298,9 +299,7 @@ export async function POST(request: Request) {
     // Stripe Checkout flow below.
   }
 
-  const origin =
-    request.headers.get("origin") ||
-    `https://${request.headers.get("host")}`;
+  const origin = getOrigin(request);
   const safeReturnPath =
     typeof returnPath === "string" && returnPath.startsWith("/")
       ? returnPath

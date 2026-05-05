@@ -223,11 +223,12 @@ function createRequest(
   {
     rawBody,
     origin = "http://localhost:3000",
-  }: { rawBody?: string; origin?: string } = {},
+    host = "localhost:3000",
+  }: { rawBody?: string; origin?: string; host?: string } = {},
 ): Request {
   return new Request("http://localhost:3000/api/checkout/products/create", {
     method: "POST",
-    headers: { "Content-Type": "application/json", origin },
+    headers: { "Content-Type": "application/json", origin, host },
     body: rawBody ?? JSON.stringify(body),
   });
 }

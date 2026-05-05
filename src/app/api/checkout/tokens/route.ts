@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { getProductByPriceId } from "@/lib/stripe/products";
 import { isSupportedCurrency, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import { ROUTES } from "@/lib/constants";
+import { getOrigin } from "@/lib/url";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -49,9 +50,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const origin =
-      request.headers.get("origin") ||
-      `https://${request.headers.get("host")}`;
+    const origin = getOrigin(request);
 
     // Reuse existing Stripe customer to avoid creating duplicates
     const customerParams: Pick<
