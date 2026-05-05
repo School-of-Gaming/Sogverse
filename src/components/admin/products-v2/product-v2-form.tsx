@@ -37,6 +37,7 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
     initialState(config, uiLocale),
   );
   const [error, setError] = useState<string | null>(null);
+  const [committing, setCommitting] = useState(false);
 
   const createProduct = useCreateProductV2();
 
@@ -59,11 +60,13 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
     }
 
     const input = buildCreateInput(state, productType, config);
+    setCommitting(true);
 
     try {
       await createProduct.mutateAsync(input);
       router.push(`/admin/${config.routeSlug}`);
     } catch (err) {
+      setCommitting(false);
       setError(err instanceof Error ? err.message : t("errors.createFailed"));
     }
   }
@@ -101,10 +104,8 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
         >
           {c("cancel")}
         </Button>
-        <Button type="submit" size="lg" disabled={createProduct.isPending}>
-          {createProduct.isPending && (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-          )}
+        <Button type="submit" size="lg" disabled={committing}>
+          {committing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
           {t("actions.createLabel", { label: label.toLowerCase() })}
         </Button>
       </div>
