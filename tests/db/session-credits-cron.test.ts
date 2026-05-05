@@ -80,6 +80,20 @@ function thirtyMinutesAgoSlot(): SessionTiming {
 }
 
 /**
+ * Calls the cron and asserts no per-participation BEGIN block silently
+ * raised. The cron's outer EXCEPTION WHEN OTHERS catches everything and
+ * increments `errors` in the return JSONB instead of propagating. Without
+ * this assertion a real bug (like the BOOLEAN/INT mismatch we hit on the
+ * GET DIAGNOSTICS line in apply_credit_motion_v2) shows up only as a
+ * missing-row failure three layers down.
+ */
+async function runCron(admin: SupabaseClient<Database>): Promise<void> {
+  const { data, error } = await admin.rpc("process_session_credits_v2");
+  expect(error).toBeNull();
+  expect((data as { errors: number }).errors).toBe(0);
+}
+
+/**
  * Inserts a participation directly via admin client (skipping the RPC's
  * payment dance). Returns its id. Required setup for cron tests since
  * the cron only operates on rows already in 'active' state.
@@ -210,8 +224,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
       cancelled_at: cancelledAt.toISOString(),
     });
 
-    const { error } = await admin.rpc("process_session_credits_v2");
-    expect(error).toBeNull();
+    await runCron(admin);
 
     const { data: deduction } = await admin
       .from("credit_deductions_v2")
@@ -243,7 +256,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     );
     await makeSubCovered(admin, participationId, "rule2");
 
-    await admin.rpc("process_session_credits_v2");
+    await runCron(admin);
 
     const { data: deduction } = await admin
       .from("credit_deductions_v2")
@@ -283,7 +296,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
       cancelled_at: cancelledAt.toISOString(),
     });
 
-    await admin.rpc("process_session_credits_v2");
+    await runCron(admin);
 
     const { data: deduction } = await admin
       .from("credit_deductions_v2")
@@ -313,7 +326,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
       4,
     );
 
-    await admin.rpc("process_session_credits_v2");
+    await runCron(admin);
 
     const { data: deduction } = await admin
       .from("credit_deductions_v2")
@@ -343,8 +356,8 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
       4,
     );
 
-    await admin.rpc("process_session_credits_v2");
-    await admin.rpc("process_session_credits_v2");
+    await runCron(admin);
+    await runCron(admin);
 
     const { data: deductions } = await admin
       .from("credit_deductions_v2")
@@ -377,7 +390,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
       0,
     );
 
-    await admin.rpc("process_session_credits_v2");
+    await runCron(admin);
 
     const { data: deduction } = await admin
       .from("credit_deductions_v2")

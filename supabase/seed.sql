@@ -168,7 +168,7 @@ INSERT INTO auth.users (
 ) VALUES (
   '00000000-0000-0000-0000-000000000006',
   '00000000-0000-0000-0000-000000000000',
-  'authenticated', 'authenticated', 'testgamer2@gamer.sogverse.internal',
+  'authenticated', 'authenticated', 'testgamer-c1@gamer.sogverse.internal',
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
@@ -181,7 +181,7 @@ INSERT INTO auth.identities (
 ) VALUES (
   '00000000-0000-0000-0000-000000000006',
   '00000000-0000-0000-0000-000000000006',
-  jsonb_build_object('sub', '00000000-0000-0000-0000-000000000006', 'email', 'testgamer2@gamer.sogverse.internal'),
+  jsonb_build_object('sub', '00000000-0000-0000-0000-000000000006', 'email', 'testgamer-c1@gamer.sogverse.internal'),
   'email', '00000000-0000-0000-0000-000000000006',
   NOW(), NOW(), NOW()
 );
@@ -206,7 +206,7 @@ INSERT INTO gamer_profiles (user_id, date_of_birth, gender)
 VALUES ('00000000-0000-0000-0000-000000000004', '2015-06-15', 'boy');
 
 -- Promote gamer 2 (mirrors gamer 1 promotion)
-UPDATE profiles SET role = 'gamer', email = NULL, username = 'testgamer2'
+UPDATE profiles SET role = 'gamer', email = NULL, username = 'testgamer-c1'
 WHERE id = '00000000-0000-0000-0000-000000000006';
 DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000006';
 INSERT INTO gamer_profiles (user_id, date_of_birth, gender)

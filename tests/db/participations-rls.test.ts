@@ -232,13 +232,15 @@ describe("v2 participations / payments / refunds RLS", () => {
       }
     });
 
-    it("anon cannot SELECT participations", async () => {
+    it("anon SELECT returns no rows (RLS, not GRANT, blocks anon)", async () => {
+      // Supabase grants SELECT to anon on every public-schema table by default.
+      // RLS is the gate — and there's no policy that lets anon see rows. So
+      // the query succeeds silently with an empty result set.
       const { data, error } = await anonClient
         .from("participations_v2")
         .select("id");
-      // No SELECT GRANT for anon → 42501.
-      expect(error?.code).toBe("42501");
-      expect(data).toBeNull();
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
     });
 
     it("customer cannot INSERT a participation directly", async () => {
@@ -295,10 +297,10 @@ describe("v2 participations / payments / refunds RLS", () => {
       expect(data).toEqual([]);
     });
 
-    it("anon cannot SELECT payments", async () => {
+    it("anon SELECT returns no rows (RLS blocks)", async () => {
       const { data, error } = await anonClient.from("payments_v2").select("id");
-      expect(error?.code).toBe("42501");
-      expect(data).toBeNull();
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
     });
 
     it("customer cannot INSERT a payment directly", async () => {
@@ -349,10 +351,10 @@ describe("v2 participations / payments / refunds RLS", () => {
       expect(data?.amount_cents).toBe(2000);
     });
 
-    it("anon cannot SELECT refunds", async () => {
+    it("anon SELECT returns no rows (RLS blocks)", async () => {
       const { data, error } = await anonClient.from("refunds_v2").select("id");
-      expect(error?.code).toBe("42501");
-      expect(data).toBeNull();
+      expect(error).toBeNull();
+      expect(data).toEqual([]);
     });
   });
 
