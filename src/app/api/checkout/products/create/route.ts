@@ -300,10 +300,22 @@ export async function POST(request: Request) {
   }
 
   const origin = getOrigin(request);
+  // Reject protocol-relative paths (`//evil.com/path`) — they pass a naïve
+  // `startsWith("/")` check but most browsers parse them as `https://evil.com/path`,
+  // turning the cancel URL into an open redirect.
+  //
+  // The fallback is the homepage — never the product detail page. The
+  // fallback only fires when something abnormal happened (broken frontend,
+  // attacker forging the request body), so we don't try to deduce where
+  // the user "should" have gone; we send them somewhere safe and familiar.
+  // The success path is independently type-aware (see successPath below),
+  // so happy-path users still land on the correct product page.
   const safeReturnPath =
-    typeof returnPath === "string" && returnPath.startsWith("/")
+    typeof returnPath === "string" &&
+    returnPath.startsWith("/") &&
+    !returnPath.startsWith("//")
       ? returnPath
-      : `/clubs/${productId}`;
+      : "/";
   // Success lands on the product detail page, which now branches to the
   // purchased-detail view (placeholder for the v2 phase) once the webhook
   // flips the reservation to active. There's a 1–3s race window between

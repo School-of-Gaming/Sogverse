@@ -332,21 +332,23 @@ type RawMyParticipationRow = Pick<
     display_name: string | null;
     username: string | null;
   } | null;
+  // Migration 00045 added UNIQUE(participation_id) — PostgREST now treats
+  // this as a to-one relationship, so the embedded shape is a single
+  // nullable object (not an array). At most one item ever links to a given
+  // participation.
   family_subscription_items_v2: {
     id: string;
     family_subscription: { status: string } | null;
-  }[];
+  } | null;
 };
 
 function toMyParticipationRow(row: RawMyParticipationRow): MyParticipationRow {
-  // "Sub-covered" = at least one item linked to a live family sub.
-  const isSubCovered = row.family_subscription_items_v2.some(
-    (item) =>
-      item.family_subscription !== null &&
-      ["active", "canceling", "past_due"].includes(
-        item.family_subscription.status,
-      ),
-  );
+  // "Sub-covered" = the linked item exists AND its parent sub is live.
+  const item = row.family_subscription_items_v2;
+  const isSubCovered =
+    item !== null &&
+    item.family_subscription !== null &&
+    ["active", "canceling", "past_due"].includes(item.family_subscription.status);
   const { family_subscription_items_v2: _items, ...rest } = row;
   void _items;
   return { ...rest, is_sub_covered: isSubCovered };

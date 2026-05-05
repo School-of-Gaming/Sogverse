@@ -482,8 +482,11 @@ describe("POST /api/checkout/products/create", () => {
     expect(params.success_url).toBe(
       `http://localhost:3000/clubs/${PRODUCT_ID}?signup=success`,
     );
+    // No returnPath in the body → cancel_url falls back to homepage.
+    // (Real frontend always sends window.location.pathname, so happy-path
+    // browser flows use that and never hit this fallback.)
     expect(params.cancel_url).toBe(
-      `http://localhost:3000/clubs/${PRODUCT_ID}?signup=canceled`,
+      "http://localhost:3000/?signup=canceled",
     );
     // expires_at sits ~30 minutes in the future (Stripe enforces a 30-min floor).
     expect(params.expires_at).toBeGreaterThan(Math.floor(Date.now() / 1000));
@@ -909,7 +912,7 @@ describe("POST /api/checkout/products/create", () => {
     );
   });
 
-  it("falls back to /clubs/[id] when returnPath does not start with /", async () => {
+  it("falls back to homepage when returnPath does not start with /", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CLUB });
     mockAdminRpc.mockResolvedValueOnce({
@@ -930,7 +933,37 @@ describe("POST /api/checkout/products/create", () => {
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.cancel_url).toBe(
-      `http://localhost:3000/clubs/${PRODUCT_ID}?signup=canceled`,
+      "http://localhost:3000/?signup=canceled",
+    );
+  });
+
+  it("rejects protocol-relative returnPath like //evil.com/path and falls back to homepage", async () => {
+    // `//evil.com/path` passes a naïve startsWith("/") check but produces
+    // `https://localhost:3000//evil.com/path` which most browsers parse as
+    // an absolute URL to evil.com — open redirect after Stripe's redirect.
+    // The abnormal path always lands on the homepage, never on a guessed
+    // product page; the user is somewhere safe and familiar.
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "reserving", participation_id: RESERVATION_ID },
+      error: null,
+    });
+    mockComputeBundleAmount.mockResolvedValue(3800);
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/c/x",
+    });
+
+    await POST(
+      createRequest({
+        ...VALID_BUNDLE_BODY,
+        returnPath: "//evil.com/path",
+      }),
+    );
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    expect(params.cancel_url).toBe(
+      "http://localhost:3000/?signup=canceled",
     );
   });
 });
