@@ -329,6 +329,7 @@ The active CTA POSTs to `/api/checkout/products/create` with `{ productId, gamer
 - **Admin-cancel-session UI.** `session_overrides_v2` is designed but not shipped. When it lands, extend `computeProductSessions` to merge those rows into `skips` — the calendar View needs no change.
 - **Show family discount.** Surface a "Save another 10% with 2+ kids" note below the pricing picker once the family-subscription Stripe coupon ships.
 - **Image hero + lightbox.** Today the image renders as a 1:1 thumbnail in the hero. A future "tap to enlarge" wouldn't break the layout.
+- **Dead-end detail panels — no normal browse-card entry point.** Browse-card CTAs only link to actionable states (`open` / `pending_thr` / `closed_pre` / `full_waitlist`); `full_closed` shows a disabled button and `running_late` / `ended` show no CTA at all. The corresponding detail-page panels (`FullClosedPanel`, `RunningLatePanel`, `EndedPanel`) therefore have no normal browse → detail entry. They still render defensively for direct-URL access and for in-session state transitions (open product hits its cap during the user's session, end_date crosses underfoot), but they aren't exercised by typical browsing. The UI Components page is now the only reliable regression surface for these panels — keep its preview tiles current as the canonical demo, and treat any visual change to those panels as in scope for the demo's review pass.
 
 ### `?mock=1` purchased section
 
