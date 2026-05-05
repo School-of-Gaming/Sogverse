@@ -1156,18 +1156,19 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - ✓ `products_v2` lifecycle status enum stores admin facts only; effective `running` / `completed` derived at read time.
 - ○ `product_groups_v2` (form captures groups in local state but does not persist yet; UI surfaces a "not wired" warning).
 - ○ `gedu_group_assignments_v2`.
-- ○ `participations_v2`.
-- ○ `payments_v2`, `refunds_v2`.
-- ○ `family_subscriptions_v2`, `family_subscription_items_v2`, `product_subscription_prices_v2`.
-- ○ `session_overrides_v2`, `session_substitutions_v2`, `session_attendance_v2`, `session_notes_v2`, `session_cancellations_v2`, `credit_deductions_v2`.
+- ✓ `participations_v2` (with `'reserving'` status + `reserved_until`, `credits_remaining`, partial unique index excluding reserving rows).
+- ✓ `payments_v2`, `refunds_v2` (UNIQUE on `stripe_event_id`).
+- ✓ `family_subscriptions_v2`, `family_subscription_items_v2`, `product_subscription_prices_v2`.
+- ✓ `session_cancellations_v2`, `credit_deductions_v2` (append-only ledger), `product_seat_counts_v2` (public-readable rollup with trigger-driven counts + Realtime publication).
+- ○ `session_overrides_v2`, `session_substitutions_v2`, `session_attendance_v2`, `session_notes_v2`.
 
 **RPCs (§6)** — `_v2`.
 - ✓ `create_product_v2` — atomic insert across products + translations + schedule slots + tags + prices + holiday calendars; rejects payloads missing en/fi.
-- ◐ Effective-status derivation — TS helper (`src/components/admin/products-v2/effective-status.ts`) ships; SQL twin `effective_status_v2(product_id)` not yet built (deferred until DB-side filters need it).
-- ○ Participation lifecycle (`create_participation_v2`, `cancel_participation_v2`, `admin_remove_participation_v2`, `promote_from_waitlist_v2`).
+- ✓ Effective-status derivation — TS helper (`src/components/admin/products-v2/effective-status.ts`) and SQL twin `effective_status_v2(product_id)` both ship.
+- ◐ Participation lifecycle — `create_participation_v2`, `confirm_reservation_v2`, `expire_reservation_v2`, `join_waitlist_v2`, `cancel_participation_v2`, `apply_credit_motion_v2` ship; `promote_from_waitlist_v2` ships as a stub (not wired into a customer flow — see §11); `admin_remove_participation_v2` not started.
 - ○ Session operations (`cancel_session_v2`, `reschedule_session_v2`, `request_substitute_v2`, `assign_substitute_v2`, `record_attendance_v2`).
-- ○ Hourly credit cron (`process_session_credits_v2`).
-- ○ Subscription management (`subscribe_to_product_v2`, `unsubscribe_from_product_v2`, `switch_subscription_frequency_v2`).
+- ✓ Hourly credit cron (`process_session_credits_v2` scheduled via `pg_cron` at `0 * * * *`).
+- ◐ Subscription management — first-ever sub goes through Stripe Checkout; inline-add of an additional gamer to an existing family sub uses `subscriptions.update` with `always_invoice` + `error_if_incomplete` (synchronous via the checkout route). `unsubscribe_from_product_v2`, `switch_subscription_frequency_v2` not started.
 - ○ Lifecycle transitions (`start_product_v2`, `cancel_product_v2`, `finalize_completed_products_v2`).
 - ○ Group mutations (`commit_group_changes_v2`).
 
@@ -1195,13 +1196,28 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - ✓ Cents helper + currency-aware formatting in `src/lib/constants/{currency,pricing}.ts` and `src/lib/utils.ts`.
 
 **Tests.**
-- ✓ Unit: `products-v2-build`, `effective-status-v2`, `pricing-block-fx`, `pricing`, `resolve-translation`.
-- ✓ Integration: `tests/integration/api/products-v2-create.test.ts` (route → RPC → DB).
-- ✓ DB access-control: `products_v2` family covered by `tests/db/access-control.test.ts`.
+- ✓ Unit: `products-v2-build`, `effective-status-v2`, `pricing-block-fx`, `pricing`, `resolve-translation`, `participation-state-of`.
+- ✓ Integration (route handlers): `products-v2-create`, `checkout-products-create`, `participations-waitlist`, `stripe-webhook-products`.
+- ✓ DB: `participations-race` (parallel reservations on a 1-seat product, expired-reservation handling, parallel waitlist monotonicity, idempotent waitlist join, free-product seat cap), `participations-rls` (consolidated cross-customer IDOR coverage for participations / payments / refunds / product_seat_counts; other v2 tables covered via the `access-control.test.ts` catalog check), `product-seat-counts-trigger` (insert/update/delete recomputes the rollup), `session-credits-cron` (all four §6.3 rules + idempotency + late-cancel split + holiday-skip + multi-slot product).
+- ✓ DB access-control: `products_v2` family + all v2 financial tables covered by `tests/db/access-control.test.ts`.
 
-**Parent UI**: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator. ○ Not started.
+**Parent UI**: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator.
+- ✓ Browse cards + detail page read real `useParticipationCounts` (seat-left math, threshold progress, "almost full" pill, full-waitlist transitions).
+- ✓ Detail-page CTA wires real Stripe Checkout for bundles, subs, single-payment camps; free events register without Stripe.
+- ✓ Out-of-stock products show "Join the waitlist" → `join_waitlist_v2` with no charge.
+- ✓ Realtime seat counter on the detail page (`useProductSeatCountsRealtime` subscribes to `product_seat_counts_v2` filtered by `product_id`).
+- ✓ Already-signed-up detection on the detail page → renders `AlreadySignedUpPanel` (active / waitlisted variants) instead of the signup form.
+- ✓ Purchased card driven off real `useMyParticipations` — three placement states (waitlisted / unassigned / assigned), bundle-vs-sub coverage line, session-balance line for bundle-covered clubs.
+- ✓ All `?mock=1` gates and `mock-purchased` fixtures deleted from parent surfaces.
+- ○ Purchased-state layout for `/clubs/[id]` (the second of "same route, two layouts"): sub management, session calendar with cancellations, per-gamer attendance, add-another-gamer affordance, leave-club / cancel-sub confirms. The current `AlreadySignedUpPanel` is the v1 placeholder until this lands. See `docs/products-v2-architecture.md` § "Future improvements (detail-page surfaces)".
+- ○ Customer-facing self-cancel flows (cancel-sub, leave-club, cancel-session).
 
-**Stripe**: `_v2` Checkout endpoints, lazy-created Prices for subs, webhook handlers that write `payments_v2` / `refunds_v2`, family-coupon application. ○ Not started.
+**Stripe**: `_v2` Checkout endpoints, lazy-created Prices for subs, webhook handlers that write `payments_v2` / `refunds_v2`.
+- ✓ `POST /api/checkout/products/create` — auth-gated to customers, validates shape × billing_mode × product_type, holds a `'reserving'` row for 30 min before any Stripe call. Bundles + single-payment use inline `price_data`; subs lazy-resolve a `product_subscription_prices_v2` row and create the Stripe Price on first use.
+- ✓ `POST /api/participations/waitlist` — auth-gated, calls `join_waitlist_v2`. Idempotent on existing waitlist rows.
+- ✓ `POST /api/webhooks/stripe/products` (separate signing secret `STRIPE_PRODUCTS_WEBHOOK_SECRET`) — handles `checkout.session.completed`, `checkout.session.expired`, `invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`. Idempotent via `stripe_event_id` UNIQUE; pay-twice race bounded by the participations partial unique index firing on the second confirm (logged + 200, manual refund follow-up).
+- ✓ Movie-ticket reservation model — status holds the seat for the full 30-min Stripe-session lifetime; cancel-in-Stripe is a no-op; retry reuses the held row. See `docs/products-v2-architecture.md` § "Movie-ticket reservation model".
+- ○ Family-coupon application (`FAMILY_DISCOUNT_PERCENT`) — flat-tier value undecided per §11; coupon attachment skipped in v1.
 
 **Existing Sorg system**: untouched.
 
@@ -1280,7 +1296,87 @@ Three UX mockups live on the `feature/school-clubs-mockup` branch (see top of do
 
 All three are sketches, not implementations. **None of them model the new fiat pricing, bundle purchase, or family subscription flows — they predate this redesign's billing pivot.** When the billing-layer screens are designed, the mockups are a starting point for product-type-specific flows only; pricing UX is new work.
 
-### 12.3 Why we kept Gedu Groups (and generalized them to every product type)
+### 12.3 Stripe webhook deployment across environments
+
+Three Vercel environments → three webhook endpoints. Stripe distinguishes test vs live mode; Vercel distinguishes preview / production. The two axes intersect like this:
+
+| Vercel target | Vercel URL | Stripe mode | Webhook scope |
+|---|---|---|---|
+| Preview (feature branch) | `sogverse-git-<branch>-kyle-sogs-projects.vercel.app` | test | one endpoint per long-lived branch |
+| Preview (`dev` branch → staging) | `sogverse-git-dev-kyle-sogs-projects.vercel.app` | test | one endpoint that sticks for staging |
+| Production (`main`) | the production custom domain | **live** | one endpoint, separate signing secret |
+
+The Vercel CLI defaults to no branch scope (env var applies to *all* preview deployments). The Stripe CLI defaults to **test** mode (must pass `--live` for production). Both defaults are intentional here — don't override them without a reason.
+
+The path is always `/api/webhooks/stripe/products`. The events are always:
+
+```
+checkout.session.completed
+checkout.session.expired
+invoice.paid
+customer.subscription.updated
+customer.subscription.deleted
+charge.refunded
+```
+
+**1. Preview (feature branch on PR open).** Repeat this if a future feature branch needs its own webhook.
+
+```bash
+# Test-mode webhook pointing at the branch preview URL
+stripe webhook_endpoints create \
+  --url "https://sogverse-git-<branch>-kyle-sogs-projects.vercel.app/api/webhooks/stripe/products" \
+  --description "v2 products webhook (preview)" \
+  -d "enabled_events[]=checkout.session.completed" \
+  -d "enabled_events[]=checkout.session.expired" \
+  -d "enabled_events[]=invoice.paid" \
+  -d "enabled_events[]=customer.subscription.updated" \
+  -d "enabled_events[]=customer.subscription.deleted" \
+  -d "enabled_events[]=charge.refunded"
+
+# Capture the whsec_... from the response, then:
+printf '%s' 'whsec_...' | vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET preview --sensitive
+
+# Trigger a redeploy of the preview so the env var lands (empty commit or dashboard "Redeploy")
+```
+
+**2. Staging (when this PR merges to `dev`).** The `dev` branch's preview URL is stable but a different host than the feature-branch preview, so the existing webhook needs to be re-pointed (or a fresh one created and the old one deleted). Re-pointing is simpler — the signing secret stays the same and Vercel needs no change.
+
+```bash
+# Re-aim the existing test-mode endpoint at the staging URL
+stripe webhook_endpoints update we_<id-from-step-1> \
+  -d "url=https://sogverse-git-dev-kyle-sogs-projects.vercel.app/api/webhooks/stripe/products"
+```
+
+If the feature-branch preview also still needs to work (e.g. another PR is open against `dev` and we want both to fire), create a second endpoint instead of updating, and add the new secret to Vercel preview *scoped to that branch*: `vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET preview <git-branch> --sensitive`. Branch-scoped overrides take precedence over the unscoped preview value.
+
+After the merge, smoke-test against staging: bundle purchase, sub purchase, waitlist join, refund.
+
+**3. Production (cut from `dev` to `main`).** Brand new live-mode endpoint, brand new signing secret in Vercel's `production` env. Do **not** reuse the test-mode secret in production.
+
+```bash
+# Live-mode webhook against the production domain
+stripe webhook_endpoints create --live \
+  --url "https://<prod-domain>/api/webhooks/stripe/products" \
+  --description "v2 products webhook (production)" \
+  -d "enabled_events[]=checkout.session.completed" \
+  -d "enabled_events[]=checkout.session.expired" \
+  -d "enabled_events[]=invoice.paid" \
+  -d "enabled_events[]=customer.subscription.updated" \
+  -d "enabled_events[]=customer.subscription.deleted" \
+  -d "enabled_events[]=charge.refunded"
+
+# Capture the live whsec_... and store it in Vercel production
+printf '%s' 'whsec_...' | vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET production --sensitive
+
+# Redeploy production so the env var binds
+vercel redeploy <prod-deployment-url> --prod
+```
+
+After cut-over, send one real `$0.50`-class purchase through to confirm the live webhook is wired before announcing.
+
+**What `.env.local` does NOT need.** `STRIPE_PRODUCTS_WEBHOOK_SECRET` is not required in `.env.local` for normal local dev. `stripe listen --forward-to localhost:3000/api/webhooks/stripe/products` prints a fresh `whsec_...` per session — paste that into the running process's env or your shell, not into committed-template files. `.env.local.example` documents the variable name only, with a comment pointing at this section. Do **not** check in any real `whsec_...` value.
+
+### 12.4 Why we kept Gedu Groups (and generalized them to every product type)
 
 An earlier version of this doc retired `product_groups` in favor of cloning whole products. Product-team feedback pushed back: groups are the right abstraction for admins organizing who-runs-what-with-whom inside a product, and they should apply to all four product types.
 
