@@ -119,6 +119,8 @@ The `computeSessionWindow()` utility (in `src/lib/session-schedule.ts`) determin
    - Gedu → must be the group's assigned gedu (`product_groups.gedu_id`)
    - Gamer → must have an active enrollment in the group
 
+   **Forward-looking:** under the v2 products system, an active participation row is not the same as active *access*. A parent who cancels their sub or whose card fails enters a grace window where the seat is held but the gamer must be blocked from joining the voice room. When the v2 access-state function lands (see `docs/products-redesign.md` §4.5d), the gamer-side check above must additionally consult `participation_access_state(...)` — `'allowed'` lets them in, `'grace_blocked'` and `'expired'` deny. Until then, the enrollment-only check stands.
+
 4. **Mid-session enrollment gate (gamers only):**
    - If a gamer's `enrollment.created_at` is at or after the current session's start time, they cannot join — their enrollment starts next session.
    - This prevents mid-session freeloading: the first charge covers the next session (via `getNextSessionStart()`), not the in-progress one.

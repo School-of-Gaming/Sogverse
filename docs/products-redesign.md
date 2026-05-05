@@ -262,7 +262,9 @@ This is intentionally simpler than the Sorg token model, which deducted tokens a
 | **Cancel subscription** | The Stripe sub stops at period end. Participations stay alive. | Banked credits stay. Future sessions become bundle-covered; gamer keeps attending until credits run out. |
 | **Leave this club** | The participation is hard-deleted. The corresponding sub item is removed from Stripe (and the sub itself if this was the last item). | Banked credits forfeit. No Stripe refund. |
 
-**The distinction only matters when balance > 0.** When `credits_remaining = 0`, the two actions are functionally identical — either way the gamer stops attending immediately. The detail page can collapse to a single "Leave this club" button in that case. When `credits_remaining > 0`, both actions must be present and the confirm dialog for each must spell out exactly what happens to the credits, with the count visible.
+**The distinction only matters when balance > 0.** When `credits_remaining = 0`, the two actions are functionally identical from the gamer's day-to-day perspective — either way the gamer stops attending immediately. The detail page can collapse to a single "Leave this club" button in that case. When `credits_remaining > 0`, both actions must be present and the confirm dialog for each must spell out exactly what happens to the credits, with the count visible.
+
+(There is one second-order difference even at `credits_remaining = 0`: a `Cancel subscription` puts the seat into a grace-window hold, while `Leave this club` releases it immediately. See §4.5d.)
 
 The dialog copy is the load-bearing UX — a parent who cancels their sub and *thinks* they've left the club entirely will be confused weeks later when their child is still expected to show up (or when they still see the club on their dashboard). Confirm-dialog wording for the eventual implementation:
 
@@ -270,6 +272,50 @@ The dialog copy is the load-bearing UX — a parent who cancels their sub and *t
 - **Leave this club** confirm: *"Leave {Club Name}? Your child loses their spot, your **N credits forfeit**, and your subscription continues for any other clubs."*
 
 Wording will iterate during the detail-page design pass; the rule the wording must satisfy is in this section.
+
+### 4.5d Seat hold vs. club access — two independent gates with a grace window
+
+A participation row carries two distinct rights, not one:
+
+- **Seat hold** — the row occupies a slot in `products_v2.seat_count`. Other parents see this slot as taken; the waitlist sees it as not-yet-promotable.
+- **Club access** — the gamer can join the club's voice room, see the schedule, receive content, and otherwise *participate* in the club.
+
+Most of the time these move together: an `active` participation backed by a healthy sub or banked credits has both. They diverge whenever a parent's billing ability collapses but we don't want to tear the participation row down yet. Two scenarios trigger that divergence:
+
+| Trigger | Seat hold | Club access |
+|---|---|---|
+| **Sub cancelled, `credits_remaining = 0`** | Held for grace window | Blocked immediately |
+| **Sub payment failed, `credits_remaining = 0`** | Held for grace window | Blocked immediately |
+| Sub cancelled, `credits_remaining > 0` | Held | Allowed (until credits run out) |
+| Sub payment failed, `credits_remaining > 0` | Held | Allowed (until credits run out) |
+
+The grace window — `ACCESS_GRACE_DAYS`, a single platform-wide constant — gives the parent a few days to update their card or re-subscribe without losing their child's spot. After it expires, the seat is released and the lowest-position waitlist row is promoted; the participation row itself is hard-deleted on the same path as `cancel_participation_v2`. A successful re-charge or re-sub during the window cleanly restores access (sub status returns to `active`, items rebound, the next billing cycle tops up `credits_remaining`) — no special "rejoin" flow needed.
+
+Why these are separate gates:
+
+- **Holding the seat without granting access** prevents two opposite failure modes at once: rug-pull (parent missed one charge → child loses a club spot they've had for months) and free access (parent cancels and the gamer keeps showing up until someone notices). Either alone is wrong.
+- **Access is a runtime decision; seat is a long-lived state.** Access is checked every time a gamer tries to enter the voice room or view the schedule. Seat is a column count re-evaluated only when the grace job wakes up. Conflating them forces the access check to walk the seat lifecycle (or vice versa) — both worse than separating.
+- **Bundle-only participations behave the same way at `credits_remaining = 0`,** for symmetry: access is blocked, seat is held for grace days, then released. A parent who lets their bundle run out without buying more shouldn't be holding a seat indefinitely either.
+
+#### Single source of truth: `participation_access_state`
+
+`participation_access_state(participation_id)` is a SQL function (with a TS twin) returning one of `'allowed' | 'grace_blocked' | 'expired'`. It joins the participation to its family-sub status and credit balance and applies the table above. **Every "can this gamer use the club right now" check consults this function** — voice-room admission, schedule visibility, content gates. No surface re-derives the rule on its own.
+
+#### Grace expiry job
+
+A daily cron walks `participations_v2` for rows that have been `grace_blocked` longer than `ACCESS_GRACE_DAYS` and runs the same cascade as `cancel_participation_v2`: hard-delete the row, promote the lowest-position waitlist row, log the event. Email notification ("your child's spot was released because the billing issue wasn't resolved within X days") lives in the same follow-up PR as the promote-from-waitlist email.
+
+#### What the parent sees during grace
+
+On the (future) purchased-product detail page, a `grace_blocked` participation surfaces a prominent banner — *"Your card was declined — update your payment method to restore access. Your child's spot is held until {date}."* — with a one-click link into the Stripe billing portal. The same banner appears on the gamer's dashboard, worded gently and without exposing money detail to the child: *"Your parent needs to sort out billing — you'll be back in {Club Name} once that's done."*
+
+#### What this requires that doesn't exist today
+
+This section is **forward-looking spec** — none of it ships in the v2 launch PR. The shape it locks in:
+
+- The Stripe webhook must additionally subscribe to `invoice.payment_failed`, and `customer.subscription.updated` transitions to `past_due` / `unpaid` must be recorded — the access-state function needs that data.
+- A `grace_started_at timestamptz` column on `participations_v2` records when the row entered `grace_blocked`. Set by the webhook on the relevant transition; cleared on recovery. The grace-expiry job uses it.
+- `participation_access_state` and the `enforce_grace_expiry_v2` cron land together in a follow-up PR, and they must land **before** any access check (voice-room admission, schedule visibility) starts depending on them. Until then, the access check stays on enrollment-only.
 
 ### 4.5a Design principle for pricing code: keep the first pass simple
 
