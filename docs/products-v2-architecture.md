@@ -232,6 +232,17 @@ RLS only returns `pending` and `running` rows to anon/customer. `completed` is h
 - `/camps/[id]` — camp detail.
 - `/events/[id]` — event detail.
 
+### Same route, two layouts
+
+There is **one URL per product**. Marketing emails, share links, search results, and parent-to-parent forwards all keep working with the canonical detail URL — we deliberately did not split `/clubs/[id]` from `/my/clubs/[id]`. The page renders different layouts depending on whether the viewing parent has at least one of their gamers enrolled:
+
+- **Marketing layout** (no enrolled gamers) — what's described in the rest of this section. Hero, description, pricing picker, signup form. The Sign Up CTA is the page's reason for being.
+- **Purchased layout** (at least one enrolled gamer) — the real layout is *not yet built; tracked under "Future improvements" below*. Substantially different surface: sub management, session calendar with cancelled-session markers, per-gamer attendance, **add-another-gamer affordance**, leave-club / cancel-sub confirms. In place of it today is `ProductPurchasedDetailPlaceholder` — a deliberately ugly raw `<dl>` dump of the product fields and per-gamer participation rows. It exists so we can verify Stripe webhook fulfillment landed correct DB state during smoke-testing, and so the route shape is locked in (one URL, two branches in `product-detail-page.tsx`) before the real layout is designed. The placeholder file gets deleted when that lands; until then, browse → buy → success-redirect → Manage button all funnel into it.
+
+**Shared loading skeleton — replace when the real layout lands.** Both branches currently show `DetailLoadingSkeleton` (hero + 2-column with a tall right-rail signup panel). That matches the marketing layout and is harmless for the placeholder, but a real purchased layout will have a different shape (no signup panel, different right-rail content) and the skeleton will then reflow visibly when data arrives — exactly the layout-shift CLAUDE.md "Once a clickable or readable element is on screen, it must not move" forbids. When the real layout is designed, branch the skeleton too. The branch signal is tricky pre-data: there's no cached `mySignupState` to read on cold load, so options are (a) render a neutral skeleton that's a strict subset of both layouts, (b) split the route into two URLs after all, or (c) gate the skeleton choice on a server-rendered hint. Decide alongside the layout design.
+
+The today fallback for "add another gamer to a club I already have one in": parent revisits the browse page, picks the club, the gamer-picker offers their un-enrolled gamer. Clunky but functional. The proper affordance lives inside the purchased layout when it's built.
+
 ### Component map
 
 ```
@@ -286,16 +297,39 @@ Auth overlays sit on top: unauthenticated visitors see the panel info but the fo
 
 `/preview/products-v2/[type]/[state]` renders the body with a `buildDetailFixture(type, state)` payload. Public route inside `(public)` so it picks up the parent-eye chrome (header + footer) instead of the admin sidebar; never indexed (`metadata.robots = { index: false, follow: false }`); reachable only via `/admin/ui-components` "Preview full page →" links. Designers can poke at all 32 (type × state) cells without seeding any data.
 
-### Click target — UI-only phase
+### Movie-ticket reservation model
 
-The active CTA is a no-op for now. When Stripe Checkout wires up, the same handler will redirect to a Checkout Session created with the parent's selected pricing key + selected gamer.
+The `participations_v2` row **is** the seat. Each click on Sign Up creates a fresh `reserving` row that's held until either Stripe fires `checkout.session.completed` (→ `confirm_reservation_v2` flips it to `active`) or `checkout.session.expired` (→ `expire_reservation_v2` deletes it). These two events are mutually exclusive on Stripe's side, so the seat is never simultaneously released and confirmed — there is no race window.
+
+Status alone holds the seat. `count_seats_taken_v2` counts `active + reserving`; `reserved_until` is informational only and no longer consulted by seat math. We trust Stripe's webhook delivery as source of truth — if `checkout.session.expired` never arrives (rare), the reserving row is stuck until manual cleanup.
+
+The schema's partial unique index (`uq_participations_v2_active_or_waitlisted`) excludes `'reserving'`, so multiple held rows for the same parent/gamer can coexist. This is the load-bearing piece that lets each click be independent: a parent who abandoned a previous Stripe session can come back, click Sign Up again, and get a brand-new reservation row + Stripe session without any retry/reuse logic in the route.
+
+Concrete behaviors that fall out of this model:
+
+- **Cancel in Stripe Checkout = no DB action.** The session's `cancel_url` brings the parent back to the product page. We do nothing to the row. The unpaid Stripe session dies on its own at `expires_at` (~30 min), Stripe fires `expired`, and the webhook releases the seat.
+- **Retry = a brand-new reservation.** Each click creates a new row. If seats remain, the second click succeeds normally and the parent has two reserving rows simultaneously; whichever Stripe session pays first wins, the other is cleaned up by `expire_reservation_v2` 30 min later. If the parent's own held seat is the last one (last-seat case), the second click sees `kind='full'` and the UI flips to "Join the waitlist."
+- **Pay-twice is bounded by the schema.** Parent kept the original Stripe tab open *and* paid a retry tab: first webhook flips its row to `active`; second webhook tries to flip its row to `active` and hits the unique index → Postgres `23505`. The webhook catches the code, logs loudly, returns 200 to stop Stripe retries. The duplicate Stripe charge sits unrefunded; admin reconciles via the Stripe dashboard. Rare (parent has to actually pay both tabs); we accept the manual recovery to avoid an automated refund flow.
+- **Success redirects to the browse page, not back to the detail page.** This intentionally moves the post-payment race window off `/clubs/[id]`, so we don't need a "Finishing your sign-up" panel here.
+- **Held seat = visible to other parents as taken.** An abandoned reservation reduces the displayed seat count for up to 30 min until `checkout.session.expired` cleans it up. UX cost only matters on tiny-capacity products.
+
+The `expire_reservation_v2` RPC stays around — the webhook calls it on `checkout.session.expired` — but is **never** invoked from a customer-facing API route.
+
+**Waitlist is dead until promotion lands.** `promote_from_waitlist_v2` exists in the schema but no caller wires it up — there's no email path, no cron, no trigger on participation removal. So a waitlisted parent is not notified when a seat opens; whoever clicks Sign Up first when the seat shows as available wins it. Plan to wire promotion (post-removal RPC trigger + transactional email + opt-in re-checkout link) lands in a future PR. Until then the waitlist is purely informational: parents see a position number, but seats free in a first-come basis when someone clicks Sign Up.
+
+**Known minor UX wart: parent with held reserving row clicks "Join waitlist".** `join_waitlist_v2`'s idempotency check accepts `'reserving'` and returns the held row as-is, so the parent isn't actually waitlisted — the response carries `status: 'reserving'` and the UI may render it misleadingly. The state self-heals: ~30 min later Stripe fires `checkout.session.expired`, the webhook deletes the reserving row, and the parent can sign up fresh from the (now seat-available) product page. We deliberately do *not* drop `'reserving'` from the idempotency check today: with no promotion logic, a "correctly waitlisted" parent would actually be *stuck* (their waitlisted row blocks `create_participation_v2`'s already-signed-up check, and nothing removes it). The fix lands together with promotion.
+
+### Click target
+
+The active CTA POSTs to `/api/checkout/products/create` with `{ productId, gamerId, purchaseShape, currency }`. The route returns one of `redirect` (Stripe Checkout URL), `subscribed` (inline-add to existing family sub, no redirect), `free_confirmed` (free event, no Stripe), or `full` (UI flips to waitlist CTA). See `docs/plans/v2-stripe-participations-plan.md` while it exists, or read the route directly.
 
 ### Future improvements (detail-page surfaces)
 
+- **Purchased-state layout for `/clubs/[id]` (and camps/events).** The big one. Same route, substantially different UI when the viewer has at least one enrolled gamer. Includes: sub management (frequency switch, cancel sub, see next billing date), session calendar with cancelled-session markers and per-gamer attendance, **add-another-gamer affordance** (the gap left by today's "go back to browse and pick a different gamer" workaround), leave-club / cancel-session confirms, refund disclosure when a session was cancelled in-window. The current `AlreadySignedUpPanel` (active variant) is the v1 placeholder — keep it pointing at the parent's products list until the real layout ships.
 - **Admin-cancel-session UI.** `session_overrides_v2` is designed but not shipped. When it lands, extend `computeProductSessions` to merge those rows into `skips` — the calendar View needs no change.
 - **Show family discount.** Surface a "Save another 10% with 2+ kids" note below the pricing picker once the family-subscription Stripe coupon ships.
 - **Image hero + lightbox.** Today the image renders as a 1:1 thumbnail in the hero. A future "tap to enlarge" wouldn't break the layout.
-- **Real participation counts.** The panel reads `participationsCount: 0` until `participations_v2` ships. The deriver auto-promotes to richer states (`pending_thr` with real progress, `full_*`, urgent-low-seats) the moment that wires up.
+- **Dead-end detail panels — no normal browse-card entry point.** Browse-card CTAs only link to actionable states (`open` / `pending_thr` / `closed_pre` / `full_waitlist`); `full_closed` shows a disabled button and `running_late` / `ended` show no CTA at all. The corresponding detail-page panels (`FullClosedPanel`, `RunningLatePanel`, `EndedPanel`) therefore have no normal browse → detail entry. They still render defensively for direct-URL access and for in-session state transitions (open product hits its cap during the user's session, end_date crosses underfoot), but they aren't exercised by typical browsing. The UI Components page is now the only reliable regression surface for these panels — keep its preview tiles current as the canonical demo, and treat any visual change to those panels as in scope for the demo's review pass.
 
 ### `?mock=1` purchased section
 

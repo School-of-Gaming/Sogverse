@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,9 +39,37 @@ export type AuthState =
       gamers: readonly { id: string; name: string; age: number | null }[];
     };
 
+/**
+ * One of the customer's gamers already has a seat or is on the waitlist for
+ * this product. The detail page detects this via
+ * `useParticipationCounts(...).mySignupState` and passes it through; when
+ * non-null, the panel replaces the signup form with a status panel.
+ *
+ * `reserving` is intentionally not part of this union — the movie-ticket
+ * reservation model treats a held seat as the parent's to retry against
+ * (they just click Sign Up again), not as an "already signed up" state.
+ */
+export type MyParticipationState = "waitlisted" | "active";
+
+/**
+ * CTA copy hint for subscriptions. `inline_add` triggers "Add to subscription
+ * · €X/mo (charged today)" copy, signalling that the parent's card on file
+ * will be charged immediately for the prorated period — no Stripe Checkout
+ * redirect. Per docs/products-redesign.md §4.5b.
+ */
+export type SubCtaMode = "new" | "inline_add";
+
 export interface SignupPanelViewProps {
   productType: ProductTypeV2;
   state: RegistrationState;
+  /**
+   * When set, the parent (or one of their gamers) is already on this product
+   * — render the already-signed-up status panel instead of dispatching by
+   * `state`.
+   */
+  myParticipationState: MyParticipationState | null;
+  /** Link to the parent's purchased-products list, used by the active panel. */
+  myProductsHref: string;
   authState: AuthState;
   pricingTracks: PricingTracks;
   selectedPricingKey: PricingOption["key"];
@@ -52,6 +80,14 @@ export interface SignupPanelViewProps {
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
   onSubmit: () => void;
+  /** Separate from onSubmit — the waitlist branch calls this. */
+  onJoinWaitlist: () => void;
+  /** Sub CTA copy — `'inline_add'` when the parent already has a live sub. */
+  subCtaMode: SubCtaMode;
+  /** Mutation-state hint for disabling the CTA while in flight. */
+  submitting?: boolean;
+  /** Server-side error from the most recent submit. */
+  submitError?: string | null;
   currency: SupportedCurrency;
   locale: string;
   /** Render frozen at this instant for deterministic mock previews. */
@@ -59,6 +95,14 @@ export interface SignupPanelViewProps {
 }
 
 export function SignupPanelView(props: SignupPanelViewProps) {
+  if (props.myParticipationState !== null) {
+    return (
+      <AlreadySignedUpPanel
+        kind={props.myParticipationState}
+        myProductsHref={props.myProductsHref}
+      />
+    );
+  }
   switch (props.state.kind) {
     case "ended":
       return <EndedPanel productType={props.productType} />;
@@ -75,6 +119,40 @@ export function SignupPanelView(props: SignupPanelViewProps) {
     case "open":
       return <OpenPanel {...props} />;
   }
+}
+
+// ---------- Variant: already signed up ----------
+
+function AlreadySignedUpPanel({
+  kind,
+  myProductsHref,
+}: {
+  kind: MyParticipationState;
+  myProductsHref: string;
+}) {
+  const t = useTranslations("productDetail.signupPanel");
+  if (kind === "waitlisted") {
+    return (
+      <PanelShell banner={t("alreadySignedUpWaitlistBanner")} tone="secondary">
+        <p className="text-sm text-muted-foreground">
+          {t("alreadySignedUpWaitlistNote")}
+        </p>
+      </PanelShell>
+    );
+  }
+  // active
+  return (
+    <PanelShell banner={t("alreadySignedUpActiveBanner")} tone="primary">
+      <p className="text-sm text-muted-foreground">
+        {t("alreadySignedUpActiveNote")}
+      </p>
+      <Link href={myProductsHref} className="w-full">
+        <Button size="lg" variant="outline" className="w-full text-base">
+          {t("ctaViewMyProducts")}
+        </Button>
+      </Link>
+    </PanelShell>
+  );
 }
 
 // ---------- Shared shell ----------
@@ -181,6 +259,8 @@ function FullWaitlistPanel(props: SignupPanelViewProps) {
       />
       <FormOrAuth
         {...props}
+        // Full+waitlist branch dispatches to onJoinWaitlist instead of onSubmit.
+        onSubmit={props.onJoinWaitlist}
         ctaLabelActive={t("ctaWaitlist")}
         ctaLabelIdle={t("ctaWaitlist")}
         active
@@ -259,6 +339,7 @@ function PreOpenPanel(props: SignupPanelViewProps) {
   // in practice (the parent dispatches by kind) but kept for type
   // narrowing in the JSX below.
   const t = useTranslations("productDetail.signupPanel");
+  const format = useFormatter();
   const opensAt =
     props.state.kind === "closed_pre"
       ? props.state.opensAt
@@ -272,18 +353,26 @@ function PreOpenPanel(props: SignupPanelViewProps) {
     props.selectedPricingKey,
     props.currency,
     props.locale,
+    props.subCtaMode,
   );
 
   if (props.state.kind !== "closed_pre") return null;
 
-  const banner = isOpen ? t("bannerCountdownDone") : t("bannerCountdown");
+  // Pre-zero banner names the exact moment registration opens — the
+  // countdown clock sits below the button (so the button doesn't shift
+  // when it unmounts), so the banner has to carry the "when" itself.
+  const banner = isOpen
+    ? t("bannerCountdownDone")
+    : t("bannerCountdown", {
+        date: format.dateTime(new Date(targetMs), {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }),
+      });
   const tone: Tone = isOpen ? "primary" : "muted";
 
   return (
     <PanelShell banner={banner} tone={tone}>
-      {!isOpen && (
-        <CountdownClock targetMs={targetMs} fixedNowMs={props.fixedNowMs} />
-      )}
       <PricingPanelView
         tracks={props.pricingTracks}
         selectedKey={props.selectedPricingKey}
@@ -305,6 +394,20 @@ function PreOpenPanel(props: SignupPanelViewProps) {
         ctaLabelActive={isOpen ? activeLabel : t("ctaPreOpenReady")}
         active={isOpen}
       />
+      {/* Countdown stays mounted across the pre-open → open flip. When the
+          target instant arrives we set `done`, which keeps the four cells
+          in place but renders them as `--` placeholders. Unmounting the
+          clock would shrink the panel — and because the panel is sticky on
+          desktop and reflows on mobile, that shrink propagates outward
+          (page section height changes, sticky bottom anchor pulls content
+          up, etc.) and the Sign-up button shifts under the parent's
+          cursor. The whole point of the live countdown is the one-tap-buy
+          moment, so the slot is held constant. */}
+      <CountdownClock
+        targetMs={targetMs}
+        fixedNowMs={props.fixedNowMs}
+        done={isOpen}
+      />
     </PanelShell>
   );
 }
@@ -320,6 +423,7 @@ function OpenPanel(props: SignupPanelViewProps) {
     props.selectedPricingKey,
     props.currency,
     props.locale,
+    props.subCtaMode,
   );
 
   if (props.state.kind !== "open") return null;
@@ -484,7 +588,7 @@ function SignupForm(
 ) {
   const t = useTranslations("productDetail.signupPanel");
   const formReady = props.selectedGamerId !== null && props.agreed;
-  const clickable = formReady && props.active;
+  const clickable = formReady && props.active && !props.submitting;
 
   return (
     <div className="space-y-4">
@@ -548,8 +652,18 @@ function SignupForm(
         disabled={!clickable}
         onClick={props.onSubmit}
       >
-        {formReady ? props.ctaLabelActive : props.ctaLabelIdle}
+        {props.submitting
+          ? t("ctaSubmitting")
+          : formReady
+            ? props.ctaLabelActive
+            : props.ctaLabelIdle}
       </Button>
+
+      {props.submitError && (
+        <p className="text-xs text-destructive" role="alert">
+          {props.submitError}
+        </p>
+      )}
     </div>
   );
 }
@@ -596,11 +710,18 @@ function useActiveCtaLabel(
   selectedKey: PricingOption["key"],
   currency: SupportedCurrency,
   locale: string,
+  subCtaMode: SubCtaMode,
 ): string {
   const t = useTranslations("productDetail.signupPanel");
   const option = findOption(pricingTracks, selectedKey);
   const price = priceForCta(option, currency, locale);
   if (price === null) return t("ctaActive", { verb });
+  // Inline-add path: parent already has a live family sub at this
+  // (frequency, currency). Copy makes it explicit that the card on file
+  // will be charged today for the prorated period.
+  if (subCtaMode === "inline_add" && option?.kind === "subscription") {
+    return t("ctaInlineAddSub", { price });
+  }
   return t("ctaActiveWithPrice", { verb, price });
 }
 

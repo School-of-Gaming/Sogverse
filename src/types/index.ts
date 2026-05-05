@@ -215,6 +215,75 @@ export type ProductV2BrowseRow = ProductV2 & {
   locations: BrowseRowLocation | null;
 };
 
+// ---------------------------------------------------------------------------
+// products v2 — participations, payments, family subs (00039)
+// See docs/products-redesign.md §§ 5.5, 5.7, 5.7a, 5.1a, 6.1.
+// ---------------------------------------------------------------------------
+
+// Enums
+export type ParticipationStatus = Database["public"]["Enums"]["participation_status_v2"];
+export type SubscriptionFrequencyV2 = Database["public"]["Enums"]["subscription_frequency_v2"];
+export type PaymentPurposeV2 = Database["public"]["Enums"]["payment_purpose_v2"];
+export type RefundReasonV2 = Database["public"]["Enums"]["refund_reason_v2"];
+export type EffectiveProductStatusV2DB = Database["public"]["Enums"]["effective_product_status_v2"];
+
+// participations_v2
+export type Participation = Database["public"]["Tables"]["participations_v2"]["Row"];
+export type ParticipationInsert = Database["public"]["Tables"]["participations_v2"]["Insert"];
+
+/**
+ * Derived 3-state placement vocabulary for participations.
+ * See products-redesign.md §3 "Participation state vocabulary":
+ *   - 'waitlisted'  — `status = 'waitlisted'`
+ *   - 'unassigned'  — `status = 'active' AND group_id IS NULL`
+ *   - 'assigned'    — `status = 'active' AND group_id IS NOT NULL`
+ *
+ * Use `participationStateOf()` (src/lib/participation-state.ts) to derive.
+ */
+export type ParticipationState = "waitlisted" | "unassigned" | "assigned";
+
+/**
+ * Purchase shape selectors the client sends to the create-participation route.
+ * Server recomputes prices from the product's stored base price + the
+ * pricing-v2 constants — clients never send amounts.
+ */
+export type PurchaseShape =
+  | "bundle_1"
+  | "bundle_4"
+  | "bundle_10"
+  | "subscription_monthly"
+  | "subscription_quarterly"
+  | "subscription_yearly"
+  | "single_payment"
+  | "free";
+
+// payments_v2
+export type Payment = Database["public"]["Tables"]["payments_v2"]["Row"];
+export type PaymentInsert = Database["public"]["Tables"]["payments_v2"]["Insert"];
+
+// refunds_v2
+export type Refund = Database["public"]["Tables"]["refunds_v2"]["Row"];
+export type RefundInsert = Database["public"]["Tables"]["refunds_v2"]["Insert"];
+
+// family_subscriptions_v2 + family_subscription_items_v2
+export type FamilySubscription = Database["public"]["Tables"]["family_subscriptions_v2"]["Row"];
+export type FamilySubscriptionInsert = Database["public"]["Tables"]["family_subscriptions_v2"]["Insert"];
+export type FamilySubscriptionItem = Database["public"]["Tables"]["family_subscription_items_v2"]["Row"];
+export type FamilySubscriptionItemInsert = Database["public"]["Tables"]["family_subscription_items_v2"]["Insert"];
+
+// product_subscription_prices_v2 (Stripe Price ID cache; admin-only)
+export type ProductSubscriptionPriceV2 = Database["public"]["Tables"]["product_subscription_prices_v2"]["Row"];
+export type ProductSubscriptionPriceV2Insert = Database["public"]["Tables"]["product_subscription_prices_v2"]["Insert"];
+
+// session_cancellations_v2 (ships now even though the cancel-session UI does not)
+export type SessionCancellationV2 = Database["public"]["Tables"]["session_cancellations_v2"]["Row"];
+
+// credit_deductions_v2 (cron audit ledger)
+export type CreditDeductionV2 = Database["public"]["Tables"]["credit_deductions_v2"]["Row"];
+
+// product_seat_counts_v2 (public-readable rollup feeding the realtime counter)
+export type ProductSeatCountV2 = Database["public"]["Tables"]["product_seat_counts_v2"]["Row"];
+
 // whatsapp_contacts
 export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"]["Row"];
 

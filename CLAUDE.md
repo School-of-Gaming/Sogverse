@@ -86,6 +86,14 @@ A skeleton with no rendered text or interactions (just animated placeholders) do
 
 Layout changes on the same page *after* user interaction (clicking a button that reveals more content) are more acceptable but still not ideal — prefer an animated transition over a jump when you do need to reflow. Navigating to a new page is fine; this rule is about in-place shifts. If you're unsure how to reconcile the design with this rule, or hit a genuine edge case (e.g. a countdown timer that must update continuously — `tabular-nums` keeps digit columns from reflowing), check in with me. One reasonable escape hatch for unavoidable reflow is to place clickable elements somewhere the shifting region won't push them.
 
+### Loading & Disabled State
+
+**Rule: A button must not visually re-enable between the click and the action actually finishing.** A click promises one outcome; the disabled/loading state has to persist all the way through to it — across any redirect, route transition, or panel/view swap that the success path triggers. React Query's `mutation.isPending` is not enough on its own: it flips false the moment React Query dispatches the success state, but `onSuccess` runs after that and any navigation/view-swap is later still — so the button briefly re-enables and a fast user can fire the action twice.
+
+The pattern that works: hold a local `committing` boolean, flip it true *synchronously before* `mutate()` runs, and only clear it on outcomes where the user needs to retry (a `'full'` race, a thrown error). On outcomes where the page unloads (`window.location.href = …`) or the panel swaps to a different view (a query refetch flips the visible component), leave the flag set — the unmount/swap takes care of the rest. OR `committing` into the button's `disabled` and use it (not `isPending`) for the spinner. For internal Next.js route transitions, `useTransition`'s `isPending` follows the same shape and can be ORed in alongside.
+
+Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late and does not close the gap. The flag has to be live before any render after the click.
+
 ### Date & Time Formatting
 
 **Rule: Pick the right tool for the date/time operation, and never use UTC as a stand-in for someone's local date.**

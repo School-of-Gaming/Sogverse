@@ -1,17 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/providers/auth-provider";
-import { useProductV2Detail } from "@/services/products-v2";
+import { useProductV2Detail, productV2Keys } from "@/services/products-v2";
 import { useMyGamers } from "@/services/gamers";
+import {
+  participationKeys,
+  useMyParticipations,
+  useMyFamilySubs,
+  useParticipationCounts,
+  useProductSeatCountsRealtime,
+} from "@/services/participations";
 import type { ProductTypeV2 } from "@/types";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { ProductDetailPageBody } from "./product-detail-page-body";
-import type { AuthState } from "./signup-panel-view";
+import { ProductPurchasedDetailPlaceholder } from "./product-purchased-detail-placeholder";
+import type { AuthState, MyParticipationState } from "./signup-panel-view";
 
 // Route-level adapter: fetches the product, resolves the auth state
 // (signed-in customer with gamers / customer with no gamers / non-
@@ -26,7 +36,9 @@ interface ProductDetailPageProps {
 
 export function ProductDetailPage({ productId, productType }: ProductDetailPageProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
+  const queryClient = useQueryClient();
 
   const { user, profile, isLoading: authLoading } = useAuth();
   const isCustomer = profile?.role === "customer";
@@ -38,7 +50,56 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
     enabled: isCustomer,
   });
 
-  if (productLoading || authLoading || (isCustomer && gamersLoading)) {
+  const { data: counts, isLoading: countsLoading } = useParticipationCounts(
+    product ? [product.id] : [],
+  );
+  const myCount = counts?.[0];
+
+  // The purchased-detail branch (placeholder for now; real layout TBD) needs
+  // the actual participation rows, not just the `mySignupState` flag, so we
+  // pull the customer's full list and filter to this product. The browse
+  // page already prefetches this query, so on warm-cache navigation it's
+  // instant; on cold load we wait below.
+  const { data: myParticipations, isLoading: myParticipationsLoading } =
+    useMyParticipations();
+
+  // Family subs for the post-purchase placeholder. Only fetched when the
+  // user is a logged-in customer; the placeholder uses this to surface
+  // Stripe↔DB drift (sub charging but participation flagged non-sub-covered).
+  const { data: myFamilySubs } = useMyFamilySubs();
+
+  // Live seat-count updates for this single product. Browse pages don't
+  // subscribe per-card (a 30-card grid is too many channels) — detail page
+  // is the only realtime subscriber. Per CLAUDE.md the callback only
+  // invalidates queries; never run a Supabase data query inside it.
+  useProductSeatCountsRealtime(product?.id);
+
+  // Stripe Checkout bounce-back. Success goes to the browse page (handled
+  // upstream), so a `signup=success` here only happens on legacy or copied
+  // URLs — invalidate just in case the realtime channel missed the rollup.
+  // We deliberately do NOT free the seat on `signup=canceled`: the
+  // movie-ticket model holds the seat for the full reservation lifetime, and
+  // the parent retries by clicking Sign Up again.
+  const signupResult = searchParams.get("signup");
+  useEffect(() => {
+    if (signupResult === "success") {
+      queryClient.invalidateQueries({ queryKey: participationKeys.all });
+      queryClient.invalidateQueries({ queryKey: productV2Keys.all });
+    }
+  }, [signupResult, queryClient]);
+
+  // Wait on every query whose result decides which branch (purchased vs.
+  // browse) renders, so we don't paint the signup panel and then snap to
+  // the placeholder a tick later. countsLoading carries `mySignupState`
+  // (the branch signal); myParticipationsLoading carries the rows the
+  // placeholder needs. For non-customers both queries return fast/empty.
+  if (
+    productLoading ||
+    authLoading ||
+    (isCustomer && gamersLoading) ||
+    (isCustomer && countsLoading) ||
+    (isCustomer && myParticipationsLoading)
+  ) {
     return <DetailLoadingSkeleton />;
   }
 
@@ -64,23 +125,68 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
       kind: "ready",
       gamers: gamers.map((g) => ({
         id: g.id,
-        name: g.username,
+        name: g.display_name || g.username,
         age: null,
       })),
     };
   })();
 
+  // Seat math feeds active+reserving for the seat-left pill. Reserving rows
+  // count against the seat too — they're held for 30 min while the parent
+  // is in Stripe Checkout. The threshold check uses the same number; the
+  // small over-count for in-flight reservations is acceptable in v1.
+  const participationsCount =
+    (myCount?.activeCount ?? 0) + (myCount?.reservingCount ?? 0);
+
   const state = deriveRegistrationState({
     product,
     now: new Date(),
-    participationsCount: 0,
+    participationsCount,
   });
+
+  // Already-signed-up override: if any of the customer's gamers has an
+  // active or waitlisted row on this product, swap the entire detail page
+  // for the purchased view. Reserving rows are deliberately not surfaced —
+  // the movie-ticket model treats the held seat as the parent's to retry
+  // against (they just click Sign Up again), not as a "you're already signed
+  // up" state. See docs/plans/v2-stripe-participations-plan.md "Movie-ticket
+  // reservation model".
+  const myParticipationState: MyParticipationState | null =
+    myCount?.mySignupState === "active" ||
+    myCount?.mySignupState === "waitlisted"
+      ? myCount.mySignupState
+      : null;
+
+  if (myParticipationState !== null) {
+    // Filter the customer's full list down to rows for *this* product.
+    // Multi-gamer households get one row per enrolled gamer; the placeholder
+    // renders a block per row. The flag is on `participations_v2.product_id`
+    // (not the joined product object) which is non-null by schema, so a
+    // simple equality is enough.
+    const rows = (myParticipations ?? []).filter(
+      (p) => p.product_id === product.id,
+    );
+    // Show ALL the customer's family subs, not just ones touching this
+    // product. This is a debugging surface — full subscription state
+    // visibility is the point. Per-item rendering in the placeholder shows
+    // which participation each item covers, so the user can tell at a glance
+    // which item is for the current product vs. another.
+    return (
+      <ProductPurchasedDetailPlaceholder
+        product={product}
+        productType={productType}
+        participations={rows}
+        familySubs={myFamilySubs ?? []}
+      />
+    );
+  }
 
   return (
     <ProductDetailPageBody
       product={product}
       state={state}
       authState={authState}
+      myParticipationState={null}
     />
   );
 }

@@ -104,13 +104,15 @@ function mockAuthenticatedWithRole(role: string) {
 
 function createRequest(
   body: Record<string, unknown>,
-  origin = "http://localhost:3000"
+  origin = "http://localhost:3000",
+  host = "localhost:3000"
 ): Request {
   return new Request("http://localhost:3000/api/checkout/tokens", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       origin,
+      host,
     },
     body: JSON.stringify(body),
   });
@@ -369,10 +371,17 @@ describe("POST /api/checkout/tokens", () => {
     mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
     mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
 
+    // Simulate a per-PR Vercel preview deploy: VERCEL_URL is the deployment's
+    // own hostname, not user-controllable, and is trusted by getOrigin when
+    // the incoming Host matches.
+    const originalVercelUrl = process.env.VERCEL_URL;
+    process.env.VERCEL_URL = "myapp.vercel.app";
+
     await POST(
       createRequest(
         { priceId: "price_starter_usd", currency: "usd", returnPath: "/parent/sorg" },
-        "https://myapp.vercel.app"
+        "https://myapp.vercel.app",
+        "myapp.vercel.app",
       )
     );
 
@@ -383,6 +392,35 @@ describe("POST /api/checkout/tokens", () => {
     expect(params.cancel_url).toBe(
       "https://myapp.vercel.app/parent/sorg?canceled=true"
     );
+
+    process.env.VERCEL_URL = originalVercelUrl;
+  });
+
+  it("ignores a spoofed Host header and falls back to the canonical origin", async () => {
+    mockAuthenticatedCustomer();
+    mockGetProductByPriceId.mockResolvedValue(ONE_TIME_PRODUCT);
+    mockStripeSessionCreate.mockResolvedValue({ url: "https://stripe.com/s" });
+
+    const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    process.env.NEXT_PUBLIC_SITE_URL = "https://sogverse.sog.gg";
+
+    await POST(
+      createRequest(
+        { priceId: "price_starter_usd", currency: "usd", returnPath: "/parent/sorg" },
+        "https://evil.com",
+        "evil.com",
+      )
+    );
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    expect(params.success_url).toBe(
+      "https://sogverse.sog.gg/parent/sorg?success=true"
+    );
+    expect(params.cancel_url).toBe(
+      "https://sogverse.sog.gg/parent/sorg?canceled=true"
+    );
+
+    process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
   });
 
   it("should default returnPath to /sorg when not provided", async () => {

@@ -262,7 +262,9 @@ This is intentionally simpler than the Sorg token model, which deducted tokens a
 | **Cancel subscription** | The Stripe sub stops at period end. Participations stay alive. | Banked credits stay. Future sessions become bundle-covered; gamer keeps attending until credits run out. |
 | **Leave this club** | The participation is hard-deleted. The corresponding sub item is removed from Stripe (and the sub itself if this was the last item). | Banked credits forfeit. No Stripe refund. |
 
-**The distinction only matters when balance > 0.** When `credits_remaining = 0`, the two actions are functionally identical — either way the gamer stops attending immediately. The detail page can collapse to a single "Leave this club" button in that case. When `credits_remaining > 0`, both actions must be present and the confirm dialog for each must spell out exactly what happens to the credits, with the count visible.
+**The distinction only matters when balance > 0.** When `credits_remaining = 0`, the two actions are functionally identical from the gamer's day-to-day perspective — either way the gamer stops attending immediately. The detail page can collapse to a single "Leave this club" button in that case. When `credits_remaining > 0`, both actions must be present and the confirm dialog for each must spell out exactly what happens to the credits, with the count visible.
+
+(There is one second-order difference even at `credits_remaining = 0`: a `Cancel subscription` puts the seat into a grace-window hold, while `Leave this club` releases it immediately. See §4.5d.)
 
 The dialog copy is the load-bearing UX — a parent who cancels their sub and *thinks* they've left the club entirely will be confused weeks later when their child is still expected to show up (or when they still see the club on their dashboard). Confirm-dialog wording for the eventual implementation:
 
@@ -270,6 +272,50 @@ The dialog copy is the load-bearing UX — a parent who cancels their sub and *t
 - **Leave this club** confirm: *"Leave {Club Name}? Your child loses their spot, your **N credits forfeit**, and your subscription continues for any other clubs."*
 
 Wording will iterate during the detail-page design pass; the rule the wording must satisfy is in this section.
+
+### 4.5d Seat hold vs. club access — two independent gates with a grace window
+
+A participation row carries two distinct rights, not one:
+
+- **Seat hold** — the row occupies a slot in `products_v2.seat_count`. Other parents see this slot as taken; the waitlist sees it as not-yet-promotable.
+- **Club access** — the gamer can join the club's voice room, see the schedule, receive content, and otherwise *participate* in the club.
+
+Most of the time these move together: an `active` participation backed by a healthy sub or banked credits has both. They diverge whenever a parent's billing ability collapses but we don't want to tear the participation row down yet. Two scenarios trigger that divergence:
+
+| Trigger | Seat hold | Club access |
+|---|---|---|
+| **Sub cancelled, `credits_remaining = 0`** | Held for grace window | Blocked immediately |
+| **Sub payment failed, `credits_remaining = 0`** | Held for grace window | Blocked immediately |
+| Sub cancelled, `credits_remaining > 0` | Held | Allowed (until credits run out) |
+| Sub payment failed, `credits_remaining > 0` | Held | Allowed (until credits run out) |
+
+The grace window — `ACCESS_GRACE_DAYS`, a single platform-wide constant — gives the parent a few days to update their card or re-subscribe without losing their child's spot. After it expires, the seat is released and the lowest-position waitlist row is promoted; the participation row itself is hard-deleted on the same path as `cancel_participation_v2`. A successful re-charge or re-sub during the window cleanly restores access (sub status returns to `active`, items rebound, the next billing cycle tops up `credits_remaining`) — no special "rejoin" flow needed.
+
+Why these are separate gates:
+
+- **Holding the seat without granting access** prevents two opposite failure modes at once: rug-pull (parent missed one charge → child loses a club spot they've had for months) and free access (parent cancels and the gamer keeps showing up until someone notices). Either alone is wrong.
+- **Access is a runtime decision; seat is a long-lived state.** Access is checked every time a gamer tries to enter the voice room or view the schedule. Seat is a column count re-evaluated only when the grace job wakes up. Conflating them forces the access check to walk the seat lifecycle (or vice versa) — both worse than separating.
+- **Bundle-only participations behave the same way at `credits_remaining = 0`,** for symmetry: access is blocked, seat is held for grace days, then released. A parent who lets their bundle run out without buying more shouldn't be holding a seat indefinitely either.
+
+#### Single source of truth: `participation_access_state`
+
+`participation_access_state(participation_id)` is a SQL function (with a TS twin) returning one of `'allowed' | 'grace_blocked' | 'expired'`. It joins the participation to its family-sub status and credit balance and applies the table above. **Every "can this gamer use the club right now" check consults this function** — voice-room admission, schedule visibility, content gates. No surface re-derives the rule on its own.
+
+#### Grace expiry job
+
+A daily cron walks `participations_v2` for rows that have been `grace_blocked` longer than `ACCESS_GRACE_DAYS` and runs the same cascade as `cancel_participation_v2`: hard-delete the row, promote the lowest-position waitlist row, log the event. Email notification ("your child's spot was released because the billing issue wasn't resolved within X days") lives in the same follow-up PR as the promote-from-waitlist email.
+
+#### What the parent sees during grace
+
+On the (future) purchased-product detail page, a `grace_blocked` participation surfaces a prominent banner — *"Your card was declined — update your payment method to restore access. Your child's spot is held until {date}."* — with a one-click link into the Stripe billing portal. The same banner appears on the gamer's dashboard, worded gently and without exposing money detail to the child: *"Your parent needs to sort out billing — you'll be back in {Club Name} once that's done."*
+
+#### What this requires that doesn't exist today
+
+This section is **forward-looking spec** — none of it ships in the v2 launch PR. The shape it locks in:
+
+- The Stripe webhook must additionally subscribe to `invoice.payment_failed`, and `customer.subscription.updated` transitions to `past_due` / `unpaid` must be recorded — the access-state function needs that data.
+- A `grace_started_at timestamptz` column on `participations_v2` records when the row entered `grace_blocked`. Set by the webhook on the relevant transition; cleared on recovery. The grace-expiry job uses it.
+- `participation_access_state` and the `enforce_grace_expiry_v2` cron land together in a follow-up PR, and they must land **before** any access check (voice-room admission, schedule visibility) starts depending on them. Until then, the access check stays on enrollment-only.
 
 ### 4.5a Design principle for pricing code: keep the first pass simple
 
@@ -308,15 +354,17 @@ The lock above is a *gate*, not a *hold*. By itself it serializes seat-count rea
 The chosen mechanism is a **reserving participation row**, not a held card authorization:
 
 1. Parent clicks the type-specific signup verb. The client calls a `create_participation_v2` API route with `(product_id, gamer_id, purchase_shape, currency)`.
-2. The RPC takes the gate lock, counts seats (active + non-expired-reserving rows), then either:
-   - **Seat available** — inserts a `participations_v2` row with `status='reserving'` and `reserved_until = now() + 30 minutes`, returns a Stripe Checkout URL whose metadata is keyed to that row.
+2. The RPC takes the gate lock, counts seats (`active + reserving`), then either:
+   - **Seat available** — inserts a `participations_v2` row with `status='reserving'`, returns a Stripe Checkout URL whose metadata is keyed to that row.
    - **No seat** — returns `{ full: true }`. The client flips the CTA to "Join the waitlist". No Stripe call ever made.
 3. Parent completes Stripe Checkout → webhook flips the reserving row to `status='active'` and writes `payments_v2`.
-4. Parent abandons → reservation expires after 30 min. The next signup attempt's seat-count query ignores expired reserving rows; the seat returns to the pool.
+4. Parent abandons → Stripe fires `checkout.session.expired` (~30 min after creation, the session lifetime), webhook calls `expire_reservation_v2`, the row is deleted, and the seat returns to the pool.
 
 This pattern works uniformly for **all** purchase shapes — bundles, single-payment camps/events, and family subs. The same gate decides who proceeds to Stripe; nobody is sent through Checkout without a held seat.
 
-**Why 30 min, not shorter.** The reservation lifetime is matched to Stripe Checkout's session lifetime (also 30 min by default). A shorter reservation would create a window where Stripe still accepts the parent's payment but our reservation has lapsed, forcing a "completed after expired" branch that's complex to test and confusing when it fires. 30 min eliminates the gap entirely: if Stripe says the payment is valid, the seat is theirs. The trade-off is slightly slower seat-return for parents who abandon — acceptable, since the alternative is occasional billed-but-no-seat surprises.
+**Status, not a timer, holds the seat.** Earlier drafts had `count_seats_taken_v2` exclude reserving rows past `reserved_until`; that created a race window at the 30-min boundary (Stripe accepts payment at T=29:59, our timer lapses at T=30:00, another parent grabs the seat before our webhook arrives). Counting all reserving rows regardless of timer eliminates that window: the row stays held until either `confirm_reservation_v2` or `expire_reservation_v2` fires, and Stripe guarantees those two events are mutually exclusive for a given session. Trade-off: we trust Stripe's webhook delivery to release abandoned seats. If `checkout.session.expired` never arrives (rare), the row is stuck until manual cleanup.
+
+**Each click is an independent reservation.** A parent who abandons mid-pay and clicks Sign Up again gets a brand-new reservation row, not the old one. The schema permits multiple `reserving` rows per `(product, gamer)` (the partial unique index excludes `'reserving'`); whichever Stripe session pays first wins, the other is cleaned up by `expire_reservation_v2`. Pay-twice (parent pays both tabs) is bounded by the unique index firing on the second confirm — the webhook catches `23505`, logs, and returns 200; the duplicate Stripe charge is left for manual refund. We accept this manual-recovery cost in exchange for not maintaining an automated refund flow.
 
 **Subscriptions and the manual-capture gap.** Stripe doesn't support `capture_method: "manual"` for recurring charges, which complicates the "auth-then-decide" pattern an earlier draft of this doc suggested for one-shot bundles. The reservation row sidesteps this entirely: the seat is held in our DB before any Stripe transaction starts, so subs and one-offs follow the same path. The manual-capture future improvement (previously listed under `products-v2-architecture.md`) is **obsolete** under this model.
 
@@ -709,6 +757,8 @@ participations_v2
 ```
 
 **Hard-delete on cancellation** — same as prior draft. Cancellation (customer- or admin-initiated) hard-deletes the row via `cancel_participation_v2` / `admin_remove_participation_v2`. No soft-delete column; cancelled rows are physically gone so `UNIQUE(product_id, gamer_id)` works on re-signup.
+
+> **TODO (deferred — cancellation flow is not in this PR).** The hard-delete cascades down the FK chain via `ON DELETE CASCADE` on `credit_deductions_v2.participation_id` and `session_cancellations_v2.participation_id` — so the audit ledger that proves what was charged and when sessions were cancelled disappears the moment a participation is cancelled. That's exactly the evidence we'd want for chargeback/dispute forensics. When the cancellation flow ships, decide between (a) soft-cancel (status flip to a new `'cancelled'` enum + `cancelled_at` / `cancelled_by` columns + adjust the partial UNIQUE to exclude `'cancelled'`), or (b) keep hard-delete on participations but change those two FKs to `ON DELETE RESTRICT` (matching `refunds_v2.payment_id` which already does this) so the ledger outlives the row. Don't ship the cancel RPC against the current cascade.
 
 `group_id IS NULL` is the unassigned inbox state. Deleting a group resets its participations to `group_id = NULL`.
 
@@ -1108,18 +1158,19 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - ✓ `products_v2` lifecycle status enum stores admin facts only; effective `running` / `completed` derived at read time.
 - ○ `product_groups_v2` (form captures groups in local state but does not persist yet; UI surfaces a "not wired" warning).
 - ○ `gedu_group_assignments_v2`.
-- ○ `participations_v2`.
-- ○ `payments_v2`, `refunds_v2`.
-- ○ `family_subscriptions_v2`, `family_subscription_items_v2`, `product_subscription_prices_v2`.
-- ○ `session_overrides_v2`, `session_substitutions_v2`, `session_attendance_v2`, `session_notes_v2`, `session_cancellations_v2`, `credit_deductions_v2`.
+- ✓ `participations_v2` (with `'reserving'` status + `reserved_until`, `credits_remaining`, partial unique index excluding reserving rows).
+- ✓ `payments_v2`, `refunds_v2` (UNIQUE on `stripe_event_id`).
+- ✓ `family_subscriptions_v2`, `family_subscription_items_v2`, `product_subscription_prices_v2`.
+- ✓ `session_cancellations_v2`, `credit_deductions_v2` (append-only ledger), `product_seat_counts_v2` (public-readable rollup with trigger-driven counts + Realtime publication).
+- ○ `session_overrides_v2`, `session_substitutions_v2`, `session_attendance_v2`, `session_notes_v2`.
 
 **RPCs (§6)** — `_v2`.
 - ✓ `create_product_v2` — atomic insert across products + translations + schedule slots + tags + prices + holiday calendars; rejects payloads missing en/fi.
-- ◐ Effective-status derivation — TS helper (`src/components/admin/products-v2/effective-status.ts`) ships; SQL twin `effective_status_v2(product_id)` not yet built (deferred until DB-side filters need it).
-- ○ Participation lifecycle (`create_participation_v2`, `cancel_participation_v2`, `admin_remove_participation_v2`, `promote_from_waitlist_v2`).
+- ✓ Effective-status derivation — TS helper (`src/components/admin/products-v2/effective-status.ts`) and SQL twin `effective_status_v2(product_id)` both ship.
+- ◐ Participation lifecycle — `create_participation_v2`, `confirm_reservation_v2`, `expire_reservation_v2`, `join_waitlist_v2`, `cancel_participation_v2`, `apply_credit_motion_v2` ship; `promote_from_waitlist_v2` ships as a stub (not wired into a customer flow — see §11); `admin_remove_participation_v2` not started.
 - ○ Session operations (`cancel_session_v2`, `reschedule_session_v2`, `request_substitute_v2`, `assign_substitute_v2`, `record_attendance_v2`).
-- ○ Hourly credit cron (`process_session_credits_v2`).
-- ○ Subscription management (`subscribe_to_product_v2`, `unsubscribe_from_product_v2`, `switch_subscription_frequency_v2`).
+- ✓ Hourly credit cron (`process_session_credits_v2` scheduled via `pg_cron` at `0 * * * *`).
+- ◐ Subscription management — first-ever sub goes through Stripe Checkout; inline-add of an additional gamer to an existing family sub uses `subscriptions.update` with `always_invoice` + `error_if_incomplete` (synchronous via the checkout route). `unsubscribe_from_product_v2`, `switch_subscription_frequency_v2` not started.
 - ○ Lifecycle transitions (`start_product_v2`, `cancel_product_v2`, `finalize_completed_products_v2`).
 - ○ Group mutations (`commit_group_changes_v2`).
 
@@ -1147,13 +1198,28 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - ✓ Cents helper + currency-aware formatting in `src/lib/constants/{currency,pricing}.ts` and `src/lib/utils.ts`.
 
 **Tests.**
-- ✓ Unit: `products-v2-build`, `effective-status-v2`, `pricing-block-fx`, `pricing`, `resolve-translation`.
-- ✓ Integration: `tests/integration/api/products-v2-create.test.ts` (route → RPC → DB).
-- ✓ DB access-control: `products_v2` family covered by `tests/db/access-control.test.ts`.
+- ✓ Unit: `products-v2-build`, `effective-status-v2`, `pricing-block-fx`, `pricing`, `resolve-translation`, `participation-state-of`.
+- ✓ Integration (route handlers): `products-v2-create`, `checkout-products-create`, `participations-waitlist`, `stripe-webhook-products`.
+- ✓ DB: `participations-race` (parallel reservations on a 1-seat product, expired-reservation handling, parallel waitlist monotonicity, idempotent waitlist join, free-product seat cap), `participations-rls` (consolidated cross-customer IDOR coverage for participations / payments / refunds / product_seat_counts; other v2 tables covered via the `access-control.test.ts` catalog check), `product-seat-counts-trigger` (insert/update/delete recomputes the rollup), `session-credits-cron` (all four §6.3 rules + idempotency + late-cancel split + holiday-skip + multi-slot product).
+- ✓ DB access-control: `products_v2` family + all v2 financial tables covered by `tests/db/access-control.test.ts`.
 
-**Parent UI**: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator. ○ Not started.
+**Parent UI**: **do not ship by default**. Each customer-facing screen requires an explicit UX approval from the operator.
+- ✓ Browse cards + detail page read real `useParticipationCounts` (seat-left math, threshold progress, "almost full" pill, full-waitlist transitions).
+- ✓ Detail-page CTA wires real Stripe Checkout for bundles, subs, single-payment camps; free events register without Stripe.
+- ✓ Out-of-stock products show "Join the waitlist" → `join_waitlist_v2` with no charge.
+- ✓ Realtime seat counter on the detail page (`useProductSeatCountsRealtime` subscribes to `product_seat_counts_v2` filtered by `product_id`).
+- ✓ Already-signed-up detection on the detail page → renders `AlreadySignedUpPanel` (active / waitlisted variants) instead of the signup form.
+- ✓ Purchased card driven off real `useMyParticipations` — three placement states (waitlisted / unassigned / assigned), bundle-vs-sub coverage line, session-balance line for bundle-covered clubs.
+- ✓ All `?mock=1` gates and `mock-purchased` fixtures deleted from parent surfaces.
+- ○ Purchased-state layout for `/clubs/[id]` (the second of "same route, two layouts"): sub management, session calendar with cancellations, per-gamer attendance, add-another-gamer affordance, leave-club / cancel-sub confirms. The current `AlreadySignedUpPanel` is the v1 placeholder until this lands. See `docs/products-v2-architecture.md` § "Future improvements (detail-page surfaces)".
+- ○ Customer-facing self-cancel flows (cancel-sub, leave-club, cancel-session).
 
-**Stripe**: `_v2` Checkout endpoints, lazy-created Prices for subs, webhook handlers that write `payments_v2` / `refunds_v2`, family-coupon application. ○ Not started.
+**Stripe**: `_v2` Checkout endpoints, lazy-created Prices for subs, webhook handlers that write `payments_v2` / `refunds_v2`.
+- ✓ `POST /api/checkout/products/create` — auth-gated to customers, validates shape × billing_mode × product_type, holds a `'reserving'` row for 30 min before any Stripe call. Bundles + single-payment use inline `price_data`; subs lazy-resolve a `product_subscription_prices_v2` row and create the Stripe Price on first use.
+- ✓ `POST /api/participations/waitlist` — auth-gated, calls `join_waitlist_v2`. Idempotent on existing waitlist rows.
+- ✓ `POST /api/webhooks/stripe/products` (separate signing secret `STRIPE_PRODUCTS_WEBHOOK_SECRET`) — handles `checkout.session.completed`, `checkout.session.expired`, `invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`. Idempotent via `stripe_event_id` UNIQUE. **Pay-twice race:** if a parent's two reserving rows for the same (product, gamer) both complete payment, `confirm_reservation_v2` returns `kind='duplicate_payment'` on the second webhook. The handler logs `[stripe/products webhook] duplicate payment detected` with all the IDs needed for refund triage (grep Vercel logs to find), inserts a `payments_v2` row with `purpose='reservation_duplicate'` (admin can `SELECT * FROM payments_v2 WHERE purpose='reservation_duplicate'` to find candidates), deletes the orphan reserving row, and returns 200. Refunds are issued manually by an admin from the Stripe dashboard when the customer reports the double charge.
+- ✓ Movie-ticket reservation model — status holds the seat for the full 30-min Stripe-session lifetime; cancel-in-Stripe is a no-op; retry reuses the held row. See `docs/products-v2-architecture.md` § "Movie-ticket reservation model".
+- ○ Family-coupon application (`FAMILY_DISCOUNT_PERCENT`) — flat-tier value undecided per §11; coupon attachment skipped in v1.
 
 **Existing Sorg system**: untouched.
 
@@ -1172,6 +1238,8 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - Sibling-discount tier ladder (expand the flat `FAMILY_DISCOUNT_PERCENT` into a multi-tier lookup) if business wants it.
 - First-session-free / promo codes.
 - **Manage topic & tag translations admin UI.** Inline-create from the product form writes a single translation in the admin's current UI locale (see §5.1b). To complete the multi-locale story for shared reference data, add an admin page that lists all topics + tags with their existing translations and lets an admin add/edit translations for additional locales. Until this exists, parents on a locale that lacks a topic/tag translation see the fallback (en → fi → first available).
+- **Atomic inline-add for subscriptions.** The inline-add path (`POST /api/checkout/products/create` when a live family sub already exists) does three things in sequence: `subscriptions.update` (Stripe charges proration) → `confirm_reservation_v2` (DB flips reserving → active) → `family_subscription_items_v2.insert` (link row). A DB blip between the second and third step leaves the parent paying for a sub but with no link row, so the cron treats them as bundle-mode-with-0-credits. Symptom: parent cancels a session ≥24h ahead, expects the sub-covered "bank a credit" perk, sees no credit appear; contacts support; support manually inserts the link row (and back-fills `credits_remaining` if appropriate). Not a double-charge — the cron never makes Stripe API calls. Likelihood is rare but real (~1 in 5–10k inline-adds). Fix when frequency justifies it: collapse steps 2+3 into a single RPC, or invert the order (write link row first as `pending`, call Stripe, then confirm). The purchased-product detail page surfaces the family sub + its items so this drift is visible at a glance during testing and support investigations.
+- **Inline-add CTA copy overflow.** When the parent has a live family sub and the next add is a yearly tier (e.g., `€600.00` charged today), the CTA "Add to your subscription · €600.00 (charged today)" is too long to fit on a single-line button on `signup-panel-view.tsx` (`ctaInlineAddSub` in messages files). Word-wraps awkwardly on narrow widths. Options when fixing: (a) drop the price suffix and surface the proration amount in the panel body above the button instead, (b) shorten the CTA to "Add · €600.00" with a smaller "charged today" caption underneath, or (c) keep one-line on desktop and stack on narrow widths. Lowest-effort: option (b). Affects all four locales' `ctaInlineAddSub` strings.
 
 ### Phase 4 — on-platform municipality billing
 
@@ -1199,7 +1267,8 @@ Flagged inline as `OPEN` in the sections they affect.
 - **Single-group auto-assign.** When a product has exactly one group, auto-assign new participations instead of routing through the inbox? Defer until we see inbox in real use.
 - **Unassigned inbox notifications.** WhatsApp / email / in-app nudges to admins when the inbox has sat non-empty for N hours. Future phase.
 - **Attendance → removal policy.** N-unexcused-absences threshold, approval flow, appeal path. Defer until attendance tracking ships.
-- **DST / tz edge cases on per-session deduction.** When a camp crosses a DST boundary, does the session at 17:00 local still deduct 1 credit? Probably yes — deduction is per-session, not per-hour.
+- **DST / tz edge cases on per-session deduction.** When a camp crosses a DST boundary, does the session at 17:00 local still deduct 1 credit? Probably yes — deduction is per-session, not per-hour. *Test note:* `process_session_credits_v2` is currently exercised only with `timezone='UTC'` in `tests/db/session-credits-cron.test.ts`. Real products will run in `Europe/Helsinki`, `America/New_York`, etc. Hard to test deterministically without mocking `NOW()` or the slot timezone, so the plan is a manual staging smoke once a non-UTC product runs through a DST transition, then a regression test if it ever bites.
+- **`promote_from_waitlist_v2` lifecycle is not yet wired.** Function shipped in 00039 as a forward-looking stub per §6.1. As written it (a) holds no `FOR UPDATE` lock so two concurrent webhook workers could pick the same row, and (b) doesn't transition the row's status — it stays `'waitlisted'`, which makes a subsequent `create_participation_v2` for that gamer hit the existing-row guard with "already on waitlist". Zero TS callers, zero tests today. The intended flow (cancel → admin emails next-on-waitlist → parent clicks → re-checkout) needs an additional RPC to convert a waitlist row into a reservation without tripping the existing-row check, plus the cancellation RPCs need to actually invoke it. Defer until the waitlist-promotion phase starts; rewrite with locking + transition + race tests parallel to `tests/db/participations-race.test.ts`.
 - **Event account requirement for truly free events.** v1 requires an account for all participations. Consider magic-link + gamer-only capture later if friction is too high.
 - **Topic taxonomy depth.** Sub-topics (Minecraft — Survival vs Redstone) — add `topics_v2.parent_id` if needed. Not yet.
 - **Calendar view as a first-class parent feature.** "Everything my kids are doing this week" across products is obvious v2 UX. Design the per-gamer session query to support it.
@@ -1231,7 +1300,87 @@ Three UX mockups live on the `feature/school-clubs-mockup` branch (see top of do
 
 All three are sketches, not implementations. **None of them model the new fiat pricing, bundle purchase, or family subscription flows — they predate this redesign's billing pivot.** When the billing-layer screens are designed, the mockups are a starting point for product-type-specific flows only; pricing UX is new work.
 
-### 12.3 Why we kept Gedu Groups (and generalized them to every product type)
+### 12.3 Stripe webhook deployment across environments
+
+Three Vercel environments → three webhook endpoints. Stripe distinguishes test vs live mode; Vercel distinguishes preview / production. The two axes intersect like this:
+
+| Vercel target | Vercel URL | Stripe mode | Webhook scope |
+|---|---|---|---|
+| Preview (feature branch) | `sogverse-git-<branch>-kyle-sogs-projects.vercel.app` | test | one endpoint per long-lived branch |
+| Preview (`dev` branch → staging) | `sogverse-git-dev-kyle-sogs-projects.vercel.app` | test | one endpoint that sticks for staging |
+| Production (`main`) | the production custom domain | **live** | one endpoint, separate signing secret |
+
+The Vercel CLI defaults to no branch scope (env var applies to *all* preview deployments). The Stripe CLI defaults to **test** mode (must pass `--live` for production). Both defaults are intentional here — don't override them without a reason.
+
+The path is always `/api/webhooks/stripe/products`. The events are always:
+
+```
+checkout.session.completed
+checkout.session.expired
+invoice.paid
+customer.subscription.updated
+customer.subscription.deleted
+charge.refunded
+```
+
+**1. Preview (feature branch on PR open).** Repeat this if a future feature branch needs its own webhook.
+
+```bash
+# Test-mode webhook pointing at the branch preview URL
+stripe webhook_endpoints create \
+  --url "https://sogverse-git-<branch>-kyle-sogs-projects.vercel.app/api/webhooks/stripe/products" \
+  --description "v2 products webhook (preview)" \
+  -d "enabled_events[]=checkout.session.completed" \
+  -d "enabled_events[]=checkout.session.expired" \
+  -d "enabled_events[]=invoice.paid" \
+  -d "enabled_events[]=customer.subscription.updated" \
+  -d "enabled_events[]=customer.subscription.deleted" \
+  -d "enabled_events[]=charge.refunded"
+
+# Capture the whsec_... from the response, then:
+printf '%s' 'whsec_...' | vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET preview --sensitive
+
+# Trigger a redeploy of the preview so the env var lands (empty commit or dashboard "Redeploy")
+```
+
+**2. Staging (when this PR merges to `dev`).** The `dev` branch's preview URL is stable but a different host than the feature-branch preview, so the existing webhook needs to be re-pointed (or a fresh one created and the old one deleted). Re-pointing is simpler — the signing secret stays the same and Vercel needs no change.
+
+```bash
+# Re-aim the existing test-mode endpoint at the staging URL
+stripe webhook_endpoints update we_<id-from-step-1> \
+  -d "url=https://sogverse-git-dev-kyle-sogs-projects.vercel.app/api/webhooks/stripe/products"
+```
+
+If the feature-branch preview also still needs to work (e.g. another PR is open against `dev` and we want both to fire), create a second endpoint instead of updating, and add the new secret to Vercel preview *scoped to that branch*: `vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET preview <git-branch> --sensitive`. Branch-scoped overrides take precedence over the unscoped preview value.
+
+After the merge, smoke-test against staging: bundle purchase, sub purchase, waitlist join, refund.
+
+**3. Production (cut from `dev` to `main`).** Brand new live-mode endpoint, brand new signing secret in Vercel's `production` env. Do **not** reuse the test-mode secret in production.
+
+```bash
+# Live-mode webhook against the production domain
+stripe webhook_endpoints create --live \
+  --url "https://<prod-domain>/api/webhooks/stripe/products" \
+  --description "v2 products webhook (production)" \
+  -d "enabled_events[]=checkout.session.completed" \
+  -d "enabled_events[]=checkout.session.expired" \
+  -d "enabled_events[]=invoice.paid" \
+  -d "enabled_events[]=customer.subscription.updated" \
+  -d "enabled_events[]=customer.subscription.deleted" \
+  -d "enabled_events[]=charge.refunded"
+
+# Capture the live whsec_... and store it in Vercel production
+printf '%s' 'whsec_...' | vercel env add STRIPE_PRODUCTS_WEBHOOK_SECRET production --sensitive
+
+# Redeploy production so the env var binds
+vercel redeploy <prod-deployment-url> --prod
+```
+
+After cut-over, send one real `$0.50`-class purchase through to confirm the live webhook is wired before announcing.
+
+**What `.env.local` does NOT need.** `STRIPE_PRODUCTS_WEBHOOK_SECRET` is not required in `.env.local` for normal local dev. `stripe listen --forward-to localhost:3000/api/webhooks/stripe/products` prints a fresh `whsec_...` per session — paste that into the running process's env or your shell, not into committed-template files. `.env.local.example` documents the variable name only, with a comment pointing at this section. Do **not** check in any real `whsec_...` value.
+
+### 12.4 Why we kept Gedu Groups (and generalized them to every product type)
 
 An earlier version of this doc retired `product_groups` in favor of cloning whole products. Product-team feedback pushed back: groups are the right abstraction for admins organizing who-runs-what-with-whom inside a product, and they should apply to all four product types.
 

@@ -123,18 +123,6 @@ The rule's preferred patterns: derive from props/`useMemo`, use `useSyncExternal
 - [ ] Move `window.location.hash` parsing in the auth forms out of `useEffect` (e.g., into a `useState` initializer guarded by `typeof window`, or a top-level helper called from an event handler)
 - [ ] Once each is rewritten, drop its `eslint-disable-next-line` comment
 
-### Delete `mock-purchased.ts` once `participations_v2` ships
-
-`src/components/public/products-v2/mock-purchased.ts` powers the "your enrolled / signed up" rail on `/clubs?mock=1`, `/camps?mock=1`, `/events?mock=1`. It exists because there's no real data source to drive that surface yet — design / UX review needed *something* to render. The rows are gated behind `?mock=1` so real visitors never see them.
-
-When `participations_v2` lands (per `docs/products-redesign.md` §5.5), replace consumers of this module with a real `useMyParticipations` hook and delete the file.
-
-- [ ] Build `useMyParticipations` keyed on the signed-in customer's parent_gamer rows
-- [ ] Update `ProductBrowsePage` to source the purchased rail from real data and remove the `?mock=1` gate
-- [ ] Delete `src/components/public/products-v2/mock-purchased.ts`
-- [ ] Drop the `PURCHASED_DEMO_CARDS` block + the "Purchased cards" SubSection from `src/app/(dashboard)/admin/ui-components/page.tsx` (or rebuild it from `ProductPurchasedCardView` directly so the demo doesn't re-import the deleted file)
-- [ ] Localised content: the mock rows hard-code English strings (`"Tomorrow, 17:00"`, `"Every Tuesday · 17:00 (Helsinki)"`, etc.) — the real adapter must format `nextSession` / `scheduleSummary` from a `Date` + locale-aware formatter so Finnish parents don't see English
-
 ### Enable next-intl typed messages + locale-parity test
 
 We have no compile-time safety on translation keys today. A dead-key audit during the products-v2 browse review deleted `admin.productsV2.hints.{free,paid}Detail` because the heuristic missed that `billing-section.tsx:76` references them via `t(\`hints.${mode}Detail\`)`. The bug only surfaced as a runtime `IntlError: MISSING_MESSAGE` in the browser — no test, lint, or type-check caught it.

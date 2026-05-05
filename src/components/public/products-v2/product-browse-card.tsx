@@ -5,6 +5,7 @@ import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useCurrency } from "@/providers/currency-provider";
 import type { ProductV2BrowseRow } from "@/types";
+import type { ParticipationCounts } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { formatProductLocation } from "./format-product-location";
 import { formatProductPrice } from "./format-product-price";
@@ -21,6 +22,12 @@ import {
 
 interface ProductBrowseCardProps {
   product: ProductV2BrowseRow;
+  /**
+   * Participation counts for this product. Pre-fetched at the browse-page
+   * level (one query for the whole grid) and threaded through. `null` while
+   * the counts query is in flight — card falls back to 0/0/0.
+   */
+  counts?: ParticipationCounts | null;
 }
 
 // Adapter: resolves a `ProductV2BrowseRow` into the display props
@@ -28,7 +35,7 @@ interface ProductBrowseCardProps {
 // participation lookups happen here so the View stays purely
 // presentational — that's what lets the UI Components page render every
 // state by hand without forging a full BrowseRow.
-export function ProductBrowseCard({ product }: ProductBrowseCardProps) {
+export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
   const uiLocale = resolveLocale(useLocale());
   const { currency } = useCurrency();
@@ -39,14 +46,16 @@ export function ProductBrowseCard({ product }: ProductBrowseCardProps) {
     uiLocale,
   );
 
-  // Pre-`participations_v2`, every product reports zero active
-  // participations. The deriver handles the today-vs-future degradation
-  // (see derive-registration-state.ts) — when the count goes live the
-  // richer states light up automatically.
+  // Seat math feeds active+reserving — reserving rows hold the seat for
+  // 30 min during Stripe Checkout. The threshold check uses the same
+  // count; small over-count for in-flight reservations is acceptable in v1.
+  const participationsCount =
+    (counts?.activeCount ?? 0) + (counts?.reservingCount ?? 0);
+
   const state = deriveRegistrationState({
     product,
     now: new Date(),
-    participationsCount: 0,
+    participationsCount,
   });
 
   const schedule = formatProductSchedule({ product, locale: uiLocale });

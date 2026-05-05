@@ -1011,36 +1011,123 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
 
 const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProps }[] = [
   {
-    label: "Consumer club · two gamers enrolled",
+    label: "Bundle · assigned (group set, sessions left)",
     props: {
       name: "Tuesday Minecraft Builders",
       imagePath: null,
       topicLabel: "MINECRAFT",
-      verbLabel: "Enrolled",
-      gamers: [
-        { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
-        { displayName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
-      ],
+      state: "assigned",
+      gamer: { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
       scheduleSummary: "Every Tuesday · 17:00 (Helsinki)",
-      nextSession: "Tomorrow, 17:00",
+      detailLine: "Next: Tomorrow, 17:00",
+      balanceLine: "7 sessions left",
       showManagePayment: true,
+      manageHref: "#",
     },
   },
   {
-    label: "Camp · three gamers signed up (clip-stack overlap)",
+    label: "Bundle · unassigned (admin hasn't placed gamer yet)",
+    props: {
+      name: "Tuesday Minecraft Builders",
+      imagePath: null,
+      topicLabel: "MINECRAFT",
+      state: "unassigned",
+      gamer: { displayName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
+      scheduleSummary: "Every Tuesday · 17:00 (Helsinki)",
+      detailLine: "We'll set up your group",
+      balanceLine: "10 sessions left",
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Subscription-covered consumer club",
+    props: {
+      name: "Friday Fortnite Squad",
+      imagePath: null,
+      topicLabel: "FORTNITE",
+      state: "assigned",
+      gamer: { displayName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
+      scheduleSummary: "Every Friday · 18:00 (Helsinki)",
+      detailLine: "Next: Friday 18:00",
+      balanceLine: "Subscription",
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Bundle · 0 credits remaining",
+    props: {
+      name: "Wednesday Roblox Crafters",
+      imagePath: null,
+      topicLabel: "ROBLOX",
+      state: "assigned",
+      gamer: { displayName: "Aino", seed: "86d1eed7-8d73-4de1-a654-064a62b60bc6" },
+      scheduleSummary: "Every Wednesday · 16:30 (Helsinki)",
+      detailLine: "Next: Wednesday 16:30",
+      balanceLine: "No sessions left — buy more",
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Waitlist · with position",
     props: {
       name: "Spring Break Roblox Camp",
       imagePath: null,
       topicLabel: "ROBLOX",
-      verbLabel: "Signed up",
-      gamers: [
-        { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
-        { displayName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
-        { displayName: "Aino", seed: "86d1eed7-8d73-4de1-a654-064a62b60bc6" },
-      ],
+      state: "waitlisted",
+      gamer: { displayName: "Noah", seed: "fda26c15-4677-4374-aa3b-7bed0cb0e2af" },
       scheduleSummary: "24–28 March · 10:00–14:00 (Helsinki)",
-      nextSession: "Mon 24 Mar, 10:00",
+      detailLine: "3 ahead of you in line",
+      balanceLine: null,
       showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Camp · paid single-payment (no balance line)",
+    props: {
+      name: "Spring Break Roblox Camp",
+      imagePath: null,
+      topicLabel: "ROBLOX",
+      state: "assigned",
+      gamer: { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
+      scheduleSummary: "24–28 March · 10:00–14:00 (Helsinki)",
+      detailLine: "Next: Mon 24 Mar, 10:00",
+      balanceLine: null,
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Free event (no manage button, no balance line)",
+    props: {
+      name: "Family Fortnite Friday",
+      imagePath: null,
+      topicLabel: "FORTNITE",
+      state: "assigned",
+      gamer: { displayName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
+      scheduleSummary: "Friday 12 April · 18:00–20:00",
+      detailLine: "Next: Fri 12 Apr, 18:00",
+      balanceLine: null,
+      showManagePayment: false,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Municipality club · external_contract (manage hidden)",
+    props: {
+      name: "Helsinki Coding Club",
+      imagePath: null,
+      topicLabel: "GAME DESIGN",
+      state: "assigned",
+      gamer: { displayName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
+      scheduleSummary: "Every Friday · 15:30 (Helsinki)",
+      detailLine: "Next: Friday 15:30",
+      balanceLine: null,
+      showManagePayment: false,
+      manageHref: "#",
     },
   },
 ];
@@ -1091,11 +1178,13 @@ function ProductsV2Demo() {
         </div>
       </SubSection>
 
-      <SubSection title="Purchased cards">
+      <SubSection title="Purchased cards (waitlisted / unassigned / assigned)">
         <p className="text-sm text-muted-foreground mb-4">
           The &ldquo;your enrolled / signed up&rdquo; surface — appears above the browse grid on
-          /clubs, /camps, /events when ?mock=1 is set. The verb badge already
-          conveys &ldquo;you&rsquo;re in&rdquo;, so these cards don&rsquo;t carry a registration pill.
+          /clubs, /camps, /events when the customer has live participations. Drives off
+          real <code>useMyParticipations</code> data; the demo below renders the View
+          directly so design review covers all three placement states across coverage modes
+          (bundle / subscription / one-off) and edge states (zero credits, waitlist with position).
         </p>
         <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
           {PURCHASED_DEMO_CARDS.map(({ label, props }) => (
@@ -1742,6 +1831,7 @@ function ProductDetailDemo() {
 // what an admin reading this page should see at a glance.
 const STATE_LABELS: Record<PreviewStateKind, string> = {
   closed_pre: "Pre-launch — registration not yet open",
+  closed_pre_10s: "Pre-launch — opens in 10 seconds (live test)",
   open: "Open for sign-ups",
   open_almost_full: "Open — almost full",
   pending_thr: "Pending threshold — needs more sign-ups",

@@ -166,26 +166,15 @@ export function ProductBrowseCardView({
             <div className="flex items-end justify-between gap-2">
               <PriceBlock price={price} />
               {cta &&
-                (detailHref && cta.kind !== "disabled" ? (
+                (cta.kind === "primary" && detailHref ? (
                   <Link href={detailHref}>
-                    <Button
-                      size="sm"
-                      variant={cta.kind === "primary" ? "default" : "secondary"}
-                    >
-                      {cta.labelText}
-                    </Button>
+                    <Button size="sm">{cta.labelText}</Button>
                   </Link>
                 ) : (
                   <Button
                     type="button"
                     size="sm"
-                    variant={
-                      cta.kind === "primary"
-                        ? "default"
-                        : cta.kind === "secondary"
-                          ? "secondary"
-                          : "outline"
-                    }
+                    variant={cta.kind === "disabled" ? "outline" : "default"}
                     disabled={cta.kind === "disabled"}
                   >
                     {cta.labelText}
