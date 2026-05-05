@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Users,
   AudioLines,
-  Package,
   Palette,
   Settings,
   Gamepad2,
@@ -30,7 +29,7 @@ import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
 type SidebarKey =
-  | "dashboard" | "users" | "products" | "groups" | "locations"
+  | "dashboard" | "users" | "groups" | "locations"
   | "uiComponents" | "whatsapp" | "testing" | "feedback" | "settings"
   | "sorg" | "myGamers" | "home" | "myGroups"
   | "consumerClubs" | "municipalityClubs" | "camps" | "events";
@@ -45,7 +44,6 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
   admin: [
     { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
-    { href: ROUTES.admin.products, labelKey: "products", icon: <Package className="h-5 w-5" /> },
     { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: <Joystick className="h-5 w-5" /> },
     { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: <School className="h-5 w-5" /> },
     { href: ROUTES.admin.camps, labelKey: "camps", icon: <Tent className="h-5 w-5" /> },
