@@ -13,6 +13,7 @@ import { useMyGamers } from "@/services/gamers";
 import {
   participationKeys,
   useMyParticipations,
+  useMyFamilySubs,
   useParticipationCounts,
   useProductSeatCountsRealtime,
 } from "@/services/participations";
@@ -61,6 +62,11 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   // instant; on cold load we wait below.
   const { data: myParticipations, isLoading: myParticipationsLoading } =
     useMyParticipations();
+
+  // Family subs for the post-purchase placeholder. Only fetched when the
+  // user is a logged-in customer; the placeholder uses this to surface
+  // Stripe↔DB drift (sub charging but participation flagged non-sub-covered).
+  const { data: myFamilySubs } = useMyFamilySubs();
 
   // Live seat-count updates for this single product. Browse pages don't
   // subscribe per-card (a 30-card grid is too many channels) — detail page
@@ -160,11 +166,17 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
     const rows = (myParticipations ?? []).filter(
       (p) => p.product_id === product.id,
     );
+    // Show ALL the customer's family subs, not just ones touching this
+    // product. This is a debugging surface — full subscription state
+    // visibility is the point. Per-item rendering in the placeholder shows
+    // which participation each item covers, so the user can tell at a glance
+    // which item is for the current product vs. another.
     return (
       <ProductPurchasedDetailPlaceholder
         product={product}
         productType={productType}
         participations={rows}
+        familySubs={myFamilySubs ?? []}
       />
     );
   }

@@ -56,6 +56,41 @@ export type MyParticipationRow = Pick<
 };
 
 /**
+ * Row shape returned by `getMyFamilySubs()`. Used by the purchased-detail
+ * placeholder to surface the family sub + its linked items so support and
+ * dev can spot Stripe↔DB drift (active sub + participation flagged
+ * non-sub-covered = missing link row).
+ *
+ * Pricing fields (`unit_amount_cents`, `stripe_price_currency`,
+ * `recurring_interval`, `total_cents`) come from a live Stripe lookup, not
+ * the local `product_subscription_prices_v2` cache: existing subs are
+ * billed at their locked-in Stripe price, so the local cache can drift
+ * from what's actually being charged. They're nullable to allow graceful
+ * degradation if the Stripe call fails (e.g., sub deleted on Stripe).
+ */
+export interface MyFamilySubRow {
+  id: string;
+  status: string;
+  frequency: SubscriptionFrequencyV2;
+  currency: string;
+  current_period_end: string | null;
+  stripe_subscription_id: string;
+  stripe_customer_id: string;
+  created_at: string;
+  family_subscription_items_v2: {
+    id: string;
+    participation_id: string;
+    stripe_subscription_item_id: string;
+    stripe_price_id: string;
+    unit_amount_cents: number | null;
+    stripe_price_currency: string | null;
+    recurring_interval: string | null;
+  }[];
+  /** Sum of all items' unit_amount_cents. Null if any item failed to price. */
+  total_cents: number | null;
+}
+
+/**
  * Per-product participation counts for the browse + detail surfaces.
  */
 export interface ParticipationCounts {
@@ -185,6 +220,25 @@ export class ParticipationsService {
     }
 
     return [...countsByProduct.values()];
+  }
+
+  /**
+   * The current customer's family subscriptions plus their items, enriched
+   * with live Stripe pricing. Used by the purchased-detail placeholder to
+   * surface Stripe↔DB drift (active family sub paired with a participation
+   * NOT flagged sub-covered = inline-add atomicity gap, link row missing).
+   *
+   * Reads via API route, not direct supabase: the route hits Stripe to get
+   * each item's actual locked-in price, since existing subs continue
+   * paying their original price after a local price change.
+   */
+  async getMyFamilySubs(): Promise<MyFamilySubRow[]> {
+    const response = await fetch("/api/family-subscriptions/me");
+    if (!response.ok) {
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      throw new Error(data.error ?? "Failed to load family subscriptions");
+    }
+    return (await response.json()) as MyFamilySubRow[];
   }
 
   /**

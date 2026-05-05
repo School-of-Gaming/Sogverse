@@ -15,6 +15,7 @@ import { productV2Keys } from "../products-v2";
 export const participationKeys = {
   all: ["participations-v2"] as const,
   mine: () => [...participationKeys.all, "mine"] as const,
+  myFamilySubs: () => [...participationKeys.all, "my-family-subs"] as const,
   countsByProducts: (productIds: string[]) =>
     [...participationKeys.all, "counts", { productIds: [...productIds].sort() }] as const,
   myFamilySub: (frequency: string, currency: string) =>
@@ -27,6 +28,21 @@ export function useMyParticipations() {
   return useQuery({
     queryKey: participationKeys.mine(),
     queryFn: () => service.getMyParticipations(),
+  });
+}
+
+/**
+ * The current customer's family subscriptions plus their items. Drives the
+ * "Family subscriptions" section on the purchased-detail placeholder so
+ * Stripe↔DB drift (sub charging but participation flagged non-sub-covered)
+ * is visible at a glance.
+ */
+export function useMyFamilySubs() {
+  const supabase = getClient();
+  const service = new ParticipationsService(supabase);
+  return useQuery({
+    queryKey: participationKeys.myFamilySubs(),
+    queryFn: () => service.getMyFamilySubs(),
   });
 }
 
