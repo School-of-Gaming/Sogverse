@@ -2013,7 +2013,11 @@ export type Database = {
         | "active"
         | "waitlisted"
         | "completed"
-      payment_purpose_v2: "bundle" | "subscription_invoice" | "single_payment"
+      payment_purpose_v2:
+        | "bundle"
+        | "subscription_invoice"
+        | "single_payment"
+        | "reservation_duplicate"
       product_status_v2:
         | "draft"
         | "pending"
@@ -2181,7 +2185,12 @@ export const Constants = {
         "waitlisted",
         "completed",
       ],
-      payment_purpose_v2: ["bundle", "subscription_invoice", "single_payment"],
+      payment_purpose_v2: [
+        "bundle",
+        "subscription_invoice",
+        "single_payment",
+        "reservation_duplicate",
+      ],
       product_status_v2: [
         "draft",
         "pending",

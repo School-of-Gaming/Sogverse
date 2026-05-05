@@ -315,6 +315,58 @@ describe("participations_v2 race + idempotency", () => {
       });
       expect((result.data as { kind: string }).kind).toBe("orphan");
     });
+
+    it("returns duplicate_payment when another active row exists for the same (product, gamer)", async () => {
+      // The "already signed up" guard in create_participation_v2 only blocks
+      // active/waitlisted — a parent who clicks-abandons-clicks-again can
+      // legitimately have two reserving rows. If both Stripe sessions
+      // complete, the second confirm must NOT raise on the partial UNIQUE;
+      // it must return duplicate_payment so the webhook can record the
+      // duplicate charge instead of looping on Stripe retries.
+      const { data: active } = await admin
+        .from("participations_v2")
+        .insert({
+          product_id: PRODUCT_CONFIRM,
+          gamer_id: TEST_IDS.GAMER,
+          customer_id: TEST_IDS.CUSTOMER,
+          status: "active",
+          credits_remaining: 4,
+        })
+        .select("id")
+        .single();
+
+      const { data: reserving } = await admin
+        .from("participations_v2")
+        .insert({
+          product_id: PRODUCT_CONFIRM,
+          gamer_id: TEST_IDS.GAMER,
+          customer_id: TEST_IDS.CUSTOMER,
+          status: "reserving",
+          reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
+          credits_remaining: 0,
+        })
+        .select("id")
+        .single();
+
+      const result = await admin.rpc("confirm_reservation_v2", {
+        p_reservation_id: reserving!.id,
+        p_credits_to_grant: 4,
+      });
+      const body = result.data as {
+        kind: string;
+        existing_participation_id?: string;
+      };
+      expect(body.kind).toBe("duplicate_payment");
+      expect(body.existing_participation_id).toBe(active!.id);
+
+      // Reserving row left untouched — webhook is responsible for deleting it.
+      const { data: row } = await admin
+        .from("participations_v2")
+        .select("status")
+        .eq("id", reserving!.id)
+        .single();
+      expect(row?.status).toBe("reserving");
+    });
   });
 
   // ---------------------------------------------------------------------------

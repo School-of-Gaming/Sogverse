@@ -90,6 +90,7 @@ type AdminInserts = {
   refunds_v2: Record<string, unknown>[];
   family_subscriptions_v2: Record<string, unknown>[];
   family_subscription_items_v2: Record<string, unknown>[];
+  participations_v2_deletes: { id: string; status: string }[];
 };
 
 type AdminMockOptions = {
@@ -105,6 +106,7 @@ function mockAdmin(opts: AdminMockOptions = {}) {
     refunds_v2: [],
     family_subscriptions_v2: [],
     family_subscription_items_v2: [],
+    participations_v2_deletes: [],
   };
 
   mockAdminFrom.mockImplementation((table: string) => {
@@ -163,6 +165,27 @@ function mockAdmin(opts: AdminMockOptions = {}) {
               return Promise.resolve({ data: null, error: null });
             },
           }),
+        }),
+      };
+    }
+    if (table === "participations_v2") {
+      // Only the duplicate_payment branch deletes from this table; capture
+      // the (id, status) filter so tests can assert what was released.
+      return {
+        delete: () => ({
+          eq: (col: string, val: string) => {
+            const filter: { id: string; status: string } = { id: "", status: "" };
+            if (col === "id") filter.id = val;
+            else if (col === "status") filter.status = val;
+            return {
+              eq: (col2: string, val2: string) => {
+                if (col2 === "id") filter.id = val2;
+                else if (col2 === "status") filter.status = val2;
+                inserts.participations_v2_deletes.push(filter);
+                return Promise.resolve({ data: null, error: null });
+              },
+            };
+          },
         }),
       };
     }
@@ -330,36 +353,63 @@ describe("POST /api/webhooks/stripe/products", () => {
     });
   });
 
-  describe("checkout.session.completed — pay-twice (unique constraint)", () => {
-    it("logs and bails when confirm RPC raises 23505 (second active row blocked)", async () => {
+  describe("checkout.session.completed — duplicate_payment", () => {
+    it("logs, records the duplicate payment, and releases the orphan reserving row", async () => {
+      const EXISTING_PARTICIPATION_ID = "55555555-5555-5555-5555-555555555555";
       mockConstructEvent.mockReturnValue(
         createCompletedEvent({ id: "evt_completed_2", paymentIntent: "pi_dup_1" }),
       );
       const inserts = mockAdmin();
-      // Postgres unique_violation surfaces through PostgREST as code "23505".
       mockAdminRpc.mockResolvedValue({
-        data: null,
-        error: { code: "23505", message: "duplicate key value" },
+        data: {
+          kind: "duplicate_payment",
+          reservation_id: RESERVATION_ID,
+          existing_participation_id: EXISTING_PARTICIPATION_ID,
+          product_id: PRODUCT_ID,
+          gamer_id: GAMER_ID,
+          customer_id: CUSTOMER_ID,
+        },
+        error: null,
       });
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
 
-      expect(inserts.payments_v2).toHaveLength(0);
-      expect(inserts.refunds_v2).toHaveLength(0);
+      // Structured log with all the fields admin needs to triage the refund.
       expect(errorSpy).toHaveBeenCalledWith(
-        expect.stringContaining("pay-twice detected"),
+        expect.stringContaining("duplicate payment detected"),
         expect.objectContaining({
           reservationId: RESERVATION_ID,
+          existingParticipationId: EXISTING_PARTICIPATION_ID,
           eventId: "evt_completed_2",
+          customerId: CUSTOMER_ID,
+          gamerId: GAMER_ID,
+          productId: PRODUCT_ID,
           paymentIntent: "pi_dup_1",
         }),
       );
+
+      // Payments_v2 row recorded under the new purpose so admin can filter.
+      expect(inserts.payments_v2).toHaveLength(1);
+      expect(inserts.payments_v2[0]).toMatchObject({
+        purpose: "reservation_duplicate",
+        stripe_event_id: "evt_completed_2",
+        stripe_payment_intent_id: "pi_dup_1",
+        customer_id: CUSTOMER_ID,
+      });
+
+      // Orphan reserving row released so it doesn't permanently hold a seat.
+      expect(inserts.participations_v2_deletes).toHaveLength(1);
+      expect(inserts.participations_v2_deletes[0]).toEqual({
+        id: RESERVATION_ID,
+        status: "reserving",
+      });
+
       errorSpy.mockRestore();
     });
 
-    it("rethrows non-23505 RPC errors so Stripe retries", async () => {
+    it("rethrows generic RPC errors so Stripe retries", async () => {
       mockConstructEvent.mockReturnValue(createCompletedEvent({ id: "evt_completed_3" }));
       mockAdmin();
       mockAdminRpc.mockResolvedValue({

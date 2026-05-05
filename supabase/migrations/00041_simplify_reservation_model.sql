@@ -12,8 +12,15 @@
 -- Stripe events are mutually exclusive, so the seat is never simultaneously released
 -- and confirmed. The race window is gone.
 --
--- We trust Stripe's webhook delivery as source of truth. If checkout.session.expired
--- never arrives (rare), the reserving row is stuck until manual cleanup.
+-- Stripe owns the timer too. The route sets `expires_at` on the Checkout Session
+-- itself (RESERVATION_LIFETIME_MINUTES, currently 30). At that timestamp Stripe:
+--   (a) refuses any further payment attempts on the session, AND
+--   (b) fires checkout.session.expired, which our webhook turns into
+--       expire_reservation_v2 (deletes the reserving row → seat freed).
+-- Stripe retries failed webhook deliveries for up to 3 days. So a stuck
+-- reserving row requires Stripe's webhook system to fail for 3 straight days,
+-- which is well below our threshold for building a janitor cron. If it ever
+-- happens, an admin can DELETE the row by hand.
 
 -- count_seats_taken_v2 — drop the reserved_until check.
 CREATE OR REPLACE FUNCTION count_seats_taken_v2(p_product_id UUID)

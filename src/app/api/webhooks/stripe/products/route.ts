@@ -104,16 +104,17 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
 
   const creditsToGrant = isBundle ? bundleSizeFromShape(purchaseShape) : 0;
 
-  // Confirm reservation. The RPC flips reserving → active, or returns
-  // 'orphan' if the row is missing / in an unexpected status (admin
-  // interference; should not happen under normal Stripe operation).
-  //
-  // Pay-twice handling: each click creates a fresh reservation row, so two
-  // Stripe sessions for the same parent/gamer reference different rows.
-  // The schema's `uq_participations_v2_active_or_waitlisted` partial unique
-  // index catches the second confirm by raising 23505 (unique violation).
-  // We catch and log; the duplicate Stripe charge sits there awaiting a
-  // manual refund. Rare; cleaner than an automated refund flow.
+  // Confirm reservation. The RPC returns one of:
+  //   'confirmed'        — happy path: row flipped reserving → active
+  //                        (or already active, in which case `idempotent: true`).
+  //   'orphan'           — row missing or in an unexpected status (admin
+  //                        interference). Log; charge sits in Stripe awaiting
+  //                        manual reconciliation.
+  //   'duplicate_payment' — parent has another active/waitlisted/completed
+  //                        row for this (product, gamer). Both Stripe sessions
+  //                        completed (parent paid the original tab and a retry
+  //                        tab). Record the duplicate so admin can find and
+  //                        refund it; release the orphan reserving row.
   const { data: confirmResult, error: confirmErr } = await admin.rpc(
     "confirm_reservation_v2",
     {
@@ -122,30 +123,75 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
     },
   );
   if (confirmErr) {
-    if (confirmErr.code === "23505") {
-      console.error(
-        "[stripe/products] pay-twice detected — second confirm blocked by unique index, manual refund needed",
-        {
-          reservationId,
-          eventId: event.id,
-          paymentIntent: session.payment_intent,
-          subscription: session.subscription,
-        },
-      );
-      return;
-    }
     throw new Error(`confirm_reservation_v2 failed: ${confirmErr.message}`);
   }
   const confirmJson = confirmResult as {
-    kind: "confirmed" | "orphan";
+    kind: "confirmed" | "orphan" | "duplicate_payment";
     participation_id?: string;
+    existing_participation_id?: string;
   };
 
   if (confirmJson.kind === "orphan") {
     console.error(
-      "[stripe/products] orphan confirmation — reservation row missing or in unexpected status",
+      "[stripe/products webhook] orphan confirmation — reservation row missing or in unexpected status",
       { reservationId, eventId: event.id },
     );
+    return;
+  }
+
+  if (confirmJson.kind === "duplicate_payment") {
+    // Rare: parent paid two Stripe sessions that both targeted the same
+    // (product, gamer). The first webhook landed an active row; this one is
+    // the duplicate charge. Log loudly and record the payment under
+    // `reservation_duplicate` so admin can find it from a payments_v2 query
+    // (filter on purpose='reservation_duplicate') when the customer reports
+    // the double charge. No automated refund — admin issues it manually.
+    console.error(
+      "[stripe/products webhook] duplicate payment detected — admin must refund manually",
+      {
+        reservationId,
+        existingParticipationId: confirmJson.existing_participation_id,
+        eventId: event.id,
+        customerId,
+        gamerId,
+        productId,
+        paymentIntent:
+          typeof session.payment_intent === "string"
+            ? session.payment_intent
+            : null,
+        subscription:
+          typeof session.subscription === "string" ? session.subscription : null,
+        amountCents: session.amount_total ?? 0,
+        currency,
+      },
+    );
+
+    await insertPaymentRow(admin, {
+      stripeEventId: event.id,
+      customerId,
+      amountCents: session.amount_total ?? 0,
+      currency,
+      purpose: "reservation_duplicate",
+      stripePaymentIntentId:
+        typeof session.payment_intent === "string" ? session.payment_intent : null,
+      stripeInvoiceId:
+        typeof session.invoice === "string" ? session.invoice : null,
+      metadata: {
+        gamerId,
+        productId,
+        purchaseShape,
+        reservationId,
+        existingParticipationId: confirmJson.existing_participation_id ?? null,
+      },
+    });
+
+    // Release the orphan reserving row so it doesn't permanently hold a seat.
+    await admin
+      .from("participations_v2")
+      .delete()
+      .eq("id", reservationId)
+      .eq("status", "reserving");
+
     return;
   }
 
@@ -354,6 +400,11 @@ async function handleChargeRefunded(admin: Admin, event: Stripe.Event) {
   if (!payment) return;
 
   // Pull the refund object from charge.refunds (the most recent one).
+  // Each `charge.refunded` event corresponds to exactly one refund creation,
+  // and Stripe sorts refunds.data newest-first — so data[0] is the refund this
+  // event is about. Don't iterate refunds.data here: refunds_v2 has UNIQUE on
+  // BOTH stripe_event_id AND stripe_refund_id, and looping would try to INSERT
+  // multiple rows sharing the same event_id, silently failing all but the first.
   const refunds = charge.refunds;
   if (!refunds || refunds.data.length === 0) return;
   const latest = refunds.data[0];
