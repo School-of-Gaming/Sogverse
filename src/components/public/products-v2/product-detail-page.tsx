@@ -12,12 +12,14 @@ import { useProductV2Detail, productV2Keys } from "@/services/products-v2";
 import { useMyGamers } from "@/services/gamers";
 import {
   participationKeys,
+  useMyParticipations,
   useParticipationCounts,
   useProductSeatCountsRealtime,
 } from "@/services/participations";
 import type { ProductTypeV2 } from "@/types";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { ProductDetailPageBody } from "./product-detail-page-body";
+import { ProductPurchasedDetailPlaceholder } from "./product-purchased-detail-placeholder";
 import type { AuthState, MyParticipationState } from "./signup-panel-view";
 
 // Route-level adapter: fetches the product, resolves the auth state
@@ -47,10 +49,18 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
     enabled: isCustomer,
   });
 
-  const { data: counts } = useParticipationCounts(
+  const { data: counts, isLoading: countsLoading } = useParticipationCounts(
     product ? [product.id] : [],
   );
   const myCount = counts?.[0];
+
+  // The purchased-detail branch (placeholder for now; real layout TBD) needs
+  // the actual participation rows, not just the `mySignupState` flag, so we
+  // pull the customer's full list and filter to this product. The browse
+  // page already prefetches this query, so on warm-cache navigation it's
+  // instant; on cold load we wait below.
+  const { data: myParticipations, isLoading: myParticipationsLoading } =
+    useMyParticipations();
 
   // Live seat-count updates for this single product. Browse pages don't
   // subscribe per-card (a 30-card grid is too many channels) — detail page
@@ -72,7 +82,18 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
     }
   }, [signupResult, queryClient]);
 
-  if (productLoading || authLoading || (isCustomer && gamersLoading)) {
+  // Wait on every query whose result decides which branch (purchased vs.
+  // browse) renders, so we don't paint the signup panel and then snap to
+  // the placeholder a tick later. countsLoading carries `mySignupState`
+  // (the branch signal); myParticipationsLoading carries the rows the
+  // placeholder needs. For non-customers both queries return fast/empty.
+  if (
+    productLoading ||
+    authLoading ||
+    (isCustomer && gamersLoading) ||
+    (isCustomer && countsLoading) ||
+    (isCustomer && myParticipationsLoading)
+  ) {
     return <DetailLoadingSkeleton />;
   }
 
@@ -118,11 +139,11 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   });
 
   // Already-signed-up override: if any of the customer's gamers has an
-  // active or waitlisted row on this product, replace the signup form with
-  // the status panel. Reserving rows are deliberately not surfaced — the
-  // movie-ticket model treats the held seat as the parent's to retry against
-  // (they just click Sign Up again), not as a "you're already signed up"
-  // state. See docs/plans/v2-stripe-participations-plan.md "Movie-ticket
+  // active or waitlisted row on this product, swap the entire detail page
+  // for the purchased view. Reserving rows are deliberately not surfaced —
+  // the movie-ticket model treats the held seat as the parent's to retry
+  // against (they just click Sign Up again), not as a "you're already signed
+  // up" state. See docs/plans/v2-stripe-participations-plan.md "Movie-ticket
   // reservation model".
   const myParticipationState: MyParticipationState | null =
     myCount?.mySignupState === "active" ||
@@ -130,12 +151,30 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
       ? myCount.mySignupState
       : null;
 
+  if (myParticipationState !== null) {
+    // Filter the customer's full list down to rows for *this* product.
+    // Multi-gamer households get one row per enrolled gamer; the placeholder
+    // renders a block per row. The flag is on `participations_v2.product_id`
+    // (not the joined product object) which is non-null by schema, so a
+    // simple equality is enough.
+    const rows = (myParticipations ?? []).filter(
+      (p) => p.product_id === product.id,
+    );
+    return (
+      <ProductPurchasedDetailPlaceholder
+        product={product}
+        productType={productType}
+        participations={rows}
+      />
+    );
+  }
+
   return (
     <ProductDetailPageBody
       product={product}
       state={state}
       authState={authState}
-      myParticipationState={myParticipationState}
+      myParticipationState={null}
     />
   );
 }

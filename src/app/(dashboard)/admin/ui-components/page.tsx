@@ -1022,6 +1022,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       detailLine: "Next: Tomorrow, 17:00",
       balanceLine: "7 sessions left",
       showManagePayment: true,
+      manageHref: "#",
     },
   },
   {
@@ -1036,6 +1037,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       detailLine: "We'll set up your group",
       balanceLine: "10 sessions left",
       showManagePayment: true,
+      manageHref: "#",
     },
   },
   {
@@ -1050,6 +1052,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       detailLine: "Next: Friday 18:00",
       balanceLine: "Subscription",
       showManagePayment: true,
+      manageHref: "#",
     },
   },
   {
@@ -1064,6 +1067,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       detailLine: "Next: Wednesday 16:30",
       balanceLine: "No sessions left — buy more",
       showManagePayment: true,
+      manageHref: "#",
     },
   },
   {
@@ -1078,6 +1082,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       detailLine: "3 ahead of you in line",
       balanceLine: null,
       showManagePayment: true,
+      manageHref: "#",
     },
   },
   {
@@ -1092,6 +1097,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       detailLine: "Next: Mon 24 Mar, 10:00",
       balanceLine: null,
       showManagePayment: true,
+      manageHref: "#",
     },
   },
   {
@@ -1106,6 +1112,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       detailLine: "Next: Fri 12 Apr, 18:00",
       balanceLine: null,
       showManagePayment: false,
+      manageHref: "#",
     },
   },
   {
@@ -1120,6 +1127,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       detailLine: "Next: Friday 15:30",
       balanceLine: null,
       showManagePayment: false,
+      manageHref: "#",
     },
   },
 ];

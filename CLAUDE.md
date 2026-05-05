@@ -86,6 +86,12 @@ A skeleton with no rendered text or interactions (just animated placeholders) do
 
 Layout changes on the same page *after* user interaction (clicking a button that reveals more content) are more acceptable but still not ideal — prefer an animated transition over a jump when you do need to reflow. Navigating to a new page is fine; this rule is about in-place shifts. If you're unsure how to reconcile the design with this rule, or hit a genuine edge case (e.g. a countdown timer that must update continuously — `tabular-nums` keeps digit columns from reflowing), check in with me. One reasonable escape hatch for unavoidable reflow is to place clickable elements somewhere the shifting region won't push them.
 
+### Loading & Disabled State
+
+**Rule: A button must not visually re-enable between the click and the action actually finishing.** A click promises one outcome; the disabled/loading state has to persist all the way through to it (including any navigation that follows). React Query's `mutation.isPending` is not enough on its own when the success path triggers a redirect or a route change — `isPending` flips back to `false` synchronously, but the navigation hasn't happened yet, so the button flickers and a fast user can fire the action twice.
+
+For external redirects use `useExternalRedirect()` from `src/hooks/use-external-redirect.ts`; for internal Next.js navigation use `useTransition`. Both expose a flag you OR into the button's `disabled` so the state stays held through the handoff.
+
 ### Date & Time Formatting
 
 **Rule: Pick the right tool for the date/time operation, and never use UTC as a stand-in for someone's local date.**

@@ -37,6 +37,18 @@ export type MyParticipationRow = Pick<
     product_translations_v2: ProductTranslationV2[];
   } | null;
   /**
+   * Joined gamer profile so the purchased card can render "For {name}"
+   * without a second lookup. RLS already permits parents to read their
+   * gamers' profiles (same path the `parent_gamer` join uses elsewhere).
+   * Either field can be missing depending on how the gamer was created;
+   * the UI falls back to `display_name → username` and renders something
+   * either way.
+   */
+  gamer: {
+    display_name: string | null;
+    username: string | null;
+  } | null;
+  /**
    * `true` when a live family_subscription_items_v2 row points at this
    * participation. Drives the bundle-vs-sub coverage UI on the purchased card.
    */
@@ -101,6 +113,9 @@ export class ParticipationsService {
           product:products_v2(
             id, product_type, billing_mode, image_path, timezone,
             product_translations_v2(*)
+          ),
+          gamer:profiles!participations_v2_gamer_id_fkey(
+            display_name, username
           ),
           family_subscription_items_v2(
             id,
@@ -258,6 +273,10 @@ type RawMyParticipationRow = Pick<
     image_path: string | null;
     timezone: string;
     product_translations_v2: ProductTranslationV2[];
+  } | null;
+  gamer: {
+    display_name: string | null;
+    username: string | null;
   } | null;
   family_subscription_items_v2: {
     id: string;

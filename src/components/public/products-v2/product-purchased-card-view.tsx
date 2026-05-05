@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,6 +58,8 @@ export interface ProductPurchasedCardViewProps {
    * through the municipality's own flow).
    */
   showManagePayment: boolean;
+  /** Where the Manage button navigates — the product detail page. */
+  manageHref: string;
 }
 
 export function ProductPurchasedCardView({
@@ -69,6 +72,7 @@ export function ProductPurchasedCardView({
   detailLine,
   balanceLine,
   showManagePayment,
+  manageHref,
 }: ProductPurchasedCardViewProps) {
   const t = useTranslations("productBrowse.card");
   const isWaitlist = state === "waitlisted";
@@ -134,16 +138,11 @@ export function ProductPurchasedCardView({
             )}
           </div>
           {showManagePayment && (
-            <Button
-              type="button"
-              size="sm"
-              variant="default"
-              onClick={() => {
-                /* noop: management page lands in a follow-up */
-              }}
-            >
-              {t("manage")}
-            </Button>
+            <Link href={manageHref}>
+              <Button type="button" size="sm" variant="default">
+                {t("manage")}
+              </Button>
+            </Link>
           )}
         </div>
       </CardContent>

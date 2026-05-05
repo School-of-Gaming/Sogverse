@@ -62,16 +62,30 @@ export function ProductPurchasedCard({ participation }: ProductPurchasedCardProp
     return t("balanceNoSessionsLeft");
   })();
 
-  // The participations service joins one gamer per row. Pull a display
-  // name from the gamer_id; for v2 launch we use the gamer_id as the
-  // identicon seed which keeps the avatar stable. A future improvement
-  // adds the gamer's display_name to the join (RLS-permitting).
+  // The participations service joins the gamer's profile (display_name +
+  // username). Prefer display_name; fall back to username; final fallback
+  // is a slice of the id so we still render *something* if both are null
+  // (shouldn't happen — a gamer profile is created with at least a
+  // username — but the types allow it). The gamer_id is the identicon
+  // seed regardless, which keeps the avatar stable across name changes.
+  const displayName =
+    participation.gamer?.display_name ||
+    participation.gamer?.username ||
+    participation.gamer_id.slice(0, 8);
   const gamer = {
-    displayName: participation.gamer_id.slice(0, 8),
+    displayName,
     seed: participation.gamer_id,
   };
 
   const showManagePayment = product?.billing_mode !== "external_contract";
+
+  // The Manage button navigates to the product's detail route — same URL the
+  // browse grid uses; the page branches on whether the parent owns it. While
+  // the placeholder is in place the detail view dumps raw participation rows
+  // for verification; when the real layout lands here the link target stays
+  // the same.
+  const manageHref =
+    product !== null ? detailHrefFor(product.product_type, product.id) : "/";
 
   return (
     <ProductPurchasedCardView
@@ -84,6 +98,22 @@ export function ProductPurchasedCard({ participation }: ProductPurchasedCardProp
       detailLine={detailLine}
       balanceLine={balanceLine}
       showManagePayment={Boolean(showManagePayment)}
+      manageHref={manageHref}
     />
   );
+}
+
+function detailHrefFor(
+  productType: NonNullable<MyParticipationRow["product"]>["product_type"],
+  productId: string,
+): string {
+  switch (productType) {
+    case "consumer_club":
+    case "municipality_club":
+      return `/clubs/${productId}`;
+    case "camp":
+      return `/camps/${productId}`;
+    case "event":
+      return `/events/${productId}`;
+  }
 }

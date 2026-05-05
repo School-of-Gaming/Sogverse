@@ -102,7 +102,8 @@ export function ProductBrowsePage({
     () => (products ?? []).map((p) => p.id),
     [products],
   );
-  const { data: counts } = useParticipationCounts(productIds);
+  const { data: counts, isLoading: countsLoading } =
+    useParticipationCounts(productIds);
   const countsByProduct = useMemo(() => {
     const map = new Map<string, ParticipationCounts>();
     for (const c of counts ?? []) {
@@ -112,7 +113,8 @@ export function ProductBrowsePage({
   }, [counts]);
 
   // Real "your enrolled" rail (replaces the prior ?mock=1 gate).
-  const { data: myParticipations } = useMyParticipations();
+  const { data: myParticipations, isLoading: myParticipationsLoading } =
+    useMyParticipations();
   const purchasedRows = useMemo(() => {
     if (!myParticipations) return [];
     return myParticipations.filter(
@@ -121,13 +123,39 @@ export function ProductBrowsePage({
     );
   }, [myParticipations, purchasedTypes]);
 
-  const allLoaded = !productsLoading && !topicsLoading && !tagsLoading;
+  // Hide already-purchased products from the browse grid below: the parent's
+  // single entry point to a product they own is the purchased rail above.
+  // Multi-gamer households still see one purchased card per gamer; the set
+  // dedupes by product id for the exclusion. We exclude on `myParticipations`
+  // (the full list — clubs/camps/events) rather than `purchasedRows` (filtered
+  // to `purchasedTypes`) so a parent who bought a club can't see it linger in
+  // a different browse grid either.
+  const purchasedProductIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const p of myParticipations ?? []) {
+      if (p.product !== null) ids.add(p.product.id);
+    }
+    return ids;
+  }, [myParticipations]);
+
+  // Wait on every query the page renders before painting anything — including
+  // myParticipations + counts. Without this gate the browse grid lands first,
+  // the purchased rail pops in above it and shoves the grid down (CLAUDE.md
+  // layout-shift rule), and a parent gets a brief glimpse of an
+  // already-purchased product as a browse card before it's filtered out.
+  const allLoaded =
+    !productsLoading &&
+    !topicsLoading &&
+    !tagsLoading &&
+    !myParticipationsLoading &&
+    !countsLoading;
 
   const { topics, tags, format, languages } = useBrowseFilters();
-  const filtered = useMemo(
-    () => filterProducts(products ?? [], { topics, tags, format, languages }),
-    [products, topics, tags, format, languages],
-  );
+  const filtered = useMemo(() => {
+    const base = filterProducts(products ?? [], { topics, tags, format, languages });
+    if (purchasedProductIds.size === 0) return base;
+    return base.filter((p) => !purchasedProductIds.has(p.id));
+  }, [products, topics, tags, format, languages, purchasedProductIds]);
 
   const headingKey = HEADING_KEYS[browseType];
 

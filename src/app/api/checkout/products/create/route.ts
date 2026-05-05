@@ -305,13 +305,16 @@ export async function POST(request: Request) {
     typeof returnPath === "string" && returnPath.startsWith("/")
       ? returnPath
       : `/clubs/${productId}`;
-  // Success goes to the type-appropriate browse page (the one with the
-  // "purchased" rail) — not back to the product detail page. Sending the
-  // parent to detail meant they'd land in a 1–3s race window between Stripe's
-  // redirect and our webhook flipping the reservation to active, forcing us
-  // to show a "Finishing your sign-up" panel. Browse-page redirect skips that
-  // entirely. Eventually this becomes the purchased-product detail page.
-  const successPath = browsePathForType(product.product_type);
+  // Success lands on the product detail page, which now branches to the
+  // purchased-detail view (placeholder for the v2 phase) once the webhook
+  // flips the reservation to active. There's a 1–3s race window between
+  // Stripe's redirect and the webhook landing — during that window the
+  // detail page renders the signup panel briefly, then snaps to the
+  // purchased view as soon as the participation queries refetch. The
+  // `?signup=success` flag triggers the explicit invalidation in
+  // ProductDetailPage's useEffect (and the realtime channel on
+  // product_seat_counts_v2 covers the late-webhook case).
+  const successPath = detailPathForType(product.product_type, productId);
   const successUrl = `${origin}${successPath}?signup=success`;
   // Cancel bounces back to the product page. We do NOT free the seat — the
   // reserving row stays held until either Stripe fires session.completed
@@ -435,15 +438,18 @@ function pickProductName(
   return "School of Gaming product";
 }
 
-function browsePathForType(productType: ProductTypeV2): string {
+function detailPathForType(
+  productType: ProductTypeV2,
+  productId: string,
+): string {
   switch (productType) {
     case "consumer_club":
     case "municipality_club":
-      return "/clubs";
+      return `/clubs/${productId}`;
     case "camp":
-      return "/camps";
+      return `/camps/${productId}`;
     case "event":
-      return "/events";
+      return `/events/${productId}`;
   }
 }
 

@@ -12,6 +12,7 @@ import {
   useMyFamilySubAt,
   type CreateParticipationInput,
 } from "@/services/participations";
+import { useExternalRedirect } from "@/hooks/use-external-redirect";
 import {
   buildPricingOptions,
   findOption,
@@ -105,6 +106,7 @@ export function SignupPanel({
 
   const createMutation = useCreateParticipation();
   const waitlistMutation = useJoinWaitlist();
+  const { redirecting, redirectTo } = useExternalRedirect();
 
   const purchaseShape = purchaseShapeFor(selectedOption);
 
@@ -123,8 +125,11 @@ export function SignupPanel({
         if (response.status === "redirect") {
           // Full-page navigation per CLAUDE.md auth/Stripe rule — leaves
           // any client-side state behind so the post-Stripe return reads
-          // fresh participations.
-          window.location.href = response.checkoutUrl;
+          // fresh participations. `redirectTo` keeps the CTA disabled
+          // through the unload (mutation.isPending flips false instantly,
+          // but the page hasn't swapped yet — without the flag the button
+          // re-enables for one frame and a fast user can double-click).
+          redirectTo(response.checkoutUrl);
         }
         // 'subscribed' / 'free_confirmed' / 'full' all stay on the page.
         // The mutation's onSuccess invalidates participation/products keys,
@@ -168,7 +173,8 @@ export function SignupPanel({
     onSubmit: handleSubmit,
     onJoinWaitlist: handleJoinWaitlist,
     subCtaMode,
-    submitting: createMutation.isPending || waitlistMutation.isPending,
+    submitting:
+      createMutation.isPending || waitlistMutation.isPending || redirecting,
     submitError,
     currency,
     locale: uiLocale,
