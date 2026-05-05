@@ -154,6 +154,38 @@ INSERT INTO auth.identities (
   NOW(), NOW(), NOW()
 );
 
+-- Gamer 2 (second gamer linked to customer 1 — needed for v2 race / waitlist
+-- monotonicity tests where two distinct (customer, gamer) pairs are required.
+-- Linked to customer 1 because the join_waitlist_v2 idempotency check is keyed
+-- on gamer_id alone, so distinct gamers — not distinct customers — are what
+-- yields independent rows.)
+INSERT INTO auth.users (
+  id, instance_id, aud, role, email,
+  encrypted_password, email_confirmed_at, last_sign_in_at,
+  raw_app_meta_data, raw_user_meta_data,
+  confirmation_token, email_change, email_change_token_new, recovery_token,
+  created_at, updated_at
+) VALUES (
+  '00000000-0000-0000-0000-000000000006',
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated', 'testgamer2@gamer.sogverse.internal',
+  crypt('testpassword123', gen_salt('bf')),
+  NOW(), NOW(),
+  '{"provider":"email","providers":["email"]}',
+  jsonb_build_object('display_name', 'Test Gamer 2'),
+  '', '', '', '',
+  NOW(), NOW()
+);
+INSERT INTO auth.identities (
+  id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+) VALUES (
+  '00000000-0000-0000-0000-000000000006',
+  '00000000-0000-0000-0000-000000000006',
+  jsonb_build_object('sub', '00000000-0000-0000-0000-000000000006', 'email', 'testgamer2@gamer.sogverse.internal'),
+  'email', '00000000-0000-0000-0000-000000000006',
+  NOW(), NOW(), NOW()
+);
+
 -- =============================================================================
 -- 2. Promote non-customer roles (trigger defaults ALL users to customer)
 -- =============================================================================
@@ -173,6 +205,13 @@ DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000
 INSERT INTO gamer_profiles (user_id, date_of_birth, gender)
 VALUES ('00000000-0000-0000-0000-000000000004', '2015-06-15', 'boy');
 
+-- Promote gamer 2 (mirrors gamer 1 promotion)
+UPDATE profiles SET role = 'gamer', email = NULL, username = 'testgamer2'
+WHERE id = '00000000-0000-0000-0000-000000000006';
+DELETE FROM customer_profiles WHERE user_id = '00000000-0000-0000-0000-000000000006';
+INSERT INTO gamer_profiles (user_id, date_of_birth, gender)
+VALUES ('00000000-0000-0000-0000-000000000006', '2016-03-20', 'girl');
+
 -- =============================================================================
 -- 3. Patch extension tables (trigger creates them with defaults)
 -- =============================================================================
@@ -188,6 +227,12 @@ INSERT INTO parent_gamer (id, parent_id, gamer_id) VALUES (
   '00000000-0000-0000-0000-000000000100',
   '00000000-0000-0000-0000-000000000002', -- customer 1
   '00000000-0000-0000-0000-000000000004'  -- gamer
+);
+
+INSERT INTO parent_gamer (id, parent_id, gamer_id) VALUES (
+  '00000000-0000-0000-0000-000000000101',
+  '00000000-0000-0000-0000-000000000002', -- customer 1
+  '00000000-0000-0000-0000-000000000006'  -- gamer 2
 );
 
 -- =============================================================================
