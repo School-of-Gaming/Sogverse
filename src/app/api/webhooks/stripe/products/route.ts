@@ -104,8 +104,16 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
 
   const creditsToGrant = isBundle ? bundleSizeFromShape(purchaseShape) : 0;
 
-  // Confirm reservation atomically. RPC returns either 'confirmed' (active row)
-  // or 'lost_seat' (race lost — refund + waitlist).
+  // Confirm reservation. The RPC flips reserving → active, or returns
+  // 'orphan' if the row is missing / in an unexpected status (admin
+  // interference; should not happen under normal Stripe operation).
+  //
+  // Pay-twice handling: each click creates a fresh reservation row, so two
+  // Stripe sessions for the same parent/gamer reference different rows.
+  // The schema's `uq_participations_v2_active_or_waitlisted` partial unique
+  // index catches the second confirm by raising 23505 (unique violation).
+  // We catch and log; the duplicate Stripe charge sits there awaiting a
+  // manual refund. Rare; cleaner than an automated refund flow.
   const { data: confirmResult, error: confirmErr } = await admin.rpc(
     "confirm_reservation_v2",
     {
@@ -114,60 +122,30 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
     },
   );
   if (confirmErr) {
+    if (confirmErr.code === "23505") {
+      console.error(
+        "[stripe/products] pay-twice detected — second confirm blocked by unique index, manual refund needed",
+        {
+          reservationId,
+          eventId: event.id,
+          paymentIntent: session.payment_intent,
+          subscription: session.subscription,
+        },
+      );
+      return;
+    }
     throw new Error(`confirm_reservation_v2 failed: ${confirmErr.message}`);
   }
   const confirmJson = confirmResult as {
-    kind: "confirmed" | "lost_seat";
+    kind: "confirmed" | "orphan";
     participation_id?: string;
-    idempotent?: boolean;
   };
 
-  if (confirmJson.kind === "lost_seat") {
-    // Refund and put parent on waitlist.
-    if (typeof session.payment_intent === "string") {
-      try {
-        const refund = await stripe.refunds.create({
-          payment_intent: session.payment_intent,
-          reason: "requested_by_customer",
-        });
-        // Record the refund — but first we need a payments_v2 row. Without
-        // one we can't satisfy the FK. So write the payment row first
-        // (purpose is whatever the original was), then the refund.
-        const paymentRow = await insertPaymentRow(admin, {
-          stripeEventId: event.id,
-          customerId,
-          amountCents: session.amount_total ?? 0,
-          currency,
-          purpose: paymentPurposeFor(purchaseShape),
-          stripePaymentIntentId: session.payment_intent,
-          stripeInvoiceId: null,
-          metadata: {
-            gamerId,
-            productId,
-            purchaseShape,
-            lostSeat: true,
-          },
-        });
-        if (paymentRow) {
-          await admin.from("refunds_v2").insert({
-            payment_id: paymentRow.id,
-            amount_cents: refund.amount,
-            reason: "lost_seat_after_payment",
-            stripe_refund_id: refund.id,
-            stripe_event_id: `${event.id}:lost_seat_refund`,
-          });
-        }
-      } catch (refundErr) {
-        console.error("[stripe/products] refund failed on lost-seat path:", refundErr);
-      }
-    }
-
-    // Put the parent on the waitlist.
-    await admin.rpc("join_waitlist_v2", {
-      p_product_id: productId,
-      p_gamer_id: gamerId,
-      p_customer_id: customerId,
-    });
+  if (confirmJson.kind === "orphan") {
+    console.error(
+      "[stripe/products] orphan confirmation — reservation row missing or in unexpected status",
+      { reservationId, eventId: event.id },
+    );
     return;
   }
 

@@ -3,10 +3,12 @@
 // shared with the existing v1 paths.
 
 /**
- * How long a `reserving` participation row holds a seat before the cron's
- * count_seats_taken_v2 ignores it. Matched to Stripe Checkout's session
- * lifetime so a parent who completes Checkout never lands "completed-but-
- * expired" — see docs/products-redesign.md §4.6a.
+ * Stripe Checkout session lifetime. Stripe enforces a 30-minute minimum on
+ * `expires_at`, so this is also the floor for how long a reservation can be
+ * held. The DB-side reservation has no separate timer: status='reserving'
+ * holds the seat until either Stripe fires session.completed (→ confirm)
+ * or session.expired (→ expire). See docs/products-v2-architecture.md
+ * "Movie-ticket reservation model".
  */
 export const RESERVATION_LIFETIME_MINUTES = 30;
 

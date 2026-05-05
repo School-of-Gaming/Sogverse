@@ -130,99 +130,64 @@ export async function POST(request: Request) {
     );
   }
 
-  // Movie-ticket retry prelude. If this gamer already has a held reservation
-  // on this product (parent canceled or abandoned a previous Stripe session),
-  // reuse the row rather than creating a second one — the seat is theirs for
-  // the full 30-min lifetime regardless of how many retries. The new Stripe
-  // Checkout session carries the latest `purchaseShape` in metadata.
-  //
-  // The old Stripe session is left to die on its own — it expires at the
-  // same `expires_at` we set on the original (= reserved_until) and no money
-  // moved through it, so there's nothing to refund. The webhook will fire
-  // `checkout.session.expired` for it; the handler is a no-op for already-
-  // completed reservations.
-  //
-  // Edge case: parent kept the original Stripe tab open and pays both the
-  // old and new sessions. First webhook flips the row to `active`; second
-  // webhook hits the existing `lost_seat` path and refunds the duplicate.
-  // Rare; defined recovery.
-  //
-  // Free products skip the prelude — they have no "retry" notion (the RPC
-  // inserts an active row directly, no Stripe round-trip).
-  let reservationId: string;
-  let existingReservationId: string | null = null;
-  if (purchaseShape !== "free") {
-    const { data: existingReserving } = await admin
-      .from("participations_v2")
-      .select("id")
-      .eq("product_id", productId)
-      .eq("gamer_id", gamerId)
-      .eq("customer_id", user.id)
-      .eq("status", "reserving")
-      .maybeSingle();
-    if (existingReserving) {
-      existingReservationId = existingReserving.id;
-    }
+  // Each click is an independent reservation. If the parent abandoned a
+  // previous Stripe session, that row stays in the seat-count until Stripe
+  // fires `checkout.session.expired` (~30 min) and the webhook deletes it.
+  // The schema's unique index on (product_id, gamer_id) excludes 'reserving',
+  // so multiple held rows for the same parent/gamer coexist fine. Pay-twice
+  // is bounded by the unique index firing on the second confirm — see the
+  // webhook for the 23505 catch.
+  const { data: rpcResult, error: rpcErr } = await admin.rpc(
+    "create_participation_v2",
+    {
+      p_product_id: productId,
+      p_gamer_id: gamerId,
+      p_customer_id: user.id,
+      p_purchase_shape: purchaseShape,
+      p_currency: currency,
+    },
+  );
+
+  if (rpcErr) {
+    return NextResponse.json(
+      { error: rpcErr.message },
+      { status: rpcErr.code === "23505" ? 409 : 400 },
+    );
   }
 
-  if (existingReservationId !== null) {
-    reservationId = existingReservationId;
-  } else {
-    // Normal path: RPC takes the gate lock, validates parent-gamer link /
-    // effective status / seat count, and either inserts a reserving row,
-    // returns full, or (free) inserts active. SECURITY DEFINER bypasses RLS.
-    const { data: rpcResult, error: rpcErr } = await admin.rpc(
-      "create_participation_v2",
-      {
-        p_product_id: productId,
-        p_gamer_id: gamerId,
-        p_customer_id: user.id,
-        p_purchase_shape: purchaseShape,
-        p_currency: currency,
-      },
-    );
+  const rpcJson = rpcResult as {
+    kind: "free_active" | "reserving" | "full";
+    participation_id?: string;
+    reserved_until?: string;
+  };
 
-    if (rpcErr) {
-      return NextResponse.json(
-        { error: rpcErr.message },
-        { status: rpcErr.code === "23505" ? 409 : 400 },
-      );
-    }
+  if (rpcJson.kind === "full") {
+    const respBody: CreateResponseBody = { status: "full" };
+    return NextResponse.json(respBody);
+  }
 
-    const rpcJson = rpcResult as {
-      kind: "free_active" | "reserving" | "full";
-      participation_id?: string;
-      reserved_until?: string;
-    };
-
-    if (rpcJson.kind === "full") {
-      const respBody: CreateResponseBody = { status: "full" };
-      return NextResponse.json(respBody);
-    }
-
-    if (rpcJson.kind === "free_active") {
-      if (!rpcJson.participation_id) {
-        return NextResponse.json(
-          { error: "RPC returned no participation id" },
-          { status: 500 },
-        );
-      }
-      const respBody: CreateResponseBody = {
-        status: "free_confirmed",
-        participationId: rpcJson.participation_id,
-      };
-      return NextResponse.json(respBody);
-    }
-
-    // kind === 'reserving'
+  if (rpcJson.kind === "free_active") {
     if (!rpcJson.participation_id) {
       return NextResponse.json(
-        { error: "RPC returned no reservation id" },
+        { error: "RPC returned no participation id" },
         { status: 500 },
       );
     }
-    reservationId = rpcJson.participation_id;
+    const respBody: CreateResponseBody = {
+      status: "free_confirmed",
+      participationId: rpcJson.participation_id,
+    };
+    return NextResponse.json(respBody);
   }
+
+  // kind === 'reserving'
+  if (!rpcJson.participation_id) {
+    return NextResponse.json(
+      { error: "RPC returned no reservation id" },
+      { status: 500 },
+    );
+  }
+  const reservationId = rpcJson.participation_id;
 
   const stripeCustomerId = await getOrCreateStripeCustomer(admin, user.id);
 
@@ -290,28 +255,15 @@ export async function POST(request: Request) {
         }
 
         // Confirm reservation synchronously — flips reserving → active.
-        const { data: confirmResult, error: confirmErr } = await admin.rpc(
+        // The simplified RPC can no longer return a race-loss kind: status
+        // alone holds the seat, and the reservation we created two RPCs ago
+        // is still 'reserving' until we flip it here.
+        const { error: confirmErr } = await admin.rpc(
           "confirm_reservation_v2",
           { p_reservation_id: reservationId, p_credits_to_grant: 0 },
         );
         if (confirmErr) {
           throw new Error(`confirm_reservation_v2 failed: ${confirmErr.message}`);
-        }
-        const confirmJson = confirmResult as { kind: "confirmed" | "lost_seat" };
-        if (confirmJson.kind === "lost_seat") {
-          // Rare race: the seat went between RPC reserve and Stripe call.
-          // Roll back the Stripe item and refund the prorated charge.
-          try {
-            await stripe.subscriptionItems.del(newItem.id, {
-              proration_behavior: "always_invoice",
-            });
-          } catch (rollbackErr) {
-            console.error(
-              "[checkout/products] could not roll back inline sub item:",
-              rollbackErr,
-            );
-          }
-          return NextResponse.json({ status: "full" } satisfies CreateResponseBody);
         }
 
         // Link the participation to the family sub.
@@ -362,9 +314,11 @@ export async function POST(request: Request) {
   const successPath = browsePathForType(product.product_type);
   const successUrl = `${origin}${successPath}?signup=success`;
   // Cancel bounces back to the product page. We do NOT free the seat — the
-  // reservation stays held for its full 30-min lifetime (movie-ticket model).
-  // The same parent can click Sign Up again to retry against the same held
-  // seat; that retry path is handled by the existing-row prelude above.
+  // reserving row stays held until either Stripe fires session.completed
+  // (→ confirm) or session.expired (→ expire). A parent who clicks Sign Up
+  // again creates a fresh reservation (their old row stays held until its
+  // session expires). On the rare last-seat case they'd see "Fully booked"
+  // and can join the waitlist instead.
   const cancelUrl = `${origin}${safeReturnPath}?signup=canceled`;
 
   const metadata = {
@@ -376,9 +330,9 @@ export async function POST(request: Request) {
     currency,
   };
 
-  // Stripe Checkout sessions expire matched to the reservation — guarantees
-  // we never land in "completed-but-expired" because Stripe accepted payment
-  // after our reservation lapsed.
+  // Stripe Checkout's session expiry IS our reservation lifetime: Stripe
+  // refuses payment past `expires_at` and fires checkout.session.expired,
+  // which our webhook turns into expire_reservation_v2.
   const expiresAt = Math.floor(Date.now() / 1000) + RESERVATION_LIFETIME_MINUTES * 60;
 
   const sessionParams: Stripe.Checkout.SessionCreateParams = {

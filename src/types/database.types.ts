@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -2027,7 +2027,7 @@ export type Database = {
         | "product_cancelled"
         | "subscription_item_removed"
         | "subscription_period_proration"
-        | "lost_seat_after_payment"
+        | "duplicate_payment"
       subscription_frequency_v2: "monthly" | "quarterly" | "yearly"
       token_transaction_type:
         | "purchase"
@@ -2196,7 +2196,7 @@ export const Constants = {
         "product_cancelled",
         "subscription_item_removed",
         "subscription_period_proration",
-        "lost_seat_after_payment",
+        "duplicate_payment",
       ],
       subscription_frequency_v2: ["monthly", "quarterly", "yearly"],
       token_transaction_type: [

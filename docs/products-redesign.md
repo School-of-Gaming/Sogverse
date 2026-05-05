@@ -308,15 +308,17 @@ The lock above is a *gate*, not a *hold*. By itself it serializes seat-count rea
 The chosen mechanism is a **reserving participation row**, not a held card authorization:
 
 1. Parent clicks the type-specific signup verb. The client calls a `create_participation_v2` API route with `(product_id, gamer_id, purchase_shape, currency)`.
-2. The RPC takes the gate lock, counts seats (active + non-expired-reserving rows), then either:
-   - **Seat available** — inserts a `participations_v2` row with `status='reserving'` and `reserved_until = now() + 30 minutes`, returns a Stripe Checkout URL whose metadata is keyed to that row.
+2. The RPC takes the gate lock, counts seats (`active + reserving`), then either:
+   - **Seat available** — inserts a `participations_v2` row with `status='reserving'`, returns a Stripe Checkout URL whose metadata is keyed to that row.
    - **No seat** — returns `{ full: true }`. The client flips the CTA to "Join the waitlist". No Stripe call ever made.
 3. Parent completes Stripe Checkout → webhook flips the reserving row to `status='active'` and writes `payments_v2`.
-4. Parent abandons → reservation expires after 30 min. The next signup attempt's seat-count query ignores expired reserving rows; the seat returns to the pool.
+4. Parent abandons → Stripe fires `checkout.session.expired` (~30 min after creation, the session lifetime), webhook calls `expire_reservation_v2`, the row is deleted, and the seat returns to the pool.
 
 This pattern works uniformly for **all** purchase shapes — bundles, single-payment camps/events, and family subs. The same gate decides who proceeds to Stripe; nobody is sent through Checkout without a held seat.
 
-**Why 30 min, not shorter.** The reservation lifetime is matched to Stripe Checkout's session lifetime (also 30 min by default). A shorter reservation would create a window where Stripe still accepts the parent's payment but our reservation has lapsed, forcing a "completed after expired" branch that's complex to test and confusing when it fires. 30 min eliminates the gap entirely: if Stripe says the payment is valid, the seat is theirs. The trade-off is slightly slower seat-return for parents who abandon — acceptable, since the alternative is occasional billed-but-no-seat surprises.
+**Status, not a timer, holds the seat.** Earlier drafts had `count_seats_taken_v2` exclude reserving rows past `reserved_until`; that created a race window at the 30-min boundary (Stripe accepts payment at T=29:59, our timer lapses at T=30:00, another parent grabs the seat before our webhook arrives). Counting all reserving rows regardless of timer eliminates that window: the row stays held until either `confirm_reservation_v2` or `expire_reservation_v2` fires, and Stripe guarantees those two events are mutually exclusive for a given session. Trade-off: we trust Stripe's webhook delivery to release abandoned seats. If `checkout.session.expired` never arrives (rare), the row is stuck until manual cleanup.
+
+**Each click is an independent reservation.** A parent who abandons mid-pay and clicks Sign Up again gets a brand-new reservation row, not the old one. The schema permits multiple `reserving` rows per `(product, gamer)` (the partial unique index excludes `'reserving'`); whichever Stripe session pays first wins, the other is cleaned up by `expire_reservation_v2`. Pay-twice (parent pays both tabs) is bounded by the unique index firing on the second confirm — the webhook catches `23505`, logs, and returns 200; the duplicate Stripe charge is left for manual refund. We accept this manual-recovery cost in exchange for not maintaining an automated refund flow.
 
 **Subscriptions and the manual-capture gap.** Stripe doesn't support `capture_method: "manual"` for recurring charges, which complicates the "auth-then-decide" pattern an earlier draft of this doc suggested for one-shot bundles. The reservation row sidesteps this entirely: the seat is held in our DB before any Stripe transaction starts, so subs and one-offs follow the same path. The manual-capture future improvement (previously listed under `products-v2-architecture.md`) is **obsolete** under this model.
 
