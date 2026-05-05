@@ -12,7 +12,6 @@ import {
   useMyFamilySubAt,
   type CreateParticipationInput,
 } from "@/services/participations";
-import { useExternalRedirect } from "@/hooks/use-external-redirect";
 import {
   buildPricingOptions,
   findOption,
@@ -106,13 +105,23 @@ export function SignupPanel({
 
   const createMutation = useCreateParticipation();
   const waitlistMutation = useJoinWaitlist();
-  const { redirecting, redirectTo } = useExternalRedirect();
+
+  // Per CLAUDE.md "Loading & Disabled State": flip true synchronously *before*
+  // the mutation so there's no render where the button is enabled between
+  // the click and the outcome. `mutation.isPending` alone doesn't suffice —
+  // it flips false the instant React Query dispatches the success state, but
+  // the navigation/panel-swap hasn't happened yet, so the CTA briefly
+  // re-enables. Only cleared on retry-able outcomes (`full`, error). For
+  // 'redirect', the page unloads. For 'subscribed' / 'free_confirmed', the
+  // panel swaps to AlreadySignedUpPanel via the myParticipationState refresh.
+  const [committing, setCommitting] = useState(false);
 
   const purchaseShape = purchaseShapeFor(selectedOption);
 
   const handleSubmit = () => {
     if (!selectedGamerId || !purchaseShape) return;
     setSubmitError(null);
+    setCommitting(true);
     const input: CreateParticipationInput = {
       productId: product.id,
       gamerId: selectedGamerId,
@@ -123,20 +132,18 @@ export function SignupPanel({
     createMutation.mutate(input, {
       onSuccess: (response) => {
         if (response.status === "redirect") {
-          // Full-page navigation per CLAUDE.md auth/Stripe rule — leaves
-          // any client-side state behind so the post-Stripe return reads
-          // fresh participations. `redirectTo` keeps the CTA disabled
-          // through the unload (mutation.isPending flips false instantly,
-          // but the page hasn't swapped yet — without the flag the button
-          // re-enables for one frame and a fast user can double-click).
-          redirectTo(response.checkoutUrl);
+          window.location.href = response.checkoutUrl;
+          return;
         }
-        // 'subscribed' / 'free_confirmed' / 'full' all stay on the page.
-        // The mutation's onSuccess invalidates participation/products keys,
-        // so the panel's myParticipationState prop will refresh and the
-        // success state renders without an explicit transition here.
+        if (response.status === "full") {
+          // Seat went between the click and the server-side check. The panel
+          // will swap to FullWaitlistPanel once participation queries refetch
+          // — release so the new "Join the waitlist" button is clickable.
+          setCommitting(false);
+        }
       },
       onError: (err) => {
+        setCommitting(false);
         setSubmitError(err instanceof Error ? err.message : "Could not sign up");
       },
     });
@@ -145,10 +152,12 @@ export function SignupPanel({
   const handleJoinWaitlist = () => {
     if (!selectedGamerId) return;
     setSubmitError(null);
+    setCommitting(true);
     waitlistMutation.mutate(
       { productId: product.id, gamerId: selectedGamerId },
       {
         onError: (err) => {
+          setCommitting(false);
           setSubmitError(
             err instanceof Error ? err.message : "Could not join waitlist",
           );
@@ -173,8 +182,7 @@ export function SignupPanel({
     onSubmit: handleSubmit,
     onJoinWaitlist: handleJoinWaitlist,
     subCtaMode,
-    submitting:
-      createMutation.isPending || waitlistMutation.isPending || redirecting,
+    submitting: committing,
     submitError,
     currency,
     locale: uiLocale,
