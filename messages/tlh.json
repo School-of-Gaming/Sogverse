@@ -1247,7 +1247,7 @@
     "signupPanel": {
       "bannerOpen": "DaH {verb}",
       "bannerAlmostFull": "nom — pa' puS neH",
-      "bannerCountdown": "qonta' poSlaw'",
+      "bannerCountdown": "qonta' poSlaw' {date}",
       "bannerCountdownDone": "qonta' poS",
       "bannerThreshold": "buy'meH tagh",
       "bannerWaitlist": "DaH buy'",

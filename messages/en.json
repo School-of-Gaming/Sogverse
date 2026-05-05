@@ -1199,7 +1199,7 @@
     "signupPanel": {
       "bannerOpen": "{verb} now",
       "bannerAlmostFull": "Going fast — only a few seats left",
-      "bannerCountdown": "Sign-up opens in",
+      "bannerCountdown": "Sign-up opens at {date}",
       "bannerCountdownDone": "Sign-up is now open",
       "bannerThreshold": "Starts when it fills up",
       "bannerWaitlist": "Fully booked right now",

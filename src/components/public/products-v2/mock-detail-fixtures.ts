@@ -20,6 +20,7 @@ import type { AuthState } from "./signup-panel-view";
 
 export type PreviewStateKind =
   | "closed_pre"
+  | "closed_pre_10s"
   | "open"
   | "open_almost_full"
   | "pending_thr"
@@ -30,6 +31,7 @@ export type PreviewStateKind =
 
 export const PREVIEW_STATES: PreviewStateKind[] = [
   "closed_pre",
+  "closed_pre_10s",
   "open",
   "open_almost_full",
   "pending_thr",
@@ -346,6 +348,11 @@ function pickRegistrationOpensAt(
       // 2 days, 4 hrs ahead of *now* — gives the countdown enough digits
       // and ensures it actually ticks for an admin reviewing the mock.
       return new Date(nowMs + 2 * DAY_MS + 4 * HOUR_MS).toISOString();
+    case "closed_pre_10s":
+      // 10 seconds ahead of *now* — for live-testing the pre-open → open
+      // transition (countdown clock disappearing, banner copy flip, CTA
+      // re-enabling) in real time on the UI Components page.
+      return new Date(nowMs + 10 * 1000).toISOString();
     default:
       // Already open in every other state.
       return new Date(nowMs - DAY_MS).toISOString();
@@ -371,6 +378,7 @@ function pickStatus(
       return "running";
     case "pending_thr":
     case "closed_pre":
+    case "closed_pre_10s":
     case "full_closed":
     case "full_waitlist":
       return "pending";
@@ -390,6 +398,11 @@ function buildRegistrationState(
       return {
         kind: "closed_pre",
         opensAt: new Date(nowMs + 2 * DAY_MS + 4 * HOUR_MS).toISOString(),
+      };
+    case "closed_pre_10s":
+      return {
+        kind: "closed_pre",
+        opensAt: new Date(nowMs + 10 * 1000).toISOString(),
       };
     case "open":
       return {

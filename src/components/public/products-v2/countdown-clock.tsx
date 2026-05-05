@@ -24,6 +24,13 @@ export interface CountdownClockProps {
   className?: string;
   /** Renders the four cells but with `--` numbers, no live ticking. */
   paused?: boolean;
+  /**
+   * Renders the four cells with `--` placeholders and no live ticking.
+   * Use when the countdown has *completed* but the slot must remain
+   * occupied to preserve panel height — caller is expected to keep this
+   * mounted so the surrounding layout stays put across the flip.
+   */
+  done?: boolean;
 }
 
 interface Snapshot {
@@ -39,6 +46,7 @@ export function CountdownClock({
   fixedNowMs,
   className,
   paused,
+  done,
 }: CountdownClockProps) {
   const t = useTranslations("productDetail.countdown");
 
@@ -52,20 +60,25 @@ export function CountdownClock({
   );
 
   useEffect(() => {
-    if (paused) return;
+    if (paused || done) return;
     if (fixedNowMs !== undefined) return;
     const id = setInterval(() => {
       setSnapshot(buildSnapshot(targetMs, Date.now()));
     }, 1000);
     return () => clearInterval(id);
-  }, [targetMs, paused, fixedNowMs]);
+  }, [targetMs, paused, done, fixedNowMs]);
+
+  // When `done`, force the cells to render `--` placeholders regardless of
+  // the last live snapshot, so the visual matches the panel's "registration
+  // is now open" state without unmounting (which would shrink the panel).
+  const cellValue = (live: number | undefined) => (done ? undefined : live);
 
   return (
     <div className={cn("grid grid-cols-4 gap-1.5 text-center", className)}>
-      <Cell value={snapshot?.days} label={t("days")} />
-      <Cell value={snapshot?.hours} label={t("hours")} />
-      <Cell value={snapshot?.minutes} label={t("minutes")} />
-      <Cell value={snapshot?.seconds} label={t("seconds")} />
+      <Cell value={cellValue(snapshot?.days)} label={t("days")} />
+      <Cell value={cellValue(snapshot?.hours)} label={t("hours")} />
+      <Cell value={cellValue(snapshot?.minutes)} label={t("minutes")} />
+      <Cell value={cellValue(snapshot?.seconds)} label={t("seconds")} />
     </div>
   );
 }

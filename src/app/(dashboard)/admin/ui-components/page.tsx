@@ -1831,6 +1831,7 @@ function ProductDetailDemo() {
 // what an admin reading this page should see at a glance.
 const STATE_LABELS: Record<PreviewStateKind, string> = {
   closed_pre: "Pre-launch — registration not yet open",
+  closed_pre_10s: "Pre-launch — opens in 10 seconds (live test)",
   open: "Open for sign-ups",
   open_almost_full: "Open — almost full",
   pending_thr: "Pending threshold — needs more sign-ups",

@@ -1199,7 +1199,7 @@
     "signupPanel": {
       "bannerOpen": "{verb} nu",
       "bannerAlmostFull": "Snabbt nu – bara några platser kvar",
-      "bannerCountdown": "Anmälan öppnar om",
+      "bannerCountdown": "Anmälan öppnar {date}",
       "bannerCountdownDone": "Anmälan är öppen",
       "bannerThreshold": "Startar när det fyllts",
       "bannerWaitlist": "Fullbokad just nu",

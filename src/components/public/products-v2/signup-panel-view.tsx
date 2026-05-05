@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -339,6 +339,7 @@ function PreOpenPanel(props: SignupPanelViewProps) {
   // in practice (the parent dispatches by kind) but kept for type
   // narrowing in the JSX below.
   const t = useTranslations("productDetail.signupPanel");
+  const format = useFormatter();
   const opensAt =
     props.state.kind === "closed_pre"
       ? props.state.opensAt
@@ -357,14 +358,21 @@ function PreOpenPanel(props: SignupPanelViewProps) {
 
   if (props.state.kind !== "closed_pre") return null;
 
-  const banner = isOpen ? t("bannerCountdownDone") : t("bannerCountdown");
+  // Pre-zero banner names the exact moment registration opens — the
+  // countdown clock sits below the button (so the button doesn't shift
+  // when it unmounts), so the banner has to carry the "when" itself.
+  const banner = isOpen
+    ? t("bannerCountdownDone")
+    : t("bannerCountdown", {
+        date: format.dateTime(new Date(targetMs), {
+          dateStyle: "medium",
+          timeStyle: "short",
+        }),
+      });
   const tone: Tone = isOpen ? "primary" : "muted";
 
   return (
     <PanelShell banner={banner} tone={tone}>
-      {!isOpen && (
-        <CountdownClock targetMs={targetMs} fixedNowMs={props.fixedNowMs} />
-      )}
       <PricingPanelView
         tracks={props.pricingTracks}
         selectedKey={props.selectedPricingKey}
@@ -385,6 +393,20 @@ function PreOpenPanel(props: SignupPanelViewProps) {
         }
         ctaLabelActive={isOpen ? activeLabel : t("ctaPreOpenReady")}
         active={isOpen}
+      />
+      {/* Countdown stays mounted across the pre-open → open flip. When the
+          target instant arrives we set `done`, which keeps the four cells
+          in place but renders them as `--` placeholders. Unmounting the
+          clock would shrink the panel — and because the panel is sticky on
+          desktop and reflows on mobile, that shrink propagates outward
+          (page section height changes, sticky bottom anchor pulls content
+          up, etc.) and the Sign-up button shifts under the parent's
+          cursor. The whole point of the live countdown is the one-tap-buy
+          moment, so the slot is held constant. */}
+      <CountdownClock
+        targetMs={targetMs}
+        fixedNowMs={props.fixedNowMs}
+        done={isOpen}
       />
     </PanelShell>
   );

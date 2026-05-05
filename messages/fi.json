@@ -1199,7 +1199,7 @@
     "signupPanel": {
       "bannerOpen": "{verb} nyt",
       "bannerAlmostFull": "Paikat täyttyvät – vain muutama jäljellä",
-      "bannerCountdown": "Ilmoittautuminen avautuu",
+      "bannerCountdown": "Ilmoittautuminen avautuu {date}",
       "bannerCountdownDone": "Ilmoittautuminen on auki",
       "bannerThreshold": "Alkaa, kun paikat täyttyvät",
       "bannerWaitlist": "Tällä hetkellä täynnä",
