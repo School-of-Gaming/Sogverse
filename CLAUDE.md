@@ -95,6 +95,8 @@ Layout changes on the same page *after* user interaction (e.g. clicking a button
 
 A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them. See `docs/i18n-architecture.md` § "Two distinct concepts".
 
+**Rule: User-facing strings must be translated for every locale message file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected. Klingon (`tlh`) is an easter egg — fun and quirky takes are welcome, accuracy is not the goal there.**
+
 ### Styling
 - Use `cn()` utility from `lib/utils.ts` for conditional classes
 - Brand colors: primary yellow `#FAA901`, secondary purple `#8F00E2`
