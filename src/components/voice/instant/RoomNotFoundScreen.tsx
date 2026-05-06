@@ -45,9 +45,9 @@ export function RoomNotFoundScreen({ code }: RoomNotFoundScreenProps) {
 
           {isMod && (
             <div className="pt-2">
-              <Button asChild>
-                <Link href={newRoomHref}>{t("createNew")}</Link>
-              </Button>
+              <Link href={newRoomHref}>
+                <Button>{t("createNew")}</Button>
+              </Link>
             </div>
           )}
         </CardContent>
