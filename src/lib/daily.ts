@@ -121,6 +121,14 @@ interface CreateTokenOptions {
   userName?: string;
   /** Custom token expiry as a Unix timestamp (seconds). Defaults to now + TOKEN_EXPIRY_SECONDS. */
   expUnix?: number;
+  /**
+   * Initial track states at meeting join. The token's `start_*_off` flags
+   * override anything passed to `createCallObject`, so the lobby's mic/camera
+   * preview choice has to be threaded through here. Defaults preserve the
+   * historical group-room behavior (mic on, camera off).
+   */
+  startVideoOff?: boolean;
+  startAudioOff?: boolean;
 }
 
 interface DailyToken {
@@ -137,8 +145,8 @@ export async function createMeetingToken(options: CreateTokenOptions): Promise<s
         room_name: options.roomName,
         is_owner: options.isOwner,
         enable_screenshare: options.isOwner,
-        start_video_off: true,
-        start_audio_off: false,
+        start_video_off: options.startVideoOff ?? true,
+        start_audio_off: options.startAudioOff ?? false,
         user_name: options.userName,
         exp,
       },

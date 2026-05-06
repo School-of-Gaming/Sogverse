@@ -208,10 +208,14 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       audio.createAudioContext();
 
       const Daily = (await import("@daily-co/daily-js")).default;
+      // Initial mic/camera state is set by the meeting token's
+      // `start_video_off` / `start_audio_off` properties (see
+      // `createMeetingToken`). Token-level settings override anything passed
+      // here, so we deliberately don't duplicate them on the call object —
+      // the token is the single source of truth.
       const co = Daily.createCallObject({
         audioSource: true,
         videoSource: true,
-        startVideoOff: true,
         dailyConfig: {
           // Use <script> element loader instead of fetch+eval, so the call object
           // bundle is allowed by our nonce-based CSP ('strict-dynamic').

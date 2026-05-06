@@ -36,10 +36,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const { code: rawCode, displayName: rawDisplayName } = (body ?? {}) as {
+  const {
+    code: rawCode,
+    displayName: rawDisplayName,
+    micOn: rawMicOn,
+    cameraOn: rawCameraOn,
+  } = (body ?? {}) as {
     code?: unknown;
     displayName?: unknown;
+    micOn?: unknown;
+    cameraOn?: unknown;
   };
+
+  // Lobby preview choices. Default to the historical (mic on, camera off)
+  // shape if the client didn't send them — keeps older clients working and
+  // the test surface predictable.
+  const micOn = typeof rawMicOn === "boolean" ? rawMicOn : true;
+  const cameraOn = typeof rawCameraOn === "boolean" ? rawCameraOn : false;
 
   // Validate code format BEFORE any Daily API call so a malformed code can't
   // produce a path-traversal request to Daily's API.
@@ -118,6 +131,8 @@ export async function POST(request: Request) {
     roomName: code,
     isOwner: role !== "guest",
     userName: buildUserName({ userId, role, displayName }),
+    startVideoOff: !cameraOn,
+    startAudioOff: !micOn,
   });
 
   return NextResponse.json({

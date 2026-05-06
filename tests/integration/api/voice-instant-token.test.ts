@@ -337,6 +337,73 @@ describe("POST /api/voice/instant/token", () => {
     });
   });
 
+  describe("lobby media preferences", () => {
+    it("forwards micOn=false / cameraOn=true to the token mint", async () => {
+      unauthenticated();
+      await POST(
+        createTokenRequest({
+          code: "K7P2",
+          displayName: "Bob",
+          micOn: false,
+          cameraOn: true,
+        }),
+      );
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startAudioOff: true,
+          startVideoOff: false,
+        }),
+      );
+    });
+
+    it("forwards micOn=true / cameraOn=false to the token mint", async () => {
+      unauthenticated();
+      await POST(
+        createTokenRequest({
+          code: "K7P2",
+          displayName: "Bob",
+          micOn: true,
+          cameraOn: false,
+        }),
+      );
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startAudioOff: false,
+          startVideoOff: true,
+        }),
+      );
+    });
+
+    it("defaults to mic on / camera off when flags are absent", async () => {
+      unauthenticated();
+      await POST(createTokenRequest({ code: "K7P2", displayName: "Bob" }));
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startAudioOff: false,
+          startVideoOff: true,
+        }),
+      );
+    });
+
+    it("ignores non-boolean micOn/cameraOn values (falls back to defaults)", async () => {
+      unauthenticated();
+      await POST(
+        createTokenRequest({
+          code: "K7P2",
+          displayName: "Bob",
+          micOn: "false",
+          cameraOn: 1,
+        }),
+      );
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startAudioOff: false,
+          startVideoOff: true,
+        }),
+      );
+    });
+  });
+
   describe("room not found", () => {
     it("returns 404 with the entered code echoed back", async () => {
       unauthenticated();

@@ -101,14 +101,22 @@ function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps)
   }, [code]);
 
   const handleJoin = useCallback(
-    async (displayName: string) => {
+    async (
+      displayName: string,
+      media: { micOn: boolean; cameraOn: boolean },
+    ) => {
       setJoinError(null);
       setJoining(true);
       try {
         const response = await fetch("/api/voice/instant/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code, displayName }),
+          body: JSON.stringify({
+            code,
+            displayName,
+            micOn: media.micOn,
+            cameraOn: media.cameraOn,
+          }),
         });
 
         if (response.status === 404) {
