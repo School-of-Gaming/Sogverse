@@ -1,6 +1,7 @@
 import { InstantVoiceHeader } from "@/components/voice/instant/InstantVoiceHeader";
 import { InstantVoiceSession } from "@/components/voice/instant/InstantVoiceSession";
 import { RoomNotFoundScreen } from "@/components/voice/instant/RoomNotFoundScreen";
+import { Copyright } from "@/components/layout";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 
 /**
@@ -36,7 +37,11 @@ export default async function InstantVoicePage({
   return (
     <>
       <InstantVoiceHeader code={code} />
-      <InstantVoiceSession code={code} />
+      {/* Copyright is rendered here in the server boundary so its year is
+          fixed at SSR time — passing it as a prop into the client session
+          avoids a client-side getFullYear() that could disagree with the
+          server-rendered HTML at year boundaries. */}
+      <InstantVoiceSession code={code} copyright={<Copyright className="text-xs" />} />
     </>
   );
 }

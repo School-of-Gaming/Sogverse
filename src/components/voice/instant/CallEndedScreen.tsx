@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { RoomLinkChip } from "./RoomLinkChip";
@@ -16,6 +17,10 @@ interface CallEndedScreenProps {
   /** Room code for the URL chip rendered on the "left" variant so the
    *  user can copy the link to come back. */
   code: string;
+  /** Pre-rendered `<Copyright />` from the server boundary above. Threaded
+   *  in as a slot rather than imported here so the year computation stays
+   *  on the server (avoids hydration mismatch at year boundaries). */
+  copyright: ReactNode;
 }
 
 /**
@@ -30,11 +35,9 @@ interface CallEndedScreenProps {
  * the tagline as a footer; this is the only voice screen that carries
  * one.
  */
-export function CallEndedScreen({ reason, code }: CallEndedScreenProps) {
+export function CallEndedScreen({ reason, code, copyright }: CallEndedScreenProps) {
   const t = useTranslations(`voice.instant.${reason}`);
   const tHome = useTranslations("home.hero");
-  const tFooter = useTranslations("footer");
-  const year = new Date().getFullYear();
 
   return (
     <div className="container mx-auto max-w-xl p-4 md:p-6">
@@ -58,9 +61,7 @@ export function CallEndedScreen({ reason, code }: CallEndedScreenProps) {
               ),
             })}
           </h2>
-          <p className="pt-6 text-xs text-muted-foreground">
-            {tFooter("copyright", { year })}
-          </p>
+          <div className="pt-6">{copyright}</div>
         </CardContent>
       </Card>
     </div>

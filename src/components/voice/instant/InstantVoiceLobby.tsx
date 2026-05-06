@@ -45,7 +45,7 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
   const [micOn, setMicOn] = useState(true);
-  const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [permissionError, setPermissionError] = useState(false);
   const [name, setName] = useState("");
 
   // Preview-only identicon. Generated client-side after mount so SSR doesn't
@@ -88,13 +88,13 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
           videoRef.current.srcObject = next;
         }
         setStream(next);
-      } catch (err) {
+      } catch {
         if (cancelled) return;
         // User denied permission, no devices, or HTTP origin. We let them
         // continue to join — they can grant later, and Daily will work
-        // without media.
-        const msg = err instanceof Error ? err.message : String(err);
-        setPermissionError(msg);
+        // without media. The native error is browser-specific and English-only,
+        // so we surface a localized message instead.
+        setPermissionError(true);
       }
     }
 

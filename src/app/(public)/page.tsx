@@ -3,7 +3,6 @@ import { useTranslations } from 'next-intl';
 import { ArrowRight, Shield, Users, Sparkles, Gamepad2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Footer } from "@/components/layout";
 import { AboutSection } from "@/components/home/about-section";
 import { SectionPill } from "@/components/home/section-pill";
 import { YtySection } from "@/components/home/yty-section";
@@ -24,7 +23,7 @@ export default function HomePage() {
   }));
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col">
+    <>
       <SectionPill />
 
       {/* Home: hero + features + how it works are grouped under a single
@@ -163,8 +162,6 @@ export default function HomePage() {
           </CardContent>
         </Card>
       </section>
-
-      <Footer />
-    </div>
+    </>
   );
 }
