@@ -16,15 +16,21 @@ Pages
 API routes (src/app/api/voice/instant/)
 ├── create/route.ts  — POST: Mint code + create Daily room (admin/gedu only)
 ├── token/route.ts   — POST: Issue Daily token (PUBLIC — auth optional)
+├── exists/route.ts  — GET: Cheap pre-flight existence check (PUBLIC)
 └── end/route.ts     — POST: Delete Daily room (admin/gedu only)
 
 Components (src/components/voice/instant/)
-├── InstantVoiceHeader   — "SOG Sogverse" non-link, copy-code button, locale picker
-├── InstantVoiceLobby    — Camera/mic preview, name input, identicon preview
-├── InstantVoiceSession  — State machine orchestrator (lobby → in-call → ended)
-├── EndCallModal         — Mod choice: Leave call vs End for everyone
-├── CallEndedScreen      — Friendly dead-end with mission copy
-└── RoomNotFoundScreen   — Echoes entered code, suggests typo check
+├── InstantVoiceHeader     — "SOG Sogverse" non-link, locale picker, "Room code: XXXX" copy button
+├── InstantVoiceLobby      — Avatar preview (speaking glow + camera-in-circle), mic/cam toggles, name input
+├── InstantVoiceSession    — State machine orchestrator (checking → lobby → in-call → ended | not-found)
+├── EndCallModal           — Mod choice: Leave call vs End for everyone
+├── CallEndedScreen        — Reason-aware dead-end (variants: "left" / "ended")
+├── CreateInstantRoomCard  — Dashboard: create-button → URL chip + Join
+└── RoomNotFoundScreen     — Echoes entered code, suggests typo check
+
+Hooks (src/components/voice/hooks/)
+└── use-local-stream-glow.ts  — Lobby speaking glow driven by `getUserMedia` stream
+                                 (parallel to `use-speaking-glow.ts` which reads from Daily)
 
 Utilities
 ├── src/lib/voice-room-code.ts  — Code generation + format validation
@@ -53,9 +59,10 @@ Per-creation collision probability with 500 concurrent rooms is ~1 in 2,100 (~5/
 
 | Event | What happens |
 |---|---|
-| Mod clicks "Create voice room" | `POST /api/voice/instant/create` → mint code → Daily `POST /rooms` with `properties.exp = now + 8h` → return code → client navigates to `/voice/{CODE}` |
-| Anyone visits `/voice/{CODE}` | Lobby renders → user sets name + checks cam/mic → `POST /api/voice/instant/token` → join Daily room |
-| Mod clicks "End for everyone" | Broadcasts `callEndedByMod` app message → `POST /api/voice/instant/end` → Daily `DELETE /rooms/{CODE}` → all participants disconnected → all clients show CallEndedScreen |
+| Mod clicks "Create voice room" | `POST /api/voice/instant/create` → mint code → Daily `POST /rooms` with `properties.exp = now + 8h` → returns code; the dashboard shows the URL chip (click to copy) + "Join" button |
+| Anyone visits `/voice/{CODE}` | `GET /api/voice/instant/exists` runs first; on 404 the user sees `RoomNotFoundScreen` immediately (no permission prompt). On 200 the lobby renders → user sets name + checks cam/mic → `POST /api/voice/instant/token` → join Daily room |
+| User clicks Leave | `CallEndedScreen` renders with reason `"left"` — copy reassures them the room is still open and they can rejoin via the link |
+| Mod clicks "End for everyone" | Broadcasts `callEndedByMod` app message → `POST /api/voice/instant/end` → Daily `DELETE /rooms/{CODE}` → all participants disconnected → all clients show `CallEndedScreen` with reason `"ended"` |
 | 8h passes | Daily destroys the room automatically; subsequent join attempts get the "room not found" page |
 | Everyone leaves but no one ends | Room sits idle until 8h `exp`. No participants = no Daily charges. |
 

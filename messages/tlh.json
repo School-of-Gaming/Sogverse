@@ -1512,6 +1512,7 @@
     "instant": {
       "joinFailed": "Daq muv Dabe'lu'. yItoH'egh!",
       "header": {
+        "roomCode": "Daq ngoQ:",
         "copyLink": "Daq He yI'ang",
         "copied": "'angta'!"
       },
@@ -1520,19 +1521,19 @@
         "description": "Daq bIjaH pa', mIlQeD jatlhwI' je yIqel.",
         "nameLabel": "ponglIj",
         "namePlaceholder": "chay' SoH wIponglu'?",
-        "nameHelp": "{min}–{max} mu'tlheghHom.",
-        "cameraOff": "mIlQeD Qom",
-        "cameraOn": "mIlQeD yIn",
         "micOn": "jatlhwI' yIn",
         "micOff": "jatlhwI' Qom",
+        "cameraOn": "mIlQeD yIn",
+        "cameraOff": "mIlQeD Qom",
         "muteMic": "jatlhwI' yISov",
         "unmuteMic": "jatlhwI' yISovHa'",
         "showCamera": "mIlQeD yIqet",
         "hideCamera": "mIlQeD yImev",
         "permissionDenied": "mIlQeD jatlhwI' je vISuqlaHbe'. Daq DamuvchoH 'e' DIcheghmoH ghIq.",
-        "join": "Daq yImuv",
+        "join": "yImuv",
         "joining": "vImuv…"
       },
+      "checkingRoom": "Daq vIqel…",
       "end": {
         "guestTitle": "yIvoQ'a'?",
         "guestDescription": "Daq SoQmoHpa', He rap lo'taHvIS bIcheghlaH.",
@@ -1544,28 +1545,30 @@
       },
       "ended": {
         "title": "lop mevta'",
-        "body": "qatlho' bImuv. Daq SoQmoHta'.",
+        "body": "Daq SoQmoHta'. qatlho' bImuv.",
+        "mission": "School of Gaming — DaH poH Qap tIv moj."
+      },
+      "left": {
+        "title": "lop DavoQ",
+        "body": "Daq poSqu'taH — He yIcheghmoH 'ej cheghchuq Daq SoQbe'pa'.",
         "mission": "School of Gaming — DaH poH Qap tIv moj."
       },
       "notFound": {
         "title": "Daq tu'be'lu'",
         "body": "ngoQ vam ngebvam tu'be'lu':",
-        "hint": "ngoQ yIqel. Hoch tetlh rap, 'ach mu'tlheghHommey rap rapnIS.",
+        "hint": "ngoQ yIqel. mu'tlheghHommey rap rapnIS.",
         "createNew": "Daq chu' yIchen"
       },
       "createPage": {
         "title": "Daq chu' yIchen",
-        "description": "DaH Daq yIchen, He yI'ang Hoch muvwI' DaneHbogh.",
+        "subtitle": "DaH Daq yIchen, He yI'ang Hoch muvwI' DaneHbogh.",
         "createButton": "Daq yIchen",
         "creating": "chenmoHlu'…",
         "createFailed": "Daq chenmoH luchchugh. yItoH'egh!",
-        "howItWorksTitle": "qaStaHvIS chay'",
-        "howItWorks": {
-          "share": "Daq He yI'ang — Daq Qum nIH SaH.",
-          "guests": "He ghaj 'Iv DoQ — qungwI' poQbe'. potlh chaH ponglIj wIvmeH yIqaw.",
-          "lifetime": "8 rep tlha' Daq SoQmoH 'e' Hoch ghu' yIqel.",
-          "endForEveryone": "QaD nuv Hoch poH lop mev'eghlaHmo'."
-        }
+        "ready": "DaqlIj pIm",
+        "shareHint": "He yI'ang 'angmeH.",
+        "copied": "'angta'!",
+        "join": "yImuv"
       }
     }
   },

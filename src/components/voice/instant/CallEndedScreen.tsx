@@ -3,18 +3,27 @@
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 
+export type EndReason =
+  /** The user clicked Leave themselves; the room is still open for others. */
+  | "left"
+  /** The call ended for everyone — mod ended it, room expired, or the
+   *  participant got disconnected for any other non-user reason. */
+  | "ended";
+
+interface CallEndedScreenProps {
+  reason: EndReason;
+}
+
 /**
- * Dead-end page shown after the call ends — either because a mod ended it
- * for everyone, or because Daily disconnected the participant for any
- * other reason after they were in-call.
+ * Dead-end page shown after the call wraps up for the participant.
  *
- * Intentionally has no "return home" or "create new room" CTA. The user is
- * done with this URL; they can navigate via browser tools if they want to
- * go elsewhere. The mission tagline gives the page a soft, branded close
- * instead of a cold "you've been disconnected."
+ * Two variants because the framing differs: "you left" is reassuring
+ * ("come back any time") while "call ended" is a hard close. Both
+ * share the brand mission tagline as a soft outro instead of a bare
+ * "you've been disconnected."
  */
-export function CallEndedScreen() {
-  const t = useTranslations("voice.instant.ended");
+export function CallEndedScreen({ reason }: CallEndedScreenProps) {
+  const t = useTranslations(`voice.instant.${reason}`);
 
   return (
     <div className="container mx-auto max-w-xl p-4 md:p-6">
