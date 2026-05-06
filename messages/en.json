@@ -1652,6 +1652,10 @@
     "broadcast": "Broadcast",
     "instant": {
       "joinFailed": "Couldn't join the room. Please try again.",
+      "share": {
+        "hint": "Click the link to copy it.",
+        "copied": "Copied!"
+      },
       "header": {
         "roomCode": "Room code:",
         "copyLink": "Copy room link",
@@ -1674,12 +1678,11 @@
         "join": "Join",
         "joining": "Joining…"
       },
-      "checkingRoom": "Checking room…",
       "end": {
         "guestTitle": "Leave this call?",
         "guestDescription": "You can rejoin any time using the same link, until the room ends.",
         "modTitle": "Leaving the call?",
-        "modDescription": "You can leave on your own, or end the call for everyone — that disconnects every participant and destroys the room.",
+        "modDescription": "You can leave on your own, or end the call for everyone — that disconnects every participant and closes the room.",
         "cancel": "Stay",
         "leave": "Leave call",
         "endForEveryone": "End for everyone"
@@ -1691,7 +1694,7 @@
       },
       "left": {
         "title": "You left the call",
-        "body": "The room is still open — paste the link to come back any time before it expires.",
+        "body": "The room is still open — use the link to come back any time.",
         "mission": "School of Gaming — where screen time becomes quality time."
       },
       "notFound": {
@@ -1707,8 +1710,6 @@
         "creating": "Creating…",
         "createFailed": "Couldn't create a room. Please try again.",
         "ready": "Your room is ready",
-        "shareHint": "Click the link to copy it.",
-        "copied": "Copied!",
         "join": "Join"
       }
     }

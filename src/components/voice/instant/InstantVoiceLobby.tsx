@@ -186,14 +186,16 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
               </p>
             </div>
 
-            {/* Cam/mic toggles */}
+            {/* Cam/mic toggles. Fixed min-width on each button so the layout
+                doesn't shift when the label flips between on/off — the
+                value is sized to fit the longer label across every locale. */}
             <div className="flex items-center justify-center gap-3">
               <Button
                 type="button"
                 variant={micOn ? "secondary" : "destructive"}
                 size="sm"
                 onClick={toggleMic}
-                className="gap-2"
+                className="min-w-[10rem] justify-center gap-2"
                 aria-label={micOn ? t("muteMic") : t("unmuteMic")}
               >
                 {micOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
@@ -204,7 +206,7 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
                 variant={cameraOn ? "secondary" : "outline"}
                 size="sm"
                 onClick={toggleCamera}
-                className="gap-2"
+                className="min-w-[10rem] justify-center gap-2"
                 aria-label={cameraOn ? t("hideCamera") : t("showCamera")}
               >
                 {cameraOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}

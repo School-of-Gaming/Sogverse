@@ -7,8 +7,10 @@ import { LocalePicker } from "@/components/layout/locale-picker";
 import { cn } from "@/lib/utils";
 
 interface InstantVoiceHeaderProps {
-  /** Uppercase 4-character room code. Displayed; clicking copies the full URL. */
-  code: string;
+  /** Uppercase 4-character room code. Displayed; clicking copies the full
+   *  URL. Omit when the code is malformed — the chip is hidden so we don't
+   *  offer a copy-link action that would just paste a broken URL. */
+  code?: string;
 }
 
 /**
@@ -33,7 +35,7 @@ export function InstantVoiceHeader({ code }: InstantVoiceHeaderProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !code) return;
     const url = `${window.location.origin}/voice/${code}`;
     try {
       await navigator.clipboard.writeText(url);
@@ -57,27 +59,29 @@ export function InstantVoiceHeader({ code }: InstantVoiceHeaderProps) {
 
         <div className="flex items-center gap-2">
           <LocalePicker />
-          <button
-            onClick={handleCopy}
-            className={cn(
-              "flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-              copied && "border-success text-success",
-            )}
-            aria-label={copied ? t("header.copied") : t("header.copyLink")}
-            title={copied ? t("header.copied") : t("header.copyLink")}
-          >
-            <span className="font-medium text-muted-foreground">
-              {t("header.roomCode")}
-            </span>
-            <span className="font-mono font-semibold tracking-wider">
-              {code}
-            </span>
-            {copied ? (
-              <Check className="h-3.5 w-3.5" aria-hidden />
-            ) : (
-              <Copy className="h-3.5 w-3.5" aria-hidden />
-            )}
-          </button>
+          {code && (
+            <button
+              onClick={handleCopy}
+              className={cn(
+                "flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                copied && "border-success text-success",
+              )}
+              aria-label={copied ? t("header.copied") : t("header.copyLink")}
+              title={copied ? t("header.copied") : t("header.copyLink")}
+            >
+              <span className="font-medium text-muted-foreground">
+                {t("header.roomCode")}
+              </span>
+              <span className="font-mono font-semibold tracking-wider">
+                {code}
+              </span>
+              {copied ? (
+                <Check className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <Copy className="h-3.5 w-3.5" aria-hidden />
+              )}
+            </button>
+          )}
         </div>
       </nav>
     </header>

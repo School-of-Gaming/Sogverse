@@ -1652,6 +1652,10 @@
     "broadcast": "Sändning",
     "instant": {
       "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
+      "share": {
+        "hint": "Klicka på länken för att kopiera den.",
+        "copied": "Kopierat!"
+      },
       "header": {
         "roomCode": "Rumskod:",
         "copyLink": "Kopiera rumslänk",
@@ -1674,12 +1678,11 @@
         "join": "Gå med",
         "joining": "Ansluter…"
       },
-      "checkingRoom": "Kontrollerar rummet…",
       "end": {
         "guestTitle": "Lämna samtalet?",
         "guestDescription": "Du kan gå med igen via samma länk tills rummet stängs.",
         "modTitle": "Lämna samtalet?",
-        "modDescription": "Du kan lämna själv eller avsluta samtalet för alla — det senare kopplar bort alla deltagare och stänger rummet.",
+        "modDescription": "Du kan lämna själv eller avsluta samtalet för alla — det senare kopplar bort deltagarna och stänger rummet.",
         "cancel": "Stanna",
         "leave": "Lämna samtalet",
         "endForEveryone": "Avsluta för alla"
@@ -1691,7 +1694,7 @@
       },
       "left": {
         "title": "Du lämnade samtalet",
-        "body": "Rummet är fortfarande öppet — klistra in länken för att komma tillbaka när som helst innan det stängs.",
+        "body": "Rummet är fortfarande öppet — använd länken för att komma tillbaka när som helst.",
         "mission": "School of Gaming — där skärmtid blir kvalitetstid."
       },
       "notFound": {
@@ -1707,8 +1710,6 @@
         "creating": "Skapar…",
         "createFailed": "Kunde inte skapa rummet. Försök igen.",
         "ready": "Ditt rum är redo",
-        "shareHint": "Klicka på länken för att kopiera den.",
-        "copied": "Kopierat!",
         "join": "Gå med"
       }
     }
