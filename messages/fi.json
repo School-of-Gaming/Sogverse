@@ -1653,6 +1653,7 @@
     "instant": {
       "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
       "header": {
+        "roomCode": "Huoneen koodi:",
         "copyLink": "Kopioi huoneen linkki",
         "copied": "Kopioitu!"
       },
@@ -1661,19 +1662,19 @@
         "description": "Tarkista kamera ja mikrofoni ennen sisäänmenoa.",
         "nameLabel": "Nimesi",
         "namePlaceholder": "Miksi sinua kutsutaan?",
-        "nameHelp": "{min}–{max} merkkiä.",
-        "cameraOff": "Kamera pois",
-        "cameraOn": "Kamera päällä",
         "micOn": "Mikki päällä",
         "micOff": "Mikki pois",
+        "cameraOn": "Kamera päällä",
+        "cameraOff": "Kamera pois",
         "muteMic": "Mykistä mikrofoni",
         "unmuteMic": "Poista mykistys",
         "showCamera": "Käynnistä kamera",
         "hideCamera": "Sammuta kamera",
         "permissionDenied": "Emme saaneet pääsyä kameraan tai mikrofoniin. Voit silti liittyä — käynnistä ne myöhemmin, jos annat luvan.",
-        "join": "Liity äänihuoneeseen",
+        "join": "Liity",
         "joining": "Liitytään…"
       },
+      "checkingRoom": "Tarkistetaan huonetta…",
       "end": {
         "guestTitle": "Poistutko puhelusta?",
         "guestDescription": "Voit liittyä uudelleen samalla linkillä, kunnes huone sulkeutuu.",
@@ -1685,28 +1686,30 @@
       },
       "ended": {
         "title": "Puhelu päättyi",
-        "body": "Kiitos osallistumisesta. Huone on suljettu.",
+        "body": "Huone on suljettu. Kiitos osallistumisesta.",
+        "mission": "School of Gaming — ruutuajasta laatuaikaa."
+      },
+      "left": {
+        "title": "Poistuit puhelusta",
+        "body": "Huone on yhä auki — liitä linkki ja palaa milloin tahansa, kunnes se sulkeutuu.",
         "mission": "School of Gaming — ruutuajasta laatuaikaa."
       },
       "notFound": {
         "title": "Huonetta ei löytynyt",
         "body": "Tällä koodilla ei löytynyt äänihuonetta:",
-        "hint": "Tarkista koodi kirjoitusvirheiden varalta. Isot ja pienet kirjaimet eivät vaikuta, mutta kirjainten ja numeroiden on muuten täsmättävä.",
+        "hint": "Tarkista koodi kirjoitusvirheiden varalta. Kirjainten ja numeroiden on täsmättävä tarkasti.",
         "createNew": "Luo uusi äänihuone"
       },
       "createPage": {
         "title": "Luo äänihuone",
-        "description": "Avaa hetkessä äänihuone ja jaa linkki niille, joiden haluat liittyvän.",
+        "subtitle": "Avaa hetkessä huone ja jaa linkki niille, joiden haluat liittyvän.",
         "createButton": "Luo äänihuone",
         "creating": "Luodaan…",
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
-        "howItWorksTitle": "Näin se toimii",
-        "howItWorks": {
-          "share": "Kopioi huoneen linkki huonesivun yläreunan oikealta puolelta.",
-          "guests": "Kuka tahansa linkin saanut voi liittyä — tiliä ei tarvita. Vieraat valitsevat itselleen näyttönimen saapuessaan.",
-          "lifetime": "Huoneet ovat auki enintään 8 tuntia. Sen jälkeen ne sulkeutuvat automaattisesti.",
-          "endForEveryone": "Ylläpitäjät voivat lopettaa puhelun kaikilta milloin tahansa."
-        }
+        "ready": "Huoneesi on valmis",
+        "shareHint": "Kopioi linkki napsauttamalla.",
+        "copied": "Kopioitu!",
+        "join": "Liity"
       }
     }
   },

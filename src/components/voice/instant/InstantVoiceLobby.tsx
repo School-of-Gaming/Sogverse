@@ -5,11 +5,11 @@ import { Loader2, Mic, MicOff, Video, VideoOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { useLocalStreamGlow } from "@/components/voice/hooks/use-local-stream-glow";
 
 interface InstantVoiceLobbyProps {
   /** Called with the lobby-supplied display name (empty for mods who use their profile). */
@@ -20,12 +20,14 @@ interface InstantVoiceLobbyProps {
 }
 
 /**
- * Pre-join screen for instant voice rooms. Asks for camera/mic permission,
- * shows a live preview, and (for guests) collects a display name.
+ * Pre-join screen for instant voice rooms. Shows a live preview of the
+ * avatar exactly as it will appear in the spatial canvas — speaking
+ * glow, camera-in-circle, mic indicator — and (for guests) collects a
+ * display name.
  *
  * Authenticated admins/gedus skip the name input — the server uses their
- * profile display name. Everyone else, including authenticated parents and
- * gamers, is treated as a guest and must provide a name.
+ * profile display name. Everyone else, including authenticated parents
+ * and gamers, is treated as a guest and must provide a name.
  *
  * The lobby's identicon is a *preview* generated from a fresh client-side
  * UUID. The actual call uses a server-issued UUID (see token route's
@@ -38,6 +40,7 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
   const isMod = profile?.role === "admin" || profile?.role === "gedu";
 
   const videoRef = useRef<HTMLVideoElement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
 
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraOn, setCameraOn] = useState(false);
@@ -103,6 +106,10 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
     };
   }, []);
 
+  // Speaking glow on the avatar frame (white halo + brighter border that
+  // pulses with mic level). Visually identical to the in-call avatar.
+  useLocalStreamGlow(frameRef, stream, micOn);
+
   const toggleCamera = () => {
     if (!stream) return;
     const next = !cameraOn;
@@ -123,6 +130,11 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
     trimmedName.length <= DISPLAY_NAME_MAX;
   const canJoin = isMod || nameValid;
 
+  // Display name shown under the avatar — mirrors what the in-call avatar
+  // will render (mods use profile.display_name, guests use the typed name).
+  const previewName =
+    profile && isMod ? profile.display_name : trimmedName;
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canJoin || joining) return;
@@ -138,30 +150,40 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Preview */}
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className={cn("h-full w-full object-cover", !cameraOn && "hidden")}
-              />
-              {!cameraOn && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                  <Avatar className="h-24 w-24">
-                    {lobbyIdenticonId && (
-                      <Identicon id={lobbyIdenticonId} size={96} />
-                    )}
-                  </Avatar>
-                  <p className="text-sm text-muted-foreground">
-                    {t("cameraOff")}
-                  </p>
+            {/* Avatar preview — sized and styled to mirror the in-call avatar */}
+            <div className="flex flex-col items-center gap-3">
+              <div
+                ref={frameRef}
+                className="relative h-48 w-48 overflow-hidden rounded-2xl border-2 border-border bg-muted ring-1 ring-primary/30 transition-shadow"
+              >
+                {/* Always-mounted video; hidden when camera is off so toggling
+                    on doesn't have to re-attach `srcObject`. */}
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className={cn(
+                    "absolute inset-0 h-full w-full object-cover",
+                    !cameraOn && "hidden",
+                  )}
+                />
+                {!cameraOn && lobbyIdenticonId && (
+                  <Identicon id={lobbyIdenticonId} size={192} />
+                )}
+                {/* Mic indicator overlay — same idea as VoiceAvatar */}
+                <div className="absolute bottom-2 right-2 rounded-full bg-background/70 p-1.5">
+                  {micOn ? (
+                    <Mic className="h-4 w-4 text-success" />
+                  ) : (
+                    <MicOff className="h-4 w-4 text-destructive" />
+                  )}
                 </div>
-              )}
-
-              {/* Mic level indicator overlay */}
-              {micOn && stream && <LobbyMicLevel stream={stream} />}
+              </div>
+              {/* Reserve label height to keep the layout stable as the user types. */}
+              <p className="min-h-[1.5rem] text-center text-base font-medium">
+                {previewName}
+              </p>
             </div>
 
             {/* Cam/mic toggles */}
@@ -213,9 +235,6 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
                   placeholder={t("namePlaceholder")}
                   className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
                 />
-                <p className="text-xs text-muted-foreground">
-                  {t("nameHelp", { min: DISPLAY_NAME_MIN, max: DISPLAY_NAME_MAX })}
-                </p>
               </div>
             )}
 
@@ -239,62 +258,6 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
           </form>
         </CardContent>
       </Card>
-    </div>
-  );
-}
-
-/**
- * Bar that visualizes the lobby user's mic level. Reads directly from the
- * `getUserMedia` stream — separate from the in-call `MicLevelIndicator`
- * which reads from the Daily call object that doesn't exist here yet.
- */
-function LobbyMicLevel({ stream }: { stream: MediaStream }) {
-  const barRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const tracks = stream.getAudioTracks();
-    if (tracks.length === 0) return;
-    const track = tracks[0];
-    const bar = barRef.current;
-    if (!bar) return;
-
-    const ctx = new AudioContext();
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256;
-    const source = ctx.createMediaStreamSource(new MediaStream([track]));
-    source.connect(analyser);
-
-    const data = new Uint8Array(analyser.fftSize);
-    let raf = 0;
-
-    const tick = () => {
-      analyser.getByteTimeDomainData(data);
-      let sum = 0;
-      for (let i = 0; i < data.length; i++) {
-        const norm = (data[i] - 128) / 128;
-        sum += norm * norm;
-      }
-      const rms = Math.sqrt(sum / data.length);
-      const level = Math.min(1, rms * 3);
-      bar.style.width = `${level * 100}%`;
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      source.disconnect();
-      void ctx.close();
-    };
-  }, [stream]);
-
-  return (
-    <div className="absolute bottom-3 left-3 right-3 h-1 overflow-hidden rounded-full bg-background/40">
-      <div
-        ref={barRef}
-        className="h-full rounded-full bg-success transition-[width] duration-75"
-        style={{ width: "0%" }}
-      />
     </div>
   );
 }

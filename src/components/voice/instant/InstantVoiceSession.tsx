@@ -7,15 +7,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
 import { InstantVoiceLobby } from "./InstantVoiceLobby";
-import { CallEndedScreen } from "./CallEndedScreen";
+import { CallEndedScreen, type EndReason } from "./CallEndedScreen";
 import { RoomNotFoundScreen } from "./RoomNotFoundScreen";
 import { EndCallModal } from "./EndCallModal";
 import type { AppMessage } from "@/components/voice/hooks/types";
 
 type SessionState =
+  | { phase: "checking" }
   | { phase: "lobby" }
   | { phase: "in-call" }
-  | { phase: "ended" }
+  | { phase: "ended"; reason: EndReason }
   | { phase: "not-found" };
 
 interface InstantVoiceSessionProps {
@@ -27,14 +28,18 @@ interface InstantVoiceSessionProps {
  * State-machine orchestrator for the public voice room page.
  *
  * Phases:
- *   - `lobby`     — Pre-join: cam/mic preview, name input. Default state.
+ *   - `checking`  — On mount we ping `/api/voice/instant/exists` to make
+ *                   sure the room is real before asking the user to grant
+ *                   camera/mic permission and pick a name. Resolves to
+ *                   `lobby` or `not-found`.
+ *   - `lobby`     — Pre-join: cam/mic preview, name input.
  *   - `in-call`   — Connected to Daily; renders the spatial canvas.
- *   - `ended`     — Mod ended the call, OR the participant got disconnected
- *                   for a non-user reason (token expired, room deleted, etc.).
- *                   Dead-end screen with mission copy.
- *   - `not-found` — `/api/voice/instant/token` returned 404 because Daily
- *                   has no room with this code. Echoes the code back so the
- *                   user can spot typos.
+ *   - `ended`     — Either the user clicked Leave (reason: "left") or
+ *                   the call ended for everyone (reason: "ended" — mod
+ *                   ended it, token expired, room deleted, network drop).
+ *                   Different headlines for each.
+ *   - `not-found` — Room doesn't exist. Echoes the code back so the user
+ *                   can spot typos.
  */
 export function InstantVoiceSession({ code }: InstantVoiceSessionProps) {
   return (
@@ -48,7 +53,7 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
   const t = useTranslations("voice");
   const tInstant = useTranslations("voice.instant");
   const { joined, join, leave, callObject } = useVoiceRoom();
-  const [state, setState] = useState<SessionState>({ phase: "lobby" });
+  const [state, setState] = useState<SessionState>({ phase: "checking" });
   const [joinError, setJoinError] = useState<string | null>(null);
   const [joining, setJoining] = useState(false);
   const [endModalOpen, setEndModalOpen] = useState(false);
@@ -58,8 +63,38 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
 
   // Tracks whether the local user initiated the leave themselves. A
   // non-user-initiated `left-meeting` (room deleted, token expired) means
-  // we should land on the call-ended screen, not bounce back to the lobby.
+  // we should land on the "call ended" screen, not the "you left" screen.
   const userLeftRef = useRef(false);
+
+  // Pre-flight existence check. Don't burn the user's camera/mic permission
+  // prompt or make them type a name if the room is gone.
+  useEffect(() => {
+    let cancelled = false;
+    async function check() {
+      try {
+        const response = await fetch(
+          `/api/voice/instant/exists?code=${encodeURIComponent(code)}`,
+        );
+        if (cancelled) return;
+        if (response.status === 404) {
+          setState({ phase: "not-found" });
+          return;
+        }
+        // Any other non-2xx (rare — network, 500) — fall through to
+        // lobby and let the join attempt surface the real error. The
+        // alternative is an awkward "couldn't check" screen that's
+        // worse than just trying.
+        setState({ phase: "lobby" });
+      } catch {
+        if (cancelled) return;
+        setState({ phase: "lobby" });
+      }
+    }
+    void check();
+    return () => {
+      cancelled = true;
+    };
+  }, [code]);
 
   const handleJoin = useCallback(
     async (displayName: string) => {
@@ -73,6 +108,7 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
         });
 
         if (response.status === 404) {
+          // Room got deleted between the pre-flight check and the join.
           setState({ phase: "not-found" });
           setJoining(false);
           return;
@@ -111,7 +147,7 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
       if (event.data.type === "callEndedByMod") {
         userLeftRef.current = true; // suppress the "ended" path firing twice
         void leave().catch(() => {});
-        setState({ phase: "ended" });
+        setState({ phase: "ended", reason: "ended" });
       }
     };
     callObject.on("app-message", onAppMessage);
@@ -127,9 +163,8 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
   useEffect(() => {
     if (state.phase !== "in-call") return;
     if (joined) return;
-    // joined just went false while we were in-call
     if (userLeftRef.current) return;
-    setState({ phase: "ended" });
+    setState({ phase: "ended", reason: "ended" });
   }, [joined, state.phase]);
 
   /**
@@ -139,7 +174,7 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
   const handleLeave = useCallback(async () => {
     userLeftRef.current = true;
     await leave();
-    setState({ phase: "ended" });
+    setState({ phase: "ended", reason: "left" });
     setEndModalOpen(false);
   }, [leave]);
 
@@ -171,7 +206,7 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
       // disconnects us and the room hangs around until its 8h exp.
     }
     await leave();
-    setState({ phase: "ended" });
+    setState({ phase: "ended", reason: "ended" });
     setEndModalOpen(false);
   }, [callObject, code, leave]);
 
@@ -195,12 +230,27 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
     }
   }, []);
 
+  if (state.phase === "checking") {
+    return (
+      <div className="container mx-auto max-w-xl p-4 md:p-6">
+        <Card>
+          <CardContent className="flex items-center justify-center gap-2 py-12">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              {tInstant("checkingRoom")}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (state.phase === "not-found") {
     return <RoomNotFoundScreen code={code} />;
   }
 
   if (state.phase === "ended") {
-    return <CallEndedScreen />;
+    return <CallEndedScreen reason={state.reason} />;
   }
 
   if (state.phase === "lobby") {

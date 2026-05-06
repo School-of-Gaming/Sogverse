@@ -56,23 +56,28 @@ export function InstantVoiceHeader({ code }: InstantVoiceHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <LocalePicker />
           <button
             onClick={handleCopy}
             className={cn(
-              "flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-3 py-1.5 font-mono text-sm font-semibold tracking-wider transition-colors hover:bg-accent hover:text-accent-foreground",
+              "flex items-center gap-2 rounded-md border border-border bg-muted/50 px-3 py-1.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
               copied && "border-success text-success",
             )}
             aria-label={copied ? t("header.copied") : t("header.copyLink")}
             title={copied ? t("header.copied") : t("header.copyLink")}
           >
+            <span className="font-medium text-muted-foreground">
+              {t("header.roomCode")}
+            </span>
+            <span className="font-mono font-semibold tracking-wider">
+              {code}
+            </span>
             {copied ? (
               <Check className="h-3.5 w-3.5" aria-hidden />
             ) : (
               <Copy className="h-3.5 w-3.5" aria-hidden />
             )}
-            <span>{code}</span>
           </button>
-          <LocalePicker />
         </div>
       </nav>
     </header>
