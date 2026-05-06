@@ -1511,6 +1511,10 @@
     "broadcast": "Hoch ngeH",
     "instant": {
       "joinFailed": "Daq muv Dabe'lu'. yItoH'egh!",
+      "share": {
+        "hint": "He yI'ang 'angmeH.",
+        "copied": "'angta'!"
+      },
       "header": {
         "roomCode": "Daq ngoQ:",
         "copyLink": "Daq He yI'ang",
@@ -1533,12 +1537,11 @@
         "join": "yImuv",
         "joining": "vImuv…"
       },
-      "checkingRoom": "Daq vIqel…",
       "end": {
         "guestTitle": "yIvoQ'a'?",
         "guestDescription": "Daq SoQmoHpa', He rap lo'taHvIS bIcheghlaH.",
         "modTitle": "yIvoQ'a'?",
-        "modDescription": "vaj bIvoQ — pagh Hoch lop yImev. cha'DIch Hoch toy'wI'pu' tIQan, Daq SoQmoH je.",
+        "modDescription": "vaj bIvoQ — pagh Hoch lop yImev. cha'DIch Hoch toy'wI'pu' tIQan, Daq poSHa'moH je.",
         "cancel": "yIratlh",
         "leave": "yIvoQ",
         "endForEveryone": "Hoch lop yImev"
@@ -1550,7 +1553,7 @@
       },
       "left": {
         "title": "lop DavoQ",
-        "body": "Daq poSqu'taH — He yIcheghmoH 'ej cheghchuq Daq SoQbe'pa'.",
+        "body": "Daq poSqu'taH — He yIlo' bIcheghmeH neH.",
         "mission": "School of Gaming — DaH poH Qap tIv moj."
       },
       "notFound": {
@@ -1566,8 +1569,6 @@
         "creating": "chenmoHlu'…",
         "createFailed": "Daq chenmoH luchchugh. yItoH'egh!",
         "ready": "DaqlIj pIm",
-        "shareHint": "He yI'ang 'angmeH.",
-        "copied": "'angta'!",
         "join": "yImuv"
       }
     }

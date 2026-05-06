@@ -236,9 +236,7 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
         <Card>
           <CardContent className="flex items-center justify-center gap-2 py-12">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">
-              {tInstant("checkingRoom")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("connecting")}</p>
           </CardContent>
         </Card>
       </div>
@@ -250,7 +248,7 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
   }
 
   if (state.phase === "ended") {
-    return <CallEndedScreen reason={state.reason} />;
+    return <CallEndedScreen reason={state.reason} code={code} />;
   }
 
   if (state.phase === "lobby") {

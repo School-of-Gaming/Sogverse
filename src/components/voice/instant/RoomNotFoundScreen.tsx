@@ -37,7 +37,7 @@ export function RoomNotFoundScreen({ code }: RoomNotFoundScreenProps) {
             <p className="text-sm text-muted-foreground">{t("body")}</p>
           </div>
 
-          <div className="rounded-md border border-border bg-muted/40 px-4 py-3 font-mono text-2xl font-bold tracking-[0.3em]">
+          <div className="break-all rounded-md border border-border bg-muted/40 px-4 py-3 font-mono text-2xl font-bold tracking-[0.3em]">
             {code}
           </div>
 

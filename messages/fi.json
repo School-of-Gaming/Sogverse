@@ -1463,6 +1463,10 @@
     "broadcast": "Kuulutus",
     "instant": {
       "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
+      "share": {
+        "hint": "Kopioi linkki napsauttamalla.",
+        "copied": "Kopioitu!"
+      },
       "header": {
         "roomCode": "Huoneen koodi:",
         "copyLink": "Kopioi huoneen linkki",
@@ -1485,12 +1489,11 @@
         "join": "Liity",
         "joining": "Liitytään…"
       },
-      "checkingRoom": "Tarkistetaan huonetta…",
       "end": {
         "guestTitle": "Poistutko puhelusta?",
         "guestDescription": "Voit liittyä uudelleen samalla linkillä, kunnes huone sulkeutuu.",
         "modTitle": "Poistutko puhelusta?",
-        "modDescription": "Voit poistua itse tai lopettaa puhelun kaikilta — jälkimmäinen katkaisee yhteyden kaikilta osallistujilta ja sulkee huoneen.",
+        "modDescription": "Voit poistua itse tai lopettaa puhelun kaikilta — jälkimmäinen katkaisee yhteyden osallistujilta ja sulkee huoneen.",
         "cancel": "Jää",
         "leave": "Poistu puhelusta",
         "endForEveryone": "Lopeta kaikilta"
@@ -1502,7 +1505,7 @@
       },
       "left": {
         "title": "Poistuit puhelusta",
-        "body": "Huone on yhä auki — liitä linkki ja palaa milloin tahansa, kunnes se sulkeutuu.",
+        "body": "Huone on yhä auki — käytä linkkiä palataksesi milloin tahansa.",
         "mission": "School of Gaming — ruutuajasta laatuaikaa."
       },
       "notFound": {
@@ -1518,8 +1521,6 @@
         "creating": "Luodaan…",
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
         "ready": "Huoneesi on valmis",
-        "shareHint": "Kopioi linkki napsauttamalla.",
-        "copied": "Kopioitu!",
         "join": "Liity"
       }
     }
