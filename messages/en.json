@@ -1306,6 +1306,7 @@
     "myGamers": "My Gamers",
     "home": "Home",
     "myGroups": "My Groups",
+    "voice": "Voice",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar"
   },
@@ -1648,7 +1649,68 @@
     "cameraLockedByModerator": "Camera locked by moderator",
     "shareScreen": "Share screen",
     "stopScreenShare": "Stop screen share",
-    "broadcast": "Broadcast"
+    "broadcast": "Broadcast",
+    "instant": {
+      "joinFailed": "Couldn't join the room. Please try again.",
+      "share": {
+        "hint": "Click the link to copy it.",
+        "copied": "Copied!"
+      },
+      "header": {
+        "roomCode": "Room code:",
+        "copyLink": "Copy room link",
+        "copied": "Copied!"
+      },
+      "lobby": {
+        "title": "Ready to join?",
+        "description": "Check your camera and microphone before stepping in.",
+        "nameLabel": "Your name",
+        "namePlaceholder": "What should we call you?",
+        "micOn": "Mic on",
+        "micOff": "Mic off",
+        "cameraOn": "Camera on",
+        "cameraOff": "Camera off",
+        "muteMic": "Mute microphone",
+        "unmuteMic": "Unmute microphone",
+        "showCamera": "Turn camera on",
+        "hideCamera": "Turn camera off",
+        "permissionDenied": "We couldn't access your camera or microphone. You can still join — toggle them on later if you grant permission.",
+        "join": "Join",
+        "joining": "Joining…"
+      },
+      "end": {
+        "guestTitle": "Leave this call?",
+        "guestDescription": "You can rejoin any time using the same link, until the room ends.",
+        "modTitle": "Leaving the call?",
+        "modDescription": "You can leave on your own, or end the call for everyone — that disconnects every participant and closes the room.",
+        "cancel": "Stay",
+        "leave": "Leave call",
+        "endForEveryone": "End for everyone"
+      },
+      "ended": {
+        "title": "Call ended",
+        "body": "The room is closed. Thanks for joining."
+      },
+      "left": {
+        "title": "You left the call",
+        "body": "The room is still open — use the link to come back any time."
+      },
+      "notFound": {
+        "title": "Room not found",
+        "body": "We couldn't find a voice room with this code:",
+        "hint": "Double-check the code for typos. Letters and numbers must match exactly.",
+        "createNew": "Create a new voice room"
+      },
+      "createPage": {
+        "title": "Create a voice room",
+        "subtitle": "Spin up a room and share the link with whoever should join.",
+        "createButton": "Create voice room",
+        "creating": "Creating…",
+        "createFailed": "Couldn't create a room. Please try again.",
+        "ready": "Your room is ready",
+        "join": "Join"
+      }
+    }
   },
   "yty": {
     "hero": {

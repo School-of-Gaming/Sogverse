@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { Inter, Press_Start_2P } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
-import { Header, MouseflowConsent } from "@/components/layout";
+import { MouseflowConsent } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { getStripeProducts } from "@/lib/stripe/products";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -78,7 +78,10 @@ export default async function RootLayout({
           baseRates={baseRates}
           nonce={nonce}
         >
-          <Header />
+          {/* Header rendering is owned by each route group's layout — that's how
+              the (voice) group can replace the standard chrome with its own
+              simplified header. The pt-16 reserves space for whichever fixed
+              header the active group renders. */}
           <main className="h-screen overflow-auto pt-16">
             {children}
           </main>

@@ -1,11 +1,10 @@
 import { useCallback, useState } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
-import type { UserRole } from "@/types";
-import type { VoiceParticipant } from "./types";
+import type { VoiceParticipant, VoiceRole } from "./types";
 
 interface UseScreenShareParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
-  localRole: UserRole;
+  localRole: VoiceRole;
   /** The local user's session ID (from participants state, not a ref read) */
   localSessionId: string | null;
 }
@@ -13,7 +12,9 @@ interface UseScreenShareParams {
 export function useScreenShare({ callObjectRef, localRole, localSessionId }: UseScreenShareParams) {
   const [screenSharerSessionId, setScreenSharerSessionId] = useState<string | null>(null);
 
-  const canScreenShare = localRole !== "gamer";
+  // Positive mod check so any non-mod role (gamer, guest, future ones) falls
+  // through to "cannot screen share" without needing per-role updates.
+  const canScreenShare = localRole === "admin" || localRole === "gedu";
 
   // Derived from state (screenSharerSessionId + localSessionId), not ref reads
   const isScreenSharing = screenSharerSessionId !== null && screenSharerSessionId === localSessionId;

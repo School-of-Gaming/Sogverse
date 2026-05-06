@@ -1306,6 +1306,7 @@
     "myGamers": "Mina spelare",
     "home": "Hem",
     "myGroups": "Mina grupper",
+    "voice": "Röst",
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel"
   },
@@ -1648,7 +1649,68 @@
     "cameraLockedByModerator": "Kamera låst av moderator",
     "shareScreen": "Dela skärm",
     "stopScreenShare": "Sluta dela skärm",
-    "broadcast": "Sändning"
+    "broadcast": "Sändning",
+    "instant": {
+      "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
+      "share": {
+        "hint": "Klicka på länken för att kopiera den.",
+        "copied": "Kopierat!"
+      },
+      "header": {
+        "roomCode": "Rumskod:",
+        "copyLink": "Kopiera rumslänk",
+        "copied": "Kopierat!"
+      },
+      "lobby": {
+        "title": "Redo att gå med?",
+        "description": "Kontrollera kameran och mikrofonen innan du går in.",
+        "nameLabel": "Ditt namn",
+        "namePlaceholder": "Vad ska vi kalla dig?",
+        "micOn": "Mikrofon på",
+        "micOff": "Mikrofon av",
+        "cameraOn": "Kamera på",
+        "cameraOff": "Kamera av",
+        "muteMic": "Tysta mikrofon",
+        "unmuteMic": "Slå på mikrofon",
+        "showCamera": "Slå på kamera",
+        "hideCamera": "Stäng av kamera",
+        "permissionDenied": "Vi kunde inte komma åt din kamera eller mikrofon. Du kan ändå gå med — slå på dem senare om du ger tillstånd.",
+        "join": "Gå med",
+        "joining": "Ansluter…"
+      },
+      "end": {
+        "guestTitle": "Lämna samtalet?",
+        "guestDescription": "Du kan gå med igen via samma länk tills rummet stängs.",
+        "modTitle": "Lämna samtalet?",
+        "modDescription": "Du kan lämna själv eller avsluta samtalet för alla — det senare kopplar bort deltagarna och stänger rummet.",
+        "cancel": "Stanna",
+        "leave": "Lämna samtalet",
+        "endForEveryone": "Avsluta för alla"
+      },
+      "ended": {
+        "title": "Samtalet avslutades",
+        "body": "Rummet är stängt. Tack för att du deltog."
+      },
+      "left": {
+        "title": "Du lämnade samtalet",
+        "body": "Rummet är fortfarande öppet — använd länken för att komma tillbaka när som helst."
+      },
+      "notFound": {
+        "title": "Rummet hittades inte",
+        "body": "Vi hittade inget röstrum med den här koden:",
+        "hint": "Kontrollera koden för stavfel. Bokstäverna och siffrorna måste stämma exakt.",
+        "createNew": "Skapa ett nytt röstrum"
+      },
+      "createPage": {
+        "title": "Skapa ett röstrum",
+        "subtitle": "Starta ett rum direkt och dela länken med dem som ska gå med.",
+        "createButton": "Skapa röstrum",
+        "creating": "Skapar…",
+        "createFailed": "Kunde inte skapa rummet. Försök igen.",
+        "ready": "Ditt rum är redo",
+        "join": "Gå med"
+      }
+    }
   },
   "yty": {
     "hero": {

@@ -25,4 +25,13 @@ export const VOICE_CONFIG = {
   MIN_VOLUME: 0.1,
   /** Maximum per-participant volume (100%) */
   MAX_VOLUME: 1.0,
+  /**
+   * Hard lifetime (seconds) on instant voice rooms. Daily.co destroys the
+   * room at this time even if a call is still active. 8 hours is generous
+   * enough for any realistic gathering and short enough that abandoned rooms
+   * clean themselves up promptly.
+   */
+  INSTANT_ROOM_EXP_SECONDS: 8 * 60 * 60,
+  /** Max retries on code-collision (Daily 409) when creating an instant room. */
+  INSTANT_ROOM_CREATE_MAX_RETRIES: 3,
 } as const;
