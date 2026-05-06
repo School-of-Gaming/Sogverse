@@ -2,6 +2,8 @@
 
 Daily.co-powered spatial voice (and optional video) chat for gedus, admins, and gamers, with screen sharing, per-participant volume control, and moderator controls.
 
+> Looking for the on-the-fly voice rooms admins/gedus can spin up and share via short URL? See [instant-voice-rooms.md](./instant-voice-rooms.md). This document covers the schedule-driven, group-linked voice rooms.
+
 ## Overview
 
 Voice rooms are linked 1:1 to product groups — each group gets a dedicated room that opens/closes automatically based on the product's weekly schedule. Two always-open special rooms (Admin Lounge, Gedu Lounge) are seeded in the migration. Access control is enrollment-based: gamers can only see and join rooms for groups they're enrolled in, gedus see rooms for their assigned groups, and admins see everything.
@@ -265,5 +267,3 @@ Currently capped at 100% due to a Chrome limitation with WebRTC MediaStream sour
 ### State machine extraction for protocol testing
 The position exchange protocol (per-peer `posUpdate` handshake, `lockSync`, `sentPositionToRef` dedup) is timing-sensitive — bugs manifest as invisible participants under specific event orderings. If regressions recur, extract the protocol logic into a pure state machine (`voice-protocol.ts`, ~50 lines) that takes `(state, event) → actions[]`. State: `{ positions, sentPositionTo, joined, localSessionId, localLocks }`. Events: `joined-meeting`, `participant-joined`, `received-posUpdate`, `received-lockSync`, `participant-left`. Actions: `send-posUpdate-to-X`, `store-position`, `store-lock`, etc. The hooks become thin adapters that map Daily.co events to protocol events and execute the returned actions. Then write permutation tests (~150 lines) with a multi-peer simulator that feeds every plausible event ordering into the state machines and asserts the invariant: after all events settle, every peer pair has exchanged positions. This is the industry-standard approach for testing timing-sensitive protocols without needing a real network.
 
-### Sanitize pipe delimiter from display names in token userName
-The token endpoint encodes `userId|role|displayName` as a pipe-delimited string in Daily.co's `user_name` field. If a user's `display_name` contains `|`, the client-side parser (`mapParticipant`) handles it correctly by re-joining slots 2+. However, a user could set their display name to e.g. `fakeId|admin|Admin` and the parser would extract a spoofed `role` and `userId`. This is cosmetic-only — the Daily.co token's `is_owner` flag (set server-side) is the real authority for drag permissions and `moveUser` validation — but it could cause incorrect role badges or identicons. Fix by stripping `|` from `displayName` before encoding, or switching to JSON encoding.

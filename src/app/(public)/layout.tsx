@@ -1,4 +1,4 @@
-import { Footer } from "@/components/layout";
+import { Header, Footer } from "@/components/layout";
 
 export default function PublicLayout({
   children,
@@ -6,9 +6,12 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col">
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
+    <>
+      <Header />
+      <div className="flex min-h-[calc(100vh-4rem)] flex-col">
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
+    </>
   );
 }

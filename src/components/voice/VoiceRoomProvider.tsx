@@ -13,9 +13,8 @@ import type {
   DailyCall,
   DailyParticipant,
 } from "@daily-co/daily-js";
-import type { UserRole } from "@/types";
 import type { SpatialPosition } from "@/lib/constants/spatial";
-import type { VoiceRoomContextValue, VoiceParticipant, AppMessage } from "./hooks/types";
+import type { VoiceRoomContextValue, VoiceParticipant, AppMessage, VoiceRole } from "./hooks/types";
 import { useAudioPipeline } from "./hooks/use-audio-pipeline";
 import { useSpatialPositions } from "./hooks/use-spatial-positions";
 import { useScreenShare } from "./hooks/use-screen-share";
@@ -33,7 +32,7 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null, pos
   const raw = p.user_name || "";
   const parts = raw.split("|");
   const userId = parts[0] || p.session_id;
-  const role = parts[1] as UserRole;
+  const role = parts[1] as VoiceRole;
   const userName = parts.slice(2).join("|") || "Unknown";
 
   return {
@@ -66,7 +65,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   const [micOn, setMicOn] = useState(true);
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraAllowed, setCameraAllowed] = useState(false);
-  const [localRole, setLocalRole] = useState<UserRole>("gamer");
+  const [localRole, setLocalRole] = useState<VoiceRole>("gamer");
   const activeSpeakerIdRef = useRef<string | null>(null);
   // Synchronous gate — events like track-started fire before joined-meeting,
   // when co.participants().local doesn't exist yet. updateParticipants skips
@@ -231,7 +230,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
         const local = co.participants().local;
         const rawName = local.user_name || "";
-        setLocalRole(rawName.split("|")[1] as UserRole);
+        setLocalRole(rawName.split("|")[1] as VoiceRole);
 
         // Set local position before updateParticipants so the local user
         // passes the position gate and appears immediately.

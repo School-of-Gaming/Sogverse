@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createMeetingToken, getDailyRoom, createDailyRoom } from "@/lib/daily";
+import { createMeetingToken, getDailyRoom, createDailyRoom, buildUserName } from "@/lib/daily";
 import { computeSessionWindow, isEnrolledForSession } from "@/lib/session-schedule";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
@@ -132,9 +132,13 @@ export async function POST(request: Request) {
       await createDailyRoom({ name: room.daily_room_name });
     }
 
-    // Build token — encode userId|role|displayName
-    const displayName = profile.display_name;
-    const userName = `${user.id}|${role}|${displayName}`;
+    // Build token — encode userId|role|displayName via helper that
+    // strips `|` from the display name so the client parser can't be spoofed.
+    const userName = buildUserName({
+      userId: user.id,
+      role,
+      displayName: profile.display_name,
+    });
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
     if (!domain) {
       console.error("Missing NEXT_PUBLIC_DAILY_DOMAIN environment variable");

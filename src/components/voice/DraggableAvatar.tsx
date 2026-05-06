@@ -137,10 +137,12 @@ export const DraggableAvatar = memo(function DraggableAvatar({ participant, canD
 
       if (!dragPos) return;
 
-      // Gamers cannot enter broadcast zone — push to nearest edge
+      // Only mods can enter the broadcast zone — push everyone else (gamers,
+      // guests on instant rooms) to the nearest edge.
       let dropX = dragPos.x;
       let dropY = dragPos.y;
-      if (participant.role === "gamer") {
+      const isMod = participant.role === "admin" || participant.role === "gedu";
+      if (!isMod) {
         const ejected = ejectFromBroadcastZone(dropX, dropY);
         dropX = ejected.x;
         dropY = ejected.y;

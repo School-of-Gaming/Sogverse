@@ -2,12 +2,21 @@ import type { DailyCall } from "@daily-co/daily-js";
 import type { UserRole } from "@/types";
 import type { ZoneId, SpatialPosition } from "@/lib/constants/spatial";
 
+/**
+ * Voice-room-internal role union. Adds `"guest"` on top of the system roles
+ * to cover unauthenticated joiners on instant voice rooms (and authenticated
+ * parents/gamers, who are also treated as guests when they join via a public
+ * room link). Gating logic uses positive "is mod" checks so guest behavior is
+ * the same as gamer — non-mod, no screen share, can't drag others.
+ */
+export type VoiceRole = UserRole | "guest";
+
 // ---------- Participant ----------
 
 export interface VoiceParticipant {
   sessionId: string;
   userId: string;
-  role: UserRole;
+  role: VoiceRole;
   userName: string;
   audioOn: boolean;
   videoOn: boolean;
@@ -41,7 +50,16 @@ export type AppMessage =
   | { type: "lockSync"; lock: LockState }
   | { type: "moveUser"; targetSessionId: string; position: SpatialPosition }
   | { type: "moderatorMute"; targetSessionId: string; track: "audio" | "video" }
-  | { type: "moderatorLock"; targetSessionId: string; track: "audio" | "video"; locked: boolean };
+  | { type: "moderatorLock"; targetSessionId: string; track: "audio" | "video"; locked: boolean }
+  /**
+   * Broadcast by a moderator on instant voice rooms right before they call
+   * the end-for-everyone API. Lets other clients show the friendly
+   * `CallEndedScreen` immediately rather than waiting for the Daily
+   * disconnect (which would otherwise look like a generic network drop).
+   * If a client misses the broadcast, the subsequent `left-meeting` event
+   * with a non-user-initiated reason falls through to the same screen.
+   */
+  | { type: "callEndedByMod" };
 
 // ---------- Context ----------
 
@@ -59,7 +77,7 @@ export interface VoiceRoomContextValue {
   callObject: DailyCall | null;
   // Spatial extensions
   localZone: ZoneId;
-  localRole: UserRole;
+  localRole: VoiceRole;
   moveLocal: (x: number, y: number) => void;
   moveOther: (targetSessionId: string, x: number, y: number) => void;
   // Audio analysis
