@@ -1500,13 +1500,11 @@
       },
       "ended": {
         "title": "Samtalet avslutades",
-        "body": "Rummet är stängt. Tack för att du deltog.",
-        "mission": "School of Gaming — där skärmtid blir kvalitetstid."
+        "body": "Rummet är stängt. Tack för att du deltog."
       },
       "left": {
         "title": "Du lämnade samtalet",
-        "body": "Rummet är fortfarande öppet — använd länken för att komma tillbaka när som helst.",
-        "mission": "School of Gaming — där skärmtid blir kvalitetstid."
+        "body": "Rummet är fortfarande öppet — använd länken för att komma tillbaka när som helst."
       },
       "notFound": {
         "title": "Rummet hittades inte",

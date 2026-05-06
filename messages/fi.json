@@ -1500,13 +1500,11 @@
       },
       "ended": {
         "title": "Puhelu päättyi",
-        "body": "Huone on suljettu. Kiitos osallistumisesta.",
-        "mission": "School of Gaming — ruutuajasta laatuaikaa."
+        "body": "Huone on suljettu. Kiitos osallistumisesta."
       },
       "left": {
         "title": "Poistuit puhelusta",
-        "body": "Huone on yhä auki — käytä linkkiä palataksesi milloin tahansa.",
-        "mission": "School of Gaming — ruutuajasta laatuaikaa."
+        "body": "Huone on yhä auki — käytä linkkiä palataksesi milloin tahansa."
       },
       "notFound": {
         "title": "Huonetta ei löytynyt",

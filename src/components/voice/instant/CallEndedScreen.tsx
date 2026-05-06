@@ -23,11 +23,18 @@ interface CallEndedScreenProps {
  *
  * Two variants because the framing differs: "you left" is reassuring
  * ("come back any time" with the same URL chip the mod sees on creation)
- * while "call ended" is a hard close. Both share the brand mission
- * tagline as a soft outro instead of a bare "you've been disconnected."
+ * while "call ended" is a hard close. Both close with the brand tagline
+ * styled the same way as the home-page hero — `home.hero.title` is reused
+ * directly so the typography and colour treatment stay in sync if either
+ * the copy or palette changes later. A small copyright line sits below
+ * the tagline as a footer; this is the only voice screen that carries
+ * one.
  */
 export function CallEndedScreen({ reason, code }: CallEndedScreenProps) {
   const t = useTranslations(`voice.instant.${reason}`);
+  const tHome = useTranslations("home.hero");
+  const tFooter = useTranslations("footer");
+  const year = new Date().getFullYear();
 
   return (
     <div className="container mx-auto max-w-xl p-4 md:p-6">
@@ -40,8 +47,19 @@ export function CallEndedScreen({ reason, code }: CallEndedScreenProps) {
               <RoomLinkChip code={code} />
             </div>
           )}
-          <p className="pt-4 text-base font-medium text-primary">
-            {t("mission")}
+          <h2 className="pt-6 font-display text-2xl font-bold leading-tight tracking-tight md:text-3xl">
+            {tHome.rich("title", {
+              br: () => <br />,
+              primary: (chunks) => (
+                <span className="text-primary">{chunks}</span>
+              ),
+              secondary: (chunks) => (
+                <span className="text-secondary">{chunks}</span>
+              ),
+            })}
+          </h2>
+          <p className="pt-6 text-xs text-muted-foreground">
+            {tFooter("copyright", { year })}
           </p>
         </CardContent>
       </Card>
