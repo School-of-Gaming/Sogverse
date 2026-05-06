@@ -10,18 +10,18 @@ vi.mock("@/lib/supabase/server", () => ({
 
 const mockCreateMeetingToken = vi.fn();
 const mockGetDailyRoom = vi.fn();
-const mockBuildUserName = vi.fn(
-  (parts: { userId: string; role: string; displayName: string }) => {
-    const safe = parts.displayName.replaceAll("|", "");
-    return `${parts.userId}|${parts.role}|${safe}`;
-  },
-);
-vi.mock("@/lib/daily", () => ({
-  createMeetingToken: (...args: unknown[]) => mockCreateMeetingToken(...args),
-  getDailyRoom: (...args: unknown[]) => mockGetDailyRoom(...args),
-  buildUserName: (parts: { userId: string; role: string; displayName: string }) =>
-    mockBuildUserName(parts),
-}));
+// Stub the network-touching helpers but keep `buildUserName` real — Vector A
+// (display-name pipe sanitization) asserts on the encoded output, so the
+// production helper has to be the one under test, not a parallel mirror that
+// can drift.
+vi.mock("@/lib/daily", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/daily")>("@/lib/daily");
+  return {
+    ...actual,
+    createMeetingToken: (...args: unknown[]) => mockCreateMeetingToken(...args),
+    getDailyRoom: (...args: unknown[]) => mockGetDailyRoom(...args),
+  };
+});
 
 // --- Helpers ---
 

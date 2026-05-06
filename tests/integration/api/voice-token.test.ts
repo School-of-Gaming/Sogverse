@@ -24,15 +24,18 @@ vi.mock("@/lib/supabase/admin", () => ({
 const mockCreateMeetingToken = vi.fn();
 const mockGetDailyRoom = vi.fn();
 const mockCreateDailyRoom = vi.fn();
-vi.mock("@/lib/daily", () => ({
-  createMeetingToken: (...args: unknown[]) => mockCreateMeetingToken(...args),
-  getDailyRoom: (...args: unknown[]) => mockGetDailyRoom(...args),
-  createDailyRoom: (...args: unknown[]) => mockCreateDailyRoom(...args),
-  // Inline mirror of the production helper so existing tests can assert on
-  // the encoded `userName` without coupling to the helper's identity.
-  buildUserName: (parts: { userId: string; role: string; displayName: string }) =>
-    `${parts.userId}|${parts.role}|${parts.displayName.replaceAll("|", "")}`,
-}));
+// Stub the network-touching helpers but keep `buildUserName` real so any
+// future change to its sanitization is exercised by the existing userName
+// assertions instead of silently passing against a stale mirror.
+vi.mock("@/lib/daily", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/daily")>("@/lib/daily");
+  return {
+    ...actual,
+    createMeetingToken: (...args: unknown[]) => mockCreateMeetingToken(...args),
+    getDailyRoom: (...args: unknown[]) => mockGetDailyRoom(...args),
+    createDailyRoom: (...args: unknown[]) => mockCreateDailyRoom(...args),
+  };
+});
 
 const mockComputeSessionWindow = vi.fn();
 const mockIsEnrolledForSession = vi.fn();

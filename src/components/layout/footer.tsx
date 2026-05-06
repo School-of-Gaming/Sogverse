@@ -1,9 +1,9 @@
 import { useTranslations } from 'next-intl';
+import { Copyright } from "./copyright";
 
 export function Footer() {
   const t = useTranslations('footer');
   const c = useTranslations('common');
-  const currentYear = new Date().getFullYear();
 
   return (
     <footer className="border-t border-border bg-card">
@@ -25,9 +25,7 @@ export function Footer() {
             {t('contact.email')}
           </a>
           <div className="w-full border-t border-border pt-4">
-            <p className="text-sm text-muted-foreground">
-              {t('copyright', { year: currentYear })}
-            </p>
+            <Copyright />
           </div>
         </div>
       </div>

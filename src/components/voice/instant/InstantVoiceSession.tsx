@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,6 +22,10 @@ type SessionState =
 interface InstantVoiceSessionProps {
   /** Validated, uppercase 4-character code from the URL. */
   code: string;
+  /** Pre-rendered copyright slot from the parent server component. Threaded
+   *  down to CallEndedScreen so the year is computed on the server and we
+   *  don't risk a hydration mismatch at year boundaries. */
+  copyright: ReactNode;
 }
 
 /**
@@ -41,15 +45,15 @@ interface InstantVoiceSessionProps {
  *   - `not-found` — Room doesn't exist. Echoes the code back so the user
  *                   can spot typos.
  */
-export function InstantVoiceSession({ code }: InstantVoiceSessionProps) {
+export function InstantVoiceSession({ code, copyright }: InstantVoiceSessionProps) {
   return (
     <VoiceRoomProvider>
-      <InstantVoiceSessionInner code={code} />
+      <InstantVoiceSessionInner code={code} copyright={copyright} />
     </VoiceRoomProvider>
   );
 }
 
-function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
+function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps) {
   const t = useTranslations("voice");
   const tInstant = useTranslations("voice.instant");
   const { joined, join, leave, callObject } = useVoiceRoom();
@@ -170,12 +174,26 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
   /**
    * Handler for the modal's "Leave call" button. Returns once the leave
    * has completed so the modal can clean up its loading state.
+   *
+   * If `leave()` throws (network blip, Daily error), we roll back
+   * `userLeftRef` and re-raise so the modal's busy spinner clears, the
+   * modal stays open, and the user can retry. Without the rollback, a
+   * subsequent Daily-side disconnect would silently pass through the
+   * auto-end path because the sentinel was already set.
    */
   const handleLeave = useCallback(async () => {
     userLeftRef.current = true;
-    await leave();
+    try {
+      await leave();
+    } catch (err) {
+      userLeftRef.current = false;
+      throw err;
+    }
     setState({ phase: "ended", reason: "left" });
     setEndModalOpen(false);
+    // Resolve idempotently; the next leave-button press overwrites the slot
+    // in onLeaveButtonPressed, so there's no need to null it out here.
+    openLeaveModalRef.current?.resolve();
   }, [leave]);
 
   /**
@@ -183,6 +201,11 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
    * Broadcasts the friendly-end signal to peers, then asks the server to
    * delete the Daily room. Order matters: the broadcast must land before
    * the room is destroyed, otherwise peers see a generic disconnect.
+   *
+   * Same error-handling shape as `handleLeave`: a thrown `leave()` rolls
+   * back the sentinel and propagates so the modal can re-enable. The
+   * fetch is intentionally best-effort — if it fails we still try to
+   * leave locally so the moderator isn't stuck in the call.
    */
   const handleEndForEveryone = useCallback(async () => {
     userLeftRef.current = true;
@@ -205,9 +228,15 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
       // Best-effort — if the delete fails, the local leave below still
       // disconnects us and the room hangs around until its 8h exp.
     }
-    await leave();
+    try {
+      await leave();
+    } catch (err) {
+      userLeftRef.current = false;
+      throw err;
+    }
     setState({ phase: "ended", reason: "ended" });
     setEndModalOpen(false);
+    openLeaveModalRef.current?.resolve();
   }, [callObject, code, leave]);
 
   // The leave button in SpatialVoiceRoom calls this. We open the modal
@@ -226,7 +255,6 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
     setEndModalOpen(open);
     if (!open) {
       openLeaveModalRef.current?.resolve();
-      openLeaveModalRef.current = null;
     }
   }, []);
 
@@ -248,7 +276,7 @@ function InstantVoiceSessionInner({ code }: InstantVoiceSessionProps) {
   }
 
   if (state.phase === "ended") {
-    return <CallEndedScreen reason={state.reason} code={code} />;
+    return <CallEndedScreen reason={state.reason} code={code} copyright={copyright} />;
   }
 
   if (state.phase === "lobby") {
