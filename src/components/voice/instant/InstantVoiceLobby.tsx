@@ -45,12 +45,15 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [name, setName] = useState("");
 
-  // Preview-only identicon. Regenerates on mount; the server issues a separate
-  // UUID for the actual call. We don't try to keep them in sync — see the
-  // file-level note above.
-  const [previewId] = useState(() =>
-    typeof crypto !== "undefined" ? crypto.randomUUID() : "preview",
-  );
+  // Preview-only identicon. Generated client-side after mount so SSR doesn't
+  // produce a different UUID than the client (hydration mismatch). The server
+  // issues a separate UUID for the actual call — we don't try to keep these
+  // in sync; see the file-level note above.
+  const [previewId, setPreviewId] = useState<string | null>(null);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the render-after-mount is the point: a fresh client-only UUID after hydration avoids the SSR/client mismatch we'd get from generating it during render.
+    setPreviewId(crypto.randomUUID());
+  }, []);
 
   // For mods, show their profile identicon — that matches the avatar
   // they'll have in-call. Everyone else (guests, including auth'd
@@ -147,7 +150,9 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
               {!cameraOn && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                   <Avatar className="h-24 w-24">
-                    <Identicon id={lobbyIdenticonId} size={96} />
+                    {lobbyIdenticonId && (
+                      <Identicon id={lobbyIdenticonId} size={96} />
+                    )}
                   </Avatar>
                   <p className="text-sm text-muted-foreground">
                     {t("cameraOff")}
