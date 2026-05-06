@@ -12,8 +12,15 @@ import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useLocalStreamGlow } from "@/components/voice/hooks/use-local-stream-glow";
 
 interface InstantVoiceLobbyProps {
-  /** Called with the lobby-supplied display name (empty for mods who use their profile). */
-  onJoin: (displayName: string) => void;
+  /**
+   * Called with the lobby-supplied display name (empty for mods who use
+   * their profile) and the user's preview-screen mic/camera choices,
+   * which the call object honors at join time.
+   */
+  onJoin: (
+    displayName: string,
+    media: { micOn: boolean; cameraOn: boolean },
+  ) => void;
   joining: boolean;
   /** Most recent error from a failed join attempt; rendered above the join button. */
   error: string | null;
@@ -81,8 +88,9 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
           return;
         }
         acquired = next;
-        // Camera is OFF by default on entry to match the in-call default
-        // (Daily creates the call object with `startVideoOff: true`).
+        // Camera starts OFF in the preview; the lobby's `cameraOn` toggle
+        // is forwarded to the call object at join time, so whatever the
+        // user chose here is what they enter the room with.
         next.getVideoTracks().forEach((tr) => (tr.enabled = false));
         if (videoRef.current) {
           videoRef.current.srcObject = next;
@@ -138,7 +146,7 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (!canJoin || joining) return;
-    onJoin(isMod ? "" : trimmedName);
+    onJoin(isMod ? "" : trimmedName, { micOn, cameraOn });
   };
 
   return (
