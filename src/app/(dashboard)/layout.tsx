@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { DashboardLayout } from "@/components/layout";
+import { DashboardLayout, Header } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
 
 export default async function DashboardRootLayout({
@@ -13,5 +13,10 @@ export default async function DashboardRootLayout({
     redirect("/login");
   }
 
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <>
+      <Header />
+      <DashboardLayout>{children}</DashboardLayout>
+    </>
+  );
 }

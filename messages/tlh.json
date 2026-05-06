@@ -1354,6 +1354,7 @@
     "myGamers": "jIH toy'wI'pu'",
     "home": "juH",
     "myGroups": "jIH ghom'a'mey",
+    "voice": "jatlh",
     "expandSidebar": "HeDmey 'an",
     "collapseSidebar": "HeDmey SoQmoH"
   },
@@ -1696,7 +1697,66 @@
     "cameraLockedByModerator": "mIlQeD jonlu' — QaD",
     "shareScreen": "Daq yIngeH",
     "stopScreenShare": "Daq ngeH yImev",
-    "broadcast": "Hoch ngeH"
+    "broadcast": "Hoch ngeH",
+    "instant": {
+      "joinFailed": "Daq muv Dabe'lu'. yItoH'egh!",
+      "header": {
+        "copyLink": "Daq He yI'ang",
+        "copied": "'angta'!"
+      },
+      "lobby": {
+        "title": "Daq DaSuq'a'?",
+        "description": "Daq bIjaH pa', mIlQeD jatlhwI' je yIqel.",
+        "nameLabel": "ponglIj",
+        "namePlaceholder": "chay' SoH wIponglu'?",
+        "nameHelp": "{min}–{max} mu'tlheghHom.",
+        "cameraOff": "mIlQeD Qom",
+        "cameraOn": "mIlQeD yIn",
+        "micOn": "jatlhwI' yIn",
+        "micOff": "jatlhwI' Qom",
+        "muteMic": "jatlhwI' yISov",
+        "unmuteMic": "jatlhwI' yISovHa'",
+        "showCamera": "mIlQeD yIqet",
+        "hideCamera": "mIlQeD yImev",
+        "permissionDenied": "mIlQeD jatlhwI' je vISuqlaHbe'. Daq DamuvchoH 'e' DIcheghmoH ghIq.",
+        "join": "Daq yImuv",
+        "joining": "vImuv…"
+      },
+      "end": {
+        "guestTitle": "yIvoQ'a'?",
+        "guestDescription": "Daq SoQmoHpa', He rap lo'taHvIS bIcheghlaH.",
+        "modTitle": "yIvoQ'a'?",
+        "modDescription": "vaj bIvoQ — pagh Hoch lop yImev. cha'DIch Hoch toy'wI'pu' tIQan, Daq SoQmoH je.",
+        "cancel": "yIratlh",
+        "leave": "yIvoQ",
+        "endForEveryone": "Hoch lop yImev"
+      },
+      "ended": {
+        "title": "lop mevta'",
+        "body": "qatlho' bImuv. Daq SoQmoHta'.",
+        "mission": "School of Gaming — DaH poH Qap tIv moj."
+      },
+      "notFound": {
+        "title": "Daq tu'be'lu'",
+        "body": "ngoQ vam ngebvam tu'be'lu':",
+        "hint": "ngoQ yIqel. Hoch tetlh rap, 'ach mu'tlheghHommey rap rapnIS.",
+        "createNew": "Daq chu' yIchen"
+      },
+      "createPage": {
+        "title": "Daq chu' yIchen",
+        "description": "DaH Daq yIchen, He yI'ang Hoch muvwI' DaneHbogh.",
+        "createButton": "Daq yIchen",
+        "creating": "chenmoHlu'…",
+        "createFailed": "Daq chenmoH luchchugh. yItoH'egh!",
+        "howItWorksTitle": "qaStaHvIS chay'",
+        "howItWorks": {
+          "share": "Daq He yI'ang — Daq Qum nIH SaH.",
+          "guests": "He ghaj 'Iv DoQ — qungwI' poQbe'. potlh chaH ponglIj wIvmeH yIqaw.",
+          "lifetime": "8 rep tlha' Daq SoQmoH 'e' Hoch ghu' yIqel.",
+          "endForEveryone": "QaD nuv Hoch poH lop mev'eghlaHmo'."
+        }
+      }
+    }
   },
   "yty": {
     "hero": {

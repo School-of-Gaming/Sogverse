@@ -28,6 +28,10 @@ vi.mock("@/lib/daily", () => ({
   createMeetingToken: (...args: unknown[]) => mockCreateMeetingToken(...args),
   getDailyRoom: (...args: unknown[]) => mockGetDailyRoom(...args),
   createDailyRoom: (...args: unknown[]) => mockCreateDailyRoom(...args),
+  // Inline mirror of the production helper so existing tests can assert on
+  // the encoded `userName` without coupling to the helper's identity.
+  buildUserName: (parts: { userId: string; role: string; displayName: string }) =>
+    `${parts.userId}|${parts.role}|${parts.displayName.replaceAll("|", "")}`,
 }));
 
 const mockComputeSessionWindow = vi.fn();

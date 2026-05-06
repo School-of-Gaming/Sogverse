@@ -5,7 +5,10 @@ import type { DailyParticipant } from "@daily-co/daily-js";
 // The encoding convention is: user_name = "userId|role|displayName"
 // This test ensures the parsing is correct for Identicon generation and role extraction.
 
-type UserRole = "admin" | "customer" | "gamer" | "gedu";
+// Mirrors VoiceRole in src/components/voice/hooks/types.ts. "guest" is the
+// extra role used by instant voice rooms for unauthenticated joiners (and
+// authenticated parents/gamers, who get the same treatment on those rooms).
+type VoiceRole = "admin" | "customer" | "gamer" | "gedu" | "guest";
 
 type ParticipantFields = Pick<DailyParticipant, "user_name" | "session_id" | "audio" | "video" | "tracks" | "local" | "owner">;
 
@@ -18,7 +21,7 @@ function mapParticipant(
   const raw = p.user_name || "";
   const parts = raw.split("|");
   const userId = parts[0] || p.session_id;
-  const role = parts[1] as UserRole;
+  const role = parts[1] as VoiceRole;
   const userName = parts.slice(2).join("|") || "Unknown";
 
   return {
@@ -113,8 +116,8 @@ describe("mapParticipant", () => {
       expect(result.userName).toBe("Unknown");
     });
 
-    it("should parse all four roles correctly", () => {
-      for (const role of ["admin", "customer", "gamer", "gedu"] as const) {
+    it("should parse all five roles correctly (admin, customer, gamer, gedu, guest)", () => {
+      for (const role of ["admin", "customer", "gamer", "gedu", "guest"] as const) {
         const p = createFakeParticipant({ user_name: `uid|${role}|Name` });
         const result = mapParticipant(p, null);
         expect(result.role).toBe(role);

@@ -16,6 +16,15 @@ export const ROUTES = {
   setupAccount: "/setup-account",
   feedback: "/feedback",
   settings: "/settings",
+  /**
+   * Public on-the-fly voice room — see docs/instant-voice-rooms.md.
+   * `prefix` is the route base used for proxy matching; `forCode` builds
+   * the full URL for a given room code.
+   */
+  voice: {
+    prefix: "/voice",
+    forCode: (code: string) => `/voice/${code}`,
+  },
   admin: {
     dashboard: "/admin",
     users: "/admin/users",
@@ -37,6 +46,7 @@ export const ROUTES = {
     groups: "/admin/groups",
     group: (groupId: string) => `/admin/groups/${groupId}`,
     voiceSession: (roomId: string) => `/admin/voice/${roomId}`,
+    voice: "/admin/voice",
     uiComponents: "/admin/ui-components",
     testing: "/admin/testing",
     whatsapp: "/admin/whatsapp",
@@ -63,5 +73,6 @@ export const ROUTES = {
     groups: "/gedu/groups",
     group: (groupId: string) => `/gedu/groups/${groupId}`,
     voiceSession: (roomId: string) => `/gedu/voice/${roomId}`,
+    voice: "/gedu/voice",
   },
 } as const;

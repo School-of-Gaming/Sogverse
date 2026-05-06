@@ -1306,6 +1306,7 @@
     "myGamers": "Pelaajani",
     "home": "Etusivu",
     "myGroups": "Ryhmäni",
+    "voice": "Ääni",
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki"
   },
@@ -1648,7 +1649,66 @@
     "cameraLockedByModerator": "Kamera lukittu moderaattorin toimesta",
     "shareScreen": "Jaa näyttö",
     "stopScreenShare": "Lopeta näytön jakaminen",
-    "broadcast": "Kuulutus"
+    "broadcast": "Kuulutus",
+    "instant": {
+      "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
+      "header": {
+        "copyLink": "Kopioi huoneen linkki",
+        "copied": "Kopioitu!"
+      },
+      "lobby": {
+        "title": "Valmiina liittymään?",
+        "description": "Tarkista kamera ja mikrofoni ennen sisäänmenoa.",
+        "nameLabel": "Nimesi",
+        "namePlaceholder": "Miksi sinua kutsutaan?",
+        "nameHelp": "{min}–{max} merkkiä.",
+        "cameraOff": "Kamera pois",
+        "cameraOn": "Kamera päällä",
+        "micOn": "Mikki päällä",
+        "micOff": "Mikki pois",
+        "muteMic": "Mykistä mikrofoni",
+        "unmuteMic": "Poista mykistys",
+        "showCamera": "Käynnistä kamera",
+        "hideCamera": "Sammuta kamera",
+        "permissionDenied": "Emme saaneet pääsyä kameraan tai mikrofoniin. Voit silti liittyä — käynnistä ne myöhemmin, jos annat luvan.",
+        "join": "Liity äänihuoneeseen",
+        "joining": "Liitytään…"
+      },
+      "end": {
+        "guestTitle": "Poistutko puhelusta?",
+        "guestDescription": "Voit liittyä uudelleen samalla linkillä, kunnes huone sulkeutuu.",
+        "modTitle": "Poistutko puhelusta?",
+        "modDescription": "Voit poistua itse tai lopettaa puhelun kaikilta — jälkimmäinen katkaisee yhteyden kaikilta osallistujilta ja sulkee huoneen.",
+        "cancel": "Jää",
+        "leave": "Poistu puhelusta",
+        "endForEveryone": "Lopeta kaikilta"
+      },
+      "ended": {
+        "title": "Puhelu päättyi",
+        "body": "Kiitos osallistumisesta. Huone on suljettu.",
+        "mission": "School of Gaming — ruutuajasta laatuaikaa."
+      },
+      "notFound": {
+        "title": "Huonetta ei löytynyt",
+        "body": "Tällä koodilla ei löytynyt äänihuonetta:",
+        "hint": "Tarkista koodi kirjoitusvirheiden varalta. Isot ja pienet kirjaimet eivät vaikuta, mutta kirjainten ja numeroiden on muuten täsmättävä.",
+        "createNew": "Luo uusi äänihuone"
+      },
+      "createPage": {
+        "title": "Luo äänihuone",
+        "description": "Avaa hetkessä äänihuone ja jaa linkki niille, joiden haluat liittyvän.",
+        "createButton": "Luo äänihuone",
+        "creating": "Luodaan…",
+        "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
+        "howItWorksTitle": "Näin se toimii",
+        "howItWorks": {
+          "share": "Kopioi huoneen linkki huonesivun yläreunan oikealta puolelta.",
+          "guests": "Kuka tahansa linkin saanut voi liittyä — tiliä ei tarvita. Vieraat valitsevat itselleen näyttönimen saapuessaan.",
+          "lifetime": "Huoneet ovat auki enintään 8 tuntia. Sen jälkeen ne sulkeutuvat automaattisesti.",
+          "endForEveryone": "Ylläpitäjät voivat lopettaa puhelun kaikilta milloin tahansa."
+        }
+      }
+    }
   },
   "yty": {
     "hero": {
