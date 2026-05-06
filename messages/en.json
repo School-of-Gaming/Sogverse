@@ -1689,13 +1689,11 @@
       },
       "ended": {
         "title": "Call ended",
-        "body": "The room is closed. Thanks for joining.",
-        "mission": "School of Gaming — where screen time becomes quality time."
+        "body": "The room is closed. Thanks for joining."
       },
       "left": {
         "title": "You left the call",
-        "body": "The room is still open — use the link to come back any time.",
-        "mission": "School of Gaming — where screen time becomes quality time."
+        "body": "The room is still open — use the link to come back any time."
       },
       "notFound": {
         "title": "Room not found",
