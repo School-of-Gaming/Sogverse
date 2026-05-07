@@ -1,11 +1,14 @@
 -- Migration: Filter v2 group RLS policies by participation status
--- Description: The four non-admin policies on product_groups_v2 and
+-- Description: The non-admin policies on product_groups_v2 and
 --              gedu_group_assignments_v2 gate visibility through
---              participations_v2 but did not filter on status. A customer or
---              gamer who cancels keeps reading the product's group + Gedu
+--              participations_v2 but did not filter on status. A former
+--              participant whose row is anything other than 'active' (most
+--              commonly 'completed' once a product finishes — v2's enum is
+--              'reserving' / 'active' / 'waitlisted' / 'completed', no
+--              'cancelled') keeps reading the product's current group + Gedu
 --              shape forever. The intent is "active members see active
---              product structure"; cancelled membership shouldn't grant
---              ongoing visibility. Add `status = 'active'` to all four.
+--              product structure"; non-active membership shouldn't grant
+--              ongoing visibility. Add `status = 'active'` to all three.
 
 DROP POLICY IF EXISTS "gamers_read_own_group_v2" ON product_groups_v2;
 CREATE POLICY "gamers_read_own_group_v2"

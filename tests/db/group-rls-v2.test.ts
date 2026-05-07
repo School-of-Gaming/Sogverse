@@ -214,14 +214,18 @@ describe("product_groups_v2 + gedu_group_assignments_v2 RLS", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Cancelled participations don't grant ongoing visibility (00051).
+// Non-active participations don't grant ongoing visibility (00051).
+// v2's participation_status_v2 enum is ('reserving', 'active', 'waitlisted',
+// 'completed') — no 'cancelled'. The realistic leak is a former participant
+// of a finished product retaining visibility into its current group/Gedu
+// structure, which the migration closes by gating on status = 'active'.
 // Uses its own product fixture so the active-state assertions above keep
 // their seed assumptions.
 // ---------------------------------------------------------------------------
 
 const PRODUCT_Z = "00000000-0000-0000-0000-0000000007b3";
 
-describe("cancelled participation loses RLS visibility on v2 groups", () => {
+describe("completed participation loses RLS visibility on v2 groups", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
   let customerAuth: SupabaseClient<Database>;
@@ -274,7 +278,7 @@ describe("cancelled participation loses RLS visibility on v2 groups", () => {
     await deleteV2TestProducts(admin, [PRODUCT_Z]);
   });
 
-  it("customer loses product_groups_v2 visibility after the participation is cancelled", async () => {
+  it("customer loses product_groups_v2 visibility once their participation is no longer active", async () => {
     // Sanity: visible while active.
     const before = await customerAuth
       .from("product_groups_v2")
@@ -284,7 +288,7 @@ describe("cancelled participation loses RLS visibility on v2 groups", () => {
 
     await admin
       .from("participations_v2")
-      .update({ status: "cancelled" })
+      .update({ status: "completed" })
       .eq("id", participationZ);
 
     const after = await customerAuth
@@ -300,10 +304,10 @@ describe("cancelled participation loses RLS visibility on v2 groups", () => {
       .eq("id", participationZ);
   });
 
-  it("gamer loses product_groups_v2 visibility after their own participation is cancelled", async () => {
+  it("gamer loses product_groups_v2 visibility once their own participation is no longer active", async () => {
     await admin
       .from("participations_v2")
-      .update({ status: "cancelled" })
+      .update({ status: "completed" })
       .eq("id", participationZ);
 
     const { data } = await gamerAuth
@@ -318,10 +322,10 @@ describe("cancelled participation loses RLS visibility on v2 groups", () => {
       .eq("id", participationZ);
   });
 
-  it("customer loses gedu_group_assignments_v2 visibility after the participation is cancelled", async () => {
+  it("customer loses gedu_group_assignments_v2 visibility once the participation is no longer active", async () => {
     await admin
       .from("participations_v2")
-      .update({ status: "cancelled" })
+      .update({ status: "completed" })
       .eq("id", participationZ);
 
     const { data } = await customerAuth
