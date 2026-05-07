@@ -96,7 +96,11 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        `relative flex h-full flex-col border-r border-sidebar-border bg-sidebar-background ${collapseTransition}`,
+        // Sticky to the bottom of the fixed Header (4rem = h-16). Height is
+        // pinned to the visible viewport below the header so the user-info
+        // section stays anchored to the bottom while the dashboard <main>
+        // scrolls with the document.
+        `sticky top-16 flex h-[calc(100vh-4rem)] flex-col self-start border-r border-sidebar-border bg-sidebar-background ${collapseTransition}`,
         collapsed ? "w-18" : "w-18 md:w-64"
       )}
     >

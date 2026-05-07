@@ -66,7 +66,7 @@ export default async function RootLayout({
   const { baseRates } = await getStripeProducts();
 
   return (
-    <html lang={locale} className="dark overflow-hidden" suppressHydrationWarning>
+    <html lang={locale} className="dark" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${pressStart2P.variable} antialiased bg-background text-foreground`}
       >
@@ -78,13 +78,13 @@ export default async function RootLayout({
           baseRates={baseRates}
           nonce={nonce}
         >
-          {/* Header rendering is owned by each route group's layout — that's how
+          {/* Header rendering and the pt-16 offset that reserves space below the
+              fixed header are owned by each route group's layout — that's how
               the (voice) group can replace the standard chrome with its own
-              simplified header. The pt-16 reserves space for whichever fixed
-              header the active group renders. */}
-          <main className="h-screen overflow-auto pt-16">
-            {children}
-          </main>
+              simplified header (or skip it entirely). The document is the
+              single scroll container; no inner element should set h-screen
+              overflow-auto. */}
+          {children}
           <MouseflowConsent nonce={nonce} />
         </Providers>
         <SpeedInsights />

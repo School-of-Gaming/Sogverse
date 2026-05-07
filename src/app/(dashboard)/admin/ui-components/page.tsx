@@ -107,7 +107,7 @@ function AnchorHeading({
 }) {
   const Tag = as;
   return (
-    <Tag id={id} className={`group scroll-mt-4 ${className}`}>
+    <Tag id={id} className={`group scroll-mt-20 ${className}`}>
       <a
         href={`#${id}`}
         className="inline-flex items-center gap-2 hover:underline"
@@ -1204,19 +1204,6 @@ function ProductsV2Demo() {
 /* ------------------------------------------------------------------ */
 
 export default function AdminUIComponentsPage() {
-  // The dashboard scroll container is <main overflow-auto>, not the document.
-  // The browser's native hash jump runs before this client component has
-  // rendered, so it lands in the wrong scroll context. Re-apply the scroll
-  // after mount.
-  useEffect(() => {
-    const hash = window.location.hash.slice(1);
-    if (!hash) return;
-    const raf = requestAnimationFrame(() => {
-      document.getElementById(hash)?.scrollIntoView({ block: "start" });
-    });
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
   return (
     <div className="space-y-8">
       <div>

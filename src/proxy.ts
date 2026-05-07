@@ -47,7 +47,8 @@ function buildCspHeader(nonce: string): string {
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
       : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://cdn.mouseflow.com",
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: blob: ${SUPABASE_HOST}`,
+    // mc-heads.net renders the Minecraft skin body avatar in MinecraftUsernameField (settings page for gamers/gedus)
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting;
     // mouseflow: beta-only session recording (remove with the rest of the Mouseflow integration after Beta)
