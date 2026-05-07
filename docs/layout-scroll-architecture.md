@@ -50,6 +50,12 @@ The `overflow-hidden` IS the correct solution for this browser behavior, not a w
 2. The Playwright debug script at `tests/debug-layout.mjs` can be used to measure all layers (delete it when no longer needed)
 3. CSS overflow spec reference: when both `<html>` and `<body>` have `overflow: visible`, the UA must apply the body's overflow to the viewport
 
+### Playwright and `overflow-hidden`
+
+Playwright's click actionability check uses `elementFromPoint` at the target's coordinates before clicking. With `overflow-hidden` on `<html>`, the scroll container is `<main>` instead of the viewport. This changes the CSS stacking context — sibling sections later in the DOM (which paint on top of earlier positioned sections) can register as "intercepting pointer events" even when they don't visually overlap. Real users are unaffected because browser click dispatch doesn't perform this check.
+
+Affected tests use `.dispatchEvent("click")` instead of `.click()` to target the DOM node directly. See `tests/e2e/home.spec.ts` for examples.
+
 ### Why `<main>` must NOT be `flex flex-col`
 
 An earlier version added `flex flex-col` to `<main>` so the dashboard layout could use `flex-1`. This caused the home page hero section (which has `overflow: hidden` for decorative blur clipping) to collapse to zero height. Per CSS spec, a flex item that is a scroll container gets `min-height: 0` instead of `min-content`, so when the flex algorithm needed to shrink items, the hero absorbed all the shrinkage and became invisible.
