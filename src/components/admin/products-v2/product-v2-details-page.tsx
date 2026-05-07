@@ -16,7 +16,7 @@ import {
   Wallet,
   ExternalLink,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -226,11 +226,9 @@ function HeaderCard({
           </div>
         </div>
         <div className="shrink-0">
-          <Link href={editHref}>
-            <Button>
-              <Pencil className="mr-1 h-4 w-4" />
-              {editLabel}
-            </Button>
+          <Link href={editHref} className={buttonVariants()}>
+            <Pencil className="mr-1 h-4 w-4" />
+            {editLabel}
           </Link>
         </div>
       </CardContent>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Users, Hourglass, MapPin, Globe } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LanguageFlag } from "@/components/ui/language-flag";
@@ -167,8 +167,11 @@ export function ProductBrowseCardView({
               <PriceBlock price={price} />
               {cta &&
                 (cta.kind === "primary" && detailHref ? (
-                  <Link href={detailHref}>
-                    <Button size="sm">{cta.labelText}</Button>
+                  <Link
+                    href={detailHref}
+                    className={buttonVariants({ size: "sm" })}
+                  >
+                    {cta.labelText}
                   </Link>
                 ) : (
                   <Button

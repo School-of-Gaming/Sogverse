@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/providers/auth-provider";
 import { useProductV2Detail, productV2Keys } from "@/services/products-v2";
@@ -229,8 +229,11 @@ function DetailNotFound({ productType }: { productType: ProductTypeV2 }) {
           <p className="mt-2 text-sm text-muted-foreground">
             {t("notFound.description")}
           </p>
-          <Link href={browseHref(productType)} className="mt-4">
-            <Button>{t("notFound.cta")}</Button>
+          <Link
+            href={browseHref(productType)}
+            className={buttonVariants({ className: "mt-4" })}
+          >
+            {t("notFound.cta")}
           </Link>
         </CardContent>
       </Card>

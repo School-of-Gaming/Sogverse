@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { Identicon } from "@/components/ui/identicon";
 import { cn } from "@/lib/utils";
@@ -138,10 +138,8 @@ export function ProductPurchasedCardView({
             )}
           </div>
           {showManagePayment && (
-            <Link href={manageHref}>
-              <Button type="button" size="sm" variant="default">
-                {t("manage")}
-              </Button>
+            <Link href={manageHref} className={buttonVariants({ size: "sm" })}>
+              {t("manage")}
             </Link>
           )}
         </div>

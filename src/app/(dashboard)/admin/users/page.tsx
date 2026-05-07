@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Search, UserPlus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { UserRow } from "@/components/admin/user-row";
@@ -107,11 +107,9 @@ export default function AdminUsersPage() {
             {t('manageAccounts')}
           </p>
         </div>
-        <Link href={ROUTES.admin.usersAdd}>
-          <Button>
-            <UserPlus className="mr-2 h-4 w-4" />
-            {t('inviteGedu')}
-          </Button>
+        <Link href={ROUTES.admin.usersAdd} className={buttonVariants()}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          {t('inviteGedu')}
         </Link>
       </div>
 

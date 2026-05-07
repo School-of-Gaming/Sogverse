@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -64,11 +64,12 @@ export function ForgotPasswordForm() {
           </CardDescription>
         </CardHeader>
         <CardFooter className="flex flex-col space-y-4">
-          <Link href={ROUTES.login} className="w-full">
-            <Button variant="outline" className="w-full">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {c('backToLogin')}
-            </Button>
+          <Link
+            href={ROUTES.login}
+            className={buttonVariants({ variant: "outline", className: "w-full" })}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {c('backToLogin')}
           </Link>
         </CardFooter>
       </Card>

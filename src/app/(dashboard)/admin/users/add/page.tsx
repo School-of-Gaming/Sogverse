@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -81,8 +81,11 @@ export default function AddUserPage() {
               </p>
             )}
             <div className="mt-6 flex gap-4">
-              <Link href={ROUTES.admin.users}>
-                <Button variant="outline">{t('viewAllUsers')}</Button>
+              <Link
+                href={ROUTES.admin.users}
+                className={buttonVariants({ variant: "outline" })}
+              >
+                {t('viewAllUsers')}
               </Link>
               <Button onClick={() => {
                 setSuccess(false);
@@ -102,10 +105,11 @@ export default function AddUserPage() {
   return (
     <div className="mx-auto max-w-lg space-y-6">
       <div className="flex items-center gap-4">
-        <Link href={ROUTES.admin.users}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+        <Link
+          href={ROUTES.admin.users}
+          className={buttonVariants({ variant: "ghost", size: "icon" })}
+        >
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
           <h1 className="text-2xl font-bold">{t('inviteNewGedu')}</h1>

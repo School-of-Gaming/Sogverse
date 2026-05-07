@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl';
 import { Menu, X, LogOut, Settings } from "lucide-react";
 import { useState, useRef } from "react";
 import { useClickOutside } from "@/hooks/use-click-outside";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
@@ -92,10 +92,11 @@ export function Header() {
           ) : user ? (
             <div className="flex items-center gap-4">
               {dashboardPath && (
-                <Link href={dashboardPath}>
-                  <Button variant="ghost" size="sm" className="cursor-pointer">
-                    {c('dashboard')}
-                  </Button>
+                <Link
+                  href={dashboardPath}
+                  className={buttonVariants({ variant: "ghost", size: "sm" })}
+                >
+                  {c('dashboard')}
                 </Link>
               )}
               <LocalePicker />
@@ -144,13 +145,17 @@ export function Header() {
             <div className="flex items-center gap-2">
               <LocalePicker />
               <CurrencyPicker />
-              <Link href={ROUTES.login}>
-                <Button variant="ghost" size="sm">
-                  {c('signIn')}
-                </Button>
+              <Link
+                href={ROUTES.login}
+                className={buttonVariants({ variant: "ghost", size: "sm" })}
+              >
+                {c('signIn')}
               </Link>
-              <Link href={ROUTES.register}>
-                <Button size="sm">{c('getStarted')}</Button>
+              <Link
+                href={ROUTES.register}
+                className={buttonVariants({ size: "sm" })}
+              >
+                {c('getStarted')}
               </Link>
             </div>
           )}

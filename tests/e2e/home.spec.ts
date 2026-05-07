@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { activate } from "./helpers";
 
 test.describe("Home Page", () => {
   test("should display the hero section", async ({ page }) => {
@@ -31,7 +32,7 @@ test.describe("Home Page", () => {
   test("should navigate to register page", async ({ page }) => {
     await page.goto("/");
 
-    await page.getByRole("link", { name: /get started/i }).first().click();
+    await activate(page.getByRole("link", { name: /get started/i }).first());
 
     await expect(page).toHaveURL("/register");
   });
@@ -39,7 +40,7 @@ test.describe("Home Page", () => {
   test("should navigate to clubs page", async ({ page }) => {
     await page.goto("/");
 
-    await page.getByRole("link", { name: /view clubs/i }).click();
+    await activate(page.getByRole("link", { name: /view clubs/i }));
 
     await expect(page).toHaveURL("/clubs");
   });
