@@ -238,31 +238,29 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
         onDiscard={() => dispatch({ type: "RESET" })}
       />
 
-      {pickerForGroupId && (
-        <GeduPickerSheetV2
-          open
-          onOpenChange={(open) => {
-            if (!open) setPickerForGroupId(null);
-          }}
-          title={t("picker.addTitle", {
-            name:
-              effective.groups.find((g) => g.id === pickerForGroupId)?.name ??
-              "",
-          })}
-          description={t("picker.addDescription")}
-          excludeIds={allAssignedGeduIds}
-          onSelect={(gedu) => {
-            dispatch({
-              type: "ADD_GEDU",
-              groupId: pickerForGroupId,
-              geduId: gedu.id,
-              displayName: gedu.display_name,
-              email: gedu.email,
-            });
-            setPickerForGroupId(null);
-          }}
-        />
-      )}
+      <GeduPickerSheetV2
+        open={pickerForGroupId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPickerForGroupId(null);
+        }}
+        title={t("picker.addTitle", {
+          name:
+            effective.groups.find((g) => g.id === pickerForGroupId)?.name ?? "",
+        })}
+        description={t("picker.addDescription")}
+        excludeIds={allAssignedGeduIds}
+        onSelect={(gedu) => {
+          if (!pickerForGroupId) return;
+          dispatch({
+            type: "ADD_GEDU",
+            groupId: pickerForGroupId,
+            geduId: gedu.id,
+            displayName: gedu.display_name,
+            email: gedu.email,
+          });
+          setPickerForGroupId(null);
+        }}
+      />
 
       {summaryOpen && (
         <CommitSummaryDialog
