@@ -1156,8 +1156,8 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - ✓ `site_details_v2` (member-visible) + `site_staff_details_v2` (admin/Gedu only) — the §4.8 split.
 - ✓ `registration_opens_at` is NOT NULL (§7.5); "Right away" resolves to creation time.
 - ✓ `products_v2` lifecycle status enum stores admin facts only; effective `running` / `completed` derived at read time.
-- ○ `product_groups_v2` (form captures groups in local state but does not persist yet; UI surfaces a "not wired" warning).
-- ○ `gedu_group_assignments_v2`.
+- ✓ `product_groups_v2` (named cohorts, `display_order`, `name NOT NULL` with non-blank check).
+- ✓ `gedu_group_assignments_v2` (multi-Gedu join with denormalized `product_id` for the `unique(gedu_id, product_id)` constraint and a BEFORE-trigger that mirrors `product_id` from the group).
 - ✓ `participations_v2` (with `'reserving'` status + `reserved_until`, `credits_remaining`, partial unique index excluding reserving rows).
 - ✓ `payments_v2`, `refunds_v2` (UNIQUE on `stripe_event_id`).
 - ✓ `family_subscriptions_v2`, `family_subscription_items_v2`, `product_subscription_prices_v2`.
@@ -1172,11 +1172,11 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - ✓ Hourly credit cron (`process_session_credits_v2` scheduled via `pg_cron` at `0 * * * *`).
 - ◐ Subscription management — first-ever sub goes through Stripe Checkout; inline-add of an additional gamer to an existing family sub uses `subscriptions.update` with `always_invoice` + `error_if_incomplete` (synchronous via the checkout route). `unsubscribe_from_product_v2`, `switch_subscription_frequency_v2` not started.
 - ○ Lifecycle transitions (`start_product_v2`, `cancel_product_v2`, `finalize_completed_products_v2`).
-- ○ Group mutations (`commit_group_changes_v2`).
+- ✓ Group mutations (`commit_group_changes_v2`) — atomic batch with the v1 staged-changes pattern, extended for named groups, multi-Gedu, and the unassigned inbox. Companion read RPC `get_product_groups_v2_with_details(p_product_id)` returns a single JSONB document with `groups[]` (each with `gedus[]` + `participations[]`) and `unassigned[]` for the panel.
 
 **Admin UI** — at `/admin/{consumer-clubs,municipality-clubs,camps,events}{,/new}`.
 - ✓ List page per product type (`ProductV2ListPage`, type-discriminated).
-- ✓ Create form per product type sharing one shell (`product-v2-form.tsx`) split into per-section components — identity, audience, when, where, billing, registration, groups, visibility (`src/components/admin/products-v2/sections/*`).
+- ✓ Create form per product type sharing one shell (`product-v2-form.tsx`) split into per-section components — identity, audience, when, where, billing, registration, visibility (`src/components/admin/products-v2/sections/*`). Group management was deliberately removed from the form; admins manage groups from the per-product details page (§7.3).
 - ✓ Per-currency pricing block with live FX auto-fill (`pricing-block.tsx` + `pricing-block-fx.ts`, FX rates proxied via `/api/admin/fx-rates` cached 6h) and rendered price previews.
 - ✓ Country-aware location picker with inline create (`location-picker-v2.tsx` + `/api/admin/locations/{create,[id]}`).
 - ✓ Inline-create for topics and tags (single-locale, in admin's current UI locale) via `/api/admin/{topics-v2,tags-v2}/create`.
@@ -1184,7 +1184,7 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - ✓ Holiday-calendar checkbox selector on the form (read-only against existing rows; no admin CRUD UI for managing calendars yet).
 - ✓ Type-specific helper card on list pages (`product-type-info-card.tsx`).
 - ✓ Image picker + upload (`image-picker-v2.tsx`).
-- ◐ Groups panel — captured in form state but not persisted (see schema bullet); no per-product management page yet.
+- ✓ Groups panel — drag-and-drop UI on the v2 details page (`src/components/admin/products-v2/groups/`). Unassigned column + one card per group with editable name, multi-Gedu pills (add via `GeduPickerSheetV2`, remove via X button), and droppable participant area. Staged-changes commit-bar pattern via `useGroupEditorV2`; review summary, then atomic apply through `commit_group_changes_v2`.
 - ○ Edit-product form (only create exists today).
 - ○ Calendar view with computed sessions, overrides, substitutions.
 - ○ Standalone holiday-calendar management screen.
