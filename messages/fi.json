@@ -346,8 +346,6 @@
           "camp": "Useita päiviä viikossa, jokaisella oma alkamisaika ja kesto.",
           "event": "Yksi päivä ja alkamisaika."
         },
-        "groups": "Ryhmät",
-        "groupsDescription": "Ylläpitäjät käyttävät ryhmiä tuotteen sisäiseen jakoon. Vanhemmat eivät näe ryhmiä — vain tuotteen.",
         "billing": "Paikat ja hinnoittelu",
         "billingDescription": {
           "consumerClub": "Vanhemmat maksavat jokaisesta lapsen osallistumiskerrasta. Laskutus tapahtuu automaattisesti viikoittain.",
@@ -495,8 +493,6 @@
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
         "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
-        "groupsHint": "Lisää ryhmät nyt jos tiedät jo, miten haluat tämän järjestää — tai jätä tyhjäksi ja lisää myöhemmin tuotesivulta, kun näet ilmoittautuneiden määrän.",
-        "groupsNotWired": "Ryhmien käyttöliittymä on paikoillaan, mutta sitä ei ole vielä yhdistetty taustajärjestelmään — ryhmävalintojasi ei tallenneta lähetyksessä. Tulossa pian.",
         "billingHint": "Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa. Maksullisilla on aina.",
         "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
         "paidDetail": "Kertamaksu ilmoittautumisen yhteydessä.",
@@ -592,20 +588,67 @@
         "current": "Nykyinen",
         "alreadyAssigned": "Jo nimetty"
       },
-      "groups": {
-        "groupNumber": "Ryhmä {n}",
-        "groupNamePlaceholder": "Ryhmän nimi",
-        "removeGroup": "Poista ryhmä",
-        "assignedGedus": "Nimetyt Gedut",
-        "noGedusYet": "Ei vielä yhtään. Ryhmä ilman Geduja on ihan ok — voit nimetä myöhemmin.",
-        "assignGedu": "Nimeä Gedu",
-        "removeGedu": "Poista Gedu",
-        "noGroupsYet": "Ei vielä ryhmiä.",
-        "noGroupsDetail": "Vanhemmat voivat silti ilmoittautua. Heidän pelaajansa päätyy \"nimeämättä\"-laatikkoon, kunnes asetat hänet ryhmään.",
-        "defaultName": "Ryhmä {letter}",
+      "groupsPanel": {
+        "title": "Ryhmät",
+        "subtitle": "Järjestä osallistujat Gedu-vetoisiin ryhmiin. Vedä pelaajia ryhmästä toiseen tai takaisin nimeämättömiin.",
         "addGroup": "Lisää ryhmä",
-        "addGeduTo": "Lisää Gedu ryhmään {name}",
-        "addGeduDescription": "Tähän ryhmään nimetyt Gedut ohjaavat sen kerrat. Verkossa toteutettavissa tuotteissa he voivat tarvittaessa hypätä myös muiden ryhmien puhehuoneisiin saman tuotteen sisällä."
+        "loading": "Ladataan…",
+        "genderBoy": "poika",
+        "genderGirl": "tyttö",
+        "genderNonBinary": "muunsukupuolinen",
+        "chip": {
+          "age": "{age}v"
+        },
+        "unassigned": {
+          "title": "Nimeämättömät",
+          "subtitle": "Pelaajat, jotka ovat ilmoittautuneet mutta joita ei ole vielä asetettu ryhmään. Pudota tähän palauttaaksesi pelaajan jonoon.",
+          "empty": "Kukaan ei odota sijoittelua."
+        },
+        "empty": {
+          "title": "Ei vielä ryhmiä",
+          "description": "Lisää ryhmä, kun olet valmis sijoittelemaan pelaajia.",
+          "addFirst": "Lisää ensimmäinen ryhmä"
+        },
+        "group": {
+          "defaultName": "Ryhmä {letter}",
+          "nameLabel": "Ryhmän nimi",
+          "namePlaceholder": "Anna ryhmälle nimi",
+          "deleteAria": "Poista {name}",
+          "gamerCount": "{count, plural, =0 {Ei pelaajia} =1 {1 pelaaja} other {# pelaajaa}}",
+          "new": "Uusi",
+          "markedForDeletion": "Merkitty poistettavaksi",
+          "assignedGedus": "Nimetyt Gedut",
+          "noGedus": "Ei vielä nimettyjä Geduja.",
+          "addGedu": "Lisää Gedu",
+          "gamersLabel": "Pelaajat",
+          "empty": "Ei vielä pelaajia tässä ryhmässä.",
+          "willBeDeleted": "Pelaajat siirtyvät nimeämättömiin, kun viimeistelet muutokset.",
+          "geduStatusFootnote": "Odottavat muutokset näkyvissä — tarkista ja viimeistele tallentaaksesi.",
+          "deleteConfirmTitle": "Poistetaanko {name}?",
+          "deleteConfirmEmpty": "Ryhmässä ei ole pelaajia, joten poisto on turvallinen — myös Gedu-nimitykset poistetaan.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {Tässä ryhmässä on 1 pelaaja} other {Tässä ryhmässä on # pelaajaa}}, ja he siirtyvät nimeämättömiin, kun viimeistelet muutokset."
+        },
+        "gedu": {
+          "pendingAdd": "Lisätään",
+          "pendingRemove": "Poistetaan",
+          "removeAria": "Poista {name}"
+        },
+        "picker": {
+          "addTitle": "Lisää Gedu ryhmään {name}",
+          "addDescription": "Yksi Gedu voi olla vain yhdessä ryhmässä per tuote. Muualle nimetyt näkyvät ei-valittavina."
+        },
+        "commitBar": {
+          "summary": "{count, plural, =1 {1 odottava muutos} other {# odottavaa muutosta}}",
+          "discard": "Hylkää",
+          "review": "Tarkista muutokset"
+        },
+        "summary": {
+          "title": "Tarkista muutokset",
+          "description": "Muutokset tallennetaan kaikki yhdessä — jos yksi epäonnistuu, mitään ei tallenneta.",
+          "apply": "Tallenna muutokset",
+          "applying": "Tallennetaan…",
+          "genericError": "Jokin meni pieleen. Yritä uudelleen."
+        }
       }
     },
     "users": {

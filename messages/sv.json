@@ -346,8 +346,6 @@
           "camp": "Flera dagar i veckan, var och en med egen starttid och längd.",
           "event": "Ett enda datum och en starttid."
         },
-        "groups": "Grupper",
-        "groupsDescription": "Administratörer använder grupper för att organisera deltagare inuti en produkt. Föräldrar ser inga grupper — de ser produkten.",
         "billing": "Kapacitet och fakturering",
         "billingDescription": {
           "consumerClub": "Föräldrar betalar för varje tillfälle barnet deltar. Faktureringen sker automatiskt varje vecka.",
@@ -495,8 +493,6 @@
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
         "holidayHint": "Inget tillfälle körs på något datum från de valda kalendrarna. Redigera en kalender en gång och alla produkter som använder den uppdateras automatiskt.",
-        "groupsHint": "Lägg till grupper nu om du redan vet hur du vill organisera detta — eller lämna tomt och lägg till senare från produktsidan, när du ser hur många spelare som anmäler sig.",
-        "groupsNotWired": "Gruppgränssnittet finns på plats men är ännu inte kopplat till backend — dina gruppval sparas inte vid skicka. Kommer snart.",
         "billingHint": "Gratis evenemang behöver ingen platsgräns. Betalda har alltid en.",
         "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
         "paidDetail": "Engångsavgift vid anmälan.",
@@ -592,20 +588,67 @@
         "current": "Nuvarande",
         "alreadyAssigned": "Redan tilldelad"
       },
-      "groups": {
-        "groupNumber": "Grupp {n}",
-        "groupNamePlaceholder": "Gruppnamn",
-        "removeGroup": "Ta bort grupp",
-        "assignedGedus": "Tilldelade Geduer",
-        "noGedusYet": "Inga än. En grupp utan Geduer fungerar — du kan tilldela senare.",
-        "assignGedu": "Tilldela en Gedu",
-        "removeGedu": "Ta bort Gedu",
-        "noGroupsYet": "Inga grupper än.",
-        "noGroupsDetail": "Föräldrar kan ändå anmäla sig. Deras spelare hamnar i en \"otilldelad\"-inkorg tills du placerar dem i en grupp.",
-        "defaultName": "Grupp {letter}",
-        "addGroup": "Lägg till en grupp",
-        "addGeduTo": "Lägg till Gedu i {name}",
-        "addGeduDescription": "Geduer som tilldelats denna grupp kör dess tillfällen. För onlineprodukter kan de även hoppa in i andra gruppers röstrum inom samma produkt vid behov."
+      "groupsPanel": {
+        "title": "Grupper",
+        "subtitle": "Organisera deltagare i Gedu-ledda grupper. Dra spelare mellan grupper eller tillbaka till otilldelade.",
+        "addGroup": "Lägg till grupp",
+        "loading": "Laddar…",
+        "genderBoy": "pojke",
+        "genderGirl": "flicka",
+        "genderNonBinary": "ickebinär",
+        "chip": {
+          "age": "{age}å"
+        },
+        "unassigned": {
+          "title": "Otilldelade",
+          "subtitle": "Spelare som har anmält sig men ännu inte placerats i en grupp. Släpp här för att skicka tillbaka till inkorgen.",
+          "empty": "Ingen väntar på placering."
+        },
+        "empty": {
+          "title": "Inga grupper än",
+          "description": "Lägg till en grupp när du är redo att börja placera spelare.",
+          "addFirst": "Lägg till din första grupp"
+        },
+        "group": {
+          "defaultName": "Grupp {letter}",
+          "nameLabel": "Gruppnamn",
+          "namePlaceholder": "Namnge gruppen",
+          "deleteAria": "Ta bort {name}",
+          "gamerCount": "{count, plural, =0 {Inga spelare} =1 {1 spelare} other {# spelare}}",
+          "new": "Ny",
+          "markedForDeletion": "Markerad för borttagning",
+          "assignedGedus": "Tilldelade Geduer",
+          "noGedus": "Inga Geduer tilldelade än.",
+          "addGedu": "Lägg till Gedu",
+          "gamersLabel": "Spelare",
+          "empty": "Inga spelare i denna grupp än.",
+          "willBeDeleted": "Spelarna flyttas till otilldelade när du tillämpar ändringarna.",
+          "geduStatusFootnote": "Väntande ändringar visas — granska och tillämpa för att spara.",
+          "deleteConfirmTitle": "Ta bort {name}?",
+          "deleteConfirmEmpty": "Gruppen har inga spelare, så det är säkert — Gedu-tilldelningar tas också bort.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {1 spelare finns i denna grupp} other {# spelare finns i denna grupp}} och flyttas till otilldelade när du tillämpar ändringarna."
+        },
+        "gedu": {
+          "pendingAdd": "Väntande",
+          "pendingRemove": "Tas bort",
+          "removeAria": "Ta bort {name}"
+        },
+        "picker": {
+          "addTitle": "Lägg till Gedu i {name}",
+          "addDescription": "En Gedu kan bara vara i en grupp per produkt. De som redan tilldelats visas som inaktiverade."
+        },
+        "commitBar": {
+          "summary": "{count, plural, =1 {1 väntande ändring} other {# väntande ändringar}}",
+          "discard": "Avvisa",
+          "review": "Granska ändringar"
+        },
+        "summary": {
+          "title": "Granska ändringar",
+          "description": "Ändringarna tillämpas atomärt — om något misslyckas sparas inget.",
+          "apply": "Tillämpa ändringar",
+          "applying": "Tillämpar…",
+          "genericError": "Något gick fel. Försök igen."
+        }
       }
     },
     "users": {

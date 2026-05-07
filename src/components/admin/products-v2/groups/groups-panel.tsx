@@ -1,0 +1,263 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useDndContext,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { Plus, Users } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useGroupEditorV2 } from "@/hooks/use-group-editor-v2";
+import { useProductGroupsV2 } from "@/services/groups-v2";
+import { GeduPickerSheetV2 } from "../gedu-picker-sheet-v2";
+import { CommitBar } from "./commit-bar";
+import { CommitSummaryDialog } from "./commit-summary-dialog";
+import { GamerChip } from "./gamer-chip";
+import { GroupColumn } from "./group-column";
+import { UnassignedCard } from "./unassigned-card";
+import type { EffectiveSnapshot } from "@/hooks/use-group-editor-v2";
+
+interface GroupsPanelProps {
+  productId: string;
+}
+
+// Renders the chip in the floating overlay during a drag. Reads `active` from
+// dnd-kit context so we don't propagate it through props (which would re-render
+// the entire panel on every pointer move).
+function DragOverlayContent({
+  effective,
+}: {
+  effective: EffectiveSnapshot;
+}) {
+  const { active } = useDndContext();
+
+  const overlay = useMemo(() => {
+    if (!active) return null;
+    const data = active.data.current as
+      | { participationId: string; gamerId: string; displayName: string }
+      | undefined;
+    if (!data) return null;
+
+    // Find the participation in the effective snapshot to grab DOB/gender.
+    const all = [
+      ...effective.unassigned,
+      ...effective.groups.flatMap((g) => g.participations),
+    ];
+    const found = all.find((p) => p.id === data.participationId);
+    if (!found) return null;
+
+    return found;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on active?.id rather than the ref-changing `active` object
+  }, [active?.id, effective]);
+
+  if (!overlay) return null;
+
+  return (
+    <GamerChip
+      participationId={overlay.id}
+      gamerId={overlay.gamer_id}
+      displayName={overlay.gamer_display_name}
+      dateOfBirth={overlay.gamer_date_of_birth}
+      gender={overlay.gamer_gender}
+    />
+  );
+}
+
+export function GroupsPanel({ productId }: GroupsPanelProps) {
+  const t = useTranslations("admin.productsV2.groupsPanel");
+  const { data: snapshot, isLoading } = useProductGroupsV2(productId);
+
+  const { dispatch, effective, changeSummary, batchPayload } =
+    useGroupEditorV2(snapshot);
+
+  const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { over, active } = event;
+    if (!over) return;
+
+    const dragData = active.data.current as
+      | { participationId: string }
+      | undefined;
+    const dropData = over.data.current as
+      | { toGroupId: string | null }
+      | undefined;
+    if (!dragData || !dropData) return;
+
+    dispatch({
+      type: "MOVE_PARTICIPATION",
+      participationId: dragData.participationId,
+      toGroupId: dropData.toGroupId,
+    });
+  };
+
+  const handleAddGroup = () => {
+    // Default name: "Group A", "Group B", … indexed by current group count.
+    // Effective groups gives us the count after staged changes — what the
+    // admin will see immediately above the new card.
+    const liveCount = effective.groups.filter((g) => !g.isDeleted).length;
+    const letter = String.fromCharCode(65 + liveCount);
+    dispatch({
+      type: "ADD_GROUP",
+      name: t("group.defaultName", { letter }),
+    });
+  };
+
+  // The picker sheet shows for the group the admin clicked "Add Gedu" on.
+  // We exclude Gedus already assigned to that group OR to any other group on
+  // this product (the unique constraint at the DB level enforces one group
+  // per Gedu per product, so the picker reflects that).
+  const allAssignedGeduIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const g of effective.groups) {
+      if (g.isDeleted) continue;
+      for (const ge of g.gedus) {
+        if (!ge.isPendingRemove) ids.add(ge.id);
+      }
+    }
+    return Array.from(ids);
+  }, [effective.groups]);
+
+  const handleSuccess = () => {
+    dispatch({ type: "RESET" });
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-muted-foreground" />
+            {t("title")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="h-20 animate-pulse rounded-lg bg-muted" />
+            <div className="h-20 animate-pulse rounded-lg bg-muted" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const hasGroups = effective.groups.length > 0;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-row items-center justify-between">
+        <div>
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <Users className="h-5 w-5 text-muted-foreground" />
+            {t("title")}
+          </h2>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleAddGroup}>
+          <Plus className="mr-1 h-4 w-4" />
+          {t("addGroup")}
+        </Button>
+      </div>
+
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <div className="space-y-3">
+          <UnassignedCard participations={effective.unassigned} />
+
+          {hasGroups ? (
+            effective.groups.map((g) => (
+              <GroupColumn
+                key={g.id}
+                group={g}
+                onRename={(groupId, name) =>
+                  dispatch({ type: "RENAME_GROUP", groupId, name })
+                }
+                onDelete={(groupId) =>
+                  dispatch({ type: "DELETE_GROUP", groupId })
+                }
+                onAddGedu={(groupId) => setPickerForGroupId(groupId)}
+                onRemoveGedu={(groupId, geduId) =>
+                  dispatch({ type: "REMOVE_GEDU", groupId, geduId })
+                }
+              />
+            ))
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="py-8 text-center">
+                <p className="text-sm font-medium">{t("empty.title")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {t("empty.description")}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4"
+                  onClick={handleAddGroup}
+                >
+                  <Plus className="mr-1 h-4 w-4" />
+                  {t("empty.addFirst")}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <DragOverlay>
+          <DragOverlayContent effective={effective} />
+        </DragOverlay>
+      </DndContext>
+
+      <CommitBar
+        summary={changeSummary}
+        onReview={() => setSummaryOpen(true)}
+        onDiscard={() => dispatch({ type: "RESET" })}
+      />
+
+      {pickerForGroupId && (
+        <GeduPickerSheetV2
+          open
+          onOpenChange={(open) => {
+            if (!open) setPickerForGroupId(null);
+          }}
+          title={t("picker.addTitle", {
+            name:
+              effective.groups.find((g) => g.id === pickerForGroupId)?.name ??
+              "",
+          })}
+          description={t("picker.addDescription")}
+          excludeIds={allAssignedGeduIds}
+          onSelect={(geduId) => {
+            dispatch({
+              type: "ADD_GEDU",
+              groupId: pickerForGroupId,
+              geduId,
+            });
+            setPickerForGroupId(null);
+          }}
+        />
+      )}
+
+      {summaryOpen && (
+        <CommitSummaryDialog
+          open
+          onOpenChange={setSummaryOpen}
+          summary={changeSummary}
+          productId={productId}
+          batchPayload={batchPayload}
+          onSuccess={handleSuccess}
+        />
+      )}
+    </div>
+  );
+}

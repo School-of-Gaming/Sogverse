@@ -8,7 +8,6 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { useLocale } from "next-intl";
 import { AudienceSection } from "./sections/audience-section";
 import { BillingSection } from "./sections/billing-section";
-import { GroupsSection } from "./sections/groups-section";
 import { IdentitySection } from "./sections/identity-section";
 import { RegistrationSection } from "./sections/registration-section";
 import { VisibilitySection } from "./sections/visibility-section";
@@ -98,7 +97,6 @@ export function ProductV2FormShell({
       <AudienceSection state={state} setState={setState} />
       <WhereSection state={state} setState={setState} config={config} />
       <WhenSection state={state} setState={setState} config={config} />
-      <GroupsSection state={state} setState={setState} />
       <BillingSection state={state} setState={setState} config={config} />
       <RegistrationSection state={state} setState={setState} />
       <VisibilitySection state={state} setState={setState} />
