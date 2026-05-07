@@ -7,10 +7,8 @@ import { AuthProvider } from "./auth-provider";
 import { LocaleProvider } from "./locale-provider";
 import { CurrencyProvider } from "./currency-provider";
 import { ThemeProvider } from "./theme-provider";
-import { TokenRateProvider } from "./token-rate-provider";
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/types";
-import type { SupportedCurrency } from "@/lib/constants/currency";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
 
 interface ProvidersProps {
@@ -19,7 +17,6 @@ interface ProvidersProps {
   initialProfile?: Profile | null;
   initialLocale: string;
   messages: Record<string, unknown>;
-  baseRates: Record<SupportedCurrency, number>;
   nonce?: string;
 }
 
@@ -29,7 +26,6 @@ export function Providers({
   initialProfile,
   initialLocale,
   messages,
-  baseRates,
   nonce,
 }: ProvidersProps) {
   return (
@@ -39,9 +35,7 @@ export function Providers({
           <NextIntlClientProvider locale={initialLocale} messages={messages} timeZone={DEFAULT_TIMEZONE}>
             <LocaleProvider>
               <CurrencyProvider>
-                <TokenRateProvider baseRates={baseRates}>
-                  {children}
-                </TokenRateProvider>
+                {children}
               </CurrencyProvider>
             </LocaleProvider>
           </NextIntlClientProvider>
@@ -57,4 +51,3 @@ export { ThemeProvider } from "./theme-provider";
 export { AuthProvider } from "./auth-provider";
 export { LocaleProvider, useLocaleControl } from "./locale-provider";
 export { CurrencyProvider, useCurrency } from "./currency-provider";
-export { TokenRateProvider, useTokenRates } from "./token-rate-provider";

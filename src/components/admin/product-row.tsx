@@ -4,16 +4,13 @@ import { NavChevron } from "@/components/ui/nav-chevron";
 import { formatScheduleLocal } from "@/lib/utils";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import type { ProductWithGame } from "@/services/products";
-import type { SupportedCurrency } from "@/lib/constants/currency";
 
 interface ProductRowProps {
   product: ProductWithGame;
-  currency: SupportedCurrency;
   locale: string;
-  tokensToCurrencyDisplay: (tokens: number, currency: SupportedCurrency, locale: string) => string;
 }
 
-export function ProductRow({ product, currency, locale, tokensToCurrencyDisplay }: ProductRowProps) {
+export function ProductRow({ product, locale }: ProductRowProps) {
   const t = useTranslations('admin.products');
   const c = useTranslations('common');
   const schedule = formatScheduleLocal(
@@ -48,9 +45,6 @@ export function ProductRow({ product, currency, locale, tokensToCurrencyDisplay 
             {product.description}
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span className="font-semibold text-primary">
-              {product.token_cost} {c('sorgs')} ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})
-            </span>
             <span>
               {c('schedule', { day: schedule.localDay, time: schedule.localTime, tz: schedule.tzAbbrev })}
             </span>

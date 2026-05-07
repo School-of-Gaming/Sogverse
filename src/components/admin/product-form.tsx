@@ -3,15 +3,13 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { z } from "zod";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CardContent } from "@/components/ui/card";
 import { useGames, useCreateGame } from "@/services/games";
 import { useSpokenLanguages } from "@/services/users";
-import { useCurrency } from "@/hooks/use-currency";
-import { useTokenRates } from "@/providers/token-rate-provider";
 import { cn, DAYS_OF_WEEK } from "@/lib/utils";
 import { ProductLocationPicker } from "@/components/admin/product-location-picker";
 import { ProductImagePicker, type ProductImageValue } from "@/components/admin/product-image-picker";
@@ -24,10 +22,6 @@ function createProductSchema(msgs: Record<string, string>) {
       .min(1, msgs.nameRequired)
       .max(100, msgs.nameMaxLength),
     description: z.string().min(1, msgs.descriptionRequired),
-    tokenCost: z
-      .number({ invalid_type_error: msgs.sorgCostNumber })
-      .int(msgs.sorgCostWhole)
-      .min(1, msgs.sorgCostMin),
     padletUrl: z.union([z.string().url(msgs.validUrl), z.literal("")]).optional(),
     gameId: z.string().uuid(msgs.gameRequired),
     dayOfWeek: z.number().int().min(0).max(6),
@@ -89,12 +83,9 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
   const { data: games, isLoading: gamesLoading } = useGames();
   const createGame = useCreateGame();
   const { data: spokenLanguages } = useSpokenLanguages();
-  const { currency } = useCurrency();
-  const locale = useLocale();
-  const { tokensToCurrencyDisplay } = useTokenRates();
   const validationKeys = [
-    "nameRequired", "nameMaxLength", "descriptionRequired", "sorgCostNumber",
-    "sorgCostWhole", "sorgCostMin", "validUrl", "imageRequired", "gameRequired",
+    "nameRequired", "nameMaxLength", "descriptionRequired",
+    "validUrl", "imageRequired", "gameRequired",
     "validTime", "durationMin", "minAgeMin", "maxAgeMin", "maxAgeGte",
     "locationRequired", "spokenLanguageRequired",
   ] as const;
@@ -103,7 +94,10 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
 
   const [name, setName] = useState(initialValues?.name ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
-  const [tokenCost, setTokenCost] = useState(initialValues?.token_cost != null ? String(initialValues.token_cost) : "");
+  // token_cost is no longer surfaced in the UI (Sorg currency is being removed),
+  // but the column still exists on the products table — pass through the
+  // existing value on edit/clone, or default to 1 for new products.
+  const tokenCostValue = initialValues?.token_cost ?? 1;
   // File when admin staged a new image (not yet uploaded), string when an
   // existing bucket path is loaded (edit mode), null when empty. The File is
   // never uploaded client-side — it's handed to the server along with the
@@ -165,7 +159,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
     console.log("[DBG product-form] handleSubmit:enter", {
       name,
       description: description.slice(0, 40),
-      tokenCost,
+      tokenCostValue,
       gameId,
       gameIdLength: gameId.length,
       showNewGame,
@@ -204,7 +198,6 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
       const validatedData = productSchema.parse({
         name,
         description,
-        tokenCost: tokenCost === "" ? undefined : Number(tokenCost),
         padletUrl,
         gameId,
         dayOfWeek: Number(dayOfWeek),
@@ -223,7 +216,7 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
       await onSubmit({
         name: validatedData.name,
         description: validatedData.description,
-        token_cost: validatedData.tokenCost,
+        token_cost: tokenCostValue,
         padlet_url: validatedData.padletUrl || null,
         game_id: validatedData.gameId,
         day_of_week: validatedData.dayOfWeek,
@@ -304,24 +297,6 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
             onChange={(e) => setPadletUrl(e.target.value)}
             disabled={isPending}
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="tokenCost">{t('sorgCostLabel')}</Label>
-          <Input
-            id="tokenCost"
-            type="number"
-            step="1"
-            min="1"
-            placeholder="1"
-            value={tokenCost}
-            onChange={(e) => setTokenCost(e.target.value)}
-            disabled={isPending}
-            required
-          />
-          <p className="text-xs text-muted-foreground">
-            {t('approxPerSession', { amount: tokensToCurrencyDisplay(Number(tokenCost) || 0, currency, locale) })}
-          </p>
         </div>
 
         <ProductImagePicker

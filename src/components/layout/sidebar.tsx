@@ -10,7 +10,6 @@ import {
   Palette,
   Settings,
   Gamepad2,
-  Coins,
   FlaskConical,
   MessageCircle,
   MessageSquare,
@@ -32,7 +31,7 @@ import type { UserRole } from "@/types";
 type SidebarKey =
   | "dashboard" | "users" | "groups" | "locations"
   | "uiComponents" | "whatsapp" | "testing" | "feedback" | "settings"
-  | "sorg" | "myGamers" | "home" | "myGroups" | "voice"
+  | "myGamers" | "home" | "myGroups" | "voice"
   | "consumerClubs" | "municipalityClubs" | "camps" | "events";
 
 interface NavItemDef {
@@ -60,7 +59,6 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
   ],
   customer: [
     { href: ROUTES.customer.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
-    { href: ROUTES.customer.sorg, labelKey: "sorg", icon: <Coins className="h-5 w-5" /> },
     { href: ROUTES.customer.gamers, labelKey: "myGamers", icon: <Gamepad2 className="h-5 w-5" /> },
     { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },

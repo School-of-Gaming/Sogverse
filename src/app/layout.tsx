@@ -5,7 +5,6 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { MouseflowConsent } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
-import { getStripeProducts } from "@/lib/stripe/products";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
@@ -60,10 +59,6 @@ export default async function RootLayout({
   // Server components access full messages via getTranslations() directly.
   const { email: _email, metadata: _metadata, ...clientMessages } =
     (await getMessages()) as Record<string, unknown>;
-  // getStripeProducts() is backed by unstable_cache (persistent data cache, 5-min revalidation).
-  // Callers always get the cached value instantly — Stripe is only contacted during background
-  // revalidation, so this adds no latency and no runtime dependency on Stripe availability.
-  const { baseRates } = await getStripeProducts();
 
   return (
     <html lang={locale} className="dark" suppressHydrationWarning>
@@ -75,7 +70,6 @@ export default async function RootLayout({
           initialProfile={userWithProfile?.profile}
           initialLocale={locale}
           messages={clientMessages}
-          baseRates={baseRates}
           nonce={nonce}
         >
           {/* Header rendering and the pt-16 offset that reserves space below the

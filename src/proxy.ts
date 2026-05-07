@@ -10,7 +10,7 @@ import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 // arrives via an email link with hash tokens — they aren't authenticated yet.
 // ROUTES.voice.prefix is public because instant voice rooms are share-via-link
 // by design — see docs/instant-voice-rooms.md.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.camps, ROUTES.events, ROUTES.sorg, ROUTES.checkout, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.camps, ROUTES.events, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
 
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
