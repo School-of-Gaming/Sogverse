@@ -212,3 +212,127 @@ describe("product_groups_v2 + gedu_group_assignments_v2 RLS", () => {
     });
   });
 });
+
+// ---------------------------------------------------------------------------
+// Cancelled participations don't grant ongoing visibility (00051).
+// Uses its own product fixture so the active-state assertions above keep
+// their seed assumptions.
+// ---------------------------------------------------------------------------
+
+const PRODUCT_Z = "00000000-0000-0000-0000-0000000007b3";
+
+describe("cancelled participation loses RLS visibility on v2 groups", () => {
+  let admin: SupabaseClient<Database>;
+  let adminAuth: SupabaseClient<Database>;
+  let customerAuth: SupabaseClient<Database>;
+  let gamerAuth: SupabaseClient<Database>;
+
+  let groupZ: string;
+  let participationZ: string;
+
+  beforeAll(async () => {
+    admin = createAdminTestClient();
+    adminAuth = await createAuthenticatedClient(
+      TEST_CREDENTIALS.ADMIN.email,
+      TEST_CREDENTIALS.ADMIN.password,
+    );
+    customerAuth = await createAuthenticatedClient(
+      TEST_CREDENTIALS.CUSTOMER.email,
+      TEST_CREDENTIALS.CUSTOMER.password,
+    );
+    gamerAuth = await createAuthenticatedClient(
+      TEST_CREDENTIALS.GAMER.email,
+      TEST_CREDENTIALS.GAMER.password,
+    );
+
+    await deleteV2TestProducts(admin, [PRODUCT_Z]);
+    await createV2TestProduct(admin, { id: PRODUCT_Z, seatCount: 50 });
+
+    const created = await adminAuth.rpc("commit_group_changes_v2", {
+      p_product_id: PRODUCT_Z,
+      p_added_groups: [{ tempId: "tZ", name: "Z", geduIds: [TEST_IDS.GEDU] }],
+    });
+    groupZ = (created.data as { tempMap: Record<string, string> }).tempMap.tZ;
+
+    const { data: part } = await admin
+      .from("participations_v2")
+      .insert({
+        product_id: PRODUCT_Z,
+        gamer_id: TEST_IDS.GAMER,
+        customer_id: TEST_IDS.CUSTOMER,
+        status: "active",
+        group_id: groupZ,
+        credits_remaining: 1,
+      })
+      .select("id")
+      .single();
+    participationZ = part!.id;
+  });
+
+  afterAll(async () => {
+    await admin.from("participations_v2").delete().eq("product_id", PRODUCT_Z);
+    await deleteV2TestProducts(admin, [PRODUCT_Z]);
+  });
+
+  it("customer loses product_groups_v2 visibility after the participation is cancelled", async () => {
+    // Sanity: visible while active.
+    const before = await customerAuth
+      .from("product_groups_v2")
+      .select("id")
+      .eq("id", groupZ);
+    expect((before.data ?? []).map((r) => r.id)).toEqual([groupZ]);
+
+    await admin
+      .from("participations_v2")
+      .update({ status: "cancelled" })
+      .eq("id", participationZ);
+
+    const after = await customerAuth
+      .from("product_groups_v2")
+      .select("id")
+      .eq("id", groupZ);
+    expect(after.data ?? []).toEqual([]);
+
+    // Restore for subsequent assertions.
+    await admin
+      .from("participations_v2")
+      .update({ status: "active" })
+      .eq("id", participationZ);
+  });
+
+  it("gamer loses product_groups_v2 visibility after their own participation is cancelled", async () => {
+    await admin
+      .from("participations_v2")
+      .update({ status: "cancelled" })
+      .eq("id", participationZ);
+
+    const { data } = await gamerAuth
+      .from("product_groups_v2")
+      .select("id")
+      .eq("id", groupZ);
+    expect(data ?? []).toEqual([]);
+
+    await admin
+      .from("participations_v2")
+      .update({ status: "active" })
+      .eq("id", participationZ);
+  });
+
+  it("customer loses gedu_group_assignments_v2 visibility after the participation is cancelled", async () => {
+    await admin
+      .from("participations_v2")
+      .update({ status: "cancelled" })
+      .eq("id", participationZ);
+
+    const { data } = await customerAuth
+      .from("gedu_group_assignments_v2")
+      .select("gedu_id")
+      .eq("product_id", PRODUCT_Z);
+    expect(data ?? []).toEqual([]);
+
+    await admin
+      .from("participations_v2")
+      .update({ status: "active" })
+      .eq("id", participationZ);
+  });
+});

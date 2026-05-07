@@ -613,6 +613,8 @@
           "defaultName": "Grupp {letter}",
           "nameLabel": "Gruppnamn",
           "namePlaceholder": "Namnge gruppen",
+          "nameRequired": "Ge gruppen ett namn.",
+          "nameRequiredHint": "Vissa grupper har inget namn ännu.",
           "deleteAria": "Ta bort {name}",
           "gamerCount": "{count, plural, =0 {Inga spelare} =1 {1 spelare} other {# spelare}}",
           "new": "Ny",

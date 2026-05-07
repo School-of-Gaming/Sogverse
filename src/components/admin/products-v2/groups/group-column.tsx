@@ -51,6 +51,11 @@ export function GroupColumn({
   // the "active" Gedu list shown in the count.
   const activeGedus = group.gedus.filter((g) => !g.isPendingRemove);
 
+  // Live (non-deleted) groups must have a non-blank name before the admin
+  // can review/apply. Surface the error inline so they don't have to hunt
+  // for the offending column.
+  const hasBlankName = !group.isDeleted && !group.name.trim();
+
   return (
     <>
       <Card
@@ -77,7 +82,23 @@ export function GroupColumn({
                 onChange={(e) => onRename(group.id, e.target.value)}
                 disabled={group.isDeleted}
                 placeholder={t("group.namePlaceholder")}
+                aria-invalid={hasBlankName || undefined}
+                aria-describedby={
+                  hasBlankName ? `group-${group.id}-name-error` : undefined
+                }
+                className={cn(
+                  hasBlankName &&
+                    "border-destructive focus-visible:ring-destructive",
+                )}
               />
+              {hasBlankName && (
+                <p
+                  id={`group-${group.id}-name-error`}
+                  className="text-xs text-destructive"
+                >
+                  {t("group.nameRequired")}
+                </p>
+              )}
             </div>
             <Button
               type="button"

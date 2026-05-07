@@ -613,6 +613,8 @@
           "defaultName": "Group {letter}",
           "nameLabel": "Group name",
           "namePlaceholder": "Name this group",
+          "nameRequired": "Give this group a name.",
+          "nameRequiredHint": "Some groups don't have a name yet.",
           "deleteAria": "Delete {name}",
           "gamerCount": "{count, plural, =0 {No gamers} =1 {1 gamer} other {# gamers}}",
           "new": "New",

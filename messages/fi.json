@@ -613,6 +613,8 @@
           "defaultName": "Ryhmä {letter}",
           "nameLabel": "Ryhmän nimi",
           "namePlaceholder": "Anna ryhmälle nimi",
+          "nameRequired": "Ryhmä tarvitsee nimen.",
+          "nameRequiredHint": "Joillakin ryhmillä ei ole vielä nimeä.",
           "deleteAria": "Poista {name}",
           "gamerCount": "{count, plural, =0 {Ei pelaajia} =1 {1 pelaaja} other {# pelaajaa}}",
           "new": "Uusi",

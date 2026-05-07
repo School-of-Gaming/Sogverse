@@ -144,6 +144,13 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
     return Array.from(ids);
   }, [effective.groups]);
 
+  // Live groups with blank/whitespace names — block commit until each one
+  // gets a real name. The DB rejects via chk_product_groups_v2_name_not_blank,
+  // but failing that late means the admin only finds out after clicking Apply.
+  const hasBlankNames = effective.groups.some(
+    (g) => !g.isDeleted && !g.name.trim(),
+  );
+
   const handleSuccess = () => {
     dispatch({ type: "RESET" });
   };
@@ -236,6 +243,10 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
         summary={changeSummary}
         onReview={() => setSummaryOpen(true)}
         onDiscard={() => dispatch({ type: "RESET" })}
+        reviewDisabled={hasBlankNames}
+        reviewDisabledReason={
+          hasBlankNames ? t("group.nameRequiredHint") : undefined
+        }
       />
 
       <GeduPickerSheetV2

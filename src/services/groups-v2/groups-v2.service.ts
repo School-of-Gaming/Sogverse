@@ -49,8 +49,16 @@ export class GroupsV2Service {
   /**
    * Applies a batch of staged group changes via the apply route, which calls
    * commit_group_changes_v2. Mutations always go through the API route, never
-   * directly from the browser client — the route uses requireRole + the admin
-   * client so we don't grant write privileges to authenticated.
+   * directly from the browser client — `commit_group_changes_v2` is
+   * SECURITY DEFINER and re-checks `get_user_role() = 'admin'` itself, so the
+   * route uses the user-context client from `requireRole` (no admin client
+   * needed today).
+   *
+   * If/when v2 grows email or Daily.co provisioning around the RPC (mirroring
+   * the v1 route at `src/app/api/admin/products/[id]/groups/apply/route.ts`),
+   * the route will need `createAdminClient()` to read product/profile rows
+   * and provision rooms — same pattern as v1. The RPC call itself doesn't
+   * change.
    */
   async applyChanges(
     productId: string,

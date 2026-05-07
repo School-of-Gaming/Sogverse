@@ -661,6 +661,8 @@
           "defaultName": "ghom {letter}",
           "nameLabel": "ghom pong",
           "namePlaceholder": "ghom pong yIngu'",
+          "nameRequired": "ghom pong poQ!",
+          "nameRequiredHint": "ghommey law' pong luHutlh.",
           "deleteAria": "{name} yIteq",
           "gamerCount": "{count, plural, =0 {Suvwl'pu' pagh} =1 {1 Suvwl'} other {# Suvwl'pu'}}",
           "new": "chu'",
