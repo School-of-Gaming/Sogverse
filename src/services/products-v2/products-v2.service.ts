@@ -225,9 +225,14 @@ export class ProductsV2Service {
   // the linked holiday calendars — that's everything the calendar widget
   // and the signup panel need to render.
   //
-  // RLS: parent-facing read; only `is_visible = true` AND status in
-  // (pending, running) products are returned. Returns null on miss so the
-  // page can render a clean "not found" state.
+  // RLS is the sole gate: a viewer reaches this row if either
+  // `public_read_published_products_v2` (visible + pending/running) OR
+  // `purchaser_read_products_v2` (active/waitlisted participation owned
+  // by the viewer) lets them through. The detail page renders the
+  // marketing layout for the former and the purchased layout for the
+  // latter — both branches need the row, so no explicit `is_visible` /
+  // status filters here. Returns null on miss so the page can render a
+  // clean "not found" state.
   async getDetailById(
     id: string,
   ): Promise<ProductV2DetailRow | null> {
@@ -237,8 +242,6 @@ export class ProductsV2Service {
         "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars_v2(holiday_calendars_v2(name, calendar_holidays_v2(date, reason)))",
       )
       .eq("id", id)
-      .eq("is_visible", true)
-      .in("status", ["pending", "running"])
       .maybeSingle();
 
     if (error) throw error;
