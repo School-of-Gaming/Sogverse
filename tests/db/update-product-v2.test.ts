@@ -265,8 +265,10 @@ describe("update_product_v2", () => {
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
     });
-    // SQLSTATE 02000 (no_data_found) — asserting on the code rather than
-    // the message text so a copy tweak doesn't break the test.
-    expect(error?.code).toBe("02000");
+    // SQLSTATE P0002 — PL/pgSQL's `no_data_found` condition (the function
+    // uses `USING ERRCODE = 'no_data_found'`, which maps to P0002, not the
+    // SQL-standard 02000/no_data). Asserting on the code rather than the
+    // message so a copy tweak doesn't break the test.
+    expect(error?.code).toBe("P0002");
   });
 });
