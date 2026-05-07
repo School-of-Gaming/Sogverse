@@ -44,6 +44,7 @@
     "saveChanges": "Tallenna muutokset",
     "on": "Päällä",
     "off": "Pois",
+    "notSet": "Ei asetettu",
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
@@ -277,6 +278,7 @@
         "uncapped": "Ei rajaa (maksuton tapahtuma)",
         "visible": "Näkyy vanhemmille",
         "hidden": "Piilotettu vanhemmilta",
+        "waitlistOn": "jonotuslista käytössä",
         "minutes": "{count} min",
         "perMonth": "{amount} / kk",
         "scheduleRow": "{day} · klo {time} · {duration} min",
@@ -304,6 +306,20 @@
           "prices": "Hinnat",
           "registrationOpensAt": "Ilmoittautuminen aukeaa",
           "visibility": "Näkyvyys"
+        },
+        "placeholders": {
+          "groups": {
+            "title": "Ryhmät ja Gedut",
+            "body": "Kun pelaajat ilmoittautuvat, voit luoda täällä ryhmiä, lisätä Geduja ja siirtää ilman paikkaa olevat pelaajat oikeaan ryhmään."
+          },
+          "waitlist": {
+            "title": "Jonotuslista",
+            "body": "Pelaajat, jotka eivät saaneet paikkaa, näkyvät tässä, jotta voit nostaa heidät listalta paikkojen vapautuessa."
+          },
+          "metrics": {
+            "title": "Liiketoimintamittarit",
+            "body": "Tämän tuotteen ilmoittautumismäärät, liikevaihto ja palautukset näkyvät tässä, kun maksudata on valmis."
+          }
         }
       },
       "editPage": {

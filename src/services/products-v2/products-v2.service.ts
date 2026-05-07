@@ -203,7 +203,12 @@ export class ProductsV2Service {
     const { data, error } = await this.supabase
       .from("products_v2")
       .select(
-        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:locations!parent_id(id, name, type))"
+        // `parent:parent_id(...)` (column-name form) embeds the parent row
+        // via the FK on parent_id. The `locations!parent_id` form looks
+        // like the same thing but PostgREST resolves it to the *children*
+        // (rows whose parent_id points back here) and returns `[]` for
+        // any leaf location — surfaces as "Foo, undefined" in the UI.
+        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))"
       )
       .eq("product_type", type)
       .eq("is_visible", true)
@@ -229,7 +234,7 @@ export class ProductsV2Service {
     const { data, error } = await this.supabase
       .from("products_v2")
       .select(
-        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:locations!parent_id(id, name, type)), product_holiday_calendars_v2(holiday_calendars_v2(name, calendar_holidays_v2(date, reason)))",
+        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars_v2(holiday_calendars_v2(name, calendar_holidays_v2(date, reason)))",
       )
       .eq("id", id)
       .eq("is_visible", true)
@@ -302,7 +307,7 @@ export class ProductsV2Service {
     const { data, error } = await this.supabase
       .from("products_v2")
       .select(
-        "*, topics_v2(id, slug, kind, topic_translations_v2(locale, name)), product_translations_v2(*), product_tags_v2(tag_id, tags_v2(slug, tag_translations_v2(locale, name))), product_prices_v2(currency, price_per_session, price_per_month), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:locations!parent_id(id, name, type)), product_holiday_calendars_v2(calendar_id, holiday_calendars_v2(name))",
+        "*, topics_v2(id, slug, kind, topic_translations_v2(locale, name)), product_translations_v2(*), product_tags_v2(tag_id, tags_v2(slug, tag_translations_v2(locale, name))), product_prices_v2(currency, price_per_session, price_per_month), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars_v2(calendar_id, holiday_calendars_v2(name))",
       )
       .eq("id", id)
       .maybeSingle();

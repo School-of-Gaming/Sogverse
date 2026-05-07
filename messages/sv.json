@@ -44,6 +44,7 @@
     "saveChanges": "Spara ändringar",
     "on": "På",
     "off": "Av",
+    "notSet": "Inte angivet",
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "getStarted": "Kom igång",
@@ -277,6 +278,7 @@
         "uncapped": "Ingen begränsning (gratis evenemang)",
         "visible": "Synlig för föräldrar",
         "hidden": "Dold för föräldrar",
+        "waitlistOn": "väntelista på",
         "minutes": "{count} min",
         "perMonth": "{amount} / månad",
         "scheduleRow": "{day} · kl. {time} · {duration} min",
@@ -304,6 +306,20 @@
           "prices": "Priser",
           "registrationOpensAt": "Anmälan öppnar",
           "visibility": "Synlighet"
+        },
+        "placeholders": {
+          "groups": {
+            "title": "Grupper och Gedus",
+            "body": "När gamare anmäler sig skapar du grupper här, tilldelar Gedus och drar in oanmälda gamare till rätt rum."
+          },
+          "waitlist": {
+            "title": "Väntelista",
+            "body": "Gamare som inte fick någon plats visas här så att du kan flytta upp dem när platser frigörs."
+          },
+          "metrics": {
+            "title": "Affärsstatistik",
+            "body": "Anmälningsantal, intäkter och återbetalningar för den här produkten landar här när betaldatan är ansluten."
+          }
         }
       },
       "editPage": {

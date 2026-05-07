@@ -44,6 +44,7 @@
     "saveChanges": "choHmey yISaH",
     "on": "tujpa'",
     "off": "tujbe'",
+    "notSet": "ngoQbe'",
     "signIn": "yI'el",
     "signOut": "yImej",
     "getStarted": "DaH yIqet",
@@ -325,6 +326,7 @@
         "uncapped": "veH HuchHa' (Hong'a' Hubu')",
         "visible": "vavpu' Daleghbej",
         "hidden": "vavpu' SoQ",
+        "waitlistOn": "loS DIS naQ",
         "minutes": "{count} tup",
         "perMonth": "{amount} / jar",
         "scheduleRow": "{day} · {time} · {duration} tup",
@@ -352,6 +354,20 @@
           "prices": "Huchmey",
           "registrationOpensAt": "ghIH poSchoH",
           "visibility": "leghlu"
+        },
+        "placeholders": {
+          "groups": {
+            "title": "ghommey 'ej Gedus",
+            "body": "QojvIp tagh DIvI', ghommey vIchenmoH, Gedus vIlaH, 'ej veqlargh Hovmey vIvummoH."
+          },
+          "waitlist": {
+            "title": "loS DIS",
+            "body": "quS ghaj Hovmey loSlu'taHvIS naDev tu'lu', vaj ghuv quSmey ghoS DaH."
+          },
+          "metrics": {
+            "title": "Huch ngoq",
+            "body": "ghIH mI', Huch tlhutlh, 'ej Huch chegh tu'lu' naDev qaStaHvIS Huch De' chu'lu'pu'."
+          }
         }
       },
       "editPage": {
