@@ -66,15 +66,25 @@ describe("useGroupEditorV2 reducer", () => {
       const state = dispatch([{ type: "ADD_GROUP", name: "Group A" }]);
       expect(state.addedGroups).toHaveLength(1);
       expect(state.addedGroups[0].name).toBe("Group A");
-      expect(state.addedGroups[0].geduIds).toEqual([]);
+      expect(state.addedGroups[0].gedus).toEqual([]);
       expect(state.addedGroups[0].tempId).toMatch(/^temp-/);
     });
 
-    it("optionally seeds initial Gedu ids", () => {
+    it("optionally seeds initial Gedus with their display details", () => {
       const state = dispatch([
-        { type: "ADD_GROUP", name: "Group A", geduIds: ["g1", "g2"] },
+        {
+          type: "ADD_GROUP",
+          name: "Group A",
+          gedus: [
+            { id: "g1", displayName: "Alice", email: "alice@test.com" },
+            { id: "g2", displayName: "Bob", email: null },
+          ],
+        },
       ]);
-      expect(state.addedGroups[0].geduIds).toEqual(["g1", "g2"]);
+      expect(state.addedGroups[0].gedus).toEqual([
+        { id: "g1", displayName: "Alice", email: "alice@test.com" },
+        { id: "g2", displayName: "Bob", email: null },
+      ]);
     });
 
     it("generates unique temp ids across multiple adds", () => {
@@ -129,6 +139,7 @@ describe("useGroupEditorV2 reducer", () => {
         type: "MOVE_PARTICIPATION",
         participationId: "p1",
         toGroupId: tempId,
+        serverGroupId: null,
       });
       expect(withMoves.participationMoves).toHaveLength(1);
 
@@ -150,6 +161,7 @@ describe("useGroupEditorV2 reducer", () => {
         type: "MOVE_PARTICIPATION",
         participationId: "p1",
         toGroupId: "server-1",
+        serverGroupId: null,
       });
 
       const state = reducer(moveInto, {
@@ -163,7 +175,7 @@ describe("useGroupEditorV2 reducer", () => {
   });
 
   describe("ADD_GEDU and REMOVE_GEDU", () => {
-    it("adding to a newly-added group mutates that group's geduIds", () => {
+    it("adding to a newly-added group mutates that group's Gedu list and carries display details", () => {
       const afterAdd = dispatch([{ type: "ADD_GROUP", name: "G" }]);
       const tempId = afterAdd.addedGroups[0].tempId;
 
@@ -171,19 +183,30 @@ describe("useGroupEditorV2 reducer", () => {
         type: "ADD_GEDU",
         groupId: tempId,
         geduId: "gedu-1",
+        displayName: "Alice",
+        email: "alice@test.com",
       });
-      expect(state.addedGroups[0].geduIds).toEqual(["gedu-1"]);
+      expect(state.addedGroups[0].gedus).toEqual([
+        { id: "gedu-1", displayName: "Alice", email: "alice@test.com" },
+      ]);
       expect(state.geduAssignmentsAdded).toEqual([]);
     });
 
-    it("adding to an existing group records a pending assignment", () => {
+    it("adding to an existing group records a pending assignment with display details", () => {
       const state = reducer(initialState, {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
+        displayName: "Alice",
+        email: "alice@test.com",
       });
       expect(state.geduAssignmentsAdded).toEqual([
-        { groupId: "server-1", geduId: "gedu-1" },
+        {
+          groupId: "server-1",
+          geduId: "gedu-1",
+          displayName: "Alice",
+          email: "alice@test.com",
+        },
       ]);
     });
 
@@ -192,6 +215,8 @@ describe("useGroupEditorV2 reducer", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
+        displayName: "Alice",
+        email: null,
       });
       const b = reducer(a, {
         type: "REMOVE_GEDU",
@@ -212,6 +237,8 @@ describe("useGroupEditorV2 reducer", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
+        displayName: "Alice",
+        email: null,
       });
       expect(b.geduAssignmentsAdded).toEqual([]);
       expect(b.geduAssignmentsRemoved).toEqual([]);
@@ -222,14 +249,23 @@ describe("useGroupEditorV2 reducer", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
+        displayName: "Alice",
+        email: null,
       });
       const b = reducer(a, {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
+        displayName: "Alice",
+        email: null,
       });
       expect(b.geduAssignmentsAdded).toEqual([
-        { groupId: "server-1", geduId: "gedu-1" },
+        {
+          groupId: "server-1",
+          geduId: "gedu-1",
+          displayName: "Alice",
+          email: null,
+        },
       ]);
     });
   });
@@ -240,6 +276,7 @@ describe("useGroupEditorV2 reducer", () => {
         type: "MOVE_PARTICIPATION",
         participationId: "p1",
         toGroupId: "server-1",
+        serverGroupId: null,
       });
       expect(state.participationMoves).toEqual([
         { participationId: "p1", toGroupId: "server-1" },
@@ -251,11 +288,13 @@ describe("useGroupEditorV2 reducer", () => {
         type: "MOVE_PARTICIPATION",
         participationId: "p1",
         toGroupId: "server-1",
+        serverGroupId: null,
       });
       const b = reducer(a, {
         type: "MOVE_PARTICIPATION",
         participationId: "p1",
         toGroupId: "server-2",
+        serverGroupId: null,
       });
       expect(b.participationMoves).toEqual([
         { participationId: "p1", toGroupId: "server-2" },
@@ -267,8 +306,68 @@ describe("useGroupEditorV2 reducer", () => {
         type: "MOVE_PARTICIPATION",
         participationId: "p1",
         toGroupId: null,
+        serverGroupId: "server-1",
       });
       expect(state.participationMoves[0].toGroupId).toBeNull();
+    });
+
+    // Regression coverage for the phantom-change bug: dragging onto the same
+    // column the participation already lives in must not produce a staged
+    // move. Otherwise the commit bar lights up with a "1 unsaved change"
+    // even though nothing actually changed.
+    it("ignores a drop onto the same column the server already has it in", () => {
+      const state = reducer(initialState, {
+        type: "MOVE_PARTICIPATION",
+        participationId: "p1",
+        toGroupId: "server-A",
+        serverGroupId: "server-A",
+      });
+      expect(state.participationMoves).toEqual([]);
+      expect(state).toEqual(initialState);
+    });
+
+    it("ignores a drop back into Unassigned when the server has it Unassigned", () => {
+      const state = reducer(initialState, {
+        type: "MOVE_PARTICIPATION",
+        participationId: "p1",
+        toGroupId: null,
+        serverGroupId: null,
+      });
+      expect(state).toEqual(initialState);
+    });
+
+    it("cancels a previously staged move when dragged back to the original column (round-trip)", () => {
+      const a = reducer(initialState, {
+        type: "MOVE_PARTICIPATION",
+        participationId: "p1",
+        toGroupId: "server-B",
+        serverGroupId: "server-A",
+      });
+      expect(a.participationMoves).toHaveLength(1);
+
+      const b = reducer(a, {
+        type: "MOVE_PARTICIPATION",
+        participationId: "p1",
+        toGroupId: "server-A",
+        serverGroupId: "server-A",
+      });
+      expect(b.participationMoves).toEqual([]);
+    });
+
+    it("round-trip via Unassigned (A → Unassigned → A) ends with no staged moves", () => {
+      const a = reducer(initialState, {
+        type: "MOVE_PARTICIPATION",
+        participationId: "p1",
+        toGroupId: null,
+        serverGroupId: "server-A",
+      });
+      const b = reducer(a, {
+        type: "MOVE_PARTICIPATION",
+        participationId: "p1",
+        toGroupId: "server-A",
+        serverGroupId: "server-A",
+      });
+      expect(b.participationMoves).toEqual([]);
     });
   });
 
@@ -278,11 +377,18 @@ describe("useGroupEditorV2 reducer", () => {
         { type: "ADD_GROUP", name: "G" },
         { type: "RENAME_GROUP", groupId: "server-1", name: "Renamed" },
         { type: "DELETE_GROUP", groupId: "server-2" },
-        { type: "ADD_GEDU", groupId: "server-3", geduId: "gedu-1" },
+        {
+          type: "ADD_GEDU",
+          groupId: "server-3",
+          geduId: "gedu-1",
+          displayName: "Alice",
+          email: null,
+        },
         {
           type: "MOVE_PARTICIPATION",
           participationId: "p1",
           toGroupId: "server-3",
+          serverGroupId: null,
         },
       ]);
       expect(dirty).not.toEqual(initialState);
@@ -391,6 +497,7 @@ describe("computeEffectiveSnapshot", () => {
       type: "MOVE_PARTICIPATION",
       participationId: ZOE.id,
       toGroupId: "server-B",
+      serverGroupId: "server-A",
     });
     const snap = computeEffectiveSnapshot(server, state);
     expect(snap.groups[0].participations).toHaveLength(0);
@@ -406,6 +513,7 @@ describe("computeEffectiveSnapshot", () => {
       type: "MOVE_PARTICIPATION",
       participationId: YANNI.id,
       toGroupId: tempId,
+      serverGroupId: null,
     });
     const snap = computeEffectiveSnapshot(server, state);
     expect(snap.unassigned).toHaveLength(0);
@@ -429,7 +537,13 @@ describe("computeEffectiveSnapshot", () => {
       ],
     });
     const state = dispatch([
-      { type: "ADD_GEDU", groupId: "server-1", geduId: BOB.id },
+      {
+        type: "ADD_GEDU",
+        groupId: "server-1",
+        geduId: BOB.id,
+        displayName: BOB.display_name,
+        email: BOB.email,
+      },
       { type: "REMOVE_GEDU", groupId: "server-1", geduId: ALICE.id },
     ]);
     const snap = computeEffectiveSnapshot(server, state);
@@ -438,11 +552,26 @@ describe("computeEffectiveSnapshot", () => {
     expect(alice?.isPendingRemove).toBe(true);
     expect(alice?.isPending).toBe(false);
 
+    // Bob isn't on the server snapshot for this product, but the action
+    // carries his details — the pending pill renders his real name, not
+    // "Unknown".
     const bob = snap.groups[0].gedus.find((g) => g.id === BOB.id);
-    // Bob isn't on the server snapshot, so display_name falls back to "Unknown".
-    // The test's intent is the pending flag, not the fallback name.
     expect(bob?.isPending).toBe(true);
     expect(bob?.isPendingRemove).toBe(false);
+    expect(bob?.display_name).toBe("Bob");
+    expect(bob?.email).toBe(BOB.email);
+  });
+
+  it("uses the action-supplied name for a Gedu added inline at group creation", () => {
+    const server = makeSnapshot();
+    const state = reducer(initialState, {
+      type: "ADD_GROUP",
+      name: "Brand New",
+      gedus: [{ id: "gedu-x", displayName: "Charlie", email: null }],
+    });
+    const snap = computeEffectiveSnapshot(server, state);
+    expect(snap.groups[0].gedus).toHaveLength(1);
+    expect(snap.groups[0].gedus[0].display_name).toBe("Charlie");
   });
 });
 
@@ -475,8 +604,19 @@ describe("buildChangeSummary", () => {
       { type: "ADD_GROUP", name: "Brand New" },
       { type: "DELETE_GROUP", groupId: "ghost-id" }, // unknown, line still emits with placeholder
       { type: "RENAME_GROUP", groupId: "server-1", name: "Renamed" },
-      { type: "ADD_GEDU", groupId: "server-1", geduId: BOB.id },
-      { type: "MOVE_PARTICIPATION", participationId: ZOE.id, toGroupId: null },
+      {
+        type: "ADD_GEDU",
+        groupId: "server-1",
+        geduId: BOB.id,
+        displayName: BOB.display_name,
+        email: BOB.email,
+      },
+      {
+        type: "MOVE_PARTICIPATION",
+        participationId: ZOE.id,
+        toGroupId: null,
+        serverGroupId: "server-1",
+      },
     ]);
     const summary = buildChangeSummary(state, server);
     expect(summary.hasChanges).toBe(true);
@@ -524,17 +664,34 @@ describe("buildChangeSummary", () => {
 describe("buildBatchPayload", () => {
   it("returns the wire shape verbatim", () => {
     const state = dispatch([
-      { type: "ADD_GROUP", name: "A", geduIds: ["g1"] },
+      {
+        type: "ADD_GROUP",
+        name: "A",
+        gedus: [{ id: "g1", displayName: "Alice", email: null }],
+      },
       { type: "RENAME_GROUP", groupId: "server-1", name: "Renamed" },
       { type: "DELETE_GROUP", groupId: "server-2" },
-      { type: "ADD_GEDU", groupId: "server-1", geduId: "g3" },
+      {
+        type: "ADD_GEDU",
+        groupId: "server-1",
+        geduId: "g3",
+        displayName: "Charlie",
+        email: "c@test.com",
+      },
       { type: "REMOVE_GEDU", groupId: "server-1", geduId: "g4" },
-      { type: "MOVE_PARTICIPATION", participationId: "p1", toGroupId: null },
+      {
+        type: "MOVE_PARTICIPATION",
+        participationId: "p1",
+        toGroupId: null,
+        serverGroupId: "server-1",
+      },
     ]);
     const payload = buildBatchPayload(state);
 
     expect(payload.addedGroups).toHaveLength(1);
     expect(payload.addedGroups[0].name).toBe("A");
+    // Wire shape stays as a string[] of ids — the editor's display details
+    // are stripped here so they aren't sent to the server.
     expect(payload.addedGroups[0].geduIds).toEqual(["g1"]);
     expect(payload.renamedGroups).toEqual([
       { groupId: "server-1", name: "Renamed" },

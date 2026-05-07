@@ -590,7 +590,7 @@
       },
       "groupsPanel": {
         "title": "Groups",
-        "subtitle": "Organize participants into Gedu-led cohorts. Drag gamers between groups or back to the unassigned inbox.",
+        "subtitle": "Drag each gamer into the group they'll play with. Add Gedus to lead each group.",
         "addGroup": "Add group",
         "loading": "Loading…",
         "genderBoy": "boy",
@@ -601,8 +601,8 @@
         },
         "unassigned": {
           "title": "Unassigned",
-          "subtitle": "Gamers who've signed up but aren't yet placed in a group. Drop them here to send them back to the inbox.",
-          "empty": "Nobody is waiting for placement."
+          "subtitle": "Gamers who've paid but aren't in a group yet. Drag them into one to place them.",
+          "empty": "Everyone has a group."
         },
         "empty": {
           "title": "No groups yet",
@@ -616,37 +616,37 @@
           "deleteAria": "Delete {name}",
           "gamerCount": "{count, plural, =0 {No gamers} =1 {1 gamer} other {# gamers}}",
           "new": "New",
-          "markedForDeletion": "Marked for deletion",
-          "assignedGedus": "Assigned Gedus",
-          "noGedus": "No Gedus assigned yet.",
+          "markedForDeletion": "Will be deleted",
+          "assignedGedus": "Gedus",
+          "noGedus": "No Gedus yet.",
           "addGedu": "Add Gedu",
           "gamersLabel": "Gamers",
-          "empty": "No gamers in this group yet.",
-          "willBeDeleted": "Gamers will move to unassigned when you apply.",
-          "geduStatusFootnote": "Pending changes shown — review and apply to commit.",
+          "empty": "No gamers here yet — drag one in.",
+          "willBeDeleted": "These gamers will move to Unassigned when you save.",
+          "geduStatusFootnote": "Some changes here aren't saved yet.",
           "deleteConfirmTitle": "Delete {name}?",
-          "deleteConfirmEmpty": "The group has no gamers, so this is safe — Gedu assignments will be removed too.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {1 gamer is in this group} other {# gamers are in this group}} and will move to the unassigned inbox when you apply."
+          "deleteConfirmEmpty": "Nobody is in this group, so deleting it just clears the Gedu assignments.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {1 gamer is in this group} other {# gamers are in this group}}. They'll move to Unassigned when you save."
         },
         "gedu": {
-          "pendingAdd": "Pending",
-          "pendingRemove": "Pending removal",
+          "pendingAdd": "Adding",
+          "pendingRemove": "Removing",
           "removeAria": "Remove {name}"
         },
         "picker": {
           "addTitle": "Add Gedu to {name}",
-          "addDescription": "A Gedu can only be on one group per product. Anyone already assigned shows as disabled."
+          "addDescription": "A Gedu can only run one group per product. Anyone already assigned is greyed out."
         },
         "commitBar": {
-          "summary": "{count, plural, =1 {1 pending change} other {# pending changes}}",
+          "summary": "{count, plural, =1 {1 unsaved change} other {# unsaved changes}}",
           "discard": "Discard",
           "review": "Review changes"
         },
         "summary": {
           "title": "Review changes",
-          "description": "These changes apply atomically — if anything fails, none of them save.",
-          "apply": "Apply changes",
-          "applying": "Applying…",
+          "description": "All of these save together. If any one can't save, none of them will.",
+          "apply": "Save changes",
+          "applying": "Saving…",
           "genericError": "Something went wrong. Please try again."
         }
       }

@@ -84,6 +84,19 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
+  // Where each participation lives on the server. The reducer needs this to
+  // recognize round-trip drags (back to the original column) as no-ops and
+  // cancel any previously staged move.
+  const serverPlacementById = useMemo(() => {
+    const map = new Map<string, string | null>();
+    if (!snapshot) return map;
+    for (const g of snapshot.groups) {
+      for (const p of g.participations) map.set(p.id, g.id);
+    }
+    for (const p of snapshot.unassigned) map.set(p.id, null);
+    return map;
+  }, [snapshot]);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { over, active } = event;
     if (!over) return;
@@ -100,6 +113,7 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
       type: "MOVE_PARTICIPATION",
       participationId: dragData.participationId,
       toGroupId: dropData.toGroupId,
+      serverGroupId: serverPlacementById.get(dragData.participationId) ?? null,
     });
   };
 
@@ -237,11 +251,13 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
           })}
           description={t("picker.addDescription")}
           excludeIds={allAssignedGeduIds}
-          onSelect={(geduId) => {
+          onSelect={(gedu) => {
             dispatch({
               type: "ADD_GEDU",
               groupId: pickerForGroupId,
-              geduId,
+              geduId: gedu.id,
+              displayName: gedu.display_name,
+              email: gedu.email,
             });
             setPickerForGroupId(null);
           }}

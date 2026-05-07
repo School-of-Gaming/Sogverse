@@ -590,7 +590,7 @@
       },
       "groupsPanel": {
         "title": "Grupper",
-        "subtitle": "Organisera deltagare i Gedu-ledda grupper. Dra spelare mellan grupper eller tillbaka till otilldelade.",
+        "subtitle": "Dra varje spelare till gruppen de ska spela med. Lägg till Geduer som leder varje grupp.",
         "addGroup": "Lägg till grupp",
         "loading": "Laddar…",
         "genderBoy": "pojke",
@@ -601,8 +601,8 @@
         },
         "unassigned": {
           "title": "Otilldelade",
-          "subtitle": "Spelare som har anmält sig men ännu inte placerats i en grupp. Släpp här för att skicka tillbaka till inkorgen.",
-          "empty": "Ingen väntar på placering."
+          "subtitle": "Spelare som har betalat men ännu inte är i en grupp. Dra dem in i en för att placera dem.",
+          "empty": "Alla har en grupp."
         },
         "empty": {
           "title": "Inga grupper än",
@@ -616,37 +616,37 @@
           "deleteAria": "Ta bort {name}",
           "gamerCount": "{count, plural, =0 {Inga spelare} =1 {1 spelare} other {# spelare}}",
           "new": "Ny",
-          "markedForDeletion": "Markerad för borttagning",
-          "assignedGedus": "Tilldelade Geduer",
-          "noGedus": "Inga Geduer tilldelade än.",
+          "markedForDeletion": "Tas bort",
+          "assignedGedus": "Geduer",
+          "noGedus": "Inga Geduer än.",
           "addGedu": "Lägg till Gedu",
           "gamersLabel": "Spelare",
-          "empty": "Inga spelare i denna grupp än.",
-          "willBeDeleted": "Spelarna flyttas till otilldelade när du tillämpar ändringarna.",
-          "geduStatusFootnote": "Väntande ändringar visas — granska och tillämpa för att spara.",
+          "empty": "Inga spelare här än — dra in någon.",
+          "willBeDeleted": "Dessa spelare flyttas till Otilldelade när du sparar.",
+          "geduStatusFootnote": "Vissa ändringar här är inte sparade ännu.",
           "deleteConfirmTitle": "Ta bort {name}?",
-          "deleteConfirmEmpty": "Gruppen har inga spelare, så det är säkert — Gedu-tilldelningar tas också bort.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {1 spelare finns i denna grupp} other {# spelare finns i denna grupp}} och flyttas till otilldelade när du tillämpar ändringarna."
+          "deleteConfirmEmpty": "Ingen är i den här gruppen, så att ta bort den rensar bara Gedu-tilldelningarna.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {1 spelare finns i denna grupp} other {# spelare finns i denna grupp}}. De flyttas till Otilldelade när du sparar."
         },
         "gedu": {
-          "pendingAdd": "Väntande",
+          "pendingAdd": "Läggs till",
           "pendingRemove": "Tas bort",
           "removeAria": "Ta bort {name}"
         },
         "picker": {
           "addTitle": "Lägg till Gedu i {name}",
-          "addDescription": "En Gedu kan bara vara i en grupp per produkt. De som redan tilldelats visas som inaktiverade."
+          "addDescription": "En Gedu kan bara leda en grupp per produkt. De som redan är tilldelade är gråa."
         },
         "commitBar": {
-          "summary": "{count, plural, =1 {1 väntande ändring} other {# väntande ändringar}}",
+          "summary": "{count, plural, =1 {1 osparad ändring} other {# osparade ändringar}}",
           "discard": "Avvisa",
           "review": "Granska ändringar"
         },
         "summary": {
           "title": "Granska ändringar",
-          "description": "Ändringarna tillämpas atomärt — om något misslyckas sparas inget.",
-          "apply": "Tillämpa ändringar",
-          "applying": "Tillämpar…",
+          "description": "Alla dessa sparas tillsammans. Om någon inte kan sparas så sparas ingen.",
+          "apply": "Spara ändringar",
+          "applying": "Sparar…",
           "genericError": "Något gick fel. Försök igen."
         }
       }

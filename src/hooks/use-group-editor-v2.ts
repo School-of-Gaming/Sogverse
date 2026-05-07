@@ -13,11 +13,20 @@ import type { BatchGroupChangesV2 } from "@/services/groups-v2";
 // Staged change types
 // ---------------------------------------------------------------------------
 
+/** A Gedu staged for assignment — carries display details so the UI can
+ * show real names (not "Unknown") for Gedus who aren't yet on the server
+ * snapshot for this product. */
+interface PendingGedu {
+  id: string;
+  displayName: string;
+  email: string | null;
+}
+
 interface AddedGroupV2 {
   tempId: string;
   name: string;
   /** Gedus added inline at group creation time. */
-  geduIds: string[];
+  gedus: PendingGedu[];
 }
 
 interface RenamedGroup {
@@ -25,7 +34,14 @@ interface RenamedGroup {
   name: string;
 }
 
-interface AssignmentChange {
+interface AssignmentAdd {
+  groupId: string;
+  geduId: string;
+  displayName: string;
+  email: string | null;
+}
+
+interface AssignmentRemove {
   groupId: string;
   geduId: string;
 }
@@ -40,8 +56,8 @@ interface GroupEditorV2State {
   addedGroups: AddedGroupV2[];
   renamedGroups: RenamedGroup[];
   deletedGroupIds: string[];
-  geduAssignmentsAdded: AssignmentChange[];
-  geduAssignmentsRemoved: AssignmentChange[];
+  geduAssignmentsAdded: AssignmentAdd[];
+  geduAssignmentsRemoved: AssignmentRemove[];
   participationMoves: ParticipationMove[];
 }
 
@@ -50,12 +66,26 @@ interface GroupEditorV2State {
 // ---------------------------------------------------------------------------
 
 export type GroupEditorV2Action =
-  | { type: "ADD_GROUP"; name: string; geduIds?: string[] }
+  | { type: "ADD_GROUP"; name: string; gedus?: PendingGedu[] }
   | { type: "RENAME_GROUP"; groupId: string; name: string }
   | { type: "DELETE_GROUP"; groupId: string }
-  | { type: "ADD_GEDU"; groupId: string; geduId: string }
+  | {
+      type: "ADD_GEDU";
+      groupId: string;
+      geduId: string;
+      displayName: string;
+      email: string | null;
+    }
   | { type: "REMOVE_GEDU"; groupId: string; geduId: string }
-  | { type: "MOVE_PARTICIPATION"; participationId: string; toGroupId: string | null }
+  | {
+      type: "MOVE_PARTICIPATION";
+      participationId: string;
+      toGroupId: string | null;
+      /** Where the participation lives on the server. Used to detect no-op
+       * round-trip drags (back to the original location) and cancel any
+       * previously staged move for this participation. */
+      serverGroupId: string | null;
+    }
   | { type: "RESET" };
 
 // Module-level temp id counter — temp ids are ephemeral and only need to be
@@ -89,7 +119,7 @@ export function reducer(
         ...state,
         addedGroups: [
           ...state.addedGroups,
-          { tempId, name: action.name, geduIds: action.geduIds ?? [] },
+          { tempId, name: action.name, gedus: action.gedus ?? [] },
         ],
       };
     }
@@ -171,14 +201,24 @@ export function reducer(
     }
 
     case "ADD_GEDU": {
-      // Adding a Gedu to a newly-added group → mutate that group's geduIds.
+      // Adding a Gedu to a newly-added group → mutate that group's Gedu list.
       if (isTempId(action.groupId)) {
         return {
           ...state,
           addedGroups: state.addedGroups.map((g) => {
             if (g.tempId !== action.groupId) return g;
-            if (g.geduIds.includes(action.geduId)) return g;
-            return { ...g, geduIds: [...g.geduIds, action.geduId] };
+            if (g.gedus.some((ge) => ge.id === action.geduId)) return g;
+            return {
+              ...g,
+              gedus: [
+                ...g.gedus,
+                {
+                  id: action.geduId,
+                  displayName: action.displayName,
+                  email: action.email,
+                },
+              ],
+            };
           }),
         };
       }
@@ -209,19 +249,24 @@ export function reducer(
         ...state,
         geduAssignmentsAdded: [
           ...state.geduAssignmentsAdded,
-          { groupId: action.groupId, geduId: action.geduId },
+          {
+            groupId: action.groupId,
+            geduId: action.geduId,
+            displayName: action.displayName,
+            email: action.email,
+          },
         ],
       };
     }
 
     case "REMOVE_GEDU": {
-      // Removing from a newly-added group → drop from its geduIds.
+      // Removing from a newly-added group → drop from its Gedu list.
       if (isTempId(action.groupId)) {
         return {
           ...state,
           addedGroups: state.addedGroups.map((g) =>
             g.tempId === action.groupId
-              ? { ...g, geduIds: g.geduIds.filter((id) => id !== action.geduId) }
+              ? { ...g, gedus: g.gedus.filter((ge) => ge.id !== action.geduId) }
               : g,
           ),
         };
@@ -257,10 +302,24 @@ export function reducer(
     }
 
     case "MOVE_PARTICIPATION": {
-      // Upsert: one move per participation. Re-moving overwrites.
       const idx = state.participationMoves.findIndex(
         (m) => m.participationId === action.participationId,
       );
+
+      // Round-trip: dropping back where the server already has this
+      // participation. Drop any previously staged move; if none was staged,
+      // this is a true no-op (drag onto the same column without any prior
+      // movement) and the state shouldn't change.
+      if (action.toGroupId === action.serverGroupId) {
+        if (idx === -1) return state;
+        return {
+          ...state,
+          participationMoves: state.participationMoves.filter(
+            (_, i) => i !== idx,
+          ),
+        };
+      }
+
       if (idx === -1) {
         return {
           ...state,
@@ -395,11 +454,13 @@ export function computeEffectiveSnapshot(
       isPendingRemove: removalsForGroup.has(ge.id),
     }));
     for (const add of additionsForGroup) {
+      // Prefer the action-supplied details (the picker has the full Profile);
+      // fall back to whatever the server snapshot had for this product.
       const detail = allServerGedus.get(add.geduId);
       gedus.push({
         id: add.geduId,
-        display_name: detail?.display_name ?? "Unknown",
-        email: detail?.email ?? null,
+        display_name: add.displayName || (detail?.display_name ?? "Unknown"),
+        email: add.email ?? detail?.email ?? null,
         isPending: true,
         isPendingRemove: false,
       });
@@ -431,12 +492,12 @@ export function computeEffectiveSnapshot(
 
   for (let i = 0; i < state.addedGroups.length; i++) {
     const ag = state.addedGroups[i];
-    const gedus: EffectiveGroupV2["gedus"] = ag.geduIds.map((geduId) => {
-      const detail = allServerGedus.get(geduId);
+    const gedus: EffectiveGroupV2["gedus"] = ag.gedus.map((ge) => {
+      const detail = allServerGedus.get(ge.id);
       return {
-        id: geduId,
-        display_name: detail?.display_name ?? "Unknown",
-        email: detail?.email ?? null,
+        id: ge.id,
+        display_name: ge.displayName || (detail?.display_name ?? "Unknown"),
+        email: ge.email ?? detail?.email ?? null,
         isPending: true,
         isPendingRemove: false,
       };
@@ -516,6 +577,14 @@ export function buildChangeSummary(
   for (const g of server.groups) {
     for (const ge of g.gedus) geduNameById.set(ge.id, ge.display_name);
   }
+  // Seed staged names too so pending adds for Gedus not yet on this product
+  // still render with their real name in the summary.
+  for (const ag of state.addedGroups) {
+    for (const ge of ag.gedus) geduNameById.set(ge.id, ge.displayName);
+  }
+  for (const a of state.geduAssignmentsAdded) {
+    geduNameById.set(a.geduId, a.displayName);
+  }
 
   const gamerNameByParticipationId = new Map<string, string>();
   for (const g of server.groups) {
@@ -530,12 +599,10 @@ export function buildChangeSummary(
   // Adds first, deletes, renames, gedu changes, then moves — so the summary
   // reads top-down.
   for (const ag of state.addedGroups) {
-    if (ag.geduIds.length === 0) {
+    if (ag.gedus.length === 0) {
       lines.push([text("Add group "), group(ag.name)]);
     } else {
-      const names = ag.geduIds
-        .map((id) => geduNameById.get(id) ?? "(unknown)")
-        .join(", ");
+      const names = ag.gedus.map((ge) => ge.displayName).join(", ");
       lines.push([
         text("Add group "),
         group(ag.name),
@@ -615,11 +682,16 @@ export function buildBatchPayload(
     addedGroups: state.addedGroups.map((g) => ({
       tempId: g.tempId,
       name: g.name,
-      geduIds: g.geduIds,
+      geduIds: g.gedus.map((ge) => ge.id),
     })),
     renamedGroups: state.renamedGroups.map((r) => ({ ...r })),
     deletedGroupIds: [...state.deletedGroupIds],
-    geduAssignmentsAdded: state.geduAssignmentsAdded.map((a) => ({ ...a })),
+    // The server contract only needs ids — strip the display fields the
+    // client uses for rendering pending pills.
+    geduAssignmentsAdded: state.geduAssignmentsAdded.map((a) => ({
+      groupId: a.groupId,
+      geduId: a.geduId,
+    })),
     geduAssignmentsRemoved: state.geduAssignmentsRemoved.map((a) => ({ ...a })),
     participationMoves: state.participationMoves.map((m) => ({ ...m })),
   };

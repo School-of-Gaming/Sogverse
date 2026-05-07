@@ -638,7 +638,7 @@
       },
       "groupsPanel": {
         "title": "ghommey",
-        "subtitle": "Gedu DevwI' ghommey Daq vavmey yIngu'. ghommey jojDaq Suvwl'pu' yIngeH, pagh ngu'be'pu' jolDaq.",
+        "subtitle": "Suvwl' QujmeH ghomvaD yIngeH. ghom DevmeH Gedupu' yIchu'.",
         "addGroup": "ghom yIchu'",
         "loading": "tIjwI'…",
         "genderBoy": "loDHom",
@@ -649,8 +649,8 @@
         },
         "unassigned": {
           "title": "ngu'be'pu'",
-          "subtitle": "Suvwl'pu' jaq lawmoH ngu'be'pu'. naDevDaq yIQaw' ngu'be'pu' jolDaq tlhe'meH.",
-          "empty": "wa' DopaQ Daq pagh."
+          "subtitle": "DIl Suvwl'pu', 'ach ghomDaq pagh. ghomvaD yIngeH ngu'meH.",
+          "empty": "Hoch ghom ghaj."
         },
         "empty": {
           "title": "ghommey pagh",
@@ -664,37 +664,37 @@
           "deleteAria": "{name} yIteq",
           "gamerCount": "{count, plural, =0 {Suvwl'pu' pagh} =1 {1 Suvwl'} other {# Suvwl'pu'}}",
           "new": "chu'",
-          "markedForDeletion": "DochwI'lu' luSov",
-          "assignedGedus": "Gedupu' ngu'lu'",
-          "noGedus": "Gedupu' ngu'lu'pu' pagh.",
+          "markedForDeletion": "teqlu'bogh",
+          "assignedGedus": "Gedupu'",
+          "noGedus": "Gedupu' pagh.",
           "addGedu": "Gedu yIchu'",
           "gamersLabel": "Suvwl'pu'",
-          "empty": "ghomvamDaq Suvwl'pu' pagh.",
-          "willBeDeleted": "Suvwl'pu' ngu'be'pu' jolDaq lengtaH 'ej DochwI'lu' DubeQ.",
-          "geduStatusFootnote": "loSlu' DochwI'lu' — yIlegh, yIDub.",
+          "empty": "Suvwl' pagh — naDev yIngeH.",
+          "willBeDeleted": "DaQon DaH, Suvwl'vam ngu'be'pu' jolDaq lengtaH.",
+          "geduStatusFootnote": "DochwI' Qonbe' law'.",
           "deleteConfirmTitle": "{name} yIteq'a'?",
-          "deleteConfirmEmpty": "ghomvamDaq Suvwl'pu' pagh — Daj. Gedupu' ngu'pu' je teqlu'.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {ghomvamDaq 1 Suvwl'} other {ghomvamDaq # Suvwl'pu'}} 'ej ngu'be'pu' jolDaq lengtaH DochwI'lu' DubeQ."
+          "deleteConfirmEmpty": "ghomvamDaq Suvwl' pagh — Daj. Gedu ngu' je teqlu'.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {ghomvamDaq 1 Suvwl'} other {ghomvamDaq # Suvwl'pu'}}. DaQon DaH, ngu'be'pu' jolDaq lengtaH."
         },
         "gedu": {
-          "pendingAdd": "loSlu'",
-          "pendingRemove": "luteqlu'",
+          "pendingAdd": "chu'lu'",
+          "pendingRemove": "teqlu'",
           "removeAria": "{name} yIteq"
         },
         "picker": {
           "addTitle": "{name} ghomvaD Gedu yIchu'",
-          "addDescription": "wa' Gedu wa' ghom rurpu'. ngu'lu'pu' QujwI'pu' boch."
+          "addDescription": "wa' Gedu, wa' ghom — Hoch Daq. ngu'lu'pu' wovbe'."
         },
         "commitBar": {
-          "summary": "{count, plural, =1 {1 loSwI' DochwI'} other {# loSwI' DochwI'pu'}}",
+          "summary": "{count, plural, =1 {1 Qonbe' DochwI'} other {# Qonbe' DochwI'pu'}}",
           "discard": "yIqaw'be'",
           "review": "DochwI' yIlegh"
         },
         "summary": {
           "title": "DochwI'pu' yIlegh",
-          "description": "Hoch DochwI'pu' DubeQ wa' Daq — wa' Qaw' chugh, pagh DubeQ.",
-          "apply": "DochwI'pu' yIDub",
-          "applying": "DubeQtaH…",
+          "description": "Hoch wa' DaQ Qonlu'. wa' Qaw'lu' chugh, pagh Qonlu'.",
+          "apply": "DochwI'pu' yIQon",
+          "applying": "Qonlu'taH…",
           "genericError": "vay' Qaw'. ghopaq yIqIH."
         }
       }

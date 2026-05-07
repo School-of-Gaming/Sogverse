@@ -590,7 +590,7 @@
       },
       "groupsPanel": {
         "title": "Ryhmät",
-        "subtitle": "Järjestä osallistujat Gedu-vetoisiin ryhmiin. Vedä pelaajia ryhmästä toiseen tai takaisin nimeämättömiin.",
+        "subtitle": "Vedä jokainen pelaaja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
         "addGroup": "Lisää ryhmä",
         "loading": "Ladataan…",
         "genderBoy": "poika",
@@ -601,8 +601,8 @@
         },
         "unassigned": {
           "title": "Nimeämättömät",
-          "subtitle": "Pelaajat, jotka ovat ilmoittautuneet mutta joita ei ole vielä asetettu ryhmään. Pudota tähän palauttaaksesi pelaajan jonoon.",
-          "empty": "Kukaan ei odota sijoittelua."
+          "subtitle": "Pelaajat, jotka ovat maksaneet mutta eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
+          "empty": "Kaikilla on ryhmä."
         },
         "empty": {
           "title": "Ei vielä ryhmiä",
@@ -616,17 +616,17 @@
           "deleteAria": "Poista {name}",
           "gamerCount": "{count, plural, =0 {Ei pelaajia} =1 {1 pelaaja} other {# pelaajaa}}",
           "new": "Uusi",
-          "markedForDeletion": "Merkitty poistettavaksi",
-          "assignedGedus": "Nimetyt Gedut",
-          "noGedus": "Ei vielä nimettyjä Geduja.",
+          "markedForDeletion": "Poistetaan",
+          "assignedGedus": "Gedut",
+          "noGedus": "Ei vielä Geduja.",
           "addGedu": "Lisää Gedu",
           "gamersLabel": "Pelaajat",
-          "empty": "Ei vielä pelaajia tässä ryhmässä.",
-          "willBeDeleted": "Pelaajat siirtyvät nimeämättömiin, kun viimeistelet muutokset.",
-          "geduStatusFootnote": "Odottavat muutokset näkyvissä — tarkista ja viimeistele tallentaaksesi.",
+          "empty": "Ei pelaajia vielä — vedä joku tähän.",
+          "willBeDeleted": "Nämä pelaajat siirtyvät Nimeämättömiin, kun tallennat.",
+          "geduStatusFootnote": "Joitakin muutoksia ei ole vielä tallennettu.",
           "deleteConfirmTitle": "Poistetaanko {name}?",
-          "deleteConfirmEmpty": "Ryhmässä ei ole pelaajia, joten poisto on turvallinen — myös Gedu-nimitykset poistetaan.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {Tässä ryhmässä on 1 pelaaja} other {Tässä ryhmässä on # pelaajaa}}, ja he siirtyvät nimeämättömiin, kun viimeistelet muutokset."
+          "deleteConfirmEmpty": "Ryhmässä ei ole pelaajia, joten poistaminen vain poistaa Gedu-nimitykset.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {Tässä ryhmässä on 1 pelaaja} other {Tässä ryhmässä on # pelaajaa}}. He siirtyvät Nimeämättömiin, kun tallennat."
         },
         "gedu": {
           "pendingAdd": "Lisätään",
@@ -635,16 +635,16 @@
         },
         "picker": {
           "addTitle": "Lisää Gedu ryhmään {name}",
-          "addDescription": "Yksi Gedu voi olla vain yhdessä ryhmässä per tuote. Muualle nimetyt näkyvät ei-valittavina."
+          "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina."
         },
         "commitBar": {
-          "summary": "{count, plural, =1 {1 odottava muutos} other {# odottavaa muutosta}}",
+          "summary": "{count, plural, =1 {1 tallentamaton muutos} other {# tallentamatonta muutosta}}",
           "discard": "Hylkää",
           "review": "Tarkista muutokset"
         },
         "summary": {
           "title": "Tarkista muutokset",
-          "description": "Muutokset tallennetaan kaikki yhdessä — jos yksi epäonnistuu, mitään ei tallenneta.",
+          "description": "Kaikki muutokset tallennetaan yhdessä. Jos yksi ei tallennu, mikään ei tallennu.",
           "apply": "Tallenna muutokset",
           "applying": "Tallennetaan…",
           "genericError": "Jokin meni pieleen. Yritä uudelleen."
