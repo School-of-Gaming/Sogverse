@@ -148,7 +148,7 @@ export function IdentitySection({
       title={t("sections.identity")}
       description={t("sections.identityDescription")}
     >
-      {/* Language tabs — at least one of (en, fi) required. The hint below
+      {/* Language tabs — at least one filled locale required. The hint below
           spells the rule out. Switching tabs preserves what's typed in each. */}
       <div className="space-y-2">
         <Label>

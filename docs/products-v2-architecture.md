@@ -11,7 +11,8 @@ For the design rationale, see `docs/products-redesign.md`. This doc covers what'
 - DB foundation: `products_v2`, `topics_v2`, `tags_v2`, translation child tables (`product_translations_v2`, `topic_translations_v2`, `tag_translations_v2`), holiday calendars, schedule slots, prices, groups, and the `site_details_v2` / `site_staff_details_v2` split for location extension data.
 - Admin creation UI for all four product types at `/admin/{consumer-clubs,municipality-clubs,camps,events}/new`, sharing one form with type-specific config (`product-v2-type-config.ts`).
 - Admin list pages for the same four types.
-- Server-side `create_product_v2` RPC plus inline-create routes for tags, topics, locations, FX rates, and site notes.
+- Admin details page at `/admin/{type}/[id]` (compact header + "key facts" grid + dashed-bordered placeholder cards for the Groups & Gedus / Waitlist / Business metrics surfaces that ship with participations) and edit page at `/admin/{type}/[id]/edit` (the same form, pre-populated). The edit form is a thin wrapper around the shared `ProductV2FormShell` — same sections, same validation; the wrapper supplies the seeded state, the `update_product_v2` mutation, and post-save navigation back to the details page.
+- Server-side `create_product_v2` and `update_product_v2` RPCs plus inline-create routes for tags, topics, locations, FX rates, and site notes. Both RPCs commit parent + child sets atomically; the update RPC uses an upsert-then-delete-leftovers ordering on translations to avoid tripping the BEFORE-DELETE keep-≥1-row trigger.
 - Effective-status derivation (TS + SQL twin) — `pending → running → completed` is computed at read time from stored facts, not driven by cron.
 
 **Parent browse (created on `feat/products-v2-browse-pages`):**
@@ -27,13 +28,17 @@ For the design rationale, see `docs/products-redesign.md`. This doc covers what'
 
 ```
 Pages (admin only)
-├── /admin/{consumer-clubs,municipality-clubs,camps,events}        → ProductV2ListPage (productType discriminator)
-└── /admin/{consumer-clubs,municipality-clubs,camps,events}/new    → NewProductV2Page
+├── /admin/{consumer-clubs,municipality-clubs,camps,events}             → ProductV2ListPage (productType discriminator)
+├── /admin/{consumer-clubs,municipality-clubs,camps,events}/new         → NewProductV2Page → ProductV2FormCreate
+├── /admin/{consumer-clubs,municipality-clubs,camps,events}/[id]        → ProductV2DetailsPage (read-only header + summary + Edit button)
+└── /admin/{consumer-clubs,municipality-clubs,camps,events}/[id]/edit   → EditProductV2Page → ProductV2FormEdit
 
 Form (src/components/admin/products-v2/)
-├── product-v2-form.tsx              — Shell: section wrappers, submit, mutation, navigation
+├── product-v2-form.tsx              — Shared shell: sections, validate, error display, committing flag
+├── product-v2-form-create.tsx       — Wraps shell with create mutation, "Create {label}", route to list
+├── product-v2-form-edit.tsx         — Wraps shell with update mutation, "Save changes", route to details
 ├── product-v2-form-state.ts         — Form state shape, defaults, reducers
-├── product-v2-build.ts              — Form state → RPC payload (the transformation pipeline)
+├── product-v2-build.ts              — Form state → RPC payload (build/validate + reverse transform)
 ├── product-v2-type-config.ts        — Per-type field availability, scheduling shape, pricing shape
 ├── effective-status.ts              — Derived status helper (TS twin of SQL effective_status_v2())
 └── sections/
@@ -60,7 +65,8 @@ Shared building blocks
 └── group-card.tsx                   — Group preview within form
 
 API routes (admin-only)
-├── /api/admin/products-v2/create    — Calls create_product_v2 RPC, then updates image_path
+├── /api/admin/products-v2/create        — Calls create_product_v2 RPC, then updates image_path
+├── /api/admin/products-v2/[id]/update   — Calls update_product_v2 RPC; uploads new blob first, deletes old/orphan blob after
 ├── /api/admin/locations/create      — Inline create from location picker
 ├── /api/admin/locations/[id]        — PATCH name only
 ├── /api/admin/topics-v2/create      — Inline create + single-locale translation
@@ -69,8 +75,8 @@ API routes (admin-only)
 └── /api/admin/fx-rates              — Proxies frankfurter.dev (cached 6h via fetch data cache)
 
 Services (src/services/products-v2/)
-├── products-v2.service.ts           — Read methods (listByType); write goes through API routes
-├── products-v2.queries.ts           — useProductsV2ByType, useCreateProductV2
+├── products-v2.service.ts           — Read methods (listByType, getByIdForAdmin); write goes through API routes
+├── products-v2.queries.ts           — useProductsV2ByType, useProductV2Admin, useCreateProductV2, useUpdateProductV2
 ├── reference-data.queries.ts        — useTopicsV2, useTagsV2, useHolidayCalendarsV2, etc.
 └── fx.queries.ts                    — useFxRates (calls /api/admin/fx-rates)
 
@@ -82,9 +88,9 @@ i18n
 
 Per-locale child tables hold user-visible text. The parent rows hold only structural data.
 
-- **Resolver fallback chain:** `user locale → en → fi → first available` (`src/lib/i18n/resolve-translation.ts`).
-- **Products must keep ≥1 of (en, fi)** at all times. Enforced by `create_product_v2` payload validation and a `BEFORE DELETE` trigger on `product_translations_v2`. **Gap today:** an `UPDATE OF locale` (e.g. flipping `'en'` → `'sv'`) is not guarded — see Future improvements below.
-- **Topics and tags are not subject to the en/fi rule** — they're shared reference data and may exist in only one locale at first. Inline-create from the product form writes a single translation in the admin's current UI locale.
+- **Resolver fallback chain:** `user locale → en → first available` (`src/lib/i18n/resolve-translation.ts`). With ≥1 row guaranteed by the DB, the chain always resolves to a present row.
+- **Products must keep ≥1 translation row** in any locale at all times. Enforced by `create_product_v2` / `update_product_v2` payload validation (non-empty translation array) and a `BEFORE DELETE` trigger on `product_translations_v2` that rejects deletes leaving the product with no rows. The previous rule required `≥1 of (en, fi)` specifically; migration `00047_relax_product_translations_locale_rule.sql` relaxed it because the resolver's fallback chain no longer needs en/fi to always be present — "first available" handles single-locale products.
+- **Topics and tags follow the same rule** — they're shared reference data and may exist in only one locale at first. Inline-create from the product form writes a single translation in the admin's current UI locale.
 - **Sending all available translations to the client is intentional** — payloads stay small (max 4 locales × 2 short fields), and a future "view this product in another language" UI is trivial.
 
 ## Status vs. visibility
@@ -114,6 +120,28 @@ History: prior to migration `00035_decouple_draft_from_hidden.sql`, the form tie
 - `running` (stored or derived) → `completed` once `end_date` has passed.
 
 The TS helper (`effective-status.ts`) and the SQL function `effective_status_v2(product_id)` share the same rule. The SQL form is what RLS / list queries call when filtering by effective state.
+
+## Admin edit flow
+
+An admin edit goes through `update_product_v2()`, the sibling of `create_product_v2()`. Same shape minus the immutable fields (`product_type` is locked by the URL, `status` is preserved across the update so effective-status keeps deriving naturally from the data fields the admin actually changed). Inside one transaction the RPC updates the parent row and wipes-and-replaces every child set (translations, prices, schedule slots, tags, holiday-calendar links).
+
+**Translation wipe-and-replace ordering.** A naïve `DELETE FROM product_translations_v2 WHERE product_id = …` followed by `INSERT` would trip the BEFORE-DELETE keep-≥1-row trigger when the product has only one row. The RPC instead UPSERTs the new translation set first, *then* deletes leftovers (rows whose locale isn't in the new set). By the time deletes fire, the new rows are already in place, so the trigger's "another row remains?" check passes for every leftover. See migrations `00046_update_product_v2_rpc.sql` and `00047_relax_product_translations_locale_rule.sql`.
+
+**Image handling.** The RPC takes `p_image_path` as a regular argument; the API route owns the storage bucket dance around it. Mirrors the legacy update-product route, just wrapped around an RPC instead of a flat UPDATE:
+
+- **Replace:** Upload new blob → call RPC with the new path → on RPC failure delete the just-uploaded blob (no orphan); on success delete the old blob.
+- **Clear:** Call RPC with `p_image_path = NULL` → on success delete the old blob.
+- **Keep:** Pass the existing path through unchanged. Storage untouched. The route does NOT trust path strings from the client — the existing path comes from the DB; the new path comes from the just-uploaded blob.
+
+The RPC ensures DB atomicity; storage cleanup still has to live in the route because Supabase Storage is a separate system from the SQL transaction.
+
+**Reverse transform** (`existingFormState` in `product-v2-build.ts`) maps a fetched `ProductV2AdminDetailRow` back into `FormState` so the edit form re-renders the persisted data. Round-trip property: fetch → `existingFormState` → `buildUpdateInput` → RPC preserves the row's data fields (covered by `tests/unit/components/products-v2-existing-state.test.ts`). Decisions baked in:
+
+- `manualEdits` is seeded with all 3 currencies. Otherwise editing the EUR price would FX-overwrite the persisted GBP/USD values that the admin chose deliberately. Admin clears a cell to opt back into auto-fill.
+- `registrationOpensMode` is derived: future timestamp → `scheduled` (with date/hour/minute populated from the timestamp in Helsinki TZ); past timestamp → `immediately` (the form re-resolves to a fresh `now()` at submit, harmless because the timestamp is already in the past).
+- `groups: []` — the Groups section is UI-only on both create and edit. Future group/gamer assignment lives on the details page, not the form.
+
+**Status as a knob.** The edit form deliberately doesn't expose stored `status` — the field updates naturally because effective status is derived. Future "Cancel product" and "Save as draft" actions, when they ship, will set `status` via dedicated buttons rather than a form field.
 
 ## Site location split
 
@@ -353,10 +381,15 @@ Every browse + purchased card state is rendered on `/admin/ui-components` under 
 - **`useTranslations` types don't cross function boundaries.** Helper functions that take `ReturnType<typeof useTranslations<"productBrowse.card">>` as a parameter trip TS2589 ("excessively deep") on this path. The pattern: closure-bind `t` inside the component and write small literal-key dispatcher helpers (see `headingFor` in `product-browse-page.tsx`, `decorationFor` in `registration-pill.tsx`).
 - **Lucide icons must not be aliased to a local variable in render.** `react-hooks/static-components` flags `const Icon = iconFor(state)` as dynamic component creation. Wrap the switch in a tiny component (`<StateIcon state={state} className=... />`) instead — the className flows through as a JSX attribute, which the i18n literal-string rule allows-lists.
 - **The View shouldn't depend on the currency provider.** Currency lookup happens in the adapter; the View receives an already-formatted `ProductPriceLine`. Same rule for locale-aware date formatting on `closed_pre.opensAt` — the Pill formats it with `useFormatter` since the pill itself is locale-aware, but anything else handed to the View should be pre-formatted.
+- **Self-referential location parent join uses the column name, not the table name.** The product SELECTs use `locations(..., parent:parent_id(id, name, type))`. The intuitive `parent:locations!parent_id(...)` form looks identical but PostgREST resolves it to the *children* (rows whose `parent_id` points back here), so leaf locations come back with `parent: []` and the UI prints "Foo, undefined". `parent:parent_id(...)` traverses the FK in the right direction.
 
 ## Future improvements
 
 These are known gaps tracked here so they aren't lost. None are blocking the current admin-only flow.
+
+### Admin details page — gamer/group management surface
+
+The current details page is a read-only summary + Edit button. Once participations land, the same page should host gamer→group assignment plus an "unassigned gamers" tray so admins can do roster work without leaving the product. Wire this in alongside the participation rollup — the Groups section on the *form* stays cosmetic regardless (groups belong on the details page, not the edit form). Cancel-product and Save-as-draft buttons also live here, not on the edit form.
 
 ### Extend `site_details_v2` read policy to purchasing customers
 
@@ -392,13 +425,15 @@ If the request is interrupted between the two awaits (network drop, lambda timeo
 
 **Fix:** Move both inserts into a single SQL function (`create_topic_v2`, `create_tag_v2`) that takes the parent + translation fields and writes both atomically. Matches the pattern set by `create_product_v2`. Removes the JS rollback path entirely.
 
-### Translation `UPDATE OF locale` can violate the en/fi-keep rule
+### `update_product_v2` silently wipes parent fields the form doesn't surface
 
-The `BEFORE DELETE` trigger on `product_translations_v2` enforces ≥1 of (en, fi) on deletes. It does **not** guard `UPDATE OF locale` — a direct `UPDATE product_translations_v2 SET locale = 'sv' WHERE locale = 'en'` succeeds even when no `fi` row exists, leaving the product without any en/fi translation.
+`update_product_v2` accepts every editable column as an RPC arg with `DEFAULT NULL`. Any field the build pipeline doesn't include in its payload (`buildSharedFields` in `product-v2-build.ts`) lands as `undefined` at the supabase client, gets sent to PostgREST without that key, and the SQL function uses the default — which for a non-required column means writing `NULL` to the column.
 
-**Impact:** Latent today (no edit-translations UI exists). Will become live the moment such a UI ships, unless the UI exclusively does DELETE+INSERT. If violated, English and Finnish parents see content in whatever locale the resolver falls back to (typically the first available row) — real text, but in a language they may not read.
+**Concrete trap:** `refund_policy_days` is in the schema (with a CHECK constraint scoping it to `camp` / `event`) but no UI surface sets it today. If a future feature, manual SQL, or backfill ever populates it, the next admin edit through the form will silently null the value back out.
 
-**Fix:** Add a `BEFORE UPDATE OF locale` trigger that runs the same en/fi check, or forbid `UPDATE OF locale` entirely and require admins to delete + insert.
+**Impact:** Latent — no products have `refund_policy_days` set today. Live the moment that changes. The same shape applies to any column added to `products_v2` later that isn't immediately wired into both the form and `buildSharedFields`.
+
+**Fix:** Two reasonable directions. Either make the route read the existing row and pass through any field the client didn't explicitly send (mirrors the existing `image_path` "keep current" behavior), or change the RPC to take an explicit "set" sentinel for each optional column so omission means "leave alone." The pure-RPC version is cleaner; the route-level version is less invasive.
 
 ### `effective_status_v2` SQL twin to mirror the TS helper
 
@@ -406,7 +441,7 @@ The TS helper (`effective-status.ts`) uses `date-fns-tz` to compare `start_date`
 
 ### Manage topic & tag translations admin UI
 
-Inline-create writes a single translation in the admin's current UI locale (intentional simplification). Topics and tags are not subject to the en/fi rule. Until a "Manage topic & tag translations" admin page ships, parents on a locale that lacks a topic/tag translation see the resolver fallback.
+Inline-create writes a single translation in the admin's current UI locale (intentional simplification). Until a "Manage topic & tag translations" admin page ships, parents on a locale that lacks a topic/tag translation see the resolver fallback (UI locale → en → first available).
 
 ### Browse page gates entire surface on three queries
 

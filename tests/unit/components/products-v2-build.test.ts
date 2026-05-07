@@ -56,14 +56,15 @@ describe("validate", () => {
       });
     });
 
-    it("requires en or fi — sv-only is rejected", () => {
+    it("accepts a single non-en/non-fi locale (sv only)", () => {
+      // Rule: any single locale is enough. Display falls back through
+      // user-locale → en → first available, so a Swedish-only product
+      // still resolves for any viewer.
       const s = validConsumerState();
       s.translations = {
         sv: { name: "Klubb", description: "En klubb" },
       };
-      expect(validate(s, consumerConfig)).toEqual({
-        messageKey: "translationsMustHaveEnOrFi",
-      });
+      expect(validate(s, consumerConfig)).toBeNull();
     });
 
     it("rejects a half-filled locale tab", () => {

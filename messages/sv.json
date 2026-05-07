@@ -42,6 +42,9 @@
     "continue": "Fortsätt",
     "submit": "Skicka",
     "saveChanges": "Spara ändringar",
+    "on": "På",
+    "off": "Av",
+    "notSet": "Inte angivet",
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "getStarted": "Kom igång",
@@ -257,7 +260,7 @@
       },
       "translations": {
         "label": "Språk",
-        "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett av engelska eller finska krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska eller finska.",
+        "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska, eller på det språk som är ifyllt.",
         "addLocale": "+ Lägg till språk",
         "removeLocale": "Ta bort {locale}",
         "inlineCreateHint": "Sparas på {locale}. Översättningar till andra språk kan läggas till senare i ämne- och tagghanteringen."
@@ -266,6 +269,63 @@
         "back": "Tillbaka till {plural}",
         "kicker": "Nytt {label}",
         "title": "Nytt {label}"
+      },
+      "detailsPage": {
+        "notFound": "Produkten kunde inte hittas.",
+        "online": "Online",
+        "onlineWithin": "Online (inom {name})",
+        "locationMissing": "—",
+        "uncapped": "Ingen begränsning (gratis evenemang)",
+        "visible": "Synlig för föräldrar",
+        "hidden": "Dold för föräldrar",
+        "waitlistOn": "väntelista på",
+        "minutes": "{count} min",
+        "perMonth": "{amount} / månad",
+        "scheduleRow": "{day} · kl. {time} · {duration} min",
+        "billingMode": {
+          "paid": "Betald",
+          "free": "Gratis",
+          "external_contract": "Externt avtal (kommun)"
+        },
+        "fields": {
+          "topic": "Ämne",
+          "tags": "Taggar",
+          "padletUrl": "Padlet",
+          "locales": "Språk",
+          "ageRange": "Åldersintervall",
+          "spokenLanguage": "Talat språk",
+          "location": "Plats",
+          "startDate": "Startdatum",
+          "endDate": "Slutdatum",
+          "signupThreshold": "Anmälningströskel",
+          "schedule": "Schema",
+          "holidayCalendars": "Lovkalendrar",
+          "billingMode": "Fakturering",
+          "seats": "Platser",
+          "waitlist": "Väntelista",
+          "prices": "Priser",
+          "registrationOpensAt": "Anmälan öppnar",
+          "visibility": "Synlighet"
+        },
+        "placeholders": {
+          "groups": {
+            "title": "Grupper och Gedus",
+            "body": "När gamare anmäler sig skapar du grupper här, tilldelar Gedus och drar in oanmälda gamare till rätt rum."
+          },
+          "waitlist": {
+            "title": "Väntelista",
+            "body": "Gamare som inte fick någon plats visas här så att du kan flytta upp dem när platser frigörs."
+          },
+          "metrics": {
+            "title": "Affärsstatistik",
+            "body": "Anmälningsantal, intäkter och återbetalningar för den här produkten landar här när betaldatan är ansluten."
+          }
+        }
+      },
+      "editPage": {
+        "back": "Tillbaka till produkten",
+        "kicker": "Redigera {label}",
+        "title": "Redigera {name}"
       },
       "sections": {
         "identity": "Identitet",
@@ -449,7 +509,6 @@
       },
       "errors": {
         "translationRequired": "Minst ett språk med namn och beskrivning krävs",
-        "translationsMustHaveEnOrFi": "Lägg till en översättning på engelska eller finska — varje produkt behöver minst en av dem.",
         "translationIncomplete": "Fyll i både namn och beskrivning för fliken {locale}, eller ta bort den.",
         "topicRequired": "Ämne krävs",
         "spokenLanguageRequired": "Talat språk krävs",

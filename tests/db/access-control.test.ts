@@ -23,6 +23,7 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "get_my_groups",
 
   "create_product_v2",
+  "update_product_v2",
 ]);
 
 /**

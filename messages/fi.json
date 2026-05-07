@@ -42,6 +42,9 @@
     "continue": "Jatka",
     "submit": "Lähetä",
     "saveChanges": "Tallenna muutokset",
+    "on": "Päällä",
+    "off": "Pois",
+    "notSet": "Ei asetettu",
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
@@ -257,7 +260,7 @@
       },
       "translations": {
         "label": "Kielet",
-        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään englanti tai suomi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai suomeksi.",
+        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty.",
         "addLocale": "+ Lisää kieli",
         "removeLocale": "Poista {locale}",
         "inlineCreateHint": "Tallennetaan kielellä {locale}. Muiden kielten käännökset voi lisätä myöhemmin aiheiden ja tunnisteiden hallinnasta."
@@ -266,6 +269,63 @@
         "back": "Takaisin: {plural}",
         "kicker": "Uusi {label}",
         "title": "Uusi {label}"
+      },
+      "detailsPage": {
+        "notFound": "Tuotetta ei löytynyt.",
+        "online": "Verkossa",
+        "onlineWithin": "Verkossa ({name})",
+        "locationMissing": "—",
+        "uncapped": "Ei rajaa (maksuton tapahtuma)",
+        "visible": "Näkyy vanhemmille",
+        "hidden": "Piilotettu vanhemmilta",
+        "waitlistOn": "jonotuslista käytössä",
+        "minutes": "{count} min",
+        "perMonth": "{amount} / kk",
+        "scheduleRow": "{day} · klo {time} · {duration} min",
+        "billingMode": {
+          "paid": "Maksullinen",
+          "free": "Maksuton",
+          "external_contract": "Ulkoinen sopimus (kunta)"
+        },
+        "fields": {
+          "topic": "Aihe",
+          "tags": "Tunnisteet",
+          "padletUrl": "Padlet",
+          "locales": "Kielet",
+          "ageRange": "Ikäryhmä",
+          "spokenLanguage": "Puhuttu kieli",
+          "location": "Sijainti",
+          "startDate": "Alkamispäivä",
+          "endDate": "Päättymispäivä",
+          "signupThreshold": "Ilmoittautumiskynnys",
+          "schedule": "Aikataulu",
+          "holidayCalendars": "Lomakalenterit",
+          "billingMode": "Laskutus",
+          "seats": "Paikat",
+          "waitlist": "Jonotuslista",
+          "prices": "Hinnat",
+          "registrationOpensAt": "Ilmoittautuminen aukeaa",
+          "visibility": "Näkyvyys"
+        },
+        "placeholders": {
+          "groups": {
+            "title": "Ryhmät ja Gedut",
+            "body": "Kun pelaajat ilmoittautuvat, voit luoda täällä ryhmiä, lisätä Geduja ja siirtää ilman paikkaa olevat pelaajat oikeaan ryhmään."
+          },
+          "waitlist": {
+            "title": "Jonotuslista",
+            "body": "Pelaajat, jotka eivät saaneet paikkaa, näkyvät tässä, jotta voit nostaa heidät listalta paikkojen vapautuessa."
+          },
+          "metrics": {
+            "title": "Liiketoimintamittarit",
+            "body": "Tämän tuotteen ilmoittautumismäärät, liikevaihto ja palautukset näkyvät tässä, kun maksudata on valmis."
+          }
+        }
+      },
+      "editPage": {
+        "back": "Takaisin tuotteeseen",
+        "kicker": "Muokkaa: {label}",
+        "title": "Muokkaa: {name}"
       },
       "sections": {
         "identity": "Perustiedot",
@@ -449,7 +509,6 @@
       },
       "errors": {
         "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",
-        "translationsMustHaveEnOrFi": "Lisää käännös englanniksi tai suomeksi — jokaisella tuotteella on oltava vähintään toinen niistä.",
         "translationIncomplete": "Täytä sekä nimi että kuvaus välilehdellä {locale} tai poista välilehti.",
         "topicRequired": "Aihe vaaditaan",
         "spokenLanguageRequired": "Kieli vaaditaan",

@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Plus, Calendar, Users, Clock, Hourglass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { NavChevron } from "@/components/ui/nav-chevron";
 import { useProductsV2ByType } from "@/services/products-v2";
 import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -118,9 +119,13 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
                 ? renderPendingHint(pendingHintKey(p, now), uiLocale, t)
                 : null;
             return (
-              <Card key={p.id}>
-                <CardContent className="flex items-center gap-4 py-3">
-                  <div className="relative h-14 w-14 overflow-hidden rounded-md border bg-muted">
+              <Link
+                key={p.id}
+                href={`/admin/${config.routeSlug}/${p.id}`}
+                className="group flex items-center justify-between gap-4 rounded-lg border p-4 transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-4">
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md border bg-muted">
                     {thumbnailUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element -- admin list only; next/image unoptimized not worth the ceremony here
                       <img
@@ -130,7 +135,7 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
                       />
                     ) : null}
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate font-medium">
                         {tr?.name ?? t("list.untitled")}
@@ -182,8 +187,9 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
                       )}
                     </div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+                <NavChevron />
+              </Link>
             );
           })}
         </div>

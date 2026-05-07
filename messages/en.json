@@ -42,6 +42,9 @@
     "continue": "Continue",
     "submit": "Submit",
     "saveChanges": "Save Changes",
+    "on": "On",
+    "off": "Off",
+    "notSet": "Not set",
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "getStarted": "Get Started",
@@ -257,7 +260,7 @@
       },
       "translations": {
         "label": "Languages",
-        "hint": "Add the languages you want parents to be able to read this in. At least one of English or Finnish is required. Parents see this product in their UI language if available, otherwise in English, then Finnish.",
+        "hint": "Add the languages you want parents to be able to read this in. At least one is required. Parents see this product in their UI language if available, otherwise in English, then in whichever language is filled in.",
         "addLocale": "+ Add language",
         "removeLocale": "Remove {locale}",
         "inlineCreateHint": "Saved in {locale}. Translations for other languages can be added later from topic & tag management."
@@ -266,6 +269,63 @@
         "back": "Back to {plural}",
         "kicker": "New {label}",
         "title": "New {label}"
+      },
+      "detailsPage": {
+        "notFound": "Product not found.",
+        "online": "Online",
+        "onlineWithin": "Online (within {name})",
+        "locationMissing": "—",
+        "uncapped": "No cap (free event)",
+        "visible": "Visible to parents",
+        "hidden": "Hidden from parents",
+        "waitlistOn": "waitlist on",
+        "minutes": "{count} min",
+        "perMonth": "{amount} / month",
+        "scheduleRow": "{day} · {time} · {duration} min",
+        "billingMode": {
+          "paid": "Paid",
+          "free": "Free",
+          "external_contract": "External contract (municipality)"
+        },
+        "fields": {
+          "topic": "Topic",
+          "tags": "Tags",
+          "padletUrl": "Padlet",
+          "locales": "Languages",
+          "ageRange": "Age range",
+          "spokenLanguage": "Spoken language",
+          "location": "Location",
+          "startDate": "Start date",
+          "endDate": "End date",
+          "signupThreshold": "Signup threshold",
+          "schedule": "Schedule",
+          "holidayCalendars": "Holiday calendars",
+          "billingMode": "Billing",
+          "seats": "Seats",
+          "waitlist": "Waitlist",
+          "prices": "Prices",
+          "registrationOpensAt": "Registration opens",
+          "visibility": "Visibility"
+        },
+        "placeholders": {
+          "groups": {
+            "title": "Groups & Gedus",
+            "body": "Once gamers register, this is where you'll create groups, assign Gedus, and drag unassigned gamers into the right room."
+          },
+          "waitlist": {
+            "title": "Waitlist",
+            "body": "Gamers who couldn't get a seat will appear here so you can promote them as space opens."
+          },
+          "metrics": {
+            "title": "Business metrics",
+            "body": "Enrollment counts, revenue, and refunds for this product will land here once payments data is wired up."
+          }
+        }
+      },
+      "editPage": {
+        "back": "Back to product",
+        "kicker": "Edit {label}",
+        "title": "Edit {name}"
       },
       "sections": {
         "identity": "Identity",
@@ -449,7 +509,6 @@
       },
       "errors": {
         "translationRequired": "At least one language with name and description is required",
-        "translationsMustHaveEnOrFi": "Add a translation in English or Finnish — every product needs at least one of those.",
         "translationIncomplete": "Fill in both name and description for the {locale} tab, or remove it.",
         "topicRequired": "Topic is required",
         "spokenLanguageRequired": "Spoken language is required",

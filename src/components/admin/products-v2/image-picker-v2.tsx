@@ -6,13 +6,23 @@ import { useTranslations } from "next-intl";
 import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { productImageUrl } from "@/lib/images/product-image-url";
 import { cn } from "@/lib/utils";
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/svg+xml";
 
+// Three picker states:
+//   File   — admin just picked a new image (replaces on save).
+//   string — existing image_path on the product (edit mode); rendered
+//            from the storage bucket. Picking a new file replaces it,
+//            clearing wipes it. The route never trusts this string —
+//            it re-reads the existing path from the DB.
+//   null   — no image picked / cleared.
+export type ImagePickerV2Value = File | string | null;
+
 interface ImagePickerV2Props {
-  value: File | null;
-  onChange: (value: File | null) => void;
+  value: ImagePickerV2Value;
+  onChange: (value: ImagePickerV2Value) => void;
   disabled?: boolean;
 }
 
@@ -21,17 +31,20 @@ export function ImagePickerV2({ value, onChange, disabled }: ImagePickerV2Props)
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const previewUrl = useMemo(
-    () => (value ? URL.createObjectURL(value) : null),
-    [value]
-  );
+  // Object URLs need cleanup; bucket URLs don't. Track which kind we're
+  // rendering so the cleanup effect only fires for File values.
+  const previewUrl = useMemo(() => {
+    if (value instanceof File) return URL.createObjectURL(value);
+    if (typeof value === "string") return productImageUrl(value);
+    return null;
+  }, [value]);
 
   useEffect(() => {
-    if (previewUrl) {
+    if (value instanceof File && previewUrl) {
       return () => URL.revokeObjectURL(previewUrl);
     }
     return undefined;
-  }, [previewUrl]);
+  }, [value, previewUrl]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,7 +110,7 @@ export function ImagePickerV2({ value, onChange, disabled }: ImagePickerV2Props)
           >
             {t("chooseFile")}
           </Button>
-          {value && (
+          {value !== null && (
             <Button
               type="button"
               variant="ghost"

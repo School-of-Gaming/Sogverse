@@ -42,6 +42,9 @@
     "continue": "yIghoS",
     "submit": "yIlI'",
     "saveChanges": "choHmey yISaH",
+    "on": "tujpa'",
+    "off": "tujbe'",
+    "notSet": "ngoQbe'",
     "signIn": "yI'el",
     "signOut": "yImej",
     "getStarted": "DaH yIqet",
@@ -305,7 +308,7 @@
       },
       "translations": {
         "label": "Hol",
-        "hint": "Hol DIchu'. wa' DoS DIchu' — DIvI' Hol pagh Suomey Hol. vavmey Hol vIqIm pagh DIvI' Hol pagh Suomey Hol.",
+        "hint": "Hol DIchu'. wa' DoS DIchu' poQ. vavmey Hol vIqIm; pagh, DIvI' Hol; pagh, Hol DIchu'bogh.",
         "addLocale": "+ Hol chu'",
         "removeLocale": "{locale} pe'",
         "inlineCreateHint": "{locale} 'ay'wIj. latlh Hol chajwIj DaH ngeb."
@@ -314,6 +317,63 @@
         "back": "{plural} vIcheghmoH",
         "kicker": "{label} chu'",
         "title": "{label} chu'"
+      },
+      "detailsPage": {
+        "notFound": "Davchugh ghaj.",
+        "online": "QumlIj",
+        "onlineWithin": "QumlIj ({name})",
+        "locationMissing": "—",
+        "uncapped": "veH HuchHa' (Hong'a' Hubu')",
+        "visible": "vavpu' Daleghbej",
+        "hidden": "vavpu' SoQ",
+        "waitlistOn": "loS DIS naQ",
+        "minutes": "{count} tup",
+        "perMonth": "{amount} / jar",
+        "scheduleRow": "{day} · {time} · {duration} tup",
+        "billingMode": {
+          "paid": "Huch",
+          "free": "HuchHa'",
+          "external_contract": "DIvI' qaSpu'qa' (veng)"
+        },
+        "fields": {
+          "topic": "Doch",
+          "tags": "qonta'",
+          "padletUrl": "Padlet",
+          "locales": "Hol",
+          "ageRange": "ben'a'",
+          "spokenLanguage": "Hol jatlh",
+          "location": "Daq",
+          "startDate": "tagh jaj",
+          "endDate": "rIn jaj",
+          "signupThreshold": "ghIH yum",
+          "schedule": "naQ poH",
+          "holidayCalendars": "leSpoH naQ",
+          "billingMode": "Huch yIv",
+          "seats": "quS",
+          "waitlist": "loS DIS",
+          "prices": "Huchmey",
+          "registrationOpensAt": "ghIH poSchoH",
+          "visibility": "leghlu"
+        },
+        "placeholders": {
+          "groups": {
+            "title": "ghommey 'ej Gedus",
+            "body": "QojvIp tagh DIvI', ghommey vIchenmoH, Gedus vIlaH, 'ej veqlargh Hovmey vIvummoH."
+          },
+          "waitlist": {
+            "title": "loS DIS",
+            "body": "quS ghaj Hovmey loSlu'taHvIS naDev tu'lu', vaj ghuv quSmey ghoS DaH."
+          },
+          "metrics": {
+            "title": "Huch ngoq",
+            "body": "ghIH mI', Huch tlhutlh, 'ej Huch chegh tu'lu' naDev qaStaHvIS Huch De' chu'lu'pu'."
+          }
+        }
+      },
+      "editPage": {
+        "back": "Doch vIcheghmoH",
+        "kicker": "{label} yIchoH",
+        "title": "{name} yIchoH"
       },
       "sections": {
         "identity": "pong",
@@ -497,7 +557,6 @@
       },
       "errors": {
         "translationRequired": "wa' Hol pong QIn je poQ",
-        "translationsMustHaveEnOrFi": "DIvI' Hol pagh Suomey Hol — wa' poQ.",
         "translationIncomplete": "{locale} chajDaq pong QIn je yIchov, pagh yIpe'.",
         "topicRequired": "mu'meH poQ",
         "spokenLanguageRequired": "Hol poQ",

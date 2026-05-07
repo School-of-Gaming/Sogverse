@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Database } from "@/types";
 
-type RpcArgs = Database["public"]["Functions"]["create_product_v2"]["Args"];
+type RpcArgs = Database["public"]["Functions"]["update_product_v2"]["Args"];
 
 const EXT_TO_MIME: Record<string, string> = {
   jpg: "image/jpeg",
@@ -24,15 +24,12 @@ function friendlyRpcError(err: { code?: string; message: string }): string {
     case "23505": // unique_violation
       return "A product with these details already exists. Please change something and try again.";
     default:
-      // RAISE EXCEPTION messages from our own RPCs are already friendly
-      // ("Only admins can create products", "At least one translation is
-      // required", etc.). Pass them through.
       return err.message;
   }
 }
 
 function resolveUploadMeta(
-  file: File
+  file: File,
 ): { path: string; contentType: string } | null {
   const ext = (file.name.split(".").pop() ?? "").toLowerCase();
   const contentType = EXT_TO_MIME[ext];
@@ -41,9 +38,14 @@ function resolveUploadMeta(
   return { path: `${randomUUID()}.${normalised}`, contentType };
 }
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const { id } = await params;
+
   const result = await requireRole("admin", {
-    forbiddenMessage: "Only admins can create products",
+    forbiddenMessage: "Only admins can update products",
   });
   if (result instanceof NextResponse) return result;
   const { supabase } = result;
@@ -54,7 +56,7 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json(
       { error: "Request must be multipart/form-data" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -69,31 +71,79 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json(
       { error: "'data' field must be valid JSON" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   const file = formData.get("file");
-  const hasImage = file instanceof File;
-  if (hasImage && file.size > MAX_FILE_BYTES) {
+  const hasNewImage = file instanceof File;
+  if (hasNewImage && file.size > MAX_FILE_BYTES) {
     return NextResponse.json(
       { error: "Image must be 5 MB or smaller" },
-      { status: 413 }
+      { status: 413 },
     );
   }
-  const uploadMeta = hasImage ? resolveUploadMeta(file) : null;
-  if (hasImage && !uploadMeta) {
+  const uploadMeta = hasNewImage ? resolveUploadMeta(file) : null;
+  if (hasNewImage && !uploadMeta) {
     return NextResponse.json(
       { error: "Unsupported file type. Use JPEG, PNG, WEBP, AVIF, or SVG." },
-      { status: 415 }
+      { status: 415 },
     );
   }
 
-  // Build RPC args. Values we don't have go in as undefined so the RPC uses
-  // its DEFAULT NULL. Validation beyond "string is string" lives in the DB
-  // (CHECK constraints + location trigger on products_v2).
+  const clearImage = formData.get("clear_image") === "true";
+
+  // Read existing image_path so we know what blob (if any) to delete on a
+  // successful replace/clear. Doubles as a "does this product exist" check
+  // before we bother uploading anything.
+  const admin = createAdminClient();
+  const { data: existing, error: readError } = await admin
+    .from("products_v2")
+    .select("image_path")
+    .eq("id", id)
+    .maybeSingle();
+  if (readError) {
+    return NextResponse.json({ error: readError.message }, { status: 400 });
+  }
+  if (!existing) {
+    return NextResponse.json({ error: "Product not found" }, { status: 404 });
+  }
+  const existingPath = existing.image_path;
+
+  // Upload the new blob FIRST so the RPC can commit image_path atomically
+  // with the rest of the update. If the RPC then fails, we delete the
+  // newly-uploaded blob to avoid an orphan in the bucket. Mirrors the
+  // legacy update-product route.
+  if (hasNewImage && uploadMeta) {
+    const { error: uploadError } = await admin.storage
+      .from("product-images")
+      .upload(uploadMeta.path, file, {
+        contentType: uploadMeta.contentType,
+        upsert: false,
+      });
+    if (uploadError) {
+      return NextResponse.json(
+        { error: uploadError.message },
+        { status: 500 },
+      );
+    }
+  }
+
+  // Final image_path to commit. We deliberately don't trust any path
+  // string from the client — the existing path comes from the DB and the
+  // new path comes from the just-uploaded blob.
+  const finalImagePath: string | null = uploadMeta
+    ? uploadMeta.path
+    : clearImage
+      ? null
+      : existingPath;
+
+  // p_image_path's DEFAULT is NULL, so omitting it (undefined) and passing
+  // NULL produce the same effect — image_path is wiped. The cleared case
+  // (finalImagePath === null) and the "no DEFAULT for a nullable string"
+  // RpcArgs typing both land on undefined here.
   const rpcArgs: RpcArgs = {
-    p_product_type: body.product_type as RpcArgs["p_product_type"],
+    p_id: id,
     p_billing_mode: body.billing_mode as RpcArgs["p_billing_mode"],
     p_translations: body.translations as RpcArgs["p_translations"],
     p_topic_id: body.topic_id as string,
@@ -102,17 +152,17 @@ export async function POST(request: Request) {
     p_spoken_language_code: body.spoken_language_code as string,
     p_is_remote: body.is_remote as boolean,
     p_timezone: body.timezone as string,
-    p_status: (body.status as RpcArgs["p_status"]) ?? undefined,
+    p_registration_opens_at: body.registration_opens_at as string,
     p_is_visible: (body.is_visible as boolean | undefined) ?? undefined,
     p_waitlist_enabled:
       (body.waitlist_enabled as boolean | undefined) ?? undefined,
+    p_image_path: finalImagePath ?? undefined,
     p_padlet_url: (body.padlet_url as string | null) ?? undefined,
     p_location_id: (body.location_id as string | null) ?? undefined,
     p_signup_threshold: (body.signup_threshold as number | null) ?? undefined,
     p_start_date: (body.start_date as string | null) ?? undefined,
     p_end_date: (body.end_date as string | null) ?? undefined,
     p_seat_count: (body.seat_count as number | null) ?? undefined,
-    p_registration_opens_at: body.registration_opens_at as string,
     p_refund_policy_days:
       (body.refund_policy_days as number | null) ?? undefined,
     p_schedule_slots: body.schedule_slots as RpcArgs["p_schedule_slots"],
@@ -122,62 +172,36 @@ export async function POST(request: Request) {
       (body.holiday_calendar_ids as string[] | undefined) ?? undefined,
   };
 
-  // Call RPC through the user's session client — SECURITY INVOKER means
-  // get_user_role() needs auth.uid() populated. RLS on each table gates the
-  // inserts; the explicit admin check inside the RPC is belt-and-suspenders.
   const { data: productId, error: rpcError } = await supabase.rpc(
-    "create_product_v2",
-    rpcArgs
+    "update_product_v2",
+    rpcArgs,
   );
 
   if (rpcError) {
-    // The form validates everything client-side, so RPC errors here are
-    // mostly race conditions (an admin deleted a topic / location / tag
-    // between page load and submit). Translate Postgres native error
-    // codes to actionable messages; RAISE EXCEPTION messages from our
-    // own functions are already user-friendly and pass through.
+    if (uploadMeta) {
+      await admin.storage.from("product-images").remove([uploadMeta.path]);
+    }
     return NextResponse.json(
       { error: friendlyRpcError(rpcError) },
-      { status: 400 }
+      { status: 400 },
     );
   }
   if (!productId) {
+    if (uploadMeta) {
+      await admin.storage.from("product-images").remove([uploadMeta.path]);
+    }
     return NextResponse.json(
-      { error: "Failed to create product" },
-      { status: 500 }
+      { error: "Failed to update product" },
+      { status: 500 },
     );
   }
 
-  // Image-last pattern: if the RPC succeeded but upload or path-update fails,
-  // we return a soft warning. The product exists and is editable — admin can
-  // retry the image on the edit page. No orphan-image cleanup needed.
-  if (hasImage && uploadMeta) {
-    const admin = createAdminClient();
-    const { error: uploadError } = await admin.storage
-      .from("product-images")
-      .upload(uploadMeta.path, file, {
-        contentType: uploadMeta.contentType,
-        upsert: false,
-      });
-
-    if (uploadError) {
-      return NextResponse.json({
-        product_id: productId,
-        warning: `Product created but image upload failed: ${uploadError.message}. Retry from the edit page.`,
-      });
-    }
-
-    const { error: updateError } = await supabase
-      .from("products_v2")
-      .update({ image_path: uploadMeta.path })
-      .eq("id", productId);
-
-    if (updateError) {
-      return NextResponse.json({
-        product_id: productId,
-        warning: `Product created and image uploaded but DB update failed: ${updateError.message}. Retry from the edit page.`,
-      });
-    }
+  // Delete the old blob if its path is no longer referenced. Storage and
+  // DB are separate systems, so this cleanup happens after the RPC
+  // succeeds; if it fails we accept an orphan rather than rolling back
+  // the (now-committed) DB update.
+  if (existingPath && existingPath !== finalImagePath) {
+    await admin.storage.from("product-images").remove([existingPath]);
   }
 
   return NextResponse.json({ product_id: productId });
