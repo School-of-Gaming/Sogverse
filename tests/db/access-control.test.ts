@@ -24,6 +24,9 @@ const AUTHENTICATED_ALLOWLIST = new Set([
 
   "create_product_v2",
   "update_product_v2",
+
+  "get_product_groups_v2_with_details",
+  "commit_group_changes_v2",
 ]);
 
 /**

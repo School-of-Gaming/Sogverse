@@ -284,6 +284,54 @@ export type CreditDeductionV2 = Database["public"]["Tables"]["credit_deductions_
 // product_seat_counts_v2 (public-readable rollup feeding the realtime counter)
 export type ProductSeatCountV2 = Database["public"]["Tables"]["product_seat_counts_v2"]["Row"];
 
+// ---------------------------------------------------------------------------
+// products v2 — groups & gedu assignments (00049)
+// See docs/products-redesign.md §4.1, §5.4, §6.1a.
+// ---------------------------------------------------------------------------
+
+// product_groups_v2
+export type ProductGroupV2 = Database["public"]["Tables"]["product_groups_v2"]["Row"];
+export type ProductGroupV2Insert = Database["public"]["Tables"]["product_groups_v2"]["Insert"];
+export type ProductGroupV2Update = Database["public"]["Tables"]["product_groups_v2"]["Update"];
+
+// gedu_group_assignments_v2
+export type GeduGroupAssignmentV2 = Database["public"]["Tables"]["gedu_group_assignments_v2"]["Row"];
+export type GeduGroupAssignmentV2Insert = Database["public"]["Tables"]["gedu_group_assignments_v2"]["Insert"];
+
+// get_product_groups_v2_with_details — returns JSONB, so the generated type is
+// `Json`. Define a structured shape that mirrors what the RPC produces so the
+// admin UI gets type safety without a Zod parse step.
+export interface GroupV2GeduDetail {
+  id: string;
+  display_name: string;
+  email: string | null;
+}
+
+export interface GroupV2ParticipationDetail {
+  id: string;
+  gamer_id: string;
+  gamer_display_name: string;
+  gamer_date_of_birth: string | null;
+  gamer_gender: GenderType | null;
+  status: ParticipationStatus;
+  signed_up_at: string;
+}
+
+export interface ProductGroupV2WithDetails {
+  id: string;
+  name: string;
+  display_order: number;
+  created_at: string;
+  gedus: GroupV2GeduDetail[];
+  participations: GroupV2ParticipationDetail[];
+}
+
+export interface ProductGroupsV2Snapshot {
+  product_id: string;
+  groups: ProductGroupV2WithDetails[];
+  unassigned: GroupV2ParticipationDetail[];
+}
+
 // whatsapp_contacts
 export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"]["Row"];
 
