@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { ROUTES } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAllProducts } from "@/services/products";
@@ -36,11 +36,9 @@ export default function AdminProductsPage() {
             {t('manageCatalog')}
           </p>
         </div>
-        <Link href={ROUTES.admin.productsAdd}>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('addProduct')}
-          </Button>
+        <Link href={ROUTES.admin.productsAdd} className={buttonVariants()}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t('addProduct')}
         </Link>
       </div>
 

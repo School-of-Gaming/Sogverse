@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, User, Lock, Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -193,8 +193,11 @@ export default function GamerDetailsPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               {t('gamerDetail.notFound.description')}
             </p>
-            <Link href={ROUTES.customer.gamers} className="mt-4">
-              <Button variant="outline">{t('gamerDetail.backToGamers')}</Button>
+            <Link
+              href={ROUTES.customer.gamers}
+              className={buttonVariants({ variant: "outline", className: "mt-4" })}
+            >
+              {t('gamerDetail.backToGamers')}
             </Link>
           </CardContent>
         </Card>

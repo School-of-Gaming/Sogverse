@@ -13,7 +13,7 @@ import {
   Copy,
   Trash,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PadletLink } from "@/components/ui/padlet-link";
@@ -172,17 +172,19 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
             )}
             {isVisible ? t('hideProduct') : t('showProduct')}
           </Button>
-          <Link href={ROUTES.admin.productEdit(product.id)}>
-            <Button variant="outline">
-              <Pencil className="mr-2 h-4 w-4" />
-              {c('edit')}
-            </Button>
+          <Link
+            href={ROUTES.admin.productEdit(product.id)}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            {c('edit')}
           </Link>
-          <Link href={ROUTES.admin.productClone(product.id)}>
-            <Button variant="outline">
-              <Copy className="mr-2 h-4 w-4" />
-              {t('clone')}
-            </Button>
+          <Link
+            href={ROUTES.admin.productClone(product.id)}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            {t('clone')}
           </Link>
           <Button
             variant="destructive"

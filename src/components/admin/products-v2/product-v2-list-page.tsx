@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Calendar, Users, Clock, Hourglass } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { useProductsV2ByType } from "@/services/products-v2";
@@ -75,11 +75,12 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
             {t("list.subtitle", { plural })}
           </p>
         </div>
-        <Link href={`/admin/${config.routeSlug}/new`}>
-          <Button>
-            <Plus className="mr-1 h-4 w-4" />
-            {t("list.new", { label })}
-          </Button>
+        <Link
+          href={`/admin/${config.routeSlug}/new`}
+          className={buttonVariants()}
+        >
+          <Plus className="mr-1 h-4 w-4" />
+          {t("list.new", { label })}
         </Link>
       </div>
 

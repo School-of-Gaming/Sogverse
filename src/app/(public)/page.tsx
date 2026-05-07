@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
 import { ArrowRight, Shield, Users, Sparkles, Gamepad2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AboutSection } from "@/components/home/about-section";
 import { SectionPill } from "@/components/home/section-pill";
@@ -44,16 +44,18 @@ export default function HomePage() {
                 {t('hero.subtitle')}
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Link href={ROUTES.products}>
-                  <Button variant="outline" size="lg">
-                    {t('hero.viewClubs')}
-                  </Button>
+                <Link
+                  href={ROUTES.products}
+                  className={buttonVariants({ variant: "outline", size: "lg" })}
+                >
+                  {t('hero.viewClubs')}
                 </Link>
-                <Link href={ROUTES.register}>
-                  <Button size="lg" className="gap-2">
-                    {c('getStarted')}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+                <Link
+                  href={ROUTES.register}
+                  className={buttonVariants({ size: "lg", className: "gap-2" })}
+                >
+                  {c('getStarted')}
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>
@@ -150,13 +152,17 @@ export default function HomePage() {
               {t('cta.subheading')}
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <Link href={ROUTES.products}>
-                <Button variant="outline" size="lg">{c('exploreClubs')}</Button>
+              <Link
+                href={ROUTES.products}
+                className={buttonVariants({ variant: "outline", size: "lg" })}
+              >
+                {c('exploreClubs')}
               </Link>
-              <Link href={ROUTES.register}>
-                <Button size="lg">
-                  {t('cta.createFreeAccount')}
-                </Button>
+              <Link
+                href={ROUTES.register}
+                className={buttonVariants({ size: "lg" })}
+              >
+                {t('cta.createFreeAccount')}
               </Link>
             </div>
           </CardContent>

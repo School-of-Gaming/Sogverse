@@ -2,7 +2,7 @@
 
 import { useFormatter, useTranslations } from "next-intl";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
 import type { ProductTypeV2 } from "@/types";
@@ -146,10 +146,15 @@ function AlreadySignedUpPanel({
       <p className="text-sm text-muted-foreground">
         {t("alreadySignedUpActiveNote")}
       </p>
-      <Link href={myProductsHref} className="w-full">
-        <Button size="lg" variant="outline" className="w-full text-base">
-          {t("ctaViewMyProducts")}
-        </Button>
+      <Link
+        href={myProductsHref}
+        className={buttonVariants({
+          size: "lg",
+          variant: "outline",
+          className: "w-full text-base",
+        })}
+      >
+        {t("ctaViewMyProducts")}
       </Link>
     </PanelShell>
   );
@@ -539,15 +544,21 @@ function UnauthenticatedOverlay({
   const t = useTranslations("productDetail.signupPanel");
   return (
     <div className="flex flex-col gap-2">
-      <Link href={signInHref} className="w-full">
-        <Button size="lg" className="w-full text-base">
-          {t("ctaSignIn")}
-        </Button>
+      <Link
+        href={signInHref}
+        className={buttonVariants({ size: "lg", className: "w-full text-base" })}
+      >
+        {t("ctaSignIn")}
       </Link>
-      <Link href={createAccountHref} className="w-full">
-        <Button size="lg" variant="outline" className="w-full text-base">
-          {t("ctaCreateAccount")}
-        </Button>
+      <Link
+        href={createAccountHref}
+        className={buttonVariants({
+          size: "lg",
+          variant: "outline",
+          className: "w-full text-base",
+        })}
+      >
+        {t("ctaCreateAccount")}
       </Link>
     </div>
   );
@@ -572,10 +583,11 @@ function NoGamersOverlay({ addGamerHref }: { addGamerHref: string }) {
           {t("noGamersDescription")}
         </p>
       </div>
-      <Link href={addGamerHref} className="w-full">
-        <Button size="lg" className="w-full text-base">
-          {t("ctaAddGamer")}
-        </Button>
+      <Link
+        href={addGamerHref}
+        className={buttonVariants({ size: "lg", className: "w-full text-base" })}
+      >
+        {t("ctaAddGamer")}
       </Link>
     </div>
   );

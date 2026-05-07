@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Gamepad2 } from "lucide-react";
 import { useTranslations, useLocale, useFormatter } from "next-intl";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { GroupCard } from "@/components/ui/group-card";
 import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
@@ -53,10 +53,8 @@ export default function CustomerGamersPage() {
             {t('gamers.subtitle')}
           </p>
         </div>
-        <Link href={ROUTES.products}>
-          <Button>
-            {c('browseClubs')}
-          </Button>
+        <Link href={ROUTES.products} className={buttonVariants()}>
+          {c('browseClubs')}
         </Link>
       </div>
 
@@ -138,10 +136,11 @@ export default function CustomerGamersPage() {
             <p className="mt-2 text-center text-sm text-muted-foreground">
               {t('gamers.empty.description')}
             </p>
-            <Link href={ROUTES.products} className="mt-4">
-              <Button>
-                {c('browseClubs')}
-              </Button>
+            <Link
+              href={ROUTES.products}
+              className={buttonVariants({ className: "mt-4" })}
+            >
+              {c('browseClubs')}
             </Link>
           </CardContent>
         </Card>

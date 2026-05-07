@@ -113,12 +113,6 @@ These don't break flows, but real customers see them.
 
 **Fix when the real purchased layout lands:** branch the skeleton on a server-rendered hint or render a neutral subset.
 
-### Nested `<Link><Button>` interactive descendants — invalid HTML, a11y broken
-
-Five sites: `product-purchased-card-view.tsx:140-146`, `product-browse-card-view.tsx:170-172`, `signup-panel-view.tsx:149-153, 541-553, 575-580`. Renders `<a><button>…</button></a>` — invalid HTML, double-announcing screen readers, focus weirdness for keyboard users.
-
-**Fix:** `<Button asChild><Link …>…</Link></Button>` — shadcn pattern. Five small edits.
-
 ### Signup CTA missing spinner during submit
 
 `signup-panel-view.tsx:648-660`. The `committing` flag is correctly wired into `disabled` (matches CLAUDE.md rule). But no `Loader2` icon. Other forms in the project (admin form) include the icon.
