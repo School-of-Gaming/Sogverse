@@ -118,7 +118,12 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
                 ? renderPendingHint(pendingHintKey(p, now), uiLocale, t)
                 : null;
             return (
-              <Card key={p.id}>
+              <Link
+                key={p.id}
+                href={`/admin/${config.routeSlug}/${p.id}`}
+                className="block transition-shadow hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+              >
+              <Card>
                 <CardContent className="flex items-center gap-4 py-3">
                   <div className="relative h-14 w-14 overflow-hidden rounded-md border bg-muted">
                     {thumbnailUrl ? (
@@ -184,6 +189,7 @@ export function ProductV2ListPage({ productType }: ProductV2ListPageProps) {
                   </div>
                 </CardContent>
               </Card>
+              </Link>
             );
           })}
         </div>

@@ -35,6 +35,55 @@ export type ProductV2DetailRow = ProductV2BrowseRow & {
   holidays: { date: string; reason: string }[];
 };
 
+// Admin-only single-product detail. Unlike ProductV2DetailRow this is
+// NOT filtered on is_visible / status, so admins can fetch drafts and
+// cancelled rows. Carries everything the form needs to round-trip an
+// edit (tag IDs, holiday calendar IDs) plus readable strings the
+// details page renders (tag/topic translations, location chain,
+// holiday calendar names).
+export type ProductV2AdminDetailRow = ProductV2 & {
+  topics_v2:
+    | {
+        id: string;
+        slug: string;
+        kind: string;
+        topic_translations_v2: { locale: string; name: string }[];
+      }
+    | null;
+  product_translations_v2: ProductTranslationV2[];
+  product_tags_v2: {
+    tag_id: string;
+    tags_v2:
+      | {
+          slug: string;
+          tag_translations_v2: { locale: string; name: string }[];
+        }
+      | null;
+  }[];
+  product_prices_v2: {
+    currency: string;
+    price_per_session: number;
+    price_per_month: number;
+  }[];
+  schedule_slots_v2: {
+    weekday: number;
+    start_time: string;
+    duration_minutes: number;
+  }[];
+  locations:
+    | {
+        id: string;
+        name: string;
+        type: string;
+        parent: { id: string; name: string; type: string } | null;
+      }
+    | null;
+  product_holiday_calendars_v2: {
+    calendar_id: string;
+    holiday_calendars_v2: { name: string } | null;
+  }[];
+};
+
 export type ProductTranslationInput = {
   locale: SupportedLocale;
   name: string;
@@ -85,6 +134,41 @@ export type CreateProductV2Input = {
   prices: PriceInput[];
   holiday_calendar_ids: string[];
   image: File | null;
+};
+
+// Shape accepted by /api/admin/products-v2/[id]/update. Mirrors
+// update_product_v2() RPC args. Differs from CreateProductV2Input in:
+//   - no `product_type` (immutable; URL-locked)
+//   - no `status` (preserved by the RPC; effective status re-derives
+//     from the data fields this input edits)
+//   - `image` accepts `string` ("keep existing path") in addition to
+//     `File` (replace) and `null` (clear). The route reads the existing
+//     `image_path` from the DB to decide what to do — string values
+//     from the client are *not* trusted as-is; the route preserves the
+//     existing path on its own when the client signals "no change."
+export type UpdateProductV2Input = {
+  billing_mode: BillingModeV2;
+  translations: ProductTranslationInput[];
+  topic_id: string;
+  min_age: number;
+  max_age: number;
+  spoken_language_code: string;
+  padlet_url: string | null;
+  location_id: string | null;
+  is_remote: boolean;
+  signup_threshold: number | null;
+  start_date: string | null;
+  end_date: string | null;
+  timezone: string;
+  seat_count: number | null;
+  waitlist_enabled: boolean;
+  registration_opens_at: string;
+  is_visible: boolean;
+  schedule_slots: ScheduleSlotInput[];
+  tag_ids: string[];
+  prices: PriceInput[];
+  holiday_calendar_ids: string[];
+  image: File | string | null;
 };
 
 export class ProductsV2Service {
@@ -201,6 +285,59 @@ export class ProductsV2Service {
     if (!response.ok) {
       const data = (await response.json().catch(() => ({}))) as { error?: string };
       throw new Error(data.error ?? "Failed to create product");
+    }
+
+    const { product_id } = (await response.json()) as { product_id: string };
+    return product_id;
+  }
+
+  // Admin-only single-product fetch. Same join shape as getDetailById but
+  // WITHOUT the `is_visible = true` and `status IN (pending, running)`
+  // filters, so admins see drafts, hidden, and cancelled products too.
+  // Carries the IDs the form needs to round-trip an edit (tag_id,
+  // calendar_id) plus readable strings for the read-only details page.
+  async getByIdForAdmin(
+    id: string,
+  ): Promise<ProductV2AdminDetailRow | null> {
+    const { data, error } = await this.supabase
+      .from("products_v2")
+      .select(
+        "*, topics_v2(id, slug, kind, topic_translations_v2(locale, name)), product_translations_v2(*), product_tags_v2(tag_id, tags_v2(slug, tag_translations_v2(locale, name))), product_prices_v2(currency, price_per_session, price_per_month), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:locations!parent_id(id, name, type)), product_holiday_calendars_v2(calendar_id, holiday_calendars_v2(name))",
+      )
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+    return data as ProductV2AdminDetailRow;
+  }
+
+  async updateProduct(id: string, input: UpdateProductV2Input): Promise<string> {
+    const { image, ...metadata } = input;
+
+    const formData = new FormData();
+    formData.append("data", JSON.stringify(metadata));
+    // File = admin picked a new image to replace the current one.
+    // null when there used to be an image but the admin cleared it OR
+    //   when the product never had an image: the route distinguishes
+    //   via the `clear_image` field below + the existing DB row.
+    // string = "keep the existing path" — the route preserves it without
+    //   trusting the string value (it re-reads the existing path from
+    //   the DB and uses that).
+    if (image instanceof File) {
+      formData.append("file", image);
+    } else if (image === null) {
+      formData.append("clear_image", "true");
+    }
+
+    const response = await fetch(`/api/admin/products-v2/${id}/update`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      throw new Error(data.error ?? "Failed to update product");
     }
 
     const { product_id } = (await response.json()) as { product_id: string };

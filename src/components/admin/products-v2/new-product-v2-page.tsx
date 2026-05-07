@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { ProductTypeInfoCard } from "./product-type-info-card";
-import { ProductV2Form } from "./product-v2-form";
+import { ProductV2FormCreate } from "./product-v2-form-create";
 import { PRODUCT_TYPE_CONFIG } from "./product-v2-type-config";
 import type { ProductTypeV2 } from "@/types";
 
@@ -39,7 +39,7 @@ export function NewProductV2Page({ productType }: NewProductV2PageProps) {
 
       <ProductTypeInfoCard productType={productType} />
 
-      <ProductV2Form productType={productType} />
+      <ProductV2FormCreate productType={productType} />
     </div>
   );
 }

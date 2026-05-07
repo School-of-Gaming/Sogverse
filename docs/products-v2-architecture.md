@@ -11,7 +11,8 @@ For the design rationale, see `docs/products-redesign.md`. This doc covers what'
 - DB foundation: `products_v2`, `topics_v2`, `tags_v2`, translation child tables (`product_translations_v2`, `topic_translations_v2`, `tag_translations_v2`), holiday calendars, schedule slots, prices, groups, and the `site_details_v2` / `site_staff_details_v2` split for location extension data.
 - Admin creation UI for all four product types at `/admin/{consumer-clubs,municipality-clubs,camps,events}/new`, sharing one form with type-specific config (`product-v2-type-config.ts`).
 - Admin list pages for the same four types.
-- Server-side `create_product_v2` RPC plus inline-create routes for tags, topics, locations, FX rates, and site notes.
+- Admin details page at `/admin/{type}/[id]` (read-only summary + Edit button) and edit page at `/admin/{type}/[id]/edit` (the same form, pre-populated). The edit form is a thin wrapper around the shared `ProductV2FormShell` — same sections, same validation; the wrapper supplies the seeded state, the `update_product_v2` mutation, and post-save navigation back to the details page.
+- Server-side `create_product_v2` and `update_product_v2` RPCs plus inline-create routes for tags, topics, locations, FX rates, and site notes. Both RPCs commit parent + child sets atomically; the update RPC uses an upsert-then-delete-leftovers ordering on translations to avoid tripping the BEFORE-DELETE en/fi-keep trigger.
 - Effective-status derivation (TS + SQL twin) — `pending → running → completed` is computed at read time from stored facts, not driven by cron.
 
 **Parent browse (created on `feat/products-v2-browse-pages`):**
@@ -27,13 +28,17 @@ For the design rationale, see `docs/products-redesign.md`. This doc covers what'
 
 ```
 Pages (admin only)
-├── /admin/{consumer-clubs,municipality-clubs,camps,events}        → ProductV2ListPage (productType discriminator)
-└── /admin/{consumer-clubs,municipality-clubs,camps,events}/new    → NewProductV2Page
+├── /admin/{consumer-clubs,municipality-clubs,camps,events}             → ProductV2ListPage (productType discriminator)
+├── /admin/{consumer-clubs,municipality-clubs,camps,events}/new         → NewProductV2Page → ProductV2FormCreate
+├── /admin/{consumer-clubs,municipality-clubs,camps,events}/[id]        → ProductV2DetailsPage (read-only header + summary + Edit button)
+└── /admin/{consumer-clubs,municipality-clubs,camps,events}/[id]/edit   → EditProductV2Page → ProductV2FormEdit
 
 Form (src/components/admin/products-v2/)
-├── product-v2-form.tsx              — Shell: section wrappers, submit, mutation, navigation
+├── product-v2-form.tsx              — Shared shell: sections, validate, error display, committing flag
+├── product-v2-form-create.tsx       — Wraps shell with create mutation, "Create {label}", route to list
+├── product-v2-form-edit.tsx         — Wraps shell with update mutation, "Save changes", route to details
 ├── product-v2-form-state.ts         — Form state shape, defaults, reducers
-├── product-v2-build.ts              — Form state → RPC payload (the transformation pipeline)
+├── product-v2-build.ts              — Form state → RPC payload (build/validate + reverse transform)
 ├── product-v2-type-config.ts        — Per-type field availability, scheduling shape, pricing shape
 ├── effective-status.ts              — Derived status helper (TS twin of SQL effective_status_v2())
 └── sections/
@@ -60,7 +65,8 @@ Shared building blocks
 └── group-card.tsx                   — Group preview within form
 
 API routes (admin-only)
-├── /api/admin/products-v2/create    — Calls create_product_v2 RPC, then updates image_path
+├── /api/admin/products-v2/create        — Calls create_product_v2 RPC, then updates image_path
+├── /api/admin/products-v2/[id]/update   — Calls update_product_v2 RPC; uploads new blob first, deletes old/orphan blob after
 ├── /api/admin/locations/create      — Inline create from location picker
 ├── /api/admin/locations/[id]        — PATCH name only
 ├── /api/admin/topics-v2/create      — Inline create + single-locale translation
@@ -69,8 +75,8 @@ API routes (admin-only)
 └── /api/admin/fx-rates              — Proxies frankfurter.dev (cached 6h via fetch data cache)
 
 Services (src/services/products-v2/)
-├── products-v2.service.ts           — Read methods (listByType); write goes through API routes
-├── products-v2.queries.ts           — useProductsV2ByType, useCreateProductV2
+├── products-v2.service.ts           — Read methods (listByType, getByIdForAdmin); write goes through API routes
+├── products-v2.queries.ts           — useProductsV2ByType, useProductV2Admin, useCreateProductV2, useUpdateProductV2
 ├── reference-data.queries.ts        — useTopicsV2, useTagsV2, useHolidayCalendarsV2, etc.
 └── fx.queries.ts                    — useFxRates (calls /api/admin/fx-rates)
 
@@ -114,6 +120,28 @@ History: prior to migration `00035_decouple_draft_from_hidden.sql`, the form tie
 - `running` (stored or derived) → `completed` once `end_date` has passed.
 
 The TS helper (`effective-status.ts`) and the SQL function `effective_status_v2(product_id)` share the same rule. The SQL form is what RLS / list queries call when filtering by effective state.
+
+## Admin edit flow
+
+An admin edit goes through `update_product_v2()`, the sibling of `create_product_v2()`. Same shape minus the immutable fields (`product_type` is locked by the URL, `status` is preserved across the update so effective-status keeps deriving naturally from the data fields the admin actually changed). Inside one transaction the RPC updates the parent row and wipes-and-replaces every child set (translations, prices, schedule slots, tags, holiday-calendar links).
+
+**Translation wipe-and-replace ordering.** A naïve `DELETE FROM product_translations_v2 WHERE product_id = …` followed by `INSERT` would trip the BEFORE-DELETE en/fi-keep trigger on the last en/fi row. The RPC instead UPSERTs the new translation set first, *then* deletes leftovers (rows whose locale isn't in the new set). By the time deletes fire, the new en/fi row is already in place, so the trigger's "another en/fi row remains?" check passes for every leftover. See migration `00046_update_product_v2_rpc.sql`.
+
+**Image handling.** The RPC takes `p_image_path` as a regular argument; the API route owns the storage bucket dance around it. Mirrors the legacy update-product route, just wrapped around an RPC instead of a flat UPDATE:
+
+- **Replace:** Upload new blob → call RPC with the new path → on RPC failure delete the just-uploaded blob (no orphan); on success delete the old blob.
+- **Clear:** Call RPC with `p_image_path = NULL` → on success delete the old blob.
+- **Keep:** Pass the existing path through unchanged. Storage untouched. The route does NOT trust path strings from the client — the existing path comes from the DB; the new path comes from the just-uploaded blob.
+
+The RPC ensures DB atomicity; storage cleanup still has to live in the route because Supabase Storage is a separate system from the SQL transaction.
+
+**Reverse transform** (`existingFormState` in `product-v2-build.ts`) maps a fetched `ProductV2AdminDetailRow` back into `FormState` so the edit form re-renders the persisted data. Round-trip property: fetch → `existingFormState` → `buildUpdateInput` → RPC preserves the row's data fields (covered by `tests/unit/components/products-v2-existing-state.test.ts`). Decisions baked in:
+
+- `manualEdits` is seeded with all 3 currencies. Otherwise editing the EUR price would FX-overwrite the persisted GBP/USD values that the admin chose deliberately. Admin clears a cell to opt back into auto-fill.
+- `registrationOpensMode` is derived: future timestamp → `scheduled` (with date/hour/minute populated from the timestamp in Helsinki TZ); past timestamp → `immediately` (the form re-resolves to a fresh `now()` at submit, harmless because the timestamp is already in the past).
+- `groups: []` — the Groups section is UI-only on both create and edit. Future group/gamer assignment lives on the details page, not the form.
+
+**Status as a knob.** The edit form deliberately doesn't expose stored `status` — the field updates naturally because effective status is derived. Future "Cancel product" and "Save as draft" actions, when they ship, will set `status` via dedicated buttons rather than a form field.
 
 ## Site location split
 
@@ -357,6 +385,10 @@ Every browse + purchased card state is rendered on `/admin/ui-components` under 
 ## Future improvements
 
 These are known gaps tracked here so they aren't lost. None are blocking the current admin-only flow.
+
+### Admin details page — gamer/group management surface
+
+The current details page is a read-only summary + Edit button. Once participations land, the same page should host gamer→group assignment plus an "unassigned gamers" tray so admins can do roster work without leaving the product. Wire this in alongside the participation rollup — the Groups section on the *form* stays cosmetic regardless (groups belong on the details page, not the edit form). Cancel-product and Save-as-draft buttons also live here, not on the edit form.
 
 ### Extend `site_details_v2` read policy to purchasing customers
 

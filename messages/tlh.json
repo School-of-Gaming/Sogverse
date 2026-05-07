@@ -42,6 +42,8 @@
     "continue": "yIghoS",
     "submit": "yIlI'",
     "saveChanges": "choHmey yISaH",
+    "on": "tujpa'",
+    "off": "tujbe'",
     "signIn": "yI'el",
     "signOut": "yImej",
     "getStarted": "DaH yIqet",
@@ -314,6 +316,48 @@
         "back": "{plural} vIcheghmoH",
         "kicker": "{label} chu'",
         "title": "{label} chu'"
+      },
+      "detailsPage": {
+        "notFound": "Davchugh ghaj.",
+        "online": "QumlIj",
+        "onlineWithin": "QumlIj ({name})",
+        "locationMissing": "—",
+        "uncapped": "veH HuchHa' (Hong'a' Hubu')",
+        "visible": "vavpu' Daleghbej",
+        "hidden": "vavpu' SoQ",
+        "minutes": "{count} tup",
+        "perMonth": "{amount} / jar",
+        "scheduleRow": "{day} · {time} · {duration} tup",
+        "billingMode": {
+          "paid": "Huch",
+          "free": "HuchHa'",
+          "external_contract": "DIvI' qaSpu'qa' (veng)"
+        },
+        "fields": {
+          "topic": "Doch",
+          "tags": "qonta'",
+          "padletUrl": "Padlet",
+          "locales": "Hol",
+          "ageRange": "ben'a'",
+          "spokenLanguage": "Hol jatlh",
+          "location": "Daq",
+          "startDate": "tagh jaj",
+          "endDate": "rIn jaj",
+          "signupThreshold": "ghIH yum",
+          "schedule": "naQ poH",
+          "holidayCalendars": "leSpoH naQ",
+          "billingMode": "Huch yIv",
+          "seats": "quS",
+          "waitlist": "loS DIS",
+          "prices": "Huchmey",
+          "registrationOpensAt": "ghIH poSchoH",
+          "visibility": "leghlu"
+        }
+      },
+      "editPage": {
+        "back": "Doch vIcheghmoH",
+        "kicker": "{label} yIchoH",
+        "title": "{name} yIchoH"
       },
       "sections": {
         "identity": "pong",

@@ -43,7 +43,10 @@ export interface FormState {
   topicId: string;
   tagIds: Set<string>;
   padletUrl: string;
-  image: File | null;
+  // File   — newly picked replacement (admin uploaded a fresh image).
+  // string — existing image_path on the product (edit-mode load).
+  // null   — no image, or admin cleared the existing one.
+  image: File | string | null;
 
   // Inline topic create — single-locale (admin's current UI locale).
   // Other-locale names get added later in the (yet-to-be-built) reference-data

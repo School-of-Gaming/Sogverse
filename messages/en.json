@@ -42,6 +42,8 @@
     "continue": "Continue",
     "submit": "Submit",
     "saveChanges": "Save Changes",
+    "on": "On",
+    "off": "Off",
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "getStarted": "Get Started",
@@ -266,6 +268,48 @@
         "back": "Back to {plural}",
         "kicker": "New {label}",
         "title": "New {label}"
+      },
+      "detailsPage": {
+        "notFound": "Product not found.",
+        "online": "Online",
+        "onlineWithin": "Online (within {name})",
+        "locationMissing": "—",
+        "uncapped": "No cap (free event)",
+        "visible": "Visible to parents",
+        "hidden": "Hidden from parents",
+        "minutes": "{count} min",
+        "perMonth": "{amount} / month",
+        "scheduleRow": "{day} · {time} · {duration} min",
+        "billingMode": {
+          "paid": "Paid",
+          "free": "Free",
+          "external_contract": "External contract (municipality)"
+        },
+        "fields": {
+          "topic": "Topic",
+          "tags": "Tags",
+          "padletUrl": "Padlet",
+          "locales": "Languages",
+          "ageRange": "Age range",
+          "spokenLanguage": "Spoken language",
+          "location": "Location",
+          "startDate": "Start date",
+          "endDate": "End date",
+          "signupThreshold": "Signup threshold",
+          "schedule": "Schedule",
+          "holidayCalendars": "Holiday calendars",
+          "billingMode": "Billing",
+          "seats": "Seats",
+          "waitlist": "Waitlist",
+          "prices": "Prices",
+          "registrationOpensAt": "Registration opens",
+          "visibility": "Visibility"
+        }
+      },
+      "editPage": {
+        "back": "Back to product",
+        "kicker": "Edit {label}",
+        "title": "Edit {name}"
       },
       "sections": {
         "identity": "Identity",

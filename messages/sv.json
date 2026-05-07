@@ -42,6 +42,8 @@
     "continue": "Fortsätt",
     "submit": "Skicka",
     "saveChanges": "Spara ändringar",
+    "on": "På",
+    "off": "Av",
     "signIn": "Logga in",
     "signOut": "Logga ut",
     "getStarted": "Kom igång",
@@ -266,6 +268,48 @@
         "back": "Tillbaka till {plural}",
         "kicker": "Nytt {label}",
         "title": "Nytt {label}"
+      },
+      "detailsPage": {
+        "notFound": "Produkten kunde inte hittas.",
+        "online": "Online",
+        "onlineWithin": "Online (inom {name})",
+        "locationMissing": "—",
+        "uncapped": "Ingen begränsning (gratis evenemang)",
+        "visible": "Synlig för föräldrar",
+        "hidden": "Dold för föräldrar",
+        "minutes": "{count} min",
+        "perMonth": "{amount} / månad",
+        "scheduleRow": "{day} · kl. {time} · {duration} min",
+        "billingMode": {
+          "paid": "Betald",
+          "free": "Gratis",
+          "external_contract": "Externt avtal (kommun)"
+        },
+        "fields": {
+          "topic": "Ämne",
+          "tags": "Taggar",
+          "padletUrl": "Padlet",
+          "locales": "Språk",
+          "ageRange": "Åldersintervall",
+          "spokenLanguage": "Talat språk",
+          "location": "Plats",
+          "startDate": "Startdatum",
+          "endDate": "Slutdatum",
+          "signupThreshold": "Anmälningströskel",
+          "schedule": "Schema",
+          "holidayCalendars": "Lovkalendrar",
+          "billingMode": "Fakturering",
+          "seats": "Platser",
+          "waitlist": "Väntelista",
+          "prices": "Priser",
+          "registrationOpensAt": "Anmälan öppnar",
+          "visibility": "Synlighet"
+        }
+      },
+      "editPage": {
+        "back": "Tillbaka till produkten",
+        "kicker": "Redigera {label}",
+        "title": "Redigera {name}"
       },
       "sections": {
         "identity": "Identitet",

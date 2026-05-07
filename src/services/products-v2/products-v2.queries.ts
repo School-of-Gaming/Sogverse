@@ -6,6 +6,7 @@ import type { ProductTypeV2 } from "@/types";
 import {
   ProductsV2Service,
   type CreateProductV2Input,
+  type UpdateProductV2Input,
 } from "./products-v2.service";
 
 export const productV2Keys = {
@@ -17,6 +18,8 @@ export const productV2Keys = {
     [...productV2Keys.lists(), "visible", { type }] as const,
   detail: (id: string | undefined) =>
     [...productV2Keys.all, "detail", id] as const,
+  adminDetail: (id: string | undefined) =>
+    [...productV2Keys.all, "admin-detail", id] as const,
 };
 
 export function useProductV2Detail(id: string | undefined) {
@@ -50,6 +53,17 @@ export function useVisibleProductsV2ByType(type: ProductTypeV2) {
   });
 }
 
+export function useProductV2Admin(id: string | undefined) {
+  const supabase = getClient();
+  const service = new ProductsV2Service(supabase);
+
+  return useQuery({
+    queryKey: productV2Keys.adminDetail(id),
+    queryFn: () => service.getByIdForAdmin(id!),
+    enabled: !!id,
+  });
+}
+
 export function useCreateProductV2() {
   const queryClient = useQueryClient();
   const supabase = getClient();
@@ -59,6 +73,21 @@ export function useCreateProductV2() {
     mutationFn: (input: CreateProductV2Input) => service.createProduct(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: productV2Keys.lists() });
+    },
+  });
+}
+
+export function useUpdateProductV2(id: string) {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new ProductsV2Service(supabase);
+
+  return useMutation({
+    mutationFn: (input: UpdateProductV2Input) => service.updateProduct(id, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: productV2Keys.lists() });
+      queryClient.invalidateQueries({ queryKey: productV2Keys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: productV2Keys.adminDetail(id) });
     },
   });
 }

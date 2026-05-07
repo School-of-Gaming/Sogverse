@@ -42,6 +42,8 @@
     "continue": "Jatka",
     "submit": "Lähetä",
     "saveChanges": "Tallenna muutokset",
+    "on": "Päällä",
+    "off": "Pois",
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
@@ -266,6 +268,48 @@
         "back": "Takaisin: {plural}",
         "kicker": "Uusi {label}",
         "title": "Uusi {label}"
+      },
+      "detailsPage": {
+        "notFound": "Tuotetta ei löytynyt.",
+        "online": "Verkossa",
+        "onlineWithin": "Verkossa ({name})",
+        "locationMissing": "—",
+        "uncapped": "Ei rajaa (maksuton tapahtuma)",
+        "visible": "Näkyy vanhemmille",
+        "hidden": "Piilotettu vanhemmilta",
+        "minutes": "{count} min",
+        "perMonth": "{amount} / kk",
+        "scheduleRow": "{day} · klo {time} · {duration} min",
+        "billingMode": {
+          "paid": "Maksullinen",
+          "free": "Maksuton",
+          "external_contract": "Ulkoinen sopimus (kunta)"
+        },
+        "fields": {
+          "topic": "Aihe",
+          "tags": "Tunnisteet",
+          "padletUrl": "Padlet",
+          "locales": "Kielet",
+          "ageRange": "Ikäryhmä",
+          "spokenLanguage": "Puhuttu kieli",
+          "location": "Sijainti",
+          "startDate": "Alkamispäivä",
+          "endDate": "Päättymispäivä",
+          "signupThreshold": "Ilmoittautumiskynnys",
+          "schedule": "Aikataulu",
+          "holidayCalendars": "Lomakalenterit",
+          "billingMode": "Laskutus",
+          "seats": "Paikat",
+          "waitlist": "Jonotuslista",
+          "prices": "Hinnat",
+          "registrationOpensAt": "Ilmoittautuminen aukeaa",
+          "visibility": "Näkyvyys"
+        }
+      },
+      "editPage": {
+        "back": "Takaisin tuotteeseen",
+        "kicker": "Muokkaa: {label}",
+        "title": "Muokkaa: {name}"
       },
       "sections": {
         "identity": "Perustiedot",

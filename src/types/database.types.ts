@@ -1996,6 +1996,35 @@ export type Database = {
           refund_transaction_id: string
         }[]
       }
+      update_product_v2: {
+        Args: {
+          p_billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
+          p_end_date?: string
+          p_holiday_calendar_ids?: string[]
+          p_id: string
+          p_image_path?: string
+          p_is_remote: boolean
+          p_is_visible?: boolean
+          p_location_id?: string
+          p_max_age: number
+          p_min_age: number
+          p_padlet_url?: string
+          p_prices?: Json
+          p_refund_policy_days?: number
+          p_registration_opens_at: string
+          p_schedule_slots?: Json
+          p_seat_count?: number
+          p_signup_threshold?: number
+          p_spoken_language_code: string
+          p_start_date?: string
+          p_tag_ids?: string[]
+          p_timezone: string
+          p_topic_id: string
+          p_translations: Json
+          p_waitlist_enabled?: boolean
+        }
+        Returns: string
+      }
     }
     Enums: {
       billing_mode_v2: "paid" | "free" | "external_contract"
