@@ -28,6 +28,7 @@ import {
   type ProductV2AdminDetailRow,
 } from "@/services/products-v2";
 import { effectiveStatus } from "./effective-status";
+import { GroupsPanel } from "./groups/groups-panel";
 import { PRODUCT_TYPE_CONFIG } from "./product-v2-type-config";
 import type { ProductTypeV2 } from "@/types";
 
@@ -141,11 +142,8 @@ export function ProductV2DetailsPage({
 
       <KeyFacts product={product} topicName={topicName} tags={tags} uiLocale={uiLocale} t={t} c={c} />
 
-      <FuturePlaceholder
-        icon={Users}
-        title={t("detailsPage.placeholders.groups.title")}
-        body={t("detailsPage.placeholders.groups.body")}
-      />
+      <GroupsPanel productId={productId} />
+
       <FuturePlaceholder
         icon={Clock}
         title={t("detailsPage.placeholders.waitlist.title")}

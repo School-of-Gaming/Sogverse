@@ -353,6 +353,49 @@ export type Database = {
         }
         Relationships: []
       }
+      gedu_group_assignments_v2: {
+        Row: {
+          created_at: string
+          gedu_id: string
+          group_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          gedu_id: string
+          group_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          gedu_id?: string
+          group_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_group_assignments_v2_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_assignments_v2_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_assignments_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gedu_locations: {
         Row: {
           created_at: string
@@ -630,7 +673,7 @@ export type Database = {
             foreignKeyName: "participations_v2_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
-            referencedRelation: "product_groups"
+            referencedRelation: "product_groups_v2"
             referencedColumns: ["id"]
           },
           {
@@ -727,6 +770,41 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_groups_v2: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_groups_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
             referencedColumns: ["id"]
           },
         ]
@@ -1722,6 +1800,18 @@ export type Database = {
         }
         Returns: Json
       }
+      commit_group_changes_v2: {
+        Args: {
+          p_added_groups?: Json
+          p_deleted_group_ids?: string[]
+          p_gedu_assignments_added?: Json
+          p_gedu_assignments_removed?: Json
+          p_participation_moves?: Json
+          p_product_id: string
+          p_renamed_groups?: Json
+        }
+        Returns: Json
+      }
       compute_next_session: {
         Args: {
           p_day_of_week: number
@@ -1898,6 +1988,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_product_groups_v2_with_details: {
+        Args: { p_product_id: string }
+        Returns: Json
       }
       get_product_groups_with_details: {
         Args: { p_product_id: string }

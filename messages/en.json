@@ -346,8 +346,6 @@
           "camp": "Multiple days per week, each with its own start time and duration.",
           "event": "A single date and start time."
         },
-        "groups": "Groups",
-        "groupsDescription": "Admins use groups to organize participants inside a product. Parents don't see groups — they see the product.",
         "billing": "Capacity & billing",
         "billingDescription": {
           "consumerClub": "Parents pay per session their child attends. Billing happens automatically each week.",
@@ -495,8 +493,6 @@
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you'll need to cancel and refund from the product's page.",
         "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
         "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
-        "groupsHint": "Add groups now if you already know how you want to organize this — or leave this empty and add them later from the product page, once you see how many gamers sign up.",
-        "groupsNotWired": "Groups UI is in place but not yet wired to the backend — your group choices won't be saved on submit. Coming soon.",
         "billingHint": "Free events can have no seat limit. Paid events always have a seat count.",
         "freeDetail": "No charge. Anyone can join with one click.",
         "paidDetail": "One-time charge at signup.",
@@ -592,20 +588,69 @@
         "current": "Current",
         "alreadyAssigned": "Already assigned"
       },
-      "groups": {
-        "groupNumber": "Group {n}",
-        "groupNamePlaceholder": "Group name",
-        "removeGroup": "Remove group",
-        "assignedGedus": "Assigned Gedus",
-        "noGedusYet": "None yet. A group with no Gedus is fine — you can assign them later.",
-        "assignGedu": "Assign a Gedu",
-        "removeGedu": "Remove Gedu",
-        "noGroupsYet": "No groups yet.",
-        "noGroupsDetail": "Parents can still sign up. Their gamer will land in an \"unassigned\" inbox until you place them into a group.",
-        "defaultName": "Group {letter}",
-        "addGroup": "Add a group",
-        "addGeduTo": "Add Gedu to {name}",
-        "addGeduDescription": "Gedus assigned to this group run its sessions. For online products they can also hop into other groups' voice rooms in the same product when needed."
+      "groupsPanel": {
+        "title": "Groups",
+        "subtitle": "Drag each gamer into the group they'll play with. Add Gedus to lead each group.",
+        "addGroup": "Add group",
+        "loading": "Loading…",
+        "genderBoy": "boy",
+        "genderGirl": "girl",
+        "genderNonBinary": "non-binary",
+        "chip": {
+          "age": "{age}y"
+        },
+        "unassigned": {
+          "title": "Unassigned",
+          "subtitle": "Gamers who've paid but aren't in a group yet. Drag them into one to place them.",
+          "empty": "Everyone has a group."
+        },
+        "empty": {
+          "title": "No groups yet",
+          "description": "Add a group when you're ready to start placing gamers.",
+          "addFirst": "Add your first group"
+        },
+        "group": {
+          "defaultName": "Group {letter}",
+          "nameLabel": "Group name",
+          "namePlaceholder": "Name this group",
+          "nameRequired": "Give this group a name.",
+          "nameRequiredHint": "Some groups don't have a name yet.",
+          "deleteAria": "Delete {name}",
+          "gamerCount": "{count, plural, =0 {No gamers} =1 {1 gamer} other {# gamers}}",
+          "new": "New",
+          "markedForDeletion": "Will be deleted",
+          "assignedGedus": "Gedus",
+          "noGedus": "No Gedus yet.",
+          "addGedu": "Add Gedu",
+          "gamersLabel": "Gamers",
+          "empty": "No gamers here yet — drag one in.",
+          "willBeDeleted": "These gamers will move to Unassigned when you save.",
+          "geduStatusFootnote": "Some changes here aren't saved yet.",
+          "deleteConfirmTitle": "Delete {name}?",
+          "deleteConfirmEmpty": "Nobody is in this group, so deleting it just clears the Gedu assignments.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {1 gamer is in this group} other {# gamers are in this group}}. They'll move to Unassigned when you save."
+        },
+        "gedu": {
+          "pendingAdd": "Adding",
+          "pendingRemove": "Removing",
+          "removeAria": "Remove {name}"
+        },
+        "picker": {
+          "addTitle": "Add Gedu to {name}",
+          "addDescription": "A Gedu can only run one group per product. Anyone already assigned is greyed out."
+        },
+        "commitBar": {
+          "summary": "{count, plural, =1 {1 unsaved change} other {# unsaved changes}}",
+          "discard": "Discard",
+          "review": "Review changes"
+        },
+        "summary": {
+          "title": "Review changes",
+          "description": "All of these save together. If any one can't save, none of them will.",
+          "apply": "Save changes",
+          "applying": "Saving…",
+          "genericError": "Something went wrong. Please try again."
+        }
       }
     },
     "users": {

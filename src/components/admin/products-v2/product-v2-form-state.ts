@@ -1,7 +1,6 @@
 import { DEFAULT_CURRENCY, type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductTypeV2 } from "@/types";
-import type { GroupDraft } from "./group-card";
 import type {
   ProductTypeConfig,
   StartMode,
@@ -75,10 +74,6 @@ export interface FormState {
   scheduleSlots: ScheduleSlotDraft[];
   holidayCalendarIds: Set<string>;
   signupThreshold: string;
-
-  // Groups (UI-only — not wired to backend yet)
-  groups: GroupDraft[];
-  activeGroupSheetId: string | null;
 
   // Capacity & billing
   paidMode: PaidMode;
@@ -163,8 +158,6 @@ export function initialState(
     scheduleSlots: defaultSlots(config),
     holidayCalendarIds: new Set(),
     signupThreshold: "",
-    groups: [],
-    activeGroupSheetId: null,
     paidMode: initialPaidMode,
     prices: {
       eur: { session: "", month: "" },

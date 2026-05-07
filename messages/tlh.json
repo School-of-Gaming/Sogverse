@@ -394,8 +394,6 @@
           "camp": "law' jaj per Hogh, vay' poH tagh 'ej poH nab.",
           "event": "wa' jaj 'ej wa' poH tagh."
         },
-        "groups": "ghommey",
-        "groupsDescription": "ra'wI'pu' De' DochDaq ghommey lo'. vavmey ghommey luleghbe' — De' luleghlu'.",
         "billing": "pa' je Huch",
         "billingDescription": {
           "consumerClub": "vavmey Huch nob qaStaHvISmey lop puqpu'. Hogh nIDqu' tlhutlh.",
@@ -543,8 +541,6 @@
         "thresholdWithDate": "jaj taghDaq ghItlh law' pumchugh, De' Daq tlhotlh 'ej Huch chegh.",
         "timezoneFixedHelsinki": "poHmey Europe/Helsinki Daq. vavmey Daq poHchaj choHlu'.",
         "holidayHint": "jajmey Do' qaStaHvIS pagh qaS. wa' jajmey Do' DachoHchugh, Hoch ghor De'.",
-        "groupsHint": "DaH ghommey yIchu' tIghaj 'e' yIyajchugh — qoj chIm yIdaj 'ej tlhe'lu' De' Daq, ghItlh law' lulegh.",
-        "groupsNotWired": "ghom De'wI' Daq 'ach backend rarbe' — ghom wIvmey poljbe' pol. tagh DaH.",
         "billingHint": "Huch pagh Qu' pa' mI' Sub poQbe'. Huch Qu' pa' mI' Sub poQ.",
         "freeDetail": "Huch pagh. Hoch wa' chu'wI' lo'.",
         "paidDetail": "ghItlh wa' Huch.",
@@ -640,20 +636,69 @@
         "current": "DaH",
         "alreadyAssigned": "ngu'lu'pu'"
       },
-      "groups": {
-        "groupNumber": "ghom {n}",
-        "groupNamePlaceholder": "ghom pong",
-        "removeGroup": "ghom yIteq",
-        "assignedGedus": "Gedupu' ngu'lu'",
-        "noGedusYet": "ghaH pagh. Gedu pagh ghom QaQ — tlhe'lu' yIngu'.",
-        "assignGedu": "Gedu yIngu'",
-        "removeGedu": "Gedu yIteq",
-        "noGroupsYet": "ghom pagh.",
-        "noGroupsDetail": "vavmey loSlu'laH. ghom Daq ngu'be'pu' puq, ngu'mo' loS.",
-        "defaultName": "ghom {letter}",
+      "groupsPanel": {
+        "title": "ghommey",
+        "subtitle": "Suvwl' QujmeH ghomvaD yIngeH. ghom DevmeH Gedupu' yIchu'.",
         "addGroup": "ghom yIchu'",
-        "addGeduTo": "{name} ghomvaD Gedu yIchu'",
-        "addGeduDescription": "ghom Gedu ngu'lu' qaStaHvISmey lo'. rurmey De'mey, ghom voicemey latlh ghom rar."
+        "loading": "tIjwI'…",
+        "genderBoy": "loDHom",
+        "genderGirl": "be'Hom",
+        "genderNonBinary": "loDHomHey",
+        "chip": {
+          "age": "{age} DIS"
+        },
+        "unassigned": {
+          "title": "ngu'be'pu'",
+          "subtitle": "DIl Suvwl'pu', 'ach ghomDaq pagh. ghomvaD yIngeH ngu'meH.",
+          "empty": "Hoch ghom ghaj."
+        },
+        "empty": {
+          "title": "ghommey pagh",
+          "description": "ghom yIchu' Suvwl'pu' Daq ngu'meH.",
+          "addFirst": "wa'DIch ghom yIchu'"
+        },
+        "group": {
+          "defaultName": "ghom {letter}",
+          "nameLabel": "ghom pong",
+          "namePlaceholder": "ghom pong yIngu'",
+          "nameRequired": "ghom pong poQ!",
+          "nameRequiredHint": "ghommey law' pong luHutlh.",
+          "deleteAria": "{name} yIteq",
+          "gamerCount": "{count, plural, =0 {Suvwl'pu' pagh} =1 {1 Suvwl'} other {# Suvwl'pu'}}",
+          "new": "chu'",
+          "markedForDeletion": "teqlu'bogh",
+          "assignedGedus": "Gedupu'",
+          "noGedus": "Gedupu' pagh.",
+          "addGedu": "Gedu yIchu'",
+          "gamersLabel": "Suvwl'pu'",
+          "empty": "Suvwl' pagh — naDev yIngeH.",
+          "willBeDeleted": "DaQon DaH, Suvwl'vam ngu'be'pu' jolDaq lengtaH.",
+          "geduStatusFootnote": "DochwI' Qonbe' law'.",
+          "deleteConfirmTitle": "{name} yIteq'a'?",
+          "deleteConfirmEmpty": "ghomvamDaq Suvwl' pagh — Daj. Gedu ngu' je teqlu'.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {ghomvamDaq 1 Suvwl'} other {ghomvamDaq # Suvwl'pu'}}. DaQon DaH, ngu'be'pu' jolDaq lengtaH."
+        },
+        "gedu": {
+          "pendingAdd": "chu'lu'",
+          "pendingRemove": "teqlu'",
+          "removeAria": "{name} yIteq"
+        },
+        "picker": {
+          "addTitle": "{name} ghomvaD Gedu yIchu'",
+          "addDescription": "wa' Gedu, wa' ghom — Hoch Daq. ngu'lu'pu' wovbe'."
+        },
+        "commitBar": {
+          "summary": "{count, plural, =1 {1 Qonbe' DochwI'} other {# Qonbe' DochwI'pu'}}",
+          "discard": "yIqaw'be'",
+          "review": "DochwI' yIlegh"
+        },
+        "summary": {
+          "title": "DochwI'pu' yIlegh",
+          "description": "Hoch wa' DaQ Qonlu'. wa' Qaw'lu' chugh, pagh Qonlu'.",
+          "apply": "DochwI'pu' yIQon",
+          "applying": "Qonlu'taH…",
+          "genericError": "vay' Qaw'. ghopaq yIqIH."
+        }
       }
     },
     "users": {

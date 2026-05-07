@@ -28,7 +28,7 @@ interface GeduPickerSheetV2Props {
   excludeIds?: string[];
   /** The id currently filling this slot — shown with a "current" badge. */
   highlightId?: string;
-  onSelect: (geduId: string) => void;
+  onSelect: (gedu: Profile) => void;
 }
 
 export function GeduPickerSheetV2({
@@ -157,7 +157,7 @@ export function GeduPickerSheetV2({
                   isDisabled={isDisabled}
                   onClick={() => {
                     if (isDisabled) return;
-                    onSelect(g.id);
+                    onSelect(g);
                     handleOpenChange(false);
                   }}
                 />

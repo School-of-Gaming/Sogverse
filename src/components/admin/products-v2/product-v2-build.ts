@@ -521,8 +521,6 @@ export function existingFormState(
     ),
     signupThreshold:
       product.signup_threshold != null ? String(product.signup_threshold) : "",
-    groups: [],
-    activeGroupSheetId: null,
     paidMode,
     prices,
     manualEdits: new Set(SUPPORTED_CURRENCIES),

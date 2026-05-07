@@ -35,12 +35,15 @@ function Sheet({ open, onOpenChange, children }: SheetProps) {
   return createPortal(
     <div
       className={cn(
-        "fixed inset-0 z-50 transition-opacity duration-200",
-        open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+        "fixed inset-0 z-50",
+        open ? "pointer-events-auto" : "pointer-events-none",
       )}
     >
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        className={cn(
+          "fixed inset-0 bg-black/50 transition-opacity duration-200 ease-out",
+          open ? "opacity-100" : "opacity-0",
+        )}
         onClick={() => onOpenChange(false)}
       />
       <div
