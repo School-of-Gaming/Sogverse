@@ -168,11 +168,16 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 
 Development uses the **remote** Supabase instance (configured in `.env.local`). A separate local Supabase instance (Docker) is used **only** for database integration tests (`npm run test:db`) — these run automatically in CI and optionally locally. See `docs/local-supabase.md`.
 
-Migrations in `supabase/migrations/`. Seed data for local tests in `supabase/seed.sql`. After schema changes, regenerate types from the **remote** project:
-```bash
-supabase gen types typescript --project-id $SUPABASE_PROJECT_REF > src/types/database.types.ts
+Migrations in `supabase/migrations/`. Seed data for local tests in `supabase/seed.sql`. After schema changes, regenerate types from the **remote** project.
+
+**Environment note (Windows / PowerShell):** This project runs on Windows with PowerShell as the shell. `.env.local` is loaded by Node at app start; it is **not** loaded into the shell environment, so `$env:SUPABASE_PROJECT_REF` is empty unless you set it explicitly. Read the value out of `.env.local` instead. Also: do not redirect a native exe's stderr in PowerShell (`2>$null`, `2>&1`) — it wraps each line in a `NativeCommandError` and flips `$?` to false even on exit code 0.
+
+```powershell
+$ref = (Get-Content .env.local | Select-String '^SUPABASE_PROJECT_REF=').Line.Split('=')[1]
+supabase gen types typescript --project-id $ref | Out-File -Encoding utf8 src/types/database.types.ts
 ```
-The `npm run supabase:gen-types` script uses `--local` which requires Docker. For this project (remote Supabase, no local Docker), always use the command above with the project ref from `.env.local`.
+
+The `npm run supabase:gen-types` script uses `--local` which requires Docker. For this project (remote Supabase, no local Docker), always use the command above. Do **not** add `-NoNewline` to `Out-File` — the CLI emits the file as a single multi-line stream, and the flag collapses it into one literal line.
 
 **Important:** The gen-types command may append a CLI upgrade warning to the output file. Always check and remove any trailing non-TypeScript text from `src/types/database.types.ts` after generation.
 
@@ -181,29 +186,35 @@ The `npm run supabase:gen-types` script uses `--local` which requires Docker. Fo
 ### Remote Database Migrations
 
 1. **Link the project** (first time only):
-   ```bash
-   supabase link --project-ref $SUPABASE_PROJECT_REF
-   # Get the project ref from SUPABASE_PROJECT_REF in .env.local
-   # Enter the database password from SUPABASE_DB_PASSWORD in .env.local when prompted
+   ```powershell
+   $ref = (Get-Content .env.local | Select-String '^SUPABASE_PROJECT_REF=').Line.Split('=')[1]
+   supabase link --project-ref $ref
+   # Enter the database password from SUPABASE_DB_PASSWORD in .env.local when prompted.
    ```
 
 2. **Push migrations**:
-   ```bash
-   supabase db push -p "YOUR_DB_PASSWORD"
+   ```powershell
+   $pw = (Get-Content .env.local | Select-String '^SUPABASE_DB_PASSWORD=').Line.Substring('SUPABASE_DB_PASSWORD='.Length)
+   supabase db push -p $pw
    ```
-   The `-p` flag passes the database password inline, avoiding interactive prompts.
-   The password is stored in `.env.local` as `SUPABASE_DB_PASSWORD`. Note: if the password contains `%`, double it to `%%` for shell escaping.
+   `Substring` (not `Split('=')[1]`) keeps any `=` characters that appear inside the password itself. PowerShell does not need the `%%` cmd.exe escape.
 
 ### Migration Workflow (important)
 
 **Rule: When a migration adds or modifies functions/tables, push it to remote and regenerate types before committing.** DB tests and type-check depend on `database.types.ts` matching the schema. Since we don't run Docker locally, types are generated from the remote project. The full workflow for a migration PR:
 
 1. Write the migration SQL file
-2. Push to remote: `supabase db push -p "PASSWORD"`
-3. Regenerate types (use `2>/dev/null` to suppress CLI warnings):
-   ```bash
-   supabase gen types typescript --project-id $SUPABASE_PROJECT_REF 2>/dev/null > src/types/database.types.ts
+2. Push to remote (PowerShell, see § Remote Database Migrations above for the full command):
+   ```powershell
+   $pw = (Get-Content .env.local | Select-String '^SUPABASE_DB_PASSWORD=').Line.Substring('SUPABASE_DB_PASSWORD='.Length)
+   supabase db push -p $pw
    ```
+3. Regenerate types (PowerShell):
+   ```powershell
+   $ref = (Get-Content .env.local | Select-String '^SUPABASE_PROJECT_REF=').Line.Split('=')[1]
+   supabase gen types typescript --project-id $ref | Out-File -Encoding utf8 src/types/database.types.ts
+   ```
+   Do not redirect stderr — the CLI's "new version available" notice goes to stderr and the redirect makes PowerShell flip `$?` to false even on success. Just let the notice through; it doesn't pollute the output file.
 4. Check `src/types/index.ts` — add convenience aliases for any new tables/enums
 5. Commit migration + updated types + tests together in the PR
 

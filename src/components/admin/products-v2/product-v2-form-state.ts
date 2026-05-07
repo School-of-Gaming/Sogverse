@@ -35,7 +35,7 @@ export type TranslationDraft = { name: string; description: string };
 export interface FormState {
   // Per-locale name + description. Admin starts with one tab (their UI locale)
   // and can add more. Submission writes one product_translations_v2 row per
-  // locale present in this map. At least one of (en, fi) is required.
+  // locale present in this map. At least one filled locale is required (any).
   translations: Partial<Record<SupportedLocale, TranslationDraft>>;
   activeLocale: SupportedLocale;
 

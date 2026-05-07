@@ -308,7 +308,7 @@
       },
       "translations": {
         "label": "Hol",
-        "hint": "Hol DIchu'. wa' DoS DIchu' — DIvI' Hol pagh Suomey Hol. vavmey Hol vIqIm pagh DIvI' Hol pagh Suomey Hol.",
+        "hint": "Hol DIchu'. wa' DoS DIchu' poQ. vavmey Hol vIqIm; pagh, DIvI' Hol; pagh, Hol DIchu'bogh.",
         "addLocale": "+ Hol chu'",
         "removeLocale": "{locale} pe'",
         "inlineCreateHint": "{locale} 'ay'wIj. latlh Hol chajwIj DaH ngeb."
@@ -557,7 +557,6 @@
       },
       "errors": {
         "translationRequired": "wa' Hol pong QIn je poQ",
-        "translationsMustHaveEnOrFi": "DIvI' Hol pagh Suomey Hol — wa' poQ.",
         "translationIncomplete": "{locale} chajDaq pong QIn je yIchov, pagh yIpe'.",
         "topicRequired": "mu'meH poQ",
         "spokenLanguageRequired": "Hol poQ",

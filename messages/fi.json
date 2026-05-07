@@ -260,7 +260,7 @@
       },
       "translations": {
         "label": "Kielet",
-        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään englanti tai suomi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai suomeksi.",
+        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty.",
         "addLocale": "+ Lisää kieli",
         "removeLocale": "Poista {locale}",
         "inlineCreateHint": "Tallennetaan kielellä {locale}. Muiden kielten käännökset voi lisätä myöhemmin aiheiden ja tunnisteiden hallinnasta."
@@ -509,7 +509,6 @@
       },
       "errors": {
         "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",
-        "translationsMustHaveEnOrFi": "Lisää käännös englanniksi tai suomeksi — jokaisella tuotteella on oltava vähintään toinen niistä.",
         "translationIncomplete": "Täytä sekä nimi että kuvaus välilehdellä {locale} tai poista välilehti.",
         "topicRequired": "Aihe vaaditaan",
         "spokenLanguageRequired": "Kieli vaaditaan",

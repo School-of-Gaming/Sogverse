@@ -44,7 +44,6 @@ import type { ProductTypeConfig, StartMode } from "./product-v2-type-config";
 // caller's t(`errors.${messageKey}`) typechecks without a cast.
 export type ValidationKey =
   | "translationRequired"
-  | "translationsMustHaveEnOrFi"
   | "translationIncomplete"
   | "topicRequired"
   | "spokenLanguageRequired"
@@ -95,8 +94,9 @@ export function validate(
   state: FormState,
   config: ProductTypeConfig,
 ): ValidationFailure | null {
-  // Translations: at least one filled locale, at least one of (en, fi),
-  // and no half-filled tabs.
+  // Translations: at least one filled locale (any locale) and no
+  // half-filled tabs. The display fallback chain (preferred → en → first
+  // available) means a single locale of any kind is enough to render.
   const entries = Object.entries(state.translations) as [
     SupportedLocale,
     TranslationDraft,
@@ -106,8 +106,6 @@ export function validate(
     .map(([k]) => k);
 
   if (filledLocales.length === 0) return err("translationRequired");
-  if (!filledLocales.includes("en") && !filledLocales.includes("fi"))
-    return err("translationsMustHaveEnOrFi");
 
   for (const [locale, v] of entries) {
     if (!v.name.trim() || !v.description.trim()) {
@@ -226,30 +224,44 @@ function resolveRegistrationOpensAt(state: FormState): string {
 }
 
 /**
- * Build the request payload for /api/admin/products-v2/create from the
- * form state. Assumes `validate(state, config)` has already returned null
- * — the function trusts numeric fields parse, locales are filled, etc.
+ * Day of week for a YYYY-MM-DD calendar date, returned in our schema's
+ * convention (0=Mon..6=Sun). Independent of browser timezone — the date
+ * string is parsed as a calendar date in the local TZ via the (year,
+ * month, day) Date constructor, and the resulting day-of-week depends
+ * only on the calendar date, not the offset.
+ *
+ * Naïve `new Date("YYYY-MM-DD").getDay()` interprets the string as UTC
+ * midnight and reads getDay() in browser-local time, which is off-by-one
+ * for any admin in a timezone west of UTC near the day boundary.
+ */
+function weekdayFromDateString(dateStr: string): number {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const dayOfWeek = new Date(y, m - 1, d).getDay(); // 0=Sun..6=Sat
+  return (dayOfWeek + 6) % 7; // → 0=Mon..6=Sun
+}
+
+/**
+ * Fields that go into both the create and update payload. Everything the
+ * form lets an admin change lives here; create/update wrap with their
+ * unique fields (product_type+status / nothing).
+ *
+ * Assumes `validate(state, config)` returned null — numeric strings parse,
+ * locales are filled, prices are present when paid, etc.
  *
  * Subtle bits worth knowing:
  *   - For single_date events the schedule slot's weekday is *derived* from
- *     start_date, since the dropdown is hidden in the UI. JS Date.getDay()
- *     is 0=Sun..6=Sat; our schema is 0=Mon..6=Sun, hence (d+6)%7.
+ *     start_date, since the dropdown is hidden in the UI. See
+ *     `weekdayFromDateString` for the TZ caveat.
  *   - end_date for single_date events mirrors start_date so list/detail
  *     code only has to look at end_date for "is it over".
- *   - The form always creates products as `pending` regardless of visibility.
- *     `is_visible` is the sole knob the form exposes for "should parents see
- *     this?". `draft` is reserved in the schema for a future "save incomplete
- *     product" flow — it means *fields are missing*, not *hidden*. See
- *     docs/products-v2-architecture.md § "Status vs. visibility".
  *   - Prices are stored in *cents*. For upfront_total products we put the
  *     whole total in price_per_session and 0 in price_per_month; downstream
  *     billing branches on billing_mode.
  */
-export function buildCreateInput(
+function buildSharedFields(
   state: FormState,
-  productType: ProductTypeV2,
   config: ProductTypeConfig,
-): CreateProductV2Input {
+): Omit<UpdateProductV2Input, "image"> {
   const billingMode = effectiveBillingMode(config, state.paidMode);
   const pricingShape = effectivePricingShape(config);
   const usesDate = startModeUsesDate(state.startMode);
@@ -265,8 +277,7 @@ export function buildCreateInput(
 
   let finalSlots = state.scheduleSlots;
   if (config.scheduleShape === "single_date" && state.startDate) {
-    const dayOfWeek = new Date(state.startDate).getDay();
-    const weekday = (dayOfWeek + 6) % 7;
+    const weekday = weekdayFromDateString(state.startDate);
     finalSlots = [{ ...state.scheduleSlots[0], weekday }];
   }
 
@@ -279,7 +290,6 @@ export function buildCreateInput(
   }));
 
   return {
-    product_type: productType,
     billing_mode: billingMode,
     translations,
     topic_id: state.topicId,
@@ -289,7 +299,6 @@ export function buildCreateInput(
     padlet_url: state.padletUrl.trim() || null,
     location_id: state.locationId,
     is_remote: state.isRemote,
-    status: "pending",
     signup_threshold:
       usesThreshold && state.signupThreshold
         ? Number(state.signupThreshold)
@@ -326,6 +335,27 @@ export function buildCreateInput(
         })
       : [],
     holiday_calendar_ids: Array.from(state.holidayCalendarIds),
+  };
+}
+
+/**
+ * Build the request payload for /api/admin/products-v2/create.
+ *
+ * The form always creates products as `pending` regardless of visibility.
+ * `is_visible` is the sole knob the form exposes for "should parents see
+ * this?". `draft` is reserved in the schema for a future "save incomplete
+ * product" flow — it means *fields are missing*, not *hidden*. See
+ * docs/products-v2-architecture.md § "Status vs. visibility".
+ */
+export function buildCreateInput(
+  state: FormState,
+  productType: ProductTypeV2,
+  config: ProductTypeConfig,
+): CreateProductV2Input {
+  return {
+    ...buildSharedFields(state, config),
+    product_type: productType,
+    status: "pending",
     // Create form's initial state always seeds image as null, so the
     // string variant of FormState.image (used on edit) is unreachable
     // here. Narrow defensively for the typechecker.
@@ -348,77 +378,8 @@ export function buildUpdateInput(
   state: FormState,
   config: ProductTypeConfig,
 ): UpdateProductV2Input {
-  const billingMode = effectiveBillingMode(config, state.paidMode);
-  const pricingShape = effectivePricingShape(config);
-  const usesDate = startModeUsesDate(state.startMode);
-  const usesThreshold = startModeUsesThreshold(state.startMode);
-  const canUncap = config.productType === "event" && billingMode === "free";
-  const seatInputDisabled = canUncap && state.uncapped;
-  const showPricing =
-    billingMode === "paid" && config.pricingShape !== "external";
-
-  const minAge = Number(state.minAge);
-  const maxAge = Number(state.maxAge);
-  const seat = seatInputDisabled ? null : Number(state.seatCount);
-
-  let finalSlots = state.scheduleSlots;
-  if (config.scheduleShape === "single_date" && state.startDate) {
-    const dayOfWeek = new Date(state.startDate).getDay();
-    const weekday = (dayOfWeek + 6) % 7;
-    finalSlots = [{ ...state.scheduleSlots[0], weekday }];
-  }
-
-  const translations = (
-    Object.entries(state.translations) as [SupportedLocale, TranslationDraft][]
-  ).map(([locale, v]) => ({
-    locale,
-    name: v.name.trim(),
-    description: v.description.trim(),
-  }));
-
   return {
-    billing_mode: billingMode,
-    translations,
-    topic_id: state.topicId,
-    min_age: minAge,
-    max_age: maxAge,
-    spoken_language_code: state.spokenLanguageCode,
-    padlet_url: state.padletUrl.trim() || null,
-    location_id: state.locationId,
-    is_remote: state.isRemote,
-    signup_threshold:
-      usesThreshold && state.signupThreshold
-        ? Number(state.signupThreshold)
-        : null,
-    start_date: usesDate ? state.startDate || null : null,
-    end_date: !usesDate
-      ? null
-      : config.scheduleShape === "single_date"
-        ? state.startDate || null
-        : state.endDate || null,
-    timezone: FIXED_TIMEZONE,
-    seat_count: seat,
-    waitlist_enabled: state.waitlistEnabled,
-    registration_opens_at: resolveRegistrationOpensAt(state),
-    is_visible: state.isVisible,
-    schedule_slots: finalSlots,
-    tag_ids: Array.from(state.tagIds),
-    prices: showPricing
-      ? SUPPORTED_CURRENCIES.map((currency) => {
-          const row = state.prices[currency];
-          const sessionCents = decimalToCents(row.session) ?? 0;
-          const monthCents =
-            pricingShape === "session_and_month"
-              ? (decimalToCents(row.month) ?? 0)
-              : 0;
-          return {
-            currency,
-            price_per_session: sessionCents,
-            price_per_month: monthCents,
-          };
-        })
-      : [],
-    holiday_calendar_ids: Array.from(state.holidayCalendarIds),
+    ...buildSharedFields(state, config),
     image: state.image,
   };
 }
@@ -469,8 +430,10 @@ function inferStartMode(
  *     to a fresh now() at submit; harmless because the timestamp is
  *     already in the past).
  *   - `groups` is empty; the section is UI-only on both create and edit.
- *   - `uiLocale` becomes activeLocale only if the product has a
- *     translation in that locale; otherwise the first available locale.
+ *   - `activeLocale` follows the same fallback chain `resolveTranslation`
+ *     uses for display: the admin's UI locale → en → first available. With
+ *     ≥1 translation guaranteed by the RPC and trigger, the chain always
+ *     resolves to a present row.
  */
 export function existingFormState(
   product: ProductV2AdminDetailRow,
@@ -488,7 +451,9 @@ export function existingFormState(
   const activeLocale: SupportedLocale =
     translations[uiLocale] !== undefined
       ? uiLocale
-      : (translationLocales[0] ?? uiLocale);
+      : translations.en !== undefined
+        ? "en"
+        : (translationLocales[0] ?? uiLocale);
 
   // Per-currency record. Rows we don't have stay blank — that's invalid
   // for paid products, but the form's validate() will catch it on save

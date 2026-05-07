@@ -159,7 +159,33 @@ describe("existingFormState", () => {
     expect(state.startMode).toBe("threshold");
   });
 
-  it("falls back to first-available locale when uiLocale has no translation", () => {
+  it("falls back to en when uiLocale has no translation but en does", () => {
+    // Mirrors resolveTranslation's chain: uiLocale → en → first available.
+    const product = syntheticConsumerProduct();
+    product.product_translations_v2 = [
+      {
+        product_id: product.id,
+        locale: "en",
+        name: "Build Club",
+        description: "Build castles together.",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      {
+        product_id: product.id,
+        locale: "sv",
+        name: "Byggklubb",
+        description: "Bygg slott tillsammans.",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+    ];
+    const state = existingFormState(product, consumerConfig, "fi");
+
+    expect(state.activeLocale).toBe("en");
+  });
+
+  it("falls back to first-available locale when neither uiLocale nor en exist", () => {
     const product = syntheticConsumerProduct();
     product.product_translations_v2 = [
       {
@@ -171,7 +197,7 @@ describe("existingFormState", () => {
         updated_at: new Date().toISOString(),
       },
     ];
-    const state = existingFormState(product, consumerConfig, "en");
+    const state = existingFormState(product, consumerConfig, "sv");
 
     expect(state.activeLocale).toBe("fi");
   });

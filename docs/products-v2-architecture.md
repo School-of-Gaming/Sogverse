@@ -12,7 +12,7 @@ For the design rationale, see `docs/products-redesign.md`. This doc covers what'
 - Admin creation UI for all four product types at `/admin/{consumer-clubs,municipality-clubs,camps,events}/new`, sharing one form with type-specific config (`product-v2-type-config.ts`).
 - Admin list pages for the same four types.
 - Admin details page at `/admin/{type}/[id]` (compact header + "key facts" grid + dashed-bordered placeholder cards for the Groups & Gedus / Waitlist / Business metrics surfaces that ship with participations) and edit page at `/admin/{type}/[id]/edit` (the same form, pre-populated). The edit form is a thin wrapper around the shared `ProductV2FormShell` — same sections, same validation; the wrapper supplies the seeded state, the `update_product_v2` mutation, and post-save navigation back to the details page.
-- Server-side `create_product_v2` and `update_product_v2` RPCs plus inline-create routes for tags, topics, locations, FX rates, and site notes. Both RPCs commit parent + child sets atomically; the update RPC uses an upsert-then-delete-leftovers ordering on translations to avoid tripping the BEFORE-DELETE en/fi-keep trigger.
+- Server-side `create_product_v2` and `update_product_v2` RPCs plus inline-create routes for tags, topics, locations, FX rates, and site notes. Both RPCs commit parent + child sets atomically; the update RPC uses an upsert-then-delete-leftovers ordering on translations to avoid tripping the BEFORE-DELETE keep-≥1-row trigger.
 - Effective-status derivation (TS + SQL twin) — `pending → running → completed` is computed at read time from stored facts, not driven by cron.
 
 **Parent browse (created on `feat/products-v2-browse-pages`):**
@@ -88,9 +88,9 @@ i18n
 
 Per-locale child tables hold user-visible text. The parent rows hold only structural data.
 
-- **Resolver fallback chain:** `user locale → en → fi → first available` (`src/lib/i18n/resolve-translation.ts`).
-- **Products must keep ≥1 of (en, fi)** at all times. Enforced by `create_product_v2` payload validation and a `BEFORE DELETE` trigger on `product_translations_v2`. **Gap today:** an `UPDATE OF locale` (e.g. flipping `'en'` → `'sv'`) is not guarded — see Future improvements below.
-- **Topics and tags are not subject to the en/fi rule** — they're shared reference data and may exist in only one locale at first. Inline-create from the product form writes a single translation in the admin's current UI locale.
+- **Resolver fallback chain:** `user locale → en → first available` (`src/lib/i18n/resolve-translation.ts`). With ≥1 row guaranteed by the DB, the chain always resolves to a present row.
+- **Products must keep ≥1 translation row** in any locale at all times. Enforced by `create_product_v2` / `update_product_v2` payload validation (non-empty translation array) and a `BEFORE DELETE` trigger on `product_translations_v2` that rejects deletes leaving the product with no rows. The previous rule required `≥1 of (en, fi)` specifically; migration `00047_relax_product_translations_locale_rule.sql` relaxed it because the resolver's fallback chain no longer needs en/fi to always be present — "first available" handles single-locale products.
+- **Topics and tags follow the same rule** — they're shared reference data and may exist in only one locale at first. Inline-create from the product form writes a single translation in the admin's current UI locale.
 - **Sending all available translations to the client is intentional** — payloads stay small (max 4 locales × 2 short fields), and a future "view this product in another language" UI is trivial.
 
 ## Status vs. visibility
@@ -125,7 +125,7 @@ The TS helper (`effective-status.ts`) and the SQL function `effective_status_v2(
 
 An admin edit goes through `update_product_v2()`, the sibling of `create_product_v2()`. Same shape minus the immutable fields (`product_type` is locked by the URL, `status` is preserved across the update so effective-status keeps deriving naturally from the data fields the admin actually changed). Inside one transaction the RPC updates the parent row and wipes-and-replaces every child set (translations, prices, schedule slots, tags, holiday-calendar links).
 
-**Translation wipe-and-replace ordering.** A naïve `DELETE FROM product_translations_v2 WHERE product_id = …` followed by `INSERT` would trip the BEFORE-DELETE en/fi-keep trigger on the last en/fi row. The RPC instead UPSERTs the new translation set first, *then* deletes leftovers (rows whose locale isn't in the new set). By the time deletes fire, the new en/fi row is already in place, so the trigger's "another en/fi row remains?" check passes for every leftover. See migration `00046_update_product_v2_rpc.sql`.
+**Translation wipe-and-replace ordering.** A naïve `DELETE FROM product_translations_v2 WHERE product_id = …` followed by `INSERT` would trip the BEFORE-DELETE keep-≥1-row trigger when the product has only one row. The RPC instead UPSERTs the new translation set first, *then* deletes leftovers (rows whose locale isn't in the new set). By the time deletes fire, the new rows are already in place, so the trigger's "another row remains?" check passes for every leftover. See migrations `00046_update_product_v2_rpc.sql` and `00047_relax_product_translations_locale_rule.sql`.
 
 **Image handling.** The RPC takes `p_image_path` as a regular argument; the API route owns the storage bucket dance around it. Mirrors the legacy update-product route, just wrapped around an RPC instead of a flat UPDATE:
 
@@ -425,13 +425,15 @@ If the request is interrupted between the two awaits (network drop, lambda timeo
 
 **Fix:** Move both inserts into a single SQL function (`create_topic_v2`, `create_tag_v2`) that takes the parent + translation fields and writes both atomically. Matches the pattern set by `create_product_v2`. Removes the JS rollback path entirely.
 
-### Translation `UPDATE OF locale` can violate the en/fi-keep rule
+### `update_product_v2` silently wipes parent fields the form doesn't surface
 
-The `BEFORE DELETE` trigger on `product_translations_v2` enforces ≥1 of (en, fi) on deletes. It does **not** guard `UPDATE OF locale` — a direct `UPDATE product_translations_v2 SET locale = 'sv' WHERE locale = 'en'` succeeds even when no `fi` row exists, leaving the product without any en/fi translation.
+`update_product_v2` accepts every editable column as an RPC arg with `DEFAULT NULL`. Any field the build pipeline doesn't include in its payload (`buildSharedFields` in `product-v2-build.ts`) lands as `undefined` at the supabase client, gets sent to PostgREST without that key, and the SQL function uses the default — which for a non-required column means writing `NULL` to the column.
 
-**Impact:** Latent today (no edit-translations UI exists). Will become live the moment such a UI ships, unless the UI exclusively does DELETE+INSERT. If violated, English and Finnish parents see content in whatever locale the resolver falls back to (typically the first available row) — real text, but in a language they may not read.
+**Concrete trap:** `refund_policy_days` is in the schema (with a CHECK constraint scoping it to `camp` / `event`) but no UI surface sets it today. If a future feature, manual SQL, or backfill ever populates it, the next admin edit through the form will silently null the value back out.
 
-**Fix:** Add a `BEFORE UPDATE OF locale` trigger that runs the same en/fi check, or forbid `UPDATE OF locale` entirely and require admins to delete + insert.
+**Impact:** Latent — no products have `refund_policy_days` set today. Live the moment that changes. The same shape applies to any column added to `products_v2` later that isn't immediately wired into both the form and `buildSharedFields`.
+
+**Fix:** Two reasonable directions. Either make the route read the existing row and pass through any field the client didn't explicitly send (mirrors the existing `image_path` "keep current" behavior), or change the RPC to take an explicit "set" sentinel for each optional column so omission means "leave alone." The pure-RPC version is cleaner; the route-level version is less invasive.
 
 ### `effective_status_v2` SQL twin to mirror the TS helper
 
@@ -439,7 +441,7 @@ The TS helper (`effective-status.ts`) uses `date-fns-tz` to compare `start_date`
 
 ### Manage topic & tag translations admin UI
 
-Inline-create writes a single translation in the admin's current UI locale (intentional simplification). Topics and tags are not subject to the en/fi rule. Until a "Manage topic & tag translations" admin page ships, parents on a locale that lacks a topic/tag translation see the resolver fallback.
+Inline-create writes a single translation in the admin's current UI locale (intentional simplification). Until a "Manage topic & tag translations" admin page ships, parents on a locale that lacks a topic/tag translation see the resolver fallback (UI locale → en → first available).
 
 ### Browse page gates entire surface on three queries
 

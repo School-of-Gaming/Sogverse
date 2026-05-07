@@ -260,7 +260,7 @@
       },
       "translations": {
         "label": "Languages",
-        "hint": "Add the languages you want parents to be able to read this in. At least one of English or Finnish is required. Parents see this product in their UI language if available, otherwise in English, then Finnish.",
+        "hint": "Add the languages you want parents to be able to read this in. At least one is required. Parents see this product in their UI language if available, otherwise in English, then in whichever language is filled in.",
         "addLocale": "+ Add language",
         "removeLocale": "Remove {locale}",
         "inlineCreateHint": "Saved in {locale}. Translations for other languages can be added later from topic & tag management."
@@ -509,7 +509,6 @@
       },
       "errors": {
         "translationRequired": "At least one language with name and description is required",
-        "translationsMustHaveEnOrFi": "Add a translation in English or Finnish — every product needs at least one of those.",
         "translationIncomplete": "Fill in both name and description for the {locale} tab, or remove it.",
         "topicRequired": "Topic is required",
         "spokenLanguageRequired": "Spoken language is required",

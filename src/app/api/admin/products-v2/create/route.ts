@@ -25,8 +25,8 @@ function friendlyRpcError(err: { code?: string; message: string }): string {
       return "A product with these details already exists. Please change something and try again.";
     default:
       // RAISE EXCEPTION messages from our own RPCs are already friendly
-      // ("Only admins can create products", "Each product must keep at
-      // least one of (en, fi) translations", etc.). Pass them through.
+      // ("Only admins can create products", "At least one translation is
+      // required", etc.). Pass them through.
       return err.message;
   }
 }

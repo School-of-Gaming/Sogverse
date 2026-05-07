@@ -629,16 +629,16 @@ tag_translations_v2   (same shape; description nullable)
 **Resolution rule.** The reader picks one row per parent for display, walking the fallback chain in `src/lib/i18n/resolve-translation.ts`:
 
 ```
-user's UI locale → en → fi → first available
+user's UI locale → en → first available
 ```
 
 Sending all available translations to the client is intentional — payloads stay small (2 short fields per locale, max 4 locales) and a future "view this product in another language" UI is trivial. The browser just calls `resolveTranslation(parent.product_translations_v2, useLocale())`.
 
-**Must-have-en-or-fi rule for products.** Every product must keep at least one of (en, fi) translations at all times. Enforced two ways:
-- `create_product_v2()` rejects an `p_translations` payload that has no en or fi entry.
-- A BEFORE-DELETE trigger on `product_translations_v2` raises if the delete would leave the product without any en/fi row. (CASCADE on parent delete is allowed via a "parent gone?" check.)
+**Must-have-≥1-translation rule for products.** Every product must keep at least one translation row in any locale at all times. Enforced two ways:
+- `create_product_v2()` / `update_product_v2()` reject an empty `p_translations` payload.
+- A BEFORE-DELETE trigger on `product_translations_v2` raises if the delete would leave the product with no rows. (CASCADE on parent delete is allowed via a "parent gone?" check.)
 
-Topics and tags are not subject to the rule — they're shared reference data that may exist in only one locale at first.
+The same rule applies to topics and tags — they're shared reference data that may exist in only one locale at first.
 
 **Inline create stays single-locale.** When the admin clicks "+ Create new topic" / "+ Create new tag" in the product form, the new row is written with one translation — the admin's current UI locale. Other-locale translations for shared reference data get added later via a "Manage topic & tag translations" admin UI (not yet built — tracked as a follow-up).
 
@@ -1148,7 +1148,7 @@ If cutover happens after production launches with real customers on Sorg tokens,
 Prove the unified shape against the two product lines closest to real users. Status legend below: ✓ shipped, ◐ partially shipped, ○ not started.
 
 **Schema (§5)** — `_v2` tables.
-- ✓ `products_v2` + per-locale `product_translations_v2` (en/fi-keep rule enforced via `BEFORE DELETE` trigger and RPC payload validation).
+- ✓ `products_v2` + per-locale `product_translations_v2` (≥1-row rule enforced via `BEFORE DELETE` trigger and RPC payload validation).
 - ✓ `topics_v2`, `tags_v2`, `product_tags_v2` + per-locale `topic_translations_v2`, `tag_translations_v2`.
 - ✓ `schedule_slots_v2`.
 - ✓ `holiday_calendars_v2`, `calendar_holidays_v2`, `product_holiday_calendars_v2`.
@@ -1165,7 +1165,7 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - ○ `session_overrides_v2`, `session_substitutions_v2`, `session_attendance_v2`, `session_notes_v2`.
 
 **RPCs (§6)** — `_v2`.
-- ✓ `create_product_v2` — atomic insert across products + translations + schedule slots + tags + prices + holiday calendars; rejects payloads missing en/fi.
+- ✓ `create_product_v2` — atomic insert across products + translations + schedule slots + tags + prices + holiday calendars; rejects empty translation payloads.
 - ✓ Effective-status derivation — TS helper (`src/components/admin/products-v2/effective-status.ts`) and SQL twin `effective_status_v2(product_id)` both ship.
 - ◐ Participation lifecycle — `create_participation_v2`, `confirm_reservation_v2`, `expire_reservation_v2`, `join_waitlist_v2`, `cancel_participation_v2`, `apply_credit_motion_v2` ship; `promote_from_waitlist_v2` ships as a stub (not wired into a customer flow — see §11); `admin_remove_participation_v2` not started.
 - ○ Session operations (`cancel_session_v2`, `reschedule_session_v2`, `request_substitute_v2`, `assign_substitute_v2`, `record_attendance_v2`).

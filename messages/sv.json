@@ -260,7 +260,7 @@
       },
       "translations": {
         "label": "Språk",
-        "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett av engelska eller finska krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska eller finska.",
+        "hint": "Lägg till de språk du vill att föräldrar ska kunna läsa detta på. Minst ett krävs. Föräldrar ser produkten på sitt eget språk om det finns; annars på engelska, eller på det språk som är ifyllt.",
         "addLocale": "+ Lägg till språk",
         "removeLocale": "Ta bort {locale}",
         "inlineCreateHint": "Sparas på {locale}. Översättningar till andra språk kan läggas till senare i ämne- och tagghanteringen."
@@ -509,7 +509,6 @@
       },
       "errors": {
         "translationRequired": "Minst ett språk med namn och beskrivning krävs",
-        "translationsMustHaveEnOrFi": "Lägg till en översättning på engelska eller finska — varje produkt behöver minst en av dem.",
         "translationIncomplete": "Fyll i både namn och beskrivning för fliken {locale}, eller ta bort den.",
         "topicRequired": "Ämne krävs",
         "spokenLanguageRequired": "Talat språk krävs",

@@ -15,7 +15,8 @@ import { ensureTestTopicV2, deleteV2TestProducts } from "./v2-helpers";
  *   - non-admin denied (customer client gets 42501).
  *   - product_type and status are NOT mutable through this RPC (the
  *     stored status is preserved across an update).
- *   - en/fi rule still enforced on the new translation set.
+ *   - relaxed locale rule: any single locale is accepted (sv-only is
+ *     fine); empty translation set is rejected.
  *   - translation BEFORE-DELETE trigger doesn't trip on wipe-and-replace
  *     (the upsert-then-delete-leftovers ordering is the load-bearing
  *     piece — see migration 00046 header comment).
@@ -203,7 +204,10 @@ describe("update_product_v2", () => {
     expect(error?.code).toBe("42501");
   });
 
-  it("rejects translation set without en or fi", async () => {
+  it("accepts a single non-(en, fi) locale (sv only)", async () => {
+    // Confirms the relaxed rule: any single locale is enough. The
+    // display fallback chain (preferred → en → first available) means
+    // sv-only still resolves for every viewer.
     await freshProduct();
 
     const { error } = await admin.rpc("update_product_v2", {
@@ -217,9 +221,34 @@ describe("update_product_v2", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
+      p_seat_count: 10,
     });
-    expect(error).not.toBeNull();
-    expect(error?.message).toMatch(/at least one of \(en, fi\)/i);
+    expect(error).toBeNull();
+
+    const { data: trs } = await admin
+      .from("product_translations_v2")
+      .select("locale")
+      .eq("product_id", PRODUCT_ID);
+    expect(trs?.map((t) => t.locale).sort()).toEqual(["sv"]);
+  });
+
+  it("rejects an empty translation set", async () => {
+    await freshProduct();
+
+    const { error } = await admin.rpc("update_product_v2", {
+      p_id: PRODUCT_ID,
+      p_billing_mode: "paid",
+      p_translations: [],
+      p_topic_id: topicId,
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+    });
+    expect(error?.code).toBe("23514"); // check_violation
+    expect(error?.message).toMatch(/at least one translation/i);
   });
 
   it("returns no_data_found for an unknown product id", async () => {
@@ -236,7 +265,8 @@ describe("update_product_v2", () => {
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
     });
-    expect(error).not.toBeNull();
-    expect(error?.message).toMatch(/not found/i);
+    // SQLSTATE 02000 (no_data_found) — asserting on the code rather than
+    // the message text so a copy tweak doesn't break the test.
+    expect(error?.code).toBe("02000");
   });
 });

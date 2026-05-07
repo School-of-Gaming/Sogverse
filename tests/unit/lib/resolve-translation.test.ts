@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 
-// Fallback chain: user-locale → en → fi → first available. The exact
-// ordering matters — every translated entity (product, topic, tag) reads
-// through this function on the client. A swap of fi/en or of "first
-// available" with "last" silently mistranslates the whole site for users
-// whose locale isn't in the data.
+// Fallback chain: user-locale → en → first available. The exact ordering
+// matters — every translated entity (product, topic, tag) reads through
+// this function on the client. A swap of en with "first" or "last"
+// silently mistranslates the whole site for users whose locale isn't in
+// the data.
 
 interface Row {
   locale: string;
@@ -39,7 +39,7 @@ describe("resolveTranslation", () => {
     expect(resolveTranslation(rows, "sv")?.name).toBe("English");
   });
 
-  it("falls back to fi when both the user's locale and en are missing", () => {
+  it("falls back to the first row when neither user-locale nor en exist", () => {
     const rows: Row[] = [
       { locale: "fi", name: "Finnish" },
       { locale: "tlh", name: "Klingon" },
@@ -47,12 +47,11 @@ describe("resolveTranslation", () => {
     expect(resolveTranslation(rows, "sv")?.name).toBe("Finnish");
   });
 
-  it("falls back to the first row when neither user-locale nor en/fi exist", () => {
+  it("falls back to the first row when only non-en locales are present", () => {
     const rows: Row[] = [
       { locale: "tlh", name: "Klingon" },
       { locale: "sv", name: "Swedish" },
     ];
-    // Neither tlh nor en/fi == user's locale of, say, fi
     expect(resolveTranslation(rows, "fi")?.name).toBe("Klingon");
   });
 
