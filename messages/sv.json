@@ -10,7 +10,6 @@
       "resetPassword": "Återställ lösenord",
       "setupAccount": "Konfigurera ditt konto",
       "about": "Om oss",
-      "sorg": "Sogge – Sogversens valuta",
       "yty": "Yty – Sogversens kraft",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Administratörspanel",
@@ -56,7 +55,6 @@
     "unexpectedError": "Ett oväntat fel uppstod",
     "somethingWentWrong": "Något gick fel",
     "noPermission": "Du har inte behörighet att visa den här sidan.",
-    "sorgs": "Soggar",
     "perSession": "per session",
     "minutes": "min",
     "ages": "Ålder {min}–{max}",
@@ -672,24 +670,6 @@
       "unnamedGamer": "Namnlös spelare",
       "unnamedUser": "Namnlös användare",
       "noConnectedGamers": "Inga kopplade spelare",
-      "tokenBalance": "Sogge-saldo",
-      "tokenMonetaryWarning": "Varje Sogge är värd {rate}. Justeringar påverkar verkligt penningvärde.",
-      "amountLabel": "Belopp (+ för att lägga till, − för att ta bort)",
-      "amountPlaceholder": "t.ex. 10 eller -5",
-      "reasonLabel": "Anledning",
-      "reasonPlaceholder": "t.ex. Kompensation för missad session",
-      "adjustBalance": "Justera saldo",
-      "failedToAdjust": "Kunde inte justera saldot",
-      "transactionHistory": "Transaktionshistorik",
-      "adjustDialogTitle": "{action} {count, plural, one {# Sogge} other {# Soggar}}",
-      "adjustDialogDescription": "Detta kommer att {action} {count, plural, one {# Sogge} other {# Soggar}} {direction} {user}.",
-      "add": "Lägga till",
-      "remove": "Ta bort",
-      "to": "till",
-      "from": "från",
-      "thisUser": "denna användare",
-      "monetaryValue": "Penningvärde",
-      "adjusting": "Justerar...",
       "inviteNewGedu": "Bjud in ny Gedu",
       "sendInvitation": "Skicka en inbjudan via e-post till en ny spelfostrare",
       "newGeduInvitation": "Ny Gedu-inbjudan",
@@ -831,7 +811,6 @@
       "descriptionLabel": "Beskrivning",
       "descriptionPlaceholder": "Beskriv din produkt",
       "padletUrlLabel": "Padlet-URL",
-      "sorgCostLabel": "Sogge-kostnad (per session)",
       "approxPerSession": "≈ {amount} per session",
       "imageLabel": "Bild",
       "preview": "Förhandsgranska",
@@ -853,9 +832,6 @@
       "nameRequired": "Produktnamn krävs",
       "nameMaxLength": "Produktnamnet får vara högst 100 tecken",
       "descriptionRequired": "Beskrivning krävs",
-      "sorgCostNumber": "Sogge-kostnaden måste vara ett tal",
-      "sorgCostWhole": "Sogge-kostnaden måste vara ett heltal",
-      "sorgCostMin": "Sogge-kostnaden måste vara minst 1",
       "validUrl": "Måste vara en giltig URL",
       "gameRequired": "Spel krävs",
       "validTime": "Måste vara en giltig tid",
@@ -956,20 +932,6 @@
     "redirecting": "Omdirigerar till kassan...",
     "error": "Något gick fel vid kassan. <link>Gå tillbaka</link> och försök igen."
   },
-  "clubs": {
-    "tokenCost": "{cost} Soggar",
-    "detail": {
-      "backToClubs": "Tillbaka till klubbar",
-      "notFound": "Klubben hittades inte",
-      "notFoundDescription": "Denna klubb kanske inte längre finns tillgänglig.",
-      "every": "Varje {day}",
-      "enrollment": "Anmälan",
-      "onlyParents": "Bara föräldrakonton kan anmäla spelare till klubbar.",
-      "readyToEnroll": "Redo att anmäla?",
-      "readyToEnrollDescription": "Logga in eller skapa ett konto för att anmäla ditt barn till denna klubb.",
-      "logInToEnroll": "Logga in för att anmäla"
-    }
-  },
   "docs": {
     "minecraftApi": {
       "title": "Minecraft Server API",
@@ -1014,76 +976,6 @@
         "note4": "En <code>404</code> betyder att spelaren inte har kopplat sitt Minecraft-konto i Sogverse ännu. Du kan visa ett meddelande om att koppla sitt konto i profilinställningarna.",
         "note5": "Alla felsvar följer formatet <code>'{ \"error\": \"message\" }'</code>."
       }
-    }
-  },
-  "enrollment": {
-    "wizard": {
-      "title": "Anmäl din spelare",
-      "costDescription": "{cost} Soggar dras för den kommande sessionen",
-      "insufficientBalance": "Otillräckligt saldo",
-      "insufficientBalanceDescription": "Du behöver <strong>{cost} Soggar</strong> för att anmäla men har bara <strong>{balance}</strong>.",
-      "getMoreSorgs": "Skaffa fler Soggar",
-      "chooseGamer": "Välj vilken spelare du vill anmäla:",
-      "createNewGamer": "Skapa ny spelare",
-      "createGamerDescription": "Skapa ett nytt spelarkonto för ditt barn",
-      "chooseGroup": "Välj en grupp för {name}:",
-      "noGroupsAvailable": "Inga grupper tillgängliga för denna klubb ännu. Försök igen senare.",
-      "enrollmentSummary": "Sammanfattning av anmälan",
-      "summaryGamer": "Spelare",
-      "summaryGedu": "Gedu",
-      "summaryCost": "Kostnad",
-      "sorgAmount": "{amount} Soggar",
-      "currentBalance": "Nuvarande saldo",
-      "afterEnrollment": "Efter anmälan",
-      "enrolling": "Anmäler...",
-      "confirmEnrollment": "Bekräfta anmälan",
-      "enrolled": "Anmäld!",
-      "enrolledDescription": "<strong>{gamer}</strong> är nu anmäld i <strong>{club}</strong>.",
-      "newBalance": "Nytt saldo: {balance} Soggar",
-      "howToJoinTitle": "Så ansluter du till en session",
-      "howToJoinDescription": "När en session börjar visas en grön \"Live\"-bricka på gruppkortet i <strong>{name}s</strong> översikt. De kan klicka \"Gå med\" för att ansluta.",
-      "viewMyGamers": "Visa mina spelare",
-      "failedToEnroll": "Anmälan misslyckades",
-      "gamerCount": "{count, plural, one {# spelare} other {# spelare}}"
-    },
-    "gamerForm": {
-      "mustBeLoggedIn": "Du måste vara inloggad",
-      "credentialsAlertTitle": "Dela dessa uppgifter med ditt barn",
-      "credentialsAlertDescription": "Ditt barn använder användarnamnet och lösenordet nedan för att logga in på sitt eget spelarkonto. Det är säkrare än att dela ditt föräldralösenord — spelarkonton kan bara komma åt sina spel och sin profil, inte din fakturering eller kontoinställningar.",
-      "displayNameLabel": "Spelarens visningsnamn",
-      "displayNamePlaceholder": "Hur deras namn visas i spelet",
-      "usernamePlaceholder": "Välj ett unikt användarnamn",
-      "usernameHint": "Bara bokstäver, siffror och understreck",
-      "passwordPlaceholder": "Skapa ett lösenord",
-      "passwordHint": "Minst 6 tecken",
-      "confirmPasswordPlaceholder": "Bekräfta lösenordet",
-      "dateOfBirthLabel": "Födelsedatum",
-      "age": "Ålder: {age} {count, plural, one {år} other {år}}",
-      "genderLabel": "Kön",
-      "genderBoy": "Pojke",
-      "genderGirl": "Flicka",
-      "genderNonBinary": "Icke-binär",
-      "creating": "Skapar...",
-      "createGamer": "Skapa spelare"
-    },
-    "unenroll": {
-      "failedToUnenroll": "Avanmälan misslyckades",
-      "successTitle": "Avanmäld",
-      "successDescription": "<strong>{gamer}</strong> har avanmälts från <strong>{club}</strong>.",
-      "sorgsRefunded": "{amount} Soggar återbetalade",
-      "toYourBalance": "till ditt saldo.",
-      "noRefund": "Ingen återbetalning gjordes.",
-      "newBalance": "Nytt saldo: <strong>{balance} Soggar</strong>",
-      "done": "Klar",
-      "title": "Avanmäl {name}?",
-      "description": "Detta tar bort <strong>{gamer}</strong> från <strong>{club}</strong>.",
-      "club": "Klubb",
-      "gamer": "Spelare",
-      "refundEligible": "Du kommer att få en återbetalning på <strong>{cost} Soggar</strong>.",
-      "noRefundWithinWindow": "Ingen återbetalning görs — nästa session är inom {hours} timmar.",
-      "noChargeNextSession": "Du debiteras inte för nästa session.",
-      "unenrolling": "Avanmäler...",
-      "confirmUnenroll": "Bekräfta avanmälan"
     }
   },
   "feedback": {
@@ -1145,7 +1037,6 @@
     "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
     "noGamersEnrolled": "Inga spelare anmälda ännu.",
     "age": "Ålder {age}",
-    "sorgsPerWeek": "{cost} Soggar / vecka",
     "unenrollGamer": "Avanmäl {name}",
     "noGroupsYet": "Inga grupper ännu",
     "nextSession": "Nästa: {date}",
@@ -1178,12 +1069,10 @@
       "clubs": "Klubbar",
       "camps": "Läger",
       "events": "Evenemang",
-      "sorg": "Sogge",
       "yty": "Yty",
       "about": "Om oss"
     },
-    "toggleMenu": "Växla meny",
-    "tokenBalance": "{count} Soggar"
+    "toggleMenu": "Växla meny"
   },
   "productBrowse": {
     "headings": {
@@ -1407,7 +1296,6 @@
     "testing": "Testning",
     "feedback": "Feedback",
     "settings": "Inställningar",
-    "sorg": "Sogge",
     "myGamers": "Mina spelare",
     "home": "Hem",
     "myGroups": "Mina grupper",
@@ -1481,10 +1369,6 @@
           "title": "Mina spelare",
           "description": "Visa och hantera dina spelarkonton"
         },
-        "sorg": {
-          "title": "Sogge-tokens",
-          "description": "Kontrollera saldo och köp tokens"
-        },
         "browseClubs": {
           "title": "Bläddra bland klubbar",
           "description": "Hitta och anmäl dig till spelklubbar"
@@ -1493,27 +1377,7 @@
           "title": "Inställningar",
           "description": "Hantera dina kontoinställningar"
         }
-      },
-      "gettingStarted": {
-        "title": "Kom igång",
-        "subtitle": "Följ dessa steg för att få din spelare igång",
-        "step1": {
-          "title": "Köp Sogge-tokens",
-          "description": "Sogge-tokens används för att betala för spelsessioner. Gå till Sogge-sidan för att köpa ett paket eller prenumerera."
-        },
-        "step2": {
-          "title": "Bläddra bland klubbar",
-          "description": "Utforska våra spelklubbar och hitta den perfekta passformen för ditt barns ålder och intressen."
-        },
-        "step3": {
-          "title": "Anmäl din spelare",
-          "description": "Skapa ett spelarkonto och anmäl dem till en klubb. De är redo att gå med i sin första session!"
-        }
       }
-    },
-    "billing": {
-      "error": "Kunde inte öppna faktureringsportalen. Försök igen eller besök <link>Sogge-sidan</link>.",
-      "redirecting": "Omdirigerar till faktureringsportalen..."
     },
     "gamers": {
       "title": "Mina spelare",
@@ -1555,11 +1419,6 @@
         "updatePassword": "Uppdatera lösenord"
       }
     },
-    "sorg": {
-      "title": "Sogge-tokens",
-      "subtitle": "Köp tokens och hantera ditt saldo",
-      "transactionHistory": "Transaktionshistorik"
-    },
     "switchToGamer": {
       "title": "Byt till {name}?",
       "description": "Du loggas in som <bold>{name}</bold>. Du kan byta tillbaka till ditt föräldrakonto från spelarens översikt.",
@@ -1584,141 +1443,7 @@
     "minecraftCleared": "Minecraft-användarnamn borttaget.",
     "failedToUpdateMinecraft": "Kunde inte uppdatera Minecraft-användarnamn.",
     "saveMinecraft": "Spara Minecraft-användarnamn",
-    "notifications": "Notifieringar",
-    "notificationsDescription": "Konfigurera hur du får notifieringar",
-    "notificationsComingSoon": "Notifieringsinställningar kommer snart.",
-    "appearance": "Utseende",
-    "appearanceDescription": "Anpassa utseendet",
-    "appearanceComingSoon": "Temainställningar kommer snart.",
     "spokenLanguages": "Talade språk"
-  },
-  "sorg": {
-    "hero": {
-      "title": "Vad är <primary>Sogge</primary>?",
-      "subtitle": "Sogge är valutan som driver ditt barns klubbsessioner i Sogverse. Föräldrar köper Soggar och de används för att betala för veckovisa sessioner — enkelt, transparent och flexibelt."
-    },
-    "overview": {
-      "heading": "Så fungerar det",
-      "text": "Varje klubbsession kostar ett visst antal Soggar. När du anmäler ditt barn till en klubb dras Soggar automatiskt varje vecka för deras session. Köp ett tokenpaket eller prenumerera månadsvis — det som passar din familj bäst."
-    },
-    "benefits": {
-      "heading": "Varför Soggar?",
-      "subheading": "Ett enkelt och rättvist sätt att betala för ditt barns klubbar",
-      "payPerSession": {
-        "title": "Betala per session",
-        "description": "Soggar dras en gång i veckan för varje anmäld klubb. Du betalar bara för sessionerna ditt barn deltar i — inga långtidskontrakt."
-      },
-      "fullTransparency": {
-        "title": "Full transparens",
-        "description": "Se exakt vart varje Sogge går. Din föräldraöversikt visar ditt saldo, transaktionshistorik och kommande debiteringar."
-      },
-      "flexibleTopUps": {
-        "title": "Flexibla påfyllningar",
-        "description": "Köp ett engångspaket med tokens när du behöver det, eller prenumerera för en månatlig tilldelning till bättre pris. Ändra eller avsluta när som helst."
-      },
-      "safeByDesign": {
-        "title": "Säkert av design",
-        "description": "Soggar finns bara inom Sogverse. Bara föräldrar kan se saldon och göra köp — barn exponeras aldrig för valutan. Inga överraskningar."
-      }
-    },
-    "faqs": {
-      "heading": "Vanliga frågor",
-      "isRealMoney": {
-        "question": "Är Sogge riktiga pengar?",
-        "answer": "Soggar köps med riktiga pengar men finns bara inom Sogverse. De kan inte överföras utanför plattformen, men om du vill ha återbetalning på oanvända Soggar, kontakta vårt supportteam."
-      },
-      "howSpent": {
-        "question": "Hur används Soggar?",
-        "answer": "Varje klubbsession kostar ett visst antal Soggar, som visas på klubbsidan. Soggar dras automatiskt en gång i veckan när ditt barns session är schemalagd."
-      },
-      "parentControl": {
-        "question": "Kan föräldrar kontrollera utgifterna?",
-        "answer": "Ja. Soggar är helt osynliga för barn. Bara föräldrar kan se saldon, köpa tokens och se utgiftshistorik i föräldraöversikten."
-      },
-      "doExpire": {
-        "question": "Går Soggar ut?",
-        "answer": "Nej. När de väl är köpta stannar Soggar på ditt konto tills de används för klubbsessioner. Det finns inga utgångsdatum eller dolda avgifter."
-      },
-      "refund": {
-        "question": "Kan jag få återbetalning?",
-        "answer": "Om du avanmäler en spelare minst 24 timmar innan en session börjar, återbetalas Soggar för den sessionen automatiskt till ditt saldo. För allt annat, kontakta vårt supportteam — vi hjälper gärna till."
-      }
-    },
-    "cta": {
-      "heading": "Redo att komma igång?",
-      "subheading": "Skapa ett konto, skaffa lite Soggar och anmäl ditt barn till sin första klubb."
-    }
-  },
-  "tokens": {
-    "balance": {
-      "title": "Sogge-saldo"
-    },
-    "subscription": {
-      "label": "Prenumeration",
-      "tierLabelFull": "{name} — {amount} Soggar/mån",
-      "tierLabelAmount": "{amount} Soggar/mån",
-      "paymentFailed": "Betalning misslyckades",
-      "paymentFailedDescription": "Din senaste betalning misslyckades. <link>Uppdatera din betalningsmetod</link> för att fortsätta din prenumeration.",
-      "nextPayment": "Nästa betalning den {date}",
-      "activeRenews": "Aktiv — förnyas automatiskt",
-      "canceledAccessUntil": "Avslutad — tillgång till {date}",
-      "canceledAccessUntilEnd": "Avslutad — tillgång till slutet av faktureringsperioden",
-      "pastDue": "Betalning förfallen — uppdatera din betalningsmetod",
-      "status": "Status: {status}",
-      "manageBilling": "Hantera fakturering",
-      "resuming": "Återupptar...",
-      "resume": "Återuppta",
-      "cancelSubscription": "Avsluta prenumeration",
-      "cancelDialog": {
-        "title": "Avsluta prenumeration?",
-        "description": "Är du säker på att du vill avsluta din prenumeration?",
-        "loseRate": "Du förlorar ditt nuvarande pris på {rate}/mån.",
-        "keepAccess": "Du behåller tillgången till slutet av din nuvarande faktureringsperiod.",
-        "keep": "Behåll prenumeration",
-        "canceling": "Avslutar...",
-        "confirm": "Ja, avsluta"
-      }
-    },
-    "purchase": {
-      "success": "Betalningen lyckades! Dina Soggar har lagts till på ditt saldo.",
-      "canceled": "Betalningen avbröts. Inga debiteringar gjordes.",
-      "checkoutError": "Kunde inte starta kassan. Försök igen.",
-      "switchError": "Kunde inte byta prenumeration. Försök igen.",
-      "title": "Skaffa Soggar",
-      "subtitle": "Välj ett paket eller en prenumeration för att driva dina spelsessioner",
-      "oneTimePacks": "Engångspaket",
-      "monthlySubscriptions": "Månadsprenumerationer",
-      "legacyTier": "Din nuvarande plan är inte längre tillgänglig. Byt till en ny nivå nedan.",
-      "signInRequired": "Logga in för att köpa Soggar",
-      "switchDialog": {
-        "title": "Byt till {name}?",
-        "description": "Du byter till planen {name} ({amount} Soggar/månad). Ändringen träder i kraft vid din nästa faktureringsperiod.",
-        "resumeNote": "Detta återupptar även din avslutade prenumeration.",
-        "confirm": "Byt plan"
-      }
-    },
-    "package": {
-      "cancelsAtPeriodEnd": "Avslutas vid periodens slut",
-      "currentPlan": "Nuvarande plan",
-      "save": "Spara {amount}{period}",
-      "perMonth": "/mån",
-      "resuming": "Återupptar...",
-      "resumeSubscription": "Återuppta prenumeration",
-      "switching": "Byter...",
-      "switchToPlan": "Byt till plan",
-      "redirectingCheckout": "Omdirigerar till kassan...",
-      "subscribed": "Prenumererar",
-      "subscribe": "Prenumerera",
-      "buyNow": "Köp nu"
-    },
-    "transactions": {
-      "empty": "Inga transaktioner ännu.",
-      "date": "Datum",
-      "amount": "Belopp",
-      "type": "Typ",
-      "description": "Beskrivning",
-      "balanceAfter": "Saldo efter"
-    }
   },
   "voice": {
     "participantsCount": "Deltagare ({count})",

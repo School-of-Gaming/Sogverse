@@ -10,7 +10,6 @@
       "resetPassword": "Vaihda salasana",
       "setupAccount": "Tilin käyttöönotto",
       "about": "Tietoa meistä",
-      "sorg": "Sorgga – Sogversen valuutta",
       "yty": "Yty – Sogversen voima",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
@@ -56,7 +55,6 @@
     "unexpectedError": "Odottamaton virhe tapahtui",
     "somethingWentWrong": "Jokin meni pieleen",
     "noPermission": "Sinulla ei ole oikeutta tarkastella tätä sivua.",
-    "sorgs": "Sorggaa",
     "perSession": "per kerta",
     "minutes": "min",
     "ages": "Ikä {min}–{max}",
@@ -672,24 +670,6 @@
       "unnamedGamer": "Nimetön pelaaja",
       "unnamedUser": "Nimetön käyttäjä",
       "noConnectedGamers": "Ei liitettyjä pelaajia",
-      "tokenBalance": "Sorgga-saldo",
-      "tokenMonetaryWarning": "Jokainen Sorgga on arvoltaan {rate}. Muutokset vaikuttavat todelliseen rahalliseen arvoon.",
-      "amountLabel": "Määrä (+ lisää, − vähennä)",
-      "amountPlaceholder": "esim. 10 tai -5",
-      "reasonLabel": "Syy",
-      "reasonPlaceholder": "esim. Hyvitys menetetystä kerrasta",
-      "adjustBalance": "Muuta saldoa",
-      "failedToAdjust": "Saldon muuttaminen epäonnistui",
-      "transactionHistory": "Tapahtumahistoria",
-      "adjustDialogTitle": "{action} {count, plural, one {# Sorgga} other {# Sorggaa}}",
-      "adjustDialogDescription": "Tämä {action} {count, plural, one {# Sorgga} other {# Sorggaa}} {direction} {user}.",
-      "add": "Lisää",
-      "remove": "Poista",
-      "to": "käyttäjälle",
-      "from": "käyttäjältä",
-      "thisUser": "tämä käyttäjä",
-      "monetaryValue": "Rahallinen arvo",
-      "adjusting": "Muutetaan...",
       "inviteNewGedu": "Kutsu uusi Gedu",
       "sendInvitation": "Lähetä kutsu uudelle pelikasvattajalle",
       "newGeduInvitation": "Uusi Gedu-kutsu",
@@ -831,7 +811,6 @@
       "descriptionLabel": "Kuvaus",
       "descriptionPlaceholder": "Kuvaile tuotettasi",
       "padletUrlLabel": "Padlet-URL",
-      "sorgCostLabel": "Sorgga-hinta (per kerta)",
       "approxPerSession": "≈ {amount} per kerta",
       "imageLabel": "Kuva",
       "preview": "Esikatselu",
@@ -853,9 +832,6 @@
       "nameRequired": "Tuotteen nimi on pakollinen",
       "nameMaxLength": "Tuotteen nimi saa olla enintään 100 merkkiä",
       "descriptionRequired": "Kuvaus on pakollinen",
-      "sorgCostNumber": "Sorgga-hinnan pitää olla numero",
-      "sorgCostWhole": "Sorgga-hinnan pitää olla kokonaisluku",
-      "sorgCostMin": "Sorgga-hinnan pitää olla vähintään 1",
       "validUrl": "Syötä kelvollinen URL",
       "gameRequired": "Peli on pakollinen",
       "validTime": "Syötä kelvollinen aika",
@@ -956,20 +932,6 @@
     "redirecting": "Ohjataan kassalle...",
     "error": "Jokin meni pieleen kassalle siirryttäessä. <link>Palaa takaisin</link> ja yritä uudelleen."
   },
-  "clubs": {
-    "tokenCost": "{cost} Sorggaa",
-    "detail": {
-      "backToClubs": "Takaisin kerhoihin",
-      "notFound": "Kerhoa ei löytynyt",
-      "notFoundDescription": "Tämä kerho ei ehkä ole enää saatavilla.",
-      "every": "Joka {day}",
-      "enrollment": "Ilmoittautuminen",
-      "onlyParents": "Vain vanhempien tilit voivat ilmoittaa pelaajia kerhoihin.",
-      "readyToEnroll": "Valmis ilmoittautumaan?",
-      "readyToEnrollDescription": "Kirjaudu sisään tai luo tili ilmoittaaksesi lapsesi tähän kerhoon.",
-      "logInToEnroll": "Kirjaudu ilmoittautuaksesi"
-    }
-  },
   "docs": {
     "minecraftApi": {
       "title": "Minecraft-palvelimen API",
@@ -1014,76 +976,6 @@
         "note4": "<code>404</code> tarkoittaa, ettei pelaaja ole vielä linkittänyt Minecraft-tiliään Sogversessä. Voit näyttää viestin, joka kehottaa linkittämään tilin profiiliasetuksissa.",
         "note5": "Kaikki virheresponssit noudattavat muotoa <code>'{ \"error\": \"viesti\" }'</code>."
       }
-    }
-  },
-  "enrollment": {
-    "wizard": {
-      "title": "Ilmoita pelaajasi",
-      "costDescription": "{cost} Sorggaa vähennetään tulevasta kerrasta",
-      "insufficientBalance": "Riittämätön saldo",
-      "insufficientBalanceDescription": "Tarvitset <strong>{cost} Sorggaa</strong> ilmoittautumiseen, mutta sinulla on vain <strong>{balance}</strong>.",
-      "getMoreSorgs": "Hanki lisää Sorggoja",
-      "chooseGamer": "Valitse ilmoitettava pelaaja:",
-      "createNewGamer": "Luo uusi pelaaja",
-      "createGamerDescription": "Luo uusi pelaajatili lapsellesi",
-      "chooseGroup": "Valitse ryhmä pelaajalle {name}:",
-      "noGroupsAvailable": "Tälle kerholle ei ole vielä ryhmiä saatavilla. Yritä myöhemmin uudelleen.",
-      "enrollmentSummary": "Ilmoittautumisen yhteenveto",
-      "summaryGamer": "Pelaaja",
-      "summaryGedu": "Gedu",
-      "summaryCost": "Hinta",
-      "sorgAmount": "{amount} Sorggaa",
-      "currentBalance": "Nykyinen saldo",
-      "afterEnrollment": "Ilmoittautumisen jälkeen",
-      "enrolling": "Ilmoitetaan...",
-      "confirmEnrollment": "Vahvista ilmoittautuminen",
-      "enrolled": "Ilmoittautunut!",
-      "enrolledDescription": "<strong>{gamer}</strong> on nyt ilmoitettu kerhoon <strong>{club}</strong>.",
-      "newBalance": "Uusi saldo: {balance} Sorggaa",
-      "howToJoinTitle": "Miten liityt kertaan",
-      "howToJoinDescription": "Kun kerta alkaa, vihreä \"Live\"-merkki ilmestyy ryhmäkorttiin <strong>{name}</strong> hallintapaneelissa. Hän voi klikata \"Liity\" yhdistääkseen.",
-      "viewMyGamers": "Näytä pelaajani",
-      "failedToEnroll": "Ilmoittautuminen epäonnistui",
-      "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}"
-    },
-    "gamerForm": {
-      "mustBeLoggedIn": "Sinun täytyy olla kirjautunut",
-      "credentialsAlertTitle": "Jaa nämä tunnukset lapsellesi",
-      "credentialsAlertDescription": "Lapsesi kirjautuu alla olevalla käyttäjänimellä ja salasanalla omaan pelaajatiliinsä. Tämä on turvallisempaa kuin vanhemman salasanan jakaminen — pelaajatilit pääsevät käsiksi vain peleihin ja profiiliin, eivät laskutus- tai tiliasetuksiin.",
-      "displayNameLabel": "Pelaajan näyttönimi",
-      "displayNamePlaceholder": "Miten nimi näkyy pelissä",
-      "usernamePlaceholder": "Valitse uniikki käyttäjänimi",
-      "usernameHint": "Vain kirjaimia, numeroita ja alaviivoja",
-      "passwordPlaceholder": "Luo salasana",
-      "passwordHint": "Vähintään 6 merkkiä",
-      "confirmPasswordPlaceholder": "Vahvista salasana",
-      "dateOfBirthLabel": "Syntymäpäivä",
-      "age": "Ikä: {age} {count, plural, one {vuosi} other {vuotta}}",
-      "genderLabel": "Sukupuoli",
-      "genderBoy": "Poika",
-      "genderGirl": "Tyttö",
-      "genderNonBinary": "Muunsukupuolinen",
-      "creating": "Luodaan...",
-      "createGamer": "Luo pelaaja"
-    },
-    "unenroll": {
-      "failedToUnenroll": "Ilmoittautumisen peruuttaminen epäonnistui",
-      "successTitle": "Ilmoittautuminen peruutettu",
-      "successDescription": "<strong>{gamer}</strong> on poistettu kerhosta <strong>{club}</strong>.",
-      "sorgsRefunded": "{amount} Sorggaa palautettu",
-      "toYourBalance": "saldollesi.",
-      "noRefund": "Hyvitystä ei myönnetty.",
-      "newBalance": "Uusi saldo: <strong>{balance} Sorggaa</strong>",
-      "done": "Valmis",
-      "title": "Poista {name} kerhosta?",
-      "description": "Tämä poistaa pelaajan <strong>{gamer}</strong> kerhosta <strong>{club}</strong>.",
-      "club": "Kerho",
-      "gamer": "Pelaaja",
-      "refundEligible": "Saat hyvityksen: <strong>{cost} Sorggaa</strong>.",
-      "noRefundWithinWindow": "Hyvitystä ei myönnetä — seuraava kerta on {hours} tunnin sisällä.",
-      "noChargeNextSession": "Seuraavasta kerrasta ei veloiteta.",
-      "unenrolling": "Peruutetaan...",
-      "confirmUnenroll": "Vahvista peruutus"
     }
   },
   "feedback": {
@@ -1145,7 +1037,6 @@
     "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
     "noGamersEnrolled": "Ei vielä ilmoittautuneita pelaajia.",
     "age": "Ikä {age}",
-    "sorgsPerWeek": "{cost} Sorggaa / viikko",
     "unenrollGamer": "Poista {name} kerhosta",
     "noGroupsYet": "Ei vielä ryhmiä",
     "nextSession": "Seuraava: {date}",
@@ -1178,12 +1069,10 @@
       "clubs": "Kerhot",
       "camps": "Leirit",
       "events": "Tapahtumat",
-      "sorg": "Sorgga",
       "yty": "Yty",
       "about": "Tietoa"
     },
-    "toggleMenu": "Vaihda valikko",
-    "tokenBalance": "{count} Sorggaa"
+    "toggleMenu": "Vaihda valikko"
   },
   "productBrowse": {
     "headings": {
@@ -1407,7 +1296,6 @@
     "testing": "Testaus",
     "feedback": "Palaute",
     "settings": "Asetukset",
-    "sorg": "Sorgga",
     "myGamers": "Pelaajani",
     "home": "Etusivu",
     "myGroups": "Ryhmäni",
@@ -1481,10 +1369,6 @@
           "title": "Pelaajani",
           "description": "Näytä ja hallitse pelaajatilejäsi"
         },
-        "sorg": {
-          "title": "Sorgga-tokenit",
-          "description": "Tarkista saldo ja osta tokeneita"
-        },
         "browseClubs": {
           "title": "Selaa kerhoja",
           "description": "Etsi ja ilmoittaudu pelikerhoihin"
@@ -1493,27 +1377,7 @@
           "title": "Asetukset",
           "description": "Hallitse tilisi asetuksia"
         }
-      },
-      "gettingStarted": {
-        "title": "Näin pääset alkuun",
-        "subtitle": "Seuraa näitä askeleita saadaksesi pelaajasi pelaamaan",
-        "step1": {
-          "title": "Osta Sorgga-tokeneita",
-          "description": "Sorgga-tokeneilla maksetaan pelikerrat. Siirry Sorgga-sivulle ostaaksesi paketin tai tilataksesi kuukausittaisen paketin."
-        },
-        "step2": {
-          "title": "Selaa kerhoja",
-          "description": "Tutustu pelikerhoihimme ja löydä lapsellesi sopiva ikä- ja kiinnostusryhmä."
-        },
-        "step3": {
-          "title": "Ilmoita pelaajasi",
-          "description": "Luo pelaajatili ja ilmoita hänet kerhoon. Hän on valmis ensimmäiselle kerralle!"
-        }
       }
-    },
-    "billing": {
-      "error": "Laskutusportaalin avaaminen epäonnistui. Yritä uudelleen tai siirry <link>Sorgga-sivulle</link>.",
-      "redirecting": "Ohjataan laskutusportaaliin..."
     },
     "gamers": {
       "title": "Pelaajani",
@@ -1555,11 +1419,6 @@
         "updatePassword": "Päivitä salasana"
       }
     },
-    "sorg": {
-      "title": "Sorgga-tokenit",
-      "subtitle": "Osta tokeneita ja hallitse saldoasi",
-      "transactionHistory": "Tapahtumahistoria"
-    },
     "switchToGamer": {
       "title": "Vaihda käyttäjään {name}?",
       "description": "Sinut kirjataan sisään käyttäjänä <bold>{name}</bold>. Voit vaihtaa takaisin vanhemman tilille pelaajan hallintapaneelista.",
@@ -1584,141 +1443,7 @@
     "minecraftCleared": "Minecraft-käyttäjänimi poistettu.",
     "failedToUpdateMinecraft": "Minecraft-käyttäjänimen päivittäminen epäonnistui.",
     "saveMinecraft": "Tallenna Minecraft-käyttäjänimi",
-    "notifications": "Ilmoitukset",
-    "notificationsDescription": "Määritä miten saat ilmoituksia",
-    "notificationsComingSoon": "Ilmoitusasetukset tulossa pian.",
-    "appearance": "Ulkoasu",
-    "appearanceDescription": "Mukauta ulkoasua ja tuntumaa",
-    "appearanceComingSoon": "Teema-asetukset tulossa pian.",
     "spokenLanguages": "Puhutut kielet"
-  },
-  "sorg": {
-    "hero": {
-      "title": "Mikä on <primary>Sorgga</primary>?",
-      "subtitle": "Sorgga on valuutta, joka pyörittää lapsesi kerhojen kertoja Sogversessa. Vanhemmat ostavat Sorggoja ja niillä maksetaan viikottaiset kerrat — yksinkertaista, läpinäkyvää ja joustavaa."
-    },
-    "overview": {
-      "heading": "Näin se toimii",
-      "text": "Jokainen kerhokerran hinta on tietty määrä Sorggoja. Kun ilmoitat lapsesi kerhoon, Sorggoja vähennetään automaattisesti joka viikko heidän kerrasta. Osta tokeneita kerralla tai tilaa kuukausittain — kumpi sopii perheellesi paremmin."
-    },
-    "benefits": {
-      "heading": "Miksi Sorggat?",
-      "subheading": "Yksinkertainen ja reilu tapa maksaa lapsesi kerhoista",
-      "payPerSession": {
-        "title": "Maksa kerrasta",
-        "description": "Sorggoja vähennetään kerran viikossa jokaisesta ilmoitetusta kerhosta. Maksat vain kerroista, joihin lapsesi osallistuu — ei pitkiä sopimuksia."
-      },
-      "fullTransparency": {
-        "title": "Täysi läpinäkyvyys",
-        "description": "Näe tarkalleen mihin jokainen Sorgga menee. Vanhemman hallintapaneelissa näet saldosi, tapahtumahistorian ja tulevat veloitukset."
-      },
-      "flexibleTopUps": {
-        "title": "Joustavat täydennykset",
-        "description": "Osta kertatokenipaketti tarpeen mukaan tai tilaa kuukausittainen erä edullisempaan hintaan. Vaihda tai peruuta milloin tahansa."
-      },
-      "safeByDesign": {
-        "title": "Turvallinen suunnittelultaan",
-        "description": "Sorggat ovat olemassa vain Sogversessa. Vain vanhemmat näkevät saldot ja voivat tehdä ostoksia — lapset eivät koskaan näe valuuttaa. Ei yllätyksiä."
-      }
-    },
-    "faqs": {
-      "heading": "Usein kysytyt kysymykset",
-      "isRealMoney": {
-        "question": "Onko Sorgga oikeaa rahaa?",
-        "answer": "Sorggoja ostetaan oikealla rahalla, mutta ne ovat olemassa vain Sogversessa. Niitä ei voi siirtää alustan ulkopuolelle, mutta jos haluat hyvityksen käyttämättömistä Sorggoista, ota yhteyttä tukitiimiimme."
-      },
-      "howSpent": {
-        "question": "Miten Sorggoja käytetään?",
-        "answer": "Jokainen kerhokerran hinta on tietty määrä Sorggoja, joka näkyy kerhon sivulla. Sorggat vähennetään automaattisesti kerran viikossa, kun lapsesi kerta on aikataulutettu."
-      },
-      "parentControl": {
-        "question": "Voivatko vanhemmat hallita kulutusta?",
-        "answer": "Kyllä. Sorggat ovat lapsille täysin näkymättömiä. Vain vanhemmat näkevät saldot, ostavat tokeneita ja tarkastelevat kulutushistoriaa vanhemman hallintapaneelissa."
-      },
-      "doExpire": {
-        "question": "Vanhenevatko Sorggat?",
-        "answer": "Eivät. Ostetut Sorggat pysyvät tililläsi, kunnes niitä käytetään kerhokertoihin. Ei vanhenemispäiviä eikä piilokustannuksia."
-      },
-      "refund": {
-        "question": "Voinko saada hyvityksen?",
-        "answer": "Jos peruutat ilmoittautumisen vähintään 24 tuntia ennen kerran alkua, kerran Sorggat palautetaan automaattisesti saldollesi. Muissa tapauksissa ota yhteyttä tukitiimiimme — autamme mielellämme."
-      }
-    },
-    "cta": {
-      "heading": "Valmis aloittamaan?",
-      "subheading": "Luo tili, hanki Sorggoja ja ilmoita lapsesi ensimmäiseen kerhoon."
-    }
-  },
-  "tokens": {
-    "balance": {
-      "title": "Sorgga-saldo"
-    },
-    "subscription": {
-      "label": "Tilaus",
-      "tierLabelFull": "{name} — {amount} Sorggaa/kk",
-      "tierLabelAmount": "{amount} Sorggaa/kk",
-      "paymentFailed": "Maksu epäonnistui",
-      "paymentFailedDescription": "Viimeisin maksusi epäonnistui. <link>Päivitä maksutapasi</link> jatkaaksesi tilaustasi.",
-      "nextPayment": "Seuraava maksu {date}",
-      "activeRenews": "Aktiivinen — uusitaan automaattisesti",
-      "canceledAccessUntil": "Peruutettu — pääsy {date} asti",
-      "canceledAccessUntilEnd": "Peruutettu — pääsy laskutuskauden loppuun",
-      "pastDue": "Maksu myöhässä — päivitä maksutapasi",
-      "status": "Tila: {status}",
-      "manageBilling": "Hallitse laskutusta",
-      "resuming": "Jatketaan...",
-      "resume": "Jatka",
-      "cancelSubscription": "Peruuta tilaus",
-      "cancelDialog": {
-        "title": "Peruuta tilaus?",
-        "description": "Haluatko varmasti peruuttaa tilauksesi?",
-        "loseRate": "Menetät nykyisen hintasi {rate}/kk.",
-        "keepAccess": "Pääsysi säilyy nykyisen laskutuskauden loppuun.",
-        "keep": "Säilytä tilaus",
-        "canceling": "Peruutetaan...",
-        "confirm": "Kyllä, peruuta"
-      }
-    },
-    "purchase": {
-      "success": "Maksu onnistui! Sorggat on lisätty saldollesi.",
-      "canceled": "Maksu peruttiin. Veloituksia ei tehty.",
-      "checkoutError": "Kassaa ei voitu avata. Yritä uudelleen.",
-      "switchError": "Tilausta ei voitu vaihtaa. Yritä uudelleen.",
-      "title": "Hanki Sorggoja",
-      "subtitle": "Valitse paketti tai tilaus pelikertojesi tehoksi",
-      "oneTimePacks": "Kertapaketit",
-      "monthlySubscriptions": "Kuukausitilaukset",
-      "legacyTier": "Nykyinen suunnitelmasi ei ole enää saatavilla. Vaihda uuteen tasoon alla.",
-      "signInRequired": "Kirjaudu sisään ostaaksesi Sorggoja",
-      "switchDialog": {
-        "title": "Vaihda suunnitelmaan {name}?",
-        "description": "Sinut vaihdetaan suunnitelmaan {name} ({amount} Sorggaa/kuukausi). Muutos astuu voimaan seuraavalla laskutuskaudella.",
-        "resumeNote": "Tämä myös jatkaa peruutettua tilaustasi.",
-        "confirm": "Vaihda suunnitelma"
-      }
-    },
-    "package": {
-      "cancelsAtPeriodEnd": "Peruuntuu kauden lopussa",
-      "currentPlan": "Nykyinen suunnitelma",
-      "save": "Säästä {amount}{period}",
-      "perMonth": "/kk",
-      "resuming": "Jatketaan...",
-      "resumeSubscription": "Jatka tilausta",
-      "switching": "Vaihdetaan...",
-      "switchToPlan": "Vaihda suunnitelmaan",
-      "redirectingCheckout": "Ohjataan kassalle...",
-      "subscribed": "Tilattu",
-      "subscribe": "Tilaa",
-      "buyNow": "Osta nyt"
-    },
-    "transactions": {
-      "empty": "Ei vielä tapahtumia.",
-      "date": "Päivämäärä",
-      "amount": "Määrä",
-      "type": "Tyyppi",
-      "description": "Kuvaus",
-      "balanceAfter": "Saldo jälkeen"
-    }
   },
   "voice": {
     "participantsCount": "Osallistujat ({count})",

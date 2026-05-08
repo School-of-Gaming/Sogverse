@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, Bell, Palette, Gamepad2 } from "lucide-react";
+import { User, Lock, Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -287,41 +287,6 @@ export default function SettingsPage() {
         </Card>
       )}
 
-      {/* Notifications Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            <CardTitle>{t('notifications')}</CardTitle>
-          </div>
-          <CardDescription>
-            {t('notificationsDescription')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {t('notificationsComingSoon')}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Appearance Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            <CardTitle>{t('appearance')}</CardTitle>
-          </div>
-          <CardDescription>
-            {t('appearanceDescription')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            {t('appearanceComingSoon')}
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }

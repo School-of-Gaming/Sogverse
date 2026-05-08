@@ -10,7 +10,6 @@
       "resetPassword": "Reset Password",
       "setupAccount": "Set Up Your Account",
       "about": "About Us",
-      "sorg": "Sorg – the Sogverse Currency",
       "yty": "Yty – the Force of the Sogverse",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin Dashboard",
@@ -56,7 +55,6 @@
     "unexpectedError": "An unexpected error occurred",
     "somethingWentWrong": "Something went wrong",
     "noPermission": "You don't have permission to view this page.",
-    "sorgs": "Sorgs",
     "perSession": "per session",
     "minutes": "min",
     "ages": "Ages {min}–{max}",
@@ -672,24 +670,6 @@
       "unnamedGamer": "Unnamed Gamer",
       "unnamedUser": "Unnamed User",
       "noConnectedGamers": "No connected gamers",
-      "tokenBalance": "Token Balance",
-      "tokenMonetaryWarning": "Each Sorg is worth {rate}. Adjustments affect real monetary value.",
-      "amountLabel": "Amount (+ to add, − to remove)",
-      "amountPlaceholder": "e.g. 10 or -5",
-      "reasonLabel": "Reason",
-      "reasonPlaceholder": "e.g. Compensation for missed session",
-      "adjustBalance": "Adjust Balance",
-      "failedToAdjust": "Failed to adjust balance",
-      "transactionHistory": "Transaction History",
-      "adjustDialogTitle": "{action} {count, plural, one {# Sorg} other {# Sorgs}}",
-      "adjustDialogDescription": "This will {action} {count, plural, one {# Sorg} other {# Sorgs}} {direction} {user}.",
-      "add": "Add",
-      "remove": "Remove",
-      "to": "to",
-      "from": "from",
-      "thisUser": "this user",
-      "monetaryValue": "Monetary value",
-      "adjusting": "Adjusting...",
       "inviteNewGedu": "Invite New Gedu",
       "sendInvitation": "Send an invitation email to a new game educator",
       "newGeduInvitation": "New Gedu Invitation",
@@ -831,7 +811,6 @@
       "descriptionLabel": "Description",
       "descriptionPlaceholder": "Describe your product",
       "padletUrlLabel": "Padlet URL",
-      "sorgCostLabel": "Sorg Cost (per session)",
       "approxPerSession": "≈ {amount} per session",
       "imageLabel": "Image",
       "preview": "Preview",
@@ -853,9 +832,6 @@
       "nameRequired": "Product name is required",
       "nameMaxLength": "Product name must be at most 100 characters",
       "descriptionRequired": "Description is required",
-      "sorgCostNumber": "Sorg cost must be a number",
-      "sorgCostWhole": "Sorg cost must be a whole number",
-      "sorgCostMin": "Sorg cost must be at least 1",
       "validUrl": "Must be a valid URL",
       "gameRequired": "Game is required",
       "validTime": "Must be a valid time",
@@ -956,20 +932,6 @@
     "redirecting": "Redirecting to checkout...",
     "error": "Something went wrong starting checkout. Please <link>go back</link> and try again."
   },
-  "clubs": {
-    "tokenCost": "{cost} Sorgs",
-    "detail": {
-      "backToClubs": "Back to Clubs",
-      "notFound": "Club Not Found",
-      "notFoundDescription": "This club may no longer be available.",
-      "every": "Every {day}",
-      "enrollment": "Enrolment",
-      "onlyParents": "Only parent accounts can enrol gamers in clubs.",
-      "readyToEnroll": "Ready to Enrol?",
-      "readyToEnrollDescription": "Log in or create an account to enrol your child in this club.",
-      "logInToEnroll": "Log In to Enrol"
-    }
-  },
   "docs": {
     "minecraftApi": {
       "title": "Minecraft Server API",
@@ -1014,76 +976,6 @@
         "note4": "A <code>404</code> means the player hasn't linked their Minecraft account in Sogverse yet. You can show them a message to link their account in their profile settings.",
         "note5": "All error responses follow the shape <code>'{ \"error\": \"message\" }'</code>."
       }
-    }
-  },
-  "enrollment": {
-    "wizard": {
-      "title": "Enrol Your Gamer",
-      "costDescription": "{cost} Sorgs will be deducted for the upcoming session",
-      "insufficientBalance": "Insufficient Balance",
-      "insufficientBalanceDescription": "You need <strong>{cost} Sorgs</strong> to enrol but only have <strong>{balance}</strong>.",
-      "getMoreSorgs": "Get More Sorgs",
-      "chooseGamer": "Choose which gamer to enrol:",
-      "createNewGamer": "Create New Gamer",
-      "createGamerDescription": "Create a new gamer account for your child",
-      "chooseGroup": "Choose a group for {name}:",
-      "noGroupsAvailable": "No groups available for this club yet. Please try again later.",
-      "enrollmentSummary": "Enrolment Summary",
-      "summaryGamer": "Gamer",
-      "summaryGedu": "Gedu",
-      "summaryCost": "Cost",
-      "sorgAmount": "{amount} Sorgs",
-      "currentBalance": "Current Balance",
-      "afterEnrollment": "After Enrolment",
-      "enrolling": "Enrolling...",
-      "confirmEnrollment": "Confirm Enrolment",
-      "enrolled": "Enrolled!",
-      "enrolledDescription": "<strong>{gamer}</strong> is now enrolled in <strong>{club}</strong>.",
-      "newBalance": "New balance: {balance} Sorgs",
-      "howToJoinTitle": "How to join a session",
-      "howToJoinDescription": "When a session starts, a green \"Live\" badge will appear on the group card in <strong>{name}'s</strong> dashboard. They can click \"Join\" to connect.",
-      "viewMyGamers": "View My Gamers",
-      "failedToEnroll": "Failed to enrol",
-      "gamerCount": "{count, plural, one {# gamer} other {# gamers}}"
-    },
-    "gamerForm": {
-      "mustBeLoggedIn": "You must be logged in",
-      "credentialsAlertTitle": "Share these credentials with your child",
-      "credentialsAlertDescription": "Your child will use the username and password below to log in to their own gamer account. This is safer than sharing your parent password — gamer accounts can only access their games and profile, not your billing or account settings.",
-      "displayNameLabel": "Gamer's Display Name",
-      "displayNamePlaceholder": "How their name appears in-game",
-      "usernamePlaceholder": "Choose a unique username",
-      "usernameHint": "Letters, numbers, and underscores only",
-      "passwordPlaceholder": "Create a password",
-      "passwordHint": "At least 6 characters",
-      "confirmPasswordPlaceholder": "Confirm the password",
-      "dateOfBirthLabel": "Date of Birth",
-      "age": "Age: {age} {count, plural, one {year} other {years}} old",
-      "genderLabel": "Gender",
-      "genderBoy": "Boy",
-      "genderGirl": "Girl",
-      "genderNonBinary": "Non-binary",
-      "creating": "Creating...",
-      "createGamer": "Create Gamer"
-    },
-    "unenroll": {
-      "failedToUnenroll": "Failed to unenrol",
-      "successTitle": "Unenrolled",
-      "successDescription": "<strong>{gamer}</strong> has been unenrolled from <strong>{club}</strong>.",
-      "sorgsRefunded": "{amount} Sorgs refunded",
-      "toYourBalance": "to your balance.",
-      "noRefund": "No refund was issued.",
-      "newBalance": "New balance: <strong>{balance} Sorgs</strong>",
-      "done": "Done",
-      "title": "Unenrol {name}?",
-      "description": "This will remove <strong>{gamer}</strong> from <strong>{club}</strong>.",
-      "club": "Club",
-      "gamer": "Gamer",
-      "refundEligible": "You will receive a refund of <strong>{cost} Sorgs</strong>.",
-      "noRefundWithinWindow": "No refund will be issued — the next session is within {hours} hours.",
-      "noChargeNextSession": "You won't be charged for the next session.",
-      "unenrolling": "Unenrolling...",
-      "confirmUnenroll": "Confirm Unenrol"
     }
   },
   "feedback": {
@@ -1145,7 +1037,6 @@
     "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
     "noGamersEnrolled": "No gamers enrolled yet.",
     "age": "Age {age}",
-    "sorgsPerWeek": "{cost} Sorgs / week",
     "unenrollGamer": "Unenrol {name}",
     "noGroupsYet": "No Groups Yet",
     "nextSession": "Next: {date}",
@@ -1178,12 +1069,10 @@
       "clubs": "Clubs",
       "camps": "Camps",
       "events": "Events",
-      "sorg": "Sorg",
       "yty": "Yty",
       "about": "About"
     },
-    "toggleMenu": "Toggle menu",
-    "tokenBalance": "{count} Sorgs"
+    "toggleMenu": "Toggle menu"
   },
   "productBrowse": {
     "headings": {
@@ -1407,7 +1296,6 @@
     "testing": "Testing",
     "feedback": "Feedback",
     "settings": "Settings",
-    "sorg": "Sorg",
     "myGamers": "My Gamers",
     "home": "Home",
     "myGroups": "My Groups",
@@ -1481,10 +1369,6 @@
           "title": "My Gamers",
           "description": "View and manage your gamer accounts"
         },
-        "sorg": {
-          "title": "Sorg Tokens",
-          "description": "Check balance and purchase tokens"
-        },
         "browseClubs": {
           "title": "Browse Clubs",
           "description": "Find and enrol in gaming clubs"
@@ -1493,27 +1377,7 @@
           "title": "Settings",
           "description": "Manage your account settings"
         }
-      },
-      "gettingStarted": {
-        "title": "Getting Started",
-        "subtitle": "Follow these steps to get your gamer playing",
-        "step1": {
-          "title": "Purchase Sorg Tokens",
-          "description": "Sorg tokens are used to pay for gaming sessions. Head to the Sorg page to buy a pack or subscribe."
-        },
-        "step2": {
-          "title": "Browse Clubs",
-          "description": "Explore our gaming clubs and find the perfect fit for your child's age and interests."
-        },
-        "step3": {
-          "title": "Enrol Your Gamer",
-          "description": "Create a gamer account and enrol them in a club. They'll be ready to join their first session!"
-        }
       }
-    },
-    "billing": {
-      "error": "Could not open the billing portal. Please try again or visit the <link>Sorg page</link>.",
-      "redirecting": "Redirecting to billing portal..."
     },
     "gamers": {
       "title": "My Gamers",
@@ -1555,11 +1419,6 @@
         "updatePassword": "Update Password"
       }
     },
-    "sorg": {
-      "title": "Sorg Tokens",
-      "subtitle": "Purchase tokens and manage your balance",
-      "transactionHistory": "Transaction History"
-    },
     "switchToGamer": {
       "title": "Switch to {name}?",
       "description": "You'll be signed in as <bold>{name}</bold>. You can switch back to your parent account from the gamer dashboard.",
@@ -1584,141 +1443,7 @@
     "minecraftCleared": "Minecraft username cleared.",
     "failedToUpdateMinecraft": "Failed to update Minecraft username.",
     "saveMinecraft": "Save Minecraft Username",
-    "notifications": "Notifications",
-    "notificationsDescription": "Configure how you receive notifications",
-    "notificationsComingSoon": "Notification settings coming soon.",
-    "appearance": "Appearance",
-    "appearanceDescription": "Customise the look and feel",
-    "appearanceComingSoon": "Theme settings coming soon.",
     "spokenLanguages": "Languages spoken"
-  },
-  "sorg": {
-    "hero": {
-      "title": "What is <primary>Sorg</primary>?",
-      "subtitle": "Sorg is the currency that powers your child's club sessions in the Sogverse. Parents purchase Sorgs and they are used to pay for weekly sessions — simple, transparent, and flexible."
-    },
-    "overview": {
-      "heading": "How It Works",
-      "text": "Each club session costs a set number of Sorgs. When you enrol your child in a club, Sorgs are deducted automatically each week for their session. Buy a token pack or subscribe monthly — whichever suits your family best."
-    },
-    "benefits": {
-      "heading": "Why Sorgs?",
-      "subheading": "A simple, fair way to pay for your child's clubs",
-      "payPerSession": {
-        "title": "Pay Per Session",
-        "description": "Sorgs are deducted once a week for each enrolled club. You only pay for the sessions your child attends — no long-term contracts."
-      },
-      "fullTransparency": {
-        "title": "Full Transparency",
-        "description": "See exactly where every Sorg goes. Your parent dashboard shows your balance, transaction history, and upcoming charges."
-      },
-      "flexibleTopUps": {
-        "title": "Flexible Top-Ups",
-        "description": "Buy a one-time token pack when you need it, or subscribe for a monthly allowance at a better rate. Change or cancel anytime."
-      },
-      "safeByDesign": {
-        "title": "Safe by Design",
-        "description": "Sorgs exist only within the Sogverse. Only parents can see balances and make purchases — children are never exposed to the currency. No surprises."
-      }
-    },
-    "faqs": {
-      "heading": "Frequently Asked Questions",
-      "isRealMoney": {
-        "question": "Is Sorg real money?",
-        "answer": "Sorgs are purchased with real money but exist only within the Sogverse. They cannot be transferred outside the platform, but if you ever want a refund on unused Sorgs, just contact our support team."
-      },
-      "howSpent": {
-        "question": "How are Sorgs spent?",
-        "answer": "Each club session costs a set number of Sorgs, shown on the club page. Sorgs are automatically deducted once a week when your child's session is scheduled."
-      },
-      "parentControl": {
-        "question": "Can parents control spending?",
-        "answer": "Yes. Sorgs are completely invisible to children. Only parents can see balances, purchase tokens, and view spending history in the parent dashboard."
-      },
-      "doExpire": {
-        "question": "Do Sorgs expire?",
-        "answer": "No. Once purchased, Sorgs stay in your account until they are used for club sessions. There are no expiration dates or hidden fees."
-      },
-      "refund": {
-        "question": "Can I get a refund?",
-        "answer": "If you unenrol a gamer at least 24 hours before the start of a session, the Sorgs for that session are automatically refunded to your balance. For anything else, contact our support team — we're happy to help."
-      }
-    },
-    "cta": {
-      "heading": "Ready to Get Started?",
-      "subheading": "Create an account, grab some Sorgs, and enrol your child in their first club."
-    }
-  },
-  "tokens": {
-    "balance": {
-      "title": "Sorg Balance"
-    },
-    "subscription": {
-      "label": "Subscription",
-      "tierLabelFull": "{name} — {amount} Sorgs/mo",
-      "tierLabelAmount": "{amount} Sorgs/mo",
-      "paymentFailed": "Payment Failed",
-      "paymentFailedDescription": "Your last payment failed. Please <link>update your payment method</link> to continue your subscription.",
-      "nextPayment": "Next payment on {date}",
-      "activeRenews": "Active — renews automatically",
-      "canceledAccessUntil": "Cancelled — access until {date}",
-      "canceledAccessUntilEnd": "Cancelled — access until end of billing period",
-      "pastDue": "Payment overdue — please update your payment method",
-      "status": "Status: {status}",
-      "manageBilling": "Manage Billing",
-      "resuming": "Resuming...",
-      "resume": "Resume",
-      "cancelSubscription": "Cancel Subscription",
-      "cancelDialog": {
-        "title": "Cancel Subscription?",
-        "description": "Are you sure you want to cancel your subscription?",
-        "loseRate": "You'll lose your current rate of {rate}/mo.",
-        "keepAccess": "You'll keep access until the end of your current billing period.",
-        "keep": "Keep Subscription",
-        "canceling": "Cancelling...",
-        "confirm": "Yes, Cancel"
-      }
-    },
-    "purchase": {
-      "success": "Payment successful! Your Sorgs have been added to your balance.",
-      "canceled": "Payment was cancelled. No charges were made.",
-      "checkoutError": "Could not start checkout. Please try again.",
-      "switchError": "Could not switch subscription. Please try again.",
-      "title": "Get Sorgs",
-      "subtitle": "Choose a pack or subscription to power your gaming sessions",
-      "oneTimePacks": "One-Time Packs",
-      "monthlySubscriptions": "Monthly Subscriptions",
-      "legacyTier": "Your current plan is no longer available. Switch to a new tier below.",
-      "signInRequired": "Sign in to purchase Sorgs",
-      "switchDialog": {
-        "title": "Switch to {name}?",
-        "description": "You'll be switched to the {name} plan ({amount} Sorgs/month). The change takes effect on your next billing cycle.",
-        "resumeNote": "This will also resume your cancelled subscription.",
-        "confirm": "Switch Plan"
-      }
-    },
-    "package": {
-      "cancelsAtPeriodEnd": "Cancels at period end",
-      "currentPlan": "Current Plan",
-      "save": "Save {amount}{period}",
-      "perMonth": "/mo",
-      "resuming": "Resuming...",
-      "resumeSubscription": "Resume Subscription",
-      "switching": "Switching...",
-      "switchToPlan": "Switch to Plan",
-      "redirectingCheckout": "Redirecting to checkout...",
-      "subscribed": "Subscribed",
-      "subscribe": "Subscribe",
-      "buyNow": "Buy Now"
-    },
-    "transactions": {
-      "empty": "No transactions yet.",
-      "date": "Date",
-      "amount": "Amount",
-      "type": "Type",
-      "description": "Description",
-      "balanceAfter": "Balance After"
-    }
   },
   "voice": {
     "participantsCount": "Participants ({count})",
