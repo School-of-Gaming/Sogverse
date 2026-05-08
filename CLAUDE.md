@@ -35,7 +35,7 @@ npm run supabase:gen-types  # Regenerate database types from local Supabase
 ### Role-Based Access Control (RBAC)
 Four user roles with separate dashboards:
 - `admin` → `/admin` - System management
-- `customer` → `/customer` - Parents who purchase products and manage linked gamers
+- `customer` → `/parent` - Parents who purchase products and manage linked gamers (the role identifier is `customer`; the URL is `/parent`)
 - `gamer` → `/gamer` - Child accounts (use username login, synthetic email: `{username}@gamer.sogverse.internal`)
 - `gedu` → `/gedu` - Game educators
 
