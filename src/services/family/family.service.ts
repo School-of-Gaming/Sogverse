@@ -1,6 +1,8 @@
-import type { FamilyMember } from "@/app/api/family/list/route";
-
-export type { FamilyMember };
+export type FamilyMember = {
+  id: string;
+  role: "customer" | "gamer";
+  first_name: string;
+};
 
 export class FamilyService {
   async getFamily(): Promise<FamilyMember[]> {

@@ -20,7 +20,7 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
-import type { ProfileUpdate } from "@/types";
+import { isGamerProfile, type ProfileUpdate } from "@/types";
 
 export function SettingsSectionContent() {
   const t = useTranslations('settings');
@@ -30,7 +30,8 @@ export function SettingsSectionContent() {
   const router = useRouter();
   const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
   const isGedu = profile?.role === "gedu";
-  const isGamer = profile?.role === "gamer";
+  const gamerProfile = isGamerProfile(profile) ? profile : null;
+  const isGamer = gamerProfile !== null;
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
   const { data: availableLanguages } = useSpokenLanguages();
@@ -149,7 +150,7 @@ export function SettingsSectionContent() {
                 {[profile?.first_name, !isGamer && profile?.last_name].filter(Boolean).join(" ")}
               </p>
               <p className="text-sm text-muted-foreground">
-                {isGamer ? `@${profile.username ?? ""}` : profile?.email || `@${profile?.username}`}
+                {gamerProfile ? `@${gamerProfile.username}` : profile?.email || `@${profile?.username}`}
               </p>
               <p className="text-xs text-muted-foreground capitalize">
                 {t('roleAccount', { role: profile?.role ?? '' })}

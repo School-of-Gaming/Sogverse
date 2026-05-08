@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-
-export type FamilyMember = {
-  id: string;
-  role: "customer" | "gamer";
-  first_name: string;
-};
+import type { FamilyMember } from "@/services/family/family.service";
 
 /**
  * Return every member of the caller's family unit (the caller themselves,
