@@ -67,7 +67,7 @@ export function Header() {
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container mx-auto flex h-16 items-center justify-between gap-3 px-4">
+      <nav className="container mx-auto flex h-16 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4">
         <Link
           href={ROUTES.home}
           className="flex shrink-0 items-center gap-2"
@@ -86,7 +86,7 @@ export function Header() {
           </span>
         </Link>
 
-        <div className="flex items-center gap-3 sm:gap-6">
+        <div className="flex items-center gap-2 sm:gap-6">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -105,7 +105,7 @@ export function Header() {
           })}
         </div>
 
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <LocalePicker />
           {avatarHref ? (
             <Link

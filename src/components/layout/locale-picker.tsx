@@ -82,7 +82,7 @@ export function LocalePicker({ className }: { className?: string }) {
         <ChevronDown className="h-3 w-3 text-muted-foreground" />
       </button>
       {open && (
-        <div className="absolute left-0 z-50 mt-1 w-36 rounded-md border border-border bg-card py-1 shadow-lg">
+        <div className="absolute right-0 z-50 mt-1 w-36 rounded-md border border-border bg-card py-1 shadow-lg">
           {SUPPORTED_LOCALES.map((opt) => {
             const cfg = LOCALE_CONFIG[opt];
             return (
