@@ -2,268 +2,125 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTranslations } from 'next-intl';
-import { Menu, X, LogOut, Settings } from "lucide-react";
-import { useState, useRef } from "react";
-import { useClickOutside } from "@/hooks/use-click-outside";
-import { buttonVariants } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { UnknownAvatar } from "@/components/ui/unknown-avatar";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS, ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
 import { LocalePicker } from "@/components/layout/locale-picker";
+
+// Dashboard route prefixes the avatar's "active" ring tracks against. When the
+// user is anywhere under one of these, the avatar gets a primary-color ring —
+// the same role SOG's drop-shadow plays for the home page.
+const DASHBOARD_PREFIXES = ["/admin", "/parent", "/gamer", "/gedu"];
 
 export function Header() {
   const pathname = usePathname();
   const { user, profile, isLoading } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const t = useTranslations('header');
-  const c = useTranslations('common');
+  const t = useTranslations("header");
+  const c = useTranslations("common");
 
-  const publicNavLinks = [
-    { href: ROUTES.products, label: t('nav.clubs') },
-    { href: ROUTES.camps, label: t('nav.camps') },
-    { href: ROUTES.events, label: t('nav.events') },
+  const navLinks = [
+    { href: ROUTES.products, label: t("nav.clubs") },
+    { href: ROUTES.camps, label: t("nav.camps") },
+    { href: ROUTES.events, label: t("nav.events") },
   ];
 
-  const mobileInlineLinks = [
-    { href: ROUTES.products, label: t('nav.clubs') },
-    { href: ROUTES.camps, label: t('nav.camps') },
-    { href: ROUTES.events, label: t('nav.events') },
-  ];
+  const isHome = pathname === ROUTES.home;
+  const isOnDashboard = DASHBOARD_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  );
 
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
     : null;
 
-  const isHome = pathname === ROUTES.home;
+  // While auth is resolving we don't yet know where the avatar should link, so
+  // the slot stays non-interactive (a span, not a Link). Once known, signed-in
+  // users go to their dashboard, signed-out users go to login.
+  const avatarHref = isLoading
+    ? null
+    : user && dashboardPath
+      ? dashboardPath
+      : ROUTES.login;
 
-  useClickOutside(dropdownRef, () => setDropdownOpen(false));
+  const avatarContent = isLoading ? (
+    <UnknownAvatar faded />
+  ) : user ? (
+    <Identicon id={profile?.id || user.id} size={32} />
+  ) : (
+    <UnknownAvatar />
+  );
+
+  const avatarFrame = (
+    <Avatar
+      className={cn(
+        "h-8 w-8 transition-shadow",
+        isOnDashboard && "ring-2 ring-primary",
+      )}
+    >
+      {avatarContent}
+    </Avatar>
+  );
 
   return (
     <header className="fixed top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container mx-auto flex h-16 items-center justify-between px-4">
-        {/* Logo — glows and is visually "active" when on home,
-            replacing the explicit "Home" nav link. */}
+      <nav className="container mx-auto flex h-16 items-center justify-between gap-3 px-4">
         <Link
-          href="/"
-          className="flex items-center gap-2"
+          href={ROUTES.home}
+          className="flex shrink-0 items-center gap-2"
           aria-current={isHome ? "page" : undefined}
         >
           <span
             className={cn(
               "font-display text-xl font-bold text-primary transition-all duration-300",
-              isHome && "drop-shadow-[0_0_12px_currentColor]"
+              isHome && "drop-shadow-[0_0_12px_currentColor]",
             )}
           >
             SOG
           </span>
           <span className="hidden text-lg font-semibold sm:inline-block">
-            {c('appName')}
+            {c("appName")}
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden items-center gap-6 md:flex">
-          {publicNavLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
-                pathname === link.href
-                  ? "text-primary"
-                  : "text-muted-foreground"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Auth Section */}
-        <div className="hidden items-center gap-4 md:flex">
-          {isLoading ? (
-            <div className="h-10 w-20 animate-pulse rounded-md bg-muted" />
-          ) : user ? (
-            <div className="flex items-center gap-4">
-              {dashboardPath && (
-                <Link
-                  href={dashboardPath}
-                  className={buttonVariants({ variant: "ghost", size: "sm" })}
-                >
-                  {c('dashboard')}
-                </Link>
-              )}
-              <LocalePicker />
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-2 rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <Avatar className="h-8 w-8">
-                    <Identicon id={profile?.id || user.id} size={32} />
-                  </Avatar>
-                </button>
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md border border-border bg-card py-1 shadow-lg">
-                    <div className="px-4 py-2 border-b border-border">
-                      <p className="text-sm font-medium">
-                        {profile?.display_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {profile?.role ? c(ROLE_LABEL_KEYS[profile.role]) : null}
-                      </p>
-                    </div>
-                    <Link
-                      href={ROUTES.settings}
-                      onClick={() => setDropdownOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
-                    >
-                      <Settings className="h-4 w-4" />
-                      {c('settings')}
-                    </Link>
-                    <form action="/api/auth/signout" method="post">
-                      <button
-                        type="submit"
-                        className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-accent hover:text-accent-foreground"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        {c('signOut')}
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <LocalePicker />
-              <Link
-                href={ROUTES.login}
-                className={buttonVariants({ variant: "ghost", size: "sm" })}
-              >
-                {c('signIn')}
-              </Link>
-              <Link
-                href={ROUTES.register}
-                className={buttonVariants({ size: "sm" })}
-              >
-                {c('getStarted')}
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* Mobile Inline Navigation */}
-        <div className="flex items-center gap-3 md:hidden">
-          {mobileInlineLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-primary",
-                pathname === link.href
-                  ? "text-primary"
-                  : "text-muted-foreground"
-              )}
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          className="md:hidden"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label={t('toggleMenu')}
-        >
-          {mobileMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
-        </button>
-      </nav>
-
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="border-t border-border md:hidden">
-          <div className="container mx-auto space-y-1 px-4 py-4">
-            {publicNavLinks.map((link) => (
+        <div className="flex items-center gap-3 sm:gap-6">
+          {navLinks.map((link) => {
+            const isActive = pathname === link.href;
+            return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "block rounded-md px-3 py-2 text-sm font-medium",
-                  pathname === link.href
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  "text-sm font-medium transition-colors hover:text-primary",
+                  isActive ? "text-primary" : "text-muted-foreground",
                 )}
-                onClick={() => setMobileMenuOpen(false)}
+                aria-current={isActive ? "page" : undefined}
               >
                 {link.label}
               </Link>
-            ))}
-            <hr className="my-2 border-border" />
-            {user ? (
-              <>
-                {dashboardPath && (
-                  <Link
-                    href={dashboardPath}
-                    className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {c('dashboard')}
-                  </Link>
-                )}
-                <div className="px-3 py-2">
-                  <LocalePicker />
-                </div>
-                <Link
-                  href={ROUTES.settings}
-                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {c('settings')}
-                </Link>
-                <form action="/api/auth/signout" method="post">
-                  <button
-                    type="submit"
-                    className="block w-full rounded-md px-3 py-2 text-left text-sm font-medium text-destructive hover:bg-accent hover:text-accent-foreground"
-                  >
-                    {c('signOut')}
-                  </button>
-                </form>
-              </>
-            ) : (
-              <>
-                <div className="px-3 py-2">
-                  <LocalePicker />
-                </div>
-                <Link
-                  href={ROUTES.login}
-                  className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {c('signIn')}
-                </Link>
-                <Link
-                  href={ROUTES.register}
-                  className="block rounded-md bg-primary px-3 py-2 text-center text-sm font-medium text-primary-foreground"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {c('getStarted')}
-                </Link>
-              </>
-            )}
-          </div>
+            );
+          })}
         </div>
-      )}
+
+        <div className="flex shrink-0 items-center gap-3">
+          <LocalePicker />
+          {avatarHref ? (
+            <Link
+              href={avatarHref}
+              aria-label={user ? c("dashboard") : c("signIn")}
+              aria-current={isOnDashboard ? "page" : undefined}
+              className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {avatarFrame}
+            </Link>
+          ) : (
+            <span className="rounded-md">{avatarFrame}</span>
+          )}
+        </div>
+      </nav>
     </header>
   );
 }
