@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     });
     if (result instanceof NextResponse) return result;
 
-    const { email, locale: requestedLocale, displayName } = await request.json();
+    const { email, locale: requestedLocale, firstName, lastName } = await request.json();
 
     if (!email || typeof email !== "string") {
       return NextResponse.json(
@@ -24,25 +24,39 @@ export async function POST(request: Request) {
       );
     }
 
-    if (typeof displayName !== "string" || displayName.trim().length < DISPLAY_NAME_MIN || displayName.trim().length > DISPLAY_NAME_MAX) {
+    if (typeof firstName !== "string" || firstName.trim().length < DISPLAY_NAME_MIN || firstName.trim().length > DISPLAY_NAME_MAX) {
       return NextResponse.json(
-        { error: `Display name must be ${DISPLAY_NAME_MIN}-${DISPLAY_NAME_MAX} characters` },
+        { error: `First name must be ${DISPLAY_NAME_MIN}-${DISPLAY_NAME_MAX} characters` },
         { status: 400 }
       );
     }
 
-    const trimmedDisplayName = displayName.trim();
+    if (lastName !== undefined && lastName !== null) {
+      if (typeof lastName !== "string" || lastName.trim().length > DISPLAY_NAME_MAX) {
+        return NextResponse.json(
+          { error: `Last name must be at most ${DISPLAY_NAME_MAX} characters` },
+          { status: 400 }
+        );
+      }
+    }
+
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = typeof lastName === "string" ? lastName.trim() : "";
+    const composedDisplayName = [trimmedFirstName, trimmedLastName]
+      .filter(Boolean)
+      .join(" ");
     const locale = resolveLocale(requestedLocale);
     const origin = new URL(request.url).origin;
     const admin = createAdminClient();
 
     // Step 1: Generate invite link — this creates the user AND returns a signed,
     // time-limited link in one atomic operation. The handle_new_user trigger
-    // fires and seeds profiles.display_name from raw_user_meta_data (passed via
-    // options.data), then assigns customer role by default. The setup-account
-    // form reads the same raw_user_meta_data.display_name to pre-fill its
-    // display-name input — the round-trip exists to hydrate the form, not to
-    // seed the DB (the trigger has already done that).
+    // fires and seeds profiles.first_name/last_name from raw_user_meta_data
+    // (passed via options.data), then assigns customer role by default. The
+    // setup-account form reads the same raw_user_meta_data to pre-fill its
+    // name inputs — the round-trip exists to hydrate the form, not to seed
+    // the DB (the trigger has already done that). display_name is also written
+    // (composed) so the Supabase Auth dashboard label stays human-readable.
     // generateLink() has no PKCE challenge, so Supabase's verify endpoint
     // redirects with implicit flow (tokens in URL hash). The setup-account
     // page parses these and calls setSession() manually.
@@ -51,7 +65,11 @@ export async function POST(request: Request) {
       email,
       options: {
         redirectTo: `${origin}${ROUTES.setupAccount}`,
-        data: { display_name: trimmedDisplayName },
+        data: {
+          first_name: trimmedFirstName,
+          last_name: trimmedLastName,
+          display_name: composedDisplayName,
+        },
       },
     });
 
@@ -85,7 +103,7 @@ export async function POST(request: Request) {
         fromName: t("senderAuth"),
         toEmail: email,
         subject: t("geduInvite.subject"),
-        htmlContent: buildGeduInviteEmail(t, data.properties.action_link, locale, trimmedDisplayName),
+        htmlContent: buildGeduInviteEmail(t, data.properties.action_link, locale, trimmedFirstName),
       });
     } catch (emailError) {
       console.error("Invite email failed, rolling back user:", emailError instanceof Error ? emailError.message : emailError);

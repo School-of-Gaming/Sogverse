@@ -20,7 +20,7 @@ export function CustomerGroupDetailContent({ groupId, gamerId }: CustomerGroupDe
 
   const group = groups.find((g) => g.groupId === groupId);
   const gamer = gamers?.find((g) => g.id === gamerId);
-  const gamerDisplayName = gamer?.display_name ?? "Gamer";
+  const gamerDisplayName = gamer?.first_name ?? "Gamer";
 
   return (
     <>

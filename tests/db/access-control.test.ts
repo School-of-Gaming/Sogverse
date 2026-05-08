@@ -97,8 +97,8 @@ describe("Access Control", () => {
     // policy intact but silently breaks every authenticated write against
     // the table — exactly how products/games writes regressed in the past.
     // profiles is intentionally NOT in this allowlist: it uses column-level
-    // UPDATE grants on (display_name, phone, spoken_languages) rather than
-    // table-level UPDATE. Column privileges live in information_schema
+    // UPDATE grants on (first_name, last_name, phone, spoken_languages) rather
+    // than table-level UPDATE. Column privileges live in information_schema
     // .column_privileges and are out of scope for _list_table_grants.
     const WRITE_GRANT_ALLOWLIST = new Map<string, Set<string>>([
       ["parent_gamer", new Set(["DELETE"])],

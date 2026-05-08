@@ -146,7 +146,7 @@ export function GroupColumn({
                   <GeduPill
                     key={ge.id}
                     geduId={ge.id}
-                    displayName={ge.display_name}
+                    firstName={ge.first_name}
                     email={ge.email}
                     isPending={ge.isPending}
                     isPendingRemove={ge.isPendingRemove}
@@ -188,7 +188,7 @@ export function GroupColumn({
                     key={p.id}
                     participationId={p.id}
                     gamerId={p.gamer_id}
-                    displayName={p.gamer_display_name}
+                    firstName={p.gamer_first_name}
                     dateOfBirth={p.gamer_date_of_birth}
                     gender={p.gamer_gender}
                     isMoved={p.isMoved}

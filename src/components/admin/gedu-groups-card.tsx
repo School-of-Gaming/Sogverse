@@ -88,7 +88,7 @@ function DragOverlayContent({ effectiveGroups }: { effectiveGroups: EffectiveGro
   return (
     <EnrolledGamerChip
       gamerId={gamer.gamerId}
-      displayName={gamer.displayName}
+      firstName={gamer.firstName}
       dateOfBirth={gamer.dateOfBirth}
       gender={gamer.gender}
       groupId={fromGroupId}
@@ -138,7 +138,7 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
 
     const { gamerId, fromGroupId } = active.data.current as {
       gamerId: string;
-      displayName: string;
+      firstName: string;
       fromGroupId: string;
     };
     const { groupId: toGroupId } = over.data.current as { groupId: string };
@@ -227,12 +227,12 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
                       if (g && g.gamers.length > 0) return;
                       dispatch({ type: "DELETE_GROUP", groupId: id });
                     }}
-                    onReassignGedu={(id, geduId, geduDisplayName) =>
+                    onReassignGedu={(id, geduId, geduFirstName) =>
                       dispatch({
                         type: "UPDATE_GROUP_GEDU",
                         groupId: id,
                         geduId,
-                        geduDisplayName,
+                        geduFirstName,
                       })
                     }
                   />
@@ -259,8 +259,8 @@ export function GeduGroupsCard({ productId }: GeduGroupsCardProps) {
         description={t('selectGeduForGroup')}
         gedus={allGedus}
         excludeIds={usedGeduIds}
-        onSelect={(geduId, geduDisplayName) =>
-          dispatch({ type: "ADD_GROUP", geduId, geduDisplayName })
+        onSelect={(geduId, geduFirstName) =>
+          dispatch({ type: "ADD_GROUP", geduId, geduFirstName })
         }
       />
 

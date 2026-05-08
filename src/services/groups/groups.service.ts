@@ -4,7 +4,7 @@ import type { Database, MyGroupWithDetails } from "@/types";
 /** Enrolled gamer fields from the get_product_groups_with_details RPC (admin). */
 export interface GroupGamer {
   gamerId: string;
-  displayName: string;
+  firstName: string;
   enrollmentId: string;
   dateOfBirth: string;
   gender: string;
@@ -15,7 +15,7 @@ export interface ProductGroup {
   productId: string;
   geduId: string;
   displayOrder: number;
-  geduDisplayName: string;
+  geduFirstName: string;
   geduEmail: string;
   gamers: GroupGamer[];
 }
@@ -23,7 +23,7 @@ export interface ProductGroup {
 /** Enrolled gamer fields from the get_my_groups RPC. */
 export interface GeduGroupGamer {
   gamerId: string;
-  displayName: string;
+  firstName: string;
   enrollmentId: string;
   dateOfBirth: string | null;
   gender: string | null;
@@ -79,7 +79,7 @@ function reshapeGroupRows(data: MyGroupWithDetails[]): GeduGroup[] {
         gameId: row.game_id,
         gameName: row.game_name,
         geduId: row.gedu_id,
-        geduName: row.gedu_display_name,
+        geduName: row.gedu_first_name,
         dayOfWeek: row.day_of_week,
         startTime: row.start_time,
         timezone: row.timezone,
@@ -93,7 +93,7 @@ function reshapeGroupRows(data: MyGroupWithDetails[]): GeduGroup[] {
     if (row.gamer_id) {
       groupMap.get(row.group_id)!.gamers.push({
         gamerId: row.gamer_id,
-        displayName: row.gamer_display_name!,
+        firstName: row.gamer_first_name!,
         enrollmentId: row.enrollment_id!,
         dateOfBirth: row.gamer_date_of_birth,
         gender: row.gamer_gender,
@@ -128,7 +128,7 @@ export class GroupsService {
           productId: row.product_id,
           geduId: row.gedu_id,
           displayOrder: row.display_order,
-          geduDisplayName: row.gedu_display_name,
+          geduFirstName: row.gedu_first_name,
           geduEmail: row.gedu_email,
           gamers: [],
         });
@@ -139,7 +139,7 @@ export class GroupsService {
       if (row.gamer_id) {
         groupMap.get(row.group_id)!.gamers.push({
           gamerId: row.gamer_id,
-          displayName: row.gamer_display_name,
+          firstName: row.gamer_first_name,
           enrollmentId: row.enrollment_id,
           dateOfBirth: row.gamer_date_of_birth,
           gender: row.gamer_gender,

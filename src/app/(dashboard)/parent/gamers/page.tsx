@@ -92,7 +92,7 @@ export default function CustomerGamersPage() {
                 <Link href={`${ROUTES.customer.gamers}/${gamer.id}`} className="block">
                   <GamerCard
                     id={gamer.id}
-                    displayName={gamer.display_name}
+                    firstName={gamer.first_name}
                     username={gamer.username}
                     subtitle={t('gamers.joined', { time: format.relativeTime(new Date(gamer.created_at), new Date()) })}
                   />
@@ -109,7 +109,7 @@ export default function CustomerGamersPage() {
                         locale={locale}
                         onJoinClick={() => setSwitchTarget({
                           gamerId: gamer.id,
-                          gamerDisplayName: gamer.display_name,
+                          gamerDisplayName: gamer.first_name,
                           redirectUrl: `${ROUTES.gamer.voiceSession(group.voiceRoomId)}?groupId=${group.groupId}`,
                         })}
                       />

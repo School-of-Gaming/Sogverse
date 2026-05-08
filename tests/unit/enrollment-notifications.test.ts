@@ -58,11 +58,11 @@ function setupMockData(overrides?: {
             };
           }
           // Parent profile (now includes locale)
-          if (selectStr.includes("display_name") && selectStr.includes("email") && selectStr.includes("locale") && !selectStr.includes("minecraft")) {
+          if (selectStr.includes("first_name") && selectStr.includes("email") && selectStr.includes("locale") && !selectStr.includes("minecraft")) {
             return {
               eq: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue({
-                  data: { display_name: "Parent Name", email: parentEmail, locale: null },
+                  data: { first_name: "Parent Name", email: parentEmail, locale: null },
                   error: null,
                 }),
               }),
@@ -74,7 +74,7 @@ function setupMockData(overrides?: {
               eq: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue({
                   data: {
-                    display_name: "Gamer Name",
+                    first_name: "Gamer Name",
                     minecraft_accounts: { minecraft_username: minecraftUsername, minecraft_uuid: minecraftUuid },
                   },
                   error: null,
@@ -94,7 +94,7 @@ function setupMockData(overrides?: {
               data: {
                 gedu_id: "gedu-1",
                 products: { name: "Minecraft 101" },
-                profiles: { display_name: "Gedu Name", email: geduEmail, locale: null },
+                profiles: { first_name: "Gedu Name", email: geduEmail, locale: null },
               },
               error: null,
             }),

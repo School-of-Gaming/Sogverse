@@ -21,10 +21,10 @@ describe("GroupsService", () => {
           product_id: "p1",
           gedu_id: "gedu-2",
           display_order: 1,
-          gedu_display_name: "Bob",
+          gedu_first_name: "Bob",
           gedu_email: "bob@test.com",
           gamer_id: null,
-          gamer_display_name: null,
+          gamer_first_name: null,
           enrollment_id: null,
           gamer_date_of_birth: null,
           gamer_gender: null,
@@ -34,10 +34,10 @@ describe("GroupsService", () => {
           product_id: "p1",
           gedu_id: "gedu-1",
           display_order: 0,
-          gedu_display_name: "Alice",
+          gedu_first_name: "Alice",
           gedu_email: "alice@test.com",
           gamer_id: "gamer-1",
-          gamer_display_name: "Kid A",
+          gamer_first_name: "Kid A",
           enrollment_id: "e1",
           gamer_date_of_birth: "2015-01-01",
           gamer_gender: "male",
@@ -47,10 +47,10 @@ describe("GroupsService", () => {
           product_id: "p1",
           gedu_id: "gedu-1",
           display_order: 0,
-          gedu_display_name: "Alice",
+          gedu_first_name: "Alice",
           gedu_email: "alice@test.com",
           gamer_id: "gamer-2",
-          gamer_display_name: "Kid B",
+          gamer_first_name: "Kid B",
           enrollment_id: "e2",
           gamer_date_of_birth: null,
           gamer_gender: null,
@@ -69,7 +69,7 @@ describe("GroupsService", () => {
       // Should be sorted by displayOrder (g1=0 before g2=1)
       expect(result).toHaveLength(2);
       expect(result[0].groupId).toBe("g1");
-      expect(result[0].geduDisplayName).toBe("Alice");
+      expect(result[0].geduFirstName).toBe("Alice");
       expect(result[0].gamers).toHaveLength(2);
       expect(result[0].gamers[0].gamerId).toBe("gamer-1");
       expect(result[0].gamers[0].dateOfBirth).toBe("2015-01-01");
@@ -110,10 +110,10 @@ describe("GroupsService", () => {
           product_id: "p1",
           gedu_id: "gedu-1",
           display_order: 0,
-          gedu_display_name: "Alice",
+          gedu_first_name: "Alice",
           gedu_email: "alice@test.com",
           gamer_id: null,
-          gamer_display_name: null,
+          gamer_first_name: null,
           enrollment_id: null,
           gamer_date_of_birth: null,
           gamer_gender: null,

@@ -56,7 +56,7 @@ function createTokenRequest(body: Record<string, unknown>): Request {
 
 function mockAuthenticatedWithProfile(
   userId: string,
-  profile: { role: string; display_name: string; username: string | null },
+  profile: { role: string; first_name: string; username: string | null },
 ) {
   if (profile.role === "customer") {
     mockRequireRole.mockResolvedValue(
@@ -166,7 +166,7 @@ describe("POST /api/voice/token", () => {
   it("should return 403 for customer role", async () => {
     mockAuthenticatedWithProfile("customer-id", {
       role: "customer",
-      display_name: "Parent",
+      first_name: "Parent",
       username: "parent1",
     });
 
@@ -180,7 +180,7 @@ describe("POST /api/voice/token", () => {
   it("should return 400 when roomId is missing", async () => {
     mockAuthenticatedWithProfile("gedu-user-id", {
       role: "gedu",
-      display_name: "Educator",
+      first_name: "Educator",
       username: "edu1",
     });
 
@@ -194,7 +194,7 @@ describe("POST /api/voice/token", () => {
   it("should return 404 when room does not exist", async () => {
     mockAuthenticatedWithProfile("gedu-user-id", {
       role: "gedu",
-      display_name: "Educator",
+      first_name: "Educator",
       username: "edu1",
     });
     mockRoomLookup(null);
@@ -211,7 +211,7 @@ describe("POST /api/voice/token", () => {
 
     mockAuthenticatedWithProfile("gedu-user-id", {
       role: "gedu",
-      display_name: "Educator",
+      first_name: "Educator",
       username: "edu1",
     });
     mockRoomLookup(createGroupRoom());
@@ -227,7 +227,7 @@ describe("POST /api/voice/token", () => {
     it("should allow admin to join", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
-        display_name: "Admin",
+        first_name: "Admin",
         username: "admin1",
       });
       mockRoomLookup(createSpecialRoom("admin_only"));
@@ -239,7 +239,7 @@ describe("POST /api/voice/token", () => {
     it("should reject gedu from admin-only room", async () => {
       mockAuthenticatedWithProfile("gedu-user-id", {
         role: "gedu",
-        display_name: "Educator",
+        first_name: "Educator",
         username: "edu1",
       });
       mockRoomLookup(createSpecialRoom("admin_only"));
@@ -254,7 +254,7 @@ describe("POST /api/voice/token", () => {
     it("should reject gamer from admin-only room", async () => {
       mockAuthenticatedWithProfile("gamer-user-id", {
         role: "gamer",
-        display_name: "Gamer",
+        first_name: "Gamer",
         username: "gamer1",
       });
       mockRoomLookup(createSpecialRoom("admin_only"));
@@ -268,7 +268,7 @@ describe("POST /api/voice/token", () => {
     it("should allow gedu to join", async () => {
       mockAuthenticatedWithProfile("gedu-user-id", {
         role: "gedu",
-        display_name: "Educator",
+        first_name: "Educator",
         username: "edu1",
       });
       mockRoomLookup(createSpecialRoom("gedu_only"));
@@ -280,7 +280,7 @@ describe("POST /api/voice/token", () => {
     it("should allow admin to join gedu-only room", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
-        display_name: "Admin",
+        first_name: "Admin",
         username: "admin1",
       });
       mockRoomLookup(createSpecialRoom("gedu_only"));
@@ -292,7 +292,7 @@ describe("POST /api/voice/token", () => {
     it("should reject gamer from gedu-only room", async () => {
       mockAuthenticatedWithProfile("gamer-user-id", {
         role: "gamer",
-        display_name: "Gamer",
+        first_name: "Gamer",
         username: "gamer1",
       });
       mockRoomLookup(createSpecialRoom("gedu_only"));
@@ -309,7 +309,7 @@ describe("POST /api/voice/token", () => {
     it("should allow assigned gedu to join", async () => {
       mockAuthenticatedWithProfile("gedu-user-id", {
         role: "gedu",
-        display_name: "Educator",
+        first_name: "Educator",
         username: "edu1",
       });
       mockRoomLookup(createGroupRoom());
@@ -321,7 +321,7 @@ describe("POST /api/voice/token", () => {
     it("should reject unassigned gedu", async () => {
       mockAuthenticatedWithProfile("other-gedu-id", {
         role: "gedu",
-        display_name: "Other Educator",
+        first_name: "Other Educator",
         username: "edu2",
       });
       mockRoomLookup(createGroupRoom());
@@ -369,7 +369,7 @@ describe("POST /api/voice/token", () => {
     it("should allow enrolled gamer to join when session is open", async () => {
       mockAuthenticatedWithProfile("gamer-user-id", {
         role: "gamer",
-        display_name: "Gamer",
+        first_name: "Gamer",
         username: "gamer1",
       });
       mockRoomLookup(createGroupRoom());
@@ -396,7 +396,7 @@ describe("POST /api/voice/token", () => {
     it("should reject unenrolled gamer", async () => {
       mockAuthenticatedWithProfile("gamer-user-id", {
         role: "gamer",
-        display_name: "Gamer",
+        first_name: "Gamer",
         username: "gamer1",
       });
 
@@ -412,7 +412,7 @@ describe("POST /api/voice/token", () => {
     it("should reject gamer outside session window", async () => {
       mockAuthenticatedWithProfile("gamer-user-id", {
         role: "gamer",
-        display_name: "Gamer",
+        first_name: "Gamer",
         username: "gamer1",
       });
 
@@ -438,7 +438,7 @@ describe("POST /api/voice/token", () => {
     it("should reject gamer who enrolled after session started (mid-session enrollment)", async () => {
       mockAuthenticatedWithProfile("gamer-user-id", {
         role: "gamer",
-        display_name: "Gamer",
+        first_name: "Gamer",
         username: "gamer1",
       });
 
@@ -468,7 +468,7 @@ describe("POST /api/voice/token", () => {
     it("should allow gamer who enrolled just before session started", async () => {
       mockAuthenticatedWithProfile("gamer-user-id", {
         role: "gamer",
-        display_name: "Gamer",
+        first_name: "Gamer",
         username: "gamer1",
       });
 
@@ -497,7 +497,7 @@ describe("POST /api/voice/token", () => {
     it("should allow admin to join any group room when session is open", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
-        display_name: "Admin User",
+        first_name: "Admin User",
         username: "admin1",
       });
       mockRoomLookup(createGroupRoom());
@@ -518,7 +518,7 @@ describe("POST /api/voice/token", () => {
     it("should reject admin outside session window", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
-        display_name: "Admin User",
+        first_name: "Admin User",
         username: "admin1",
       });
       mockRoomLookup(createGroupRoom());
@@ -541,7 +541,7 @@ describe("POST /api/voice/token", () => {
     it("should reject assigned gedu outside session window", async () => {
       mockAuthenticatedWithProfile("gedu-user-id", {
         role: "gedu",
-        display_name: "Educator",
+        first_name: "Educator",
         username: "edu1",
       });
       mockRoomLookup(createGroupRoom());
@@ -564,7 +564,7 @@ describe("POST /api/voice/token", () => {
     it("should create owner token for gedu", async () => {
       mockAuthenticatedWithProfile("gedu-user-id", {
         role: "gedu",
-        display_name: "Test Educator",
+        first_name: "Test Educator",
         username: "testgedu",
       });
       mockRoomLookup(createGroupRoom());
@@ -582,7 +582,7 @@ describe("POST /api/voice/token", () => {
     it("should create non-owner token for gamer", async () => {
       mockAuthenticatedWithProfile("gamer-user-id", {
         role: "gamer",
-        display_name: "Test Gamer",
+        first_name: "Test Gamer",
         username: "testgamer",
       });
 
@@ -628,7 +628,7 @@ describe("POST /api/voice/token", () => {
     it("should grant screen share (via isOwner) for admin", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
-        display_name: "Admin",
+        first_name: "Admin",
         username: "admin1",
       });
       mockRoomLookup(createSpecialRoom("admin_only"));
@@ -644,7 +644,7 @@ describe("POST /api/voice/token", () => {
     it("should grant screen share (via isOwner) for gedu", async () => {
       mockAuthenticatedWithProfile("gedu-user-id", {
         role: "gedu",
-        display_name: "Educator",
+        first_name: "Educator",
         username: "edu1",
       });
       mockRoomLookup(createGroupRoom());
@@ -660,7 +660,7 @@ describe("POST /api/voice/token", () => {
     it("should deny screen share (via non-owner) for gamer", async () => {
       mockAuthenticatedWithProfile("gamer-user-id", {
         role: "gamer",
-        display_name: "Gamer",
+        first_name: "Gamer",
         username: "gamer1",
       });
 
@@ -706,7 +706,7 @@ describe("POST /api/voice/token", () => {
     it("should set group room token expiry to windowClosesAt + grace period", async () => {
       mockAuthenticatedWithProfile("gedu-user-id", {
         role: "gedu",
-        display_name: "Educator",
+        first_name: "Educator",
         username: "edu1",
       });
       mockRoomLookup(createGroupRoom());
@@ -731,7 +731,7 @@ describe("POST /api/voice/token", () => {
     it("should not set expUnix for always-open rooms", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
-        display_name: "Admin",
+        first_name: "Admin",
         username: "admin1",
       });
       mockRoomLookup(createSpecialRoom("admin_only"));
@@ -748,7 +748,7 @@ describe("POST /api/voice/token", () => {
     it("should create Daily.co room if it does not exist", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
-        display_name: "Admin",
+        first_name: "Admin",
         username: "admin1",
       });
       mockRoomLookup(createSpecialRoom("admin_only"));
@@ -764,7 +764,7 @@ describe("POST /api/voice/token", () => {
     it("should skip Daily.co creation if room already exists", async () => {
       mockAuthenticatedWithProfile("admin-user-id", {
         role: "admin",
-        display_name: "Admin",
+        first_name: "Admin",
         username: "admin1",
       });
       mockRoomLookup(createSpecialRoom("admin_only"));

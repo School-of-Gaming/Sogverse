@@ -62,18 +62,18 @@ export function ProductPurchasedCard({ participation }: ProductPurchasedCardProp
     return t("balanceNoSessionsLeft");
   })();
 
-  // The participations service joins the gamer's profile (display_name +
-  // username). Prefer display_name; fall back to username; final fallback
+  // The participations service joins the gamer's profile (first_name +
+  // username). Prefer first_name; fall back to username; final fallback
   // is a slice of the id so we still render *something* if both are null
   // (shouldn't happen — a gamer profile is created with at least a
   // username — but the types allow it). The gamer_id is the identicon
   // seed regardless, which keeps the avatar stable across name changes.
-  const displayName =
-    participation.gamer?.display_name ||
+  const firstName =
+    participation.gamer?.first_name ||
     participation.gamer?.username ||
     participation.gamer_id.slice(0, 8);
   const gamer = {
-    displayName,
+    firstName,
     seed: participation.gamer_id,
   };
 

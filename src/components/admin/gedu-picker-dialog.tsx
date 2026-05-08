@@ -23,10 +23,10 @@ interface GeduPickerDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
-  gedus: Pick<Profile, "id" | "display_name" | "email">[];
+  gedus: Pick<Profile, "id" | "first_name" | "email">[];
   excludeIds?: string[];
   highlightId?: string;
-  onSelect: (geduId: string, displayName: string) => void;
+  onSelect: (geduId: string, firstName: string) => void;
 }
 
 export function GeduPickerDialog({
@@ -60,7 +60,7 @@ export function GeduPickerDialog({
     if (!search) return true;
     const q = search.toLowerCase();
     return (
-      g.display_name.toLowerCase().includes(q) ||
+      g.first_name.toLowerCase().includes(q) ||
       (g.email?.toLowerCase().includes(q) ?? false)
     );
   });
@@ -109,7 +109,7 @@ export function GeduPickerDialog({
                     isCurrent && "border-primary bg-primary/5",
                   )}
                   onClick={() => {
-                    onSelect(g.id, g.display_name);
+                    onSelect(g.id, g.first_name);
                     handleOpenChange(false);
                   }}
                 >
@@ -117,7 +117,7 @@ export function GeduPickerDialog({
                     <Identicon id={g.id} size={32} />
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium">{g.display_name}</p>
+                    <p className="font-medium">{g.first_name}</p>
                     <p className="truncate text-xs text-muted-foreground">{g.email}</p>
                   </div>
                   {(isCurrent || isAssigned) && (

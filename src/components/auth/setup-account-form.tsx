@@ -17,7 +17,8 @@ import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useSpokenLanguages } from "@/services/users";
 
 const setupAccountSchema = z.object({
-  displayName: z.string().min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Display name must be at most ${DISPLAY_NAME_MAX} characters`),
+  firstName: z.string().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
+  lastName: z.string().max(DISPLAY_NAME_MAX, `Last name must be at most ${DISPLAY_NAME_MAX} characters`).optional(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -28,7 +29,8 @@ const setupAccountSchema = z.object({
 export function SetupAccountForm() {
   const t = useTranslations('auth');
   const c = useTranslations('common');
-  const [displayName, setDisplayName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [minecraftUsername, setMinecraftUsername] = useState("");
@@ -83,12 +85,15 @@ export function SetupAccountForm() {
             setInviteInvalid(true);
           } else {
             setSessionEmail(sessionData.user?.email ?? "");
-            // Pre-fill the display name from the admin-supplied value in
+            // Pre-fill the name from the admin-supplied values in
             // raw_user_meta_data (set via generateLink's options.data). The
-            // gedu can still edit it before submitting.
-            const metadataName = sessionData.user?.user_metadata.display_name;
-            if (typeof metadataName === "string" && metadataName.length > 0) {
-              setDisplayName(metadataName);
+            // gedu can still edit before submitting.
+            const meta = sessionData.user?.user_metadata ?? {};
+            if (typeof meta.first_name === "string" && meta.first_name.length > 0) {
+              setFirstName(meta.first_name);
+            }
+            if (typeof meta.last_name === "string" && meta.last_name.length > 0) {
+              setLastName(meta.last_name);
             }
             // Clear hash from URL without triggering navigation
             window.history.replaceState(null, "", window.location.pathname);
@@ -111,7 +116,12 @@ export function SetupAccountForm() {
     setIsLoading(true);
 
     try {
-      const validatedData = setupAccountSchema.parse({ displayName, password, confirmPassword });
+      const validatedData = setupAccountSchema.parse({
+        firstName,
+        lastName: lastName.trim() || undefined,
+        password,
+        confirmPassword,
+      });
 
       // Save minecraft FIRST — the UNIQUE constraint on minecraft_uuid can
       // reject this call, and password/profile updates are irreversible
@@ -164,7 +174,8 @@ export function SetupAccountForm() {
         const { error: profileError } = await supabase
           .from("profiles")
           .update({
-            display_name: validatedData.displayName,
+            first_name: validatedData.firstName,
+            last_name: validatedData.lastName ?? "",
             phone: toE164Digits(phone),
             spoken_languages: spokenLanguages,
           })
@@ -175,9 +186,18 @@ export function SetupAccountForm() {
           return;
         }
 
-        // Sync display_name to auth.users metadata so it shows in Supabase dashboard
+        // Sync to auth.users metadata so the Supabase dashboard label stays
+        // current. display_name is composed for the dashboard; first/last
+        // are written separately for tooling.
+        const composedDisplayName = [validatedData.firstName, validatedData.lastName ?? ""]
+          .filter(Boolean)
+          .join(" ");
         await supabase.auth.updateUser({
-          data: { display_name: validatedData.displayName },
+          data: {
+            first_name: validatedData.firstName,
+            last_name: validatedData.lastName ?? "",
+            display_name: composedDisplayName,
+          },
         });
       }
 
@@ -232,17 +252,30 @@ export function SetupAccountForm() {
           {/* Hidden email field so Chrome saves the password against the correct email */}
           <input type="email" autoComplete="username" value={sessionEmail} readOnly hidden />
           <div className="space-y-2">
-            <Label htmlFor="displayName">{c('displayName')}</Label>
+            <Label htmlFor="firstName">{c('firstName')}</Label>
             <Input
-              id="displayName"
+              id="firstName"
               type="text"
-              placeholder={t('setupAccount.namePlaceholder')}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder={t('setupAccount.firstNamePlaceholder')}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
               disabled={isLoading}
               required
               maxLength={DISPLAY_NAME_MAX}
-              autoComplete="name"
+              autoComplete="given-name"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">{c('lastName')}</Label>
+            <Input
+              id="lastName"
+              type="text"
+              placeholder={t('setupAccount.lastNamePlaceholder')}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              disabled={isLoading}
+              maxLength={DISPLAY_NAME_MAX}
+              autoComplete="family-name"
             />
           </div>
           <div className="space-y-2">

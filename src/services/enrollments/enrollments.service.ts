@@ -3,7 +3,7 @@ import type { Database } from "@/types";
 
 export interface EnrollmentGroup {
   groupId: string;
-  geduDisplayName: string;
+  geduFirstName: string;
   gamerCount: number;
   minGamerAge: number | null;
   maxGamerAge: number | null;
@@ -54,7 +54,7 @@ export class EnrollmentsService {
 
     return data.map((row) => ({
       groupId: row.group_id,
-      geduDisplayName: row.gedu_display_name,
+      geduFirstName: row.gedu_first_name,
       gamerCount: row.gamer_count,
       // Generated types mark these as non-null, but MIN/MAX over a LEFT JOIN
       // returns null for groups with zero enrollments.

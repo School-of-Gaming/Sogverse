@@ -65,7 +65,7 @@ export default function AdminUserDetailPage() {
           </Avatar>
           <div className="flex-1">
             <h1 className="text-2xl font-bold">
-              {profile.display_name}
+              {[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
             </h1>
             <div className="flex items-center gap-2">
               <p className="text-muted-foreground">
@@ -108,7 +108,7 @@ export default function AdminUserDetailPage() {
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">
-                          {gamer.display_name || gamer.username || t('unnamedGamer')}
+                          {gamer.first_name || gamer.username || t('unnamedGamer')}
                         </p>
                         <p className="text-xs text-muted-foreground ">
                           {gamer.username}
@@ -142,7 +142,7 @@ export default function AdminUserDetailPage() {
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">
-                          {parent.display_name || parent.username || t('unnamedUser')}
+                          {parent.first_name || parent.username || t('unnamedUser')}
                         </p>
                         <p className="text-xs text-muted-foreground ">
                           {parent.email}

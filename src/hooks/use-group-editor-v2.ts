@@ -18,7 +18,7 @@ import type { BatchGroupChangesV2 } from "@/services/groups-v2";
  * snapshot for this product. */
 interface PendingGedu {
   id: string;
-  displayName: string;
+  firstName: string;
   email: string | null;
 }
 
@@ -37,7 +37,7 @@ interface RenamedGroup {
 interface AssignmentAdd {
   groupId: string;
   geduId: string;
-  displayName: string;
+  firstName: string;
   email: string | null;
 }
 
@@ -73,7 +73,7 @@ export type GroupEditorV2Action =
       type: "ADD_GEDU";
       groupId: string;
       geduId: string;
-      displayName: string;
+      firstName: string;
       email: string | null;
     }
   | { type: "REMOVE_GEDU"; groupId: string; geduId: string }
@@ -214,7 +214,7 @@ export function reducer(
                 ...g.gedus,
                 {
                   id: action.geduId,
-                  displayName: action.displayName,
+                  firstName: action.firstName,
                   email: action.email,
                 },
               ],
@@ -252,7 +252,7 @@ export function reducer(
           {
             groupId: action.groupId,
             geduId: action.geduId,
-            displayName: action.displayName,
+            firstName: action.firstName,
             email: action.email,
           },
         ],
@@ -459,7 +459,7 @@ export function computeEffectiveSnapshot(
       const detail = allServerGedus.get(add.geduId);
       gedus.push({
         id: add.geduId,
-        display_name: add.displayName || (detail?.display_name ?? "Unknown"),
+        first_name: add.firstName || (detail?.first_name ?? "Unknown"),
         email: add.email ?? detail?.email ?? null,
         isPending: true,
         isPendingRemove: false,
@@ -474,7 +474,7 @@ export function computeEffectiveSnapshot(
       participations.push({ ...info.detail, isMoved: isMoved(id) });
     }
     participations.sort((a, b) =>
-      a.gamer_display_name.localeCompare(b.gamer_display_name),
+      a.gamer_first_name.localeCompare(b.gamer_first_name),
     );
 
     return {
@@ -496,7 +496,7 @@ export function computeEffectiveSnapshot(
       const detail = allServerGedus.get(ge.id);
       return {
         id: ge.id,
-        display_name: ge.displayName || (detail?.display_name ?? "Unknown"),
+        first_name: ge.firstName || (detail?.first_name ?? "Unknown"),
         email: ge.email ?? detail?.email ?? null,
         isPending: true,
         isPendingRemove: false,
@@ -510,7 +510,7 @@ export function computeEffectiveSnapshot(
       participations.push({ ...info.detail, isMoved: true });
     }
     participations.sort((a, b) =>
-      a.gamer_display_name.localeCompare(b.gamer_display_name),
+      a.gamer_first_name.localeCompare(b.gamer_first_name),
     );
 
     groups.push({
@@ -575,25 +575,25 @@ export function buildChangeSummary(
 
   const geduNameById = new Map<string, string>();
   for (const g of server.groups) {
-    for (const ge of g.gedus) geduNameById.set(ge.id, ge.display_name);
+    for (const ge of g.gedus) geduNameById.set(ge.id, ge.first_name);
   }
   // Seed staged names too so pending adds for Gedus not yet on this product
   // still render with their real name in the summary.
   for (const ag of state.addedGroups) {
-    for (const ge of ag.gedus) geduNameById.set(ge.id, ge.displayName);
+    for (const ge of ag.gedus) geduNameById.set(ge.id, ge.firstName);
   }
   for (const a of state.geduAssignmentsAdded) {
-    geduNameById.set(a.geduId, a.displayName);
+    geduNameById.set(a.geduId, a.firstName);
   }
 
   const gamerNameByParticipationId = new Map<string, string>();
   for (const g of server.groups) {
     for (const p of g.participations) {
-      gamerNameByParticipationId.set(p.id, p.gamer_display_name);
+      gamerNameByParticipationId.set(p.id, p.gamer_first_name);
     }
   }
   for (const p of server.unassigned) {
-    gamerNameByParticipationId.set(p.id, p.gamer_display_name);
+    gamerNameByParticipationId.set(p.id, p.gamer_first_name);
   }
 
   // Adds first, deletes, renames, gedu changes, then moves — so the summary
@@ -602,7 +602,7 @@ export function buildChangeSummary(
     if (ag.gedus.length === 0) {
       lines.push([text("Add group "), group(ag.name)]);
     } else {
-      const names = ag.gedus.map((ge) => ge.displayName).join(", ");
+      const names = ag.gedus.map((ge) => ge.firstName).join(", ");
       lines.push([
         text("Add group "),
         group(ag.name),

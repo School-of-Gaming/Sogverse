@@ -83,7 +83,7 @@ export async function POST(request: Request) {
   ) {
     role = session.profile.role;
     userId = session.user.id;
-    displayName = session.profile.display_name;
+    displayName = session.profile.first_name;
   } else {
     role = "guest";
     userId = crypto.randomUUID();

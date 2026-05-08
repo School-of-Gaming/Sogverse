@@ -72,8 +72,8 @@ Auth is detected at the token endpoint. The server NEVER trusts client-supplied 
 
 | Visitor | Token `is_owner` | Identity source | Permissions |
 |---|---|---|---|
-| Authenticated admin | true | profile.id, profile.display_name | Full mod (mute, lock, screen-share, end) |
-| Authenticated gedu | true | profile.id, profile.display_name | Full mod (same as admin) |
+| Authenticated admin | true | profile.id, profile.first_name | Full mod (mute, lock, screen-share, end) |
+| Authenticated gedu | true | profile.id, profile.first_name | Full mod (same as admin) |
 | Authenticated parent | false | server-generated UUID, lobby name input | Same as guest — auth ignored |
 | Authenticated gamer | false | server-generated UUID, lobby name input | Same as guest — auth ignored |
 | Unauthenticated | false | server-generated UUID, lobby name input | Same as guest |
@@ -133,7 +133,7 @@ A guest can name themselves "Admin Bob" in the lobby. Today the voice UI does no
 { "code": "K7P2", "displayName": "Bob" }
 ```
 
-`displayName` is required for the guest path, ignored for the mod path (we use `profile.display_name`). All other body fields are ignored — `isOwner`, `role`, `userId`, etc., cannot be supplied by the client.
+`displayName` is required for the guest path, ignored for the mod path (we use `profile.first_name`). All other body fields are ignored — `isOwner`, `role`, `userId`, etc., cannot be supplied by the client.
 
 **Response (success):**
 ```json

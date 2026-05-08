@@ -45,7 +45,7 @@ function mockAuthenticatedAs(role: string, overrides?: Record<string, unknown>) 
     profile: {
       role,
       email: `${role}@test.local`,
-      display_name: `Test ${role}`,
+      first_name: `Test ${role}`,
       username: role === "gamer" ? "testgamer" : null,
       ...overrides,
     },
@@ -217,7 +217,7 @@ describe("POST /api/feedback", () => {
   it("should use parent email as replyTo for gamer", async () => {
     mockAuthenticatedAs("gamer", {
       email: "testgamer@gamer.sogverse.internal",
-      display_name: "Test Gamer",
+      first_name: "Test Gamer",
     });
     setupGamerParentLookup("parent@test.local");
 

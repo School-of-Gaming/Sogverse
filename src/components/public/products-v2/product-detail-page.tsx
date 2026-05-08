@@ -125,7 +125,7 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
       kind: "ready",
       gamers: gamers.map((g) => ({
         id: g.id,
-        name: g.display_name || g.username,
+        name: g.first_name || g.username,
         age: null,
       })),
     };

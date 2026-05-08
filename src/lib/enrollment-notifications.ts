@@ -23,19 +23,19 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
     // Parent profile
     admin
       .from("profiles")
-      .select("display_name, email, locale")
+      .select("first_name, email, locale")
       .eq("id", ctx.customerId)
       .single(),
     // Gamer profile + minecraft info
     admin
       .from("profiles")
-      .select("display_name, minecraft_accounts(minecraft_username, minecraft_uuid)")
+      .select("first_name, minecraft_accounts(minecraft_username, minecraft_uuid)")
       .eq("id", ctx.gamerId)
       .single(),
     // Group → gedu + product
     admin
       .from("product_groups")
-      .select("gedu_id, products(name), profiles:gedu_id(display_name, email, locale)")
+      .select("gedu_id, products(name), profiles:gedu_id(first_name, email, locale)")
       .eq("id", ctx.groupId)
       .single(),
     // Admin emails
@@ -55,15 +55,15 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
     throw new Error(`Failed to fetch group data: ${groupResult.error.message}`);
   }
 
-  const parent = parentResult.data as { display_name: string; email: string; locale: string | null };
+  const parent = parentResult.data as { first_name: string; email: string; locale: string | null };
   const gamer = gamerResult.data as {
-    display_name: string;
+    first_name: string;
     minecraft_accounts: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
   };
   const group = groupResult.data as {
     gedu_id: string;
     products: { name: string };
-    profiles: { display_name: string; email: string; locale: string | null };
+    profiles: { first_name: string; email: string; locale: string | null };
   };
 
   const adminEmails: string[] = (adminResult.data ?? [])
@@ -71,13 +71,13 @@ async function fetchNotificationData(ctx: EnrollmentNotificationContext) {
     .filter((e: string | null): e is string => !!e);
 
   return {
-    parentName: parent.display_name,
+    parentName: parent.first_name,
     parentEmail: parent.email,
     parentLocale: resolveLocale(parent.locale),
-    gamerName: gamer.display_name,
+    gamerName: gamer.first_name,
     minecraftUsername: gamer.minecraft_accounts?.minecraft_username ?? null,
     minecraftUuid: gamer.minecraft_accounts?.minecraft_uuid ?? null,
-    geduName: group.profiles.display_name,
+    geduName: group.profiles.first_name,
     geduEmail: group.profiles.email,
     geduLocale: resolveLocale(group.profiles.locale),
     productName: group.products.name,

@@ -17,7 +17,7 @@ const GENDER_KEY: Record<string, string> = {
 
 interface ContentProps {
   gamerId: string;
-  displayName: string;
+  firstName: string;
   dateOfBirth: string | null;
   gender: GenderType | null;
 }
@@ -26,7 +26,7 @@ interface ContentProps {
 // pointer move, but the inner identicon/text don't need to reconcile.
 const ChipContent = memo(function ChipContent({
   gamerId,
-  displayName,
+  firstName,
   dateOfBirth,
   gender,
 }: ContentProps) {
@@ -47,7 +47,7 @@ const ChipContent = memo(function ChipContent({
         <Identicon id={gamerId} size={28} />
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className="truncate leading-tight">{displayName}</p>
+        <p className="truncate leading-tight">{firstName}</p>
         {detail && (
           <p className="text-[10px] leading-tight text-muted-foreground">
             {detail}
@@ -67,14 +67,14 @@ interface GamerChipProps extends ContentProps {
 export function GamerChip({
   participationId,
   gamerId,
-  displayName,
+  firstName,
   dateOfBirth,
   gender,
   isMoved,
 }: GamerChipProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `participation-${participationId}`,
-    data: { participationId, gamerId, displayName },
+    data: { participationId, gamerId, firstName },
   });
 
   return (
@@ -92,7 +92,7 @@ export function GamerChip({
     >
       <ChipContent
         gamerId={gamerId}
-        displayName={displayName}
+        firstName={firstName}
         dateOfBirth={dateOfBirth}
         gender={gender}
       />

@@ -37,10 +37,10 @@ function unauthenticated() {
   mockGetUserWithProfile.mockResolvedValue(null);
 }
 
-function authenticated(role: string, opts?: { id?: string; displayName?: string }) {
+function authenticated(role: string, opts?: { id?: string; firstName?: string }) {
   mockGetUserWithProfile.mockResolvedValue({
     user: { id: opts?.id ?? `${role}-user-id` },
-    profile: { role, display_name: opts?.displayName ?? `${role} user` },
+    profile: { role, first_name: opts?.firstName ?? `${role} user` },
   });
 }
 
@@ -153,7 +153,7 @@ describe("POST /api/voice/instant/token", () => {
     });
 
     it("treats authenticated parents as guests", async () => {
-      authenticated("customer", { displayName: "Real Parent" });
+      authenticated("customer", { firstName: "Real Parent" });
       const response = await POST(
         createTokenRequest({ code: "K7P2", displayName: "Lobby Name" }),
       );
@@ -167,7 +167,7 @@ describe("POST /api/voice/instant/token", () => {
     });
 
     it("treats authenticated gamers as guests", async () => {
-      authenticated("gamer", { displayName: "Real Gamer" });
+      authenticated("gamer", { firstName: "Real Gamer" });
       const response = await POST(
         createTokenRequest({ code: "K7P2", displayName: "Lobby Name" }),
       );
@@ -181,7 +181,7 @@ describe("POST /api/voice/instant/token", () => {
 
   describe("moderator path", () => {
     it("issues an owner token for authenticated admin", async () => {
-      authenticated("admin", { id: "admin-1", displayName: "Admin User" });
+      authenticated("admin", { id: "admin-1", firstName: "Admin User" });
       const response = await POST(createTokenRequest({ code: "K7P2" }));
       expect(response.status).toBe(200);
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
@@ -194,7 +194,7 @@ describe("POST /api/voice/instant/token", () => {
     });
 
     it("issues an owner token for authenticated gedu", async () => {
-      authenticated("gedu", { id: "gedu-1", displayName: "Educator" });
+      authenticated("gedu", { id: "gedu-1", firstName: "Educator" });
       const response = await POST(createTokenRequest({ code: "K7P2" }));
       expect(response.status).toBe(200);
       expect(mockCreateMeetingToken).toHaveBeenCalledWith(
@@ -203,8 +203,8 @@ describe("POST /api/voice/instant/token", () => {
       expect((await response.json()).role).toBe("gedu");
     });
 
-    it("uses profile display_name for mods (lobby-supplied name ignored)", async () => {
-      authenticated("admin", { id: "admin-1", displayName: "Profile Admin" });
+    it("uses profile first_name for mods (lobby-supplied name ignored)", async () => {
+      authenticated("admin", { id: "admin-1", firstName: "Profile Admin" });
       const response = await POST(
         createTokenRequest({ code: "K7P2", displayName: "Lobby Override" }),
       );
@@ -325,7 +325,7 @@ describe("POST /api/voice/instant/token", () => {
     it("treats unknown role as guest, not as mod", async () => {
       mockGetUserWithProfile.mockResolvedValue({
         user: { id: "u1" },
-        profile: { role: "totally-not-a-real-role", display_name: "X" },
+        profile: { role: "totally-not-a-real-role", first_name: "X" },
       });
       const response = await POST(
         createTokenRequest({ code: "K7P2", displayName: "Bob" }),

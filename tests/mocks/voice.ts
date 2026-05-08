@@ -29,7 +29,7 @@ export function createMockAvailableVoiceRoom(
     start_time: "14:00",
     timezone: "Europe/Helsinki",
     duration_minutes: 60,
-    gedu_display_name: "Test Educator",
+    gedu_first_name: "Test Educator",
     gedu_id: "gedu-user-id",
     enrolled_at: null,
     ...overrides,

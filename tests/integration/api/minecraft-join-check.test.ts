@@ -58,7 +58,7 @@ const SCHEDULE = {
   duration_minutes: 60,
 };
 
-function mockPlayerLookup(profile: { id: string; display_name: string; role: string } | null) {
+function mockPlayerLookup(profile: { id: string; first_name: string; role: string } | null) {
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "minecraft_accounts") {
       return {
@@ -165,7 +165,7 @@ describe("GET /api/minecraft/join-check", () => {
   // --- Gedu ---
 
   describe("gedu", () => {
-    const geduProfile = { id: "gedu-1", display_name: "GeduSteve", role: "gedu" };
+    const geduProfile = { id: "gedu-1", first_name: "GeduSteve", role: "gedu" };
 
     it("allowed when assigned to group with active session", async () => {
       // Step 1: player lookup returns gedu
@@ -204,7 +204,7 @@ describe("GET /api/minecraft/join-check", () => {
       expect(response.status).toBe(200);
       expect(data.allowed).toBe(true);
       expect(data.role).toBe("gedu");
-      expect(data.displayName).toBe("GeduSteve");
+      expect(data.firstName).toBe("GeduSteve");
       expect(data.endTime).toBeDefined();
       expect(data.reason).toBe("Intro to Redstone with GeduSteve");
     });
@@ -282,7 +282,7 @@ describe("GET /api/minecraft/join-check", () => {
   // --- Gamer ---
 
   describe("gamer", () => {
-    const gamerProfile = { id: "gamer-1", display_name: "CoolKid", role: "gamer" };
+    const gamerProfile = { id: "gamer-1", first_name: "CoolKid", role: "gamer" };
 
     function mockGamerWithEnrollments(
       enrollments: Array<{
@@ -290,7 +290,7 @@ describe("GET /api/minecraft/join-check", () => {
         product_groups: {
           gedu_id: string;
           products: typeof SCHEDULE;
-          profiles: { display_name: string };
+          profiles: { first_name: string };
         } | null;
       }>,
     ) {
@@ -330,7 +330,7 @@ describe("GET /api/minecraft/join-check", () => {
           product_groups: {
             gedu_id: "gedu-1",
             products: SCHEDULE,
-            profiles: { display_name: "GeduSteve" },
+            profiles: { first_name: "GeduSteve" },
           },
         },
       ]);
@@ -343,7 +343,7 @@ describe("GET /api/minecraft/join-check", () => {
       expect(response.status).toBe(200);
       expect(data.allowed).toBe(true);
       expect(data.role).toBe("gamer");
-      expect(data.displayName).toBe("CoolKid");
+      expect(data.firstName).toBe("CoolKid");
       expect(data.endTime).toBeDefined();
       expect(data.reason).toBe("Intro to Redstone with GeduSteve");
     });
@@ -366,7 +366,7 @@ describe("GET /api/minecraft/join-check", () => {
           product_groups: {
             gedu_id: "gedu-1",
             products: SCHEDULE,
-            profiles: { display_name: "GeduSteve" },
+            profiles: { first_name: "GeduSteve" },
           },
         },
       ]);
@@ -387,7 +387,7 @@ describe("GET /api/minecraft/join-check", () => {
           product_groups: {
             gedu_id: "gedu-1",
             products: SCHEDULE,
-            profiles: { display_name: "GeduSteve" },
+            profiles: { first_name: "GeduSteve" },
           },
         },
       ]);
@@ -410,7 +410,7 @@ describe("GET /api/minecraft/join-check", () => {
           product_groups: {
             gedu_id: "gedu-1",
             products: SCHEDULE,
-            profiles: { display_name: "GeduSteve" },
+            profiles: { first_name: "GeduSteve" },
           },
         },
         {
@@ -418,7 +418,7 @@ describe("GET /api/minecraft/join-check", () => {
           product_groups: {
             gedu_id: "gedu-2",
             products: SCHEDULE_2,
-            profiles: { display_name: "GeduAlex" },
+            profiles: { first_name: "GeduAlex" },
           },
         },
       ]);

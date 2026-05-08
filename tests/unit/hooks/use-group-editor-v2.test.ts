@@ -28,19 +28,19 @@ function makeSnapshot(
 
 const ALICE = {
   id: "gedu-alice",
-  display_name: "Alice",
+  first_name: "Alice",
   email: "alice@test.com",
 };
 const BOB = {
   id: "gedu-bob",
-  display_name: "Bob",
+  first_name: "Bob",
   email: "bob@test.com",
 };
 
 const ZOE = {
   id: "p-zoe",
   gamer_id: "g-zoe",
-  gamer_display_name: "Zoe",
+  gamer_first_name: "Zoe",
   gamer_date_of_birth: "2015-01-01",
   gamer_gender: "girl" as const,
   status: "active" as const,
@@ -49,7 +49,7 @@ const ZOE = {
 const YANNI = {
   id: "p-yanni",
   gamer_id: "g-yanni",
-  gamer_display_name: "Yanni",
+  gamer_first_name: "Yanni",
   gamer_date_of_birth: "2014-06-01",
   gamer_gender: "boy" as const,
   status: "active" as const,
@@ -76,14 +76,14 @@ describe("useGroupEditorV2 reducer", () => {
           type: "ADD_GROUP",
           name: "Group A",
           gedus: [
-            { id: "g1", displayName: "Alice", email: "alice@test.com" },
-            { id: "g2", displayName: "Bob", email: null },
+            { id: "g1", firstName: "Alice", email: "alice@test.com" },
+            { id: "g2", firstName: "Bob", email: null },
           ],
         },
       ]);
       expect(state.addedGroups[0].gedus).toEqual([
-        { id: "g1", displayName: "Alice", email: "alice@test.com" },
-        { id: "g2", displayName: "Bob", email: null },
+        { id: "g1", firstName: "Alice", email: "alice@test.com" },
+        { id: "g2", firstName: "Bob", email: null },
       ]);
     });
 
@@ -183,11 +183,11 @@ describe("useGroupEditorV2 reducer", () => {
         type: "ADD_GEDU",
         groupId: tempId,
         geduId: "gedu-1",
-        displayName: "Alice",
+        firstName: "Alice",
         email: "alice@test.com",
       });
       expect(state.addedGroups[0].gedus).toEqual([
-        { id: "gedu-1", displayName: "Alice", email: "alice@test.com" },
+        { id: "gedu-1", firstName: "Alice", email: "alice@test.com" },
       ]);
       expect(state.geduAssignmentsAdded).toEqual([]);
     });
@@ -197,14 +197,14 @@ describe("useGroupEditorV2 reducer", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
-        displayName: "Alice",
+        firstName: "Alice",
         email: "alice@test.com",
       });
       expect(state.geduAssignmentsAdded).toEqual([
         {
           groupId: "server-1",
           geduId: "gedu-1",
-          displayName: "Alice",
+          firstName: "Alice",
           email: "alice@test.com",
         },
       ]);
@@ -215,7 +215,7 @@ describe("useGroupEditorV2 reducer", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
-        displayName: "Alice",
+        firstName: "Alice",
         email: null,
       });
       const b = reducer(a, {
@@ -237,7 +237,7 @@ describe("useGroupEditorV2 reducer", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
-        displayName: "Alice",
+        firstName: "Alice",
         email: null,
       });
       expect(b.geduAssignmentsAdded).toEqual([]);
@@ -249,21 +249,21 @@ describe("useGroupEditorV2 reducer", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
-        displayName: "Alice",
+        firstName: "Alice",
         email: null,
       });
       const b = reducer(a, {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "gedu-1",
-        displayName: "Alice",
+        firstName: "Alice",
         email: null,
       });
       expect(b.geduAssignmentsAdded).toEqual([
         {
           groupId: "server-1",
           geduId: "gedu-1",
-          displayName: "Alice",
+          firstName: "Alice",
           email: null,
         },
       ]);
@@ -381,7 +381,7 @@ describe("useGroupEditorV2 reducer", () => {
           type: "ADD_GEDU",
           groupId: "server-3",
           geduId: "gedu-1",
-          displayName: "Alice",
+          firstName: "Alice",
           email: null,
         },
         {
@@ -541,7 +541,7 @@ describe("computeEffectiveSnapshot", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: BOB.id,
-        displayName: BOB.display_name,
+        firstName: BOB.first_name,
         email: BOB.email,
       },
       { type: "REMOVE_GEDU", groupId: "server-1", geduId: ALICE.id },
@@ -558,7 +558,7 @@ describe("computeEffectiveSnapshot", () => {
     const bob = snap.groups[0].gedus.find((g) => g.id === BOB.id);
     expect(bob?.isPending).toBe(true);
     expect(bob?.isPendingRemove).toBe(false);
-    expect(bob?.display_name).toBe("Bob");
+    expect(bob?.first_name).toBe("Bob");
     expect(bob?.email).toBe(BOB.email);
   });
 
@@ -567,11 +567,11 @@ describe("computeEffectiveSnapshot", () => {
     const state = reducer(initialState, {
       type: "ADD_GROUP",
       name: "Brand New",
-      gedus: [{ id: "gedu-x", displayName: "Charlie", email: null }],
+      gedus: [{ id: "gedu-x", firstName: "Charlie", email: null }],
     });
     const snap = computeEffectiveSnapshot(server, state);
     expect(snap.groups[0].gedus).toHaveLength(1);
-    expect(snap.groups[0].gedus[0].display_name).toBe("Charlie");
+    expect(snap.groups[0].gedus[0].first_name).toBe("Charlie");
   });
 });
 
@@ -608,7 +608,7 @@ describe("buildChangeSummary", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: BOB.id,
-        displayName: BOB.display_name,
+        firstName: BOB.first_name,
         email: BOB.email,
       },
       {
@@ -667,7 +667,7 @@ describe("buildBatchPayload", () => {
       {
         type: "ADD_GROUP",
         name: "A",
-        gedus: [{ id: "g1", displayName: "Alice", email: null }],
+        gedus: [{ id: "g1", firstName: "Alice", email: null }],
       },
       { type: "RENAME_GROUP", groupId: "server-1", name: "Renamed" },
       { type: "DELETE_GROUP", groupId: "server-2" },
@@ -675,7 +675,7 @@ describe("buildBatchPayload", () => {
         type: "ADD_GEDU",
         groupId: "server-1",
         geduId: "g3",
-        displayName: "Charlie",
+        firstName: "Charlie",
         email: "c@test.com",
       },
       { type: "REMOVE_GEDU", groupId: "server-1", geduId: "g4" },

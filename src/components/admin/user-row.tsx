@@ -9,7 +9,7 @@ import type { UserRole } from "@/types";
 
 interface UserRowUser {
   id: string;
-  display_name: string | null;
+  first_name: string;
   username: string | null;
   email: string | null;
   role: UserRole;
@@ -37,7 +37,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
           </Avatar>
           <div>
             <p className="font-medium">
-              {user.display_name || user.username || t('unnamedUser')}
+              {user.first_name || user.username || t('unnamedUser')}
             </p>
             <p className="text-sm text-muted-foreground">
               {user.email || user.username}
@@ -71,7 +71,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
                   <Identicon id={gamer.id} size={28} />
                 </Avatar>
                 <p className="text-sm font-medium">
-                  {gamer.display_name || gamer.username || t('unnamedGamer')}
+                  {gamer.first_name || gamer.username || t('unnamedGamer')}
                 </p>
               </div>
               <div className="flex items-center gap-2">

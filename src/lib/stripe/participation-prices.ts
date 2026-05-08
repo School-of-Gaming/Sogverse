@@ -218,13 +218,18 @@ export async function getOrCreateStripeCustomer(
 
   const { data: userProfile } = await admin
     .from("profiles")
-    .select("email, display_name")
+    .select("email, first_name, last_name")
     .eq("id", customerId)
     .single();
 
+  // Stripe receipts/invoices want the full name, not just the first.
+  const fullName = [userProfile?.first_name, userProfile?.last_name]
+    .filter((part): part is string => Boolean(part))
+    .join(" ");
+
   const created = await stripe.customers.create({
     email: userProfile?.email ?? undefined,
-    name: userProfile?.display_name ?? undefined,
+    name: fullName || undefined,
     metadata: { user_id: customerId },
   });
 

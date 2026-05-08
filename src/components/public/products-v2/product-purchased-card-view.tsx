@@ -16,7 +16,7 @@ import type { ParticipationState } from "@/types";
 // display props.
 
 export interface PurchasedGamerDisplay {
-  displayName: string;
+  firstName: string;
   /** Optional stable seed for the identicon (UUID is ideal). */
   seed?: string;
 }
@@ -119,7 +119,7 @@ export function ProductPurchasedCardView({
             <ul className="space-y-0.5 text-xs text-muted-foreground">
               <li className="line-clamp-1">{scheduleSummary}</li>
               <li className="line-clamp-1">
-                {t("gamersLabel", { names: gamer.displayName })}
+                {t("gamersLabel", { names: gamer.firstName })}
               </li>
             </ul>
           </div>
@@ -173,9 +173,9 @@ function GamerClip({ gamer }: { gamer: PurchasedGamerDisplay }) {
     <div className="absolute -right-2 -top-2 flex">
       <div
         className="relative h-8 w-8 rotate-6 overflow-hidden rounded-full border-2 border-background bg-background shadow-md"
-        title={gamer.displayName}
+        title={gamer.firstName}
       >
-        <Identicon id={gamer.seed ?? gamer.displayName} size={32} />
+        <Identicon id={gamer.seed ?? gamer.firstName} size={32} />
       </div>
     </div>
   );
