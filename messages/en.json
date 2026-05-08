@@ -979,8 +979,12 @@
     "myFamily": "My Family",
     "yty": "Yty",
     "feedback": "Feedback",
-    "settings": "Settings",
-    "myFamilyDescription": "This space is being prepared. Soon you'll be able to manage everyone in your family from one place."
+    "settings": "Settings"
+  },
+  "family": {
+    "createNewGamer": "Create new gamer",
+    "switchFailed": "Failed to switch accounts",
+    "loadFailed": "Failed to load family"
   },
   "footer": {
     "tagline": "School of Gaming - Where screen time becomes quality time.",
