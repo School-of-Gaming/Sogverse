@@ -111,7 +111,7 @@ export function Header() {
             <Link
               href={avatarHref}
               aria-label={user ? c("dashboard") : c("signIn")}
-              aria-current={isOnDashboard ? "page" : undefined}
+              aria-current={pathname === dashboardPath ? "page" : undefined}
               className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             >
               {avatarFrame}
