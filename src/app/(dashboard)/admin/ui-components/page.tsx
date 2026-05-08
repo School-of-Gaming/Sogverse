@@ -15,7 +15,6 @@ import {
   AlertCircle,
   AlertTriangle,
   Info,
-  Coins,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,6 @@ import {
 import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow } from "@/components/voice/ParticipantRow";
-import { TokenBalanceCard } from "@/components/customer";
 import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
 import { ProductRow } from "@/components/admin/product-row";
 import { UserRow } from "@/components/admin/user-row";
@@ -51,10 +49,6 @@ import { GroupCard } from "@/components/ui/group-card";
 import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useLocale } from "next-intl";
-import { useCurrency } from "@/hooks/use-currency";
-import { useTokenRates } from "@/providers/token-rate-provider";
-import { TokenPurchaseSection } from "@/components/tokens";
-import type { StripePackage } from "@/types";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
 import { computeGlowStyle } from "@/lib/constants/spatial.config";
 import type { ChangeSegment } from "@/hooks/use-group-editor";
@@ -637,99 +631,15 @@ function GroupCardDemo() {
 }
 
 function ProductRowDemo() {
-  const { currency } = useCurrency();
   const locale = useLocale();
-  const { tokensToCurrencyDisplay } = useTokenRates();
   return (
     <div className="space-y-2">
       {DEMO_PRODUCTS.map((product) => (
-        <ProductRow key={product.id} product={product} currency={currency} locale={locale} tokensToCurrencyDisplay={tokensToCurrencyDisplay} />
+        <ProductRow key={product.id} product={product} locale={locale} />
       ))}
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/*  Package Card Demo                                                  */
-/* ------------------------------------------------------------------ */
-
-const DEMO_ONE_TIME_PACKAGES: StripePackage[] = [
-  {
-    stripeProductId: "prod_demo_starter",
-    name: "Sogverse Starter Pack",
-    description: "5 Sorgs to get started",
-    tokenAmount: 5,
-    prices: {
-      usd: { priceId: "price_demo_starter_usd", unitAmount: 1500 },
-      gbp: { priceId: "price_demo_starter_gbp", unitAmount: 1200 },
-      eur: { priceId: "price_demo_starter_eur", unitAmount: 1400 },
-    },
-    type: "one_time",
-  },
-  {
-    stripeProductId: "prod_demo_value",
-    name: "Sogverse Value Pack",
-    description: "15 Sorgs at a great price",
-    tokenAmount: 15,
-    prices: {
-      usd: { priceId: "price_demo_value_usd", unitAmount: 4000 },
-      gbp: { priceId: "price_demo_value_gbp", unitAmount: 3200 },
-      eur: { priceId: "price_demo_value_eur", unitAmount: 3700 },
-    },
-    type: "one_time",
-  },
-  {
-    stripeProductId: "prod_demo_mega",
-    name: "Sogverse Mega Pack",
-    description: "40 Sorgs — best value one-time pack",
-    tokenAmount: 40,
-    prices: {
-      usd: { priceId: "price_demo_mega_usd", unitAmount: 10000 },
-      gbp: { priceId: "price_demo_mega_gbp", unitAmount: 8000 },
-      eur: { priceId: "price_demo_mega_eur", unitAmount: 9200 },
-    },
-    type: "one_time",
-  },
-];
-
-const DEMO_SUB_PACKAGES: StripePackage[] = [
-  {
-    stripeProductId: "prod_demo_basic",
-    name: "Sogverse Basic",
-    description: "10 Sorgs every month",
-    tokenAmount: 10,
-    prices: {
-      usd: { priceId: "price_demo_basic_usd", unitAmount: 2500 },
-      gbp: { priceId: "price_demo_basic_gbp", unitAmount: 2000 },
-      eur: { priceId: "price_demo_basic_eur", unitAmount: 2300 },
-    },
-    type: "subscription",
-  },
-  {
-    stripeProductId: "prod_demo_standard",
-    name: "Sogverse Standard",
-    description: "25 Sorgs every month",
-    tokenAmount: 25,
-    prices: {
-      usd: { priceId: "price_demo_standard_usd", unitAmount: 5000 },
-      gbp: { priceId: "price_demo_standard_gbp", unitAmount: 4000 },
-      eur: { priceId: "price_demo_standard_eur", unitAmount: 4600 },
-    },
-    type: "subscription",
-  },
-  {
-    stripeProductId: "prod_demo_premium",
-    name: "Sogverse Premium",
-    description: "50 Sorgs every month — best monthly value",
-    tokenAmount: 50,
-    prices: {
-      usd: { priceId: "price_demo_premium_usd", unitAmount: 8500 },
-      gbp: { priceId: "price_demo_premium_gbp", unitAmount: 6800 },
-      eur: { priceId: "price_demo_premium_eur", unitAmount: 7800 },
-    },
-    type: "subscription",
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Commit Flow Dialog Demo                                            */
@@ -1340,16 +1250,6 @@ export default function AdminUIComponentsPage() {
           ))}
         </div>
 
-        <p className="text-sm text-muted-foreground mt-4 mb-2">Sorg balance badge (header)</p>
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium">
-              <Coins className="h-4 w-4 text-primary" />
-              <span>125</span>
-            </span>
-            <span className="text-xs text-muted-foreground">Default</span>
-          </div>
-        </div>
       </Section>
 
       {/* ============================================================ */}
@@ -1485,7 +1385,7 @@ export default function AdminUIComponentsPage() {
               <div>
                 <AlertTitle>Warning</AlertTitle>
                 <AlertDescription>
-                  Tokens have monetary value. Double-check before adjusting.
+                  Heads up — this action affects production data.
                 </AlertDescription>
               </div>
             </Alert>
@@ -1683,22 +1583,6 @@ export default function AdminUIComponentsPage() {
               </Card>
             ))}
           </div>
-        </SubSection>
-
-        {/* -- Token Balance Card -- */}
-        <SubSection title="Token Balance Card (customer/sorg)">
-          <TokenBalanceCard />
-        </SubSection>
-
-        {/* -- Package Cards (Sorg purchase) -- */}
-        <SubSection title="Package Cards (sorg purchase)">
-          <p className="text-sm text-muted-foreground mb-3">
-            Dynamically rendered from Stripe Products. Two sections: one-time packs and monthly subscriptions, sorted cheapest to most expensive. Cards show savings badge, tier switching for subscribers, and resume action for canceling subscriptions. No icons — keeps the UI clean for any number of dynamic packages.
-          </p>
-          <TokenPurchaseSection
-            oneTimePackages={DEMO_ONE_TIME_PACKAGES}
-            subscriptionPackages={DEMO_SUB_PACKAGES}
-          />
         </SubSection>
 
         {/* -- Lounge Card -- */}

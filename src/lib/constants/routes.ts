@@ -4,9 +4,7 @@ export const ROUTES = {
   products: "/clubs",
   camps: "/camps",
   events: "/events",
-  sorg: "/sorg",
   yty: "/#yty",
-  checkout: "/checkout",
   about: "/#about",
   docs: "/docs",
   login: "/login",
@@ -54,8 +52,6 @@ export const ROUTES = {
   },
   customer: {
     dashboard: "/parent",
-    sorg: "/parent/sorg",
-    billing: "/parent/billing",
     gamers: "/parent/gamers",
     group: (groupId: string, gamerId?: string) =>
       gamerId

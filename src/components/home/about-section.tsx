@@ -12,7 +12,7 @@ const valueKeys = ["playIsEssential", "friendsCarry", "keepChildrenSafe", "famil
 
 const easterEggRows = [
   "brandName", "tagline", "delete", "deleting", "close", "cancel", "getStarted",
-  "password", "error", "english", "ok", "sorg", "copyright", "learnMore",
+  "password", "error", "english", "ok", "copyright", "learnMore",
 ] as const;
 
 export function AboutSection({ id }: AboutSectionProps) {

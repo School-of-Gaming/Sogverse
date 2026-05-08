@@ -28,8 +28,6 @@ import {
 import { useProduct, useToggleProductVisibility, useDeleteProduct } from "@/services/products";
 import { useProductGroups } from "@/services/groups";
 import { GeduGroupsCard, VisibilityWarningBanner } from "@/components/admin/gedu-groups-card";
-import { useCurrency } from "@/hooks/use-currency";
-import { useTokenRates } from "@/providers/token-rate-provider";
 import { formatScheduleLocal, formatDate } from "@/lib/utils";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 
@@ -40,9 +38,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
   const { data: groups = [] } = useProductGroups(id);
-  const { currency } = useCurrency();
   const locale = useLocale();
-  const { tokensToCurrencyDisplay } = useTokenRates();
   const toggleVisibility = useToggleProductVisibility();
   const deleteProduct = useDeleteProduct();
   const [isNavigating, startTransition] = useTransition();
@@ -138,7 +134,6 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
               </span>
               <span>{product.duration_minutes} {c('minutes')}</span>
               <span>{c('ages', { min: product.min_age, max: product.max_age })}</span>
-              <span className="font-semibold text-primary">{product.token_cost} {c('sorgs')} ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})/{c('perSession')}</span>
             </div>
             {product.padlet_url && (
               <PadletLink href={product.padlet_url} />

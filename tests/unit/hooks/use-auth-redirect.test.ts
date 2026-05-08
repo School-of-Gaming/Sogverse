@@ -7,12 +7,6 @@ describe("resolveSafeRedirect", () => {
     expect(resolveSafeRedirect("")).toBe(null);
   });
 
-  it("allows checkout with a query string", () => {
-    expect(resolveSafeRedirect("/checkout?priceId=price_123")).toBe(
-      "/checkout?priceId=price_123",
-    );
-  });
-
   it("allows product detail pages for every public product root", () => {
     expect(resolveSafeRedirect("/clubs/abc-123")).toBe("/clubs/abc-123");
     expect(resolveSafeRedirect("/camps/abc-123")).toBe("/camps/abc-123");
@@ -26,12 +20,6 @@ describe("resolveSafeRedirect", () => {
     expect(resolveSafeRedirect("/clubs")).toBe(null);
     expect(resolveSafeRedirect("/camps")).toBe(null);
     expect(resolveSafeRedirect("/events")).toBe(null);
-  });
-
-  it("rejects /checkout without a query string", () => {
-    // The allowlist requires `?` so an attacker can't smuggle a path
-    // like `/checkoutevil` through the prefix check.
-    expect(resolveSafeRedirect("/checkout")).toBe(null);
   });
 
   it("rejects arbitrary paths", () => {

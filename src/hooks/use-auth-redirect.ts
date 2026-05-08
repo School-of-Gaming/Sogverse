@@ -11,7 +11,6 @@ import { ROUTES } from "@/lib/constants";
 // or sign-in will silently send the user to their dashboard instead of
 // back to the page they came from.
 const SAFE_REDIRECT_PREFIXES: readonly string[] = [
-  `${ROUTES.checkout}?`,
   `${ROUTES.products}/`, // /clubs/[id]
   `${ROUTES.camps}/`,    // /camps/[id]
   `${ROUTES.events}/`,   // /events/[id]

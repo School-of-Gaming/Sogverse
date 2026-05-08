@@ -1,31 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Coins, Loader2, Radio, Users } from "lucide-react";
+import { ArrowLeft, Loader2, Radio, Users } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { Button } from "@/components/ui/button";
 import { JoinButton } from "@/components/ui/join-button";
 import { GroupVoiceStatus } from "@/components/ui/group-card";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { computeAge, formatScheduleLocal } from "@/lib/utils";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
-import { getRefundEligibility } from "@/lib/enrollment";
-import { UnenrollDialog } from "@/components/enrollment/unenroll-dialog";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
-
-/** Customer enrollment context — all-or-nothing. Built by the parent. */
-export interface CustomerEnrollmentContext {
-  enrollmentId: string;
-  tokenCost: number;
-  gamerDisplayName: string;
-  lastChargeSessionDate: string | null;
-}
 
 interface GroupDetailContentBase {
   groups: GroupWithVoice[];
@@ -33,7 +21,6 @@ interface GroupDetailContentBase {
   isLoading: boolean;
   error: Error | null;
   backHref: string;
-  customerEnrollment?: CustomerEnrollmentContext;
 }
 
 interface GroupDetailWithVoiceRoute extends GroupDetailContentBase {
@@ -56,16 +43,10 @@ export function GroupDetailContent({
   backHref,
   voiceRoute,
   onJoinClick,
-  customerEnrollment,
 }: GroupDetailContentProps) {
   const t = useTranslations('groups');
   const c = useTranslations('common');
-  const router = useRouter();
   const locale = useLocale();
-  const [unenrollRefund, setUnenrollRefund] = useState<{
-    eligible: boolean;
-    reason?: "within_window" | "session_past";
-  } | null>(null);
 
   const group = useMemo(
     () => groups.find((g) => g.groupId === groupId) ?? null,
@@ -220,49 +201,6 @@ export function GroupDetailContent({
           )}
         </CardContent>
       </Card>
-
-      {/* Enrollment info (customer only) */}
-      {customerEnrollment && (
-        <Card>
-          <CardContent className="flex items-center justify-between py-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Coins className="h-4 w-4 text-muted-foreground" />
-              <span>{t('sorgsPerWeek', { cost: customerEnrollment.tokenCost })}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const refund = getRefundEligibility({
-                  product: {
-                    day_of_week: group.dayOfWeek,
-                    start_time: group.startTime,
-                    timezone: group.timezone,
-                    token_cost: customerEnrollment.tokenCost,
-                  },
-                  lastChargeSessionDate: customerEnrollment.lastChargeSessionDate,
-                });
-                setUnenrollRefund({ eligible: refund.eligible, reason: refund.reason });
-              }}
-            >
-              {t('unenrollGamer', { name: customerEnrollment.gamerDisplayName })}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {unenrollRefund && customerEnrollment && (
-        <UnenrollDialog
-          enrollmentId={customerEnrollment.enrollmentId}
-          productName={group.productName}
-          gamerDisplayName={customerEnrollment.gamerDisplayName}
-          tokenCost={customerEnrollment.tokenCost}
-          refundEligible={unenrollRefund.eligible}
-          refundDenialReason={unenrollRefund.reason}
-          onClose={() => setUnenrollRefund(null)}
-          onSuccess={() => router.push(backHref)}
-        />
-      )}
     </div>
   );
 }
