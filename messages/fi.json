@@ -966,6 +966,13 @@
     "failedToSubmit": "Palautteen lähettäminen epäonnistui.",
     "failedToSubmitRetry": "Palautteen lähettäminen epäonnistui. Yritä uudelleen."
   },
+  "dashboardSections": {
+    "myFamily": "Perheeni",
+    "yty": "Yty",
+    "feedback": "Palaute",
+    "settings": "Asetukset",
+    "myFamilyDescription": "Tämä osio on rakenteilla. Pian voit hallita koko perhettäsi yhdestä paikasta."
+  },
   "footer": {
     "tagline": "School of Gaming – Ruutuaika muuttuu laatuajaksi.",
     "copyright": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",
