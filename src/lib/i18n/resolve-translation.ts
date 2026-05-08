@@ -7,14 +7,17 @@
 //
 //   1. The user's current UI locale.
 //   2. English (en).
-//   3. Finnish (fi).
-//   4. The first locale present in the array.
+//   3. The first locale present in the array.
 //
-// Every product is guaranteed to have at least one of (en, fi) by an
+// Every product is guaranteed to have ≥1 translation in any locale by an
 // RPC-level check on insert and a BEFORE-DELETE trigger — so for products
-// the array is never empty. For topics/tags, inline-create only writes the
-// admin's current locale, so absence in fi is possible until someone fills
-// it in via the (yet-to-be-built) reference-data translation manager.
+// the array is never empty and the "first available" step always resolves.
+// For topics/tags, inline-create only writes the admin's current locale,
+// so the same fallback chain still applies.
+//
+// English is special-cased as the second step because it's our most-likely
+// shared lingua franca; beyond that, "first available" gives a predictable
+// answer without a longer hard-coded order.
 
 import type { SupportedLocale } from "@/lib/constants/locales";
 
@@ -36,9 +39,6 @@ export function resolveTranslation<T extends LocaleRow>(
   for (const t of translations) byLocale.set(t.locale, t);
 
   return (
-    byLocale.get(userLocale) ??
-    byLocale.get("en") ??
-    byLocale.get("fi") ??
-    translations[0]
+    byLocale.get(userLocale) ?? byLocale.get("en") ?? translations[0]
   );
 }

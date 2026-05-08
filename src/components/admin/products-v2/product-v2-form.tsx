@@ -1,44 +1,62 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { resolveLocale } from "@/lib/constants/locales";
-import { useCreateProductV2 } from "@/services/products-v2";
+import { useLocale } from "next-intl";
 import { AudienceSection } from "./sections/audience-section";
 import { BillingSection } from "./sections/billing-section";
-import { GroupsSection } from "./sections/groups-section";
 import { IdentitySection } from "./sections/identity-section";
 import { RegistrationSection } from "./sections/registration-section";
 import { VisibilitySection } from "./sections/visibility-section";
 import { WhenSection } from "./sections/when-section";
 import { WhereSection } from "./sections/where-section";
-import { buildCreateInput, validate } from "./product-v2-build";
-import { initialState, type FormState } from "./product-v2-form-state";
+import { validate } from "./product-v2-build";
+import { type FormState } from "./product-v2-form-state";
 import { PRODUCT_TYPE_CONFIG } from "./product-v2-type-config";
 import type { ProductTypeV2 } from "@/types";
 
-interface ProductV2FormProps {
+interface ProductV2FormShellProps {
   productType: ProductTypeV2;
+  /** Pre-populated state. Create wrapper passes `initialState(...)`,
+   *  edit wrapper passes `existingFormState(product, ...)`. */
+  initialFormState: FormState;
+  /** Submit-button label, e.g. "Create club" or "Save changes". */
+  submitLabel: string;
+  /** Called when the admin clicks Cancel. Wrapper navigates from here. */
+  onCancel: () => void;
+  /** Called after `validate()` passes. Wrapper builds the payload, fires
+   *  the mutation, and navigates on success. Throws on error so the shell
+   *  can render the message. The shell deliberately does NOT clear the
+   *  committing flag on success — the wrapper's nav unmounts the page,
+   *  closing the click→action gap (see CLAUDE.md "Loading & Disabled State"). */
+  onSubmit: (state: FormState) => Promise<void>;
 }
 
-export function ProductV2Form({ productType }: ProductV2FormProps) {
+/**
+ * Shared form shell for both create and edit. Owns local form state,
+ * validation, error display, and the committing flag. The wrappers
+ * (`ProductV2FormCreate`, `ProductV2FormEdit`) supply the initial state,
+ * the submit pipeline (build + mutate + navigate), and the button label.
+ */
+export function ProductV2FormShell({
+  productType,
+  initialFormState,
+  submitLabel,
+  onCancel,
+  onSubmit,
+}: ProductV2FormShellProps) {
   const config = PRODUCT_TYPE_CONFIG[productType];
-  const router = useRouter();
   const t = useTranslations("admin.productsV2");
   const c = useTranslations("common");
   const rawLocale = useLocale();
   const uiLocale = resolveLocale(rawLocale);
-  const label = t(`types.${config.i18nKey}.label`);
 
-  const [state, setState] = useState<FormState>(() =>
-    initialState(config, uiLocale),
-  );
+  const [state, setState] = useState<FormState>(initialFormState);
   const [error, setError] = useState<string | null>(null);
-
-  const createProduct = useCreateProductV2();
+  const [committing, setCommitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -58,17 +76,14 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       return;
     }
 
-    const input = buildCreateInput(state, productType, config);
-
+    setCommitting(true);
     try {
-      await createProduct.mutateAsync(input);
-      router.push(`/admin/${config.routeSlug}`);
+      await onSubmit(state);
     } catch (err) {
+      setCommitting(false);
       setError(err instanceof Error ? err.message : t("errors.createFailed"));
     }
   }
-
-  // ===== Render =====
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -82,7 +97,6 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       <AudienceSection state={state} setState={setState} />
       <WhereSection state={state} setState={setState} config={config} />
       <WhenSection state={state} setState={setState} config={config} />
-      <GroupsSection state={state} setState={setState} />
       <BillingSection state={state} setState={setState} config={config} />
       <RegistrationSection state={state} setState={setState} />
       <VisibilitySection state={state} setState={setState} />
@@ -94,18 +108,12 @@ export function ProductV2Form({ productType }: ProductV2FormProps) {
       )}
 
       <div className="flex items-center justify-between gap-4 border-t pt-6">
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => router.push(`/admin/${config.routeSlug}`)}
-        >
+        <Button type="button" variant="ghost" onClick={onCancel}>
           {c("cancel")}
         </Button>
-        <Button type="submit" size="lg" disabled={createProduct.isPending}>
-          {createProduct.isPending && (
-            <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-          )}
-          {t("actions.createLabel", { label: label.toLowerCase() })}
+        <Button type="submit" size="lg" disabled={committing}>
+          {committing && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+          {submitLabel}
         </Button>
       </div>
     </form>

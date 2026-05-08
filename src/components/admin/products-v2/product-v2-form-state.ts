@@ -1,7 +1,6 @@
 import { DEFAULT_CURRENCY, type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductTypeV2 } from "@/types";
-import type { GroupDraft } from "./group-card";
 import type {
   ProductTypeConfig,
   StartMode,
@@ -35,7 +34,7 @@ export type TranslationDraft = { name: string; description: string };
 export interface FormState {
   // Per-locale name + description. Admin starts with one tab (their UI locale)
   // and can add more. Submission writes one product_translations_v2 row per
-  // locale present in this map. At least one of (en, fi) is required.
+  // locale present in this map. At least one filled locale is required (any).
   translations: Partial<Record<SupportedLocale, TranslationDraft>>;
   activeLocale: SupportedLocale;
 
@@ -43,7 +42,10 @@ export interface FormState {
   topicId: string;
   tagIds: Set<string>;
   padletUrl: string;
-  image: File | null;
+  // File   — newly picked replacement (admin uploaded a fresh image).
+  // string — existing image_path on the product (edit-mode load).
+  // null   — no image, or admin cleared the existing one.
+  image: File | string | null;
 
   // Inline topic create — single-locale (admin's current UI locale).
   // Other-locale names get added later in the (yet-to-be-built) reference-data
@@ -72,10 +74,6 @@ export interface FormState {
   scheduleSlots: ScheduleSlotDraft[];
   holidayCalendarIds: Set<string>;
   signupThreshold: string;
-
-  // Groups (UI-only — not wired to backend yet)
-  groups: GroupDraft[];
-  activeGroupSheetId: string | null;
 
   // Capacity & billing
   paidMode: PaidMode;
@@ -160,8 +158,6 @@ export function initialState(
     scheduleSlots: defaultSlots(config),
     holidayCalendarIds: new Set(),
     signupThreshold: "",
-    groups: [],
-    activeGroupSheetId: null,
     paidMode: initialPaidMode,
     prices: {
       eur: { session: "", month: "" },

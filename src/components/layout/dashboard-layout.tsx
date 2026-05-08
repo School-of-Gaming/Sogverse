@@ -8,10 +8,9 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
-    <div className="flex h-full overflow-hidden">
+    <div className="flex pt-16">
       <Sidebar />
-      {/* scrollbar-gutter:stable reserves space for the scrollbar so content doesn't shift when it appears */}
-      <main className="flex-1 overflow-auto bg-background [scrollbar-gutter:stable]">
+      <main className="flex-1 bg-background">
         <div className="container mx-auto p-6">{children}</div>
       </main>
     </div>

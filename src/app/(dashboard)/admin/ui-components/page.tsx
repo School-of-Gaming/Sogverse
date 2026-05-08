@@ -1,7 +1,7 @@
 /* eslint-disable i18next/no-literal-string -- internal admin-only style guide; all content is copy-paste component examples, not user-facing text that ships in any locale */
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import {
   Plus,
   Pencil,
@@ -15,7 +15,6 @@ import {
   AlertCircle,
   AlertTriangle,
   Info,
-  Coins,
 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,6 @@ import {
 import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow } from "@/components/voice/ParticipantRow";
-import { TokenBalanceCard } from "@/components/customer";
 import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
 import { ProductRow } from "@/components/admin/product-row";
 import { UserRow } from "@/components/admin/user-row";
@@ -51,19 +49,74 @@ import { GroupCard } from "@/components/ui/group-card";
 import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useLocale } from "next-intl";
-import { useCurrency } from "@/hooks/use-currency";
-import { useTokenRates } from "@/providers/token-rate-provider";
-import { TokenPurchaseSection } from "@/components/tokens";
-import type { StripePackage } from "@/types";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
 import { computeGlowStyle } from "@/lib/constants/spatial.config";
 import type { ChangeSegment } from "@/hooks/use-group-editor";
 import { ChangeSummaryList, StepProgressPanel } from "@/components/admin/commit-flow-parts";
 import type { StepItem } from "@/components/admin/commit-flow-parts";
+import {
+  ProductBrowseCardView,
+  type ProductBrowseCardViewProps,
+} from "@/components/public/products-v2/product-browse-card-view";
+import {
+  ProductPurchasedCardView,
+  type ProductPurchasedCardViewProps,
+} from "@/components/public/products-v2/product-purchased-card-view";
+import { RegistrationPill } from "@/components/public/products-v2/registration-pill";
+import type { RegistrationState } from "@/components/public/products-v2/derive-registration-state";
+import { SignupPanel } from "@/components/public/products-v2/signup-panel";
+import {
+  buildDetailFixture,
+  PREVIEW_STATES,
+  PREVIEW_TYPES,
+  type PreviewStateKind,
+} from "@/components/public/products-v2/mock-detail-fixtures";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
 /* ------------------------------------------------------------------ */
+
+function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+// Lets SubSection prefix its anchor id with the parent Section's slug, so
+// duplicated subsection titles (e.g. "Variants" under both Button and Badge)
+// don't collide.
+const SectionSlugContext = createContext<string | null>(null);
+
+function AnchorHeading({
+  as,
+  id,
+  className,
+  children,
+}: {
+  as: "h2" | "h3";
+  id: string;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const Tag = as;
+  return (
+    <Tag id={id} className={`group scroll-mt-20 ${className}`}>
+      <a
+        href={`#${id}`}
+        className="inline-flex items-center gap-2 hover:underline"
+      >
+        {children}
+        <span
+          aria-hidden
+          className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+        >
+          #
+        </span>
+      </a>
+    </Tag>
+  );
+}
 
 function Section({
   title,
@@ -72,11 +125,16 @@ function Section({
   title: string;
   children: React.ReactNode;
 }) {
+  const slug = slugify(title);
   return (
-    <section className="space-y-4">
-      <h2 className="text-2xl font-bold">{title}</h2>
-      <div className="rounded-lg border p-6 space-y-6">{children}</div>
-    </section>
+    <SectionSlugContext.Provider value={slug}>
+      <section className="space-y-4">
+        <AnchorHeading as="h2" id={slug} className="text-2xl font-bold">
+          {title}
+        </AnchorHeading>
+        <div className="rounded-lg border p-6 space-y-6">{children}</div>
+      </section>
+    </SectionSlugContext.Provider>
   );
 }
 
@@ -87,11 +145,17 @@ function SubSection({
   title: string;
   children: React.ReactNode;
 }) {
+  const parentSlug = useContext(SectionSlugContext);
+  const slug = parentSlug ? `${parentSlug}-${slugify(title)}` : slugify(title);
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+      <AnchorHeading
+        as="h3"
+        id={slug}
+        className="text-sm font-semibold text-muted-foreground uppercase tracking-wider"
+      >
         {title}
-      </h3>
+      </AnchorHeading>
       {children}
     </div>
   );
@@ -567,99 +631,15 @@ function GroupCardDemo() {
 }
 
 function ProductRowDemo() {
-  const { currency } = useCurrency();
   const locale = useLocale();
-  const { tokensToCurrencyDisplay } = useTokenRates();
   return (
     <div className="space-y-2">
       {DEMO_PRODUCTS.map((product) => (
-        <ProductRow key={product.id} product={product} currency={currency} locale={locale} tokensToCurrencyDisplay={tokensToCurrencyDisplay} />
+        <ProductRow key={product.id} product={product} locale={locale} />
       ))}
     </div>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/*  Package Card Demo                                                  */
-/* ------------------------------------------------------------------ */
-
-const DEMO_ONE_TIME_PACKAGES: StripePackage[] = [
-  {
-    stripeProductId: "prod_demo_starter",
-    name: "Sogverse Starter Pack",
-    description: "5 Sorgs to get started",
-    tokenAmount: 5,
-    prices: {
-      usd: { priceId: "price_demo_starter_usd", unitAmount: 1500 },
-      gbp: { priceId: "price_demo_starter_gbp", unitAmount: 1200 },
-      eur: { priceId: "price_demo_starter_eur", unitAmount: 1400 },
-    },
-    type: "one_time",
-  },
-  {
-    stripeProductId: "prod_demo_value",
-    name: "Sogverse Value Pack",
-    description: "15 Sorgs at a great price",
-    tokenAmount: 15,
-    prices: {
-      usd: { priceId: "price_demo_value_usd", unitAmount: 4000 },
-      gbp: { priceId: "price_demo_value_gbp", unitAmount: 3200 },
-      eur: { priceId: "price_demo_value_eur", unitAmount: 3700 },
-    },
-    type: "one_time",
-  },
-  {
-    stripeProductId: "prod_demo_mega",
-    name: "Sogverse Mega Pack",
-    description: "40 Sorgs — best value one-time pack",
-    tokenAmount: 40,
-    prices: {
-      usd: { priceId: "price_demo_mega_usd", unitAmount: 10000 },
-      gbp: { priceId: "price_demo_mega_gbp", unitAmount: 8000 },
-      eur: { priceId: "price_demo_mega_eur", unitAmount: 9200 },
-    },
-    type: "one_time",
-  },
-];
-
-const DEMO_SUB_PACKAGES: StripePackage[] = [
-  {
-    stripeProductId: "prod_demo_basic",
-    name: "Sogverse Basic",
-    description: "10 Sorgs every month",
-    tokenAmount: 10,
-    prices: {
-      usd: { priceId: "price_demo_basic_usd", unitAmount: 2500 },
-      gbp: { priceId: "price_demo_basic_gbp", unitAmount: 2000 },
-      eur: { priceId: "price_demo_basic_eur", unitAmount: 2300 },
-    },
-    type: "subscription",
-  },
-  {
-    stripeProductId: "prod_demo_standard",
-    name: "Sogverse Standard",
-    description: "25 Sorgs every month",
-    tokenAmount: 25,
-    prices: {
-      usd: { priceId: "price_demo_standard_usd", unitAmount: 5000 },
-      gbp: { priceId: "price_demo_standard_gbp", unitAmount: 4000 },
-      eur: { priceId: "price_demo_standard_eur", unitAmount: 4600 },
-    },
-    type: "subscription",
-  },
-  {
-    stripeProductId: "prod_demo_premium",
-    name: "Sogverse Premium",
-    description: "50 Sorgs every month — best monthly value",
-    tokenAmount: 50,
-    prices: {
-      usd: { priceId: "price_demo_premium_usd", unitAmount: 8500 },
-      gbp: { priceId: "price_demo_premium_gbp", unitAmount: 6800 },
-      eur: { priceId: "price_demo_premium_eur", unitAmount: 7800 },
-    },
-    type: "subscription",
-  },
-];
 
 /* ------------------------------------------------------------------ */
 /*  Commit Flow Dialog Demo                                            */
@@ -755,6 +735,376 @@ function CommitFlowDialogDemo() {
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Products v2 (browse + purchased cards, registration pill)          */
+/* ------------------------------------------------------------------ */
+
+// Every state where the pill earns a row. Default-open is intentionally
+// excluded — the pill returns null in that case (the Sign-up button
+// alone says everything a parent needs).
+const DEMO_REGISTRATION_STATES: { label: string; state: RegistrationState }[] = [
+  {
+    label: "Almost full · 2 spots left",
+    state: { kind: "open", seatCount: 8, seatsLeft: 2, waitlistEnabled: false },
+  },
+  {
+    label: "Needs more sign-ups (threshold)",
+    state: { kind: "pending_thr", threshold: 6, count: 2 },
+  },
+  {
+    label: "Full · waitlist open",
+    state: { kind: "full_waitlist", seatCount: 8 },
+  },
+  {
+    label: "Full · closed",
+    state: { kind: "full_closed", seatCount: 8 },
+  },
+  {
+    label: "Sign-ups open later",
+    state: { kind: "closed_pre", opensAt: "2026-05-15T00:00:00Z" },
+  },
+  {
+    label: "Already started (camp/event)",
+    state: { kind: "running_late" },
+  },
+  {
+    label: "Ended",
+    state: { kind: "ended" },
+  },
+];
+
+// One sample of each price shape so the price block is exercised across
+// the demo browse cards.
+const SAMPLE_PRICE_BUNDLE: ProductBrowseCardViewProps["price"] = {
+  kind: "bundle_or_sub",
+  perSession: "€18.00",
+  perMonth: "€55.00",
+};
+const SAMPLE_PRICE_UPFRONT: ProductBrowseCardViewProps["price"] = {
+  kind: "upfront",
+  total: "€120.00",
+};
+const SAMPLE_PRICE_FREE: ProductBrowseCardViewProps["price"] = { kind: "free" };
+
+// Browse-card display props for each state we want to render in full.
+const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] = [
+  {
+    label: "Default · plenty of seats (no pill)",
+    props: {
+      name: "Tuesday Minecraft Builders",
+      description:
+        "Weekly creative sessions where your gamer collaborates with new friends and a Gedu who really gets it.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "MINECRAFT",
+      scheduleLines: ["Tuesday · 17:00–18:30 (EET)"],
+      ageLine: "Ages 8–12",
+      seatsHint: { kind: "capacity", count: 8 },
+      locationLine: { kind: "online", label: "Online" },
+      tagLabels: ["Creative", "Friendly", "Beginner-OK"],
+      spokenLanguageCode: "fi",
+      price: SAMPLE_PRICE_BUNDLE,
+      state: { kind: "open", seatCount: 8, seatsLeft: 6, waitlistEnabled: false },
+    },
+  },
+  {
+    label: "Almost full · 2 spots left",
+    props: {
+      name: "Wednesday Roblox Crew",
+      description:
+        "Build, race, and collab with your crew — small group with regular faces every week.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "ROBLOX",
+      scheduleLines: ["Wednesday · 17:00–18:30 (EET)"],
+      ageLine: "Ages 9–13",
+      seatsHint: { kind: "capacity", count: 8 },
+      locationLine: { kind: "in_person", label: "Tapiolan koulu" },
+      tagLabels: ["Small group"],
+      spokenLanguageCode: "en",
+      price: SAMPLE_PRICE_BUNDLE,
+      state: { kind: "open", seatCount: 8, seatsLeft: 2, waitlistEnabled: false },
+    },
+  },
+  {
+    label: "Needs more sign-ups",
+    props: {
+      name: "Spring Roblox Build-Off",
+      description:
+        "Group challenge that runs once enough builders sign up — gather your crew and we'll lock in a start date.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "ROBLOX",
+      scheduleLines: ["24–28 March (EET)", "10:00–14:00"],
+      ageLine: "Ages 9–14",
+      seatsHint: null,
+      locationLine: { kind: "online_muni", label: "Espoo" },
+      tagLabels: ["Group", "Tournament"],
+      spokenLanguageCode: "fi",
+      price: SAMPLE_PRICE_UPFRONT,
+      state: { kind: "pending_thr", threshold: 6, count: 2 },
+    },
+  },
+  {
+    label: "Full · waitlist open",
+    props: {
+      name: "Friday Family Fortnite",
+      description:
+        "Drop-in event for parents and gamers — light competition, lots of laughter.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "FORTNITE",
+      scheduleLines: ["Friday 12 April · 18:00–20:00 (EET)"],
+      ageLine: "Ages 10+",
+      seatsHint: { kind: "capacity", count: 12 },
+      locationLine: { kind: "in_person", label: "Iso Omena" },
+      tagLabels: ["Family", "Casual"],
+      spokenLanguageCode: "en",
+      price: SAMPLE_PRICE_FREE,
+      state: { kind: "full_waitlist", seatCount: 12 },
+    },
+  },
+  {
+    label: "Sign-ups open later",
+    props: {
+      name: "Summer Adventure Camp",
+      description:
+        "A week-long story-driven adventure across multiple games. Sign-ups open soon.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "ADVENTURE",
+      scheduleLines: ["12–16 August (EET)", "10:00–15:00"],
+      ageLine: "Ages 9–13",
+      seatsHint: { kind: "capacity", count: 16 },
+      locationLine: { kind: "in_person", label: "Sogverse HQ" },
+      tagLabels: ["Camp", "Story-driven"],
+      spokenLanguageCode: "sv",
+      price: SAMPLE_PRICE_UPFRONT,
+      state: { kind: "closed_pre", opensAt: "2026-05-15T00:00:00Z" },
+    },
+  },
+  {
+    label: "Already started (camp)",
+    props: {
+      name: "April Roblox Camp",
+      description:
+        "Already underway — late joins aren't supported once a camp is running.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "ROBLOX",
+      scheduleLines: ["20–24 April (EET)", "10:00–14:00"],
+      ageLine: "Ages 8–12",
+      seatsHint: { kind: "capacity", count: 10 },
+      locationLine: { kind: "in_person", label: "Ressun peruskoulu" },
+      tagLabels: ["Camp"],
+      spokenLanguageCode: "fi",
+      price: SAMPLE_PRICE_UPFRONT,
+      state: { kind: "running_late" },
+    },
+  },
+  {
+    label: "Ended",
+    props: {
+      name: "March Holiday Tournament",
+      description: "This event has wrapped — keep an eye out for the next one.",
+      imagePath: "demo-placeholder.svg",
+      topicLabel: "FORTNITE",
+      scheduleLines: ["Saturday 22 March · 14:00–17:00 (EET)"],
+      ageLine: "Ages 10+",
+      seatsHint: null,
+      locationLine: { kind: "in_person", label: "Tampere-talo" },
+      tagLabels: ["Tournament"],
+      spokenLanguageCode: "en",
+      price: SAMPLE_PRICE_UPFRONT,
+      state: { kind: "ended" },
+    },
+  },
+];
+
+const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProps }[] = [
+  {
+    label: "Bundle · assigned (group set, sessions left)",
+    props: {
+      name: "Tuesday Minecraft Builders",
+      imagePath: null,
+      topicLabel: "MINECRAFT",
+      state: "assigned",
+      gamer: { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
+      scheduleSummary: "Every Tuesday · 17:00 (Helsinki)",
+      detailLine: "Next: Tomorrow, 17:00",
+      balanceLine: "7 sessions left",
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Bundle · unassigned (admin hasn't placed gamer yet)",
+    props: {
+      name: "Tuesday Minecraft Builders",
+      imagePath: null,
+      topicLabel: "MINECRAFT",
+      state: "unassigned",
+      gamer: { displayName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
+      scheduleSummary: "Every Tuesday · 17:00 (Helsinki)",
+      detailLine: "We'll set up your group",
+      balanceLine: "10 sessions left",
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Subscription-covered consumer club",
+    props: {
+      name: "Friday Fortnite Squad",
+      imagePath: null,
+      topicLabel: "FORTNITE",
+      state: "assigned",
+      gamer: { displayName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
+      scheduleSummary: "Every Friday · 18:00 (Helsinki)",
+      detailLine: "Next: Friday 18:00",
+      balanceLine: "Subscription",
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Bundle · 0 credits remaining",
+    props: {
+      name: "Wednesday Roblox Crafters",
+      imagePath: null,
+      topicLabel: "ROBLOX",
+      state: "assigned",
+      gamer: { displayName: "Aino", seed: "86d1eed7-8d73-4de1-a654-064a62b60bc6" },
+      scheduleSummary: "Every Wednesday · 16:30 (Helsinki)",
+      detailLine: "Next: Wednesday 16:30",
+      balanceLine: "No sessions left — buy more",
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Waitlist · with position",
+    props: {
+      name: "Spring Break Roblox Camp",
+      imagePath: null,
+      topicLabel: "ROBLOX",
+      state: "waitlisted",
+      gamer: { displayName: "Noah", seed: "fda26c15-4677-4374-aa3b-7bed0cb0e2af" },
+      scheduleSummary: "24–28 March · 10:00–14:00 (Helsinki)",
+      detailLine: "3 ahead of you in line",
+      balanceLine: null,
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Camp · paid single-payment (no balance line)",
+    props: {
+      name: "Spring Break Roblox Camp",
+      imagePath: null,
+      topicLabel: "ROBLOX",
+      state: "assigned",
+      gamer: { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
+      scheduleSummary: "24–28 March · 10:00–14:00 (Helsinki)",
+      detailLine: "Next: Mon 24 Mar, 10:00",
+      balanceLine: null,
+      showManagePayment: true,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Free event (no manage button, no balance line)",
+    props: {
+      name: "Family Fortnite Friday",
+      imagePath: null,
+      topicLabel: "FORTNITE",
+      state: "assigned",
+      gamer: { displayName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
+      scheduleSummary: "Friday 12 April · 18:00–20:00",
+      detailLine: "Next: Fri 12 Apr, 18:00",
+      balanceLine: null,
+      showManagePayment: false,
+      manageHref: "#",
+    },
+  },
+  {
+    label: "Municipality club · external_contract (manage hidden)",
+    props: {
+      name: "Helsinki Coding Club",
+      imagePath: null,
+      topicLabel: "GAME DESIGN",
+      state: "assigned",
+      gamer: { displayName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
+      scheduleSummary: "Every Friday · 15:30 (Helsinki)",
+      detailLine: "Next: Friday 15:30",
+      balanceLine: null,
+      showManagePayment: false,
+      manageHref: "#",
+    },
+  },
+];
+
+// Caption above each card in the demo grid. Uses the same uppercase
+// micro-label treatment as the topic chip inside the card so it reads
+// as meta information, not card content — keeps it from blending into
+// the title and looking like overlap.
+function DemoCaption({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      {children}
+    </p>
+  );
+}
+
+function ProductsV2Demo() {
+  return (
+    <div className="space-y-8">
+      <SubSection title="Pill — every state">
+        <p className="text-sm text-muted-foreground mb-3">
+          The pill speaks parent voice and only renders when there&rsquo;s something
+          actionable or urgency-creating to say. Default-open (&ldquo;you can sign up&rdquo;)
+          gets no pill — the Sign-up button alone says everything a parent needs.
+        </p>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          {DEMO_REGISTRATION_STATES.map(({ label, state }) => (
+            <div key={label} className="flex flex-col gap-1.5">
+              <DemoCaption>{label}</DemoCaption>
+              <RegistrationPill state={state} />
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="Browse cards (in context)">
+        <p className="text-sm text-muted-foreground mb-4">
+          Full card with the pill inline next to the topic label. Each example
+          renders one of the registration states the deriver returns.
+        </p>
+        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          {BROWSE_DEMO_CARDS.map(({ label, props }) => (
+            <div key={label} className="flex flex-col gap-2">
+              <DemoCaption>{label}</DemoCaption>
+              <ProductBrowseCardView {...props} />
+            </div>
+          ))}
+        </div>
+      </SubSection>
+
+      <SubSection title="Purchased cards (waitlisted / unassigned / assigned)">
+        <p className="text-sm text-muted-foreground mb-4">
+          The &ldquo;your enrolled / signed up&rdquo; surface — appears above the browse grid on
+          /clubs, /camps, /events when the customer has live participations. Drives off
+          real <code>useMyParticipations</code> data; the demo below renders the View
+          directly so design review covers all three placement states across coverage modes
+          (bundle / subscription / one-off) and edge states (zero credits, waitlist with position).
+        </p>
+        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2">
+          {PURCHASED_DEMO_CARDS.map(({ label, props }) => (
+            <div key={label} className="flex flex-col gap-2">
+              <DemoCaption>{label}</DemoCaption>
+              <ProductPurchasedCardView {...props} />
+            </div>
+          ))}
+        </div>
+      </SubSection>
     </div>
   );
 }
@@ -900,16 +1250,6 @@ export default function AdminUIComponentsPage() {
           ))}
         </div>
 
-        <p className="text-sm text-muted-foreground mt-4 mb-2">Sorg balance badge (header)</p>
-        <div className="flex flex-wrap items-center gap-6">
-          <div className="flex flex-col items-center gap-1.5">
-            <span className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-3 py-1 text-sm font-medium">
-              <Coins className="h-4 w-4 text-primary" />
-              <span>125</span>
-            </span>
-            <span className="text-xs text-muted-foreground">Default</span>
-          </div>
-        </div>
       </Section>
 
       {/* ============================================================ */}
@@ -1045,7 +1385,7 @@ export default function AdminUIComponentsPage() {
               <div>
                 <AlertTitle>Warning</AlertTitle>
                 <AlertDescription>
-                  Tokens have monetary value. Double-check before adjusting.
+                  Heads up — this action affects production data.
                 </AlertDescription>
               </div>
             </Alert>
@@ -1245,22 +1585,6 @@ export default function AdminUIComponentsPage() {
           </div>
         </SubSection>
 
-        {/* -- Token Balance Card -- */}
-        <SubSection title="Token Balance Card (customer/sorg)">
-          <TokenBalanceCard />
-        </SubSection>
-
-        {/* -- Package Cards (Sorg purchase) -- */}
-        <SubSection title="Package Cards (sorg purchase)">
-          <p className="text-sm text-muted-foreground mb-3">
-            Dynamically rendered from Stripe Products. Two sections: one-time packs and monthly subscriptions, sorted cheapest to most expensive. Cards show savings badge, tier switching for subscribers, and resume action for canceling subscriptions. No icons — keeps the UI clean for any number of dynamic packages.
-          </p>
-          <TokenPurchaseSection
-            oneTimePackages={DEMO_ONE_TIME_PACKAGES}
-            subscriptionPackages={DEMO_SUB_PACKAGES}
-          />
-        </SubSection>
-
         {/* -- Lounge Card -- */}
         <SubSection title="Lounge Card (shared)">
           <p className="text-sm text-muted-foreground mb-3">
@@ -1315,6 +1639,114 @@ export default function AdminUIComponentsPage() {
         </SubSection>
       </Section>
 
+      {/* ============================================================ */}
+      {/* Section 11: Products v2 (parent browse + purchased)           */}
+      {/* ============================================================ */}
+      <Section title="Products v2 — Browse & Purchased Cards">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Parent-facing card surfaces for products_v2 (/clubs, /camps, /events).
+          The registration pill speaks parent voice and only appears when
+          there&rsquo;s something actionable to say.
+        </p>
+        <ProductsV2Demo />
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 12: Products v2 — Detail Page                          */}
+      {/* ============================================================ */}
+      <Section title="Products v2 — Detail Page">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Per-type detail pages (/clubs/[id], /camps/[id], /events/[id]).
+          The right-side signup panel switches across registration states
+          (countdown / open / waitlist / threshold / ended). Each tile here
+          shows the panel inline; the &ldquo;Preview full page &rarr;&rdquo;
+          link opens the route in the public layout exactly as a parent
+          would see it.
+        </p>
+        <ProductDetailDemo />
+      </Section>
+
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Section 12: Products v2 — Detail Page                              */
+/* ------------------------------------------------------------------ */
+
+function ProductDetailDemo() {
+  return (
+    <div className="space-y-6">
+      {PREVIEW_TYPES.map((productType) => (
+        <SubSection
+          key={productType}
+          title={productType.replace(/_/g, " ").toUpperCase()}
+        >
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {PREVIEW_STATES.map((stateKind) => (
+              <ProductDetailPanelTile
+                key={`${productType}-${stateKind}`}
+                productType={productType}
+                stateKind={stateKind}
+              />
+            ))}
+          </div>
+        </SubSection>
+      ))}
+    </div>
+  );
+}
+
+// Plain-English labels for each PreviewStateKind. The state key is the
+// internal code name (matches `RegistrationState["kind"]`); the label is
+// what an admin reading this page should see at a glance.
+const STATE_LABELS: Record<PreviewStateKind, string> = {
+  closed_pre: "Pre-launch — registration not yet open",
+  closed_pre_10s: "Pre-launch — opens in 10 seconds (live test)",
+  open: "Open for sign-ups",
+  open_almost_full: "Open — almost full",
+  pending_thr: "Pending threshold — needs more sign-ups",
+  full_waitlist: "Full — waitlist available",
+  full_closed: "Full — waitlist closed",
+  running_late: "Already running — no late joins",
+  ended: "Ended",
+};
+
+function ProductDetailPanelTile({
+  productType,
+  stateKind,
+}: {
+  productType: (typeof PREVIEW_TYPES)[number];
+  stateKind: PreviewStateKind;
+}) {
+  const fixture = buildDetailFixture(productType, stateKind);
+  const fullPageHref = `/preview/products-v2/${productType}/${stateKind}`;
+
+  return (
+    <div className="rounded-lg border bg-muted/20 p-3 space-y-2">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-sm font-medium leading-tight">
+            {STATE_LABELS[stateKind]}
+          </p>
+          <p className="text-xs font-mono text-muted-foreground">{stateKind}</p>
+        </div>
+        <a
+          href={fullPageHref}
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 text-xs font-medium text-primary hover:underline"
+        >
+          Preview full page →
+        </a>
+      </div>
+      <div className="rounded-md bg-background p-3">
+        <SignupPanel
+          product={fixture.product}
+          state={fixture.state}
+          authState={fixture.authState}
+        />
+      </div>
     </div>
   );
 }

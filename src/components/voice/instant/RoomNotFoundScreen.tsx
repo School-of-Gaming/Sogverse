@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/providers";
 import { ROUTES } from "@/lib/constants";
@@ -45,8 +45,8 @@ export function RoomNotFoundScreen({ code }: RoomNotFoundScreenProps) {
 
           {isMod && (
             <div className="pt-2">
-              <Link href={newRoomHref}>
-                <Button>{t("createNew")}</Button>
+              <Link href={newRoomHref} className={buttonVariants()}>
+                {t("createNew")}
               </Link>
             </div>
           )}

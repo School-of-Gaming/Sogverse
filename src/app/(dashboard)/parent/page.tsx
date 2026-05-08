@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
-import { Coins, Gamepad2, ShoppingCart, Settings } from "lucide-react";
+import { Gamepad2, ShoppingCart, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
@@ -11,14 +11,13 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: t("parentDashboard"), description: "Manage your gamers and enrollments" };
 }
 
-const quickActionIcons = [Gamepad2, Coins, ShoppingCart, Settings] as const;
+const quickActionIcons = [Gamepad2, ShoppingCart, Settings] as const;
 const quickActionHrefs = [
   ROUTES.customer.gamers,
-  ROUTES.customer.sorg,
   ROUTES.products,
   ROUTES.settings,
 ] as const;
-const quickActionKeys = ["gamers", "sorg", "browseClubs", "settings"] as const;
+const quickActionKeys = ["gamers", "browseClubs", "settings"] as const;
 
 export default function CustomerDashboardPage() {
   const t = useTranslations('parent');
@@ -36,7 +35,7 @@ export default function CustomerDashboardPage() {
         {quickActionKeys.map((key, i) => {
           const Icon = quickActionIcons[i];
           const href = quickActionHrefs[i];
-          const secondary = i >= 2;
+          const secondary = i >= 1;
           return (
           <Link key={href} href={href}>
             <Card className="group h-full transition-colors hover:bg-accent hover:text-accent-foreground">

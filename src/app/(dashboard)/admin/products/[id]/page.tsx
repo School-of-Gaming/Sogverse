@@ -13,7 +13,7 @@ import {
   Copy,
   Trash,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PadletLink } from "@/components/ui/padlet-link";
@@ -28,8 +28,6 @@ import {
 import { useProduct, useToggleProductVisibility, useDeleteProduct } from "@/services/products";
 import { useProductGroups } from "@/services/groups";
 import { GeduGroupsCard, VisibilityWarningBanner } from "@/components/admin/gedu-groups-card";
-import { useCurrency } from "@/hooks/use-currency";
-import { useTokenRates } from "@/providers/token-rate-provider";
 import { formatScheduleLocal, formatDate } from "@/lib/utils";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 
@@ -40,9 +38,7 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const { data: product, isLoading } = useProduct(id);
   const { data: groups = [] } = useProductGroups(id);
-  const { currency } = useCurrency();
   const locale = useLocale();
-  const { tokensToCurrencyDisplay } = useTokenRates();
   const toggleVisibility = useToggleProductVisibility();
   const deleteProduct = useDeleteProduct();
   const [isNavigating, startTransition] = useTransition();
@@ -138,7 +134,6 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
               </span>
               <span>{product.duration_minutes} {c('minutes')}</span>
               <span>{c('ages', { min: product.min_age, max: product.max_age })}</span>
-              <span className="font-semibold text-primary">{product.token_cost} {c('sorgs')} ({tokensToCurrencyDisplay(product.token_cost, currency, locale)})/{c('perSession')}</span>
             </div>
             {product.padlet_url && (
               <PadletLink href={product.padlet_url} />
@@ -172,17 +167,19 @@ export default function ManageProductPage({ params }: { params: Promise<{ id: st
             )}
             {isVisible ? t('hideProduct') : t('showProduct')}
           </Button>
-          <Link href={ROUTES.admin.productEdit(product.id)}>
-            <Button variant="outline">
-              <Pencil className="mr-2 h-4 w-4" />
-              {c('edit')}
-            </Button>
+          <Link
+            href={ROUTES.admin.productEdit(product.id)}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            {c('edit')}
           </Link>
-          <Link href={ROUTES.admin.productClone(product.id)}>
-            <Button variant="outline">
-              <Copy className="mr-2 h-4 w-4" />
-              {t('clone')}
-            </Button>
+          <Link
+            href={ROUTES.admin.productClone(product.id)}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            {t('clone')}
           </Link>
           <Button
             variant="destructive"

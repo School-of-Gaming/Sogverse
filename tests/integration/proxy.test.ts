@@ -193,6 +193,36 @@ describe("proxy", () => {
     });
   });
 
+  // --- Preview routes (admin-only mock UI under (public) layout) ---
+
+  describe("preview routes", () => {
+    it("allows admin to access /preview/products-v2/...", async () => {
+      mockUser("admin");
+      const response = await proxy(
+        createNextRequest("/preview/products-v2/consumer_club/open"),
+      );
+      expect(response.status).toBe(200);
+    });
+
+    it("redirects customer from /preview/... to /parent", async () => {
+      mockUser("customer");
+      const response = await proxy(
+        createNextRequest("/preview/products-v2/consumer_club/open"),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/parent");
+    });
+
+    it("redirects unauthenticated from /preview/... to /login", async () => {
+      mockNoUser();
+      const response = await proxy(
+        createNextRequest("/preview/products-v2/consumer_club/open"),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/login");
+    });
+  });
+
   // --- Settings (shared protected route) ---
 
   describe("settings route", () => {

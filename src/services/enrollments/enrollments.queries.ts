@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import { tokenKeys } from "@/services/tokens";
 import { groupKeys } from "@/services/groups/groups.queries";
 import { EnrollmentsService } from "./enrollments.service";
 
@@ -34,27 +33,6 @@ export function useEnrollGamer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
       queryClient.invalidateQueries({ queryKey: groupKeys.mine() });
-      queryClient.invalidateQueries({ queryKey: tokenKeys.all });
     },
   });
-}
-
-export function useUnenrollGamer() {
-  const queryClient = useQueryClient();
-  const supabase = getClient();
-  const service = new EnrollmentsService(supabase);
-
-  const mutation = useMutation({
-    mutationFn: (enrollmentId: string) => service.unenrollGamer(enrollmentId),
-    // No onSuccess — invalidation is deferred until the success dialog is dismissed,
-    // otherwise the enrollment card unmounts (active → inactive) and kills the dialog.
-  });
-
-  const invalidateEnrollments = () => {
-    queryClient.invalidateQueries({ queryKey: enrollmentKeys.all });
-    queryClient.invalidateQueries({ queryKey: groupKeys.mine() });
-    queryClient.invalidateQueries({ queryKey: tokenKeys.all });
-  };
-
-  return { ...mutation, invalidateEnrollments };
 }

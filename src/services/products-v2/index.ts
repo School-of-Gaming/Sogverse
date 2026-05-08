@@ -1,15 +1,22 @@
 export { ProductsV2Service } from "./products-v2.service";
 export type {
   ProductV2WithDetails,
+  ProductV2DetailRow,
+  ProductV2AdminDetailRow,
   ProductTranslationInput,
   ScheduleSlotInput,
   PriceInput,
   CreateProductV2Input,
+  UpdateProductV2Input,
 } from "./products-v2.service";
 export {
   productV2Keys,
   useProductsV2ByType,
+  useVisibleProductsV2ByType,
+  useProductV2Detail,
+  useProductV2Admin,
   useCreateProductV2,
+  useUpdateProductV2,
 } from "./products-v2.queries";
 export {
   referenceKeys,

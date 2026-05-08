@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "title": "Sogverse \u2013 School of Gaming",
+    "title": "Sogverse – School of Gaming",
     "description": "Where screen time becomes quality time through Minecraft clubs led by professional game educators.",
-    "shortDescription": "School of Gaming \u2013 Where screen time becomes quality time",
+    "shortDescription": "School of Gaming – Where screen time becomes quality time",
     "pages": {
       "signIn": "Sign In",
       "createAccount": "Create Account",
@@ -10,8 +10,8 @@
       "resetPassword": "Reset Password",
       "setupAccount": "Set Up Your Account",
       "about": "About Us",
-      "sorg": "Sorg \u2013 the Sogverse Currency",
-      "yty": "Yty \u2013 the Force of the Sogverse",
+      "sorg": "Sorg – the Sogverse Currency",
+      "yty": "Yty – the Force of the Sogverse",
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin Dashboard",
       "adminGroups": "Groups",
@@ -42,6 +42,9 @@
     "continue": "Continue",
     "submit": "Submit",
     "saveChanges": "Save Changes",
+    "on": "On",
+    "off": "Off",
+    "notSet": "Not set",
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "getStarted": "Get Started",
@@ -257,7 +260,7 @@
       },
       "translations": {
         "label": "Languages",
-        "hint": "Add the languages you want parents to be able to read this in. At least one of English or Finnish is required. Parents see this product in their UI language if available, otherwise in English, then Finnish.",
+        "hint": "Add the languages you want parents to be able to read this in. At least one is required. Parents see this product in their UI language if available, otherwise in English, then in whichever language is filled in.",
         "addLocale": "+ Add language",
         "removeLocale": "Remove {locale}",
         "inlineCreateHint": "Saved in {locale}. Translations for other languages can be added later from topic & tag management."
@@ -266,6 +269,63 @@
         "back": "Back to {plural}",
         "kicker": "New {label}",
         "title": "New {label}"
+      },
+      "detailsPage": {
+        "notFound": "Product not found.",
+        "online": "Online",
+        "onlineWithin": "Online (within {name})",
+        "locationMissing": "—",
+        "uncapped": "No cap (free event)",
+        "visible": "Visible to parents",
+        "hidden": "Hidden from parents",
+        "waitlistOn": "waitlist on",
+        "minutes": "{count} min",
+        "perMonth": "{amount} / month",
+        "scheduleRow": "{day} · {time} · {duration} min",
+        "billingMode": {
+          "paid": "Paid",
+          "free": "Free",
+          "external_contract": "External contract (municipality)"
+        },
+        "fields": {
+          "topic": "Topic",
+          "tags": "Tags",
+          "padletUrl": "Padlet",
+          "locales": "Languages",
+          "ageRange": "Age range",
+          "spokenLanguage": "Spoken language",
+          "location": "Location",
+          "startDate": "Start date",
+          "endDate": "End date",
+          "signupThreshold": "Signup threshold",
+          "schedule": "Schedule",
+          "holidayCalendars": "Holiday calendars",
+          "billingMode": "Billing",
+          "seats": "Seats",
+          "waitlist": "Waitlist",
+          "prices": "Prices",
+          "registrationOpensAt": "Registration opens",
+          "visibility": "Visibility"
+        },
+        "placeholders": {
+          "groups": {
+            "title": "Groups & Gedus",
+            "body": "Once gamers register, this is where you'll create groups, assign Gedus, and drag unassigned gamers into the right room."
+          },
+          "waitlist": {
+            "title": "Waitlist",
+            "body": "Gamers who couldn't get a seat will appear here so you can promote them as space opens."
+          },
+          "metrics": {
+            "title": "Business metrics",
+            "body": "Enrollment counts, revenue, and refunds for this product will land here once payments data is wired up."
+          }
+        }
+      },
+      "editPage": {
+        "back": "Back to product",
+        "kicker": "Edit {label}",
+        "title": "Edit {name}"
       },
       "sections": {
         "identity": "Identity",
@@ -286,8 +346,6 @@
           "camp": "Multiple days per week, each with its own start time and duration.",
           "event": "A single date and start time."
         },
-        "groups": "Groups",
-        "groupsDescription": "Admins use groups to organize participants inside a product. Parents don't see groups — they see the product.",
         "billing": "Capacity & billing",
         "billingDescription": {
           "consumerClub": "Parents pay per session their child attends. Billing happens automatically each week.",
@@ -308,7 +366,6 @@
         "padletUrl": "Padlet URL",
         "minAge": "Min age",
         "maxAge": "Max age",
-        "spokenLanguage": "Spoken language",
         "deliveredIn": "Delivered in",
         "online": "Online",
         "inPerson": "In person",
@@ -340,8 +397,6 @@
       },
       "placeholders": {
         "selectTopic": "Select a topic…",
-        "selectSite": "Select a site",
-        "selectMunicipality": "Select a municipality",
         "newTopicName": "New topic name (e.g. Among Us, Digital wellness)",
         "newTagName": "Tag name",
         "padletUrl": "https://padlet.com/...",
@@ -380,7 +435,6 @@
         "cancel": "Cancel",
         "pick": "Pick",
         "noVenueHint": "No physical venue. Parents browsing in {name} — or any smaller area inside it — will see this product.",
-        "noSitesYet": "no sites yet",
         "memberNotesLabel": "Member-visible notes",
         "memberNotesFieldLabel": "Notes shown to parents and gamers",
         "memberNotesPlaceholder": "Address details, parking, accessibility — anything parents need to know.",
@@ -397,7 +451,6 @@
       "pricing": {
         "currencyPickerLabel": "Currency",
         "fxSuggested": "Suggested from today's EUR rate ({rate}). Edit to override.",
-        "fxUnavailable": "Couldn't fetch today's FX rate — enter manually.",
         "perSessionLabel": "Price per session",
         "perMonthLabel": "Price per month",
         "totalLabel": "Total price",
@@ -426,26 +479,20 @@
         "scheduledDescription": "Parents see a countdown until then. Useful for ticket-drop style launches."
       },
       "hints": {
-        "noTopics": "No topics yet. Add one with the + button next to the picker.",
         "topicHint": "The primary subject — one per product. What the sessions are actually about.",
         "tagsHint": "Optional. Helps parents filter products when they're browsing.",
         "padletHint": "Optional. Shared with families after they sign up.",
         "deliveredInHint": "The primary language used during sessions.",
-        "noLocations": "No matching locations. Create one inline with the + button.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
         "voiceRoomAuto": "A voice room will be set up for this product automatically.",
         "municipalityHint": "Municipality clubs are always tied to a specific municipality — the one paying for it. Parents from that municipality (or anywhere smaller inside it) will see it when they browse.",
         "siteHint": "Where sessions physically happen.",
-        "eventWeekdayDerived": "Event weekday is derived from the date automatically.",
         "eventSingleDay": "Events happen on a single date.",
         "endDateOpt": "Leave blank for an ongoing club with no end date.",
         "thresholdOnly": "No fixed start date yet. Parents see a \"X of Y needed\" counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you'll need to cancel and refund from the product's page.",
         "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
-        "holidaySkips": "Sessions on calendar dates are skipped.",
         "holidayHint": "No session will run on any date from the selected calendars. Edit a calendar once and every product using it updates automatically.",
-        "groupsHint": "Add groups now if you already know how you want to organize this — or leave this empty and add them later from the product page, once you see how many gamers sign up.",
-        "groupsNotWired": "Groups UI is in place but not yet wired to the backend — your group choices won't be saved on submit. Coming soon.",
         "billingHint": "Free events can have no seat limit. Paid events always have a seat count.",
         "freeDetail": "No charge. Anyone can join with one click.",
         "paidDetail": "One-time charge at signup.",
@@ -458,7 +505,6 @@
       },
       "errors": {
         "translationRequired": "At least one language with name and description is required",
-        "translationsMustHaveEnOrFi": "Add a translation in English or Finnish — every product needs at least one of those.",
         "translationIncomplete": "Fill in both name and description for the {locale} tab, or remove it.",
         "topicRequired": "Topic is required",
         "spokenLanguageRequired": "Spoken language is required",
@@ -542,21 +588,69 @@
         "current": "Current",
         "alreadyAssigned": "Already assigned"
       },
-      "groups": {
-        "groupNumber": "Group {n}",
-        "groupNamePlaceholder": "Group name",
-        "removeGroup": "Remove group",
-        "assignedGedus": "Assigned Gedus",
-        "noGedusYet": "None yet. A group with no Gedus is fine — you can assign them later.",
-        "assignGedu": "Assign a Gedu",
-        "removeGedu": "Remove Gedu",
-        "noGroupsYet": "No groups yet.",
-        "noGroupsDetail": "Parents can still sign up. Their gamer will land in an \"unassigned\" inbox until you place them into a group.",
-        "defaultName": "Group {letter}",
-        "addGroup": "Add a group",
-        "addGeduTo": "Add Gedu to {name}",
-        "addGeduGeneric": "Add Gedu to group",
-        "addGeduDescription": "Gedus assigned to this group run its sessions. For online products they can also hop into other groups' voice rooms in the same product when needed."
+      "groupsPanel": {
+        "title": "Groups",
+        "subtitle": "Drag each gamer into the group they'll play with. Add Gedus to lead each group.",
+        "addGroup": "Add group",
+        "loading": "Loading…",
+        "genderBoy": "boy",
+        "genderGirl": "girl",
+        "genderNonBinary": "non-binary",
+        "chip": {
+          "age": "{age}y"
+        },
+        "unassigned": {
+          "title": "Unassigned",
+          "subtitle": "Gamers who've paid but aren't in a group yet. Drag them into one to place them.",
+          "empty": "Everyone has a group."
+        },
+        "empty": {
+          "title": "No groups yet",
+          "description": "Add a group when you're ready to start placing gamers.",
+          "addFirst": "Add your first group"
+        },
+        "group": {
+          "defaultName": "Group {letter}",
+          "nameLabel": "Group name",
+          "namePlaceholder": "Name this group",
+          "nameRequired": "Give this group a name.",
+          "nameRequiredHint": "Some groups don't have a name yet.",
+          "deleteAria": "Delete {name}",
+          "gamerCount": "{count, plural, =0 {No gamers} =1 {1 gamer} other {# gamers}}",
+          "new": "New",
+          "markedForDeletion": "Will be deleted",
+          "assignedGedus": "Gedus",
+          "noGedus": "No Gedus yet.",
+          "addGedu": "Add Gedu",
+          "gamersLabel": "Gamers",
+          "empty": "No gamers here yet — drag one in.",
+          "willBeDeleted": "These gamers will move to Unassigned when you save.",
+          "geduStatusFootnote": "Some changes here aren't saved yet.",
+          "deleteConfirmTitle": "Delete {name}?",
+          "deleteConfirmEmpty": "Nobody is in this group, so deleting it just clears the Gedu assignments.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {1 gamer is in this group} other {# gamers are in this group}}. They'll move to Unassigned when you save."
+        },
+        "gedu": {
+          "pendingAdd": "Adding",
+          "pendingRemove": "Removing",
+          "removeAria": "Remove {name}"
+        },
+        "picker": {
+          "addTitle": "Add Gedu to {name}",
+          "addDescription": "A Gedu can only run one group per product. Anyone already assigned is greyed out."
+        },
+        "commitBar": {
+          "summary": "{count, plural, =1 {1 unsaved change} other {# unsaved changes}}",
+          "discard": "Discard",
+          "review": "Review changes"
+        },
+        "summary": {
+          "title": "Review changes",
+          "description": "All of these save together. If any one can't save, none of them will.",
+          "apply": "Save changes",
+          "applying": "Saving…",
+          "genericError": "Something went wrong. Please try again."
+        }
       }
     },
     "users": {
@@ -605,7 +699,7 @@
       "emailPlaceholder": "gedu@example.com",
       "geduDisplayName": "Display Name",
       "geduDisplayNamePlaceholder": "e.g. Jane Smith",
-      "geduDisplayNameHelper": "Shown in the welcome email greeting and pre-filled on the gedu\u2019s profile.",
+      "geduDisplayNameHelper": "Shown in the welcome email greeting and pre-filled on the gedu’s profile.",
       "geduDisplayNameTooShort": "Display name must be at least 2 characters",
       "geduDisplayNameTooLong": "Display name must be at most 32 characters",
       "inviteLanguage": "Invite Email Language",
@@ -728,7 +822,7 @@
       "deleteGroupConfirmDescription": "This will remove the group and its gedu assignment. This change won’t take effect until you commit.",
       "reassignGeduFor": "Reassign Gedu for {label}",
       "selectDifferentGedu": "Select a different gedu for this group.",
-      "searchByNameOrEmail": "Search by name or email\u2026",
+      "searchByNameOrEmail": "Search by name or email…",
       "noGedusMatchSearch": "No gedus match your search."
     },
     "forms": {
@@ -863,15 +957,6 @@
     "error": "Something went wrong starting checkout. Please <link>go back</link> and try again."
   },
   "clubs": {
-    "listing": {
-      "heading": "Our Clubs",
-      "subheading": "Explore our Minecraft clubs — each one led by a professional game educator.",
-      "noClubs": "No Clubs Available",
-      "checkBackSoon": "Check again soon for new clubs!",
-      "needHelp": "Need Help Choosing?",
-      "needHelpDescription": "Not sure which club is right for your family? Contact us for personalised recommendations based on your children's ages and interests.",
-      "learnMoreAboutUs": "Learn More About Us"
-    },
     "tokenCost": "{cost} Sorgs",
     "detail": {
       "backToClubs": "Back to Clubs",
@@ -1075,7 +1160,7 @@
     "allGroupsEmpty": "No groups have been created yet.",
     "myGroupsHeading": "My Groups",
     "myGroupsSubheading": "Your enrolled groups and upcoming voice sessions.",
-    "myGroupsEmpty": "You\u2019re not enrolled in any groups yet.",
+    "myGroupsEmpty": "You’re not enrolled in any groups yet.",
     "yourGroupsHeading": "Your Groups",
     "yourGroupsSubheading": "Your assigned groups, students, and voice sessions.",
     "yourGroupsEmpty": "Groups will appear here when an admin assigns you to a club.",
@@ -1091,6 +1176,8 @@
     "nav": {
       "home": "Home",
       "clubs": "Clubs",
+      "camps": "Camps",
+      "events": "Events",
       "sorg": "Sorg",
       "yty": "Yty",
       "about": "About"
@@ -1098,10 +1185,216 @@
     "toggleMenu": "Toggle menu",
     "tokenBalance": "{count} Sorgs"
   },
+  "productBrowse": {
+    "headings": {
+      "consumer_club": "Our Clubs",
+      "camp": "Our Camps",
+      "event": "Our Events"
+    },
+    "subheadings": {
+      "consumer_club": "Weekly clubs where your gamer plays the games they love with new friends and a Gedu who actually gets it.",
+      "camp": "School breaks turned into game-filled adventures — new friends, real skills, and a Gedu along for the ride.",
+      "event": "Workshops, tournaments and parties — drop in whenever something catches your gamer's eye."
+    },
+    "purchasedHeadings": {
+      "consumer_club": "Your Gamers' Clubs",
+      "camp": "Your Gamers' Camps",
+      "event": "Your Gamers' Events"
+    },
+    "filters": {
+      "topic": "Topic",
+      "tag": "Vibe",
+      "format": "Format",
+      "formatOnline": "Online",
+      "formatInPerson": "In person",
+      "language": "Language",
+      "clearAll": "Clear",
+      "filterBy": "Filter by"
+    },
+    "card": {
+      "ages": "Ages {min}–{max}",
+      "perSession": "{price} / session",
+      "perMonth": "{price} / month",
+      "orChoice": "or",
+      "upfrontTotal": "{price}",
+      "free": "Free",
+      "externalContract": "Funded by your municipality",
+      "notAvailableInCurrency": "Not in {currency}",
+      "seatsCapacity": "{count, plural, one {# seat} other {# seats}}",
+      "waitlistAvailable": "Waitlist available",
+      "endedBadge": "Ended",
+      "endedNote": "This one's wrapped — keep an eye out for the next one.",
+      "viewDetails": "View",
+      "manage": "Manage",
+      "pillSpotsLeft": "{count, plural, one {Only # spot left} other {Only # spots left}}",
+      "pillNeedsMore": "{count, plural, one {Need # more to start} other {Need # more to start}}",
+      "pillFull": "Full",
+      "pillFullWaitlist": "Full — waitlist open",
+      "pillOpensOn": "Opens {date}",
+      "pillStarted": "Already started",
+      "fullDisabled": "Full",
+      "online": "Online",
+      "verbConsumerClub": "Enrolled",
+      "verbMunicipalityClub": "Registered",
+      "verbCamp": "Signed up",
+      "verbEvent": "Joined",
+      "statusConfirmed": "Confirmed",
+      "statusWaitlist": "Waitlist",
+      "purchasedDetailWaitlist": "We'll email when a seat opens",
+      "purchasedDetailWaitlistWithPosition": "{position} ahead of you in line",
+      "purchasedDetailUnassigned": "We'll set up your group",
+      "purchasedDetailNoSchedule": "Schedule coming soon",
+      "balanceSessionsLeft": "{count, plural, one {# session left} other {# sessions left}}",
+      "balanceNoSessionsLeft": "No sessions left — buy more",
+      "balanceSubscription": "Subscription",
+      "nextSession": "Next: {when}",
+      "gamersLabel": "For {names}"
+    },
+    "empty": {
+      "noProducts": "Nothing here yet — new ones are on the way.",
+      "noMatches": "No matches. Try clearing your filters."
+    }
+  },
+  "productDetail": {
+    "back": {
+      "consumer_club": "All clubs",
+      "municipality_club": "All municipality clubs",
+      "camp": "All camps",
+      "event": "All events"
+    },
+    "typeLabel": {
+      "consumer_club": "Club",
+      "municipality_club": "Municipality club",
+      "camp": "Camp",
+      "event": "Event"
+    },
+    "sections": {
+      "whenWhere": "When & where",
+      "calendar": "Schedule",
+      "tags": "What to expect",
+      "topicsLabel": "Focus",
+      "tagsLabel": "Vibe"
+    },
+    "info": {
+      "schedule": "Schedule",
+      "where": "Where",
+      "format": "Format",
+      "ages": "Ages {min}–{max}",
+      "ageRange": "Age range",
+      "language": "Language",
+      "online": "Online",
+      "atVenue": "At {venue}",
+      "tbd": "To be confirmed"
+    },
+    "calendar": {
+      "weekdayMon": "Mon",
+      "weekdayTue": "Tue",
+      "weekdayWed": "Wed",
+      "weekdayThu": "Thu",
+      "weekdayFri": "Fri",
+      "weekdaySat": "Sat",
+      "weekdaySun": "Sun",
+      "legendSession": "Session",
+      "legendSkipped": "Skipped",
+      "skipLine": "{date} · {reason}"
+    },
+    "signupPanel": {
+      "bannerOpen": "{verb} now",
+      "bannerAlmostFull": "Going fast — only a few seats left",
+      "bannerCountdown": "Sign-up opens at {date}",
+      "bannerCountdownDone": "Sign-up is now open",
+      "bannerThreshold": "Starts when it fills up",
+      "bannerWaitlist": "Fully booked right now",
+      "bannerFullClosed": "Fully booked",
+      "bannerRunningLate": "This one's already underway",
+      "bannerEnded": "This one's wrapped",
+      "verb": {
+        "consumer_club": "Enroll",
+        "municipality_club": "Register",
+        "camp": "Sign up",
+        "event": "Join"
+      },
+      "ctaPreOpenIdle": "{verb} — not yet open",
+      "ctaPreOpenReady": "Ready when sign-up opens",
+      "ctaPreOpenChooseChild": "Pick a child first",
+      "ctaActive": "{verb} now",
+      "ctaActiveWithPrice": "{verb} now {price}",
+      "ctaInlineAddSub": "Add to your subscription · {price} (charged today)",
+      "ctaSubmitting": "One moment…",
+      "ctaWaitlist": "Join the waitlist",
+      "ctaThreshold": "Reserve a spot",
+      "ctaSignIn": "Sign in to register",
+      "ctaCreateAccount": "Create account",
+      "ctaAddGamer": "Add a child first",
+      "ctaViewMyProducts": "View my products",
+      "alreadySignedUpWaitlistBanner": "You're on the waitlist",
+      "alreadySignedUpWaitlistNote": "We'll email you when a seat opens.",
+      "alreadySignedUpActiveBanner": "You're signed up",
+      "alreadySignedUpActiveNote": "See this signup and others on your products page.",
+      "nonCustomerNote": "Only parents can register a gamer here.",
+      "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
+      "thresholdHelper": "We'll start once {count} kids have signed up. Reserve a spot now and we'll let you know the moment we have enough.",
+      "thresholdProgress": "{current} of {threshold}",
+      "thresholdRemaining": "{count, plural, =0 {Threshold reached} one {# more to start} other {# more to start}}",
+      "seatsRemaining": "{count, plural, one {# of {total} seat remaining} other {# of {total} seats remaining}}",
+      "waitlistHowTitle": "How the waitlist works",
+      "waitlistHowItem1": "You keep your spot in line for the whole term.",
+      "waitlistHowItem2": "If a family cancels, the next person gets a short window to accept.",
+      "waitlistHowItem3": "You can leave the waitlist anytime from your account.",
+      "endedNote": "This one already wrapped. Keep an eye out for the next one.",
+      "runningLateNote": "We've already started — sign-up is closed. The next round will open soon.",
+      "rules": {
+        "consumer_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
+        "municipality_club": "I understand School of Gaming has zero tolerance for bullying and toxic behavior, and that repeated unexcused absences may open my child's seat for the next family on the waitlist.",
+        "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
+        "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
+      },
+      "whoAreYouSigningUp": "Who are you signing up?",
+      "selected": "Selected",
+      "agePill": "Age {age}",
+      "noGamersTitle": "Add a child to your account",
+      "noGamersDescription": "We need to know who to sign up. Add a child first — it takes a minute."
+    },
+    "pricing": {
+      "title": "Pricing",
+      "subscribeHeading": "Subscribe (saves more)",
+      "bundleHeading": "Or pay as you go",
+      "perSession": "{price} / session",
+      "subscribeMonthly": "Monthly",
+      "subscribeQuarterly": "Every 3 months",
+      "subscribeYearly": "Yearly",
+      "bundleSingle": "Single session",
+      "bundleN": "{count} sessions",
+      "savings": "Save {percent}%",
+      "free": "Free",
+      "freeHint": "No payment needed.",
+      "external": "Free to you · paid by your municipality",
+      "externalHint": "No payment needed — your municipality covers the cost.",
+      "upfrontHint": "One-time payment.",
+      "notAvailable": "Pricing isn't available in {currency} yet.",
+      "cadenceMonth": "/ month",
+      "cadenceQuarter": "every 3 months",
+      "cadenceYear": "every year"
+    },
+    "countdown": {
+      "days": "days",
+      "hours": "hrs",
+      "minutes": "min",
+      "seconds": "sec"
+    },
+    "loading": "Loading…",
+    "notFound": {
+      "title": "We couldn't find that",
+      "description": "It may have been removed or the link is wrong. Browse what's available below.",
+      "cta": "Back to browse"
+    },
+    "preview": {
+      "banner": "Mockup preview · interactions are not wired up"
+    }
+  },
   "sidebar": {
     "dashboard": "Dashboard",
     "users": "Users",
-    "products": "Products (Legacy)",
     "consumerClubs": "Consumer Clubs",
     "municipalityClubs": "Municipality Clubs",
     "camps": "Camps",
@@ -1572,7 +1865,7 @@
     "senderAuth": "Sogverse Team",
     "senderFeedback": "Sogverse Feedback",
     "senderEnrollment": "Sogverse Enrolment",
-    "footer": "\u00a9 {year} Sogverse. All rights reserved.",
+    "footer": "© {year} Sogverse. All rights reserved.",
     "roleAdmin": "Admin",
     "roleParent": "Parent",
     "roleGamer": "Gamer",
@@ -1582,14 +1875,14 @@
       "heading": "Reset Your Password",
       "body": "We received a request to reset your Sogverse password. Click the button below to choose a new password.",
       "expiry": "This link will expire in 72 hours.",
-      "ignore": "If you didn\u2019t request a password reset, you can safely ignore this email. Your password will not be changed.",
+      "ignore": "If you didn’t request a password reset, you can safely ignore this email. Your password will not be changed.",
       "button": "Reset Password"
     },
     "geduInvite": {
-      "subject": "You\u2019re invited to the Sogverse",
+      "subject": "You’re invited to the Sogverse",
       "heading": "Welcome to the Sogverse",
       "greeting": "Hi {name},",
-      "body": "You\u2019ve been invited to join the Sogverse as a <strong>Gedu</strong>. Click the button below to set up your account.",
+      "body": "You’ve been invited to join the Sogverse as a <strong>Gedu</strong>. Click the button below to set up your account.",
       "expiry": "This link will expire in 72 hours.",
       "button": "Set Up Your Account"
     },
@@ -1605,7 +1898,7 @@
       "body": "Hi {parentName}, {gamerName} is now enrolled in {productName} with Gedu {geduName}."
     },
     "enrollmentGedu": {
-      "subject": "{gamerName} has joined your group \u2013 {productName}",
+      "subject": "{gamerName} has joined your group – {productName}",
       "heading": "New Gamer in Your Group",
       "body": "Hi {geduName}, {gamerName} has joined your group for {productName}."
     },
@@ -1615,50 +1908,50 @@
       "body": "Hi {parentName}, {gamerName} has been unenrolled from {productName} (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
-      "subject": "{gamerName} has left your group \u2013 {productName}",
+      "subject": "{gamerName} has left your group – {productName}",
       "heading": "Gamer Left Your Group",
       "body": "Hi {geduName}, {gamerName} has left your group for {productName}."
     },
     "groupAdded": {
-      "subject": "You\u2019ve been assigned to a new group \u2013 {productName}",
-      "heading": "You\u2019ve been assigned to a new group",
-      "body": "Hi {geduName}, you\u2019ve been assigned to a new group for {productName}.",
-      "dashboardNote": "You\u2019ll see this group in your dashboard shortly."
+      "subject": "You’ve been assigned to a new group – {productName}",
+      "heading": "You’ve been assigned to a new group",
+      "body": "Hi {geduName}, you’ve been assigned to a new group for {productName}.",
+      "dashboardNote": "You’ll see this group in your dashboard shortly."
     },
     "groupDeleted": {
-      "subject": "Your group has been removed \u2013 {productName}",
+      "subject": "Your group has been removed – {productName}",
       "heading": "Your group has been removed",
       "body": "Hi {geduName}, your group for {productName} has been removed by an admin."
     },
     "groupReassignedOldGedu": {
-      "subject": "Your group has been reassigned \u2013 {productName}",
+      "subject": "Your group has been reassigned – {productName}",
       "heading": "Your group has been reassigned",
       "body": "Hi {oldGeduName}, your group for {productName} has been reassigned to {newGeduName}."
     },
     "groupReassignedNewGedu": {
-      "subject": "You\u2019ve been assigned to a group \u2013 {productName}",
-      "heading": "You\u2019ve been assigned to a group",
-      "body": "Hi {newGeduName}, you\u2019ve been assigned to a group for {productName} (previously led by {oldGeduName})."
+      "subject": "You’ve been assigned to a group – {productName}",
+      "heading": "You’ve been assigned to a group",
+      "body": "Hi {newGeduName}, you’ve been assigned to a group for {productName} (previously led by {oldGeduName})."
     },
     "groupReassignedParent": {
-      "subject": "Gedu change for {gamerName} \u2013 {productName}",
-      "heading": "Your gamer\u2019s Gedu has changed",
-      "body": "Hi {parentName}, the Gedu for {gamerName}\u2019s group in {productName} has changed from {oldGeduName} to {newGeduName}."
+      "subject": "Gedu change for {gamerName} – {productName}",
+      "heading": "Your gamer’s Gedu has changed",
+      "body": "Hi {parentName}, the Gedu for {gamerName}’s group in {productName} has changed from {oldGeduName} to {newGeduName}."
     },
     "gamerMovedParent": {
-      "subject": "{gamerName} has been moved to a new group \u2013 {productName}",
+      "subject": "{gamerName} has been moved to a new group – {productName}",
       "heading": "Your child has been moved to a new group",
-      "body": "Hi {parentName}, {gamerName} has been moved from {oldGeduName}\u2019s group to {newGeduName}\u2019s group in {productName}."
+      "body": "Hi {parentName}, {gamerName} has been moved from {oldGeduName}’s group to {newGeduName}’s group in {productName}."
     },
     "gamerMovedOldGedu": {
-      "subject": "{gamerName} has been moved from your group \u2013 {productName}",
+      "subject": "{gamerName} has been moved from your group – {productName}",
       "heading": "A gamer has been moved from your group",
-      "body": "Hi {geduName}, {gamerName} has been moved from your group to {newGeduName}\u2019s group in {productName}."
+      "body": "Hi {geduName}, {gamerName} has been moved from your group to {newGeduName}’s group in {productName}."
     },
     "gamerMovedNewGedu": {
-      "subject": "{gamerName} has been moved to your group \u2013 {productName}",
+      "subject": "{gamerName} has been moved to your group – {productName}",
       "heading": "A gamer has been moved to your group",
-      "body": "Hi {geduName}, {gamerName} has been moved to your group from {oldGeduName}\u2019s group in {productName}."
+      "body": "Hi {geduName}, {gamerName} has been moved to your group from {oldGeduName}’s group in {productName}."
     },
     "feedback": {
       "subject": "Feedback from {displayName} ({role})",
@@ -1673,7 +1966,7 @@
   },
   "mouseflow": {
     "title": "Help us improve Sogverse",
-    "body": "Sogverse is in Beta. To learn how people actually use the site \u2014 so we can make it better for everyone \u2014 we'd like to record your visit (mouse movements, clicks, and which pages you visit). Only Sogverse admins can see this, and we will delete all of it once Beta ends.",
+    "body": "Sogverse is in Beta. To learn how people actually use the site — so we can make it better for everyone — we'd like to record your visit (mouse movements, clicks, and which pages you visit). Only Sogverse admins can see this, and we will delete all of it once Beta ends.",
     "accept": "Yes, help improve Sogverse",
     "decline": "No thanks"
   }

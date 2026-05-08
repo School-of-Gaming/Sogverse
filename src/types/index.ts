@@ -168,6 +168,170 @@ export type SiteDetailsV2Insert = Database["public"]["Tables"]["site_details_v2"
 export type SiteStaffDetailsV2 = Database["public"]["Tables"]["site_staff_details_v2"]["Row"];
 export type SiteStaffDetailsV2Insert = Database["public"]["Tables"]["site_staff_details_v2"]["Insert"];
 
+// Joined location shape shared by browse rows. The detail / card layers
+// only need the name + type plus one level of parent for display
+// ("Tapiolan koulu, Espoo"). Walk the chain via `parent` if a deeper
+// hierarchy is ever needed — the SELECT only fetches one level today.
+export type BrowseRowLocation = {
+  id: string;
+  name: string;
+  type: LocationType;
+  parent: {
+    id: string;
+    name: string;
+    type: LocationType;
+  } | null;
+};
+
+// Joined shape consumed by the parent-facing browse pages
+// (src/components/public/products-v2/product-browse-page.tsx). The card
+// renderer expects everything it needs to draw itself in one row — topic
+// label, all product translations, tag chips, prices per supported currency,
+// weekly schedule slots, and the joined location for in-person products.
+// Single source so the component props mirror the SELECT shape exactly.
+export type ProductV2BrowseRow = ProductV2 & {
+  topics_v2:
+    | {
+        slug: string;
+        kind: TopicKindV2;
+        icon_path: string | null;
+        topic_translations_v2: TopicTranslationV2[];
+      }
+    | null;
+  product_translations_v2: ProductTranslationV2[];
+  product_tags_v2: {
+    tags_v2:
+      | {
+          slug: string;
+          tag_translations_v2: TagTranslationV2[];
+        }
+      | null;
+  }[];
+  product_prices_v2: ProductPriceV2[];
+  schedule_slots_v2: Pick<
+    ScheduleSlotV2,
+    "weekday" | "start_time" | "duration_minutes"
+  >[];
+  locations: BrowseRowLocation | null;
+};
+
+// ---------------------------------------------------------------------------
+// products v2 — participations, payments, family subs (00039)
+// See docs/products-redesign.md §§ 5.5, 5.7, 5.7a, 5.1a, 6.1.
+// ---------------------------------------------------------------------------
+
+// Enums
+export type ParticipationStatus = Database["public"]["Enums"]["participation_status_v2"];
+export type SubscriptionFrequencyV2 = Database["public"]["Enums"]["subscription_frequency_v2"];
+export type PaymentPurposeV2 = Database["public"]["Enums"]["payment_purpose_v2"];
+export type RefundReasonV2 = Database["public"]["Enums"]["refund_reason_v2"];
+export type EffectiveProductStatusV2DB = Database["public"]["Enums"]["effective_product_status_v2"];
+
+// participations_v2
+export type Participation = Database["public"]["Tables"]["participations_v2"]["Row"];
+export type ParticipationInsert = Database["public"]["Tables"]["participations_v2"]["Insert"];
+
+/**
+ * Derived 3-state placement vocabulary for participations.
+ * See products-redesign.md §3 "Participation state vocabulary":
+ *   - 'waitlisted'  — `status = 'waitlisted'`
+ *   - 'unassigned'  — `status = 'active' AND group_id IS NULL`
+ *   - 'assigned'    — `status = 'active' AND group_id IS NOT NULL`
+ *
+ * Use `participationStateOf()` (src/lib/participation-state.ts) to derive.
+ */
+export type ParticipationState = "waitlisted" | "unassigned" | "assigned";
+
+/**
+ * Purchase shape selectors the client sends to the create-participation route.
+ * Server recomputes prices from the product's stored base price + the
+ * pricing-v2 constants — clients never send amounts.
+ */
+export type PurchaseShape =
+  | "bundle_1"
+  | "bundle_4"
+  | "bundle_10"
+  | "subscription_monthly"
+  | "subscription_quarterly"
+  | "subscription_yearly"
+  | "single_payment"
+  | "free";
+
+// payments_v2
+export type Payment = Database["public"]["Tables"]["payments_v2"]["Row"];
+export type PaymentInsert = Database["public"]["Tables"]["payments_v2"]["Insert"];
+
+// refunds_v2
+export type Refund = Database["public"]["Tables"]["refunds_v2"]["Row"];
+export type RefundInsert = Database["public"]["Tables"]["refunds_v2"]["Insert"];
+
+// family_subscriptions_v2 + family_subscription_items_v2
+export type FamilySubscription = Database["public"]["Tables"]["family_subscriptions_v2"]["Row"];
+export type FamilySubscriptionInsert = Database["public"]["Tables"]["family_subscriptions_v2"]["Insert"];
+export type FamilySubscriptionItem = Database["public"]["Tables"]["family_subscription_items_v2"]["Row"];
+export type FamilySubscriptionItemInsert = Database["public"]["Tables"]["family_subscription_items_v2"]["Insert"];
+
+// product_subscription_prices_v2 (Stripe Price ID cache; admin-only)
+export type ProductSubscriptionPriceV2 = Database["public"]["Tables"]["product_subscription_prices_v2"]["Row"];
+export type ProductSubscriptionPriceV2Insert = Database["public"]["Tables"]["product_subscription_prices_v2"]["Insert"];
+
+// session_cancellations_v2 (ships now even though the cancel-session UI does not)
+export type SessionCancellationV2 = Database["public"]["Tables"]["session_cancellations_v2"]["Row"];
+
+// credit_deductions_v2 (cron audit ledger)
+export type CreditDeductionV2 = Database["public"]["Tables"]["credit_deductions_v2"]["Row"];
+
+// product_seat_counts_v2 (public-readable rollup feeding the realtime counter)
+export type ProductSeatCountV2 = Database["public"]["Tables"]["product_seat_counts_v2"]["Row"];
+
+// ---------------------------------------------------------------------------
+// products v2 — groups & gedu assignments (00049)
+// See docs/products-redesign.md §4.1, §5.4, §6.1a.
+// ---------------------------------------------------------------------------
+
+// product_groups_v2
+export type ProductGroupV2 = Database["public"]["Tables"]["product_groups_v2"]["Row"];
+export type ProductGroupV2Insert = Database["public"]["Tables"]["product_groups_v2"]["Insert"];
+export type ProductGroupV2Update = Database["public"]["Tables"]["product_groups_v2"]["Update"];
+
+// gedu_group_assignments_v2
+export type GeduGroupAssignmentV2 = Database["public"]["Tables"]["gedu_group_assignments_v2"]["Row"];
+export type GeduGroupAssignmentV2Insert = Database["public"]["Tables"]["gedu_group_assignments_v2"]["Insert"];
+
+// get_product_groups_v2_with_details — returns JSONB, so the generated type is
+// `Json`. Define a structured shape that mirrors what the RPC produces so the
+// admin UI gets type safety without a Zod parse step.
+export interface GroupV2GeduDetail {
+  id: string;
+  display_name: string;
+  email: string | null;
+}
+
+export interface GroupV2ParticipationDetail {
+  id: string;
+  gamer_id: string;
+  gamer_display_name: string;
+  gamer_date_of_birth: string | null;
+  gamer_gender: GenderType | null;
+  status: ParticipationStatus;
+  signed_up_at: string;
+}
+
+export interface ProductGroupV2WithDetails {
+  id: string;
+  name: string;
+  display_order: number;
+  created_at: string;
+  gedus: GroupV2GeduDetail[];
+  participations: GroupV2ParticipationDetail[];
+}
+
+export interface ProductGroupsV2Snapshot {
+  product_id: string;
+  groups: ProductGroupV2WithDetails[];
+  unassigned: GroupV2ParticipationDetail[];
+}
+
 // whatsapp_contacts
 export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"]["Row"];
 

@@ -5,7 +5,6 @@ import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { MouseflowConsent } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
-import { getStripeProducts } from "@/lib/stripe/products";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
@@ -60,13 +59,9 @@ export default async function RootLayout({
   // Server components access full messages via getTranslations() directly.
   const { email: _email, metadata: _metadata, ...clientMessages } =
     (await getMessages()) as Record<string, unknown>;
-  // getStripeProducts() is backed by unstable_cache (persistent data cache, 5-min revalidation).
-  // Callers always get the cached value instantly — Stripe is only contacted during background
-  // revalidation, so this adds no latency and no runtime dependency on Stripe availability.
-  const { baseRates } = await getStripeProducts();
 
   return (
-    <html lang={locale} className="dark overflow-hidden" suppressHydrationWarning>
+    <html lang={locale} className="dark" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${pressStart2P.variable} antialiased bg-background text-foreground`}
       >
@@ -75,16 +70,15 @@ export default async function RootLayout({
           initialProfile={userWithProfile?.profile}
           initialLocale={locale}
           messages={clientMessages}
-          baseRates={baseRates}
           nonce={nonce}
         >
-          {/* Header rendering is owned by each route group's layout — that's how
+          {/* Header rendering and the pt-16 offset that reserves space below the
+              fixed header are owned by each route group's layout — that's how
               the (voice) group can replace the standard chrome with its own
-              simplified header. The pt-16 reserves space for whichever fixed
-              header the active group renders. */}
-          <main className="h-screen overflow-auto pt-16">
-            {children}
-          </main>
+              simplified header (or skip it entirely). The document is the
+              single scroll container; no inner element should set h-screen
+              overflow-auto. */}
+          {children}
           <MouseflowConsent nonce={nonce} />
         </Providers>
         <SpeedInsights />

@@ -1,29 +1,29 @@
 {
   "metadata": {
-    "title": "Sogverse \u2013 School of Gaming",
-    "description": "Kun ruutuajasta tulee laatuaikaa \u2013 Minecraft-kerhoja ammattimaisten pelikasvattajien johdolla.",
-    "shortDescription": "School of Gaming \u2013 Kun ruutuajasta tulee laatuaikaa",
+    "title": "Sogverse – School of Gaming",
+    "description": "Kun ruutuajasta tulee laatuaikaa – Minecraft-kerhoja ammattimaisten pelikasvattajien johdolla.",
+    "shortDescription": "School of Gaming – Kun ruutuajasta tulee laatuaikaa",
     "pages": {
-      "signIn": "Kirjaudu sis\u00e4\u00e4n",
+      "signIn": "Kirjaudu sisään",
       "createAccount": "Luo tili",
       "forgotPassword": "Unohtuiko salasana",
       "resetPassword": "Vaihda salasana",
-      "setupAccount": "Tilin k\u00e4ytt\u00f6\u00f6notto",
-      "about": "Tietoa meist\u00e4",
-      "sorg": "Sorgga \u2013 Sogversen valuutta",
-      "yty": "Yty \u2013 Sogversen voima",
+      "setupAccount": "Tilin käyttöönotto",
+      "about": "Tietoa meistä",
+      "sorg": "Sorgga – Sogversen valuutta",
+      "yty": "Yty – Sogversen voima",
       "minecraftApi": "Minecraft Server API",
-      "adminDashboard": "Yll\u00e4pidon hallintapaneeli",
-      "adminGroups": "Ryhm\u00e4t",
-      "adminGroupDetails": "Ryhm\u00e4n tiedot",
+      "adminDashboard": "Ylläpidon hallintapaneeli",
+      "adminGroups": "Ryhmät",
+      "adminGroupDetails": "Ryhmän tiedot",
       "parentDashboard": "Vanhemman hallintapaneeli",
       "geduDashboard": "Kasvattajan hallintapaneeli",
-      "geduGroups": "Ryhm\u00e4t",
-      "geduGroupDetails": "Ryhm\u00e4n tiedot",
+      "geduGroups": "Ryhmät",
+      "geduGroupDetails": "Ryhmän tiedot",
       "gamerHome": "Pelaajan etusivu",
-      "gamerGroups": "Omat ryhm\u00e4t",
-      "gamerGroupDetails": "Ryhm\u00e4n tiedot",
-      "voiceSession": "\u00c4\u00e4ni-istunto"
+      "gamerGroups": "Omat ryhmät",
+      "gamerGroupDetails": "Ryhmän tiedot",
+      "voiceSession": "Ääni-istunto"
     }
   },
   "common": {
@@ -42,6 +42,9 @@
     "continue": "Jatka",
     "submit": "Lähetä",
     "saveChanges": "Tallenna muutokset",
+    "on": "Päällä",
+    "off": "Pois",
+    "notSet": "Ei asetettu",
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
@@ -257,7 +260,7 @@
       },
       "translations": {
         "label": "Kielet",
-        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään englanti tai suomi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai suomeksi.",
+        "hint": "Lisää kielet, joilla haluat vanhempien voivan lukea tämän. Vähintään yksi vaaditaan. Vanhemmat näkevät tämän tuotteen omalla kielellään, jos saatavilla — muuten englanniksi tai sillä kielellä, joka on täytetty.",
         "addLocale": "+ Lisää kieli",
         "removeLocale": "Poista {locale}",
         "inlineCreateHint": "Tallennetaan kielellä {locale}. Muiden kielten käännökset voi lisätä myöhemmin aiheiden ja tunnisteiden hallinnasta."
@@ -266,6 +269,63 @@
         "back": "Takaisin: {plural}",
         "kicker": "Uusi {label}",
         "title": "Uusi {label}"
+      },
+      "detailsPage": {
+        "notFound": "Tuotetta ei löytynyt.",
+        "online": "Verkossa",
+        "onlineWithin": "Verkossa ({name})",
+        "locationMissing": "—",
+        "uncapped": "Ei rajaa (maksuton tapahtuma)",
+        "visible": "Näkyy vanhemmille",
+        "hidden": "Piilotettu vanhemmilta",
+        "waitlistOn": "jonotuslista käytössä",
+        "minutes": "{count} min",
+        "perMonth": "{amount} / kk",
+        "scheduleRow": "{day} · klo {time} · {duration} min",
+        "billingMode": {
+          "paid": "Maksullinen",
+          "free": "Maksuton",
+          "external_contract": "Ulkoinen sopimus (kunta)"
+        },
+        "fields": {
+          "topic": "Aihe",
+          "tags": "Tunnisteet",
+          "padletUrl": "Padlet",
+          "locales": "Kielet",
+          "ageRange": "Ikäryhmä",
+          "spokenLanguage": "Puhuttu kieli",
+          "location": "Sijainti",
+          "startDate": "Alkamispäivä",
+          "endDate": "Päättymispäivä",
+          "signupThreshold": "Ilmoittautumiskynnys",
+          "schedule": "Aikataulu",
+          "holidayCalendars": "Lomakalenterit",
+          "billingMode": "Laskutus",
+          "seats": "Paikat",
+          "waitlist": "Jonotuslista",
+          "prices": "Hinnat",
+          "registrationOpensAt": "Ilmoittautuminen aukeaa",
+          "visibility": "Näkyvyys"
+        },
+        "placeholders": {
+          "groups": {
+            "title": "Ryhmät ja Gedut",
+            "body": "Kun pelaajat ilmoittautuvat, voit luoda täällä ryhmiä, lisätä Geduja ja siirtää ilman paikkaa olevat pelaajat oikeaan ryhmään."
+          },
+          "waitlist": {
+            "title": "Jonotuslista",
+            "body": "Pelaajat, jotka eivät saaneet paikkaa, näkyvät tässä, jotta voit nostaa heidät listalta paikkojen vapautuessa."
+          },
+          "metrics": {
+            "title": "Liiketoimintamittarit",
+            "body": "Tämän tuotteen ilmoittautumismäärät, liikevaihto ja palautukset näkyvät tässä, kun maksudata on valmis."
+          }
+        }
+      },
+      "editPage": {
+        "back": "Takaisin tuotteeseen",
+        "kicker": "Muokkaa: {label}",
+        "title": "Muokkaa: {name}"
       },
       "sections": {
         "identity": "Perustiedot",
@@ -286,8 +346,6 @@
           "camp": "Useita päiviä viikossa, jokaisella oma alkamisaika ja kesto.",
           "event": "Yksi päivä ja alkamisaika."
         },
-        "groups": "Ryhmät",
-        "groupsDescription": "Ylläpitäjät käyttävät ryhmiä tuotteen sisäiseen jakoon. Vanhemmat eivät näe ryhmiä — vain tuotteen.",
         "billing": "Paikat ja hinnoittelu",
         "billingDescription": {
           "consumerClub": "Vanhemmat maksavat jokaisesta lapsen osallistumiskerrasta. Laskutus tapahtuu automaattisesti viikoittain.",
@@ -308,7 +366,6 @@
         "padletUrl": "Padlet-osoite",
         "minAge": "Alaikäraja",
         "maxAge": "Yläikäraja",
-        "spokenLanguage": "Kieli",
         "deliveredIn": "Toteutuksen kieli",
         "online": "Verkossa",
         "inPerson": "Paikan päällä",
@@ -340,8 +397,6 @@
       },
       "placeholders": {
         "selectTopic": "Valitse aihe…",
-        "selectSite": "Valitse toimipiste",
-        "selectMunicipality": "Valitse kunta",
         "newTopicName": "Uuden aiheen nimi (esim. Among Us, Digihyvinvointi)",
         "newTagName": "Tunnisteen nimi",
         "padletUrl": "https://padlet.com/...",
@@ -380,7 +435,6 @@
         "cancel": "Peruuta",
         "pick": "Valitse",
         "noVenueHint": "Ei fyysistä toimipaikkaa. Vanhemmat, jotka selaavat alueella {name} — tai missä tahansa sen sisällä — näkevät tämän tuotteen.",
-        "noSitesYet": "ei vielä toimipisteitä",
         "memberNotesLabel": "Jäsenille näkyvät tiedot",
         "memberNotesFieldLabel": "Vanhemmille ja pelaajille näkyvät tiedot",
         "memberNotesPlaceholder": "Osoitetiedot, parkkipaikka, esteettömyys — kaikki mitä vanhempien on hyvä tietää.",
@@ -397,7 +451,6 @@
       "pricing": {
         "currencyPickerLabel": "Valuutta",
         "fxSuggested": "Ehdotus tämän päivän EUR-kurssilla ({rate}). Muokkaa halutessasi.",
-        "fxUnavailable": "Valuuttakurssia ei saatu haettua — syötä manuaalisesti.",
         "perSessionLabel": "Hinta per kerta",
         "perMonthLabel": "Hinta per kuukausi",
         "totalLabel": "Kokonaishinta",
@@ -426,26 +479,20 @@
         "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
       },
       "hints": {
-        "noTopics": "Ei vielä aiheita. Lisää uusi valitsimen vieressä olevalla + -painikkeella.",
         "topicHint": "Pääaihe — yksi per tuote. Mistä kerrat oikeasti kertovat.",
         "tagsHint": "Valinnainen. Auttaa vanhempia suodattamaan tuotteita selatessaan.",
         "padletHint": "Valinnainen. Jaetaan perheille ilmoittautumisen jälkeen.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
-        "noLocations": "Ei sopivia sijainteja. Luo uusi + -painikkeella.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
         "voiceRoomAuto": "Tälle tuotteelle luodaan automaattisesti puhehuone.",
         "municipalityHint": "Kuntakerhot ovat aina sidottu tiettyyn kuntaan — siihen joka sen maksaa. Sen kunnan (tai sen sisällä olevan pienemmän alueen) vanhemmat näkevät sen selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
-        "eventWeekdayDerived": "Tapahtuman viikonpäivä päätellään automaattisesti päivämäärästä.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
         "endDateOpt": "Jätä tyhjäksi jatkuvalle kerholle ilman loppupäivää.",
         "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät \"X / Y tarvitaan\" -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
-        "holidaySkips": "Kalenterin päivinä kertoja ei pidetä.",
         "holidayHint": "Yksikään kerta ei pidetä valittujen kalenterien päivinä. Muokkaa kalenteria kerran ja kaikki sitä käyttävät tuotteet päivittyvät automaattisesti.",
-        "groupsHint": "Lisää ryhmät nyt jos tiedät jo, miten haluat tämän järjestää — tai jätä tyhjäksi ja lisää myöhemmin tuotesivulta, kun näet ilmoittautuneiden määrän.",
-        "groupsNotWired": "Ryhmien käyttöliittymä on paikoillaan, mutta sitä ei ole vielä yhdistetty taustajärjestelmään — ryhmävalintojasi ei tallenneta lähetyksessä. Tulossa pian.",
         "billingHint": "Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa. Maksullisilla on aina.",
         "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
         "paidDetail": "Kertamaksu ilmoittautumisen yhteydessä.",
@@ -458,7 +505,6 @@
       },
       "errors": {
         "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",
-        "translationsMustHaveEnOrFi": "Lisää käännös englanniksi tai suomeksi — jokaisella tuotteella on oltava vähintään toinen niistä.",
         "translationIncomplete": "Täytä sekä nimi että kuvaus välilehdellä {locale} tai poista välilehti.",
         "topicRequired": "Aihe vaaditaan",
         "spokenLanguageRequired": "Kieli vaaditaan",
@@ -542,21 +588,69 @@
         "current": "Nykyinen",
         "alreadyAssigned": "Jo nimetty"
       },
-      "groups": {
-        "groupNumber": "Ryhmä {n}",
-        "groupNamePlaceholder": "Ryhmän nimi",
-        "removeGroup": "Poista ryhmä",
-        "assignedGedus": "Nimetyt Gedut",
-        "noGedusYet": "Ei vielä yhtään. Ryhmä ilman Geduja on ihan ok — voit nimetä myöhemmin.",
-        "assignGedu": "Nimeä Gedu",
-        "removeGedu": "Poista Gedu",
-        "noGroupsYet": "Ei vielä ryhmiä.",
-        "noGroupsDetail": "Vanhemmat voivat silti ilmoittautua. Heidän pelaajansa päätyy \"nimeämättä\"-laatikkoon, kunnes asetat hänet ryhmään.",
-        "defaultName": "Ryhmä {letter}",
+      "groupsPanel": {
+        "title": "Ryhmät",
+        "subtitle": "Vedä jokainen pelaaja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
         "addGroup": "Lisää ryhmä",
-        "addGeduTo": "Lisää Gedu ryhmään {name}",
-        "addGeduGeneric": "Lisää Gedu ryhmään",
-        "addGeduDescription": "Tähän ryhmään nimetyt Gedut ohjaavat sen kerrat. Verkossa toteutettavissa tuotteissa he voivat tarvittaessa hypätä myös muiden ryhmien puhehuoneisiin saman tuotteen sisällä."
+        "loading": "Ladataan…",
+        "genderBoy": "poika",
+        "genderGirl": "tyttö",
+        "genderNonBinary": "muunsukupuolinen",
+        "chip": {
+          "age": "{age}v"
+        },
+        "unassigned": {
+          "title": "Nimeämättömät",
+          "subtitle": "Pelaajat, jotka ovat maksaneet mutta eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
+          "empty": "Kaikilla on ryhmä."
+        },
+        "empty": {
+          "title": "Ei vielä ryhmiä",
+          "description": "Lisää ryhmä, kun olet valmis sijoittelemaan pelaajia.",
+          "addFirst": "Lisää ensimmäinen ryhmä"
+        },
+        "group": {
+          "defaultName": "Ryhmä {letter}",
+          "nameLabel": "Ryhmän nimi",
+          "namePlaceholder": "Anna ryhmälle nimi",
+          "nameRequired": "Ryhmä tarvitsee nimen.",
+          "nameRequiredHint": "Joillakin ryhmillä ei ole vielä nimeä.",
+          "deleteAria": "Poista {name}",
+          "gamerCount": "{count, plural, =0 {Ei pelaajia} =1 {1 pelaaja} other {# pelaajaa}}",
+          "new": "Uusi",
+          "markedForDeletion": "Poistetaan",
+          "assignedGedus": "Gedut",
+          "noGedus": "Ei vielä Geduja.",
+          "addGedu": "Lisää Gedu",
+          "gamersLabel": "Pelaajat",
+          "empty": "Ei pelaajia vielä — vedä joku tähän.",
+          "willBeDeleted": "Nämä pelaajat siirtyvät Nimeämättömiin, kun tallennat.",
+          "geduStatusFootnote": "Joitakin muutoksia ei ole vielä tallennettu.",
+          "deleteConfirmTitle": "Poistetaanko {name}?",
+          "deleteConfirmEmpty": "Ryhmässä ei ole pelaajia, joten poistaminen vain poistaa Gedu-nimitykset.",
+          "deleteConfirmWithGamers": "{count, plural, =1 {Tässä ryhmässä on 1 pelaaja} other {Tässä ryhmässä on # pelaajaa}}. He siirtyvät Nimeämättömiin, kun tallennat."
+        },
+        "gedu": {
+          "pendingAdd": "Lisätään",
+          "pendingRemove": "Poistetaan",
+          "removeAria": "Poista {name}"
+        },
+        "picker": {
+          "addTitle": "Lisää Gedu ryhmään {name}",
+          "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina."
+        },
+        "commitBar": {
+          "summary": "{count, plural, =1 {1 tallentamaton muutos} other {# tallentamatonta muutosta}}",
+          "discard": "Hylkää",
+          "review": "Tarkista muutokset"
+        },
+        "summary": {
+          "title": "Tarkista muutokset",
+          "description": "Kaikki muutokset tallennetaan yhdessä. Jos yksi ei tallennu, mikään ei tallennu.",
+          "apply": "Tallenna muutokset",
+          "applying": "Tallennetaan…",
+          "genericError": "Jokin meni pieleen. Yritä uudelleen."
+        }
       }
     },
     "users": {
@@ -728,7 +822,7 @@
       "deleteGroupConfirmDescription": "Tämä poistaa ryhmän ja sen Gedu-määrityksen. Muutos astuu voimaan vasta, kun toteutat sen.",
       "reassignGeduFor": "Vaihda Gedu ryhmälle {label}",
       "selectDifferentGedu": "Valitse toinen Gedu tälle ryhmälle.",
-      "searchByNameOrEmail": "Hae nimellä tai sähköpostilla\u2026",
+      "searchByNameOrEmail": "Hae nimellä tai sähköpostilla…",
       "noGedusMatchSearch": "Hakuasi vastaavia Geduja ei löytynyt."
     },
     "forms": {
@@ -863,15 +957,6 @@
     "error": "Jokin meni pieleen kassalle siirryttäessä. <link>Palaa takaisin</link> ja yritä uudelleen."
   },
   "clubs": {
-    "listing": {
-      "heading": "Kerhomme",
-      "subheading": "Tutustu Minecraft-kerhoihimme — jokaista johtaa ammattimainen pelikasvattaja.",
-      "noClubs": "Kerhoja ei saatavilla",
-      "checkBackSoon": "Palaa pian katsomaan uusia kerhoja!",
-      "needHelp": "Tarvitsetko apua valinnassa?",
-      "needHelpDescription": "Etkö ole varma, mikä kerho sopii perheellesi? Ota yhteyttä niin annamme henkilökohtaisia suosituksia lastesi iän ja kiinnostusten perusteella.",
-      "learnMoreAboutUs": "Lue lisää meistä"
-    },
     "tokenCost": "{cost} Sorggaa",
     "detail": {
       "backToClubs": "Takaisin kerhoihin",
@@ -1091,6 +1176,8 @@
     "nav": {
       "home": "Etusivu",
       "clubs": "Kerhot",
+      "camps": "Leirit",
+      "events": "Tapahtumat",
       "sorg": "Sorgga",
       "yty": "Yty",
       "about": "Tietoa"
@@ -1098,10 +1185,216 @@
     "toggleMenu": "Vaihda valikko",
     "tokenBalance": "{count} Sorggaa"
   },
+  "productBrowse": {
+    "headings": {
+      "consumer_club": "Kerhomme",
+      "camp": "Leirimme",
+      "event": "Tapahtumamme"
+    },
+    "subheadings": {
+      "consumer_club": "Viikoittaiset kerhot, joissa pelaajasi pelaa lempipelejään uusien kavereiden ja Gedun kanssa.",
+      "camp": "Koululomat täynnä peliseikkailuja – uusia kavereita, oikeita taitoja ja Gedu mukana matkassa.",
+      "event": "Työpajat, turnaukset ja juhlat – pudottaudu mukaan, kun jokin kiinnostaa."
+    },
+    "purchasedHeadings": {
+      "consumer_club": "Pelaajiesi kerhot",
+      "camp": "Pelaajiesi leirit",
+      "event": "Pelaajiesi tapahtumat"
+    },
+    "filters": {
+      "topic": "Aihe",
+      "tag": "Tyyli",
+      "format": "Muoto",
+      "formatOnline": "Verkossa",
+      "formatInPerson": "Paikan päällä",
+      "language": "Kieli",
+      "clearAll": "Tyhjennä",
+      "filterBy": "Suodata"
+    },
+    "card": {
+      "ages": "Ikä {min}–{max}",
+      "perSession": "{price} / kerta",
+      "perMonth": "{price} / kk",
+      "orChoice": "tai",
+      "upfrontTotal": "{price}",
+      "free": "Maksuton",
+      "externalContract": "Kuntasi rahoittama",
+      "notAvailableInCurrency": "Ei valuutassa {currency}",
+      "seatsCapacity": "{count, plural, one {# paikka} other {# paikkaa}}",
+      "waitlistAvailable": "Jonotuslista käytössä",
+      "endedBadge": "Päättynyt",
+      "endedNote": "Tämä on päättynyt – seuraava on tulossa pian.",
+      "viewDetails": "Katso",
+      "manage": "Hallitse",
+      "pillSpotsLeft": "{count, plural, one {Vain # paikka jäljellä} other {Vain # paikkaa jäljellä}}",
+      "pillNeedsMore": "{count, plural, one {# ilmoittautuminen puuttuu} other {# ilmoittautumista puuttuu}}",
+      "pillFull": "Täynnä",
+      "pillFullWaitlist": "Täynnä – jonotuslista auki",
+      "pillOpensOn": "Aukeaa {date}",
+      "pillStarted": "Alkanut",
+      "fullDisabled": "Täynnä",
+      "online": "Verkossa",
+      "verbConsumerClub": "Ilmoittautunut",
+      "verbMunicipalityClub": "Rekisteröity",
+      "verbCamp": "Mukana",
+      "verbEvent": "Mukana",
+      "statusConfirmed": "Vahvistettu",
+      "statusWaitlist": "Jonossa",
+      "purchasedDetailWaitlist": "Ilmoitamme, kun paikka vapautuu",
+      "purchasedDetailWaitlistWithPosition": "{position} edelläsi jonossa",
+      "purchasedDetailUnassigned": "Järjestämme ryhmän kohta",
+      "purchasedDetailNoSchedule": "Aikataulu vahvistuu pian",
+      "balanceSessionsLeft": "{count, plural, one {# kerta jäljellä} other {# kertaa jäljellä}}",
+      "balanceNoSessionsLeft": "Kerrat käytetty – osta lisää",
+      "balanceSubscription": "Tilaus",
+      "nextSession": "Seuraava: {when}",
+      "gamersLabel": "Pelaajille: {names}"
+    },
+    "empty": {
+      "noProducts": "Täällä ei ole vielä mitään – uusia on tulossa.",
+      "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
+    }
+  },
+  "productDetail": {
+    "back": {
+      "consumer_club": "Kaikki kerhot",
+      "municipality_club": "Kaikki kuntakerhot",
+      "camp": "Kaikki leirit",
+      "event": "Kaikki tapahtumat"
+    },
+    "typeLabel": {
+      "consumer_club": "Kerho",
+      "municipality_club": "Kuntakerho",
+      "camp": "Leiri",
+      "event": "Tapahtuma"
+    },
+    "sections": {
+      "whenWhere": "Milloin ja missä",
+      "calendar": "Aikataulu",
+      "tags": "Mitä odottaa",
+      "topicsLabel": "Aihe",
+      "tagsLabel": "Tunnelma"
+    },
+    "info": {
+      "schedule": "Aikataulu",
+      "where": "Missä",
+      "format": "Muoto",
+      "ages": "Ikä {min}–{max}",
+      "ageRange": "Ikähaarukka",
+      "language": "Kieli",
+      "online": "Verkossa",
+      "atVenue": "Paikassa {venue}",
+      "tbd": "Vahvistetaan myöhemmin"
+    },
+    "calendar": {
+      "weekdayMon": "Ma",
+      "weekdayTue": "Ti",
+      "weekdayWed": "Ke",
+      "weekdayThu": "To",
+      "weekdayFri": "Pe",
+      "weekdaySat": "La",
+      "weekdaySun": "Su",
+      "legendSession": "Tapaaminen",
+      "legendSkipped": "Ei tapaamista",
+      "skipLine": "{date} · {reason}"
+    },
+    "signupPanel": {
+      "bannerOpen": "{verb} nyt",
+      "bannerAlmostFull": "Paikat täyttyvät – vain muutama jäljellä",
+      "bannerCountdown": "Ilmoittautuminen avautuu {date}",
+      "bannerCountdownDone": "Ilmoittautuminen on auki",
+      "bannerThreshold": "Alkaa, kun paikat täyttyvät",
+      "bannerWaitlist": "Tällä hetkellä täynnä",
+      "bannerFullClosed": "Täynnä",
+      "bannerRunningLate": "Tämä on jo käynnissä",
+      "bannerEnded": "Tämä on päättynyt",
+      "verb": {
+        "consumer_club": "Ilmoittaudu",
+        "municipality_club": "Rekisteröidy",
+        "camp": "Ilmoittaudu",
+        "event": "Liity"
+      },
+      "ctaPreOpenIdle": "{verb} – ei vielä avoinna",
+      "ctaPreOpenReady": "Valmis – odotetaan avaamista",
+      "ctaPreOpenChooseChild": "Valitse lapsi ensin",
+      "ctaActive": "{verb} nyt",
+      "ctaActiveWithPrice": "{verb} nyt {price}",
+      "ctaInlineAddSub": "Lisää tilaukseesi · {price} (veloitetaan tänään)",
+      "ctaSubmitting": "Hetki…",
+      "ctaWaitlist": "Liity jonotuslistalle",
+      "ctaThreshold": "Varaa paikka",
+      "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",
+      "ctaCreateAccount": "Luo tili",
+      "ctaAddGamer": "Lisää lapsi ensin",
+      "ctaViewMyProducts": "Näytä tuotteeni",
+      "alreadySignedUpWaitlistBanner": "Olet jonotuslistalla",
+      "alreadySignedUpWaitlistNote": "Ilmoitamme sähköpostitse, kun paikka vapautuu.",
+      "alreadySignedUpActiveBanner": "Olet ilmoittautunut",
+      "alreadySignedUpActiveNote": "Näet tämän ja muut ilmoittautumisesi tuotteistasi.",
+      "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
+      "preOpenHelper": "Valitse lapsi ja hyväksy säännöt, niin ilmoittautuminen onnistuu yhdellä napautuksella heti, kun se avautuu.",
+      "thresholdHelper": "Aloitamme heti, kun {count} lasta on ilmoittautunut. Varaa paikka nyt – ilmoitamme heti, kun ryhmä on kasassa.",
+      "thresholdProgress": "{current} / {threshold}",
+      "thresholdRemaining": "{count, plural, =0 {Raja saavutettu} one {# vielä alkamiseen} other {# vielä alkamiseen}}",
+      "seatsRemaining": "{count, plural, one {# / {total} paikka jäljellä} other {# / {total} paikkaa jäljellä}}",
+      "waitlistHowTitle": "Näin jonotuslista toimii",
+      "waitlistHowItem1": "Pidät paikkasi jonossa koko kauden ajan.",
+      "waitlistHowItem2": "Jos joku perhe peruu, seuraavalle annetaan lyhyt aika ottaa paikka vastaan.",
+      "waitlistHowItem3": "Voit poistua jonotuslistalta milloin tahansa tililtäsi.",
+      "endedNote": "Tämä on jo päättynyt. Pidä silmällä seuraavaa kierrosta.",
+      "runningLateNote": "Olemme jo aloittaneet – ilmoittautuminen on suljettu. Seuraava kierros avautuu pian.",
+      "rules": {
+        "consumer_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
+        "municipality_club": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä, ja että toistuvat ilmoittamattomat poissaolot voivat vapauttaa lapseni paikan seuraavalle jonossa olevalle perheelle.",
+        "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
+        "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä."
+      },
+      "whoAreYouSigningUp": "Kenet ilmoitat?",
+      "selected": "Valittu",
+      "agePill": "Ikä {age}",
+      "noGamersTitle": "Lisää lapsi tilillesi",
+      "noGamersDescription": "Meidän on tiedettävä, kenet ilmoitat. Lisää lapsi ensin – se vie minuutin."
+    },
+    "pricing": {
+      "title": "Hinta",
+      "subscribeHeading": "Tilaus (säästät enemmän)",
+      "bundleHeading": "Tai osta kerralla",
+      "perSession": "{price} / kerta",
+      "subscribeMonthly": "Kuukausi",
+      "subscribeQuarterly": "Kolme kuukautta",
+      "subscribeYearly": "Vuosi",
+      "bundleSingle": "Yksittäinen kerta",
+      "bundleN": "{count} kertaa",
+      "savings": "Säästä {percent} %",
+      "free": "Maksuton",
+      "freeHint": "Maksua ei tarvita.",
+      "external": "Sinulle maksuton · kuntasi maksaa",
+      "externalHint": "Maksua ei tarvita – kuntasi kattaa kustannukset.",
+      "upfrontHint": "Kertamaksu.",
+      "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
+      "cadenceMonth": "/ kk",
+      "cadenceQuarter": "/ 3 kk",
+      "cadenceYear": "/ vuosi"
+    },
+    "countdown": {
+      "days": "pv",
+      "hours": "h",
+      "minutes": "min",
+      "seconds": "s"
+    },
+    "loading": "Ladataan…",
+    "notFound": {
+      "title": "Sivua ei löytynyt",
+      "description": "Se on ehkä poistettu tai linkki on virheellinen. Selaa muita vaihtoehtoja alta.",
+      "cta": "Takaisin selaamaan"
+    },
+    "preview": {
+      "banner": "Mallinäkymä · toiminnot eivät ole vielä kytkettyinä"
+    }
+  },
   "sidebar": {
     "dashboard": "Hallintapaneeli",
     "users": "Käyttäjät",
-    "products": "Tuotteet (vanha)",
     "consumerClubs": "Kuluttajakerhot",
     "municipalityClubs": "Kuntakerhot",
     "camps": "Leirit",
@@ -1572,7 +1865,7 @@
     "senderAuth": "Sogverse-tiimi",
     "senderFeedback": "Sogverse-palaute",
     "senderEnrollment": "Sogverse-ilmoittautuminen",
-    "footer": "\u00a9 {year} Sogverse. Kaikki oikeudet pidätetään.",
+    "footer": "© {year} Sogverse. Kaikki oikeudet pidätetään.",
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
@@ -1605,7 +1898,7 @@
       "body": "Hei {parentName}, {gamerName} on nyt ilmoittautunut kerhoon {productName} Gedun {geduName} kanssa."
     },
     "enrollmentGedu": {
-      "subject": "{gamerName} on liittynyt ryhmääsi \u2013 {productName}",
+      "subject": "{gamerName} on liittynyt ryhmääsi – {productName}",
       "heading": "Uusi pelaaja ryhmässäsi",
       "body": "Hei {geduName}, {gamerName} on liittynyt ryhmääsi kerhossa {productName}."
     },
@@ -1615,48 +1908,48 @@
       "body": "Hei {parentName}, {gamerName} on poistettu kerhosta {productName} (Gedu: {geduName})."
     },
     "unenrollmentGedu": {
-      "subject": "{gamerName} on poistunut ryhmästäsi \u2013 {productName}",
+      "subject": "{gamerName} on poistunut ryhmästäsi – {productName}",
       "heading": "Pelaaja poistunut ryhmästäsi",
       "body": "Hei {geduName}, {gamerName} on poistunut ryhmästäsi kerhossa {productName}."
     },
     "groupAdded": {
-      "subject": "Sinut on määrätty uuteen ryhmään \u2013 {productName}",
+      "subject": "Sinut on määrätty uuteen ryhmään – {productName}",
       "heading": "Sinut on määrätty uuteen ryhmään",
       "body": "Hei {geduName}, sinut on määrätty uuteen ryhmään kerhossa {productName}.",
       "dashboardNote": "Näet tämän ryhmän hallintapaneelissasi pian."
     },
     "groupDeleted": {
-      "subject": "Ryhmäsi on poistettu \u2013 {productName}",
+      "subject": "Ryhmäsi on poistettu – {productName}",
       "heading": "Ryhmäsi on poistettu",
       "body": "Hei {geduName}, ryhmäsi kerhossa {productName} on poistettu ylläpitäjän toimesta."
     },
     "groupReassignedOldGedu": {
-      "subject": "Ryhmäsi on siirretty toiselle \u2013 {productName}",
+      "subject": "Ryhmäsi on siirretty toiselle – {productName}",
       "heading": "Ryhmäsi on siirretty toiselle",
       "body": "Hei {oldGeduName}, ryhmäsi kerhossa {productName} on siirretty Gedulle {newGeduName}."
     },
     "groupReassignedNewGedu": {
-      "subject": "Sinut on määrätty ryhmään \u2013 {productName}",
+      "subject": "Sinut on määrätty ryhmään – {productName}",
       "heading": "Sinut on määrätty ryhmään",
       "body": "Hei {newGeduName}, sinut on määrätty ryhmään kerhossa {productName} (aiemmin Gedun {oldGeduName} vetämä)."
     },
     "groupReassignedParent": {
-      "subject": "Gedun vaihto: {gamerName} \u2013 {productName}",
+      "subject": "Gedun vaihto: {gamerName} – {productName}",
       "heading": "Pelaajasi Gedu on vaihtunut",
       "body": "Hei {parentName}, pelaajan {gamerName} ryhmän Gedu kerhossa {productName} on vaihtunut Gedusta {oldGeduName} Geduun {newGeduName}."
     },
     "gamerMovedParent": {
-      "subject": "{gamerName} on siirretty uuteen ryhmään \u2013 {productName}",
+      "subject": "{gamerName} on siirretty uuteen ryhmään – {productName}",
       "heading": "Lapsesi on siirretty uuteen ryhmään",
       "body": "Hei {parentName}, {gamerName} on siirretty Gedun {oldGeduName} ryhmästä Gedun {newGeduName} ryhmään kerhossa {productName}."
     },
     "gamerMovedOldGedu": {
-      "subject": "{gamerName} on siirretty ryhmästäsi \u2013 {productName}",
+      "subject": "{gamerName} on siirretty ryhmästäsi – {productName}",
       "heading": "Pelaaja on siirretty ryhmästäsi",
       "body": "Hei {geduName}, {gamerName} on siirretty ryhmästäsi Gedun {newGeduName} ryhmään kerhossa {productName}."
     },
     "gamerMovedNewGedu": {
-      "subject": "{gamerName} on siirretty ryhmääsi \u2013 {productName}",
+      "subject": "{gamerName} on siirretty ryhmääsi – {productName}",
       "heading": "Pelaaja on siirretty ryhmääsi",
       "body": "Hei {geduName}, {gamerName} on siirretty ryhmääsi Gedun {oldGeduName} ryhmästä kerhossa {productName}."
     },
@@ -1673,7 +1966,7 @@
   },
   "mouseflow": {
     "title": "Auta meitä parantamaan Sogversea",
-    "body": "Sogverse on Beta-vaiheessa. Jotta opimme, miten sivustoa todella käytetään \u2014 ja voimme tehdä siitä paremman kaikille \u2014 haluaisimme tallentaa vierailusi (hiiren liikkeet, klikkaukset ja vieraillut sivut). Vain Sogversen ylläpitäjät näkevät nämä tiedot, ja poistamme kaiken, kun Beta päättyy.",
+    "body": "Sogverse on Beta-vaiheessa. Jotta opimme, miten sivustoa todella käytetään — ja voimme tehdä siitä paremman kaikille — haluaisimme tallentaa vierailusi (hiiren liikkeet, klikkaukset ja vieraillut sivut). Vain Sogversen ylläpitäjät näkevät nämä tiedot, ja poistamme kaiken, kun Beta päättyy.",
     "accept": "Kyllä, autan parantamaan Sogversea",
     "decline": "Ei kiitos"
   }

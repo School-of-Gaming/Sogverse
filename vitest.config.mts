@@ -22,6 +22,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Stub Next.js's `server-only` marker so route handlers that import it
+      // (transitively or directly) can be imported into Vitest tests.
+      "server-only": path.resolve(__dirname, "./tests/mocks/server-only.ts"),
     },
   },
 });

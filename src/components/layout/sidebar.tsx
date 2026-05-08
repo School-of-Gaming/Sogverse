@@ -7,11 +7,9 @@ import {
   Users,
   UsersRound,
   AudioLines,
-  Package,
   Palette,
   Settings,
   Gamepad2,
-  Coins,
   FlaskConical,
   MessageCircle,
   MessageSquare,
@@ -31,9 +29,9 @@ import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
 type SidebarKey =
-  | "dashboard" | "users" | "products" | "groups" | "locations"
+  | "dashboard" | "users" | "groups" | "locations"
   | "uiComponents" | "whatsapp" | "testing" | "feedback" | "settings"
-  | "sorg" | "myGamers" | "home" | "myGroups" | "voice"
+  | "myGamers" | "home" | "myGroups" | "voice"
   | "consumerClubs" | "municipalityClubs" | "camps" | "events";
 
 interface NavItemDef {
@@ -46,7 +44,6 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
   admin: [
     { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
-    { href: ROUTES.admin.products, labelKey: "products", icon: <Package className="h-5 w-5" /> },
     { href: ROUTES.admin.consumerClubs, labelKey: "consumerClubs", icon: <Joystick className="h-5 w-5" /> },
     { href: ROUTES.admin.municipalityClubs, labelKey: "municipalityClubs", icon: <School className="h-5 w-5" /> },
     { href: ROUTES.admin.camps, labelKey: "camps", icon: <Tent className="h-5 w-5" /> },
@@ -62,7 +59,6 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
   ],
   customer: [
     { href: ROUTES.customer.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
-    { href: ROUTES.customer.sorg, labelKey: "sorg", icon: <Coins className="h-5 w-5" /> },
     { href: ROUTES.customer.gamers, labelKey: "myGamers", icon: <Gamepad2 className="h-5 w-5" /> },
     { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
@@ -98,7 +94,11 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        `relative flex h-full flex-col border-r border-sidebar-border bg-sidebar-background ${collapseTransition}`,
+        // Sticky to the bottom of the fixed Header (4rem = h-16). Height is
+        // pinned to the visible viewport below the header so the user-info
+        // section stays anchored to the bottom while the dashboard <main>
+        // scrolls with the document.
+        `sticky top-16 flex h-[calc(100vh-4rem)] flex-col self-start border-r border-sidebar-border bg-sidebar-background ${collapseTransition}`,
         collapsed ? "w-18" : "w-18 md:w-64"
       )}
     >

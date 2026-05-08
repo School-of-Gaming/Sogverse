@@ -2,60 +2,50 @@
 
 ## Current Design
 
-The app uses a single-page layout where all scrolling is managed by inner containers — the document itself (`<html>`) never scrolls.
+The **document is the single scroll container** for every route group. There are no inner `overflow-auto` panes; the page scrolls naturally and `window.scrollY` reflects the user's actual scroll position.
 
 ```
-<html>                overflow-hidden (no document-level scroll)
+<html>                                  default (overflow: visible)
   <body>
-    <Header />        fixed top-0 z-50 (overlaps <main>, enables backdrop-blur)
-    <main>            h-screen overflow-auto pt-16
-      {children}      ← public pages scroll here
-      OR
-      <Dashboard>     flex h-full overflow-hidden
-        <Sidebar>     h-full flex-col (pinned, never scrolls)
-        <main>        flex-1 overflow-auto
-          {page}      ← dashboard pages scroll here
+    <Header />                          fixed top-0 z-50, h-16, out of flow
+    {route-group layout}                owns pt-16 to clear the fixed header
 ```
 
-### Scroll containers
+### Per-route-group layouts
 
-| Page type | Scroll container | Element |
-|-----------|-----------------|---------|
-| Public pages | Root `<main>` | `layout.tsx` → `<main className="h-screen overflow-auto pt-16">` |
-| Dashboard pages | Dashboard `<main>` | `dashboard-layout.tsx` → `<main className="flex-1 overflow-auto">` |
+| Group | Wrapper |
+|---|---|
+| `(public)` | `<div className="flex min-h-screen flex-col pt-16"><main flex-1>{children}</main><Footer /></div>` |
+| `(auth)` | `<div className="flex min-h-screen flex-col pt-16"><main flex flex-1 items-center justify-center>{children}</main><Footer /></div>` |
+| `(dashboard)` | `<DashboardLayout>` — `<div className="flex pt-16"><Sidebar /><main flex-1>{children}</main></div>` |
+| `(voice)` | `{children}` — full-bleed, no chrome |
 
-### Header positioning
+### Header
 
-The header uses `position: fixed` (not `sticky`) so that it overlaps the root `<main>`. This allows page content to scroll behind the header, making the `backdrop-blur` glass effect visible. The `pt-16` on `<main>` prevents content from being hidden behind the 64px header.
-
-`<main>` uses `h-screen` (100vh) to fill the viewport, with `pt-16` padding to keep content below the header. For dashboard pages, the dashboard wrapper uses `h-full` which resolves to `<main>`'s content box height (total height minus `pt-16` padding), so the dashboard fills the space below the header exactly.
-
-### Why `overflow-hidden` on `<html>`
-
-Without it, a second browser-level scrollbar appears when dashboard content exceeds the viewport height. The root cause is subtle — something (likely browser rounding of `100vh`, default margins, or subpixel rendering) causes the `h-screen` div to be fractionally taller than the viewport, triggering document-level overflow.
-
-We investigated this thoroughly (March 2026) using Playwright to measure every layer:
-- The second scrollbar is **outside** `<html>` — it's the browser viewport scrollbar
-- `<html>` reports `scrollHeight: 1440` (double viewport) while `<body>` reports `scrollHeight: 720` (correct)
-- Both `<html>` and `<body>` have `offsetHeight: 720`, no margins, no padding, no borders
-- The overflow is substantial (720px extra — not a rounding error)
-- **Root cause:** When both `<html>` and `<body>` have `overflow: visible` (the default), browsers propagate nested scrollable content to the viewport. The dashboard `<main>` has `overflow: auto` with ~1640px of scroll content — the browser surfaces this as viewport-level overflow even though all intermediate containers properly constrain it
-- This is standard browser behavior per the CSS overflow spec: overflow on the root element propagates to the viewport
-- `overflow-hidden` on `<html>` is the correct fix — it stops the browser from propagating inner scroll content to the viewport and lets each container manage its own scrolling
-
-### If revisiting this
-
-The `overflow-hidden` IS the correct solution for this browser behavior, not a workaround. If you still want to explore alternatives:
-1. Setting `overflow: auto` on `<html>` instead of `hidden` would also work (it stops propagation) but would show a viewport scrollbar if anything ever overflows `<html>` itself
-2. The Playwright debug script at `tests/debug-layout.mjs` can be used to measure all layers (delete it when no longer needed)
-3. CSS overflow spec reference: when both `<html>` and `<body>` have `overflow: visible`, the UA must apply the body's overflow to the viewport
-
-### Why `<main>` must NOT be `flex flex-col`
-
-An earlier version added `flex flex-col` to `<main>` so the dashboard layout could use `flex-1`. This caused the home page hero section (which has `overflow: hidden` for decorative blur clipping) to collapse to zero height. Per CSS spec, a flex item that is a scroll container gets `min-height: 0` instead of `min-content`, so when the flex algorithm needed to shrink items, the hero absorbed all the shrinkage and became invisible.
-
-The fix: `<main>` is a plain `overflow-auto` container (no flex). The dashboard layout uses `h-full` (resolves to `<main>`'s content box height) instead of `flex-1` to fill the available space.
+`<Header>` is `position: fixed top-0 z-50 h-16` and out of normal flow. Each route-group layout adds `pt-16` to its wrapper so content starts below the header. Because the document scrolls and the header is fixed, the `backdrop-blur` glass effect just works — content scrolls behind it with no inner-scroll-container gymnastics.
 
 ### Dashboard sidebar
 
-The sidebar uses `h-full` inside the dashboard wrapper (`flex h-full overflow-hidden`). This keeps it pinned to the full height with the user info section locked at the bottom. The dashboard wrapper's `overflow-hidden` ensures its content never overflows into the root `<main>`, preventing double scrollbars within the dashboard.
+The sidebar uses **`position: sticky; top: 4rem`** with explicit height `calc(100vh - 4rem)`. It sits inside the dashboard's flex row alongside `<main>`; as the document scrolls, the sidebar sticks to the bottom edge of the fixed header. The sidebar's own `nav flex-1 + user-info` layout pins the user info to the bottom of the sidebar at all times.
+
+This works because:
+- The dashboard wrapper's height is the natural height of its tallest child (`<main>`), which can be much taller than the viewport.
+- `position: sticky` keeps the sidebar visible within that wrapper as the document scrolls past it.
+- The explicit `h-[calc(100vh-4rem)]` (and `self-start`) overrides the default flex `align-items: stretch` so the sidebar doesn't try to match `<main>`'s height.
+
+### Anchor links and the fixed header
+
+Use `scroll-mt-16` (or larger) on any element that's a hash-anchor target so it lands below the fixed header instead of behind it. `scroll-mt-20` (5rem) gives a small breathing-room offset that reads better than the exact header height. Examples: `src/components/home/about-section.tsx`, `src/app/(dashboard)/admin/ui-components/page.tsx`.
+
+## History (why this doc exists)
+
+The layout went through several iterations before landing here. Earlier versions tried to make the root `<main>` a fixed-height scroll container so dashboard pages could derive heights from it. Symptoms cascaded:
+
+1. Dashboard content overflowed and pushed the sidebar off-screen → fixed by adding `overflow-auto` on an inner dashboard `<main>`.
+2. A second document-level scrollbar appeared → "fixed" by adding `overflow-hidden` to `<html>`.
+3. The home hero collapsed to zero height → fixed by removing `flex flex-col` from the root `<main>`.
+4. `window.scrollY`, native hash navigation, Playwright `elementFromPoint`, and many third-party scroll libraries silently broke because the document didn't scroll. Each grew its own workaround.
+
+The fix was to undo the inner-scroll-container architecture entirely: drop the root `<main>` wrapper, drop the dashboard's inner scroll container, and switch the sidebar to `position: sticky`. The document is now the single scroll container, and all the workarounds for scroll listeners, hash navigation, and Playwright clicks went away.
+
+If you find yourself reaching for `h-screen overflow-auto` on a top-level container, stop — you'll re-introduce the cascade above. The right shape is `min-h-screen` plus `pt-16` on the wrapper, document scroll, and `position: sticky` for anything that should stay visible while scrolling.

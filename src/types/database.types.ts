@@ -43,6 +43,61 @@ export type Database = {
           },
         ]
       }
+      credit_deductions_v2: {
+        Row: {
+          delta: number
+          gamer_id: string
+          id: string
+          participation_id: string
+          processed_at: string
+          product_id: string
+          reason: string
+          session_date: string
+        }
+        Insert: {
+          delta: number
+          gamer_id: string
+          id?: string
+          participation_id: string
+          processed_at?: string
+          product_id: string
+          reason: string
+          session_date: string
+        }
+        Update: {
+          delta?: number
+          gamer_id?: string
+          id?: string
+          participation_id?: string
+          processed_at?: string
+          product_id?: string
+          reason?: string
+          session_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_deductions_v2_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_deductions_v2_participation_id_fkey"
+            columns: ["participation_id"]
+            isOneToOne: false
+            referencedRelation: "participations_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_deductions_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customer_profiles: {
         Row: {
           stripe_customer_id: string | null
@@ -133,6 +188,98 @@ export type Database = {
           },
         ]
       }
+      family_subscription_items_v2: {
+        Row: {
+          created_at: string
+          family_subscription_id: string
+          id: string
+          participation_id: string
+          stripe_price_id: string
+          stripe_subscription_item_id: string
+        }
+        Insert: {
+          created_at?: string
+          family_subscription_id: string
+          id?: string
+          participation_id: string
+          stripe_price_id: string
+          stripe_subscription_item_id: string
+        }
+        Update: {
+          created_at?: string
+          family_subscription_id?: string
+          id?: string
+          participation_id?: string
+          stripe_price_id?: string
+          stripe_subscription_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_subscription_items_v2_family_subscription_id_fkey"
+            columns: ["family_subscription_id"]
+            isOneToOne: false
+            referencedRelation: "family_subscriptions_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_subscription_items_v2_participation_id_fkey"
+            columns: ["participation_id"]
+            isOneToOne: true
+            referencedRelation: "participations_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      family_subscriptions_v2: {
+        Row: {
+          created_at: string
+          currency: string
+          current_period_end: string | null
+          customer_id: string
+          discount_coupon_id: string | null
+          frequency: Database["public"]["Enums"]["subscription_frequency_v2"]
+          id: string
+          status: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          current_period_end?: string | null
+          customer_id: string
+          discount_coupon_id?: string | null
+          frequency: Database["public"]["Enums"]["subscription_frequency_v2"]
+          id?: string
+          status: string
+          stripe_customer_id: string
+          stripe_subscription_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          customer_id?: string
+          discount_coupon_id?: string | null
+          frequency?: Database["public"]["Enums"]["subscription_frequency_v2"]
+          id?: string
+          status?: string
+          stripe_customer_id?: string
+          stripe_subscription_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "family_subscriptions_v2_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback_submissions: {
         Row: {
           created_at: string
@@ -205,6 +352,49 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      gedu_group_assignments_v2: {
+        Row: {
+          created_at: string
+          gedu_id: string
+          group_id: string
+          product_id: string
+        }
+        Insert: {
+          created_at?: string
+          gedu_id: string
+          group_id: string
+          product_id: string
+        }
+        Update: {
+          created_at?: string
+          gedu_id?: string
+          group_id?: string
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gedu_group_assignments_v2_gedu_id_fkey"
+            columns: ["gedu_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_assignments_v2_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gedu_group_assignments_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gedu_locations: {
         Row: {
@@ -421,6 +611,127 @@ export type Database = {
           },
         ]
       }
+      participations_v2: {
+        Row: {
+          created_at: string
+          credits_remaining: number
+          customer_id: string
+          gamer_id: string
+          group_id: string | null
+          id: string
+          product_id: string
+          reserved_until: string | null
+          signed_up_at: string
+          status: Database["public"]["Enums"]["participation_status_v2"]
+          updated_at: string
+          waitlist_position: number | null
+        }
+        Insert: {
+          created_at?: string
+          credits_remaining?: number
+          customer_id: string
+          gamer_id: string
+          group_id?: string | null
+          id?: string
+          product_id: string
+          reserved_until?: string | null
+          signed_up_at?: string
+          status: Database["public"]["Enums"]["participation_status_v2"]
+          updated_at?: string
+          waitlist_position?: number | null
+        }
+        Update: {
+          created_at?: string
+          credits_remaining?: number
+          customer_id?: string
+          gamer_id?: string
+          group_id?: string | null
+          id?: string
+          product_id?: string
+          reserved_until?: string | null
+          signed_up_at?: string
+          status?: Database["public"]["Enums"]["participation_status_v2"]
+          updated_at?: string
+          waitlist_position?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "participations_v2_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participations_v2_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participations_v2_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "participations_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments_v2: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          customer_id: string
+          id: string
+          metadata: Json
+          purpose: Database["public"]["Enums"]["payment_purpose_v2"]
+          stripe_event_id: string
+          stripe_invoice_id: string | null
+          stripe_payment_intent_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency: string
+          customer_id: string
+          id?: string
+          metadata?: Json
+          purpose: Database["public"]["Enums"]["payment_purpose_v2"]
+          stripe_event_id: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          customer_id?: string
+          id?: string
+          metadata?: Json
+          purpose?: Database["public"]["Enums"]["payment_purpose_v2"]
+          stripe_event_id?: string
+          stripe_invoice_id?: string | null
+          stripe_payment_intent_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_v2_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_groups: {
         Row: {
           created_at: string
@@ -459,6 +770,41 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_groups_v2: {
+        Row: {
+          created_at: string
+          display_order: number
+          id: string
+          name: string
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name: string
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          id?: string
+          name?: string
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_groups_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
             referencedColumns: ["id"]
           },
         ]
@@ -524,6 +870,73 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "product_prices_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_seat_counts_v2: {
+        Row: {
+          active_count: number
+          product_id: string
+          reserving_count: number
+          updated_at: string
+          waitlist_count: number
+        }
+        Insert: {
+          active_count?: number
+          product_id: string
+          reserving_count?: number
+          updated_at?: string
+          waitlist_count?: number
+        }
+        Update: {
+          active_count?: number
+          product_id?: string
+          reserving_count?: number
+          updated_at?: string
+          waitlist_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_seat_counts_v2_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_subscription_prices_v2: {
+        Row: {
+          created_at: string
+          currency: string
+          frequency: Database["public"]["Enums"]["subscription_frequency_v2"]
+          product_id: string
+          stripe_price_id: string
+          unit_amount_cents: number
+        }
+        Insert: {
+          created_at?: string
+          currency: string
+          frequency: Database["public"]["Enums"]["subscription_frequency_v2"]
+          product_id: string
+          stripe_price_id: string
+          unit_amount_cents: number
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          frequency?: Database["public"]["Enums"]["subscription_frequency_v2"]
+          product_id?: string
+          stripe_price_id?: string
+          unit_amount_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_subscription_prices_v2_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products_v2"
@@ -849,6 +1262,44 @@ export type Database = {
         }
         Relationships: []
       }
+      refunds_v2: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          payment_id: string
+          reason: Database["public"]["Enums"]["refund_reason_v2"]
+          stripe_event_id: string
+          stripe_refund_id: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          payment_id: string
+          reason: Database["public"]["Enums"]["refund_reason_v2"]
+          stripe_event_id: string
+          stripe_refund_id: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          payment_id?: string
+          reason?: Database["public"]["Enums"]["refund_reason_v2"]
+          stripe_event_id?: string
+          stripe_refund_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_v2_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_slots_v2: {
         Row: {
           created_at: string
@@ -883,6 +1334,35 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      session_cancellations_v2: {
+        Row: {
+          cancelled_at: string
+          id: string
+          participation_id: string
+          session_date: string
+        }
+        Insert: {
+          cancelled_at?: string
+          id?: string
+          participation_id: string
+          session_date: string
+        }
+        Update: {
+          cancelled_at?: string
+          id?: string
+          participation_id?: string
+          session_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_cancellations_v2_participation_id_fkey"
+            columns: ["participation_id"]
+            isOneToOne: false
+            referencedRelation: "participations_v2"
             referencedColumns: ["id"]
           },
         ]
@@ -1297,6 +1777,19 @@ export type Database = {
           transaction_id: string
         }[]
       }
+      apply_credit_motion_v2: {
+        Args: {
+          p_delta: number
+          p_participation_id: string
+          p_reason: string
+          p_session_date: string
+        }
+        Returns: boolean
+      }
+      cancel_participation_v2: {
+        Args: { p_participation_id: string; p_reason: string }
+        Returns: Json
+      }
       commit_group_changes: {
         Args: {
           p_added_groups?: Json
@@ -1307,6 +1800,18 @@ export type Database = {
         }
         Returns: Json
       }
+      commit_group_changes_v2: {
+        Args: {
+          p_added_groups?: Json
+          p_deleted_group_ids?: string[]
+          p_gedu_assignments_added?: Json
+          p_gedu_assignments_removed?: Json
+          p_participation_moves?: Json
+          p_product_id: string
+          p_renamed_groups?: Json
+        }
+        Returns: Json
+      }
       compute_next_session: {
         Args: {
           p_day_of_week: number
@@ -1314,6 +1819,22 @@ export type Database = {
           p_timezone: string
         }
         Returns: string
+      }
+      confirm_reservation_v2: {
+        Args: { p_credits_to_grant: number; p_reservation_id: string }
+        Returns: Json
+      }
+      count_active_seats_v2: { Args: { p_product_id: string }; Returns: number }
+      count_seats_taken_v2: { Args: { p_product_id: string }; Returns: number }
+      create_participation_v2: {
+        Args: {
+          p_currency: string
+          p_customer_id: string
+          p_gamer_id: string
+          p_product_id: string
+          p_purchase_shape: string
+        }
+        Returns: Json
       }
       create_product_v2: {
         Args: {
@@ -1345,6 +1866,10 @@ export type Database = {
         }
         Returns: string
       }
+      effective_status_v2: {
+        Args: { p_product_id: string }
+        Returns: Database["public"]["Enums"]["effective_product_status_v2"]
+      }
       enroll_gamer_in_group: {
         Args: {
           p_customer_id: string
@@ -1357,6 +1882,10 @@ export type Database = {
           new_balance: number
           transaction_id: string
         }[]
+      }
+      expire_reservation_v2: {
+        Args: { p_reservation_id: string }
+        Returns: Json
       }
       get_available_voice_rooms: {
         Args: never
@@ -1460,6 +1989,10 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_product_groups_v2_with_details: {
+        Args: { p_product_id: string }
+        Returns: Json
+      }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
         Returns: {
@@ -1513,7 +2046,35 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
+      join_waitlist_v2: {
+        Args: {
+          p_customer_id: string
+          p_gamer_id: string
+          p_product_id: string
+        }
+        Returns: Json
+      }
+      participation_state_v2: {
+        Args: {
+          p_group_id: string
+          p_status: Database["public"]["Enums"]["participation_status_v2"]
+        }
+        Returns: string
+      }
       process_enrollment_charges: { Args: never; Returns: Json }
+      process_session_credits_v2: { Args: never; Returns: Json }
+      product_has_session_v2: {
+        Args: { p_product_id: string; p_session_date: string }
+        Returns: boolean
+      }
+      promote_from_waitlist_v2: {
+        Args: { p_product_id: string }
+        Returns: Json
+      }
+      refresh_product_seat_counts_v2: {
+        Args: { p_product_id: string }
+        Returns: undefined
+      }
       submit_feedback: {
         Args: { p_message: string; p_user_id: string }
         Returns: boolean
@@ -1529,11 +2090,57 @@ export type Database = {
           refund_transaction_id: string
         }[]
       }
+      update_product_v2: {
+        Args: {
+          p_billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
+          p_end_date?: string
+          p_holiday_calendar_ids?: string[]
+          p_id: string
+          p_image_path?: string
+          p_is_remote: boolean
+          p_is_visible?: boolean
+          p_location_id?: string
+          p_max_age: number
+          p_min_age: number
+          p_padlet_url?: string
+          p_prices?: Json
+          p_refund_policy_days?: number
+          p_registration_opens_at: string
+          p_schedule_slots?: Json
+          p_seat_count?: number
+          p_signup_threshold?: number
+          p_spoken_language_code: string
+          p_start_date?: string
+          p_tag_ids?: string[]
+          p_timezone: string
+          p_topic_id: string
+          p_translations: Json
+          p_waitlist_enabled?: boolean
+        }
+        Returns: string
+      }
     }
     Enums: {
       billing_mode_v2: "paid" | "free" | "external_contract"
+      effective_product_status_v2:
+        | "draft"
+        | "pending"
+        | "running"
+        | "completed"
+        | "cancelled"
+        | "expired"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
+      participation_status_v2:
+        | "reserving"
+        | "active"
+        | "waitlisted"
+        | "completed"
+      payment_purpose_v2:
+        | "bundle"
+        | "subscription_invoice"
+        | "single_payment"
+        | "reservation_duplicate"
       product_status_v2:
         | "draft"
         | "pending"
@@ -1541,6 +2148,14 @@ export type Database = {
         | "completed"
         | "cancelled"
       product_type_v2: "consumer_club" | "municipality_club" | "camp" | "event"
+      refund_reason_v2:
+        | "session_cancelled_in_window"
+        | "admin_refund"
+        | "product_cancelled"
+        | "subscription_item_removed"
+        | "subscription_period_proration"
+        | "duplicate_payment"
+      subscription_frequency_v2: "monthly" | "quarterly" | "yearly"
       token_transaction_type:
         | "purchase"
         | "subscription"
@@ -1677,8 +2292,28 @@ export const Constants = {
   public: {
     Enums: {
       billing_mode_v2: ["paid", "free", "external_contract"],
+      effective_product_status_v2: [
+        "draft",
+        "pending",
+        "running",
+        "completed",
+        "cancelled",
+        "expired",
+      ],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],
+      participation_status_v2: [
+        "reserving",
+        "active",
+        "waitlisted",
+        "completed",
+      ],
+      payment_purpose_v2: [
+        "bundle",
+        "subscription_invoice",
+        "single_payment",
+        "reservation_duplicate",
+      ],
       product_status_v2: [
         "draft",
         "pending",
@@ -1687,6 +2322,15 @@ export const Constants = {
         "cancelled",
       ],
       product_type_v2: ["consumer_club", "municipality_club", "camp", "event"],
+      refund_reason_v2: [
+        "session_cancelled_in_window",
+        "admin_refund",
+        "product_cancelled",
+        "subscription_item_removed",
+        "subscription_period_proration",
+        "duplicate_payment",
+      ],
+      subscription_frequency_v2: ["monthly", "quarterly", "yearly"],
       token_transaction_type: [
         "purchase",
         "subscription",

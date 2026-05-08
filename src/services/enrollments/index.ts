@@ -4,5 +4,4 @@ export {
   enrollmentKeys,
   useEnrollmentGroups,
   useEnrollGamer,
-  useUnenrollGamer,
 } from "./enrollments.queries";

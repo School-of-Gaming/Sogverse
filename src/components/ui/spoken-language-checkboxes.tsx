@@ -19,17 +19,12 @@
  * language to the DB shows up in both automatically.
  */
 
-import flags from "react-phone-number-input/flags";
 import { useTranslations } from "next-intl";
 import type { SpokenLanguage } from "@/types";
-
-// Map spoken-language codes to country codes for flag display.
-// Update when adding new languages to the spoken_languages table.
-const SPOKEN_LANG_TO_COUNTRY: Record<string, string> = {
-  fi: "FI",
-  sv: "SE",
-  en: "GB",
-};
+import {
+  getSpokenLanguageFlag,
+  type SpokenLanguageFlag,
+} from "@/components/ui/language-flag";
 
 // Map spoken-language codes to common.* translation keys.
 // Falls back to the DB name for codes not listed here.
@@ -41,13 +36,10 @@ const SPOKEN_LANG_NAME_KEYS: Record<string, string> = {
 
 const PLACEHOLDER_COUNT = 3;
 
-type FlagComponent = (typeof flags)[keyof typeof flags];
-
 function useLangDisplay() {
   const c = useTranslations("common");
-  return (lang: SpokenLanguage): { FlagIcon: FlagComponent | undefined; displayName: string } => {
-    const country = SPOKEN_LANG_TO_COUNTRY[lang.code];
-    const FlagIcon = country ? flags[country as keyof typeof flags] : undefined;
+  return (lang: SpokenLanguage): { FlagIcon: SpokenLanguageFlag | undefined; displayName: string } => {
+    const FlagIcon = getSpokenLanguageFlag(lang.code);
     const nameKey = SPOKEN_LANG_NAME_KEYS[lang.code];
     const displayName = nameKey ? c(nameKey as "languageEnglish") : lang.name;
     return { FlagIcon, displayName };
@@ -58,7 +50,7 @@ function FlagLabel({
   FlagIcon,
   displayName,
 }: {
-  FlagIcon: FlagComponent | undefined;
+  FlagIcon: SpokenLanguageFlag | undefined;
   displayName: string;
 }) {
   return (

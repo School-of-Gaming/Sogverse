@@ -5,21 +5,17 @@ import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { ROUTES } from "@/lib/constants";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { useAllProducts } from "@/services/products";
-import { useCurrency } from "@/hooks/use-currency";
-import { useTokenRates } from "@/providers/token-rate-provider";
 import { ProductRow } from "@/components/admin/product-row";
 
 export default function AdminProductsPage() {
   const t = useTranslations('admin.products');
   const [searchQuery, setSearchQuery] = useState("");
   const { data: products, isLoading } = useAllProducts();
-  const { currency } = useCurrency();
   const locale = useLocale();
-  const { tokensToCurrencyDisplay } = useTokenRates();
 
   const filteredProducts = products?.filter(
     (product) =>
@@ -36,11 +32,9 @@ export default function AdminProductsPage() {
             {t('manageCatalog')}
           </p>
         </div>
-        <Link href={ROUTES.admin.productsAdd}>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            {t('addProduct')}
-          </Button>
+        <Link href={ROUTES.admin.productsAdd} className={buttonVariants()}>
+          <Plus className="mr-2 h-4 w-4" />
+          {t('addProduct')}
         </Link>
       </div>
 
@@ -81,7 +75,7 @@ export default function AdminProductsPage() {
                   key={product.id}
                   href={ROUTES.admin.product(product.id)}
                 >
-                  <ProductRow product={product} currency={currency} locale={locale} tokensToCurrencyDisplay={tokensToCurrencyDisplay} />
+                  <ProductRow product={product} locale={locale} />
                 </Link>
               ))}
             </div>

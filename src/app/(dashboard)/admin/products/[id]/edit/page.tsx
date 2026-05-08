@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Package } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProduct, useUpdateProduct } from "@/services/products";
 import { ProductForm, type ProductFormValues } from "@/components/admin/product-form";
@@ -56,10 +56,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center gap-4">
-          <Link href={ROUTES.admin.product(id)}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+          <Link
+            href={ROUTES.admin.product(id)}
+            className={buttonVariants({ variant: "ghost", size: "icon" })}
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="text-2xl font-bold">{t('productNotFound')}</h1>
         </div>
@@ -70,10 +71,11 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div className="flex items-center gap-4">
-        <Link href={`/admin/products/${id}`}>
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
+        <Link
+          href={`/admin/products/${id}`}
+          className={buttonVariants({ variant: "ghost", size: "icon" })}
+        >
+          <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
           <h1 className="text-2xl font-bold">{t('editProduct')}</h1>

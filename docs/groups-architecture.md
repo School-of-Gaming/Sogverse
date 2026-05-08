@@ -283,3 +283,58 @@ Only `PointerSensor` is configured in `GeduGroupsCard`. Keyboard-only users cann
 
 The four role branches (admin, gedu, gamer, customer) share nearly identical `SELECT`/`FROM`/`JOIN` clauses. If a column is added or a JOIN changes, all branches must be updated in sync. Consider extracting the common query into a CTE or view — but only once the branches have stabilized, since roles may diverge (e.g., admin-only columns) and premature abstraction would make that harder.
 
+---
+
+## v2 Groups (parallel-phase)
+
+The v2 product system (see `docs/products-redesign.md`) ships its own group infrastructure alongside the legacy v1 tables. They run in parallel until the v2 cutover, when the v1 `product_groups` / `group_enrollments` / `enrollment_charges` are dropped (see § "Cutover").
+
+### Schema differences from v1
+
+| Concept | v1 | v2 |
+|---|---|---|
+| Groups table | `product_groups(product_id → products, gedu_id NOT NULL, ...)` | `product_groups_v2(product_id → products_v2, name TEXT NOT NULL, ...)` |
+| Gedu assignment | Single `gedu_id` column with `UNIQUE(product_id, gedu_id)` | Separate `gedu_group_assignments_v2(group_id, gedu_id, product_id)` join with `UNIQUE(gedu_id, product_id)` |
+| Group naming | None (rendered as "Group A/B/C…" by index) | Required `name` column with non-blank check; admins can rename |
+| Gamer ↔ group | `group_enrollments(group_id, gamer_id, status, …)` | `participations_v2.group_id` (nullable; `NULL` = unassigned inbox) |
+| Empty-product behavior | Auto-hide product when last group is deleted | No auto-hide — products with no groups are valid (admins create groups after seats sell) |
+
+The denormalized `product_id` on `gedu_group_assignments_v2` is what makes "one group per Gedu per product" expressible as a UNIQUE constraint. A BEFORE-INSERT/UPDATE trigger fills it from the group's `product_id` if the caller omits it, and rejects mismatches if the caller passes a wrong value.
+
+### v2 RPCs
+
+- `get_product_groups_v2_with_details(p_product_id UUID) → JSONB` — admin-only read. Returns `{ product_id, groups: [{id, name, display_order, gedus: […], participations: […]}], unassigned: [{…}] }` in a single round-trip.
+- `commit_group_changes_v2(p_product_id, p_added_groups, p_renamed_groups, p_deleted_group_ids, p_gedu_assignments_added, p_gedu_assignments_removed, p_participation_moves) → JSONB { tempMap }` — atomic batch mutation. Locks the product row first (`SELECT 1 FROM products_v2 WHERE id = $1 FOR UPDATE`) to serialize with participation flow. Order of operations: removes → deletes → renames → inserts (with inline geduIds) → adds → participation moves. Removing before adding lets a single batch swap a Gedu between two groups without tripping `UNIQUE(gedu_id, product_id)`.
+
+### v2 admin UI
+
+The v2 Groups panel lives at `src/components/admin/products-v2/groups/`:
+
+```
+groups-panel.tsx       — Top-level orchestrator: query, DnD context, commit bar, picker sheet, summary dialog
+unassigned-card.tsx    — Leftmost droppable card for participations with group_id IS NULL
+group-column.tsx       — Per-group card: editable name input, multi-Gedu pills, droppable participation area
+gamer-chip.tsx         — Draggable participation chip with age/gender detail
+gedu-pill.tsx          — Gedu pill with optional remove (X) button; pending-add and pending-remove states
+commit-bar.tsx         — Sticky bottom bar showing staged-change count
+commit-summary-dialog.tsx — Review dialog: segmented summary list + Apply (atomic via apply route)
+```
+
+Mutations flow through `POST /api/admin/products-v2/[id]/groups/apply` → `commit_group_changes_v2`. The route is intentionally simpler than the v1 streaming SSE route — no email notifications, no Daily.co room provisioning. Email + Daily.co code stays on the v1 route for future reuse on v2.
+
+The staged-changes reducer (`src/hooks/use-group-editor-v2.ts`) extends the v1 pattern for:
+
+- **Multi-Gedu groups** — `geduIds: string[]` inline on added groups + separate `geduAssignmentsAdded` / `geduAssignmentsRemoved` buckets for existing groups.
+- **Named groups** — `RENAME_GROUP` action; renames of newly-added groups mutate the `addedGroups` entry in place; renames of existing groups upsert in `renamedGroups`.
+- **Unassigned column** — `MOVE_PARTICIPATION` takes `toGroupId: string | null` where `null` is the unassigned-inbox sentinel. The reducer mirrors the DB's `ON DELETE SET NULL` by treating any participation effectively placed in a deleted group as unassigned in the rendered snapshot.
+- **Cancellation pairs** — `ADD_GEDU` followed by `REMOVE_GEDU` on the same `(group, gedu)` pair cancels out (and vice versa), so the apply payload only carries net changes.
+
+### Cutover
+
+At v2 cutover (per `docs/products-redesign.md` §10), drop:
+- v1 tables: `product_groups`, `group_enrollments`, `enrollment_charges`
+- v1 RPCs: `commit_group_changes`, `get_product_groups_with_details`, `enroll_gamer_in_group`, `unenroll_gamer`, `get_enrollment_groups`
+- v1 admin UI: `gedu-groups-card.tsx`, `group-card.tsx` (legacy), `commit-bar.tsx` (legacy), `commit-flow-dialog.tsx`, `commit-flow-parts.tsx`, `gedu-picker-dialog.tsx`
+- v1 hook: `use-group-editor.ts`
+
+Rename the `_v2` versions to drop the suffix at the same time.

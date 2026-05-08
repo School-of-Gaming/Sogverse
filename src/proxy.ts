@@ -10,7 +10,7 @@ import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 // arrives via an email link with hash tokens — they aren't authenticated yet.
 // ROUTES.voice.prefix is public because instant voice rooms are share-via-link
 // by design — see docs/instant-voice-rooms.md.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.sorg, ROUTES.checkout, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.camps, ROUTES.events, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
 
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
@@ -47,7 +47,8 @@ function buildCspHeader(nonce: string): string {
       ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`
       : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://c.daily.co https://cdn.mouseflow.com",
     "style-src 'self' 'unsafe-inline'",
-    `img-src 'self' data: blob: ${SUPABASE_HOST}`,
+    // mc-heads.net renders the Minecraft skin body avatar in MinecraftUsernameField (settings page for gamers/gedus)
+    `img-src 'self' data: blob: ${SUPABASE_HOST} https://mc-heads.net`,
     "font-src 'self'",
     // wss: Supabase Realtime, Daily.co signaling; sentry: Daily.co's bundled error reporting;
     // mouseflow: beta-only session recording (remove with the rest of the Mouseflow integration after Beta)
@@ -168,6 +169,15 @@ export async function proxy(request: NextRequest) {
   // Shared routes (feedback, settings) are accessible to all authenticated users
   if (pathname.startsWith(ROUTES.feedback) || pathname.startsWith(ROUTES.settings)) {
     return supabaseResponse;
+  }
+
+  // /preview/* are admin-only mock surfaces linked from /admin/ui-components.
+  // They live in the (public) layout group so the page renders in the
+  // parent-facing chrome (header + footer, no admin sidebar) — but only
+  // admins should be able to reach them. Non-admins bounce to their own
+  // dashboard; unauthenticated users were already redirected to /login above.
+  if (pathname.startsWith("/preview/") && userRole !== "admin") {
+    return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
   }
 
   // Check if user has access to the requested route

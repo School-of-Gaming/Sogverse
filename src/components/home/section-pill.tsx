@@ -43,22 +43,16 @@ export function SectionPill() {
   // from that point on. Disappearing again when the user clicks Home and
   // scrolls back to the top would feel like the navigation is being taken
   // away mid-interaction.
-  //
-  // The app scrolls on the root <main> element (html is overflow-hidden — see
-  // docs/layout-scroll-architecture.md), so window scroll events never fire.
   useEffect(() => {
-    const scrollContainer = document.querySelector("main");
-    if (!scrollContainer) return;
-
     const handleScroll = () => {
-      if (scrollContainer.scrollTop > VISIBILITY_THRESHOLD_PX) {
+      if (window.scrollY > VISIBILITY_THRESHOLD_PX) {
         setIsVisible(true);
-        scrollContainer.removeEventListener("scroll", handleScroll);
+        window.removeEventListener("scroll", handleScroll);
       }
     };
-    scrollContainer.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    return () => scrollContainer.removeEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, id: SectionId) => {
