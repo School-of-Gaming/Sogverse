@@ -1027,11 +1027,7 @@
   },
   "gamer": {
     "welcome": "nuqneH, toy'wI'!",
-    "subtitle": "DaH yItoy' je yIghoj?",
-    "myGroups": "jIH ghom'a'mey",
-    "myGroupsDescription": "ghom'a'mey je pIq jatlh poHmey tIlegh",
-    "tipOfTheDay": "jaj QaQ",
-    "tipOfTheDayMessage": "bIvum'a'? ghom'a' poHDaq yImuv — laHmey yIboqmoH. Qapla'!"
+    "subtitle": "DaH yItoy' je yIghoj?"
   },
   "gedu": {
     "title": "Gedu QaD",
@@ -1386,24 +1382,6 @@
     "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH"
   },
   "parent": {
-    "dashboard": {
-      "welcome": "vav/SoS QaD",
-      "subtitle": "toy'wI'pu' je qo' ghoHmey tI'ang",
-      "quickActions": {
-        "gamers": {
-          "title": "jIH toy'wI'pu'",
-          "description": "toy'wI' accountmey tIlegh je tI'ang"
-        },
-        "browseClubs": {
-          "title": "ghom'a'mey tInej",
-          "description": "toy'a' ghom'a'mey Suq je muv"
-        },
-        "settings": {
-          "title": "ngoQmey",
-          "description": "account ngoQmey tI'ang"
-        }
-      }
-    },
     "gamers": {
       "title": "jIH toy'wI'pu'",
       "subtitle": "toy'wI' accountmey je qo' ghoHmey tI'ang",

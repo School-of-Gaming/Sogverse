@@ -982,11 +982,7 @@
   },
   "gamer": {
     "welcome": "Välkommen, spelare!",
-    "subtitle": "Redo att spela och lära dig?",
-    "myGroups": "Mina grupper",
-    "myGroupsDescription": "Visa dina grupper och kommande röstsessioner",
-    "tipOfTheDay": "Dagens tips",
-    "tipOfTheDayMessage": "Övning ger färdighet! Gå med i en gruppsession för att höja din nivå."
+    "subtitle": "Redo att spela och lära dig?"
   },
   "gedu": {
     "title": "Utbildarens översikt",
@@ -1341,24 +1337,6 @@
     "mcHeadsAttribution": "Skin renderat av <link>mc-heads.net</link>"
   },
   "parent": {
-    "dashboard": {
-      "welcome": "Föräldraöversikt",
-      "subtitle": "Hantera dina spelare och anmälningar",
-      "quickActions": {
-        "gamers": {
-          "title": "Mina spelare",
-          "description": "Visa och hantera dina spelarkonton"
-        },
-        "browseClubs": {
-          "title": "Bläddra bland klubbar",
-          "description": "Hitta och anmäl dig till spelklubbar"
-        },
-        "settings": {
-          "title": "Inställningar",
-          "description": "Hantera dina kontoinställningar"
-        }
-      }
-    },
     "gamers": {
       "title": "Mina spelare",
       "subtitle": "Hantera dina spelarkonton och anmälningar",

@@ -79,7 +79,7 @@ export function SectionPill() {
             <a
               href={`#${id}`}
               onClick={(e) => handleClick(e, id)}
-              aria-current={activeSection === id ? "true" : undefined}
+              aria-current={activeSection === id ? "location" : undefined}
               className={cn(
                 "block rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] sm:px-4 sm:text-sm",
                 activeSection === id
