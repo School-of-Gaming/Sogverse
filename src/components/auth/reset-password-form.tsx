@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
@@ -131,9 +131,8 @@ export function ResetPasswordForm() {
           )}
           <div className="space-y-2">
             <Label htmlFor="password">{c('newPassword')}</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder={t('resetPassword.newPasswordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -147,9 +146,8 @@ export function ResetPasswordForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               placeholder={t('resetPassword.confirmPasswordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

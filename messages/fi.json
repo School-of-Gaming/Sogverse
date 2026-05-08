@@ -63,6 +63,8 @@
     "email": "Sähköposti",
     "password": "Salasana",
     "confirmPassword": "Vahvista salasana",
+    "showPassword": "Näytä salasana",
+    "hidePassword": "Piilota salasana",
     "firstName": "Etunimi",
     "lastName": "Sukunimi",
     "username": "Käyttäjänimi",

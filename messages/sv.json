@@ -63,6 +63,8 @@
     "email": "E-post",
     "password": "Lösenord",
     "confirmPassword": "Bekräfta lösenord",
+    "showPassword": "Visa lösenord",
+    "hidePassword": "Dölj lösenord",
     "firstName": "Förnamn",
     "lastName": "Efternamn",
     "username": "Användarnamn",

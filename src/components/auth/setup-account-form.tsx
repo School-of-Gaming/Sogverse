@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
@@ -280,9 +281,8 @@ export function SetupAccountForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">{c('password')}</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder={t('setupAccount.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -296,9 +296,8 @@ export function SetupAccountForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               placeholder={t('setupAccount.confirmPasswordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
