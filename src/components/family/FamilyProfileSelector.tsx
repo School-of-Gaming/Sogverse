@@ -184,10 +184,14 @@ function ProfileTile({
 
 function AddGamerTile() {
   const t = useTranslations("family");
-  // TODO: when the create-gamer flow is ready, wire this up:
+  // Intentional placeholder: the tile is rendered as a clickable affordance
+  // so the family-selector layout matches its eventual shape (two rows, gamer
+  // row ends in "Add Gamer"). The click target is deliberately a no-op until
+  // the create-gamer flow lands — kept as a button (not a div) so spacing,
+  // focus ring, and hover state match the live tiles next to it. Wire-up,
+  // when ready:
   //  - parent dashboard: open the create-gamer form/dialog directly
   //  - gamer dashboard: switch to a parent first, then open the form
-  // Until then this is a no-op.
   return (
     <button
       type="button"

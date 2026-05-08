@@ -8,10 +8,9 @@ export const familyKeys = {
   list: () => [...familyKeys.all, "list"] as const,
 };
 
-export function useFamily({ enabled = true }: { enabled?: boolean } = {}) {
+export function useFamily() {
   return useQuery({
     queryKey: familyKeys.list(),
     queryFn: () => new FamilyService().getFamily(),
-    enabled,
   });
 }
