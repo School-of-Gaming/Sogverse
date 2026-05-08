@@ -1357,6 +1357,7 @@
     },
     "pricing": {
       "title": "Hinta",
+      "pricesIn": "Hinnat valuutassa",
       "subscribeHeading": "Tilaus (säästät enemmän)",
       "bundleHeading": "Tai osta kerralla",
       "perSession": "{price} / kerta",

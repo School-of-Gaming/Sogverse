@@ -1357,6 +1357,7 @@
     },
     "pricing": {
       "title": "Pris",
+      "pricesIn": "Priser i",
       "subscribeHeading": "Prenumerera (sparar mer)",
       "bundleHeading": "Eller betala när du går",
       "perSession": "{price} / pass",

@@ -1357,6 +1357,7 @@
     },
     "pricing": {
       "title": "Pricing",
+      "pricesIn": "Prices in",
       "subscribeHeading": "Subscribe (saves more)",
       "bundleHeading": "Or pay as you go",
       "perSession": "{price} / session",
