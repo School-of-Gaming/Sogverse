@@ -63,6 +63,8 @@
     "email": "QIn",
     "password": "mu'mey",
     "confirmPassword": "mu'mey yIchel",
+    "showPassword": "mu'mey 'angmoH",
+    "hidePassword": "mu'mey So'moH",
     "firstName": "wa'DIch pong",
     "lastName": "qorDu' pong",
     "username": "lo'wI' pong",

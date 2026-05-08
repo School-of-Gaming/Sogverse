@@ -7,6 +7,7 @@ import { ArrowLeft, User, Lock, Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -358,9 +359,8 @@ export default function GamerDetailsPage() {
             <input type="text" name="username" autoComplete="username" value={gamer.username} readOnly tabIndex={-1} aria-hidden="true" className="sr-only" />
             <div className="space-y-2">
               <Label htmlFor="newPassword">{c('newPassword')}</Label>
-              <Input
+              <PasswordInput
                 id="newPassword"
-                type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder={t('gamerDetail.security.passwordPlaceholder')}
@@ -370,9 +370,8 @@ export default function GamerDetailsPage() {
 
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder={t('gamerDetail.security.confirmPlaceholder')}
