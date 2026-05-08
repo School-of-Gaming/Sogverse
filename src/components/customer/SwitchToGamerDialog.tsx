@@ -39,10 +39,10 @@ export function SwitchToGamerDialog({
     setSwitchError(null);
 
     try {
-      const res = await fetch("/api/auth/switch-to-gamer", {
+      const res = await fetch("/api/auth/switch-account", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ gamerId }),
+        body: JSON.stringify({ userId: gamerId }),
       });
 
       if (!res.ok) {

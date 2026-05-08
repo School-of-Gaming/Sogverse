@@ -979,8 +979,12 @@
     "myFamily": "Perheeni",
     "yty": "Yty",
     "feedback": "Palaute",
-    "settings": "Asetukset",
-    "myFamilyDescription": "Tämä osio on rakenteilla. Pian voit hallita koko perhettäsi yhdestä paikasta."
+    "settings": "Asetukset"
+  },
+  "family": {
+    "createNewGamer": "Luo uusi pelaaja",
+    "switchFailed": "Tilin vaihtaminen epäonnistui",
+    "loadFailed": "Perheen lataaminen epäonnistui"
   },
   "footer": {
     "tagline": "School of Gaming – Ruutuaika muuttuu laatuajaksi.",

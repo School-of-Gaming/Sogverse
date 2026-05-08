@@ -1024,8 +1024,12 @@
     "myFamily": "qorDu'wIj",
     "yty": "Yty",
     "feedback": "QaH",
-    "settings": "tlhInganpu' chu'",
-    "myFamilyDescription": "Daq vam chenmoHlu'taH. tugh qorDu'lIj naQ Dachelqu' wa' Daq."
+    "settings": "tlhInganpu' chu'"
+  },
+  "family": {
+    "createNewGamer": "QujwI' chu' chenmoH",
+    "switchFailed": "qaSbe' QunwI' choH",
+    "loadFailed": "qorDu' polHa'lu'pu'"
   },
   "footer": {
     "tagline": "toy'wI' ghom - DaH bIQam, batlh yIghoS.",

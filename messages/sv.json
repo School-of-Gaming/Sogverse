@@ -979,8 +979,12 @@
     "myFamily": "Min familj",
     "yty": "Yty",
     "feedback": "Feedback",
-    "settings": "Inställningar",
-    "myFamilyDescription": "Den här delen håller på att byggas. Snart kan du sköta hela familjen från ett och samma ställe."
+    "settings": "Inställningar"
+  },
+  "family": {
+    "createNewGamer": "Skapa ny gamer",
+    "switchFailed": "Det gick inte att byta konto",
+    "loadFailed": "Det gick inte att läsa in familjen"
   },
   "footer": {
     "tagline": "School of Gaming - Där skärmtid blir kvalitetstid.",
