@@ -5,13 +5,13 @@ import { Identicon } from "@/components/ui/identicon";
 
 interface GamerCardProps {
   id: string;
-  displayName: string;
+  firstName: string;
   username: string;
   /** Pre-formatted "Joined X ago" text, or any trailing label */
   subtitle?: string;
 }
 
-export function GamerCard({ id, displayName, username, subtitle }: GamerCardProps) {
+export function GamerCard({ id, firstName, username, subtitle }: GamerCardProps) {
   return (
     <Card className="group transition-colors hover:bg-accent hover:text-accent-foreground">
       <CardHeader>
@@ -21,7 +21,7 @@ export function GamerCard({ id, displayName, username, subtitle }: GamerCardProp
               <Identicon id={id} size={48} />
             </Avatar>
             <div>
-              <CardTitle className="text-lg">{displayName}</CardTitle>
+              <CardTitle className="text-lg">{firstName}</CardTitle>
               <CardDescription>@{username}</CardDescription>
             </div>
           </div>

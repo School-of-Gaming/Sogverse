@@ -20,14 +20,19 @@ export default function AddUserPage() {
 
   const createGeduSchema = z.object({
     email: z.string().email(t('invalidEmail')),
-    displayName: z.string()
+    firstName: z.string()
       .trim()
-      .min(DISPLAY_NAME_MIN, t('geduDisplayNameTooShort'))
-      .max(DISPLAY_NAME_MAX, t('geduDisplayNameTooLong')),
+      .min(DISPLAY_NAME_MIN, t('geduFirstNameTooShort'))
+      .max(DISPLAY_NAME_MAX, t('geduFirstNameTooLong')),
+    lastName: z.string()
+      .trim()
+      .max(DISPLAY_NAME_MAX, t('geduLastNameTooLong'))
+      .optional(),
   });
 
   const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [locale, setLocale] = useState<SupportedLocale>(DEFAULT_LOCALE);
   const [error, setError] = useState<string | null>(null);
   const [warning, setWarning] = useState<string | null>(null);
@@ -39,11 +44,16 @@ export default function AddUserPage() {
     setWarning(null);
 
     try {
-      const validatedData = createGeduSchema.parse({ email, displayName });
+      const validatedData = createGeduSchema.parse({
+        email,
+        firstName,
+        lastName: lastName.trim() || undefined,
+      });
 
       const result = await createGedu.mutateAsync({
         email: validatedData.email,
-        displayName: validatedData.displayName,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName ?? null,
         locale,
       });
 
@@ -90,7 +100,8 @@ export default function AddUserPage() {
               <Button onClick={() => {
                 setSuccess(false);
                 setEmail("");
-                setDisplayName("");
+                setFirstName("");
+                setLastName("");
                 setWarning(null);
               }}>
                 {t('inviteAnother')}
@@ -142,21 +153,35 @@ export default function AddUserPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="displayName">{t('geduDisplayName')}</Label>
+              <Label htmlFor="firstName">{t('geduFirstName')}</Label>
               <Input
-                id="displayName"
+                id="firstName"
                 type="text"
-                placeholder={t('geduDisplayNamePlaceholder')}
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder={t('geduFirstNamePlaceholder')}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 disabled={createGedu.isPending}
                 required
                 maxLength={DISPLAY_NAME_MAX}
                 autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
-                {t('geduDisplayNameHelper')}
+                {t('geduFirstNameHelper')}
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="lastName">{t('geduLastName')}</Label>
+              <Input
+                id="lastName"
+                type="text"
+                placeholder={t('geduLastNamePlaceholder')}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                disabled={createGedu.isPending}
+                maxLength={DISPLAY_NAME_MAX}
+                autoComplete="off"
+              />
             </div>
 
             <div className="space-y-2">

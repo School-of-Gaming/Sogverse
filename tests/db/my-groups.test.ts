@@ -163,12 +163,12 @@ describe("get_my_groups RPC", () => {
       }
     });
 
-    it("gamer: gamer_display_name is still returned for enrolled gamers", async () => {
+    it("gamer: gamer_first_name is still returned for enrolled gamers", async () => {
       const { data } = await gamerClient.rpc("get_my_groups");
       expect(data).not.toBeNull();
       const gamerRow = data!.find((r) => r.gamer_id === TEST_IDS.GAMER);
       expect(gamerRow).toBeDefined();
-      expect(gamerRow!.gamer_display_name).not.toBeNull();
+      expect(gamerRow!.gamer_first_name).not.toBeNull();
     });
 
     it("admin: gamer_date_of_birth and gamer_gender are returned for enrolled gamers", async () => {
@@ -281,7 +281,7 @@ describe("get_my_groups RPC", () => {
       const emptyGroup = data!.find((r) => r.group_id === TEST_IDS.GROUP);
       expect(emptyGroup).toBeDefined();
       expect(emptyGroup!.gamer_id).toBeNull();
-      expect(emptyGroup!.gamer_display_name).toBeNull();
+      expect(emptyGroup!.gamer_first_name).toBeNull();
       expect(emptyGroup!.enrollment_id).toBeNull();
 
       // Restore enrollment for other tests
@@ -304,7 +304,7 @@ describe("get_my_groups RPC", () => {
         email: "testgamer2@gamer.sogverse.internal",
         password: "testpassword123",
         email_confirm: true,
-        user_metadata: { display_name: "Test Gamer 2" },
+        user_metadata: { first_name: "Test", last_name: "Gamer 2" },
       });
       gamer2Id = user!.id;
 

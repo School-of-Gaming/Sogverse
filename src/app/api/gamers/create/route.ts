@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const { user } = result;
 
     const body = await request.json();
-    const { username, password, displayName, dateOfBirth, gender, minecraftUsername } = body;
+    const { username, password, firstName, dateOfBirth, gender, minecraftUsername } = body;
 
     if (!username || !password) {
       return NextResponse.json(
@@ -23,9 +23,9 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!displayName || typeof displayName !== "string" || displayName.trim().length < DISPLAY_NAME_MIN || displayName.trim().length > DISPLAY_NAME_MAX) {
+    if (!firstName || typeof firstName !== "string" || firstName.trim().length < DISPLAY_NAME_MIN || firstName.trim().length > DISPLAY_NAME_MAX) {
       return NextResponse.json(
-        { error: `Display name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters` },
+        { error: `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters` },
         { status: 400 }
       );
     }
@@ -79,6 +79,17 @@ export async function POST(request: Request) {
       );
     }
 
+    // Snapshot the parent's last_name onto the gamer at creation time. The
+    // parent's UI never asks for the gamer's last_name; we copy it once here
+    // and never sync. TODO(name-sync): if a parent later changes their
+    // last_name, gamer profiles do not auto-update. Track as a follow-up.
+    const { data: parentProfile } = await admin
+      .from("profiles")
+      .select("last_name")
+      .eq("id", user.id)
+      .single();
+    const inheritedLastName = parentProfile?.last_name ?? "";
+
     // Resolve Minecraft account BEFORE creating auth user — the UNIQUE
     // constraint on minecraft_uuid can reject this, and createUser burns
     // the username irreversibly. By checking first, the parent can retry
@@ -107,13 +118,22 @@ export async function POST(request: Request) {
       }
     }
 
+    // Compose display_name for the Supabase auth dashboard label.
+    const composedDisplayName = [firstName, inheritedLastName]
+      .filter(Boolean)
+      .join(" ");
+
     // Step 1: Create auth user — trigger assigns customer role by default
     const { data: authData, error: authError } =
       await admin.auth.admin.createUser({
         email: syntheticEmail,
         password,
         email_confirm: true,
-        user_metadata: { display_name: displayName },
+        user_metadata: {
+          first_name: firstName,
+          last_name: inheritedLastName,
+          display_name: composedDisplayName,
+        },
       });
 
     if (authError) {
@@ -129,7 +149,8 @@ export async function POST(request: Request) {
         role: "gamer",
         email: null,
         username,
-        display_name: displayName,
+        first_name: firstName,
+        last_name: inheritedLastName,
       })
       .eq("id", gamerId);
 

@@ -69,7 +69,7 @@ export type VoiceRoomUpdate = Database["public"]["Tables"]["voice_rooms"]["Updat
 type _AvailableVoiceRoomGenerated = Database["public"]["Functions"]["get_available_voice_rooms"]["Returns"][number];
 export type AvailableVoiceRoom = Omit<
   _AvailableVoiceRoomGenerated,
-  "group_id" | "product_name" | "day_of_week" | "start_time" | "timezone" | "duration_minutes" | "gedu_display_name" | "gedu_id" | "enrolled_at"
+  "group_id" | "product_name" | "day_of_week" | "start_time" | "timezone" | "duration_minutes" | "gedu_first_name" | "gedu_id" | "enrolled_at"
 > & {
   group_id: string | null;
   product_name: string | null;
@@ -77,7 +77,7 @@ export type AvailableVoiceRoom = Omit<
   start_time: string | null;
   timezone: string | null;
   duration_minutes: number | null;
-  gedu_display_name: string | null;
+  gedu_first_name: string | null;
   gedu_id: string | null;
   enrolled_at: string | null;
 };
@@ -303,14 +303,14 @@ export type GeduGroupAssignmentV2Insert = Database["public"]["Tables"]["gedu_gro
 // admin UI gets type safety without a Zod parse step.
 export interface GroupV2GeduDetail {
   id: string;
-  display_name: string;
+  first_name: string;
   email: string | null;
 }
 
 export interface GroupV2ParticipationDetail {
   id: string;
   gamer_id: string;
-  gamer_display_name: string;
+  gamer_first_name: string;
   gamer_date_of_birth: string | null;
   gamer_gender: GenderType | null;
   status: ParticipationStatus;
@@ -363,12 +363,12 @@ export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAP
 type _MyGroupGenerated = Database["public"]["Functions"]["get_my_groups"]["Returns"][number];
 export type MyGroupWithDetails = Omit<
   _MyGroupGenerated,
-  | "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
+  | "enrollment_id" | "gamer_id" | "gamer_first_name" | "gamer_date_of_birth" | "gamer_gender"
   | "product_padlet_url" | "last_charge_session_date"
 > & {
   enrollment_id: string | null;
   gamer_id: string | null;
-  gamer_display_name: string | null;
+  gamer_first_name: string | null;
   gamer_date_of_birth: string | null;
   gamer_gender: string | null;
   product_padlet_url: string | null;
@@ -381,11 +381,11 @@ export type MyGroupWithDetails = Omit<
 type _GroupDetailsGenerated = Database["public"]["Functions"]["get_product_groups_with_details"]["Returns"][number];
 export type ProductGroupWithDetails = Omit<
   _GroupDetailsGenerated,
-  "enrollment_id" | "gamer_id" | "gamer_display_name" | "gamer_date_of_birth" | "gamer_gender"
+  "enrollment_id" | "gamer_id" | "gamer_first_name" | "gamer_date_of_birth" | "gamer_gender"
 > & {
   enrollment_id: string | null;
   gamer_id: string | null;
-  gamer_display_name: string | null;
+  gamer_first_name: string | null;
   gamer_date_of_birth: string | null;
   gamer_gender: Database["public"]["Enums"]["gender_type"] | null;
 };
@@ -437,7 +437,7 @@ export interface AuthState {
 export interface CreateGamerInput {
   username: string;
   password: string;
-  displayName: string;
+  firstName: string;
   dateOfBirth: string;
   gender: "boy" | "girl" | "non_binary";
   minecraftUsername?: string;
@@ -456,7 +456,8 @@ export interface GamerLoginCredentials {
 export interface RegisterInput {
   email: string;
   password: string;
-  displayName?: string;
+  firstName: string;
+  lastName?: string;
 }
 
 export interface ApiResponse<T> {

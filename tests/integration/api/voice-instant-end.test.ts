@@ -28,7 +28,7 @@ function endRequest(body: Record<string, unknown>): Request {
 function authenticated(role: string) {
   mockRequireRole.mockResolvedValue({
     user: { id: `${role}-user-id` },
-    profile: { role, display_name: `${role} user` },
+    profile: { role, first_name: `${role} user` },
     supabase: {},
   });
 }

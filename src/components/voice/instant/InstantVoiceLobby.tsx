@@ -139,9 +139,9 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
   const canJoin = isMod || nameValid;
 
   // Display name shown under the avatar — mirrors what the in-call avatar
-  // will render (mods use profile.display_name, guests use the typed name).
+  // will render (mods use profile.first_name, guests use the typed name).
   const previewName =
-    profile && isMod ? profile.display_name : trimmedName;
+    profile && isMod ? profile.first_name : trimmedName;
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();

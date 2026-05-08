@@ -47,7 +47,7 @@ function createRequest(body: Record<string, unknown>): Request {
 function mockAuthenticated(userId: string) {
   mockRequireRole.mockResolvedValue({
     user: { id: userId },
-    profile: { id: userId, role: "customer", display_name: "Parent" },
+    profile: { id: userId, role: "customer", first_name: "Parent" },
     supabase: { auth: { signOut: mockSignOut } },
   });
 }

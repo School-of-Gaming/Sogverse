@@ -69,7 +69,7 @@ export class GamerService {
       body: JSON.stringify({
         username: input.username,
         password: input.password,
-        displayName: input.displayName,
+        firstName: input.firstName,
         dateOfBirth: input.dateOfBirth,
         gender: input.gender,
         minecraftUsername: input.minecraftUsername,
@@ -87,7 +87,7 @@ export class GamerService {
 
   async updateGamer(
     gamerId: string,
-    updates: { displayName?: string; password?: string; minecraftUsername?: string | null },
+    updates: { firstName?: string; password?: string; minecraftUsername?: string | null },
   ): Promise<Profile> {
     const response = await fetch(`/api/gamers/${gamerId}`, {
       method: "PATCH",

@@ -1224,9 +1224,10 @@ export type Database = {
         Row: {
           created_at: string
           currency: string | null
-          display_name: string
           email: string | null
+          first_name: string
           id: string
+          last_name: string | null
           locale: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -1237,9 +1238,10 @@ export type Database = {
         Insert: {
           created_at?: string
           currency?: string | null
-          display_name: string
           email?: string | null
+          first_name: string
           id: string
+          last_name?: string | null
           locale?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -1250,9 +1252,10 @@ export type Database = {
         Update: {
           created_at?: string
           currency?: string | null
-          display_name?: string
           email?: string | null
+          first_name?: string
           id?: string
+          last_name?: string | null
           locale?: string | null
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -1886,7 +1889,7 @@ export type Database = {
           day_of_week: number
           duration_minutes: number
           enrolled_at: string
-          gedu_display_name: string
+          gedu_first_name: string
           gedu_id: string
           group_id: string
           id: string
@@ -1901,7 +1904,7 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: {
           gamer_count: number
-          gedu_display_name: string
+          gedu_first_name: string
           group_id: string
           max_gamer_age: number
           min_gamer_age: number
@@ -1912,9 +1915,10 @@ export type Database = {
         Returns: {
           created_at: string
           currency: string | null
-          display_name: string
           email: string | null
+          first_name: string
           id: string
+          last_name: string | null
           locale: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -1939,10 +1943,10 @@ export type Database = {
           game_id: string
           game_name: string
           gamer_date_of_birth: string
-          gamer_display_name: string
+          gamer_first_name: string
           gamer_gender: string
           gamer_id: string
-          gedu_display_name: string
+          gedu_first_name: string
           gedu_id: string
           group_id: string
           last_charge_session_date: string
@@ -1964,9 +1968,10 @@ export type Database = {
         Returns: {
           created_at: string
           currency: string | null
-          display_name: string
           email: string | null
+          first_name: string
           id: string
+          last_name: string | null
           locale: string | null
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -1991,11 +1996,11 @@ export type Database = {
           display_order: number
           enrollment_id: string
           gamer_date_of_birth: string
-          gamer_display_name: string
+          gamer_first_name: string
           gamer_gender: Database["public"]["Enums"]["gender_type"]
           gamer_id: string
-          gedu_display_name: string
           gedu_email: string
+          gedu_first_name: string
           gedu_id: string
           group_id: string
           product_id: string

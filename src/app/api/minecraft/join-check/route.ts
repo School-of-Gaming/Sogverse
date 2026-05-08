@@ -48,7 +48,7 @@ export async function GET(request: Request) {
 
     const { data: account, error: accountError } = await admin
       .from("minecraft_accounts")
-      .select("user_id, profiles(id, display_name, role)")
+      .select("user_id, profiles(id, first_name, role)")
       .eq("minecraft_uuid", uuid)
       .maybeSingle();
 
@@ -63,22 +63,22 @@ export async function GET(request: Request) {
 
     const profile = account.profiles;
     const role = profile.role;
-    const displayName = profile.display_name;
+    const firstName = profile.first_name;
 
     // --- Check session access ---
     if (role === "gedu") {
-      return await checkGeduSession(admin, profile.id, displayName);
+      return await checkGeduSession(admin, profile.id, firstName);
     }
 
     if (role === "gamer") {
-      return await checkGamerSession(admin, profile.id, displayName);
+      return await checkGamerSession(admin, profile.id, firstName);
     }
 
     // Other roles (admin, customer) — no session-gated access
     return NextResponse.json({
       allowed: false,
       role,
-      displayName,
+      firstName,
       reason: "No active session",
     });
   } catch (err) {
@@ -89,7 +89,7 @@ export async function GET(request: Request) {
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 
-async function checkGeduSession(admin: AdminClient, userId: string, displayName: string) {
+async function checkGeduSession(admin: AdminClient, userId: string, firstName: string) {
   const { data: groups, error } = await admin
     .from("product_groups")
     .select("id, products(name, day_of_week, start_time, timezone, duration_minutes)")
@@ -104,7 +104,7 @@ async function checkGeduSession(admin: AdminClient, userId: string, displayName:
     return NextResponse.json({
       allowed: false,
       role: "gedu",
-      displayName,
+      firstName,
       reason: "No active session",
     });
   }
@@ -117,9 +117,9 @@ async function checkGeduSession(admin: AdminClient, userId: string, displayName:
       return NextResponse.json({
         allowed: true,
         role: "gedu",
-        displayName,
+        firstName,
         endTime: window.windowClosesAt.toISOString(),
-        reason: `${product.name} with ${displayName}`,
+        reason: `${product.name} with ${firstName}`,
       });
     }
   }
@@ -127,12 +127,12 @@ async function checkGeduSession(admin: AdminClient, userId: string, displayName:
   return NextResponse.json({
     allowed: false,
     role: "gedu",
-    displayName,
+    firstName,
     reason: "No active session",
   });
 }
 
-async function checkGamerSession(admin: AdminClient, userId: string, displayName: string) {
+async function checkGamerSession(admin: AdminClient, userId: string, firstName: string) {
   const { data: enrollments, error } = await admin
     .from("group_enrollments")
     .select(`
@@ -140,7 +140,7 @@ async function checkGamerSession(admin: AdminClient, userId: string, displayName
       product_groups(
         gedu_id,
         products(name, day_of_week, start_time, timezone, duration_minutes),
-        profiles(display_name)
+        profiles(first_name)
       )
     `)
     .eq("gamer_id", userId)
@@ -155,7 +155,7 @@ async function checkGamerSession(admin: AdminClient, userId: string, displayName
     return NextResponse.json({
       allowed: false,
       role: "gamer",
-      displayName,
+      firstName,
       reason: "No active session",
     });
   }
@@ -171,12 +171,12 @@ async function checkGamerSession(admin: AdminClient, userId: string, displayName
     const enrolledAt = new Date(enrollment.created_at);
     if (!isEnrolledForSession(enrolledAt, window.nextSessionStart)) continue;
 
-    const geduName = group.profiles.display_name;
+    const geduName = group.profiles.first_name;
 
     return NextResponse.json({
       allowed: true,
       role: "gamer",
-      displayName,
+      firstName,
       endTime: window.windowClosesAt.toISOString(),
       reason: `${product.name} with ${geduName}`,
     });
@@ -185,7 +185,7 @@ async function checkGamerSession(admin: AdminClient, userId: string, displayName
   return NextResponse.json({
     allowed: false,
     role: "gamer",
-    displayName,
+    firstName,
     reason: "No active session",
   });
 }

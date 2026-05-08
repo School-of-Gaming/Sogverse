@@ -186,7 +186,7 @@ export function GroupDetailContent({
                       <Identicon id={gamer.gamerId} size={32} />
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium">{gamer.displayName}</p>
+                      <p className="text-sm font-medium">{gamer.firstName}</p>
                       {gamer.dateOfBirth && gamer.gender && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{t('age', { age: computeAge(gamer.dateOfBirth) })}</span>

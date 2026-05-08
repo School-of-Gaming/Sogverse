@@ -72,7 +72,7 @@ export function GeduPickerSheetV2({
       }
       if (!q) return true;
       return (
-        g.display_name.toLowerCase().includes(q) ||
+        g.first_name.toLowerCase().includes(q) ||
         (g.email?.toLowerCase().includes(q) ?? false)
       );
     });
@@ -209,7 +209,7 @@ function GeduRow({
       </Avatar>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate font-medium">{gedu.display_name}</p>
+          <p className="truncate font-medium">{gedu.first_name}</p>
           {isCurrent && (
             <Badge variant="outline" className="shrink-0">
               <Check className="mr-1 h-3 w-3" />

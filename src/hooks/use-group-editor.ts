@@ -8,13 +8,13 @@ import type { ProductGroup, GroupGamer, BatchGroupChanges } from "@/services/gro
 interface AddedGroup {
   tempId: string;
   geduId: string;
-  geduDisplayName: string;
+  geduFirstName: string;
 }
 
 interface UpdatedGroup {
   groupId: string;
   geduId: string;
-  geduDisplayName: string;
+  geduFirstName: string;
 }
 
 interface EnrollmentMove {
@@ -33,8 +33,8 @@ interface GroupEditorState {
 // --- Actions ---
 
 export type GroupEditorAction =
-  | { type: "ADD_GROUP"; geduId: string; geduDisplayName: string }
-  | { type: "UPDATE_GROUP_GEDU"; groupId: string; geduId: string; geduDisplayName: string }
+  | { type: "ADD_GROUP"; geduId: string; geduFirstName: string }
+  | { type: "UPDATE_GROUP_GEDU"; groupId: string; geduId: string; geduFirstName: string }
   | { type: "DELETE_GROUP"; groupId: string }
   | { type: "MOVE_GAMER"; gamerId: string; fromGroupId: string; toGroupId: string }
   | { type: "RESET" };
@@ -53,7 +53,7 @@ export function reducer(state: GroupEditorState, action: GroupEditorAction): Gro
         ...state,
         addedGroups: [
           ...state.addedGroups,
-          { tempId, geduId: action.geduId, geduDisplayName: action.geduDisplayName },
+          { tempId, geduId: action.geduId, geduFirstName: action.geduFirstName },
         ],
       };
     }
@@ -66,7 +66,7 @@ export function reducer(state: GroupEditorState, action: GroupEditorAction): Gro
         updated[addedIdx] = {
           ...updated[addedIdx],
           geduId: action.geduId,
-          geduDisplayName: action.geduDisplayName,
+          geduFirstName: action.geduFirstName,
         };
         return { ...state, addedGroups: updated };
       }
@@ -78,7 +78,7 @@ export function reducer(state: GroupEditorState, action: GroupEditorAction): Gro
         updated[existingIdx] = {
           groupId: action.groupId,
           geduId: action.geduId,
-          geduDisplayName: action.geduDisplayName,
+          geduFirstName: action.geduFirstName,
         };
         return { ...state, updatedGroups: updated };
       }
@@ -87,7 +87,7 @@ export function reducer(state: GroupEditorState, action: GroupEditorAction): Gro
         ...state,
         updatedGroups: [
           ...state.updatedGroups,
-          { groupId: action.groupId, geduId: action.geduId, geduDisplayName: action.geduDisplayName },
+          { groupId: action.groupId, geduId: action.geduId, geduFirstName: action.geduFirstName },
         ],
       };
     }
@@ -182,7 +182,7 @@ export interface EffectiveGroup {
   /** Real UUID or temp-xxx for new groups */
   id: string;
   geduId: string;
-  geduDisplayName: string;
+  geduFirstName: string;
   displayOrder: number;
   isNew: boolean;
   isDeleted: boolean;
@@ -228,7 +228,7 @@ export function computeEffectiveGroups(
         const gamer = gamerLookup.get(move.gamerId);
         gamers.push({
           gamerId: move.gamerId,
-          displayName: gamer?.displayName ?? "Unknown",
+          firstName: gamer?.firstName ?? "Unknown",
           enrollmentId: "",
           dateOfBirth: gamer?.dateOfBirth ?? "",
           gender: gamer?.gender ?? "",
@@ -240,7 +240,7 @@ export function computeEffectiveGroups(
     groups.push({
       id: sg.groupId,
       geduId: update ? update.geduId : sg.geduId,
-      geduDisplayName: update ? update.geduDisplayName : sg.geduDisplayName,
+      geduFirstName: update ? update.geduFirstName : sg.geduFirstName,
       displayOrder: sg.displayOrder,
       isNew: false,
       isDeleted,
@@ -255,7 +255,7 @@ export function computeEffectiveGroups(
     groups.push({
       id: ag.tempId,
       geduId: ag.geduId,
-      geduDisplayName: ag.geduDisplayName,
+      geduFirstName: ag.geduFirstName,
       displayOrder: serverGroups.length + i,
       isNew: true,
       isDeleted: false,
@@ -263,7 +263,7 @@ export function computeEffectiveGroups(
         const gamer = gamerLookup.get(m.gamerId);
         return {
           gamerId: m.gamerId,
-          displayName: gamer?.displayName ?? "Unknown",
+          firstName: gamer?.firstName ?? "Unknown",
           enrollmentId: "",
           dateOfBirth: gamer?.dateOfBirth ?? "",
           gender: gamer?.gender ?? "",
@@ -304,18 +304,18 @@ export function buildChangeSummary(
   const lines: ChangeLine[] = [];
 
   for (const g of state.addedGroups) {
-    lines.push([text("Add group with "), gedu(g.geduDisplayName)]);
+    lines.push([text("Add group with "), gedu(g.geduFirstName)]);
   }
   for (const g of state.updatedGroups) {
     const prev = serverGroups.find((sg) => sg.groupId === g.groupId);
-    const from = prev?.geduDisplayName ?? "unknown";
+    const from = prev?.geduFirstName ?? "unknown";
     lines.push([
-      text("Reassign "), gedu(from), text("'s group to "), gedu(g.geduDisplayName),
+      text("Reassign "), gedu(from), text("'s group to "), gedu(g.geduFirstName),
     ]);
   }
   for (const id of state.deletedGroupIds) {
     const sg = serverGroups.find((g) => g.groupId === id);
-    const name = sg?.geduDisplayName ?? "unknown";
+    const name = sg?.geduFirstName ?? "unknown";
     lines.push([text("Delete "), gedu(name), text("'s group")]);
   }
 
@@ -323,17 +323,17 @@ export function buildChangeSummary(
   const gamerLookup = new Map<string, string>();
   const groupGeduLookup = new Map<string, string>();
   for (const sg of serverGroups) {
-    groupGeduLookup.set(sg.groupId, sg.geduDisplayName);
+    groupGeduLookup.set(sg.groupId, sg.geduFirstName);
     for (const g of sg.gamers) {
-      gamerLookup.set(g.gamerId, g.displayName);
+      gamerLookup.set(g.gamerId, g.firstName);
     }
   }
   for (const ag of state.addedGroups) {
-    groupGeduLookup.set(ag.tempId, ag.geduDisplayName);
+    groupGeduLookup.set(ag.tempId, ag.geduFirstName);
   }
   // Override with reassigned gedu names so move descriptions reflect the new owner
   for (const ug of state.updatedGroups) {
-    groupGeduLookup.set(ug.groupId, ug.geduDisplayName);
+    groupGeduLookup.set(ug.groupId, ug.geduFirstName);
   }
   for (const m of state.enrollmentMoves) {
     const name = gamerLookup.get(m.gamerId) ?? "a gamer";

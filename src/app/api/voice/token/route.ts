@@ -137,7 +137,7 @@ export async function POST(request: Request) {
     const userName = buildUserName({
       userId: user.id,
       role,
-      displayName: profile.display_name,
+      displayName: profile.first_name,
     });
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
     if (!domain) {

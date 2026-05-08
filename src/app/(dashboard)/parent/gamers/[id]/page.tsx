@@ -27,7 +27,7 @@ export default function GamerDetailsPage() {
   const gamer = gamers?.find((g) => g.id === id);
 
   // Profile form state
-  const [displayName, setDisplayName] = useState("");
+  const [firstName, setFirstName] = useState("");
   const [profileInitialized, setProfileInitialized] = useState(false);
 
   // Minecraft form state
@@ -49,7 +49,7 @@ export default function GamerDetailsPage() {
 
   // Initialize display name once gamer data loads
   if (gamer && !profileInitialized) {
-    setDisplayName(gamer.display_name);
+    setFirstName(gamer.first_name);
     setProfileInitialized(true);
   }
 
@@ -69,7 +69,7 @@ export default function GamerDetailsPage() {
     try {
       await updateGamer.mutateAsync({
         gamerId: gamer.id,
-        updates: { displayName: displayName.trim() },
+        updates: { firstName: firstName.trim() },
       });
       setProfileSuccess(t('gamerDetail.profileUpdated'));
     } catch (error: unknown) {
@@ -218,7 +218,7 @@ export default function GamerDetailsPage() {
       <div>
         <h1 className="text-3xl font-bold">{t('gamerDetail.title')}</h1>
         <p className="text-muted-foreground">
-          {t('gamerDetail.subtitle', { name: gamer.display_name })}
+          {t('gamerDetail.subtitle', { name: gamer.first_name })}
         </p>
       </div>
 
@@ -239,7 +239,7 @@ export default function GamerDetailsPage() {
               <Identicon id={gamer.id} size={64} />
             </Avatar>
             <div>
-              <p className="font-medium">{gamer.display_name}</p>
+              <p className="font-medium">{gamer.first_name}</p>
               <p className="text-sm text-muted-foreground">
                 @{gamer.username}
               </p>
@@ -260,12 +260,12 @@ export default function GamerDetailsPage() {
 
           <form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="gamerDisplayName">{c('displayName')}</Label>
+              <Label htmlFor="gamerDisplayName">{c('firstName')}</Label>
               <Input
                 id="gamerDisplayName"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder={c('displayName')}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder={c('firstName')}
                 maxLength={DISPLAY_NAME_MAX}
               />
             </div>
@@ -281,7 +281,7 @@ export default function GamerDetailsPage() {
 
             <Button
               type="submit"
-              disabled={isSavingProfile || displayName.trim().length < 2}
+              disabled={isSavingProfile || firstName.trim().length < 2}
             >
               {isSavingProfile ? c('saving') : c('saveChanges')}
             </Button>

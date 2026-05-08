@@ -224,7 +224,7 @@ function VoiceAvatarDemo() {
       <div style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}>
         <VoiceAvatar
           userId={profile?.id || user?.id || "demo"}
-          userName={profile?.display_name ?? "You"}
+          userName={profile?.first_name ?? "You"}
           audioOn={micOn}
           videoOn={cameraOn}
           isLocal
@@ -927,7 +927,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       imagePath: null,
       topicLabel: "MINECRAFT",
       state: "assigned",
-      gamer: { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
+      gamer: { firstName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
       scheduleSummary: "Every Tuesday · 17:00 (Helsinki)",
       detailLine: "Next: Tomorrow, 17:00",
       balanceLine: "7 sessions left",
@@ -942,7 +942,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       imagePath: null,
       topicLabel: "MINECRAFT",
       state: "unassigned",
-      gamer: { displayName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
+      gamer: { firstName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
       scheduleSummary: "Every Tuesday · 17:00 (Helsinki)",
       detailLine: "We'll set up your group",
       balanceLine: "10 sessions left",
@@ -957,7 +957,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       imagePath: null,
       topicLabel: "FORTNITE",
       state: "assigned",
-      gamer: { displayName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
+      gamer: { firstName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
       scheduleSummary: "Every Friday · 18:00 (Helsinki)",
       detailLine: "Next: Friday 18:00",
       balanceLine: "Subscription",
@@ -972,7 +972,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       imagePath: null,
       topicLabel: "ROBLOX",
       state: "assigned",
-      gamer: { displayName: "Aino", seed: "86d1eed7-8d73-4de1-a654-064a62b60bc6" },
+      gamer: { firstName: "Aino", seed: "86d1eed7-8d73-4de1-a654-064a62b60bc6" },
       scheduleSummary: "Every Wednesday · 16:30 (Helsinki)",
       detailLine: "Next: Wednesday 16:30",
       balanceLine: "No sessions left — buy more",
@@ -987,7 +987,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       imagePath: null,
       topicLabel: "ROBLOX",
       state: "waitlisted",
-      gamer: { displayName: "Noah", seed: "fda26c15-4677-4374-aa3b-7bed0cb0e2af" },
+      gamer: { firstName: "Noah", seed: "fda26c15-4677-4374-aa3b-7bed0cb0e2af" },
       scheduleSummary: "24–28 March · 10:00–14:00 (Helsinki)",
       detailLine: "3 ahead of you in line",
       balanceLine: null,
@@ -1002,7 +1002,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       imagePath: null,
       topicLabel: "ROBLOX",
       state: "assigned",
-      gamer: { displayName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
+      gamer: { firstName: "Oliver", seed: "f5066ba6-bd8c-49f7-8912-524cd53de323" },
       scheduleSummary: "24–28 March · 10:00–14:00 (Helsinki)",
       detailLine: "Next: Mon 24 Mar, 10:00",
       balanceLine: null,
@@ -1017,7 +1017,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       imagePath: null,
       topicLabel: "FORTNITE",
       state: "assigned",
-      gamer: { displayName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
+      gamer: { firstName: "Mira", seed: "b86618b9-1cc0-4276-8dcc-14f995356e55" },
       scheduleSummary: "Friday 12 April · 18:00–20:00",
       detailLine: "Next: Fri 12 Apr, 18:00",
       balanceLine: null,
@@ -1032,7 +1032,7 @@ const PURCHASED_DEMO_CARDS: { label: string; props: ProductPurchasedCardViewProp
       imagePath: null,
       topicLabel: "GAME DESIGN",
       state: "assigned",
-      gamer: { displayName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
+      gamer: { firstName: "Ella", seed: "e2c031b4-a853-4a75-91fd-0aa07935fa56" },
       scheduleSummary: "Every Friday · 15:30 (Helsinki)",
       detailLine: "Next: Friday 15:30",
       balanceLine: null,
@@ -1503,13 +1503,13 @@ export default function AdminUIComponentsPage() {
           <div className="space-y-4">
             <GamerCard
               id="8e86d931-500c-49ed-889d-c2cd10879a28"
-              displayName="MyrskySusi"
+              firstName="MyrskySusi"
               username="myrskysusi"
               subtitle="Joined 3 days ago"
             />
             <GamerCard
               id="5aec0f5a-5398-46d7-a150-3554cf701beb"
-              displayName="CrimsonArrow"
+              firstName="CrimsonArrow"
               username="crimsonarrow"
               subtitle="Joined 2 weeks ago"
             />
@@ -1523,14 +1523,14 @@ export default function AdminUIComponentsPage() {
           </p>
           <div className="space-y-4">
             <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000001", display_name: "Jane Parent", username: "janeparent", email: "jane@example.com", role: "customer" }}
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000001", first_name: "Jane", username: "janeparent", email: "jane@example.com", role: "customer" }}
               linkedGamers={[
-                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", display_name: "MyrskySusi", username: "myrskysusi", email: null, role: "gamer" },
-                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", display_name: "CrimsonArrow", username: "crimsonarrow", email: null, role: "gamer" },
+                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "MyrskySusi", username: "myrskysusi", email: null, role: "gamer" },
+                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "CrimsonArrow", username: "crimsonarrow", email: null, role: "gamer" },
               ]}
             />
             <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000002", display_name: "Sam Gedu", username: "samgedu", email: "sam@example.com", role: "gedu" }}
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000002", first_name: "Sam", username: "samgedu", email: "sam@example.com", role: "gedu" }}
             />
           </div>
         </SubSection>

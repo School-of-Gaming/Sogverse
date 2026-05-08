@@ -158,7 +158,7 @@ export function Sidebar() {
       <div className="overflow-hidden border-t border-sidebar-border p-4">
         <div className="whitespace-nowrap text-sm">
           <p className="overflow-hidden text-ellipsis font-medium text-sidebar-foreground">
-            {profile.display_name}
+            {profile.first_name}
           </p>
           <p className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
             {c(ROLE_LABEL_KEYS[profile.role])}

@@ -97,7 +97,7 @@ export function useUpdateGamer() {
       updates,
     }: {
       gamerId: string;
-      updates: { displayName?: string; password?: string; minecraftUsername?: string | null };
+      updates: { firstName?: string; password?: string; minecraftUsername?: string | null };
     }) => service.updateGamer(gamerId, updates),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });

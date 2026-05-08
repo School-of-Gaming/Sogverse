@@ -28,7 +28,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('display_name', 'Test Admin'),
+  jsonb_build_object('first_name', 'Test', 'last_name', 'Admin'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -56,7 +56,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('role', 'customer', 'display_name', 'Test Customer'),
+  jsonb_build_object('role', 'customer', 'first_name', 'Test', 'last_name', 'Customer'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -84,7 +84,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('display_name', 'Test Gedu'),
+  jsonb_build_object('first_name', 'Test', 'last_name', 'Gedu'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -112,7 +112,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('display_name', 'Test Gamer'),
+  jsonb_build_object('first_name', 'Test', 'last_name', 'Gamer'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -140,7 +140,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('role', 'customer', 'display_name', 'Test Customer 2'),
+  jsonb_build_object('role', 'customer', 'first_name', 'Test', 'last_name', 'Customer 2'),
   '', '', '', '',
   NOW(), NOW()
 );
@@ -172,7 +172,7 @@ INSERT INTO auth.users (
   crypt('testpassword123', gen_salt('bf')),
   NOW(), NOW(),
   '{"provider":"email","providers":["email"]}',
-  jsonb_build_object('display_name', 'Test Gamer 2'),
+  jsonb_build_object('first_name', 'Test', 'last_name', 'Gamer 2'),
   '', '', '', '',
   NOW(), NOW()
 );

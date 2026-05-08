@@ -34,7 +34,8 @@ export function SettingsSectionContent() {
   const updateMyMc = useUpdateMyMinecraft();
   const { data: availableLanguages } = useSpokenLanguages();
 
-  const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
+  const [firstName, setFirstName] = useState(profile?.first_name ?? "");
+  const [lastName, setLastName] = useState(profile?.last_name ?? "");
   const [phone, setPhone] = useState(profile?.phone ? `+${profile.phone}` : "");
   const [spokenLanguages, setSpokenLanguages] = useState<string[]>(profile?.spoken_languages ?? []);
   const [isSaving, setIsSaving] = useState(false);
@@ -67,7 +68,8 @@ export function SettingsSectionContent() {
       }
 
       const updates: ProfileUpdate = {
-        display_name: displayName,
+        first_name: firstName,
+        last_name: lastName.trim() || null,
         phone: toE164Digits(phone),
         spoken_languages: spokenLanguages,
       };
@@ -143,7 +145,7 @@ export function SettingsSectionContent() {
             </Avatar>
             <div>
               <p className="font-medium">
-                {profile?.display_name}
+                {[profile?.first_name, profile?.last_name].filter(Boolean).join(" ")}
               </p>
               <p className="text-sm text-muted-foreground">
                 {profile?.email || `@${profile?.username}`}
@@ -167,13 +169,26 @@ export function SettingsSectionContent() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="displayName">{c('displayName')}</Label>
+            <Label htmlFor="firstName">{c('firstName')}</Label>
             <Input
-              id="displayName"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder={t('displayNamePlaceholder')}
+              id="firstName"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder={t('firstNamePlaceholder')}
               maxLength={DISPLAY_NAME_MAX}
+              autoComplete="given-name"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="lastName">{c('lastName')}</Label>
+            <Input
+              id="lastName"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder={t('lastNamePlaceholder')}
+              maxLength={DISPLAY_NAME_MAX}
+              autoComplete="family-name"
             />
           </div>
 

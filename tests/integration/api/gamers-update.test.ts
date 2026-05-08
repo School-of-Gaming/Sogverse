@@ -98,13 +98,19 @@ function mockTargetProfile(role: string | null) {
   return { select: selectMock };
 }
 
-/** Mock the admin profiles update */
-function mockProfileUpdate(success = true) {
-  const eqMock = vi.fn().mockResolvedValue(
+/** Mock the admin profiles update — supports the post-update SELECT.single()
+ *  chain the route uses to read back first_name/last_name for metadata sync. */
+function mockProfileUpdate(
+  success = true,
+  returnedRow: Record<string, unknown> = { first_name: "New Name", last_name: "" },
+) {
+  const singleMock = vi.fn().mockResolvedValue(
     success
-      ? { data: null, error: null }
+      ? { data: returnedRow, error: null }
       : { data: null, error: { message: "Update failed" } },
   );
+  const selectMock = vi.fn().mockReturnValue({ single: singleMock });
+  const eqMock = vi.fn().mockReturnValue({ select: selectMock });
   const updateMock = vi.fn().mockReturnValue({ eq: eqMock });
   return { update: updateMock };
 }
@@ -120,14 +126,14 @@ function mockProfileFetch(profile: Record<string, unknown>) {
 /**
  * Sets up mockAdminFrom to handle the sequence of admin client calls:
  * 1. profiles (select role) — role check
- * 2. profiles (update) — display name update
+ * 2. profiles (update) — first name update
  * 3. profiles (select *) — final fetch
  */
 function mockAdminSuccess(
   targetRole = "gamer",
   updatedProfile: Record<string, unknown> = {
     id: "gamer-1",
-    display_name: "Updated Name",
+    first_name: "Updated Name",
     role: "gamer",
   },
 ) {
@@ -164,7 +170,7 @@ describe("PATCH /api/gamers/[id]", () => {
   it("should return 401 when unauthenticated", async () => {
     mockUnauthenticated();
 
-    const [req, ctx] = createRequest("gamer-1", { displayName: "New Name" });
+    const [req, ctx] = createRequest("gamer-1", { firstName: "New Name" });
     const response = await PATCH(req, ctx);
     expect(response.status).toBe(401);
   });
@@ -172,7 +178,7 @@ describe("PATCH /api/gamers/[id]", () => {
   it("should enforce customer role and return 403 for non-customers", async () => {
     mockForbiddenRole();
 
-    const [req, ctx] = createRequest("gamer-1", { displayName: "New Name" });
+    const [req, ctx] = createRequest("gamer-1", { firstName: "New Name" });
     const response = await PATCH(req, ctx);
     expect(response.status).toBe(403);
     expect(mockRequireRole).toHaveBeenCalledWith("customer", expect.any(Object));
@@ -192,10 +198,10 @@ describe("PATCH /api/gamers/[id]", () => {
     expect(data.error).toContain("minecraftUsername");
   });
 
-  it("should return 400 when displayName is too short", async () => {
+  it("should return 400 when firstName is too short", async () => {
     mockAuthenticated();
 
-    const [req, ctx] = createRequest("gamer-1", { displayName: "A" });
+    const [req, ctx] = createRequest("gamer-1", { firstName: "A" });
     const response = await PATCH(req, ctx);
     const data = await response.json();
 
@@ -220,7 +226,7 @@ describe("PATCH /api/gamers/[id]", () => {
     mockAuthenticated("customer-123");
     mockParentGamerLookup(false);
 
-    const [req, ctx] = createRequest("gamer-1", { displayName: "New Name" });
+    const [req, ctx] = createRequest("gamer-1", { firstName: "New Name" });
     const response = await PATCH(req, ctx);
     const data = await response.json();
 
@@ -233,7 +239,7 @@ describe("PATCH /api/gamers/[id]", () => {
     mockParentGamerLookup(true);
     mockAdminSuccess("admin"); // target is admin, not gamer
 
-    const [req, ctx] = createRequest("admin-1", { displayName: "New Name" });
+    const [req, ctx] = createRequest("admin-1", { firstName: "New Name" });
     const response = await PATCH(req, ctx);
     const data = await response.json();
 
@@ -243,24 +249,24 @@ describe("PATCH /api/gamers/[id]", () => {
 
   // -- Happy paths --
 
-  it("should update display name only", async () => {
+  it("should update first name only", async () => {
     mockAuthenticated("customer-123");
     mockParentGamerLookup(true);
     mockAdminSuccess("gamer", {
       id: "gamer-1",
-      display_name: "New Name",
+      first_name: "New Name",
       role: "gamer",
     });
 
-    const [req, ctx] = createRequest("gamer-1", { displayName: "New Name" });
+    const [req, ctx] = createRequest("gamer-1", { firstName: "New Name" });
     const response = await PATCH(req, ctx);
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.gamer.display_name).toBe("New Name");
+    expect(data.gamer.first_name).toBe("New Name");
     expect(mockAdminAuthAdmin.updateUserById).toHaveBeenCalledWith(
       "gamer-1",
-      { user_metadata: { display_name: "New Name" } },
+      { user_metadata: { first_name: "New Name", display_name: "New Name" } },
     );
   });
 
@@ -272,7 +278,7 @@ describe("PATCH /api/gamers/[id]", () => {
     const roleCheck = mockTargetProfile("gamer");
     const fetch = mockProfileFetch({
       id: "gamer-1",
-      display_name: "Existing",
+      first_name: "Existing",
       role: "gamer",
     });
 
@@ -300,25 +306,25 @@ describe("PATCH /api/gamers/[id]", () => {
     );
   });
 
-  it("should update both display name and password", async () => {
+  it("should update both first name and password", async () => {
     mockAuthenticated("customer-123");
     mockParentGamerLookup(true);
     mockAdminSuccess("gamer", {
       id: "gamer-1",
-      display_name: "New Name",
+      first_name: "New Name",
       role: "gamer",
     });
 
     const [req, ctx] = createRequest("gamer-1", {
-      displayName: "New Name",
+      firstName: "New Name",
       password: "newpass123",
     });
     const response = await PATCH(req, ctx);
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.gamer.display_name).toBe("New Name");
-    // Should have been called twice: once for display_name metadata, once for password
+    expect(data.gamer.first_name).toBe("New Name");
+    // Should have been called twice: once for first_name metadata, once for password
     expect(mockAdminAuthAdmin.updateUserById).toHaveBeenCalledTimes(2);
   });
 
@@ -339,7 +345,7 @@ describe("PATCH /api/gamers/[id]", () => {
     };
     const fetch = mockProfileFetch({
       id: "gamer-1",
-      display_name: "Existing",
+      first_name: "Existing",
       role: "gamer",
     });
 
@@ -378,7 +384,7 @@ describe("PATCH /api/gamers/[id]", () => {
     };
     const fetch = mockProfileFetch({
       id: "gamer-1",
-      display_name: "Existing",
+      first_name: "Existing",
       role: "gamer",
     });
 

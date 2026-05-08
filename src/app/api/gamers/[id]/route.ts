@@ -20,20 +20,20 @@ export async function PATCH(
 
     // 2. Validate input
     const body = await request.json();
-    const { displayName, password } = body;
+    const { firstName, password } = body;
     const hasMinecraft = "minecraftUsername" in body;
 
-    if (!displayName && !password && !hasMinecraft) {
+    if (!firstName && !password && !hasMinecraft) {
       return NextResponse.json(
-        { error: "At least one of displayName, password, or minecraftUsername is required" },
+        { error: "At least one of firstName, password, or minecraftUsername is required" },
         { status: 400 },
       );
     }
 
-    if (displayName !== undefined) {
-      if (typeof displayName !== "string" || displayName.trim().length < DISPLAY_NAME_MIN || displayName.trim().length > DISPLAY_NAME_MAX) {
+    if (firstName !== undefined) {
+      if (typeof firstName !== "string" || firstName.trim().length < DISPLAY_NAME_MIN || firstName.trim().length > DISPLAY_NAME_MAX) {
         return NextResponse.json(
-          { error: `Display name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters` },
+          { error: `First name must be between ${DISPLAY_NAME_MIN} and ${DISPLAY_NAME_MAX} characters` },
           { status: 400 },
         );
       }
@@ -91,13 +91,15 @@ export async function PATCH(
     }
 
     // 5. Apply updates via admin client
-    if (displayName !== undefined) {
-      const trimmed = displayName.trim();
+    if (firstName !== undefined) {
+      const trimmed = firstName.trim();
 
-      const { error: profileError } = await admin
+      const { data: updatedRow, error: profileError } = await admin
         .from("profiles")
-        .update({ display_name: trimmed })
-        .eq("id", gamerId);
+        .update({ first_name: trimmed })
+        .eq("id", gamerId)
+        .select("first_name, last_name")
+        .single();
 
       if (profileError) {
         return NextResponse.json(
@@ -106,11 +108,16 @@ export async function PATCH(
         );
       }
 
-      // Best-effort: sync display name to auth metadata for Supabase dashboard visibility.
-      // The profiles table is the source of truth — if this fails, the app is unaffected.
+      // Sync to auth metadata so the Supabase dashboard label stays current.
+      // Compose display_name from the post-update row so the dashboard sees a
+      // human-readable full name. The profiles table is the source of truth —
+      // if this sync fails, the app is unaffected.
+      const composed = [updatedRow.first_name, updatedRow.last_name]
+        .filter(Boolean)
+        .join(" ");
       const { error: authError } = await admin.auth.admin.updateUserById(
         gamerId,
-        { user_metadata: { display_name: trimmed } },
+        { user_metadata: { first_name: updatedRow.first_name, display_name: composed } },
       );
 
       if (authError) {

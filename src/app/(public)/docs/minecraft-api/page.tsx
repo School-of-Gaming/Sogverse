@@ -117,7 +117,7 @@ export default function MinecraftApiDocsPage() {
               <CodeBlock>{`{
   "allowed": true,
   "role": "gamer",
-  "displayName": "CoolKid",
+  "firstName": "CoolKid",
   "endTime": "2026-03-19T15:05:00.000Z",
   "reason": "Intro to Redstone with GeduSteve"
 }`}</CodeBlock>
@@ -128,8 +128,8 @@ export default function MinecraftApiDocsPage() {
                 <Field name="role" type={`"gamer" | "gedu"`}>
                   {t('responses.fields.role')}
                 </Field>
-                <Field name="displayName" type="string">
-                  {t('responses.fields.displayName')}
+                <Field name="firstName" type="string">
+                  {t('responses.fields.firstName')}
                 </Field>
                 <Field name="endTime" type="ISO 8601 string">
                   {t('responses.fields.endTime')}
@@ -155,7 +155,7 @@ export default function MinecraftApiDocsPage() {
               <CodeBlock>{`{
   "allowed": false,
   "role": "gamer",
-  "displayName": "CoolKid",
+  "firstName": "CoolKid",
   "reason": "No active session"
 }`}</CodeBlock>
               <p className="mt-4 text-sm text-muted-foreground">

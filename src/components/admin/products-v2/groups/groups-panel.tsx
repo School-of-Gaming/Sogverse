@@ -41,7 +41,7 @@ function DragOverlayContent({
   const overlay = useMemo(() => {
     if (!active) return null;
     const data = active.data.current as
-      | { participationId: string; gamerId: string; displayName: string }
+      | { participationId: string; gamerId: string; firstName: string }
       | undefined;
     if (!data) return null;
 
@@ -63,7 +63,7 @@ function DragOverlayContent({
     <GamerChip
       participationId={overlay.id}
       gamerId={overlay.gamer_id}
-      displayName={overlay.gamer_display_name}
+      firstName={overlay.gamer_first_name}
       dateOfBirth={overlay.gamer_date_of_birth}
       gender={overlay.gamer_gender}
     />
@@ -266,7 +266,7 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
             type: "ADD_GEDU",
             groupId: pickerForGroupId,
             geduId: gedu.id,
-            displayName: gedu.display_name,
+            firstName: gedu.first_name,
             email: gedu.email,
           });
           setPickerForGroupId(null);

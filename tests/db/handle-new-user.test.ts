@@ -56,7 +56,7 @@ describe("handle_new_user() role assignment", () => {
   it("blocks admin role escalation via user_metadata", async () => {
     const user = await createTestUser({
       email: "escalation-admin@test.local",
-      user_metadata: { role: "admin", display_name: "Fake Admin" },
+      user_metadata: { role: "admin", first_name: "Fake", last_name: "Admin" },
     });
 
     const profile = await getProfile(user.id);
@@ -66,7 +66,7 @@ describe("handle_new_user() role assignment", () => {
   it("blocks gedu role escalation via user_metadata", async () => {
     const user = await createTestUser({
       email: "escalation-gedu@test.local",
-      user_metadata: { role: "gedu", display_name: "Fake Gedu" },
+      user_metadata: { role: "gedu", first_name: "Fake", last_name: "Gedu" },
     });
 
     const profile = await getProfile(user.id);
@@ -76,7 +76,7 @@ describe("handle_new_user() role assignment", () => {
   it("blocks gamer role escalation via user_metadata", async () => {
     const user = await createTestUser({
       email: "escalation-gamer@test.local",
-      user_metadata: { role: "gamer", display_name: "Fake Gamer" },
+      user_metadata: { role: "gamer", first_name: "Fake", last_name: "Gamer" },
     });
 
     const profile = await getProfile(user.id);
@@ -86,7 +86,7 @@ describe("handle_new_user() role assignment", () => {
   it("blocks gamer email domain from creating gamer account", async () => {
     const user = await createTestUser({
       email: "sneaky@gamer.sogverse.internal",
-      user_metadata: { display_name: "Sneaky Gamer" },
+      user_metadata: { first_name: "Sneaky", last_name: "Gamer" },
     });
 
     const profile = await getProfile(user.id);
@@ -96,7 +96,7 @@ describe("handle_new_user() role assignment", () => {
   it("defaults to customer when no role metadata is provided", async () => {
     const user = await createTestUser({
       email: "norole@test.local",
-      user_metadata: { display_name: "No Role User" },
+      user_metadata: { first_name: "No Role", last_name: "User" },
     });
 
     const profile = await getProfile(user.id);
@@ -106,7 +106,7 @@ describe("handle_new_user() role assignment", () => {
   it("creates customer_profiles extension row for every signup", async () => {
     const user = await createTestUser({
       email: "extension@test.local",
-      user_metadata: { display_name: "Extension Test" },
+      user_metadata: { first_name: "Extension", last_name: "Test" },
     });
 
     const { data, error } = await admin

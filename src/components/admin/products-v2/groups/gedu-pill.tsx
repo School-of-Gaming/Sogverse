@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 interface GeduPillProps {
   geduId: string;
-  displayName: string;
+  firstName: string;
   email?: string | null;
   isPending?: boolean;
   isPendingRemove?: boolean;
@@ -18,7 +18,7 @@ interface GeduPillProps {
 
 export function GeduPill({
   geduId,
-  displayName,
+  firstName,
   email,
   isPending,
   isPendingRemove,
@@ -38,7 +38,7 @@ export function GeduPill({
         <Identicon id={geduId} size={28} />
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{displayName}</p>
+        <p className="truncate font-medium">{firstName}</p>
         {email && (
           <p className="truncate text-[10px] text-muted-foreground">{email}</p>
         )}
@@ -57,7 +57,7 @@ export function GeduPill({
         <button
           type="button"
           onClick={onRemove}
-          aria-label={t("gedu.removeAria", { name: displayName })}
+          aria-label={t("gedu.removeAria", { name: firstName })}
           className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <X className="h-3.5 w-3.5" />

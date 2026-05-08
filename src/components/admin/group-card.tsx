@@ -37,12 +37,12 @@ const GENDER_KEYS: Record<string, string> = {
 // reconciliation since its primitive props don't change during drag.
 const GamerChipContent = memo(function GamerChipContent({
   gamerId,
-  displayName,
+  firstName,
   dateOfBirth,
   gender,
 }: {
   gamerId: string;
-  displayName: string;
+  firstName: string;
   dateOfBirth: string;
   gender: string;
 }) {
@@ -56,7 +56,7 @@ const GamerChipContent = memo(function GamerChipContent({
         <Identicon id={gamerId} size={28} />
       </Avatar>
       <div className="min-w-0 flex-1">
-        <p className="truncate leading-tight">{displayName}</p>
+        <p className="truncate leading-tight">{firstName}</p>
         {detail && (
           <p className="text-[10px] leading-tight text-muted-foreground">{detail}</p>
         )}
@@ -68,17 +68,17 @@ const GamerChipContent = memo(function GamerChipContent({
 
 interface EnrolledGamerChipProps {
   gamerId: string;
-  displayName: string;
+  firstName: string;
   dateOfBirth: string;
   gender: string;
   groupId: string;
   isMoved?: boolean;
 }
 
-export function EnrolledGamerChip({ gamerId, displayName, dateOfBirth, gender, groupId, isMoved }: EnrolledGamerChipProps) {
+export function EnrolledGamerChip({ gamerId, firstName, dateOfBirth, gender, groupId, isMoved }: EnrolledGamerChipProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `gamer-${gamerId}`,
-    data: { gamerId, displayName, fromGroupId: groupId },
+    data: { gamerId, firstName, fromGroupId: groupId },
   });
 
   return (
@@ -96,7 +96,7 @@ export function EnrolledGamerChip({ gamerId, displayName, dateOfBirth, gender, g
     >
       <GamerChipContent
         gamerId={gamerId}
-        displayName={displayName}
+        firstName={firstName}
         dateOfBirth={dateOfBirth}
         gender={gender}
       />
@@ -109,10 +109,10 @@ export function EnrolledGamerChip({ gamerId, displayName, dateOfBirth, gender, g
 interface GroupCardProps {
   group: EffectiveGroup;
   groupLabel: string;
-  gedus: Pick<Profile, "id" | "display_name" | "email">[];
+  gedus: Pick<Profile, "id" | "first_name" | "email">[];
   usedGeduIds: string[];
   onDelete: (groupId: string) => void;
-  onReassignGedu: (groupId: string, geduId: string, geduDisplayName: string) => void;
+  onReassignGedu: (groupId: string, geduId: string, geduFirstName: string) => void;
 }
 
 export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onReassignGedu }: GroupCardProps) {
@@ -172,7 +172,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
                 </span>
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                {group.geduDisplayName}
+                {group.geduFirstName}
               </p>
               {hasGamers && (ageRange || genderParts.length > 0) && (
                 <p className="text-xs text-muted-foreground">
@@ -220,7 +220,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
                 <EnrolledGamerChip
                   key={g.gamerId}
                   gamerId={g.gamerId}
-                  displayName={g.displayName}
+                  firstName={g.firstName}
                   dateOfBirth={g.dateOfBirth}
                   gender={g.gender}
                   groupId={group.id}
@@ -279,8 +279,8 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
           gedus={gedus}
           excludeIds={usedGeduIds}
           highlightId={group.geduId}
-          onSelect={(geduId, displayName) =>
-            onReassignGedu(group.id, geduId, displayName)
+          onSelect={(geduId, firstName) =>
+            onReassignGedu(group.id, geduId, firstName)
           }
         />
       )}

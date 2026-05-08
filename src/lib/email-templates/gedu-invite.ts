@@ -10,11 +10,11 @@ export function buildGeduInviteEmail(
   t: EmailTranslator,
   setupLink: string,
   locale: string,
-  displayName: string,
+  firstName: string,
 ): string {
   const content = `
     ${heading(t("geduInvite.heading"))}
-    ${paragraph(t("geduInvite.greeting", { name: displayName }))}
+    ${paragraph(t("geduInvite.greeting", { name: firstName }))}
     ${paragraph(t.markup("geduInvite.body", { strong: (chunks) => `<strong class="brand-primary" style="color:${BRAND.primary};">${chunks}</strong>` }))}
     ${paragraph(t("geduInvite.expiry"))}
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0;">

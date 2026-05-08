@@ -46,7 +46,7 @@ function createRequest(body: Record<string, unknown>): Request {
 const validBody = {
   username: "newgamer",
   password: "password123",
-  displayName: "New Gamer",
+  firstName: "New Gamer",
   dateOfBirth: "2015-06-15",
   gender: "boy",
 };
@@ -60,14 +60,26 @@ const validBody = {
 function mockPreCreateChecks(config: {
   usernameExists?: boolean;
   uuidExists?: boolean;
+  parentLastName?: string | null;
 }) {
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "profiles") {
+      // Two distinct chains hit profiles in this phase:
+      //   1. username-uniqueness: .select("id").eq().maybeSingle()
+      //   2. parent last_name snapshot: .select("last_name").eq().single()
+      // Branch on the column passed to .select() so each test can configure
+      // whether the username is taken AND what last_name to inherit.
       return {
-        select: () => ({
+        select: (col: string) => ({
           eq: () => ({
             maybeSingle: () => Promise.resolve({
               data: config.usernameExists ? { id: "existing-id" } : null,
+              error: null,
+            }),
+            single: () => Promise.resolve({
+              data: col.includes("last_name")
+                ? { last_name: config.parentLastName ?? "" }
+                : null,
               error: null,
             }),
           }),

@@ -83,28 +83,28 @@ export async function POST(
     geduIds.delete("");
     gamerIds.delete("");
 
-    const geduProfiles = new Map<string, { displayName: string; email: string; locale: SupportedLocale }>();
+    const geduProfiles = new Map<string, { firstName: string; email: string; locale: SupportedLocale }>();
     if (geduIds.size > 0) {
       const { data: gedus } = await admin
         .from("profiles")
-        .select("id, display_name, email, locale")
+        .select("id, first_name, email, locale")
         .in("id", Array.from(geduIds));
       for (const g of gedus ?? []) {
         if (g.email) {
-          geduProfiles.set(g.id, { displayName: g.display_name, email: g.email, locale: resolveLocale(g.locale) });
+          geduProfiles.set(g.id, { firstName: g.first_name, email: g.email, locale: resolveLocale(g.locale) });
         }
       }
     }
 
-    const gamerProfiles = new Map<string, { displayName: string }>();
+    const gamerProfiles = new Map<string, { firstName: string }>();
     const gamerParentIds = new Map<string, string>();
     if (gamerIds.size > 0) {
       const { data: gamers } = await admin
         .from("profiles")
-        .select("id, display_name")
+        .select("id, first_name")
         .in("id", Array.from(gamerIds));
       for (const g of gamers ?? []) {
-        gamerProfiles.set(g.id, { displayName: g.display_name });
+        gamerProfiles.set(g.id, { firstName: g.first_name });
       }
 
       const { data: enrollments } = await admin
@@ -152,10 +152,10 @@ export async function POST(
       if (reassignmentGamerIds.size > 0) {
         const { data: gamers } = await admin
           .from("profiles")
-          .select("id, display_name")
+          .select("id, first_name")
           .in("id", Array.from(reassignmentGamerIds));
         for (const g of gamers ?? []) {
-          gamerProfiles.set(g.id, { displayName: g.display_name });
+          gamerProfiles.set(g.id, { firstName: g.first_name });
         }
       }
     }
@@ -166,15 +166,15 @@ export async function POST(
       for (const { parentId } of map.values()) allParentIds.add(parentId);
     }
 
-    const parentProfiles = new Map<string, { displayName: string; email: string; locale: SupportedLocale }>();
+    const parentProfiles = new Map<string, { firstName: string; email: string; locale: SupportedLocale }>();
     if (allParentIds.size > 0) {
       const { data: parents } = await admin
         .from("profiles")
-        .select("id, display_name, email, locale")
+        .select("id, first_name, email, locale")
         .in("id", Array.from(allParentIds));
       for (const p of parents ?? []) {
         if (p.email) {
-          parentProfiles.set(p.id, { displayName: p.display_name, email: p.email, locale: resolveLocale(p.locale) });
+          parentProfiles.set(p.id, { firstName: p.first_name, email: p.email, locale: resolveLocale(p.locale) });
         }
       }
     }
@@ -207,7 +207,7 @@ export async function POST(
         toEmail: gedu.email,
         fromName: t("senderEnrollment"),
         subject: t("groupAdded.subject", { productName }),
-        htmlContent: buildGroupAddedEmail(t, gedu.locale, { geduName: gedu.displayName, productName }),
+        htmlContent: buildGroupAddedEmail(t, gedu.locale, { geduName: gedu.firstName, productName }),
         cc: adminEmails.filter((e) => e !== gedu.email),
         description: `Group added → ${gedu.email}`,
       });
@@ -221,7 +221,7 @@ export async function POST(
         toEmail: gedu.email,
         fromName: t("senderEnrollment"),
         subject: t("groupDeleted.subject", { productName }),
-        htmlContent: buildGroupDeletedEmail(t, gedu.locale, { geduName: gedu.displayName, productName }),
+        htmlContent: buildGroupDeletedEmail(t, gedu.locale, { geduName: gedu.firstName, productName }),
         cc: adminEmails.filter((e) => e !== gedu.email),
         description: `Group deleted → ${gedu.email}`,
       });
@@ -238,8 +238,8 @@ export async function POST(
         fromName: oldT("senderEnrollment"),
         subject: oldT("groupReassignedOldGedu.subject", { productName }),
         htmlContent: buildGroupReassignedOldGeduEmail(oldT, oldGedu.locale, {
-          oldGeduName: oldGedu.displayName,
-          newGeduName: newGedu.displayName,
+          oldGeduName: oldGedu.firstName,
+          newGeduName: newGedu.firstName,
           productName,
         }),
         cc: adminEmails.filter((e) => e !== oldGedu.email),
@@ -252,8 +252,8 @@ export async function POST(
         fromName: newT("senderEnrollment"),
         subject: newT("groupReassignedNewGedu.subject", { productName }),
         htmlContent: buildGroupReassignedNewGeduEmail(newT, newGedu.locale, {
-          oldGeduName: oldGedu.displayName,
-          newGeduName: newGedu.displayName,
+          oldGeduName: oldGedu.firstName,
+          newGeduName: newGedu.firstName,
           productName,
         }),
         cc: adminEmails.filter((e) => e !== newGedu.email),
@@ -270,12 +270,12 @@ export async function POST(
           emailJobs.push({
             toEmail: parent.email,
             fromName: pT("senderEnrollment"),
-            subject: pT("groupReassignedParent.subject", { gamerName: gamer.displayName, productName }),
+            subject: pT("groupReassignedParent.subject", { gamerName: gamer.firstName, productName }),
             htmlContent: buildGroupReassignedParentEmail(pT, parent.locale, {
-              parentName: parent.displayName,
-              gamerName: gamer.displayName,
-              oldGeduName: oldGedu.displayName,
-              newGeduName: newGedu.displayName,
+              parentName: parent.firstName,
+              gamerName: gamer.firstName,
+              oldGeduName: oldGedu.firstName,
+              newGeduName: newGedu.firstName,
               productName,
             }),
             bcc: adminEmails.filter((e) => e !== parent.email),
@@ -299,12 +299,12 @@ export async function POST(
           emailJobs.push({
             toEmail: parent.email,
             fromName: pT("senderEnrollment"),
-            subject: pT("gamerMovedParent.subject", { gamerName: gamer.displayName, productName }),
+            subject: pT("gamerMovedParent.subject", { gamerName: gamer.firstName, productName }),
             htmlContent: buildGamerMovedParentEmail(pT, parent.locale, {
-              parentName: parent.displayName,
-              gamerName: gamer.displayName,
-              oldGeduName: oldGedu.displayName,
-              newGeduName: newGedu.displayName,
+              parentName: parent.firstName,
+              gamerName: gamer.firstName,
+              oldGeduName: oldGedu.firstName,
+              newGeduName: newGedu.firstName,
               productName,
             }),
             bcc: adminEmails.filter((e) => e !== parent.email),
@@ -317,11 +317,11 @@ export async function POST(
       emailJobs.push({
         toEmail: oldGedu.email,
         fromName: oldT("senderEnrollment"),
-        subject: oldT("gamerMovedOldGedu.subject", { gamerName: gamer.displayName, productName }),
+        subject: oldT("gamerMovedOldGedu.subject", { gamerName: gamer.firstName, productName }),
         htmlContent: buildGamerMovedOldGeduEmail(oldT, oldGedu.locale, {
-          geduName: oldGedu.displayName,
-          gamerName: gamer.displayName,
-          newGeduName: newGedu.displayName,
+          geduName: oldGedu.firstName,
+          gamerName: gamer.firstName,
+          newGeduName: newGedu.firstName,
           productName,
         }),
         cc: adminEmails.filter((e) => e !== oldGedu.email),
@@ -332,11 +332,11 @@ export async function POST(
       emailJobs.push({
         toEmail: newGedu.email,
         fromName: newT("senderEnrollment"),
-        subject: newT("gamerMovedNewGedu.subject", { gamerName: gamer.displayName, productName }),
+        subject: newT("gamerMovedNewGedu.subject", { gamerName: gamer.firstName, productName }),
         htmlContent: buildGamerMovedNewGeduEmail(newT, newGedu.locale, {
-          geduName: newGedu.displayName,
-          gamerName: gamer.displayName,
-          oldGeduName: oldGedu.displayName,
+          geduName: newGedu.firstName,
+          gamerName: gamer.firstName,
+          oldGeduName: oldGedu.firstName,
           productName,
         }),
         cc: adminEmails.filter((e) => e !== newGedu.email),

@@ -26,10 +26,17 @@ export class UsersService {
 
     if (error) throw error;
 
-    // Sync display_name to auth.users metadata so it shows in Supabase dashboard
-    if (updates.display_name !== undefined) {
+    // Sync name fields to auth.users metadata so they show in the Supabase
+    // dashboard. Keep writing display_name (composed) for the dashboard label,
+    // and first_name/last_name separately for tooling that prefers them.
+    if (updates.first_name !== undefined || updates.last_name !== undefined) {
+      const composed = [data.first_name, data.last_name].filter(Boolean).join(" ");
       await this.supabase.auth.updateUser({
-        data: { display_name: updates.display_name },
+        data: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          display_name: composed,
+        },
       });
     }
 
@@ -61,7 +68,7 @@ export class UsersService {
     const { data, error } = await this.supabase
       .from("profiles")
       .select("*")
-      .or(`email.ilike.%${escapeLikePattern(query)}%,username.ilike.%${escapeLikePattern(query)}%,display_name.ilike.%${escapeLikePattern(query)}%`)
+      .or(`email.ilike.%${escapeLikePattern(query)}%,username.ilike.%${escapeLikePattern(query)}%,first_name.ilike.%${escapeLikePattern(query)}%,last_name.ilike.%${escapeLikePattern(query)}%`)
       .order("created_at", { ascending: false })
       .limit(20);
 
@@ -78,11 +85,16 @@ export class UsersService {
     return data;
   }
 
-  async createGedu(email: string, displayName: string, locale?: string): Promise<{ warning?: string }> {
+  async createGedu(
+    email: string,
+    firstName: string,
+    lastName: string | null,
+    locale?: string,
+  ): Promise<{ warning?: string }> {
     const response = await fetch("/api/admin/create-gedu", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, displayName, locale }),
+      body: JSON.stringify({ email, firstName, lastName, locale }),
     });
 
     const data = await response.json();

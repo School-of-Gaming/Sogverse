@@ -18,7 +18,8 @@ const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
-  displayName: z.string().min(DISPLAY_NAME_MIN, `Display name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Display name must be at most ${DISPLAY_NAME_MAX} characters`),
+  firstName: z.string().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
+  lastName: z.string().max(DISPLAY_NAME_MAX, `Last name must be at most ${DISPLAY_NAME_MAX} characters`).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -31,7 +32,8 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -47,15 +49,23 @@ export function RegisterForm() {
         email,
         password,
         confirmPassword,
-        displayName,
+        firstName,
+        lastName: lastName.trim() || undefined,
       });
+
+      const composedDisplayName = [validatedData.firstName, validatedData.lastName ?? ""]
+        .filter(Boolean)
+        .join(" ");
 
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: validatedData.email,
         password: validatedData.password,
         options: {
           data: {
-            display_name: validatedData.displayName,
+            first_name: validatedData.firstName,
+            last_name: validatedData.lastName ?? "",
+            // Composed for the Supabase Auth dashboard's display label.
+            display_name: composedDisplayName,
             role: "customer",
           },
         },
@@ -113,17 +123,30 @@ export function RegisterForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="displayName">{t('register.parentDisplayName')}</Label>
+            <Label htmlFor="firstName">{t('register.parentFirstName')}</Label>
             <Input
-              id="displayName"
+              id="firstName"
               type="text"
-              placeholder={t('register.namePlaceholder')}
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder={t('register.firstNamePlaceholder')}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
               disabled={isLoading}
               required
               maxLength={DISPLAY_NAME_MAX}
-              autoComplete="name"
+              autoComplete="given-name"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="lastName">{t('register.parentLastName')}</Label>
+            <Input
+              id="lastName"
+              type="text"
+              placeholder={t('register.lastNamePlaceholder')}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              disabled={isLoading}
+              maxLength={DISPLAY_NAME_MAX}
+              autoComplete="family-name"
             />
           </div>
           <div className="space-y-2">

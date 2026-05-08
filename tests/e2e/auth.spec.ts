@@ -39,7 +39,8 @@ test.describe("Authentication Pages", () => {
         page.getByRole("heading", { name: /create an account/i })
       ).toBeVisible();
 
-      await expect(page.getByLabel(/display name/i)).toBeVisible();
+      await expect(page.getByLabel(/first name/i).first()).toBeVisible();
+      await expect(page.getByLabel(/last name/i).first()).toBeVisible();
       await expect(page.getByLabel(/email/i)).toBeVisible();
       await expect(page.getByLabel(/^password$/i)).toBeVisible();
       await expect(page.getByLabel(/confirm password/i)).toBeVisible();

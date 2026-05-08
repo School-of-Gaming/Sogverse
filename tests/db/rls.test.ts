@@ -56,13 +56,13 @@ describe("Row Level Security", () => {
     it("customer can read own profile", async () => {
       const { data, error } = await customerClient
         .from("profiles")
-        .select("id, role, display_name")
+        .select("id, role, first_name")
         .eq("id", TEST_IDS.CUSTOMER)
         .single();
 
       expect(error).toBeNull();
       expect(data!.role).toBe("customer");
-      expect(data!.display_name).toBe("Test Customer");
+      expect(data!.first_name).toBe("Test");
     });
 
     it("customer cannot read another customer's profile", async () => {
@@ -135,7 +135,7 @@ describe("Row Level Security", () => {
       const { error } = await customerClient.from("profiles").insert({
         id: "00000000-0000-0000-0000-000000000099",
         role: "customer",
-        display_name: "Injected",
+        first_name: "Injected",
       });
 
       expect(error).not.toBeNull();
@@ -816,7 +816,7 @@ describe("Row Level Security", () => {
           email: "temp-gamer@gamer.sogverse.internal",
           password: "testpassword123",
           email_confirm: true,
-          user_metadata: { display_name: "Temp Gamer" },
+          user_metadata: { first_name: "Temp", last_name: "Gamer" },
         });
 
         // Promote to gamer (same pattern as seed.sql)

@@ -209,7 +209,7 @@ describe("POST /api/admin/products/[id]/groups/apply", () => {
     );
 
     // Gedu profile lookup + admin emails
-    const geduData = [{ id: "gedu-1", display_name: "Alice", email: "alice@test.com" }];
+    const geduData = [{ id: "gedu-1", first_name: "Alice", email: "alice@test.com" }];
     const adminData = [{ email: "admin@test.com" }];
     let fromCallCount = 0;
     mockAdminFrom.mockImplementation((table: string) => {
