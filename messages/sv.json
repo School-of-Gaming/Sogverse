@@ -848,37 +848,11 @@
   "auth": {
     "login": {
       "welcomeTitle": "Välkommen till Sogverse",
-      "chooseRole": "Välj hur du vill logga in",
+      "description": "Logga in på ditt konto",
       "noAccountSignUp": "Har du inget konto? <link>Registrera dig</link>",
       "signingIn": "Loggar in...",
-      "startPlaying": "Börja spela!",
-      "gamerHelp": "Behöver du hjälp? Fråga din förälder eller vårdnadshavare.",
-      "geduAccountNote": "Gedu-konton skapas av en administratör.",
-      "gamerInvalidCredentials": "Felaktigt användarnamn eller lösenord. Försök igen.",
       "emailPlaceholder": "du@example.com",
-      "passwordPlaceholder": "Ange ditt lösenord",
-      "gamerUsernamePlaceholder": "Ditt spelaranvändarnamn",
-      "gamerPasswordPlaceholder": "Ditt hemliga lösenord",
-      "roles": {
-        "customer": {
-          "title": "Förälder",
-          "subtitle": "Hantera dina spelare",
-          "loginTitle": "Föräldrar loggar in",
-          "description": "Logga in för att hantera köp och spelarkonton"
-        },
-        "gedu": {
-          "title": "Gedu",
-          "subtitle": "Lär ut & inspirera",
-          "loginTitle": "Gedu loggar in",
-          "description": "Logga in för att komma åt dina undervisningsverktyg"
-        },
-        "gamer": {
-          "title": "Spelare",
-          "subtitle": "Börja spela",
-          "loginTitle": "Spelare loggar in",
-          "description": "Logga in med ditt användarnamn för att börja spela"
-        }
-      }
+      "passwordPlaceholder": "Ange ditt lösenord"
     },
     "register": {
       "title": "Skapa ett konto",

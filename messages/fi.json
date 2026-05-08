@@ -848,37 +848,11 @@
   "auth": {
     "login": {
       "welcomeTitle": "Tervetuloa Sogverseen",
-      "chooseRole": "Valitse miten haluat kirjautua",
+      "description": "Kirjaudu tilillesi",
       "noAccountSignUp": "Eikö sinulla ole tiliä? <link>Rekisteröidy</link>",
       "signingIn": "Kirjaudutaan...",
-      "startPlaying": "Aloita pelaaminen!",
-      "gamerHelp": "Tarvitsetko apua? Kysy vanhemmaltasi tai huoltajaltasi.",
-      "geduAccountNote": "Gedu-tilit luodaan ylläpitäjän toimesta.",
-      "gamerInvalidCredentials": "Väärä käyttäjänimi tai salasana. Yritä uudelleen.",
       "emailPlaceholder": "sinä@example.com",
-      "passwordPlaceholder": "Syötä salasanasi",
-      "gamerUsernamePlaceholder": "Pelikäyttäjänimesi",
-      "gamerPasswordPlaceholder": "Salainen salasanasi",
-      "roles": {
-        "customer": {
-          "title": "Vanhempi",
-          "subtitle": "Hallitse pelaajiasi",
-          "loginTitle": "Vanhemman kirjautuminen",
-          "description": "Kirjaudu hallitaksesi ostoksia ja pelaajatilejä"
-        },
-        "gedu": {
-          "title": "Gedu",
-          "subtitle": "Opeta ja inspiroi",
-          "loginTitle": "Gedun kirjautuminen",
-          "description": "Kirjaudu käyttääksesi opetustyökalujasi"
-        },
-        "gamer": {
-          "title": "Pelaaja",
-          "subtitle": "Aloita pelaaminen",
-          "loginTitle": "Pelaajan kirjautuminen",
-          "description": "Kirjaudu käyttäjänimelläsi aloittaaksesi pelaamisen"
-        }
-      }
+      "passwordPlaceholder": "Syötä salasanasi"
     },
     "register": {
       "title": "Luo tili",

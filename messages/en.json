@@ -848,37 +848,11 @@
   "auth": {
     "login": {
       "welcomeTitle": "Welcome to the Sogverse",
-      "chooseRole": "Choose how you'd like to sign in",
+      "description": "Sign in to your account",
       "noAccountSignUp": "Don't have an account? <link>Sign up</link>",
       "signingIn": "Signing in...",
-      "startPlaying": "Start Playing!",
-      "gamerHelp": "Need help? Ask your parent or guardian.",
-      "geduAccountNote": "Gedu accounts are created by an administrator.",
-      "gamerInvalidCredentials": "Incorrect username or password. Please try again.",
       "emailPlaceholder": "you@example.com",
-      "passwordPlaceholder": "Enter your password",
-      "gamerUsernamePlaceholder": "Your gaming username",
-      "gamerPasswordPlaceholder": "Your secret password",
-      "roles": {
-        "customer": {
-          "title": "Parent",
-          "subtitle": "Manage your gamers",
-          "loginTitle": "Parent Login",
-          "description": "Sign in to manage purchases and gamer accounts"
-        },
-        "gedu": {
-          "title": "Gedu",
-          "subtitle": "Teach & inspire",
-          "loginTitle": "Gedu Login",
-          "description": "Sign in to access your teaching tools"
-        },
-        "gamer": {
-          "title": "Gamer",
-          "subtitle": "Start playing",
-          "loginTitle": "Gamer Login",
-          "description": "Sign in with your username to start playing"
-        }
-      }
+      "passwordPlaceholder": "Enter your password"
     },
     "register": {
       "title": "Create an account",

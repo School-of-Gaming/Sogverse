@@ -893,37 +893,11 @@
   "auth": {
     "login": {
       "welcomeTitle": "Sogverse bIghoS, SuvwI'!",
-      "chooseRole": "nuqDaq bI'el",
+      "description": "accountlIj yI'el",
       "noAccountSignUp": "account DaHutlh'a'? <link>DachenmoH</link>",
       "signingIn": "bI'el...",
-      "startPlaying": "DaH yItoy'!",
-      "gamerHelp": "DaQaHnIS'a'? vav qoj SoS yIjatlh.",
-      "geduAccountNote": "Gedu accountmey admin chenmoH.",
-      "gamerInvalidCredentials": "lo'wI' pong qoj mu'mey Qagh. yIboq.",
       "emailPlaceholder": "SoH@example.com",
-      "passwordPlaceholder": "mu'mey yIchel",
-      "gamerUsernamePlaceholder": "SoH toy'a' pong",
-      "gamerPasswordPlaceholder": "SoH peghHa' mu'mey",
-      "roles": {
-        "customer": {
-          "title": "vav/SoS",
-          "subtitle": "toy'wI'pu' tI'ang",
-          "loginTitle": "vav/SoS bI'el",
-          "description": "bI'el — Huch je toy'wI' accountmey tI'ang"
-        },
-        "gedu": {
-          "title": "Gedu",
-          "subtitle": "ghojmoH je QaQ",
-          "loginTitle": "Gedu bI'el",
-          "description": "bI'el — ghojmoH Qu'mey yIlo'"
-        },
-        "gamer": {
-          "title": "toy'wI'",
-          "subtitle": "DaH yItoy'",
-          "loginTitle": "toy'wI' bI'el",
-          "description": "lo'wI' pong yIlo' — DaH yItoy'"
-        }
-      }
+      "passwordPlaceholder": "mu'mey yIchel"
     },
     "register": {
       "title": "Account yIchenmoH",
