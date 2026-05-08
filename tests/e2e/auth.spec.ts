@@ -10,7 +10,7 @@ test.describe("Authentication Pages", () => {
       ).toBeVisible();
 
       await expect(page.getByLabel(/email/i)).toBeVisible();
-      await expect(page.getByLabel(/password/i)).toBeVisible();
+      await expect(page.getByLabel(/^password$/i)).toBeVisible();
       await expect(
         page.locator("form").getByRole("button", { name: /sign in/i })
       ).toBeVisible();
