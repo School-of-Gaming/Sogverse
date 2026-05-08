@@ -39,7 +39,11 @@ export default function GamerDashboardPage() {
 
         <section id="yty" className="scroll-mt-32 space-y-6">
           <div className="text-center">
-            <h2 className="font-display text-3xl font-bold text-primary">
+            {/* Two-size pattern matching the public Home heading:
+                font-display (Press Start 2P) is monospaced ~1em-wide, so a
+                long Finnish word like "Tervetuloa," overflows mobile at
+                text-3xl. break-words is a safety net for longer translations. */}
+            <h2 className="font-display text-xl font-bold text-primary break-words md:text-3xl">
               {t('welcome')}
             </h2>
             <p className="text-muted-foreground">
