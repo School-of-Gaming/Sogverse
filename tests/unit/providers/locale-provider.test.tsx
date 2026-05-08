@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, waitFor } from "@testing-library/react";
-import { LocaleProvider } from "@/providers/locale-provider";
+import { LocaleProvider, useLocaleControl } from "@/providers/locale-provider";
 import type { Profile } from "@/types";
 
 // Shared mock state for useAuth — updated per test via mockAuth.*
@@ -12,6 +12,15 @@ const mockAuth = vi.hoisted(() => ({
 
 vi.mock("@/providers/auth-provider", () => ({
   useAuth: () => mockAuth,
+}));
+
+// LocaleProvider seeds its initial state from useLocale() (the server-
+// resolved locale exposed by NextIntlClientProvider). Tests render the
+// provider in isolation, so stub useLocale to return the default; tests
+// that care about a specific seed value can override mockIntlLocale.value.
+const mockIntlLocale = vi.hoisted(() => ({ value: "en" }));
+vi.mock("next-intl", () => ({
+  useLocale: () => mockIntlLocale.value,
 }));
 
 // The real next/navigation useRouter returns a stable object across renders.
@@ -55,7 +64,32 @@ describe("LocaleProvider", () => {
     clearCookies();
     mockAuth.profile = null;
     mockAuth.user = null;
+    mockIntlLocale.value = "en";
     mockRefresh.mockClear();
+  });
+
+  it("seeds the locale from the server-resolved useLocale() value", () => {
+    // Regression: on iOS Safari, navigator.language can disagree with the
+    // Accept-Language the browser actually sent (e.g. system Finnish but
+    // navigator.language reports "en-US"). The server resolves correctly
+    // from Accept-Language, so the client must trust useLocale() rather
+    // than re-deriving from navigator. Without this, the page rendered in
+    // Finnish but the LocalePicker showed the EN flag on first paint.
+    mockIntlLocale.value = "fi";
+
+    let capturedLocale: string | undefined;
+    function Capture() {
+      capturedLocale = useLocaleControl().locale;
+      return null;
+    }
+
+    render(
+      <LocaleProvider>
+        <Capture />
+      </LocaleProvider>,
+    );
+
+    expect(capturedLocale).toBe("fi");
   });
 
   it("syncs the cookie to profile.locale when they disagree on mount", async () => {

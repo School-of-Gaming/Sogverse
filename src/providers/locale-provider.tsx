@@ -18,14 +18,13 @@ import {
   useContext,
   useState,
   useCallback,
-  useRef,
   useEffect,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale } from "next-intl";
 import { useAuth } from "./auth-provider";
 import {
-  detectLocaleFromHeader,
   isSupportedLocale,
   DEFAULT_LOCALE,
   type SupportedLocale,
@@ -34,31 +33,6 @@ import {
 import { getCookie, setCookie } from "@/lib/cookies";
 
 const COOKIE_NAME = "locale";
-
-function resolveInitialLocale(
-  profileLocale: string | null | undefined,
-): SupportedLocale {
-  // 1. Profile preference
-  if (profileLocale && isSupportedLocale(profileLocale)) {
-    return profileLocale;
-  }
-
-  // 2. Cookie
-  const cookieValue = getCookie(COOKIE_NAME);
-  if (cookieValue && isSupportedLocale(cookieValue)) {
-    return cookieValue;
-  }
-
-  // 3. Browser locale detection. detectLocaleFromHeader parses a comma-
-  // separated Accept-Language list, but a single navigator.language tag like
-  // "fi-FI" is just a one-entry list with implicit q=1, which the parser
-  // handles correctly.
-  if (typeof navigator !== "undefined" && navigator.language) {
-    return detectLocaleFromHeader(navigator.language);
-  }
-
-  return DEFAULT_LOCALE;
-}
 
 interface LocaleContextType {
   locale: SupportedLocale;
@@ -72,23 +46,19 @@ const LocaleContext = createContext<LocaleContextType | undefined>(
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const { profile, user, refreshProfile } = useAuth();
   const router = useRouter();
-  // Start with DEFAULT_LOCALE to match SSR (cookies/navigator aren't
-  // available server-side). Synced to the real value after hydration.
-  const [locale, setLocaleState] =
-    useState<SupportedLocale>(DEFAULT_LOCALE);
-
-  // After hydration, resolve the real locale from profile/cookie/browser
-  const hasMounted = useRef(false);
-  useEffect(() => {
-    if (!hasMounted.current) {
-      hasMounted.current = true;
-      const resolved = resolveInitialLocale(profile?.locale);
-      if (resolved !== DEFAULT_LOCALE) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration sync; cookies/navigator aren't available during SSR so we must defer resolution to the client. Guarded by hasMounted.current so it only fires once.
-        setLocaleState(resolved);
-      }
-    }
-  }, [profile?.locale]);
+  // Seed from the server-resolved locale so SSR and the first client paint
+  // agree. The server already ran the priority chain (cookie >
+  // Accept-Language > default) in src/i18n/request.ts and exposed the result
+  // via NextIntlClientProvider, so useLocale() returns the same value both
+  // sides see. Re-deriving on the client from navigator.language used to
+  // miss on iOS Safari, where that value can disagree with what the browser
+  // actually sent in Accept-Language (e.g. system language Finnish but
+  // navigator.language reports "en-US") — the page rendered in Finnish but
+  // the LocalePicker showed the EN flag until the user clicked it.
+  const intlLocale = useLocale();
+  const [locale, setLocaleState] = useState<SupportedLocale>(() =>
+    isSupportedLocale(intlLocale) ? intlLocale : DEFAULT_LOCALE,
+  );
 
   // Derive locale from profile on render rather than using setState in an
   // effect (which triggers a cascading re-render and violates the
