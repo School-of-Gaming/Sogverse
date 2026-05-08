@@ -982,11 +982,7 @@
   },
   "gamer": {
     "welcome": "Tervetuloa, pelaaja!",
-    "subtitle": "Valmis pelaamaan ja oppimaan?",
-    "myGroups": "Ryhmäni",
-    "myGroupsDescription": "Näytä ryhmäsi ja tulevat ääni-istunnot",
-    "tipOfTheDay": "Päivän vinkki",
-    "tipOfTheDayMessage": "Harjoitus tekee mestarin! Liity ryhmäkertaan kehittääksesi taitojasi."
+    "subtitle": "Valmis pelaamaan ja oppimaan?"
   },
   "gedu": {
     "title": "Kasvattajan hallintapaneeli",
@@ -1341,24 +1337,6 @@
     "mcHeadsAttribution": "Ulkoasu renderöity palvelulla <link>mc-heads.net</link>"
   },
   "parent": {
-    "dashboard": {
-      "welcome": "Vanhemman hallintapaneeli",
-      "subtitle": "Hallitse pelaajiasi ja ilmoittautumisia",
-      "quickActions": {
-        "gamers": {
-          "title": "Pelaajani",
-          "description": "Näytä ja hallitse pelaajatilejäsi"
-        },
-        "browseClubs": {
-          "title": "Selaa kerhoja",
-          "description": "Etsi ja ilmoittaudu pelikerhoihin"
-        },
-        "settings": {
-          "title": "Asetukset",
-          "description": "Hallitse tilisi asetuksia"
-        }
-      }
-    },
     "gamers": {
       "title": "Pelaajani",
       "subtitle": "Hallitse pelaajatilejä ja ilmoittautumisia",

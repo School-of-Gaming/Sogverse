@@ -57,6 +57,10 @@ export function DashboardSectionPill({
       aria-label={ariaLabel}
       // Pinned just below the fixed 4rem header. Always visible — dashboard
       // pages have no hero to compete with the way the public Home page does.
+      // Sections that scroll to themselves use `scroll-mt-32` (8rem) to land
+      // clear of: 4rem header (top-0) + 1rem gap + ~3rem pill (top-20 plus
+      // its own height). Keep these in sync if the header height or pill
+      // sizing changes.
       className="sticky top-20 z-40 mx-auto -mt-2 mb-6 w-fit"
     >
       <ul className="flex items-center gap-1 rounded-full border border-border bg-background/90 p-1 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/70">
@@ -65,7 +69,7 @@ export function DashboardSectionPill({
             <a
               href={`#${id}`}
               onClick={(e) => handleClick(e, id)}
-              aria-current={activeSection === id ? "true" : undefined}
+              aria-current={activeSection === id ? "location" : undefined}
               className={cn(
                 "block rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-300 ease-[cubic-bezier(0.65,0,0.35,1)] sm:px-4 sm:text-sm",
                 activeSection === id

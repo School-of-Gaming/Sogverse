@@ -982,11 +982,7 @@
   },
   "gamer": {
     "welcome": "Welcome, Gamer!",
-    "subtitle": "Ready to play and learn?",
-    "myGroups": "My Groups",
-    "myGroupsDescription": "View your groups and upcoming voice sessions",
-    "tipOfTheDay": "Tip of the Day",
-    "tipOfTheDayMessage": "Practice makes perfect! Join a group session to level up your skills."
+    "subtitle": "Ready to play and learn?"
   },
   "gedu": {
     "title": "Educator Dashboard",
@@ -1341,24 +1337,6 @@
     "mcHeadsAttribution": "Skin rendered by <link>mc-heads.net</link>"
   },
   "parent": {
-    "dashboard": {
-      "welcome": "Parent Dashboard",
-      "subtitle": "Manage your gamers and enrolments",
-      "quickActions": {
-        "gamers": {
-          "title": "My Gamers",
-          "description": "View and manage your gamer accounts"
-        },
-        "browseClubs": {
-          "title": "Browse Clubs",
-          "description": "Find and enrol in gaming clubs"
-        },
-        "settings": {
-          "title": "Settings",
-          "description": "Manage your account settings"
-        }
-      }
-    },
     "gamers": {
       "title": "My Gamers",
       "subtitle": "Manage your gamer accounts and enrolments",
