@@ -982,7 +982,7 @@
     "settings": "Asetukset"
   },
   "family": {
-    "createNewGamer": "Luo uusi pelaaja",
+    "addGamer": "Lisää pelaaja",
     "switchFailed": "Tilin vaihtaminen epäonnistui",
     "loadFailed": "Perheen lataaminen epäonnistui"
   },
