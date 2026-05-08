@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Gamepad2, ShoppingCart, Settings } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -55,50 +55,6 @@ export default function CustomerDashboardPage() {
           );
         })}
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('dashboard.gettingStarted.title')}</CardTitle>
-          <CardDescription>
-            {t('dashboard.gettingStarted.subtitle')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-start gap-4 rounded-lg border p-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-              1
-            </div>
-            <div>
-              <h3 className="font-medium">{t('dashboard.gettingStarted.step1.title')}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.gettingStarted.step1.description')}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-4 rounded-lg border p-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary text-sm font-bold text-secondary-foreground">
-              2
-            </div>
-            <div>
-              <h3 className="font-medium">{t('dashboard.gettingStarted.step2.title')}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.gettingStarted.step2.description')}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-4 rounded-lg border p-4">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-              3
-            </div>
-            <div>
-              <h3 className="font-medium">{t('dashboard.gettingStarted.step3.title')}</h3>
-              <p className="text-sm text-muted-foreground">
-                {t('dashboard.gettingStarted.step3.description')}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
     </div>
   );
