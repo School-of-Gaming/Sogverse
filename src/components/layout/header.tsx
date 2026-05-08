@@ -12,7 +12,6 @@ import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS, ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
-import { CurrencyPicker } from "@/components/layout/currency-picker";
 import { LocalePicker } from "@/components/layout/locale-picker";
 
 export function Header() {
@@ -100,7 +99,6 @@ export function Header() {
                 </Link>
               )}
               <LocalePicker />
-              <CurrencyPicker />
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -144,7 +142,6 @@ export function Header() {
           ) : (
             <div className="flex items-center gap-2">
               <LocalePicker />
-              <CurrencyPicker />
               <Link
                 href={ROUTES.login}
                 className={buttonVariants({ variant: "ghost", size: "sm" })}
@@ -224,9 +221,8 @@ export function Header() {
                     {c('dashboard')}
                   </Link>
                 )}
-                <div className="flex gap-2 px-3 py-2">
+                <div className="px-3 py-2">
                   <LocalePicker />
-                  <CurrencyPicker />
                 </div>
                 <Link
                   href={ROUTES.settings}
@@ -246,9 +242,8 @@ export function Header() {
               </>
             ) : (
               <>
-                <div className="flex gap-2 px-3 py-2">
+                <div className="px-3 py-2">
                   <LocalePicker />
-                  <CurrencyPicker />
                 </div>
                 <Link
                   href={ROUTES.login}

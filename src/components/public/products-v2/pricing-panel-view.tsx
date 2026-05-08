@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { formatCurrencyFromCents } from "@/lib/utils";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SubscriptionFrequency } from "@/lib/constants/pricing";
+import { CurrencyPicker } from "@/components/layout/currency-picker";
 import type { PricingOption, PricingTracks } from "./pricing-options";
 
 // Two-track stacked list: Subscribe rows on top, Pay-as-you-go below.
@@ -34,12 +35,24 @@ export function PricingPanelView({
 }: PricingPanelViewProps) {
   const t = useTranslations("productDetail.pricing");
 
+  // Free / external products don't display a price, so the currency picker
+  // would just be visual noise. For `unavailable` we keep it — that branch is
+  // literally "this currency isn't sold here", so the picker is the fix.
+  const showCurrencyPicker =
+    tracks.single?.kind !== "free" && tracks.single?.kind !== "external";
+
   if (tracks.single) {
-    return <SingleRow option={tracks.single} currency={currency} locale={locale} />;
+    return (
+      <div className="space-y-3">
+        {showCurrencyPicker && <CurrencyPickerRow />}
+        <SingleRow option={tracks.single} currency={currency} locale={locale} />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-3">
+      <CurrencyPickerRow />
       {tracks.subscriptions.length > 0 && (
         <Track heading={t("subscribeHeading")}>
           {tracks.subscriptions.map((opt) => (
@@ -68,6 +81,16 @@ export function PricingPanelView({
           ))}
         </Track>
       )}
+    </div>
+  );
+}
+
+function CurrencyPickerRow() {
+  const t = useTranslations("productDetail.pricing");
+  return (
+    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+      <span>{t("pricesIn")}</span>
+      <CurrencyPicker />
     </div>
   );
 }
