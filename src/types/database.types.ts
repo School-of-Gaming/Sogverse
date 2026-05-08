@@ -1812,14 +1812,6 @@ export type Database = {
         }
         Returns: Json
       }
-      compute_next_session: {
-        Args: {
-          p_day_of_week: number
-          p_start_time: string
-          p_timezone: string
-        }
-        Returns: string
-      }
       confirm_reservation_v2: {
         Args: { p_credits_to_grant: number; p_reservation_id: string }
         Returns: Json
@@ -2061,7 +2053,6 @@ export type Database = {
         }
         Returns: string
       }
-      process_enrollment_charges: { Args: never; Returns: Json }
       process_session_credits_v2: { Args: never; Returns: Json }
       product_has_session_v2: {
         Args: { p_product_id: string; p_session_date: string }
