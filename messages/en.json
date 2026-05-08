@@ -982,7 +982,7 @@
     "settings": "Settings"
   },
   "family": {
-    "createNewGamer": "Create new gamer",
+    "addGamer": "Add Gamer",
     "switchFailed": "Failed to switch accounts",
     "loadFailed": "Failed to load family"
   },

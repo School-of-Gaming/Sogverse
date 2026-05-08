@@ -30,6 +30,7 @@ export function SettingsSectionContent() {
   const router = useRouter();
   const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
   const isGedu = profile?.role === "gedu";
+  const isGamer = profile?.role === "gamer";
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
   const { data: availableLanguages } = useSpokenLanguages();
@@ -145,10 +146,10 @@ export function SettingsSectionContent() {
             </Avatar>
             <div>
               <p className="font-medium">
-                {[profile?.first_name, profile?.last_name].filter(Boolean).join(" ")}
+                {[profile?.first_name, !isGamer && profile?.last_name].filter(Boolean).join(" ")}
               </p>
               <p className="text-sm text-muted-foreground">
-                {profile?.email || `@${profile?.username}`}
+                {isGamer ? `@${profile.username ?? ""}` : profile?.email || `@${profile?.username}`}
               </p>
               <p className="text-xs text-muted-foreground capitalize">
                 {t('roleAccount', { role: profile?.role ?? '' })}
@@ -180,17 +181,19 @@ export function SettingsSectionContent() {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="lastName">{c('lastName')}</Label>
-            <Input
-              id="lastName"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder={t('lastNamePlaceholder')}
-              maxLength={DISPLAY_NAME_MAX}
-              autoComplete="family-name"
-            />
-          </div>
+          {!isGamer && (
+            <div className="space-y-2">
+              <Label htmlFor="lastName">{c('lastName')}</Label>
+              <Input
+                id="lastName"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder={t('lastNamePlaceholder')}
+                maxLength={DISPLAY_NAME_MAX}
+                autoComplete="family-name"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="phone">{c('phoneNumber')}</Label>
@@ -207,14 +210,16 @@ export function SettingsSectionContent() {
             onChange={setSpokenLanguages}
           />
 
-          <div className="space-y-2">
-            <Label>{c('email')}</Label>
-            <Input
-              value={profile?.email || ""}
-              disabled
-              className="bg-muted"
-            />
-          </div>
+          {!isGamer && (
+            <div className="space-y-2">
+              <Label>{c('email')}</Label>
+              <Input
+                value={profile?.email || ""}
+                disabled
+                className="bg-muted"
+              />
+            </div>
+          )}
 
           {profile?.username && (
             <div className="space-y-2">

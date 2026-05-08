@@ -982,7 +982,7 @@
     "settings": "Inställningar"
   },
   "family": {
-    "createNewGamer": "Skapa ny gamer",
+    "addGamer": "Lägg till gamer",
     "switchFailed": "Det gick inte att byta konto",
     "loadFailed": "Det gick inte att läsa in familjen"
   },
