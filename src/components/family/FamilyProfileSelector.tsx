@@ -148,7 +148,7 @@ function ProfileTile({
       disabled={disabled}
       aria-current={isActive ? "true" : undefined}
       className={cn(
-        "group flex w-20 flex-col items-center gap-2 transition-transform duration-150 sm:w-24 md:w-28",
+        "group flex w-16 flex-col items-center gap-2 transition-transform duration-150 sm:w-20 md:w-24",
         isActive ? "cursor-default" : "cursor-pointer hover:scale-105 focus-visible:scale-105",
       )}
     >
@@ -169,7 +169,7 @@ function ProfileTile({
       </div>
       <span
         className={cn(
-          "line-clamp-1 max-w-full text-sm font-medium",
+          "line-clamp-1 max-w-full text-xs font-medium sm:text-sm",
           isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
         )}
       >
@@ -189,7 +189,7 @@ function AddGamerTile() {
     <button
       type="button"
       onClick={() => {}}
-      className="group flex w-20 flex-col items-center gap-2 transition-transform duration-150 hover:scale-105 focus-visible:scale-105 sm:w-24 md:w-28"
+      className="group flex w-16 flex-col items-center gap-2 transition-transform duration-150 hover:scale-105 focus-visible:scale-105 sm:w-20 md:w-24"
       aria-label={t("addGamer")}
     >
       <div className="relative aspect-square w-full overflow-hidden rounded-lg border-2 border-dashed border-muted-foreground/40 transition-colors duration-150 group-hover:border-primary group-hover:bg-primary/5 group-focus-visible:border-primary">
@@ -200,7 +200,7 @@ function AddGamerTile() {
           />
         </div>
       </div>
-      <span className="line-clamp-1 max-w-full text-center text-sm font-medium text-muted-foreground group-hover:text-foreground">
+      <span className="line-clamp-1 max-w-full text-center text-xs font-medium text-muted-foreground group-hover:text-foreground sm:text-sm">
         {t("addGamer")}
       </span>
     </button>
@@ -211,10 +211,10 @@ function SkeletonTile() {
   return (
     <div
       aria-hidden
-      className="flex w-20 flex-col items-center gap-2 sm:w-24 md:w-28"
+      className="flex w-16 flex-col items-center gap-2 sm:w-20 md:w-24"
     >
       <div className="aspect-square w-full animate-pulse rounded-lg bg-muted" />
-      <div className="h-4 w-16 animate-pulse rounded bg-muted" />
+      <div className="h-4 w-12 animate-pulse rounded bg-muted sm:h-5 sm:w-16" />
     </div>
   );
 }
