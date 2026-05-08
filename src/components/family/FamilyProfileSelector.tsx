@@ -167,9 +167,12 @@ function ProfileTile({
           </div>
         )}
       </div>
+      {/* whitespace-nowrap + text-center lets long names spill into the
+          gap between tiles instead of truncating. The button itself stays
+          w-16/20/24 so avatar layout is unchanged; only the text overflows. */}
       <span
         className={cn(
-          "line-clamp-1 max-w-full text-xs font-medium sm:text-sm",
+          "whitespace-nowrap text-center text-xs font-medium sm:text-sm",
           isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground",
         )}
       >
@@ -200,7 +203,7 @@ function AddGamerTile() {
           />
         </div>
       </div>
-      <span className="line-clamp-1 max-w-full text-center text-xs font-medium text-muted-foreground group-hover:text-foreground sm:text-sm">
+      <span className="whitespace-nowrap text-center text-xs font-medium text-muted-foreground group-hover:text-foreground sm:text-sm">
         {t("addGamer")}
       </span>
     </button>
