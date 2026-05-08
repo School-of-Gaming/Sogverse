@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Lock, Gamepad2 } from "lucide-react";
+import { User, Lock, Gamepad2, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -231,13 +231,19 @@ export default function SettingsPage() {
             {t('securityDescription')}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-wrap gap-3">
           <Button
             variant="outline"
             onClick={handleChangePassword}
           >
             {t('changePassword')}
           </Button>
+          <form action="/api/auth/signout" method="post">
+            <Button type="submit" variant="destructive">
+              <LogOut className="h-4 w-4" />
+              {c('signOut')}
+            </Button>
+          </form>
         </CardContent>
       </Card>
 
