@@ -13,10 +13,16 @@ export default async function DashboardRootLayout({
     redirect("/login");
   }
 
+  // Parent and gamer dashboards have moved to a single-page scroll UX with
+  // an in-page section pill (see /parent and /gamer pages); the sidebar is
+  // suppressed for those roles across every (dashboard) route.
+  const role = userWithProfile.profile?.role;
+  const showSidebar = role === "admin" || role === "gedu";
+
   return (
     <>
       <Header />
-      <DashboardLayout>{children}</DashboardLayout>
+      <DashboardLayout showSidebar={showSidebar}>{children}</DashboardLayout>
     </>
   );
 }

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { NavChevron } from "@/components/ui/nav-chevron";
-import { ROUTES } from "@/lib/constants";
+import { Users } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
+import { FeedbackSectionContent } from "@/components/feedback/feedback-section-content";
+import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,63 +15,76 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function GamerDashboardPage() {
   const t = useTranslations('gamer');
+  const ds = useTranslations('dashboardSections');
   const yty = useTranslations('yty');
 
+  const sections: DashboardSection[] = [
+    { id: 'my-family', label: ds('myFamily') },
+    { id: 'yty', label: ds('yty') },
+    { id: 'feedback', label: ds('feedback') },
+    { id: 'settings', label: ds('settings') },
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="font-display text-3xl font-bold text-primary">
-          {t('welcome')}
-        </h1>
-        <p className="text-muted-foreground">
-          {t('subtitle')}
-        </p>
-      </div>
+    <>
+      <DashboardSectionPill sections={sections} ariaLabel={ds('myFamily')} />
 
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        {YTY_ELEMENTS.map((el) => (
-          <Card key={el.id} className={`bg-gradient-to-br ${el.color.bgGradient}`}>
-            <CardHeader className="text-center pb-2">
-              <el.icon className={`mx-auto h-8 w-8 ${el.color.accent}`} />
-              <CardTitle className="text-base">{yty(`elements.${el.id}.name`)}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center pt-0">
-              <p className="text-3xl font-bold">0</p>
-              <p className="text-xs text-muted-foreground">{yty(`elements.${el.id}.description`)}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <div className="space-y-24 pb-24">
+        <section id="my-family" className="scroll-mt-32">
+          <div className="mx-auto max-w-3xl space-y-6">
+            <h1 className="text-3xl font-bold">{ds('myFamily')}</h1>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <Users className="h-6 w-6 text-primary" />
+                  </div>
+                  <CardTitle className="text-lg">{ds('myFamily')}</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base">
+                  {ds('myFamilyDescription')}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
 
-      <Link href={ROUTES.gamer.groups} className="block">
-        <Card className="group cursor-pointer transition-colors hover:bg-accent hover:text-accent-foreground">
-          <CardContent className="flex items-center gap-4 py-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <Users className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium">{t('myGroups')}</p>
-              <p className="text-sm text-muted-foreground">
-                {t('myGroupsDescription')}
-              </p>
-            </div>
-            <NavChevron />
-          </CardContent>
-        </Card>
-      </Link>
-
-      <Card className="border-secondary/50 bg-secondary/5">
-        <CardContent className="flex items-center gap-4 py-4">
-          {/* eslint-disable-next-line i18next/no-literal-string -- decorative emoji, not translatable content */}
-          <div className="text-4xl">🎮</div>
-          <div>
-            <h3 className="font-medium">{t('tipOfTheDay')}</h3>
-            <p className="text-sm text-muted-foreground">
-              {t('tipOfTheDayMessage')}
+        <section id="yty" className="scroll-mt-32 space-y-6">
+          <div className="text-center">
+            <h2 className="font-display text-3xl font-bold text-primary">
+              {t('welcome')}
+            </h2>
+            <p className="text-muted-foreground">
+              {t('subtitle')}
             </p>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+            {YTY_ELEMENTS.map((el) => (
+              <Card key={el.id} className={`bg-gradient-to-br ${el.color.bgGradient}`}>
+                <CardHeader className="text-center pb-2">
+                  <el.icon className={`mx-auto h-8 w-8 ${el.color.accent}`} />
+                  <CardTitle className="text-base">{yty(`elements.${el.id}.name`)}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center pt-0">
+                  <p className="text-3xl font-bold">0</p>
+                  <p className="text-xs text-muted-foreground">{yty(`elements.${el.id}.description`)}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section id="feedback" className="scroll-mt-32">
+          <FeedbackSectionContent />
+        </section>
+
+        <section id="settings" className="scroll-mt-32">
+          <SettingsSectionContent />
+        </section>
+      </div>
+    </>
   );
 }

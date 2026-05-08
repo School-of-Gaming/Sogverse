@@ -966,6 +966,13 @@
     "failedToSubmit": "Failed to submit feedback.",
     "failedToSubmitRetry": "Failed to submit feedback. Please try again."
   },
+  "dashboardSections": {
+    "myFamily": "My Family",
+    "yty": "Yty",
+    "feedback": "Feedback",
+    "settings": "Settings",
+    "myFamilyDescription": "This space is being prepared. Soon you'll be able to manage everyone in your family from one place."
+  },
   "footer": {
     "tagline": "School of Gaming - Where screen time becomes quality time.",
     "copyright": "© {year} School of Gaming. All rights reserved.",

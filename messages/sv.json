@@ -966,6 +966,13 @@
     "failedToSubmit": "Kunde inte skicka feedback.",
     "failedToSubmitRetry": "Kunde inte skicka feedback. Försök igen."
   },
+  "dashboardSections": {
+    "myFamily": "Min familj",
+    "yty": "Yty",
+    "feedback": "Feedback",
+    "settings": "Inställningar",
+    "myFamilyDescription": "Den här delen håller på att byggas. Snart kan du sköta hela familjen från ett och samma ställe."
+  },
   "footer": {
     "tagline": "School of Gaming - Där skärmtid blir kvalitetstid.",
     "copyright": "© {year} School of Gaming. Alla rättigheter förbehållna.",
