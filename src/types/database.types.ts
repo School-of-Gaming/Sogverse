@@ -312,17 +312,17 @@ export type Database = {
       gamer_profiles: {
         Row: {
           date_of_birth: string
-          gender: Database["public"]["Enums"]["gender_type"]
+          gender: Database["public"]["Enums"]["gender_type"] | null
           user_id: string
         }
         Insert: {
           date_of_birth: string
-          gender: Database["public"]["Enums"]["gender_type"]
+          gender?: Database["public"]["Enums"]["gender_type"] | null
           user_id: string
         }
         Update: {
           date_of_birth?: string
-          gender?: Database["public"]["Enums"]["gender_type"]
+          gender?: Database["public"]["Enums"]["gender_type"] | null
           user_id?: string
         }
         Relationships: [

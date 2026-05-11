@@ -6,6 +6,8 @@ import { useTranslations } from "next-intl";
 import { Identicon } from "@/components/ui/identicon";
 import { useAuth } from "@/providers/auth-provider";
 import { FamilyService, useFamily, type FamilyMember } from "@/services/family";
+import { AddGamerDialog } from "./AddGamerDialog";
+import { SelectParentToAddGamerDialog } from "./SelectParentToAddGamerDialog";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -20,16 +22,20 @@ import { cn } from "@/lib/utils";
  * primary-colored ring; clicking another tile signs out and signs in as
  * that account with no confirmation dialog.
  *
- * The "Add Gamer" tile is currently a no-op pending the create-gamer flow.
+ * The "Add Gamer" tile opens AddGamerDialog. useCreateGamer's onSuccess
+ * invalidates the family query so the new gamer slots into the bottom row.
  */
 export function FamilyProfileSelector() {
   const t = useTranslations("family");
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { data: family, isLoading, error } = useFamily();
   const [committingTargetId, setCommittingTargetId] = useState<string | null>(null);
   const [switchError, setSwitchError] = useState<string | null>(null);
+  const [addGamerOpen, setAddGamerOpen] = useState(false);
+  const [selectParentOpen, setSelectParentOpen] = useState(false);
 
   const currentUserId = user?.id ?? null;
+  const viewerIsCustomer = profile?.role === "customer";
 
   async function handleSwitch(target: FamilyMember) {
     if (target.id === currentUserId) return;
@@ -75,6 +81,28 @@ export function FamilyProfileSelector() {
   const parents = family.filter((m) => m.role === "customer").sort(byFirstName);
   const gamers = family.filter((m) => m.role === "gamer").sort(byFirstName);
 
+  // The Steven Brown Rule: a beloved family friend of Chief Engineer Kyle's
+  // who fathered seven children. If Steven can manage seven gamers, that's
+  // also the most anyone else can reasonably need on one Sogverse account.
+  // UI-only cap — the API and DB happily accept more if a power user calls
+  // the route directly.
+  const underStevenBrownLimit = gamers.length < 7;
+  // Gamers can also see the tile. Clicking from a gamer's dashboard opens
+  // a "pick a parent to switch into" dialog instead of the form, since
+  // only parents can actually create gamers. Defensively hide the tile
+  // if a gamer has no linked parents (shouldn't happen in practice).
+  const canTriggerAddGamer = viewerIsCustomer
+    ? underStevenBrownLimit
+    : underStevenBrownLimit && parents.length > 0;
+
+  function handleAddGamerClick() {
+    if (viewerIsCustomer) {
+      setAddGamerOpen(true);
+    } else {
+      setSelectParentOpen(true);
+    }
+  }
+
   return (
     <div className="space-y-4">
       {switchError && (
@@ -107,9 +135,20 @@ export function FamilyProfileSelector() {
               onClick={() => handleSwitch(member)}
             />
           ))}
-          <AddGamerTile />
+          {canTriggerAddGamer && (
+            <AddGamerTile onClick={handleAddGamerClick} />
+          )}
         </Row>
       </div>
+
+      <AddGamerDialog open={addGamerOpen} onOpenChange={setAddGamerOpen} />
+      <SelectParentToAddGamerDialog
+        open={selectParentOpen}
+        onOpenChange={setSelectParentOpen}
+        parents={parents}
+        committingTargetId={committingTargetId}
+        onPickParent={(parent) => handleSwitch(parent)}
+      />
     </div>
   );
 }
@@ -182,20 +221,12 @@ function ProfileTile({
   );
 }
 
-function AddGamerTile() {
+function AddGamerTile({ onClick }: { onClick: () => void }) {
   const t = useTranslations("family");
-  // Intentional placeholder: the tile is rendered as a clickable affordance
-  // so the family-selector layout matches its eventual shape (two rows, gamer
-  // row ends in "Add Gamer"). The click target is deliberately a no-op until
-  // the create-gamer flow lands — kept as a button (not a div) so spacing,
-  // focus ring, and hover state match the live tiles next to it. Wire-up,
-  // when ready:
-  //  - parent dashboard: open the create-gamer form/dialog directly
-  //  - gamer dashboard: switch to a parent first, then open the form
   return (
     <button
       type="button"
-      onClick={() => {}}
+      onClick={onClick}
       className="group flex w-16 flex-col items-center gap-2 transition-transform duration-150 hover:scale-105 focus-visible:scale-105 sm:w-20 md:w-24"
       aria-label={t("addGamer")}
     >

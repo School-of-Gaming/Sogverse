@@ -1,27 +1,31 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generateGamerEmail } from "@/lib/utils";
 import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 
+type GenderValue = "boy" | "girl" | "non_binary";
+const VALID_GENDERS: readonly GenderValue[] = ["boy", "girl", "non_binary"];
+
+// v1 internal handle. Opaque on purpose: the parent never sees this in v1
+// (gamer login is via account-switching from the parent), and v2 will
+// replace the username concept entirely with the gamer's real email.
+function generateOpaqueGamerUsername(): string {
+  return "g" + randomBytes(8).toString("hex");
+}
+
 export async function POST(request: Request) {
   try {
     const result = await requireRole("customer", {
-      forbiddenMessage: "Only customers can create gamer accounts",
+      forbiddenMessage: "Switch to a parent account to add a gamer.",
     });
     if (result instanceof NextResponse) return result;
     const { user } = result;
 
     const body = await request.json();
-    const { username, password, firstName, dateOfBirth, gender, minecraftUsername } = body;
-
-    if (!username || !password) {
-      return NextResponse.json(
-        { error: "Username and password are required" },
-        { status: 400 }
-      );
-    }
+    const { username: providedUsername, password: providedPassword, firstName, dateOfBirth, gender: providedGender, minecraftUsername } = body;
 
     if (!firstName || typeof firstName !== "string" || firstName.trim().length < DISPLAY_NAME_MIN || firstName.trim().length > DISPLAY_NAME_MAX) {
       return NextResponse.json(
@@ -45,12 +49,54 @@ export async function POST(request: Request) {
       );
     }
 
-    const validGenders = ["boy", "girl", "non_binary"];
-    if (!gender || !validGenders.includes(gender)) {
+    let gender: GenderValue | null;
+    if (providedGender === undefined || providedGender === null || providedGender === "") {
+      gender = null;
+    } else if (typeof providedGender === "string" && (VALID_GENDERS as readonly string[]).includes(providedGender)) {
+      gender = providedGender as GenderValue;
+    } else {
       return NextResponse.json(
-        { error: "Gender is required (boy, girl, or non_binary)" },
+        { error: "Gender must be boy, girl, or non_binary" },
         { status: 400 }
       );
+    }
+
+    // username + password are optional in v1 — auto-generate when missing.
+    // The parent never sees either. v2 (direct gamer login via email) will
+    // replace this with real credentials.
+    const password =
+      typeof providedPassword === "string" && providedPassword.length > 0
+        ? providedPassword
+        : randomBytes(24).toString("base64url");
+
+    const admin = createAdminClient();
+
+    let username: string;
+    if (typeof providedUsername === "string" && providedUsername.length > 0) {
+      username = providedUsername;
+      const { data: existingUser } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .maybeSingle();
+      if (existingUser) {
+        return NextResponse.json(
+          { error: "This username is already taken" },
+          { status: 409 }
+        );
+      }
+    } else {
+      // Belt-and-braces: 64 bits of entropy means collisions are
+      // vanishingly improbable, but check once and retry once just in case.
+      username = generateOpaqueGamerUsername();
+      const { data: collision } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("username", username)
+        .maybeSingle();
+      if (collision) {
+        username = generateOpaqueGamerUsername();
+      }
     }
 
     if (minecraftUsername !== undefined && minecraftUsername !== null) {
@@ -63,21 +109,6 @@ export async function POST(request: Request) {
     }
 
     const syntheticEmail = generateGamerEmail(username);
-    const admin = createAdminClient();
-
-    // Check if username is already taken before attempting to create
-    const { data: existingUser } = await admin
-      .from("profiles")
-      .select("id")
-      .eq("username", username)
-      .maybeSingle();
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "This username is already taken" },
-        { status: 409 }
-      );
-    }
 
     // Snapshot the parent's last_name onto the gamer at creation time. The
     // parent's UI never asks for the gamer's last_name; we copy it once here

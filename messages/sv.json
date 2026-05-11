@@ -984,7 +984,31 @@
   "family": {
     "addGamer": "Lägg till gamer",
     "switchFailed": "Det gick inte att byta konto",
-    "loadFailed": "Det gick inte att läsa in familjen"
+    "loadFailed": "Det gick inte att läsa in familjen",
+    "selectParentToAddGamer": {
+      "title": "Välj en föräldraprofil för att lägga till en gamer",
+      "description": "Endast föräldrar kan lägga till gamers. Välj en föräldraprofil att byta till."
+    },
+    "addGamerForm": {
+      "title": "Lägg till en gamer",
+      "firstNameLabel": "Förnamn",
+      "firstNamePlaceholder": "t.ex. Lily",
+      "birthMonthLabel": "Födelsemånad",
+      "birthMonthPlaceholder": "Månad",
+      "birthYearLabel": "Födelseår",
+      "birthYearPlaceholder": "År",
+      "genderLabel": "Kön",
+      "genderBoy": "Pojke",
+      "genderGirl": "Flicka",
+      "genderNonBinary": "Icke-binär",
+      "submit": "Lägg till gamer",
+      "submitting": "Lägger till…",
+      "firstNameTooShort": "Förnamnet måste vara minst 2 tecken.",
+      "firstNameTooLong": "Förnamnet får vara högst 32 tecken.",
+      "birthMonthRequired": "Välj en födelsemånad.",
+      "birthYearRequired": "Välj ett födelseår.",
+      "genericError": "Det gick inte att lägga till gamern. Försök igen."
+    }
   },
   "footer": {
     "tagline": "School of Gaming - Där skärmtid blir kvalitetstid.",

@@ -1029,7 +1029,31 @@
   "family": {
     "addGamer": "QujwI' chel",
     "switchFailed": "qaSbe' QunwI' choH",
-    "loadFailed": "qorDu' polHa'lu'pu'"
+    "loadFailed": "qorDu' polHa'lu'pu'",
+    "selectParentToAddGamer": {
+      "title": "QujwI' chelmeH vavpu' wIv",
+      "description": "QujwI' chel neH vavpu'. vav qun yIwIv."
+    },
+    "addGamerForm": {
+      "title": "QujwI' chu' chel",
+      "firstNameLabel": "wa'DIch pong",
+      "firstNamePlaceholder": "Lily rur",
+      "birthMonthLabel": "qoSlIj jar",
+      "birthMonthPlaceholder": "jar",
+      "birthYearLabel": "qoSlIj DIS",
+      "birthYearPlaceholder": "DIS",
+      "genderLabel": "ghob",
+      "genderBoy": "loDHom",
+      "genderGirl": "be'Hom",
+      "genderNonBinary": "latlh",
+      "submit": "QujwI' chel",
+      "submitting": "chellu'taH…",
+      "firstNameTooShort": "wa'DIch pong tIn law' cha' Hap puS.",
+      "firstNameTooLong": "wa'DIch pong tIn law' cha'maH cha' Hap law'.",
+      "birthMonthRequired": "qoSlIj jar yIwIv!",
+      "birthYearRequired": "qoSlIj DIS yIwIv!",
+      "genericError": "QujwI' chelta'be'. yInIDqa'!"
+    }
   },
   "footer": {
     "tagline": "toy'wI' ghom - DaH bIQam, batlh yIghoS.",
