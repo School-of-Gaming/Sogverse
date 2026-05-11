@@ -15,12 +15,19 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * municipality clubs are all in scope — camps + events are one-shot paid /
  * free, muni is invoiced off-platform via external_contract.
  *
- * Uses the admin (service-role) client for the write. participations_v2 only
- * grants SELECT to authenticated; per the original design (migration 00039),
- * writes go through SECURITY DEFINER RPCs or via the admin client. We
- * deliberately bypass create_participation_v2 here because its gates
- * (parent-of-customer, registration-opens-at, effective-status, seat-cap)
- * are exactly what the admin override should sail past.
+ * Uses the admin (service-role) client for the write. participations_v2 is
+ * grant-locked: REVOKE ALL FROM authenticated + GRANT SELECT only, so even
+ * with the admin_full_access_participations_v2 RLS policy in place,
+ * PostgreSQL rejects authenticated INSERTs at the grant level. Writes
+ * happen through SECURITY DEFINER RPCs or createAdminClient by design
+ * (migration 00039). We deliberately bypass create_participation_v2 here
+ * because its gates (parent-of-customer, registration-opens-at,
+ * effective-status, seat-cap) are exactly what this admin override should
+ * sail past.
+ *
+ * The SECURITY DEFINER RPC + user-bound client pattern is a better
+ * architectural fit for this route — see docs/db-access-patterns.md.
+ * Tracked in TODO.md for a future coordinated rollout.
  */
 export async function POST(
   request: Request,
@@ -99,9 +106,9 @@ export async function POST(
   }
   const customerId = parentLinks[0].parent_id;
 
-  // Direct insert via service-role. participations_v2 grants SELECT to
-  // authenticated but not INSERT (migration 00039 routes writes through
-  // SECURITY DEFINER RPCs or admin client by design).
+  // Direct insert via service-role — bypasses the grant lockdown on
+  // participations_v2 (REVOKE ALL FROM authenticated) that exists to
+  // funnel writes through SECURITY DEFINER RPCs or createAdminClient.
   const { data: inserted, error: insertError } = await admin
     .from("participations_v2")
     .insert({

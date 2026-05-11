@@ -53,6 +53,51 @@
 
   **How to verify after splitting:** open a file in each target subtree, check that `/context` shows the nested CLAUDE.md as loaded and the root file is correspondingly leaner. Confirm a sample rule (e.g., the `adjust_token_balance` RPC rule) no longer appears in a fresh-session context dump until a `src/services/tokens/*` file is touched.
 
+### Convert v2 admin writes to SECURITY DEFINER RPCs
+
+See `docs/db-access-patterns.md` for the full architectural rationale. Short version: routes that currently use `createAdminClient` (service-role) to write to sensitive tables (`participations_v2`, `payments_v2`, `refunds_v2`, family subscriptions, etc.) hold full database privileges for the duration of the request. The correct shape is a SECURITY DEFINER RPC called via the user-bound client from `requireRole` — three layers of defense (route role check + RPC role check + grant lockdown) instead of one, and the trust boundary becomes the RPC body rather than "everything the service-role connection could do."
+
+**Current state is not vulnerable.** Every route gates with `requireRole` correctly, the service-role key is server-only, and grants + RLS are configured to match what each route does. This is defense-in-depth hardening, not bug remediation — worth doing as a single coordinated sweep when there's time, but no fire.
+
+**Worked example:** `POST /api/admin/products-v2/[id]/participations` — see `docs/db-access-patterns.md` § "Worked example" for the current shape and the target shape side-by-side. That route currently uses Model A (service-role) because that was the established pattern when it was written; the target is Model D (RPC + grant lockdown + user-bound client).
+
+**Triage of `createAdminClient` callers** (32 total — `git grep -l createAdminClient src/`):
+
+*Legitimate — keep as service-role:*
+- `src/app/api/auth/switch-account/route.ts`, `src/app/api/auth/forgot-password/route.ts`, `src/app/api/admin/create-gedu/route.ts`, `src/app/api/gamers/create/route.ts`, `src/app/api/gamers/[id]/route.ts` — all use `auth.admin.*` (Supabase's Auth Admin API requires service-role).
+- `src/app/api/admin/products-v2/[id]/update/route.ts`, `src/app/api/admin/products-v2/create/route.ts`, `src/app/api/admin/create-product/route.ts`, `src/app/api/admin/update-product/route.ts` — storage uploads to `product-images` bucket.
+- `src/app/api/webhooks/stripe/products/route.ts`, `src/app/api/webhooks/whatsapp/route.ts`, `src/app/api/minecraft/join-check/route.ts`, `src/lib/enrollment-notifications.ts` — no user session (webhook / external secret-key auth / internal helper).
+
+*Candidates for conversion (writes sensitive data — RPC + grant lockdown):*
+- [ ] `src/app/api/admin/products-v2/[id]/participations/route.ts` — admin comp-enroll. This PR. **Use as the worked example.**
+- [ ] `src/app/api/enrollments/route.ts` — customer creates enrollment.
+- [ ] `src/app/api/enrollments/[id]/route.ts` — customer modifies own enrollment.
+- [ ] `src/app/api/participations/waitlist/route.ts` — customer joins waitlist.
+- [ ] `src/app/api/checkout/products/create/route.ts` — customer initiates checkout (verify whether seat-count / cross-user reads genuinely need service-role first).
+
+*Candidates for conversion (writes normal tables — user-bound client + RLS is enough, no RPC needed):*
+- [ ] `src/app/api/admin/products/[id]/groups/apply/route.ts` — v1 admin groups.
+- [ ] `src/app/api/admin/locations/create/route.ts`, `src/app/api/admin/locations/[id]/route.ts` — admin locations CRUD.
+- [ ] `src/app/api/admin/create-game/route.ts` — admin games write.
+- [ ] `src/app/api/user/locale/route.ts`, `src/app/api/user/currency/route.ts` — user updates own profile column.
+- [ ] `src/app/api/minecraft/account/route.ts` — gamer/gedu own minecraft account.
+- [ ] `src/app/api/admin/whatsapp/send/route.ts` — admin DB write + external API call.
+
+*Needs investigation — may legitimately need service-role for cross-user reads:*
+- [ ] `src/app/api/feedback/route.ts` — reads other users' profiles via `parent_gamer`.
+- [ ] `src/app/api/family/list/route.ts` — customer reads sibling/parent data.
+- [ ] `src/app/api/voice/token/route.ts` — gedu/gamer minting tokens for rooms.
+
+**Per-route verification checklist** before flipping any of the candidates:
+1. The route does *no* storage writes and *no* `auth.admin.*` calls.
+2. For sensitive-table writes: an RPC exists (or is written) that encodes the route's business rules + internal role check.
+3. For normal-table writes: RLS on every touched table grants the caller's role the operation, AND the policy authorizes both the actor and the target (see CLAUDE.md "RLS INSERT/UPDATE policies must authorize both the actor AND the target").
+4. No cross-user/cross-tenant reads beyond what the caller's RLS view permits.
+5. Integration test exists or is added — at minimum: unauthenticated, wrong-role, missing/bad input, happy path.
+6. For new RPCs: added to the allowlist in `tests/db/access-control.test.ts`.
+
+**Sequencing:** Don't convert piecemeal. Pick a batch (e.g. the four "normal table" routes first — they're mechanical), do them in one PR, then tackle the sensitive-table set in a separate PR once a couple of RPCs are in place and the pattern is settled.
+
 ### E2E Tests with Local Supabase
 
 Current E2E tests only cover unauthenticated flows (page renders, redirects). Authenticated tests (admin-only pages, role-based routing, CRUD operations) need real Supabase Auth + Postgres but shouldn't depend on the remote instance.
