@@ -130,7 +130,7 @@ function AddGamerDialogInner({
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
         </DialogHeader>
@@ -200,7 +200,7 @@ function AddGamerDialogInner({
 
             <div className="space-y-2">
               <Label>{t("genderLabel")}</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <GenderButton
                   selected={gender === "boy"}
                   disabled={committing}
