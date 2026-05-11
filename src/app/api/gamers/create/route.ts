@@ -9,11 +9,16 @@ import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 type GenderValue = "boy" | "girl" | "non_binary";
 const VALID_GENDERS: readonly GenderValue[] = ["boy", "girl", "non_binary"];
 
-// v1 internal handle. Opaque on purpose: the parent never sees this in v1
-// (gamer login is via account-switching from the parent), and v2 will
-// replace the username concept entirely with the gamer's real email.
+// v1 internal handle + password. Opaque on purpose: the parent never sees
+// either in v1 (gamer login is via account-switching from the parent),
+// and v2 will replace the username concept entirely with the gamer's
+// real email + a password they choose.
 function generateOpaqueGamerUsername(): string {
   return "g" + randomBytes(8).toString("hex");
+}
+
+function generateOpaqueGamerPassword(): string {
+  return randomBytes(24).toString("base64url");
 }
 
 export async function POST(request: Request) {
@@ -25,7 +30,7 @@ export async function POST(request: Request) {
     const { user } = result;
 
     const body = await request.json();
-    const { username: providedUsername, password: providedPassword, firstName, dateOfBirth, gender: providedGender, minecraftUsername } = body;
+    const { firstName, dateOfBirth, gender: providedGender, minecraftUsername } = body;
 
     if (!firstName || typeof firstName !== "string" || firstName.trim().length < DISPLAY_NAME_MIN || firstName.trim().length > DISPLAY_NAME_MAX) {
       return NextResponse.json(
@@ -61,42 +66,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // username + password are optional in v1 — auto-generate when missing.
-    // The parent never sees either. v2 (direct gamer login via email) will
-    // replace this with real credentials.
-    const password =
-      typeof providedPassword === "string" && providedPassword.length > 0
-        ? providedPassword
-        : randomBytes(24).toString("base64url");
-
+    const password = generateOpaqueGamerPassword();
     const admin = createAdminClient();
 
-    let username: string;
-    if (typeof providedUsername === "string" && providedUsername.length > 0) {
-      username = providedUsername;
-      const { data: existingUser } = await admin
-        .from("profiles")
-        .select("id")
-        .eq("username", username)
-        .maybeSingle();
-      if (existingUser) {
-        return NextResponse.json(
-          { error: "This username is already taken" },
-          { status: 409 }
-        );
-      }
-    } else {
-      // Belt-and-braces: 64 bits of entropy means collisions are
-      // vanishingly improbable, but check once and retry once just in case.
+    // Belt-and-braces: 64 bits of entropy means collisions are
+    // vanishingly improbable, but check once and retry once just in case.
+    let username = generateOpaqueGamerUsername();
+    const { data: collision } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
+    if (collision) {
       username = generateOpaqueGamerUsername();
-      const { data: collision } = await admin
-        .from("profiles")
-        .select("id")
-        .eq("username", username)
-        .maybeSingle();
-      if (collision) {
-        username = generateOpaqueGamerUsername();
-      }
     }
 
     if (minecraftUsername !== undefined && minecraftUsername !== null) {
