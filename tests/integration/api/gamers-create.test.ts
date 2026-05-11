@@ -160,7 +160,7 @@ describe("POST /api/gamers/create — DOB validation", () => {
   it("should return 403 for non-customer roles", async () => {
     mockRequireRole.mockResolvedValue(
       NextResponse.json(
-        { error: "Only customers can create gamer accounts" },
+        { error: "Switch to a parent account to add a gamer." },
         { status: 403 },
       ),
     );
@@ -248,5 +248,64 @@ describe("POST /api/gamers/create — Minecraft UUID ordering", () => {
     expect(mockCreateUser).toHaveBeenCalled();
     expect(mockLookupMinecraftUser).not.toHaveBeenCalled();
     expect(mockAdminFrom).not.toHaveBeenCalledWith("minecraft_accounts");
+  });
+});
+
+describe("POST /api/gamers/create — v1 minimal body (auto-generated credentials, optional gender)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("accepts a body with only firstName + dateOfBirth and auto-generates credentials", async () => {
+    mockAuthenticated();
+    mockPreCreateChecks({ usernameExists: false });
+    // Stop the flow at createUser so we can inspect what got passed.
+    mockCreateUser.mockResolvedValue({
+      data: null,
+      error: { message: "mock-stop" },
+    });
+
+    await POST(createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15" }));
+
+    expect(mockCreateUser).toHaveBeenCalledTimes(1);
+    const callArg = mockCreateUser.mock.calls[0][0] as {
+      email: string;
+      password: string;
+    };
+    // Opaque internal username shape: "g" + 16 hex chars.
+    expect(callArg.email).toMatch(/^g[0-9a-f]{16}@gamer\.sogverse\.internal$/);
+    // Auto-generated password is a non-empty random string.
+    expect(typeof callArg.password).toBe("string");
+    expect(callArg.password.length).toBeGreaterThanOrEqual(16);
+  });
+
+  it("rejects an invalid gender value", async () => {
+    mockAuthenticated();
+
+    const response = await POST(
+      createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15", gender: "robot" }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Gender");
+  });
+
+  it("accepts a missing/null gender (no longer required)", async () => {
+    mockAuthenticated();
+    mockPreCreateChecks({ usernameExists: false });
+    mockCreateUser.mockResolvedValue({
+      data: null,
+      error: { message: "mock-stop" },
+    });
+
+    const response = await POST(
+      createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15" }),
+    );
+
+    // 400 from createUser's mock-stop, not from a gender validation error.
+    const data = await response.json();
+    expect(data.error).toBe("mock-stop");
+    expect(response.status).toBe(400);
   });
 });

@@ -5,6 +5,7 @@ import { getClient } from "@/lib/supabase/client";
 import { GamerService } from "./gamers.service";
 import { groupKeys } from "@/services/groups/groups.queries";
 import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
+import { familyKeys } from "@/services/family";
 import type { CreateGamerInput } from "@/types";
 
 export const gamerKeys = {
@@ -82,6 +83,7 @@ export function useCreateGamer() {
     }) => service.createGamerAccount(parentId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });
+      queryClient.invalidateQueries({ queryKey: familyKeys.list() });
     },
   });
 }

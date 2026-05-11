@@ -984,7 +984,31 @@
   "family": {
     "addGamer": "Add Gamer",
     "switchFailed": "Failed to switch accounts",
-    "loadFailed": "Failed to load family"
+    "loadFailed": "Failed to load family",
+    "selectParentToAddGamer": {
+      "title": "Select a parent profile to add a gamer",
+      "description": "Only parents can add gamers. Pick a parent profile to switch into."
+    },
+    "addGamerForm": {
+      "title": "Add a gamer",
+      "firstNameLabel": "First name",
+      "firstNamePlaceholder": "e.g. Lily",
+      "birthMonthLabel": "Birth month",
+      "birthMonthPlaceholder": "Month",
+      "birthYearLabel": "Birth year",
+      "birthYearPlaceholder": "Year",
+      "genderLabel": "Gender",
+      "genderBoy": "Boy",
+      "genderGirl": "Girl",
+      "genderNonBinary": "Non-binary",
+      "submit": "Add gamer",
+      "submitting": "Adding…",
+      "firstNameTooShort": "First name must be at least 2 characters.",
+      "firstNameTooLong": "First name must be 32 characters or fewer.",
+      "birthMonthRequired": "Pick a birth month.",
+      "birthYearRequired": "Pick a birth year.",
+      "genericError": "Couldn't add this gamer. Please try again."
+    }
   },
   "footer": {
     "tagline": "School of Gaming - Where screen time becomes quality time.",

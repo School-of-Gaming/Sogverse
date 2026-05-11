@@ -448,11 +448,15 @@ export interface AuthState {
 }
 
 export interface CreateGamerInput {
-  username: string;
-  password: string;
   firstName: string;
   dateOfBirth: string;
-  gender: "boy" | "girl" | "non_binary";
+  // username + password are auto-generated server-side when omitted (v1
+  // gamers sign in via parent account-switching only, so the parent never
+  // sees these). Still accepted for backwards compatibility with any
+  // caller that wants to set them explicitly.
+  username?: string;
+  password?: string;
+  gender?: "boy" | "girl" | "non_binary" | null;
   minecraftUsername?: string;
 }
 

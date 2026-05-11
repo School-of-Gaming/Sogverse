@@ -984,7 +984,31 @@
   "family": {
     "addGamer": "Lisää pelaaja",
     "switchFailed": "Tilin vaihtaminen epäonnistui",
-    "loadFailed": "Perheen lataaminen epäonnistui"
+    "loadFailed": "Perheen lataaminen epäonnistui",
+    "selectParentToAddGamer": {
+      "title": "Valitse vanhempi pelaajan lisäämistä varten",
+      "description": "Vain vanhemmat voivat lisätä pelaajia. Valitse vanhemman profiili, johon vaihdetaan."
+    },
+    "addGamerForm": {
+      "title": "Lisää pelaaja",
+      "firstNameLabel": "Etunimi",
+      "firstNamePlaceholder": "esim. Lily",
+      "birthMonthLabel": "Syntymäkuukausi",
+      "birthMonthPlaceholder": "Kuukausi",
+      "birthYearLabel": "Syntymävuosi",
+      "birthYearPlaceholder": "Vuosi",
+      "genderLabel": "Sukupuoli",
+      "genderBoy": "Poika",
+      "genderGirl": "Tyttö",
+      "genderNonBinary": "Muunsukupuolinen",
+      "submit": "Lisää pelaaja",
+      "submitting": "Lisätään…",
+      "firstNameTooShort": "Etunimessä on oltava vähintään 2 merkkiä.",
+      "firstNameTooLong": "Etunimessä saa olla enintään 32 merkkiä.",
+      "birthMonthRequired": "Valitse syntymäkuukausi.",
+      "birthYearRequired": "Valitse syntymävuosi.",
+      "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen."
+    }
   },
   "footer": {
     "tagline": "School of Gaming – Ruutuaika muuttuu laatuajaksi.",
