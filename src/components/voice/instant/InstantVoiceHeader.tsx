@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LocalePicker } from "@/components/layout/locale-picker";
+import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 import { cn } from "@/lib/utils";
 
 interface InstantVoiceHeaderProps {
@@ -25,9 +26,9 @@ interface InstantVoiceHeaderProps {
  *   - Reuses `LocalePicker` verbatim so the language switcher is consistent
  *     with the rest of the app.
  *
- * Visual styling (fixed top bar + backdrop blur + brand-colored logo) matches
- * `src/components/layout/header.tsx` so any future styling change to the
- * main header carries over here naturally.
+ * The outer chrome (sticky bar, backdrop blur, height) comes from
+ * `<SiteHeaderShell>`, the same component the main app `Header` wraps —
+ * so any visual tweak there carries here automatically.
  */
 export function InstantVoiceHeader({ code }: InstantVoiceHeaderProps) {
   const c = useTranslations("common");
@@ -48,8 +49,8 @@ export function InstantVoiceHeader({ code }: InstantVoiceHeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container mx-auto flex h-16 items-center justify-between px-4">
+    <SiteHeaderShell>
+      <nav className="container mx-auto flex h-full items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <span className="font-display text-xl font-bold text-primary">SOG</span>
           <span className="hidden text-lg font-semibold sm:inline-block">
@@ -84,6 +85,6 @@ export function InstantVoiceHeader({ code }: InstantVoiceHeaderProps) {
           )}
         </div>
       </nav>
-    </header>
+    </SiteHeaderShell>
   );
 }

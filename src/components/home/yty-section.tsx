@@ -11,7 +11,7 @@ export function YtySection({ id }: YtySectionProps) {
   const t = useTranslations("yty");
 
   return (
-    <section id={id} className="container mx-auto scroll-mt-16 px-4 py-16 sm:py-24">
+    <section id={id} className="container mx-auto scroll-mt-[var(--header-height)] px-4 py-16 sm:py-24">
       {/* Hero */}
       <div className="mx-auto max-w-3xl text-center">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">

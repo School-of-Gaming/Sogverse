@@ -72,12 +72,13 @@ export default async function RootLayout({
           messages={clientMessages}
           nonce={nonce}
         >
-          {/* Header rendering and the pt-16 offset that reserves space below the
-              fixed header are owned by each route group's layout — that's how
-              the (voice) group can replace the standard chrome with its own
-              simplified header (or skip it entirely). The document is the
-              single scroll container; no inner element should set h-screen
-              overflow-auto. */}
+          {/* Header rendering is owned by each route group's layout — that's
+              how the (voice) group can replace the standard chrome with its
+              own simplified header. Headers are `position: sticky top-0`
+              (via `<SiteHeaderShell>`, sized by `--header-height`), so they
+              reserve their own space in normal flow and no wrapper needs an
+              offset to clear them. The document is the single scroll
+              container; no inner element should set h-screen overflow-auto. */}
           {children}
           <MouseflowConsent nonce={nonce} />
         </Providers>

@@ -28,9 +28,9 @@ export default function HomePage() {
 
       {/* Home: hero + features + how it works are grouped under a single
           scrollspy anchor so the "Home" pill stays active across all of them. */}
-      <div id="home" className="scroll-mt-16">
+      <div id="home" className="scroll-mt-[var(--header-height)]">
         {/* Hero Section */}
-        <section className="relative -mt-16 overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-16">
+        <section className="relative -mt-[var(--header-height)] overflow-hidden bg-[linear-gradient(to_bottom,_transparent_0%,_hsl(var(--background))_100%),linear-gradient(to_right,_hsl(var(--primary)/0.2),_transparent_50%,_hsl(var(--secondary)/0.1))] pt-[var(--header-height)]">
           <div className="container mx-auto px-4 py-24 sm:py-32">
             <div className="mx-auto max-w-3xl text-center">
               <h1 className="font-display text-2xl font-bold tracking-tight md:text-6xl">

@@ -10,6 +10,7 @@ import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
 import { LocalePicker } from "@/components/layout/locale-picker";
+import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 
 // Dashboard route prefixes the avatar's "active" ring tracks against. When the
 // user is anywhere under one of these, the avatar gets a primary-color ring —
@@ -66,8 +67,8 @@ export function Header() {
   );
 
   return (
-    <header className="fixed top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container mx-auto flex h-16 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4">
+    <SiteHeaderShell>
+      <nav className="container mx-auto flex h-full items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4">
         <Link
           href={ROUTES.home}
           className="flex shrink-0 items-center gap-2"
@@ -121,6 +122,6 @@ export function Header() {
           )}
         </div>
       </nav>
-    </header>
+    </SiteHeaderShell>
   );
 }

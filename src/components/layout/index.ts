@@ -1,4 +1,5 @@
 export { Header } from "./header";
+export { SiteHeaderShell } from "./site-header-shell";
 export { Sidebar } from "./sidebar";
 export { Footer } from "./footer";
 export { Copyright } from "./copyright";
