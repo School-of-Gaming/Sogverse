@@ -67,8 +67,6 @@ export class GamerService {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        username: input.username,
-        password: input.password,
         firstName: input.firstName,
         dateOfBirth: input.dateOfBirth,
         gender: input.gender,

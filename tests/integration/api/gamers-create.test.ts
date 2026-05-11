@@ -44,8 +44,6 @@ function createRequest(body: Record<string, unknown>): Request {
 }
 
 const validBody = {
-  username: "newgamer",
-  password: "password123",
   firstName: "New Gamer",
   dateOfBirth: "2015-06-15",
   gender: "boy",

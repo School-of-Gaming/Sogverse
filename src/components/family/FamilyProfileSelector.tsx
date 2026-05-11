@@ -146,8 +146,14 @@ export function FamilyProfileSelector() {
         open={selectParentOpen}
         onOpenChange={setSelectParentOpen}
         parents={parents}
-        committingTargetId={committingTargetId}
-        onPickParent={(parent) => handleSwitch(parent)}
+        onPickParent={(parent) => {
+          // Close before kicking off the switch so the underlying tile's
+          // spinner is visible and a switch failure surfaces through the
+          // selector's inline switchError (which the dialog backdrop
+          // would otherwise hide).
+          setSelectParentOpen(false);
+          handleSwitch(parent);
+        }}
       />
     </div>
   );
