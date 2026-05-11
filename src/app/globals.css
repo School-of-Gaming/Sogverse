@@ -64,6 +64,12 @@
   /* Radius */
   --radius: 0.5rem;
 
+  /* Layout — single source of truth for the sticky header's height.
+     Consumed by the header itself, the dashboard sidebar's sticky offset,
+     the home hero's bleed-under-header trick, and hash-anchor scroll
+     margins. Change this here and the whole layout follows. */
+  --header-height: 4rem;
+
   /* Sidebar */
   --sidebar-background: 0 0% 9%;
   --sidebar-foreground: 0 0% 93%;

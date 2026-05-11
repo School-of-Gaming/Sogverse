@@ -9,7 +9,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, showSidebar }: DashboardLayoutProps) {
   return (
-    <div className="flex pt-16">
+    <div className="flex">
       {showSidebar && <Sidebar />}
       {/* min-w-0 lets the flex item shrink to its assigned width instead of
           growing to fit its widest unbreakable child. Without it, a long

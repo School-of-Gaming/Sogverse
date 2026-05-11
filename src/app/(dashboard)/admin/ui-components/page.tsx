@@ -101,7 +101,7 @@ function AnchorHeading({
 }) {
   const Tag = as;
   return (
-    <Tag id={id} className={`group scroll-mt-20 ${className}`}>
+    <Tag id={id} className={`group scroll-mt-[calc(var(--header-height)+1rem)] ${className}`}>
       <a
         href={`#${id}`}
         className="inline-flex items-center gap-2 hover:underline"
