@@ -10,12 +10,16 @@ import {
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { Plus, Users } from "lucide-react";
+import { Plus, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGroupEditorV2 } from "@/hooks/use-group-editor-v2";
-import { useProductGroupsV2 } from "@/services/groups-v2";
+import {
+  useAdminAddGamerToProductV2,
+  useProductGroupsV2,
+} from "@/services/groups-v2";
+import { GamerPickerSheetV2 } from "../gamer-picker-sheet-v2";
 import { GeduPickerSheetV2 } from "../gedu-picker-sheet-v2";
 import { CommitBar } from "./commit-bar";
 import { CommitSummaryDialog } from "./commit-summary-dialog";
@@ -23,9 +27,11 @@ import { GamerChip } from "./gamer-chip";
 import { GroupColumn } from "./group-column";
 import { UnassignedCard } from "./unassigned-card";
 import type { EffectiveSnapshot } from "@/hooks/use-group-editor-v2";
+import type { ProductTypeV2 } from "@/types";
 
 interface GroupsPanelProps {
   productId: string;
+  productType: ProductTypeV2;
 }
 
 // Renders the chip in the floating overlay during a drag. Reads `active` from
@@ -70,7 +76,7 @@ function DragOverlayContent({
   );
 }
 
-export function GroupsPanel({ productId }: GroupsPanelProps) {
+export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
   const t = useTranslations("admin.productsV2.groupsPanel");
   const { data: snapshot, isLoading } = useProductGroupsV2(productId);
 
@@ -78,7 +84,28 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
     useGroupEditorV2(snapshot);
 
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
+  const [gamerPickerOpen, setGamerPickerOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+
+  const addGamer = useAdminAddGamerToProductV2(productId);
+
+  // Recurring billing on consumer clubs makes a no-payment comp awkward, so
+  // the Add Gamer affordance is hidden for that product type. Route enforces
+  // this too (defense in depth).
+  const canAddGamer = productType !== "consumer_club";
+
+  // Server snapshot drives the "already added" disabled state inside the
+  // picker. The effective snapshot here may include staged moves, but
+  // enrollment (any non-reserving participation) is what really blocks a re-add.
+  const enrolledGamerIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!snapshot) return ids;
+    for (const g of snapshot.groups) {
+      for (const p of g.participations) ids.add(p.gamer_id);
+    }
+    for (const p of snapshot.unassigned) ids.add(p.gamer_id);
+    return ids;
+  }, [snapshot]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -186,10 +213,22 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
           </h2>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleAddGroup}>
-          <Plus className="mr-1 h-4 w-4" />
-          {t("addGroup")}
-        </Button>
+        <div className="flex items-center gap-2">
+          {canAddGamer && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setGamerPickerOpen(true)}
+            >
+              <UserPlus className="mr-1 h-4 w-4" />
+              {t("unassigned.addGamer")}
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={handleAddGroup}>
+            <Plus className="mr-1 h-4 w-4" />
+            {t("addGroup")}
+          </Button>
+        </div>
       </div>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
@@ -247,6 +286,20 @@ export function GroupsPanel({ productId }: GroupsPanelProps) {
         reviewDisabledReason={
           hasBlankNames ? t("group.nameRequiredHint") : undefined
         }
+      />
+
+      {/* GamerPickerSheetV2 and GeduPickerSheetV2 are deliberately rendered
+          OUTSIDE the DndContext above. dnd-kit re-renders subscribed children
+          on every pointer move during a drag, so a heavy always-mounted
+          subtree under it would tank drag responsiveness. Keep these as
+          siblings of the DndContext, not children. */}
+      <GamerPickerSheetV2
+        open={gamerPickerOpen}
+        onOpenChange={setGamerPickerOpen}
+        enrolledGamerIds={enrolledGamerIds}
+        onAddGamer={async (gamerId) => {
+          await addGamer.mutateAsync(gamerId);
+        }}
       />
 
       <GeduPickerSheetV2

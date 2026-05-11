@@ -589,6 +589,21 @@
         "current": "Nuvarande",
         "alreadyAssigned": "Redan tilldelad"
       },
+      "gamerPicker": {
+        "title": "Lägg till en spelare",
+        "description": "Lägg till en spelare direkt i denna produkt, förbi betalningen.",
+        "searchPlaceholder": "Sök på förälder eller spelarnamn…",
+        "searchHint": "Skriv minst 2 tecken för att söka.",
+        "noParents": "Inga föräldrar med kopplade spelare ännu.",
+        "noSearchResults": "Inga föräldrar eller spelare matchar din sökning.",
+        "unnamedParent": "Namnlös förälder",
+        "unnamedGamer": "Namnlös spelare",
+        "add": "Lägg till",
+        "adding": "Lägger till…",
+        "added": "Tillagd",
+        "alreadyAdded": "Redan tillagd",
+        "addFailed": "Det gick inte att lägga till spelaren."
+      },
       "groupsPanel": {
         "title": "Grupper",
         "subtitle": "Dra varje spelare till gruppen de ska spela med. Lägg till Geduer som leder varje grupp.",
@@ -603,7 +618,8 @@
         "unassigned": {
           "title": "Otilldelade",
           "subtitle": "Spelare som har betalat men ännu inte är i en grupp. Dra dem in i en för att placera dem.",
-          "empty": "Alla har en grupp."
+          "empty": "Alla har en grupp.",
+          "addGamer": "Lägg till spelare"
         },
         "empty": {
           "title": "Inga grupper än",

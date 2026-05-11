@@ -634,6 +634,21 @@
         "current": "DaH",
         "alreadyAssigned": "ngu'lu'pu'"
       },
+      "gamerPicker": {
+        "title": "Suvwl' yIchel",
+        "description": "DochvamDaq Suvwl' yIchel; Huch DaH poQbe'.",
+        "searchPlaceholder": "vav pong, qoj Suvwl' pong yInej…",
+        "searchHint": "cha' mu' pIm yIghItlh, vaj yInej.",
+        "noParents": "Suvwl'pu' DIvI'pu' ghajbogh vav pagh tu'lu'.",
+        "noSearchResults": "vav qoj Suvwl' tu'be'lu'.",
+        "unnamedParent": "vav pongHa'",
+        "unnamedGamer": "Suvwl' pongHa'",
+        "add": "chel",
+        "adding": "chellu'taH…",
+        "added": "chellu'pu'",
+        "alreadyAdded": "wa'logh chellu'pu'",
+        "addFailed": "Suvwl' chellu'pu'be'."
+      },
       "groupsPanel": {
         "title": "ghommey",
         "subtitle": "Suvwl' QujmeH ghomvaD yIngeH. ghom DevmeH Gedupu' yIchu'.",
@@ -648,7 +663,8 @@
         "unassigned": {
           "title": "ngu'be'pu'",
           "subtitle": "DIl Suvwl'pu', 'ach ghomDaq pagh. ghomvaD yIngeH ngu'meH.",
-          "empty": "Hoch ghom ghaj."
+          "empty": "Hoch ghom ghaj.",
+          "addGamer": "Suvwl' yIchel"
         },
         "empty": {
           "title": "ghommey pagh",

@@ -36,3 +36,24 @@ export function useApplyGroupChangesV2(productId: string) {
     },
   });
 }
+
+/**
+ * Admin comp-enrollment mutation — drops a gamer directly into a product
+ * (status='active', group_id=NULL). Invalidates the product's groups
+ * snapshot so the new chip appears in the Unassigned card immediately.
+ */
+export function useAdminAddGamerToProductV2(productId: string) {
+  const queryClient = useQueryClient();
+  const supabase = getClient();
+  const service = new GroupsV2Service(supabase);
+
+  return useMutation({
+    mutationFn: (gamerId: string) =>
+      service.addGamerToProduct(productId, gamerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: groupsV2Keys.byProduct(productId),
+      });
+    },
+  });
+}

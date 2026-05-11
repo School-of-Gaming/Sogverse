@@ -7,4 +7,5 @@ export {
   groupsV2Keys,
   useProductGroupsV2,
   useApplyGroupChangesV2,
+  useAdminAddGamerToProductV2,
 } from "./groups-v2.queries";
