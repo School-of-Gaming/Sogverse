@@ -80,4 +80,36 @@ export class GroupsV2Service {
     }
     return (await response.json()) as ApplyGroupChangesV2Result;
   }
+
+  /**
+   * Admin comp-enrollment: drops a gamer directly into the product as an
+   * active participation, bypassing payment, seat caps, registration windows,
+   * and the effective-status gate. Blocked server-side on consumer_club —
+   * recurring billing makes a no-payment comp awkward and we don't model it.
+   *
+   * On success the caller should invalidate `groupsV2Keys.byProduct(productId)`
+   * so the new chip appears in the Unassigned card.
+   */
+  async addGamerToProduct(
+    productId: string,
+    gamerId: string,
+  ): Promise<{ participation_id: string }> {
+    const response = await fetch(
+      `/api/admin/products-v2/${productId}/participations`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ gamerId }),
+      },
+    );
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      throw new Error(
+        body.error ?? `Failed to add gamer (${response.status})`,
+      );
+    }
+    return (await response.json()) as { participation_id: string };
+  }
 }

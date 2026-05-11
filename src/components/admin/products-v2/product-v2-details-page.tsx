@@ -142,7 +142,7 @@ export function ProductV2DetailsPage({
 
       <KeyFacts product={product} topicName={topicName} tags={tags} uiLocale={uiLocale} t={t} c={c} />
 
-      <GroupsPanel productId={productId} />
+      <GroupsPanel productId={productId} productType={productType} />
 
       <FuturePlaceholder
         icon={Clock}

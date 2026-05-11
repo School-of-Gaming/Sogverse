@@ -589,6 +589,21 @@
         "current": "Nykyinen",
         "alreadyAssigned": "Jo nimetty"
       },
+      "gamerPicker": {
+        "title": "Lisää pelaaja",
+        "description": "Lisää pelaaja suoraan tähän tuotteeseen ohittaen maksun.",
+        "searchPlaceholder": "Hae vanhemman tai pelaajan nimellä…",
+        "searchHint": "Hae kirjoittamalla vähintään 2 merkkiä.",
+        "noParents": "Yhdelläkään vanhemmalla ei ole vielä yhdistettyjä pelaajia.",
+        "noSearchResults": "Yksikään vanhempi tai pelaaja ei vastaa hakuasi.",
+        "unnamedParent": "Nimetön vanhempi",
+        "unnamedGamer": "Nimetön pelaaja",
+        "add": "Lisää",
+        "adding": "Lisätään…",
+        "added": "Lisätty",
+        "alreadyAdded": "Jo lisätty",
+        "addFailed": "Pelaajan lisääminen epäonnistui."
+      },
       "groupsPanel": {
         "title": "Ryhmät",
         "subtitle": "Vedä jokainen pelaaja siihen ryhmään, jossa hän pelaa. Lisää Geduja vetämään ryhmiä.",
@@ -603,7 +618,8 @@
         "unassigned": {
           "title": "Nimeämättömät",
           "subtitle": "Pelaajat, jotka ovat maksaneet mutta eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
-          "empty": "Kaikilla on ryhmä."
+          "empty": "Kaikilla on ryhmä.",
+          "addGamer": "Lisää pelaaja"
         },
         "empty": {
           "title": "Ei vielä ryhmiä",

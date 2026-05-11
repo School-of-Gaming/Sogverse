@@ -589,6 +589,21 @@
         "current": "Current",
         "alreadyAssigned": "Already assigned"
       },
+      "gamerPicker": {
+        "title": "Add a gamer",
+        "description": "Drop a gamer directly into this product, bypassing payment.",
+        "searchPlaceholder": "Search by parent or gamer name…",
+        "searchHint": "Type at least 2 characters to search.",
+        "noParents": "No parents with linked gamers yet.",
+        "noSearchResults": "No parents or gamers match your search.",
+        "unnamedParent": "Unnamed parent",
+        "unnamedGamer": "Unnamed gamer",
+        "add": "Add",
+        "adding": "Adding…",
+        "added": "Added",
+        "alreadyAdded": "Already added",
+        "addFailed": "Failed to add gamer."
+      },
       "groupsPanel": {
         "title": "Groups",
         "subtitle": "Drag each gamer into the group they'll play with. Add Gedus to lead each group.",
@@ -603,7 +618,8 @@
         "unassigned": {
           "title": "Unassigned",
           "subtitle": "Gamers who've paid but aren't in a group yet. Drag them into one to place them.",
-          "empty": "Everyone has a group."
+          "empty": "Everyone has a group.",
+          "addGamer": "Add gamer"
         },
         "empty": {
           "title": "No groups yet",
