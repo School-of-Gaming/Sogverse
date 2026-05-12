@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
+import { useAuth } from "@/providers";
 
 const registerSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -30,6 +31,7 @@ export function RegisterForm() {
   const t = useTranslations('auth');
   const c = useTranslations('common');
   const { redirect, status, navigateAfterAuth } = useAuthRedirect();
+  const { freezeUntilNavigation } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -55,6 +57,12 @@ export function RegisterForm() {
       });
 
       const composedDisplayName = `${validatedData.firstName} ${validatedData.lastName}`;
+
+      // Freeze auth state updates *before* signUp — Supabase fires SIGNED_IN
+      // synchronously inside the call when auto-confirm is on, so freezing
+      // afterward would be too late to stop the Header from flashing
+      // signed-in chrome. See the matching comment in login-form.tsx.
+      freezeUntilNavigation();
 
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: validatedData.email,
