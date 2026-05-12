@@ -182,14 +182,26 @@ function GroupsSection({ productId }: { productId: string }) {
     );
   }
 
-  const groups = data?.groups ?? [];
+  // Lift the viewer's own group(s) to the front while preserving the RPC's
+  // display_order within each partition. Stable partition (not a custom
+  // comparator on isOwn ? -1 : 1) so two non-own groups keep their relative
+  // order even when JS engines use unstable sort fallbacks.
+  const sortedGroups = (() => {
+    const all = data?.groups ?? [];
+    const own: ProductGroupV2WithDetails[] = [];
+    const other: ProductGroupV2WithDetails[] = [];
+    for (const g of all) {
+      (ownsGroup(g, user?.id) ? own : other).push(g);
+    }
+    return [...own, ...other];
+  })();
 
   return (
     <section className="space-y-3">
       <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
         {t("heading")}
       </h2>
-      {groups.length === 0 ? (
+      {sortedGroups.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-sm text-muted-foreground">
             {t("emptyNoGroups")}
@@ -199,10 +211,10 @@ function GroupsSection({ productId }: { productId: string }) {
         <div
           className={cn(
             "grid gap-4",
-            groups.length >= 2 && "md:grid-cols-2",
+            sortedGroups.length >= 2 && "md:grid-cols-2",
           )}
         >
-          {groups.map((group) => (
+          {sortedGroups.map((group) => (
             <GroupCard
               key={group.id}
               group={group}
@@ -236,7 +248,7 @@ function GroupCard({
     <Card
       className={cn(
         "h-full transition-colors",
-        isOwn && "border-primary/40 bg-primary/[0.03]",
+        isOwn && "ring-2 ring-primary",
       )}
     >
       <CardContent className="space-y-4 p-5 sm:p-6">
