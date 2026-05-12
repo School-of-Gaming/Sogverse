@@ -12,6 +12,7 @@ import { getClient } from "@/lib/supabase/client";
 import { generateGamerEmail } from "@/lib/utils";
 import { ROLE_POST_LOGIN_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
+import { useAuth } from "@/providers";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -19,6 +20,7 @@ export function LoginForm() {
   const t = useTranslations('auth');
   const c = useTranslations('common');
   const { redirect, status, navigateAfterAuth } = useAuthRedirect();
+  const { freezeUntilNavigation } = useAuth();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -63,6 +65,14 @@ export function LoginForm() {
       const loginEmail = trimmedIdentifier.includes("@")
         ? trimmedIdentifier
         : generateGamerEmail(trimmedIdentifier);
+
+      // Freeze auth state updates *before* signInWithPassword. Supabase fires
+      // the SIGNED_IN event synchronously inside the call, before the promise
+      // resolves — so anything we do "after success" is already too late to
+      // stop the Header from flashing signed-in chrome during the subsequent
+      // profile-query await. On sign-in failure the frozen state is harmless
+      // (page is still showing signed-out chrome) and a full reload resets it.
+      freezeUntilNavigation();
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: loginEmail,

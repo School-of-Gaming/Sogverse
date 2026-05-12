@@ -2,8 +2,10 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -17,6 +19,15 @@ interface AuthContextType {
   profile: Profile | null;
   isLoading: boolean;
   refreshProfile: () => Promise<void>;
+  /**
+   * Stops AuthProvider from reacting to further auth-state events until the
+   * document unloads. Call this right before kicking off a full-page
+   * navigation after sign-in/sign-up so the current page's chrome (Header,
+   * etc.) doesn't briefly re-render as "signed in" before the new document
+   * paints. The flag is reset implicitly: the next page load mounts a fresh
+   * AuthProvider with `initialUser` hydrated from the server.
+   */
+  freezeUntilNavigation: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,9 +46,16 @@ export function AuthProvider({
   const [user, setUser] = useState<User | null>(initialUser);
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
   const [isLoading, setIsLoading] = useState(!initialUser);
+  // Ref (not state) so the `onAuthStateChange` closure below reads the latest
+  // value on every fire — a state value would be captured at mount.
+  const frozenRef = useRef(false);
 
   const supabase = getClient();
   const queryClient = useQueryClient();
+
+  const freezeUntilNavigation = useCallback(() => {
+    frozenRef.current = true;
+  }, []);
 
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
@@ -91,6 +109,11 @@ export function AuthProvider({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
+      // Once a sign-in/up flow has committed to a full-page navigation,
+      // ignore further auth events so the outgoing page's chrome doesn't
+      // flash the post-sign-in state before the new document paints. See
+      // `freezeUntilNavigation` above.
+      if (frozenRef.current) return;
       if (event === "SIGNED_IN" && session?.user) {
         setUser(session.user);
       } else if (event === "SIGNED_OUT") {
@@ -113,6 +136,7 @@ export function AuthProvider({
         profile,
         isLoading,
         refreshProfile,
+        freezeUntilNavigation,
       }}
     >
       {children}
