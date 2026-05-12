@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { generateGamerEmail } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
+import { ROLE_POST_LOGIN_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 const PASSWORD_MIN_LENGTH = 6;
@@ -82,14 +82,17 @@ export function LoginForm() {
         .eq("id", data.user.id)
         .single();
 
-      const dashboardPath = profile?.role
-        ? ROLE_DASHBOARD_PATHS[profile.role]
-        : ROUTES.customer.dashboard;
+      // Customer (parent) lands on /select-profile so they can pick which
+      // family member is entering Sogverse; everyone else goes to their
+      // dashboard. A safe ?redirect= still wins via navigateAfterAuth.
+      const postLoginPath = profile?.role
+        ? ROLE_POST_LOGIN_PATHS[profile.role]
+        : ROUTES.selectProfile;
 
       // Full-page navigation so the root layout re-runs server-side and
       // hydrates AuthProvider with the correct initialProfile. Do not clear
       // isLoading — the document is unloading.
-      navigateAfterAuth(dashboardPath);
+      navigateAfterAuth(postLoginPath);
     } catch {
       setError(c('unexpectedError'));
       setIsLoading(false);

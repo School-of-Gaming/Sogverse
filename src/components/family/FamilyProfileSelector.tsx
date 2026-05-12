@@ -11,21 +11,31 @@ import { SelectParentToAddGamerDialog } from "./SelectParentToAddGamerDialog";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
+interface FamilyProfileSelectorProps {
+  /**
+   * Override behavior when the viewer clicks their own tile. Default (unset)
+   * makes the active tile non-interactive — used inside the My Family
+   * section, where the viewer is already "where they are". The
+   * /select-profile interstitial passes a navigator here so a parent can
+   * pick themselves to enter the parent dashboard.
+   */
+  onSelfClick?: () => void;
+}
+
 /**
  * Netflix-style profile selector for the current viewer's family.
  *
- * Family-tree layout: parents on the top row, gamers (plus the "Add Gamer"
- * tile) on the bottom row, both rows centered and wrapped on every breakpoint
- * — never horizontal-scroll, since the dashboard must not spill outside the
- * viewport. Each tile has a subtle border so the icon shape stands out
- * against the dark page background. The active viewer's tile gets a
- * primary-colored ring; clicking another tile signs out and signs in as
- * that account with no confirmation dialog.
+ * One centered, wrap-on-every-breakpoint row: parents first, then gamers,
+ * then the "Add Gamer" tile. Never horizontal-scrolls. Each tile has a
+ * subtle border so the icon shape stands out against the dark page
+ * background. The active viewer's tile gets a primary-colored ring;
+ * clicking another tile signs out and signs in as that account with no
+ * confirmation dialog.
  *
  * The "Add Gamer" tile opens AddGamerDialog. useCreateGamer's onSuccess
- * invalidates the family query so the new gamer slots into the bottom row.
+ * invalidates the family query so the new gamer slots into the row.
  */
-export function FamilyProfileSelector() {
+export function FamilyProfileSelector({ onSelfClick }: FamilyProfileSelectorProps = {}) {
   const t = useTranslations("family");
   const { user, profile } = useAuth();
   const { data: family, isLoading, error } = useFamily();
@@ -38,8 +48,16 @@ export function FamilyProfileSelector() {
   const viewerIsCustomer = profile?.role === "customer";
 
   async function handleSwitch(target: FamilyMember) {
-    if (target.id === currentUserId) return;
     if (committingTargetId) return;
+
+    if (target.id === currentUserId) {
+      if (!onSelfClick) return;
+      // Hold the spinner through the full-page nav initiated by onSelfClick
+      // — same loading-state contract as the cross-account switch below.
+      setCommittingTargetId(target.id);
+      onSelfClick();
+      return;
+    }
 
     setSwitchError(null);
     setCommittingTargetId(target.id);
@@ -66,15 +84,11 @@ export function FamilyProfileSelector() {
 
   if (isLoading || !family) {
     return (
-      <div className="space-y-6 sm:space-y-8">
-        <Row>
-          <SkeletonTile />
-        </Row>
-        <Row>
-          <SkeletonTile />
-          <SkeletonTile />
-        </Row>
-      </div>
+      <Row>
+        <SkeletonTile />
+        <SkeletonTile />
+        <SkeletonTile />
+      </Row>
     );
   }
 
@@ -111,35 +125,36 @@ export function FamilyProfileSelector() {
         </div>
       )}
 
-      <div className="space-y-6 sm:space-y-8">
-        <Row>
-          {parents.map((member) => (
-            <ProfileTile
-              key={member.id}
-              member={member}
-              isActive={member.id === currentUserId}
-              isCommitting={committingTargetId === member.id}
-              isAnyCommitting={!!committingTargetId}
-              onClick={() => handleSwitch(member)}
-            />
-          ))}
-        </Row>
-        <Row>
-          {gamers.map((member) => (
-            <ProfileTile
-              key={member.id}
-              member={member}
-              isActive={member.id === currentUserId}
-              isCommitting={committingTargetId === member.id}
-              isAnyCommitting={!!committingTargetId}
-              onClick={() => handleSwitch(member)}
-            />
-          ))}
-          {canTriggerAddGamer && (
-            <AddGamerTile onClick={handleAddGamerClick} />
-          )}
-        </Row>
-      </div>
+      {/* Single wrap-on-every-breakpoint row: parents first, then gamers,
+          then "Add Gamer". Wraps to multiple lines as needed on narrow
+          viewports — never horizontal-scrolls. */}
+      <Row>
+        {parents.map((member) => (
+          <ProfileTile
+            key={member.id}
+            member={member}
+            isActive={member.id === currentUserId}
+            activeIsClickable={!!onSelfClick}
+            isCommitting={committingTargetId === member.id}
+            isAnyCommitting={!!committingTargetId}
+            onClick={() => handleSwitch(member)}
+          />
+        ))}
+        {gamers.map((member) => (
+          <ProfileTile
+            key={member.id}
+            member={member}
+            isActive={member.id === currentUserId}
+            activeIsClickable={!!onSelfClick}
+            isCommitting={committingTargetId === member.id}
+            isAnyCommitting={!!committingTargetId}
+            onClick={() => handleSwitch(member)}
+          />
+        ))}
+        {canTriggerAddGamer && (
+          <AddGamerTile onClick={handleAddGamerClick} />
+        )}
+      </Row>
 
       <AddGamerDialog open={addGamerOpen} onOpenChange={setAddGamerOpen} />
       <SelectParentToAddGamerDialog
@@ -175,17 +190,20 @@ function Row({ children }: { children: React.ReactNode }) {
 function ProfileTile({
   member,
   isActive,
+  activeIsClickable,
   isCommitting,
   isAnyCommitting,
   onClick,
 }: {
   member: FamilyMember;
   isActive: boolean;
+  activeIsClickable: boolean;
   isCommitting: boolean;
   isAnyCommitting: boolean;
   onClick: () => void;
 }) {
-  const disabled = isActive || isAnyCommitting;
+  const disabled = (isActive && !activeIsClickable) || isAnyCommitting;
+  const clickable = !isActive || activeIsClickable;
   return (
     <button
       type="button"
@@ -194,7 +212,7 @@ function ProfileTile({
       aria-current={isActive ? "true" : undefined}
       className={cn(
         "group flex w-16 flex-col items-center gap-2 transition-transform duration-150 sm:w-20 md:w-24",
-        isActive ? "cursor-default" : "cursor-pointer hover:scale-105 focus-visible:scale-105",
+        clickable ? "cursor-pointer hover:scale-105 focus-visible:scale-105" : "cursor-default",
       )}
     >
       <div

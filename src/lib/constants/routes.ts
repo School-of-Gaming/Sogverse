@@ -12,6 +12,7 @@ export const ROUTES = {
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   setupAccount: "/setup-account",
+  selectProfile: "/select-profile",
   feedback: "/feedback",
   settings: "/settings",
   /**
