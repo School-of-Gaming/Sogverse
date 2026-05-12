@@ -81,9 +81,13 @@ export function ProductGeduDetailBody({ product }: ProductGeduDetailBodyProps) {
           )}
         </div>
 
-        <div className="mt-8 space-y-6">
-          <ProductWhenWhereCard product={product} />
-          <CalendarCard product={product} />
+        <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="min-w-0 md:col-span-1 [&>*]:h-full">
+            <ProductWhenWhereCard product={product} />
+          </div>
+          <div className="min-w-0 md:col-span-2 [&>*]:h-full">
+            <CalendarCard product={product} />
+          </div>
         </div>
 
         <div className="mt-8">
