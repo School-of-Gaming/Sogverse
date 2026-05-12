@@ -1034,6 +1034,9 @@
       "genericError": "Pelaajan lisääminen epäonnistui. Yritä uudelleen."
     }
   },
+  "selectProfile": {
+    "title": "Kuka astuu Sogverseen?"
+  },
   "footer": {
     "tagline": "School of Gaming – Ruutuaika muuttuu laatuajaksi.",
     "copyright": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",

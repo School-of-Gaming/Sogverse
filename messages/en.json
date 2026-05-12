@@ -1034,6 +1034,9 @@
       "genericError": "Couldn't add this gamer. Please try again."
     }
   },
+  "selectProfile": {
+    "title": "Who is entering Sogverse?"
+  },
   "footer": {
     "tagline": "School of Gaming - Where screen time becomes quality time.",
     "copyright": "© {year} School of Gaming. All rights reserved.",

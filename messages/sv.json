@@ -1034,6 +1034,9 @@
       "genericError": "Det gick inte att lägga till gamern. Försök igen."
     }
   },
+  "selectProfile": {
+    "title": "Vem ska in i Sogverse?"
+  },
   "footer": {
     "tagline": "School of Gaming - Där skärmtid blir kvalitetstid.",
     "copyright": "© {year} School of Gaming. Alla rättigheter förbehållna.",

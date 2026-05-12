@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
+import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -24,14 +24,16 @@ export async function GET(request: Request) {
           .eq("id", user.id)
           .single();
 
-        // Redirect to role-specific dashboard or the intended destination
+        // Honor an explicit `next` destination; otherwise route by role.
+        // Customers land on /select-profile (the family selector); other
+        // roles go straight to their dashboard. See ROLE_POST_LOGIN_PATHS.
         const role = profile?.role;
         const redirectPath =
           next !== "/"
             ? next
             : role
-              ? ROLE_DASHBOARD_PATHS[role as keyof typeof ROLE_DASHBOARD_PATHS]
-              : ROLE_DASHBOARD_PATHS.customer;
+              ? ROLE_POST_LOGIN_PATHS[role as keyof typeof ROLE_POST_LOGIN_PATHS]
+              : ROLE_POST_LOGIN_PATHS.customer;
 
         return NextResponse.redirect(`${origin}${redirectPath}`);
       }

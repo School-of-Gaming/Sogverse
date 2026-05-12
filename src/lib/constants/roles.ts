@@ -30,3 +30,18 @@ export const ROLE_DASHBOARD_PATHS: Record<UserRole, string> = {
   gamer: "/gamer",
   gedu: "/gedu",
 };
+
+/**
+ * Where each role lands immediately after sign-in when no specific redirect
+ * was requested. Customers land on the family profile selector so a parent
+ * can pick which family member is entering Sogverse; everyone else goes
+ * straight to their dashboard. Routes that need a real dashboard URL (e.g.
+ * the proxy's role-access check) must keep using ROLE_DASHBOARD_PATHS — the
+ * selector is *not* a parent-only dashboard, it's an interstitial.
+ */
+export const ROLE_POST_LOGIN_PATHS: Record<UserRole, string> = {
+  admin: "/admin",
+  customer: "/select-profile",
+  gamer: "/gamer",
+  gedu: "/gedu",
+};
