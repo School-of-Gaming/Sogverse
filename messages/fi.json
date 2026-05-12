@@ -1112,7 +1112,8 @@
       "events": "Tapahtumat",
       "yty": "Yty",
       "about": "Tietoa"
-    }
+    },
+    "selectProfile": "Vaihda profiilia"
   },
   "productBrowse": {
     "headings": {

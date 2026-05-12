@@ -9,14 +9,14 @@ import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 /**
  * Simplified header for /select-profile.
  *
- * Replaces the standard app `Header` while a parent is choosing which family
- * member is entering Sogverse. Differences:
+ * Replaces the standard app `Header` while the viewer (parent or gamer) is
+ * choosing which family member is entering Sogverse. Differences:
  *   - The "SOG Sogverse" mark is non-clickable. Sending the user home would
  *     yank them out of the picker mid-decision.
  *   - No public nav links — there's nothing else to do from this screen.
  *   - The avatar slot stays an UnknownAvatar inside a non-interactive frame
- *     even though the parent is signed in. They haven't yet picked *whose*
- *     session this is, so there's no profile to surface here.
+ *     even though someone is signed in. The page itself is the avatar
+ *     picker, so duplicating that affordance in the header would be noise.
  *   - Reuses `LocalePicker` verbatim so the language switcher is consistent.
  *
  * Outer chrome (sticky bar, backdrop blur, height) comes from

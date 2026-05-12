@@ -2,19 +2,24 @@
 
 import { useTranslations } from "next-intl";
 import { FamilyProfileSelector } from "@/components/family";
-import { ROUTES } from "@/lib/constants";
 
 /**
- * Body of the post-sign-in landing for parents. The page-level layout owns
- * the outer flex/min-height + simplified header; this component is just the
+ * Body of the family profile selector page. The page-level layout owns the
+ * outer flex/min-height + simplified header; this component is just the
  * centered content column.
  *
  * Reuses FamilyProfileSelector to show parent + gamer tiles + "Add Gamer".
- * Clicking a gamer tile signs in as that gamer (handled inside the selector).
- * Clicking the parent's own tile navigates to /parent — the active tile is a
- * no-op in the My Family section but here it's the "Continue as me" choice.
+ * Clicking another family member's tile switches accounts (handled inside
+ * the selector). Clicking the viewer's own tile navigates to their dashboard
+ * — the active tile is a no-op in the My Family section but here it's the
+ * "Continue as me" choice. The destination depends on the viewer's role, so
+ * the parent page passes it in.
  */
-export function SelectProfileView() {
+export function SelectProfileView({
+  selfDashboardPath,
+}: {
+  selfDashboardPath: string;
+}) {
   const t = useTranslations("selectProfile");
 
   return (
@@ -25,8 +30,8 @@ export function SelectProfileView() {
       <FamilyProfileSelector
         onSelfClick={() => {
           // Full-page navigation so the proxy/root layout re-run and the
-          // parent dashboard hydrates against fresh session cookies.
-          window.location.href = ROUTES.customer.dashboard;
+          // dashboard hydrates against fresh session cookies.
+          window.location.href = selfDashboardPath;
         }}
       />
     </div>
