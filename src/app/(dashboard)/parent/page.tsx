@@ -12,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function CustomerDashboardPage() {
   const t = useTranslations('dashboardSections');
   const p = useTranslations('parent.placeholders');
+  const m = useTranslations('metadata.pages');
 
   const sections: DashboardSection[] = [
     { id: 'my-gamers', label: t('myGamers') },
@@ -22,33 +23,38 @@ export default function CustomerDashboardPage() {
 
   return (
     <>
+      {/* Visually-hidden page title — the four sections below are equal-weight
+          h2s under it, and the section pill is the visual nav. Gives screen
+          readers a single "My SOG" page heading instead of four competing h1s. */}
+      <h1 className="sr-only">{m('parentDashboard')}</h1>
+
       <DashboardSectionPill sections={sections} ariaLabel={t('myGamers')} />
 
       <div className="space-y-24 pb-24">
         <section id="my-gamers" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
-            <h1 className="text-3xl font-bold">{t('myGamers')}</h1>
+            <h2 className="text-3xl font-bold">{t('myGamers')}</h2>
             <MyGamersGrid />
           </div>
         </section>
 
         <section id="sessions" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
-            <h1 className="text-3xl font-bold">{t('upcomingSessions')}</h1>
+            <h2 className="text-3xl font-bold">{t('upcomingSessions')}</h2>
             <p className="text-muted-foreground">{p('upcomingSessions')}</p>
           </div>
         </section>
 
         <section id="billing" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
-            <h1 className="text-3xl font-bold">{t('billing')}</h1>
+            <h2 className="text-3xl font-bold">{t('billing')}</h2>
             <p className="text-muted-foreground">{p('billing')}</p>
           </div>
         </section>
 
         <section id="help" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
-            <h1 className="text-3xl font-bold">{t('help')}</h1>
+            <h2 className="text-3xl font-bold">{t('help')}</h2>
             <p className="text-muted-foreground">{p('help')}</p>
           </div>
         </section>

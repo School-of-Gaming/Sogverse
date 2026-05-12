@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
-import { HelpFeedbackGate } from "./help-feedback-gate";
+import { getUser } from "@/lib/supabase/server";
+import { FeedbackSectionContent } from "@/components/feedback/feedback-section-content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -16,8 +16,13 @@ const FAQ_KEYS = [
   "howToStart",
 ] as const;
 
-export default function HelpPage() {
-  const t = useTranslations("help");
+// The Help page itself is public — anyone can read the FAQ. The feedback
+// form needs a signed-in user (the API route requires auth and the email
+// we send includes their name/role/email), so we gate it server-side here
+// to avoid a post-hydration flash for signed-in visitors.
+export default async function HelpPage() {
+  const t = await getTranslations("help");
+  const user = await getUser();
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-12">
@@ -42,9 +47,11 @@ export default function HelpPage() {
         </div>
       </section>
 
-      <div className="mt-12">
-        <HelpFeedbackGate />
-      </div>
+      {user && (
+        <div className="mt-12">
+          <FeedbackSectionContent />
+        </div>
+      )}
     </div>
   );
 }
