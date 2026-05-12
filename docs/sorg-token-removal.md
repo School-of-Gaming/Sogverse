@@ -4,7 +4,7 @@ The Sorg token system (Stripe-backed in-app currency: balance, subscriptions, pa
 
 This doc is the rolling checklist. Tick items as work merges. Remove this file once everything is done.
 
-Related docs to delete at the end: `docs/sorg-token-architecture.md`. Review/update: `docs/stripe-testing.md`, `docs/products-redesign.md`. (`docs/stripe-decoupling.md` was deleted separately on 2026-05-12 — it was a stale "future consideration" unrelated to the removal.)
+Related cleanup: `docs/products-redesign.md` still has ~20 Sorg references that need trimming. (`docs/sorg-token-architecture.md` and `docs/stripe-decoupling.md` were deleted on 2026-05-12; `docs/stripe-testing.md` was reviewed, contains no Sorg references, and stays as the general Stripe testing reference.)
 
 ---
 
@@ -134,11 +134,11 @@ New migration to drop:
 
 ## Step 9 — Docs & project instructions
 
-- [ ] Delete `docs/sorg-token-architecture.md`.
-- [ ] `CLAUDE.md` — remove the "Sorg Token Purchasing (Stripe)" section (currently lines 141–154).
-- [ ] `TODO.md` — remove Sorg notes.
-- [ ] Trim Sorg references from `docs/products-redesign.md`. (`docs/stripe-decoupling.md` was deleted, so nothing to trim there.)
-- [ ] Decide whether `docs/stripe-testing.md` stays as-is (general Stripe testing) or gets repurposed.
+- [x] Delete `docs/sorg-token-architecture.md`.
+- [x] `CLAUDE.md` — remove the "Sorg Token Purchasing (Stripe)" section.
+- [x] `TODO.md` — remove Sorg notes (dropped the `src/services/tokens/CLAUDE.md` splitting candidate and swapped the verification example to `commit_group_changes`).
+- [ ] Trim Sorg references from `docs/products-redesign.md`. (~20 occurrences still inside the doc body.)
+- [x] Decide whether `docs/stripe-testing.md` stays as-is — yes, stays as-is. It has no Sorg references and serves as the general Stripe testing reference.
 
 ---
 

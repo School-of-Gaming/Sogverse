@@ -138,20 +138,6 @@ See `docs/voice-chat-architecture.md` for the full architecture, component map, 
 
 **Rule: Realtime hooks must only invalidate queries — never make Supabase data queries in callbacks.** Same deadlock risk as `onAuthStateChange`.
 
-### Sorg Token Purchasing (Stripe)
-
-See `docs/sorg-token-architecture.md` for the full architecture, component map, data flows, and fulfillment model. See `docs/stripe-testing.md` for local Stripe CLI testing setup.
-
-**Rule: All token balance changes must go through the `adjust_token_balance()` RPC.** Never update `token_balance` directly.
-
-**Rule: Token packages are defined in Stripe, not in code.** Products with `tokenAmount` metadata are fetched at runtime via `getStripeProducts()` (`src/lib/stripe/products.ts`) and cached for 5 minutes. The client sends a `priceId` (validated server-side against live Stripe products), never a price amount.
-
-**Rule: The Stripe webhook is the sole fulfillment path for all token crediting.** Both handlers use idempotency checks + UNIQUE constraint on `stripe_idempotency_key`.
-
-**Rule: Only customers can purchase tokens.** Admins can manually adjust via `POST /api/admin/adjust-tokens`.
-
-**Rule: Subscription tier switches use `proration_behavior: "none"`.** The new tier starts on the next billing cycle. The switch route updates both Stripe subscription metadata and `customer_profiles.subscription_tier` immediately.
-
 ### Other Docs
 
 - `docs/products-v2-architecture.md` — Unified products_v2 system: admin form, parent browse pages, registration pill, View+adapter card split
