@@ -195,14 +195,34 @@ describe("get_gedu_product_detail_v2", () => {
 
     it("does not leak waitlisted / completed / reserving participations", async () => {
       // Flip the seeded participation through every non-active status and
-      // assert it disappears from the roster, then restore for the happy
-      // path test re-run. Pins the `WHERE p.status = 'active'` filter inside
-      // the participations sub-aggregate.
-      for (const status of ["waitlisted", "reserving", "completed"] as const) {
-        await admin
+      // assert it disappears from the roster. Pins the `WHERE p.status =
+      // 'active'` filter inside the participations sub-aggregate.
+      //
+      // The companion columns are required: chk_participations_v2_waitlisted_has_position
+      // forbids waitlisted without waitlist_position, and
+      // chk_participations_v2_reserving_has_until forbids reserving without
+      // reserved_until. The admin (service-role) client bypasses RLS but NOT
+      // CHECK constraints, so we have to satisfy them here.
+      const fixtures = [
+        {
+          status: "waitlisted" as const,
+          extras: { waitlist_position: 1 },
+        },
+        {
+          status: "reserving" as const,
+          extras: {
+            reserved_until: new Date(Date.now() + 60_000).toISOString(),
+          },
+        },
+        { status: "completed" as const, extras: {} },
+      ];
+
+      for (const { status, extras } of fixtures) {
+        const { error: updateErr } = await admin
           .from("participations_v2")
-          .update({ status })
+          .update({ status, ...extras })
           .eq("product_id", PRODUCT_GEDU_ON);
+        expect(updateErr).toBeNull();
 
         const { data, error } = await geduAuth.rpc(
           "get_gedu_product_detail_v2",
