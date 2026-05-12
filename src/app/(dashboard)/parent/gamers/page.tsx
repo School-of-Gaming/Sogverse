@@ -53,7 +53,7 @@ export default function CustomerGamersPage() {
             {t('gamers.subtitle')}
           </p>
         </div>
-        <Link href={ROUTES.products} className={buttonVariants()}>
+        <Link href={ROUTES.clubs} className={buttonVariants()}>
           {c('browseClubs')}
         </Link>
       </div>
@@ -119,7 +119,7 @@ export default function CustomerGamersPage() {
                   <Card className="ml-4">
                     <CardContent className="py-6 text-center">
                       <p className="text-sm text-muted-foreground">
-                        {t.rich('gamers.noEnrollments', { link: (chunks) => <Link href={ROUTES.products} className="font-medium text-primary hover:underline">{chunks}</Link> })}
+                        {t.rich('gamers.noEnrollments', { link: (chunks) => <Link href={ROUTES.clubs} className="font-medium text-primary hover:underline">{chunks}</Link> })}
                       </p>
                     </CardContent>
                   </Card>
@@ -137,7 +137,7 @@ export default function CustomerGamersPage() {
               {t('gamers.empty.description')}
             </p>
             <Link
-              href={ROUTES.products}
+              href={ROUTES.clubs}
               className={buttonVariants({ className: "mt-4" })}
             >
               {c('browseClubs')}

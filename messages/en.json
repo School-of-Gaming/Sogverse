@@ -15,14 +15,16 @@
       "adminDashboard": "Admin Dashboard",
       "adminGroups": "Groups",
       "adminGroupDetails": "Group Details",
-      "parentDashboard": "Parent Dashboard",
+      "parentDashboard": "My SOG",
       "geduDashboard": "Educator Dashboard",
       "geduGroups": "Groups",
       "geduGroupDetails": "Group Details",
-      "gamerHome": "Gamer Home",
+      "gamerHome": "Gamer",
       "gamerGroups": "My Groups",
       "gamerGroupDetails": "Group Details",
-      "voiceSession": "Voice Session"
+      "voiceSession": "Voice Session",
+      "help": "Help",
+      "shop": "Shop"
     }
   },
   "common": {
@@ -1001,8 +1003,9 @@
   },
   "dashboardSections": {
     "myFamily": "My Family",
+    "upcomingSessions": "Upcoming Sessions",
+    "billing": "Billing",
     "yty": "Yty",
-    "feedback": "Feedback",
     "settings": "Settings"
   },
   "family": {
@@ -1107,13 +1110,45 @@
   "header": {
     "nav": {
       "home": "Home",
-      "clubs": "Clubs",
-      "camps": "Camps",
-      "events": "Events",
+      "shop": "Shop",
+      "help": "Help",
       "yty": "Yty",
       "about": "About"
     },
     "selectProfile": "Switch profile"
+  },
+  "shop": {
+    "title": "Shop",
+    "intro": "This is where you'll sign your child up for our clubs, camps, and events. We're still putting it together — check back soon!"
+  },
+  "help": {
+    "title": "Help",
+    "intro": "Answers to common questions about Sogverse.",
+    "faq": {
+      "heading": "Frequently asked questions",
+      "items": {
+        "whatIsSogverse": {
+          "q": "What is Sogverse?",
+          "a": "Sogverse — School of Gaming — runs Minecraft clubs led by professional game educators so that screen time becomes quality time."
+        },
+        "productTypes": {
+          "q": "What's the difference between clubs, camps, and events?",
+          "a": "Clubs meet on a recurring schedule. Camps run across multiple days during school breaks. Events are one-off get-togethers."
+        },
+        "whoLeads": {
+          "q": "Who leads the sessions?",
+          "a": "Every session is hosted by a Gedu — a game educator who's also a gamer and knows how to support kids in-game and out."
+        },
+        "safety": {
+          "q": "Is it safe for my child?",
+          "a": "An educator hosts every session, our communities are moderated, and we have zero tolerance for bullying."
+        },
+        "howToStart": {
+          "q": "How do I get started?",
+          "a": "Create a parent account, browse what's on offer, and enrol your child. They'll log in with their own account for sessions."
+        }
+      }
+    }
   },
   "productBrowse": {
     "headings": {
@@ -1354,7 +1389,6 @@
     "uiComponents": "UI Components",
     "whatsapp": "WhatsApp",
     "testing": "Testing",
-    "feedback": "Feedback",
     "settings": "Settings",
     "myGamers": "My Gamers",
     "home": "Home",
@@ -1420,6 +1454,10 @@
     "mcHeadsAttribution": "Skin rendered by <link>mc-heads.net</link>"
   },
   "parent": {
+    "placeholders": {
+      "upcomingSessions": "This is where you'll see your summer camp.",
+      "billing": "This is where you'll manage billing."
+    },
     "gamers": {
       "title": "My Gamers",
       "subtitle": "Manage your gamer accounts and enrolments",

@@ -15,14 +15,16 @@
       "adminDashboard": "Administratörspanel",
       "adminGroups": "Grupper",
       "adminGroupDetails": "Gruppdetaljer",
-      "parentDashboard": "Föräldrapanel",
+      "parentDashboard": "Min SOG",
       "geduDashboard": "Utbildarpanel",
       "geduGroups": "Grupper",
       "geduGroupDetails": "Gruppdetaljer",
-      "gamerHome": "Spelarens startsida",
+      "gamerHome": "Spelare",
       "gamerGroups": "Mina grupper",
       "gamerGroupDetails": "Gruppdetaljer",
-      "voiceSession": "Röstsession"
+      "voiceSession": "Röstsession",
+      "help": "Hjälp",
+      "shop": "Butik"
     }
   },
   "common": {
@@ -1001,8 +1003,9 @@
   },
   "dashboardSections": {
     "myFamily": "Min familj",
+    "upcomingSessions": "Kommande träffar",
+    "billing": "Fakturering",
     "yty": "Yty",
-    "feedback": "Feedback",
     "settings": "Inställningar"
   },
   "family": {
@@ -1107,13 +1110,45 @@
   "header": {
     "nav": {
       "home": "Hem",
-      "clubs": "Klubbar",
-      "camps": "Läger",
-      "events": "Evenemang",
+      "shop": "Butik",
+      "help": "Hjälp",
       "yty": "Yty",
       "about": "Om oss"
     },
     "selectProfile": "Byt profil"
+  },
+  "shop": {
+    "title": "Butik",
+    "intro": "Här anmäler du ditt barn till våra klubbar, läger och evenemang. Vi bygger fortfarande — kom tillbaka snart!"
+  },
+  "help": {
+    "title": "Hjälp",
+    "intro": "Svar på vanliga frågor om Sogverse.",
+    "faq": {
+      "heading": "Vanliga frågor",
+      "items": {
+        "whatIsSogverse": {
+          "q": "Vad är Sogverse?",
+          "a": "Sogverse — School of Gaming — driver Minecraft-klubbar ledda av professionella spelpedagoger så att skärmtid blir kvalitetstid."
+        },
+        "productTypes": {
+          "q": "Vad är skillnaden mellan klubbar, läger och evenemang?",
+          "a": "Klubbar träffas regelbundet. Läger pågår under flera dagar under skolloven. Evenemang är enstaka tillfällen."
+        },
+        "whoLeads": {
+          "q": "Vem leder träffarna?",
+          "a": "Varje träff leds av en Gedu — en spelpedagog som själv är gamer och vet hur man stöttar barn i spelet och utanför."
+        },
+        "safety": {
+          "q": "Är det säkert för mitt barn?",
+          "a": "En pedagog är med vid varje träff, våra gemenskaper är modererade och vi har nolltolerans mot mobbning."
+        },
+        "howToStart": {
+          "q": "Hur kommer jag igång?",
+          "a": "Skapa ett föräldrakonto, bläddra bland utbudet och anmäl ditt barn. Hen loggar in med sitt eget konto inför träffarna."
+        }
+      }
+    }
   },
   "productBrowse": {
     "headings": {
@@ -1354,7 +1389,6 @@
     "uiComponents": "UI-komponenter",
     "whatsapp": "WhatsApp",
     "testing": "Testning",
-    "feedback": "Feedback",
     "settings": "Inställningar",
     "myGamers": "Mina spelare",
     "home": "Hem",
@@ -1420,6 +1454,10 @@
     "mcHeadsAttribution": "Skin renderat av <link>mc-heads.net</link>"
   },
   "parent": {
+    "placeholders": {
+      "upcomingSessions": "Här ser du ditt sommarläger.",
+      "billing": "Här hanterar du fakturering."
+    },
     "gamers": {
       "title": "Mina spelare",
       "subtitle": "Hantera dina spelarkonton och anmälningar",
