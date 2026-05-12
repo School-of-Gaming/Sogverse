@@ -206,8 +206,6 @@ export type MyType = Omit<_Generated, "nullable_col"> & { nullable_col: string |
 
 **Rule: RLS INSERT/UPDATE policies must authorize both the actor AND the target.** Checking only `column = auth.uid()` is insufficient — also verify the user is authorized to reference the target entity (prevents IDOR).
 
-**Rule: Use `SELECT ... FOR UPDATE` in functions that read-then-write financial data** (e.g., token balances). Without row locking, concurrent requests can cause corruption or overdrafts.
-
 The DB test `access-control.test.ts` enforces function and RLS rules — it queries PostgreSQL catalogs and fails if any non-allowlisted function is callable or any table lacks RLS.
 
 ## Testing
