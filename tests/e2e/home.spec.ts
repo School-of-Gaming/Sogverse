@@ -17,22 +17,21 @@ test.describe("Home Page", () => {
   test("should have navigation links", async ({ page }) => {
     await page.goto("/");
 
-    // Home, Clubs, and About are visible inline on both desktop and mobile,
-    // so no need to open the hamburger menu. Use .first() because mobile
-    // renders them both inline and inside the hamburger menu.
-    await expect(page.getByRole("link", { name: "Home" }).first()).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Clubs", exact: true }).first()
+      page.getByRole("link", { name: "Clubs", exact: true })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "About", exact: true }).first()
+      page.getByRole("link", { name: "Camps", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Events", exact: true })
     ).toBeVisible();
   });
 
   test("should navigate to register page", async ({ page }) => {
     await page.goto("/");
 
-    await activate(page.getByRole("link", { name: /get started/i }).first());
+    await activate(page.getByRole("link", { name: /get started/i }));
 
     await expect(page).toHaveURL("/register");
   });
@@ -40,7 +39,7 @@ test.describe("Home Page", () => {
   test("should navigate to clubs page", async ({ page }) => {
     await page.goto("/");
 
-    await activate(page.getByRole("link", { name: /view clubs/i }));
+    await activate(page.getByRole("link", { name: "Clubs", exact: true }));
 
     await expect(page).toHaveURL("/clubs");
   });
