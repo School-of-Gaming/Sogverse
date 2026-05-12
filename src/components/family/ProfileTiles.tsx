@@ -20,7 +20,9 @@ const ADD_ICON_SIZE: Record<TileSize, string> = {
 
 const SKELETON_LABEL: Record<TileSize, string> = {
   default: "h-4 w-12 sm:h-5 sm:w-16",
-  sm: "h-4 w-10 sm:w-12 md:w-14",
+  // Heights must match the real ProfileTile label (text-xs → h-4, text-sm → h-5)
+  // at each breakpoint so the section doesn't grow when data lands.
+  sm: "h-4 w-10 sm:h-5 sm:w-12 md:w-14",
 };
 
 /**
