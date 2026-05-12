@@ -1354,8 +1354,7 @@
   "home": {
     "hero": {
       "title": "<primary>Ruutuajasta</primary><br></br><secondary>Laatuaikaa</secondary>",
-      "subtitle": "Ammattilaisten suunnittelemat Minecraft-kerhomme edistävät tervettä pelaamista harrastuksena. Maailmanluokan pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat.",
-      "viewClubs": "Kerhot"
+      "subtitle": "Ammattilaisten suunnittelemat Minecraft-kerhomme edistävät tervettä pelaamista harrastuksena. Maailmanluokan pelikasvattajat tekevät jokaisesta kerrasta leikillisen oppimiskokemuksen, jossa lapset saavat uusia ystäviä, oppivat uutta ja pitävät hauskaa tekemällä sitä, mitä rakastavat."
     },
     "features": {
       "heading": "Tee pelaamisesta hieno harrastus",
