@@ -11,8 +11,7 @@ import { formatProductLocation } from "./format-product-location";
 import { formatProductPrice } from "./format-product-price";
 import {
   formatProductSchedule,
-  type ProductScheduleSummary,
-  type ScheduleTimeGroup,
+  scheduleCardLines,
 } from "./format-product-schedule";
 import {
   ProductBrowseCardView,
@@ -67,7 +66,7 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
     locale: uiLocale,
   });
 
-  const scheduleLines = scheduleLinesForCard(schedule);
+  const scheduleLines = scheduleCardLines(schedule, { withTimezone: true });
 
   const seatsHint: SeatsHint | null =
     product.seat_count !== null
@@ -139,52 +138,3 @@ function resolveTagLabels(
     .filter((s): s is string => Boolean(s));
 }
 
-// Card line count follows what's typical for each product type. Camps
-// usually run multiple days per week with the same daily hours, so we
-// split: line 1 is the date range, line 2 is the daily hours. Clubs
-// usually run one weekday, so a single line fits — multi-weekday clubs
-// are rare and fold onto the same line (line-clamp-1 truncates if it
-// gets long; the detail page carries the full picture). Events are
-// single date + time, one line.
-function scheduleLinesForCard(schedule: ProductScheduleSummary): string[] {
-  switch (schedule.kind) {
-    case "tbd":
-      return [];
-    case "recurring": {
-      const main = joinGroups(schedule.groups);
-      return [withTz(main, schedule.tz)];
-    }
-    case "ranged": {
-      const dateLine = withTz(
-        `${schedule.startDate} – ${schedule.endDate}`,
-        schedule.tz,
-      );
-      if (schedule.groups.length === 0) return [dateLine];
-      // Common case (single time-bucket across all camp days): drop the
-      // weekday list — the date range above already covers the calendar
-      // shape, and "09:00–15:00" alone reads cleanly as "daily hours".
-      // Multi-bucket camps keep weekday labels so the info isn't lost.
-      const timeLine =
-        schedule.groups.length === 1
-          ? `${schedule.groups[0].startTime}–${schedule.groups[0].endTime}`
-          : joinGroups(schedule.groups);
-      return [dateLine, timeLine];
-    }
-    case "single": {
-      const timeSuffix = schedule.time
-        ? ` · ${schedule.time.start}–${schedule.time.end}`
-        : "";
-      return [withTz(`${schedule.date}${timeSuffix}`, schedule.tz)];
-    }
-  }
-}
-
-function joinGroups(groups: readonly ScheduleTimeGroup[]): string {
-  return groups
-    .map((g) => `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`)
-    .join(", ");
-}
-
-function withTz(line: string, tz: string): string {
-  return tz ? `${line} (${tz})` : line;
-}

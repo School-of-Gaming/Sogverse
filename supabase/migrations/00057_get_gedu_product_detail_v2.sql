@@ -38,7 +38,10 @@ BEGIN
   END IF;
 
   -- Caller must be assigned to at least one group on this product. Anything
-  -- else is a 403 — a Gedu can't snoop on products they don't teach.
+  -- else is a 403 — a Gedu can't open products they aren't on. Once they're
+  -- on one group, the function returns every group in the product (sister
+  -- groups included); the cross-group visibility is intentional so a Gedu
+  -- can see who their colleagues are on the same product.
   IF NOT EXISTS (
     SELECT 1 FROM gedu_group_assignments_v2
      WHERE product_id = p_product_id

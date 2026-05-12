@@ -151,6 +151,61 @@ function buildTimeGroups(
   return groups;
 }
 
+// Joins per-time-group entries onto one line ("Mon, Wed · 16:00–17:30,
+// Fri · 18:00–19:30"). Shared by every card that renders a single-line
+// schedule summary (browse, purchased, gedu-assigned).
+export function joinScheduleGroups(
+  groups: readonly ScheduleTimeGroup[],
+): string {
+  return groups
+    .map((g) => `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`)
+    .join(", ");
+}
+
+// 0-2 schedule lines for a card. The split-vs-collapsed decision is up to
+// the caller: the browse card prints each line on its own row; the
+// gedu-assigned card joins with " · " so the rail entry stays one row.
+//
+// `withTimezone` decorates the lead line with the product's TZ abbrev. The
+// detail body uses its own multi-line renderer that puts the TZ on its own
+// chip, so this helper is card-only.
+export function scheduleCardLines(
+  schedule: ProductScheduleSummary,
+  { withTimezone }: { withTimezone: boolean },
+): string[] {
+  const tz = (line: string, zone: string): string =>
+    withTimezone && zone ? `${line} (${zone})` : line;
+
+  switch (schedule.kind) {
+    case "tbd":
+      return [];
+    case "recurring":
+      return [tz(joinScheduleGroups(schedule.groups), schedule.tz)];
+    case "ranged": {
+      const dateLine = tz(
+        `${schedule.startDate} – ${schedule.endDate}`,
+        schedule.tz,
+      );
+      if (schedule.groups.length === 0) return [dateLine];
+      // Common case (one bucket across all camp days): drop the weekday
+      // list — the date range already gives the calendar shape and
+      // "09:00–15:00" alone reads as "daily hours". Multi-bucket camps
+      // keep weekday labels so the info isn't lost.
+      const timeLine =
+        schedule.groups.length === 1
+          ? `${schedule.groups[0].startTime}–${schedule.groups[0].endTime}`
+          : joinScheduleGroups(schedule.groups);
+      return [dateLine, timeLine];
+    }
+    case "single": {
+      const timeSuffix = schedule.time
+        ? ` · ${schedule.time.start}–${schedule.time.end}`
+        : "";
+      return [tz(`${schedule.date}${timeSuffix}`, schedule.tz)];
+    }
+  }
+}
+
 export function formatProductSchedule({
   product,
   locale,
