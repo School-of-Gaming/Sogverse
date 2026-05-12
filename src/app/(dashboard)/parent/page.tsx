@@ -4,7 +4,6 @@ import { getTranslations } from "next-intl/server";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { FamilyProfileSelector } from "@/components/family";
 import { FeedbackSectionContent } from "@/components/feedback/feedback-section-content";
-import { SettingsSectionContent } from "@/components/settings/settings-section-content";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -17,7 +16,6 @@ export default function CustomerDashboardPage() {
   const sections: DashboardSection[] = [
     { id: 'my-family', label: t('myFamily') },
     { id: 'feedback', label: t('feedback') },
-    { id: 'settings', label: t('settings') },
   ];
 
   return (
@@ -34,10 +32,6 @@ export default function CustomerDashboardPage() {
 
         <section id="feedback" className="scroll-mt-32">
           <FeedbackSectionContent />
-        </section>
-
-        <section id="settings" className="scroll-mt-32">
-          <SettingsSectionContent />
         </section>
       </div>
     </>
