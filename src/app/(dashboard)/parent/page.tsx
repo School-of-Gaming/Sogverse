@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
-import { FamilyProfileSelector } from "@/components/family";
+import { MyGamersGrid } from "@/components/family";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -14,7 +14,7 @@ export default function CustomerDashboardPage() {
   const p = useTranslations('parent.placeholders');
 
   const sections: DashboardSection[] = [
-    { id: 'my-family', label: t('myFamily') },
+    { id: 'my-gamers', label: t('myGamers') },
     { id: 'sessions', label: t('upcomingSessions') },
     { id: 'billing', label: t('billing') },
     { id: 'help', label: t('help') },
@@ -22,13 +22,13 @@ export default function CustomerDashboardPage() {
 
   return (
     <>
-      <DashboardSectionPill sections={sections} ariaLabel={t('myFamily')} />
+      <DashboardSectionPill sections={sections} ariaLabel={t('myGamers')} />
 
       <div className="space-y-24 pb-24">
-        <section id="my-family" className="scroll-mt-32">
+        <section id="my-gamers" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
-            <h1 className="text-3xl font-bold">{t('myFamily')}</h1>
-            <FamilyProfileSelector />
+            <h1 className="text-3xl font-bold">{t('myGamers')}</h1>
+            <MyGamersGrid />
           </div>
         </section>
 
