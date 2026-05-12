@@ -14,7 +14,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Post-sign-in interstitial for parents — "Who is entering Sogverse?"
+ * Family profile selector — "Who is entering Sogverse?"
+ *
+ * Two entry points share this page:
+ *   1. Post-sign-in interstitial for parents (set by `ROLE_POST_LOGIN_PATHS`).
+ *   2. In-session switcher for parents *and* gamers, reached by clicking the
+ *      header avatar — lets a gamer hop to a sibling or back to the parent.
  *
  * Lives at the top of the app tree (not inside any (group)) so it doesn't
  * inherit the standard `(public)` / `(dashboard)` chrome. The route renders
@@ -22,16 +27,19 @@ export async function generateMetadata(): Promise<Metadata> {
  * avatar) — the same chrome-replacement pattern the `(voice)` group uses.
  *
  * Routing: the proxy already bounces unauthenticated visitors to /login. Here
- * we additionally short-circuit any non-customer role to their own dashboard,
- * since the family selector is parent-only in v1.
+ * we additionally short-circuit admins/gedus to their own dashboards — the
+ * family selector only makes sense for parent/gamer households.
  */
 export default async function SelectProfilePage() {
   const userWithProfile = await getUserWithProfile();
   const role = userWithProfile?.profile?.role as UserRole | undefined;
 
-  if (role !== "customer") {
+  if (role !== "customer" && role !== "gamer") {
     redirect(role ? ROLE_DASHBOARD_PATHS[role] : ROUTES.customer.dashboard);
   }
+
+  // "Continue as me" target: the viewer's own dashboard.
+  const selfDashboardPath = ROLE_DASHBOARD_PATHS[role];
 
   return (
     <>
@@ -43,7 +51,7 @@ export default async function SelectProfilePage() {
           py-12 keeps the centering true; the body content is small enough
           (title + one row of tiles) that it never reaches the header zone. */}
       <main className="-mt-[var(--header-height)] flex min-h-screen items-center justify-center px-4 py-12 sm:py-16">
-        <SelectProfileView />
+        <SelectProfileView selfDashboardPath={selfDashboardPath} />
       </main>
     </>
   );
