@@ -1003,8 +1003,9 @@
   },
   "dashboardSections": {
     "myFamily": "Min familj",
-    "upcomingSessions": "Kommande träffar",
+    "upcomingSessions": "Träffar",
     "billing": "Fakturering",
+    "help": "Hjälp",
     "yty": "Yty",
     "settings": "Inställningar"
   },
@@ -1455,8 +1456,9 @@
   },
   "parent": {
     "placeholders": {
-      "upcomingSessions": "Här ser du ditt sommarläger.",
-      "billing": "Här hanterar du fakturering."
+      "upcomingSessions": "Här ser du din spelares kommande träffar.",
+      "billing": "Här hanterar du fakturering.",
+      "help": "Hjälp och guider kommer att finnas här."
     },
     "gamers": {
       "title": "Mina spelare",

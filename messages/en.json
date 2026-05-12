@@ -1003,8 +1003,9 @@
   },
   "dashboardSections": {
     "myFamily": "My Family",
-    "upcomingSessions": "Upcoming Sessions",
+    "upcomingSessions": "Sessions",
     "billing": "Billing",
+    "help": "Help",
     "yty": "Yty",
     "settings": "Settings"
   },
@@ -1455,8 +1456,9 @@
   },
   "parent": {
     "placeholders": {
-      "upcomingSessions": "This is where you'll see your summer camp.",
-      "billing": "This is where you'll manage billing."
+      "upcomingSessions": "This is where you'll see your gamer's upcoming sessions.",
+      "billing": "This is where you'll manage billing.",
+      "help": "Help and guides will live here."
     },
     "gamers": {
       "title": "My Gamers",
