@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Settings } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { UnknownAvatar } from "@/components/ui/unknown-avatar";
@@ -33,6 +34,8 @@ export function Header() {
   const isOnDashboard = DASHBOARD_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(p + "/"),
   );
+  const isOnSettings =
+    pathname === ROUTES.settings || pathname.startsWith(ROUTES.settings + "/");
 
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
@@ -107,6 +110,19 @@ export function Header() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {user && (
+            <Link
+              href={ROUTES.settings}
+              aria-label={c("settings")}
+              aria-current={isOnSettings ? "page" : undefined}
+              className={cn(
+                "rounded-md p-1 transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring",
+                isOnSettings ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              <Settings className="h-5 w-5" />
+            </Link>
+          )}
           <LocalePicker />
           {avatarHref ? (
             <Link
