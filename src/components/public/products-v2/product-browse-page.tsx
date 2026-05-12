@@ -4,17 +4,24 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useVisibleProductsV2ByType, useTopicsV2, useTagsV2 } from "@/services/products-v2";
+import {
+  useMyGeduAssignedProducts,
+  useVisibleProductsV2ByType,
+  useTopicsV2,
+  useTagsV2,
+} from "@/services/products-v2";
 import {
   useMyParticipations,
   useParticipationCounts,
   type ParticipationCounts,
 } from "@/services/participations";
+import { useAuth } from "@/providers/auth-provider";
 import type { ProductTypeV2 } from "@/types";
 import { filterProducts } from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
 import { ProductBrowseCard } from "./product-browse-card";
 import { ProductBrowseFilters } from "./product-browse-filters";
+import { ProductGeduAssignedCard } from "./product-gedu-assigned-card";
 import { ProductPurchasedCard } from "./product-purchased-card";
 
 interface ProductBrowsePageProps {
@@ -81,11 +88,27 @@ function purchasedHeadingFor(
   }
 }
 
+function geduAssignedHeadingFor(
+  t: ReturnType<typeof useTranslations<"productBrowse">>,
+  key: HeadingKey,
+): string {
+  switch (key) {
+    case "consumer_club":
+      return t("geduAssignedHeadings.consumer_club");
+    case "camp":
+      return t("geduAssignedHeadings.camp");
+    case "event":
+      return t("geduAssignedHeadings.event");
+  }
+}
+
 export function ProductBrowsePage({
   browseType,
   purchasedTypes,
 }: ProductBrowsePageProps) {
   const t = useTranslations("productBrowse");
+  const { profile, isLoading: authLoading } = useAuth();
+  const isGedu = profile?.role === "gedu";
 
   const { data: products, isLoading: productsLoading } =
     useVisibleProductsV2ByType(browseType);
@@ -113,8 +136,10 @@ export function ProductBrowsePage({
   }, [counts]);
 
   // Real "your enrolled" rail (replaces the prior ?mock=1 gate).
+  // Gedus don't have participations — their parallel rail is driven by
+  // gedu_group_assignments_v2 (see useMyGeduAssignedProducts below).
   const { data: myParticipations, isLoading: myParticipationsLoading } =
-    useMyParticipations();
+    useMyParticipations({ enabled: !isGedu });
   const purchasedRows = useMemo(() => {
     if (!myParticipations) return [];
     return myParticipations.filter(
@@ -123,31 +148,54 @@ export function ProductBrowsePage({
     );
   }, [myParticipations, purchasedTypes]);
 
-  // Hide already-purchased products from the browse grid below: the parent's
-  // single entry point to a product they own is the purchased rail above.
-  // Multi-gamer households still see one purchased card per gamer; the set
-  // dedupes by product id for the exclusion. We exclude on `myParticipations`
-  // (the full list — clubs/camps/events) rather than `purchasedRows` (filtered
-  // to `purchasedTypes`) so a parent who bought a club can't see it linger in
-  // a different browse grid either.
+  // Gedu rail: products this gedu is assigned to (via gedu_group_assignments_v2).
+  // Parallel to the parent's purchased rail above; filtered to the types this
+  // page surfaces. Step one of the gedu products v2 rollout — clicking a card
+  // navigates to the same /clubs/[id] (or /camps, /events) route the parent
+  // uses, where the detail page branches on role.
+  const { data: geduAssignedProducts, isLoading: geduAssignedLoading } =
+    useMyGeduAssignedProducts({ enabled: isGedu });
+  const geduAssignedRows = useMemo(() => {
+    if (!geduAssignedProducts) return [];
+    return geduAssignedProducts.filter((p) =>
+      purchasedTypes.includes(p.product_type),
+    );
+  }, [geduAssignedProducts, purchasedTypes]);
+
+  // Hide already-owned products from the browse grid below: the user's
+  // single entry point to a product they own is the rail above. For parents,
+  // "owned" = an active/waitlisted participation. For gedus, "owned" = an
+  // assignment row. Multi-gamer households still see one purchased card per
+  // gamer; the set dedupes by product id for the exclusion. We exclude on
+  // the full list (across types) rather than the type-filtered rows so a
+  // parent who bought a club can't see it linger in a different browse grid
+  // either.
   const purchasedProductIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const p of myParticipations ?? []) {
-      if (p.product !== null) ids.add(p.product.id);
+    if (isGedu) {
+      for (const p of geduAssignedProducts ?? []) ids.add(p.id);
+    } else {
+      for (const p of myParticipations ?? []) {
+        if (p.product !== null) ids.add(p.product.id);
+      }
     }
     return ids;
-  }, [myParticipations]);
+  }, [isGedu, myParticipations, geduAssignedProducts]);
 
   // Wait on every query the page renders before painting anything — including
   // myParticipations + counts. Without this gate the browse grid lands first,
   // the purchased rail pops in above it and shoves the grid down (CLAUDE.md
   // layout-shift rule), and a parent gets a brief glimpse of an
   // already-purchased product as a browse card before it's filtered out.
+  // Gedu role waits on the gedu-assigned query instead of myParticipations
+  // (those are mutually exclusive — see the `enabled` gating above).
   const allLoaded =
+    !authLoading &&
     !productsLoading &&
     !topicsLoading &&
     !tagsLoading &&
     !myParticipationsLoading &&
+    !geduAssignedLoading &&
     !countsLoading;
 
   const { topics, tags, format, languages } = useBrowseFilters();
@@ -177,7 +225,20 @@ export function ProductBrowsePage({
           </div>
         ) : (
           <div className="space-y-8">
-            {purchasedRows.length > 0 && (
+            {isGedu && geduAssignedRows.length > 0 && (
+              <section className="space-y-3">
+                <h2 className="text-lg font-semibold">
+                  {geduAssignedHeadingFor(t, headingKey)}
+                </h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {geduAssignedRows.map((p) => (
+                    <ProductGeduAssignedCard key={p.id} product={p} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {!isGedu && purchasedRows.length > 0 && (
               <section className="space-y-3">
                 <h2 className="text-lg font-semibold">
                   {purchasedHeadingFor(t, headingKey)}

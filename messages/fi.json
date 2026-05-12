@@ -1119,6 +1119,11 @@
       "camp": "Pelaajiesi leirit",
       "event": "Pelaajiesi tapahtumat"
     },
+    "geduAssignedHeadings": {
+      "consumer_club": "Omat kerhot",
+      "camp": "Omat leirit",
+      "event": "Omat tapahtumat"
+    },
     "filters": {
       "topic": "Aihe",
       "tag": "Tyyli",

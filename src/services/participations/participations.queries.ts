@@ -22,12 +22,15 @@ export const participationKeys = {
     [...participationKeys.all, "family-sub", { frequency, currency }] as const,
 };
 
-export function useMyParticipations() {
+export function useMyParticipations({
+  enabled = true,
+}: { enabled?: boolean } = {}) {
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
   return useQuery({
     queryKey: participationKeys.mine(),
     queryFn: () => service.getMyParticipations(),
+    enabled,
   });
 }
 

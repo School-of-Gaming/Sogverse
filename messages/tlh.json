@@ -1164,6 +1164,11 @@
       "camp": "DIvI'lI' raghmeyDaj",
       "event": "DIvI'lI' wanI'meyDaj"
     },
+    "geduAssignedHeadings": {
+      "consumer_club": "ghom'a'meywIj",
+      "camp": "raghmeywIj",
+      "event": "wanI'meywIj"
+    },
     "filters": {
       "topic": "mu'qaD",
       "tag": "Segh",

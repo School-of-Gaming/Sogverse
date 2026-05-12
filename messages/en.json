@@ -1119,6 +1119,11 @@
       "camp": "Your Gamers' Camps",
       "event": "Your Gamers' Events"
     },
+    "geduAssignedHeadings": {
+      "consumer_club": "My Clubs",
+      "camp": "My Camps",
+      "event": "My Events"
+    },
     "filters": {
       "topic": "Topic",
       "tag": "Vibe",
