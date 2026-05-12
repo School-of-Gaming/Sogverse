@@ -13,6 +13,7 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
 import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
+import { ProductWhenWhereCard } from "./product-when-where-card";
 import { useGeduProductDetail } from "@/services/products-v2";
 import { useAuth } from "@/providers/auth-provider";
 import { cn, computeAge } from "@/lib/utils";
@@ -80,7 +81,8 @@ export function ProductGeduDetailBody({ product }: ProductGeduDetailBodyProps) {
           )}
         </div>
 
-        <div className="mt-8">
+        <div className="mt-8 space-y-6">
+          <ProductWhenWhereCard product={product} />
           <CalendarCard product={product} />
         </div>
 
