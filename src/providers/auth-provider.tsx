@@ -20,14 +20,18 @@ interface AuthContextType {
   isLoading: boolean;
   refreshProfile: () => Promise<void>;
   /**
-   * Stops AuthProvider from reacting to further auth-state events until the
-   * document unloads. Call this right before kicking off a full-page
-   * navigation after sign-in/sign-up so the current page's chrome (Header,
-   * etc.) doesn't briefly re-render as "signed in" before the new document
-   * paints. The flag is reset implicitly: the next page load mounts a fresh
-   * AuthProvider with `initialUser` hydrated from the server.
+   * Stops AuthProvider from reacting to further auth-state events. Call this
+   * right before kicking off a full-page navigation after sign-in/sign-up so
+   * the current page's chrome (Header, etc.) doesn't briefly re-render as
+   * "signed in" before the new document paints. In the happy path the flag
+   * is reset implicitly when the next page load mounts a fresh AuthProvider.
+   * If the operation fails before navigation, call `unfreezeAuthState()` so
+   * the listener resumes — otherwise this AuthProvider instance ignores all
+   * auth events for the rest of its lifetime (which survives soft navs).
    */
   freezeUntilNavigation: () => void;
+  /** Release a `freezeUntilNavigation()` after an aborted sign-in/sign-up. */
+  unfreezeAuthState: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -55,6 +59,10 @@ export function AuthProvider({
 
   const freezeUntilNavigation = useCallback(() => {
     frozenRef.current = true;
+  }, []);
+
+  const unfreezeAuthState = useCallback(() => {
+    frozenRef.current = false;
   }, []);
 
   const fetchProfile = async (userId: string) => {
@@ -137,6 +145,7 @@ export function AuthProvider({
         isLoading,
         refreshProfile,
         freezeUntilNavigation,
+        unfreezeAuthState,
       }}
     >
       {children}

@@ -31,7 +31,7 @@ export function RegisterForm() {
   const t = useTranslations('auth');
   const c = useTranslations('common');
   const { redirect, status, navigateAfterAuth } = useAuthRedirect();
-  const { freezeUntilNavigation } = useAuth();
+  const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -79,6 +79,7 @@ export function RegisterForm() {
       });
 
       if (signUpError) {
+        unfreezeAuthState();
         setError(signUpError.message);
         setIsLoading(false);
         return;
@@ -87,6 +88,7 @@ export function RegisterForm() {
       if (data.user) {
         // Check if email confirmation is required
         if (data.user.identities?.length === 0) {
+          unfreezeAuthState();
           setError(t('register.accountExists'));
           setIsLoading(false);
           return;
@@ -99,6 +101,7 @@ export function RegisterForm() {
         return;
       }
     } catch (err) {
+      unfreezeAuthState();
       if (err instanceof z.ZodError) {
         setError(err.errors[0].message);
       } else {

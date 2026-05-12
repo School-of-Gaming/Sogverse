@@ -20,7 +20,7 @@ export function LoginForm() {
   const t = useTranslations('auth');
   const c = useTranslations('common');
   const { redirect, status, navigateAfterAuth } = useAuthRedirect();
-  const { freezeUntilNavigation } = useAuth();
+  const { freezeUntilNavigation, unfreezeAuthState } = useAuth();
 
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
@@ -80,6 +80,7 @@ export function LoginForm() {
       });
 
       if (signInError) {
+        unfreezeAuthState();
         const code = (signInError as { code?: string }).code;
         setError(translateSignInError(code));
         setIsLoading(false);
@@ -104,6 +105,7 @@ export function LoginForm() {
       // isLoading — the document is unloading.
       navigateAfterAuth(postLoginPath);
     } catch {
+      unfreezeAuthState();
       setError(c('unexpectedError'));
       setIsLoading(false);
     }
