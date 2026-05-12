@@ -919,8 +919,16 @@
       "noAccountSignUp": "account DaHutlh'a'? <link>DachenmoH</link>",
       "signingIn": "bI'el...",
       "emailPlaceholder": "SoH@example.com",
-      "passwordPlaceholder": "mu'mey yIchel"
+      "passwordPlaceholder": "mu'mey yIchel",
+      "errors": {
+        "identifierRequired": "QIn-HutlIj yIchel, SuvwI'!",
+        "passwordTooShort": "{count} mu'mey law' law' Hutlhbe' mu'mey'lIj.",
+        "invalidCredentials": "QIn-Hut pagh mu'mey lughbe'. tugh!",
+        "emailNotConfirmed": "QIn-HutlIj yIngu' 'el qaSpa'.",
+        "tooManyAttempts": "law' 'el wIv DataH! loSpa' tugh ghIq yInID."
+      }
     },
+    "needHelp": "QaH DaSov'a'? <link>{email}</link> yIngeH",
     "register": {
       "title": "Account yIchenmoH",
       "description": "De' yIchel — vav/SoS account yIchenmoH",
@@ -1075,7 +1083,7 @@
     "tagline": "toy'wI' ghom - DaH bIQam, batlh yIghoS.",
     "copyright": "© {year} toy'wI' ghom. Hoch batlh.",
     "contact": {
-      "email": "QIn: kanslia@sog.gg"
+      "email": "QIn: {email}"
     }
   },
   "gamer": {

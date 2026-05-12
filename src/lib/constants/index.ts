@@ -14,3 +14,6 @@ export const DISPLAY_NAME_MAX = 32;
 
 /** Verified sender for transactional emails via Brevo. */
 export const SENDER_EMAIL = "sogverse@sog.gg";
+
+/** Customer-facing support inbox shown in the footer and on auth screens. */
+export const SUPPORT_EMAIL = "help@sog.gg";

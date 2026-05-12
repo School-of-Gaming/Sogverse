@@ -874,8 +874,16 @@
       "noAccountSignUp": "Eikö sinulla ole tiliä? <link>Rekisteröidy</link>",
       "signingIn": "Kirjaudutaan...",
       "emailPlaceholder": "sinä@example.com",
-      "passwordPlaceholder": "Syötä salasanasi"
+      "passwordPlaceholder": "Syötä salasanasi",
+      "errors": {
+        "identifierRequired": "Syötä sähköpostiosoite.",
+        "passwordTooShort": "Salasanan on oltava vähintään {count} merkkiä pitkä.",
+        "invalidCredentials": "Antamasi sähköpostiosoite tai salasana on virheellinen.",
+        "emailNotConfirmed": "Vahvista sähköpostiosoitteesi ennen kirjautumista.",
+        "tooManyAttempts": "Liian monta kirjautumisyritystä. Odota hetki ja yritä uudelleen."
+      }
     },
+    "needHelp": "Tarvitsetko apua? Ota yhteyttä osoitteeseen <link>{email}</link>",
     "register": {
       "title": "Luo tili",
       "description": "Syötä tietosi luodaksesi vanhemman tilin",
@@ -1030,7 +1038,7 @@
     "tagline": "School of Gaming – Ruutuaika muuttuu laatuajaksi.",
     "copyright": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",
     "contact": {
-      "email": "Sähköposti: kanslia@sog.gg"
+      "email": "Sähköposti: {email}"
     }
   },
   "gamer": {
