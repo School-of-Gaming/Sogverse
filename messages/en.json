@@ -1472,15 +1472,12 @@
       }
     },
     "gamerDetail": {
-      "backToGamers": "Back to My Gamers",
+      "backToMySog": "Back to My SOG",
       "title": "Gamer Settings",
       "subtitle": "Manage settings for {name}",
-      "profileDescription": "Update your gamer's first name and view their username.",
+      "profileDescription": "Update your gamer's details.",
       "profileUpdated": "Name updated!",
       "failedUpdateDisplayName": "Failed to update name",
-      "passwordsDoNotMatch": "Passwords do not match",
-      "passwordUpdated": "Password updated!",
-      "failedUpdatePassword": "Failed to update password",
       "notFound": {
         "title": "Gamer not found",
         "description": "This gamer account may have been removed or you don't have access to it."
@@ -1492,14 +1489,7 @@
       },
       "mcSaved": "Minecraft username saved!",
       "mcCleared": "Minecraft username cleared",
-      "failedUpdateMc": "Failed to update Minecraft username",
-      "security": {
-        "description": "Change the password your gamer uses to log in.",
-        "passwordPlaceholder": "Enter new password",
-        "confirmPlaceholder": "Confirm new password",
-        "updating": "Updating...",
-        "updatePassword": "Update Password"
-      }
+      "failedUpdateMc": "Failed to update Minecraft username"
     },
     "switchToGamer": {
       "title": "Switch to {name}?",

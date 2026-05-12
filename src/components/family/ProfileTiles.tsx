@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Loader2, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Identicon } from "@/components/ui/identicon";
@@ -38,9 +39,33 @@ export function ProfileTilesRow({ children }: { children: React.ReactNode }) {
   );
 }
 
-interface ProfileTileProps {
+type ProfileTileCommonProps = {
   member: FamilyMember;
   size?: TileSize;
+  /** Adds the primary-colored ring used to mark the active viewer. */
+  isActive?: boolean;
+};
+
+/**
+ * Navigation tile: renders as a Next.js Link so middle-click / ctrl-click /
+ * right-click open-in-new-tab all work. No disabled or loading state — for
+ * actions that block the click (e.g. mid-flight account switch), use the
+ * onClick variant.
+ */
+type ProfileTileLinkProps = ProfileTileCommonProps & {
+  href: string;
+  onClick?: never;
+  disabled?: never;
+  clickable?: never;
+  isLoading?: never;
+};
+
+/**
+ * Action tile: renders as a button. Used by FamilyProfileSelector, where
+ * the click triggers an in-flight switch and needs disabled/loading state.
+ */
+type ProfileTileButtonProps = ProfileTileCommonProps & {
+  href?: never;
   onClick?: () => void;
   /**
    * Sets the underlying button's `disabled` attribute (blocks click). Defaults
@@ -55,34 +80,28 @@ interface ProfileTileProps {
    * when an onSelfClick navigator is supplied).
    */
   clickable?: boolean;
-  /** Adds the primary-colored ring used to mark the active viewer. */
-  isActive?: boolean;
   /** Renders a dimming spinner overlay while this tile's action is in flight. */
   isLoading?: boolean;
-}
+};
 
-export function ProfileTile({
-  member,
-  size = "default",
-  onClick,
-  disabled = false,
-  clickable,
-  isActive = false,
-  isLoading = false,
-}: ProfileTileProps) {
-  const isClickable = clickable ?? !disabled;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-current={isActive ? "true" : undefined}
-      className={cn(
-        "group flex flex-col items-center gap-2 transition-transform duration-150",
-        TILE_WIDTH[size],
-        isClickable ? "cursor-pointer hover:scale-105 focus-visible:scale-105" : "cursor-default",
-      )}
-    >
+type ProfileTileProps = ProfileTileLinkProps | ProfileTileButtonProps;
+
+export function ProfileTile(props: ProfileTileProps) {
+  const { member, size = "default", isActive = false } = props;
+  const isLink = "href" in props && props.href !== undefined;
+  const isLoading = !isLink && (props.isLoading ?? false);
+  const isClickable = isLink
+    ? true
+    : (props.clickable ?? !(props.disabled ?? false));
+
+  const wrapperClassName = cn(
+    "group flex flex-col items-center gap-2 transition-transform duration-150",
+    TILE_WIDTH[size],
+    isClickable ? "cursor-pointer hover:scale-105 focus-visible:scale-105" : "cursor-default",
+  );
+
+  const inner = (
+    <>
       <div
         className={cn(
           "relative aspect-square w-full overflow-hidden rounded-lg border-2 ring-offset-2 ring-offset-background transition-[border,box-shadow] duration-150",
@@ -99,7 +118,7 @@ export function ProfileTile({
         )}
       </div>
       {/* whitespace-nowrap + text-center lets long names spill into the
-          gap between tiles instead of truncating. The button itself stays
+          gap between tiles instead of truncating. The wrapper itself stays
           a fixed width so avatar layout is unchanged; only the text overflows. */}
       <span
         className={cn(
@@ -109,6 +128,30 @@ export function ProfileTile({
       >
         {member.first_name}
       </span>
+    </>
+  );
+
+  if (isLink) {
+    return (
+      <Link
+        href={props.href}
+        aria-current={isActive ? "true" : undefined}
+        className={wrapperClassName}
+      >
+        {inner}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={props.onClick}
+      disabled={props.disabled}
+      aria-current={isActive ? "true" : undefined}
+      className={wrapperClassName}
+    >
+      {inner}
     </button>
   );
 }

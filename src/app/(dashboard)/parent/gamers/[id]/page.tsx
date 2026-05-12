@@ -3,11 +3,10 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, User, Lock, Gamepad2 } from "lucide-react";
+import { ArrowLeft, User, Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -40,13 +39,6 @@ export default function GamerDetailsPage() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
-
-  // Password form state
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isSavingPassword, setIsSavingPassword] = useState(false);
-  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
-  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Initialize display name once gamer data loads
   if (gamer && !profileInitialized) {
@@ -83,45 +75,6 @@ export default function GamerDetailsPage() {
       setProfileError(message);
     } finally {
       setIsSavingProfile(false);
-    }
-  };
-
-  const handleChangePassword = async () => {
-    if (!gamer) return;
-
-    setPasswordSuccess(null);
-    setPasswordError(null);
-
-    if (newPassword.length < 6) {
-      setPasswordError(c('passwordMinLength', { count: 6 }));
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setPasswordError(t('gamerDetail.passwordsDoNotMatch'));
-      return;
-    }
-
-    setIsSavingPassword(true);
-
-    try {
-      await updateGamer.mutateAsync({
-        gamerId: gamer.id,
-        updates: { password: newPassword },
-      });
-      setPasswordSuccess(t('gamerDetail.passwordUpdated'));
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : typeof error === "object" && error !== null && "message" in error
-            ? String((error as { message: unknown }).message)
-            : t('gamerDetail.failedUpdatePassword');
-      setPasswordError(message);
-    } finally {
-      setIsSavingPassword(false);
     }
   };
 
@@ -182,11 +135,11 @@ export default function GamerDetailsPage() {
     return (
       <div className="mx-auto max-w-2xl space-y-6">
         <Link
-          href={ROUTES.customer.gamers}
+          href={ROUTES.customer.dashboard}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          {t('gamerDetail.backToGamers')}
+          {t('gamerDetail.backToMySog')}
         </Link>
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
@@ -195,10 +148,10 @@ export default function GamerDetailsPage() {
               {t('gamerDetail.notFound.description')}
             </p>
             <Link
-              href={ROUTES.customer.gamers}
+              href={ROUTES.customer.dashboard}
               className={buttonVariants({ variant: "outline", className: "mt-4" })}
             >
-              {t('gamerDetail.backToGamers')}
+              {t('gamerDetail.backToMySog')}
             </Link>
           </CardContent>
         </Card>
@@ -209,11 +162,11 @@ export default function GamerDetailsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <Link
-        href={ROUTES.customer.gamers}
+        href={ROUTES.customer.dashboard}
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        {t('gamerDetail.backToGamers')}
+        {t('gamerDetail.backToMySog')}
       </Link>
 
       <div>
@@ -271,15 +224,6 @@ export default function GamerDetailsPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>{c('username')}</Label>
-              <Input
-                value={gamer.username}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-
             <Button
               type="submit"
               disabled={isSavingProfile || firstName.trim().length < 2}
@@ -331,64 +275,6 @@ export default function GamerDetailsPage() {
         </CardContent>
       </Card>
 
-      {/* Security Settings */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            <CardTitle>{c('security')}</CardTitle>
-          </div>
-          <CardDescription>
-            {t('gamerDetail.security.description')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {passwordSuccess && (
-            <div className="rounded-md bg-success/10 p-3 text-sm text-success">
-              {passwordSuccess}
-            </div>
-          )}
-
-          {passwordError && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-              {passwordError}
-            </div>
-          )}
-
-          <form onSubmit={(e) => { e.preventDefault(); handleChangePassword(); }} className="space-y-6">
-            <input type="text" name="username" autoComplete="username" value={gamer.username} readOnly tabIndex={-1} aria-hidden="true" className="sr-only" />
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">{c('newPassword')}</Label>
-              <PasswordInput
-                id="newPassword"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder={t('gamerDetail.security.passwordPlaceholder')}
-                autoComplete="new-password"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
-              <PasswordInput
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder={t('gamerDetail.security.confirmPlaceholder')}
-                autoComplete="new-password"
-              />
-            </div>
-
-            <Button
-              type="submit"
-              disabled={isSavingPassword || !newPassword}
-              variant="outline"
-            >
-              {isSavingPassword ? t('gamerDetail.security.updating') : t('gamerDetail.security.updatePassword')}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
     </div>
   );
 }
