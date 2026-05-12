@@ -8,7 +8,9 @@ import { SelectProfileHeader, SelectProfileView } from "@/components/select-prof
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("selectProfile");
-  return { title: t("title") };
+  // `absolute` skips the root layout's "%s | Sogverse" template — the title
+  // already contains "Sogverse", and the templated version reads as a stutter.
+  return { title: { absolute: t("title") } };
 }
 
 /**
@@ -25,12 +27,8 @@ export async function generateMetadata(): Promise<Metadata> {
  */
 export default async function SelectProfilePage() {
   const userWithProfile = await getUserWithProfile();
+  const role = userWithProfile?.profile?.role as UserRole | undefined;
 
-  if (!userWithProfile?.user) {
-    redirect(`${ROUTES.login}?redirect=${encodeURIComponent(ROUTES.selectProfile)}`);
-  }
-
-  const role = userWithProfile.profile?.role as UserRole | undefined;
   if (role !== "customer") {
     redirect(role ? ROLE_DASHBOARD_PATHS[role] : ROUTES.customer.dashboard);
   }
