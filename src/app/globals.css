@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* Layout — single source of truth for the sticky header's height.
+   Consumed by the header itself, the dashboard sidebar's sticky offset,
+   the home hero's bleed-under-header trick, and hash-anchor scroll
+   margins. Declared inside @theme (not just :root) because Tailwind v4 /
+   Lightning CSS tree-shakes custom properties that aren't reachable from
+   the theme — and this one is only referenced from arbitrary-value
+   utilities like `h-[var(--header-height)]`, which the optimizer doesn't
+   track as references. @theme guarantees the variable lands in :root. */
+@theme {
+  --header-height: 4rem;
+}
+
 /* SOG Brand Theme - Dark by default */
 :root {
   /* Background colors */
@@ -63,12 +75,6 @@
 
   /* Radius */
   --radius: 0.5rem;
-
-  /* Layout — single source of truth for the sticky header's height.
-     Consumed by the header itself, the dashboard sidebar's sticky offset,
-     the home hero's bleed-under-header trick, and hash-anchor scroll
-     margins. Change this here and the whole layout follows. */
-  --header-height: 4rem;
 
   /* Sidebar */
   --sidebar-background: 0 0% 9%;
