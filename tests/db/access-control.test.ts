@@ -27,6 +27,7 @@ const AUTHENTICATED_ALLOWLIST = new Set([
 
   "get_product_groups_v2_with_details",
   "commit_group_changes_v2",
+  "get_gedu_product_detail_v2",
 ]);
 
 /**

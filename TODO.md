@@ -97,6 +97,26 @@ See `docs/db-access-patterns.md` for the full architectural rationale. Short ver
 
 **Sequencing:** Don't convert piecemeal. Pick a batch (e.g. the four "normal table" routes first — they're mechanical), do them in one PR, then tackle the sensitive-table set in a separate PR once a couple of RPCs are in place and the pattern is settled.
 
+### Make `tests/db/access-control.test.ts` a real security gate
+
+The RPC allowlist tests catch "did someone forget to `REVOKE EXECUTE`?" — a real but narrow failure mode. The original incident they were meant to prevent was "admin-only RPC ended up callable by anyone for two weeks," and the current shape doesn't catch the underlying class: an RPC granted to `authenticated` whose body forgets to check the caller's role. The allowlist asks "did you mean to GRANT this?" but doesn't verify the body enforces the intended access. Today every admin-write RPC (`create_product_v2`, `update_product_v2`, `commit_group_changes*`, `get_product_groups*_with_details`) sits on the authenticated allowlist with a body-level `get_user_role() <> 'admin'` guard — the allowlist doesn't distinguish "anyone authenticated can do this" from "anyone authenticated can call this but only admins succeed."
+
+The right shape is a role × RPC matrix:
+
+- Annotate each entry in `AUTHENTICATED_ALLOWLIST` with the role(s) the body actually permits — `admin`, `customer`, `gedu`, or `any-authenticated`.
+- For each `(role, rpc)` pair where the role is *not* in the entry's permitted set, sign in as that role and call the RPC; assert it raises 42501 (or the documented forbidden code).
+- `any-authenticated` covers self-scoping helpers (`is_admin`, `get_user_role`, `get_my_*`, `get_visible_products`) where every authenticated caller getting a response is the intent.
+
+This directly catches the original incident: an RPC tagged `admin` but missing its body guard fails the test when a customer/gedu/gamer session reaches it and *doesn't* get 42501.
+
+**Cost:** most RPCs take typed parameters, so the test needs dummy args that pass parameter validation but get rejected at the role check. A small per-RPC `forbiddenCallArgs` map handles this. `createAuthenticatedClient(email, password)` in `tests/db/helpers.ts` already covers role-switching.
+
+**Worth bundling into the same PR if scope allows:**
+- IDOR check on direct table writes: as user A, attempt UPDATE/DELETE on a row owned by user B via the user-bound client. RLS is supposed to block this but only the "actor" half of each policy is mechanically verified today (per CLAUDE.md "RLS INSERT/UPDATE policies must authorize both the actor AND the target").
+- Column-grant audit: explicit deny list for sensitive columns (`profiles.role`, `customer_profiles.token_balance`, …) — no UPDATE grant should reach them.
+
+Keep the existing grant-level allowlist tests until the matrix lands — they do catch grant misconfigs, just not body misconfigs. Either fold them into the matrix or retire them once the behavioral test covers the same ground.
+
 ### E2E Tests with Local Supabase
 
 Current E2E tests only cover unauthenticated flows (page renders, redirects). Authenticated tests (admin-only pages, role-based routing, CRUD operations) need real Supabase Auth + Postgres but shouldn't depend on the remote instance.
