@@ -187,9 +187,7 @@ function GroupsSection({ productId }: { productId: string }) {
   }
 
   // Lift the viewer's own group(s) to the front while preserving the RPC's
-  // display_order within each partition. Stable partition (not a custom
-  // comparator on isOwn ? -1 : 1) so two non-own groups keep their relative
-  // order even when JS engines use unstable sort fallbacks.
+  // display_order within each partition.
   const sortedGroups = (() => {
     const all = data?.groups ?? [];
     const own: ProductGroupV2WithDetails[] = [];

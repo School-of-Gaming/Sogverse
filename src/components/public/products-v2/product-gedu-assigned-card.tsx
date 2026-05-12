@@ -14,8 +14,7 @@ import type { ProductV2BrowseRow } from "@/types";
 import { formatProductLocation } from "./format-product-location";
 import {
   formatProductSchedule,
-  type ProductScheduleSummary,
-  type ScheduleTimeGroup,
+  scheduleCardLines,
 } from "./format-product-schedule";
 
 // Gedu-facing version of the parent's purchased card — surfaces a product
@@ -45,7 +44,11 @@ export function ProductGeduAssignedCard({ product }: ProductGeduAssignedCardProp
   );
 
   const schedule = formatProductSchedule({ product, locale: uiLocale });
-  const scheduleLine = scheduleLineForCard(schedule);
+  // Single-line schedule for the rail entry — the detail page surfaces
+  // the full multi-line breakdown + calendar. `withTimezone: false` keeps
+  // the line compact; the TZ chip is visible on the detail page.
+  const scheduleLine =
+    scheduleCardLines(schedule, { withTimezone: false }).join(" · ") || null;
   const location = formatProductLocation(product);
   const locationLine = renderLocationLine(product.is_remote, location, t("online"));
   const isOnline = location?.kind !== "site";
@@ -138,36 +141,3 @@ function renderLocationLine(
   }
 }
 
-// Single-line schedule summary tuned for the card. Mirrors the rules in
-// product-browse-card.tsx's scheduleLinesForCard but collapsed to one line:
-// the gedu card never needs the multi-line camp layout — clicking through
-// to the detail page surfaces the full calendar.
-function scheduleLineForCard(schedule: ProductScheduleSummary): string | null {
-  switch (schedule.kind) {
-    case "tbd":
-      return null;
-    case "recurring":
-      return joinGroups(schedule.groups);
-    case "ranged": {
-      const dateLine = `${schedule.startDate} – ${schedule.endDate}`;
-      if (schedule.groups.length === 0) return dateLine;
-      const timeLine =
-        schedule.groups.length === 1
-          ? `${schedule.groups[0].startTime}–${schedule.groups[0].endTime}`
-          : joinGroups(schedule.groups);
-      return `${dateLine} · ${timeLine}`;
-    }
-    case "single": {
-      const time = schedule.time
-        ? ` · ${schedule.time.start}–${schedule.time.end}`
-        : "";
-      return `${schedule.date}${time}`;
-    }
-  }
-}
-
-function joinGroups(groups: readonly ScheduleTimeGroup[]): string {
-  return groups
-    .map((g) => `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`)
-    .join(", ");
-}

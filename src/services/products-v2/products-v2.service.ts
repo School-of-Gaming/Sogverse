@@ -226,16 +226,20 @@ export class ProductsV2Service {
   // listVisibleByType, this does NOT filter on is_visible / status: an
   // assignment is the gedu's claim on the product, parallel to the customer's
   // participation, so a hidden / draft / cancelled product they're on still
-  // shows up. RLS is the gate (gedu_assigned_read_products_v2 from
-  // migration 00056 plus the existing gedus_read_own_and_team_assignments_v2
-  // policy on the join table); the explicit gedu_id filter here narrows
-  // teammates' assignments out so a gedu only sees products they're personally
-  // on, not the union of every product their team touches.
+  // shows up. The new `gedu_assigned_read_products_v2` policy (migration
+  // 00056) lifts the visibility gate on products_v2 for the second query.
   //
-  // Two-step deliberately: the join-form `gedu_group_assignments_v2!inner`
-  // would let RLS return teammate rows and require de-dup either side. The
-  // two-step is one extra round trip but reads cleanly and dedupes ids in
-  // JS — assignment rows are small (3 UUIDs + ts).
+  // Two-step (assignments → products) instead of an `!inner` join: a gedu can
+  // sit on multiple groups within the same product, so we have to dedupe
+  // product_ids before fetching products. JS dedup on the small assignment
+  // payload (a couple of UUIDs per row) reads cleaner than letting the join
+  // multiply rows out and deduping the larger product payloads downstream.
+  //
+  // RLS on the join table is `gedus_read_own_assignments_v2` (migration 00050,
+  // which replaced the earlier team-visibility policy after it caused
+  // self-referential recursion). That policy already restricts the result to
+  // the caller's own rows; the explicit `.eq("gedu_id", userId)` here is
+  // belt-and-suspenders.
   async listMyGeduAssigned(): Promise<ProductV2BrowseRow[]> {
     const { data: userData } = await this.supabase.auth.getUser();
     const userId = userData.user?.id;

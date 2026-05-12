@@ -395,6 +395,10 @@ The current details page is a read-only summary + Edit button. Once participatio
 
 Step one of the Gedu detail page (`get_gedu_product_detail_v2` RPC) returns `groups[]` only. The Gedu can see every group in the product they teach plus the full roster of each, but new signups that haven't been placed in a group yet (`participations_v2.group_id IS NULL`, `status = 'active'`) are invisible. Add a read-only "Awaiting assignment" section that lists those rows so a Gedu knows who's coming. They can't move gamers themselves — that's still admin-only via `commit_group_changes_v2`. Extend the RPC's return JSONB with an `unassigned[]` array (same shape as the admin RPC's existing field) and a section above the group cards. Drives the "I want to know who just signed up" nudge without granting write access.
 
+### Admin groups RPC sorts `display_order` as text
+
+`get_product_groups_v2_with_details` orders group entries with `jsonb_agg(g ORDER BY g->>'display_order', g->>'created_at')`. `->>` returns `text`, so `'10' < '2'`. Any product with 10+ groups will render them in the wrong order on the admin details page. Fix: cast — `(g->>'display_order')::int` (and `(g->>'created_at')::timestamptz` for the tie-break). Low priority while typical products have under 10 groups, but worth doing before that bites someone. The gedu RPC (`get_gedu_product_detail_v2`) inherits the same sort but doesn't care — the gedu detail body partitions on "your group(s) first, everything else after," so within-bucket order isn't load-bearing there.
+
 ### Extend `site_details_v2` read policy to purchasing customers
 
 Migration `00038_site_details_restrict_to_staff.sql` tightened `site_details_v2` to admin + gedu only. The original handoff intent was admin + gedu + **customers who have purchased a product at that site**, but there's no v2 enrollment / participation table yet to write that predicate against (legacy `group_enrollments` references `products`, not `products_v2`). Until that lands, post-purchase address visibility has to go through an out-of-band channel (admin-rendered confirmation page, transactional email).
