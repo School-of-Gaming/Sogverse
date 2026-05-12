@@ -4,7 +4,7 @@ The Sorg token system (Stripe-backed in-app currency: balance, subscriptions, pa
 
 This doc is the rolling checklist. Tick items as work merges. Remove this file once everything is done.
 
-Related docs to delete at the end: `docs/sorg-token-architecture.md`. Review/update: `docs/stripe-testing.md`, `docs/stripe-decoupling.md`, `docs/products-redesign.md`.
+Related docs to delete at the end: `docs/sorg-token-architecture.md`. Review/update: `docs/stripe-testing.md`, `docs/products-redesign.md`. (`docs/stripe-decoupling.md` was deleted separately on 2026-05-12 — it was a stale "future consideration" unrelated to the removal.)
 
 ---
 
@@ -64,32 +64,33 @@ User-visible surfaces and the components/routes that back them.
 
 ---
 
-## Step 2 — Services, queries, providers
+## Step 2 — Services, queries, providers (done)
 
 After the UI is gone, the React-Query/service layer becomes dead code.
 
-- [ ] Delete `src/services/tokens/` (service, queries, subscription-state, index).
-- [ ] Delete `src/providers/token-rate-provider.tsx`.
-- [ ] `src/providers/index.tsx` — drop `TokenRateProvider` wrap and re-export.
-- [ ] `src/app/layout.tsx` — drop `getStripeProducts()` call and the `baseRates` prop.
-- [ ] `src/services/enrollments/enrollments.queries.ts` — drop `tokenKeys` import and the two `invalidateQueries({ queryKey: tokenKeys.all })` calls.
+- [x] Delete `src/services/tokens/` (service, queries, subscription-state, index).
+- [x] Delete `src/providers/token-rate-provider.tsx`. (Pulled forward in Step 1.)
+- [x] `src/providers/index.tsx` — drop `TokenRateProvider` wrap and re-export. (Pulled forward in Step 1.)
+- [x] `src/app/layout.tsx` — drop `getStripeProducts()` call and the `baseRates` prop. (Pulled forward in Step 1.)
+- [x] `src/services/enrollments/enrollments.queries.ts` — drop `tokenKeys` import and the two `invalidateQueries({ queryKey: tokenKeys.all })` calls. (Pulled forward in Step 1.)
+- [x] `src/services/index.ts` — drop `export * from "./tokens"`.
 
 ---
 
-## Step 3 — API routes
+## Step 3 — API routes (done)
 
-- [ ] Delete `src/app/api/checkout/tokens/route.ts`.
-- [ ] Delete `src/app/api/checkout/subscription/` (route, switch, cancel, resume, billing-portal).
-- [ ] Delete `src/app/api/admin/adjust-tokens/route.ts`.
-- [ ] `src/app/api/webhooks/stripe/route.ts` — remove the four Sorg event cases (`checkout.session.completed` (Sorg branch), `invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted`). The route stays for Products v2.
+- [x] Delete `src/app/api/checkout/tokens/route.ts`. (Pulled forward in Step 1.)
+- [x] Delete `src/app/api/checkout/subscription/` (route, switch, cancel, resume, billing-portal). (Pulled forward in Step 1.)
+- [x] Delete `src/app/api/admin/adjust-tokens/route.ts`. (Pulled forward in Step 1.)
+- [x] `src/app/api/webhooks/stripe/route.ts` — the entire Sorg webhook file was deleted. Products v2 events are now handled by `src/app/api/webhooks/stripe/products/route.ts`.
 
 ---
 
-## Step 4 — Stripe lib (Sorg-specific only)
+## Step 4 — Stripe lib (Sorg-specific only) (done)
 
-- [ ] Delete `src/lib/stripe/products.ts` (`getStripeProducts`, `getProductByPriceId`).
-- [ ] Delete `src/lib/stripe/utils.ts` (`getPackageSavings`, `tokensToCurrencyDisplay`).
-- [ ] Keep generic Stripe client setup, signature verification, `participation-prices.ts` (Products v2).
+- [x] Delete `src/lib/stripe/products.ts` (`getStripeProducts`, `getProductByPriceId`). (Pulled forward in Step 1.)
+- [x] Delete `src/lib/stripe/utils.ts` (`getPackageSavings`, `tokensToCurrencyDisplay`). (Pulled forward in Step 1.)
+- [x] Keep generic Stripe client setup, signature verification, `participation-prices.ts` (Products v2).
 
 ---
 
@@ -113,18 +114,18 @@ New migration to drop:
 
 ---
 
-## Step 7 — i18n
+## Step 7 — i18n (done)
 
-- [ ] Remove `sorg.*`, `tokens.*`, `parent.sorg.*`, `checkout.*`, `admin.users.tokenBalance*` keys from `messages/{en,fi,sv,tlh}.json`.
-- [ ] Drop `"sorg"` from `messages/*.json` `sidebar.*` namespace.
+- [x] Remove `sorg.*`, `tokens.*`, `parent.sorg.*`, `checkout.*`, `admin.users.tokenBalance*` keys from `messages/{en,fi,sv,tlh}.json`.
+- [x] Drop `"sorg"` from `messages/*.json` `sidebar.*` namespace.
 
 ---
 
 ## Step 8 — Tests
 
-- [ ] Delete unit tests: `tests/unit/tokens.test.ts`, `tests/unit/stripe-products.test.ts`, `tests/unit/services/subscription-state.test.ts`.
-- [ ] Delete integration tests: `tests/integration/api/{checkout-tokens,admin-adjust-tokens,subscription-switch,subscription-cancel,subscription-resume}.test.ts`.
-- [ ] Trim `tests/integration/api/stripe-webhook.test.ts` — remove Sorg cases, keep generic webhook coverage if any remains.
+- [x] Delete unit tests: `tests/unit/tokens.test.ts`, `tests/unit/stripe-products.test.ts`, `tests/unit/services/subscription-state.test.ts`.
+- [x] Delete integration tests: `tests/integration/api/{checkout-tokens,admin-adjust-tokens,subscription-switch,subscription-cancel,subscription-resume}.test.ts`. (Pulled forward in Step 1.)
+- [x] Trim `tests/integration/api/stripe-webhook.test.ts` — the file was deleted entirely.
 - [ ] Delete `tests/db/token-balance.test.ts`. Trim `tests/db/rls.test.ts` and `tests/db/access-control.test.ts` token sections.
 - [ ] `tests/db/constants.ts` — drop `SEED.CUSTOMER_TOKEN_BALANCE`. `tests/db/helpers.ts` — drop `resetTokenState()`.
 - [ ] `tests/mocks/stripe.ts` — drop Sorg helpers. `tests/mocks/supabase.ts` — drop token fields.
@@ -136,7 +137,7 @@ New migration to drop:
 - [ ] Delete `docs/sorg-token-architecture.md`.
 - [ ] `CLAUDE.md` — remove the "Sorg Token Purchasing (Stripe)" section (currently lines 141–154).
 - [ ] `TODO.md` — remove Sorg notes.
-- [ ] Trim Sorg references from `docs/stripe-decoupling.md` and `docs/products-redesign.md`.
+- [ ] Trim Sorg references from `docs/products-redesign.md`. (`docs/stripe-decoupling.md` was deleted, so nothing to trim there.)
 - [ ] Decide whether `docs/stripe-testing.md` stays as-is (general Stripe testing) or gets repurposed.
 
 ---
