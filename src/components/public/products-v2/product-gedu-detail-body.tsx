@@ -2,27 +2,39 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2, Users } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Avatar } from "@/components/ui/avatar";
+import { Identicon } from "@/components/ui/identicon";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
 import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
-import type { ProductTypeV2 } from "@/types";
+import { useGeduProductDetail } from "@/services/products-v2";
+import { useAuth } from "@/providers/auth-provider";
+import { cn, computeAge } from "@/lib/utils";
+import type {
+  GenderType,
+  GroupV2GeduDetail,
+  GroupV2ParticipationDetail,
+  ProductGroupV2WithDetails,
+  ProductTypeV2,
+} from "@/types";
 import type { ProductV2DetailRow } from "@/services/products-v2";
 
 // Gedu detail body — step one of the gedu product-details rollout
-// (docs/products-redesign.md). Deliberately minimal: hero (image + name +
-// type label + tagline) plus the session calendar. Mirrors the parent
-// detail page's calendar card by reusing the same primitives
-// (SessionCalendarView + computeProductSessions), so a future expansion
-// (group rosters, staff notes, when/where info) drops in alongside this
-// without rewiring.
+// (docs/products-redesign.md). Hero (image + name + type label + tagline),
+// session calendar, then a groups section that mirrors the admin panel
+// without write affordances: every group in the product is visible, the
+// viewer's own group(s) get a "Your group" accent so a Gedu can spot
+// themselves in a multi-group product at a glance.
 //
-// No signup panel, no pricing — gedus don't purchase. No teammates panel
-// in v1; that lands when group rosters do.
+// No signup panel, no pricing — gedus don't purchase. The unassigned-gamer
+// tray is intentionally absent in step one; see docs/products-v2-architecture.md
+// "Gedu details page — unassigned-gamers tray" for the follow-up.
 
 interface ProductGeduDetailBodyProps {
   product: ProductV2DetailRow;
@@ -70,6 +82,10 @@ export function ProductGeduDetailBody({ product }: ProductGeduDetailBodyProps) {
 
         <div className="mt-8">
           <CalendarCard product={product} />
+        </div>
+
+        <div className="mt-8">
+          <GroupsSection productId={product.id} />
         </div>
       </div>
     </div>
@@ -141,5 +157,186 @@ function CalendarCard({ product }: { product: ProductV2DetailRow }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Renders every group in the product. The viewer's own group(s) — anywhere
+// they appear as one of the assigned gedus — get a "Your group" badge and
+// a primary border accent. Sister groups render with the same density so a
+// Gedu can scan teammates' rosters and (in a future iteration) jump in to
+// cover sessions.
+function GroupsSection({ productId }: { productId: string }) {
+  const t = useTranslations("productDetail.geduGroups");
+  const { user } = useAuth();
+  const { data, isLoading } = useGeduProductDetail(productId);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex justify-center p-8">
+          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const groups = data?.groups ?? [];
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        {t("heading")}
+      </h2>
+      {groups.length === 0 ? (
+        <Card>
+          <CardContent className="p-6 text-sm text-muted-foreground">
+            {t("emptyNoGroups")}
+          </CardContent>
+        </Card>
+      ) : (
+        <div
+          className={cn(
+            "grid gap-4",
+            groups.length >= 2 && "md:grid-cols-2",
+          )}
+        >
+          {groups.map((group) => (
+            <GroupCard
+              key={group.id}
+              group={group}
+              isOwn={ownsGroup(group, user?.id)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ownsGroup(
+  group: ProductGroupV2WithDetails,
+  userId: string | undefined,
+): boolean {
+  if (!userId) return false;
+  return group.gedus.some((g) => g.id === userId);
+}
+
+function GroupCard({
+  group,
+  isOwn,
+}: {
+  group: ProductGroupV2WithDetails;
+  isOwn: boolean;
+}) {
+  const t = useTranslations("productDetail.geduGroups");
+
+  return (
+    <Card
+      className={cn(
+        "h-full transition-colors",
+        isOwn && "border-primary/40 bg-primary/[0.03]",
+      )}
+    >
+      <CardContent className="space-y-4 p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="text-base font-semibold leading-tight">{group.name}</h3>
+          {isOwn && (
+            <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
+              {t("yourGroupBadge")}
+            </Badge>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            {t("educatorsLabel")}
+          </p>
+          {group.gedus.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("noEducators")}</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {group.gedus.map((g) => (
+                <GeduChip key={g.id} gedu={g} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              {t("gamersLabel")}
+            </p>
+            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+              <Users className="h-3 w-3" />
+              {t("gamerCount", { count: group.participations.length })}
+            </span>
+          </div>
+          {group.participations.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("emptyNoGamers")}</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {group.participations.map((p) => (
+                <GamerRow key={p.id} participation={p} />
+              ))}
+            </ul>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function GeduChip({ gedu }: { gedu: GroupV2GeduDetail }) {
+  return (
+    <div className="flex items-center gap-2 rounded-full border border-border bg-muted px-2.5 py-1 text-xs">
+      <Avatar className="h-5 w-5">
+        <Identicon id={gedu.id} size={20} />
+      </Avatar>
+      <span className="leading-none">{gedu.first_name}</span>
+    </div>
+  );
+}
+
+const GENDER_KEY: Record<GenderType, "genderBoy" | "genderGirl" | "genderNonBinary"> = {
+  boy: "genderBoy",
+  girl: "genderGirl",
+  non_binary: "genderNonBinary",
+};
+
+function GamerRow({
+  participation,
+}: {
+  participation: GroupV2ParticipationDetail;
+}) {
+  const t = useTranslations("productDetail.geduGroups");
+
+  const detailParts: string[] = [];
+  if (participation.gamer_date_of_birth) {
+    detailParts.push(
+      t("age", { age: computeAge(participation.gamer_date_of_birth) }),
+    );
+  }
+  if (participation.gamer_gender) {
+    detailParts.push(t(GENDER_KEY[participation.gamer_gender]));
+  }
+  const detail = detailParts.join(" · ");
+
+  return (
+    <li className="flex items-center gap-2.5 rounded-md border border-border bg-card px-2.5 py-1.5">
+      <Avatar className="h-7 w-7">
+        <Identicon id={participation.gamer_id} size={28} />
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium leading-tight">
+          {participation.gamer_first_name}
+        </p>
+        {detail && (
+          <p className="text-[11px] leading-tight text-muted-foreground">
+            {detail}
+          </p>
+        )}
+      </div>
+    </li>
   );
 }

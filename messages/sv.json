@@ -1314,6 +1314,20 @@
     },
     "preview": {
       "banner": "Mockup-förhandsvisning · interaktioner är inte kopplade"
+    },
+    "geduGroups": {
+      "heading": "Grupper",
+      "yourGroupBadge": "Din grupp",
+      "educatorsLabel": "Spelpedagoger",
+      "noEducators": "Inga spelpedagoger tilldelade ännu.",
+      "gamersLabel": "Spelare",
+      "gamerCount": "{count, plural, =0 {0 spelare} one {# spelare} other {# spelare}}",
+      "emptyNoGamers": "Inga spelare i den här gruppen ännu.",
+      "emptyNoGroups": "Inga grupper har skapats för den här produkten ännu.",
+      "age": "{age} år",
+      "genderBoy": "Pojke",
+      "genderGirl": "Flicka",
+      "genderNonBinary": "Icke-binär"
     }
   },
   "sidebar": {

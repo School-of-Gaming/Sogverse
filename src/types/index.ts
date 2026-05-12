@@ -341,6 +341,14 @@ export interface ProductGroupsV2Snapshot {
   unassigned: GroupV2ParticipationDetail[];
 }
 
+// get_gedu_product_detail_v2 — same groups[] shape as the admin RPC, but no
+// unassigned[] yet (see docs/products-v2-architecture.md "Gedu details page —
+// unassigned-gamers tray" for the future-improvement entry).
+export interface ProductGroupsV2GeduSnapshot {
+  product_id: string;
+  groups: ProductGroupV2WithDetails[];
+}
+
 // whatsapp_contacts
 export type WhatsAppContact = Database["public"]["Tables"]["whatsapp_contacts"]["Row"];
 

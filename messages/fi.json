@@ -1314,6 +1314,20 @@
     },
     "preview": {
       "banner": "Mallinäkymä · toiminnot eivät ole vielä kytkettyinä"
+    },
+    "geduGroups": {
+      "heading": "Ryhmät",
+      "yourGroupBadge": "Oma ryhmä",
+      "educatorsLabel": "Ohjaajat",
+      "noEducators": "Ei vielä ohjaajia.",
+      "gamersLabel": "Pelaajat",
+      "gamerCount": "{count, plural, =0 {0 pelaajaa} one {# pelaaja} other {# pelaajaa}}",
+      "emptyNoGamers": "Tässä ryhmässä ei ole vielä pelaajia.",
+      "emptyNoGroups": "Tälle tuotteelle ei ole vielä luotu ryhmiä.",
+      "age": "{age} v",
+      "genderBoy": "Poika",
+      "genderGirl": "Tyttö",
+      "genderNonBinary": "Muunsukupuolinen"
     }
   },
   "sidebar": {

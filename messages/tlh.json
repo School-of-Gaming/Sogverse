@@ -1359,6 +1359,20 @@
     },
     "preview": {
       "banner": "mocku' · ngeD lan'be'."
+    },
+    "geduGroups": {
+      "heading": "ghomHommey",
+      "yourGroupBadge": "ghomHomlIj",
+      "educatorsLabel": "ghojmoHwI'pu'",
+      "noEducators": "ghojmoHwI' tu'lu'be'.",
+      "gamersLabel": "QujwI'pu'",
+      "gamerCount": "{count, plural, =0 {pagh QujwI'} one {# QujwI'} other {# QujwI'pu'}}",
+      "emptyNoGamers": "ghomHomvamDaq QujwI' tu'lu'be'.",
+      "emptyNoGroups": "ngoptaHvaD ghomHom chenmoHlu'be'.",
+      "age": "ben {age}",
+      "genderBoy": "loDHom",
+      "genderGirl": "be'Hom",
+      "genderNonBinary": "Hutlh'a'"
     }
   },
   "sidebar": {

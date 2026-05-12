@@ -25,6 +25,7 @@
       "Bash(npx tsc:*)",
       "Bash(npx eslint:*)",
       "Bash(npx vercel logs:*)",
+      "Bash(supabase gen types typescript:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
