@@ -222,8 +222,14 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
 }
 
 function DetailLoadingSkeleton() {
-  // Match the body's hero + 2-column shape so the layout doesn't shift
-  // when data lands.
+  // Generic placeholder shared by all three branches (public signup, gedu
+  // detail, purchased view). The hero is identical across them, but the
+  // body grids diverge — public is 1fr/380px, gedu is 1/3 + 2/3, purchased
+  // is a stack — so the skeleton below the hero is intentionally a flat
+  // stack of rectangles. Per CLAUDE.md "Layout & Scrolling", a skeleton
+  // with no rendered text or interactions doesn't anchor anything, so it
+  // doesn't need to mirror the final grid; the body simply appears in
+  // place when data lands.
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-5xl">
@@ -236,13 +242,10 @@ function DetailLoadingSkeleton() {
             <div className="h-4 w-full animate-pulse rounded bg-muted" />
           </div>
         </div>
-        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="space-y-6">
-            <div className="h-32 animate-pulse rounded-lg bg-muted" />
-            <div className="h-40 animate-pulse rounded-lg bg-muted" />
-            <div className="h-64 animate-pulse rounded-lg bg-muted" />
-          </div>
-          <div className="h-96 animate-pulse rounded-lg bg-muted" />
+        <div className="mt-8 space-y-6">
+          <div className="h-40 animate-pulse rounded-lg bg-muted" />
+          <div className="h-64 animate-pulse rounded-lg bg-muted" />
+          <div className="h-32 animate-pulse rounded-lg bg-muted" />
         </div>
       </div>
     </div>
