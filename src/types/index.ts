@@ -16,7 +16,6 @@ import type { Database } from "./database.types";
 
 // Enums
 export type UserRole = Database["public"]["Enums"]["user_role"];
-export type TokenTransactionType = Database["public"]["Enums"]["token_transaction_type"];
 export type GenderType = Database["public"]["Enums"]["gender_type"];
 export type LocationType = Database["public"]["Enums"]["location_type"];
 
@@ -68,9 +67,6 @@ export type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
 
 // feedback_submissions
 export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissions"]["Row"];
-
-// token_transactions
-export type TokenTransaction = Database["public"]["Tables"]["token_transactions"]["Row"];
 
 // voice_rooms
 export type VoiceRoom = Database["public"]["Tables"]["voice_rooms"]["Row"];
@@ -402,28 +398,6 @@ export type ProductGroupWithDetails = Omit<
   gamer_date_of_birth: string | null;
   gamer_gender: Database["public"]["Enums"]["gender_type"] | null;
 };
-
-// ---------------------------------------------------------------------------
-// Stripe-driven package types
-// ---------------------------------------------------------------------------
-
-import type { SupportedCurrency } from "@/lib/constants/currency";
-import type { SupportedLocale } from "@/lib/constants/locales";
-
-export interface StripePackage {
-  stripeProductId: string;
-  /** English name (base). Use `nameI18n[locale] ?? name` for display. */
-  name: string;
-  /** English description (base). Use `descriptionI18n[locale] ?? description` for display. */
-  description: string | null;
-  /** Localised names from Stripe metadata (`name_fi`, `name_sv`, ...). Sparse — missing locales fall back to `name`. */
-  nameI18n?: Partial<Record<SupportedLocale, string>>;
-  /** Localised descriptions from Stripe metadata (`description_fi`, `description_sv`, ...). Sparse — missing locales fall back to `description`. */
-  descriptionI18n?: Partial<Record<SupportedLocale, string>>;
-  tokenAmount: number;
-  prices: Record<SupportedCurrency, { priceId: string; unitAmount: number }>;
-  type: "one_time" | "subscription";
-}
 
 // ---------------------------------------------------------------------------
 // App-level types (not generated)
