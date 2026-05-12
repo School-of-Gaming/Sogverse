@@ -12,7 +12,7 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
-import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
 const registerSchema = z.object({
@@ -195,14 +195,26 @@ export function RegisterForm() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {status ?? (isLoading ? t('register.creatingAccount') : c('createAccount'))}
           </Button>
-          <div className="text-center text-sm text-muted-foreground">
-            {t.rich('register.alreadyHaveAccount', {
-              link: (chunks) => (
-                <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">
-                  {chunks}
-                </Link>
-              ),
-            })}
+          <div className="space-y-2 text-center text-sm text-muted-foreground">
+            <div>
+              {t.rich('register.alreadyHaveAccount', {
+                link: (chunks) => (
+                  <Link href={redirect ? `${ROUTES.login}?redirect=${encodeURIComponent(redirect)}` : ROUTES.login} className="text-primary hover:underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </div>
+            <div>
+              {t.rich('needHelp', {
+                email: SUPPORT_EMAIL,
+                link: (chunks) => (
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                    {chunks}
+                  </a>
+                ),
+              })}
+            </div>
           </div>
         </CardFooter>
       </form>

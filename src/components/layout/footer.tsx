@@ -1,5 +1,6 @@
 import { useTranslations } from 'next-intl';
 import { Copyright } from "./copyright";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 
 export function Footer() {
   const t = useTranslations('footer');
@@ -19,10 +20,10 @@ export function Footer() {
             {t('tagline')}
           </p>
           <a
-            href="mailto:kanslia@sog.gg"
+            href={`mailto:${SUPPORT_EMAIL}`}
             className="text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            {t('contact.email')}
+            {t('contact.email', { email: SUPPORT_EMAIL })}
           </a>
           <div className="w-full border-t border-border pt-4">
             <Copyright />

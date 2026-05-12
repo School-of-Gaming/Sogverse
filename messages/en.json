@@ -874,8 +874,16 @@
       "noAccountSignUp": "Don't have an account? <link>Sign up</link>",
       "signingIn": "Signing in...",
       "emailPlaceholder": "you@example.com",
-      "passwordPlaceholder": "Enter your password"
+      "passwordPlaceholder": "Enter your password",
+      "errors": {
+        "identifierRequired": "Please enter your email.",
+        "passwordTooShort": "Password must be at least {count} characters.",
+        "invalidCredentials": "The email or password you entered is incorrect.",
+        "emailNotConfirmed": "Please confirm your email address before signing in.",
+        "tooManyAttempts": "Too many sign-in attempts. Please wait a moment and try again."
+      }
     },
+    "needHelp": "Need help? Contact <link>{email}</link>",
     "register": {
       "title": "Create an account",
       "description": "Enter your details to create your parent account",
@@ -1030,7 +1038,7 @@
     "tagline": "School of Gaming - Where screen time becomes quality time.",
     "copyright": "© {year} School of Gaming. All rights reserved.",
     "contact": {
-      "email": "Email: kanslia@sog.gg"
+      "email": "Email: {email}"
     }
   },
   "gamer": {

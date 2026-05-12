@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -11,13 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { getClient } from "@/lib/supabase/client";
 import { generateGamerEmail } from "@/lib/utils";
-import { ROLE_DASHBOARD_PATHS, ROUTES } from "@/lib/constants";
+import { ROLE_DASHBOARD_PATHS, ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 import { useAuthRedirect } from "@/hooks/use-auth-redirect";
 
-const loginSchema = z.object({
-  identifier: z.string().min(1, "Please enter your email or username"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+const PASSWORD_MIN_LENGTH = 6;
 
 export function LoginForm() {
   const t = useTranslations('auth');
@@ -31,27 +27,51 @@ export function LoginForm() {
 
   const supabase = getClient();
 
+  const translateSignInError = (code: string | undefined): string => {
+    switch (code) {
+      case "invalid_credentials":
+        return t("login.errors.invalidCredentials");
+      case "email_not_confirmed":
+        return t("login.errors.emailNotConfirmed");
+      case "over_request_rate_limit":
+        return t("login.errors.tooManyAttempts");
+      default:
+        return c("unexpectedError");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    const trimmedIdentifier = identifier.trim();
+    if (!trimmedIdentifier) {
+      setError(t("login.errors.identifierRequired"));
+      return;
+    }
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      setError(t("login.errors.passwordTooShort", { count: PASSWORD_MIN_LENGTH }));
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const validated = loginSchema.parse({ identifier, password });
       // Gamer accounts use a synthetic `<username>@gamer.sogverse.internal`
       // email under the hood. If the user typed a bare username, map it to
       // that synthetic address before calling Supabase auth.
-      const loginEmail = validated.identifier.includes("@")
-        ? validated.identifier
-        : generateGamerEmail(validated.identifier);
+      const loginEmail = trimmedIdentifier.includes("@")
+        ? trimmedIdentifier
+        : generateGamerEmail(trimmedIdentifier);
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: loginEmail,
-        password: validated.password,
+        password,
       });
 
       if (signInError) {
-        setError(signInError.message);
+        const code = (signInError as { code?: string }).code;
+        setError(translateSignInError(code));
         setIsLoading(false);
         return;
       }
@@ -70,12 +90,8 @@ export function LoginForm() {
       // hydrates AuthProvider with the correct initialProfile. Do not clear
       // isLoading — the document is unloading.
       navigateAfterAuth(dashboardPath);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        setError(err.errors[0].message);
-      } else {
-        setError(c('unexpectedError'));
-      }
+    } catch {
+      setError(c('unexpectedError'));
       setIsLoading(false);
     }
   };
@@ -131,17 +147,29 @@ export function LoginForm() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {status ?? (isLoading ? t('login.signingIn') : c('signIn'))}
           </Button>
-          <div className="text-center text-sm text-muted-foreground">
-            {t.rich('login.noAccountSignUp', {
-              link: (chunks) => (
-                <Link
-                  href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
-                  className="text-primary hover:underline"
-                >
-                  {chunks}
-                </Link>
-              ),
-            })}
+          <div className="space-y-2 text-center text-sm text-muted-foreground">
+            <div>
+              {t.rich('login.noAccountSignUp', {
+                link: (chunks) => (
+                  <Link
+                    href={redirect ? `${ROUTES.register}?redirect=${encodeURIComponent(redirect)}` : ROUTES.register}
+                    className="text-primary hover:underline"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </div>
+            <div>
+              {t.rich('needHelp', {
+                email: SUPPORT_EMAIL,
+                link: (chunks) => (
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary hover:underline">
+                    {chunks}
+                  </a>
+                ),
+              })}
+            </div>
           </div>
         </CardFooter>
       </form>

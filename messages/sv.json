@@ -874,8 +874,16 @@
       "noAccountSignUp": "Har du inget konto? <link>Registrera dig</link>",
       "signingIn": "Loggar in...",
       "emailPlaceholder": "du@example.com",
-      "passwordPlaceholder": "Ange ditt lösenord"
+      "passwordPlaceholder": "Ange ditt lösenord",
+      "errors": {
+        "identifierRequired": "Ange din e-postadress.",
+        "passwordTooShort": "Lösenordet måste vara minst {count} tecken långt.",
+        "invalidCredentials": "E-postadressen eller lösenordet du angav är felaktigt.",
+        "emailNotConfirmed": "Bekräfta din e-postadress innan du loggar in.",
+        "tooManyAttempts": "För många inloggningsförsök. Vänta en stund och försök igen."
+      }
     },
+    "needHelp": "Behöver du hjälp? Kontakta <link>{email}</link>",
     "register": {
       "title": "Skapa ett konto",
       "description": "Ange dina uppgifter för att skapa ditt föräldrakonto",
@@ -1030,7 +1038,7 @@
     "tagline": "School of Gaming - Där skärmtid blir kvalitetstid.",
     "copyright": "© {year} School of Gaming. Alla rättigheter förbehållna.",
     "contact": {
-      "email": "E-post: kanslia@sog.gg"
+      "email": "E-post: {email}"
     }
   },
   "gamer": {
