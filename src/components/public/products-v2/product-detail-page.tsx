@@ -66,7 +66,9 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   // Family subs for the post-purchase placeholder. Only fetched when the
   // user is a logged-in customer; the placeholder uses this to surface
   // Stripe↔DB drift (sub charging but participation flagged non-sub-covered).
-  const { data: myFamilySubs } = useMyFamilySubs();
+  // The route is customer-only (403 for other roles), so non-customer viewers
+  // of the public detail page must skip it entirely.
+  const { data: myFamilySubs } = useMyFamilySubs({ enabled: isCustomer });
 
   // Live seat-count updates for this single product. Browse pages don't
   // subscribe per-card (a 30-card grid is too many channels) — detail page
