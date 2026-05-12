@@ -15,14 +15,16 @@
       "adminDashboard": "Admin QaD",
       "adminGroups": "ghom'a'mey",
       "adminGroupDetails": "ghom'a' Qatlh",
-      "parentDashboard": "vav/SoS QaD",
+      "parentDashboard": "jIH SOG",
       "geduDashboard": "Gedu QaD",
       "geduGroups": "ghom'a'mey",
       "geduGroupDetails": "ghom'a' Qatlh",
-      "gamerHome": "toy'wI' juH",
+      "gamerHome": "toy'wI'",
       "gamerGroups": "jIH ghom'a'mey",
       "gamerGroupDetails": "ghom'a' Qatlh",
-      "voiceSession": "jatlh poH"
+      "voiceSession": "jatlh poH",
+      "help": "boQ",
+      "shop": "ngevwI'"
     }
   },
   "common": {
@@ -1046,8 +1048,9 @@
   },
   "dashboardSections": {
     "myFamily": "qorDu'wIj",
+    "upcomingSessions": "ghoSqep'a'",
+    "billing": "Huch DIl",
     "yty": "Yty",
-    "feedback": "QaH",
     "settings": "tlhInganpu' chu'"
   },
   "family": {
@@ -1152,13 +1155,45 @@
   "header": {
     "nav": {
       "home": "juH",
-      "clubs": "ghom'a'mey",
-      "camps": "raghmey",
-      "events": "wanI'mey",
+      "shop": "ngevwI'",
+      "help": "boQ",
       "yty": "Yty",
       "about": "maH"
     },
     "selectProfile": "qa' choH"
+  },
+  "shop": {
+    "title": "ngevwI'",
+    "intro": "naDev puqlIj ghom'a'mey, raghmey, wanI'mey je yIngeH. wIchu'taH — vorghoSchugh DaH yIcheghqa'!"
+  },
+  "help": {
+    "title": "boQ",
+    "intro": "Sogverse SeghHommey jatlhlu'.",
+    "faq": {
+      "heading": "qaSchuq SeghHommey",
+      "items": {
+        "whatIsSogverse": {
+          "q": "Sogverse 'oH nuq?",
+          "a": "Quj yejHaD 'oH Sogverse'e'. Minecraft ghom'a'mey wIcheH, ghojmoHwI'pu' Quj DevtaHvIS, vaj Daq tIv mojchoH Qap tIv."
+        },
+        "productTypes": {
+          "q": "ghom'a'mey, raghmey, wanI'mey: chay' juHHa'chuq?",
+          "a": "ghom'a'mey rurchuq qaSchuq. raghmey, ghojmoHwI' poH qaSchuq. wanI'mey wa'logh neH qaSchuq."
+        },
+        "whoLeads": {
+          "q": "'Iv DevtaH qep?",
+          "a": "Hoch qep DevtaH Gedu — Quj ghojmoHwI', Quj toy'wI' je ghaH, 'ej puqpu' boQ."
+        },
+        "safety": {
+          "q": "puqwI' QaQ'a'?",
+          "a": "Hoch qepvaD ghojmoHwI' tu'lu', maghomvam Qaw' law'lu', 'ej Hochna' Qoqbe'lu'."
+        },
+        "howToStart": {
+          "q": "chay' jIQaplaH?",
+          "a": "vav Account yIchel, yIQong, je puqlIj yIqar. qep'a'mey luQong puqpu', Account chaj lo'taHvIS."
+        }
+      }
+    }
   },
   "productBrowse": {
     "headings": {
@@ -1399,7 +1434,6 @@
     "uiComponents": "UI ngoQmey",
     "whatsapp": "WhatsApp",
     "testing": "Qu' nI'moH",
-    "feedback": "QIn",
     "settings": "ngoQmey",
     "myGamers": "jIH toy'wI'pu'",
     "home": "juH",
@@ -1465,6 +1499,10 @@
     "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH"
   },
   "parent": {
+    "placeholders": {
+      "upcomingSessions": "naDev tuj poH 'oQqar yIlegh!",
+      "billing": "naDev Huch yIDIl."
+    },
     "gamers": {
       "title": "jIH toy'wI'pu'",
       "subtitle": "toy'wI' accountmey je qo' ghoHmey tI'ang",

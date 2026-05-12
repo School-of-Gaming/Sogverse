@@ -15,11 +15,13 @@
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "adminGroups": "Ryhmät",
       "adminGroupDetails": "Ryhmän tiedot",
-      "parentDashboard": "Vanhemman hallintapaneeli",
+      "parentDashboard": "Oma SOG",
       "geduDashboard": "Kasvattajan hallintapaneeli",
       "geduGroups": "Ryhmät",
       "geduGroupDetails": "Ryhmän tiedot",
-      "gamerHome": "Pelaajan etusivu",
+      "help": "Apu",
+      "shop": "Kauppa",
+      "gamerHome": "Pelaaja",
       "gamerGroups": "Omat ryhmät",
       "gamerGroupDetails": "Ryhmän tiedot",
       "voiceSession": "Ääni-istunto"
@@ -1001,8 +1003,9 @@
   },
   "dashboardSections": {
     "myFamily": "Perheeni",
+    "upcomingSessions": "Tulevat tapaamiset",
+    "billing": "Laskutus",
     "yty": "Yty",
-    "feedback": "Palaute",
     "settings": "Asetukset"
   },
   "family": {
@@ -1107,13 +1110,45 @@
   "header": {
     "nav": {
       "home": "Etusivu",
-      "clubs": "Kerhot",
-      "camps": "Leirit",
-      "events": "Tapahtumat",
+      "shop": "Kauppa",
+      "help": "Apu",
       "yty": "Yty",
       "about": "Tietoa"
     },
     "selectProfile": "Vaihda profiilia"
+  },
+  "shop": {
+    "title": "Kauppa",
+    "intro": "Täältä voit ilmoittaa lapsesi mukaan kerhoihimme, leireillemme ja tapahtumiimme. Rakennamme tätä vielä — käy pian uudelleen!"
+  },
+  "help": {
+    "title": "Apu",
+    "intro": "Vastauksia yleisimpiin Sogversea koskeviin kysymyksiin.",
+    "faq": {
+      "heading": "Usein kysytyt kysymykset",
+      "items": {
+        "whatIsSogverse": {
+          "q": "Mikä Sogverse on?",
+          "a": "Sogverse — School of Gaming — järjestää Minecraft-kerhoja, joita vetävät ammattilaiset pelikasvattajat, jotta ruutuajasta tulisi laatuaikaa."
+        },
+        "productTypes": {
+          "q": "Mikä on kerhojen, leirien ja tapahtumien ero?",
+          "a": "Kerhot kokoontuvat säännöllisesti. Leirit järjestetään useamman päivän ajan koulujen lomilla. Tapahtumat ovat kertaluonteisia kokoontumisia."
+        },
+        "whoLeads": {
+          "q": "Kuka vetää tapaamiset?",
+          "a": "Jokaista tapaamista vetää Gedu — pelikasvattaja, joka pelaa itsekin ja osaa tukea lapsia pelissä ja sen ulkopuolella."
+        },
+        "safety": {
+          "q": "Onko se turvallista lapselleni?",
+          "a": "Jokaisessa tapaamisessa on kasvattaja paikalla, yhteisömme ovat moderoituja, eikä kiusaamista suvaita."
+        },
+        "howToStart": {
+          "q": "Miten pääsen alkuun?",
+          "a": "Luo vanhemman tili, selaa tarjontaa ja ilmoita lapsesi mukaan. Hän kirjautuu omalla tunnuksellaan tapaamisiin."
+        }
+      }
+    }
   },
   "productBrowse": {
     "headings": {
@@ -1354,7 +1389,6 @@
     "uiComponents": "UI-komponentit",
     "whatsapp": "WhatsApp",
     "testing": "Testaus",
-    "feedback": "Palaute",
     "settings": "Asetukset",
     "myGamers": "Pelaajani",
     "home": "Etusivu",
@@ -1420,6 +1454,10 @@
     "mcHeadsAttribution": "Ulkoasu renderöity palvelulla <link>mc-heads.net</link>"
   },
   "parent": {
+    "placeholders": {
+      "upcomingSessions": "Täällä näet kesäleirisi.",
+      "billing": "Täällä hallitset laskutustasi."
+    },
     "gamers": {
       "title": "Pelaajani",
       "subtitle": "Hallitse pelaajatilejä ja ilmoittautumisia",

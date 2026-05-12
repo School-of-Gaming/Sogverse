@@ -4,7 +4,6 @@ import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { FamilyProfileSelector } from "@/components/family";
-import { FeedbackSectionContent } from "@/components/feedback/feedback-section-content";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,7 +19,6 @@ export default function GamerDashboardPage() {
   const sections: DashboardSection[] = [
     { id: 'my-family', label: ds('myFamily') },
     { id: 'yty', label: ds('yty') },
-    { id: 'feedback', label: ds('feedback') },
   ];
 
   return (
@@ -65,9 +63,6 @@ export default function GamerDashboardPage() {
           </div>
         </section>
 
-        <section id="feedback" className="scroll-mt-32">
-          <FeedbackSectionContent />
-        </section>
       </div>
     </>
   );

@@ -10,7 +10,7 @@ import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 // arrives via an email link with hash tokens — they aren't authenticated yet.
 // ROUTES.voice.prefix is public because instant voice rooms are share-via-link
 // by design — see docs/instant-voice-rooms.md.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.products, ROUTES.camps, ROUTES.events, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.clubs, ROUTES.camps, ROUTES.events, ROUTES.help, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
 
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
@@ -166,8 +166,8 @@ export async function proxy(request: NextRequest) {
   // Check role-based access
   const userRole = profileData.role;
 
-  // Shared routes (feedback, settings) are accessible to all authenticated users
-  if (pathname.startsWith(ROUTES.feedback) || pathname.startsWith(ROUTES.settings)) {
+  // /settings is shared across roles — accessible to any authenticated user.
+  if (pathname.startsWith(ROUTES.settings)) {
     return supabaseResponse;
   }
 

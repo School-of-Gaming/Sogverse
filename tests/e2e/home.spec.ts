@@ -18,13 +18,10 @@ test.describe("Home Page", () => {
     await page.goto("/");
 
     await expect(
-      page.getByRole("link", { name: "Clubs", exact: true })
+      page.getByRole("link", { name: "Shop", exact: true })
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Camps", exact: true })
-    ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Events", exact: true })
+      page.getByRole("link", { name: "Help", exact: true })
     ).toBeVisible();
   });
 
@@ -36,12 +33,12 @@ test.describe("Home Page", () => {
     await expect(page).toHaveURL("/register");
   });
 
-  test("should navigate to clubs page", async ({ page }) => {
+  test("should navigate to shop page", async ({ page }) => {
     await page.goto("/");
 
-    await activate(page.getByRole("link", { name: "Clubs", exact: true }));
+    await activate(page.getByRole("link", { name: "Shop", exact: true }));
 
-    await expect(page).toHaveURL("/clubs");
+    await expect(page).toHaveURL("/shop");
   });
 
   test("should display features section", async ({ page }) => {

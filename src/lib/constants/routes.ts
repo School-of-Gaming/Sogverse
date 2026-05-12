@@ -1,7 +1,8 @@
 /** Centralized route paths — import and reference instead of hardcoding string literals. */
 export const ROUTES = {
   home: "/",
-  products: "/clubs",
+  shop: "/shop",
+  clubs: "/clubs",
   camps: "/camps",
   events: "/events",
   yty: "/#yty",
@@ -13,7 +14,7 @@ export const ROUTES = {
   resetPassword: "/reset-password",
   setupAccount: "/setup-account",
   selectProfile: "/select-profile",
-  feedback: "/feedback",
+  help: "/help",
   settings: "/settings",
   /**
    * Public on-the-fly voice room — see docs/instant-voice-rooms.md.

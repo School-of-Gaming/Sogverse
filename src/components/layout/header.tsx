@@ -31,10 +31,13 @@ export function Header() {
   const t = useTranslations("header");
   const c = useTranslations("common");
 
+  // While the storefront is being built, the navbar surfaces a single Shop
+  // entry instead of separate Clubs / Camps / Events links. The direct routes
+  // (ROUTES.clubs, ROUTES.camps, ROUTES.events) still resolve for anyone
+  // who has the URL — they're just not in the top nav for now.
   const navLinks = [
-    { href: ROUTES.products, label: t("nav.clubs") },
-    { href: ROUTES.camps, label: t("nav.camps") },
-    { href: ROUTES.events, label: t("nav.events") },
+    { href: ROUTES.shop, label: t("nav.shop") },
+    { href: ROUTES.help, label: t("nav.help") },
   ];
 
   const isHome = pathname === ROUTES.home;

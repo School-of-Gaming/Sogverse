@@ -12,7 +12,6 @@ import {
   Gamepad2,
   FlaskConical,
   MessageCircle,
-  MessageSquare,
   MapPin,
   ChevronLeft,
   ChevronRight,
@@ -30,7 +29,7 @@ import type { UserRole } from "@/types";
 
 type SidebarKey =
   | "dashboard" | "users" | "groups" | "locations"
-  | "uiComponents" | "whatsapp" | "testing" | "feedback" | "settings"
+  | "uiComponents" | "whatsapp" | "testing" | "settings"
   | "myGamers" | "home" | "myGroups" | "voice"
   | "consumerClubs" | "municipalityClubs" | "camps" | "events";
 
@@ -54,26 +53,22 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.whatsapp, labelKey: "whatsapp", icon: <MessageCircle className="h-5 w-5" /> },
     { href: ROUTES.admin.testing, labelKey: "testing", icon: <FlaskConical className="h-5 w-5" /> },
-    { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
   customer: [
     { href: ROUTES.customer.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.customer.gamers, labelKey: "myGamers", icon: <Gamepad2 className="h-5 w-5" /> },
-    { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
   gamer: [
     { href: ROUTES.gamer.dashboard, labelKey: "home", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.gamer.groups, labelKey: "myGroups", icon: <UsersRound className="h-5 w-5" /> },
-    { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
   gedu: [
     { href: ROUTES.gedu.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.gedu.voice, labelKey: "voice", icon: <AudioLines className="h-5 w-5" /> },
     { href: ROUTES.gedu.groups, labelKey: "groups", icon: <UsersRound className="h-5 w-5" /> },
-    { href: ROUTES.feedback, labelKey: "feedback", icon: <MessageSquare className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
 };
