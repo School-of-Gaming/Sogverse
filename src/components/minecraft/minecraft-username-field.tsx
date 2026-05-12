@@ -83,7 +83,7 @@ export function MinecraftUsernameField({
           type="button"
           variant="outline"
           size="default"
-          className="w-28"
+          className="w-36"
           onClick={handleVerify}
           disabled={disabled || !value.trim() || !isValid || verify.isPending}
         >

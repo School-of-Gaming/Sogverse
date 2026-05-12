@@ -1472,15 +1472,12 @@
       }
     },
     "gamerDetail": {
-      "backToGamers": "Takaisin pelaajiin",
+      "backToMySog": "Takaisin Omaan SOGiin",
       "title": "Pelaajan asetukset",
       "subtitle": "Hallitse pelaajan {name} asetuksia",
-      "profileDescription": "Päivitä pelaajasi etunimi ja katso käyttäjänimi.",
+      "profileDescription": "Päivitä pelaajasi tiedot.",
       "profileUpdated": "Nimi päivitetty!",
       "failedUpdateDisplayName": "Nimen päivittäminen epäonnistui",
-      "passwordsDoNotMatch": "Salasanat eivät täsmää",
-      "passwordUpdated": "Salasana päivitetty!",
-      "failedUpdatePassword": "Salasanan päivittäminen epäonnistui",
       "notFound": {
         "title": "Pelaajaa ei löytynyt",
         "description": "Tämä pelaajatili on ehkä poistettu tai sinulla ei ole pääsyä siihen."
@@ -1492,14 +1489,7 @@
       },
       "mcSaved": "Minecraft-käyttäjänimi tallennettu!",
       "mcCleared": "Minecraft-käyttäjänimi poistettu",
-      "failedUpdateMc": "Minecraft-käyttäjänimen päivittäminen epäonnistui",
-      "security": {
-        "description": "Vaihda salasana, jolla pelaajasi kirjautuu.",
-        "passwordPlaceholder": "Syötä uusi salasana",
-        "confirmPlaceholder": "Vahvista uusi salasana",
-        "updating": "Päivitetään...",
-        "updatePassword": "Päivitä salasana"
-      }
+      "failedUpdateMc": "Minecraft-käyttäjänimen päivittäminen epäonnistui"
     },
     "switchToGamer": {
       "title": "Vaihda käyttäjään {name}?",

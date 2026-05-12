@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useFamily, type FamilyMember } from "@/services/family";
+import { ROUTES } from "@/lib/constants";
 import { AddGamerDialog } from "./AddGamerDialog";
 import {
   AddGamerTile,
@@ -17,8 +18,7 @@ import {
  * gamers (no parent tiles, no profile switching). Tiles are smaller — this is
  * a dashboard widget, not a full-page picker.
  *
- * Click is currently a no-op; the tile keeps its hover/focus styling so the
- * affordance is in place for the upcoming manage-gamer screen.
+ * Clicking a gamer routes to /parent/gamers/[id] to manage that gamer.
  */
 export function MyGamersGrid() {
   const t = useTranslations("family");
@@ -55,9 +55,7 @@ export function MyGamersGrid() {
             key={member.id}
             member={member}
             size="sm"
-            onClick={() => {
-              // Placeholder: routes to /parent/gamers/[id] manage screen once built.
-            }}
+            href={`${ROUTES.customer.gamers}/${member.id}`}
           />
         ))}
         {canAddGamer && (

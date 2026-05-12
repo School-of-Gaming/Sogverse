@@ -1472,15 +1472,12 @@
       }
     },
     "gamerDetail": {
-      "backToGamers": "Tillbaka till mina spelare",
+      "backToMySog": "Tillbaka till Min SOG",
       "title": "Spelarinställningar",
       "subtitle": "Hantera inställningar för {name}",
-      "profileDescription": "Uppdatera din spelares förnamn och se deras användarnamn.",
+      "profileDescription": "Uppdatera din spelares uppgifter.",
       "profileUpdated": "Namnet uppdaterat!",
       "failedUpdateDisplayName": "Kunde inte uppdatera namnet",
-      "passwordsDoNotMatch": "Lösenorden matchar inte",
-      "passwordUpdated": "Lösenord uppdaterat!",
-      "failedUpdatePassword": "Kunde inte uppdatera lösenord",
       "notFound": {
         "title": "Spelare hittades inte",
         "description": "Detta spelarkonto kan ha tagits bort eller så har du inte tillgång till det."
@@ -1492,14 +1489,7 @@
       },
       "mcSaved": "Minecraft-användarnamn sparat!",
       "mcCleared": "Minecraft-användarnamn borttaget",
-      "failedUpdateMc": "Kunde inte uppdatera Minecraft-användarnamn",
-      "security": {
-        "description": "Ändra lösenordet som din spelare använder för att logga in.",
-        "passwordPlaceholder": "Ange nytt lösenord",
-        "confirmPlaceholder": "Bekräfta nytt lösenord",
-        "updating": "Uppdaterar...",
-        "updatePassword": "Uppdatera lösenord"
-      }
+      "failedUpdateMc": "Kunde inte uppdatera Minecraft-användarnamn"
     },
     "switchToGamer": {
       "title": "Byt till {name}?",

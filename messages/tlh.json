@@ -1517,15 +1517,12 @@
       }
     },
     "gamerDetail": {
-      "backToGamers": "jIH toy'wI'pu' yIchegh",
+      "backToMySog": "jIH SOGDaq yIchegh",
       "title": "toy'wI' ngoQmey",
       "subtitle": "{name}vaH ngoQmey tI'ang",
-      "profileDescription": "toy'wI' wa'DIch pong yIchoH je lo'wI' pong tIlegh.",
+      "profileDescription": "toy'wI' De' yIchoH.",
       "profileUpdated": "pong choHlu'! Qapla'!",
       "failedUpdateDisplayName": "pong choH Dabe'lu'",
-      "passwordsDoNotMatch": "mu'mey rur Dabe'",
-      "passwordUpdated": "mu'mey choHlu'! Qapla'!",
-      "failedUpdatePassword": "mu'mey choH Dabe'lu'",
       "notFound": {
         "title": "toy'wI' tu'be'lu'",
         "description": "toy'wI' account HoHlu' qoj DaghajlaHbe'."
@@ -1537,14 +1534,7 @@
       },
       "mcSaved": "Minecraft lo'wI' pong Sahlu'! Qapla'!",
       "mcCleared": "Minecraft lo'wI' pong teqlu'",
-      "failedUpdateMc": "Minecraft lo'wI' pong choH Dabe'lu'",
-      "security": {
-        "description": "toy'wI' bI'el mu'mey yIchoH.",
-        "passwordPlaceholder": "mu'mey chu' yIchel",
-        "confirmPlaceholder": "mu'mey chu' yIchel",
-        "updating": "vIchoH...",
-        "updatePassword": "mu'mey yIchoH"
-      }
+      "failedUpdateMc": "Minecraft lo'wI' pong choH Dabe'lu'"
     },
     "switchToGamer": {
       "title": "{name}vaH yIchoH?",
