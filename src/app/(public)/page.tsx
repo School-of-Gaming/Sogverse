@@ -45,12 +45,6 @@ export default function HomePage() {
               </p>
               <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link
-                  href={ROUTES.products}
-                  className={buttonVariants({ variant: "outline", size: "lg" })}
-                >
-                  {t('hero.viewClubs')}
-                </Link>
-                <Link
                   href={ROUTES.register}
                   className={buttonVariants({ size: "lg", className: "gap-2" })}
                 >
