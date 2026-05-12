@@ -130,7 +130,6 @@ The email translator (`use-intl/core`) operates on plain strings and does not be
 3. Add its config entry to `LOCALE_CONFIG` (label, native label, country flag code)
 4. The CI script (`check-translations.mjs`) will automatically validate the new file
 5. No changes needed to `next.config.ts`, `request.ts`, or provider code
-6. Add `name_{code}` / `description_{code}` metadata to each Sorg token product in Stripe (both test and live mode) — otherwise new-locale customers silently fall back to English product names on the purchase page. See `docs/sorg-token-architecture.md` § Stripe Product Configuration.
 
 ## Adding a New Namespace
 

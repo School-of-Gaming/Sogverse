@@ -4,7 +4,7 @@ Forward-looking architecture proposal that redesigns the `products` domain to cl
 
 Status: **Phase 1 in progress** — DB foundation and admin create UI shipped on `feat/products-v2-mock-port`; participation, payments, sessions, and parent-facing surfaces still pending. See §10 for the per-bullet status and `docs/products-v2-architecture.md` for the as-built component map. Supersedes `school-clubs-design.md`. Rename to `products-architecture.md` at cutover (§9).
 
-Related: `products-v2-architecture.md` (as-built doc for what shipped on this branch), `groups-architecture.md`, `customer-enrollment-architecture.md`, `locations-architecture.md`, `voice-chat-architecture.md`, `email-architecture.md`, `whatsapp-automated-flow.md`. `sorg-token-architecture.md` is retired by this redesign at cutover.
+Related: `products-v2-architecture.md` (as-built doc for what shipped on this branch), `groups-architecture.md`, `customer-enrollment-architecture.md`, `locations-architecture.md`, `voice-chat-architecture.md`, `email-architecture.md`, `whatsapp-automated-flow.md`.
 
 ---
 
@@ -1288,7 +1288,6 @@ Flagged inline as `OPEN` in the sections they affect.
 - Email pipeline for notifications: `docs/email-architecture.md`
 - WhatsApp notification channel: `docs/whatsapp-automated-flow.md`
 - Stripe testing locally: `docs/stripe-testing.md`
-- Sorg token system: `docs/sorg-token-architecture.md` — **retired at cutover** (§9.4). Kept as-is during the parallel phase for reference and for the still-running legacy code paths; removed from the doc tree at cutover.
 
 ### 12.2 Mockup lineage
 
