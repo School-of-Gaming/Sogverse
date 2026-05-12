@@ -1119,6 +1119,11 @@
       "camp": "Dina spelares läger",
       "event": "Dina spelares evenemang"
     },
+    "geduAssignedHeadings": {
+      "consumer_club": "Mina klubbar",
+      "camp": "Mina läger",
+      "event": "Mina evenemang"
+    },
     "filters": {
       "topic": "Ämne",
       "tag": "Stil",

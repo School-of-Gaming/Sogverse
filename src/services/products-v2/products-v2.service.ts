@@ -219,6 +219,50 @@ export class ProductsV2Service {
     return data as ProductV2BrowseRow[];
   }
 
+  // Products the current Gedu is assigned to (via gedu_group_assignments_v2).
+  // Returns the same shape as `listVisibleByType` so the public browse page
+  // can render gedu-owned rows with the same card adapters. Unlike
+  // listVisibleByType, this does NOT filter on is_visible / status: an
+  // assignment is the gedu's claim on the product, parallel to the customer's
+  // participation, so a hidden / draft / cancelled product they're on still
+  // shows up. RLS is the gate (gedu_assigned_read_products_v2 from
+  // migration 00056 plus the existing gedus_read_own_and_team_assignments_v2
+  // policy on the join table); the explicit gedu_id filter here narrows
+  // teammates' assignments out so a gedu only sees products they're personally
+  // on, not the union of every product their team touches.
+  //
+  // Two-step deliberately: the join-form `gedu_group_assignments_v2!inner`
+  // would let RLS return teammate rows and require de-dup either side. The
+  // two-step is one extra round trip but reads cleanly and dedupes ids in
+  // JS — assignment rows are small (3 UUIDs + ts).
+  async listMyGeduAssigned(): Promise<ProductV2BrowseRow[]> {
+    const { data: userData } = await this.supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return [];
+
+    const { data: assignments, error: assignErr } = await this.supabase
+      .from("gedu_group_assignments_v2")
+      .select("product_id")
+      .eq("gedu_id", userId);
+    if (assignErr) throw assignErr;
+
+    const productIds = Array.from(
+      new Set(assignments.map((a) => a.product_id)),
+    );
+    if (productIds.length === 0) return [];
+
+    const { data, error } = await this.supabase
+      .from("products_v2")
+      .select(
+        "*, topics_v2(slug, kind, icon_path, topic_translations_v2(*)), product_translations_v2(*), product_tags_v2(tags_v2(slug, tag_translations_v2(*))), product_prices_v2(*), schedule_slots_v2(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))",
+      )
+      .in("id", productIds)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data as ProductV2BrowseRow[];
+  }
+
   // Single-product detail fetch for the parent-facing detail page
   // (`/clubs/[id]`, `/camps/[id]`, `/events/[id]`). Returns the same shape
   // as `listVisibleByType` plus a flattened `holidays` array sourced from

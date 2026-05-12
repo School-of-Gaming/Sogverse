@@ -13,6 +13,7 @@ export {
   productV2Keys,
   useProductsV2ByType,
   useVisibleProductsV2ByType,
+  useMyGeduAssignedProducts,
   useProductV2Detail,
   useProductV2Admin,
   useCreateProductV2,
