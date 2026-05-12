@@ -36,13 +36,18 @@ export function useMyParticipations() {
  * "Family subscriptions" section on the purchased-detail placeholder so
  * Stripe↔DB drift (sub charging but participation flagged non-sub-covered)
  * is visible at a glance.
+ *
+ * Public surfaces (e.g. the product detail page, which any role can view)
+ * must pass `enabled: isCustomer` — the underlying API route is gated to
+ * customers and returns 403 to other roles.
  */
-export function useMyFamilySubs() {
+export function useMyFamilySubs({ enabled = true }: { enabled?: boolean } = {}) {
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
   return useQuery({
     queryKey: participationKeys.myFamilySubs(),
     queryFn: () => service.getMyFamilySubs(),
+    enabled,
   });
 }
 
