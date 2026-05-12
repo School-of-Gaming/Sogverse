@@ -1314,6 +1314,20 @@
     },
     "preview": {
       "banner": "Mockup preview · interactions are not wired up"
+    },
+    "geduGroups": {
+      "heading": "Groups",
+      "yourGroupBadge": "Your group",
+      "educatorsLabel": "Educators",
+      "noEducators": "No educators assigned yet.",
+      "gamersLabel": "Gamers",
+      "gamerCount": "{count, plural, =0 {0 gamers} one {# gamer} other {# gamers}}",
+      "emptyNoGamers": "No gamers in this group yet.",
+      "emptyNoGroups": "No groups have been created for this product yet.",
+      "age": "Age {age}",
+      "genderBoy": "Boy",
+      "genderGirl": "Girl",
+      "genderNonBinary": "Non-binary"
     }
   },
   "sidebar": {

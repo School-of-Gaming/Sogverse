@@ -1910,6 +1910,10 @@ export type Database = {
           min_gamer_age: number
         }[]
       }
+      get_gedu_product_detail_v2: {
+        Args: { p_product_id: string }
+        Returns: Json
+      }
       get_my_gamers: {
         Args: never
         Returns: {

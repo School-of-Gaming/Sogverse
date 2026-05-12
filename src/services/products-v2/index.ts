@@ -16,6 +16,7 @@ export {
   useMyGeduAssignedProducts,
   useProductV2Detail,
   useProductV2Admin,
+  useGeduProductDetail,
   useCreateProductV2,
   useUpdateProductV2,
 } from "./products-v2.queries";

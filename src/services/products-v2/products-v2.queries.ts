@@ -22,6 +22,8 @@ export const productV2Keys = {
     [...productV2Keys.all, "detail", id] as const,
   adminDetail: (id: string | undefined) =>
     [...productV2Keys.all, "admin-detail", id] as const,
+  geduDetail: (id: string | undefined) =>
+    [...productV2Keys.all, "gedu-detail", id] as const,
 };
 
 export function useProductV2Detail(id: string | undefined) {
@@ -69,6 +71,25 @@ export function useMyGeduAssignedProducts({
     queryKey: productV2Keys.myGeduAssigned(),
     queryFn: () => service.listMyGeduAssigned(),
     enabled,
+  });
+}
+
+// Groups + rosters for a product the current gedu is assigned to. Backed by
+// the SECURITY DEFINER RPC get_gedu_product_detail_v2 — see the service
+// method for the auth shape. Gated on a string id and an optional `enabled`
+// so the gedu detail page can suppress the fetch until the role + product
+// row are both resolved.
+export function useGeduProductDetail(
+  id: string | undefined,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
+  const supabase = getClient();
+  const service = new ProductsV2Service(supabase);
+
+  return useQuery({
+    queryKey: productV2Keys.geduDetail(id),
+    queryFn: () => service.getGeduProductDetail(id!),
+    enabled: enabled && !!id,
   });
 }
 

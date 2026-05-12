@@ -391,6 +391,10 @@ These are known gaps tracked here so they aren't lost. None are blocking the cur
 
 The current details page is a read-only summary + Edit button. Once participations land, the same page should host gamer→group assignment plus an "unassigned gamers" tray so admins can do roster work without leaving the product. Wire this in alongside the participation rollup — the Groups section on the *form* stays cosmetic regardless (groups belong on the details page, not the edit form). Cancel-product and Save-as-draft buttons also live here, not on the edit form.
 
+### Gedu details page — unassigned-gamers tray
+
+Step one of the Gedu detail page (`get_gedu_product_detail_v2` RPC) returns `groups[]` only. The Gedu can see every group in the product they teach plus the full roster of each, but new signups that haven't been placed in a group yet (`participations_v2.group_id IS NULL`, `status = 'active'`) are invisible. Add a read-only "Awaiting assignment" section that lists those rows so a Gedu knows who's coming. They can't move gamers themselves — that's still admin-only via `commit_group_changes_v2`. Extend the RPC's return JSONB with an `unassigned[]` array (same shape as the admin RPC's existing field) and a section above the group cards. Drives the "I want to know who just signed up" nudge without granting write access.
+
 ### Extend `site_details_v2` read policy to purchasing customers
 
 Migration `00038_site_details_restrict_to_staff.sql` tightened `site_details_v2` to admin + gedu only. The original handoff intent was admin + gedu + **customers who have purchased a product at that site**, but there's no v2 enrollment / participation table yet to write that predicate against (legacy `group_enrollments` references `products`, not `products_v2`). Until that lands, post-purchase address visibility has to go through an out-of-band channel (admin-rendered confirmation page, transactional email).
