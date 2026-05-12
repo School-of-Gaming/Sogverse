@@ -15,8 +15,9 @@ export default function CustomerDashboardPage() {
 
   const sections: DashboardSection[] = [
     { id: 'my-family', label: t('myFamily') },
-    { id: 'upcoming-sessions', label: t('upcomingSessions') },
+    { id: 'sessions', label: t('upcomingSessions') },
     { id: 'billing', label: t('billing') },
+    { id: 'help', label: t('help') },
   ];
 
   return (
@@ -31,7 +32,7 @@ export default function CustomerDashboardPage() {
           </div>
         </section>
 
-        <section id="upcoming-sessions" className="scroll-mt-32">
+        <section id="sessions" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
             <h1 className="text-3xl font-bold">{t('upcomingSessions')}</h1>
             <p className="text-muted-foreground">{p('upcomingSessions')}</p>
@@ -42,6 +43,13 @@ export default function CustomerDashboardPage() {
           <div className="mx-auto max-w-3xl space-y-6">
             <h1 className="text-3xl font-bold">{t('billing')}</h1>
             <p className="text-muted-foreground">{p('billing')}</p>
+          </div>
+        </section>
+
+        <section id="help" className="scroll-mt-32">
+          <div className="mx-auto max-w-3xl space-y-6">
+            <h1 className="text-3xl font-bold">{t('help')}</h1>
+            <p className="text-muted-foreground">{p('help')}</p>
           </div>
         </section>
       </div>

@@ -1003,8 +1003,9 @@
   },
   "dashboardSections": {
     "myFamily": "Perheeni",
-    "upcomingSessions": "Tulevat tapaamiset",
+    "upcomingSessions": "Tapaamiset",
     "billing": "Laskutus",
+    "help": "Apu",
     "yty": "Yty",
     "settings": "Asetukset"
   },
@@ -1455,8 +1456,9 @@
   },
   "parent": {
     "placeholders": {
-      "upcomingSessions": "Täällä näet kesäleirisi.",
-      "billing": "Täällä hallitset laskutustasi."
+      "upcomingSessions": "Täällä näet pelaajasi tulevat tapaamiset.",
+      "billing": "Täällä hallitset laskutustasi.",
+      "help": "Ohjeet ja opastus tulevat tähän."
     },
     "gamers": {
       "title": "Pelaajani",
