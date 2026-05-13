@@ -1467,6 +1467,15 @@
     "placeholders": {
       "myGamersHint": "Välj en spelare för att hantera kontot."
     },
+    "nextSession": {
+      "title": "{name}s nästa pass",
+      "live": "Live",
+      "joinVoice": "Gå med i röstrummet",
+      "locked": "Öppnas {date} kl. {time}",
+      "startsIn": "Börjar om {countdown}",
+      "inProgress": "Pass pågår",
+      "reports": "Rapporter"
+    },
     "help": {
       "contact": {
         "heading": "Behöver du hjälp?",

@@ -1467,6 +1467,15 @@
     "placeholders": {
       "myGamersHint": "Select a gamer to manage their account."
     },
+    "nextSession": {
+      "title": "{name}'s next session",
+      "live": "Live",
+      "joinVoice": "Join voice room",
+      "locked": "Opens {date} at {time}",
+      "startsIn": "Starts in {countdown}",
+      "inProgress": "Session in progress",
+      "reports": "Your reports"
+    },
     "help": {
       "contact": {
         "heading": "Need a hand?",

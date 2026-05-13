@@ -1467,6 +1467,15 @@
     "placeholders": {
       "myGamersHint": "Valitse pelaaja hallitaksesi hänen tiliään."
     },
+    "nextSession": {
+      "title": "{name}: seuraava sessio",
+      "live": "Käynnissä",
+      "joinVoice": "Liity puhehuoneeseen",
+      "locked": "Avautuu {date} klo {time}",
+      "startsIn": "Alkaa {countdown} kuluttua",
+      "inProgress": "Sessio käynnissä",
+      "reports": "Raportit"
+    },
     "help": {
       "contact": {
         "heading": "Tarvitsetko apua?",
