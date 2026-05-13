@@ -1458,8 +1458,15 @@
   "parent": {
     "placeholders": {
       "upcomingSessions": "This is where you'll see your gamer's upcoming sessions.",
-      "billing": "This is where you'll manage billing.",
       "help": "Help and guides will live here."
+    },
+    "billing": {
+      "paymentMethod": {
+        "title": "Payment method",
+        "expires": "Expires {date}",
+        "empty": "No card on file.",
+        "error": "Couldn't load payment method."
+      }
     },
     "gamers": {
       "title": "My Gamers",
