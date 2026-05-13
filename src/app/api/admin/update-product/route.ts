@@ -18,7 +18,6 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const UPDATABLE_FIELDS = [
   "name",
   "description",
-  "token_cost",
   "padlet_url",
   "game_id",
   "day_of_week",

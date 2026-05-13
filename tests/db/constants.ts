@@ -35,8 +35,6 @@ export const TEST_CREDENTIALS = {
 
 /** Seed values — must match seed.sql */
 export const SEED = {
-  CUSTOMER_TOKEN_BALANCE: 20,
-  PRODUCT_TOKEN_COST: 2,
   PRODUCT_NAME: "Test Product",
   GAME_NAME: "Test Game",
   MINECRAFT_USERNAME_GEDU: "TestGedu",

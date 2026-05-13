@@ -80,7 +80,6 @@ function mockInsertResult(result: { data: unknown; error: unknown }) {
 const validBody = {
   name: "Test Product",
   description: "A test product",
-  token_cost: 2,
   game_id: "00000000-0000-0000-0000-000000000001",
   day_of_week: 2,
   start_time: "16:00",
@@ -176,16 +175,6 @@ describe("POST /api/admin/create-product", () => {
 
     expect(response.status).toBe(400);
     expect(data.error).toBe("Description is required");
-  });
-
-  it("returns 400 when token_cost is a decimal", async () => {
-    mockAuthenticatedWithRole("admin");
-
-    const response = await POST(createRequest({ ...validBody, token_cost: 2.5 }));
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toBe("Token cost is required (must be a positive integer)");
   });
 
   it("returns 400 when game_id is missing", async () => {

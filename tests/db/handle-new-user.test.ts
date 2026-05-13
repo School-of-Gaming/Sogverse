@@ -115,6 +115,6 @@ describe("handle_new_user() role assignment", () => {
       .eq("user_id", user.id)
       .single();
     expect(error).toBeNull();
-    expect(data!.token_balance).toBe(0);
+    expect(data!.user_id).toBe(user.id);
   });
 });

@@ -101,26 +101,14 @@ export type Database = {
       customer_profiles: {
         Row: {
           stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          subscription_status: string | null
-          subscription_tier: string | null
-          token_balance: number
           user_id: string
         }
         Insert: {
           stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_status?: string | null
-          subscription_tier?: string | null
-          token_balance?: number
           user_id: string
         }
         Update: {
           stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          subscription_status?: string | null
-          subscription_tier?: string | null
-          token_balance?: number
           user_id?: string
         }
         Relationships: [
@@ -129,61 +117,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      enrollment_charges: {
-        Row: {
-          amount: number
-          charged_at: string
-          enrollment_id: string
-          id: string
-          refund_transaction_id: string | null
-          refunded_at: string | null
-          session_date: string
-          transaction_id: string
-        }
-        Insert: {
-          amount: number
-          charged_at?: string
-          enrollment_id: string
-          id?: string
-          refund_transaction_id?: string | null
-          refunded_at?: string | null
-          session_date: string
-          transaction_id: string
-        }
-        Update: {
-          amount?: number
-          charged_at?: string
-          enrollment_id?: string
-          id?: string
-          refund_transaction_id?: string | null
-          refunded_at?: string | null
-          session_date?: string
-          transaction_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "enrollment_charges_enrollment_id_fkey"
-            columns: ["enrollment_id"]
-            isOneToOne: false
-            referencedRelation: "group_enrollments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "enrollment_charges_refund_transaction_id_fkey"
-            columns: ["refund_transaction_id"]
-            isOneToOne: false
-            referencedRelation: "token_transactions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "enrollment_charges_transaction_id_fkey"
-            columns: ["transaction_id"]
-            isOneToOne: false
-            referencedRelation: "token_transactions"
             referencedColumns: ["id"]
           },
         ]
@@ -1032,7 +965,6 @@ export type Database = {
           spoken_language_code: string
           start_time: string
           timezone: string
-          token_cost: number
           updated_at: string | null
         }
         Insert: {
@@ -1054,7 +986,6 @@ export type Database = {
           spoken_language_code: string
           start_time: string
           timezone?: string
-          token_cost: number
           updated_at?: string | null
         }
         Update: {
@@ -1076,7 +1007,6 @@ export type Database = {
           spoken_language_code?: string
           start_time?: string
           timezone?: string
-          token_cost?: number
           updated_at?: string | null
         }
         Relationships: [
@@ -1502,63 +1432,6 @@ export type Database = {
         }
         Relationships: []
       }
-      token_transactions: {
-        Row: {
-          admin_id: string | null
-          amount: number
-          balance_after: number
-          created_at: string
-          currency: string | null
-          description: string | null
-          id: string
-          stripe_idempotency_key: string | null
-          stripe_subscription_id: string | null
-          type: Database["public"]["Enums"]["token_transaction_type"]
-          user_id: string
-        }
-        Insert: {
-          admin_id?: string | null
-          amount: number
-          balance_after: number
-          created_at?: string
-          currency?: string | null
-          description?: string | null
-          id?: string
-          stripe_idempotency_key?: string | null
-          stripe_subscription_id?: string | null
-          type: Database["public"]["Enums"]["token_transaction_type"]
-          user_id: string
-        }
-        Update: {
-          admin_id?: string | null
-          amount?: number
-          balance_after?: number
-          created_at?: string
-          currency?: string | null
-          description?: string | null
-          id?: string
-          stripe_idempotency_key?: string | null
-          stripe_subscription_id?: string | null
-          type?: Database["public"]["Enums"]["token_transaction_type"]
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "token_transactions_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "token_transactions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       topic_translations_v2: {
         Row: {
           created_at: string
@@ -1764,22 +1637,6 @@ export type Database = {
           table_name: string
         }[]
       }
-      adjust_token_balance: {
-        Args: {
-          p_admin_id?: string
-          p_amount: number
-          p_currency?: string
-          p_description?: string
-          p_stripe_idempotency_key?: string
-          p_stripe_subscription_id?: string
-          p_type: Database["public"]["Enums"]["token_transaction_type"]
-          p_user_id: string
-        }
-        Returns: {
-          new_balance: number
-          transaction_id: string
-        }[]
-      }
       apply_credit_motion_v2: {
         Args: {
           p_delta: number
@@ -1865,19 +1722,6 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Database["public"]["Enums"]["effective_product_status_v2"]
       }
-      enroll_gamer_in_group: {
-        Args: {
-          p_customer_id: string
-          p_gamer_id: string
-          p_group_id: string
-          p_session_date: string
-        }
-        Returns: {
-          enrollment_id: string
-          new_balance: number
-          transaction_id: string
-        }[]
-      }
       expire_reservation_v2: {
         Args: { p_reservation_id: string }
         Returns: Json
@@ -1953,7 +1797,6 @@ export type Database = {
           gedu_first_name: string
           gedu_id: string
           group_id: string
-          last_charge_session_date: string
           product_description: string
           product_id: string
           product_image_path: string
@@ -1961,7 +1804,6 @@ export type Database = {
           product_min_age: number
           product_name: string
           product_padlet_url: string
-          product_token_cost: number
           start_time: string
           timezone: string
           voice_room_id: string
@@ -2035,7 +1877,6 @@ export type Database = {
           spoken_language_code: string
           start_time: string
           timezone: string
-          token_cost: number
           updated_at: string | null
         }[]
         SetofOptions: {
@@ -2078,17 +1919,6 @@ export type Database = {
       submit_feedback: {
         Args: { p_message: string; p_user_id: string }
         Returns: boolean
-      }
-      unenroll_gamer: {
-        Args: {
-          p_customer_id: string
-          p_enrollment_id: string
-          p_refund: boolean
-        }
-        Returns: {
-          new_balance: number
-          refund_transaction_id: string
-        }[]
       }
       update_product_v2: {
         Args: {
@@ -2156,12 +1986,6 @@ export type Database = {
         | "subscription_period_proration"
         | "duplicate_payment"
       subscription_frequency_v2: "monthly" | "quarterly" | "yearly"
-      token_transaction_type:
-        | "purchase"
-        | "subscription"
-        | "admin_adjustment"
-        | "enrollment"
-        | "enrollment_refund"
       topic_kind_v2: "game" | "subject"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
@@ -2331,13 +2155,6 @@ export const Constants = {
         "duplicate_payment",
       ],
       subscription_frequency_v2: ["monthly", "quarterly", "yearly"],
-      token_transaction_type: [
-        "purchase",
-        "subscription",
-        "admin_adjustment",
-        "enrollment",
-        "enrollment_refund",
-      ],
       topic_kind_v2: ["game", "subject"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
