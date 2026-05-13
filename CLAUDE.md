@@ -12,12 +12,8 @@ npm run lint             # ESLint
 npm run type-check       # TypeScript check (tsc --noEmit)
 npm run test             # Vitest unit tests
 npm run test:ui          # Vitest with UI
-npm run test:db          # Vitest DB tests (requires local Supabase)
-npm run test:db:ui       # Vitest DB tests with UI
 npm run test:e2e         # Playwright E2E tests
 npm run test:e2e:ui      # Playwright with UI
-npm run db:reset         # Reset local Supabase (wipe + re-migrate + re-seed)
-npm run supabase:gen-types  # Regenerate database types from local Supabase
 ```
 
 ## Architecture
@@ -138,13 +134,10 @@ See `docs/voice-chat-architecture.md` for the full architecture, component map, 
 
 **Rule: Realtime hooks must only invalidate queries — never make Supabase data queries in callbacks.** Same deadlock risk as `onAuthStateChange`.
 
-### Other Docs
+### Documentation
 
-- `docs/products-v2-architecture.md` — Unified products_v2 system: admin form, parent browse pages, registration pill, View+adapter card split
-- `docs/products-redesign.md` — Design rationale for the v2 product redesign
-- `docs/email-architecture.md` — Brevo integration, email templates, notifications, deliverability/DNS, and testing UI
-- `docs/i18n-architecture.md` — next-intl setup, locale resolution, translation patterns, adding languages/namespaces
-- `docs/SECURITY_REPORT.md` — Past security audit findings and remediations
+- `docs/` holds architecture notes, bug/fix write-ups, and future-improvement plans — not exhaustive, so when a topic isn't there, treat the code as the source of truth.
+- `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`.
 
 ## Environment Variables
 
@@ -152,15 +145,11 @@ All env vars are in `.env.local`. Keys for Supabase, Stripe, and Daily.co — in
 
 ## Database
 
-Development uses the **remote** Supabase instance (configured in `.env.local`). A separate local Supabase instance (Docker) is used **only** for database integration tests (`npm run test:db`) — these run automatically in CI and optionally locally. See `docs/local-supabase.md`.
-
-Migrations in `supabase/migrations/`. Seed data for local tests in `supabase/seed.sql`.
+Migrations in `supabase/migrations/`.
 
 **Important:** `database.types.ts` is purely auto-generated — **never** hand-edit it, even as a shortcut when the remote DB hasn't been updated yet. Always push the migration first, then regenerate. Convenience type aliases (e.g., `Profile`, `UserRole`) live in `src/types/index.ts`. After regenerating, check whether new tables or enums need aliases added to `index.ts`.
 
-The `npm run supabase:gen-types` script uses `--local` which requires Docker. For this project (remote Supabase, no local Docker), use the bash commands in the workflow below — they're far simpler than the PowerShell equivalents and avoid PowerShell quirks (stderr redirection flipping `$?`, `Out-File` encoding, etc).
-
-### Remote Database Migrations
+### Linking
 
 **Link the project** (first time only):
 ```bash
@@ -170,7 +159,7 @@ supabase link --project-ref "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d
 
 ### Migration Workflow (important)
 
-**Rule: When a migration adds or modifies functions/tables, push it to remote and regenerate types before committing.** DB tests and type-check depend on `database.types.ts` matching the schema. Since we don't run Docker locally, types are generated from the remote project. The full workflow for a migration PR (run via the Bash tool):
+**Rule: When a migration adds or modifies functions/tables, push it to remote and regenerate types before committing.** DB tests and type-check depend on `database.types.ts` matching the schema. The full workflow for a migration PR (run via the Bash tool):
 
 1. Write the migration SQL file
 2. Push to remote:
@@ -218,12 +207,12 @@ Tests are in `tests/` with four subdirectories: `unit/`, `integration/`, `db/`, 
 |---|---|---|
 | **unit** | Pure functions, service classes with injected mock dependencies, mapping/transform logic | `.test.ts`, Vitest |
 | **integration** | Route handlers (import real POST/PATCH/GET), proxy, auth flows — full request pipeline with mocked external deps | `.test.ts`, Vitest |
-| **db** | RPCs, constraints, RLS policies against real local Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
+| **db** | RPCs, constraints, RLS policies against real Postgres | `.test.ts`, Vitest (`vitest.config.db.mts`) |
 | **e2e** | Playwright browser tests against running dev server | `.spec.ts`, Playwright |
 
 ### DB Test Conventions
 
-DB tests run against a real local Supabase (Docker). Shared helpers and constants live in `tests/db/`:
+Shared helpers and constants live in `tests/db/`:
 - `helpers.ts` — `createAdminTestClient()` (service-role, bypasses RLS) and `createAuthenticatedClient(email, password)` (signs in via auth, respects RLS). Also exports idempotent seed/reset helpers: `seedEnrollment()`, `resetTokenState()`, `resetEnrollmentState()`.
 - `constants.ts` — `TEST_IDS` (deterministic UUIDs matching `supabase/seed.sql`), `TEST_CREDENTIALS` (email/password per role), and `SEED` values (balances, costs, names that must match seed data).
 
