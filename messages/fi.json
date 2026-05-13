@@ -1005,8 +1005,8 @@
     "myFamily": "Perheeni",
     "myGamers": "Pelaajani",
     "upcomingSessions": "Tapaamiset",
-    "upcomingSessionsPlaceholderGamer": "Kun leirin tapaaminen alkaa, täältä pääset puhehuoneeseen Gedun ja kavereiden kanssa.",
-    "upcomingSessionsPlaceholderParent": "Kun lapsesi leirin tapaaminen alkaa, täältä hän pääsee puhehuoneeseen Gedun ja kavereiden kanssa.",
+    "upcomingSessionsPlaceholderGamer": "Kun leiri alkaa, täältä pääset liittymään ryhmän omalle puhekanavalle.",
+    "upcomingSessionsPlaceholderParent": "Kun lapsesi leirin aika koittaa, ilmestyy tähän painike, josta pääsette sisään leirin puhekanaville.",
     "billing": "Laskutus",
     "help": "Apu",
     "yty": "Yty",
@@ -1475,7 +1475,7 @@
       },
       "minecraft": {
         "heading": "Valmistaudu Minecraft Java -leirille",
-        "intro": "Leirit ja kerhot pelataan SOG:n Minecraft Java -palvelimella. Käy nämä vaiheet lapsesi kanssa läpi ennen leiriä, niin liittyminen sujuu heti.",
+        "intro": "Leireillä ja kerhoissa käytämme Minecraft Javaa ja School of Gamingin omia pelipalvelimia. Käy nämä vaiheet läpi ennen leiriä tai kerhoa niin siihen liittyminen sujuu sutjakkaammin.",
         "steps": {
           "install": {
             "title": "Asenna Minecraft Java Edition",
