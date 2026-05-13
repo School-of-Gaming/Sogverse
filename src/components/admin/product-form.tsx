@@ -45,7 +45,6 @@ function createProductSchema(msgs: Record<string, string>) {
 export interface ProductFormValues {
   name: string;
   description: string;
-  token_cost: number;
   padlet_url: string | null;
   game_id: string;
   day_of_week: number;
@@ -94,10 +93,6 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
 
   const [name, setName] = useState(initialValues?.name ?? "");
   const [description, setDescription] = useState(initialValues?.description ?? "");
-  // token_cost is no longer surfaced in the UI (Sorg currency is being removed),
-  // but the column still exists on the products table — pass through the
-  // existing value on edit/clone, or default to 1 for new products.
-  const tokenCostValue = initialValues?.token_cost ?? 1;
   // File when admin staged a new image (not yet uploaded), string when an
   // existing bucket path is loaded (edit mode), null when empty. The File is
   // never uploaded client-side — it's handed to the server along with the
@@ -159,7 +154,6 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
     console.log("[DBG product-form] handleSubmit:enter", {
       name,
       description: description.slice(0, 40),
-      tokenCostValue,
       gameId,
       gameIdLength: gameId.length,
       showNewGame,
@@ -216,7 +210,6 @@ export function ProductForm({ initialValues, onSubmit, isPending, submitLabel, p
       await onSubmit({
         name: validatedData.name,
         description: validatedData.description,
-        token_cost: tokenCostValue,
         padlet_url: validatedData.padletUrl || null,
         game_id: validatedData.gameId,
         day_of_week: validatedData.dayOfWeek,

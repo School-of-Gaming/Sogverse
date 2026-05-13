@@ -44,11 +44,7 @@ export function createMockCustomerProfile(
 ): CustomerProfile {
   return {
     user_id: "test-user-id",
-    token_balance: 0,
     stripe_customer_id: null,
-    stripe_subscription_id: null,
-    subscription_status: null,
-    subscription_tier: null,
     ...overrides,
   };
 }
@@ -80,7 +76,6 @@ export function createMockProduct(overrides: Partial<Product> = {}): Product {
     id: "test-product-id",
     name: "Test Product",
     description: "A test product description",
-    token_cost: 2,
     image_path: "test-image.jpg",
     is_visible: true,
     created_by: "test-admin-id",
@@ -112,4 +107,3 @@ export function mockSupabaseError(message: string, code?: string) {
     error: { message, code: code || "ERROR", details: null, hint: null },
   };
 }
-

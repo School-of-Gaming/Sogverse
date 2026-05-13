@@ -115,7 +115,6 @@ export async function POST(request: Request) {
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const description =
       typeof body.description === "string" ? body.description.trim() : "";
-    const tokenCost = typeof body.token_cost === "number" ? body.token_cost : NaN;
     const gameId = typeof body.game_id === "string" ? body.game_id : "";
     const dayOfWeek =
       typeof body.day_of_week === "number" ? body.day_of_week : -1;
@@ -141,7 +140,6 @@ export async function POST(request: Request) {
       name,
       nameLen: name.length,
       descriptionLen: description.length,
-      tokenCost,
       gameId,
       gameIdType: typeof body.game_id,
       gameIdRaw: body.game_id,
@@ -167,13 +165,6 @@ export async function POST(request: Request) {
       console.log(`[DBG create-product ${reqId}] reject: description missing`);
       return NextResponse.json(
         { error: "Description is required" },
-        { status: 400 }
-      );
-    }
-    if (isNaN(tokenCost) || tokenCost < 1 || !Number.isInteger(tokenCost)) {
-      console.log(`[DBG create-product ${reqId}] reject: bad tokenCost`, { tokenCost });
-      return NextResponse.json(
-        { error: "Token cost is required (must be a positive integer)" },
         { status: 400 }
       );
     }
@@ -303,7 +294,6 @@ export async function POST(request: Request) {
       .insert({
         name,
         description,
-        token_cost: tokenCost,
         image_path: uploadMeta.path,
         padlet_url: padletUrl || null,
         created_by: user.id,

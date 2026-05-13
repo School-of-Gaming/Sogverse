@@ -14,8 +14,6 @@ export const RESERVATION_LIFETIME_MINUTES = 30;
 
 /**
  * Hours-before-session window inside which a cancellation no longer earns
- * a credit (sub-covered) or a no-charge (bundle-covered). Mirrors the
- * existing ENROLLMENT_CHARGE_WINDOW_HOURS — at cutover the v1 constant
- * collapses into this name.
+ * a credit (sub-covered) or a no-charge (bundle-covered).
  */
 export const PARTICIPATION_CHARGE_WINDOW_HOURS = 24;

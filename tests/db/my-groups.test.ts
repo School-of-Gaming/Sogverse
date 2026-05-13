@@ -203,14 +203,6 @@ describe("get_my_groups RPC", () => {
       expect(ownGamerRow!.gamer_date_of_birth).not.toBeNull();
       expect(ownGamerRow!.gamer_gender).not.toBeNull();
     });
-
-    it("gamer: last_charge_session_date is always NULL", async () => {
-      const { data } = await gamerClient.rpc("get_my_groups");
-      expect(data).not.toBeNull();
-      for (const row of data!) {
-        expect(row.last_charge_session_date).toBeNull();
-      }
-    });
   });
 
   // --- Data integrity ---
@@ -245,24 +237,6 @@ describe("get_my_groups RPC", () => {
       expect(seededRow!.voice_room_id).toBeDefined();
     });
 
-    it("returns product_token_cost for all roles", async () => {
-      // Admin
-      const { data: adminData } = await adminClient.rpc("get_my_groups");
-      const adminRow = adminData!.find((r) => r.group_id === TEST_IDS.GROUP);
-      expect(adminRow).toBeDefined();
-      expect(adminRow!.product_token_cost).toBe(SEED.PRODUCT_TOKEN_COST);
-
-      // Gedu
-      const { data: geduData } = await geduClient.rpc("get_my_groups");
-      const geduRow = geduData!.find((r) => r.group_id === TEST_IDS.GROUP);
-      expect(geduRow!.product_token_cost).toBe(SEED.PRODUCT_TOKEN_COST);
-
-      // Customer
-      const { data: customerData } = await customerClient.rpc("get_my_groups");
-      const customerRow = customerData!.find((r) => r.group_id === TEST_IDS.GROUP);
-      expect(customerRow!.product_token_cost).toBe(SEED.PRODUCT_TOKEN_COST);
-    });
-
     it("customer: voice_room_id is returned", async () => {
       const { data } = await customerClient.rpc("get_my_groups");
       const row = data!.find((r) => r.group_id === TEST_IDS.GROUP);
@@ -294,12 +268,9 @@ describe("get_my_groups RPC", () => {
   describe("cross-customer privacy (shared group)", () => {
     let gamer2Id: string;
     let enrollment2Id: string;
-    let txId1: string;
-    let txId2: string;
 
     beforeAll(async () => {
       // Create a second gamer owned by Customer 2.
-      // auth.admin.createUser triggers profile creation.
       const { data: { user } } = await admin.auth.admin.createUser({
         email: "testgamer2@gamer.sogverse.internal",
         password: "testpassword123",
@@ -308,7 +279,6 @@ describe("get_my_groups RPC", () => {
       });
       gamer2Id = user!.id;
 
-      // Promote to gamer role and set up extension table + parent link
       await admin.from("profiles").update({
         role: "gamer",
         username: "testgamer2",
@@ -334,76 +304,13 @@ describe("get_my_groups RPC", () => {
         status: "active",
       }).select("id").single();
       enrollment2Id = enrollment!.id;
-
-      // Insert charges for both enrollments
-      const { data: tx1 } = await admin.from("token_transactions").insert({
-        user_id: TEST_IDS.CUSTOMER,
-        amount: -SEED.PRODUCT_TOKEN_COST,
-        type: "enrollment",
-        description: "Charge for gamer 1",
-        balance_after: SEED.CUSTOMER_TOKEN_BALANCE - SEED.PRODUCT_TOKEN_COST,
-      }).select("id").single();
-      txId1 = tx1!.id;
-
-      await admin.from("enrollment_charges").insert({
-        enrollment_id: TEST_IDS.ENROLLMENT,
-        amount: SEED.PRODUCT_TOKEN_COST,
-        transaction_id: txId1,
-        session_date: "2026-03-20",
-      });
-
-      const { data: tx2 } = await admin.from("token_transactions").insert({
-        user_id: TEST_IDS.CUSTOMER_2,
-        amount: -SEED.PRODUCT_TOKEN_COST,
-        type: "enrollment",
-        description: "Charge for gamer 2",
-        balance_after: 0,
-      }).select("id").single();
-      txId2 = tx2!.id;
-
-      await admin.from("enrollment_charges").insert({
-        enrollment_id: enrollment2Id,
-        amount: SEED.PRODUCT_TOKEN_COST,
-        transaction_id: txId2,
-        session_date: "2026-03-22",
-      });
     });
 
     afterAll(async () => {
-      await admin.from("enrollment_charges").delete().eq("enrollment_id", enrollment2Id);
-      await admin.from("enrollment_charges").delete().eq("enrollment_id", TEST_IDS.ENROLLMENT);
       await admin.from("group_enrollments").delete().eq("id", enrollment2Id);
-      await admin.from("token_transactions").delete().eq("id", txId1);
-      await admin.from("token_transactions").delete().eq("id", txId2);
       await admin.from("parent_gamer").delete().eq("gamer_id", gamer2Id);
       await admin.from("gamer_profiles").delete().eq("user_id", gamer2Id);
       await admin.auth.admin.deleteUser(gamer2Id);
-    });
-
-    it("customer 1 sees own charge date, NULL for other family's gamer", async () => {
-      const { data, error } = await customerClient.rpc("get_my_groups");
-      expect(error).toBeNull();
-
-      const ownRow = data!.find((r) => r.gamer_id === TEST_IDS.GAMER);
-      expect(ownRow).toBeDefined();
-      expect(ownRow!.last_charge_session_date).toBe("2026-03-20");
-
-      const otherRow = data!.find((r) => r.gamer_id === gamer2Id);
-      expect(otherRow).toBeDefined();
-      expect(otherRow!.last_charge_session_date).toBeNull();
-    });
-
-    it("customer 2 sees own charge date, NULL for other family's gamer", async () => {
-      const { data, error } = await customer2Client.rpc("get_my_groups");
-      expect(error).toBeNull();
-
-      const ownRow = data!.find((r) => r.gamer_id === gamer2Id);
-      expect(ownRow).toBeDefined();
-      expect(ownRow!.last_charge_session_date).toBe("2026-03-22");
-
-      const otherRow = data!.find((r) => r.gamer_id === TEST_IDS.GAMER);
-      expect(otherRow).toBeDefined();
-      expect(otherRow!.last_charge_session_date).toBeNull();
     });
 
     it("customer 1 sees own gamer's DOB/gender, NULL for other family's gamer", async () => {
@@ -416,20 +323,6 @@ describe("get_my_groups RPC", () => {
       const otherRow = data!.find((r) => r.gamer_id === gamer2Id);
       expect(otherRow!.gamer_date_of_birth).toBeNull();
       expect(otherRow!.gamer_gender).toBeNull();
-    });
-
-    it("admin sees all charge dates (not scoped by customer)", async () => {
-      const { data } = await adminClient.rpc("get_my_groups");
-
-      const gamer1Row = data!.find(
-        (r) => r.group_id === TEST_IDS.GROUP && r.gamer_id === TEST_IDS.GAMER,
-      );
-      expect(gamer1Row!.last_charge_session_date).toBe("2026-03-20");
-
-      const gamer2Row = data!.find(
-        (r) => r.group_id === TEST_IDS.GROUP && r.gamer_id === gamer2Id,
-      );
-      expect(gamer2Row!.last_charge_session_date).toBe("2026-03-22");
     });
   });
 

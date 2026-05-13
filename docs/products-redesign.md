@@ -1,8 +1,8 @@
 # Products Redesign — Unifying Clubs, Camps, and Events
 
-Forward-looking architecture proposal that redesigns the `products` domain to cleanly support **four product types** (consumer clubs, municipality clubs, camps, events), **replaces the Sorg token system with real-currency pricing**, and **ships in parallel with the existing schema** under a `_v2` naming convention until a human-triggered cutover. Not yet implemented.
+Architecture spec that redesigns the `products` domain to cleanly support **four product types** (consumer clubs, municipality clubs, camps, events), **replaced the Sorg token system with real-currency pricing**, and **ships in parallel with the existing schema** under a `_v2` naming convention until a human-triggered rename cutover.
 
-Status: **Phase 1 in progress** — DB foundation and admin create UI shipped on `feat/products-v2-mock-port`; participation, payments, sessions, and parent-facing surfaces still pending. See §10 for the per-bullet status and `docs/products-v2-architecture.md` for the as-built component map. Supersedes `school-clubs-design.md`. Rename to `products-architecture.md` at cutover (§9).
+Status: **Phase 1 in progress** — DB foundation, admin create UI, and the v2 checkout / webhook path are shipped; the Sorg token system has been removed (migration `00059_drop_sorg_tokens.sql`); the `_v2` → canonical rename cutover (§9) and the parent-facing surfaces are still pending. See §10 for the per-bullet status and `docs/products-v2-architecture.md` for the as-built component map. Supersedes `school-clubs-design.md`. Rename to `products-architecture.md` at cutover (§9).
 
 Related: `products-v2-architecture.md` (as-built doc for what shipped on this branch), `groups-architecture.md`, `customer-enrollment-architecture.md`, `locations-architecture.md`, `voice-chat-architecture.md`, `email-architecture.md`, `whatsapp-automated-flow.md`.
 
@@ -28,7 +28,7 @@ When we implement this for real, the doc is expected to travel into the dev bran
 
 ## 1. Why redesign
 
-Today's `products` schema is built for a single product line — weekly consumer clubs priced in Sorg tokens. A `product_groups` layer organizes participants and Gedus within a product, and `group_enrollments` + `enrollment_charges` drive per-session token billing. Groups stay under the new design (§4.1); the schema around them is reshaped so all four product types use them uniformly.
+The legacy `products` schema was built for a single product line — weekly consumer clubs priced in Sorg tokens. A `product_groups` layer organized participants and Gedus within a product, and `group_enrollments` + `enrollment_charges` drove per-session token billing. The Sorg token half has been removed (migration `00059`); the `products` / `product_groups` / `group_enrollments` tables still back the v1 group-detail and voice-chat UIs and are dropped at the rename cutover (§9). Groups stay under the new design (§4.1); the schema around them is reshaped so all four product types use them uniformly.
 
 Two things change together in this redesign:
 
@@ -39,9 +39,9 @@ Extending the existing token-era schema to support fiat pricing and multi-purcha
 
 ### 1.1 Ships in parallel, not cutover
 
-Unlike the earlier drafts of this doc that assumed a greenfield wipe-and-recreate, this redesign runs **in parallel** with the existing token-era code and tables. Every new table, RPC, enum, service class, query key factory, constant, and API route uses a `_v2` suffix during the parallel phase. The existing Sorg token system stays running; customers and staging data on the old schema are untouched. A human-triggered cutover (§9) drops the old tables and strips the `_v2` suffixes from the new ones in one mechanical migration.
+Unlike the earlier drafts of this doc that assumed a greenfield wipe-and-recreate, this redesign shipped **in parallel** with the legacy token-era code and tables. Every new table, RPC, enum, service class, query key factory, constant, and API route carries a `_v2` suffix during the parallel phase. The Sorg token system was removed in `00059` once nothing customer-facing depended on it; the legacy `products` / `product_groups` / `group_enrollments` tables stay in place to back the v1 group-detail and voice-chat UIs until the rename cutover (§9) drops them and strips the `_v2` suffixes from the new tables in one mechanical migration.
 
-This keeps staging usable throughout the redesign and lets us ship the new system one piece at a time behind its own routes.
+This kept staging usable throughout the redesign and let us ship the new system one piece at a time behind its own routes.
 
 ---
 
@@ -95,7 +95,7 @@ The database uses **one** generic noun for the participation record: **`particip
 
 All new tables, RPCs, enums, service classes, constants, query keys, and API routes introduced by this redesign carry a `_v2` suffix until cutover (§9). This is a deliberate convention to keep the old and new systems visually distinct in code, not a hint that a v3 is planned. At cutover the suffixes are stripped mechanically and the final schema has no versioning noise.
 
-**Carve-out for net-new code that has no legacy peer.** Code paths that only exist in the v2 world — the new Stripe webhook endpoint, the new Checkout creation routes, the new participation services, internal types — are domain-named, not version-named. The webhook lives at `/api/webhooks/stripe/products`, not `/api/webhooks/stripe/v2`. The service is `ParticipationsService`, not `ParticipationsV2Service`. The cutover migration *deletes* the legacy Sorg endpoint at `/api/webhooks/stripe`; no rename is needed on the new side, which avoids a Stripe-dashboard reconfiguration step that's easy to miss.
+**Carve-out for net-new code that has no legacy peer.** Code paths that only exist in the v2 world — the new Stripe webhook endpoint, the new Checkout creation routes, the new participation services, internal types — are domain-named, not version-named. The webhook lives at `/api/webhooks/stripe/products`, not `/api/webhooks/stripe/v2`. The service is `ParticipationsService`, not `ParticipationsV2Service`. The legacy Sorg webhook endpoint at `/api/webhooks/stripe` was deleted with the rest of the Sorg removal (`00059`), so no rename is needed on the new side and there's no Stripe-dashboard reconfiguration step to remember at cutover.
 
 DB tables still need the `_v2` suffix because they live alongside the legacy tables (`products` vs `products_v2`) — no escape there until cutover.
 
@@ -232,7 +232,7 @@ The server recomputes the final charge from the product's stored base price + th
 | Admin-initiated cancellation of a whole product | Full refund per §6.4 (refund unused bundle value via Stripe, refund pro-rata current-period sub charges via Stripe, full camp/event refunds via Stripe). |
 | Admin-initiated removal of a single gamer | Admin can force a Stripe refund outside the normal window — `reason='admin_refund'` on the `refunds_v2` row. |
 
-The 24h window is a platform-wide constant `PARTICIPATION_CHARGE_WINDOW_HOURS` in `src/lib/constants/`, mirrored server-side in SQL for RPC use (same pattern as the existing `ENROLLMENT_CHARGE_WINDOW_HOURS` — renamed at cutover).
+The 24h window is a platform-wide constant `PARTICIPATION_CHARGE_WINDOW_HOURS` in `src/lib/constants/`, mirrored server-side in SQL for RPC use.
 
 **Session credit movement — single number, no optimistic display.** `credits_remaining` is a single int on the participation. It only moves when a credit is actually earned or spent — no "scheduled" or "pending" tier in the parent UI. The cron (§6.3) is the only thing that moves it.
 
@@ -795,7 +795,7 @@ session_notes_v2
 
 ### 5.7 Payments and refunds
 
-The Sorg-era `enrollment_charges` table is replaced by two thin tables that track Stripe money movements. Stripe is the source of truth; these tables are our local audit trail + idempotency gate + reporting index.
+The Sorg-era `enrollment_charges` table (dropped in `00059`) is replaced by two thin tables that track Stripe money movements. Stripe is the source of truth; these tables are our local audit trail + idempotency gate + reporting index.
 
 ```sql
 payments_v2
@@ -965,7 +965,7 @@ Keep the existing `commit_group_changes` pattern (see `docs/groups-architecture.
 
 ### 6.3 Session credit cron
 
-**`process_session_credits_v2()` — runs hourly.** This **reuses the existing hourly Sorg-era cron slot**; it does not introduce a new schedule. The cron is the *only* thing that moves `credits_remaining` — see §4.5 for the four-rule table the cron implements.
+**`process_session_credits_v2()` — runs hourly** (scheduled via `pg_cron` at `0 * * * *`, the slot vacated when the Sorg `process_enrollment_charges` cron was dropped in `00052`). The cron is the *only* thing that moves `credits_remaining` — see §4.5 for the four-rule table the cron implements.
 
 Logic per run:
 1. Find all `participations_v2` with `status='active'` on products whose `billing_mode='paid'` and `product_type='consumer_club'`.
@@ -998,21 +998,21 @@ The bundle-attended branch's underflow is prevented by the participation's cover
 
 ### 6.5 Retired
 
-At cutover, the following are removed:
-- `enroll_gamer_in_group` — folded into `create_participation_v2`.
-- `unenroll_gamer` — folded into `cancel_participation_v2`.
+Already dropped (migrations `00052_drop_sorg_enrollment_cron.sql` and `00059_drop_sorg_tokens.sql`):
 - `process_enrollment_charges` — replaced by `process_session_credits_v2`.
+- `enroll_gamer_in_group` — its responsibilities are folded into `create_participation_v2`.
+- `unenroll_gamer` — folded into `cancel_participation_v2`.
 - `adjust_token_balance` — retired with the Sorg token system.
-- `enrollment_charges` table — replaced by `payments_v2` + `refunds_v2`.
-- `token_charges` table (if any lingers) — same.
+- `token_transactions`, `enrollment_charges` tables — replaced by `payments_v2` + `refunds_v2`.
 
-`commit_group_changes_v2` replaces the existing `commit_group_changes`; groups are retained for all product types.
+Dropped at the rename cutover (§9):
+- `commit_group_changes` — replaced by `commit_group_changes_v2`. Groups are retained for all product types.
 
 ### 6.6 Family subscription management
 
 - **`subscribe_to_product_v2(product_id, gamer_id, frequency, currency)`** — customer-initiated (actually called via a Checkout flow; see §6.1 `create_participation_v2` with `purchase_shape=subscription_*`). Ensures `product_subscription_prices_v2` has a Stripe Price for `(product_id, frequency, currency)`, lazy-creating on Stripe if missing. Finds or creates a `family_subscriptions_v2` row for `(customer_id, frequency, currency)`. If it exists, adds an item via `stripe.subscriptions.update` aligned to the existing `billing_cycle_anchor`. If not, creates a new Stripe subscription anchored to today. Updates / attaches the family coupon based on the new gamer count.
 - **`unsubscribe_from_product_v2(participation_id)`** — removes the Stripe subscription item. Hard-deletes the participation. If the sub now has zero items, schedules the sub to cancel at period end on Stripe. Re-evaluates the family coupon.
-- **`switch_subscription_frequency_v2(customer_id, from_frequency, to_frequency)`** — uses `stripe.subscriptions.update` with `proration_behavior: 'none'`. New frequency effective at next renewal. Applies only to the sub matching `from_frequency`. Mirrors the existing Sorg tier-switch route.
+- **`switch_subscription_frequency_v2(customer_id, from_frequency, to_frequency)`** — uses `stripe.subscriptions.update` with `proration_behavior: 'none'`. New frequency effective at next renewal. Applies only to the sub matching `from_frequency`.
 
 Webhooks (`invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`) update `family_subscriptions_v2.status`, `current_period_end`, and `discount_coupon_id` from Stripe's state. Webhook-driven, not client-driven. All webhook handlers use `stripe_event_id` uniqueness on `payments_v2` / `refunds_v2` as the idempotency gate.
 
@@ -1086,9 +1086,9 @@ Seat state ("8 of 10 seats · 3 on waitlist"), schedule with skipped dates surfa
 
 ---
 
-## 9. Migration — parallel `_v2` phase, human-triggered cutover
+## 9. Migration — parallel `_v2` phase, human-triggered rename cutover
 
-Unlike the earlier drafts that assumed a greenfield wipe-and-recreate, this redesign runs in parallel with the existing token-era schema. The existing Sorg token system stays fully functional; a human-triggered cutover drops the old tables and strips `_v2` suffixes in one mechanical migration.
+This redesign shipped in parallel with the legacy schema rather than a greenfield wipe-and-recreate. The Sorg token system has now been removed; what remains of the v1 schema (the `products` / `product_groups` / `group_enrollments` / `voice_rooms` flow that backs the v1 group-detail and voice-chat UIs) is dropped together with the `_v2` rename in a single mechanical cutover.
 
 ### 9.1 Parallel-phase naming
 
@@ -1098,13 +1098,13 @@ Every new object carries a `_v2` suffix (tables, RPCs, enums, types, service cla
 - RPCs: `create_participation_v2`, `cancel_participation_v2`, `admin_remove_participation_v2`, `promote_from_waitlist_v2`, `commit_group_changes_v2`, `cancel_session_v2`, `reschedule_session_v2`, `request_substitute_v2`, `assign_substitute_v2`, `set_substitute_v2`, `record_attendance_v2`, `process_session_credits_v2`, `start_product_v2`, `cancel_product_v2`, `finalize_completed_products_v2`, `subscribe_to_product_v2`, `unsubscribe_from_product_v2`, `switch_subscription_frequency_v2`, `product_has_session_v2`.
 - Enums: `product_type_v2`, `billing_mode_v2`, `product_status_v2`, `participation_status_v2`, `subscription_frequency_v2`, `payment_purpose_v2`, `refund_reason_v2`, `session_note_visibility_v2`, `session_attendance_status_v2`, `topic_kind_v2`.
 - Code: `services/products-v2/*`, `services/participations-v2/*`, `services/family-subscriptions-v2/*`, `productsV2Keys`, `ParticipationsV2Service`, etc.
-- Routes: admin management at `/admin/products-v2/*`; Checkout endpoints at `/api/checkout/v2/*`; webhook at `/api/webhooks/stripe/v2` (or a single webhook that dispatches by `metadata.version`). Parent-facing routes (`/browse`, `/registration`) are gated by UX rollout decisions — see §9.3.
+- Routes: admin management at `/admin/products-v2/*`; Checkout endpoints at `/api/checkout/v2/*`; webhook at `/api/webhooks/stripe/products`. Parent-facing routes (`/browse`, `/registration`) are gated by UX rollout decisions — see §9.3.
 
-### 9.2 What stays running during the parallel phase
+### 9.2 What stays running between now and the rename cutover
 
-- Existing Sorg token system fully functional. Active token subscriptions keep billing. `adjust_token_balance`, `enrollment_charges`, existing `products` / `product_groups` / `group_enrollments` tables unchanged.
-- New `_v2` schema is a fresh start. Admins create test products, iterate on flows.
-- Feature work on the token system continues as needed.
+- The Sorg token system itself is gone (migration `00059`): no token balances, no `adjust_token_balance`, no `enrollment_charges`, no `enroll_gamer_in_group`/`unenroll_gamer`, no Sorg subscription columns on `customer_profiles`, no `products.token_cost`.
+- The legacy `products` / `product_groups` / `group_enrollments` / `voice_rooms` tables and the `get_my_groups` / `commit_group_changes` RPCs are kept. They back the v1 group-detail and voice-chat UIs for users who still have v1 group enrollments and are dropped together at the rename cutover.
+- The `_v2` schema is the v2 source of truth.
 
 ### 9.3 UI rollout during the parallel phase — not a blanket flip
 
@@ -1115,11 +1115,10 @@ The redesign doc scopes the data/payment layer and admin CRUD. Each customer-fac
 When the operator decides v2 is ready:
 
 1. Announce cutover window.
-2. Apply the **drop-old migration**: drops `products`, `product_groups`, `group_enrollments`, `enrollment_charges`, `token_charges` (if any), `games` (if any), `adjust_token_balance`, all token-era RPCs, policies, grants, Sorg-specific webhook handlers, Sorg-specific frontend code, Sorg Stripe products/prices.
+2. Apply the **drop-legacy-product-domain migration**: drops `products`, `product_groups`, `group_enrollments`, `voice_rooms`, `games` (if not retained for v2), `get_my_groups`, `commit_group_changes`, and any remaining v1-only RLS policies / grants / webhook handlers / frontend code paths. The Sorg-specific half of this list is already gone (handled in `00052` and `00059`); this migration only needs to handle the v1 product/group/enrollment surface.
 3. Apply the **rename migration**: renames every `*_v2` object to the canonical name (`products_v2 → products`, `participations_v2 → participations`, `create_participation_v2 → create_participation`, etc.). Mechanical.
 4. Update application code to import from the renamed canonical names (strip `_v2` / `V2` / `-v2` everywhere).
-5. Delete any remaining Sorg token-specific code paths.
-6. Deploy.
+5. Deploy.
 
 ### 9.5 Migration file shape
 
@@ -1127,17 +1126,13 @@ Do not hand-run drop/rename SQL at cutover. Every drop and every rename is a ded
 
 ```
 supabase/migrations/
-  <ts>_drop_legacy_sorg_and_product_domain.sql
+  <ts>_drop_legacy_product_domain.sql
   <ts>_rename_v2_to_canonical.sql
 ```
 
 Production and staging apply the exact same sequence deterministically.
 
-**Dry-run against a clone of the current staging schema before committing the rename migration** — the only way to catch RLS policy ordering issues, FK cascade depth surprises, function signature mismatches, and any object the old system created that isn't on the drop list.
-
-### 9.6 Real-customer data at cutover
-
-If cutover happens after production launches with real customers on Sorg tokens, those customers need a scripted migration (convert remaining token balances into equivalent bundle credits or subscription items, refund orphaned amounts, etc.). Out of scope for this doc — scope it when the timing demands it.
+**Dry-run against a clone of the current staging schema before committing the rename migration** — the only way to catch RLS policy ordering issues, FK cascade depth surprises, function signature mismatches, and any object the legacy schema created that isn't on the drop list.
 
 ---
 
@@ -1221,8 +1216,6 @@ Prove the unified shape against the two product lines closest to real users. Sta
 - ✓ Movie-ticket reservation model — status holds the seat for the full 30-min Stripe-session lifetime; cancel-in-Stripe is a no-op; retry reuses the held row. See `docs/products-v2-architecture.md` § "Movie-ticket reservation model".
 - ○ Family-coupon application (`FAMILY_DISCOUNT_PERCENT`) — flat-tier value undecided per §11; coupon attachment skipped in v1.
 
-**Existing Sorg system**: untouched.
-
 ### Phase 2 — camps and events
 
 - Multi-day schedule slots with per-day timing.
@@ -1263,7 +1256,7 @@ Flagged inline as `OPEN` in the sections they affect.
 - **Grace window length when `credits_remaining = 0`.** Parent is notified; gamer is held out of sessions; seat held for some period before admin reclaims it. `OPEN — defer to v1-build time`.
 - ~~**Bundle-refund policy on `cancel_participation_v2`.**~~ *Resolved:* **no Stripe refund on customer-initiated participation cancellation**, ever. "Leave this club" forfeits banked credits (§4.5c). The right path for a parent who wants value back from a sub is "cancel sub" (sub stops at period end, credits remain spendable), not "leave the club". For camps and paid events, customer-initiated cancellation is not self-serve — parents contact support and admin uses `admin_remove_participation_v2` to issue a refund if appropriate. This sidesteps the gamification risk of pro-rata refunds entirely.
 - **Mixing bundle and subscription on the same (gamer, product).** Disallowed in v1 — parent must cancel one mode before buying another. `OPEN — revisit if parents complain`.
-- **Subscription currency change UX.** Stripe subs are currency-sticky; code handles silently (same pattern as Sorg). No parent-facing warning. `OPEN — revisit if support complaints`.
+- **Subscription currency change UX.** Stripe subs are currency-sticky; code handles silently. No parent-facing warning. `OPEN — revisit if support complaints`.
 - **Single-group auto-assign.** When a product has exactly one group, auto-assign new participations instead of routing through the inbox? Defer until we see inbox in real use.
 - **Unassigned inbox notifications.** WhatsApp / email / in-app nudges to admins when the inbox has sat non-empty for N hours. Future phase.
 - **Attendance → removal policy.** N-unexcused-absences threshold, approval flow, appeal path. Defer until attendance tracking ships.
@@ -1281,8 +1274,8 @@ Flagged inline as `OPEN` in the sections they affect.
 
 ### 12.1 Cross-references
 
-- Groups & `commit_group_changes` (**kept and generalized, versioned as `_v2` during parallel phase**): `docs/groups-architecture.md`
-- Current consumer billing (**replaced in parallel by §5.7 + §5.7a + §6.3; the 24h `PARTICIPATION_CHARGE_WINDOW_HOURS` constant is preserved and carries forward after cutover, renamed from `ENROLLMENT_CHARGE_WINDOW_HOURS`**): `docs/customer-enrollment-architecture.md`
+- Groups & `commit_group_changes` (**kept and generalized as `_v2` during the parallel phase; the v1 RPC is dropped at the rename cutover, §9**): `docs/groups-architecture.md`
+- Legacy Sorg-era consumer billing (**replaced by §5.7 + §5.7a + §6.3; the original doc is now a stub since the Sorg flow was removed in `00059`**): `docs/customer-enrollment-architecture.md`
 - Location hierarchy & site binding: `docs/locations-architecture.md`
 - Voice-room wiring for online products: `docs/voice-chat-architecture.md`
 - Email pipeline for notifications: `docs/email-architecture.md`
