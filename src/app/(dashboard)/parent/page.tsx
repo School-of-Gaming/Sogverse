@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { MyGamersGrid } from "@/components/family";
 import { PaymentMethodCard } from "@/components/billing";
-import { ParentHelpSection } from "@/components/parent";
+import { ParentHelpSection, NextSessionCardsDebug } from "@/components/parent";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -46,7 +46,9 @@ export default function CustomerDashboardPage() {
         <section id="sessions" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 className="text-3xl font-bold">{t('upcomingSessions')}</h2>
-            <p className="text-muted-foreground">{t('upcomingSessionsPlaceholderParent')}</p>
+            {/* TODO: hardcoded debug placement. Replace with real
+                MyParticipationRow → NextSessionCardProps adapter. */}
+            <NextSessionCardsDebug />
           </div>
         </section>
 
