@@ -36,8 +36,8 @@ describe("GroupsService.getMyGroups()", () => {
         gamer_date_of_birth: "2015-01-01",
         gamer_gender: "girl",
         enrollment_id: "e1",
-        product_token_cost: 2,
-        last_charge_session_date: null,
+
+
       },
       {
         group_id: "g1",
@@ -63,8 +63,8 @@ describe("GroupsService.getMyGroups()", () => {
         gamer_date_of_birth: "2014-06-15",
         gamer_gender: "boy",
         enrollment_id: "e2",
-        product_token_cost: 2,
-        last_charge_session_date: null,
+
+
       },
       {
         group_id: "g2",
@@ -90,8 +90,8 @@ describe("GroupsService.getMyGroups()", () => {
         gamer_date_of_birth: null,
         gamer_gender: null,
         enrollment_id: null,
-        product_token_cost: 2,
-        last_charge_session_date: null,
+
+
       },
     ];
 
@@ -153,8 +153,8 @@ describe("GroupsService.getMyGroups()", () => {
         gamer_date_of_birth: null,
         gamer_gender: null,
         enrollment_id: null,
-        product_token_cost: 2,
-        last_charge_session_date: null,
+
+
       },
       {
         group_id: "g1",
@@ -180,8 +180,8 @@ describe("GroupsService.getMyGroups()", () => {
         gamer_date_of_birth: null,
         gamer_gender: null,
         enrollment_id: null,
-        product_token_cost: 2,
-        last_charge_session_date: null,
+
+
       },
     ];
 

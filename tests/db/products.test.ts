@@ -32,7 +32,6 @@ function baseProduct() {
     duration_minutes: 60,
     min_age: 7,
     max_age: 12,
-    token_cost: 1,
     spoken_language_code: "en",
   };
 }
@@ -155,7 +154,6 @@ describe("products authenticated admin writes", () => {
       duration_minutes: 60,
       min_age: 8,
       max_age: 12,
-      token_cost: 1,
       spoken_language_code: "en",
       is_remote: true,
       location_id: null,

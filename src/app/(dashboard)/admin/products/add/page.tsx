@@ -67,7 +67,6 @@ export default function AddProductPage() {
         // The admin is forced to pick a fresh image for the clone.
         name: `${cloneSource.name} (Copy)`,
         description: cloneSource.description,
-        token_cost: cloneSource.token_cost,
         padlet_url: cloneSource.padlet_url,
         game_id: cloneSource.game_id,
         day_of_week: cloneSource.day_of_week,

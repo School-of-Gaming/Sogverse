@@ -65,12 +65,10 @@ See `docs/db-access-patterns.md` for the full architectural rationale. Short ver
 *Legitimate — keep as service-role:*
 - `src/app/api/auth/switch-account/route.ts`, `src/app/api/auth/forgot-password/route.ts`, `src/app/api/admin/create-gedu/route.ts`, `src/app/api/gamers/create/route.ts`, `src/app/api/gamers/[id]/route.ts` — all use `auth.admin.*` (Supabase's Auth Admin API requires service-role).
 - `src/app/api/admin/products-v2/[id]/update/route.ts`, `src/app/api/admin/products-v2/create/route.ts`, `src/app/api/admin/create-product/route.ts`, `src/app/api/admin/update-product/route.ts` — storage uploads to `product-images` bucket.
-- `src/app/api/webhooks/stripe/products/route.ts`, `src/app/api/webhooks/whatsapp/route.ts`, `src/app/api/minecraft/join-check/route.ts`, `src/lib/enrollment-notifications.ts` — no user session (webhook / external secret-key auth / internal helper).
+- `src/app/api/webhooks/stripe/products/route.ts`, `src/app/api/webhooks/whatsapp/route.ts`, `src/app/api/minecraft/join-check/route.ts` — no user session (webhook / external secret-key auth).
 
 *Candidates for conversion (writes sensitive data — RPC + grant lockdown):*
 - [ ] `src/app/api/admin/products-v2/[id]/participations/route.ts` — admin comp-enroll. This PR. **Use as the worked example.**
-- [ ] `src/app/api/enrollments/route.ts` — customer creates enrollment.
-- [ ] `src/app/api/enrollments/[id]/route.ts` — customer modifies own enrollment.
 - [ ] `src/app/api/participations/waitlist/route.ts` — customer joins waitlist.
 - [ ] `src/app/api/checkout/products/create/route.ts` — customer initiates checkout (verify whether seat-count / cross-user reads genuinely need service-role first).
 

@@ -198,9 +198,8 @@ function pickTranslationName(
 /**
  * Find or create a Stripe Customer for a customer profile.
  *
- * Mirrors the existing token-checkout pattern (`customer_profiles.stripe_customer_id`).
- * Caches the new Stripe customer id back onto the profile so subsequent
- * checkouts reuse it.
+ * Caches the new Stripe customer id back onto `customer_profiles.stripe_customer_id`
+ * so subsequent checkouts reuse it.
  */
 export async function getOrCreateStripeCustomer(
   admin: SupabaseClient<Database>,

@@ -118,7 +118,6 @@ describe("ProductsService", () => {
       const result = await service.createProduct({
         name: "New Product",
         description: "A new product",
-        token_cost: 3,
         game_id: "00000000-0000-0000-0000-000000000001",
         day_of_week: 0,
         start_time: "16:00",
@@ -157,7 +156,6 @@ describe("ProductsService", () => {
           image: new File(["x"], "x.jpg", { type: "image/jpeg" }),
           name: "X",
           description: "Y",
-          token_cost: 1,
           game_id: "g",
           day_of_week: 0,
           start_time: "16:00",

@@ -5,7 +5,7 @@
 --
 -- The handle_new_user() trigger auto-creates profiles + extension tables
 -- from auth.users inserts, so we only need to insert into auth.users here,
--- then patch any extra fields (token_balance, gamer details) afterward.
+-- then patch any extra fields (gamer details) afterward.
 -- =============================================================================
 
 -- All test users use this password: testpassword123
@@ -213,13 +213,6 @@ INSERT INTO gamer_profiles (user_id, date_of_birth, gender)
 VALUES ('00000000-0000-0000-0000-000000000006', '2016-03-20', 'girl');
 
 -- =============================================================================
--- 3. Patch extension tables (trigger creates them with defaults)
--- =============================================================================
-
--- Give customer 1 some tokens for testing
-UPDATE customer_profiles SET token_balance = 20 WHERE user_id = '00000000-0000-0000-0000-000000000002';
-
--- =============================================================================
 -- 4. Parent-Gamer Link
 -- =============================================================================
 
@@ -244,10 +237,8 @@ INSERT INTO games (id, name) VALUES (
   '00000000-0000-0000-0000-000000000010', 'Test Game'
 );
 
--- Test product (Wednesday = 3, 15:00 Europe/Helsinki, token_cost=2, visible)
--- Note: is_visible was renamed from is_active in migration 00021
--- is_remote/location_id/spoken_language_code added in migration 00024
-INSERT INTO products (id, name, description, image_path, is_visible, created_by, game_id, day_of_week, start_time, timezone, duration_minutes, min_age, max_age, token_cost, is_remote, location_id, spoken_language_code) VALUES (
+-- Test product (Wednesday = 3, 15:00 Europe/Helsinki, visible)
+INSERT INTO products (id, name, description, image_path, is_visible, created_by, game_id, day_of_week, start_time, timezone, duration_minutes, min_age, max_age, is_remote, location_id, spoken_language_code) VALUES (
   '00000000-0000-0000-0000-000000000020',
   'Test Product',
   'A test product for DB integration tests',
@@ -261,7 +252,6 @@ INSERT INTO products (id, name, description, image_path, is_visible, created_by,
   60,     -- 1 hour
   6,      -- min age
   12,     -- max age
-  2,      -- token cost
   true,   -- is_remote (seeded test product is remote — in-person variants are created per-test)
   NULL,   -- location_id
   'en'    -- spoken_language_code (seeded by migration 00018)
