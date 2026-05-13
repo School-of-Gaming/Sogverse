@@ -1458,8 +1458,15 @@
   "parent": {
     "placeholders": {
       "upcomingSessions": "Här ser du din spelares kommande träffar.",
-      "billing": "Här hanterar du fakturering.",
       "help": "Hjälp och guider kommer att finnas här."
+    },
+    "billing": {
+      "paymentMethod": {
+        "title": "Betalningsmetod",
+        "expires": "Giltigt till {date}",
+        "empty": "Inget kort sparat.",
+        "error": "Kunde inte hämta betalningsmetoden."
+      }
     },
     "gamers": {
       "title": "Mina spelare",

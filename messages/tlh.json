@@ -1503,8 +1503,15 @@
   "parent": {
     "placeholders": {
       "upcomingSessions": "naDev DaH toy'wI'lI' ghoSqep'a' yIlegh!",
-      "billing": "naDev Huch yIDIl.",
       "help": "naDev boQ je pIvghor qonta' Su'."
+    },
+    "billing": {
+      "paymentMethod": {
+        "title": "Huch DIlmeH mIw",
+        "expires": "{date} jajvaD Huch poH SuvwI'",
+        "empty": "DaH HuchHommey laD pagh.",
+        "error": "Huch DIlmeH mIw vIqonchu'be'."
+      }
     },
     "gamers": {
       "title": "jIH toy'wI'pu'",

@@ -71,6 +71,7 @@ import {
   PREVIEW_TYPES,
   type PreviewStateKind,
 } from "@/components/public/products-v2/mock-detail-fixtures";
+import { PaymentMethodCardView } from "@/components/billing";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -1666,6 +1667,53 @@ export default function AdminUIComponentsPage() {
         <ProductDetailDemo />
       </Section>
 
+      {/* ============================================================ */}
+      {/* Section 13: Billing — Payment Method Card                      */}
+      {/* ============================================================ */}
+      <Section title="Billing — Payment Method Card">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Shown in the Billing section of the parent dashboard. Wraps the
+          parent&rsquo;s default card on file (or the most-recent card, if
+          no default is set). All three states share the same outer footprint
+          so the help section below doesn&rsquo;t reflow when the Stripe
+          lookup resolves.
+        </p>
+        <PaymentMethodCardDemo />
+      </Section>
+
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Section 13: Payment Method Card                                    */
+/* ------------------------------------------------------------------ */
+
+function PaymentMethodCardDemo() {
+  return (
+    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col gap-2">
+        <DemoCaption>Loading</DemoCaption>
+        <PaymentMethodCardView isLoading paymentMethod={null} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <DemoCaption>No card on file</DemoCaption>
+        <PaymentMethodCardView paymentMethod={null} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <DemoCaption>Card details</DemoCaption>
+        <PaymentMethodCardView
+          paymentMethod={{
+            brand: "visa",
+            last4: "4242",
+            exp_month: 6,
+            exp_year: 2027,
+            funding: "credit",
+          }}
+        />
+      </div>
     </div>
   );
 }
