@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { Mail } from "lucide-react";
 import { getUser } from "@/lib/supabase/server";
 import { FeedbackSectionContent } from "@/components/feedback/feedback-section-content";
+import { Card, CardContent } from "@/components/ui/card";
+import { SUPPORT_EMAIL } from "@/lib/constants";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -30,6 +33,25 @@ export default async function HelpPage() {
         <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         <p className="text-lg text-muted-foreground">{t("intro")}</p>
       </div>
+
+      <Card className="mt-8">
+        <CardContent className="flex flex-col gap-3 pt-6 sm:flex-row sm:items-center sm:gap-4">
+          <Mail className="h-6 w-6 shrink-0 text-primary" />
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold">{t("contact.heading")}</h2>
+            <p className="text-sm text-muted-foreground">{t("contact.body")}</p>
+            <p className="text-sm">
+              {t("contact.emailLabel")}{" "}
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="font-medium text-primary hover:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       <section className="mt-12 space-y-6">
         <h2 className="text-2xl font-bold">{t("faq.heading")}</h2>

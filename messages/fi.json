@@ -1005,6 +1005,8 @@
     "myFamily": "Perheeni",
     "myGamers": "Pelaajani",
     "upcomingSessions": "Tapaamiset",
+    "upcomingSessionsPlaceholderGamer": "Kun leirin tapaaminen alkaa, täältä pääset puhehuoneeseen Gedun ja kavereiden kanssa.",
+    "upcomingSessionsPlaceholderParent": "Kun lapsesi leirin tapaaminen alkaa, täältä hän pääsee puhehuoneeseen Gedun ja kavereiden kanssa.",
     "billing": "Laskutus",
     "help": "Apu",
     "yty": "Yty",
@@ -1027,6 +1029,7 @@
       "birthYearLabel": "Syntymävuosi",
       "birthYearPlaceholder": "Vuosi",
       "genderLabel": "Sukupuoli",
+      "genderOptional": "Valinnainen",
       "genderBoy": "Poika",
       "genderGirl": "Tyttö",
       "genderNonBinary": "Muunsukupuolinen",
@@ -1126,6 +1129,11 @@
   "help": {
     "title": "Apu",
     "intro": "Vastauksia yleisimpiin Sogversea koskeviin kysymyksiin.",
+    "contact": {
+      "heading": "Tarvitsetko apua?",
+      "body": "Ota rohkeasti yhteyttä — autamme mielellämme niin sopivan kerhon valinnassa kuin Sogversen toimintaan liittyvissä kysymyksissä.",
+      "emailLabel": "Sähköpostimme"
+    },
     "faq": {
       "heading": "Usein kysytyt kysymykset",
       "items": {
@@ -1457,8 +1465,40 @@
   },
   "parent": {
     "placeholders": {
-      "upcomingSessions": "Täällä näet pelaajasi tulevat tapaamiset.",
-      "help": "Ohjeet ja opastus tulevat tähän."
+      "myGamersHint": "Valitse pelaaja hallitaksesi hänen tiliään."
+    },
+    "help": {
+      "contact": {
+        "heading": "Tarvitsetko apua?",
+        "body": "Autamme mielellämme niin leirille liittymisessä kuin palveluun liittyvissä kysymyksissä. Lähetä viesti milloin vain — vastaamme yleensä päivän sisällä.",
+        "emailLabel": "Sähköpostimme"
+      },
+      "minecraft": {
+        "heading": "Valmistaudu Minecraft Java -leirille",
+        "intro": "Leirit ja kerhot pelataan SOG:n Minecraft Java -palvelimella. Käy nämä vaiheet lapsesi kanssa läpi ennen leiriä, niin liittyminen sujuu heti.",
+        "steps": {
+          "install": {
+            "title": "Asenna Minecraft Java Edition",
+            "body": "Osta ja asenna Minecraft Java Edition osoitteesta minecraft.net. Bedrock- tai Pocket Edition ei toimi palvelimellamme."
+          },
+          "signIn": {
+            "title": "Kirjaudu Microsoft-tilillä",
+            "body": "Käynnistä peli kerran ja kirjaudu sisään. Valitkaa käyttäjänimi — lapsi kertoo sen Gedulle, jotta hänet voidaan lisätä."
+          },
+          "addServer": {
+            "title": "Lisää SOG-palvelin",
+            "body": "Valitse Multiplayer → Add Server ja syötä leiriisi sopiva osoite. Tallenna se, niin se on valmiina leirin alkaessa:"
+          },
+          "joinAtCampTime": {
+            "title": "Liity leirin alkaessa",
+            "body": "Napsauta SOG-palvelinta listasta ja paina Join. Gedu opastaa siitä eteenpäin. Apua tarvittaessa lähetä meille sähköpostia yltä."
+          }
+        },
+        "servers": {
+          "fi": "Suomenkieliset leirit:",
+          "en": "Englanninkieliset leirit:"
+        }
+      }
     },
     "billing": {
       "paymentMethod": {
@@ -1485,6 +1525,12 @@
       "profileDescription": "Päivitä pelaajasi tiedot.",
       "profileUpdated": "Nimi päivitetty!",
       "failedUpdateDisplayName": "Nimen päivittäminen epäonnistui",
+      "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
+      "gender": {
+        "boy": "Poika",
+        "girl": "Tyttö",
+        "non_binary": "Muunsukupuolinen"
+      },
       "notFound": {
         "title": "Pelaajaa ei löytynyt",
         "description": "Tämä pelaajatili on ehkä poistettu tai sinulla ei ole pääsyä siihen."
@@ -1509,7 +1555,7 @@
   "settings": {
     "subtitle": "Hallitse tilisi asetuksia",
     "profileDescription": "Päivitä henkilötietosi",
-    "roleAccount": "{role}-tili",
+    "roleAccount": "{role, select, customer {Vanhemman tili} gamer {Pelaajan tili} gedu {Gedun tili} admin {Ylläpitäjän tili} other {Tili}}",
     "firstNamePlaceholder": "Syötä etunimesi",
     "lastNamePlaceholder": "Syötä sukunimesi",
     "invalidPhone": "Syötä kelvollinen puhelinnumero.",

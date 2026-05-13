@@ -11,10 +11,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function GamerDashboardPage() {
   const t = useTranslations('gamer');
+  const sections = useTranslations('dashboardSections');
   const yty = useTranslations('yty');
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="space-y-12 pb-24">
       <div className="text-center">
         {/* Two-size pattern matching the public Home heading:
             font-display (Press Start 2P) is monospaced ~1em-wide, so a
@@ -28,19 +29,27 @@ export default function GamerDashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-        {YTY_ELEMENTS.map((el) => (
-          <Card key={el.id} className={`bg-gradient-to-br ${el.color.bgGradient}`}>
-            <CardHeader className="text-center pb-2">
-              <el.icon className={`mx-auto h-8 w-8 ${el.color.accent}`} />
-              <CardTitle className="text-base">{yty(`elements.${el.id}.name`)}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center pt-0">
-              <p className="text-xs text-muted-foreground">{yty(`elements.${el.id}.description`)}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <section className="mx-auto max-w-3xl space-y-4">
+        <h2 className="text-3xl font-bold">{sections('upcomingSessions')}</h2>
+        <p className="text-muted-foreground">{sections('upcomingSessionsPlaceholderGamer')}</p>
+      </section>
+
+      <section className="mx-auto max-w-3xl space-y-4">
+        <h2 className="text-3xl font-bold">{sections('yty')}</h2>
+        <div className="grid grid-cols-2 gap-4">
+          {YTY_ELEMENTS.map((el) => (
+            <Card key={el.id} className={`bg-gradient-to-br ${el.color.bgGradient}`}>
+              <CardHeader className="text-center pb-2">
+                <el.icon className={`mx-auto h-8 w-8 ${el.color.accent}`} />
+                <CardTitle className="text-base">{yty(`elements.${el.id}.name`)}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center pt-0">
+                <p className="text-xs text-muted-foreground">{yty(`elements.${el.id}.description`)}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

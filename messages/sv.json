@@ -1005,6 +1005,8 @@
     "myFamily": "Min familj",
     "myGamers": "Mina spelare",
     "upcomingSessions": "Träffar",
+    "upcomingSessionsPlaceholderGamer": "När din lägerträff börjar är det här du går in i röstrummet med din Gedu och dina vänner.",
+    "upcomingSessionsPlaceholderParent": "När ditt barns lägerträff börjar är det här hen går in i röstrummet med sin Gedu och sina vänner.",
     "billing": "Fakturering",
     "help": "Hjälp",
     "yty": "Yty",
@@ -1027,6 +1029,7 @@
       "birthYearLabel": "Födelseår",
       "birthYearPlaceholder": "År",
       "genderLabel": "Kön",
+      "genderOptional": "Valfritt",
       "genderBoy": "Pojke",
       "genderGirl": "Flicka",
       "genderNonBinary": "Icke-binär",
@@ -1126,6 +1129,11 @@
   "help": {
     "title": "Hjälp",
     "intro": "Svar på vanliga frågor om Sogverse.",
+    "contact": {
+      "heading": "Behöver du hjälp?",
+      "body": "Hör av dig när som helst — vi hjälper dig gärna med allt från att välja rätt klubb till frågor om hur Sogverse fungerar.",
+      "emailLabel": "Mejla oss på"
+    },
     "faq": {
       "heading": "Vanliga frågor",
       "items": {
@@ -1457,8 +1465,40 @@
   },
   "parent": {
     "placeholders": {
-      "upcomingSessions": "Här ser du din spelares kommande träffar.",
-      "help": "Hjälp och guider kommer att finnas här."
+      "myGamersHint": "Välj en spelare för att hantera kontot."
+    },
+    "help": {
+      "contact": {
+        "heading": "Behöver du hjälp?",
+        "body": "Vi hjälper dig gärna med allt från att komma in på lägret till frågor om plattformen. Mejla oss när som helst — vi svarar oftast inom en dag.",
+        "emailLabel": "Mejla oss på"
+      },
+      "minecraft": {
+        "heading": "Förbered Minecraft Java",
+        "intro": "Läger och klubbar körs på SOG:s Minecraft Java-server. Gå igenom de här stegen med ditt barn innan lägret börjar så att hen kan ansluta direkt.",
+        "steps": {
+          "install": {
+            "title": "Installera Minecraft Java Edition",
+            "body": "Köp och installera Minecraft Java Edition från minecraft.net. Bedrock och Pocket Edition fungerar inte på vår server."
+          },
+          "signIn": {
+            "title": "Logga in med ett Microsoft-konto",
+            "body": "Starta spelet en gång och logga in. Välj ett användarnamn — ditt barn berättar det för Gedun så att hen kan läggas till."
+          },
+          "addServer": {
+            "title": "Lägg till SOG-servern",
+            "body": "Välj Multiplayer → Add Server och klistra in adressen som matchar lägret. Spara den så att den är redo när lägret börjar:"
+          },
+          "joinAtCampTime": {
+            "title": "Anslut när lägret börjar",
+            "body": "Klicka på SOG-servern i listan och tryck Join. Gedun guidar er vidare därifrån. Behöver du hjälp? Mejla oss ovan."
+          }
+        },
+        "servers": {
+          "fi": "Finskspråkiga läger:",
+          "en": "Engelskspråkiga läger:"
+        }
+      }
     },
     "billing": {
       "paymentMethod": {
@@ -1485,6 +1525,12 @@
       "profileDescription": "Uppdatera din spelares uppgifter.",
       "profileUpdated": "Namnet uppdaterat!",
       "failedUpdateDisplayName": "Kunde inte uppdatera namnet",
+      "ageYears": "{age, plural, one {# år} other {# år}}",
+      "gender": {
+        "boy": "Pojke",
+        "girl": "Flicka",
+        "non_binary": "Icke-binär"
+      },
       "notFound": {
         "title": "Spelare hittades inte",
         "description": "Detta spelarkonto kan ha tagits bort eller så har du inte tillgång till det."
@@ -1509,7 +1555,7 @@
   "settings": {
     "subtitle": "Hantera dina kontoinställningar",
     "profileDescription": "Uppdatera din personliga information",
-    "roleAccount": "{role}-konto",
+    "roleAccount": "{role, select, customer {Föräldrakonto} gamer {Spelarkonto} gedu {Gedu-konto} admin {Adminkonto} other {Konto}}",
     "firstNamePlaceholder": "Ange ditt förnamn",
     "lastNamePlaceholder": "Ange ditt efternamn",
     "invalidPhone": "Ange ett giltigt telefonnummer.",

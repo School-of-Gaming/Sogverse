@@ -1050,6 +1050,8 @@
     "myFamily": "qorDu'wIj",
     "myGamers": "jIH toy'wI'pu'",
     "upcomingSessions": "ghoSqep'a'",
+    "upcomingSessionsPlaceholderGamer": "raghlIj qaS, naDev jatlh pa'Daq Gedu jupmey je yIghoS!",
+    "upcomingSessionsPlaceholderParent": "puqlIj raghDaj qaS, naDev jatlh pa'Daq Gedu jupmey je ghoSchoH!",
     "billing": "Huch DIl",
     "help": "boQ",
     "yty": "Yty",
@@ -1072,6 +1074,7 @@
       "birthYearLabel": "qoSlIj DIS",
       "birthYearPlaceholder": "DIS",
       "genderLabel": "ghob",
+      "genderOptional": "(wIv)",
       "genderBoy": "loDHom",
       "genderGirl": "be'Hom",
       "genderNonBinary": "latlh",
@@ -1171,6 +1174,11 @@
   "help": {
     "title": "boQ",
     "intro": "Sogverse SeghHommey jatlhlu'.",
+    "contact": {
+      "heading": "boQ DaneH'a'?",
+      "body": "Hoch poH ghoSlu'taHvIS, ghochmey wIqaw'be' — ghom'a' wInIS chu' bIqlIj 'ej Sogverse mIw qaSchugh, maHvaD bIjatlh.",
+      "emailLabel": "naDev SeH wIje'"
+    },
     "faq": {
       "heading": "qaSchuq SeghHommey",
       "items": {
@@ -1502,8 +1510,40 @@
   },
   "parent": {
     "placeholders": {
-      "upcomingSessions": "naDev DaH toy'wI'lI' ghoSqep'a' yIlegh!",
-      "help": "naDev boQ je pIvghor qonta' Su'."
+      "myGamersHint": "QunwI'Daj qelmeH toy'wI' yIwIv."
+    },
+    "help": {
+      "contact": {
+        "heading": "boQ DaneH'a'?",
+        "body": "ragh muvHa'meH boQ je Sogverse mIw qaSchugh, naDev SeH wIje'. jaj wa' wIjang.",
+        "emailLabel": "naDev SeH wIje'"
+      },
+      "minecraft": {
+        "heading": "Minecraft Java raghvaD yIghuH",
+        "intro": "SOG Minecraft Java Server lo' raghmey ghom'a'mey je. ragh qaSpa', puqlIj DachaH mIwvam — vaj 'eb DamuvchoH.",
+        "steps": {
+          "install": {
+            "title": "Minecraft Java Edition yIcher",
+            "body": "minecraft.net Daq Minecraft Java Edition yIje' 'ej yIcher. Bedrock pagh Pocket Edition QaQbe' Server'majDaq."
+          },
+          "signIn": {
+            "title": "Microsoft account yIlo'",
+            "body": "Quj wa'logh yIcherchoH 'ej yI'el. pong yIwIv — Gedu pong jatlh puqlIj, vaj chel."
+          },
+          "addServer": {
+            "title": "SOG Server yIchel",
+            "body": "Multiplayer → Add Server yIwIv 'ej raghlIjvaD ngoq yIchel. yIpol — ragh qaSDI', SoQbe':"
+          },
+          "joinAtCampTime": {
+            "title": "ragh qaSDI' yI'el",
+            "body": "tetlhDaq SOG Server yIngIp 'ej Join yIqIp. Gedu DevtaH. boQ DaneH'a'? naDev SeH wIje'."
+          }
+        },
+        "servers": {
+          "fi": "Suomi-Hol raghmey:",
+          "en": "DIvI' Hol raghmey:"
+        }
+      }
     },
     "billing": {
       "paymentMethod": {
@@ -1530,6 +1570,12 @@
       "profileDescription": "toy'wI' De' yIchoH.",
       "profileUpdated": "pong choHlu'! Qapla'!",
       "failedUpdateDisplayName": "pong choH Dabe'lu'",
+      "ageYears": "{age, plural, one {# DIS} other {# DIS}}",
+      "gender": {
+        "boy": "loDHom",
+        "girl": "be'Hom",
+        "non_binary": "ghob ghajbe'"
+      },
       "notFound": {
         "title": "toy'wI' tu'be'lu'",
         "description": "toy'wI' account HoHlu' qoj DaghajlaHbe'."
@@ -1554,7 +1600,7 @@
   "settings": {
     "subtitle": "account ngoQmey tI'ang",
     "profileDescription": "SoH De' yIchoH",
-    "roleAccount": "{role} account",
+    "roleAccount": "{role, select, customer {vav/SoS account} gamer {toy'wI' account} gedu {Gedu account} admin {ra'wI' account} other {account}}",
     "firstNamePlaceholder": "wa'DIch pong yIchel",
     "lastNamePlaceholder": "qorDu' pong yIchel",
     "invalidPhone": "HablI' HSDu' nIvbe' yIchel.",

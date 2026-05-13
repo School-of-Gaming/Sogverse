@@ -199,7 +199,12 @@ function AddGamerDialogInner({
             </div>
 
             <div className="space-y-2">
-              <Label>{t("genderLabel")}</Label>
+              <Label>
+                {t("genderLabel")}{" "}
+                <span className="font-normal text-muted-foreground">
+                  ({t("genderOptional")})
+                </span>
+              </Label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <GenderButton
                   selected={gender === "boy"}

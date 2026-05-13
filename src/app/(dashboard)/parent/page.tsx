@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { MyGamersGrid } from "@/components/family";
 import { PaymentMethodCard } from "@/components/billing";
+import { ParentHelpSection } from "@/components/parent";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -34,7 +35,10 @@ export default function CustomerDashboardPage() {
       <div className="space-y-24 pb-24">
         <section id="my-gamers" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
-            <h2 className="text-3xl font-bold">{t('myGamers')}</h2>
+            <div className="space-y-1">
+              <h2 className="text-3xl font-bold">{t('myGamers')}</h2>
+              <p className="text-muted-foreground">{p('myGamersHint')}</p>
+            </div>
             <MyGamersGrid />
           </div>
         </section>
@@ -42,7 +46,7 @@ export default function CustomerDashboardPage() {
         <section id="sessions" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 className="text-3xl font-bold">{t('upcomingSessions')}</h2>
-            <p className="text-muted-foreground">{p('upcomingSessions')}</p>
+            <p className="text-muted-foreground">{t('upcomingSessionsPlaceholderParent')}</p>
           </div>
         </section>
 
@@ -53,10 +57,13 @@ export default function CustomerDashboardPage() {
           </div>
         </section>
 
-        <section id="help" className="scroll-mt-32">
+        {/* Last section gets viewport-height min so clicking its pill can
+            actually scroll it to the top — without this the page bottoms out
+            mid-scroll and the heading stays in the middle of the viewport. */}
+        <section id="help" className="scroll-mt-32 min-h-[calc(100svh-9rem)]">
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 className="text-3xl font-bold">{t('help')}</h2>
-            <p className="text-muted-foreground">{p('help')}</p>
+            <ParentHelpSection />
           </div>
         </section>
       </div>
