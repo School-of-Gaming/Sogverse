@@ -239,30 +239,3 @@ export function NextSessionCard({
     </Card>
   );
 }
-
-/**
- * Loading placeholder for `NextSessionCard`. Same outer footprint so the
- * Sessions section doesn't reflow when the participation query lands.
- */
-export function NextSessionCardSkeleton() {
-  return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-1">
-        <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-      </CardHeader>
-      <CardContent className="space-y-4 pt-0">
-        <div className="space-y-1">
-          <div className="h-6 w-3/4 animate-pulse rounded bg-muted" />
-          <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-        </div>
-        <div className="flex justify-center">
-          <div className="h-9 w-48 animate-pulse rounded-md bg-muted" />
-        </div>
-        <div className="flex items-center justify-between gap-2">
-          <div className="h-3 w-28 animate-pulse rounded bg-muted" />
-          <div className="h-9 w-28 animate-pulse rounded-md bg-muted" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
