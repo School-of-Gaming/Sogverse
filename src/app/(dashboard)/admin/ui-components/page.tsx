@@ -46,6 +46,7 @@ import { UserRow } from "@/components/admin/user-row";
 import { GamerCard } from "@/components/customer/gamer-card";
 import { LoungeCard } from "@/components/ui/lounge-card";
 import { GroupCard } from "@/components/ui/group-card";
+import { NextSessionCard, NextSessionCardSkeleton } from "@/components/parent";
 import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useLocale } from "next-intl";
@@ -638,6 +639,82 @@ function ProductRowDemo() {
       {DEMO_PRODUCTS.map((product) => (
         <ProductRow key={product.id} product={product} locale={locale} />
       ))}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  NextSessionCard Demo                                               */
+/* ------------------------------------------------------------------ */
+
+// Start times anchor to the next round-hour boundary plus an integer
+// number of hours so the demo always shows clean "16:00 – 18:00" style
+// windows. Sub-hour countdowns fall out naturally because the next-hour
+// boundary is always within 60 minutes of "now".
+const NEXT_SESSION_HOUR_MS = 3_600_000;
+const NEXT_SESSION_DURATION_MS = 2 * NEXT_SESSION_HOUR_MS;
+
+/** Each loaded fixture exercises a different countdown bucket. */
+const NEXT_SESSION_FIXTURES = [
+  {
+    gamer: "Alex",
+    name: "Minecraft Survival Camp",
+    voiceIsOpen: false,
+    hoursAfterNextHour: 53, // ~2d 5h → days+hours branch
+  },
+  {
+    gamer: "Sam",
+    name: "Lego Robotics Camp",
+    voiceIsOpen: false,
+    hoursAfterNextHour: 8, // ~8h → hours+minutes branch
+  },
+  {
+    gamer: "Riya",
+    name: "Speedrun Academy Camp",
+    voiceIsOpen: false,
+    hoursAfterNextHour: 0, // <1h → minutes+seconds branch (1s tick rate)
+  },
+  {
+    gamer: "Bobby",
+    name: "Cosmic Builders Camp",
+    voiceIsOpen: true,
+    hoursAfterNextHour: -1, // live: started at the previous hour boundary
+  },
+] as const;
+
+/** Defers time-dependent values to after mount so SSR and client render match. */
+function NextSessionCardDemo() {
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- canonical post-hydration flag; see TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
+  const nextHour = new Date();
+  nextHour.setMinutes(0, 0, 0);
+  nextHour.setHours(nextHour.getHours() + 1);
+  const nextHourMs = nextHour.getTime();
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <NextSessionCardSkeleton />
+      {NEXT_SESSION_FIXTURES.map((f) => {
+        const start = new Date(
+          nextHourMs + f.hoursAfterNextHour * NEXT_SESSION_HOUR_MS,
+        );
+        const end = new Date(start.getTime() + NEXT_SESSION_DURATION_MS);
+        return (
+          <NextSessionCard
+            key={`${f.gamer}-${f.name}`}
+            gamerFirstName={f.gamer}
+            productName={f.name}
+            nextSessionStart={start}
+            nextSessionEnd={end}
+            voiceIsOpen={f.voiceIsOpen}
+            voiceHref="#"
+            reportsHref="#"
+          />
+        );
+      })}
     </div>
   );
 }
@@ -1679,6 +1756,23 @@ export default function AdminUIComponentsPage() {
           lookup resolves.
         </p>
         <PaymentMethodCardDemo />
+      </Section>
+
+      {/* ============================================================ */}
+      {/* Section 14: Parent — Next Session Card                         */}
+      {/* ============================================================ */}
+      <Section title="Parent — Next Session Card">
+        <p className="text-sm text-muted-foreground -mt-2">
+          Shown in the Sessions section of the parent dashboard. One card per
+          (gamer × enrolled product). Header reads &ldquo;{`{name}`}&rsquo;s
+          next session&rdquo;; the body carries the product name, schedule
+          lines (club / camp / event), a self-updating countdown, the voice
+          room CTA (locked with an open-time label until the room opens), and
+          an external &ldquo;Your reports&rdquo; link. Countdown ticks every
+          60s and uses the shared <code>formatCountdown</code> cutoffs
+          (days &gt; hours &gt; hour+min &gt; minutes).
+        </p>
+        <NextSessionCardDemo />
       </Section>
 
     </div>
