@@ -46,7 +46,12 @@ import { UserRow } from "@/components/admin/user-row";
 import { GamerCard } from "@/components/customer/gamer-card";
 import { LoungeCard } from "@/components/ui/lounge-card";
 import { GroupCard } from "@/components/ui/group-card";
-import { NextSessionCard, NextSessionCardSkeleton } from "@/components/parent";
+import {
+  SessionsSectionEmpty,
+  SessionsSectionLoaded,
+  SessionsSectionLoading,
+  type NextSessionCardProps,
+} from "@/components/parent";
 import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth } from "@/providers";
 import { useLocale } from "next-intl";
@@ -644,79 +649,90 @@ function ProductRowDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  NextSessionCard Demo                                               */
+/*  Parent Sessions Section Demo                                       */
 /* ------------------------------------------------------------------ */
 
-// Start times anchor to the next round-hour boundary plus an integer
-// number of hours so the demo always shows clean "16:00 – 18:00" style
-// windows. Sub-hour countdowns fall out naturally because the next-hour
-// boundary is always within 60 minutes of "now".
-const NEXT_SESSION_HOUR_MS = 3_600_000;
-const NEXT_SESSION_DURATION_MS = 2 * NEXT_SESSION_HOUR_MS;
+// Six loaded sessions sorted ascending by start time — the live one
+// (started in the last hour) sits on top, the rest fan out across the
+// next ~11 days at 16:00 local. Future starts anchor to midnight-tomorrow
+// so the demo always shows round-hour windows ("16:00 – 18:00").
+const SESSIONS_HOUR_MS = 3_600_000;
+const SESSIONS_DAY_MS = 24 * SESSIONS_HOUR_MS;
+const SESSIONS_DURATION_MS = 2 * SESSIONS_HOUR_MS;
+const SESSIONS_FUTURE_HOUR_OF_DAY = 16;
+const SESSIONS_LIVE_STARTED_AGO_MS = 30 * 60 * 1000;
 
-/** Each loaded fixture exercises a different countdown bucket. */
-const NEXT_SESSION_FIXTURES = [
-  {
-    gamer: "Alex",
-    name: "Minecraft Survival Camp",
-    voiceIsOpen: false,
-    hoursAfterNextHour: 53, // ~2d 5h → days+hours branch
-  },
-  {
-    gamer: "Sam",
-    name: "Lego Robotics Camp",
-    voiceIsOpen: false,
-    hoursAfterNextHour: 8, // ~8h → hours+minutes branch
-  },
-  {
-    gamer: "Riya",
-    name: "Speedrun Academy Camp",
-    voiceIsOpen: false,
-    hoursAfterNextHour: 0, // <1h → minutes+seconds branch (1s tick rate)
-  },
-  {
-    gamer: "Bobby",
-    name: "Cosmic Builders Camp",
-    voiceIsOpen: true,
-    hoursAfterNextHour: -1, // live: started at the previous hour boundary
-  },
+const SESSIONS_FIXTURES = [
+  { gamer: "Bobby", name: "Cosmic Builders Camp", live: true },
+  { gamer: "Alex", name: "Minecraft Survival Camp", daysAhead: 2 },
+  { gamer: "Sam", name: "Lego Robotics Camp", daysAhead: 4 },
+  { gamer: "Mei", name: "Pixel Art Camp", daysAhead: 7 },
+  { gamer: "Riya", name: "Speedrun Academy Camp", daysAhead: 9 },
+  { gamer: "Noah", name: "Rocket League Club", daysAhead: 11 },
 ] as const;
 
 /** Defers time-dependent values to after mount so SSR and client render match. */
-function NextSessionCardDemo() {
+function SessionsSectionDemo() {
   const [mounted, setMounted] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- canonical post-hydration flag; see TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
   useEffect(() => setMounted(true), []);
 
-  if (!mounted) return null;
-  const nextHour = new Date();
-  nextHour.setMinutes(0, 0, 0);
-  nextHour.setHours(nextHour.getHours() + 1);
-  const nextHourMs = nextHour.getTime();
+  const sessions: NextSessionCardProps[] = mounted ? buildLoadedSessions() : [];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <NextSessionCardSkeleton />
-      {NEXT_SESSION_FIXTURES.map((f) => {
-        const start = new Date(
-          nextHourMs + f.hoursAfterNextHour * NEXT_SESSION_HOUR_MS,
-        );
-        const end = new Date(start.getTime() + NEXT_SESSION_DURATION_MS);
-        return (
-          <NextSessionCard
-            key={`${f.gamer}-${f.name}`}
-            gamerFirstName={f.gamer}
-            productName={f.name}
-            nextSessionStart={start}
-            nextSessionEnd={end}
-            voiceIsOpen={f.voiceIsOpen}
-            voiceHref="#"
-            reportsHref="#"
-          />
-        );
-      })}
+    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col gap-2">
+        <DemoCaption>Loading</DemoCaption>
+        <SessionsSectionLoading />
+      </div>
+      <div className="flex flex-col gap-2">
+        <DemoCaption>No sessions</DemoCaption>
+        <SessionsSectionEmpty />
+      </div>
+      <div className="flex flex-col gap-2">
+        <DemoCaption>Loaded — 6 sessions</DemoCaption>
+        {mounted ? <SessionsSectionLoaded sessions={sessions} /> : null}
+      </div>
     </div>
   );
+}
+
+function buildLoadedSessions(): NextSessionCardProps[] {
+  const now = new Date().getTime();
+  const midnightTomorrow = new Date();
+  midnightTomorrow.setHours(24, 0, 0, 0);
+  const midnightTomorrowMs = midnightTomorrow.getTime();
+
+  return SESSIONS_FIXTURES.map((f) => {
+    if ("live" in f) {
+      const start = new Date(now - SESSIONS_LIVE_STARTED_AGO_MS);
+      const end = new Date(start.getTime() + SESSIONS_DURATION_MS);
+      return {
+        gamerFirstName: f.gamer,
+        productName: f.name,
+        nextSessionStart: start,
+        nextSessionEnd: end,
+        voiceIsOpen: true,
+        voiceHref: "#",
+        reportsHref: "#",
+      };
+    }
+    const start = new Date(
+      midnightTomorrowMs
+        + (f.daysAhead - 1) * SESSIONS_DAY_MS
+        + SESSIONS_FUTURE_HOUR_OF_DAY * SESSIONS_HOUR_MS,
+    );
+    const end = new Date(start.getTime() + SESSIONS_DURATION_MS);
+    return {
+      gamerFirstName: f.gamer,
+      productName: f.name,
+      nextSessionStart: start,
+      nextSessionEnd: end,
+      voiceIsOpen: false,
+      voiceHref: "#",
+      reportsHref: "#",
+    };
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -1759,20 +1775,18 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 14: Parent — Next Session Card                         */}
+      {/* Section 14: Parent — Sessions Section                          */}
       {/* ============================================================ */}
-      <Section title="Parent — Next Session Card">
+      <Section title="Parent — Sessions Section">
         <p className="text-sm text-muted-foreground -mt-2">
-          Shown in the Sessions section of the parent dashboard. One card per
-          (gamer × enrolled product). Header reads &ldquo;{`{name}`}&rsquo;s
-          next session&rdquo;; the body carries the product name, schedule
-          lines (club / camp / event), a self-updating countdown, the voice
-          room CTA (locked with an open-time label until the room opens), and
-          an external &ldquo;Your reports&rdquo; link. Countdown ticks every
-          60s and uses the shared <code>formatCountdown</code> cutoffs
-          (days &gt; hours &gt; hour+min &gt; minutes).
+          The Sessions section on the parent dashboard. Three states side by
+          side: a section-level loading placeholder (not card-shaped — the
+          query hasn&rsquo;t told us how many cards to expect yet); the empty
+          state copy shown when the parent has no upcoming sessions; and the
+          loaded stack of <code>NextSessionCard</code>s sorted ascending by
+          start time, with any currently-live session pinned on top.
         </p>
-        <NextSessionCardDemo />
+        <SessionsSectionDemo />
       </Section>
 
     </div>

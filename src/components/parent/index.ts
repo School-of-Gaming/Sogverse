@@ -1,7 +1,11 @@
 export { ParentHelpSection } from "./ParentHelpSection";
 export {
   NextSessionCard,
-  NextSessionCardSkeleton,
   type NextSessionCardProps,
 } from "./NextSessionCard";
+export {
+  SessionsSectionLoading,
+  SessionsSectionEmpty,
+  SessionsSectionLoaded,
+} from "./SessionsSection";
 export { NextSessionCardsDebug } from "./NextSessionCardsDebug";
