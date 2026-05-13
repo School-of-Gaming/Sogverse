@@ -30,8 +30,7 @@ export function SettingsSectionContent() {
   const router = useRouter();
   const showMinecraft = profile?.role === "gamer" || profile?.role === "gedu";
   const isGedu = profile?.role === "gedu";
-  const gamerProfile = isGamerProfile(profile) ? profile : null;
-  const isGamer = gamerProfile !== null;
+  const isGamer = isGamerProfile(profile);
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
   const { data: availableLanguages } = useSpokenLanguages();
@@ -149,11 +148,13 @@ export function SettingsSectionContent() {
               <p className="font-medium">
                 {[profile?.first_name, !isGamer && profile?.last_name].filter(Boolean).join(" ")}
               </p>
-              <p className="text-sm text-muted-foreground">
-                {gamerProfile ? `@${gamerProfile.username}` : profile?.email || `@${profile?.username}`}
-              </p>
-              <p className="text-xs text-muted-foreground capitalize">
-                {t('roleAccount', { role: profile?.role ?? '' })}
+              {!isGamer && (
+                <p className="text-sm text-muted-foreground">
+                  {profile?.email || (profile?.username ? `@${profile.username}` : null)}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                {t('roleAccount', { role: profile?.role ?? 'unknown' })}
               </p>
             </div>
           </div>
@@ -222,7 +223,7 @@ export function SettingsSectionContent() {
             </div>
           )}
 
-          {profile?.username && (
+          {profile?.username && !isGamer && (
             <div className="space-y-2">
               <Label>{c('username')}</Label>
               <Input

@@ -12,9 +12,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
-import { useMyGamers, useUpdateGamer } from "@/services/gamers";
+import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers";
 import { useMinecraftAccount } from "@/services/minecraft";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { computeAge } from "@/lib/utils";
 
 export default function GamerDetailsPage() {
   const t = useTranslations('parent');
@@ -22,6 +23,7 @@ export default function GamerDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { data: gamers, isLoading } = useMyGamers();
   const { data: mcAccount } = useMinecraftAccount(id);
+  const { data: gamerProfile } = useGamerProfile(id);
   const updateGamer = useUpdateGamer();
 
   const gamer = gamers?.find((g) => g.id === id);
@@ -194,9 +196,18 @@ export default function GamerDetailsPage() {
             </Avatar>
             <div>
               <p className="font-medium">{gamer.first_name}</p>
-              <p className="text-sm text-muted-foreground">
-                @{gamer.username}
-              </p>
+              {gamerProfile && (
+                <p className="text-sm text-muted-foreground">
+                  <span>{t('gamerDetail.ageYears', { age: computeAge(gamerProfile.date_of_birth) })}</span>
+                  {gamerProfile.gender && (
+                    <>
+                      {/* eslint-disable-next-line i18next/no-literal-string -- visual separator between two i18n strings, not user-facing copy */}
+                      <span aria-hidden="true"> · </span>
+                      <span>{t(`gamerDetail.gender.${gamerProfile.gender}`)}</span>
+                    </>
+                  )}
+                </p>
+              )}
             </div>
           </div>
 

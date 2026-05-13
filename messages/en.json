@@ -1005,6 +1005,8 @@
     "myFamily": "My Family",
     "myGamers": "My Gamers",
     "upcomingSessions": "Sessions",
+    "upcomingSessionsPlaceholderGamer": "When your camp is in session, this is where you'll join the voice room with your Gedu and friends.",
+    "upcomingSessionsPlaceholderParent": "When your child's camp is in session, this is where they'll join the voice room with their Gedu and friends.",
     "billing": "Billing",
     "help": "Help",
     "yty": "Yty",
@@ -1027,6 +1029,7 @@
       "birthYearLabel": "Birth year",
       "birthYearPlaceholder": "Year",
       "genderLabel": "Gender",
+      "genderOptional": "Optional",
       "genderBoy": "Boy",
       "genderGirl": "Girl",
       "genderNonBinary": "Non-binary",
@@ -1126,6 +1129,11 @@
   "help": {
     "title": "Help",
     "intro": "Answers to common questions about Sogverse.",
+    "contact": {
+      "heading": "Need a hand?",
+      "body": "Reach out anytime — we're happy to help with anything from picking the right club to questions about how Sogverse works.",
+      "emailLabel": "Email us at"
+    },
     "faq": {
       "heading": "Frequently asked questions",
       "items": {
@@ -1457,8 +1465,40 @@
   },
   "parent": {
     "placeholders": {
-      "upcomingSessions": "This is where you'll see your gamer's upcoming sessions.",
-      "help": "Help and guides will live here."
+      "myGamersHint": "Select a gamer to manage their account."
+    },
+    "help": {
+      "contact": {
+        "heading": "Need a hand?",
+        "body": "We're here to help with anything from joining your camp to questions about the platform. Email us anytime — we usually reply within a day.",
+        "emailLabel": "Email us at"
+      },
+      "minecraft": {
+        "heading": "Get ready for Minecraft Java",
+        "intro": "Camps and clubs run on the SOG Minecraft Java server. Walk through these steps with your child before camp starts so they can join right away.",
+        "steps": {
+          "install": {
+            "title": "Install Minecraft Java Edition",
+            "body": "Buy and install Minecraft Java Edition from minecraft.net. Bedrock and Pocket Edition won't work with our server."
+          },
+          "signIn": {
+            "title": "Sign in with a Microsoft account",
+            "body": "Launch the game once and sign in. Pick a username — your child will tell their Gedu what it is so they can be added."
+          },
+          "addServer": {
+            "title": "Add the SOG server",
+            "body": "From Multiplayer → Add Server, paste the address that matches your camp and save it so it's ready when camp starts:"
+          },
+          "joinAtCampTime": {
+            "title": "Join when camp starts",
+            "body": "Click the SOG server in the list, then Join. The Gedu will guide everyone from there. Need help? Email us above."
+          }
+        },
+        "servers": {
+          "fi": "Finnish camps:",
+          "en": "English camps:"
+        }
+      }
     },
     "billing": {
       "paymentMethod": {
@@ -1485,6 +1525,12 @@
       "profileDescription": "Update your gamer's details.",
       "profileUpdated": "Name updated!",
       "failedUpdateDisplayName": "Failed to update name",
+      "ageYears": "{age, plural, one {# year old} other {# years old}}",
+      "gender": {
+        "boy": "Boy",
+        "girl": "Girl",
+        "non_binary": "Non-binary"
+      },
       "notFound": {
         "title": "Gamer not found",
         "description": "This gamer account may have been removed or you don't have access to it."
@@ -1509,7 +1555,7 @@
   "settings": {
     "subtitle": "Manage your account preferences",
     "profileDescription": "Update your personal information",
-    "roleAccount": "{role} account",
+    "roleAccount": "{role, select, customer {Parent account} gamer {Gamer account} gedu {Gedu account} admin {Admin account} other {Account}}",
     "firstNamePlaceholder": "Enter your first name",
     "lastNamePlaceholder": "Enter your last name",
     "invalidPhone": "Please enter a valid phone number.",
