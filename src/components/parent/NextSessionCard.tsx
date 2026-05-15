@@ -3,16 +3,25 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { AudioLines, ExternalLink, FileText, Lock, Radio } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { AudioLines, ExternalLink, FileText, Lock } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { Identicon } from "@/components/ui/identicon";
 import { cn } from "@/lib/utils";
+
+/**
+ * Prominent card for the soonest joinable session in the parent's list.
+ *
+ * Used once per section, at the top — shows the live/locked join button,
+ * a per-minute countdown, and the reports link. Every session below this
+ * one is rendered as a `UpcomingSessionCard` instead (no CTAs, no
+ * countdown).
+ */
 
 /**
  * Long localized "next session at" line — long weekday + day + long month
@@ -118,6 +127,8 @@ function formatCountdownCompound(ms: number, locale: string): string {
 export interface NextSessionCardProps {
   /** First name shown in the header — "{name}'s next session". */
   gamerFirstName: string;
+  /** Stable seed for the identicon (usually the gamer's UUID). Falls back to the first name. */
+  gamerSeed?: string;
   /** Product name (club / camp / event). */
   productName: string;
   /** When the next session starts. Drives the countdown and the in-progress flip. */
@@ -138,6 +149,7 @@ export interface NextSessionCardProps {
 
 export function NextSessionCard({
   gamerFirstName,
+  gamerSeed,
   productName,
   nextSessionStart,
   nextSessionEnd,
@@ -173,26 +185,23 @@ export function NextSessionCard({
       )}
     >
       <CardHeader className="pb-1">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {t("title", { name: gamerFirstName })}
-        </CardTitle>
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12">
+            <Identicon id={gamerSeed ?? gamerFirstName} size={48} />
+          </Avatar>
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <p className="text-lg font-semibold leading-tight">
+              {productName}
+            </p>
+            <p className="truncate text-sm font-medium text-muted-foreground">
+              {t("title", { name: gamerFirstName })}
+            </p>
+            <p className="text-sm text-muted-foreground">{sessionTimeLabel}</p>
+          </div>
+        </div>
       </CardHeader>
 
       <CardContent className="space-y-4 pt-0">
-        <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-lg font-semibold leading-tight">{productName}</p>
-            {voiceIsOpen && isStarted && (
-              <Badge className="shrink-0 bg-success/10 text-success">
-                <Radio className="mr-1 h-3 w-3" />
-                {t("live")}
-              </Badge>
-            )}
-          </div>
-
-          <p className="text-sm text-muted-foreground">{sessionTimeLabel}</p>
-        </div>
-
         <div className="flex justify-center">
           {voiceIsOpen ? (
             <Link

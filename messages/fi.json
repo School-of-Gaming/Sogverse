@@ -1476,6 +1476,9 @@
       "inProgress": "Sessio käynnissä",
       "reports": "Raportit"
     },
+    "upcomingSession": {
+      "gamerLabel": "Pelaaja: {name}"
+    },
     "help": {
       "contact": {
         "heading": "Tarvitsetko apua?",

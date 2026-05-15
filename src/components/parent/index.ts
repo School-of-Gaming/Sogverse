@@ -4,6 +4,10 @@ export {
   type NextSessionCardProps,
 } from "./NextSessionCard";
 export {
+  UpcomingSessionCard,
+  type UpcomingSessionCardProps,
+} from "./UpcomingSessionCard";
+export {
   SessionsSectionLoading,
   SessionsSectionEmpty,
   SessionsSectionLoaded,

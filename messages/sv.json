@@ -1476,6 +1476,9 @@
       "inProgress": "Pass pågår",
       "reports": "Rapporter"
     },
+    "upcomingSession": {
+      "gamerLabel": "För {name}"
+    },
     "help": {
       "contact": {
         "heading": "Behöver du hjälp?",
