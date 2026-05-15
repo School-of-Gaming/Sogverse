@@ -22,8 +22,6 @@ const FIXTURES = [
   { gamer: "Bobby", name: "Cosmic Builders Camp", live: true },
   { gamer: "Alex", name: "Minecraft Survival Camp", daysAhead: 2 },
   { gamer: "Sam", name: "Lego Robotics Camp", daysAhead: 4 },
-  { gamer: "Mei", name: "Pixel Art Camp", daysAhead: 7 },
-  { gamer: "Riya", name: "Speedrun Academy Camp", daysAhead: 9 },
   { gamer: "Noah", name: "Rocket League Club", daysAhead: 11 },
 ] as const;
 
