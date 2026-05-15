@@ -69,13 +69,20 @@ function SkeletonStack({ invisible = false }: { invisible?: boolean }) {
 }
 
 /**
+ * Width + centering owned at the section-state level so loading, empty,
+ * and loaded all share the same column geometry by construction. Single
+ * source of truth — the consuming page doesn't need a wrapper.
+ */
+const SECTION_FRAME = "mx-auto max-w-lg";
+
+/**
  * Section-level loading placeholder. Reserves the same vertical space the
  * loaded stack will occupy so the page chrome below doesn't reflow when
  * sessions land.
  */
 export function SessionsSectionLoading() {
   return (
-    <div role="status" aria-busy="true">
+    <div className={SECTION_FRAME} role="status" aria-busy="true">
       <SkeletonStack />
     </div>
   );
@@ -90,7 +97,7 @@ export function SessionsSectionLoading() {
 export function SessionsSectionEmpty() {
   const t = useTranslations("dashboardSections");
   return (
-    <div className="relative">
+    <div className={cn(SECTION_FRAME, "relative")}>
       <SkeletonStack invisible />
       <p className="absolute left-0 top-0 text-muted-foreground">
         {t("upcomingSessionsPlaceholderParent")}
@@ -114,7 +121,7 @@ export function SessionsSectionLoaded({
   const [next, ...upcoming] = sessions;
 
   return (
-    <div className="space-y-3">
+    <div className={cn(SECTION_FRAME, "space-y-3")}>
       <NextSessionCard
         key={`${next.gamerFirstName}-${next.productName}`}
         {...next}
