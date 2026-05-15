@@ -56,6 +56,56 @@ export type MyParticipationRow = Pick<
 };
 
 /**
+ * Row shape returned by `getMyUpcomingSessions()`. The parent dashboard's
+ * Sessions section flattens this into one card per (participation, slot,
+ * occurrence) so we need the per-product slot list, the date-range bounds
+ * (for camp/event termination), the timezone (so we can compute occurrences
+ * in product-local wall time), and the Padlet URL for the reports link.
+ *
+ * Filtered to active-and-assigned participations: waitlisted rows have no
+ * placement and unassigned rows aren't on a schedule yet, so neither makes
+ * sense on a "next session" list.
+ */
+export interface MyUpcomingSessionRow {
+  participationId: string;
+  gamer: {
+    id: string;
+    firstName: string;
+  };
+  product: {
+    id: string;
+    type: ProductTypeV2;
+    timezone: string;
+    /**
+     * Inclusive start date in the product's local calendar (YYYY-MM-DD).
+     * Used to clamp the upcoming-sessions list so a camp that has slots on
+     * "this week's weekday" but whose start_date is still in the future
+     * doesn't emit phantom in-progress sessions.
+     */
+    startDate: string | null;
+    /**
+     * Inclusive end date in the product's local calendar (YYYY-MM-DD).
+     * Null for ongoing clubs; the dashboard caps those at the next N
+     * occurrences instead.
+     */
+    endDate: string | null;
+    /** External Padlet URL for the session reports link. Null if not set. */
+    padletUrl: string | null;
+    /**
+     * Raw translation rows. The dashboard resolves to the viewer's UI locale
+     * at render time so the cache key doesn't need to include locale (and a
+     * locale switch doesn't refetch).
+     */
+    translations: ProductTranslationV2[];
+  };
+  slots: Array<{
+    weekday: number;
+    startTime: string;
+    durationMinutes: number;
+  }>;
+}
+
+/**
  * Row shape returned by `getMyFamilySubs()`. Used by the purchased-detail
  * placeholder to surface the family sub + its linked items so support and
  * dev can spot Stripe↔DB drift (active sub + participation flagged
@@ -165,6 +215,63 @@ export class ParticipationsService {
     if (error) throw error;
 
     return (data as RawMyParticipationRow[]).map(toMyParticipationRow);
+  }
+
+  /**
+   * The logged-in user's *placed* participations, joined with the bits the
+   * dashboard Sessions section needs to render one card per upcoming
+   * occurrence: per-product weekly slots, start/end-date bounds, timezone,
+   * and the Padlet URL for the reports link.
+   *
+   * Filtered to `status='active' AND group_id IS NOT NULL` — waitlisted rows
+   * aren't scheduled yet, and unassigned rows have no placement either.
+   * Expansion into concrete (start, end) pairs is the adapter's job
+   * (`src/lib/upcoming-sessions.ts`); this method just hands back the raw
+   * rows with everything that expansion needs in one round trip.
+   *
+   * Audience selects which column the row is keyed off:
+   *   - 'customer' → `customer_id = auth.uid()`: every participation the
+   *     parent paid for, across all their kids.
+   *   - 'gamer' → `gamer_id = auth.uid()`: only the rows belonging to the
+   *     logged-in gamer.
+   * The matching RLS policy gates the other audience out either way; the
+   * filter is here so the network call doesn't drag rows the policy would
+   * just reject.
+   */
+  async getMyUpcomingSessions(
+    audience: "customer" | "gamer",
+  ): Promise<MyUpcomingSessionRow[]> {
+    const { data: userData } = await this.supabase.auth.getUser();
+    const userId = userData.user?.id;
+    if (!userId) return [];
+
+    const audienceColumn =
+      audience === "customer" ? "customer_id" : "gamer_id";
+
+    const { data, error } = await this.supabase
+      .from("participations_v2")
+      .select(
+        `
+          id, gamer_id,
+          product:products_v2!inner(
+            id, product_type, timezone, start_date, end_date, padlet_url,
+            product_translations_v2(*),
+            schedule_slots_v2(weekday, start_time, duration_minutes)
+          ),
+          gamer:profiles!participations_v2_gamer_id_fkey(
+            first_name, username
+          )
+        `,
+      )
+      .eq(audienceColumn, userId)
+      .eq("status", "active")
+      .not("group_id", "is", null);
+
+    if (error) throw error;
+
+    return (data as RawMyUpcomingSessionRow[])
+      .filter((row) => row.product !== null && row.gamer !== null)
+      .map(toMyUpcomingSessionRow);
   }
 
   /**
@@ -341,6 +448,59 @@ type RawMyParticipationRow = Pick<
     family_subscription: { status: string } | null;
   } | null;
 };
+
+interface RawMyUpcomingSessionRow {
+  id: string;
+  gamer_id: string;
+  product: {
+    id: string;
+    product_type: ProductTypeV2;
+    timezone: string;
+    start_date: string | null;
+    end_date: string | null;
+    padlet_url: string | null;
+    product_translations_v2: ProductTranslationV2[];
+    schedule_slots_v2: Array<{
+      weekday: number;
+      start_time: string;
+      duration_minutes: number;
+    }>;
+  } | null;
+  gamer: {
+    first_name: string | null;
+    username: string | null;
+  } | null;
+}
+
+function toMyUpcomingSessionRow(row: RawMyUpcomingSessionRow): MyUpcomingSessionRow {
+  // Non-null on both fields is asserted by the `!inner` join on product +
+  // the `.filter()` step above for gamer; this narrows for downstream code.
+  const product = row.product!;
+  const gamer = row.gamer!;
+  // Mirror the purchased-card fallback chain so a missing first_name still
+  // renders something readable. The seed comes from `gamer_id` regardless,
+  // so the identicon stays stable across name edits.
+  const firstName =
+    gamer.first_name || gamer.username || row.gamer_id.slice(0, 8);
+  return {
+    participationId: row.id,
+    gamer: { id: row.gamer_id, firstName },
+    product: {
+      id: product.id,
+      type: product.product_type,
+      timezone: product.timezone,
+      startDate: product.start_date,
+      endDate: product.end_date,
+      padletUrl: product.padlet_url,
+      translations: product.product_translations_v2,
+    },
+    slots: product.schedule_slots_v2.map((s) => ({
+      weekday: s.weekday,
+      startTime: s.start_time,
+      durationMinutes: s.duration_minutes,
+    })),
+  };
+}
 
 function toMyParticipationRow(row: RawMyParticipationRow): MyParticipationRow {
   // "Sub-covered" = the linked item exists AND its parent sub is live.

@@ -57,10 +57,21 @@ function UpcomingSessionCardSkeleton() {
   );
 }
 
+/**
+ * Skeleton count matches the per-product 8-occurrence cap the adapter
+ * (`src/lib/upcoming-sessions.ts`) emits for open-ended clubs: one prominent
+ * `NextSessionCard` slot at the top + seven compact `UpcomingSessionCard`
+ * slots below. End-dated products can run longer than 8, but 8 is the most
+ * representative "full" load to show during the in-flight render.
+ */
 function SkeletonStack() {
   return (
     <div className="space-y-3" aria-hidden>
       <NextSessionCardSkeleton />
+      <UpcomingSessionCardSkeleton />
+      <UpcomingSessionCardSkeleton />
+      <UpcomingSessionCardSkeleton />
+      <UpcomingSessionCardSkeleton />
       <UpcomingSessionCardSkeleton />
       <UpcomingSessionCardSkeleton />
       <UpcomingSessionCardSkeleton />
@@ -85,7 +96,7 @@ const SECTION_FRAME = "mx-auto w-full max-w-lg";
 
 export interface SessionsSectionProps {
   /**
-   * The parent's enrolled sessions, sorted ascending by `sessionStart`.
+   * The viewer's enrolled sessions, sorted ascending by `sessionStart`.
    *
    * - `null` — query is in flight; render the skeleton placeholder.
    * - `[]` — query resolved with no sessions; render the empty-state copy.
@@ -93,15 +104,26 @@ export interface SessionsSectionProps {
    *   CTA, countdown, reports), then the rest as compact `UpcomingSessionCard`s.
    */
   sessions: NextSessionCardProps[] | null;
+  /**
+   * Whose dashboard we're rendering on — `"customer"` is the parent's `/parent`
+   * page (default; the admin UI demo also leaves this implicit), `"gamer"` is
+   * the kid's `/gamer` page. Drives the empty-state copy so a logged-in gamer
+   * doesn't get told "When your child's camp..." and vice versa. The session
+   * list itself is identical between the two — the only real difference is
+   * the data filter, which lives one layer up in the wrapper.
+   */
+  audience?: "customer" | "gamer";
 }
 
 /**
- * Single Sessions-section component for the parent dashboard. The three
- * states are encoded in the `sessions` prop's shape so the caller can't
- * forget to branch and the loading/empty/loaded heights stay aligned by
- * construction.
+ * Single Sessions-section component for both dashboards. The three states are
+ * encoded in the `sessions` prop's shape so the caller can't forget to branch
+ * and the loading/empty/loaded heights stay aligned by construction.
  */
-export function SessionsSection({ sessions }: SessionsSectionProps) {
+export function SessionsSection({
+  sessions,
+  audience = "customer",
+}: SessionsSectionProps) {
   const t = useTranslations("dashboardSections");
 
   if (sessions === null) {
@@ -113,23 +135,20 @@ export function SessionsSection({ sessions }: SessionsSectionProps) {
   }
 
   if (sessions.length === 0) {
-    return (
-      <p className="text-muted-foreground">
-        {t("upcomingSessionsPlaceholderParent")}
-      </p>
-    );
+    const placeholderKey =
+      audience === "gamer"
+        ? "upcomingSessionsPlaceholderGamer"
+        : "upcomingSessionsPlaceholderParent";
+    return <p className="text-muted-foreground">{t(placeholderKey)}</p>;
   }
 
   const [next, ...upcoming] = sessions;
   return (
     <div className={cn(SECTION_FRAME, "space-y-3")}>
-      <NextSessionCard
-        key={`${next.gamerSeed ?? next.gamerFirstName}-${next.productName}`}
-        {...next}
-      />
+      <NextSessionCard key={sessionKey(next)} {...next} />
       {upcoming.map((s) => (
         <UpcomingSessionCard
-          key={`${s.gamerSeed ?? s.gamerFirstName}-${s.productName}`}
+          key={sessionKey(s)}
           gamerFirstName={s.gamerFirstName}
           gamerSeed={s.gamerSeed}
           productName={s.productName}
@@ -138,4 +157,14 @@ export function SessionsSection({ sessions }: SessionsSectionProps) {
       ))}
     </div>
   );
+}
+
+/**
+ * Each row in the list is one *occurrence*, not one (gamer, product) tuple
+ * — a single weekly club emits 8 cards for the same gamer + product, and a
+ * camp emits a card per scheduled day. The start instant disambiguates
+ * those, so the key has to include it. `(gamer, product)` alone collides.
+ */
+function sessionKey(s: NextSessionCardProps): string {
+  return `${s.gamerSeed ?? s.gamerFirstName}-${s.productName}-${s.sessionStart.toISOString()}`;
 }

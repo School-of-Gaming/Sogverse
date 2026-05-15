@@ -1,6 +1,7 @@
 export { ParticipationsService } from "./participations.service";
 export type {
   MyParticipationRow,
+  MyUpcomingSessionRow,
   MyFamilySubRow,
   ParticipationCounts,
   CreateParticipationInput,
@@ -11,6 +12,7 @@ export type {
 export {
   participationKeys,
   useMyParticipations,
+  useMyUpcomingSessions,
   useMyFamilySubs,
   useParticipationCounts,
   useMyFamilySubAt,

@@ -11,3 +11,4 @@ export {
   SessionsSection,
   type SessionsSectionProps,
 } from "./SessionsSection";
+export { ParentSessionsSection } from "./ParentSessionsSection";
