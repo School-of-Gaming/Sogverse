@@ -24,9 +24,9 @@ function NextSessionCardSkeleton() {
         <div className="flex items-center gap-3">
           <div className="h-12 w-12 shrink-0" />
           <div className="min-w-0 flex-1 space-y-0.5">
-            <p className="text-lg leading-tight">{" "}</p>
-            <p className="text-sm">{" "}</p>
-            <p className="text-sm">{" "}</p>
+            <p className="text-lg leading-tight">{" "}</p>
+            <p className="text-sm">{" "}</p>
+            <p className="text-sm">{" "}</p>
           </div>
         </div>
       </CardHeader>
@@ -35,7 +35,7 @@ function NextSessionCardSkeleton() {
           <div className="h-9" />
         </div>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs">{" "}</p>
+          <p className="text-xs">{" "}</p>
           <div className="h-9" />
         </div>
       </CardContent>
@@ -49,8 +49,8 @@ function UpcomingSessionCardSkeleton() {
       <CardContent className="flex items-center gap-3 p-3 pt-3">
         <div className="h-8 w-8 shrink-0" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm">{" "}</p>
-          <p className="text-xs">{" "}</p>
+          <p className="text-sm">{" "}</p>
+          <p className="text-xs">{" "}</p>
         </div>
       </CardContent>
     </Card>
@@ -75,64 +75,60 @@ function SkeletonStack({ invisible = false }: { invisible?: boolean }) {
  */
 const SECTION_FRAME = "mx-auto max-w-lg";
 
-/**
- * Section-level loading placeholder. Reserves the same vertical space the
- * loaded stack will occupy so the page chrome below doesn't reflow when
- * sessions land.
- */
-export function SessionsSectionLoading() {
-  return (
-    <div className={SECTION_FRAME} role="status" aria-busy="true">
-      <SkeletonStack />
-    </div>
-  );
+export interface SessionsSectionProps {
+  /**
+   * The parent's enrolled sessions, sorted ascending by `sessionStart`.
+   *
+   * - `null` — query is in flight; render the skeleton placeholder.
+   * - `[]` — query resolved with no sessions; render the empty-state copy.
+   * - non-empty — render the soonest as a full `NextSessionCard` (live/locked
+   *   CTA, countdown, reports), then the rest as compact `UpcomingSessionCard`s.
+   */
+  sessions: NextSessionCardProps[] | null;
 }
 
 /**
- * Empty state — shown when the parent has no upcoming sessions. Same copy
- * the gamer dashboard uses for its sessions section, phrased for the parent.
- * An invisible skeleton stack sits beneath the message so the section
- * reserves the same vertical space as the loading and loaded states.
+ * Single Sessions-section component for the parent dashboard. The three
+ * states are encoded in the `sessions` prop's shape so the caller can't
+ * forget to branch and the loading/empty/loaded heights stay aligned by
+ * construction.
  */
-export function SessionsSectionEmpty() {
+export function SessionsSection({ sessions }: SessionsSectionProps) {
   const t = useTranslations("dashboardSections");
-  return (
-    <div className={cn(SECTION_FRAME, "relative")}>
-      <SkeletonStack invisible />
-      <p className="absolute left-0 top-0 text-muted-foreground">
-        {t("upcomingSessionsPlaceholderParent")}
-      </p>
-    </div>
-  );
-}
 
-/**
- * Loaded state — the soonest session at the top as a full `NextSessionCard`
- * (live/locked CTA, countdown, reports), then every remaining session as a
- * compact `UpcomingSessionCard` (purely informational). Caller is responsible
- * for sorting ascending by `nextSessionStart`.
- */
-export function SessionsSectionLoaded({
-  sessions,
-}: {
-  sessions: NextSessionCardProps[];
-}) {
-  if (sessions.length === 0) return null;
+  if (sessions === null) {
+    return (
+      <div className={SECTION_FRAME} role="status" aria-busy="true">
+        <SkeletonStack />
+      </div>
+    );
+  }
+
+  if (sessions.length === 0) {
+    return (
+      <div className={cn(SECTION_FRAME, "relative")}>
+        <SkeletonStack invisible />
+        <p className="absolute left-0 top-0 text-muted-foreground">
+          {t("upcomingSessionsPlaceholderParent")}
+        </p>
+      </div>
+    );
+  }
+
   const [next, ...upcoming] = sessions;
-
   return (
     <div className={cn(SECTION_FRAME, "space-y-3")}>
       <NextSessionCard
-        key={`${next.gamerFirstName}-${next.productName}`}
+        key={next.gamerSeed ?? `${next.gamerFirstName}-${next.productName}`}
         {...next}
       />
       {upcoming.map((s) => (
         <UpcomingSessionCard
-          key={`${s.gamerFirstName}-${s.productName}`}
+          key={s.gamerSeed ?? `${s.gamerFirstName}-${s.productName}`}
           gamerFirstName={s.gamerFirstName}
           gamerSeed={s.gamerSeed}
           productName={s.productName}
-          nextSessionStart={s.nextSessionStart}
+          sessionStart={s.sessionStart}
         />
       ))}
     </div>

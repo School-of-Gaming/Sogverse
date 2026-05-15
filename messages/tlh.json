@@ -1514,7 +1514,6 @@
     },
     "nextSession": {
       "title": "{name} veb may'",
-      "live": "DaH!",
       "joinVoice": "ghogh pa'Daq yIghoS",
       "locked": "{date} {time}Daq poSmoH",
       "startsIn": "{countdown} qaSpa' SoQ",
