@@ -364,6 +364,47 @@ describe("expandUpcomingSessions", () => {
     expect(out).toEqual([]);
   });
 
+  it("emits today's in-progress session on the DST-transition Wednesday", () => {
+    // Regression: Europe/Helsinki goes EET (UTC+2) → EEST (UTC+3) on Sun
+    // 2026-03-29. For a Wed 17:00 Helsinki slot, the wall-clock-to-UTC
+    // offset on Wed Apr 1 differs from Wed Mar 25 by one hour. The
+    // prev-week look-back used to back-step by 7×24h in UTC, which on this
+    // week lands an hour past last Wednesday's slot start in local time —
+    // so `getNextSessionStart` returns Mar 25's already-finished session
+    // and the in-window check fails. Result: today's in-progress session
+    // vanished from the dashboard for the duration of its voice window.
+    const row = makeRow({
+      product: {
+        id: PRODUCT_ID,
+        type: "consumer_club",
+        timezone: "Europe/Helsinki",
+        startDate: null,
+        endDate: null,
+        padletUrl: null,
+        translations: [
+          {
+            locale: "en",
+            name: "Helsinki Club",
+            description: "",
+            product_id: PRODUCT_ID,
+            created_at: "",
+            updated_at: "",
+          },
+        ],
+      },
+      slots: [{ weekday: 2, startTime: "17:00", durationMinutes: 60 }],
+    });
+    // Wed 2026-04-01 14:30Z = 17:30 EEST local — 30 min into today's
+    // 17:00–18:00 slot. Voice window is open (closes 18:05 local).
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-04-01T14:30:00Z"),
+      "en",
+    );
+    expect(out[0].sessionStart.toISOString()).toBe("2026-04-01T14:00:00.000Z");
+    expect(out[0].voiceIsOpen).toBe(true);
+  });
+
   it("respects the product's wall-clock timezone across DST", () => {
     // Europe/Helsinki goes EET → EEST on 2026-03-29 (UTC+2 → UTC+3).
     // Wednesday 17:00 *local* maps to:
