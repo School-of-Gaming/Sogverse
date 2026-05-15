@@ -1,4 +1,4 @@
-import { fromZonedTime } from "date-fns-tz";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 import { getNextSessionStart } from "@/lib/enrollment";
 import type { SupportedLocale } from "@/lib/constants/locales";
@@ -158,8 +158,22 @@ function enumerateOccurrences(args: {
     // today still matches a slot weekday (e.g. camp ending Wed, viewer
     // loading on Fri inside the would-have-been window).
     if (!beforeStart) {
+      // Back-step in *wall-clock* days, not UTC milliseconds. A flat
+      // `now - 7×24h` lands one hour off on the DST-transition Wednesday
+      // (Helsinki EET→EEST is the live example): the back-stepped point
+      // sits *after* last week's slot start in local time, so
+      // `getNextSessionStart` returns last week's already-finished session
+      // and the in-window check fails — today's in-progress session
+      // disappears from the dashboard. `toZonedTime` returns a Date whose
+      // LOCAL methods read the wall-clock in `timezone`, so manipulating
+      // via `setDate(... - 7)` subtracts 7 calendar days in tz; the
+      // `fromZonedTime` round-trip back gives the correct UTC instant
+      // regardless of system tz.
+      const zonedWeekAgo = toZonedTime(now, timezone);
+      zonedWeekAgo.setDate(zonedWeekAgo.getDate() - 7);
+      const prevSearchPoint = fromZonedTime(zonedWeekAgo, timezone);
       const prevStart = getNextSessionStart(schedule, {
-        now: new Date(now.getTime() - 7 * 24 * 60 * 60_000),
+        now: prevSearchPoint,
       });
       const prevEnd = new Date(prevStart.getTime() + durationMs);
       const withinWindow = prevEnd.getTime() + windowCloseMs > now.getTime();

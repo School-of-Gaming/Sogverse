@@ -23,7 +23,7 @@ export function GamerSessionsSection({
 }: {
   initialRows: MyUpcomingSessionRow[];
 }) {
-  const { sessions } = useMyUpcomingSessions("gamer", {
+  const sessions = useMyUpcomingSessions("gamer", {
     initialData: initialRows,
   });
   return <SessionsSection sessions={sessions} audience="gamer" />;
