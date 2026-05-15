@@ -51,7 +51,7 @@ import {
   type NextSessionCardProps,
 } from "@/components/parent";
 import { formatScheduleLocal } from "@/lib/utils";
-import { useAuth } from "@/providers";
+import { useAuth, useNow } from "@/providers";
 import { useLocale } from "next-intl";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
 import { computeGlowStyle } from "@/lib/constants/spatial.config";
@@ -694,28 +694,26 @@ const SESSIONS_FIXTURES_COUNTDOWN_FIRST: readonly SessionsFixture[] = [
   { name: "Rocket League Club", daysAhead: 11 },
 ];
 
-/** Defers time-dependent values to after mount so SSR and client render match. */
+/**
+ * Reads `useNow()` so the fixtures are anchored to the same wall clock the
+ * SSR pass used — that's what keeps the first client render byte-identical
+ * to the server HTML. No `mounted` flag needed.
+ */
 function SessionsSectionDemo() {
-  const [mounted, setMounted] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- canonical post-hydration flag; see TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
-  useEffect(() => setMounted(true), []);
-
-  const liveFirst = mounted
-    ? buildLoadedSessions(SESSIONS_FIXTURES_LIVE_FIRST, SESSIONS_LIVE_FIRST_GAMER)
-    : null;
-  const countdownFirst = mounted
-    ? buildLoadedSessions(
-        SESSIONS_FIXTURES_COUNTDOWN_FIRST,
-        SESSIONS_COUNTDOWN_FIRST_GAMER,
-      )
-    : null;
+  const now = useNow();
+  const liveFirst = buildLoadedSessions(
+    SESSIONS_FIXTURES_LIVE_FIRST,
+    SESSIONS_LIVE_FIRST_GAMER,
+    now,
+  );
+  const countdownFirst = buildLoadedSessions(
+    SESSIONS_FIXTURES_COUNTDOWN_FIRST,
+    SESSIONS_COUNTDOWN_FIRST_GAMER,
+    now,
+  );
 
   return (
-    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 xl:grid-cols-4">
-      <div className="flex flex-col gap-2">
-        <DemoCaption>Loading</DemoCaption>
-        <SessionsSection sessions={null} />
-      </div>
+    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-3">
       <div className="flex flex-col gap-2">
         <DemoCaption>No sessions</DemoCaption>
         <SessionsSection sessions={[]} />
@@ -735,8 +733,8 @@ function SessionsSectionDemo() {
 function buildLoadedSessions(
   fixtures: readonly SessionsFixture[],
   gamer: { firstName: string; seed: string },
+  now: Date,
 ): NextSessionCardProps[] {
-  const now = new Date();
   const midnightTomorrow = new Date(now);
   midnightTomorrow.setHours(24, 0, 0, 0);
   const midnightTomorrowMs = midnightTomorrow.getTime();

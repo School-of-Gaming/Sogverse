@@ -13,7 +13,6 @@ const GAMER_ID = "22222222-2222-2222-2222-222222222222";
 
 function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessionRow {
   return {
-    participationId: "p-1",
     gamer: { id: GAMER_ID, firstName: "Alex" },
     product: {
       id: PRODUCT_ID,
@@ -141,12 +140,10 @@ describe("expandUpcomingSessions", () => {
 
   it("merges and sorts sessions across multiple participations", () => {
     const rowA = makeRow({
-      participationId: "p-a",
       gamer: { id: GAMER_ID, firstName: "Alex" },
       slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }], // Wed 15:00
     });
     const rowB = makeRow({
-      participationId: "p-b",
       gamer: { id: "33333333-3333-3333-3333-333333333333", firstName: "Bobby" },
       slots: [{ weekday: 3, startTime: "10:00", durationMinutes: 60 }], // Thu 10:00
     });
@@ -322,6 +319,49 @@ describe("expandUpcomingSessions", () => {
     // Helsinki = 07:00Z during EEST).
     expect(out[0].sessionStart.toISOString()).toBe("2026-05-27T07:00:00.000Z");
     expect(out[0].voiceIsOpen).toBe(false);
+  });
+
+  it("does not emit phantom sessions after end_date for a camp whose slot weekday matches today", () => {
+    // Regression: symmetric to the start_date case above. Tech Camp runs
+    // Mon/Wed/Fri 10:00–13:00 Europe/Helsinki with end_date 2026-07-01 (Wed),
+    // so the camp's last legitimate session was on the end_date itself.
+    // Viewing the parent dashboard on Fri 2026-07-03 at 11:00 Helsinki used
+    // to surface a phantom "in progress" card for today's 10:00 slot because
+    // the prev-week look-back ignored end_date — the slot weekday matches
+    // today and the voice window is still notionally open.
+    const row = makeRow({
+      product: {
+        id: PRODUCT_ID,
+        type: "camp",
+        timezone: "Europe/Helsinki",
+        startDate: "2026-06-22",
+        endDate: "2026-07-01",
+        padletUrl: null,
+        translations: [
+          {
+            locale: "en",
+            name: "Kyle's Tech Camp",
+            description: "",
+            product_id: PRODUCT_ID,
+            created_at: "",
+            updated_at: "",
+          },
+        ],
+      },
+      slots: [
+        { weekday: 0, startTime: "10:00", durationMinutes: 180 }, // Mon
+        { weekday: 2, startTime: "10:00", durationMinutes: 180 }, // Wed
+        { weekday: 4, startTime: "10:00", durationMinutes: 180 }, // Fri
+      ],
+    });
+    // Fri 2026-07-03 at 11:00 Helsinki (EEST, UTC+3) = 08:00Z — squarely
+    // inside the *would-be* 10:00–13:00 window if end_date weren't gated.
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-07-03T08:00:00Z"),
+      "en",
+    );
+    expect(out).toEqual([]);
   });
 
   it("respects the product's wall-clock timezone across DST", () => {
