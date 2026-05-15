@@ -24,19 +24,22 @@ import { cn } from "@/lib/utils";
  */
 
 /**
- * Long localized "next session at" line — long weekday + day + long month
- * + 24h start–end time range. Intl handles weekday/month words per locale;
- * forcing `hour12: false` keeps the time column 24h regardless of locale
- * default, matching the rest of the schedule UI.
+ * Localized "next session at" line — short weekday + day + long month +
+ * 24h start–end time range. Abbreviating just the weekday is enough to fit
+ * a Finnish long-form on a single row of the narrow column layout
+ * ("lauantai" → "la"); the month word stays long since "toukokuuta" reads
+ * naturally and most other locales keep month words short anyway. Intl
+ * handles weekday/month words per locale; forcing `hour12: false` keeps
+ * the time column 24h regardless of locale default.
  *
  * We format start and end separately rather than via `formatRange`: when
  * the session crosses midnight (start and end fall on different calendar
  * days), `formatRange` auto-promotes to "5/15/2026, 19:45 – 5/16/2026,
  * 01:45" to disambiguate. The date anchor on this card already tells the
  * reader which day we mean, so the bare time range reads correctly.
- *   en → "Monday, May 1 · 16:00 – 18:00"
- *   fi → "maanantai 1. toukokuuta · 16.00 – 18.00"
- *   sv → "måndag 1 maj · 16:00 – 18:00"
+ *   en → "Mon, May 1 · 16:00 – 18:00"
+ *   fi → "ma 1. toukokuuta · 16.00 – 18.00"
+ *   sv → "mån 1 maj · 16:00 – 18:00"
  */
 /**
  * Short localized date + clock-time pair for the locked voice button.
@@ -70,7 +73,7 @@ function formatSessionDateTimeRange(
   locale: string,
 ): string {
   const datePart = new Intl.DateTimeFormat(locale, {
-    weekday: "long",
+    weekday: "short",
     day: "numeric",
     month: "long",
   }).format(start);
