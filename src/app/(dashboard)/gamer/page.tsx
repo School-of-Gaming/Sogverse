@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { GamerSessionsSection } from "@/components/gamer/GamerSessionsSection";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,7 +32,7 @@ export default function GamerDashboardPage() {
 
       <section className="mx-auto max-w-3xl space-y-4">
         <h2 className="text-3xl font-bold">{sections('upcomingSessions')}</h2>
-        <p className="text-muted-foreground">{sections('upcomingSessionsPlaceholderGamer')}</p>
+        <GamerSessionsSection />
       </section>
 
       <section className="mx-auto max-w-3xl space-y-4">
