@@ -55,9 +55,14 @@ export function decimalToCents(value: string): number | null {
   return Math.round(n * 100);
 }
 
-export function formatTime(date: Date | string, locale?: string): string {
+export function formatTime(date: Date | string, locale?: string, timeZone?: string): string {
   const d = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat(locale ?? "en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(d);
+  return new Intl.DateTimeFormat(locale ?? "en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    ...(timeZone ? { timeZone } : {}),
+  }).format(d);
 }
 
 export function formatDate(date: Date | string, locale: string, options?: Intl.DateTimeFormatOptions): string {

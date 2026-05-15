@@ -17,8 +17,9 @@ import type { MyUpcomingSessionRow } from "@/services/participations";
 const OPEN_ENDED_OCCURRENCE_CAP = 8;
 
 /**
- * Expand the parent's placed participations into a flat, time-sorted list of
- * concrete upcoming sessions for the parent dashboard's Sessions section.
+ * Expand the viewer's placed participations into a flat, time-sorted list of
+ * concrete upcoming sessions for the dashboard Sessions section (drives both
+ * `/parent` and `/gamer`).
  *
  * One emitted entry per (participation, slot, future occurrence). Sessions
  * whose voice window has already closed (`end + SESSION_WINDOW_AFTER` < now)
@@ -149,10 +150,13 @@ function enumerateOccurrences(args: {
     // currently-in-progress sessions from the list. Mirror
     // `computeSessionWindow` and check the previous-week candidate
     // explicitly: if its voice window is still open right now AND it falls
-    // on or after the product's start_date, emit it as the first occurrence
-    // for this slot. The start_date gate is what stops a camp with a
-    // weekday slot matching today from showing a phantom "in-progress"
-    // session before the camp actually starts.
+    // within the product's start_date / end_date range, emit it as the
+    // first occurrence for this slot. Both bounds are load-bearing —
+    // without `afterStart`, a camp shows a phantom in-progress session on
+    // a slot weekday before the camp actually starts; without `beforeEnd`,
+    // it shows one for the same reason in the days *after* end_date when
+    // today still matches a slot weekday (e.g. camp ending Wed, viewer
+    // loading on Fri inside the would-have-been window).
     if (!beforeStart) {
       const prevStart = getNextSessionStart(schedule, {
         now: new Date(now.getTime() - 7 * 24 * 60 * 60_000),
@@ -161,7 +165,9 @@ function enumerateOccurrences(args: {
       const withinWindow = prevEnd.getTime() + windowCloseMs > now.getTime();
       const afterStart =
         startBoundary === null || prevStart.getTime() >= startBoundary.getTime();
-      if (withinWindow && afterStart) {
+      const beforeEnd =
+        endBoundary === null || prevStart.getTime() <= endBoundary.getTime();
+      if (withinWindow && afterStart && beforeEnd) {
         out.push({ start: prevStart, end: prevEnd });
         emitted += 1;
       }

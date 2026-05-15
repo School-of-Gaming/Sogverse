@@ -1,25 +1,27 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useLocale } from "next-intl";
 import { getClient } from "@/lib/supabase/client";
 import { resolveLocale } from "@/lib/constants/locales";
 import { expandUpcomingSessions } from "@/lib/upcoming-sessions";
-import type { SubscriptionFrequencyV2 } from "@/types";
+import { useNow } from "@/providers";
+import type { SessionAudience, SubscriptionFrequencyV2 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import {
   ParticipationsService,
   type CreateParticipationInput,
   type JoinWaitlistInput,
+  type MyUpcomingSessionRow,
 } from "./participations.service";
 import { productV2Keys } from "../products-v2";
 
 export const participationKeys = {
   all: ["participations-v2"] as const,
   mine: () => [...participationKeys.all, "mine"] as const,
-  myUpcomingSessions: (audience: "customer" | "gamer") =>
+  myUpcomingSessions: (audience: SessionAudience) =>
     [...participationKeys.all, "my-upcoming-sessions", audience] as const,
   myFamilySubs: () => [...participationKeys.all, "my-family-subs"] as const,
   countsByProducts: (productIds: string[]) =>
@@ -27,14 +29,6 @@ export const participationKeys = {
   myFamilySub: (frequency: string, currency: string) =>
     [...participationKeys.all, "family-sub", { frequency, currency }] as const,
 };
-
-/**
- * Re-evaluate session windows every 30s so the soonest-session card flips
- * Live ↔ locked in near-real-time and finished sessions drop off the list
- * without a refetch. Matches `useGroupsWithVoice` (use-groups-page.ts) so
- * both sides of the app advance their clocks on the same cadence.
- */
-const SESSION_TICK_MS = 30_000;
 
 export function useMyParticipations({
   enabled = true,
@@ -53,47 +47,43 @@ export function useMyParticipations({
  * Fetches the logged-in user's active, placed participations (filtered by
  * audience — `customer` for the parent dashboard, `gamer` for the gamer
  * dashboard) and expands them into a time-sorted list of concrete upcoming
- * sessions (one entry per occurrence). Ticks every 30s so the
- * soonest-session card's `voiceIsOpen` flips on the window-open boundary
- * without a refetch.
+ * sessions (one entry per occurrence). `voiceIsOpen` and the
+ * window-closed cut re-derive on every tick of `useNow()` so the live ↔
+ * locked flip happens without a refetch.
  *
- * Returns `null` while the query is in flight and `NextSessionCardProps[]`
- * once it resolves — matches the shape `SessionsSection.sessions` expects
- * (`null = loading`, `[] = empty`, non-empty = render the list).
+ * `initialData` is **required** — every consumer pairs the hook with a
+ * server-side prefetch in the page's Server Component (see
+ * `parent/page.tsx` and `gamer/page.tsx`) so the first client render has
+ * the rows ready and the section paints with no loading state. Mutations
+ * elsewhere (`useCreateParticipation`, `useJoinWaitlist`) still cascade
+ * through `participationKeys.all` to refetch; the prefetch only affects
+ * the initial render.
  */
-export function useMyUpcomingSessions(audience: "customer" | "gamer"): {
-  sessions: NextSessionCardProps[] | null;
-  isLoading: boolean;
+export function useMyUpcomingSessions(
+  audience: SessionAudience,
+  options: { initialData: MyUpcomingSessionRow[] },
+): {
+  sessions: NextSessionCardProps[];
   error: Error | null;
 } {
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
   const locale = resolveLocale(useLocale());
+  const now = useNow();
 
   const query = useQuery({
     queryKey: participationKeys.myUpcomingSessions(audience),
     queryFn: () => service.getMyUpcomingSessions(audience),
+    initialData: options.initialData,
   });
 
-  // Ticking `now` (not the query) is enough to re-derive voiceIsOpen and the
-  // window-closed cut. The underlying participations list rarely changes
-  // and is invalidated by the mutation hooks below when it does.
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- post-hydration init: `now` is intentionally null during SSR so the expansion doesn't depend on the server clock. The first client render produces a `null` sessions array (loading), and the post-mount setState swaps in the real expansion. See TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
-    setNow(new Date());
-    const id = setInterval(() => setNow(new Date()), SESSION_TICK_MS);
-    return () => clearInterval(id);
-  }, []);
-
-  const sessions = useMemo(() => {
-    if (!query.data || now === null) return null;
-    return expandUpcomingSessions(query.data, now, locale);
-  }, [query.data, now, locale]);
+  const sessions = useMemo(
+    () => expandUpcomingSessions(query.data, now, locale),
+    [query.data, now, locale],
+  );
 
   return {
     sessions,
-    isLoading: query.isLoading,
     error: query.error,
   };
 }

@@ -6,6 +6,7 @@ import type {
   BillingModeV2,
   ProductTranslationV2,
   PurchaseShape,
+  SessionAudience,
   SubscriptionFrequencyV2,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
@@ -67,7 +68,6 @@ export type MyParticipationRow = Pick<
  * sense on a "next session" list.
  */
 export interface MyUpcomingSessionRow {
-  participationId: string;
   gamer: {
     id: string;
     firstName: string;
@@ -239,7 +239,7 @@ export class ParticipationsService {
    * just reject.
    */
   async getMyUpcomingSessions(
-    audience: "customer" | "gamer",
+    audience: SessionAudience,
   ): Promise<MyUpcomingSessionRow[]> {
     const { data: userData } = await this.supabase.auth.getUser();
     const userId = userData.user?.id;
@@ -252,7 +252,7 @@ export class ParticipationsService {
       .from("participations_v2")
       .select(
         `
-          id, gamer_id,
+          gamer_id,
           product:products_v2!inner(
             id, product_type, timezone, start_date, end_date, padlet_url,
             product_translations_v2(*),
@@ -450,7 +450,6 @@ type RawMyParticipationRow = Pick<
 };
 
 interface RawMyUpcomingSessionRow {
-  id: string;
   gamer_id: string;
   product: {
     id: string;
@@ -483,7 +482,6 @@ function toMyUpcomingSessionRow(row: RawMyUpcomingSessionRow): MyUpcomingSession
   const firstName =
     gamer.first_name || gamer.username || row.gamer_id.slice(0, 8);
   return {
-    participationId: row.id,
     gamer: { id: row.gamer_id, firstName },
     product: {
       id: product.id,

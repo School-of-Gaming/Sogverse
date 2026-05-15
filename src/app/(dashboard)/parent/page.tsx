@@ -5,13 +5,50 @@ import { DashboardSectionPill, type DashboardSection } from "@/components/layout
 import { MyGamersGrid } from "@/components/family";
 import { PaymentMethodCard } from "@/components/billing";
 import { ParentHelpSection, ParentSessionsSection } from "@/components/parent";
+import { createClient } from "@/lib/supabase/server";
+import {
+  ParticipationsService,
+  type MyUpcomingSessionRow,
+} from "@/services/participations";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return { title: t("parentDashboard"), description: "Manage your gamers and enrollments" };
 }
 
-export default function CustomerDashboardPage() {
+/**
+ * Server-prefetch the parent's upcoming-session rows. The RLS-filtered
+ * query is the same one `useMyUpcomingSessions` would fire client-side,
+ * just one network hop earlier — the result seeds React Query's cache via
+ * `initialRows`, so the section paints fully on first frame instead of
+ * flashing a skeleton. Mutations elsewhere still cascade through
+ * `participationKeys.all` to refetch normally; this prefetch only affects
+ * the initial render.
+ *
+ * Returns `[]` on any failure (no session, RLS rejection, transient
+ * Supabase error). The client hook will refetch on mount if so, which
+ * keeps the page rendering even when the prefetch can't deliver.
+ */
+async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[]> {
+  try {
+    const supabase = await createClient();
+    const service = new ParticipationsService(supabase);
+    return await service.getMyUpcomingSessions("customer");
+  } catch {
+    return [];
+  }
+}
+
+export default async function CustomerDashboardPage() {
+  const initialSessionRows = await getInitialSessionRows();
+  return <CustomerDashboardPageBody initialSessionRows={initialSessionRows} />;
+}
+
+function CustomerDashboardPageBody({
+  initialSessionRows,
+}: {
+  initialSessionRows: MyUpcomingSessionRow[];
+}) {
   const t = useTranslations('dashboardSections');
   const p = useTranslations('parent.placeholders');
   const m = useTranslations('metadata.pages');
@@ -46,7 +83,7 @@ export default function CustomerDashboardPage() {
         <section id="sessions" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 className="text-3xl font-bold">{t('upcomingSessions')}</h2>
-            <ParentSessionsSection />
+            <ParentSessionsSection initialRows={initialSessionRows} />
           </div>
         </section>
 

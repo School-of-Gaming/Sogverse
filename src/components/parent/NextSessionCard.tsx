@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { AudioLines, ExternalLink, FileText, Lock } from "lucide-react";
@@ -12,6 +11,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
+import { useNow, useTimezone } from "@/providers";
 import { cn, formatDate, formatTime } from "@/lib/utils";
 
 /**
@@ -56,13 +56,15 @@ function formatSessionDateTimeRange(
   start: Date,
   end: Date,
   locale: string,
+  timeZone: string,
 ): string {
   const datePart = formatDate(start, locale, {
     weekday: "short",
     day: "numeric",
     month: "long",
+    timeZone,
   });
-  return `${datePart} · ${formatTime(start, locale)} – ${formatTime(end, locale)}`;
+  return `${datePart} · ${formatTime(start, locale, timeZone)} – ${formatTime(end, locale, timeZone)}`;
 }
 
 /**
@@ -140,36 +142,25 @@ export function NextSessionCard({
 }: NextSessionCardProps) {
   const t = useTranslations("parent.nextSession");
   const locale = useLocale();
+  const timeZone = useTimezone();
+  // `useNow()` is seeded server-side at request time, so the first client
+  // render produces the exact same countdown text the SSR HTML already has
+  // — no NBSP placeholder gap, no hydration warning. The 30s tick keeps it
+  // fresh after mount. Cadence matches `useGroupsWithVoice` so the
+  // countdown and the Join/locked flip stay aligned across the app.
+  const now = useNow();
 
-  // `now` stays null until after mount so the SSR-rendered HTML and the
-  // first client render produce the same countdown text (a non-breaking-space
-  // placeholder). Seeding `Date.now()` only on the client avoids the
-  // hydration mismatch we'd otherwise get from the server's clock differing
-  // from the client's. 30s cadence matches the section-level `voiceIsOpen`
-  // ticker upstream (use-groups-page) so the countdown and the Join/locked
-  // flip stay roughly in sync.
-  const [now, setNow] = useState<number | null>(null);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- post-hydration init: `now` is intentionally null during SSR so the countdown text doesn't depend on the server clock. See TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
-    setNow(Date.now());
-    const id = setInterval(() => setNow(Date.now()), 30_000);
-    return () => clearInterval(id);
-  }, []);
-
-  // NBSP placeholder reserves the line height without copy — the
-  // Reports button on the right stays put between SSR and post-mount.
-  let countdownLine = " ";
-  if (now !== null) {
-    const msUntil = sessionStart.getTime() - now;
-    countdownLine = msUntil <= 0
+  const msUntil = sessionStart.getTime() - now.getTime();
+  const countdownLine =
+    msUntil <= 0
       ? t("inProgress")
       : t("startsIn", { countdown: formatCountdownCompound(msUntil, locale) });
-  }
 
   const sessionTimeLabel = formatSessionDateTimeRange(
     sessionStart,
     sessionEnd,
     locale,
+    timeZone,
   );
   // The locked label intentionally advertises the session-start time, not
   // the buffer-window open time. See the file header.
@@ -177,8 +168,9 @@ export function NextSessionCard({
     weekday: "short",
     month: "short",
     day: "numeric",
+    timeZone,
   });
-  const opensTime = formatTime(sessionStart, locale);
+  const opensTime = formatTime(sessionStart, locale, timeZone);
 
   return (
     <Card
