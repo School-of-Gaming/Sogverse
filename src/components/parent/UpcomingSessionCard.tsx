@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
+import { formatDate, formatTime } from "@/lib/utils";
 
 /**
  * Compact, purely-informational sibling of `NextSessionCard`.
@@ -14,19 +15,6 @@ import { Identicon } from "@/components/ui/identicon";
  * start date/time, nothing clickable. Strips the join + reports surfaces
  * so the list reads as "here's what's next, and here's what comes after."
  */
-function formatStart(start: Date, locale: string): string {
-  const date = new Intl.DateTimeFormat(locale, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(start);
-  const time = new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(start);
-  return `${date} · ${time}`;
-}
 
 export interface UpcomingSessionCardProps {
   /** First name shown in the "for {name}" attribution line. */
@@ -36,18 +24,23 @@ export interface UpcomingSessionCardProps {
   /** Product name (club / camp / event). */
   productName: string;
   /** When the session starts — drives the date/time label. */
-  nextSessionStart: Date;
+  sessionStart: Date;
 }
 
 export function UpcomingSessionCard({
   gamerFirstName,
   gamerSeed,
   productName,
-  nextSessionStart,
+  sessionStart,
 }: UpcomingSessionCardProps) {
   const t = useTranslations("parent.upcomingSession");
   const locale = useLocale();
-  const startLabel = formatStart(nextSessionStart, locale);
+  const dateLabel = formatDate(sessionStart, locale, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  const timeLabel = formatTime(sessionStart, locale);
 
   return (
     <Card>
@@ -61,7 +54,7 @@ export function UpcomingSessionCard({
             <span className="truncate">
               {t("gamerLabel", { name: gamerFirstName })}
             </span>
-            <span className="shrink-0">{startLabel}</span>
+            <span className="shrink-0">{`${dateLabel} · ${timeLabel}`}</span>
           </div>
         </div>
       </CardContent>

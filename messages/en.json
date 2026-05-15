@@ -1469,7 +1469,6 @@
     },
     "nextSession": {
       "title": "{name}'s next session",
-      "live": "Live",
       "joinVoice": "Join voice room",
       "locked": "Opens {date} at {time}",
       "startsIn": "Starts in {countdown}",
