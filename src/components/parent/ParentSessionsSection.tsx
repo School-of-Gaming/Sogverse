@@ -28,7 +28,7 @@ export function ParentSessionsSection({
 }: {
   initialRows: MyUpcomingSessionRow[];
 }) {
-  const { sessions } = useMyUpcomingSessions("customer", {
+  const sessions = useMyUpcomingSessions("customer", {
     initialData: initialRows,
   });
   return <SessionsSection sessions={sessions} />;

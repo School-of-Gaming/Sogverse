@@ -62,10 +62,7 @@ export function useMyParticipations({
 export function useMyUpcomingSessions(
   audience: SessionAudience,
   options: { initialData: MyUpcomingSessionRow[] },
-): {
-  sessions: NextSessionCardProps[];
-  error: Error | null;
-} {
+): NextSessionCardProps[] {
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
   const locale = resolveLocale(useLocale());
@@ -77,15 +74,10 @@ export function useMyUpcomingSessions(
     initialData: options.initialData,
   });
 
-  const sessions = useMemo(
+  return useMemo(
     () => expandUpcomingSessions(query.data, now, locale),
     [query.data, now, locale],
   );
-
-  return {
-    sessions,
-    error: query.error,
-  };
 }
 
 /**
