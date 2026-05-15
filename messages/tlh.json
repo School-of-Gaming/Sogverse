@@ -1521,6 +1521,9 @@
       "inProgress": "poH ghoStaH",
       "reports": "DaHoSmey"
     },
+    "upcomingSession": {
+      "gamerLabel": "{name}vaD"
+    },
     "help": {
       "contact": {
         "heading": "boQ DaneH'a'?",
