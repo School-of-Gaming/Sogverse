@@ -57,9 +57,9 @@ function UpcomingSessionCardSkeleton() {
   );
 }
 
-function SkeletonStack({ invisible = false }: { invisible?: boolean }) {
+function SkeletonStack() {
   return (
-    <div className={cn("space-y-3", invisible && "invisible")} aria-hidden>
+    <div className="space-y-3" aria-hidden>
       <NextSessionCardSkeleton />
       <UpcomingSessionCardSkeleton />
       <UpcomingSessionCardSkeleton />
@@ -69,11 +69,19 @@ function SkeletonStack({ invisible = false }: { invisible?: boolean }) {
 }
 
 /**
- * Width + centering owned at the section-state level so loading, empty,
- * and loaded all share the same column geometry by construction. Single
- * source of truth — the consuming page doesn't need a wrapper.
+ * Width + centering shared by the loading and loaded states so the cards
+ * stay anchored when sessions resolve. The empty state opts out — it's
+ * just a single line of copy and doesn't need the column geometry.
+ *
+ * `w-full` is load-bearing: in a flex-column parent (like the admin demo)
+ * `mx-auto` alone triggers auto-margin shrink-to-fit, so the wrapper
+ * collapses to its content's intrinsic width and the skeletons end up
+ * much narrower than the column. Setting `w-full` explicitly keeps the
+ * wrapper at parent-width, then `max-w-lg` caps it and `mx-auto` centers
+ * within the overflow. Same outcome as the block-layout case on the
+ * parent dashboard, just made resilient to flex contexts too.
  */
-const SECTION_FRAME = "mx-auto max-w-lg";
+const SECTION_FRAME = "mx-auto w-full max-w-lg";
 
 export interface SessionsSectionProps {
   /**
@@ -106,12 +114,9 @@ export function SessionsSection({ sessions }: SessionsSectionProps) {
 
   if (sessions.length === 0) {
     return (
-      <div className={cn(SECTION_FRAME, "relative")}>
-        <SkeletonStack invisible />
-        <p className="absolute left-0 top-0 text-muted-foreground">
-          {t("upcomingSessionsPlaceholderParent")}
-        </p>
-      </div>
+      <p className="text-muted-foreground">
+        {t("upcomingSessionsPlaceholderParent")}
+      </p>
     );
   }
 
@@ -119,12 +124,12 @@ export function SessionsSection({ sessions }: SessionsSectionProps) {
   return (
     <div className={cn(SECTION_FRAME, "space-y-3")}>
       <NextSessionCard
-        key={next.gamerSeed ?? `${next.gamerFirstName}-${next.productName}`}
+        key={`${next.gamerSeed ?? next.gamerFirstName}-${next.productName}`}
         {...next}
       />
       {upcoming.map((s) => (
         <UpcomingSessionCard
-          key={s.gamerSeed ?? `${s.gamerFirstName}-${s.productName}`}
+          key={`${s.gamerSeed ?? s.gamerFirstName}-${s.productName}`}
           gamerFirstName={s.gamerFirstName}
           gamerSeed={s.gamerSeed}
           productName={s.productName}
