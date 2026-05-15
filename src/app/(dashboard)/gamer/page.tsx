@@ -4,13 +4,39 @@ import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GamerSessionsSection } from "@/components/gamer/GamerSessionsSection";
 import { YTY_ELEMENTS } from "@/lib/constants/yty";
+import { createClient } from "@/lib/supabase/server";
+import {
+  ParticipationsService,
+  type MyUpcomingSessionRow,
+} from "@/services/participations";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
   return { title: t("gamerHome"), description: "Your gamer dashboard in the Sogverse" };
 }
 
-export default function GamerDashboardPage() {
+/** See `parent/page.tsx` for the rationale on this prefetch shape. Same
+ *  pattern; this one passes `audience: "gamer"` so RLS keys off `gamer_id`. */
+async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[]> {
+  try {
+    const supabase = await createClient();
+    const service = new ParticipationsService(supabase);
+    return await service.getMyUpcomingSessions("gamer");
+  } catch {
+    return [];
+  }
+}
+
+export default async function GamerDashboardPage() {
+  const initialSessionRows = await getInitialSessionRows();
+  return <GamerDashboardPageBody initialSessionRows={initialSessionRows} />;
+}
+
+function GamerDashboardPageBody({
+  initialSessionRows,
+}: {
+  initialSessionRows: MyUpcomingSessionRow[];
+}) {
   const t = useTranslations('gamer');
   const sections = useTranslations('dashboardSections');
   const yty = useTranslations('yty');
@@ -32,7 +58,7 @@ export default function GamerDashboardPage() {
 
       <section className="mx-auto max-w-3xl space-y-4">
         <h2 className="text-3xl font-bold">{sections('upcomingSessions')}</h2>
-        <GamerSessionsSection />
+        <GamerSessionsSection initialRows={initialSessionRows} />
       </section>
 
       <section className="mx-auto max-w-3xl space-y-4">

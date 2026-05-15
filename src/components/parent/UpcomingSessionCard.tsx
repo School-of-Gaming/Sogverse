@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
+import { useTimezone } from "@/providers";
 import { formatDate, formatTime } from "@/lib/utils";
 
 /**
@@ -35,12 +36,14 @@ export function UpcomingSessionCard({
 }: UpcomingSessionCardProps) {
   const t = useTranslations("parent.upcomingSession");
   const locale = useLocale();
+  const timeZone = useTimezone();
   const dateLabel = formatDate(sessionStart, locale, {
     weekday: "short",
     month: "short",
     day: "numeric",
+    timeZone,
   });
-  const timeLabel = formatTime(sessionStart, locale);
+  const timeLabel = formatTime(sessionStart, locale, timeZone);
 
   return (
     <Card>

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Inter, Press_Start_2P } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
 import { MouseflowConsent } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
+import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
@@ -55,6 +56,14 @@ export default async function RootLayout({
   const headersList = await headers();
   const nonce = headersList.get("x-nonce") ?? undefined;
   const locale = await getLocale();
+  const cookieStore = await cookies();
+  const initialTimezone = resolveTimezone(
+    cookieStore.get(TIMEZONE_COOKIE_NAME)?.value,
+  );
+  // Captured once per request and passed to NowProvider as the seed for the
+  // first client render — keeps SSR HTML and the first hydration render in
+  // lockstep. Client-side tick takes over after mount.
+  const initialNow = new Date();
   // Strip server-only namespaces (email, metadata) from the client bundle.
   // Server components access full messages via getTranslations() directly.
   const { email: _email, metadata: _metadata, ...clientMessages } =
@@ -69,6 +78,8 @@ export default async function RootLayout({
           initialUser={userWithProfile?.user ?? null}
           initialProfile={userWithProfile?.profile}
           initialLocale={locale}
+          initialTimezone={initialTimezone}
+          initialNow={initialNow}
           messages={clientMessages}
           nonce={nonce}
         >

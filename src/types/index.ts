@@ -19,6 +19,15 @@ export type UserRole = Database["public"]["Enums"]["user_role"];
 export type GenderType = Database["public"]["Enums"]["gender_type"];
 export type LocationType = Database["public"]["Enums"]["location_type"];
 
+/**
+ * The two roles whose dashboards consume the upcoming-sessions list. Derived
+ * from `UserRole` so it stays in sync if the enum ever moves; used by
+ * `getMyUpcomingSessions` and the wrapper components to pick the audience
+ * filter (`customer_id = auth.uid()` vs. `gamer_id = auth.uid()`) and the
+ * empty-state copy.
+ */
+export type SessionAudience = Extract<UserRole, "customer" | "gamer">;
+
 // profiles
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
