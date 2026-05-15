@@ -47,9 +47,7 @@ import { GamerCard } from "@/components/customer/gamer-card";
 import { LoungeCard } from "@/components/ui/lounge-card";
 import { GroupCard } from "@/components/ui/group-card";
 import {
-  SessionsSectionEmpty,
-  SessionsSectionLoaded,
-  SessionsSectionLoading,
+  SessionsSection,
   type NextSessionCardProps,
 } from "@/components/parent";
 import { formatScheduleLocal } from "@/lib/utils";
@@ -652,10 +650,11 @@ function ProductRowDemo() {
 /*  Parent Sessions Section Demo                                       */
 /* ------------------------------------------------------------------ */
 
-// Two loaded variants demoed side by side — one where the soonest session
-// is already live (`NextSessionCard` with the active join CTA), one where
-// it's still in the future (`NextSessionCard` showing the countdown + locked
-// CTA). Both stacks include three trailing `UpcomingSessionCard`s so the
+// Four states demoed side by side: loading (`sessions={null}`), empty
+// (`sessions={[]}`), and two non-empty stacks — one where the soonest
+// session is already live (`NextSessionCard` with the active join CTA),
+// one where it's still in the future (countdown + locked CTA). The two
+// non-empty stacks include three trailing `UpcomingSessionCard`s so the
 // total height matches the loading + empty states. All demo sessions run
 // 14:00–16:30 local; the live one anchors to the most recent 14:00 (today
 // if past, otherwise yesterday) so it always displays as "in progress".
@@ -703,31 +702,31 @@ function SessionsSectionDemo() {
 
   const liveFirst = mounted
     ? buildLoadedSessions(SESSIONS_FIXTURES_LIVE_FIRST, SESSIONS_LIVE_FIRST_GAMER)
-    : [];
+    : null;
   const countdownFirst = mounted
     ? buildLoadedSessions(
         SESSIONS_FIXTURES_COUNTDOWN_FIRST,
         SESSIONS_COUNTDOWN_FIRST_GAMER,
       )
-    : [];
+    : null;
 
   return (
     <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 xl:grid-cols-4">
       <div className="flex flex-col gap-2">
         <DemoCaption>Loading</DemoCaption>
-        <SessionsSectionLoading />
+        <SessionsSection sessions={null} />
       </div>
       <div className="flex flex-col gap-2">
         <DemoCaption>No sessions</DemoCaption>
-        <SessionsSectionEmpty />
+        <SessionsSection sessions={[]} />
       </div>
       <div className="flex flex-col gap-2">
         <DemoCaption>Loaded — live now</DemoCaption>
-        {mounted ? <SessionsSectionLoaded sessions={liveFirst} /> : null}
+        <SessionsSection sessions={liveFirst} />
       </div>
       <div className="flex flex-col gap-2">
         <DemoCaption>Loaded — countdown</DemoCaption>
-        {mounted ? <SessionsSectionLoaded sessions={countdownFirst} /> : null}
+        <SessionsSection sessions={countdownFirst} />
       </div>
     </div>
   );
@@ -758,8 +757,8 @@ function buildLoadedSessions(
         gamerFirstName: gamer.firstName,
         gamerSeed: gamer.seed,
         productName: f.name,
-        nextSessionStart: liveStart,
-        nextSessionEnd: end,
+        sessionStart: liveStart,
+        sessionEnd: end,
         voiceIsOpen: true,
         voiceHref: "#",
         reportsHref: "#",
@@ -775,8 +774,8 @@ function buildLoadedSessions(
       gamerFirstName: gamer.firstName,
       gamerSeed: gamer.seed,
       productName: f.name,
-      nextSessionStart: start,
-      nextSessionEnd: end,
+      sessionStart: start,
+      sessionEnd: end,
       voiceIsOpen: false,
       voiceHref: "#",
       reportsHref: "#",

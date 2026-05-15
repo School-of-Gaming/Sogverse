@@ -8,7 +8,6 @@ export {
   type UpcomingSessionCardProps,
 } from "./UpcomingSessionCard";
 export {
-  SessionsSectionLoading,
-  SessionsSectionEmpty,
-  SessionsSectionLoaded,
+  SessionsSection,
+  type SessionsSectionProps,
 } from "./SessionsSection";

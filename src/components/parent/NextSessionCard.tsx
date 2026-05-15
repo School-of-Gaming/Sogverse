@@ -12,7 +12,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
-import { cn } from "@/lib/utils";
+import { cn, formatDate, formatTime } from "@/lib/utils";
 
 /**
  * Prominent card for the soonest joinable session in the parent's list.
@@ -21,6 +21,18 @@ import { cn } from "@/lib/utils";
  * a per-minute countdown, and the reports link. Every session below this
  * one is rendered as a `UpcomingSessionCard` instead (no CTAs, no
  * countdown).
+ *
+ * Live state ("can the parent click Join?") is owned upstream by
+ * `computeSessionWindow` (lib/session-schedule.ts). The card takes
+ * `voiceIsOpen` as-is — the same value the rest of the app uses, so
+ * liveness is consistent everywhere.
+ *
+ * The locked-button label intentionally shows the *official session start*,
+ * not the (earlier) buffer-window open time. The room silently becomes
+ * joinable at `sessionStart - SESSION_WINDOW_BEFORE_MINUTES`, at which
+ * point the button flips to the Join state — letting eager parents and
+ * gamers slip in early to get settled, while everyone still sees the
+ * advertised start time on the locked label.
  */
 
 /**
@@ -28,9 +40,8 @@ import { cn } from "@/lib/utils";
  * 24h start–end time range. Abbreviating just the weekday is enough to fit
  * a Finnish long-form on a single row of the narrow column layout
  * ("lauantai" → "la"); the month word stays long since "toukokuuta" reads
- * naturally and most other locales keep month words short anyway. Intl
- * handles weekday/month words per locale; forcing `hour12: false` keeps
- * the time column 24h regardless of locale default.
+ * naturally and most other locales keep month words short anyway. `formatTime`
+ * normalizes the time column to 24h regardless of locale default.
  *
  * We format start and end separately rather than via `formatRange`: when
  * the session crosses midnight (start and end fall on different calendar
@@ -41,50 +52,17 @@ import { cn } from "@/lib/utils";
  *   fi → "ma 1. toukokuuta · 16.00 – 18.00"
  *   sv → "mån 1 maj · 16:00 – 18:00"
  */
-/**
- * Short localized date + clock-time pair for the locked voice button.
- * Splits into two pieces so the translation template can place the
- * locale-specific preposition between them — English "at", Finnish "klo",
- * Swedish "kl." — instead of forcing a single language's word order.
- *   en → { date: "Mon, May 18", time: "16:00" }  → "Opens Mon, May 18 at 16:00"
- *   fi → { date: "ma 18.5.",   time: "16.00" }  → "Avautuu ma 18.5. klo 16.00"
- *   sv → { date: "mån 18 maj", time: "16:00" }  → "Öppnas mån 18 maj kl. 16:00"
- */
-function formatVoiceOpensDateTime(
-  when: Date,
-  locale: string,
-): { date: string; time: string } {
-  const date = new Intl.DateTimeFormat(locale, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-  }).format(when);
-  const time = new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(when);
-  return { date, time };
-}
-
 function formatSessionDateTimeRange(
   start: Date,
   end: Date,
   locale: string,
 ): string {
-  const datePart = new Intl.DateTimeFormat(locale, {
+  const datePart = formatDate(start, locale, {
     weekday: "short",
     day: "numeric",
     month: "long",
-  }).format(start);
-
-  const timeFmt = new Intl.DateTimeFormat(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
   });
-
-  return `${datePart} · ${timeFmt.format(start)} – ${timeFmt.format(end)}`;
+  return `${datePart} · ${formatTime(start, locale)} – ${formatTime(end, locale)}`;
 }
 
 /**
@@ -134,14 +112,14 @@ export interface NextSessionCardProps {
   gamerSeed?: string;
   /** Product name (club / camp / event). */
   productName: string;
-  /** When the next session starts. Drives the countdown and the in-progress flip. */
-  nextSessionStart: Date;
-  /** When the next session ends. Used for the start–end time range label. */
-  nextSessionEnd: Date;
+  /** When the session officially starts. Drives the date label and countdown. */
+  sessionStart: Date;
+  /** When the session ends. Drives the start–end time range label. */
+  sessionEnd: Date;
   /**
-   * Whether the voice room is currently joinable. Open = active CTA;
-   * closed = locked button labelled with the time until it opens.
-   * The adapter decides what "open" means (typically buffer window).
+   * Whether the voice room is currently joinable. Pass
+   * `computeSessionWindow(schedule, now).isOpen` — the same value the rest
+   * of the app uses, so liveness is consistent everywhere.
    */
   voiceIsOpen: boolean;
   /** Where the active "Join voice room" link navigates. */
@@ -154,8 +132,8 @@ export function NextSessionCard({
   gamerFirstName,
   gamerSeed,
   productName,
-  nextSessionStart,
-  nextSessionEnd,
+  sessionStart,
+  sessionEnd,
   voiceIsOpen,
   voiceHref,
   reportsHref,
@@ -163,21 +141,44 @@ export function NextSessionCard({
   const t = useTranslations("parent.nextSession");
   const locale = useLocale();
 
-  const [now, setNow] = useState(() => Date.now());
+  // `now` stays null until after mount so the SSR-rendered HTML and the
+  // first client render produce the same countdown text (a non-breaking-space
+  // placeholder). Seeding `Date.now()` only on the client avoids the
+  // hydration mismatch we'd otherwise get from the server's clock differing
+  // from the client's. 30s cadence matches the section-level `voiceIsOpen`
+  // ticker upstream (use-groups-page) so the countdown and the Join/locked
+  // flip stay roughly in sync.
+  const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 60_000);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- post-hydration init: `now` is intentionally null during SSR so the countdown text doesn't depend on the server clock. See TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(id);
   }, []);
 
-  const msUntil = nextSessionStart.getTime() - now;
-  const isStarted = msUntil <= 0;
-  const countdown = formatCountdownCompound(msUntil, locale);
+  // NBSP placeholder reserves the line height without copy — the
+  // Reports button on the right stays put between SSR and post-mount.
+  let countdownLine = " ";
+  if (now !== null) {
+    const msUntil = sessionStart.getTime() - now;
+    countdownLine = msUntil <= 0
+      ? t("inProgress")
+      : t("startsIn", { countdown: formatCountdownCompound(msUntil, locale) });
+  }
+
   const sessionTimeLabel = formatSessionDateTimeRange(
-    nextSessionStart,
-    nextSessionEnd,
+    sessionStart,
+    sessionEnd,
     locale,
   );
-  const opensAt = formatVoiceOpensDateTime(nextSessionStart, locale);
+  // The locked label intentionally advertises the session-start time, not
+  // the buffer-window open time. See the file header.
+  const opensDate = formatDate(sessionStart, locale, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+  const opensTime = formatTime(sessionStart, locale);
 
   return (
     <Card
@@ -224,15 +225,13 @@ export function NextSessionCard({
               )}
             >
               <Lock className="h-4 w-4" />
-              {t("locked", { date: opensAt.date, time: opensAt.time })}
+              {t("locked", { date: opensDate, time: opensTime })}
             </button>
           )}
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">
-            {isStarted ? t("inProgress") : t("startsIn", { countdown })}
-          </p>
+          <p className="text-xs text-muted-foreground">{countdownLine}</p>
           <Link
             href={reportsHref}
             target="_blank"
