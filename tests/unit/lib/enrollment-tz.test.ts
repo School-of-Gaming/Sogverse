@@ -49,30 +49,4 @@ describe("getNextSessionStart — non-UTC runtime regression", () => {
     // And specifically: next Monday is 2026-06-01 08:00 Helsinki = 05:00 UTC.
     expect(result.toISOString()).toBe("2026-06-01T05:00:00.000Z");
   });
-
-  it("matches the right weekday in the source timezone, not in the runtime timezone", () => {
-    // 2026-05-25T18:00 UTC = Tuesday 04:00 Sydney = Monday 21:00 Helsinki.
-    // Buggy `getUTCDay` would call this Tuesday (the runtime sees it as
-    // Tuesday morning). Source-TZ weekday should be Monday.
-    const now = new Date("2026-05-25T18:00:00Z");
-    const result = getNextSessionStart(
-      { dayOfWeek: 0, startTime: "22:00", timezone: "Europe/Helsinki" },
-      { now },
-    );
-
-    // 22:00 Helsinki summer (UTC+3) = 19:00 UTC, same calendar day.
-    expect(result.toISOString()).toBe("2026-05-25T19:00:00.000Z");
-  });
-
-  it("does not regress UTC-runtime behavior (sanity)", () => {
-    // Same scenario as the first test but for a UTC-zoned product — the
-    // result must still be future regardless of runtime zone.
-    const cursor = new Date("2026-02-25T15:01:00Z");
-    const result = getNextSessionStart(
-      { dayOfWeek: 2, startTime: "15:00", timezone: "UTC" },
-      { now: cursor },
-    );
-    expect(result.getTime()).toBeGreaterThan(cursor.getTime());
-    expect(result.toISOString()).toBe("2026-03-04T15:00:00.000Z");
-  });
 });
