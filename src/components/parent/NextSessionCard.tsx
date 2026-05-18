@@ -180,7 +180,7 @@ export function NextSessionCard({
           "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
       )}
     >
-      <CardHeader className="pb-1">
+      <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12">
             <Identicon id={gamerSeed ?? gamerFirstName} size={48} />
