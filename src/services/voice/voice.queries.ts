@@ -35,12 +35,27 @@ export function useLoungeRoomId(roomType: string) {
   });
 }
 
-/** Get a Daily.co meeting token */
+/** Get a Daily.co meeting token for a v1 voice room (`voice_rooms.id`). */
 export function useVoiceToken() {
   const supabase = getClient();
   const service = new VoiceService(supabase);
 
   return useMutation({
     mutationFn: (roomId: string) => service.getToken(roomId),
+  });
+}
+
+/**
+ * Get a Daily.co meeting token for a v2 product group
+ * (`product_groups_v2.id`). The token endpoint derives the Daily room name
+ * from the group + current session window and lazy-creates the room on
+ * first join — no DB-side `voice_rooms_v2` table.
+ */
+export function useVoiceTokenV2() {
+  const supabase = getClient();
+  const service = new VoiceService(supabase);
+
+  return useMutation({
+    mutationFn: (groupId: string) => service.getTokenForGroup(groupId),
   });
 }

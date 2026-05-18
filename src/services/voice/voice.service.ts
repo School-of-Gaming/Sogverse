@@ -58,12 +58,35 @@ export class VoiceService {
     return data?.id ?? null;
   }
 
-  /** Get a Daily.co meeting token for a room */
+  /** Get a Daily.co meeting token for a v1 voice room (by `voice_rooms.id`). */
   async getToken(roomId: string): Promise<{ token: string; roomUrl: string; role: string }> {
     const response = await fetch("/api/voice/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ roomId }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || "Failed to get token");
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get a Daily.co meeting token for a v2 product group (by
+   * `product_groups_v2.id`). No backing `voice_rooms_v2` row — the token
+   * endpoint derives the Daily room name from the group + the current
+   * session window and lazy-creates the room on first join.
+   */
+  async getTokenForGroup(
+    groupId: string,
+  ): Promise<{ token: string; roomUrl: string; role: string }> {
+    const response = await fetch("/api/voice/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ groupId }),
     });
 
     if (!response.ok) {

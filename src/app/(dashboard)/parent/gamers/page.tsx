@@ -25,6 +25,7 @@ export default function CustomerGamersPage() {
   const [switchTarget, setSwitchTarget] = useState<{
     gamerId: string;
     gamerDisplayName: string;
+    productName: string;
     redirectUrl: string;
   } | null>(null);
 
@@ -110,6 +111,7 @@ export default function CustomerGamersPage() {
                         onJoinClick={() => setSwitchTarget({
                           gamerId: gamer.id,
                           gamerDisplayName: gamer.first_name,
+                          productName: group.productName,
                           redirectUrl: `${ROUTES.gamer.voiceSession(group.voiceRoomId)}?groupId=${group.groupId}`,
                         })}
                       />
@@ -152,6 +154,7 @@ export default function CustomerGamersPage() {
           onOpenChange={(open) => { if (!open) setSwitchTarget(null); }}
           gamerId={switchTarget.gamerId}
           gamerDisplayName={switchTarget.gamerDisplayName}
+          productName={switchTarget.productName}
           redirectUrl={switchTarget.redirectUrl}
         />
       )}

@@ -1562,8 +1562,8 @@
       "failedUpdateMc": "Minecraft-käyttäjänimen päivittäminen epäonnistui"
     },
     "switchToGamer": {
-      "title": "Vaihda käyttäjään {name}?",
-      "description": "Sinut kirjataan sisään käyttäjänä <bold>{name}</bold>. Voit vaihtaa takaisin vanhemman tilille pelaajan hallintapaneelista.",
+      "title": "Vaihda käyttäjän {name} profiiliin ja liity ryhmään {productName}?",
+      "oneWayWarning": "Sinut kirjataan ulos vanhemman tililtä.",
       "failedSwitch": "Tilin vaihtaminen epäonnistui",
       "switching": "Vaihdetaan...",
       "confirm": "Vaihda käyttäjään {name}"
