@@ -19,7 +19,6 @@ export function GamerGroupsPageContent() {
       heading={t("myGroupsHeading")}
       subheading={t("myGroupsSubheading")}
       emptyText={t("myGroupsEmpty")}
-      voiceRoute={ROUTES.gamer.voiceSession}
       detailRoute={ROUTES.gamer.group}
     />
   );

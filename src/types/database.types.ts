@@ -1494,44 +1494,6 @@ export type Database = {
         }
         Relationships: []
       }
-      voice_rooms: {
-        Row: {
-          created_at: string
-          daily_room_name: string
-          group_id: string | null
-          id: string
-          name: string
-          room_type: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          daily_room_name: string
-          group_id?: string | null
-          id?: string
-          name: string
-          room_type?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          daily_room_name?: string
-          group_id?: string | null
-          id?: string
-          name?: string
-          room_type?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "voice_rooms_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "product_groups"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       whatsapp_contacts: {
         Row: {
           created_at: string
@@ -1726,24 +1688,6 @@ export type Database = {
         Args: { p_reservation_id: string }
         Returns: Json
       }
-      get_available_voice_rooms: {
-        Args: never
-        Returns: {
-          daily_room_name: string
-          day_of_week: number
-          duration_minutes: number
-          enrolled_at: string
-          gedu_first_name: string
-          gedu_id: string
-          group_id: string
-          id: string
-          name: string
-          product_name: string
-          room_type: string
-          start_time: string
-          timezone: string
-        }[]
-      }
       get_enrollment_groups: {
         Args: { p_product_id: string }
         Returns: {
@@ -1806,7 +1750,6 @@ export type Database = {
           product_padlet_url: string
           start_time: string
           timezone: string
-          voice_room_id: string
         }[]
       }
       get_my_parents: {

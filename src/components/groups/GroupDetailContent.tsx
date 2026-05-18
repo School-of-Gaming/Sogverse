@@ -16,7 +16,7 @@ import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { useTimezone } from "@/providers";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
-interface GroupDetailContentBase {
+interface GroupDetailContentProps {
   groups: GroupWithVoice[];
   groupId: string;
   isLoading: boolean;
@@ -24,26 +24,22 @@ interface GroupDetailContentBase {
   backHref: string;
 }
 
-interface GroupDetailWithVoiceRoute extends GroupDetailContentBase {
-  voiceRoute: (roomId: string) => string;
-  onJoinClick?: never;
-}
-
-interface GroupDetailWithJoinClick extends GroupDetailContentBase {
-  voiceRoute?: never;
-  onJoinClick: () => void;
-}
-
-type GroupDetailContentProps = GroupDetailWithVoiceRoute | GroupDetailWithJoinClick;
-
+/**
+ * Shared detail page for v1 groups (admin, gedu, customer).
+ *
+ * The Join button is rendered disabled — the v1 voice room flow has been
+ * deleted and there's no in-page way to join from here anymore. The card
+ * still shows the live/upcoming status (driven by `useGroupsWithVoice`)
+ * because removing the entire voice strip would require a redesign; the
+ * TODO.md "Tear out the v1 groups UI now that its voice surface is a
+ * no-op" item tracks the follow-up.
+ */
 export function GroupDetailContent({
   groups,
   groupId,
   isLoading,
   error,
   backHref,
-  voiceRoute,
-  onJoinClick,
 }: GroupDetailContentProps) {
   const t = useTranslations('groups');
   const c = useTranslations('common');
@@ -149,10 +145,7 @@ export function GroupDetailContent({
             )}
           </div>
         </div>
-        {onJoinClick
-          ? <JoinButton onClick={onJoinClick} disabled={!group.voiceIsOpen} />
-          : <JoinButton href={`${voiceRoute(group.voiceRoomId)}?groupId=${group.groupId}`} disabled={!group.voiceIsOpen} />
-        }
+        <JoinButton onClick={() => {}} disabled />
       </div>
 
       {/* Gamers Roster */}

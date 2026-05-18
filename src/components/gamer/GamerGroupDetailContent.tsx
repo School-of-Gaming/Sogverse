@@ -19,7 +19,6 @@ export function GamerGroupDetailContent({ groupId }: GamerGroupDetailContentProp
       isLoading={isLoading}
       error={error}
       backHref={ROUTES.gamer.groups}
-      voiceRoute={ROUTES.gamer.voiceSession}
     />
   );
 }

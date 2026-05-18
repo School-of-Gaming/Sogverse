@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { Loader2, Users } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +12,6 @@ import type { GroupWithVoice } from "@/hooks/use-groups-page";
 export interface LoungeConfig {
   name: string;
   description: string;
-  joinHref: string | null;
 }
 
 interface GroupsListContentProps {
@@ -24,10 +22,16 @@ interface GroupsListContentProps {
   heading: string;
   subheading: string;
   emptyText: string;
-  voiceRoute: (roomId: string) => string;
   detailRoute: (groupId: string) => string;
 }
 
+/**
+ * Shared listing for the admin and gedu groups pages. The Join button on
+ * each card is no-op (disabled) — the v1 voice room system that backed
+ * these surfaces has been deleted; see TODO.md "Tear out the v1 groups
+ * UI now that its voice surface is a no-op" for the follow-up cleanup
+ * that removes this component along with its callers.
+ */
 export function GroupsListContent({
   groups,
   isLoading,
@@ -36,7 +40,6 @@ export function GroupsListContent({
   heading,
   subheading,
   emptyText,
-  voiceRoute,
   detailRoute,
 }: GroupsListContentProps) {
   const t = useTranslations('groups');
@@ -54,7 +57,6 @@ export function GroupsListContent({
           key={lounge.name}
           name={lounge.name}
           description={lounge.description}
-          joinHref={lounge.joinHref}
         />
       ))}
 
@@ -89,7 +91,6 @@ export function GroupsListContent({
               key={group.groupId}
               group={group}
               locale={locale}
-              voiceRoute={voiceRoute}
               detailRoute={detailRoute}
             />
           ))
@@ -102,22 +103,15 @@ export function GroupsListContent({
 function GroupCardAdapter({
   group,
   locale,
-  voiceRoute,
   detailRoute,
 }: {
   group: GroupWithVoice;
   locale: string;
-  voiceRoute: (roomId: string) => string;
   detailRoute: (groupId: string) => string;
 }) {
-  const router = useRouter();
   const schedule = useMemo(
     () => formatScheduleLocal(group.dayOfWeek, group.startTime, group.timezone, locale),
     [group.dayOfWeek, group.startTime, group.timezone, locale],
-  );
-  const handleJoinClick = useCallback(
-    () => router.push(voiceRoute(group.voiceRoomId)),
-    [router, voiceRoute, group.voiceRoomId],
   );
 
   return (
@@ -129,7 +123,6 @@ function GroupCardAdapter({
       schedule={schedule}
       voiceIsOpen={group.voiceIsOpen}
       voiceNextSessionStart={group.voiceNextSessionStart}
-      onJoinClick={handleJoinClick}
       detailHref={detailRoute(group.groupId)}
     />
   );

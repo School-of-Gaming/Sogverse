@@ -12,10 +12,10 @@ import { VoiceControls } from "./VoiceControls";
 import { SpatialCanvas } from "./SpatialCanvas";
 import { ScreenShareDisplay } from "./ScreenShareDisplay";
 import { ParticipantList } from "./ParticipantList";
-import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
 
 interface SpatialVoiceRoomProps {
-  room: AvailableVoiceRoomWithWindow | null;
+  /** Optional title shown in the card header. Defaults to the localized "Voice room" string. */
+  title?: string;
   onLeave: () => Promise<void>;
   leaveLabel?: string;
 }
@@ -23,7 +23,7 @@ interface SpatialVoiceRoomProps {
 const SCREEN_SHARE_ANIMATION_MS = 700;
 
 export function SpatialVoiceRoom({
-  room,
+  title,
   onLeave,
   leaveLabel,
 }: SpatialVoiceRoomProps) {
@@ -82,7 +82,7 @@ export function SpatialVoiceRoom({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Mic className="h-5 w-5" />
-              {room?.product_name ?? room?.name ?? t('voiceRoom')}
+              {title ?? t('voiceRoom')}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-xs">
