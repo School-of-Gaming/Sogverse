@@ -28,20 +28,29 @@ export function getNextSessionStart(
   // Convert: jsDay = (dayOfWeek + 1) % 7
   const targetJsDay = (schedule.dayOfWeek + 1) % 7;
 
-  // Try days 0..6 ahead of "today in the source timezone" to find the next occurrence.
-  // toZonedTime returns a Date whose UTC fields represent wall-clock in the source TZ.
+  // Try days 0..6 ahead of "today in the source timezone" to find the next
+  // occurrence. `toZonedTime` returns a Date whose *local* fields (getDay,
+  // getDate, getHours, ...) read the wall-clock in the source TZ — NOT the
+  // UTC fields. Using getUTC* here silently works on a UTC server (Vercel
+  // prod) and breaks on every non-UTC environment: a dev laptop in another
+  // zone, and crucially, every user's browser during client-side hydration
+  // of useMyUpcomingSessions. The day-of-week match shifts by the local
+  // offset, the function returns a past occurrence, and the
+  // enumerateOccurrences while-loop in src/lib/upcoming-sessions.ts (which
+  // only escapes via `start > endBoundary`) spins forever, pegging the
+  // renderer at 100% CPU. Regression: tests/unit/lib/enrollment-tz.test.ts.
   const zonedNow = toZonedTime(now, schedule.timezone);
   for (let offset = 0; offset <= 7; offset++) {
     const candidate = new Date(zonedNow.getTime() + offset * 86_400_000);
 
-    const jsDay = candidate.getUTCDay();
+    const jsDay = candidate.getDay();
     if (jsDay !== targetJsDay && offset < 7) continue;
     if (jsDay !== targetJsDay) continue;
 
     // Found the right weekday — build the wall-clock datetime and convert to UTC
-    const year = candidate.getUTCFullYear();
-    const month = pad(candidate.getUTCMonth() + 1);
-    const day = pad(candidate.getUTCDate());
+    const year = candidate.getFullYear();
+    const month = pad(candidate.getMonth() + 1);
+    const day = pad(candidate.getDate());
     const wallStr = `${year}-${month}-${day}T${pad(hours)}:${pad(minutes)}:00`;
     const utcDate = fromZonedTime(wallStr, schedule.timezone);
 
