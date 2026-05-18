@@ -194,7 +194,10 @@ function enumerateOccurrences(args: {
       const end = new Date(start.getTime() + durationMs);
       out.push({ start, end });
       // Step past this start so the next iteration finds the following
-      // occurrence rather than re-emitting this one.
+      // occurrence rather than re-emitting this one. `getNextSessionStart`
+      // is required to return a strictly future date relative to `now`;
+      // see its TZ regression test — if that contract slips, this loop
+      // never advances and the renderer pegs.
       cursor = new Date(start.getTime() + 60_000);
       emitted += 1;
     }
