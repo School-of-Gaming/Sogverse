@@ -230,20 +230,6 @@ describe("get_my_groups RPC", () => {
       expect(gamerRow!.enrollment_id).toBe(TEST_IDS.ENROLLMENT);
     });
 
-    it("returns voice_room_id for the group", async () => {
-      const { data } = await geduClient.rpc("get_my_groups");
-      const seededRow = data!.find((r) => r.group_id === TEST_IDS.GROUP);
-      expect(seededRow).toBeDefined();
-      expect(seededRow!.voice_room_id).toBeDefined();
-    });
-
-    it("customer: voice_room_id is returned", async () => {
-      const { data } = await customerClient.rpc("get_my_groups");
-      const row = data!.find((r) => r.group_id === TEST_IDS.GROUP);
-      expect(row).toBeDefined();
-      expect(row!.voice_room_id).toBeDefined();
-    });
-
     it("groups with no enrollments still appear (gamer fields are null)", async () => {
       // Remove the enrollment, query as admin (sees all groups), then restore
       await admin

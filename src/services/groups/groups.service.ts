@@ -47,7 +47,6 @@ export interface GeduGroup {
   timezone: string;
   durationMinutes: number;
   displayOrder: number;
-  voiceRoomId: string;
   gamers: GeduGroupGamer[];
 }
 
@@ -82,7 +81,6 @@ function reshapeGroupRows(data: MyGroupWithDetails[]): GeduGroup[] {
         timezone: row.timezone,
         durationMinutes: row.duration_minutes,
         displayOrder: row.display_order,
-        voiceRoomId: row.voice_room_id,
         gamers: [],
       });
     }

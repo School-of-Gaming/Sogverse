@@ -77,29 +77,6 @@ export type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
 // feedback_submissions
 export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissions"]["Row"];
 
-// voice_rooms
-export type VoiceRoom = Database["public"]["Tables"]["voice_rooms"]["Row"];
-export type VoiceRoomInsert = Database["public"]["Tables"]["voice_rooms"]["Insert"];
-export type VoiceRoomUpdate = Database["public"]["Tables"]["voice_rooms"]["Update"];
-
-// get_available_voice_rooms RPC — the generated type marks nullable LEFT JOIN
-// fields as non-nullable. Override to reflect that special rooms have null schedule data.
-type _AvailableVoiceRoomGenerated = Database["public"]["Functions"]["get_available_voice_rooms"]["Returns"][number];
-export type AvailableVoiceRoom = Omit<
-  _AvailableVoiceRoomGenerated,
-  "group_id" | "product_name" | "day_of_week" | "start_time" | "timezone" | "duration_minutes" | "gedu_first_name" | "gedu_id" | "enrolled_at"
-> & {
-  group_id: string | null;
-  product_name: string | null;
-  day_of_week: number | null;
-  start_time: string | null;
-  timezone: string | null;
-  duration_minutes: number | null;
-  gedu_first_name: string | null;
-  gedu_id: string | null;
-  enrolled_at: string | null;
-};
-
 // spoken_languages (reference table — the human languages a person speaks /
 // a club is delivered in). Distinct from `locale` (UI translation), which
 // has no DB table and is constrained by SUPPORTED_LOCALES in code.

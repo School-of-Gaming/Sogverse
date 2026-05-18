@@ -9,15 +9,19 @@ import { JoinButton } from "@/components/ui/join-button";
 interface LoungeCardProps {
   name: string;
   description: string;
-  /** When null/undefined the join button shows a loading spinner. */
-  joinHref?: string | null;
 }
 
 /**
- * Banner card for always-open voice lounges (Gedu Lounge, Admin Lounge, etc.).
- * Role-agnostic — the caller provides the name, description, and join route.
+ * Banner card for always-open voice lounges (Gedu Lounge, Admin Lounge).
+ *
+ * The Join button is rendered disabled — lounges rode on the v1 voice
+ * room system (`voice_rooms` rows with `room_type = 'admin_only'` /
+ * `'gedu_only'`) which has been deleted, and there is no v2 equivalent.
+ * The cards stay visible for now per the TODO.md cleanup item ("Tear out
+ * the v1 groups UI now that its voice surface is a no-op"); once the
+ * surrounding pages are removed this component can go too.
  */
-export function LoungeCard({ name, description, joinHref }: LoungeCardProps) {
+export function LoungeCard({ name, description }: LoungeCardProps) {
   const t = useTranslations('groups');
 
   return (
@@ -35,7 +39,7 @@ export function LoungeCard({ name, description, joinHref }: LoungeCardProps) {
             {description}
           </p>
         </div>
-        <JoinButton href={joinHref ?? ""} loading={!joinHref} />
+        <JoinButton onClick={() => {}} disabled />
       </CardContent>
     </Card>
   );

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createDailyRoom, deleteDailyRoom } from "@/lib/daily";
+import { createDailyRoom } from "@/lib/daily";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL } from "@/lib/constants";
 import {
@@ -347,17 +347,6 @@ export async function POST(
     // --- Prepare DB commit data ---
     const { addedGroups, updatedGroups, deletedGroupIds, enrollmentMoves } = batch;
 
-    let deletedRoomNames: string[] = [];
-    if (deletedGroupIds.length > 0) {
-      const { data: roomsToDelete } = await admin
-        .from("voice_rooms")
-        .select("daily_room_name")
-        .in("group_id", deletedGroupIds);
-      if (roomsToDelete) {
-        deletedRoomNames = roomsToDelete.map((r) => r.daily_room_name);
-      }
-    }
-
     // --- Stream SSE ---
     const stream = new ReadableStream({
       async start(controller) {
@@ -394,7 +383,11 @@ export async function POST(
             return;
           }
 
-          // Best-effort: pre-create Daily.co rooms for new groups
+          // Best-effort: pre-create Daily.co rooms for new groups so the
+          // first joiner doesn't pay the create-room latency. Names mirror
+          // the v1 `group-{id}` shape; the v2 voice flow uses a different
+          // name scheme (derived per-session in /api/voice/token), so this
+          // only matters for any remaining v1 group surface.
           const rpcJson = rpcResult as { tempMap?: Record<string, string> } | null;
           const tempMap = rpcJson?.tempMap ?? {};
           for (const realId of Object.values(tempMap)) {
@@ -403,15 +396,6 @@ export async function POST(
               await createDailyRoom({ name: dailyRoomName });
             } catch (err) {
               console.error(`Failed to pre-create Daily.co room ${dailyRoomName}:`, err);
-            }
-          }
-
-          // Best-effort: delete Daily.co rooms for deleted groups
-          for (const roomName of deletedRoomNames) {
-            try {
-              await deleteDailyRoom(roomName);
-            } catch (err) {
-              console.error(`Failed to delete Daily.co room ${roomName}:`, err);
             }
           }
 

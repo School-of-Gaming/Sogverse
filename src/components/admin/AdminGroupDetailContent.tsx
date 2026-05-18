@@ -19,7 +19,6 @@ export function AdminGroupDetailContent({ groupId }: AdminGroupDetailContentProp
       isLoading={isLoading}
       error={error}
       backHref={ROUTES.admin.groups}
-      voiceRoute={ROUTES.admin.voiceSession}
     />
   );
 }
