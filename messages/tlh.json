@@ -1601,8 +1601,8 @@
       "failedUpdateMc": "Minecraft lo'wI' pong choH Dabe'lu'"
     },
     "switchToGamer": {
-      "title": "{name}vaH yIchoH?",
-      "description": "<bold>{name}</bold> DaH SoH. toy'wI' QaDvo' vav/SoS account choH.",
+      "title": "{name}vaD pong yIchoH 'ej {productName}vaD yIghaj?",
+      "oneWayWarning": "vav/SoS account vIqaSlu'.",
       "failedSwitch": "account choH Dabe'lu'",
       "switching": "vIchoH...",
       "confirm": "{name}vaH yIchoH"

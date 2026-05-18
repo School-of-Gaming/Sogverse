@@ -1556,8 +1556,8 @@
       "failedUpdateMc": "Failed to update Minecraft username"
     },
     "switchToGamer": {
-      "title": "Switch to {name}?",
-      "description": "You'll be signed in as <bold>{name}</bold>. You can switch back to your parent account from the gamer dashboard.",
+      "title": "Switch to {name}'s profile to join {productName}?",
+      "oneWayWarning": "You'll be signed out of your parent account.",
       "failedSwitch": "Failed to switch accounts",
       "switching": "Switching...",
       "confirm": "Switch to {name}"

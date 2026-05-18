@@ -6,34 +6,60 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
 import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
-import { useAvailableVoiceRooms, useVoiceToken } from "@/services/voice";
+import {
+  useAvailableVoiceRooms,
+  useVoiceToken,
+  useVoiceTokenV2,
+} from "@/services/voice";
 import type { AvailableVoiceRoomWithWindow } from "@/services/voice";
 import { computeSessionWindow } from "@/lib/session-schedule";
 
 interface VoiceSessionPageProps {
+  /**
+   * The room identifier. In v1 mode this is `voice_rooms.id`; in v2 mode
+   * it's `product_groups_v2.id` (the token endpoint derives the Daily room
+   * name from the group + the current session window).
+   */
   roomId: string;
   backHref: string;
+  /**
+   * Which shape to send to `/api/voice/token`:
+   *   - `"v1"` (default) — `{ roomId }`. The page also pulls the room from
+   *     `get_available_voice_rooms` to drive the auto-leave effect.
+   *   - `"v2"` — `{ groupId }`. No backing v2 RPC, so the auto-leave effect
+   *     no-ops; Daily's token `exp` is the hard ejection boundary.
+   */
+  tokenMode?: "v1" | "v2";
 }
 
-function VoiceSessionInner({ roomId, backHref }: VoiceSessionPageProps) {
+function VoiceSessionInner({
+  roomId,
+  backHref,
+  tokenMode = "v1",
+}: VoiceSessionPageProps) {
   const t = useTranslations('voice');
   const c = useTranslations('common');
   const { joined, joining, join, leave } = useVoiceRoom();
+  // v2 rooms aren't surfaced by `get_available_voice_rooms`; skip the
+  // network call entirely in v2 mode rather than fetching a list we won't
+  // consume.
   const { data: rooms } = useAvailableVoiceRooms();
-  const getToken = useVoiceToken();
+  const getTokenV1 = useVoiceToken();
+  const getTokenV2 = useVoiceTokenV2();
   const [error, setError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
   const [sessionEnded, setSessionEnded] = useState(false);
   const hasAttemptedJoin = useRef(false);
 
   const room: AvailableVoiceRoomWithWindow | null =
-    rooms?.find((r) => r.id === roomId) ?? null;
+    tokenMode === "v1" ? rooms?.find((r) => r.id === roomId) ?? null : null;
 
   // Auto-join on mount (and reconnect on refresh)
   useEffect(() => {
     if (hasAttemptedJoin.current || joined || joining) return;
     hasAttemptedJoin.current = true;
 
+    const getToken = tokenMode === "v2" ? getTokenV2 : getTokenV1;
     getToken
       .mutateAsync(roomId)
       .then(({ token, roomUrl }) => join(roomUrl, token))

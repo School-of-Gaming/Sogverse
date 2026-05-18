@@ -1556,8 +1556,8 @@
       "failedUpdateMc": "Kunde inte uppdatera Minecraft-användarnamn"
     },
     "switchToGamer": {
-      "title": "Byt till {name}?",
-      "description": "Du loggas in som <bold>{name}</bold>. Du kan byta tillbaka till ditt föräldrakonto från spelarens översikt.",
+      "title": "Byt till {name}s profil för att gå med i {productName}?",
+      "oneWayWarning": "Du loggas ut från ditt föräldrakonto.",
       "failedSwitch": "Kunde inte byta konto",
       "switching": "Byter...",
       "confirm": "Byt till {name}"

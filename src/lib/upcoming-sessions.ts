@@ -1,5 +1,6 @@
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
+import { ROUTES } from "@/lib/constants";
 import { getNextSessionStart } from "@/lib/enrollment";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
@@ -54,6 +55,15 @@ export function expandUpcomingSessions(
     // practice — surfacing the button keeps the card layout stable rather
     // than reflowing for an edge case.
     const reportsHref = row.product.padletUrl ?? "#";
+    // The voice room route is keyed by `product_groups_v2.id` (UUID) and
+    // only exists for remote products. Unassigned participations
+    // (group_id IS NULL, redesign §4.10) get no voice access either —
+    // both cases collapse to a `"#"` no-op so the locked/Live UX still
+    // renders honestly off `voiceIsOpen` while the button stays inert.
+    const voiceHref =
+      row.product.isRemote && row.groupId
+        ? ROUTES.gamer.voiceSession(row.groupId)
+        : "#";
     const startBoundary = startDateToCutoff(
       row.product.startDate,
       row.product.timezone,
@@ -81,10 +91,7 @@ export function expandUpcomingSessions(
         // Filled in for the soonest session below; UpcomingSessionCard
         // ignores it.
         voiceIsOpen: false,
-        // Voice room is intentionally unwired in this version — the locked
-        // state is honest (driven by the same window math the rest of the
-        // app uses) and an active Join would route to `#`.
-        voiceHref: "#",
+        voiceHref,
         reportsHref,
       });
     }
