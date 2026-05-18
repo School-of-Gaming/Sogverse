@@ -43,6 +43,15 @@ export interface SessionsSectionProps {
    * the data filter, which lives one layer up in the wrapper.
    */
   audience?: SessionAudience;
+  /**
+   * Optional click handler for the `NextSessionCard`'s Join button. Used by
+   * the parent dashboard to intercept the click and open the switch-to-gamer
+   * dialog (the parent is signed in as themselves; the voice room is gated
+   * by the gamer's enrollment). The caller receives the session entry so it
+   * can route on `gamerSeed` (gamer id) + `voiceHref`. Omit on the gamer
+   * dashboard so the normal Link navigation is used.
+   */
+  onJoinClick?: (session: NextSessionCardProps) => void;
 }
 
 /**
@@ -53,6 +62,7 @@ export interface SessionsSectionProps {
 export function SessionsSection({
   sessions,
   audience = "customer",
+  onJoinClick,
 }: SessionsSectionProps) {
   const t = useTranslations("dashboardSections");
 
@@ -67,7 +77,11 @@ export function SessionsSection({
   const [next, ...upcoming] = sessions;
   return (
     <div className={cn(SECTION_FRAME, "space-y-3")}>
-      <NextSessionCard key={sessionKey(next)} {...next} />
+      <NextSessionCard
+        key={sessionKey(next)}
+        {...next}
+        onJoinClick={onJoinClick ? () => onJoinClick(next) : undefined}
+      />
       {upcoming.map((s) => (
         <UpcomingSessionCard
           key={sessionKey(s)}

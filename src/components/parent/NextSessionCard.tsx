@@ -126,6 +126,15 @@ export interface NextSessionCardProps {
   voiceIsOpen: boolean;
   /** Where the active "Join voice room" link navigates. */
   voiceHref: string;
+  /**
+   * Optional click handler. When present, the Join button renders as a
+   * `<button>` and `onJoinClick` fires instead of navigating to
+   * `voiceHref`. Used by the parent dashboard, which intercepts the click
+   * to open the switch-to-gamer dialog (the parent is signed in as
+   * themselves; the voice room is gated by the gamer's enrollment). The
+   * gamer dashboard omits this prop so the normal Link is used.
+   */
+  onJoinClick?: () => void;
   /** External reports URL — opens in a new tab. */
   reportsHref: string;
 }
@@ -138,6 +147,7 @@ export function NextSessionCard({
   sessionEnd,
   voiceIsOpen,
   voiceHref,
+  onJoinClick,
   reportsHref,
 }: NextSessionCardProps) {
   const t = useTranslations("parent.nextSession");
@@ -200,13 +210,24 @@ export function NextSessionCard({
       <CardContent className="space-y-4 pt-0">
         <div className="flex justify-center">
           {voiceIsOpen ? (
-            <Link
-              href={voiceHref}
-              className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
-            >
-              <AudioLines className="h-4 w-4" />
-              {t("joinVoice")}
-            </Link>
+            onJoinClick ? (
+              <button
+                type="button"
+                onClick={onJoinClick}
+                className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
+              >
+                <AudioLines className="h-4 w-4" />
+                {t("joinVoice")}
+              </button>
+            ) : (
+              <Link
+                href={voiceHref}
+                className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
+              >
+                <AudioLines className="h-4 w-4" />
+                {t("joinVoice")}
+              </Link>
+            )
           ) : (
             <button
               type="button"

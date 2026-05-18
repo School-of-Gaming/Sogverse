@@ -39,6 +39,7 @@ export function CustomerGroupDetailContent({ groupId, gamerId }: CustomerGroupDe
           onOpenChange={setShowSwitchDialog}
           gamerId={gamerId}
           gamerDisplayName={gamerDisplayName}
+          productName={group.productName}
           redirectUrl={`${ROUTES.gamer.voiceSession(group.voiceRoomId)}?groupId=${group.groupId}`}
         />
       )}

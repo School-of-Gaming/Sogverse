@@ -307,6 +307,7 @@ function SwitchToGamerDialogDemo() {
           onOpenChange={setOpen}
           gamerId="demo-gamer-id"
           gamerDisplayName="JääKarhu"
+          productName="Minecraft Club"
           redirectUrl="#"
         />
       </SubSection>

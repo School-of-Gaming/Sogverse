@@ -92,12 +92,26 @@ export interface MyUpcomingSessionRow {
     /** External Padlet URL for the session reports link. Null if not set. */
     padletUrl: string | null;
     /**
+     * `false` for in-person products. The dashboard uses this together with
+     * `groupId` to gate whether the Join Voice link gets a real
+     * destination — in-person products have no voice room, so the button
+     * stays inert.
+     */
+    isRemote: boolean;
+    /**
      * Raw translation rows. The dashboard resolves to the viewer's UI locale
      * at render time so the cache key doesn't need to include locale (and a
      * locale switch doesn't refetch).
      */
     translations: ProductTranslationV2[];
   };
+  /**
+   * The `product_groups_v2.id` the gamer is placed in for this product, or
+   * `null` for unassigned participations (redesign §4.10: no voice access).
+   * The dashboard treats null as "no voice destination" — the button stays
+   * inert exactly like an in-person product.
+   */
+  groupId: string | null;
   slots: Array<{
     weekday: number;
     startTime: string;
@@ -253,8 +267,9 @@ export class ParticipationsService {
       .select(
         `
           gamer_id,
+          group_id,
           product:products_v2!inner(
-            id, product_type, timezone, start_date, end_date, padlet_url,
+            id, product_type, timezone, start_date, end_date, padlet_url, is_remote,
             product_translations_v2(*),
             schedule_slots_v2(weekday, start_time, duration_minutes)
           ),
@@ -451,6 +466,7 @@ type RawMyParticipationRow = Pick<
 
 interface RawMyUpcomingSessionRow {
   gamer_id: string;
+  group_id: string | null;
   product: {
     id: string;
     product_type: ProductTypeV2;
@@ -458,6 +474,7 @@ interface RawMyUpcomingSessionRow {
     start_date: string | null;
     end_date: string | null;
     padlet_url: string | null;
+    is_remote: boolean;
     product_translations_v2: ProductTranslationV2[];
     schedule_slots_v2: Array<{
       weekday: number;
@@ -490,8 +507,10 @@ function toMyUpcomingSessionRow(row: RawMyUpcomingSessionRow): MyUpcomingSession
       startDate: product.start_date,
       endDate: product.end_date,
       padletUrl: product.padlet_url,
+      isRemote: product.is_remote,
       translations: product.product_translations_v2,
     },
+    groupId: row.group_id,
     slots: product.schedule_slots_v2.map((s) => ({
       weekday: s.weekday,
       startTime: s.start_time,

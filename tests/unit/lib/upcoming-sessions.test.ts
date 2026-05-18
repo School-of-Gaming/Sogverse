@@ -10,6 +10,7 @@ import type { MyUpcomingSessionRow } from "@/services/participations";
 
 const PRODUCT_ID = "11111111-1111-1111-1111-111111111111";
 const GAMER_ID = "22222222-2222-2222-2222-222222222222";
+const GROUP_ID = "33333333-3333-3333-3333-333333333333";
 
 function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessionRow {
   return {
@@ -21,6 +22,7 @@ function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessi
       startDate: null,
       endDate: null,
       padletUrl: "https://padlet.example/foo",
+      isRemote: true,
       translations: [
         {
           locale: "en",
@@ -33,6 +35,7 @@ function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessi
       ],
       ...(overrides.product ?? {}),
     },
+    groupId: overrides.groupId === undefined ? GROUP_ID : overrides.groupId,
     slots: overrides.slots ?? [
       { weekday: 2, startTime: "15:00", durationMinutes: 120 }, // Wed 15:00 UTC
     ],
@@ -80,6 +83,7 @@ describe("expandUpcomingSessions", () => {
         startDate: null,
         endDate: "2026-03-08", // inclusive — a session ON 2026-03-08 must land
         padletUrl: null,
+        isRemote: true,
         translations: [
           {
             locale: "en",
@@ -114,6 +118,7 @@ describe("expandUpcomingSessions", () => {
         startDate: null,
         endDate: "2026-05-31", // ~13 weeks past now
         padletUrl: null,
+        isRemote: true,
         translations: [
           {
             locale: "en",
@@ -219,6 +224,7 @@ describe("expandUpcomingSessions", () => {
         startDate: null,
         endDate: null,
         padletUrl: null,
+        isRemote: true,
         translations: [
           {
             locale: "en",
@@ -248,6 +254,59 @@ describe("expandUpcomingSessions", () => {
     );
   });
 
+  it("wires voiceHref to the gamer voice route keyed on groupId for remote products", () => {
+    const row = makeRow();
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+    expect(out[0].voiceHref).toBe(`/gamer/voice/${GROUP_ID}`);
+  });
+
+  it("leaves voiceHref as '#' for unassigned participations (groupId null)", () => {
+    // Per redesign §4.10, unassigned participations don't get voice access.
+    // The button stays inert and the card relies on the (always-false)
+    // voiceIsOpen check to render the locked state honestly.
+    const row = makeRow({ groupId: null });
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+    expect(out[0].voiceHref).toBe("#");
+  });
+
+  it("leaves voiceHref as '#' for in-person products (no voice room)", () => {
+    const row = makeRow({
+      product: {
+        id: PRODUCT_ID,
+        type: "consumer_club",
+        timezone: "UTC",
+        startDate: null,
+        endDate: null,
+        padletUrl: null,
+        isRemote: false,
+        translations: [
+          {
+            locale: "en",
+            name: "In-person Club",
+            description: "",
+            product_id: PRODUCT_ID,
+            created_at: "",
+            updated_at: "",
+          },
+        ],
+      },
+    });
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+    expect(out[0].voiceHref).toBe("#");
+  });
+
   it("falls back to '#' for the reports link when the product has no Padlet URL", () => {
     const row = makeRow({
       product: {
@@ -257,6 +316,7 @@ describe("expandUpcomingSessions", () => {
         startDate: null,
         endDate: null,
         padletUrl: null,
+        isRemote: true,
         translations: [
           {
             locale: "en",
@@ -290,6 +350,7 @@ describe("expandUpcomingSessions", () => {
         startDate: "2026-05-26",
         endDate: "2026-06-25",
         padletUrl: null,
+        isRemote: true,
         translations: [
           {
             locale: "en",
@@ -337,6 +398,7 @@ describe("expandUpcomingSessions", () => {
         startDate: "2026-06-22",
         endDate: "2026-07-01",
         padletUrl: null,
+        isRemote: true,
         translations: [
           {
             locale: "en",
@@ -381,6 +443,7 @@ describe("expandUpcomingSessions", () => {
         startDate: null,
         endDate: null,
         padletUrl: null,
+        isRemote: true,
         translations: [
           {
             locale: "en",
@@ -420,6 +483,7 @@ describe("expandUpcomingSessions", () => {
         startDate: null,
         endDate: null,
         padletUrl: null,
+        isRemote: true,
         translations: [
           {
             locale: "en",
