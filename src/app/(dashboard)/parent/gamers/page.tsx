@@ -1,13 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
 import { Gamepad2 } from "lucide-react";
 import { useTranslations, useLocale, useFormatter } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { GroupCard } from "@/components/ui/group-card";
-import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
 import { GamerCard } from "@/components/customer/gamer-card";
 import { useMyGamers } from "@/services/gamers";
 import { useMyGroups } from "@/services/groups";
@@ -15,6 +14,16 @@ import { useGroupsWithVoice } from "@/hooks/use-groups-page";
 import { formatScheduleLocal } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 
+/**
+ * Parent's "My Gamers" page (v1 groups view).
+ *
+ * The per-group "Join voice room as my gamer" trampoline (which
+ * SwitchToGamerDialog handled via /api/auth/switch-account → v1 voice
+ * room URL) is gone with the v1 voice room system. GroupCard renders
+ * its Join button disabled here until the v1 groups UI is fully torn
+ * out (see TODO.md "Tear out the v1 groups UI now that its voice
+ * surface is a no-op").
+ */
 export default function CustomerGamersPage() {
   const t = useTranslations('parent');
   const c = useTranslations('common');
@@ -22,12 +31,6 @@ export default function CustomerGamersPage() {
   const { groups, isLoading: groupsLoading, error: groupsError } = useGroupsWithVoice(useMyGroups());
   const locale = useLocale();
   const format = useFormatter();
-  const [switchTarget, setSwitchTarget] = useState<{
-    gamerId: string;
-    gamerDisplayName: string;
-    productName: string;
-    redirectUrl: string;
-  } | null>(null);
 
   const isLoading = gamersLoading || groupsLoading;
 
@@ -108,12 +111,6 @@ export default function CustomerGamersPage() {
                         group={group}
                         gamerId={gamer.id}
                         locale={locale}
-                        onJoinClick={() => setSwitchTarget({
-                          gamerId: gamer.id,
-                          gamerDisplayName: gamer.first_name,
-                          productName: group.productName,
-                          redirectUrl: `${ROUTES.gamer.voiceSession(group.voiceRoomId)}?groupId=${group.groupId}`,
-                        })}
                       />
                     ))}
                   </div>
@@ -147,17 +144,6 @@ export default function CustomerGamersPage() {
           </CardContent>
         </Card>
       )}
-
-      {switchTarget && (
-        <SwitchToGamerDialog
-          open={!!switchTarget}
-          onOpenChange={(open) => { if (!open) setSwitchTarget(null); }}
-          gamerId={switchTarget.gamerId}
-          gamerDisplayName={switchTarget.gamerDisplayName}
-          productName={switchTarget.productName}
-          redirectUrl={switchTarget.redirectUrl}
-        />
-      )}
     </div>
   );
 }
@@ -166,12 +152,10 @@ function GroupCardForCustomer({
   group,
   gamerId,
   locale,
-  onJoinClick,
 }: {
   group: import("@/hooks/use-groups-page").GroupWithVoice;
   gamerId: string;
   locale: string;
-  onJoinClick: () => void;
 }) {
   const schedule = useMemo(
     () => formatScheduleLocal(group.dayOfWeek, group.startTime, group.timezone, locale),
@@ -187,7 +171,6 @@ function GroupCardForCustomer({
       schedule={schedule}
       voiceIsOpen={group.voiceIsOpen}
       voiceNextSessionStart={group.voiceNextSessionStart}
-      onJoinClick={onJoinClick}
       detailHref={ROUTES.customer.group(group.groupId, gamerId)}
     />
   );

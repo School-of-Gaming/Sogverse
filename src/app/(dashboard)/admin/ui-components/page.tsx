@@ -1727,18 +1727,16 @@ export default function AdminUIComponentsPage() {
         {/* -- Lounge Card -- */}
         <SubSection title="Lounge Card (shared)">
           <p className="text-sm text-muted-foreground mb-3">
-            Banner card for always-open voice lounges. Used on gedu and admin group pages. The join button shows a loading spinner when the href is not yet available.
+            Banner card for always-open voice lounges. The Join button is rendered disabled — the v1 voice room system that backed these surfaces has been deleted; see TODO.md for the broader cleanup of the v1 groups UI.
           </p>
           <div className="space-y-3">
             <LoungeCard
               name="Gedu Lounge"
               description="Connect with other educators anytime"
-              joinHref="#"
             />
             <LoungeCard
               name="Admin Lounge"
               description="Private admin voice channel"
-              joinHref={null}
             />
           </div>
         </SubSection>

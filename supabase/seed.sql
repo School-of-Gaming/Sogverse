@@ -265,14 +265,6 @@ INSERT INTO product_groups (id, product_id, gedu_id, display_order) VALUES (
   0
 );
 
--- Voice room for the test group (matches what commit_group_changes would create)
-INSERT INTO voice_rooms (group_id, room_type, name, daily_room_name) VALUES (
-  '00000000-0000-0000-0000-000000000030', -- Test Group
-  'group',
-  'Test Product',
-  'group-00000000'
-);
-
 -- NOTE: Enrollments are NOT seeded here — they are mutable test state.
 -- Test files that need enrollments create them via seedEnrollment() or the
 -- enroll_gamer_in_group RPC. This prevents cross-file interference.

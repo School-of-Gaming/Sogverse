@@ -24,14 +24,13 @@ describe("commit_group_changes RPC", () => {
   const createdGroupIds: string[] = [];
 
   afterEach(async () => {
-    // Delete test-created groups (CASCADE removes voice_rooms)
     for (const id of createdGroupIds) {
       await admin.from("product_groups").delete().eq("id", id);
     }
     createdGroupIds.length = 0;
   });
 
-  it("atomically creates a voice room when adding a new group", async () => {
+  it("adds a new group and returns it in the tempMap", async () => {
     const { data, error } = await adminAuth.rpc("commit_group_changes", {
       p_product_id: TEST_IDS.PRODUCT,
       p_added_groups: [{ tempId: "t1", geduId: NEW_GROUP_GEDU }],
@@ -49,20 +48,19 @@ describe("commit_group_changes RPC", () => {
     const newGroupId = result.tempMap.t1;
     createdGroupIds.push(newGroupId);
 
-    // Verify voice room was created with correct fields
-    const { data: voiceRoom } = await admin
-      .from("voice_rooms")
-      .select("*")
-      .eq("group_id", newGroupId)
+    // Verify the group was actually inserted
+    const { data: group } = await admin
+      .from("product_groups")
+      .select("id, gedu_id, product_id")
+      .eq("id", newGroupId)
       .single();
 
-    expect(voiceRoom).toBeTruthy();
-    expect(voiceRoom!.room_type).toBe("group");
-    expect(voiceRoom!.name).toBe("Test Product");
-    expect(voiceRoom!.daily_room_name).toBe(`group-${newGroupId.slice(0, 8)}`);
+    expect(group).toBeTruthy();
+    expect(group!.product_id).toBe(TEST_IDS.PRODUCT);
+    expect(group!.gedu_id).toBe(NEW_GROUP_GEDU);
   });
 
-  it("creates voice rooms for multiple new groups in one call", async () => {
+  it("creates multiple new groups in one call", async () => {
     const { data, error } = await adminAuth.rpc("commit_group_changes", {
       p_product_id: TEST_IDS.PRODUCT,
       p_added_groups: [
@@ -82,54 +80,12 @@ describe("commit_group_changes RPC", () => {
     const id2 = result.tempMap.t2;
     createdGroupIds.push(id1, id2);
 
-    // Both groups should have voice rooms
-    const { data: rooms } = await admin
-      .from("voice_rooms")
-      .select("group_id, daily_room_name")
-      .in("group_id", [id1, id2]);
-
-    expect(rooms).toHaveLength(2);
-    const roomGroupIds = rooms!.map((r) => r.group_id);
-    expect(roomGroupIds).toContain(id1);
-    expect(roomGroupIds).toContain(id2);
-  });
-
-  it("CASCADE deletes voice room when group is deleted", async () => {
-    // Create a group + voice room via RPC
-    const { data } = await adminAuth.rpc("commit_group_changes", {
-      p_product_id: TEST_IDS.PRODUCT,
-      p_added_groups: [{ tempId: "t1", geduId: NEW_GROUP_GEDU }],
-      p_updated_groups: [],
-      p_deleted_group_ids: [],
-      p_enrollment_moves: [],
-    });
-
-    const result = data as { autoHidden: boolean; tempMap: Record<string, string> };
-    const groupId = result.tempMap.t1;
-
-    // Verify voice room exists
-    const { data: before } = await admin
-      .from("voice_rooms")
+    const { data: groups } = await admin
+      .from("product_groups")
       .select("id")
-      .eq("group_id", groupId);
-    expect(before).toHaveLength(1);
+      .in("id", [id1, id2]);
 
-    // Delete the group via RPC
-    const { error: deleteError } = await adminAuth.rpc("commit_group_changes", {
-      p_product_id: TEST_IDS.PRODUCT,
-      p_added_groups: [],
-      p_updated_groups: [],
-      p_deleted_group_ids: [groupId],
-      p_enrollment_moves: [],
-    });
-    expect(deleteError).toBeNull();
-
-    // Voice room should be gone (CASCADE)
-    const { data: after } = await admin
-      .from("voice_rooms")
-      .select("id")
-      .eq("group_id", groupId);
-    expect(after).toHaveLength(0);
+    expect(groups).toHaveLength(2);
   });
 
   it("deletes a group that has unenrolled enrollments", async () => {

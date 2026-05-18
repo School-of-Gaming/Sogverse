@@ -30,7 +30,6 @@ describe("GroupsService.getMyGroups()", () => {
         display_order: 0,
         gedu_id: "gedu1",
         gedu_first_name: "Ms. Smith",
-        voice_room_id: "vr-1",
         gamer_id: "gamer1",
         gamer_first_name: "Alice",
         gamer_date_of_birth: "2015-01-01",
@@ -57,7 +56,6 @@ describe("GroupsService.getMyGroups()", () => {
         display_order: 0,
         gedu_id: "gedu1",
         gedu_first_name: "Ms. Smith",
-        voice_room_id: "vr-1",
         gamer_id: "gamer2",
         gamer_first_name: "Bob",
         gamer_date_of_birth: "2014-06-15",
@@ -84,7 +82,6 @@ describe("GroupsService.getMyGroups()", () => {
         display_order: 1,
         gedu_id: "gedu2",
         gedu_first_name: "Mr. Jones",
-        voice_room_id: "vr-2",
         gamer_id: null,
         gamer_first_name: null,
         gamer_date_of_birth: null,
@@ -108,7 +105,6 @@ describe("GroupsService.getMyGroups()", () => {
     expect(groups[0].gamers).toHaveLength(2);
     expect(groups[0].gamers[0].gamerId).toBe("gamer1");
     expect(groups[0].gamers[1].gamerId).toBe("gamer2");
-    expect(groups[0].voiceRoomId).toBe("vr-1");
 
     // Second group (display_order 1, no gamers)
     expect(groups[1].groupId).toBe("g2");
@@ -116,7 +112,6 @@ describe("GroupsService.getMyGroups()", () => {
     expect(groups[1].productImagePath).toBe("img.jpg");
     expect(groups[1].geduName).toBe("Mr. Jones");
     expect(groups[1].gamers).toHaveLength(0);
-    expect(groups[1].voiceRoomId).toBe("vr-2");
   });
 
   it("returns empty array when RPC returns no data", async () => {
@@ -147,7 +142,6 @@ describe("GroupsService.getMyGroups()", () => {
         display_order: 5,
         gedu_id: "gedu-b",
         gedu_first_name: "Gedu B",
-        voice_room_id: "vr-2",
         gamer_id: null,
         gamer_first_name: null,
         gamer_date_of_birth: null,
@@ -174,7 +168,6 @@ describe("GroupsService.getMyGroups()", () => {
         display_order: 1,
         gedu_id: "gedu-a",
         gedu_first_name: "Gedu A",
-        voice_room_id: "vr-1",
         gamer_id: null,
         gamer_first_name: null,
         gamer_date_of_birth: null,

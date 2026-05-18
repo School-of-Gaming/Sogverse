@@ -77,8 +77,13 @@ interface GroupCardProps {
   schedule: { localDay: string; localTime: string; tzAbbrev: string };
   voiceIsOpen: boolean;
   voiceNextSessionStart: Date;
-  /** Called when the Join button is clicked. Callers handle navigation or show a dialog. */
-  onJoinClick: () => void;
+  /**
+   * Called when the Join button is clicked. When omitted the Join button is
+   * rendered disabled — this is the path the v1 groups UI takes now that
+   * its voice surface is being deprecated (see TODO.md "Tear out the v1
+   * groups UI now that its voice surface is a no-op").
+   */
+  onJoinClick?: () => void;
   /** Where clicking the card navigates (e.g. /gedu/groups/[id]). */
   detailHref: string;
 }
@@ -160,7 +165,11 @@ export function GroupCard({
         </div>
 
         {voiceIsOpen && (
-          <JoinButton onClick={onJoinClick} stopPropagation />
+          <JoinButton
+            onClick={onJoinClick ?? (() => {})}
+            disabled={!onJoinClick}
+            stopPropagation
+          />
         )}
 
         <NavChevron />

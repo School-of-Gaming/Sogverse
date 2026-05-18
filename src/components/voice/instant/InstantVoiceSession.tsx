@@ -316,7 +316,6 @@ function InstantVoiceSessionInner({ code, copyright }: InstantVoiceSessionProps)
   return (
     <div className="container mx-auto p-4 md:p-6">
       <SpatialVoiceRoom
-        room={null}
         onLeave={onLeaveButtonPressed}
         leaveLabel={t("leave")}
       />
