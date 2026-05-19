@@ -105,15 +105,30 @@ export function parseEmails(input: string): string[] {
 }
 
 
-/** Compute age in whole years from a date-of-birth string (YYYY-MM-DD). */
-export function computeAge(dateOfBirth: string): number {
-  const dob = new Date(dateOfBirth);
-  const today = new Date();
-  let age = today.getFullYear() - dob.getFullYear();
-  const monthDiff = today.getMonth() - dob.getMonth();
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-    age--;
-  }
+/**
+ * Compute age in whole years from a date-of-birth string (YYYY-MM-DD).
+ *
+ * `timeZone` is required: "today" is the viewer's calendar date in their
+ * IANA zone (e.g. `Europe/Helsinki`), not the runtime's. Passing the
+ * server's local zone — or worse, parsing the DOB string with `new Date()`
+ * and calling `.getFullYear()` — gives wrong answers across midnight
+ * boundaries. Client callers pass `useTimezone()`; server callers pass
+ * `await getServerTimezone()` (see `src/lib/timezone.server.ts`).
+ */
+export function computeAge(dateOfBirth: string, timeZone: string): number {
+  const [dobY, dobM, dobD] = dateOfBirth.split("-").map(Number);
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const todayY = Number(parts.find((p) => p.type === "year")!.value);
+  const todayM = Number(parts.find((p) => p.type === "month")!.value);
+  const todayD = Number(parts.find((p) => p.type === "day")!.value);
+
+  let age = todayY - dobY;
+  if (todayM < dobM || (todayM === dobM && todayD < dobD)) age--;
   return age;
 }
 

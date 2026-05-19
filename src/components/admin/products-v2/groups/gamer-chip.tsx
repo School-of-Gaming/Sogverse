@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { computeAge, cn } from "@/lib/utils";
+import { useTimezone } from "@/providers";
 import type { GenderType } from "@/types";
 
 const GENDER_KEY: Record<string, string> = {
@@ -31,10 +32,11 @@ const ChipContent = memo(function ChipContent({
   gender,
 }: ContentProps) {
   const t = useTranslations("admin.productsV2.groupsPanel");
+  const timeZone = useTimezone();
 
   const detailParts: string[] = [];
   if (dateOfBirth) {
-    detailParts.push(t("chip.age", { age: computeAge(dateOfBirth) }));
+    detailParts.push(t("chip.age", { age: computeAge(dateOfBirth, timeZone) }));
   }
   if (gender && GENDER_KEY[gender]) {
     detailParts.push(t(GENDER_KEY[gender] as "genderBoy"));
