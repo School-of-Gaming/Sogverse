@@ -11,9 +11,9 @@ import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
 import { computeAge, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
+import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
 import { GamerService } from "@/services/gamers";
-import type { GamerProfile, GamerProfileRow, Profile } from "@/types";
 
 export default async function AdminUserDetailPage({
   params,
@@ -21,10 +21,11 @@ export default async function AdminUserDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: userId } = await params;
-  const [t, c, locale] = await Promise.all([
+  const [t, c, locale, timeZone] = await Promise.all([
     getTranslations("admin.users"),
     getTranslations("common"),
     getLocale(),
+    getServerTimezone(),
   ]);
 
   const supabase = await createClient();
@@ -48,9 +49,7 @@ export default async function AdminUserDetailPage({
   const isGamer = profile.role === "gamer";
   const isGedu = profile.role === "gedu";
 
-  const [linkedGamers, linkedParents, gamerProfile] = await Promise.all<
-    [Promise<GamerProfileRow[]>, Promise<Profile[]>, Promise<GamerProfile | null>]
-  >([
+  const [linkedGamers, linkedParents, gamerProfile] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
       : Promise.resolve([]),
@@ -85,7 +84,7 @@ export default async function AdminUserDetailPage({
             )}
             {isGamer && gamerProfile && (
               <p className="text-sm text-muted-foreground">
-                <span>{t('ageYears', { age: computeAge(gamerProfile.date_of_birth) })}</span>
+                <span>{t('ageYears', { age: computeAge(gamerProfile.date_of_birth, timeZone) })}</span>
                 {gamerProfile.gender && (
                   <>
                     {/* eslint-disable-next-line i18next/no-literal-string -- visual separator between two i18n strings, not user-facing copy */}
@@ -100,7 +99,7 @@ export default async function AdminUserDetailPage({
                 {c(ROLE_LABEL_KEYS[profile.role])}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale) : t('unknown')}
+                {t('joined')} {profile.created_at ? formatDate(profile.created_at, locale, { dateStyle: "medium", timeZone }) : t('unknown')}
               </span>
             </div>
           </div>

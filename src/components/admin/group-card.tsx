@@ -18,6 +18,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn, computeAge } from "@/lib/utils";
+import { useTimezone } from "@/providers";
 import { GeduPickerDialog } from "./gedu-picker-dialog";
 import type { EffectiveGroup } from "@/hooks/use-group-editor";
 import type { Profile, GenderType } from "@/types";
@@ -47,8 +48,9 @@ const GamerChipContent = memo(function GamerChipContent({
   gender: string;
 }) {
   const t = useTranslations('admin.groups');
+  const timeZone = useTimezone();
   const genderLabel = GENDER_KEYS[gender] ? t(GENDER_KEYS[gender] as "genderBoy") : "";
-  const detail = `${computeAge(dateOfBirth)}y / ${genderLabel}`;
+  const detail = `${computeAge(dateOfBirth, timeZone)}y / ${genderLabel}`;
 
   return (
     <>
@@ -118,6 +120,7 @@ interface GroupCardProps {
 export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onReassignGedu }: GroupCardProps) {
   const t = useTranslations('admin.groups');
   const c = useTranslations('common');
+  const timeZone = useTimezone();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showReassign, setShowReassign] = useState(false);
 
@@ -130,7 +133,7 @@ export function GroupCard({ group, groupLabel, gedus, usedGeduIds, onDelete, onR
   const hasGamers = group.gamers.length > 0;
 
   // Compute group stats
-  const ages = group.gamers.map((g) => computeAge(g.dateOfBirth));
+  const ages = group.gamers.map((g) => computeAge(g.dateOfBirth, timeZone));
   const ageRange = ages.length > 0
     ? ages.length === 1
       ? `${ages[0]}y`
