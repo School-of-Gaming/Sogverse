@@ -731,6 +731,12 @@
       "userNotFound": "lo'wI' tu'be'lu'.",
       "joined": "muv",
       "unknown": "Sovbe'lu'",
+      "ageYears": "{age, plural, one {# DIS} other {# DIS}}",
+      "gender": {
+        "boy": "loDHom",
+        "girl": "be'Hom",
+        "non_binary": "ghob ghajbe'"
+      },
       "linkedGamers": "toy'wI'pu' jonlu'",
       "linkedParents": "vav/SoSmey jonlu'",
       "unnamedGamer": "pong Hutlh toy'wI'",

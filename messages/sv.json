@@ -686,6 +686,12 @@
       "userNotFound": "Användaren hittades inte.",
       "joined": "Gick med",
       "unknown": "Okänd",
+      "ageYears": "{age, plural, one {# år} other {# år}}",
+      "gender": {
+        "boy": "Pojke",
+        "girl": "Flicka",
+        "non_binary": "Icke-binär"
+      },
       "linkedGamers": "Kopplade spelare",
       "linkedParents": "Kopplade föräldrar",
       "unnamedGamer": "Namnlös spelare",
