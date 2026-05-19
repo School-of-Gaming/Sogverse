@@ -16,6 +16,7 @@ import { SessionCalendarView } from "@/components/calendar/session-calendar-view
 import { ProductWhenWhereCard } from "./product-when-where-card";
 import { useGeduProductDetail } from "@/services/products-v2";
 import { useAuth } from "@/providers/auth-provider";
+import { useTimezone } from "@/providers";
 import { cn, computeAge } from "@/lib/utils";
 import type {
   GenderType,
@@ -326,11 +327,12 @@ function GamerRow({
   participation: GroupV2ParticipationDetail;
 }) {
   const t = useTranslations("productDetail.geduGroups");
+  const timeZone = useTimezone();
 
   const detailParts: string[] = [];
   if (participation.gamer_date_of_birth) {
     detailParts.push(
-      t("age", { age: computeAge(participation.gamer_date_of_birth) }),
+      t("age", { age: computeAge(participation.gamer_date_of_birth, timeZone) }),
     );
   }
   if (participation.gamer_gender) {

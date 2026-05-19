@@ -16,11 +16,13 @@ import { useMyGamers, useUpdateGamer, useGamerProfile } from "@/services/gamers"
 import { useMinecraftAccount } from "@/services/minecraft";
 import { ROUTES, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { computeAge } from "@/lib/utils";
+import { useTimezone } from "@/providers";
 
 export default function GamerDetailsPage() {
   const t = useTranslations('parent');
   const c = useTranslations('common');
   const { id } = useParams<{ id: string }>();
+  const timeZone = useTimezone();
   const { data: gamers, isLoading } = useMyGamers();
   const { data: mcAccount } = useMinecraftAccount(id);
   const { data: gamerProfile } = useGamerProfile(id);
@@ -198,7 +200,7 @@ export default function GamerDetailsPage() {
               <p className="font-medium">{gamer.first_name}</p>
               {gamerProfile && (
                 <p className="text-sm text-muted-foreground">
-                  <span>{t('gamerDetail.ageYears', { age: computeAge(gamerProfile.date_of_birth) })}</span>
+                  <span>{t('gamerDetail.ageYears', { age: computeAge(gamerProfile.date_of_birth, timeZone) })}</span>
                   {gamerProfile.gender && (
                     <>
                       {/* eslint-disable-next-line i18next/no-literal-string -- visual separator between two i18n strings, not user-facing copy */}

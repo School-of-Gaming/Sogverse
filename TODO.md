@@ -211,16 +211,19 @@ The dashboard Sessions cards (`NextSessionCard`, `UpcomingSessionCard`) are the 
 **The pattern:**
 
 - `useTimezone()` (from `@/providers`) returns the viewer's IANA zone, resolved from the `timezone` cookie server-side and reconciled with `Intl.DateTimeFormat().resolvedOptions().timeZone` after mount. Cookie-only, environmental (no profile column) — see `src/providers/timezone-provider.tsx`.
+- `getServerTimezone()` (from `@/lib/timezone.server`) is the server-side equivalent: same cookie, same fallback. Use it in any Server Component or server helper that needs the viewer's zone — SSR and the first client render then read the same value through different accessors.
 - `useNow()` returns a `Date` seeded from the server's request-time wall clock and ticked client-side every 30s. SSR HTML and the first client render match because both consume the same prop — see `src/providers/now-provider.tsx`.
 - Date/time formatting: pass `timeZone` into `formatDate` / `formatTime` (both helpers in `src/lib/utils.ts` accept it via their options/third arg) so the rendered string uses the viewer's zone instead of the runtime default.
+- Age computation: `computeAge(dob, timeZone)` requires the zone — there's no default. Client callers pass `useTimezone()`, server callers pass `await getServerTimezone()`.
 - Server prefetch: pages that need first-paint data should fetch in the server component and pass it as `initialData` into the consuming React Query hook (see `useMyUpcomingSessions`). The cache seeds without a `<HydrationBoundary>` and mutation-driven invalidation keeps working unchanged.
 
 **Why migrate other call sites:** today every `formatDate` / `formatTime` call without an explicit `timeZone` falls back to the runtime default — usually UTC on the server vs. the user's local zone in the browser. That's a latent hydration-mismatch hazard. Components dodge it by gating the date string behind a null state (the old `NextSessionCard` countdown) or by being client-only. The new pattern lets them render correctly on the server.
 
-- [ ] Grep `src/` for `formatDate(` / `formatTime(` and migrate each call site that runs on a Client Component: read `useTimezone()`, pass through to the helper.
+- [ ] Grep `src/` for `formatDate(` / `formatTime(` and migrate each call site so it passes `timeZone` (from `useTimezone()` in client components, `await getServerTimezone()` in server components).
 - [ ] For components that compute "is this live right now?" / "starts in N minutes" with a per-component `useState + setInterval`, swap to `useNow()`.
 - [ ] Once the bulk of UI surfaces consume `useTimezone()`, flip `NextIntlClientProvider`'s `timeZone` prop in `src/providers/index.tsx` from `DEFAULT_TIMEZONE` to the live value so `useFormatter().dateTime()` follows the same source of truth (today it still hardcodes `Europe/Helsinki`; the comment in the file flags this).
 - [ ] Consider pages that would benefit from the server-prefetch + `initialData` pattern (`MyGamersGrid`, billing, anything else where the section currently shows a client-side React Query skeleton on load) and adopt page-by-page. Drop the per-page skeleton at the same time so the win is visible.
+- [ ] Once `formatDate` / `formatTime` migration is done, consider an ESLint rule (or `tsc` overload trick) banning calls that omit `timeZone`, so the pattern can't regress.
 
 ### Enable next-intl typed messages + locale-parity test
 
