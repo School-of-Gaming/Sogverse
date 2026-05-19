@@ -28,6 +28,11 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
     <div className="rounded-lg border">
       <Link
         href={`${basePath}/${user.id}`}
+        // Each user row points at the SSR detail page. With default prefetch,
+        // a list of N users fires N speculative server renders the moment the
+        // page mounts, contending for the same Supabase pool as the user's
+        // actual navigation.
+        prefetch={false}
         className="group flex items-center justify-between p-4 transition-colors hover:bg-accent hover:text-accent-foreground"
       >
         <div className="flex items-center gap-4">
@@ -63,6 +68,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
             <Link
               key={gamer.id}
               href={`${basePath}/${gamer.id}`}
+              prefetch={false}
               className="group flex items-center justify-between py-3 pr-4 pl-14 transition-colors hover:bg-accent hover:text-accent-foreground"
             >
               <div className="flex items-center gap-3">
