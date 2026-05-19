@@ -686,6 +686,12 @@
       "userNotFound": "User not found.",
       "joined": "Joined",
       "unknown": "Unknown",
+      "ageYears": "{age, plural, one {# year old} other {# years old}}",
+      "gender": {
+        "boy": "Boy",
+        "girl": "Girl",
+        "non_binary": "Non-binary"
+      },
       "linkedGamers": "Linked Gamers",
       "linkedParents": "Linked Parents",
       "unnamedGamer": "Unnamed Gamer",

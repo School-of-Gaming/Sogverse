@@ -10,7 +10,6 @@ import type { UserRole } from "@/types";
 interface UserRowUser {
   id: string;
   first_name: string;
-  username: string | null;
   email: string | null;
   role: UserRole;
 }
@@ -37,11 +36,11 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
           </Avatar>
           <div>
             <p className="font-medium">
-              {user.first_name || user.username || t('unnamedUser')}
+              {user.first_name || t('unnamedUser')}
             </p>
-            <p className="text-sm text-muted-foreground">
-              {user.email || user.username}
-            </p>
+            {user.role !== "gamer" && user.email && (
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -71,7 +70,7 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
                   <Identicon id={gamer.id} size={28} />
                 </Avatar>
                 <p className="text-sm font-medium">
-                  {gamer.first_name || gamer.username || t('unnamedGamer')}
+                  {gamer.first_name || t('unnamedGamer')}
                 </p>
               </div>
               <div className="flex items-center gap-2">
