@@ -8,8 +8,22 @@ function logLine(line: string) {
   console.log(line);
 }
 
+function logNavTiming(page: string) {
+  if (typeof performance === "undefined") return;
+  const entries = performance.getEntriesByType("navigation");
+  if (entries.length === 0) return;
+  const nav = entries[0] as PerformanceNavigationTiming;
+  if (nav.requestStart === 0) return;
+  const ttfb = Math.round(nav.responseStart - nav.requestStart);
+  const dcl = Math.round(nav.domContentLoadedEventStart - nav.requestStart);
+  // Note: on Next.js soft navigations this reflects the original document
+  // load, not the current page — useful only on hard refresh / direct URL.
+  logLine(`[perf] ${page}: nav TTFB=${ttfb}ms DCL=${dcl}ms`);
+}
+
 function startPage(page: string) {
   pageStarts.set(page, performance.now());
+  logNavTiming(page);
   logLine(`[perf] ${page}: render-start`);
 }
 
