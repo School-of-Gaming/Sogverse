@@ -1,44 +1,37 @@
-"use client";
-
-import { useParams } from "next/navigation";
 import Link from "next/link";
-import { useTranslations, useLocale } from "next-intl";
-import { ROUTES } from "@/lib/constants";
 import { ArrowLeft, Users } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
+
+import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
-import { useProfile } from "@/services/users";
-import { useLinkedGamers, useLinkedParents } from "@/services/gamers";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
-import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
-import { formatDate } from "@/lib/utils";
+import { computeAge, formatDate } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/server";
+import { UsersService } from "@/services/users";
+import { GamerService } from "@/services/gamers";
+import type { GamerProfile, GamerProfileRow, Profile } from "@/types";
 
-export default function AdminUserDetailPage() {
-  const t = useTranslations('admin.users');
-  const c = useTranslations('common');
-  const params = useParams();
-  const userId = params.id as string;
-  const locale = useLocale();
+export default async function AdminUserDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id: userId } = await params;
+  const [t, c, locale] = await Promise.all([
+    getTranslations("admin.users"),
+    getTranslations("common"),
+    getLocale(),
+  ]);
 
-  const { data: profile, isLoading: profileLoading } = useProfile(userId);
+  const supabase = await createClient();
+  const usersService = new UsersService(supabase);
+  const gamerService = new GamerService(supabase);
 
-  const isCustomer = profile?.role === "customer";
-  const isGamer = profile?.role === "gamer";
-  const isGedu = profile?.role === "gedu";
-  const { data: linkedGamers } = useLinkedGamers(isCustomer ? userId : "");
-  const { data: linkedParents } = useLinkedParents(isGamer ? userId : "");
-
-  if (profileLoading) {
-    return (
-      <div className="mx-auto max-w-4xl space-y-6">
-        <div className="h-8 w-32 animate-pulse rounded bg-muted" />
-        <div className="h-48 animate-pulse rounded-lg bg-muted" />
-      </div>
-    );
-  }
+  const profile = await usersService.getProfile(userId).catch(() => null);
 
   if (!profile) {
     return (
@@ -50,6 +43,24 @@ export default function AdminUserDetailPage() {
       </div>
     );
   }
+
+  const isCustomer = profile.role === "customer";
+  const isGamer = profile.role === "gamer";
+  const isGedu = profile.role === "gedu";
+
+  const [linkedGamers, linkedParents, gamerProfile] = await Promise.all<
+    [Promise<GamerProfileRow[]>, Promise<Profile[]>, Promise<GamerProfile | null>]
+  >([
+    isCustomer
+      ? gamerService.getLinkedGamers(userId).catch(() => [])
+      : Promise.resolve([]),
+    isGamer
+      ? gamerService.getLinkedParents(userId).catch(() => [])
+      : Promise.resolve([]),
+    isGamer
+      ? gamerService.getGamerProfile(userId).catch(() => null)
+      : Promise.resolve(null),
+  ]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -67,11 +78,23 @@ export default function AdminUserDetailPage() {
             <h1 className="text-2xl font-bold">
               {[profile.first_name, profile.last_name].filter(Boolean).join(" ")}
             </h1>
-            <div className="flex items-center gap-2">
-              <p className="text-muted-foreground">
-                {profile.email || profile.username}
+            {!isGamer && profile.email && (
+              <div className="flex items-center gap-2">
+                <p className="text-muted-foreground">{profile.email}</p>
+              </div>
+            )}
+            {isGamer && gamerProfile && (
+              <p className="text-sm text-muted-foreground">
+                <span>{t('ageYears', { age: computeAge(gamerProfile.date_of_birth) })}</span>
+                {gamerProfile.gender && (
+                  <>
+                    {/* eslint-disable-next-line i18next/no-literal-string -- visual separator between two i18n strings, not user-facing copy */}
+                    <span aria-hidden="true"> · </span>
+                    <span>{t(`gender.${gamerProfile.gender}`)}</span>
+                  </>
+                )}
               </p>
-            </div>
+            )}
             <div className="mt-2 flex items-center gap-3">
               <Badge className={ROLE_BADGE_STYLES[profile.role]}>
                 {c(ROLE_LABEL_KEYS[profile.role])}
@@ -94,7 +117,7 @@ export default function AdminUserDetailPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {isCustomer && linkedGamers && linkedGamers.length > 0 && (
+            {isCustomer && linkedGamers.length > 0 && (
               <div className="space-y-2">
                 {linkedGamers.map((gamer) => (
                   <Link
@@ -108,10 +131,7 @@ export default function AdminUserDetailPage() {
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">
-                          {gamer.first_name || gamer.username || t('unnamedGamer')}
-                        </p>
-                        <p className="text-xs text-muted-foreground ">
-                          {gamer.username}
+                          {gamer.first_name || t('unnamedGamer')}
                         </p>
                       </div>
                     </div>
@@ -125,10 +145,10 @@ export default function AdminUserDetailPage() {
                 ))}
               </div>
             )}
-            {isCustomer && (!linkedGamers || linkedGamers.length === 0) && (
+            {isCustomer && linkedGamers.length === 0 && (
               <p className="text-sm text-muted-foreground">{t('noConnectedGamers')}</p>
             )}
-            {isGamer && linkedParents && linkedParents.length > 0 && (
+            {isGamer && linkedParents.length > 0 && (
               <div className="space-y-2">
                 {linkedParents.map((parent) => (
                   <Link
@@ -142,7 +162,7 @@ export default function AdminUserDetailPage() {
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">
-                          {parent.first_name || parent.username || t('unnamedUser')}
+                          {parent.first_name || t('unnamedUser')}
                         </p>
                         <p className="text-xs text-muted-foreground ">
                           {parent.email}

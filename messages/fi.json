@@ -686,6 +686,12 @@
       "userNotFound": "Käyttäjää ei löytynyt.",
       "joined": "Liittynyt",
       "unknown": "Tuntematon",
+      "ageYears": "{age, plural, one {# vuotta} other {# vuotta}}",
+      "gender": {
+        "boy": "Poika",
+        "girl": "Tyttö",
+        "non_binary": "Muunsukupuolinen"
+      },
       "linkedGamers": "Liitetyt pelaajat",
       "linkedParents": "Liitetyt vanhemmat",
       "unnamedGamer": "Nimetön pelaaja",
