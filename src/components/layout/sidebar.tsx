@@ -127,6 +127,12 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              // Sidebar links point at heavy server-component dashboard routes.
+              // Next.js's default prefetch-on-mount would fire one SSR render per
+              // nav item every time the sidebar mounts; on admin (13 items) that
+              // saturates the Supabase connection pool and queues real clicks
+              // behind speculative work the user never asked for.
+              prefetch={false}
               className={cn(
                 `flex items-center overflow-hidden whitespace-nowrap rounded-lg py-2 text-sm font-medium ${navTransition}`,
                 collapsed ? "gap-0 px-2.5" : "gap-0 px-2.5 md:gap-3 md:px-3",
