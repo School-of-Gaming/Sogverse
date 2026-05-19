@@ -13,6 +13,7 @@ import { GroupVoiceStatus } from "@/components/ui/group-card";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { computeAge, formatScheduleLocal } from "@/lib/utils";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { useTimezone } from "@/providers";
 import type { GroupWithVoice } from "@/hooks/use-groups-page";
 
 interface GroupDetailContentBase {
@@ -47,6 +48,7 @@ export function GroupDetailContent({
   const t = useTranslations('groups');
   const c = useTranslations('common');
   const locale = useLocale();
+  const timeZone = useTimezone();
 
   const group = useMemo(
     () => groups.find((g) => g.groupId === groupId) ?? null,
@@ -189,7 +191,7 @@ export function GroupDetailContent({
                       <p className="text-sm font-medium">{gamer.firstName}</p>
                       {gamer.dateOfBirth && gamer.gender && (
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{t('age', { age: computeAge(gamer.dateOfBirth) })}</span>
+                          <span>{t('age', { age: computeAge(gamer.dateOfBirth, timeZone) })}</span>
                           <span className="capitalize">{gamer.gender.replace("_", " ")}</span>
                         </div>
                       )}

@@ -11,16 +11,23 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { UserRow } from "@/components/admin/user-row";
 import { useUsers, useSearchUsers, useParentGamerLinks } from "@/services/users";
 import { ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
+import { usePagePerf, useQueryPerf } from "@/lib/perf";
 import type { Profile, UserRole } from "@/types";
 
 export default function AdminUsersPage() {
+  usePagePerf("admin/users");
   const t = useTranslations('admin.users');
   const c = useTranslations('common');
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<UserRole | null>(null);
-  const { data: allUsers, isLoading: isLoadingAll } = useUsers();
+  const usersQuery = useUsers();
+  const { data: allUsers, isLoading: isLoadingAll, isFetching: isFetchingAll } = usersQuery;
   const { data: searchResults, isLoading: isSearching } = useSearchUsers(searchQuery);
-  const { data: parentGamerLinks } = useParentGamerLinks();
+  const parentGamerLinksQuery = useParentGamerLinks();
+  const { data: parentGamerLinks } = parentGamerLinksQuery;
+
+  useQueryPerf("admin/users", "useUsers", allUsers, isFetchingAll);
+  useQueryPerf("admin/users", "useParentGamerLinks", parentGamerLinks, parentGamerLinksQuery.isFetching);
 
   const ROLE_FILTERS: { value: UserRole; label: string }[] = [
     { value: "admin", label: c(ROLE_LABEL_KEYS.admin) },
