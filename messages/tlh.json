@@ -1104,13 +1104,6 @@
     "subtitle": "DaH yItoy' je yIghoj?"
   },
   "gedu": {
-    "title": "Gedu QaD",
-    "subtitle": "ghom'a'mey je toy'wI'pu' tI'ang",
-    "statsGroups": "ghom'a'mey",
-    "statsGroupsDescription": "ghom'a'mey tI'ang",
-    "statsGamers": "toy'wI'pu'",
-    "statsGamersDescription": "Hoch ghom'a'meyDaq",
-    "latestStudentActivities": "toy'wI' wanI' reHHa'",
     "coverage": {
       "title": "So' Daqmey",
       "remoteOnlyNote": "ghom'a'Daj qemlaHbe' latlh Gedu 'e' luneHchugh, SoH DaDIvmoH. Hop neH DaqaDchugh, yIchIm yImej.",
@@ -1702,9 +1695,9 @@
         "createNew": "Daq chu' yIchen"
       },
       "createPage": {
-        "title": "Daq chu' yIchen",
-        "subtitle": "DaH Daq yIchen, He yI'ang Hoch muvwI' DaneHbogh.",
-        "createButton": "Daq yIchen",
+        "title": "tugh Daq chu' yIchen!",
+        "subtitle": "wa' tay → Daq chu' je He'a' yI'ang. tugh ghom wa'-wa', qoj Gedu rurchugh tay'taHghachvaD, qaStaHvIS poH Hoch, qaStaHvIS poH latlh je.",
+        "createButton": "tugh Daq yIchen",
         "creating": "chenmoHlu'…",
         "createFailed": "Daq chenmoH luchchugh. yItoH'egh!",
         "ready": "DaqlIj pIm",

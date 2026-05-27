@@ -26,7 +26,7 @@ export function RoomNotFoundScreen({ code }: RoomNotFoundScreenProps) {
   const { profile } = useAuth();
   const isMod = profile?.role === "admin" || profile?.role === "gedu";
   const newRoomHref =
-    profile?.role === "gedu" ? ROUTES.gedu.voice : ROUTES.admin.voice;
+    profile?.role === "gedu" ? ROUTES.gedu.dashboard : ROUTES.admin.voice;
 
   return (
     <div className="container mx-auto max-w-xl p-4 md:p-6">

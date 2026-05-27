@@ -140,9 +140,9 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // Signed-in parents and gamers visiting the home page get bounced to their
-  // dashboard — mirrors the SOG-logo behavior so the home page isn't a
-  // dead-end for them. Admins and gedus pass through.
+  // Signed-in parents, gamers, and gedus visiting the home page get bounced
+  // to their dashboard — mirrors the SOG-logo behavior so the home page
+  // isn't a dead-end for them. Admins pass through.
   if (user && pathname === ROUTES.home) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
@@ -150,7 +150,12 @@ export async function proxy(request: NextRequest) {
       .eq("id", user.id)
       .single();
 
-    if (!profileError && (profile.role === "customer" || profile.role === "gamer")) {
+    if (
+      !profileError &&
+      (profile.role === "customer" ||
+        profile.role === "gamer" ||
+        profile.role === "gedu")
+    ) {
       return redirect(new URL(ROLE_DASHBOARD_PATHS[profile.role], request.url));
     }
   }

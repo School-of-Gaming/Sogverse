@@ -4,13 +4,14 @@ On-the-fly voice rooms that any admin or gedu can spin up, share via a short URL
 
 ## Overview
 
-A moderator (admin or gedu) creates a room from `/admin/voice` or `/gedu/voice`. The server allocates a 4-character code, calls Daily.co to create a matching room, and redirects the moderator to `/voice/{CODE}`. The mod copies the URL from the header and shares it with whoever should join. Anyone with the link can join, no account required. The room dies when a moderator clicks "End for everyone" or after 8 hours, whichever comes first.
+A moderator (admin or gedu) creates a room from `/admin/voice` or `/gedu`. The server allocates a 4-character code, calls Daily.co to create a matching room, and redirects the moderator to `/voice/{CODE}`. The mod copies the URL from the header and shares it with whoever should join. Anyone with the link can join, no account required. The room dies when a moderator clicks "End for everyone" or after 8 hours, whichever comes first.
 
 ## Component Map
 
 ```
 Pages
-├── /{admin,gedu}/voice  → Single-button create page (dashboard)
+├── /admin/voice         → Single-button create page (admin dashboard)
+├── /gedu                 → Single-button create page (gedu dashboard)
 └── /voice/[code]        → Public lobby + in-call (simplified chrome, no sidebar)
 
 API routes (src/app/api/voice/instant/)

@@ -19,10 +19,15 @@ import { SiteHeaderShell } from "@/components/layout/site-header-shell";
 // whose logo links to the dashboard).
 const DASHBOARD_PREFIXES = ["/admin", "/parent", "/gamer", "/gedu"];
 
+// Roles whose SOG logo routes to their own dashboard (not the public home).
+// Parents and gamers get there past the family-selector interstitial; gedus
+// have a single profile and the logo is the direct route.
+const LOGO_TO_DASHBOARD_ROLES = new Set<UserRole>(["customer", "gamer", "gedu"]);
+
 // Roles whose header avatar routes to the family profile selector instead of
 // their dashboard. Parents and gamers share one household, so the avatar is
-// the "switch to another family member" affordance for both; the SOG logo
-// takes those roles to their dashboard instead.
+// the "switch to another family member" affordance for both. Gedus have one
+// profile, so their avatar goes to the dashboard alongside the logo.
 const SELECTOR_ROLES = new Set<UserRole>(["customer", "gamer"]);
 
 export function Header() {
@@ -53,14 +58,16 @@ export function Header() {
   const dashboardPath = profile?.role
     ? ROLE_DASHBOARD_PATHS[profile.role]
     : null;
+  const logoGoesToDashboard =
+    !!profile?.role && LOGO_TO_DASHBOARD_ROLES.has(profile.role);
   const usesSelector = !!profile?.role && SELECTOR_ROLES.has(profile.role);
 
-  // Logo destination: parents/gamers go to their dashboard (the household has
-  // an interstitial in front of the dashboard, and the logo is their direct
-  // route past it). Everyone else — including signed-out visitors — goes
-  // home.
+  // Logo destination: parents, gamers, and gedus go to their dashboard
+  // (parents/gamers route past the family-selector interstitial; gedus
+  // directly to /gedu). Everyone else — including signed-out visitors —
+  // goes home.
   const logoHref =
-    user && usesSelector && dashboardPath ? dashboardPath : ROUTES.home;
+    user && logoGoesToDashboard && dashboardPath ? dashboardPath : ROUTES.home;
   // The visual "you're here" state for the logo follows whatever it links to.
   const isOnLogoTarget =
     logoHref === ROUTES.home

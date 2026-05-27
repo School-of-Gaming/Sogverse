@@ -13,11 +13,11 @@ export default async function DashboardRootLayout({
     redirect("/login");
   }
 
-  // Parent and gamer dashboards have moved to a single-page scroll UX with
-  // an in-page section pill (see /parent and /gamer pages); the sidebar is
-  // suppressed for those roles across every (dashboard) route.
+  // Only the admin dashboard uses the sidebar. Parents, gamers, and gedus
+  // have single-page dashboards where the SOG logo in the header is the
+  // route back to the dashboard.
   const role = userWithProfile.profile?.role;
-  const showSidebar = role === "admin" || role === "gedu";
+  const showSidebar = role === "admin";
 
   return (
     <>

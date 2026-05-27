@@ -1059,13 +1059,6 @@
     "subtitle": "Ready to play and learn?"
   },
   "gedu": {
-    "title": "Educator Dashboard",
-    "subtitle": "Manage your groups and students",
-    "statsGroups": "Groups",
-    "statsGroupsDescription": "Manage your groups",
-    "statsGamers": "Gamers",
-    "statsGamersDescription": "Across all groups",
-    "latestStudentActivities": "Latest student activities",
     "coverage": {
       "title": "Coverage areas",
       "remoteOnlyNote": "Used to match you as a substitute when another Gedu can't cover their club. Leave empty if you only sub remotely.",
@@ -1657,9 +1650,9 @@
         "createNew": "Create a new voice room"
       },
       "createPage": {
-        "title": "Create a voice room",
-        "subtitle": "Spin up a room and share the link with whoever should join.",
-        "createButton": "Create voice room",
+        "title": "Spin up an instant voice room",
+        "subtitle": "One tap → fresh room & shareable link to send. Use it for impromptu 1-on-1s, or co-gedu coordination outside or in addition to the scheduled session.",
+        "createButton": "Start instant room",
         "creating": "Creating…",
         "createFailed": "Couldn't create a room. Please try again.",
         "ready": "Your room is ready",
