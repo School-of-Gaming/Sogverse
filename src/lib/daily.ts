@@ -113,14 +113,21 @@ export async function deleteDailyRoom(name: string): Promise<void> {
 /**
  * Deterministic Daily.co room name for a v2 product group's session.
  *
- * Format: `g-{groupId8}-{YYYYMMDDHHMM}` where the timestamp is the session
+ * Format: `g-{groupId}-{YYYYMMDDHHMM}` where the timestamp is the session
  * window's open time formatted in the product's timezone. Same group +
  * same session window = same name, so every joiner derives the same room
- * independently with no coordination. Different sessions of the same
- * group (different weeks, different slots) produce distinct names.
+ * independently with no coordination.
  *
- * Wall-clock formatting in the product timezone keeps the wall-clock
- * identity stable across DST transitions.
+ * Both pieces are load-bearing. The full groupId rules out cross-group
+ * collisions — under `getOrCreateDailyRoom`, two groups sharing a name
+ * would silently land in each other's call (GET returns the first
+ * group's room as if it were the second's). The timestamp rules out
+ * cross-session collisions — Daily reaps rooms at their `exp` but not
+ * atomically, so a stale prior-session room could otherwise be handed
+ * to a new joiner with its already-passed `exp`.
+ *
+ * Wall-clock formatting in the product timezone keeps the name stable
+ * across DST transitions.
  */
 export function groupVoiceRoomName(params: {
   groupId: string;
@@ -132,7 +139,7 @@ export function groupVoiceRoomName(params: {
     params.timezone,
     "yyyyMMddHHmm",
   );
-  return `g-${params.groupId.slice(0, 8)}-${windowToken}`;
+  return `g-${params.groupId}-${windowToken}`;
 }
 
 /**
@@ -147,6 +154,13 @@ export function groupVoiceRoomName(params: {
  * see "not found," and one POST will lose with a duplicate-name error. That
  * loss is treated as success (the room exists, which is all the caller needs)
  * by re-fetching and returning the winner's room.
+ *
+ * `expUnix` (and any other `properties` on `config`) only apply when this
+ * call actually creates the room. If the room already exists, the existing
+ * room's properties win — callers should derive `expUnix` from a property
+ * of `config.name` itself (e.g. the encoded session window in
+ * `groupVoiceRoomName`) so racing callers compute the same value and the
+ * caller-set-vs-creator-set distinction stops mattering.
  */
 export async function getOrCreateDailyRoom(
   config: CreateRoomConfig,

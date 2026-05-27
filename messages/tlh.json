@@ -1609,9 +1609,7 @@
     "switchToGamer": {
       "title": "{name}vaD pong yIchoH 'ej {productName}vaD yIghaj?",
       "oneWayWarning": "vav/SoS account vIqaSlu'.",
-      "failedSwitch": "account choH Dabe'lu'",
-      "switching": "vIchoH...",
-      "confirm": "{name}vaH yIchoH"
+      "failedSwitch": "account choH Dabe'lu'"
     }
   },
   "settings": {

@@ -1564,9 +1564,7 @@
     "switchToGamer": {
       "title": "Vaihda käyttäjän {name} profiiliin ja liity ryhmään {productName}?",
       "oneWayWarning": "Sinut kirjataan ulos vanhemman tililtä.",
-      "failedSwitch": "Tilin vaihtaminen epäonnistui",
-      "switching": "Vaihdetaan...",
-      "confirm": "Vaihda käyttäjään {name}"
+      "failedSwitch": "Tilin vaihtaminen epäonnistui"
     }
   },
   "settings": {

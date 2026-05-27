@@ -1564,9 +1564,7 @@
     "switchToGamer": {
       "title": "Switch to {name}'s profile to join {productName}?",
       "oneWayWarning": "You'll be signed out of your parent account.",
-      "failedSwitch": "Failed to switch accounts",
-      "switching": "Switching...",
-      "confirm": "Switch to {name}"
+      "failedSwitch": "Failed to switch accounts"
     }
   },
   "settings": {
