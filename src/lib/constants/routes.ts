@@ -43,8 +43,6 @@ export const ROUTES = {
     campsNew: "/admin/camps/new",
     events: "/admin/events",
     eventsNew: "/admin/events/new",
-    groups: "/admin/groups",
-    group: (groupId: string) => `/admin/groups/${groupId}`,
     voiceSession: (roomId: string) => `/admin/voice/${roomId}`,
     voice: "/admin/voice",
     uiComponents: "/admin/ui-components",
@@ -68,8 +66,6 @@ export const ROUTES = {
   },
   gedu: {
     dashboard: "/gedu",
-    groups: "/gedu/groups",
-    group: (groupId: string) => `/gedu/groups/${groupId}`,
     voiceSession: (roomId: string) => `/gedu/voice/${roomId}`,
     voice: "/gedu/voice",
   },

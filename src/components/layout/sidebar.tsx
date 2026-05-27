@@ -28,7 +28,7 @@ import { ROLE_LABEL_KEYS, ROUTES } from "@/lib/constants";
 import type { UserRole } from "@/types";
 
 type SidebarKey =
-  | "dashboard" | "users" | "groups" | "locations"
+  | "dashboard" | "users" | "locations"
   | "uiComponents" | "whatsapp" | "testing" | "settings"
   | "myGamers" | "home" | "myGroups" | "voice"
   | "consumerClubs" | "municipalityClubs" | "camps" | "events";
@@ -48,7 +48,6 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
     { href: ROUTES.admin.camps, labelKey: "camps", icon: <Tent className="h-5 w-5" /> },
     { href: ROUTES.admin.events, labelKey: "events", icon: <CalendarDays className="h-5 w-5" /> },
     { href: ROUTES.admin.voice, labelKey: "voice", icon: <AudioLines className="h-5 w-5" /> },
-    { href: ROUTES.admin.groups, labelKey: "groups", icon: <UsersRound className="h-5 w-5" /> },
     { href: ROUTES.admin.locations, labelKey: "locations", icon: <MapPin className="h-5 w-5" /> },
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.whatsapp, labelKey: "whatsapp", icon: <MessageCircle className="h-5 w-5" /> },
@@ -68,7 +67,6 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
   gedu: [
     { href: ROUTES.gedu.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.gedu.voice, labelKey: "voice", icon: <AudioLines className="h-5 w-5" /> },
-    { href: ROUTES.gedu.groups, labelKey: "groups", icon: <UsersRound className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
 };
