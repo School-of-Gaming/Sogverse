@@ -1,10 +1,13 @@
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
-
 import { ROUTES } from "@/lib/constants";
 import { getNextSessionStart } from "@/lib/enrollment";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import {
+  endDateToCutoff,
+  getCurrentInProgressOccurrence,
+  startDateToCutoff,
+} from "@/lib/session-occurrence";
 import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import type { MyUpcomingSessionRow } from "@/services/participations";
 
@@ -132,15 +135,17 @@ function enumerateOccurrences(args: {
   const out: Array<{ start: Date; end: Date }> = [];
   const perSlotCap = Number.isFinite(cap) ? cap : Number.POSITIVE_INFINITY;
 
-  // If the product hasn't started yet (start_date is in the future), pin all
-  // iteration to "the day before start_date" so the prev-week and future
-  // searches both land on or after start_date. Otherwise both branches must
-  // honour real `now`.
+  // If the product hasn't started yet (start_date is in the future), pin
+  // the future-iteration cursor to "the day before start_date" so the
+  // search lands on or after start_date. Otherwise iterate from real
+  // `now`. The prev-week-in-window check returns null in the
+  // not-started-yet case all on its own (no occurrence can be in
+  // progress before the product opens), so no separate guard is needed
+  // here.
   const futureCursorBase =
     startBoundary !== null && startBoundary.getTime() > now.getTime()
       ? new Date(startBoundary.getTime() - 1)
       : now;
-  const beforeStart = futureCursorBase !== now;
 
   for (const slot of slots) {
     const schedule = {
@@ -152,46 +157,22 @@ function enumerateOccurrences(args: {
 
     let emitted = 0;
 
-    // `getNextSessionStart` always returns a *future* occurrence — once
-    // today's start has passed, it skips to next week. That hides
-    // currently-in-progress sessions from the list. Mirror
-    // `computeSessionWindow` and check the previous-week candidate
-    // explicitly: if its voice window is still open right now AND it falls
-    // within the product's start_date / end_date range, emit it as the
-    // first occurrence for this slot. Both bounds are load-bearing —
-    // without `afterStart`, a camp shows a phantom in-progress session on
-    // a slot weekday before the camp actually starts; without `beforeEnd`,
-    // it shows one for the same reason in the days *after* end_date when
-    // today still matches a slot weekday (e.g. camp ending Wed, viewer
-    // loading on Fri inside the would-have-been window).
-    if (!beforeStart) {
-      // Back-step in *wall-clock* days, not UTC milliseconds. A flat
-      // `now - 7×24h` lands one hour off on the DST-transition Wednesday
-      // (Helsinki EET→EEST is the live example): the back-stepped point
-      // sits *after* last week's slot start in local time, so
-      // `getNextSessionStart` returns last week's already-finished session
-      // and the in-window check fails — today's in-progress session
-      // disappears from the dashboard. `toZonedTime` returns a Date whose
-      // LOCAL methods read the wall-clock in `timezone`, so manipulating
-      // via `setDate(... - 7)` subtracts 7 calendar days in tz; the
-      // `fromZonedTime` round-trip back gives the correct UTC instant
-      // regardless of system tz.
-      const zonedWeekAgo = toZonedTime(now, timezone);
-      zonedWeekAgo.setDate(zonedWeekAgo.getDate() - 7);
-      const prevSearchPoint = fromZonedTime(zonedWeekAgo, timezone);
-      const prevStart = getNextSessionStart(schedule, {
-        now: prevSearchPoint,
-      });
-      const prevEnd = new Date(prevStart.getTime() + durationMs);
-      const withinWindow = prevEnd.getTime() + windowCloseMs > now.getTime();
-      const afterStart =
-        startBoundary === null || prevStart.getTime() >= startBoundary.getTime();
-      const beforeEnd =
-        endBoundary === null || prevStart.getTime() <= endBoundary.getTime();
-      if (withinWindow && afterStart && beforeEnd) {
-        out.push({ start: prevStart, end: prevEnd });
-        emitted += 1;
-      }
+    // First slot emission: if a previous-week occurrence is still in its
+    // voice window right now (and within the product's date bounds),
+    // surface it so an in-progress session shows up as the soonest. The
+    // DST-safe back-step + both date-bound checks live in
+    // `getCurrentInProgressOccurrence` — see its doc for the gotchas.
+    const inProgress = getCurrentInProgressOccurrence({
+      slot,
+      timezone,
+      now,
+      startBoundary,
+      endBoundary,
+      windowCloseMs,
+    });
+    if (inProgress) {
+      out.push(inProgress);
+      emitted += 1;
     }
 
     let cursor = futureCursorBase;
@@ -212,32 +193,4 @@ function enumerateOccurrences(args: {
 
   out.sort((a, b) => a.start.getTime() - b.start.getTime());
   return Number.isFinite(cap) ? out.slice(0, cap) : out;
-}
-
-/**
- * Turn a product's wall-clock start_date (YYYY-MM-DD in `timezone`) into the
- * UTC instant of that local day's midnight. Sessions whose start is at or
- * after this instant qualify; anything earlier is before the product
- * actually begins running.
- */
-function startDateToCutoff(
-  startDate: string | null,
-  timezone: string,
-): Date | null {
-  if (startDate === null) return null;
-  return fromZonedTime(`${startDate}T00:00:00.000`, timezone);
-}
-
-/**
- * Turn a product's wall-clock end_date (YYYY-MM-DD in `timezone`) into an
- * inclusive UTC cutoff: any session whose start is on or before the end of
- * that local day counts. End-of-day rather than start-of-day keeps a slot
- * whose session falls on `end_date` itself in the list.
- */
-function endDateToCutoff(
-  endDate: string | null,
-  timezone: string,
-): Date | null {
-  if (endDate === null) return null;
-  return fromZonedTime(`${endDate}T23:59:59.999`, timezone);
 }

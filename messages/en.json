@@ -14,7 +14,7 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin Dashboard",
       "parentDashboard": "My SOG",
-      "geduDashboard": "Educator Dashboard",
+      "geduDashboard": "My SOG",
       "gamerHome": "Gamer",
       "gamerGroups": "My Groups",
       "gamerGroupDetails": "Group Details",
@@ -1012,7 +1012,8 @@
     "billing": "Billing",
     "help": "Help",
     "yty": "Yty",
-    "settings": "Settings"
+    "settings": "Settings",
+    "instantVoiceRoom": "Instant Voice Room"
   },
   "family": {
     "addGamer": "Add Gamer",
@@ -1071,6 +1072,16 @@
       "save": "Save",
       "saving": "Saving...",
       "saveError": "Failed to save coverage"
+    },
+    "myGroups": {
+      "title": "My Groups",
+      "empty": "You haven't been assigned to any groups yet.",
+      "counts": "{groupCount, plural, one {# group} other {# groups}} · {gamerCount, plural, one {# gamer} other {# gamers}}",
+      "joinVoice": "Join voice room",
+      "locked": "Opens {date} at {time}",
+      "startsIn": "Starts in {countdown}",
+      "inProgress": "Session in progress",
+      "viewDetails": "View details"
     }
   },
   "groups": {

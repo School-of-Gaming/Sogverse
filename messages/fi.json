@@ -14,7 +14,7 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "parentDashboard": "Oma SOG",
-      "geduDashboard": "Kasvattajan hallintapaneeli",
+      "geduDashboard": "Oma SOG",
       "help": "Apu",
       "shop": "Kauppa",
       "gamerHome": "Pelaaja",
@@ -1012,7 +1012,8 @@
     "billing": "Laskutus",
     "help": "Apu",
     "yty": "Yty",
-    "settings": "Asetukset"
+    "settings": "Asetukset",
+    "instantVoiceRoom": "Pikaäänihuone"
   },
   "family": {
     "addGamer": "Lisää pelaaja",
@@ -1071,6 +1072,16 @@
       "save": "Tallenna",
       "saving": "Tallennetaan...",
       "saveError": "Tallennus epäonnistui"
+    },
+    "myGroups": {
+      "title": "Omat ryhmät",
+      "empty": "Sinua ei ole vielä määrätty mihinkään ryhmään.",
+      "counts": "{groupCount, plural, one {# ryhmä} other {# ryhmää}} · {gamerCount, plural, one {# pelaaja} other {# pelaajaa}}",
+      "joinVoice": "Liity äänihuoneeseen",
+      "locked": "Avautuu {date} klo {time}",
+      "startsIn": "Alkaa {countdown} kuluttua",
+      "inProgress": "Istunto käynnissä",
+      "viewDetails": "Näytä tiedot"
     }
   },
   "groups": {
