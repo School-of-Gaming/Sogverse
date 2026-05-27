@@ -281,7 +281,23 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         updateParticipants(co);
       };
 
-      const handleLeft = () => resetState();
+      // Daily fires `left-meeting` for both voluntary and involuntary
+      // disconnects (token/room exp, network drop, mod-ended call). The
+      // voluntary path (`leave()`) destroys the call object and nulls
+      // the ref before us, so this handler runs as a no-op for that
+      // case. For the involuntary paths the ref is still live — we
+      // mirror the voluntary cleanup so post-eject reads of
+      // `callObjectRef.current` short-circuit naturally instead of
+      // racing against an rAF tick (e.g. `useSpeakingGlow`) that
+      // assumes `co.participants().local` exists.
+      const handleLeft = () => {
+        if (callObjectRef.current) {
+          callObjectRef.current.destroy().catch(() => {});
+          callObjectRef.current = null;
+          setCallObject(null);
+        }
+        resetState();
+      };
 
       const handleActiveSpeakerChange = (event: { activeSpeaker: { peerId: string } }) => {
         activeSpeakerIdRef.current = event.activeSpeaker.peerId;
@@ -333,6 +349,29 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       // Camera permission denied or device unavailable
     }
   }, [cameraOn, cameraAllowed, moderator.localLocksRef]);
+
+  // Suppress a single noisy console.error that Daily's SDK emits from
+  // inside `call-machine-object-bundle.js` whenever a participant is
+  // ejected — for us, the expected end-of-session path. There is no
+  // event handler, no SDK log level, and no Daily-side config that
+  // disables it; the string-match patch is the canonical workaround
+  // across the daily-js / Vapi ecosystem (PostHog ships the same fix
+  // in their interview exporter, and dozens of public repos do the
+  // same). Scoped to the provider's mount lifetime so we don't touch
+  // console.error globally for the rest of the app.
+  useEffect(() => {
+    const originalError = console.error;
+    console.error = (...args: unknown[]) => {
+      const first = args[0];
+      if (typeof first === "string" && first.includes("Meeting ended due to ejection")) {
+        return;
+      }
+      originalError.apply(console, args);
+    };
+    return () => {
+      console.error = originalError;
+    };
+  }, []);
 
   // Clean up call object on unmount.
   // Audio and spatial hooks handle their own cleanup via internal useEffects.
