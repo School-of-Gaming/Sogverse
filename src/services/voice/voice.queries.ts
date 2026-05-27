@@ -11,8 +11,8 @@ export const voiceKeys = {
 /**
  * Get a Daily.co meeting token for a v2 product group
  * (`product_groups_v2.id`). The token endpoint derives the Daily room name
- * from the group + current session window and lazy-creates the room on
- * first join — no DB-side voice room table.
+ * from the group + current session window and get-or-creates the room on
+ * demand — no DB-side voice room table.
  */
 export function useVoiceToken() {
   const supabase = getClient();
