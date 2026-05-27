@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 const DAILY_API_BASE = "https://api.daily.co/v1";
@@ -20,6 +21,19 @@ export class DailyApiError extends Error {
     super(message);
     this.name = "DailyApiError";
   }
+}
+
+/**
+ * True when an error from `createDailyRoom` means "a room with that name
+ * already exists." Daily.co returns this as `400 invalid-request-error`
+ * with the literal info string `a room named X already exists` — not the
+ * 409 Conflict you'd expect — so callers can't branch on status alone.
+ * 409 is matched too in case Daily ever switches to the conventional code.
+ */
+export function isDailyDuplicateRoomError(err: unknown): boolean {
+  if (!(err instanceof DailyApiError)) return false;
+  if (err.status === 409) return true;
+  return err.status === 400 && err.message.includes("already exists");
 }
 
 async function dailyFetch(path: string, options?: RequestInit) {
@@ -94,6 +108,61 @@ export async function getDailyRoom(name: string): Promise<DailyRoom | null> {
 
 export async function deleteDailyRoom(name: string): Promise<void> {
   await dailyFetch(`/rooms/${encodeURIComponent(name)}`, { method: "DELETE" });
+}
+
+/**
+ * Deterministic Daily.co room name for a v2 product group's session.
+ *
+ * Format: `g-{groupId8}-{YYYYMMDDHHMM}` where the timestamp is the session
+ * window's open time formatted in the product's timezone. Same group +
+ * same session window = same name, so every joiner derives the same room
+ * independently with no coordination. Different sessions of the same
+ * group (different weeks, different slots) produce distinct names.
+ *
+ * Wall-clock formatting in the product timezone keeps the wall-clock
+ * identity stable across DST transitions.
+ */
+export function groupVoiceRoomName(params: {
+  groupId: string;
+  windowOpensAt: Date;
+  timezone: string;
+}): string {
+  const windowToken = formatInTimeZone(
+    params.windowOpensAt,
+    params.timezone,
+    "yyyyMMddHHmm",
+  );
+  return `g-${params.groupId.slice(0, 8)}-${windowToken}`;
+}
+
+/**
+ * Get an existing Daily.co room by name, or create it if it doesn't exist.
+ *
+ * Use only when the room name is **deterministic and authorization-pre-gated**
+ * — i.e. callers have already confirmed the user is allowed in this specific
+ * room. For random codes (instant rooms), this would be a security regression:
+ * a guessed code would silently let the caller join someone else's room.
+ *
+ * Concurrency: GET-then-POST is racy on a fresh room — two joiners can both
+ * see "not found," and one POST will lose with a duplicate-name error. That
+ * loss is treated as success (the room exists, which is all the caller needs)
+ * by re-fetching and returning the winner's room.
+ */
+export async function getOrCreateDailyRoom(
+  config: CreateRoomConfig,
+): Promise<DailyRoom> {
+  const existing = await getDailyRoom(config.name);
+  if (existing) return existing;
+
+  try {
+    return await createDailyRoom(config);
+  } catch (err) {
+    if (isDailyDuplicateRoomError(err)) {
+      const raced = await getDailyRoom(config.name);
+      if (raced) return raced;
+    }
+    throw err;
+  }
 }
 
 /**

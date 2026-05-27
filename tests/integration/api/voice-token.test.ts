@@ -20,13 +20,13 @@ vi.mock("@/lib/supabase/admin", () => ({
 }));
 
 const mockCreateMeetingToken = vi.fn();
-const mockCreateDailyRoom = vi.fn();
+const mockGetOrCreateDailyRoom = vi.fn();
 vi.mock("@/lib/daily", async () => {
   const actual = await vi.importActual<typeof import("@/lib/daily")>("@/lib/daily");
   return {
     ...actual,
     createMeetingToken: (...args: unknown[]) => mockCreateMeetingToken(...args),
-    createDailyRoom: (...args: unknown[]) => mockCreateDailyRoom(...args),
+    getOrCreateDailyRoom: (...args: unknown[]) => mockGetOrCreateDailyRoom(...args),
   };
 });
 
@@ -158,7 +158,13 @@ describe("POST /api/voice/token", () => {
     vi.clearAllMocks();
     process.env.NEXT_PUBLIC_DAILY_DOMAIN = "testdomain";
     mockCreateMeetingToken.mockResolvedValue("mock-daily-token");
-    mockCreateDailyRoom.mockResolvedValue({ name: "test-room" });
+    mockGetOrCreateDailyRoom.mockResolvedValue({
+      id: "room-id",
+      name: "test-room",
+      url: "https://testdomain.daily.co/test-room",
+      privacy: "private",
+      created_at: new Date().toISOString(),
+    });
     // Default window: open right now, closes in an hour.
     const nextStart = new Date(Date.now() - 60_000);
     mockComputeSessionWindow.mockReturnValue({
@@ -297,7 +303,7 @@ describe("POST /api/voice/token", () => {
   });
 
   describe("happy path + Daily mechanics", () => {
-    it("lazy-creates the Daily room with exp = windowClosesAt + grace, then mints a gamer non-owner token", async () => {
+    it("requests the deterministic room with exp = windowClosesAt + grace, then mints a gamer non-owner token", async () => {
       authAs("gamer-id", { role: "gamer", first_name: "Kid" });
       mockTables({
         group: {},
@@ -322,7 +328,7 @@ describe("POST /api/voice/token", () => {
         Math.round(windowClosesAt.getTime() / 1000) +
         VOICE_CONFIG.TOKEN_EXPIRY_GRACE_SECONDS;
 
-      expect(mockCreateDailyRoom).toHaveBeenCalledWith(
+      expect(mockGetOrCreateDailyRoom).toHaveBeenCalledWith(
         expect.objectContaining({
           name: expect.stringMatching(/^g-aaaaaaaa-\d{12}$/),
           expUnix: expectedExp,
@@ -350,20 +356,15 @@ describe("POST /api/voice/token", () => {
       );
     });
 
-    it("swallows a Daily 409 (room already exists) and still mints a token", async () => {
+    it("returns 500 when Daily fails (errors are not swallowed at the route)", async () => {
+      // The duplicate-name race is handled inside getOrCreateDailyRoom and
+      // never surfaces here. Any error that does escape the helper is a
+      // real Daily failure (outage, auth error) — bubble it as a 500.
       authAs("admin-id", { role: "admin", first_name: "Boss" });
       mockTables({ group: {} });
-      mockCreateDailyRoom.mockRejectedValue(new DailyApiError(409, "Room exists"));
-
-      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
-      expect(res.status).toBe(200);
-      expect(mockCreateMeetingToken).toHaveBeenCalled();
-    });
-
-    it("returns 500 when a non-409 Daily error escapes lazy-create", async () => {
-      authAs("admin-id", { role: "admin", first_name: "Boss" });
-      mockTables({ group: {} });
-      mockCreateDailyRoom.mockRejectedValue(new DailyApiError(500, "Daily down"));
+      mockGetOrCreateDailyRoom.mockRejectedValue(
+        new DailyApiError(500, "Daily down"),
+      );
 
       const res = await POST(tokenRequest({ groupId: GROUP_ID }));
       expect(res.status).toBe(500);

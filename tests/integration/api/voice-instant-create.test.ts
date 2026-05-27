@@ -74,7 +74,21 @@ describe("POST /api/voice/instant/create", () => {
     );
   });
 
-  it("retries on 409 collision and returns the next code", async () => {
+  it("retries on Daily's 400 'already exists' collision and returns the next code", async () => {
+    // Daily.co's actual response for a duplicate room name is 400
+    // invalid-request-error with `a room named X already exists`, not the
+    // 409 Conflict you might expect. The retry has to match on that.
+    authenticated("gedu");
+    mockCreateDailyRoom
+      .mockRejectedValueOnce(new DailyApiError(400, "a room named X already exists"))
+      .mockResolvedValueOnce({ name: "ok" });
+
+    const response = await POST();
+    expect(response.status).toBe(200);
+    expect(mockCreateDailyRoom).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries on a 409 collision too (defensive — in case Daily ever returns 409)", async () => {
     authenticated("gedu");
     mockCreateDailyRoom
       .mockRejectedValueOnce(new DailyApiError(409, "Conflict"))
@@ -87,7 +101,9 @@ describe("POST /api/voice/instant/create", () => {
 
   it("returns 503 if all retries collide", async () => {
     authenticated("admin");
-    mockCreateDailyRoom.mockRejectedValue(new DailyApiError(409, "Conflict"));
+    mockCreateDailyRoom.mockRejectedValue(
+      new DailyApiError(400, "a room named X already exists"),
+    );
 
     const response = await POST();
     expect(response.status).toBe(503);
@@ -96,10 +112,23 @@ describe("POST /api/voice/instant/create", () => {
     );
   });
 
-  it("returns 500 on a non-409 Daily error and does not retry", async () => {
+  it("returns 500 on a non-collision Daily error and does not retry", async () => {
     authenticated("admin");
     mockCreateDailyRoom.mockRejectedValue(
       new DailyApiError(500, "Daily down"),
+    );
+
+    const response = await POST();
+    expect(response.status).toBe(500);
+    expect(mockCreateDailyRoom).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 500 on a 400 that isn't a duplicate-name error (e.g. malformed request)", async () => {
+    // Other 400s (validation errors, malformed bodies) must not be treated
+    // as collisions — that would silently retry on a bad request.
+    authenticated("admin");
+    mockCreateDailyRoom.mockRejectedValue(
+      new DailyApiError(400, "invalid token format"),
     );
 
     const response = await POST();
