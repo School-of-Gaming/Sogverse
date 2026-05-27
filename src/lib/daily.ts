@@ -83,6 +83,14 @@ export async function createDailyRoom(config: CreateRoomConfig): Promise<DailyRo
     max_participants: config.maxParticipants ?? VOICE_CONFIG.MAX_PARTICIPANTS,
     enable_chat: false,
     enable_screenshare: true,
+    // Without this flag, Daily.co treats `exp` as a "no new operations past
+    // this point" boundary and lets existing WebRTC connections zombie
+    // until they drop naturally — peers see ghosts (tiles present, no
+    // audio/video) and never get a `left-meeting` event to react to.
+    // `eject_at_room_exp: true` makes Daily actively close connections at
+    // `exp`, which fires `left-meeting` on every client and lets the UI
+    // transition to the ended screen.
+    eject_at_room_exp: true,
   };
   if (config.expUnix !== undefined) {
     properties.exp = config.expUnix;
@@ -202,8 +210,14 @@ interface CreateTokenOptions {
   /** Owners can moderate (mute, lock, screen share). Non-owners cannot. */
   isOwner: boolean;
   userName?: string;
-  /** Custom token expiry as a Unix timestamp (seconds). Defaults to now + TOKEN_EXPIRY_SECONDS. */
-  expUnix?: number;
+  /**
+   * Token expiry as a Unix timestamp (seconds). Required — callers must
+   * pick a deliberate value (scheduled rooms use `windowClosesAt + grace`,
+   * instant rooms use `now + INSTANT_ROOM_EXP_SECONDS`). No default; a
+   * silent fallback would let new callers inherit semantics that don't
+   * match their flow.
+   */
+  expUnix: number;
   /**
    * Initial track states at meeting join. The token's `start_*_off` flags
    * override anything passed to `createCallObject`, so the lobby's mic/camera
@@ -219,8 +233,6 @@ interface DailyToken {
 }
 
 export async function createMeetingToken(options: CreateTokenOptions): Promise<string> {
-  const exp = options.expUnix ?? Math.round(Date.now() / 1000) + VOICE_CONFIG.TOKEN_EXPIRY_SECONDS;
-
   const result: DailyToken = await dailyFetch("/meeting-tokens", {
     method: "POST",
     body: JSON.stringify({
@@ -231,7 +243,12 @@ export async function createMeetingToken(options: CreateTokenOptions): Promise<s
         start_video_off: options.startVideoOff ?? true,
         start_audio_off: options.startAudioOff ?? false,
         user_name: options.userName,
-        exp,
+        exp: options.expUnix,
+        // See the comment on `eject_at_room_exp` in createDailyRoom — same
+        // reason, applied at the per-participant level. Without this,
+        // Daily lets the token expire silently and the WebRTC connection
+        // zombies.
+        eject_at_token_exp: true,
       },
     }),
   });

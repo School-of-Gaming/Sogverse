@@ -3,6 +3,7 @@ import { getUserWithProfile } from "@/lib/supabase/server";
 import { createMeetingToken, getDailyRoom, buildUserName } from "@/lib/daily";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 /**
  * Mint a Daily.co meeting token for an instant voice room.
@@ -127,12 +128,23 @@ export async function POST(request: Request) {
   }
   const roomUrl = `https://${domain}.daily.co/${code}`;
 
+  // Same 8h window as the room itself. Each participant's token is its
+  // own clock — late joiners get a token that survives past the room's
+  // `exp`, but the room's `eject_at_room_exp` always lands first in
+  // practice, so the per-token cap is effectively a "no participant sits
+  // here longer than INSTANT_ROOM_EXP_SECONDS from their own join"
+  // ceiling. Aligns with the room TTL without depending on reading the
+  // room's exact `exp` value.
+  const expUnix =
+    Math.round(Date.now() / 1000) + VOICE_CONFIG.INSTANT_ROOM_EXP_SECONDS;
+
   const token = await createMeetingToken({
     roomName: code,
     isOwner: role !== "guest",
     userName: buildUserName({ userId, role, displayName }),
     startVideoOff: !cameraOn,
     startAudioOff: !micOn,
+    expUnix,
   });
 
   return NextResponse.json({
