@@ -7,14 +7,14 @@ import {
 } from "@/lib/daily";
 
 describe("groupVoiceRoomName", () => {
-  it("formats the timestamp in the product timezone and uses the first 8 chars of the group id", () => {
+  it("formats the timestamp in the product timezone and uses the full group id", () => {
     // 2026-05-27 04:25 UTC → 07:25 in Europe/Helsinki (UTC+3 in May).
     const name = groupVoiceRoomName({
       groupId: "7b2b7676-6452-4812-8e36-55ad5beb249b",
       windowOpensAt: new Date("2026-05-27T04:25:00Z"),
       timezone: "Europe/Helsinki",
     });
-    expect(name).toBe("g-7b2b7676-202605270725");
+    expect(name).toBe("g-7b2b7676-6452-4812-8e36-55ad5beb249b-202605270725");
   });
 
   it("renders the same wall-clock token across DST transitions", () => {
@@ -31,8 +31,8 @@ describe("groupVoiceRoomName", () => {
       windowOpensAt: new Date("2026-07-15T10:55:00Z"), // 13:55 Helsinki, EEST
       timezone: "Europe/Helsinki",
     });
-    expect(winter).toBe("g-aaaaaaaa-202601151355");
-    expect(summer).toBe("g-aaaaaaaa-202607151355");
+    expect(winter).toBe("g-aaaaaaaa-0000-0000-0000-000000000000-202601151355");
+    expect(summer).toBe("g-aaaaaaaa-0000-0000-0000-000000000000-202607151355");
   });
 });
 

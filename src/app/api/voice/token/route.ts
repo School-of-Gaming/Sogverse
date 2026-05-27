@@ -40,12 +40,6 @@ export async function POST(request: Request) {
     });
     if (result instanceof NextResponse) return result;
     const { user, profile } = result;
-    // `requireRole` allows {gedu, gamer, admin} but the row-level Profile
-    // type still admits 'customer'. Narrow back so the helper signature is
-    // honest about which roles reach the gates below.
-    if (profile.role === "customer") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
     const role = profile.role;
 
     const body = (await request.json()) as { groupId?: string };

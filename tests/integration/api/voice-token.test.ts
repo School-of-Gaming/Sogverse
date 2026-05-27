@@ -330,7 +330,9 @@ describe("POST /api/voice/token", () => {
 
       expect(mockGetOrCreateDailyRoom).toHaveBeenCalledWith(
         expect.objectContaining({
-          name: expect.stringMatching(/^g-aaaaaaaa-\d{12}$/),
+          name: expect.stringMatching(
+            /^g-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee-\d{12}$/,
+          ),
           expUnix: expectedExp,
         }),
       );
@@ -380,7 +382,9 @@ describe("POST /api/voice/token", () => {
       expect(data).toEqual(
         expect.objectContaining({
           token: "mock-daily-token",
-          roomUrl: expect.stringContaining("testdomain.daily.co/g-aaaaaaaa-"),
+          roomUrl: expect.stringContaining(
+            "testdomain.daily.co/g-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee-",
+          ),
           role: "admin",
         }),
       );
