@@ -140,6 +140,21 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // Signed-in parents and gamers visiting the home page get bounced to their
+  // dashboard — mirrors the SOG-logo behavior so the home page isn't a
+  // dead-end for them. Admins and gedus pass through.
+  if (user && pathname === ROUTES.home) {
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profileError && (profile.role === "customer" || profile.role === "gamer")) {
+      return redirect(new URL(ROLE_DASHBOARD_PATHS[profile.role], request.url));
+    }
+  }
+
   // If public route or auth route, allow access
   if (isPublicRoute || isAuthRoute) {
     return supabaseResponse;
