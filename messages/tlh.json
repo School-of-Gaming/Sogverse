@@ -14,7 +14,7 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Admin QaD",
       "parentDashboard": "jIH SOG",
-      "geduDashboard": "Gedu QaD",
+      "geduDashboard": "jIH SOG",
       "gamerHome": "toy'wI'",
       "gamerGroups": "jIH ghom'a'mey",
       "gamerGroupDetails": "ghom'a' Qatlh",
@@ -1057,7 +1057,8 @@
     "billing": "Huch DIl",
     "help": "boQ",
     "yty": "Yty",
-    "settings": "tlhInganpu' chu'"
+    "settings": "tlhInganpu' chu'",
+    "instantVoiceRoom": "tugh Daq"
   },
   "family": {
     "addGamer": "QujwI' chel",
@@ -1116,6 +1117,16 @@
       "save": "yIpol",
       "saving": "polchoH...",
       "saveError": "pol Qapbe'"
+    },
+    "myGroups": {
+      "title": "ghomwIj",
+      "empty": "ghomDaq SoH DaQon DaH pagh.",
+      "counts": "{groupCount, plural, one {1 ghom} other {# ghommey}} · {gamerCount, plural, one {1 Suvwl'} other {# Suvwl'pu'}}",
+      "joinVoice": "Daq yIghoS",
+      "locked": "{date} {time} poSchoH",
+      "startsIn": "{countdown} qaSchoH",
+      "inProgress": "qaStaH tay'",
+      "viewDetails": "De' yIbej"
     }
   },
   "groups": {

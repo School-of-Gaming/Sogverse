@@ -389,6 +389,36 @@ export type ProductGroupWithDetails = Omit<
   gamer_gender: Database["public"]["Enums"]["gender_type"] | null;
 };
 
+// get_my_assigned_products RPC — the generator marks every column of an RPC
+// RETURNS TABLE row as non-nullable from the column type alone, missing
+// products_v2 columns that are actually nullable (start_date, end_date,
+// padlet_url). It also degrades the jsonb arrays (product_translations,
+// schedule_slots) to `Json`, which forces every consumer to cast. Tighten
+// both: nullability matches the underlying products_v2 schema, and the
+// arrays get structured shapes that mirror the jsonb_build_object calls in
+// the RPC body. Keep this alias adjacent to its source in
+// supabase/migrations/00061_get_my_assigned_products.sql.
+type _MyAssignedProductGenerated =
+  Database["public"]["Functions"]["get_my_assigned_products"]["Returns"][number];
+export type MyAssignedProductRow = Omit<
+  _MyAssignedProductGenerated,
+  "start_date" | "end_date" | "padlet_url" | "product_translations" | "schedule_slots"
+> & {
+  start_date: string | null;
+  end_date: string | null;
+  padlet_url: string | null;
+  product_translations: Array<{
+    locale: string;
+    name: string;
+    description: string;
+  }>;
+  schedule_slots: Array<{
+    weekday: number;
+    start_time: string;
+    duration_minutes: number;
+  }>;
+};
+
 // ---------------------------------------------------------------------------
 // App-level types (not generated)
 // ---------------------------------------------------------------------------

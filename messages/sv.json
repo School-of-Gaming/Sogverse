@@ -14,7 +14,7 @@
       "minecraftApi": "Minecraft Server API",
       "adminDashboard": "Administratörspanel",
       "parentDashboard": "Min SOG",
-      "geduDashboard": "Utbildarpanel",
+      "geduDashboard": "Min SOG",
       "gamerHome": "Spelare",
       "gamerGroups": "Mina grupper",
       "gamerGroupDetails": "Gruppdetaljer",
@@ -1012,7 +1012,8 @@
     "billing": "Fakturering",
     "help": "Hjälp",
     "yty": "Yty",
-    "settings": "Inställningar"
+    "settings": "Inställningar",
+    "instantVoiceRoom": "Direkt röstrum"
   },
   "family": {
     "addGamer": "Lägg till gamer",
@@ -1071,6 +1072,16 @@
       "save": "Spara",
       "saving": "Sparar...",
       "saveError": "Kunde inte spara"
+    },
+    "myGroups": {
+      "title": "Mina grupper",
+      "empty": "Du har inte tilldelats någon grupp än.",
+      "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
+      "joinVoice": "Gå med i röstrum",
+      "locked": "Öppnar {date} kl. {time}",
+      "startsIn": "Börjar om {countdown}",
+      "inProgress": "Pågående pass",
+      "viewDetails": "Visa detaljer"
     }
   },
   "groups": {

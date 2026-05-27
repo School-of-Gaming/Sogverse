@@ -1702,6 +1702,22 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Json
       }
+      get_my_assigned_products: {
+        Args: never
+        Returns: {
+          end_date: string
+          gamer_count: number
+          group_count: number
+          group_id: string
+          is_remote: boolean
+          padlet_url: string
+          product_id: string
+          product_translations: Json
+          schedule_slots: Json
+          start_date: string
+          timezone: string
+        }[]
+      }
       get_my_gamers: {
         Args: never
         Returns: {
