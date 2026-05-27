@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
-import { createDailyRoom, DailyApiError } from "@/lib/daily";
+import { createDailyRoom, isDailyDuplicateRoomError } from "@/lib/daily";
 import { generateVoiceRoomCode } from "@/lib/voice-room-code";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
@@ -14,9 +14,11 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
  * the only handle.
  *
  * Collisions are rare (~1 in 2,000 with 500 concurrent rooms) so we don't
- * pre-check the code. If Daily returns 409 Conflict on the room name, we
+ * pre-check the code. If Daily says the room name already exists, we
  * generate a fresh code and try again — `INSTANT_ROOM_CREATE_MAX_RETRIES`
- * times.
+ * times. (We can't use the `getOrCreateDailyRoom` helper here: random
+ * codes are not authorization-pre-gated, so silently joining the existing
+ * room on collision would let a caller into someone else's instant room.)
  */
 export async function POST() {
   const result = await requireRole(["admin", "gedu"], {
@@ -33,9 +35,9 @@ export async function POST() {
       await createDailyRoom({ name: code, expUnix });
       return NextResponse.json({ code });
     } catch (err) {
-      // 409 means the random code happened to collide — try again.
-      // Anything else is a real failure; bail.
-      if (err instanceof DailyApiError && err.status === 409) {
+      // Duplicate-name means the random code happened to collide — try
+      // again with a fresh code. Anything else is a real failure; bail.
+      if (isDailyDuplicateRoomError(err)) {
         continue;
       }
       console.error("Failed to create instant voice room:", err);

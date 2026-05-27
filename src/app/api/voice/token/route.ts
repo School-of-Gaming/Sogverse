@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { formatInTimeZone } from "date-fns-tz";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildUserName,
-  createDailyRoom,
   createMeetingToken,
-  DailyApiError,
+  getOrCreateDailyRoom,
+  groupVoiceRoomName,
 } from "@/lib/daily";
 import { computeSessionWindow } from "@/lib/session-schedule";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
@@ -17,9 +16,9 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
  * Request body: `{ groupId: product_groups_v2.id }`.
  *
  * There is no backing `voice_rooms_v2` table — Daily.co is the single
- * source of truth for room existence. We derive the Daily room name from
- * the group + the current session window and lazy-create on first join,
- * setting Daily's `exp` to the session-window close so the platform reaps
+ * source of truth for room existence. We derive a deterministic room name
+ * from the group + the current session window, get-or-create on demand,
+ * and set Daily's `exp` to the session-window close so the platform reaps
  * the room (and ejects late joiners) once the window passes.
  *
  * Gates:
@@ -167,30 +166,23 @@ export async function POST(request: Request) {
       );
     }
 
-    // ---- Daily room name + lazy create ----
-    // Different sessions of the same group get distinct names so two slots
-    // in the same week never collide. Wall-clock formatting in the product
-    // timezone keeps the wall-clock identity stable across DST.
-    const windowToken = formatInTimeZone(
-      openSlot.windowOpensAt,
-      productTimezone,
-      "yyyyMMddHHmm",
-    );
-    const dailyRoomName = `g-${groupId.slice(0, 8)}-${windowToken}`;
+    // ---- Daily room: get-or-create ----
+    // The room name is content-addressable from (group, window open time),
+    // so every joiner derives the same name independently and the helper
+    // either returns the existing room or creates it. No race-on-first-join
+    // surfaces as a user-visible error — the duplicate-name path falls
+    // through silently inside the helper.
+    const dailyRoomName = groupVoiceRoomName({
+      groupId,
+      windowOpensAt: openSlot.windowOpensAt,
+      timezone: productTimezone,
+    });
 
     const expUnix =
       Math.round(openSlot.windowClosesAt.getTime() / 1000) +
       VOICE_CONFIG.TOKEN_EXPIRY_GRACE_SECONDS;
 
-    try {
-      await createDailyRoom({ name: dailyRoomName, expUnix });
-    } catch (err) {
-      // 409 means the room already exists — another client got there first.
-      // Same swallow pattern instant rooms use for code collisions.
-      if (!(err instanceof DailyApiError) || err.status !== 409) {
-        throw err;
-      }
-    }
+    await getOrCreateDailyRoom({ name: dailyRoomName, expUnix });
 
     const domain = process.env.NEXT_PUBLIC_DAILY_DOMAIN;
     if (!domain) {
