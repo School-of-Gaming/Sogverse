@@ -10,7 +10,7 @@ Voice rooms are linked 1:1 to **v2 product groups** (`product_groups_v2`) and a 
 
 Gamers reach a session from the dashboard `NextSessionCard` — clicking "Join Voice" while the session window is open navigates to `/gamer/voice/{groupId}` and `VoiceSessionPage` auto-joins. The spatial canvas lets participants drag avatars into zones (breakout rooms, broadcast) for zone-based audio isolation.
 
-**Gedu UI is not yet wired** for v2 scheduled rooms — the API gate already accepts them, but no in-app surface produces a `/gedu/voice/{groupId}` link. Tracked as a follow-up; see `TODO.md`.
+**Gedu UI is not yet wired** for v2 scheduled rooms — the API gate already accepts them, but the gedu dashboard has no join link for an upcoming session. Tracked as a follow-up; see `TODO.md`.
 
 ## Component Map
 
@@ -19,7 +19,7 @@ Pages
 └── /gamer/voice/[id]  → VoiceSessionPage (auto-joins by product_groups_v2.id)
 
 (Instant rooms — separate flow, see instant-voice-rooms.md
- /admin/voice and /gedu/voice host CreateInstantRoomCard.)
+ /admin/voice and /gedu host CreateInstantRoomCard.)
 
 Voice components (src/components/voice/)
 ├── VoiceSessionPage    — Standalone voice page: auto-joins by group ID, role-agnostic (backHref pattern)
@@ -240,7 +240,7 @@ The `userName` field in Daily.co tokens encodes `userId|role|displayName` for cl
 ## Future Improvements
 
 ### Gedu UI for scheduled rooms
-The token API already accepts gedus on v2 scheduled rooms (gated by `gedu_group_assignments_v2`), but no in-app surface produces a `/gedu/voice/{groupId}` link. A gedu has to know the URL to join. Surfacing this needs a "your sessions" list on the gedu dashboard analogous to the gamer's `NextSessionCard`.
+The token API already accepts gedus on v2 scheduled rooms (gated by `gedu_group_assignments_v2`), but the gedu dashboard has no join link for an upcoming session — a gedu has to know the URL to join. Surfacing this needs a "your sessions" list on the gedu dashboard analogous to the gamer's `NextSessionCard`.
 
 ### Persistent lock state across rejoins
 Currently lock state is ephemeral — if a locked gamer disconnects and rejoins, they get a fresh token with full permissions. A server-side lock store (e.g., in Supabase or Redis) + restricted token issuance would make locks survive reconnects.

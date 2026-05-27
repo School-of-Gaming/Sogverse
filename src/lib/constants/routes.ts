@@ -66,7 +66,5 @@ export const ROUTES = {
   },
   gedu: {
     dashboard: "/gedu",
-    voiceSession: (roomId: string) => `/gedu/voice/${roomId}`,
-    voice: "/gedu/voice",
   },
 } as const;

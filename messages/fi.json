@@ -1059,13 +1059,6 @@
     "subtitle": "Valmis pelaamaan ja oppimaan?"
   },
   "gedu": {
-    "title": "Kasvattajan hallintapaneeli",
-    "subtitle": "Hallitse ryhmiäsi ja oppilaitasi",
-    "statsGroups": "Ryhmät",
-    "statsGroupsDescription": "Hallitse ryhmiäsi",
-    "statsGamers": "Pelaajat",
-    "statsGamersDescription": "Kaikissa ryhmissä",
-    "latestStudentActivities": "Oppilaiden viimeisimmät toiminnot",
     "coverage": {
       "title": "Kattamasi alueet",
       "remoteOnlyNote": "Käytetään sijaisen etsimiseen, kun toinen kasvattaja ei pääse pitämään kerhoaan. Jätä tyhjäksi, jos toimit vain etänä.",
@@ -1657,9 +1650,9 @@
         "createNew": "Luo uusi äänihuone"
       },
       "createPage": {
-        "title": "Luo äänihuone",
-        "subtitle": "Avaa hetkessä huone ja jaa linkki niille, joiden haluat liittyvän.",
-        "createButton": "Luo äänihuone",
+        "title": "Luo pikaäänihuone",
+        "subtitle": "Yhdellä napsautuksella → uusi huone ja jaettava linkki. Käytä spontaaneihin kahdenkeskisiin keskusteluihin tai kasvattajien koordinointiin ajastetun tapaamisen ulkopuolella tai sen lisäksi.",
+        "createButton": "Käynnistä pikahuone",
         "creating": "Luodaan…",
         "createFailed": "Huoneen luonti epäonnistui. Yritä uudelleen.",
         "ready": "Huoneesi on valmis",

@@ -39,7 +39,10 @@ interface NavItemDef {
   icon: React.ReactNode;
 }
 
-const navItemsByRole: Record<UserRole, NavItemDef[]> = {
+// Only admin renders the sidebar (see DashboardRootLayout). Parents, gamers,
+// and gedus get to their dashboards via the SOG logo in the header and have
+// no nested sub-routes that need sidebar nav.
+const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
   admin: [
     { href: ROUTES.admin.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
     { href: ROUTES.admin.users, labelKey: "users", icon: <Users className="h-5 w-5" /> },
@@ -64,11 +67,6 @@ const navItemsByRole: Record<UserRole, NavItemDef[]> = {
     { href: ROUTES.gamer.groups, labelKey: "myGroups", icon: <UsersRound className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
-  gedu: [
-    { href: ROUTES.gedu.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
-    { href: ROUTES.gedu.voice, labelKey: "voice", icon: <AudioLines className="h-5 w-5" /> },
-    { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
-  ],
 };
 
 export function Sidebar() {
@@ -81,6 +79,7 @@ export function Sidebar() {
   if (!profile?.role) return null;
 
   const navItems = navItemsByRole[profile.role];
+  if (!navItems) return null;
   const collapseTransition = "[transition:width_700ms,padding_700ms,gap_700ms,max-width_700ms,opacity_700ms]";
   const navTransition = "[transition:padding_700ms,gap_700ms,background-color_300ms,color_300ms]";
 
@@ -118,7 +117,6 @@ export function Sidebar() {
             (item.href !== ROUTES.admin.dashboard &&
               item.href !== ROUTES.customer.dashboard &&
               item.href !== ROUTES.gamer.dashboard &&
-              item.href !== ROUTES.gedu.dashboard &&
               pathname.startsWith(item.href));
 
           return (

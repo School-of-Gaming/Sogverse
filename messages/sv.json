@@ -1059,13 +1059,6 @@
     "subtitle": "Redo att spela och lära dig?"
   },
   "gedu": {
-    "title": "Utbildarens översikt",
-    "subtitle": "Hantera dina grupper och elever",
-    "statsGroups": "Grupper",
-    "statsGroupsDescription": "Hantera dina grupper",
-    "statsGamers": "Spelare",
-    "statsGamersDescription": "Över alla grupper",
-    "latestStudentActivities": "Senaste elevaktiviteter",
     "coverage": {
       "title": "Områden du täcker",
       "remoteOnlyNote": "Används för att matcha dig som vikarie när en annan utbildare inte kan hålla sin klubb. Lämna tomt om du bara vikarierar på distans.",
@@ -1657,9 +1650,9 @@
         "createNew": "Skapa ett nytt röstrum"
       },
       "createPage": {
-        "title": "Skapa ett röstrum",
-        "subtitle": "Starta ett rum direkt och dela länken med dem som ska gå med.",
-        "createButton": "Skapa röstrum",
+        "title": "Starta ett direkt röstrum",
+        "subtitle": "Ett tryck → nytt rum & delbar länk. Använd för spontana en-mot-en-samtal eller utbildarsamordning utöver det schemalagda mötet.",
+        "createButton": "Starta direkt rum",
         "creating": "Skapar…",
         "createFailed": "Kunde inte skapa rummet. Försök igen.",
         "ready": "Ditt rum är redo",
