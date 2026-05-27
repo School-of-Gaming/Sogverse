@@ -19,13 +19,6 @@ vi.mock("@/lib/supabase/admin", () => ({
   })),
 }));
 
-const mockCreateDailyRoom = vi.fn();
-const mockDeleteDailyRoom = vi.fn();
-vi.mock("@/lib/daily", () => ({
-  createDailyRoom: (...args: unknown[]) => mockCreateDailyRoom(...args),
-  deleteDailyRoom: (...args: unknown[]) => mockDeleteDailyRoom(...args),
-}));
-
 const mockSendTransactionalEmail = vi.fn();
 vi.mock("@/lib/brevo", () => ({
   sendTransactionalEmail: (...args: unknown[]) => mockSendTransactionalEmail(...args),
@@ -122,8 +115,6 @@ function chainSelect(data: unknown) {
 describe("POST /api/admin/products/[id]/groups/apply", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockCreateDailyRoom.mockResolvedValue({});
-    mockDeleteDailyRoom.mockResolvedValue({});
     mockSendTransactionalEmail.mockResolvedValue({});
   });
 

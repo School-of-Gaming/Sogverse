@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createDailyRoom } from "@/lib/daily";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL } from "@/lib/constants";
 import {
@@ -365,7 +364,7 @@ export async function POST(
 
         // Step 0: DB commit
         try {
-          const { data: rpcResult, error: rpcError } = await admin.rpc(
+          const { error: rpcError } = await admin.rpc(
             "commit_group_changes",
             {
               p_product_id: productId,
@@ -381,22 +380,6 @@ export async function POST(
             emit({ type: "complete", success: false, error: rpcError.message });
             controller.close();
             return;
-          }
-
-          // Best-effort: pre-create Daily.co rooms for new groups so the
-          // first joiner doesn't pay the create-room latency. Names mirror
-          // the v1 `group-{id}` shape; the v2 voice flow uses a different
-          // name scheme (derived per-session in /api/voice/token), so this
-          // only matters for any remaining v1 group surface.
-          const rpcJson = rpcResult as { tempMap?: Record<string, string> } | null;
-          const tempMap = rpcJson?.tempMap ?? {};
-          for (const realId of Object.values(tempMap)) {
-            const dailyRoomName = `group-${realId.slice(0, 8)}`;
-            try {
-              await createDailyRoom({ name: dailyRoomName });
-            } catch (err) {
-              console.error(`Failed to pre-create Daily.co room ${dailyRoomName}:`, err);
-            }
           }
 
           emit({ type: "step_done", index: 0 });
