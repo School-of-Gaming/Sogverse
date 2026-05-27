@@ -319,13 +319,17 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   );
 
   const leave = useCallback(async () => {
-    if (callObjectRef.current) {
-      await callObjectRef.current.leave();
-      await callObjectRef.current.destroy();
-      callObjectRef.current = null;
-      setCallObject(null);
-      resetState();
-    }
+    const co = callObjectRef.current;
+    if (!co) return;
+    // Null the ref first so the `left-meeting` event fired during
+    // `co.leave()` is a no-op in `handleLeft`. Otherwise `handleLeft`
+    // destroys + nulls the ref mid-await and the `destroy()` below
+    // crashes on null.
+    callObjectRef.current = null;
+    setCallObject(null);
+    await co.leave();
+    await co.destroy();
+    resetState();
   }, [resetState]);
 
   // --- Lock-aware toggles ---
