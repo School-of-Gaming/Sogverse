@@ -118,10 +118,6 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 ### UI Component Reference
 A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
-### Groups
-
-See `docs/groups-architecture.md` for the full architecture, component map, shared component patterns, and data flow. All group/enrollment mutations must go through the `commit_group_changes` RPC — never modify `product_groups` or `group_enrollments` directly.
-
 ### Customer Enrollment
 
 See `docs/customer-enrollment-architecture.md` for the enrollment flow, refund logic, weekly charge cron, and component map.

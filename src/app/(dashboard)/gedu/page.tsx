@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Users, Gamepad2 } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,13 +15,6 @@ export default function GeduDashboardPage() {
   const c = useTranslations('common');
 
   const stats = [
-    {
-      title: t('statsGroups'),
-      value: "--",
-      description: t('statsGroupsDescription'),
-      icon: Users,
-      href: "/gedu/groups",
-    },
     {
       title: t('statsGamers'),
       value: "--",
