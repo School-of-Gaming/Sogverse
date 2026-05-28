@@ -4,6 +4,7 @@ import { Users, Package, TrendingUp, DollarSign } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PerfLogger } from "@/components/dev/perf-logger";
 import { ROUTES } from "@/lib/constants";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -48,6 +49,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
+      <PerfLogger page="admin" />
       <div>
         <h1 className="text-3xl font-bold">{t('title')}</h1>
         <p className="text-muted-foreground">
