@@ -1489,7 +1489,10 @@
     "verify": "yIchel",
     "verifying": "vIchel...",
     "notFound": "Minecraft account tu'be'lu'. pong yIchel je yIboq.",
-    "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH"
+    "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH",
+    "verified": "chellu'",
+    "unverified": "{username} (chelbe'lu')",
+    "notProvided": "ngeHbe'lu'"
   },
   "parent": {
     "placeholders": {
