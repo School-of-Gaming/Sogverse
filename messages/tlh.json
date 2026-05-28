@@ -1136,9 +1136,10 @@
       },
       "yourGroupBadge": "ghom'a'lIj",
       "otherGroupsHeading": "may'vam latlh ghommey",
-      "educatorsLabel": "ghojmoHwI'pu'",
-      "noEducators": "ghojmoHwI' tu'lu'be'.",
+      "gedusLabel": "Gedupu'",
+      "noGedus": "Gedu tu'lu'be'.",
       "gamersLabel": "Suvwl'pu'",
+      "parentEmailsLabel": "vavnI' QInHommey",
       "gamerCount": "{count, plural, one {1 Suvwl'} other {# Suvwl'pu'}}",
       "emptyRoster": "Suvwl' jaSHa' Suvwl'pu' tu'lu'be'.",
       "untitledGroup": "ghom'a' pong Hutlh",
@@ -1149,11 +1150,15 @@
       "genderBoy": "loDHom",
       "genderGirl": "be'Hom",
       "genderNonBinary": "tlhejbogh",
+      "parentEmailPrefix": "vavnI'",
       "copyParentEmail": "vavnI' QInHom yI'aQ {email}",
       "noParentEmail": "vavnI' QInHom tu'lu'be'",
       "emailCopied": "QInHom 'aQpu'",
-      "copyAllEmails": "Hoch {count, plural, one {# QInHom} other {# QInHommey}} yI'aQ",
-      "allEmailsCopied": "Hoch QInHommey 'aQpu'"
+      "copyAllParentEmails": "Hoch vavnI' QInHommey yI'aQ ({count, plural, one {#} other {#}})",
+      "allEmailsCopied": "Hoch vavnI' QInHommey 'aQpu'",
+      "minecraftVerified": "Minecraft tobpu'",
+      "minecraftUnverified": "Minecraft pong tobpu'be'",
+      "minecraftMissing": "Minecraft pong rarbe'"
     }
   },
   "groups": {

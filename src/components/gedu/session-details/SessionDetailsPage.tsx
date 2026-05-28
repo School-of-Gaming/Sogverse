@@ -166,7 +166,7 @@ function Loaded({ data }: { data: { product: GeduAssignedProductShell; my_group_
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
             {t("otherGroupsHeading")}
           </h2>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-4">
             {peerGroups.map((g) => (
               <PeerGroupCard
                 key={g.id}

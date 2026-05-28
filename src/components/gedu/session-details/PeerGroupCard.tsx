@@ -1,6 +1,5 @@
 "use client";
 
-import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,6 +7,7 @@ import { Identicon } from "@/components/ui/identicon";
 import { ROUTES } from "@/lib/constants";
 import type { GeduAssignedProductGroup } from "@/types";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
+import { GroupCardHeader } from "./AssignedGroupCard";
 
 interface PeerGroupCardProps {
   group: GeduAssignedProductGroup;
@@ -20,12 +20,13 @@ interface PeerGroupCardProps {
 }
 
 /**
- * Compact card for one of the *other* groups on the same product. Shows
- * group name, active gamer count, and the assigned gedus as Identicon
- * pills — enough for the viewer to see who's teaching alongside them
- * without exposing the sister-group roster. Voice button shares the
- * same locked/unlocked state with the assigned-group card (every group
- * shares the product's schedule).
+ * Card for one of the *other* groups on the same product. Same width and
+ * shape as the assigned-group card so they read as a single series; missing
+ * the "Your group" badge + the roster + the copy-emails helper. Voice
+ * button sits in the same place as the assigned card so the action row
+ * doesn't jump between cards. We deliberately don't expose the sister-group
+ * roster — gedus see who's *teaching* alongside them (gedu pills), not the
+ * kids in those groups.
  */
 export function PeerGroupCard({
   group,
@@ -39,23 +40,27 @@ export function PeerGroupCard({
 
   return (
     <Card>
-      <CardContent className="flex h-full flex-col gap-4 p-5 sm:p-6">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-base font-semibold leading-tight">
-            {group.name || t("untitledGroup")}
-          </h3>
-          <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-            <Users className="h-3.5 w-3.5" />
-            {t("gamerCount", { count: group.gamer_count })}
-          </span>
+      <CardContent className="space-y-5 p-5 sm:p-6">
+        <GroupCardHeader
+          name={group.name || t("untitledGroup")}
+          gamerCount={group.gamer_count}
+        />
+
+        <div className="flex flex-wrap items-center gap-2">
+          <JoinVoiceButton
+            voiceIsOpen={voiceIsOpen}
+            voiceHref={voiceHref}
+            opensDate={opensDate}
+            opensTime={opensTime}
+          />
         </div>
 
         <div className="space-y-2">
           <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            {t("educatorsLabel")}
+            {t("gedusLabel")}
           </p>
           {group.gedus.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("noEducators")}</p>
+            <p className="text-sm text-muted-foreground">{t("noGedus")}</p>
           ) : (
             <div className="flex flex-wrap gap-1.5">
               {group.gedus.map((g) => (
@@ -71,15 +76,6 @@ export function PeerGroupCard({
               ))}
             </div>
           )}
-        </div>
-
-        <div className="mt-auto flex justify-center pt-2">
-          <JoinVoiceButton
-            voiceIsOpen={voiceIsOpen}
-            voiceHref={voiceHref}
-            opensDate={opensDate}
-            opensTime={opensTime}
-          />
         </div>
       </CardContent>
     </Card>
