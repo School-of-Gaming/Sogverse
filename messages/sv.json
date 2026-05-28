@@ -1009,6 +1009,7 @@
     "upcomingSessions": "Träffar",
     "upcomingSessionsPlaceholderGamer": "När din lägerträff börjar är det här du går in i röstrummet med din Gedu och dina vänner.",
     "upcomingSessionsPlaceholderParent": "När ditt barns lägerträff börjar är det här hen går in i röstrummet med sin Gedu och sina vänner.",
+    "upcomingSessionsPlaceholderGedu": "När en träff du leder närmar sig är det här du går in i röstrummet med dina spelare.",
     "billing": "Fakturering",
     "help": "Hjälp",
     "yty": "Yty",
@@ -1074,8 +1075,6 @@
       "saveError": "Kunde inte spara"
     },
     "myGroups": {
-      "title": "Mina grupper",
-      "empty": "Du har inte tilldelats någon grupp än.",
       "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
       "joinVoice": "Gå med i röstrum",
       "locked": "Öppnar {date} kl. {time}",

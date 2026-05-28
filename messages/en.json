@@ -1009,6 +1009,7 @@
     "upcomingSessions": "Sessions",
     "upcomingSessionsPlaceholderGamer": "When your camp is in session, this is where you'll join the voice room with your Gedu and friends.",
     "upcomingSessionsPlaceholderParent": "When your child's camp is in session, this is where they'll join the voice room with their Gedu and friends.",
+    "upcomingSessionsPlaceholderGedu": "When a session you're running is coming up, this is where you'll join the voice room with your gamers.",
     "billing": "Billing",
     "help": "Help",
     "yty": "Yty",
@@ -1074,8 +1075,6 @@
       "saveError": "Failed to save coverage"
     },
     "myGroups": {
-      "title": "My Groups",
-      "empty": "You haven't been assigned to any groups yet.",
       "counts": "{groupCount, plural, one {# group} other {# groups}} · {gamerCount, plural, one {# gamer} other {# gamers}}",
       "joinVoice": "Join voice room",
       "locked": "Opens {date} at {time}",
