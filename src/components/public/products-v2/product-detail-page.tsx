@@ -11,7 +11,6 @@ import { useAuth } from "@/providers/auth-provider";
 import {
   useProductV2Detail,
   productV2Keys,
-  useMyGeduAssignedProducts,
 } from "@/services/products-v2";
 import { useMyGamers } from "@/services/gamers";
 import {
@@ -24,7 +23,6 @@ import {
 import type { ProductTypeV2 } from "@/types";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { ProductDetailPageBody } from "./product-detail-page-body";
-import { ProductGeduDetailBody } from "./product-gedu-detail-body";
 import { ProductPurchasedDetailPlaceholder } from "./product-purchased-detail-placeholder";
 import type { AuthState, MyParticipationState } from "./signup-panel-view";
 
@@ -47,7 +45,6 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
 
   const { user, profile, isLoading: authLoading } = useAuth();
   const isCustomer = profile?.role === "customer";
-  const isGedu = profile?.role === "gedu";
 
   const { data: product, isLoading: productLoading, isError } =
     useProductV2Detail(productId);
@@ -68,12 +65,6 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   // instant; on cold load we wait below.
   const { data: myParticipations, isLoading: myParticipationsLoading } =
     useMyParticipations({ enabled: isCustomer });
-
-  // Gedu-assigned products drive the role-specific detail branch below. The
-  // browse page already prefetches this on /clubs, /camps, /events for the
-  // "My" rail, so warm-cache navigation lands instantly; cold load waits.
-  const { data: geduAssignedProducts, isLoading: geduAssignedLoading } =
-    useMyGeduAssignedProducts({ enabled: isGedu });
 
   // Family subs for the post-purchase placeholder. Only fetched when the
   // user is a logged-in customer; the placeholder uses this to surface
@@ -103,38 +94,26 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   }, [signupResult, queryClient]);
 
   // Wait on every query whose result decides which branch (purchased vs.
-  // browse vs. gedu) renders, so we don't paint the signup panel and then
-  // snap to the placeholder a tick later. countsLoading carries
-  // `mySignupState` (the customer branch signal); myParticipationsLoading
-  // carries the rows the placeholder needs. For non-customers both queries
-  // return fast/empty. geduAssignedLoading carries the role-branch signal
-  // when the viewer is a gedu.
+  // browse) renders, so we don't paint the signup panel and then snap to the
+  // placeholder a tick later. countsLoading carries `mySignupState` (the
+  // customer branch signal); myParticipationsLoading carries the rows the
+  // placeholder needs. For non-customers both queries return fast/empty.
+  // Gedus assigned to a product reach the gedu session-details page from
+  // /gedu/clubs/[id] (or /camps/[id] / /events/[id]) — the marketing route
+  // here shows them the public layout with a non_customer overlay, which is
+  // the right thing to surface for an enrolment-style URL.
   if (
     productLoading ||
     authLoading ||
     (isCustomer && gamersLoading) ||
     (isCustomer && countsLoading) ||
-    (isCustomer && myParticipationsLoading) ||
-    (isGedu && geduAssignedLoading)
+    (isCustomer && myParticipationsLoading)
   ) {
     return <DetailLoadingSkeleton />;
   }
 
   if (isError || !product) {
     return <DetailNotFound productType={productType} />;
-  }
-
-  // Gedu branch: when the viewer is a gedu assigned to this product (via
-  // gedu_group_assignments_v2), render the gedu detail body instead of the
-  // marketing layout. A gedu visiting a product they're NOT assigned to —
-  // e.g. clicking a published-but-not-theirs row — falls through to the
-  // marketing layout below; the signup panel shows the non_customer overlay
-  // there, which is the right thing to surface.
-  const geduAssigned = Boolean(
-    isGedu && geduAssignedProducts?.some((p) => p.id === product.id),
-  );
-  if (geduAssigned) {
-    return <ProductGeduDetailBody product={product} />;
   }
 
   const authState: AuthState = (() => {

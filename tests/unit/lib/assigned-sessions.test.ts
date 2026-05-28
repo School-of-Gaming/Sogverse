@@ -24,6 +24,7 @@ function makeRow(
       endDate: null,
       padletUrl: null,
       isRemote: true,
+      productType: "consumer_club",
       translations: [
         {
           locale: "en",
@@ -87,6 +88,7 @@ describe("expandAssignedSessionsToCards", () => {
         endDate: "2026-03-08",
         padletUrl: null,
         isRemote: true,
+        productType: "consumer_club",
         translations: [
           {
             locale: "en",
@@ -120,6 +122,7 @@ describe("expandAssignedSessionsToCards", () => {
         endDate: null,
         padletUrl: null,
         isRemote: true,
+        productType: "consumer_club",
         translations: [
           {
             locale: "en",
@@ -211,6 +214,7 @@ describe("expandAssignedSessionsToCards", () => {
         endDate: null,
         padletUrl: null,
         isRemote: false,
+        productType: "consumer_club",
         translations: [{ locale: "en", name: "Minecraft Club", description: "" }],
       },
     });
@@ -222,14 +226,42 @@ describe("expandAssignedSessionsToCards", () => {
     expect(out[0].voiceHref).toBe("#");
   });
 
-  it("leaves openGroupHref as '#' (per-group detail page is out of scope)", () => {
-    const row = makeRow();
-    const out = expandAssignedSessionsToCards(
-      [row],
-      new Date("2026-02-25T08:00:00Z"),
-      "en",
+  it("routes openGroupHref to the gedu assigned-product page picked by product type", () => {
+    const club = makeRow();
+    const camp = makeRow({
+      product: {
+        id: "44444444-4444-4444-4444-444444444444",
+        timezone: "UTC",
+        startDate: null,
+        endDate: null,
+        padletUrl: null,
+        isRemote: true,
+        productType: "camp",
+        translations: [{ locale: "en", name: "Spring Camp", description: "" }],
+      },
+    });
+    const event = makeRow({
+      product: {
+        id: "55555555-5555-5555-5555-555555555555",
+        timezone: "UTC",
+        startDate: null,
+        endDate: null,
+        padletUrl: null,
+        isRemote: true,
+        productType: "event",
+        translations: [{ locale: "en", name: "Tournament", description: "" }],
+      },
+    });
+    const now = new Date("2026-02-25T08:00:00Z");
+    expect(expandAssignedSessionsToCards([club], now, "en")[0].openGroupHref).toBe(
+      `/gedu/clubs/${PRODUCT_ID}`,
     );
-    expect(out[0].openGroupHref).toBe("#");
+    expect(expandAssignedSessionsToCards([camp], now, "en")[0].openGroupHref).toBe(
+      `/gedu/camps/44444444-4444-4444-4444-444444444444`,
+    );
+    expect(
+      expandAssignedSessionsToCards([event], now, "en")[0].openGroupHref,
+    ).toBe(`/gedu/events/55555555-5555-5555-5555-555555555555`);
   });
 
   it("resolves the product name against the requested locale, falling back to en", () => {
@@ -241,6 +273,7 @@ describe("expandAssignedSessionsToCards", () => {
         endDate: null,
         padletUrl: null,
         isRemote: true,
+        productType: "consumer_club",
         translations: [
           {
             locale: "en",
@@ -276,6 +309,7 @@ describe("expandAssignedSessionsToCards", () => {
         endDate: "2026-06-25",
         padletUrl: null,
         isRemote: true,
+        productType: "camp",
         translations: [
           {
             locale: "en",

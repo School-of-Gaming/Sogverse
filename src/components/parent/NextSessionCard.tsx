@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { AudioLines, ExternalLink, FileText, Lock } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
+import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import {
   Card,
   CardContent,
@@ -144,39 +145,13 @@ export function NextSessionCard({
 
       <CardContent className="space-y-4 pt-0">
         <div className="flex justify-center">
-          {voiceIsOpen ? (
-            onJoinClick ? (
-              <button
-                type="button"
-                onClick={onJoinClick}
-                className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
-              >
-                <AudioLines className="h-4 w-4" />
-                {t("joinVoice")}
-              </button>
-            ) : (
-              <Link
-                href={voiceHref}
-                prefetch={false}
-                className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
-              >
-                <AudioLines className="h-4 w-4" />
-                {t("joinVoice")}
-              </Link>
-            )
-          ) : (
-            <button
-              type="button"
-              disabled
-              className={cn(
-                buttonVariants({ size: "sm", variant: "secondary" }),
-                "gap-1.5",
-              )}
-            >
-              <Lock className="h-4 w-4" />
-              {t("locked", { date: opensDate, time: opensTime })}
-            </button>
-          )}
+          <JoinVoiceButton
+            voiceIsOpen={voiceIsOpen}
+            voiceHref={voiceHref}
+            opensDate={opensDate}
+            opensTime={opensTime}
+            onJoinClick={onJoinClick}
+          />
         </div>
 
         <div className="flex items-center justify-between gap-2">

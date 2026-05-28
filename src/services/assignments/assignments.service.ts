@@ -1,5 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, MyAssignedProductRow, ProductTranslationV2 } from "@/types";
+import type {
+  Database,
+  GeduAssignedProduct,
+  MyAssignedProductRow,
+  ProductTranslationV2,
+  ProductTypeV2,
+} from "@/types";
 
 /**
  * Row shape consumed by the gedu dashboard's "My Groups" section. One
@@ -28,6 +34,13 @@ export interface MyAssignedProductSessionRow {
     padletUrl: string | null;
     /** False for in-person products — the join button is a no-op in that case. */
     isRemote: boolean;
+    /**
+     * Product kind. The dashboard card uses it to pick the right URL prefix
+     * for "View details" — `/gedu/clubs/[id]`, `/gedu/camps/[id]`, or
+     * `/gedu/events/[id]` — so the gedu lands on a route that matches their
+     * mental model.
+     */
+    productType: ProductTypeV2;
     /**
      * Raw translation rows. Resolved at render time so a locale switch
      * doesn't refetch.
@@ -61,6 +74,31 @@ export class AssignmentsService {
     if (error) throw error;
     return (data as MyAssignedProductRow[]).map(toMyAssignedProductSessionRow);
   }
+
+  /**
+   * Fetches everything the gedu's session-details page needs in a single
+   * round trip — product shell, every group's name/gamer count/gedu list,
+   * and the full roster (with primary parent email) for the caller's own
+   * group. Backed by the SECURITY DEFINER RPC `get_gedu_assigned_product`;
+   * the RPC raises 42501 when the caller isn't a gedu or isn't assigned to
+   * the product, which we surface as `null` so the route can render a clean
+   * "not your session" empty state instead of throwing.
+   */
+  async getAssignedProductDetail(
+    productId: string,
+  ): Promise<GeduAssignedProduct | null> {
+    const { data, error } = await this.supabase.rpc(
+      "get_gedu_assigned_product",
+      { p_product_id: productId },
+    );
+
+    if (error) {
+      if (error.code === "42501") return null;
+      throw error;
+    }
+
+    return data as unknown as GeduAssignedProduct;
+  }
 }
 
 function toMyAssignedProductSessionRow(
@@ -74,6 +112,7 @@ function toMyAssignedProductSessionRow(
       endDate: row.end_date,
       padletUrl: row.padlet_url,
       isRemote: row.is_remote,
+      productType: row.product_type,
       translations: row.product_translations,
     },
     groupId: row.group_id,

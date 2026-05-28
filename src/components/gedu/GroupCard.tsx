@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { AudioLines, Lock } from "lucide-react";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { useNow, useTimezone } from "@/providers";
@@ -12,6 +10,7 @@ import {
   formatCountdownCompound,
   formatSessionDateTimeRange,
 } from "@/lib/session-format";
+import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 
 /**
  * Prominent card for the soonest upcoming session in the gedu dashboard's
@@ -26,7 +25,7 @@ import {
  * soonest item ever has it set to `true`; every session after that
  * renders as `UpcomingGroupSessionCard` instead.
  *
- * Whole-card click navigates to the per-group detail page via a
+ * Whole-card click navigates to the gedu's session-details page via a
  * "stretched link": the "View details" Link at the bottom-right is the
  * only card-level anchor, and its `::after` pseudo-element covers the
  * entire Card so any click on the card lands on that Link. The Join
@@ -35,9 +34,10 @@ import {
  * Ctrl/middle-click opens either in a new tab, Next.js prefetching
  * works, and there's no `<a>` inside `<a>` (which a wrapping Link
  * would produce). The Join button navigates to the shared
- * `/voice/group/[id]` page (same page the gamer side uses); the
- * `openGroupHref` is still `"#"` until the per-group detail page
- * lands — see `TODO.md`.
+ * `/voice/group/[id]` page (same page the gamer side uses);
+ * `openGroupHref` is built upstream by `expandAssignedSessionsToCards`
+ * via `ROUTES.gedu.assignedProduct` so the prefix matches the product
+ * type (clubs / camps / events).
  */
 
 export interface GroupCardProps {
@@ -57,7 +57,7 @@ export interface GroupCardProps {
   voiceIsOpen: boolean;
   /** Where the Join button navigates. `"#"` keeps the button inert. */
   voiceHref: string;
-  /** Where a click anywhere else on the card navigates. `"#"` for now. */
+  /** Where a click anywhere on the card navigates — the gedu's session-details page. */
   openGroupHref: string;
 }
 
@@ -118,31 +118,12 @@ export function GroupCard({
         {/* `relative z-10` lifts the Join button above the stretched link's
             ::after so the button receives its own clicks. */}
         <div className="relative z-10 flex justify-center">
-          {voiceIsOpen ? (
-            <Link
-              href={voiceHref}
-              prefetch={false}
-              onClick={(e) => {
-                if (voiceHref === "#") e.preventDefault();
-              }}
-              className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
-            >
-              <AudioLines className="h-4 w-4" />
-              {t("joinVoice")}
-            </Link>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className={cn(
-                buttonVariants({ size: "sm", variant: "secondary" }),
-                "gap-1.5",
-              )}
-            >
-              <Lock className="h-4 w-4" />
-              {t("locked", { date: opensDate, time: opensTime })}
-            </button>
-          )}
+          <JoinVoiceButton
+            voiceIsOpen={voiceIsOpen}
+            voiceHref={voiceHref}
+            opensDate={opensDate}
+            opensTime={opensTime}
+          />
         </div>
 
         <div className="flex items-center justify-between gap-2">

@@ -15,6 +15,7 @@
       "adminDashboard": "Admin QaD",
       "parentDashboard": "jIH SOG",
       "geduDashboard": "jIH SOG",
+      "geduSessionDetails": "may' Qatlh",
       "gamerHome": "toy'wI'",
       "gamerGroups": "jIH ghom'a'mey",
       "gamerGroupDetails": "ghom'a' Qatlh",
@@ -1121,11 +1122,38 @@
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {1 ghom} other {# ghommey}} · {gamerCount, plural, one {1 Suvwl'} other {# Suvwl'pu'}}",
-      "joinVoice": "Daq yIghoS",
-      "locked": "{date} {time} poSchoH",
       "startsIn": "{countdown} qaSchoH",
       "inProgress": "qaStaH tay'",
       "viewDetails": "De' yIbej"
+    },
+    "sessionDetails": {
+      "back": "QaDDaq vIcheghHa'",
+      "typeLabel": {
+        "consumer_club": "ghom'a'",
+        "municipality_club": "ghom'a'",
+        "camp": "wa'leSvam",
+        "event": "Soqbogh"
+      },
+      "yourGroupBadge": "ghom'a'lIj",
+      "otherGroupsHeading": "may'vam latlh ghommey",
+      "educatorsLabel": "ghojmoHwI'pu'",
+      "noEducators": "ghojmoHwI' tu'lu'be'.",
+      "gamersLabel": "Suvwl'pu'",
+      "gamerCount": "{count, plural, one {1 Suvwl'} other {# Suvwl'pu'}}",
+      "emptyRoster": "Suvwl' jaSHa' Suvwl'pu' tu'lu'be'.",
+      "untitledGroup": "ghom'a' pong Hutlh",
+      "noAssignedGroup": "may'vamDaq ghom'a' Daghaj.",
+      "notAssignedTitle": "may'lIj 'oHbe'",
+      "notAssignedBody": "may'vamDaq ghom'a' Daghajbe' — De' Daleghbe'.",
+      "age": "DIS {age}",
+      "genderBoy": "loDHom",
+      "genderGirl": "be'Hom",
+      "genderNonBinary": "tlhejbogh",
+      "copyParentEmail": "vavnI' QInHom yI'aQ {email}",
+      "noParentEmail": "vavnI' QInHom tu'lu'be'",
+      "emailCopied": "QInHom 'aQpu'",
+      "copyAllEmails": "Hoch {count, plural, one {# QInHom} other {# QInHommey}} yI'aQ",
+      "allEmailsCopied": "Hoch QInHommey 'aQpu'"
     }
   },
   "groups": {
@@ -1510,8 +1538,6 @@
     },
     "nextSession": {
       "title": "{name} veb may'",
-      "joinVoice": "ghogh pa'Daq yIghoS",
-      "locked": "{date} {time}Daq poSmoH",
       "startsIn": "{countdown} qaSpa' SoQ",
       "inProgress": "poH ghoStaH",
       "reports": "DaHoSmey"
@@ -1717,6 +1743,10 @@
         "join": "yImuv"
       }
     }
+  },
+  "voiceButton": {
+    "joinVoice": "ghogh pa'Daq yIghoS",
+    "locked": "{date} {time}Daq poSmoH"
   },
   "yty": {
     "hero": {

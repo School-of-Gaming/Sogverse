@@ -15,6 +15,7 @@
       "adminDashboard": "Admin Dashboard",
       "parentDashboard": "My SOG",
       "geduDashboard": "My SOG",
+      "geduSessionDetails": "Session details",
       "gamerHome": "Gamer",
       "gamerGroups": "My Groups",
       "gamerGroupDetails": "Group Details",
@@ -1076,11 +1077,38 @@
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# group} other {# groups}} · {gamerCount, plural, one {# gamer} other {# gamers}}",
-      "joinVoice": "Join voice room",
-      "locked": "Opens {date} at {time}",
       "startsIn": "Starts in {countdown}",
       "inProgress": "Session in progress",
       "viewDetails": "View details"
+    },
+    "sessionDetails": {
+      "back": "Back to dashboard",
+      "typeLabel": {
+        "consumer_club": "Club",
+        "municipality_club": "Club",
+        "camp": "Camp",
+        "event": "Event"
+      },
+      "yourGroupBadge": "Your group",
+      "otherGroupsHeading": "Other groups in this session",
+      "educatorsLabel": "Educators",
+      "noEducators": "No educators assigned.",
+      "gamersLabel": "Gamers",
+      "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
+      "emptyRoster": "No gamers enrolled in this group yet.",
+      "untitledGroup": "Untitled group",
+      "noAssignedGroup": "You don't have an assigned group in this session.",
+      "notAssignedTitle": "Not your session",
+      "notAssignedBody": "You aren't assigned to a group in this session, so its details aren't available to you.",
+      "age": "Age {age}",
+      "genderBoy": "Boy",
+      "genderGirl": "Girl",
+      "genderNonBinary": "Non-binary",
+      "copyParentEmail": "Copy parent email {email}",
+      "noParentEmail": "No parent email",
+      "emailCopied": "Email copied",
+      "copyAllEmails": "Copy all {count, plural, one {# email} other {# emails}}",
+      "allEmailsCopied": "All emails copied"
     }
   },
   "groups": {
@@ -1465,8 +1493,6 @@
     },
     "nextSession": {
       "title": "{name}'s next session",
-      "joinVoice": "Join voice room",
-      "locked": "Opens {date} at {time}",
       "startsIn": "Starts in {countdown}",
       "inProgress": "Session in progress",
       "reports": "Your reports"
@@ -1672,6 +1698,10 @@
         "join": "Join"
       }
     }
+  },
+  "voiceButton": {
+    "joinVoice": "Join voice room",
+    "locked": "Opens {date} at {time}"
   },
   "yty": {
     "hero": {

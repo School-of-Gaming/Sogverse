@@ -324,12 +324,66 @@ export interface ProductGroupsV2Snapshot {
   unassigned: GroupV2ParticipationDetail[];
 }
 
-// get_gedu_product_detail_v2 — same groups[] shape as the admin RPC, but no
-// unassigned[] yet (see docs/products-v2-architecture.md "Gedu details page —
-// unassigned-gamers tray" for the future-improvement entry).
-export interface ProductGroupsV2GeduSnapshot {
-  product_id: string;
-  groups: ProductGroupV2WithDetails[];
+// get_gedu_assigned_product — the JSONB document that backs the gedu's
+// session-details page (entered from a dashboard session card, but
+// product-scoped). Lives at /gedu/clubs/[id], /gedu/camps/[id], or
+// /gedu/events/[id] depending on the product's type. The RPC raises 42501
+// unless the caller has a gedu_group_assignments_v2 row on the product —
+// hence the "assigned" name.
+//
+// Generated as `Json`; pin a structured shape here so consumers don't cast.
+// Roster + parent_email are populated only on the caller's own group; sister
+// groups carry just gamer_count + gedus[] so a gedu can see who they're
+// teaching alongside without leaking the sister-group roster.
+export interface GeduAssignedProductRosterEntry {
+  gamer_id: string;
+  first_name: string;
+  date_of_birth: string | null;
+  gender: GenderType | null;
+  parent_email: string | null;
+}
+
+export interface GeduAssignedProductGroupGedu {
+  id: string;
+  first_name: string;
+}
+
+export interface GeduAssignedProductGroup {
+  id: string;
+  name: string;
+  display_order: number;
+  created_at: string;
+  is_my_group: boolean;
+  gamer_count: number;
+  gedus: GeduAssignedProductGroupGedu[];
+  /** Populated only when `is_my_group` is true; null otherwise. */
+  roster: GeduAssignedProductRosterEntry[] | null;
+}
+
+export interface GeduAssignedProductShell {
+  id: string;
+  product_type: Database["public"]["Enums"]["product_type_v2"];
+  padlet_url: string | null;
+  timezone: string;
+  start_date: string | null;
+  end_date: string | null;
+  is_remote: boolean;
+  translations: Array<{
+    locale: string;
+    name: string;
+    description: string;
+  }>;
+  schedule_slots: Array<{
+    weekday: number;
+    start_time: string;
+    duration_minutes: number;
+  }>;
+}
+
+export interface GeduAssignedProduct {
+  product: GeduAssignedProductShell;
+  my_group_id: string;
+  groups: GeduAssignedProductGroup[];
 }
 
 // whatsapp_contacts

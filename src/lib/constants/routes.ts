@@ -1,3 +1,28 @@
+import type { Database } from "@/types/database.types";
+
+type ProductTypeV2 = Database["public"]["Enums"]["product_type_v2"];
+
+/**
+ * Picks the gedu session-details URL prefix from a product's type. All three
+ * routes (`/gedu/clubs/[id]`, `/gedu/camps/[id]`, `/gedu/events/[id]`) render
+ * the same page; the prefix matches the gedu's mental model of what they're
+ * about to teach. Consumer + municipality clubs collapse into `/clubs/`.
+ */
+function geduAssignedProductHref(
+  productType: ProductTypeV2,
+  productId: string,
+): string {
+  switch (productType) {
+    case "consumer_club":
+    case "municipality_club":
+      return `/gedu/clubs/${productId}`;
+    case "camp":
+      return `/gedu/camps/${productId}`;
+    case "event":
+      return `/gedu/events/${productId}`;
+  }
+}
+
 /** Centralized route paths — import and reference instead of hardcoding string literals. */
 export const ROUTES = {
   home: "/",
@@ -73,5 +98,6 @@ export const ROUTES = {
   },
   gedu: {
     dashboard: "/gedu",
+    assignedProduct: geduAssignedProductHref,
   },
 } as const;
