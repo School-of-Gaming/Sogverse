@@ -56,7 +56,7 @@ export function UpcomingGroupSessionCard({
       className="group block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <Card>
-        <CardContent className="flex items-center gap-3 p-3 pt-3">
+        <CardContent className="flex items-center gap-3 p-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{productName}</p>
             <p className="text-xs text-muted-foreground">{`${dateLabel} · ${timeLabel}`}</p>
