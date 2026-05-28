@@ -26,11 +26,17 @@ import {
  * soonest item ever has it set to `true`; every session after that
  * renders as `UpcomingGroupSessionCard` instead.
  *
- * The whole card is wrapped in a Link to the per-group detail page so a
- * click anywhere except the Join button navigates. The Join button stops
- * propagation. Both destinations are currently `"#"` no-ops: the gedu
- * voice room page and the per-group detail page are out of scope for
- * this pass — see `TODO.md`.
+ * Whole-card click navigates to the per-group detail page via a
+ * "stretched link": the "View details" Link at the bottom-right is the
+ * only card-level anchor, and its `::after` pseudo-element covers the
+ * entire Card so any click on the card lands on that Link. The Join
+ * button is promoted with `relative z-10` so it sits above the overlay
+ * and receives its own clicks. Both card and Join are real anchors —
+ * Ctrl/middle-click opens either in a new tab, Next.js prefetching
+ * works, and there's no `<a>` inside `<a>` (which a wrapping Link
+ * would produce). Both destinations are currently `"#"` no-ops: the
+ * gedu voice room page and the per-group detail page are out of scope
+ * for this pass — see `TODO.md`.
  */
 
 export interface GroupCardProps {
@@ -89,77 +95,71 @@ export function GroupCard({
   });
   const opensTime = formatTime(sessionStart, locale, timeZone);
 
-  // The Join button needs to suppress the wrapping Link's navigation so a
-  // click on the button doesn't also navigate to the group page. `stopPropagation`
-  // alone leaves the Link's default click handler intact via event delegation;
-  // we also `preventDefault()` to neutralize the anchor's own navigation for
-  // the `voiceHref === "#"` no-op case.
-  const stopCardNav = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (voiceHref === "#") e.preventDefault();
-  };
-
   return (
-    <Link
-      href={openGroupHref}
-      onClick={(e) => {
-        if (openGroupHref === "#") e.preventDefault();
-      }}
-      className="group block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    <Card
+      className={cn(
+        "relative overflow-hidden",
+        voiceIsOpen &&
+          "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
+      )}
     >
-      <Card
-        className={cn(
-          "overflow-hidden",
-          voiceIsOpen &&
-            "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
-        )}
-      >
-        <CardHeader className="pb-4">
-          <div className="min-w-0 space-y-0.5">
-            <p className="text-lg font-semibold leading-tight">{productName}</p>
-            <p className="text-sm text-muted-foreground">
-              {t("counts", { groupCount, gamerCount })}
-            </p>
-            <p className="text-sm text-muted-foreground">{sessionTimeLabel}</p>
-          </div>
-        </CardHeader>
+      <CardHeader className="pb-4">
+        <div className="min-w-0 space-y-0.5">
+          <p className="text-lg font-semibold leading-tight">{productName}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("counts", { groupCount, gamerCount })}
+          </p>
+          <p className="text-sm text-muted-foreground">{sessionTimeLabel}</p>
+        </div>
+      </CardHeader>
 
-        <CardContent className="space-y-4 pt-0">
-          <div className="flex justify-center">
-            {voiceIsOpen ? (
-              <Link
-                href={voiceHref}
-                onClick={stopCardNav}
-                className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
-              >
-                <AudioLines className="h-4 w-4" />
-                {t("joinVoice")}
-              </Link>
-            ) : (
-              <button
-                type="button"
-                disabled
-                onClick={stopCardNav}
-                className={cn(
-                  buttonVariants({ size: "sm", variant: "secondary" }),
-                  "gap-1.5",
-                )}
-              >
-                <Lock className="h-4 w-4" />
-                {t("locked", { date: opensDate, time: opensTime })}
-              </button>
-            )}
-          </div>
+      <CardContent className="space-y-4 pt-0">
+        {/* `relative z-10` lifts the Join button above the stretched link's
+            ::after so the button receives its own clicks. */}
+        <div className="relative z-10 flex justify-center">
+          {voiceIsOpen ? (
+            <Link
+              href={voiceHref}
+              onClick={(e) => {
+                if (voiceHref === "#") e.preventDefault();
+              }}
+              className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
+            >
+              <AudioLines className="h-4 w-4" />
+              {t("joinVoice")}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className={cn(
+                buttonVariants({ size: "sm", variant: "secondary" }),
+                "gap-1.5",
+              )}
+            >
+              <Lock className="h-4 w-4" />
+              {t("locked", { date: opensDate, time: opensTime })}
+            </button>
+          )}
+        </div>
 
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground">{countdownLine}</p>
-            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              {t("viewDetails")}
-              <NavChevron size="sm" />
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">{countdownLine}</p>
+          {/* Stretched link — `after:absolute after:inset-0` makes the whole
+              Card the click target for this anchor. Focus ring renders on
+              the ::after so the entire card lights up on keyboard focus. */}
+          <Link
+            href={openGroupHref}
+            onClick={(e) => {
+              if (openGroupHref === "#") e.preventDefault();
+            }}
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground after:absolute after:inset-0 after:rounded-lg after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
+          >
+            {t("viewDetails")}
+            <NavChevron size="sm" />
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
