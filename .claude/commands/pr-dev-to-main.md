@@ -54,7 +54,9 @@ If a prior open dev → main PR exists (e.g. someone pushed `dev` directly), clo
 
 ## Step 5 — Remind about dev reset
 
-After the PR URL is returned, tell the user: **"When this PR merges, reset `dev` to `main` so the next release doesn't drift. Run the post-merge command in the PR body."** Do not perform the reset now — it is destructive to `dev` and must wait until merge.
+After the PR URL is returned, tell the user: **"When this PR merges, reset `dev` to `main` so the next release doesn't drift. Run the post-merge command in the PR body, then `/cleanup-branches` to drop the merged `release/YYYY-MM-DD` branch."** Do not perform the reset now — it is destructive to `dev` and must wait until merge.
+
+This command does not delete the release branch itself — `/cleanup-branches`'s cherry-by-content check picks it up automatically once `dev` has been reset to `main`.
 
 ## Notes
 
