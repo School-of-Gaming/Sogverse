@@ -192,16 +192,43 @@ describe("expandAssignedSessionsToCards", () => {
     }
   });
 
-  it("leaves voiceHref and openGroupHref as '#' placeholders for now", () => {
-    // The /gedu/voice/[id] page and per-group detail page are both out of
-    // scope until the dashboard wires them up — see TODO.md.
+  it("wires voiceHref to the shared group voice route keyed on groupId for remote products", () => {
     const row = makeRow();
     const out = expandAssignedSessionsToCards(
       [row],
       new Date("2026-02-25T08:00:00Z"),
       "en",
     );
+    expect(out[0].voiceHref).toBe(`/voice/group/${GROUP_ID}`);
+  });
+
+  it("leaves voiceHref as '#' for in-person products (no voice room)", () => {
+    const row = makeRow({
+      product: {
+        id: PRODUCT_ID,
+        timezone: "UTC",
+        startDate: null,
+        endDate: null,
+        padletUrl: null,
+        isRemote: false,
+        translations: [{ locale: "en", name: "Minecraft Club", description: "" }],
+      },
+    });
+    const out = expandAssignedSessionsToCards(
+      [row],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
     expect(out[0].voiceHref).toBe("#");
+  });
+
+  it("leaves openGroupHref as '#' (per-group detail page is out of scope)", () => {
+    const row = makeRow();
+    const out = expandAssignedSessionsToCards(
+      [row],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
     expect(out[0].openGroupHref).toBe("#");
   });
 

@@ -1,3 +1,4 @@
+import { ROUTES } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
@@ -64,11 +65,15 @@ export interface GroupSessionItem {
  * only for the first emitted entry — the prominent card is the only
  * one that reads it.
  *
- * `voiceHref` is `"#"` for now even on remote products — the gedu
- * voice room page (`/gedu/voice/[id]`) was removed when the dashboard
- * was collapsed; it'll come back when we wire the Join button.
- * `openGroupHref` is also `"#"` until the per-group detail page lands.
- * See `TODO.md` for the matched notes.
+ * `voiceHref` points at the shared `/voice/group/[id]` page, which
+ * routes the gedu through the same `VoiceSessionPage` the gamer side
+ * uses. Moderator rights come from the token endpoint (any non-gamer
+ * role gets `isOwner: true`); cross-group access for sister groups is
+ * authorized there too via `gedu_group_assignments_v2.product_id`.
+ * In-person products and unassigned rows collapse to `"#"` for the
+ * same locked-but-inert UX the gamer side renders.
+ * `openGroupHref` is `"#"` until the per-group detail page lands —
+ * see `TODO.md`.
  */
 export function expandAssignedSessionsToCards(
   rows: MyAssignedProductSessionRow[],
@@ -86,6 +91,13 @@ export function expandAssignedSessionsToCards(
 
     const productName =
       resolveTranslation(row.product.translations, locale)?.name ?? "";
+    // Mirror upcoming-sessions: only remote products have a voice room,
+    // and the gedu always has a concrete group_id on every row (assignment
+    // rows are keyed by group), so `row.groupId` is non-null here. The
+    // remote check is the meaningful gate.
+    const voiceHref = row.product.isRemote
+      ? ROUTES.voice.groupSession(row.groupId)
+      : "#";
 
     const startBoundary = startDateToCutoff(
       row.product.startDate,
@@ -115,9 +127,7 @@ export function expandAssignedSessionsToCards(
         sessionEnd: occ.end,
         // Filled in for the soonest item below.
         voiceIsOpen: false,
-        // Stub until /gedu/voice/[id] comes back. Same inert-link
-        // treatment the gamer card gives in-person products.
-        voiceHref: "#",
+        voiceHref,
         // Per-group detail page is out of scope for now.
         openGroupHref: "#",
       });
