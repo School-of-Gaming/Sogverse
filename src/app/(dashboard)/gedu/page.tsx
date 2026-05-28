@@ -3,6 +3,7 @@ import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { CreateInstantRoomCard } from "@/components/voice/instant/CreateInstantRoomCard";
 import { GroupsSection } from "@/components/gedu/GroupsSection";
+import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { createClient } from "@/lib/supabase/server";
 import {
   AssignmentsService,
@@ -15,7 +16,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 /**
- * Server-prefetch the assignment rows so the "My Groups" section paints
+ * Server-prefetch the assignment rows so the Sessions section paints
  * on first frame. Errors fall back to an empty list — the section will
  * render its own empty-state copy, which is the right read in both the
  * truly-empty and could-not-load cases (the user can refresh).
@@ -40,27 +41,44 @@ function GeduDashboardPageBody({
 }: {
   initialRows: MyAssignedProductSessionRow[];
 }) {
-  const t = useTranslations("gedu.myGroups");
-  const sections = useTranslations("dashboardSections");
+  const t = useTranslations("dashboardSections");
   const m = useTranslations("metadata.pages");
+
+  const sections: DashboardSection[] = [
+    { id: "sessions", label: t("upcomingSessions") },
+    { id: "instant-voice-room", label: t("instantVoiceRoom") },
+  ];
 
   return (
     <>
-      {/* Visually-hidden page title — the sections below are equal-weight
-          h2s under it. Matches the parent dashboard's structure so screen
-          readers get a single "My SOG" page heading instead of two
-          competing h1s. */}
+      {/* Visually-hidden page title — the two sections below are equal-weight
+          h2s under it, and the section pill is the visual nav. Matches the
+          parent dashboard so screen readers get a single "My SOG" page
+          heading instead of competing h1s. */}
       <h1 className="sr-only">{m("geduDashboard")}</h1>
 
-      <div className="mx-auto max-w-2xl space-y-12 pb-24">
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold">{t("title")}</h2>
-          <GroupsSection initialRows={initialRows} />
+      <DashboardSectionPill sections={sections} ariaLabel={t("upcomingSessions")} />
+
+      <div className="space-y-24 pb-24">
+        <section id="sessions" className="scroll-mt-32">
+          <div className="mx-auto max-w-3xl space-y-6">
+            <h2 className="text-3xl font-bold">{t("upcomingSessions")}</h2>
+            <GroupsSection initialRows={initialRows} />
+          </div>
         </section>
 
-        <section className="space-y-6">
-          <h2 className="text-3xl font-bold">{sections("instantVoiceRoom")}</h2>
-          <CreateInstantRoomCard />
+        {/* Last section gets viewport-height min so clicking its pill can
+            actually scroll it to the top — without this the page bottoms
+            out mid-scroll and the heading stays in the middle of the
+            viewport. Same shape as the parent dashboard's last section. */}
+        <section
+          id="instant-voice-room"
+          className="scroll-mt-32 min-h-[calc(100svh-9rem)]"
+        >
+          <div className="mx-auto max-w-3xl space-y-6">
+            <h2 className="text-3xl font-bold">{t("instantVoiceRoom")}</h2>
+            <CreateInstantRoomCard />
+          </div>
         </section>
       </div>
     </>

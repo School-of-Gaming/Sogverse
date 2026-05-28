@@ -5,9 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocale } from "next-intl";
 import { getClient } from "@/lib/supabase/client";
 import { resolveLocale } from "@/lib/constants/locales";
-import { expandAssignedProductsToCards } from "@/lib/assigned-products";
+import {
+  expandAssignedSessionsToCards,
+  type GroupSessionItem,
+} from "@/lib/assigned-sessions";
 import { useNow } from "@/providers";
-import type { GroupCardProps } from "@/components/gedu/GroupCard";
 import {
   AssignmentsService,
   type MyAssignedProductSessionRow,
@@ -19,19 +21,19 @@ export const assignmentKeys = {
 };
 
 /**
- * Drives the gedu dashboard's "My Groups" section. Fetches the signed-in
- * gedu's product assignments + product-wide aggregates, then expands each
- * one into a `GroupCardProps` keyed off the soonest upcoming session for
- * the product. Products with no future occurrence are dropped (mirroring
- * the parent/gamer Sessions section behavior); the open-room window flips
- * `voiceIsOpen` on the live card without a refetch via `useNow()`.
+ * Drives the gedu dashboard's Sessions section. Fetches the signed-in
+ * gedu's product assignments + product-wide aggregates, then expands
+ * them into one card per (assignment, slot, future occurrence) sorted
+ * ascending by `sessionStart`. Mirrors `useMyUpcomingSessions` on the
+ * parent/gamer side, including the 8-occurrence cap for open-ended
+ * products and the `voiceIsOpen` flip on the soonest item via `useNow()`.
  *
- * `initialData` is required — the gedu page server-prefetches the rows so
- * the section paints on first frame with no loading state.
+ * `initialData` is required — the gedu page server-prefetches the rows
+ * so the section paints on first frame with no loading state.
  */
-export function useMyAssignedProducts(options: {
+export function useMyAssignedSessions(options: {
   initialData: MyAssignedProductSessionRow[];
-}): GroupCardProps[] {
+}): GroupSessionItem[] {
   const supabase = getClient();
   const service = new AssignmentsService(supabase);
   const locale = resolveLocale(useLocale());
@@ -44,7 +46,7 @@ export function useMyAssignedProducts(options: {
   });
 
   return useMemo(
-    () => expandAssignedProductsToCards(query.data, now, locale),
+    () => expandAssignedSessionsToCards(query.data, now, locale),
     [query.data, now, locale],
   );
 }

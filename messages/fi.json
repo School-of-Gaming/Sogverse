@@ -1009,6 +1009,7 @@
     "upcomingSessions": "Tapaamiset",
     "upcomingSessionsPlaceholderGamer": "Kun leiri alkaa, täältä pääset liittymään ryhmän omalle puhekanavalle.",
     "upcomingSessionsPlaceholderParent": "Kun lapsesi leirin aika koittaa, ilmestyy tähän painike, josta pääsette sisään leirin puhekanaville.",
+    "upcomingSessionsPlaceholderGedu": "Kun ohjaamasi tapaaminen lähestyy, täältä pääset liittymään puhekanavalle pelaajiesi kanssa.",
     "billing": "Laskutus",
     "help": "Apu",
     "yty": "Yty",
@@ -1074,8 +1075,6 @@
       "saveError": "Tallennus epäonnistui"
     },
     "myGroups": {
-      "title": "Omat ryhmät",
-      "empty": "Sinua ei ole vielä määrätty mihinkään ryhmään.",
       "counts": "{groupCount, plural, one {# ryhmä} other {# ryhmää}} · {gamerCount, plural, one {# pelaaja} other {# pelaajaa}}",
       "joinVoice": "Liity äänihuoneeseen",
       "locked": "Avautuu {date} klo {time}",

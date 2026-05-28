@@ -14,32 +14,27 @@ import {
 } from "@/lib/session-format";
 
 /**
- * Card on the gedu dashboard's "My Groups" section.
+ * Prominent card for the soonest upcoming session in the gedu dashboard's
+ * Sessions section. Mirrors the parent's `NextSessionCard` — shared
+ * date/countdown formatting via `src/lib/session-format.ts` keeps the
+ * two surfaces in lockstep — minus the gamer attribution + reports
+ * link, plus the product-wide group/gamer counts and a "View details"
+ * chevron.
  *
- * The dashboard sees a list of *products* the gedu is assigned to (one
- * card per product, since `(gedu_id, product_id)` is unique); the gedu
- * thinks of them as their *groups* — both naming conventions are
- * deliberate. Code follows the data, UI follows the mental model.
- *
- * Layout mirrors the parent `NextSessionCard` (date / countdown
- * formatting is shared via `src/lib/session-format.ts`):
- *   - Product name + `{groupCount} groups · {gamerCount} gamers` line
- *   - Session date/time range
- *   - Join Voice button (live → joinVoice, locked → `Opens {date} {time}`)
- *   - Countdown ("Starts in …" / "Session in progress")
- *   - Chevron link to the per-group detail page
+ * Live state ("can the gedu click Join?") comes from `voiceIsOpen`,
+ * computed upstream by `expandAssignedSessionsToCards`. Only the
+ * soonest item ever has it set to `true`; every session after that
+ * renders as `UpcomingGroupSessionCard` instead.
  *
  * The whole card is wrapped in a Link to the per-group detail page so a
  * click anywhere except the Join button navigates. The Join button stops
  * propagation. Both destinations are currently `"#"` no-ops: the gedu
  * voice room page and the per-group detail page are out of scope for
- * this pass.
+ * this pass — see `TODO.md`.
  */
 
 export interface GroupCardProps {
-  /** Stable card key. */
-  productId: string;
-  /** The gedu's assigned group on this product (used by the join handler later). */
+  /** The gedu's assigned group_id for this product (used by the join handler later). */
   groupId: string;
   /** Translated product name. */
   productName: string;
@@ -49,7 +44,7 @@ export interface GroupCardProps {
   gamerCount: number;
   /** Soonest joinable session start (in product-local time, returned as UTC). */
   sessionStart: Date;
-  /** End of that session — drives the start–end range label. */
+  /** End of that session — drives the start-end range label. */
   sessionEnd: Date;
   /** Whether the voice room is currently joinable (same window math as gamers). */
   voiceIsOpen: boolean;
