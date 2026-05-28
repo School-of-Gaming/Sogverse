@@ -1444,7 +1444,10 @@
     "verify": "Verify",
     "verifying": "Verifying...",
     "notFound": "Minecraft account not found. Check the username and try again.",
-    "mcHeadsAttribution": "Skin rendered by <link>mc-heads.net</link>"
+    "mcHeadsAttribution": "Skin rendered by <link>mc-heads.net</link>",
+    "verified": "Verified",
+    "unverified": "{username} (not yet verified)",
+    "notProvided": "Not provided"
   },
   "parent": {
     "placeholders": {

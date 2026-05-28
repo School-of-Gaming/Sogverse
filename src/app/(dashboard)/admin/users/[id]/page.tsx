@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Users } from "lucide-react";
+import { ArrowLeft, Check, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
 import { GamerService } from "@/services/gamers";
+import { MinecraftService } from "@/services/minecraft";
 
 export default async function AdminUserDetailPage({
   params,
@@ -21,9 +22,10 @@ export default async function AdminUserDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: userId } = await params;
-  const [t, c, locale, timeZone] = await Promise.all([
+  const [t, c, tm, locale, timeZone] = await Promise.all([
     getTranslations("admin.users"),
     getTranslations("common"),
+    getTranslations("minecraft"),
     getLocale(),
     getServerTimezone(),
   ]);
@@ -31,6 +33,7 @@ export default async function AdminUserDetailPage({
   const supabase = await createClient();
   const usersService = new UsersService(supabase);
   const gamerService = new GamerService(supabase);
+  const minecraftService = new MinecraftService(supabase);
 
   const profile = await usersService.getProfile(userId).catch(() => null);
 
@@ -49,7 +52,7 @@ export default async function AdminUserDetailPage({
   const isGamer = profile.role === "gamer";
   const isGedu = profile.role === "gedu";
 
-  const [linkedGamers, linkedParents, gamerProfile] = await Promise.all([
+  const [linkedGamers, linkedParents, gamerProfile, minecraftAccount] = await Promise.all([
     isCustomer
       ? gamerService.getLinkedGamers(userId).catch(() => [])
       : Promise.resolve([]),
@@ -59,7 +62,14 @@ export default async function AdminUserDetailPage({
     isGamer
       ? gamerService.getGamerProfile(userId).catch(() => null)
       : Promise.resolve(null),
+    isGamer || isGedu
+      ? minecraftService.getMinecraftAccount(userId).catch(() => null)
+      : Promise.resolve(null),
   ]);
+
+  const showMinecraft = isGamer || isGedu;
+  const mcUsername = minecraftAccount?.minecraft_username ?? null;
+  const mcUuid = minecraftAccount?.minecraft_uuid ?? null;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -91,6 +101,23 @@ export default async function AdminUserDetailPage({
                     <span aria-hidden="true"> · </span>
                     <span>{t(`gender.${gamerProfile.gender}`)}</span>
                   </>
+                )}
+              </p>
+            )}
+            {showMinecraft && (
+              <p className="text-sm">
+                <span className="text-muted-foreground">{tm('label')}: </span>
+                {mcUsername && mcUuid ? (
+                  <span className="inline-flex items-center gap-1 text-success">
+                    {mcUsername}
+                    <Check className="h-4 w-4" aria-label={tm('verified')} />
+                  </span>
+                ) : mcUsername ? (
+                  <span className="text-warning" aria-label={tm('unverified', { username: mcUsername })}>
+                    {mcUsername}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">{tm('notProvided')}</span>
                 )}
               </p>
             )}
