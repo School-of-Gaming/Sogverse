@@ -56,7 +56,7 @@ export function expandUpcomingSessions(
     // renders honestly off `voiceIsOpen` while the button stays inert.
     const voiceHref =
       row.product.isRemote && row.groupId
-        ? ROUTES.gamer.voiceSession(row.groupId)
+        ? ROUTES.voice.groupSession(row.groupId)
         : "#";
     const startBoundary = startDateToCutoff(
       row.product.startDate,

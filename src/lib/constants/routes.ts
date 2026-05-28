@@ -17,13 +17,20 @@ export const ROUTES = {
   help: "/help",
   settings: "/settings",
   /**
-   * Public on-the-fly voice room — see docs/instant-voice-rooms.md.
-   * `prefix` is the route base used for proxy matching; `forCode` builds
-   * the full URL for a given room code.
+   * Voice rooms. Two shapes share the `/voice` prefix:
+   * - `forCode(code)` → `/voice/<code>` — public on-the-fly instant rooms,
+   *   share-via-link by design (see docs/instant-voice-rooms.md).
+   * - `groupSession(groupId)` → `/voice/group/<id>` — authenticated group
+   *   voice room used by gamers (as participants) and gedus/admins (as
+   *   moderators); the page authorizes by role + product assignment via
+   *   `/api/voice/token`. The proxy gates this branch behind auth even
+   *   though the rest of `/voice/*` is public.
+   * `prefix` is the route base used for proxy matching.
    */
   voice: {
     prefix: "/voice",
     forCode: (code: string) => `/voice/${code}`,
+    groupSession: (groupId: string) => `/voice/group/${groupId}`,
   },
   admin: {
     dashboard: "/admin",
@@ -43,7 +50,6 @@ export const ROUTES = {
     campsNew: "/admin/camps/new",
     events: "/admin/events",
     eventsNew: "/admin/events/new",
-    voiceSession: (roomId: string) => `/admin/voice/${roomId}`,
     voice: "/admin/voice",
     uiComponents: "/admin/ui-components",
     testing: "/admin/testing",
@@ -62,7 +68,6 @@ export const ROUTES = {
     dashboard: "/gamer",
     groups: "/gamer/groups",
     group: (groupId: string) => `/gamer/groups/${groupId}`,
-    voiceSession: (roomId: string) => `/gamer/voice/${roomId}`,
   },
   gedu: {
     dashboard: "/gedu",

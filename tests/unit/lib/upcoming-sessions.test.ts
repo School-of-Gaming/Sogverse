@@ -254,14 +254,14 @@ describe("expandUpcomingSessions", () => {
     );
   });
 
-  it("wires voiceHref to the gamer voice route keyed on groupId for remote products", () => {
+  it("wires voiceHref to the shared group voice route keyed on groupId for remote products", () => {
     const row = makeRow();
     const out = expandUpcomingSessions(
       [row],
       new Date("2026-02-25T08:00:00Z"),
       "en",
     );
-    expect(out[0].voiceHref).toBe(`/gamer/voice/${GROUP_ID}`);
+    expect(out[0].voiceHref).toBe(`/voice/group/${GROUP_ID}`);
   });
 
   it("leaves voiceHref as '#' for unassigned participations (groupId null)", () => {

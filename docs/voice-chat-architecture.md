@@ -8,15 +8,15 @@ Daily.co-powered spatial voice (and optional video) chat for v2 product groups, 
 
 Voice rooms are linked 1:1 to **v2 product groups** (`product_groups_v2`) and a specific session window: each group + session combination gets a dedicated Daily.co room that opens/closes automatically based on the product's weekly schedule. Access control is membership-based: gamers can only join rooms for groups they have an active `participations_v2` row in; gedus can join any group on a product they're assigned to (cross-group voice mobility, per the redesign §4.10); admins pass through.
 
-Gamers reach a session from the dashboard `NextSessionCard` — clicking "Join Voice" while the session window is open navigates to `/gamer/voice/{groupId}` and `VoiceSessionPage` auto-joins. The spatial canvas lets participants drag avatars into zones (breakout rooms, broadcast) for zone-based audio isolation.
+Gamers reach a session from the dashboard `NextSessionCard` — clicking "Join Voice" while the session window is open navigates to `/voice/group/{groupId}` and `VoiceSessionPage` auto-joins. Gedus reach the same room from their dashboard `GroupCard` for the group they're assigned to (sister-group access in the same product is authorized but only surfaced from the group detail page). The spatial canvas lets participants drag avatars into zones (breakout rooms, broadcast) for zone-based audio isolation.
 
-**Gedu UI is not yet wired** for v2 scheduled rooms — the API gate already accepts them, but the gedu dashboard has no join link for an upcoming session. Tracked as a follow-up; see `TODO.md`.
+`/voice/group/[id]` is shared across roles: the page reads the viewer's role to set the back link (gamer/gedu/admin → their dashboard), the proxy gates the prefix behind a session, and the token endpoint decides moderator rights (any non-gamer role gets `isOwner: true`). A copy-pasted URL works for whichever signed-in user opens it.
 
 ## Component Map
 
 ```
 Pages
-└── /gamer/voice/[id]  → VoiceSessionPage (auto-joins by product_groups_v2.id)
+└── /voice/group/[id]  → VoiceSessionPage (auto-joins by product_groups_v2.id)
 
 (Instant rooms — separate flow, see instant-voice-rooms.md
  /admin/voice and /gedu host CreateInstantRoomCard.)
@@ -210,8 +210,8 @@ Lock states are synced via app messages (`moderatorLock`). When a new peer joins
 
 ### Joining a voice session
 
-1. Gamer clicks "Join Voice" on their dashboard's `NextSessionCard` while the session window is open.
-2. Browser navigates to `/gamer/voice/{groupId}`.
+1. A gamer (or gedu) clicks "Join Voice" on their dashboard's session card while the session window is open.
+2. Browser navigates to `/voice/group/{groupId}`.
 3. `VoiceSessionPage` mounts inside `VoiceRoomProvider`.
 4. Auto-join: `useVoiceToken().mutateAsync(groupId)` → `POST /api/voice/token`.
 5. Token endpoint runs the membership + session-window gates.
@@ -224,7 +224,7 @@ Lock states are synced via app messages (`moderatorLock`). When a new peer joins
 
 ### Auto-leave triggers
 1. **Token expires** → Daily.co hard disconnect at `windowClosesAt + grace`. This is the authoritative session-end signal; there's no client-side polling that mirrors it.
-2. **User clicks Leave** → `leave()` + navigate to `backHref` (the gamer dashboard).
+2. **User clicks Leave** → `leave()` + navigate to `backHref` (the viewer's role-specific dashboard).
 
 ## Token userName Encoding
 

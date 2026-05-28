@@ -9,8 +9,17 @@ import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 // resetPassword and setupAccount are public (not auth routes) because the user
 // arrives via an email link with hash tokens — they aren't authenticated yet.
 // ROUTES.voice.prefix is public because instant voice rooms are share-via-link
-// by design — see docs/instant-voice-rooms.md.
+// by design — see docs/instant-voice-rooms.md. The authenticated group voice
+// room at /voice/group/[id] is carved back out below — it shares the prefix
+// but must require a session.
 const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.clubs, ROUTES.camps, ROUTES.events, ROUTES.help, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
+
+// The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
+// the authenticated group voice room — gamers join as participants, gedus
+// and admins as moderators. The token endpoint enforces role + assignment,
+// but we still gate at the proxy so unauthenticated visitors get redirected
+// to /login instead of landing on a page that can't mint a token.
+const AUTH_REQUIRED_VOICE_PREFIX = "/voice/group/";
 
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
@@ -117,10 +126,13 @@ export async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
-  // Check if route is public
+  // Check if route is public. /api/* always passes (handlers own their auth).
+  // The /voice/group/[id] branch is excluded so its public-prefix match here
+  // can't shadow the authenticated-route handling below.
   const isPublicRoute =
-    PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)) ||
-    pathname.startsWith("/api/");
+    pathname.startsWith("/api/") ||
+    (!pathname.startsWith(AUTH_REQUIRED_VOICE_PREFIX) &&
+      PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`)));
 
   // Check if route is for authentication
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));

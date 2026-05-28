@@ -34,9 +34,10 @@ import {
  * and receives its own clicks. Both card and Join are real anchors —
  * Ctrl/middle-click opens either in a new tab, Next.js prefetching
  * works, and there's no `<a>` inside `<a>` (which a wrapping Link
- * would produce). Both destinations are currently `"#"` no-ops: the
- * gedu voice room page and the per-group detail page are out of scope
- * for this pass — see `TODO.md`.
+ * would produce). The Join button navigates to the shared
+ * `/voice/group/[id]` page (same page the gamer side uses); the
+ * `openGroupHref` is still `"#"` until the per-group detail page
+ * lands — see `TODO.md`.
  */
 
 export interface GroupCardProps {
