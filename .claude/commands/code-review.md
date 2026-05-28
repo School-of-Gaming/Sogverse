@@ -9,7 +9,9 @@ Perform a focused code review of the current branch against local `dev`.
 
 ## Step 1 — Gather the diff
 
-Run `git diff dev...HEAD` against **local `dev`** (do not fetch, do not use `origin/dev`). Identify every changed file.
+Run `git diff dev..HEAD` against **local `dev`** (do not fetch, do not use `origin/dev`). Identify every changed file.
+
+**Two-dot, not three-dot** — this repo rebase-merges PRs, so three-dot's merge-base predates the twins on dev and inflates the diff with work that's already landed.
 
 ## Step 2 — Decide how to read and whether to split
 
