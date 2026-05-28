@@ -49,15 +49,10 @@ interface QueryEntry {
   resolvedAt: number | null;
 }
 
-interface PageContext {
-  role?: string;
-}
-
 interface PageState {
   page: string;
   startedAt: number;
   navType: string;
-  context: PageContext;
   queries: Map<string, QueryEntry>;
   longTasks: Array<{ duration: number; startTime: number }>;
   cls: number;
@@ -124,28 +119,26 @@ function detectNavType(): string {
   }
 }
 
+const UA_BROWSERS: Array<readonly [string, RegExp]> = [
+  ["Edge", /Edg\/(\d+)/],
+  ["Chrome", /Chrome\/(\d+)/],
+  ["Firefox", /Firefox\/(\d+)/],
+  ["Safari", /Version\/(\d+).*Safari/],
+];
+
 function getUaShort(): string {
   if (typeof navigator === "undefined") return "?";
   const ua = navigator.userAgent;
   let browser = "Unknown";
-  let versionToken = "";
-  if (ua.includes("Edg/")) {
-    browser = "Edge";
-    versionToken = "Edg";
-  } else if (ua.includes("Chrome/")) {
-    browser = "Chrome";
-    versionToken = "Chrome";
-  } else if (ua.includes("Firefox/")) {
-    browser = "Firefox";
-    versionToken = "Firefox";
-  } else if (ua.includes("Safari/")) {
-    browser = "Safari";
-    versionToken = "Version";
+  let version = "?";
+  for (const [name, regex] of UA_BROWSERS) {
+    const match = regex.exec(ua);
+    if (match) {
+      browser = name;
+      version = match[1];
+      break;
+    }
   }
-  const versionMatch = versionToken
-    ? new RegExp(`${versionToken}\\/(\\d+)`).exec(ua)
-    : null;
-  const version = versionMatch ? versionMatch[1] : "?";
 
   let platform = "Unknown OS";
   if (ua.includes("Windows")) platform = "Windows";
@@ -300,13 +293,12 @@ function getNavTiming(): NavTimingSummary | null {
     download: Math.round(nav.responseEnd - nav.responseStart),
     domInteractive: Math.round(nav.domInteractive - nav.requestStart),
     dcl: Math.round(nav.domContentLoadedEventStart - nav.requestStart),
-    serverTiming:
-      nav.serverTiming?.map((s) => {
-        const parts = [s.name];
-        if (s.duration) parts.push(`dur=${s.duration}`);
-        if (s.description) parts.push(`desc=${s.description}`);
-        return parts.join(";");
-      }) ?? [],
+    serverTiming: nav.serverTiming.map((s) => {
+      const parts = [s.name];
+      if (s.duration) parts.push(`dur=${s.duration}`);
+      if (s.description) parts.push(`desc=${s.description}`);
+      return parts.join(";");
+    }),
   };
 }
 
@@ -387,7 +379,6 @@ function emit(state: PageState) {
       ? document.documentElement.lang || "?"
       : "?";
   lines.push(`locale      ${locale}`);
-  if (state.context.role) lines.push(`role        ${state.context.role}`);
   lines.push(
     `env         ${process.env.NEXT_PUBLIC_VERCEL_ENV ?? "local"}`,
   );
@@ -526,11 +517,9 @@ function startObservers(state: PageState) {
   });
 
   safeObserve("largest-contentful-paint", (entries) => {
-    const last = entries[entries.length - 1];
-    if (last) {
-      state.lcp = last.startTime;
-      markActivity(state);
-    }
+    if (entries.length === 0) return;
+    state.lcp = entries[entries.length - 1].startTime;
+    markActivity(state);
   });
 
   safeObserve("paint", (entries) => {
@@ -555,10 +544,8 @@ function startObservers(state: PageState) {
  * Designed so the console output can be copied wholesale and pasted into
  * a Claude conversation for diagnosis.
  */
-export function usePagePerf(page: string, context?: PageContext) {
+export function usePagePerf(page: string) {
   const startedRef = useRef(false);
-  const contextRef = useRef(context);
-  contextRef.current = context;
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -569,7 +556,6 @@ export function usePagePerf(page: string, context?: PageContext) {
       page,
       startedAt: performance.now(),
       navType: detectNavType(),
-      context: contextRef.current ?? {},
       queries: new Map(),
       longTasks: [],
       cls: 0,
