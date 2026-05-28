@@ -15,6 +15,7 @@
       "adminDashboard": "Ylläpidon hallintapaneeli",
       "parentDashboard": "Oma SOG",
       "geduDashboard": "Oma SOG",
+      "geduSessionDetails": "Session tiedot",
       "help": "Apu",
       "shop": "Kauppa",
       "gamerHome": "Pelaaja",
@@ -1076,11 +1077,38 @@
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# ryhmä} other {# ryhmää}} · {gamerCount, plural, one {# pelaaja} other {# pelaajaa}}",
-      "joinVoice": "Liity äänihuoneeseen",
-      "locked": "Avautuu {date} klo {time}",
       "startsIn": "Alkaa {countdown} kuluttua",
       "inProgress": "Istunto käynnissä",
       "viewDetails": "Näytä tiedot"
+    },
+    "sessionDetails": {
+      "back": "Takaisin hallintapaneeliin",
+      "typeLabel": {
+        "consumer_club": "Kerho",
+        "municipality_club": "Kerho",
+        "camp": "Leiri",
+        "event": "Tapahtuma"
+      },
+      "yourGroupBadge": "Oma ryhmä",
+      "otherGroupsHeading": "Muut session ryhmät",
+      "educatorsLabel": "Ohjaajat",
+      "noEducators": "Ryhmälle ei ole määritetty ohjaajia.",
+      "gamersLabel": "Pelaajat",
+      "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
+      "emptyRoster": "Ryhmässä ei ole vielä pelaajia.",
+      "untitledGroup": "Nimetön ryhmä",
+      "noAssignedGroup": "Sinulle ei ole määritetty ryhmää tässä sessiossa.",
+      "notAssignedTitle": "Ei sinun session",
+      "notAssignedBody": "Sinua ei ole määritetty mihinkään tämän session ryhmistä, joten sen tietoja ei näytetä.",
+      "age": "Ikä {age}",
+      "genderBoy": "Poika",
+      "genderGirl": "Tyttö",
+      "genderNonBinary": "Muu",
+      "copyParentEmail": "Kopioi vanhemman sähköposti {email}",
+      "noParentEmail": "Ei vanhemman sähköpostia",
+      "emailCopied": "Sähköposti kopioitu",
+      "copyAllEmails": "Kopioi {count, plural, one {# sähköposti} other {# sähköpostia}}",
+      "allEmailsCopied": "Kaikki sähköpostit kopioitu"
     }
   },
   "groups": {
@@ -1465,8 +1493,6 @@
     },
     "nextSession": {
       "title": "{name}: seuraava sessio",
-      "joinVoice": "Liity puhehuoneeseen",
-      "locked": "Avautuu {date} klo {time}",
       "startsIn": "Alkaa {countdown} kuluttua",
       "inProgress": "Sessio käynnissä",
       "reports": "Raportit"
@@ -1672,6 +1698,10 @@
         "join": "Liity"
       }
     }
+  },
+  "voiceButton": {
+    "joinVoice": "Liity äänihuoneeseen",
+    "locked": "Avautuu {date} klo {time}"
   },
   "yty": {
     "hero": {

@@ -13,12 +13,10 @@ import { formatDate, formatTime } from "@/lib/utils";
  * Sister to the parent's `UpcomingSessionCard` — used for every session
  * after the soonest. Differences from the parent's compact card:
  * no gamer attribution (the gedu IS the gedu of every session here),
- * and the whole card is a Link to the per-group detail page with a
- * "View details" chevron — same affordance as the prominent `GroupCard`
- * so any card in the list reads as a doorway into the group.
- *
- * `openGroupHref` is `"#"` for now (per-group detail page is out of
- * scope), so the click is a no-op. See `TODO.md`.
+ * and the whole card is a Link to the gedu's session-details page with
+ * a "View details" chevron — same affordance as the prominent
+ * `GroupCard` so any card in the list reads as a doorway into the
+ * product the gedu serves on.
  */
 
 export interface UpcomingGroupSessionCardProps {
@@ -26,7 +24,7 @@ export interface UpcomingGroupSessionCardProps {
   productName: string;
   /** When the session starts — drives the date/time label. */
   sessionStart: Date;
-  /** Where a click on the card navigates. `"#"` keeps it inert. */
+  /** Where a click on the card navigates — the gedu's session-details page. */
   openGroupHref: string;
 }
 

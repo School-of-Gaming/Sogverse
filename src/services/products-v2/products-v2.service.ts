@@ -7,7 +7,6 @@ import type {
   BillingModeV2,
   ProductStatusV2,
   ProductV2BrowseRow,
-  ProductGroupsV2GeduSnapshot,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
@@ -323,39 +322,6 @@ export class ProductsV2Service {
     }
 
     return { ...row, holidays };
-  }
-
-  // Groups + rosters for a product the current Gedu is assigned to. Calls
-  // get_gedu_product_detail_v2, a SECURITY DEFINER RPC that bypasses RLS to
-  // hand back the same shape as the admin RPC (groups[] with gedus[] +
-  // participations[]) — minus the unassigned[] tray, which is the admin's
-  // tool today (see docs/products-v2-architecture.md "Gedu details page —
-  // unassigned-gamers tray").
-  //
-  // The RPC enforces auth: a 403 means the caller isn't a Gedu or isn't
-  // assigned to this product. Returns null in that case so the UI can show a
-  // "not your product" empty state instead of throwing. Any other error
-  // propagates.
-  async getGeduProductDetail(
-    productId: string,
-  ): Promise<ProductGroupsV2GeduSnapshot | null> {
-    const { data, error } = await this.supabase.rpc(
-      "get_gedu_product_detail_v2",
-      { p_product_id: productId },
-    );
-
-    if (error) {
-      // 42501 = Forbidden. RPC raises this when the caller isn't a Gedu or
-      // isn't assigned to the product. Return null so the page handles it
-      // as a "no roster visible" state rather than a runtime crash.
-      if (error.code === "42501") return null;
-      throw error;
-    }
-
-    // The RPC returns JSONB; the generated type is `Json`. The shape is
-    // controlled at the SQL boundary, so a single cast is appropriate (same
-    // pattern the admin groups service uses).
-    return data as unknown as ProductGroupsV2GeduSnapshot;
   }
 
   async createProduct(input: CreateProductV2Input): Promise<string> {

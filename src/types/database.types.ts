@@ -1698,7 +1698,7 @@ export type Database = {
           min_gamer_age: number
         }[]
       }
-      get_gedu_product_detail_v2: {
+      get_gedu_assigned_product: {
         Args: { p_product_id: string }
         Returns: Json
       }
@@ -1713,6 +1713,7 @@ export type Database = {
           padlet_url: string
           product_id: string
           product_translations: Json
+          product_type: Database["public"]["Enums"]["product_type_v2"]
           schedule_slots: Json
           start_date: string
           timezone: string

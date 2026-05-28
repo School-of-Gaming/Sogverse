@@ -44,7 +44,7 @@ export interface GroupSessionItem {
   voiceIsOpen: boolean;
   /** Where the Join button navigates. `"#"` keeps the button inert. */
   voiceHref: string;
-  /** Where a click anywhere else on the card navigates. `"#"` for now. */
+  /** Where a click anywhere on the card navigates — the gedu's session-details page. */
   openGroupHref: string;
 }
 
@@ -72,8 +72,9 @@ export interface GroupSessionItem {
  * authorized there too via `gedu_group_assignments_v2.product_id`.
  * In-person products and unassigned rows collapse to `"#"` for the
  * same locked-but-inert UX the gamer side renders.
- * `openGroupHref` is `"#"` until the per-group detail page lands —
- * see `TODO.md`.
+ * `openGroupHref` points at the gedu's session-details page; the URL
+ * prefix is picked from the product's type so the gedu lands on a
+ * route that matches their mental model (clubs / camps / events).
  */
 export function expandAssignedSessionsToCards(
   rows: MyAssignedProductSessionRow[],
@@ -116,6 +117,11 @@ export function expandAssignedSessionsToCards(
       windowCloseMs,
     });
 
+    const openGroupHref = ROUTES.gedu.assignedProduct(
+      row.product.productType,
+      row.product.id,
+    );
+
     for (const occ of occurrences) {
       items.push({
         productId: row.product.id,
@@ -128,8 +134,7 @@ export function expandAssignedSessionsToCards(
         // Filled in for the soonest item below.
         voiceIsOpen: false,
         voiceHref,
-        // Per-group detail page is out of scope for now.
-        openGroupHref: "#",
+        openGroupHref,
       });
     }
   }

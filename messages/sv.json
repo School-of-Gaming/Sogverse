@@ -15,6 +15,7 @@
       "adminDashboard": "Administratörspanel",
       "parentDashboard": "Min SOG",
       "geduDashboard": "Min SOG",
+      "geduSessionDetails": "Sessionsdetaljer",
       "gamerHome": "Spelare",
       "gamerGroups": "Mina grupper",
       "gamerGroupDetails": "Gruppdetaljer",
@@ -1076,11 +1077,38 @@
     },
     "myGroups": {
       "counts": "{groupCount, plural, one {# grupp} other {# grupper}} · {gamerCount, plural, one {# spelare} other {# spelare}}",
-      "joinVoice": "Gå med i röstrum",
-      "locked": "Öppnar {date} kl. {time}",
       "startsIn": "Börjar om {countdown}",
       "inProgress": "Pågående pass",
       "viewDetails": "Visa detaljer"
+    },
+    "sessionDetails": {
+      "back": "Tillbaka till panelen",
+      "typeLabel": {
+        "consumer_club": "Klubb",
+        "municipality_club": "Klubb",
+        "camp": "Läger",
+        "event": "Evenemang"
+      },
+      "yourGroupBadge": "Din grupp",
+      "otherGroupsHeading": "Andra grupper i denna session",
+      "educatorsLabel": "Pedagoger",
+      "noEducators": "Inga pedagoger tilldelade.",
+      "gamersLabel": "Spelare",
+      "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
+      "emptyRoster": "Inga spelare anmälda i denna grupp ännu.",
+      "untitledGroup": "Namnlös grupp",
+      "noAssignedGroup": "Du har ingen tilldelad grupp i denna session.",
+      "notAssignedTitle": "Inte din session",
+      "notAssignedBody": "Du är inte tilldelad någon grupp i denna session, så dess detaljer är inte tillgängliga.",
+      "age": "Ålder {age}",
+      "genderBoy": "Pojke",
+      "genderGirl": "Flicka",
+      "genderNonBinary": "Icke-binär",
+      "copyParentEmail": "Kopiera förälderns e-post {email}",
+      "noParentEmail": "Ingen förälder-e-post",
+      "emailCopied": "E-post kopierad",
+      "copyAllEmails": "Kopiera alla {count, plural, one {# e-post} other {# e-postadresser}}",
+      "allEmailsCopied": "Alla e-postadresser kopierade"
     }
   },
   "groups": {
@@ -1465,8 +1493,6 @@
     },
     "nextSession": {
       "title": "{name}s nästa pass",
-      "joinVoice": "Gå med i röstrummet",
-      "locked": "Öppnas {date} kl. {time}",
       "startsIn": "Börjar om {countdown}",
       "inProgress": "Pass pågår",
       "reports": "Rapporter"
@@ -1672,6 +1698,10 @@
         "join": "Gå med"
       }
     }
+  },
+  "voiceButton": {
+    "joinVoice": "Gå med i röstrum",
+    "locked": "Öppnar {date} kl. {time}"
   },
   "yty": {
     "hero": {

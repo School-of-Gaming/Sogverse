@@ -18,6 +18,8 @@ import {
 export const assignmentKeys = {
   all: ["assignments"] as const,
   myAssignedProducts: () => [...assignmentKeys.all, "my-assigned-products"] as const,
+  assignedProductDetail: (productId: string | undefined) =>
+    [...assignmentKeys.all, "assigned-product-detail", productId] as const,
 };
 
 /**
@@ -49,4 +51,23 @@ export function useMyAssignedSessions(options: {
     () => expandAssignedSessionsToCards(query.data, now, locale),
     [query.data, now, locale],
   );
+}
+
+/**
+ * Drives the gedu's session-details page (product-scoped data behind a
+ * session-card entry point). Backed by the SECURITY DEFINER RPC
+ * `get_gedu_assigned_product` — the function gates access on
+ * (role = 'gedu' AND assigned to the product), so the user-bound client
+ * is enough. Returns `null` from the service on 42501 so consumers can
+ * render a "not your session" empty state instead of throwing.
+ */
+export function useGeduAssignedProduct(productId: string | undefined) {
+  const supabase = getClient();
+  const service = new AssignmentsService(supabase);
+
+  return useQuery({
+    queryKey: assignmentKeys.assignedProductDetail(productId),
+    queryFn: () => service.getAssignedProductDetail(productId!),
+    enabled: !!productId,
+  });
 }
