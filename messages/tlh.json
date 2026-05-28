@@ -1155,7 +1155,8 @@
       "noParentEmail": "vavnI' QInHom tu'lu'be'",
       "emailCopied": "QInHom 'aQpu'",
       "copyAllParentEmails": "Hoch vavnI' QInHommey yI'aQ ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "Hoch vavnI' QInHommey 'aQpu'"
+      "allEmailsCopied": "Hoch vavnI' QInHommey 'aQpu'",
+      "minecraftUnknown": "(Sovbe'lu')"
     }
   },
   "groups": {

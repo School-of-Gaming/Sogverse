@@ -55,7 +55,7 @@ export function AssignedGroupCard({
           showAssignedBadge
         />
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center justify-center gap-2">
           <JoinVoiceButton
             voiceIsOpen={voiceIsOpen}
             voiceHref={voiceHref}

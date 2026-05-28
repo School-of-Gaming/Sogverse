@@ -1110,7 +1110,8 @@
       "noParentEmail": "Vanhemman sähköpostia ei ole tallennettu",
       "emailCopied": "Sähköposti kopioitu",
       "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu"
+      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu",
+      "minecraftUnknown": "(ei tiedossa)"
     }
   },
   "groups": {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Pickaxe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -69,10 +69,12 @@ export function GamerRosterRow({ gamer }: GamerRosterRowProps) {
 }
 
 /**
- * Mirrors the per-user Minecraft display on /admin/users/[id]: verified =
- * success + check; entered-but-unverified = warning text; not linked =
- * muted hint. Kept inline (rather than a separate component) so all three
- * states sit next to each other and are easy to tweak as one unit.
+ * Per-gamer Minecraft display. The pickaxe icon is the *only* hint that
+ * this line is about Minecraft — adding "Minecraft:" to every row would
+ * recreate the per-row noise problem we just removed from the parent
+ * emails. Same color semantics as /admin/users/[id]: verified = success
+ * green + check, entered-but-unverified = warning yellow, missing =
+ * muted dash. The verbose copy lives in the aria-label.
  */
 function MinecraftBadge({
   username,
@@ -81,6 +83,7 @@ function MinecraftBadge({
   username: string | null;
   uuid: string | null;
 }) {
+  const t = useTranslations("gedu.sessionDetails");
   const tm = useTranslations("minecraft");
 
   if (username && uuid) {
@@ -89,6 +92,7 @@ function MinecraftBadge({
         className="inline-flex items-center gap-1 text-[11px] leading-tight text-success"
         aria-label={tm("verified")}
       >
+        <Pickaxe className="h-3 w-3 shrink-0" aria-hidden />
         <span className="truncate">{username}</span>
         <Check className="h-3 w-3 shrink-0" aria-hidden />
       </p>
@@ -98,17 +102,22 @@ function MinecraftBadge({
   if (username) {
     return (
       <p
-        className="truncate text-[11px] leading-tight text-warning"
+        className="inline-flex items-center gap-1 text-[11px] leading-tight text-warning"
         aria-label={tm("unverified", { username })}
       >
-        {username}
+        <Pickaxe className="h-3 w-3 shrink-0" aria-hidden />
+        <span className="truncate">{username}</span>
       </p>
     );
   }
 
   return (
-    <p className="text-[11px] leading-tight text-muted-foreground">
-      {tm("notProvided")}
+    <p
+      className="inline-flex items-center gap-1 text-[11px] leading-tight text-muted-foreground"
+      aria-label={tm("notProvided")}
+    >
+      <Pickaxe className="h-3 w-3 shrink-0" aria-hidden />
+      <span>{t("minecraftUnknown")}</span>
     </p>
   );
 }
