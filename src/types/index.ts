@@ -339,6 +339,9 @@ export interface GeduAssignedProductRosterEntry {
   gamer_id: string;
   first_name: string;
   date_of_birth: string | null;
+  minecraft_username: string | null;
+  /** UUID present only when the gamer has *verified* their Minecraft username via the verify flow. */
+  minecraft_uuid: string | null;
   gender: GenderType | null;
   parent_email: string | null;
 }

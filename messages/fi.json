@@ -1091,9 +1091,10 @@
       },
       "yourGroupBadge": "Oma ryhmä",
       "otherGroupsHeading": "Muut session ryhmät",
-      "educatorsLabel": "Ohjaajat",
-      "noEducators": "Ryhmälle ei ole määritetty ohjaajia.",
+      "gedusLabel": "Gedut",
+      "noGedus": "Ryhmälle ei ole määritetty Geduja.",
       "gamersLabel": "Pelaajat",
+      "parentEmailsLabel": "Vanhempien sähköpostit",
       "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
       "emptyRoster": "Ryhmässä ei ole vielä pelaajia.",
       "untitledGroup": "Nimetön ryhmä",
@@ -1104,11 +1105,15 @@
       "genderBoy": "Poika",
       "genderGirl": "Tyttö",
       "genderNonBinary": "Muu",
+      "parentEmailPrefix": "Vanhempi",
       "copyParentEmail": "Kopioi vanhemman sähköposti {email}",
-      "noParentEmail": "Ei vanhemman sähköpostia",
+      "noParentEmail": "Vanhemman sähköpostia ei ole tallennettu",
       "emailCopied": "Sähköposti kopioitu",
-      "copyAllEmails": "Kopioi {count, plural, one {# sähköposti} other {# sähköpostia}}",
-      "allEmailsCopied": "Kaikki sähköpostit kopioitu"
+      "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count, plural, one {#} other {#}})",
+      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu",
+      "minecraftVerified": "Minecraft varmistettu",
+      "minecraftUnverified": "Minecraft-käyttäjänimeä ei ole vielä varmistettu",
+      "minecraftMissing": "Minecraft-käyttäjänimeä ei ole liitetty"
     }
   },
   "groups": {

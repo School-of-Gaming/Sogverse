@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Check, Copy, Users } from "lucide-react";
+import { Check, Copy, Star, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -24,12 +24,12 @@ interface AssignedGroupCardProps {
 }
 
 /**
- * The big "Your group" card at the top of the session-details page. Shows
- * everything the gedu needs at-a-glance for the gamers they teach: full
- * roster (Identicon + name + age/gender + click-to-copy parent email), the
- * assigned gedus as Identicon pills (so a gedu can see their co-teachers
- * on this group), the Join Voice button, and a "Copy all parent emails"
- * helper so they can paste a single comma-separated list into Gmail.
+ * The big "Your group" card at the top of the session-details page. Shares
+ * its header + action-row layout with PeerGroupCard — the two card variants
+ * are visually the same shape; this one adds the "Your group" star badge,
+ * the full roster (Identicon + name + age/gender + Minecraft + click-to-copy
+ * parent email), and a "Copy all parent emails" helper so the gedu can paste
+ * a single comma-separated list into Gmail.
  */
 export function AssignedGroupCard({
   group,
@@ -49,22 +49,13 @@ export function AssignedGroupCard({
   return (
     <Card className="border-primary/40">
       <CardContent className="space-y-5 p-5 sm:p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold leading-tight sm:text-xl">
-              {group.name || t("untitledGroup")}
-            </h2>
-            <Badge variant="secondary" className="text-[10px] uppercase tracking-wide">
-              {t("yourGroupBadge")}
-            </Badge>
-          </div>
-          <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-            <Users className="h-3.5 w-3.5" />
-            {t("gamerCount", { count: group.gamer_count })}
-          </span>
-        </div>
+        <GroupCardHeader
+          name={group.name || t("untitledGroup")}
+          gamerCount={group.gamer_count}
+          showAssignedBadge
+        />
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <JoinVoiceButton
             voiceIsOpen={voiceIsOpen}
             voiceHref={voiceHref}
@@ -79,7 +70,7 @@ export function AssignedGroupCard({
         {group.gedus.length > 0 && (
           <div className="space-y-2">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              {t("educatorsLabel")}
+              {t("gedusLabel")}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {group.gedus.map((g) => (
@@ -116,6 +107,46 @@ export function AssignedGroupCard({
   );
 }
 
+/**
+ * Top row used by both the assigned and peer group cards. Group name on the
+ * left; the gamer-count chip is always on the right. The "Your group" badge
+ * sits immediately to the left of the gamer-count so the assigned card is
+ * recognizable at a glance without changing the rest of the row layout.
+ */
+export function GroupCardHeader({
+  name,
+  gamerCount,
+  showAssignedBadge,
+}: {
+  name: string;
+  gamerCount: number;
+  showAssignedBadge?: boolean;
+}) {
+  const t = useTranslations("gedu.sessionDetails");
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h2 className="min-w-0 text-lg font-semibold leading-tight sm:text-xl">
+        {name}
+      </h2>
+      <div className="flex shrink-0 items-center gap-2">
+        {showAssignedBadge && (
+          <Badge
+            variant="secondary"
+            className="gap-1 text-[10px] uppercase tracking-wide"
+          >
+            <Star className="h-3 w-3 fill-current" aria-hidden />
+            {t("yourGroupBadge")}
+          </Badge>
+        )}
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+          <Users className="h-3.5 w-3.5" />
+          {t("gamerCount", { count: gamerCount })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function CopyAllEmailsButton({ emails }: { emails: string[] }) {
   const t = useTranslations("gedu.sessionDetails");
   const [copied, setCopied] = useState(false);
@@ -147,7 +178,7 @@ function CopyAllEmailsButton({ emails }: { emails: string[] }) {
       )}
       {copied
         ? t("allEmailsCopied")
-        : t("copyAllEmails", { count: emails.length })}
+        : t("copyAllParentEmails", { count: emails.length })}
     </Button>
   );
 }

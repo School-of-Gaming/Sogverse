@@ -20,12 +20,14 @@ interface GamerRosterRowProps {
 }
 
 /**
- * One gamer row inside the assigned-group roster. Identicon + first name
- * + age/gender on the left; the parent email on the right is itself a
- * click-to-copy button so the gedu can grab a single address without
- * leaving the page. Falls back to a dim placeholder when the gamer has
- * no parent email linked (rare but possible — a gamer signed up under a
- * household where the parent's profile is missing email).
+ * One gamer row inside the assigned-group roster. Identicon + first name +
+ * age/gender + Minecraft status on the left; the parent email on the right
+ * is itself a click-to-copy button (prefixed with "Parent" so the gedu sees
+ * it's the *parent's* contact, not the gamer's). Minecraft styling mirrors
+ * /admin/users/[id]: verified (uuid set) renders in success green with a
+ * check; entered-but-unverified renders in warning yellow; missing renders
+ * as muted "not linked" copy so absent Minecraft accounts are still
+ * something the gedu can spot at a glance before camp.
  */
 export function GamerRosterRow({ gamer }: GamerRosterRowProps) {
   const t = useTranslations("gedu.sessionDetails");
@@ -42,11 +44,11 @@ export function GamerRosterRow({ gamer }: GamerRosterRowProps) {
 
   return (
     <li className="flex flex-col gap-2 rounded-md border border-border bg-card p-2.5 sm:flex-row sm:items-center sm:gap-3">
-      <div className="flex min-w-0 items-center gap-2.5">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5">
         <Avatar className="h-8 w-8 shrink-0">
           <Identicon id={gamer.gamer_id} size={32} />
         </Avatar>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 space-y-0.5">
           <p className="truncate text-sm font-medium leading-tight">
             {gamer.first_name}
           </p>
@@ -55,10 +57,60 @@ export function GamerRosterRow({ gamer }: GamerRosterRowProps) {
               {detail}
             </p>
           )}
+          <MinecraftBadge
+            username={gamer.minecraft_username}
+            uuid={gamer.minecraft_uuid}
+          />
         </div>
       </div>
       <ParentEmailCell email={gamer.parent_email} />
     </li>
+  );
+}
+
+/**
+ * Mirrors the per-user Minecraft display on /admin/users/[id]: verified =
+ * success + check; entered-but-unverified = warning text; not linked =
+ * muted hint. Kept inline (rather than a separate component) so all three
+ * states sit next to each other and are easy to tweak as one unit.
+ */
+function MinecraftBadge({
+  username,
+  uuid,
+}: {
+  username: string | null;
+  uuid: string | null;
+}) {
+  const t = useTranslations("gedu.sessionDetails");
+  const tm = useTranslations("minecraft");
+
+  if (username && uuid) {
+    return (
+      <p
+        className="inline-flex items-center gap-1 text-[11px] leading-tight text-success"
+        aria-label={t("minecraftVerified")}
+      >
+        <span className="truncate">{username}</span>
+        <Check className="h-3 w-3 shrink-0" aria-hidden />
+      </p>
+    );
+  }
+
+  if (username) {
+    return (
+      <p
+        className="truncate text-[11px] leading-tight text-warning"
+        aria-label={t("minecraftUnverified")}
+      >
+        {tm("unverified", { username })}
+      </p>
+    );
+  }
+
+  return (
+    <p className="text-[11px] leading-tight text-muted-foreground">
+      {t("minecraftMissing")}
+    </p>
   );
 }
 
@@ -80,7 +132,10 @@ function ParentEmailCell({ email }: { email: string | null }) {
 
   if (!email) {
     return (
-      <span className="text-xs text-muted-foreground sm:ml-auto">
+      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground sm:ml-auto">
+        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+          {t("parentEmailPrefix")}
+        </span>
         {t("noParentEmail")}
       </span>
     );
@@ -96,7 +151,10 @@ function ParentEmailCell({ email }: { email: string | null }) {
         copied && "border-success/40 text-success",
       )}
     >
-      <span className="truncate font-mono">{email}</span>
+      <span className="rounded bg-background/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+        {t("parentEmailPrefix")}
+      </span>
+      <span className="truncate">{email}</span>
       {copied ? (
         <Check className="h-3.5 w-3.5 shrink-0" aria-hidden />
       ) : (

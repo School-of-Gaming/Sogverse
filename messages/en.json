@@ -1091,9 +1091,10 @@
       },
       "yourGroupBadge": "Your group",
       "otherGroupsHeading": "Other groups in this session",
-      "educatorsLabel": "Educators",
-      "noEducators": "No educators assigned.",
+      "gedusLabel": "Gedus",
+      "noGedus": "No Gedus assigned.",
       "gamersLabel": "Gamers",
+      "parentEmailsLabel": "Parent emails",
       "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
       "emptyRoster": "No gamers enrolled in this group yet.",
       "untitledGroup": "Untitled group",
@@ -1104,11 +1105,15 @@
       "genderBoy": "Boy",
       "genderGirl": "Girl",
       "genderNonBinary": "Non-binary",
+      "parentEmailPrefix": "Parent",
       "copyParentEmail": "Copy parent email {email}",
-      "noParentEmail": "No parent email",
+      "noParentEmail": "No parent email on file",
       "emailCopied": "Email copied",
-      "copyAllEmails": "Copy all {count, plural, one {# email} other {# emails}}",
-      "allEmailsCopied": "All emails copied"
+      "copyAllParentEmails": "Copy all parent emails ({count, plural, one {#} other {#}})",
+      "allEmailsCopied": "All parent emails copied",
+      "minecraftVerified": "Minecraft verified",
+      "minecraftUnverified": "Minecraft username not yet verified",
+      "minecraftMissing": "No Minecraft username linked"
     }
   },
   "groups": {
