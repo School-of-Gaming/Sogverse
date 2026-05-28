@@ -27,5 +27,5 @@ This repo rebase-and-merges feature branches, which gives each commit a new hash
 ## Notes
 
 - Never delete a branch with `+` lines without explicit user override — those commits genuinely don't exist on `dev`.
-- Skip release branches (`release/*`) — they're disposable and `/pr-dev-to-main` already deletes them as part of its flow.
+- `release/*` branches are treated like any other branch — once the release PR merges and `dev` is reset to `main`, the release branch's commits show up as content-equivalent on `dev` and the cherry check auto-qualifies them for deletion. (Older versions of this command carved them out; that was wrong — `/pr-dev-to-main` doesn't delete them, so they need to flow through here.)
 - The `origin/dev` reference is intentional: after a `/pr-dev-to-main` release the local `dev` is reset to `main`, but if the user is between releases the local `dev` may have unmerged feature commits not yet pushed. `origin/dev` is the authoritative reference.
