@@ -23,18 +23,26 @@ export async function generateMetadata(): Promise<Metadata> {
  * `AUTH_REQUIRED_VOICE_PREFIX`; the token endpoint at `/api/voice/token`
  * does the role + assignment authorization and decides moderator rights.
  *
- * `backHref` is the viewer's role-specific dashboard so leaving the room
- * lands them where their Sessions section lives. Customers are excluded —
+ * `backHref` defaults to the viewer's role-specific dashboard so leaving
+ * the room lands them where their Sessions section lives. Callers can
+ * override that by passing a `?back=<internal path>` query — used by the
+ * gedu session-details page so leaving the voice room returns to the
+ * product page the gedu launched from, not the top-level dashboard. Only
+ * single-segment internal paths are accepted (must start with `/` and not
+ * `//`) to prevent open-redirect via this surface. Customers are excluded —
  * they only ever reach a voice room through `SwitchToGamerDialog`, which
  * swaps the session to a gamer first, so by the time we're here the role
  * is gamer/gedu/admin.
  */
 export default async function VoiceGroupSessionPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ back?: string | string[] }>;
 }) {
   const { id } = await params;
+  const sp = await searchParams;
 
   const result = await getUserWithProfile();
   const role = result?.profile?.role;
@@ -51,7 +59,13 @@ export default async function VoiceGroupSessionPage({
     redirect(ROLE_DASHBOARD_PATHS.customer);
   }
 
-  return (
-    <VoiceSessionPage groupId={id} backHref={ROLE_DASHBOARD_PATHS[role]} />
-  );
+  const rawBack = Array.isArray(sp.back) ? sp.back[0] : sp.back;
+  const backHref =
+    typeof rawBack === "string" &&
+    rawBack.startsWith("/") &&
+    !rawBack.startsWith("//")
+      ? rawBack
+      : ROLE_DASHBOARD_PATHS[role];
+
+  return <VoiceSessionPage groupId={id} backHref={backHref} />;
 }

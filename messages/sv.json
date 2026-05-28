@@ -1110,7 +1110,8 @@
       "noParentEmail": "Ingen förälder-e-post sparad",
       "emailCopied": "E-post kopierad",
       "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
+      "allEmailsCopied": "Alla förälder-e-postadresser kopierade",
+      "minecraftUnknown": "(okänt)"
     }
   },
   "groups": {

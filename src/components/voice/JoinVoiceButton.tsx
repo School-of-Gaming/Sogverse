@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AudioLines, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { buttonVariants } from "@/components/ui/button";
@@ -41,6 +42,13 @@ interface JoinVoiceButtonProps {
  * product shares the same schedule, so each card shows the same locked-
  * state copy when the window is closed; that repetition is intentional
  * (full reuse over a one-off banner).
+ *
+ * The link always carries a `?back=<current path>` query so leaving the
+ * voice room returns the user to the page they launched from instead of
+ * the role dashboard. The voice route validates the path before honoring
+ * it (must start with `/`, not `//`) so this surface can't be turned into
+ * an open redirect. Callers don't need to pass anything for this — we read
+ * the pathname here.
  */
 export function JoinVoiceButton({
   voiceIsOpen,
@@ -51,6 +59,7 @@ export function JoinVoiceButton({
   size = "sm",
 }: JoinVoiceButtonProps) {
   const t = useTranslations("voiceButton");
+  const pathname = usePathname();
 
   if (voiceIsOpen) {
     if (onJoinClick) {
@@ -65,9 +74,13 @@ export function JoinVoiceButton({
         </button>
       );
     }
+    const hrefWithBack =
+      voiceHref === "#" || !pathname
+        ? voiceHref
+        : `${voiceHref}?back=${encodeURIComponent(pathname)}`;
     return (
       <Link
-        href={voiceHref}
+        href={hrefWithBack}
         prefetch={false}
         onClick={(e) => {
           if (voiceHref === "#") e.preventDefault();

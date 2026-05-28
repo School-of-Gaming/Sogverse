@@ -1110,7 +1110,8 @@
       "noParentEmail": "No parent email on file",
       "emailCopied": "Email copied",
       "copyAllParentEmails": "Copy all parent emails ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "All parent emails copied"
+      "allEmailsCopied": "All parent emails copied",
+      "minecraftUnknown": "(unknown)"
     }
   },
   "groups": {
