@@ -81,14 +81,13 @@ function MinecraftBadge({
   username: string | null;
   uuid: string | null;
 }) {
-  const t = useTranslations("gedu.sessionDetails");
   const tm = useTranslations("minecraft");
 
   if (username && uuid) {
     return (
       <p
         className="inline-flex items-center gap-1 text-[11px] leading-tight text-success"
-        aria-label={t("minecraftVerified")}
+        aria-label={tm("verified")}
       >
         <span className="truncate">{username}</span>
         <Check className="h-3 w-3 shrink-0" aria-hidden />
@@ -100,16 +99,16 @@ function MinecraftBadge({
     return (
       <p
         className="truncate text-[11px] leading-tight text-warning"
-        aria-label={t("minecraftUnverified")}
+        aria-label={tm("unverified", { username })}
       >
-        {tm("unverified", { username })}
+        {username}
       </p>
     );
   }
 
   return (
     <p className="text-[11px] leading-tight text-muted-foreground">
-      {t("minecraftMissing")}
+      {tm("notProvided")}
     </p>
   );
 }
@@ -132,10 +131,7 @@ function ParentEmailCell({ email }: { email: string | null }) {
 
   if (!email) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground sm:ml-auto">
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-          {t("parentEmailPrefix")}
-        </span>
+      <span className="text-xs italic text-muted-foreground sm:ml-auto">
         {t("noParentEmail")}
       </span>
     );
@@ -151,9 +147,6 @@ function ParentEmailCell({ email }: { email: string | null }) {
         copied && "border-success/40 text-success",
       )}
     >
-      <span className="rounded bg-background/60 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">
-        {t("parentEmailPrefix")}
-      </span>
       <span className="truncate">{email}</span>
       {copied ? (
         <Check className="h-3.5 w-3.5 shrink-0" aria-hidden />

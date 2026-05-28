@@ -89,17 +89,34 @@ export function AssignedGroupCard({
         )}
 
         <div className="space-y-2">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-            {t("gamersLabel")}
-          </p>
           {roster.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{t("emptyRoster")}</p>
+            <>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                {t("gamersLabel")}
+              </p>
+              <p className="text-sm text-muted-foreground">{t("emptyRoster")}</p>
+            </>
           ) : (
-            <ul className="space-y-1.5">
-              {roster.map((g) => (
-                <GamerRosterRow key={g.gamer_id} gamer={g} />
-              ))}
-            </ul>
+            <>
+              {/* Two-column header — "Gamer" anchors the left half of each
+                  row (avatar + name + age/gender + Minecraft); "Parent
+                  email" anchors the right side. Single source of meaning
+                  for the column, so the rows themselves stay quiet. On
+                  mobile the rows stack and the header still reads as a
+                  pair of section labels. */}
+              <div className="hidden items-center justify-between px-2.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:flex">
+                <span>{t("rosterGamerHeader")}</span>
+                <span>{t("rosterParentEmailHeader")}</span>
+              </div>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground sm:hidden">
+                {t("gamersLabel")}
+              </p>
+              <ul className="space-y-1.5">
+                {roster.map((g) => (
+                  <GamerRosterRow key={g.gamer_id} gamer={g} />
+                ))}
+              </ul>
+            </>
           )}
         </div>
       </CardContent>

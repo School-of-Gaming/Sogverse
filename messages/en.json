@@ -1094,7 +1094,8 @@
       "gedusLabel": "Gedus",
       "noGedus": "No Gedus assigned.",
       "gamersLabel": "Gamers",
-      "parentEmailsLabel": "Parent emails",
+      "rosterGamerHeader": "Gamer",
+      "rosterParentEmailHeader": "Parent email",
       "gamerCount": "{count, plural, one {# gamer} other {# gamers}}",
       "emptyRoster": "No gamers enrolled in this group yet.",
       "untitledGroup": "Untitled group",
@@ -1105,15 +1106,11 @@
       "genderBoy": "Boy",
       "genderGirl": "Girl",
       "genderNonBinary": "Non-binary",
-      "parentEmailPrefix": "Parent",
       "copyParentEmail": "Copy parent email {email}",
       "noParentEmail": "No parent email on file",
       "emailCopied": "Email copied",
       "copyAllParentEmails": "Copy all parent emails ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "All parent emails copied",
-      "minecraftVerified": "Minecraft verified",
-      "minecraftUnverified": "Minecraft username not yet verified",
-      "minecraftMissing": "No Minecraft username linked"
+      "allEmailsCopied": "All parent emails copied"
     }
   },
   "groups": {
