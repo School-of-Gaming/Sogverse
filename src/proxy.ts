@@ -18,8 +18,10 @@ const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.clubs, ROUTES.camps, ROU
 // the authenticated group voice room — gamers join as participants, gedus
 // and admins as moderators. The token endpoint enforces role + assignment,
 // but we still gate at the proxy so unauthenticated visitors get redirected
-// to /login instead of landing on a page that can't mint a token.
-const AUTH_REQUIRED_VOICE_PREFIX = "/voice/group/";
+// to /login instead of landing on a page that can't mint a token. Pulled
+// from `ROUTES.voice.groupSessionPrefix` so a rename of the route helper
+// stays in sync with the proxy carve-out.
+const AUTH_REQUIRED_VOICE_PREFIX = ROUTES.voice.groupSessionPrefix;
 
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];

@@ -24,12 +24,14 @@ export const ROUTES = {
    *   voice room used by gamers (as participants) and gedus/admins (as
    *   moderators); the page authorizes by role + product assignment via
    *   `/api/voice/token`. The proxy gates this branch behind auth even
-   *   though the rest of `/voice/*` is public.
+   *   though the rest of `/voice/*` is public — it imports
+   *   `groupSessionPrefix` so the carve-out can't drift from the route.
    * `prefix` is the route base used for proxy matching.
    */
   voice: {
     prefix: "/voice",
     forCode: (code: string) => `/voice/${code}`,
+    groupSessionPrefix: "/voice/group/",
     groupSession: (groupId: string) => `/voice/group/${groupId}`,
   },
   admin: {

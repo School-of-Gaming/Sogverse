@@ -39,8 +39,16 @@ export default async function VoiceGroupSessionPage({
   const result = await getUserWithProfile();
   const role = result?.profile?.role;
 
-  if (!role || role === "customer") {
+  // `!role` only fires if the profile fetch failed under an authenticated
+  // session (proxy already gated unauthenticated visitors). `/login` is the
+  // defensible fallback there. Customers, on the other hand, are signed
+  // in but landing on the wrong page — send them to their own dashboard
+  // instead of bouncing through `/login` and letting the proxy hop them.
+  if (!role) {
     redirect(ROUTES.login);
+  }
+  if (role === "customer") {
+    redirect(ROLE_DASHBOARD_PATHS.customer);
   }
 
   return (
