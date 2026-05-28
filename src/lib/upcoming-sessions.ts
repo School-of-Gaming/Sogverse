@@ -1,24 +1,15 @@
 import { ROUTES } from "@/lib/constants";
-import { getNextSessionStart } from "@/lib/enrollment";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   endDateToCutoff,
-  getCurrentInProgressOccurrence,
+  enumerateRowOccurrences,
+  OPEN_ENDED_OCCURRENCE_CAP,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
 import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import type { MyUpcomingSessionRow } from "@/services/participations";
-
-/**
- * Per-participation cap when a product has no `end_date`. Ongoing clubs run
- * indefinitely, so we surface a finite horizon of the next N occurrences
- * (across all of the product's weekly slots) rather than an unbounded list.
- * For end-dated products (camps, events, dated club runs), the date range
- * is the natural bound and we ignore this cap.
- */
-const OPEN_ENDED_OCCURRENCE_CAP = 8;
 
 /**
  * Expand the viewer's placed participations into a flat, time-sorted list of
@@ -74,7 +65,7 @@ export function expandUpcomingSessions(
     const endBoundary = endDateToCutoff(row.product.endDate, row.product.timezone);
     const cap = row.product.endDate === null ? OPEN_ENDED_OCCURRENCE_CAP : Infinity;
 
-    const occurrences = enumerateOccurrences({
+    const occurrences = enumerateRowOccurrences({
       slots: row.slots,
       timezone: row.product.timezone,
       now,
@@ -113,84 +104,4 @@ export function expandUpcomingSessions(
   }
 
   return sessions;
-}
-
-/**
- * Walk every slot forward in time, emitting concrete (start, end) pairs in
- * UTC. Per-slot iteration stops at the end-of-product-day boundary (when
- * end-dated) or after the cap is reached (when open-ended); the merge sorts
- * and trims to the cap one more time so the soonest N across all slots win.
- */
-function enumerateOccurrences(args: {
-  slots: MyUpcomingSessionRow["slots"];
-  timezone: string;
-  now: Date;
-  startBoundary: Date | null;
-  endBoundary: Date | null;
-  cap: number;
-  windowCloseMs: number;
-}): Array<{ start: Date; end: Date }> {
-  const { slots, timezone, now, startBoundary, endBoundary, cap, windowCloseMs } =
-    args;
-  const out: Array<{ start: Date; end: Date }> = [];
-  const perSlotCap = Number.isFinite(cap) ? cap : Number.POSITIVE_INFINITY;
-
-  // If the product hasn't started yet (start_date is in the future), pin
-  // the future-iteration cursor to "the day before start_date" so the
-  // search lands on or after start_date. Otherwise iterate from real
-  // `now`. The prev-week-in-window check returns null in the
-  // not-started-yet case all on its own (no occurrence can be in
-  // progress before the product opens), so no separate guard is needed
-  // here.
-  const futureCursorBase =
-    startBoundary !== null && startBoundary.getTime() > now.getTime()
-      ? new Date(startBoundary.getTime() - 1)
-      : now;
-
-  for (const slot of slots) {
-    const schedule = {
-      dayOfWeek: slot.weekday,
-      startTime: slot.startTime,
-      timezone,
-    };
-    const durationMs = slot.durationMinutes * 60_000;
-
-    let emitted = 0;
-
-    // First slot emission: if a previous-week occurrence is still in its
-    // voice window right now (and within the product's date bounds),
-    // surface it so an in-progress session shows up as the soonest. The
-    // DST-safe back-step + both date-bound checks live in
-    // `getCurrentInProgressOccurrence` — see its doc for the gotchas.
-    const inProgress = getCurrentInProgressOccurrence({
-      slot,
-      timezone,
-      now,
-      startBoundary,
-      endBoundary,
-      windowCloseMs,
-    });
-    if (inProgress) {
-      out.push(inProgress);
-      emitted += 1;
-    }
-
-    let cursor = futureCursorBase;
-    while (emitted < perSlotCap) {
-      const start = getNextSessionStart(schedule, { now: cursor });
-      if (endBoundary !== null && start.getTime() > endBoundary.getTime()) break;
-      const end = new Date(start.getTime() + durationMs);
-      out.push({ start, end });
-      // Step past this start so the next iteration finds the following
-      // occurrence rather than re-emitting this one. `getNextSessionStart`
-      // is required to return a strictly future date relative to `now`;
-      // see its TZ regression test — if that contract slips, this loop
-      // never advances and the renderer pegs.
-      cursor = new Date(start.getTime() + 60_000);
-      emitted += 1;
-    }
-  }
-
-  out.sort((a, b) => a.start.getTime() - b.start.getTime());
-  return Number.isFinite(cap) ? out.slice(0, cap) : out;
 }

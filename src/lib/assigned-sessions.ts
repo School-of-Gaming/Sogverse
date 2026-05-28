@@ -1,22 +1,13 @@
-import { getNextSessionStart } from "@/lib/enrollment";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
   endDateToCutoff,
-  getCurrentInProgressOccurrence,
+  enumerateRowOccurrences,
+  OPEN_ENDED_OCCURRENCE_CAP,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
 import type { MyAssignedProductSessionRow } from "@/services/assignments";
-
-/**
- * Per-assignment cap when a product has no `end_date`. Open-ended clubs run
- * indefinitely, so we surface a finite horizon of the next N occurrences
- * (across all of the product's weekly slots) rather than an unbounded list.
- * Mirrors `expandUpcomingSessions`'s `OPEN_ENDED_OCCURRENCE_CAP` so the
- * gedu's view of a club shows the same horizon as the parent/gamer's.
- */
-const OPEN_ENDED_OCCURRENCE_CAP = 8;
 
 /**
  * One emitted card for the gedu dashboard's Sessions section. The shape
@@ -103,7 +94,7 @@ export function expandAssignedSessionsToCards(
     const endBoundary = endDateToCutoff(row.product.endDate, row.product.timezone);
     const cap = row.product.endDate === null ? OPEN_ENDED_OCCURRENCE_CAP : Infinity;
 
-    const occurrences = enumerateOccurrences({
+    const occurrences = enumerateRowOccurrences({
       slots: row.slots,
       timezone: row.product.timezone,
       now,
@@ -144,71 +135,4 @@ export function expandAssignedSessionsToCards(
   }
 
   return items;
-}
-
-/**
- * Walk every slot forward in time, emitting concrete (start, end) pairs
- * in UTC. Per-slot iteration stops at the end-of-product-day boundary
- * (when end-dated) or after the cap is reached (when open-ended); the
- * merge sorts and trims to the cap one more time so the soonest N across
- * all slots win. Mirrors the helper in `upcoming-sessions.ts`.
- */
-function enumerateOccurrences(args: {
-  slots: MyAssignedProductSessionRow["slots"];
-  timezone: string;
-  now: Date;
-  startBoundary: Date | null;
-  endBoundary: Date | null;
-  cap: number;
-  windowCloseMs: number;
-}): Array<{ start: Date; end: Date }> {
-  const { slots, timezone, now, startBoundary, endBoundary, cap, windowCloseMs } =
-    args;
-  const out: Array<{ start: Date; end: Date }> = [];
-  const perSlotCap = Number.isFinite(cap) ? cap : Number.POSITIVE_INFINITY;
-
-  // If the product hasn't started yet (start_date is in the future), pin
-  // the future-iteration cursor to "just before start_date" so the
-  // search lands on or after start_date. Mirror of the parent's logic.
-  const futureCursorBase =
-    startBoundary !== null && startBoundary.getTime() > now.getTime()
-      ? new Date(startBoundary.getTime() - 1)
-      : now;
-
-  for (const slot of slots) {
-    const schedule = {
-      dayOfWeek: slot.weekday,
-      startTime: slot.startTime,
-      timezone,
-    };
-    const durationMs = slot.durationMinutes * 60_000;
-
-    let emitted = 0;
-
-    const inProgress = getCurrentInProgressOccurrence({
-      slot,
-      timezone,
-      now,
-      startBoundary,
-      endBoundary,
-      windowCloseMs,
-    });
-    if (inProgress) {
-      out.push(inProgress);
-      emitted += 1;
-    }
-
-    let cursor = futureCursorBase;
-    while (emitted < perSlotCap) {
-      const start = getNextSessionStart(schedule, { now: cursor });
-      if (endBoundary !== null && start.getTime() > endBoundary.getTime()) break;
-      const end = new Date(start.getTime() + durationMs);
-      out.push({ start, end });
-      cursor = new Date(start.getTime() + 60_000);
-      emitted += 1;
-    }
-  }
-
-  out.sort((a, b) => a.start.getTime() - b.start.getTime());
-  return Number.isFinite(cap) ? out.slice(0, cap) : out;
 }
