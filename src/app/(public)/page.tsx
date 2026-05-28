@@ -25,6 +25,7 @@ export default function HomePage() {
 
   return (
     <>
+      {/* eslint-disable-next-line i18next/no-literal-string -- perf logger identifier, not user-facing copy */}
       <PerfLogger page="home" />
       <SectionPill />
 

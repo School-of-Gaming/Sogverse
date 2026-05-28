@@ -49,6 +49,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
+      {/* eslint-disable-next-line i18next/no-literal-string -- perf logger identifier, not user-facing copy */}
       <PerfLogger page="admin" />
       <div>
         <h1 className="text-3xl font-bold">{t('title')}</h1>
