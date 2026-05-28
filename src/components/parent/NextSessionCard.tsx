@@ -157,6 +157,7 @@ export function NextSessionCard({
             ) : (
               <Link
                 href={voiceHref}
+                prefetch={false}
                 className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
               >
                 <AudioLines className="h-4 w-4" />
