@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AboutSection } from "@/components/home/about-section";
 import { SectionPill } from "@/components/home/section-pill";
 import { YtySection } from "@/components/home/yty-section";
+import { PerfLogger } from "@/components/dev/perf-logger";
 import { ROUTES } from "@/lib/constants";
 
 const featureIcons = [Gamepad2, Sparkles, Users, Shield];
@@ -24,6 +25,7 @@ export default function HomePage() {
 
   return (
     <>
+      <PerfLogger page="home" />
       <SectionPill />
 
       {/* Home: hero + features + how it works are grouped under a single
