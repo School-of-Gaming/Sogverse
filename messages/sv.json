@@ -1094,7 +1094,8 @@
       "gedusLabel": "Geduer",
       "noGedus": "Inga Geduer tilldelade.",
       "gamersLabel": "Spelare",
-      "parentEmailsLabel": "Föräldrarnas e-post",
+      "rosterGamerHeader": "Spelare",
+      "rosterParentEmailHeader": "Förälderns e-post",
       "gamerCount": "{count, plural, one {# spelare} other {# spelare}}",
       "emptyRoster": "Inga spelare anmälda i denna grupp ännu.",
       "untitledGroup": "Namnlös grupp",
@@ -1105,15 +1106,11 @@
       "genderBoy": "Pojke",
       "genderGirl": "Flicka",
       "genderNonBinary": "Icke-binär",
-      "parentEmailPrefix": "Förälder",
       "copyParentEmail": "Kopiera förälderns e-post {email}",
       "noParentEmail": "Ingen förälder-e-post sparad",
       "emailCopied": "E-post kopierad",
       "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "Alla förälder-e-postadresser kopierade",
-      "minecraftVerified": "Minecraft verifierad",
-      "minecraftUnverified": "Minecraft-användarnamnet är inte verifierat ännu",
-      "minecraftMissing": "Inget Minecraft-användarnamn länkat"
+      "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
     }
   },
   "groups": {

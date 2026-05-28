@@ -1094,7 +1094,8 @@
       "gedusLabel": "Gedut",
       "noGedus": "Ryhmälle ei ole määritetty Geduja.",
       "gamersLabel": "Pelaajat",
-      "parentEmailsLabel": "Vanhempien sähköpostit",
+      "rosterGamerHeader": "Pelaaja",
+      "rosterParentEmailHeader": "Vanhemman sähköposti",
       "gamerCount": "{count, plural, one {# pelaaja} other {# pelaajaa}}",
       "emptyRoster": "Ryhmässä ei ole vielä pelaajia.",
       "untitledGroup": "Nimetön ryhmä",
@@ -1105,15 +1106,11 @@
       "genderBoy": "Poika",
       "genderGirl": "Tyttö",
       "genderNonBinary": "Muu",
-      "parentEmailPrefix": "Vanhempi",
       "copyParentEmail": "Kopioi vanhemman sähköposti {email}",
       "noParentEmail": "Vanhemman sähköpostia ei ole tallennettu",
       "emailCopied": "Sähköposti kopioitu",
       "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu",
-      "minecraftVerified": "Minecraft varmistettu",
-      "minecraftUnverified": "Minecraft-käyttäjänimeä ei ole vielä varmistettu",
-      "minecraftMissing": "Minecraft-käyttäjänimeä ei ole liitetty"
+      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu"
     }
   },
   "groups": {
