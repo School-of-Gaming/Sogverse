@@ -20,6 +20,12 @@ export async function generateMetadata(): Promise<Metadata> {
  * on first frame. Errors fall back to an empty list — the section will
  * render its own empty-state copy, which is the right read in both the
  * truly-empty and could-not-load cases (the user can refresh).
+ *
+ * TODO: distinguish "no assignments" from "load failed" in the UI. Today
+ * a Supabase blip during the prefetch is indistinguishable from a real
+ * empty state (the client-side refetch should self-heal in practice).
+ * If we ever see this fire in the wild, render a "couldn't load — try
+ * refreshing" surface instead of the empty-state copy.
  */
 async function getInitialAssignmentRows(): Promise<MyAssignedProductSessionRow[]> {
   try {
