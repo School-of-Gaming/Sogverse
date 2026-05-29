@@ -6,38 +6,17 @@ Findings (`F`) describe what we've observed and the root cause. Improvements (`I
 
 ## Per-request server stack
 
-Every request — page load, API call, **and every RSC prefetch** — traverses this chain:
+Every protected request — page load, API call, and every RSC prefetch — verifies the caller's identity at three layers:
 
-1. **`src/proxy.ts`** runs (matched paths in `proxy.ts:232-242`). Calls `supabase.auth.getUser()` at `proxy.ts:119` — HTTP round-trip to Supabase's GoTrue to verify the JWT. Then queries `profiles.role` (`proxy.ts:144` or `:190`) for role-based routing decisions.
-2. **`src/app/layout.tsx`** (root) calls `getUserWithProfile()` at `layout.tsx:55` — a second `getUser()` and `profiles.select("*")`.
-3. **`src/app/(dashboard)/layout.tsx`** (or matching route-group layout) calls `getUserWithProfile()` at `(dashboard)/layout.tsx:10` — a third `getUser()` and third profile query.
-4. Page server component renders.
+1. **`src/proxy.ts`** (`proxy.ts:122`) — `supabase.auth.getClaims()` verifies the JWT **locally** against the project's published ES256 JWKS (no GoTrue round-trip). The `getSession()` it calls internally still refreshes a near-expiry token and rotates the cookie, so the proxy stays the single token-refresh point. Then queries `profiles.role` for role-based routing.
+2. **`src/app/layout.tsx`** (root, `layout.tsx:55`) and **`src/app/(dashboard)/layout.tsx`** — each calls `getUserWithProfile()`, which does another local `getClaims()` + a `profiles` query.
+3. API routes add one more local `getClaims()` + profile query via `requireRole` (`src/lib/auth.ts`).
 
-Result: **3× `getUser()` to GoTrue + 3× `profiles` queries per protected dashboard request**, all to answer the same questions ("who is the caller, what's their role"). Costs from staging (eu-north-1, dev → public internet, measured 2026-05-27 per TODO.md §"Dedupe the `getUser()` + profile fetch"): `getUser()` ≈ 84ms p50 / 91ms mean; profile query ≈ 12ms p50 (warm session). In-region (Vercel → Supabase same region) the per-call cost drops to ~10-30ms but the multiplier remains.
+Identity verification is **local crypto** at every layer (~0.7ms each), so repeating it per layer no longer costs network round-trips — the F1 waterfall is gone (see Completed improvements). The residual per-render cost is the **`profiles.role` query repeated at each layer** (~12ms warm); eliminating that is the role-in-JWT move (I2 / TODO.md §"Consider moving role into JWT claims").
 
-RSC prefetch amplifies the cost. Next.js's default `<Link prefetch={true}>` fires one full SSR render per nav item. For an admin landing on a dashboard route the chrome alone (sidebar 13 items + header 4 items = 17 links) would prefetch 17 routes; each pays the full waterfall. Vercel function concurrency and Supabase auth rate limits saturate; prefetches queue behind one another.
+RSC prefetch runs on Next's default (`prefetch={true}`; the `prefetch={false}` workarounds were reverted). It's now a net positive — prefetches warm caches before clicks, and each one's auth is a local verify, so even a ~37-prefetch fan-out completes without saturation.
 
 ## Active findings
-
-### F1 — Per-request auth waterfall (observed 2026-05-28)
-
-Browser perf trace on `/admin/users` in production:
-
-- Page's own React Query fetches: fast (`useUsers` 689ms, `useParentGamerLinks` 774ms — the page's actual work)
-- 24 RSC prefetches in parallel: median 1129ms, max 3902ms, 16 over 1s
-- Slowest prefetches: `/settings` (3902ms), `/` (3796ms), `/admin` (3616ms), `/register` (3604ms) — all mostly chrome, no heavy data
-
-Root cause: every prefetched route pays the full auth waterfall (`getUser()` × 3, `profiles` × 3), fanning out 24× in parallel. Each `/settings` render does ~6 round-trips to Supabase to serve a page with no real work.
-
-**Symptomatic patches already in the tree** — these reduce prefetch fanout but do not address per-request cost:
-
-- `src/components/layout/sidebar.tsx:131` — `prefetch={false}` on admin sidebar nav (13 items)
-- `src/components/admin/user-row.tsx:35`, `:71` — `prefetch={false}` on user row links
-- `src/components/gedu/GroupCard.tsx:124`, `:155` — `prefetch={false}` on gedu group card links
-- `src/components/gedu/UpcomingGroupSessionCard.tsx:52` — `prefetch={false}` on upcoming session card
-- `src/components/parent/NextSessionCard.tsx:160` — `prefetch={false}` on parent next-session card
-
-`src/components/layout/header.tsx` still has 4 unguarded `<Link>` components (logo line 148, nav links line 161, settings gear line 178, avatar line 192) and is the live source of the prefetch flood in current perf logs. Hold off patching it — the architectural fix in I1 makes per-prefetch cost cheap enough that `prefetch={true}` is no longer harmful, and reverting the patches lets prefetch do the job it's designed to do (warm caches before clicks).
 
 ### F2 — Public marketing pages aren't edge-cacheable
 
@@ -47,45 +26,30 @@ Full chain, blockers, and sequencing options live in the TODO item. Brought into
 
 ## Recommended improvements
 
-### I1 — Thread signed auth context from proxy to layouts and route handlers (fixes F1)
+### I2 — Move role into JWT `app_metadata` claims (the auth-path residual)
 
-**Shape.** The proxy is the only place that verifies the JWT. It signs `{ userId, role, exp }` with a server-only HMAC secret and sets it as `x-auth-context` on the forwarded request. A new helper `getAuthContext()` in `src/lib/auth.ts` reads and HMAC-verifies the header, returning `{ userId, role }`. Layouts and route handlers consume the helper instead of calling `getUser()` again.
-
-**Files touched.**
-
-- `src/proxy.ts` — strip any inbound `x-auth-context` (load-bearing, see security note), set the signed header after the existing verification.
-- `src/lib/auth.ts` — new `getAuthContext()` helper. Refactor `requireRole` to use it (closes the API-route half of the duplication noted in TODO.md §"Dedupe the `getUser()` + profile fetch").
-- `src/lib/supabase/server.ts` — `getUserWithProfile()` becomes deletable. Replaced by `getAuthContext()` + a `React.cache()`-wrapped `getProfile(userId)` for the routes that need profile columns beyond role.
-- `src/app/layout.tsx` — switch to `getAuthContext()`, or drop the auth call entirely if no consumer needs user/profile at the root level (verify by tracing where `initialUser` / `initialProfile` are actually read; Providers may seed from elsewhere).
-- `src/app/(dashboard)/layout.tsx` and other route-group layouts — switch to `getAuthContext()` plus the cached profile fetch.
-
-**Security note.** The proxy must *unconditionally* strip any inbound `x-auth-context` before setting its own — otherwise a client-supplied forgery could leak through to a handler that trusts the header. HMAC verification in `getAuthContext()` is the second line of defense; either alone is insufficient. If the "every path must strip" discipline feels fragile, sign a wider payload (include the request path or a nonce) so a captured header can't be replayed onto a different route — but that adds plumbing. The unconditional strip is the simpler, well-bounded choice.
-
-**Impact.** Per protected dashboard render:
-
-| | `getUser()` to GoTrue | `profiles` query |
-|---|---|---|
-| Today | 3 | 3 |
-| After I1 | 1 (proxy) | 1 (proxy) + 0–1 (only if profile columns needed) |
-
-Roughly **6 round-trips → 2–3 round-trips**, and the prefetch flood gets proportionally cheaper without changing any prefetch behavior. Removes the most expensive operation (`getUser()` HTTP to GoTrue, ~84ms p50 out-of-region) from every layout pass. Lets the `prefetch={false}` patches in F1 be reverted — prefetch becomes a net positive again.
-
-**Why this over alternatives.**
-
-- *Wrap server helpers in `React.cache()`* — highest impact-per-line but it's memoization, not architecture. Hides repeat calls within a single render scope; does nothing for API routes (different scope) and does not establish a trust boundary. Worth doing as a tactical layer *on top of* I1 for the residual profile fetch, not instead of it.
-- *Locale-in-URL + static public pages* (TODO §"Make the public marketing pages edge-cacheable") — bigger absolute win for public pages (TTFB 400-700ms → 50ms globally) but scope is a quarter-long project (locale routing + edge redirect + i18n migration + auth/CSP/timezone scope-trim out of root layout). Composable with I1, not a substitute.
-- *Move role into JWT custom claims* (TODO §"Consider moving role into JWT claims to eliminate the per-query DB lookup in RLS") — eliminates the `profiles.role` query everywhere (RLS + proxy) but requires a Supabase auth hook + every RLS policy migrated. Composable with I1; correctly sequenced *after* it.
-
-**Sequencing.** I1 fully closes TODO.md §"Dedupe the `getUser()` + profile fetch" by extending the same mechanism (signed headers from proxy) from API routes to RSC layouts. Partially unblocks one of the four blockers in TODO.md §"Make the public marketing pages edge-cacheable" (the "move `getUserWithProfile()` out of root layout" piece). Does not constrain the JWT-claim or locale-in-URL moves.
-
-**Scope.** One focused PR, ~200-400 lines. Required tests:
-
-- Integration: proxy strips inbound `x-auth-context` on the public-route path (forgery rejection).
-- Integration: `getAuthContext()` rejects a tampered signature (401).
-- Integration: `getAuthContext()` rejects an expired payload (401).
-- Integration: happy path — protected route reads the same `userId` / `role` the proxy verified.
-- Unit: HMAC sign/verify roundtrip with the secret rotation path (if any).
+With identity now verified locally (Completed: `getClaims`), the remaining per-render auth cost is the `profiles.role` lookup at each layer (proxy + both layouts + every `requireRole`). A custom access-token hook that writes `role` into `app_metadata` lets all of them read role off the verified JWT — and lets RLS's `get_user_role()` drop its `SELECT role FROM profiles`. Full shape + the role-staleness-until-token-refresh trade-off live in TODO.md §"Consider moving role into JWT claims". Conditional: do it when the residual profile lookup proves to matter, or when next editing the RLS policies.
 
 ## Completed improvements
 
-_(none yet — entries will land here with a PR link and a one-line "before / after" measurement once shipped)_
+### Local JWT verification via `getClaims` — fixes F1 (branch `perf/auth-getclaims`, 2026-05-29)
+
+**What.** Swapped `supabase.auth.getUser()` (HTTP round-trip to GoTrue) for `supabase.auth.getClaims()` (local ES256 verification against the project's JWKS) in the proxy (`src/proxy.ts`), the RSC layout path (`getUserWithProfile` + `getUser` in `src/lib/supabase/server.ts`), and `requireRole` (`src/lib/auth.ts`). Reverted the `prefetch={false}` workarounds (`sidebar.tsx`, `user-row.tsx`, `GroupCard.tsx`, `UpcomingGroupSessionCard.tsx`, `JoinVoiceButton.tsx`) now that per-prefetch auth is cheap.
+
+**Why (was F1).** Every protected request and every parallel RSC prefetch paid 3× `getUser()` to GoTrue, fanning out and saturating GoTrue / Vercel concurrency. A browser trace on `/admin/users` (2026-05-28) showed 24 prefetches at median 1129ms / max 3902ms, 16 over 1s — serving mostly-chrome pages with no real work. Both Supabase projects (`sogverse`, `sogverse-staging`) use asymmetric ES256 signing keys, so the JWT verifies locally with zero round-trips; `getClaims()`'s internal `getSession()` preserves token refresh, so the proxy stays the single refresh point.
+
+**Chose this over I1 (the proposed signed `x-auth-context` header).** Local `getClaims` reaches the same "verify once, cheaply" outcome with no new HMAC secret, no header-forgery footgun (the "every path must strip" discipline), and no propagation plumbing — every layer verifies the real signed JWT it already holds. The HMAC-header design is only needed on symmetric-key / network-verify projects; asymmetric keys make it moot.
+
+**Before / after.**
+
+- Per call (micro-benchmark, staging): `getUser` **28ms p50 → `getClaims` 0.7ms** (~40×; the GoTrue round-trip removed).
+- In-region live A/B (preview vs staging dashboard load): TTFB **312→216ms** admin / **538→344ms** parent; per-prefetch floor **~70→30ms**.
+- Full prefetch flood on `/admin/users` (real-browser, prefetch restored): **24 prefetches @ median 1129ms / max 3902ms / 16 over 1s → 37 prefetches @ median 93ms / max 352ms / 0 over 1s** — ~12× faster under *more* load. ("Before" = F1's recorded 2026-05-28 trace.)
+
+**Tested.** `requireRole` unit test (getClaims contract: 401/500/403/happy); proxy integration test (getClaims mocks incl. refresh-cookie preservation); full unit+integration suite (948 passing); manual sign-in/reload/gate smoke test (localhost → staging); the real-browser A/B above.
+
+**What's left.**
+
+- **Regression guard (not yet done).** `supabase.auth.getUser()` still works and is the Supabase-docs default, so a future server-side caller can silently reintroduce the waterfall. Plan: a `no-restricted-syntax` lint rule banning server-side `getUser()` + a `**Rule:**` in CLAUDE.md.
+- **`getUser()` survivors (intentional, out of scope here):** client components (`auth-provider`, `setup-account-form`), the OAuth callback, the `user/locale` + `user/currency` routes, and the service layer (`participations`, `minecraft`, `products-v2`). None are the fan-out multiplier; migrate/triage them alongside the lint rule.
+- **I2 (role-in-JWT)** removes the residual `profiles.role` lookup.
