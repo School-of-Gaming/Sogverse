@@ -26,19 +26,20 @@ export async function requireRole<const R extends UserRole>(
   options?: { forbiddenMessage?: string },
 ): Promise<AuthSuccess<R> | NextResponse> {
   const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+  // `getClaims()` verifies the JWT locally against the project's ES256 JWKS —
+  // no GoTrue round-trip (see docs/performance.md). The proxy already verified
+  // and refreshed the session for this request; this is the cheap re-check.
+  const { data, error: claimsError } = await supabase.auth.getClaims();
+  const claims = data?.claims;
 
-  if (userError || !user) {
+  if (claimsError || !claims?.sub) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", user.id)
+    .eq("id", claims.sub)
     .single();
 
   if (profileError) {
@@ -62,5 +63,6 @@ export async function requireRole<const R extends UserRole>(
     );
   }
 
+  const user = { id: claims.sub, email: claims.email };
   return { user, profile: profile as AuthSuccess<R>["profile"], supabase };
 }
