@@ -47,7 +47,6 @@ export function UpcomingGroupSessionCard({
   return (
     <Link
       href={openGroupHref}
-      prefetch={false}
       onClick={(e) => {
         if (openGroupHref === "#") e.preventDefault();
       }}

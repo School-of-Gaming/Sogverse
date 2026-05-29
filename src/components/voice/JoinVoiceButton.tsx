@@ -81,7 +81,6 @@ export function JoinVoiceButton({
     return (
       <Link
         href={hrefWithBack}
-        prefetch={false}
         onClick={(e) => {
           if (voiceHref === "#") e.preventDefault();
         }}
