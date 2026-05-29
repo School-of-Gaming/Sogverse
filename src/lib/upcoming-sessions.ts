@@ -8,6 +8,7 @@ import {
   OPEN_ENDED_OCCURRENCE_CAP,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
+import { isVoiceWindowOpen } from "@/lib/voice-window";
 import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import type { MyUpcomingSessionRow } from "@/services/participations";
 
@@ -32,9 +33,7 @@ export function expandUpcomingSessions(
   now: Date,
   locale: SupportedLocale,
 ): NextSessionCardProps[] {
-  const { SESSION_WINDOW_BEFORE_MINUTES, SESSION_WINDOW_AFTER_MINUTES } = VOICE_CONFIG;
-  const beforeMs = SESSION_WINDOW_BEFORE_MINUTES * 60_000;
-  const windowCloseMs = SESSION_WINDOW_AFTER_MINUTES * 60_000;
+  const windowCloseMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
 
   const sessions: NextSessionCardProps[] = [];
 
@@ -97,10 +96,7 @@ export function expandUpcomingSessions(
 
   if (sessions.length > 0) {
     const first = sessions[0];
-    const opensAt = first.sessionStart.getTime() - beforeMs;
-    const closesAt = first.sessionEnd.getTime() + windowCloseMs;
-    const nowMs = now.getTime();
-    first.voiceIsOpen = nowMs >= opensAt && nowMs < closesAt;
+    first.voiceIsOpen = isVoiceWindowOpen(first.sessionStart, first.sessionEnd, now);
   }
 
   return sessions;

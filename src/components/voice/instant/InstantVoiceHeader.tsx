@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Copy, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LocalePicker } from "@/components/layout/locale-picker";
 import { SiteHeaderShell } from "@/components/layout/site-header-shell";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
 
 interface InstantVoiceHeaderProps {
@@ -33,19 +33,11 @@ interface InstantVoiceHeaderProps {
 export function InstantVoiceHeader({ code }: InstantVoiceHeaderProps) {
   const c = useTranslations("common");
   const t = useTranslations("voice.instant");
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
-  const handleCopy = async () => {
+  const handleCopy = () => {
     if (typeof window === "undefined" || !code) return;
-    const url = `${window.location.origin}/voice/${code}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard write can reject on insecure origins or denied permissions.
-      // Silent failure is fine — user can still copy from the address bar.
-    }
+    void copy(`${window.location.origin}/voice/${code}`);
   };
 
   return (

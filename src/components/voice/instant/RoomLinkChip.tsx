@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
 
 interface RoomLinkChipProps {
@@ -23,24 +23,15 @@ interface RoomLinkChipProps {
  */
 export function RoomLinkChip({ code, hideHint = false }: RoomLinkChipProps) {
   const t = useTranslations("voice.instant.share");
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
   const host =
     typeof window !== "undefined" ? window.location.host : "sogverse.sog.gg";
   const displayUrl = `${host}${ROUTES.voice.forCode(code)}`;
 
-  const handleCopy = async () => {
+  const handleCopy = () => {
     if (typeof window === "undefined") return;
-    const url = `${window.location.origin}${ROUTES.voice.forCode(code)}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Clipboard write can reject on insecure origins or denied
-      // permissions. Silent failure is fine — the user can still copy
-      // from the address bar.
-    }
+    void copy(`${window.location.origin}${ROUTES.voice.forCode(code)}`);
   };
 
   return (

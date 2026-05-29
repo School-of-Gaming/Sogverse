@@ -79,7 +79,7 @@ describe("commit_group_changes_v2", () => {
       const newId = result.tempMap.t1;
       const { data: row } = await admin
         .from("product_groups_v2")
-        .select("name, display_order, product_id")
+        .select("name, product_id")
         .eq("id", newId)
         .single();
       expect(row?.name).toBe("Group A");
@@ -111,7 +111,7 @@ describe("commit_group_changes_v2", () => {
       expect(error).not.toBeNull();
     });
 
-    it("auto-assigns sequential display_order across multiple groups in one call", async () => {
+    it("creates multiple groups in one call", async () => {
       const { data } = await adminAuth.rpc("commit_group_changes_v2", {
         p_product_id: PRODUCT_BASIC,
         p_added_groups: [
@@ -121,18 +121,18 @@ describe("commit_group_changes_v2", () => {
         ],
       });
       const map = (data as { tempMap: Record<string, string> }).tempMap;
+      const ids = [map.t1, map.t2, map.t3];
+      expect(new Set(ids).size).toBe(3);
 
       const { data: rows } = await admin
         .from("product_groups_v2")
-        .select("id, display_order")
-        .eq("product_id", PRODUCT_BASIC)
-        .order("display_order");
-
-      const orderById = Object.fromEntries(
-        (rows ?? []).map((r) => [r.id, r.display_order] as const),
-      );
-      expect(orderById[map.t1]).toBeLessThan(orderById[map.t2]);
-      expect(orderById[map.t2]).toBeLessThan(orderById[map.t3]);
+        .select("id, name")
+        .in("id", ids);
+      expect((rows ?? []).map((r) => r.name).sort()).toEqual([
+        "Group A",
+        "Group B",
+        "Group C",
+      ]);
     });
   });
 

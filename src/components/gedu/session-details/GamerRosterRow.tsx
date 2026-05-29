@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useState } from "react";
 import { Check, Copy, Pickaxe } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn, computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { GamerSessionRow } from "./types";
@@ -124,19 +124,11 @@ function MinecraftBadge({
 
 function ParentEmailCell({ email }: { email: string | null }) {
   const t = useTranslations("gedu.sessionDetails");
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopyToClipboard();
 
-  const handleCopy = useCallback(async () => {
-    if (!email || typeof window === "undefined") return;
-    try {
-      await navigator.clipboard.writeText(email);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Insecure origin or denied permission — silent failure; the user
-      // can still select + copy the email from the page.
-    }
-  }, [email]);
+  const handleCopy = () => {
+    if (email) void copy(email);
+  };
 
   if (!email) {
     return (

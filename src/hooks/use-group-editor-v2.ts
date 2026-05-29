@@ -359,7 +359,6 @@ export function reducer(
 export interface EffectiveGroupV2 {
   id: string;
   name: string;
-  displayOrder: number;
   isNew: boolean;
   isDeleted: boolean;
   /** Pending-removal Gedus carry isPending=false; pending-add Gedus carry isPending=true. */
@@ -480,7 +479,6 @@ export function computeEffectiveSnapshot(
     return {
       id: sg.id,
       name: renamed?.name ?? sg.name,
-      displayOrder: sg.display_order,
       isNew: false,
       isDeleted,
       gedus,
@@ -516,7 +514,6 @@ export function computeEffectiveSnapshot(
     groups.push({
       id: ag.tempId,
       name: ag.name,
-      displayOrder: server.groups.length + i,
       isNew: true,
       isDeleted: false,
       gedus,

@@ -312,7 +312,6 @@ export interface GroupV2ParticipationDetail {
 export interface ProductGroupV2WithDetails {
   id: string;
   name: string;
-  display_order: number;
   created_at: string;
   gedus: GroupV2GeduDetail[];
   participations: GroupV2ParticipationDetail[];
@@ -354,7 +353,6 @@ export interface GeduAssignedProductGroupGedu {
 export interface GeduAssignedProductGroup {
   id: string;
   name: string;
-  display_order: number;
   created_at: string;
   is_my_group: boolean;
   gamer_count: number;

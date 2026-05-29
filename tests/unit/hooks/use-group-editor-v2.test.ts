@@ -409,9 +409,7 @@ describe("computeEffectiveSnapshot", () => {
       groups: [
         {
           id: "server-1",
-          name: "A",
-          display_order: 0,
-          created_at: "2026-01-01T00:00:00Z",
+          name: "A",          created_at: "2026-01-01T00:00:00Z",
           gedus: [ALICE],
           participations: [ZOE],
         },
@@ -432,9 +430,7 @@ describe("computeEffectiveSnapshot", () => {
       groups: [
         {
           id: "server-1",
-          name: "Old",
-          display_order: 0,
-          created_at: "2026-01-01T00:00:00Z",
+          name: "Old",          created_at: "2026-01-01T00:00:00Z",
           gedus: [],
           participations: [],
         },
@@ -454,9 +450,7 @@ describe("computeEffectiveSnapshot", () => {
       groups: [
         {
           id: "server-1",
-          name: "A",
-          display_order: 0,
-          created_at: "2026-01-01T00:00:00Z",
+          name: "A",          created_at: "2026-01-01T00:00:00Z",
           gedus: [],
           participations: [ZOE],
         },
@@ -477,17 +471,13 @@ describe("computeEffectiveSnapshot", () => {
       groups: [
         {
           id: "server-A",
-          name: "A",
-          display_order: 0,
-          created_at: "2026-01-01T00:00:00Z",
+          name: "A",          created_at: "2026-01-01T00:00:00Z",
           gedus: [],
           participations: [ZOE],
         },
         {
           id: "server-B",
-          name: "B",
-          display_order: 1,
-          created_at: "2026-01-01T00:00:00Z",
+          name: "B",          created_at: "2026-01-01T00:00:00Z",
           gedus: [],
           participations: [],
         },
@@ -528,9 +518,7 @@ describe("computeEffectiveSnapshot", () => {
       groups: [
         {
           id: "server-1",
-          name: "A",
-          display_order: 0,
-          created_at: "2026-01-01T00:00:00Z",
+          name: "A",          created_at: "2026-01-01T00:00:00Z",
           gedus: [ALICE],
           participations: [],
         },
@@ -591,9 +579,7 @@ describe("buildChangeSummary", () => {
       groups: [
         {
           id: "server-1",
-          name: "Old",
-          display_order: 0,
-          created_at: "2026-01-01T00:00:00Z",
+          name: "Old",          created_at: "2026-01-01T00:00:00Z",
           gedus: [ALICE],
           participations: [ZOE],
         },
@@ -639,9 +625,7 @@ describe("buildChangeSummary", () => {
       groups: [
         {
           id: "server-1",
-          name: "A",
-          display_order: 0,
-          created_at: "2026-01-01T00:00:00Z",
+          name: "A",          created_at: "2026-01-01T00:00:00Z",
           gedus: [],
           participations: [],
         },
