@@ -40,6 +40,7 @@ export const ROUTES = {
   setupAccount: "/setup-account",
   selectProfile: "/select-profile",
   help: "/help",
+  privacy: "/privacy",
   settings: "/settings",
   /**
    * Voice rooms. Two shapes share the `/voice` prefix:

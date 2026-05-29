@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { useTranslations } from 'next-intl';
 import { Copyright } from "./copyright";
-import { SUPPORT_EMAIL } from "@/lib/constants";
+import { ROUTES, SUPPORT_EMAIL } from "@/lib/constants";
 
 export function Footer() {
   const t = useTranslations('footer');
@@ -21,10 +22,16 @@ export function Footer() {
           </p>
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
           >
             {t('contact.email', { email: SUPPORT_EMAIL })}
           </a>
+          <Link
+            href={ROUTES.privacy}
+            className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+          >
+            {t('privacy')}
+          </Link>
           <div className="w-full border-t border-border pt-4">
             <Copyright />
           </div>

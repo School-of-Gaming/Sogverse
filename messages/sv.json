@@ -21,7 +21,8 @@
       "gamerGroupDetails": "Gruppdetaljer",
       "voiceSession": "Röstsession",
       "help": "Hjälp",
-      "shop": "Butik"
+      "shop": "Butik",
+      "privacy": "Integritetspolicy"
     }
   },
   "common": {
@@ -1055,7 +1056,8 @@
     "copyright": "© {year} School of Gaming. Alla rättigheter förbehållna.",
     "contact": {
       "email": "E-post: {email}"
-    }
+    },
+    "privacy": "Integritetspolicy"
   },
   "gamer": {
     "welcome": "Välkommen, spelare!",
@@ -1859,5 +1861,155 @@
     "body": "Sogverse är i Beta. För att lära oss hur människor faktiskt använder webbplatsen — så att vi kan göra den bättre för alla — skulle vi vilja spela in ditt besök (musrörelser, klick och vilka sidor du besöker). Endast Sogverses administratörer kan se detta, och vi kommer att radera allt när Beta tar slut.",
     "accept": "Ja, hjälp till att förbättra Sogverse",
     "decline": "Nej tack"
+  },
+  "privacy": {
+    "title": "Integritetspolicy",
+    "lastUpdated": "Senast uppdaterad: {date}",
+    "intro": {
+      "heading": "Kort sammanfattning",
+      "paragraphs": [
+        "School of Gaming finns till för att ge barn en trygg och rolig plats att lära sig genom spel. Att skydda din familjs integritet – och framför allt ditt barns – är viktigt för oss, så vi har skrivit det här på ett tydligt språk utan juridisk jargong.",
+        "Kort sagt: vi samlar bara in det vi behöver för att driva våra klubbar, läger och evenemang. Vi säljer aldrig dina eller ditt barns uppgifter. Endast en förälder kan skapa ett konto åt ett barn, och vi gör aldrig reklam riktad till barn. Du kan när som helst be oss visa, rätta eller radera dina uppgifter genom att mejla hello@sog.gg."
+      ]
+    },
+    "sections": {
+      "whoWeAre": {
+        "heading": "Vilka vi är",
+        "paragraphs": [
+          "Sogverse drivs av School of Gaming Galactic Oy (\"School of Gaming\", \"vi\", \"oss\"), ett finländskt företag. Vi ansvarar för att ta hand om de personuppgifter som du och ditt barn delar med oss – juridiskt sett är vi personuppgiftsansvarig.",
+          "Våra officiella uppgifter:"
+        ],
+        "bullets": [
+          "School of Gaming Galactic Oy (FO-nummer 3110461-1)",
+          "Isokatu 56, 90100 Uleåborg, Finland",
+          "E-post: hello@sog.gg"
+        ]
+      },
+      "infoWeCollect": {
+        "heading": "Vilka uppgifter vi samlar in",
+        "paragraphs": [
+          "Vi försöker samla in så lite som möjligt – bara det vi verkligen behöver för att driva Sogverse. I praktiken handlar det om följande:"
+        ],
+        "bullets": [
+          "Ditt namn, din e-postadress och (om du anger ett) ditt telefonnummer – så att vi kan skapa ditt konto och hålla kontakten om ditt barns klubbar.",
+          "Dina språk- och valutainställningar – så att webbplatsen visas som du förväntar dig.",
+          "Ditt lösenord, som vi endast lagrar i krypterad (hashad) form – vi kan aldrig se det.",
+          "Betaluppgifter när du köper något – de går direkt till Stripe, och vi ser eller lagrar aldrig hela ditt kortnummer.",
+          "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt.",
+          "Eventuellt barnets Minecraft-användarnamn – så att barnet kan ansluta till vår Minecraft-server under träffarna.",
+          "Allmän, anonym information om hur webbplatsen används (se \"Cookies och analys\" nedan)."
+        ]
+      },
+      "childrensPrivacy": {
+        "heading": "Barnens integritet kommer först",
+        "paragraphs": [
+          "De flesta som använder Sogverse är barn, så deras trygghet och integritet är vår högsta prioritet.",
+          "Ett barn kan aldrig skapa ett eget konto. Endast en förälder eller vårdnadshavare skapar barnets konto, väljer vad som delas och ger tillstånd å barnets vägnar. Så uppfyller vi våra skyldigheter enligt dataskyddslagstiftningen när det gäller barn.",
+          "Vi håller barnens uppgifter till ett minimum, vi visar aldrig reklam för barn och vi säljer eller delar aldrig deras uppgifter för marknadsföring. Under träffarna är barnen alltid tillsammans med en av våra utbildade ledare (vi kallar dem Gedus).",
+          "Om du när som helst vill se, ändra eller radera ditt barns uppgifter är det bara att mejla hello@sog.gg, så ordnar vi det."
+        ]
+      },
+      "howWeUse": {
+        "heading": "Hur vi använder dina uppgifter",
+        "paragraphs": [
+          "Vi använder uppgifterna ovan endast för att driva Sogverse och ge din familj en bra upplevelse – närmare bestämt:"
+        ],
+        "bullets": [
+          "För att skapa och hantera ditt konto och ditt barns konto.",
+          "För att placera ditt barn i rätt klubb-, läger- eller evenemangsgrupp och koppla ihop barnet med en ledare.",
+          "För att hålla de direktsända röst- och videoträffarna.",
+          "För att ta betalt och skicka kvitton, påminnelser och viktig information om dina klubbar.",
+          "För att svara på dina frågor när du kontaktar oss.",
+          "För att hålla Sogverse säkert, åtgärda problem och göra tjänsten bättre med tiden."
+        ]
+      },
+      "legalBasis": {
+        "heading": "Varför vi får använda uppgifterna",
+        "paragraphs": [
+          "Dataskyddslagstiftningen (EU:s dataskyddsförordning, GDPR) kräver att vi har en tydlig grund för att använda dina uppgifter. Våra grunder är enkla:"
+        ],
+        "bullets": [
+          "För att leverera det du anmält dig till – de klubbar och tjänster du köpt av oss (vårt avtal med dig).",
+          "Eftersom en förälder har gett tillstånd å barnets vägnar (samtycke).",
+          "För att uppfylla våra lagstadgade skyldigheter, till exempel att spara bokföringsuppgifter för betalningar.",
+          "För vårt berättigade intresse av att hålla webbplatsen säker och välfungerande – alltid avvägt mot din integritet."
+        ]
+      },
+      "providers": {
+        "heading": "Företagen som hjälper oss att driva Sogverse",
+        "paragraphs": [
+          "Att driva en onlinetjänst innebär att vi förlitar oss på några betrodda företag för sådant som drift, betalningar och e-post. De behandlar dina uppgifter endast för att utföra sitt arbete åt oss, enligt avtal som kräver att de håller uppgifterna säkra. De viktigaste är:"
+        ],
+        "bullets": [
+          "Supabase – lagrar dina konto-, familje- och klubbuppgifter säkert.",
+          "Stripe – hanterar betalningar. Dina kortuppgifter går direkt till Stripe, och vi ser dem aldrig.",
+          "Brevo – skickar våra e-postmeddelanden, till exempel kvitton och påminnelser.",
+          "Daily.co – möjliggör de direktsända röst- och videoträffarna.",
+          "Vercel – är värd för webbplatsen och tillhandahåller anonym, cookiefri användningsstatistik.",
+          "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp.",
+          "Mouseflow – endast om du godkänner det: hjälper oss att se hur webbplatsen används under betaperioden (se nedan)."
+        ]
+      },
+      "cookies": {
+        "heading": "Cookies och analys",
+        "paragraphs": [
+          "Vi använder inga reklam- eller spårningscookies, och vi följer dig inte runt på internet.",
+          "Vi använder ett fåtal nödvändiga cookies för att hålla dig säkert inloggad – webbplatsen fungerar inte utan dem, så de kräver inte ditt samtycke.",
+          "För att förstå sådant som hur många som besöker oss och om de använder telefon eller dator använder vi Vercels analys. Den är integritetsvänlig: inga cookies och ingen personlig identifiering.",
+          "Under betaperioden använder vi även ett verktyg som heter Mouseflow, som kan spela in hur webbplatsen används (musrörelser, klick och besökta sidor) så att vi kan förbättra den. Detta sker endast om du väljer \"Ja\" i bannern, och vi raderar allt när betaperioden tar slut. Du kan tacka nej, och webbplatsen fungerar precis likadant."
+        ]
+      },
+      "voice": {
+        "heading": "Röst- och videoträffar",
+        "paragraphs": [
+          "Direktsända klubbar, läger och evenemang hålls via röst och video med hjälp av Daily.co. Varje träff leds och övervakas av en av våra utbildade ledare, och vi använder tjänsten endast för att genomföra den träff som ditt barn anmält sig till."
+        ]
+      },
+      "retention": {
+        "heading": "Hur länge vi sparar dina uppgifter",
+        "paragraphs": [
+          "Vi sparar dina uppgifter så länge du har ett konto hos oss. Om du avslutar ditt konto raderar eller anonymiserar vi dina uppgifter – utom när lagen kräver att vi sparar vissa uppgifter längre, till exempel den finländska bokföringslagen som kräver att betalningsuppgifter sparas i flera år.",
+          "Mouseflow-inspelningar, om du godkänt dem, raderas när betaperioden tar slut."
+        ]
+      },
+      "storage": {
+        "heading": "Var dina uppgifter förvaras",
+        "paragraphs": [
+          "Några av företagen som hjälper oss (listade ovan) finns utanför Europeiska unionen, till exempel i USA. När dina uppgifter skickas till dem ser vi till att de skyddas av de skyddsåtgärder som dataskyddslagstiftningen kräver – vanligtvis Europeiska kommissionens standardavtalsklausuler."
+        ]
+      },
+      "rights": {
+        "heading": "Dina – och ditt barns – rättigheter",
+        "paragraphs": [
+          "Du har kontroll över dina uppgifter. Du kan när som helst be oss att:"
+        ],
+        "bullets": [
+          "Visa vilka uppgifter vi har om dig och ditt barn.",
+          "Rätta sådant som är fel.",
+          "Radera dina uppgifter (\"rätten att bli bortglömd\").",
+          "Ge dig en kopia som du kan ta med dig någon annanstans.",
+          "Sluta använda eller begränsa hur vi använder dem."
+        ]
+      },
+      "security": {
+        "heading": "Att hålla dina uppgifter säkra",
+        "paragraphs": [
+          "Vi skyddar dina uppgifter med branschstandardåtgärder: krypterade anslutningar, lösenord som endast lagras i hashad form och strikta begränsningar för vem som har åtkomst till uppgifter. Inget system är någonsin helt säkert, men vi arbetar hårt för att hålla din familjs uppgifter trygga."
+        ]
+      },
+      "changes": {
+        "heading": "Ändringar i denna policy",
+        "paragraphs": [
+          "Vi kan uppdatera denna policy då och då, till exempel när vi lägger till en ny funktion. När vi gör en viktig ändring uppdaterar vi datumet högst upp och meddelar dig när det är relevant."
+        ]
+      },
+      "contact": {
+        "heading": "Kontakt och din rätt att klaga",
+        "paragraphs": [
+          "Om du vill använda någon av rättigheterna ovan eller har en fråga om din integritet eller ditt barns uppgifter är det bara att mejla hello@sog.gg. Det är kostnadsfritt, vi svarar alltid, och e-post är det bästa sättet att nå oss.",
+          "Om du är missnöjd med hur vi har hanterat dina uppgifter har du rätt att lämna in ett klagomål till dataombudsmannens byrå i Finland (tietosuoja.fi)."
+        ]
+      }
+    }
   }
 }
