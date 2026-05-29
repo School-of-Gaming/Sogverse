@@ -7,6 +7,7 @@ import { MouseflowConsent } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -94,6 +95,7 @@ export default async function RootLayout({
           <MouseflowConsent nonce={nonce} />
         </Providers>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
