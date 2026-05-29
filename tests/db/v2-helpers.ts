@@ -8,8 +8,22 @@ import { TEST_IDS } from "./constants";
  *
  * Stable UUIDs in the 0xxxxxx-...-xxxxxxxx5xx range are reserved for v2
  * test scaffolding (topic + reusable resources). Each test file picks
- * its own product UUID range to avoid cross-file collisions when CI
- * parallelizes db tests.
+ * its own product UUID *sub-range* to avoid cross-file collisions when CI
+ * parallelizes db tests (vitest runs files in separate workers, so two
+ * files sharing a product id race on products_v2_pkey — one file's insert
+ * lands between the other's delete and insert → duplicate-key failure).
+ *
+ * Allocation registry — keep this current when adding a v2 db test. The
+ * suffix is the last byte of the UUID (`...0000000005XX`):
+ *   5a1            topic (this file, shared by all)
+ *   5b1–5b5        participations-race.test.ts
+ *   5b6–5b7        participations-rls.test.ts
+ *   5c1            product-seat-counts-trigger.test.ts
+ *   5d1–5da        session-credits-cron.test.ts
+ *   5e1–5e4        products-v2-gamer-rls.test.ts
+ *   5e5–5e8        products-v2-purchaser-rls.test.ts
+ *   5f1, 5ff       update-product-v2.test.ts
+ *   5f3            product-translations-v2-trigger.test.ts
  */
 
 // One topic for every v2 test product. Idempotent on rerun.
