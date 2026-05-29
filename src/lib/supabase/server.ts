@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import type { User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/database.types";
+import type { AuthenticatedUser } from "@/types";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -30,21 +30,6 @@ export async function createClient() {
   );
 }
 
-export async function getSession() {
-  const supabase = await createClient();
-  const {
-    data: { session },
-    error,
-  } = await supabase.auth.getSession();
-
-  if (error) {
-    console.error("Error getting session:", error);
-    return null;
-  }
-
-  return session;
-}
-
 // `getClaims()` verifies the access token locally against the project's
 // published ES256 JWKS — no GoTrue round-trip, unlike `getUser()` (see
 // docs/performance.md, the getUser→getClaims migration). The proxy remains the
@@ -55,22 +40,16 @@ type VerifiedClaims = NonNullable<
   Awaited<ReturnType<ServerClient["auth"]["getClaims"]>>["data"]
 >["claims"];
 
-// Build a `User` from verified JWT claims. Fields the JWT doesn't carry
-// (notably `created_at`) are left empty — no current consumer reads them; only
-// `id`/`email` flow downstream (AuthProvider seed, route handlers). Returns
-// null when the token has no subject (treated as unauthenticated).
-function claimsToUser(claims: VerifiedClaims): User | null {
+// Build the verified identity from JWT claims. A locally-verified token only
+// carries `sub`/`email` — not the fully-populated GoTrue `User` — so this
+// returns the honest `AuthenticatedUser` subset rather than fabricating the
+// rest of `User`. Returns null when the token has no subject (treated as
+// unauthenticated).
+function claimsToUser(claims: VerifiedClaims): AuthenticatedUser | null {
   if (!claims.sub) {
     return null;
   }
-  return {
-    id: claims.sub,
-    email: claims.email,
-    aud: typeof claims.aud === "string" ? claims.aud : "",
-    app_metadata: claims.app_metadata ?? {},
-    user_metadata: claims.user_metadata ?? {},
-    created_at: "",
-  };
+  return { id: claims.sub, email: claims.email };
 }
 
 export async function getUser() {

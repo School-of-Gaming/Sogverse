@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import type { Profile, UserRole } from "@/types";
+import type { AuthenticatedUser, Profile, UserRole } from "@/types";
 
 type AuthSuccess<R extends UserRole> = {
-  user: { id: string; email?: string };
+  user: AuthenticatedUser;
   profile: Omit<Profile, "role"> & { role: R };
   supabase: Awaited<ReturnType<typeof createClient>>;
 };

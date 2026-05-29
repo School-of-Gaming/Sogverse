@@ -9,13 +9,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { User } from "@supabase/supabase-js";
 import { useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import type { Profile } from "@/types";
+import type { AuthenticatedUser, Profile } from "@/types";
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthenticatedUser | null;
   profile: Profile | null;
   isLoading: boolean;
   refreshProfile: () => Promise<void>;
@@ -38,7 +37,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
-  initialUser?: User | null;
+  initialUser?: AuthenticatedUser | null;
   initialProfile?: Profile | null;
 }
 
@@ -47,7 +46,7 @@ export function AuthProvider({
   initialUser = null,
   initialProfile = null,
 }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(initialUser);
+  const [user, setUser] = useState<AuthenticatedUser | null>(initialUser);
   const [profile, setProfile] = useState<Profile | null>(initialProfile);
   const [isLoading, setIsLoading] = useState(!initialUser);
   // Ref (not state) so the `onAuthStateChange` closure below reads the latest
