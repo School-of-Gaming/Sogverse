@@ -133,7 +133,6 @@ export function GroupCard({
               the ::after so the entire card lights up on keyboard focus. */}
           <Link
             href={openGroupHref}
-            prefetch={false}
             onClick={(e) => {
               if (openGroupHref === "#") e.preventDefault();
             }}
