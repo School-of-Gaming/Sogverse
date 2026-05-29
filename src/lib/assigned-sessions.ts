@@ -8,6 +8,7 @@ import {
   OPEN_ENDED_OCCURRENCE_CAP,
   startDateToCutoff,
 } from "@/lib/session-occurrence";
+import { isVoiceWindowOpen } from "@/lib/voice-window";
 import type { MyAssignedProductSessionRow } from "@/services/assignments";
 
 /**
@@ -81,9 +82,7 @@ export function expandAssignedSessionsToCards(
   now: Date,
   locale: SupportedLocale,
 ): GroupSessionItem[] {
-  const { SESSION_WINDOW_BEFORE_MINUTES, SESSION_WINDOW_AFTER_MINUTES } = VOICE_CONFIG;
-  const beforeMs = SESSION_WINDOW_BEFORE_MINUTES * 60_000;
-  const windowCloseMs = SESSION_WINDOW_AFTER_MINUTES * 60_000;
+  const windowCloseMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
 
   const items: GroupSessionItem[] = [];
 
@@ -143,10 +142,7 @@ export function expandAssignedSessionsToCards(
 
   if (items.length > 0) {
     const first = items[0];
-    const opensAt = first.sessionStart.getTime() - beforeMs;
-    const closesAt = first.sessionEnd.getTime() + windowCloseMs;
-    const nowMs = now.getTime();
-    first.voiceIsOpen = nowMs >= opensAt && nowMs < closesAt;
+    first.voiceIsOpen = isVoiceWindowOpen(first.sessionStart, first.sessionEnd, now);
   }
 
   return items;

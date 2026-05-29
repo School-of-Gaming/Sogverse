@@ -182,14 +182,14 @@ describe("product_groups_v2 + gedu_group_assignments_v2 RLS", () => {
     it("customer cannot insert a product_groups_v2 row", async () => {
       const { error } = await customerAuth
         .from("product_groups_v2")
-        .insert({ product_id: PRODUCT_X, name: "Sneaky", display_order: 99 });
+        .insert({ product_id: PRODUCT_X, name: "Sneaky" });
       expect(error).not.toBeNull();
     });
 
     it("gedu cannot insert a product_groups_v2 row", async () => {
       const { error } = await geduAuth
         .from("product_groups_v2")
-        .insert({ product_id: PRODUCT_X, name: "Sneaky", display_order: 99 });
+        .insert({ product_id: PRODUCT_X, name: "Sneaky" });
       expect(error).not.toBeNull();
     });
 
@@ -198,7 +198,7 @@ describe("product_groups_v2 + gedu_group_assignments_v2 RLS", () => {
       // A direct INSERT must fail because the only path for writes is the RPC.
       const { error } = await adminAuth
         .from("product_groups_v2")
-        .insert({ product_id: PRODUCT_X, name: "Sneaky", display_order: 99 });
+        .insert({ product_id: PRODUCT_X, name: "Sneaky" });
       expect(error).not.toBeNull();
     });
 

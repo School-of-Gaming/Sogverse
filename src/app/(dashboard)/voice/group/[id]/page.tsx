@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { VoiceSessionPage } from "@/components/voice/VoiceSessionPage";
 import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
+import { resolveInternalPath } from "@/lib/navigation/internal-path";
 import { getUserWithProfile } from "@/lib/supabase/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -27,9 +28,12 @@ export async function generateMetadata(): Promise<Metadata> {
  * the room lands them where their Sessions section lives. Callers can
  * override that by passing a `?back=<internal path>` query — used by the
  * gedu session-details page so leaving the voice room returns to the
- * product page the gedu launched from, not the top-level dashboard. Only
- * single-segment internal paths are accepted (must start with `/` and not
- * `//`) to prevent open-redirect via this surface. Customers are excluded —
+ * product page the gedu launched from, not the top-level dashboard. The
+ * value is run through `resolveInternalPath`, which accepts it only if it
+ * resolves to a same-origin path (rejecting `//host`, `/\host`, absolute
+ * URLs, etc.) so this surface can't be turned into an open redirect —
+ * `backHref` is fed straight to `window.location.href` on leave. Customers
+ * are excluded —
  * they only ever reach a voice room through `SwitchToGamerDialog`, which
  * swaps the session to a gamer first, so by the time we're here the role
  * is gamer/gedu/admin.
@@ -59,13 +63,7 @@ export default async function VoiceGroupSessionPage({
     redirect(ROLE_DASHBOARD_PATHS.customer);
   }
 
-  const rawBack = Array.isArray(sp.back) ? sp.back[0] : sp.back;
-  const backHref =
-    typeof rawBack === "string" &&
-    rawBack.startsWith("/") &&
-    !rawBack.startsWith("//")
-      ? rawBack
-      : ROLE_DASHBOARD_PATHS[role];
+  const backHref = resolveInternalPath(sp.back, ROLE_DASHBOARD_PATHS[role]);
 
   return <VoiceSessionPage groupId={id} backHref={backHref} />;
 }

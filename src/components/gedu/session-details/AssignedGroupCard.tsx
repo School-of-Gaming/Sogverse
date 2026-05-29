@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Check, Copy, Star, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
 import type { GeduAssignedProductGroup } from "@/types";
 import { GamerRosterRow } from "./GamerRosterRow";
@@ -166,26 +167,14 @@ export function GroupCardHeader({
 
 function CopyAllEmailsButton({ emails }: { emails: string[] }) {
   const t = useTranslations("gedu.sessionDetails");
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = useCallback(async () => {
-    if (typeof window === "undefined") return;
-    try {
-      await navigator.clipboard.writeText(emails.join(", "));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // Insecure origin or denied — silent failure, gedu can still
-      // copy individual emails from each row.
-    }
-  }, [emails]);
+  const { copied, copy } = useCopyToClipboard();
 
   return (
     <Button
       type="button"
       variant="outline"
       size="sm"
-      onClick={handleCopy}
+      onClick={() => void copy(emails.join(", "))}
       className={cn("gap-1.5", copied && "border-success/40 text-success")}
     >
       {copied ? (

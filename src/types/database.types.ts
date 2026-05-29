@@ -710,7 +710,6 @@ export type Database = {
       product_groups_v2: {
         Row: {
           created_at: string
-          display_order: number
           id: string
           name: string
           product_id: string
@@ -718,7 +717,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          display_order?: number
           id?: string
           name: string
           product_id: string
@@ -726,7 +724,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          display_order?: number
           id?: string
           name?: string
           product_id?: string

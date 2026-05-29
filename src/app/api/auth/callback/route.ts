@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ROLE_POST_LOGIN_PATHS } from "@/lib/constants/roles";
+import { resolveInternalPath } from "@/lib/navigation/internal-path";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+  // `next` is caller-supplied — only honor it if it resolves to a
+  // same-origin path, else fall back to "/" (which routes by role below).
+  const next = resolveInternalPath(searchParams.get("next"), "/");
 
   if (code) {
     const supabase = await createClient();
