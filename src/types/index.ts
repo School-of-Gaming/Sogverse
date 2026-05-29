@@ -478,23 +478,16 @@ export type MyAssignedProductRow = Omit<
 // App-level types (not generated)
 // ---------------------------------------------------------------------------
 
-export interface AuthUser extends User {
-  profile?: Profile;
-}
-
-export interface SessionUser {
-  id: string;
-  email: string | null;
-  role: UserRole;
-  profile: Profile;
-}
-
-export interface AuthState {
-  user: AuthUser | null;
-  profile: Profile | null;
-  isLoading: boolean;
-  error: Error | null;
-}
+/**
+ * The identity a locally-verified JWT actually guarantees. `getClaims()`
+ * (see docs/performance.md) yields only the signed claims — `id` (`sub`) and
+ * `email` — not the fully-populated GoTrue `User` that `getUser()` returned.
+ * Derived from `User` via `Pick` so the field types track the SDK; every
+ * server auth helper (`getUser`, `getUserWithProfile`, `requireRole`) and the
+ * client auth context return this subset rather than fabricating the missing
+ * `User` fields.
+ */
+export type AuthenticatedUser = Pick<User, "id" | "email">;
 
 export interface CreateGamerInput {
   firstName: string;

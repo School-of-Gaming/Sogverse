@@ -7,7 +7,6 @@
 export { createClient as createBrowserClient, getClient } from "./client";
 export {
   createClient as createServerClient,
-  getSession,
   getUser,
   getUserWithProfile,
 } from "./server";

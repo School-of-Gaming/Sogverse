@@ -9,13 +9,12 @@ import { CurrencyProvider } from "./currency-provider";
 import { TimezoneProvider } from "./timezone-provider";
 import { NowProvider } from "./now-provider";
 import { ThemeProvider } from "./theme-provider";
-import type { User } from "@supabase/supabase-js";
-import type { Profile } from "@/types";
+import type { AuthenticatedUser, Profile } from "@/types";
 import { DEFAULT_TIMEZONE } from "@/lib/constants/locales";
 
 interface ProvidersProps {
   children: ReactNode;
-  initialUser?: User | null;
+  initialUser?: AuthenticatedUser | null;
   initialProfile?: Profile | null;
   initialLocale: string;
   /**
