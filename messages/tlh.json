@@ -21,7 +21,8 @@
       "gamerGroupDetails": "ghom'a' Qatlh",
       "voiceSession": "jatlh poH",
       "help": "boQ",
-      "shop": "ngevwI'"
+      "shop": "ngevwI'",
+      "privacy": "Privacy Policy"
     }
   },
   "common": {
@@ -1100,7 +1101,8 @@
     "copyright": "© {year} toy'wI' ghom. Hoch batlh.",
     "contact": {
       "email": "QIn: {email}"
-    }
+    },
+    "privacy": "Privacy Policy (So'wI')"
   },
   "gamer": {
     "welcome": "nuqneH, toy'wI'!",
@@ -1904,5 +1906,155 @@
     "body": "Sogverse Beta 'oH. nuq Dalo'? 'e' wIyajqu' wIneH — vaj Hoch chaH yIDubmoH. Daqonta'bogh wIqonchugh maQap (DaQwI' vIH, jonta', je paq DaghoSpu'bogh). Sogverse pIn'a'pu' neH lulegh, je Beta rInchugh, Hoch wIteq.",
     "accept": "HIja', Sogverse yIDubmoH",
     "decline": "ghobe'"
+  },
+  "privacy": {
+    "title": "Privacy Policy (batlh So'wI')",
+    "lastUpdated": "Last updated: {date}",
+    "intro": {
+      "heading": "The short version, warrior",
+      "paragraphs": [
+        "School of Gaming gives younglings a glorious, honorable place to train through gaming. Guarding your House's privacy — above all your child's — is a matter of honor. So we speak plainly here, with no lawyer's cloaking device.",
+        "In short: we take only the data our clubs, camps, and events demand. We never sell your data, nor your child's — that would be without honor. Only a parent may forge a child's account, and we never hawk wares at children. Demand to see, correct, or destroy your data any time: hail us at hello@sog.gg."
+      ]
+    },
+    "sections": {
+      "whoWeAre": {
+        "heading": "Who we are",
+        "paragraphs": [
+          "Sogverse is commanded by School of Gaming Galactic Oy (\"School of Gaming\", \"we\"), a Finnish house. We are the keepers of the personal data you and your child entrust to us — the lawyers call this the \"data controller\". Qapla'!",
+          "Our House, in full:"
+        ],
+        "bullets": [
+          "School of Gaming Galactic Oy (business ID 3110461-1)",
+          "Isokatu 56, 90100 Oulu, Finland",
+          "Email: hello@sog.gg"
+        ]
+      },
+      "infoWeCollect": {
+        "heading": "The data we collect",
+        "paragraphs": [
+          "We seize as little as honor allows — only what running Sogverse truly demands:"
+        ],
+        "bullets": [
+          "Your name, email, and (if you offer it) phone number — to forge your account and send word of your child's clubs.",
+          "Your language and currency — so the viewscreen shows what you expect.",
+          "Your password, kept only as a scrambled cipher — not even we may read it.",
+          "Payment details when you buy — sent straight to Stripe; we never glimpse your full card number.",
+          "Of your child: first name, birth month and year (never the full date — only what we truly need), and if you wish their gender — to place them in the right battle group and address them with respect.",
+          "If you wish, your child's Minecraft name — to connect to our Minecraft server during sessions.",
+          "Plain, nameless data on how the site is used (see \"Cookies and analytics\" below)."
+        ]
+      },
+      "childrensPrivacy": {
+        "heading": "A child's privacy is sacred",
+        "paragraphs": [
+          "Most who walk Sogverse are younglings, so their safety and privacy outrank all else.",
+          "No child may forge their own account. Only a parent or guardian raises a child's account, chooses what is shared, and grants permission on their behalf. Thus we keep our oath under the data-protection law for children.",
+          "We hold a child's data to the bare minimum, we never show children advertising, and we never sell or trade it for marketing. In every live session a trained educator (we call them Gedus) stands watch.",
+          "Wish to see, change, or destroy your child's data? Send word to hello@sog.gg and it is done."
+        ]
+      },
+      "howWeUse": {
+        "heading": "How we wield your data",
+        "paragraphs": [
+          "We wield the data above only to run Sogverse and serve your House well — namely:"
+        ],
+        "bullets": [
+          "To forge and command your account and your child's.",
+          "To place your child in the right club, camp, or event group and unite them with an educator.",
+          "To hold the live voice and video sessions.",
+          "To take payment and send receipts, reminders, and vital word about your clubs.",
+          "To answer your call when you seek aid.",
+          "To keep Sogverse secure, crush bugs, and forge it stronger over time."
+        ]
+      },
+      "legalBasis": {
+        "heading": "Why we are permitted",
+        "paragraphs": [
+          "The data-protection law (the GDPR) demands a clear reason to wield your data. Ours are plain:"
+        ],
+        "bullets": [
+          "To deliver what you enlisted for — the clubs and services you bought (our pact with you).",
+          "Because a parent granted permission on a child's behalf (consent).",
+          "To honor our legal duties, such as keeping payment records.",
+          "For our legitimate interest in a secure, well-running site — ever balanced against your privacy."
+        ]
+      },
+      "providers": {
+        "heading": "The allies who help us run Sogverse",
+        "paragraphs": [
+          "No house stands alone. We rely on a few trusted allies for hosting, payments, and email. They touch your data only to serve us, bound by contracts to guard it. The chief allies:"
+        ],
+        "bullets": [
+          "Supabase — guards your account, family, and club data.",
+          "Stripe — handles payments. Your card flies straight to Stripe; we never see it.",
+          "Brevo — sends our messages, such as receipts and reminders.",
+          "Daily.co — powers the live voice and video sessions.",
+          "Vercel — hosts the site and gives anonymous, cookie-free battle statistics.",
+          "Meta (WhatsApp) — to send some messages to houses who favor WhatsApp.",
+          "Mouseflow — only with your blessing: shows how the site is used during our Beta (see below)."
+        ]
+      },
+      "cookies": {
+        "heading": "Cookies and analytics",
+        "paragraphs": [
+          "We use no advertising or tracking cookies, and we do not stalk you across the stars.",
+          "We use a few necessary cookies to keep you securely logged in — the site cannot fight without them, so they need no consent.",
+          "To learn how many visit and whether by phone or computer, we use Vercel's analytics — honorable and private: no cookies, and no naming you.",
+          "During Beta we also use Mouseflow, which may record how the site is used (mouse moves, clicks, pages) so we may forge it better. It runs only if you choose \"Yes\" on the banner, and we destroy all of it when Beta ends. Refuse, and the site fights on just the same."
+        ]
+      },
+      "voice": {
+        "heading": "Voice and video sessions",
+        "paragraphs": [
+          "Live clubs, camps, and events are waged over voice and video by Daily.co. Every session is led and guarded by a trained educator, used only to deliver the session your child enlisted in."
+        ]
+      },
+      "retention": {
+        "heading": "How long we keep your data",
+        "paragraphs": [
+          "We keep your data as long as you hold an account with us. Close it, and we destroy or anonymize your data — save where the law commands we keep certain records longer, as Finnish accounting law demands payment records be kept for several years.",
+          "Mouseflow recordings, if you allowed them, are destroyed when Beta ends."
+        ]
+      },
+      "storage": {
+        "heading": "Where your data dwells",
+        "paragraphs": [
+          "Some allies above dwell beyond the European Union, such as in the United States. When your data travels to them, we guard it with the safeguards the law demands — usually the European Commission's Standard Contractual Clauses."
+        ]
+      },
+      "rights": {
+        "heading": "Your rights — and your child's",
+        "paragraphs": [
+          "You command your data. Any time, you may demand we:"
+        ],
+        "bullets": [
+          "Reveal what data we hold on you and your child.",
+          "Correct what is false.",
+          "Destroy your data (the \"right to be forgotten\").",
+          "Grant you a copy to carry elsewhere.",
+          "Halt or limit how we wield it."
+        ]
+      },
+      "security": {
+        "heading": "Guarding your data",
+        "paragraphs": [
+          "We shield your data with proven defenses: encrypted channels, passwords kept only as scrambled ciphers, and strict guard over who may reach the data. No system is ever truly impregnable, but we fight hard to keep your House's data safe."
+        ]
+      },
+      "changes": {
+        "heading": "Changes to this policy",
+        "paragraphs": [
+          "We may update this policy from time to time — say, when we forge a new feature. On an important change, we update the date above and send word when it matters."
+        ]
+      },
+      "contact": {
+        "heading": "Hail us — and your right to complain",
+        "paragraphs": [
+          "To wield any right above, or for any question about your privacy or your child's data, hail hello@sog.gg. No charge, we always answer, and the surest channel is email — our House does not muster around a letterbox.",
+          "If our handling of your data dishonors you, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto, tietosuoja.fi). Qapla'!"
+        ]
+      }
+    }
   }
 }

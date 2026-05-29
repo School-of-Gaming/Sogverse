@@ -21,7 +21,8 @@
       "gamerHome": "Pelaaja",
       "gamerGroups": "Omat ryhmät",
       "gamerGroupDetails": "Ryhmän tiedot",
-      "voiceSession": "Ääni-istunto"
+      "voiceSession": "Ääni-istunto",
+      "privacy": "Tietosuojaseloste"
     }
   },
   "common": {
@@ -1055,7 +1056,8 @@
     "copyright": "© {year} School of Gaming. Kaikki oikeudet pidätetään.",
     "contact": {
       "email": "Sähköposti: {email}"
-    }
+    },
+    "privacy": "Tietosuojaseloste"
   },
   "gamer": {
     "welcome": "Tervetuloa, pelaaja!",
@@ -1859,5 +1861,155 @@
     "body": "Sogverse on Beta-vaiheessa. Jotta opimme, miten sivustoa todella käytetään — ja voimme tehdä siitä paremman kaikille — haluaisimme tallentaa vierailusi (hiiren liikkeet, klikkaukset ja vieraillut sivut). Vain Sogversen ylläpitäjät näkevät nämä tiedot, ja poistamme kaiken, kun Beta päättyy.",
     "accept": "Kyllä, autan parantamaan Sogversea",
     "decline": "Ei kiitos"
+  },
+  "privacy": {
+    "title": "Tietosuojaseloste",
+    "lastUpdated": "Päivitetty viimeksi: {date}",
+    "intro": {
+      "heading": "Lyhyesti",
+      "paragraphs": [
+        "School of Gaming on olemassa, jotta lapsilla olisi turvallinen ja hauska paikka oppia pelaamalla. Perheesi yksityisyyden – ja ennen kaikkea lapsesi yksityisyyden – suojaaminen on meille tärkeää, joten kirjoitimme tämän selkeällä kielellä ilman juridista jargonia.",
+        "Lyhyesti: keräämme vain ne tiedot, joita tarvitsemme kerhojen, leirien ja tapahtumien järjestämiseen. Emme koskaan myy sinun emmekä lapsesi tietoja. Vain vanhempi voi luoda lapselle käyttäjätilin, emmekä koskaan mainosta lapsille. Voit milloin tahansa pyytää meitä näyttämään, korjaamaan tai poistamaan tietosi lähettämällä viestin osoitteeseen hello@sog.gg."
+      ]
+    },
+    "sections": {
+      "whoWeAre": {
+        "heading": "Keitä me olemme",
+        "paragraphs": [
+          "Sogversea pyörittää School of Gaming Galactic Oy (\"School of Gaming\", \"me\"), suomalainen yritys. Vastaamme niiden henkilötietojen huolehtimisesta, joita sinä ja lapsesi jaatte kanssamme – juridisesti olemme rekisterinpitäjä.",
+          "Viralliset tietomme:"
+        ],
+        "bullets": [
+          "School of Gaming Galactic Oy (Y-tunnus 3110461-1)",
+          "Isokatu 56, 90100 Oulu",
+          "Sähköposti: hello@sog.gg"
+        ]
+      },
+      "infoWeCollect": {
+        "heading": "Mitä tietoja keräämme",
+        "paragraphs": [
+          "Pyrimme keräämään mahdollisimman vähän – vain sen, mitä Sogversen pyörittäminen oikeasti vaatii. Käytännössä kyse on näistä tiedoista:"
+        ],
+        "bullets": [
+          "Nimesi, sähköpostiosoitteesi ja (jos annat sen) puhelinnumerosi – jotta voimme luoda tilisi ja pitää yhteyttä lapsesi kerhoihin liittyen.",
+          "Kieli- ja valuuttavalintasi – jotta sivusto näkyy sinulle odottamallasi tavalla.",
+          "Salasanasi, jonka tallennamme vain salatussa (tiivistetyssä) muodossa – emme voi koskaan nähdä sitä.",
+          "Maksutiedot, kun ostat jotain – ne menevät suoraan Stripelle, emmekä me näe emmekä tallenna koko korttinumeroasi.",
+          "Lapsestasi: etunimen, syntymäkuukauden ja -vuoden (emme kysy tarkkaa päivämäärää – vain sen, mitä todella tarvitsemme) ja halutessasi sukupuolen – jotta voimme sijoittaa hänet oikeaan ryhmään ja puhutella häntä oikein.",
+          "Halutessasi lapsesi Minecraft-käyttäjätunnuksen – jotta hän voi yhdistää Minecraft-palvelimellemme tapaamisten aikana.",
+          "Yleisiä, nimettömiä tietoja siitä, miten sivustoa käytetään (katso kohta \"Evästeet ja analytiikka\" jäljempänä)."
+        ]
+      },
+      "childrensPrivacy": {
+        "heading": "Lasten yksityisyys on etusijalla",
+        "paragraphs": [
+          "Suurin osa Sogversen käyttäjistä on lapsia, joten heidän turvallisuutensa ja yksityisyytensä on meille tärkeintä.",
+          "Lapsi ei voi koskaan luoda omaa tiliään itse. Vain vanhempi tai huoltaja luo lapsen tilin, päättää mitä tietoja jaetaan ja antaa luvan lapsen puolesta. Näin täytämme lapsia koskevat velvollisuutemme tietosuojalainsäädännön mukaan.",
+          "Pidämme lasten tiedot vähäisinä, emme koskaan näytä lapsille mainoksia emmekä koskaan myy tai jaa heidän tietojaan markkinointiin. Tapaamisissa lapset ovat aina koulutetun ohjaajan (kutsumme heitä Geduiksi) seurassa.",
+          "Jos haluat milloin tahansa nähdä, muuttaa tai poistaa lapsesi tiedot, lähetä viesti osoitteeseen hello@sog.gg, niin hoidamme asian."
+        ]
+      },
+      "howWeUse": {
+        "heading": "Miten käytämme tietojasi",
+        "paragraphs": [
+          "Käytämme yllä mainittuja tietoja vain Sogversen pyörittämiseen ja siihen, että perheelläsi on hyvä kokemus – tarkemmin sanottuna:"
+        ],
+        "bullets": [
+          "Tilisi ja lapsesi tilin luomiseen ja hallintaan.",
+          "Lapsesi sijoittamiseen oikeaan kerho-, leiri- tai tapahtumaryhmään ja ohjaajan kanssa yhdistämiseen.",
+          "Suorien ääni- ja videotapaamisten järjestämiseen.",
+          "Maksujen perimiseen sekä kuittien, muistutusten ja kerhojasi koskevien tärkeiden tiedotteiden lähettämiseen.",
+          "Kysymyksiisi vastaamiseen, kun otat meihin yhteyttä.",
+          "Sogversen turvallisena pitämiseen, ongelmien korjaamiseen ja palvelun parantamiseen ajan myötä."
+        ]
+      },
+      "legalBasis": {
+        "heading": "Miksi saamme käyttää tietoja",
+        "paragraphs": [
+          "Tietosuojalainsäädäntö (EU:n yleinen tietosuoja-asetus eli GDPR) edellyttää, että meillä on selkeä peruste tietojesi käytölle. Meidän perusteemme ovat yksinkertaiset:"
+        ],
+        "bullets": [
+          "Toimittaaksemme sen, mihin ilmoittauduit – ostamasi kerhot ja palvelut (sopimuksemme kanssasi).",
+          "Koska vanhempi on antanut luvan lapsensa puolesta (suostumus).",
+          "Täyttääksemme lakisääteiset velvollisuutemme, kuten maksujen kirjanpitotietojen säilyttämisen.",
+          "Oikeutetun etumme perusteella, kun pidämme sivuston turvallisena ja toimivana – aina yksityisyytesi kanssa tasapainotettuna."
+        ]
+      },
+      "providers": {
+        "heading": "Yritykset, jotka auttavat meitä pyörittämään Sogversea",
+        "paragraphs": [
+          "Verkkopalvelun pyörittäminen edellyttää muutaman luotetun yrityksen apua esimerkiksi palvelininfrastruktuurissa, maksuissa ja sähköpostissa. Ne käsittelevät tietojasi vain tehdäkseen työnsä meille, sopimuksin, jotka velvoittavat ne pitämään tiedot turvassa. Tärkeimmät kumppanit ovat:"
+        ],
+        "bullets": [
+          "Supabase – tallentaa turvallisesti tili-, perhe- ja kerhotietosi.",
+          "Stripe – käsittelee maksut. Korttitietosi menevät suoraan Stripelle, emmekä me näe niitä.",
+          "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
+          "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset.",
+          "Vercel – ylläpitää sivustoa ja tarjoaa nimettömät, evästeettömät käyttötilastot.",
+          "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
+          "Mouseflow – vain jos annat luvan: auttaa meitä näkemään, miten sivustoa käytetään beetavaiheen aikana (katso jäljempänä)."
+        ]
+      },
+      "cookies": {
+        "heading": "Evästeet ja analytiikka",
+        "paragraphs": [
+          "Emme käytä mainos- tai seurantaevästeitä emmekä seuraa sinua ympäri internetiä.",
+          "Käytämme muutamaa välttämätöntä evästettä, jotta pysyt turvallisesti kirjautuneena – sivusto ei toimi ilman niitä, joten ne eivät vaadi suostumustasi.",
+          "Ymmärtääksemme esimerkiksi sen, kuinka moni vierailee sivustolla ja käyttääkö hän puhelinta vai tietokonetta, käytämme Vercelin analytiikkaa. Se on yksityisyysystävällistä: ei evästeitä eikä henkilökohtaista tunnistamista.",
+          "Beetavaiheen aikana käytämme myös Mouseflow-nimistä työkalua, joka voi tallentaa sivuston käyttöä (hiiren liikkeet, klikkaukset ja vieraillut sivut), jotta voimme parantaa sitä. Tämä toimii vain, jos valitset bannerista \"Kyllä\", ja poistamme kaiken aineiston, kun beetavaihe päättyy. Voit kieltäytyä, ja sivusto toimii silti täsmälleen samoin."
+        ]
+      },
+      "voice": {
+        "heading": "Ääni- ja videotapaamiset",
+        "paragraphs": [
+          "Suorat kerhot, leirit ja tapahtumat pidetään äänen ja videon välityksellä Daily.co-palvelun avulla. Jokaista tapaamista johtaa ja valvoo yksi koulutetuista ohjaajistamme, ja käytämme palvelua vain sen tapaamisen toteuttamiseen, johon lapsesi ilmoittautui."
+        ]
+      },
+      "retention": {
+        "heading": "Kuinka kauan säilytämme tietojasi",
+        "paragraphs": [
+          "Säilytämme tietojasi niin kauan kuin sinulla on tili meillä. Jos suljet tilisi, poistamme tai anonymisoimme tietosi – paitsi silloin, kun laki edellyttää meitä säilyttämään tietyt tiedot pidempään, kuten Suomen kirjanpitolaki, joka velvoittaa säilyttämään maksutiedot useita vuosia.",
+          "Mouseflow-tallenteet, jos annoit niihin luvan, poistetaan beetavaiheen päättyessä."
+        ]
+      },
+      "storage": {
+        "heading": "Missä tietojasi säilytetään",
+        "paragraphs": [
+          "Osa meitä auttavista yrityksistä (lueteltu yllä) sijaitsee Euroopan unionin ulkopuolella, esimerkiksi Yhdysvalloissa. Kun tietojasi siirretään niille, varmistamme, että niitä suojaavat tietosuojalainsäädännön edellyttämät suojatoimet – yleensä Euroopan komission vakiolausekkeet."
+        ]
+      },
+      "rights": {
+        "heading": "Sinun – ja lapsesi – oikeudet",
+        "paragraphs": [
+          "Sinä hallitset tietojasi. Voit milloin tahansa pyytää meitä:"
+        ],
+        "bullets": [
+          "Näyttämään, mitä tietoja meillä on sinusta ja lapsestasi.",
+          "Korjaamaan virheelliset tiedot.",
+          "Poistamaan tietosi (\"oikeus tulla unohdetuksi\").",
+          "Antamaan sinulle kopion, jonka voit viedä muualle.",
+          "Lopettamaan tai rajoittamaan tietojesi käyttöä."
+        ]
+      },
+      "security": {
+        "heading": "Tietojesi turvassa pitäminen",
+        "paragraphs": [
+          "Suojaamme tietojasi alan vakiintunein keinoin: salatuin yhteyksin, säilyttämällä salasanat vain tiivistetyssä muodossa ja rajaamalla tarkasti, kuka pääsee tietoihin käsiksi. Mikään järjestelmä ei ole koskaan täysin turvallinen, mutta teemme kovasti töitä pitääksemme perheesi tiedot turvassa."
+        ]
+      },
+      "changes": {
+        "heading": "Muutokset tähän selosteeseen",
+        "paragraphs": [
+          "Voimme päivittää tätä selostetta ajoittain, esimerkiksi kun lisäämme uuden ominaisuuden. Kun teemme merkittävän muutoksen, päivitämme yläreunan päivämäärän ja ilmoitamme siitä tarvittaessa."
+        ]
+      },
+      "contact": {
+        "heading": "Yhteydenotto ja oikeutesi tehdä valitus",
+        "paragraphs": [
+          "Jos haluat käyttää mitä tahansa yllä mainituista oikeuksista tai sinulla on kysyttävää yksityisyydestäsi tai lapsesi tiedoista, lähetä viesti osoitteeseen hello@sog.gg. Se on maksutonta, vastaamme aina, ja sähköposti on paras tapa tavoittaa meidät.",
+          "Jos olet tyytymätön siihen, miten olemme käsitelleet tietojasi, sinulla on oikeus tehdä valitus tietosuojavaltuutetun toimistolle (tietosuoja.fi)."
+        ]
+      }
+    }
   }
 }

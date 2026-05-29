@@ -12,7 +12,7 @@ import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 // by design — see docs/instant-voice-rooms.md. The authenticated group voice
 // room at /voice/group/[id] is carved back out below — it shares the prefix
 // but must require a session.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.clubs, ROUTES.camps, ROUTES.events, ROUTES.help, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.clubs, ROUTES.camps, ROUTES.events, ROUTES.help, ROUTES.privacy, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — gamers join as participants, gedus

@@ -21,7 +21,8 @@
       "gamerGroupDetails": "Group Details",
       "voiceSession": "Voice Session",
       "help": "Help",
-      "shop": "Shop"
+      "shop": "Shop",
+      "privacy": "Privacy Policy"
     }
   },
   "common": {
@@ -1055,7 +1056,8 @@
     "copyright": "© {year} School of Gaming. All rights reserved.",
     "contact": {
       "email": "Email: {email}"
-    }
+    },
+    "privacy": "Privacy Policy"
   },
   "gamer": {
     "welcome": "Welcome, Gamer!",
@@ -1859,5 +1861,155 @@
     "body": "Sogverse is in Beta. To learn how people actually use the site — so we can make it better for everyone — we'd like to record your visit (mouse movements, clicks, and which pages you visit). Only Sogverse admins can see this, and we will delete all of it once Beta ends.",
     "accept": "Yes, help improve Sogverse",
     "decline": "No thanks"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: {date}",
+    "intro": {
+      "heading": "The short version",
+      "paragraphs": [
+        "School of Gaming exists to give children a safe, fun place to learn through gaming. Protecting your family's privacy — and your child's most of all — matters to us, so we've written this in plain language instead of legal jargon.",
+        "In short: we only collect what we need to run our clubs, camps, and events. We never sell your information or your child's. Only a parent can create a child's account, and we never advertise to children. You can ask us to show, correct, or delete your information at any time by emailing hello@sog.gg."
+      ]
+    },
+    "sections": {
+      "whoWeAre": {
+        "heading": "Who we are",
+        "paragraphs": [
+          "Sogverse is run by School of Gaming Galactic Oy (\"School of Gaming\", \"we\", \"us\"), a Finnish company. We're responsible for looking after the personal information you and your child share with us — in legal terms, we're the \"data controller\".",
+          "Here are our official details:"
+        ],
+        "bullets": [
+          "School of Gaming Galactic Oy (business ID 3110461-1)",
+          "Isokatu 56, 90100 Oulu, Finland",
+          "Email: hello@sog.gg"
+        ]
+      },
+      "infoWeCollect": {
+        "heading": "The information we collect",
+        "paragraphs": [
+          "We try to collect as little as possible — only what we genuinely need to run Sogverse. Here's what that looks like:"
+        ],
+        "bullets": [
+          "Your name, email address, and (if you add one) phone number — so we can set up your account and keep in touch about your child's clubs.",
+          "Your language and currency preferences — so the site shows up the way you expect.",
+          "Your password, which we store only in a scrambled (hashed) form — we can never see it.",
+          "Payment details when you buy something — these go straight to Stripe; we never see or store your full card number.",
+          "About your child: their first name, their birth month and year (we don't ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly.",
+          "Optionally, your child's Minecraft username — so they can connect to our Minecraft server during sessions.",
+          "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below)."
+        ]
+      },
+      "childrensPrivacy": {
+        "heading": "Children's privacy comes first",
+        "paragraphs": [
+          "Most of the people using Sogverse are children, so their safety and privacy is our highest priority.",
+          "A child can never create their own account. Only a parent or guardian sets up a child's account, chooses what to share, and gives permission on their behalf. That's how we meet our responsibilities under data-protection law when it comes to children.",
+          "We keep children's information to a minimum, we never show children advertising, and we never sell or share their data for marketing. During live sessions, children are always with one of our trained educators (we call them Gedus).",
+          "If you ever want to see, change, or delete your child's information, just email hello@sog.gg and we'll take care of it."
+        ]
+      },
+      "howWeUse": {
+        "heading": "How we use your information",
+        "paragraphs": [
+          "We use the information above only to run Sogverse and give your family a good experience — specifically:"
+        ],
+        "bullets": [
+          "To create and manage your account and your child's account.",
+          "To place your child in the right club, camp, or event group and connect them with an educator.",
+          "To run the live voice and video sessions.",
+          "To take payments and send receipts, reminders, and important updates about your clubs.",
+          "To answer your questions when you contact us for help.",
+          "To keep Sogverse safe, fix problems, and make it better over time."
+        ]
+      },
+      "legalBasis": {
+        "heading": "Why we're allowed to use it",
+        "paragraphs": [
+          "Data-protection law (the GDPR) asks us to have a clear reason for using your information. Ours are simple:"
+        ],
+        "bullets": [
+          "To deliver what you signed up for — the clubs and services you've bought from us (our contract with you).",
+          "Because a parent has given permission on their child's behalf (consent).",
+          "To meet our legal duties, such as keeping accounting records for payments.",
+          "For our legitimate interest in keeping the site secure and working well — always balanced against your privacy."
+        ]
+      },
+      "providers": {
+        "heading": "The companies that help us run Sogverse",
+        "paragraphs": [
+          "Running an online service means relying on a few trusted companies for things like hosting, payments, and email. They only handle your information to do their job for us, under contracts that require them to keep it safe. The main ones are:"
+        ],
+        "bullets": [
+          "Supabase — securely stores your account, family, and club information.",
+          "Stripe — processes payments. Your card details go straight to Stripe; we never see them.",
+          "Brevo — sends our emails, such as receipts and reminders.",
+          "Daily.co — powers the live voice and video sessions.",
+          "Vercel — hosts the website and provides anonymous, cookie-free usage statistics.",
+          "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp.",
+          "Mouseflow — only if you agree: helps us see how the site is used during our Beta period (see below)."
+        ]
+      },
+      "cookies": {
+        "heading": "Cookies and analytics",
+        "paragraphs": [
+          "We don't use advertising or tracking cookies, and we don't follow you around the internet.",
+          "We use a small number of necessary cookies to keep you securely logged in — the site can't work without these, so they don't need your consent.",
+          "To understand things like how many people visit and whether they're using a phone or a computer, we use Vercel's analytics. It's privacy-friendly: no cookies, and it doesn't identify you personally.",
+          "During our Beta period we also use a tool called Mouseflow that can record how the site is used (mouse movements, clicks, and pages visited) so we can improve it. This only runs if you choose \"Yes\" on the banner, and we delete all of it once Beta ends. You can decline and the site works exactly the same."
+        ]
+      },
+      "voice": {
+        "heading": "Voice and video sessions",
+        "paragraphs": [
+          "Live clubs, camps, and events take place over voice and video, powered by Daily.co. Every session is led and supervised by one of our trained educators, and we use it only to deliver the session your child signed up for."
+        ]
+      },
+      "retention": {
+        "heading": "How long we keep your information",
+        "paragraphs": [
+          "We keep your information for as long as you have an account with us. If you close your account, we delete or anonymise your information — except where the law requires us to keep certain records longer, such as Finnish accounting law, which requires payment records to be kept for several years.",
+          "Mouseflow recordings, if you agreed to them, are deleted when our Beta period ends."
+        ]
+      },
+      "storage": {
+        "heading": "Where your information is kept",
+        "paragraphs": [
+          "Some of the companies that help us (listed above) are based outside the European Union, for example in the United States. When your information is sent to them, we make sure it's protected by the safeguards data-protection law requires — usually the European Commission's Standard Contractual Clauses."
+        ]
+      },
+      "rights": {
+        "heading": "Your rights — and your child's",
+        "paragraphs": [
+          "You're in control of your information. At any time you can ask us to:"
+        ],
+        "bullets": [
+          "Show you what information we hold about you and your child.",
+          "Correct anything that's wrong.",
+          "Delete your information (the \"right to be forgotten\").",
+          "Give you a copy to take elsewhere.",
+          "Stop or limit how we use it."
+        ]
+      },
+      "security": {
+        "heading": "Keeping your information safe",
+        "paragraphs": [
+          "We protect your information with industry-standard measures: encrypted connections, passwords stored only in scrambled form, and strict limits on who can access data. No system is ever perfectly secure, but we work hard to keep your family's information safe."
+        ]
+      },
+      "changes": {
+        "heading": "Changes to this policy",
+        "paragraphs": [
+          "We may update this policy from time to time — for example, if we add a new feature. When we make an important change, we'll update the date at the top and, where it matters, let you know."
+        ]
+      },
+      "contact": {
+        "heading": "Getting in touch and your right to complain",
+        "paragraphs": [
+          "To use any of the rights above, or if you have a question about your privacy or your child's information, just email hello@sog.gg. There's no charge, we'll always reply, and email is the best way to reach us.",
+          "If you're ever unhappy with how we've handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at tietosuoja.fi."
+        ]
+      }
+    }
   }
 }
