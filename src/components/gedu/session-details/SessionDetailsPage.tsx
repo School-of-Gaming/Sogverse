@@ -20,7 +20,10 @@ import { ROUTES } from "@/lib/constants";
 import { formatDate, formatTime } from "@/lib/utils";
 import { useNow, useTimezone } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
-import type { GeduAssignedProductGroup, GeduAssignedProductShell } from "@/types";
+import type {
+  GeduAssignedProduct,
+  GeduAssignedProductShell,
+} from "@/types";
 import { AssignedGroupCard } from "./AssignedGroupCard";
 import { PeerGroupCard } from "./PeerGroupCard";
 
@@ -100,10 +103,10 @@ function NotAssignedState() {
   );
 }
 
-function Loaded({ data }: { data: { product: GeduAssignedProductShell; my_group_id: string; groups: GeduAssignedProductGroup[] } }) {
+function Loaded({ data }: { data: GeduAssignedProduct }) {
   const t = useTranslations("gedu.sessionDetails");
-  const uiLocale = resolveLocale(useLocale());
   const locale = useLocale();
+  const uiLocale = resolveLocale(locale);
   const timeZone = useTimezone();
   const now = useNow();
 
@@ -113,11 +116,13 @@ function Loaded({ data }: { data: { product: GeduAssignedProductShell; my_group_
   // Assigned group first, then peers in the RPC's order (created_at, id).
   // `find`/`filter` preserve that order for the peers while lifting the
   // caller's own group to the top so the "Your group" anchor leads.
+  // `my_group_id` is the single source for "which group is mine".
   const { assignedGroup, peerGroups } = useMemo(() => {
-    const assigned = data.groups.find((g) => g.is_my_group) ?? null;
-    const peers = data.groups.filter((g) => !g.is_my_group);
+    const assigned =
+      data.groups.find((g) => g.id === data.my_group_id) ?? null;
+    const peers = data.groups.filter((g) => g.id !== data.my_group_id);
     return { assignedGroup: assigned, peerGroups: peers };
-  }, [data.groups]);
+  }, [data.groups, data.my_group_id]);
 
   const voiceState = useMemo(
     () =>
