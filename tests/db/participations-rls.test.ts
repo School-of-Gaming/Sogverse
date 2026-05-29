@@ -29,8 +29,8 @@ import { createV2TestProduct, deleteV2TestProducts } from "./v2-helpers";
  * ownership chain (FKs cascade on customer deletion).
  */
 
-const PRODUCT_A = "00000000-0000-0000-0000-0000000005e1"; // CUSTOMER's product
-const PRODUCT_B = "00000000-0000-0000-0000-0000000005e2"; // CUSTOMER_2's product
+const PRODUCT_A = "00000000-0000-0000-0000-0000000005b6"; // CUSTOMER's product
+const PRODUCT_B = "00000000-0000-0000-0000-0000000005b7"; // CUSTOMER_2's product
 const ALL_PRODUCTS = [PRODUCT_A, PRODUCT_B];
 
 const supabaseUrl =
