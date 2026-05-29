@@ -26,6 +26,11 @@ const AUTH_REQUIRED_VOICE_PREFIX = ROUTES.voice.groupSessionPrefix;
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
 
+// Opt-in `Server-Timing` header for the proxy's auth verification. Off unless
+// AUTH_PERF_LOG=1 — set it on a Vercel preview to read per-request auth cost in
+// DevTools while validating the getUser→getClaims migration (docs/performance.md).
+const AUTH_PERF_LOG = process.env.AUTH_PERF_LOG === "1";
+
 /**
  * Build a Content-Security-Policy header value.
  * In production, uses a per-request nonce so only scripts explicitly tagged by
@@ -113,10 +118,21 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // Refresh session — must happen before any other logic
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Verify (and refresh, if near expiry) the session — must happen before any
+  // other logic. getClaims() verifies the JWT locally against the project's
+  // ES256 JWKS, so there's no GoTrue round-trip on the hot path. The
+  // getSession() it calls internally still refreshes the token when it's within
+  // the expiry margin — writing new cookies via the handler above — so the
+  // proxy remains the single token-refresh point. See docs/performance.md.
+  const authStart = performance.now();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub ?? null;
+  if (AUTH_PERF_LOG) {
+    supabaseResponse.headers.set(
+      "Server-Timing",
+      `authVerify;dur=${(performance.now() - authStart).toFixed(1)}`,
+    );
+  }
 
   // Helper: create a redirect that preserves refreshed auth cookies and CSP
   function redirect(url: URL) {
@@ -140,11 +156,11 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
   // If user is logged in and trying to access auth routes, redirect to their dashboard
-  if (user && isAuthRoute) {
+  if (userId && isAuthRoute) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
+      .eq("id", userId)
       .single();
 
     if (!profileError) {
@@ -157,11 +173,11 @@ export async function proxy(request: NextRequest) {
   // Signed-in parents, gamers, and gedus visiting the home page get bounced
   // to their dashboard — mirrors the SOG-logo behavior so the home page
   // isn't a dead-end for them. Admins pass through.
-  if (user && pathname === ROUTES.home) {
+  if (userId && pathname === ROUTES.home) {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
-      .eq("id", user.id)
+      .eq("id", userId)
       .single();
 
     if (
@@ -180,7 +196,7 @@ export async function proxy(request: NextRequest) {
   }
 
   // For protected routes, require authentication
-  if (!user) {
+  if (!userId) {
     const loginUrl = new URL(ROUTES.login, request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return redirect(loginUrl);
@@ -190,7 +206,7 @@ export async function proxy(request: NextRequest) {
   const { data: profileData, error: profileError } = await supabase
     .from("profiles")
     .select("role")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   if (profileError) {
