@@ -8,7 +8,7 @@ import { proxy } from "@/proxy";
 
 // --- Mocks ---
 
-const mockGetUser = vi.fn();
+const mockGetClaims = vi.fn();
 const mockProfileQuery = vi.fn();
 let capturedCookieHandlers: {
   getAll: () => { name: string; value: string }[];
@@ -22,7 +22,7 @@ vi.mock("@supabase/ssr", () => ({
     (_url: string, _key: string, options: { cookies: typeof capturedCookieHandlers }) => {
       capturedCookieHandlers = options.cookies;
       return {
-        auth: { getUser: mockGetUser },
+        auth: { getClaims: mockGetClaims },
         from: vi.fn(() => ({
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
@@ -42,8 +42,8 @@ function createNextRequest(pathname: string): NextRequest {
 }
 
 function mockUser(role: string) {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: "test-user-id" } },
+  mockGetClaims.mockResolvedValue({
+    data: { claims: { sub: "test-user-id" } },
     error: null,
   });
   mockProfileQuery.mockResolvedValue({
@@ -53,8 +53,8 @@ function mockUser(role: string) {
 }
 
 function mockNoUser() {
-  mockGetUser.mockResolvedValue({
-    data: { user: null },
+  mockGetClaims.mockResolvedValue({
+    data: null,
     error: null,
   });
 }
@@ -252,8 +252,8 @@ describe("proxy", () => {
 
   describe("edge cases", () => {
     it("redirects to /login when authenticated but no profile row", async () => {
-      mockGetUser.mockResolvedValue({
-        data: { user: { id: "test-user-id" } },
+      mockGetClaims.mockResolvedValue({
+        data: { claims: { sub: "test-user-id" } },
         error: null,
       });
       mockProfileQuery.mockResolvedValue({
@@ -267,8 +267,8 @@ describe("proxy", () => {
     });
 
     it("passes through auth route when authenticated but profile query fails", async () => {
-      mockGetUser.mockResolvedValue({
-        data: { user: { id: "test-user-id" } },
+      mockGetClaims.mockResolvedValue({
+        data: { claims: { sub: "test-user-id" } },
         error: null,
       });
       mockProfileQuery.mockResolvedValue({
@@ -281,13 +281,14 @@ describe("proxy", () => {
     });
 
     it("preserves refreshed auth cookies on redirect responses", async () => {
-      // Simulate Supabase SSR refreshing tokens during getUser
-      mockGetUser.mockImplementation(async () => {
+      // Simulate Supabase SSR refreshing tokens during getClaims — its internal
+      // getSession() refreshes a near-expiry token and writes new cookies.
+      mockGetClaims.mockImplementation(async () => {
         capturedCookieHandlers!.setAll([
           { name: "sb-access-token", value: "new-access", options: { path: "/" } },
           { name: "sb-refresh-token", value: "new-refresh", options: { path: "/" } },
         ]);
-        return { data: { user: null }, error: null };
+        return { data: null, error: null };
       });
 
       const response = await proxy(createNextRequest("/admin"));
