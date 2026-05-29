@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { ROLE_DASHBOARD_PATHS, ROUTES, type UserRole } from "@/lib/constants";
 import { LocalePicker } from "@/components/layout/locale-picker";
 import { SiteHeaderShell } from "@/components/layout/site-header-shell";
+import { trackDashboardNav } from "@/lib/analytics";
 
 // Dashboard route prefixes used to detect whether the user is currently on a
 // dashboard. Used both for the avatar's active-ring state (admin/gedu — whose
@@ -149,6 +150,19 @@ export function Header() {
             href={logoHref}
             className={logoClassName}
             aria-current={isOnLogoTarget ? "page" : undefined}
+            onClick={() => {
+              // The logo routes parents/gamers/gedus to their dashboard —
+              // record which path they chose. logoGoesToDashboard already
+              // implies profile.role is set (admins' logo goes home, so it's
+              // false and nothing fires).
+              if (logoGoesToDashboard) {
+                trackDashboardNav({
+                  role: profile.role,
+                  method: "logo",
+                  from: pathname,
+                });
+              }
+            }}
           >
             {logoBody}
           </Link>
@@ -194,6 +208,18 @@ export function Header() {
               aria-label={avatarLabel}
               aria-current={isOnAvatarTarget ? "page" : undefined}
               className="rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+              onClick={() => {
+                // Only the gedu avatar links straight to the dashboard;
+                // parents'/gamers' avatar opens the family selector, where the
+                // self-tile click is tracked instead.
+                if (profile?.role === "gedu") {
+                  trackDashboardNav({
+                    role: "gedu",
+                    method: "avatar",
+                    from: pathname,
+                  });
+                }
+              }}
             >
               {avatarFrame}
             </Link>
