@@ -1939,7 +1939,7 @@
           "Your name, email, and (if you offer it) phone number — to forge your account and send word of your child's clubs.",
           "Your language and currency — so the viewscreen shows what you expect.",
           "Your password, kept only as a scrambled cipher — not even we may read it.",
-          "Payment details when you buy — sent straight to Stripe; we never glimpse your full card number.",
+          "Payment details are handled directly within Stripe's vault. We never glimpse your full card number.",
           "Of your child: first name, birth month and year (never the full date — only what we truly need), and if you wish their gender — to place them in the right battle group and address them with respect.",
           "If you wish, your child's Minecraft name — to connect to our Minecraft server during sessions.",
           "Plain, nameless data on how the site is used (see \"Cookies and analytics\" below)."

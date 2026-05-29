@@ -1894,7 +1894,7 @@
           "Ditt namn, din e-postadress och (om du anger ett) ditt telefonnummer – så att vi kan skapa ditt konto och hålla kontakten om ditt barns klubbar.",
           "Dina språk- och valutainställningar – så att webbplatsen visas som du förväntar dig.",
           "Ditt lösenord, som vi endast lagrar i krypterad (hashad) form – vi kan aldrig se det.",
-          "Betaluppgifter när du köper något – de går direkt till Stripe, och vi ser eller lagrar aldrig hela ditt kortnummer.",
+          "Betaluppgifter hanteras direkt i Stripe. Vi ser eller lagrar aldrig hela ditt kortnummer.",
           "Om ditt barn: förnamn, födelsemånad och födelseår (vi frågar inte efter det exakta datumet – bara det vi verkligen behöver) och eventuellt kön – så att vi kan placera barnet i rätt grupp och tilltala det rätt.",
           "Eventuellt barnets Minecraft-användarnamn – så att barnet kan ansluta till vår Minecraft-server under träffarna.",
           "Allmän, anonym information om hur webbplatsen används (se \"Cookies och analys\" nedan)."
