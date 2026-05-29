@@ -26,11 +26,6 @@ const AUTH_REQUIRED_VOICE_PREFIX = ROUTES.voice.groupSessionPrefix;
 // Routes for authentication (login, register, etc.)
 const AUTH_ROUTES = [ROUTES.login, ROUTES.register, ROUTES.forgotPassword];
 
-// Opt-in `Server-Timing` header for the proxy's auth verification. Off unless
-// AUTH_PERF_LOG=1 — set it on a Vercel preview to read per-request auth cost in
-// DevTools while validating the getUser→getClaims migration (docs/performance.md).
-const AUTH_PERF_LOG = process.env.AUTH_PERF_LOG === "1";
-
 /**
  * Build a Content-Security-Policy header value.
  * In production, uses a per-request nonce so only scripts explicitly tagged by
@@ -124,15 +119,8 @@ export async function proxy(request: NextRequest) {
   // getSession() it calls internally still refreshes the token when it's within
   // the expiry margin — writing new cookies via the handler above — so the
   // proxy remains the single token-refresh point. See docs/performance.md.
-  const authStart = performance.now();
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims.sub ?? null;
-  if (AUTH_PERF_LOG) {
-    supabaseResponse.headers.set(
-      "Server-Timing",
-      `authVerify;dur=${(performance.now() - authStart).toFixed(1)}`,
-    );
-  }
 
   // Helper: create a redirect that preserves refreshed auth cookies and CSP
   function redirect(url: URL) {

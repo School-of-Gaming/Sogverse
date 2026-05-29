@@ -10,9 +10,11 @@
  * common slow cases impossible, at which point this can be deleted wholesale.
  *
  * Removal recipe (when the time comes):
- *   1. Delete this file (`src/lib/perf.ts`).
- *   2. Grep `usePagePerf|useQueryPerf` across `src/` — remove the imports
- *      and the hook calls from each page. Nothing else depends on it.
+ *   1. Delete this file (`src/lib/perf.ts`) and its wrapper
+ *      (`src/components/dev/perf-logger.tsx`).
+ *   2. Grep `usePagePerf|useQueryPerf|PerfLogger` across `src/` — remove the
+ *      imports and the hook/component calls from each page. Nothing else
+ *      depends on it.
  *   3. There is no other entanglement: no providers, no context, no
  *      registered hooks elsewhere, no env vars required (the
  *      NEXT_PUBLIC_VERCEL_* reads fall back to "local"), no CSS, no styles.
