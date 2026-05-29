@@ -1894,7 +1894,7 @@
           "Your name, email address, and (if you add one) phone number — so we can set up your account and keep in touch about your child's clubs.",
           "Your language and currency preferences — so the site shows up the way you expect.",
           "Your password, which we store only in a scrambled (hashed) form — we can never see it.",
-          "Payment details when you buy something — these go straight to Stripe; we never see or store your full card number.",
+          "Payment details are handled directly in Stripe. We never see or store your full card number.",
           "About your child: their first name, their birth month and year (we don't ask for the full date — only what we actually need), and optionally their gender — so we can place them in the right group and address them properly.",
           "Optionally, your child's Minecraft username — so they can connect to our Minecraft server during sessions.",
           "Basic, anonymous information about how the site is used (see \"Cookies and analytics\" below)."
