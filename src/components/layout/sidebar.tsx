@@ -5,11 +5,9 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
-  UsersRound,
   AudioLines,
   Palette,
   Settings,
-  Gamepad2,
   FlaskConical,
   MessageCircle,
   MapPin,
@@ -30,8 +28,7 @@ import type { UserRole } from "@/types";
 type SidebarKey =
   | "dashboard" | "users" | "locations"
   | "uiComponents" | "whatsapp" | "testing" | "settings"
-  | "myGamers" | "home" | "myGroups" | "voice"
-  | "consumerClubs" | "municipalityClubs" | "camps" | "events";
+  | "voice" | "consumerClubs" | "municipalityClubs" | "camps" | "events";
 
 interface NavItemDef {
   href: string;
@@ -55,16 +52,6 @@ const navItemsByRole: Partial<Record<UserRole, NavItemDef[]>> = {
     { href: ROUTES.admin.uiComponents, labelKey: "uiComponents", icon: <Palette className="h-5 w-5" /> },
     { href: ROUTES.admin.whatsapp, labelKey: "whatsapp", icon: <MessageCircle className="h-5 w-5" /> },
     { href: ROUTES.admin.testing, labelKey: "testing", icon: <FlaskConical className="h-5 w-5" /> },
-    { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
-  ],
-  customer: [
-    { href: ROUTES.customer.dashboard, labelKey: "dashboard", icon: <LayoutDashboard className="h-5 w-5" /> },
-    { href: ROUTES.customer.gamers, labelKey: "myGamers", icon: <Gamepad2 className="h-5 w-5" /> },
-    { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
-  ],
-  gamer: [
-    { href: ROUTES.gamer.dashboard, labelKey: "home", icon: <LayoutDashboard className="h-5 w-5" /> },
-    { href: ROUTES.gamer.groups, labelKey: "myGroups", icon: <UsersRound className="h-5 w-5" /> },
     { href: ROUTES.settings, labelKey: "settings", icon: <Settings className="h-5 w-5" /> },
   ],
 };

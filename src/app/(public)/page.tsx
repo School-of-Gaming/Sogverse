@@ -150,7 +150,7 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Link
-                href={ROUTES.clubs}
+                href={ROUTES.shop}
                 className={buttonVariants({ variant: "outline", size: "lg" })}
               >
                 {c('exploreClubs')}
