@@ -19,10 +19,13 @@ import {
  * a dashboard widget, not a full-page picker.
  *
  * Clicking a gamer routes to /parent/gamers/[id] to manage that gamer.
+ *
+ * `initialFamily` (server-prefetched on the parent dashboard) seeds the cache
+ * so the grid paints populated on first frame; omitted elsewhere.
  */
-export function MyGamersGrid() {
+export function MyGamersGrid({ initialFamily }: { initialFamily?: FamilyMember[] } = {}) {
   const t = useTranslations("family");
-  const { data: family, isLoading, error } = useFamily();
+  const { data: family, isLoading, error } = useFamily({ initialData: initialFamily });
   const [addGamerOpen, setAddGamerOpen] = useState(false);
 
   if (error) {

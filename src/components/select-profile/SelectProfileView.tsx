@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers";
 import { FamilyProfileSelector } from "@/components/family";
+import type { FamilyMember } from "@/services/family";
 import { trackDashboardNav } from "@/lib/analytics";
 
 /**
@@ -20,8 +21,10 @@ import { trackDashboardNav } from "@/lib/analytics";
  */
 export function SelectProfileView({
   selfDashboardPath,
+  initialFamily,
 }: {
   selfDashboardPath: string;
+  initialFamily?: FamilyMember[];
 }) {
   const t = useTranslations("selectProfile");
   const pathname = usePathname();
@@ -34,6 +37,7 @@ export function SelectProfileView({
       </h1>
       <FamilyProfileSelector
         autoOpenAddGamerFromUrl
+        initialFamily={initialFamily}
         onSelfClick={() => {
           // Parents/gamers reaching their dashboard by choosing their own
           // tile. track() is sendBeacon-backed, so it survives the full-page

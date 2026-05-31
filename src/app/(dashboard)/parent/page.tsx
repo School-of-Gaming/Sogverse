@@ -10,6 +10,8 @@ import {
   ParticipationsService,
   type MyUpcomingSessionRow,
 } from "@/services/participations";
+import { resolveCustomerFamilyViaRls } from "@/services/family/family.server";
+import type { FamilyMember } from "@/services/family";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("metadata.pages");
@@ -39,15 +41,47 @@ async function getInitialSessionRows(): Promise<MyUpcomingSessionRow[]> {
   }
 }
 
+/**
+ * Server-prefetch the parent's family (themselves + their linked gamers) via
+ * their own RLS-scoped client — no admin client. The `profiles` SELECT policies
+ * `users_view_own_profile` + `parents_view_linked_gamers` already scope a
+ * customer to {self, their gamers}, so Postgres RLS is the access gate and
+ * there's no service-role bypass on this path (see `resolveCustomerFamilyViaRls`).
+ * Seeds React Query so My Gamers paints without a skeleton flash; the client
+ * `useFamily` still refetches on mount. Returns `[]` on any failure so the page
+ * renders regardless.
+ */
+async function getInitialFamily(): Promise<FamilyMember[]> {
+  try {
+    const supabase = await createClient();
+    return await resolveCustomerFamilyViaRls(supabase);
+  } catch {
+    return [];
+  }
+}
+
 export default async function CustomerDashboardPage() {
-  const initialSessionRows = await getInitialSessionRows();
-  return <CustomerDashboardPageBody initialSessionRows={initialSessionRows} />;
+  // Both reads run together: the page already blocks on the sessions fetch, so
+  // adding the (cheaper) family read in parallel costs ~no extra wall-clock and
+  // lets My Gamers paint populated on the first frame.
+  const [initialSessionRows, initialFamily] = await Promise.all([
+    getInitialSessionRows(),
+    getInitialFamily(),
+  ]);
+  return (
+    <CustomerDashboardPageBody
+      initialSessionRows={initialSessionRows}
+      initialFamily={initialFamily}
+    />
+  );
 }
 
 function CustomerDashboardPageBody({
   initialSessionRows,
+  initialFamily,
 }: {
   initialSessionRows: MyUpcomingSessionRow[];
+  initialFamily: FamilyMember[];
 }) {
   const t = useTranslations('dashboardSections');
   const p = useTranslations('parent.placeholders');
@@ -76,7 +110,7 @@ function CustomerDashboardPageBody({
               <h2 className="text-3xl font-bold">{t('myGamers')}</h2>
               <p className="text-muted-foreground">{p('myGamersHint')}</p>
             </div>
-            <MyGamersGrid />
+            <MyGamersGrid initialFamily={initialFamily} />
           </div>
         </section>
 
