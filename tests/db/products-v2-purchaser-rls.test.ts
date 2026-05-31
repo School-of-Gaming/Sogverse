@@ -3,7 +3,11 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createV2TestProduct, deleteV2TestProducts } from "./v2-helpers";
+import {
+  createV2ScheduleSlot,
+  createV2TestProduct,
+  deleteV2TestProducts,
+} from "./v2-helpers";
 
 /**
  * Pins the "soft-deprecate" use case: an admin can flip `is_visible` to
@@ -103,6 +107,25 @@ describe("products_v2 purchaser-read RLS (00047)", () => {
       },
     ]);
     if (seed.error) throw seed.error;
+
+    // The parent dashboard's `getMyUpcomingSessions("customer")` embeds the
+    // product's schedule slots and translations under the product. Seed both
+    // on the active product so the detail-join assertion can prove the
+    // purchaser reaches the *children*, not just the product row. The child
+    // tables carry their own RLS and were never extended to purchasers — so
+    // the product survives while its slots (→ dropped session) and
+    // translations (→ blank name) come back empty.
+    await createV2ScheduleSlot(admin, HIDDEN_ACTIVE_PRODUCT, {
+      weekday: 1,
+      startTime: "10:00",
+    });
+    const trans = await admin.from("product_translations_v2").insert({
+      product_id: HIDDEN_ACTIVE_PRODUCT,
+      locale: "en",
+      name: "Hidden Active Camp",
+      description: "Seeded for the detail-join RLS assertion.",
+    });
+    if (trans.error) throw trans.error;
   });
 
   afterAll(async () => {
@@ -240,5 +263,40 @@ describe("products_v2 purchaser-read RLS (00047)", () => {
     // Reserving row exists, but the product join is RLS-nulled.
     expect(byProduct.get(HIDDEN_RESERVING_PRODUCT)?.status).toBe("reserving");
     expect(byProduct.get(HIDDEN_RESERVING_PRODUCT)?.product).toBeNull();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Dashboard surface: `getMyUpcomingSessions("customer")` embeds the product's
+  // schedule slots and translations. `purchaser_read_products_v2` lets the
+  // product row through, but the child tables need their own matching policy.
+  // Without it the embedded slots array is empty (the dashboard drops the
+  // session — Kyle's reported empty-Sessions bug) and the translations array
+  // is empty (blank product name). Assert the purchaser reaches both children.
+  // ---------------------------------------------------------------------------
+
+  it("detail join: purchaser reads the hidden product's slots and translations", async () => {
+    type DetailRow = {
+      id: string;
+      is_visible: boolean;
+      schedule_slots_v2: { weekday: number }[];
+      product_translations_v2: { locale: string; name: string }[];
+    };
+
+    const { data, error } = await customerClient
+      .from("products_v2")
+      .select(
+        "id, is_visible, schedule_slots_v2(weekday), product_translations_v2(locale, name)",
+      )
+      .eq("id", HIDDEN_ACTIVE_PRODUCT)
+      .maybeSingle();
+
+    expect(error).toBeNull();
+    const row = data as unknown as DetailRow | null;
+    expect(row?.id).toBe(HIDDEN_ACTIVE_PRODUCT);
+    // Pin that the row really is hidden, so the assertion exercises the
+    // purchaser carve-out rather than the public-read path.
+    expect(row?.is_visible).toBe(false);
+    expect(row?.schedule_slots_v2.length).toBeGreaterThan(0);
+    expect(row?.product_translations_v2.length).toBeGreaterThan(0);
   });
 });

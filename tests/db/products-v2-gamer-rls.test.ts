@@ -3,7 +3,11 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createV2TestProduct, deleteV2TestProducts } from "./v2-helpers";
+import {
+  createV2ScheduleSlot,
+  createV2TestProduct,
+  deleteV2TestProducts,
+} from "./v2-helpers";
 
 /**
  * Regression gate for `gamer_read_enrolled_products_v2` (migration 00067).
@@ -106,6 +110,25 @@ describe("products_v2 gamer-read RLS (00067)", () => {
       },
     ]);
     if (seed.error) throw seed.error;
+
+    // The dashboard query (`getMyUpcomingSessions`) embeds the product's
+    // schedule slots and translations *under* the product. Seed both on the
+    // active product so the join assertion below can prove the *children*
+    // survive RLS — not just the product row. 00067 fixed products_v2; the
+    // child tables need the matching enrolled-read policy or the dashboard
+    // sees an empty slots array (→ dropped row, the empty-Sessions bug) and
+    // an empty translations array (→ blank product name).
+    await createV2ScheduleSlot(admin, HIDDEN_ACTIVE_PRODUCT, {
+      weekday: 1,
+      startTime: "10:00",
+    });
+    const trans = await admin.from("product_translations_v2").insert({
+      product_id: HIDDEN_ACTIVE_PRODUCT,
+      locale: "en",
+      name: "Hidden Active Camp",
+      description: "Seeded for the dashboard-join RLS assertion.",
+    });
+    if (trans.error) throw trans.error;
   });
 
   afterAll(async () => {
@@ -179,21 +202,31 @@ describe("products_v2 gamer-read RLS (00067)", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Dashboard surface: the exact join `getMyUpcomingSessions("gamer")` runs.
-  // Before 00067 the inner join dropped the hidden product and the session
-  // disappeared; assert the embedded product now comes through for the gamer.
+  // Dashboard surface: the exact join `getMyUpcomingSessions("gamer")` runs,
+  // including the embedded child tables it actually projects. Before 00067 the
+  // inner join dropped the hidden product entirely; the product-row fix landed,
+  // but the *children* (slots, translations) have their own RLS and were never
+  // extended to enrolled gamers — so the product survives while its slots and
+  // translations come back empty. Assert all three layers arrive.
   // ---------------------------------------------------------------------------
 
-  it("dashboard join: gamer's active+placed session carries the hidden product", async () => {
+  it("dashboard join: gamer's active+placed session carries the hidden product with its slots and translations", async () => {
     type SessionRow = {
       gamer_id: string;
       group_id: string | null;
-      product: { id: string; is_visible: boolean } | null;
+      product: {
+        id: string;
+        is_visible: boolean;
+        schedule_slots_v2: { weekday: number }[];
+        product_translations_v2: { locale: string; name: string }[];
+      } | null;
     };
 
     const { data, error } = await gamerClient
       .from("participations_v2")
-      .select("gamer_id, group_id, product:products_v2!inner(id, is_visible)")
+      .select(
+        "gamer_id, group_id, product:products_v2!inner(id, is_visible, schedule_slots_v2(weekday), product_translations_v2(locale, name))",
+      )
       .eq("gamer_id", TEST_IDS.GAMER)
       .eq("status", "active")
       .not("group_id", "is", null)
@@ -204,5 +237,12 @@ describe("products_v2 gamer-read RLS (00067)", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].product?.id).toBe(HIDDEN_ACTIVE_PRODUCT);
     expect(rows[0].product?.is_visible).toBe(false);
+    // The product surviving the inner join isn't enough: the dashboard reads
+    // the embedded children too. An empty slots array makes
+    // `expandUpcomingSessions` drop the row (the reported empty-Sessions bug);
+    // an empty translations array renders a blank product name. Both child
+    // tables need the enrolled-read policy, so assert both actually arrive.
+    expect(rows[0].product?.schedule_slots_v2.length).toBeGreaterThan(0);
+    expect(rows[0].product?.product_translations_v2.length).toBeGreaterThan(0);
   });
 });
