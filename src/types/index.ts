@@ -5,7 +5,7 @@
 export type { Database, Json } from "./database.types";
 export { Constants } from "./database.types";
 
-import type { User } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 import type { Database } from "./database.types";
 
 // ---------------------------------------------------------------------------
@@ -488,6 +488,29 @@ export type MyAssignedProductRow = Omit<
  * `User` fields.
  */
 export type AuthenticatedUser = Pick<User, "id" | "email">;
+
+/**
+ * The Supabase client our server code and service layer use. It is a normal
+ * `SupabaseClient<Database>` with one method removed at the type level:
+ * `auth.getUser()`.
+ *
+ * `getUser()` is a GoTrue HTTP round-trip; on the per-request / per-RSC-prefetch
+ * server path it fans out into the F1 auth-waterfall (see docs/performance.md).
+ * Server identity must instead come from `auth.getClaims()` (local ES256
+ * verification, no round-trip). Subtracting `getUser` from the type makes a
+ * server-side `supabase.auth.getUser()` a *compile* error — the structural
+ * regression guard, in place of a lint that would nag forever once the codebase
+ * is clean.
+ *
+ * The full browser `SupabaseClient<Database>` (which keeps `getUser`, for the
+ * rare client-side case that genuinely needs the live GoTrue `User`) is
+ * assignable to this narrower type, so `getClient()` results still flow into
+ * service constructors unchanged. The reverse is intentionally not assignable —
+ * that's what blocks `getUser` on the server.
+ */
+export type AppSupabaseClient = Omit<SupabaseClient<Database>, "auth"> & {
+  auth: Omit<SupabaseClient<Database>["auth"], "getUser">;
+};
 
 export interface CreateGamerInput {
   firstName: string;

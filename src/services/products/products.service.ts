@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Product, ProductInsert, ProductUpdate, Database } from "@/types";
+import type { Product, ProductInsert, ProductUpdate, AppSupabaseClient } from "@/types";
 
 export type ProductWithGame = Product & { games: { name: string } | null };
 
@@ -23,7 +22,7 @@ export type UpdateProductInput = Omit<
 };
 
 export class ProductsService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getVisibleProducts(): Promise<ProductWithGame[]> {
     const { data, error } = await this.supabase

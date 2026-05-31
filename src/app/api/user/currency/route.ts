@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isSupportedCurrency } from "@/lib/constants/currency";
 
 export async function PATCH(request: Request) {
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    // `getUser()` here is the getClaims-backed server helper (local JWT
+    // verification), not GoTrue's `auth.getUser()`. We only need the user id.
+    const user = await getUser();
 
-    if (userError || !user) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

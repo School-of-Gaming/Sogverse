@@ -1,18 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { GET } from "@/app/api/auth/callback/route";
-import { createMockUser } from "../../mocks/auth";
 
 // --- Mocks ---
 
 const mockExchangeCodeForSession = vi.fn();
-const mockGetUser = vi.fn();
+const mockGetClaims = vi.fn();
 const mockProfileQuery = vi.fn();
 
 vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => ({
     auth: {
       exchangeCodeForSession: mockExchangeCodeForSession,
-      getUser: mockGetUser,
+      getClaims: mockGetClaims,
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
@@ -75,8 +74,8 @@ describe("GET /api/auth/callback", () => {
 
   it("redirects to /select-profile for customer role", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetUser.mockResolvedValue({
-      data: { user: createMockUser() },
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-123" } },
     });
     mockProfileQuery.mockResolvedValue({
       data: { role: "customer" },
@@ -91,8 +90,8 @@ describe("GET /api/auth/callback", () => {
 
   it("redirects to /admin for admin role", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetUser.mockResolvedValue({
-      data: { user: createMockUser() },
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-123" } },
     });
     mockProfileQuery.mockResolvedValue({
       data: { role: "admin" },
@@ -107,8 +106,8 @@ describe("GET /api/auth/callback", () => {
 
   it("redirects to /gedu for gedu role", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetUser.mockResolvedValue({
-      data: { user: createMockUser() },
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-123" } },
     });
     mockProfileQuery.mockResolvedValue({
       data: { role: "gedu" },
@@ -123,8 +122,8 @@ describe("GET /api/auth/callback", () => {
 
   it("redirects to /gamer for gamer role", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetUser.mockResolvedValue({
-      data: { user: createMockUser() },
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-123" } },
     });
     mockProfileQuery.mockResolvedValue({
       data: { role: "gamer" },
@@ -139,8 +138,8 @@ describe("GET /api/auth/callback", () => {
 
   it("redirects to /select-profile when profile is null (fallback)", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetUser.mockResolvedValue({
-      data: { user: createMockUser() },
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-123" } },
     });
     mockProfileQuery.mockResolvedValue({ data: null, error: null });
 
@@ -152,8 +151,8 @@ describe("GET /api/auth/callback", () => {
 
   it("redirects to next param when set", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetUser.mockResolvedValue({
-      data: { user: createMockUser() },
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "user-123" } },
     });
     mockProfileQuery.mockResolvedValue({
       data: { role: "customer" },
@@ -168,11 +167,9 @@ describe("GET /api/auth/callback", () => {
     expect(getRedirectUrl(response).pathname).toBe("/some-page");
   });
 
-  it("redirects to login error when getUser returns no user", async () => {
+  it("redirects to login error when the session has no claims", async () => {
     mockExchangeCodeForSession.mockResolvedValue({ error: null });
-    mockGetUser.mockResolvedValue({
-      data: { user: null },
-    });
+    mockGetClaims.mockResolvedValue({ data: null });
 
     const response = await GET(createCallbackRequest({ code: "valid-code" }));
 

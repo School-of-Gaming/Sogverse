@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, MyGroupWithDetails } from "@/types";
+import type { AppSupabaseClient, MyGroupWithDetails } from "@/types";
 
 /** Enrolled gamer fields from the get_product_groups_with_details RPC (admin). */
 export interface GroupGamer {
@@ -102,7 +101,7 @@ function reshapeGroupRows(data: MyGroupWithDetails[]): GeduGroup[] {
 }
 
 export class GroupsService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getProductGroups(productId: string): Promise<ProductGroup[]> {
     const { data, error } = await this.supabase.rpc(

@@ -1,17 +1,17 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { MinecraftAccount, Database } from "@/types";
+import type { MinecraftAccount, AppSupabaseClient } from "@/types";
 
 export class MinecraftService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getMyMinecraftAccount(): Promise<MinecraftAccount | null> {
-    const { data: { user } } = await this.supabase.auth.getUser();
-    if (!user) return null;
+    const { data: claims } = await this.supabase.auth.getClaims();
+    const userId = claims?.claims.sub;
+    if (!userId) return null;
 
     const { data, error } = await this.supabase
       .from("minecraft_accounts")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
 
     if (error) throw error;

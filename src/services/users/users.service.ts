@@ -1,9 +1,8 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Profile, ProfileUpdate, UserRole, ParentGamer, Database } from "@/types";
+import type { Profile, ProfileUpdate, UserRole, ParentGamer, AppSupabaseClient } from "@/types";
 import { escapeLikePattern } from "@/lib/utils";
 
 export class UsersService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getProfile(userId: string): Promise<Profile> {
     const { data, error } = await this.supabase

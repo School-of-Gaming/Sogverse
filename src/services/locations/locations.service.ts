@@ -1,8 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Location, LocationInsert, Database } from "@/types";
+import type { Location, LocationInsert, AppSupabaseClient } from "@/types";
 
 export class LocationsService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getAllLocations(): Promise<Location[]> {
     const { data, error } = await this.supabase

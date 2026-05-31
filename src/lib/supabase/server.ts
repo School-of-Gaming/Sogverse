@@ -1,9 +1,15 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/database.types";
-import type { AuthenticatedUser } from "@/types";
+import type { AppSupabaseClient, AuthenticatedUser } from "@/types";
 
-export async function createClient() {
+// Declared to return `AppSupabaseClient`, not the raw `SupabaseClient<Database>`:
+// the server client deliberately exposes no `auth.getUser()` (see the type's doc
+// in src/types/index.ts). Server identity comes from `getClaims()` — the helpers
+// below, the proxy, and `requireRole`. The full client `createServerClient`
+// builds satisfies the narrower type, so the narrowing is just this annotation;
+// everything downstream sees the `getUser`-free surface.
+export async function createClient(): Promise<AppSupabaseClient> {
   const cookieStore = await cookies();
 
   return createServerClient<Database>(
