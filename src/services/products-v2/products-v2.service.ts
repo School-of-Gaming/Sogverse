@@ -1,6 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
-  Database,
+  AppSupabaseClient,
   ProductV2,
   ProductTranslationV2,
   ProductTypeV2,
@@ -172,7 +171,7 @@ export type UpdateProductV2Input = {
 };
 
 export class ProductsV2Service {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async listByType(type: ProductTypeV2): Promise<ProductV2WithDetails[]> {
     const { data, error } = await this.supabase
@@ -240,8 +239,8 @@ export class ProductsV2Service {
   // the caller's own rows; the explicit `.eq("gedu_id", userId)` here is
   // belt-and-suspenders.
   async listMyGeduAssigned(): Promise<ProductV2BrowseRow[]> {
-    const { data: userData } = await this.supabase.auth.getUser();
-    const userId = userData.user?.id;
+    const { data: claims } = await this.supabase.auth.getClaims();
+    const userId = claims?.claims.sub;
     if (!userId) return [];
 
     const { data: assignments, error: assignErr } = await this.supabase

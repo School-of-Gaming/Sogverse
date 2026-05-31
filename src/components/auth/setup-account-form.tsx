@@ -164,9 +164,11 @@ export function SetupAccountForm() {
         return;
       }
 
-      // Update display name on the profile
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
+      // Update display name on the profile. getClaims() verifies the session's
+      // JWT locally; we only need the user id to scope the profile update.
+      const { data: claimsData } = await supabase.auth.getClaims();
+      const userId = claimsData?.claims.sub;
+      if (userId) {
         if (phone && !isValidPhoneNumber(phone)) {
           setError(t('setupAccount.invalidPhone'));
           return;
@@ -180,7 +182,7 @@ export function SetupAccountForm() {
             phone: toE164Digits(phone),
             spoken_languages: spokenLanguages,
           })
-          .eq("id", user.id);
+          .eq("id", userId);
 
         if (profileError) {
           setError(profileError.message);

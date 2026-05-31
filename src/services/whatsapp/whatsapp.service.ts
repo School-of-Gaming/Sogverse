@@ -1,8 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types";
+import type { AppSupabaseClient } from "@/types";
 
 export class WhatsAppService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getContacts() {
     const { data, error } = await this.supabase

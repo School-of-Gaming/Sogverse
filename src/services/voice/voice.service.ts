@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/types";
+import type { AppSupabaseClient } from "@/types";
 
 /**
  * Service-layer wrapper for the v2 voice room flow. The injected client is
@@ -10,7 +9,7 @@ import type { Database } from "@/types";
  */
 export class VoiceService {
   /** Service constructor signature matches sibling services for hook consistency, even though no method here reads the client. */
-  constructor(_supabase: SupabaseClient<Database>) {}
+  constructor(_supabase: AppSupabaseClient) {}
 
   /**
    * Mint a Daily.co meeting token for a v2 product group

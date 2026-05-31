@@ -5,10 +5,9 @@ import { PATCH } from "@/app/api/user/currency/route";
 
 const mockGetUser = vi.fn();
 
+// The route reads identity via the getClaims-backed `getUser()` server helper.
 vi.mock("@/lib/supabase/server", () => ({
-  createClient: vi.fn(async () => ({
-    auth: { getUser: mockGetUser },
-  })),
+  getUser: () => mockGetUser(),
 }));
 
 const mockAdminUpdate = vi.fn();
@@ -33,17 +32,11 @@ function createRequest(body: Record<string, unknown>): Request {
 }
 
 function mockAuthenticated(userId = "user-123") {
-  mockGetUser.mockResolvedValue({
-    data: { user: { id: userId } },
-    error: null,
-  });
+  mockGetUser.mockResolvedValue({ id: userId, email: "user@example.com" });
 }
 
 function mockUnauthenticated() {
-  mockGetUser.mockResolvedValue({
-    data: { user: null },
-    error: { message: "No session" },
-  });
+  mockGetUser.mockResolvedValue(null);
 }
 
 // --- Tests ---

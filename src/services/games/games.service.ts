@@ -1,8 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Game, Database } from "@/types";
+import type { Game, AppSupabaseClient } from "@/types";
 
 export class GamesService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getAllGames(): Promise<Game[]> {
     const { data, error } = await this.supabase

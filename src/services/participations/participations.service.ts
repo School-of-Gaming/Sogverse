@@ -1,6 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
-  Database,
+  AppSupabaseClient,
   Participation,
   ProductTypeV2,
   BillingModeV2,
@@ -192,15 +191,15 @@ export type JoinWaitlistResponse = {
 };
 
 export class ParticipationsService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   /**
    * The current customer's participations across all products. Used for the
    * "your enrolled" purchased-card rail.
    */
   async getMyParticipations(): Promise<MyParticipationRow[]> {
-    const { data: userData } = await this.supabase.auth.getUser();
-    const userId = userData.user?.id;
+    const { data: claims } = await this.supabase.auth.getClaims();
+    const userId = claims?.claims.sub;
     if (!userId) return [];
 
     const { data, error } = await this.supabase
@@ -255,8 +254,8 @@ export class ParticipationsService {
   async getMyUpcomingSessions(
     audience: SessionAudience,
   ): Promise<MyUpcomingSessionRow[]> {
-    const { data: userData } = await this.supabase.auth.getUser();
-    const userId = userData.user?.id;
+    const { data: claims } = await this.supabase.auth.getClaims();
+    const userId = claims?.claims.sub;
     if (!userId) return [];
 
     const audienceColumn =
@@ -321,8 +320,8 @@ export class ParticipationsService {
     }
 
     // Per-customer signup state on each of the listed products.
-    const { data: userData } = await this.supabase.auth.getUser();
-    const userId = userData.user?.id;
+    const { data: claims } = await this.supabase.auth.getClaims();
+    const userId = claims?.claims.sub;
     if (userId) {
       const { data: mine } = await this.supabase
         .from("participations_v2")
@@ -376,8 +375,8 @@ export class ParticipationsService {
     frequency: SubscriptionFrequencyV2,
     currency: SupportedCurrency,
   ): Promise<{ id: string; status: string } | null> {
-    const { data: userData } = await this.supabase.auth.getUser();
-    const userId = userData.user?.id;
+    const { data: claims } = await this.supabase.auth.getClaims();
+    const userId = claims?.claims.sub;
     if (!userId) return null;
 
     const { data, error } = await this.supabase

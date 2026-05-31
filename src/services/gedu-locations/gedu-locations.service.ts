@@ -1,8 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, GeduLocation } from "@/types";
+import type { AppSupabaseClient, GeduLocation } from "@/types";
 
 export class GeduLocationsService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getForGedu(geduId: string): Promise<GeduLocation[]> {
     const { data, error } = await this.supabase

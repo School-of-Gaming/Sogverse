@@ -15,16 +15,17 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // Get the user to determine their role
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      // Read the just-exchanged session's claims to determine the role.
+      // getClaims() verifies the freshly-minted token locally (no GoTrue
+      // round-trip) — see docs/performance.md.
+      const { data: claimsData } = await supabase.auth.getClaims();
+      const userId = claimsData?.claims.sub;
 
-      if (user) {
+      if (userId) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
-          .eq("id", user.id)
+          .eq("id", userId)
           .single();
 
         // Honor an explicit `next` destination; otherwise route by role.

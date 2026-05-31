@@ -30,19 +30,25 @@ Full chain, blockers, and sequencing options live in the TODO item. Brought into
 
 With identity now verified locally (Completed: `getClaims`), the remaining per-render auth cost is the `profiles.role` lookup at each layer (proxy + both layouts + every `requireRole`). A custom access-token hook that writes `role` into `app_metadata` lets all of them read role off the verified JWT — and lets RLS's `get_user_role()` drop its `SELECT role FROM profiles`. Full shape + the role-staleness-until-token-refresh trade-off live in TODO.md §"Consider moving role into JWT claims". Conditional: do it when the residual profile lookup proves to matter, or when next editing the RLS policies.
 
-### I3 — Guard against `getUser` regression, then convert the survivors
-
-`supabase.auth.getUser()` (HTTP round-trip to GoTrue) still works and is the Supabase-docs default, so a future server-side caller can silently reintroduce the F1 waterfall — `tsc` and tests won't catch it. The `getClaims` fix has no structural protection yet. None of this is urgent (the survivors below aren't the fan-out multiplier), but the guard is the piece that keeps the fix from eroding.
-
-**Guard (the high-value half — do this first).** Add a `no-restricted-syntax` ESLint rule flagging `…auth.getUser()` with a message pointing at `getClaims` + this doc, plus a `**Rule:**` in CLAUDE.md ("verify identity server-side with `getClaims`, never `getUser`"). One scoping decision: (a) **blanket** ban + a documented `// eslint-disable-next-line … -- reason` on each legitimate exception — makes every `getUser` a conscious choice, fits the repo's "describe every disable" culture; or (b) **scope to server paths** (proxy, route handlers, layouts, `lib/auth`), excluding `src/services/**` and client components — cleaner conceptually, harder to express in ESLint. (a) is simpler and recommended.
-
-**Survivors to triage** (find with `git grep "auth.getUser(" src/` — 11 calls across 7 files as of this writing):
-- *Migrate to `getClaims`* — `api/user/locale`, `api/user/currency`: trivial, they only need the user id; update their test mocks.
-- *Migrate or disable, with care* — the service layer (`participations` ×4, `minecraft`, `products-v2`). These are **security-sensitive write paths** (enrollment/payments); `getUser` gives server-confirmed identity, `getClaims` trusts the signed JWT until expiry (the same trade-off already accepted on the hot path — RLS still enforces). Convert with a per-call glance that each only reads `.id`, and update the service tests.
-- *Disable with reason* — OAuth `api/auth/callback/route.ts`: wants server confirmation of a freshly-exchanged session.
-- *Leave / exclude* — client components (`auth-provider`, `setup-account-form`): browser-side, not the waterfall; `getUser` is fine (and marginally stricter) there.
-
 ## Completed improvements
+
+### `AppSupabaseClient` — structural `getUser` guard + survivor conversion — closes I3 (branch `perf/auth-getclaims-guard`, 2026-05-31)
+
+**What.** Removed `supabase.auth.getUser()` (a GoTrue HTTP round-trip) from every remaining call site, and made a server-side reintroduction a **compile** error rather than relying on review. Introduced `AppSupabaseClient` in `src/types/index.ts` — `SupabaseClient<Database>` with `auth.getUser` subtracted at the type level (`Omit`). The server `createClient()` (`src/lib/supabase/server.ts`) now returns it, and all ~14 service constructors take it. The full browser client (which keeps `getUser`) is still assignable to the narrower type, so `getClient()` results flow into services unchanged; the reverse isn't, which is what blocks `getUser` on the server.
+
+**Why a type, not a lint.** A `no-restricted-syntax` ESLint rule was prototyped and rejected: it nags forever once the codebase is clean ("don't do this bad thing" long after everyone stopped). The type narrowing is self-documenting, catches the regression strictly earlier (red squiggle + `type-check`/build failure, before the line can run or merge), and adds zero runtime code. It deliberately scopes to the **server client + service layer** — the actual F1 fan-out surface. The browser client keeps `getUser` for the rare client-side case needing the live GoTrue `User`.
+
+**Survivors converted** (the 11 calls I3 catalogued):
+- `api/user/locale`, `api/user/currency` → the getClaims-backed `getUser()` helper from `server.ts` (they only need the id).
+- Service layer (`participations` ×4, `minecraft`, `products-v2`) → `getClaims()` directly. Confirmed each only reads `.id` to scope a query; RLS enforces the real authorization, so trusting the signed JWT until expiry is the same trade-off already accepted on the hot path.
+- OAuth `api/auth/callback/route.ts` → `getClaims()` on the just-exchanged session (the freshly-minted token verifies locally; no need for a server round-trip to read the role).
+- Client components (`auth-provider`, `setup-account-form`) → `getClaims()` for consistency, even though browser-side `getUser` is harmless. Both only used `.id`. The browser client *type* stays permissive.
+
+**Not covered (deliberate).** `src/proxy.ts` builds its `createServerClient` inline (it wires request/response cookie handling), so it holds the full type — but it already uses `getClaims()`, and it's one reviewed file, not a fan-out surface. No CLAUDE.md rule accompanies this: the compile error is self-enforcing on the server, and the "why" lives in the `AppSupabaseClient` doc comment — a prose "don't call `getUser`" rule would be redundant cruft for something that already won't compile.
+
+**Tested.** Updated the `user-locale` / `user-currency` route mocks (mock the `getUser` helper) and the OAuth `callback` mock (`getClaims` instead of `getUser`). `type-check` is the load-bearing check here — it's what proves the guard compiles and nothing else regressed.
+
+### Local JWT verification via `getClaims` — fixes F1 (branch `perf/auth-getclaims`, 2026-05-29)
 
 ### Local JWT verification via `getClaims` — fixes F1 (branch `perf/auth-getclaims`, 2026-05-29)
 
@@ -70,4 +76,4 @@ With identity now verified locally (Completed: `getClaims`), the remaining per-r
 
 **Tested.** `requireRole` unit test (getClaims contract: 401/500/403/happy); proxy integration test (getClaims mocks incl. refresh-cookie preservation); full unit+integration suite (948 passing); manual sign-in/reload/gate smoke test (localhost → staging); the real-browser A/B above.
 
-**What's left (all deliberately deferred).** No regression guard yet, and `getUser()` survives in non-hot-path spots (client components, OAuth callback, `user/locale`/`user/currency`, service layer) — the guard + the per-call triage are written up as **I3**. The residual per-layer `profiles.role` lookup is **I2**. Neither blocks anything; the F1 fix stands on its own.
+**What's left.** The regression guard and survivor conversion (I3) shipped — see the `AppSupabaseClient` entry above; `getUser()` is now gone from the codebase except the permissive browser-client type. The residual per-layer `profiles.role` lookup is **I2** (deferred; doesn't block anything). The F1 fix stands on its own.

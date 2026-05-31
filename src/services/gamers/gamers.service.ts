@@ -1,8 +1,7 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Profile, GamerProfileRow, ParentGamer, CreateGamerInput, GamerProfile, Database } from "@/types";
+import type { Profile, GamerProfileRow, ParentGamer, CreateGamerInput, GamerProfile, AppSupabaseClient } from "@/types";
 
 export class GamerService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getLinkedGamers(parentId: string): Promise<GamerProfileRow[]> {
     const { data, error } = await this.supabase

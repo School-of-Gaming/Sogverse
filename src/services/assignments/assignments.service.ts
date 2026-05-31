@@ -1,6 +1,5 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
-  Database,
+  AppSupabaseClient,
   GeduAssignedProduct,
   MyAssignedProductRow,
   ProductTranslationV2,
@@ -67,7 +66,7 @@ export interface MyAssignedProductSessionRow {
  * enough — no admin client required.
  */
 export class AssignmentsService {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   async getMyAssignedProducts(): Promise<MyAssignedProductSessionRow[]> {
     const { data, error } = await this.supabase.rpc("get_my_assigned_products");

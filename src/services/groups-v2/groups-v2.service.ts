@@ -1,5 +1,4 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, ProductGroupsV2Snapshot } from "@/types";
+import type { AppSupabaseClient, ProductGroupsV2Snapshot } from "@/types";
 
 /**
  * Wire shape sent to POST /api/admin/products-v2/[id]/groups/apply.
@@ -32,7 +31,7 @@ export interface ApplyGroupChangesV2Result {
 }
 
 export class GroupsV2Service {
-  constructor(private supabase: SupabaseClient<Database>) {}
+  constructor(private supabase: AppSupabaseClient) {}
 
   /** Loads the full Groups panel snapshot for a v2 product (admin-only). */
   async getProductGroups(productId: string): Promise<ProductGroupsV2Snapshot> {

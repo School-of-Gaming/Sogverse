@@ -93,13 +93,15 @@ export function AuthProvider({
         return;
       }
 
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
+      // getClaims() verifies the session's JWT locally (no GoTrue round-trip).
+      // It yields the signed `sub`/`email` — exactly the AuthenticatedUser
+      // subset this context exposes.
+      const { data: claimsData } = await supabase.auth.getClaims();
+      const claims = claimsData?.claims;
 
-      if (currentUser) {
-        setUser(currentUser);
-        const userProfile = await fetchProfile(currentUser.id);
+      if (claims?.sub) {
+        setUser({ id: claims.sub, email: claims.email });
+        const userProfile = await fetchProfile(claims.sub);
         setProfile(userProfile);
       }
 
