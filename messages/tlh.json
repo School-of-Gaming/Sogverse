@@ -49,7 +49,6 @@
     "getStarted": "DaH yIqet",
     "viewDetails": "tIqel",
     "learnMore": "bIghojnIS",
-    "browseClubs": "ghom'a'mey tInej",
     "exploreClubs": "ghom'a'mey tIghoS",
     "createAccount": "Account yIchenmoH",
     "unexpectedError": "Qagh Daj 'oH",
@@ -1471,9 +1470,6 @@
     "whatsapp": "WhatsApp",
     "testing": "Qu' nI'moH",
     "settings": "ngoQmey",
-    "myGamers": "jIH toy'wI'pu'",
-    "home": "juH",
-    "myGroups": "jIH ghom'a'mey",
     "voice": "jatlh",
     "expandSidebar": "HeDmey 'an",
     "collapseSidebar": "HeDmey SoQmoH"
@@ -1589,16 +1585,6 @@
         "expires": "{date} jajvaD Huch poH SuvwI'",
         "empty": "DaH HuchHommey laD pagh.",
         "error": "Huch DIlmeH mIw vIqonchu'be'."
-      }
-    },
-    "gamers": {
-      "title": "jIH toy'wI'pu'",
-      "subtitle": "toy'wI' accountmey je qo' ghoHmey tI'ang",
-      "joined": "muv {time}",
-      "noEnrollments": "qo' ghoHmey tu'be'lu'. <link>ghom'a'mey tInej</link> toy'wI' yImuv.",
-      "empty": {
-        "title": "toy'wI'pu' tu'be'lu'",
-        "description": "ghom'a'Daq toy'wI' account yIchenmoH. puq lo'wI' pong je mu'mey lo' — bI'el."
       }
     },
     "gamerDetail": {

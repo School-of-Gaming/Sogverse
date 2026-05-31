@@ -128,7 +128,7 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
       return { kind: "non_customer" };
     }
     if (!gamers || gamers.length === 0) {
-      return { kind: "no_gamers", addGamerHref: "/parent/gamers" };
+      return { kind: "no_gamers", addGamerHref: "/parent" };
     }
     return {
       kind: "ready",

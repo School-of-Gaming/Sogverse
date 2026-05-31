@@ -49,7 +49,6 @@
     "getStarted": "Kom igång",
     "viewDetails": "Visa detaljer",
     "learnMore": "Läs mer",
-    "browseClubs": "Bläddra bland klubbar",
     "exploreClubs": "Utforska klubbar",
     "createAccount": "Skapa konto",
     "unexpectedError": "Ett oväntat fel uppstod",
@@ -1426,9 +1425,6 @@
     "whatsapp": "WhatsApp",
     "testing": "Testning",
     "settings": "Inställningar",
-    "myGamers": "Mina spelare",
-    "home": "Hem",
-    "myGroups": "Mina grupper",
     "voice": "Röst",
     "expandSidebar": "Expandera sidopanel",
     "collapseSidebar": "Minimera sidopanel"
@@ -1544,16 +1540,6 @@
         "expires": "Giltigt till {date}",
         "empty": "Inget kort sparat.",
         "error": "Kunde inte hämta betalningsmetoden."
-      }
-    },
-    "gamers": {
-      "title": "Mina spelare",
-      "subtitle": "Hantera dina spelarkonton och anmälningar",
-      "joined": "Gick med {time}",
-      "noEnrollments": "Inga aktiva anmälningar. <link>Bläddra bland klubbar</link> för att anmäla denna spelare.",
-      "empty": {
-        "title": "Inga spelare ännu",
-        "description": "Skapa ett spelarkonto genom att anmäla dig till en klubb. Ditt barn använder sitt eget användarnamn och lösenord för att logga in."
       }
     },
     "gamerDetail": {

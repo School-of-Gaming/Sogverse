@@ -26,6 +26,18 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    // TEMPORARY: the old products-v2 storefront routes (/clubs, /camps,
+    // /events + their /[id] detail pages) are retired in favor of /shop.
+    // The source is kept in the tree for reference. These redirects make the
+    // routes unreachable for everyone (signed in or out); remove this whole
+    // block as part of the full delete when /shop ships. See TODO.md.
+    return [
+      { source: "/clubs/:path*", destination: "/shop", permanent: false },
+      { source: "/camps/:path*", destination: "/shop", permanent: false },
+      { source: "/events/:path*", destination: "/shop", permanent: false },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

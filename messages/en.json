@@ -49,7 +49,6 @@
     "getStarted": "Get Started",
     "viewDetails": "View Details",
     "learnMore": "Learn More",
-    "browseClubs": "Browse Clubs",
     "exploreClubs": "Explore Clubs",
     "createAccount": "Create Account",
     "unexpectedError": "An unexpected error occurred",
@@ -1426,9 +1425,6 @@
     "whatsapp": "WhatsApp",
     "testing": "Testing",
     "settings": "Settings",
-    "myGamers": "My Gamers",
-    "home": "Home",
-    "myGroups": "My Groups",
     "voice": "Voice",
     "expandSidebar": "Expand sidebar",
     "collapseSidebar": "Collapse sidebar"
@@ -1544,16 +1540,6 @@
         "expires": "Expires {date}",
         "empty": "No card on file.",
         "error": "Couldn't load payment method."
-      }
-    },
-    "gamers": {
-      "title": "My Gamers",
-      "subtitle": "Manage your gamer accounts and enrolments",
-      "joined": "Joined {time}",
-      "noEnrollments": "No active enrolments. <link>Browse clubs</link> to enrol this gamer.",
-      "empty": {
-        "title": "No gamers yet",
-        "description": "Create a gamer account by enrolling in a club. Your child will use their own username and password to log in."
       }
     },
     "gamerDetail": {

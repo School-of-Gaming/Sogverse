@@ -49,7 +49,6 @@
     "getStarted": "Aloita tästä",
     "viewDetails": "Näytä tiedot",
     "learnMore": "Lue lisää",
-    "browseClubs": "Selaa kerhoja",
     "exploreClubs": "Tutustu kerhoihin",
     "createAccount": "Luo tili",
     "unexpectedError": "Odottamaton virhe tapahtui",
@@ -1426,9 +1425,6 @@
     "whatsapp": "WhatsApp",
     "testing": "Testaus",
     "settings": "Asetukset",
-    "myGamers": "Pelaajani",
-    "home": "Etusivu",
-    "myGroups": "Ryhmäni",
     "voice": "Ääni",
     "expandSidebar": "Laajenna sivupalkki",
     "collapseSidebar": "Pienennä sivupalkki"
@@ -1544,16 +1540,6 @@
         "expires": "Voimassa {date} asti",
         "empty": "Ei tallennettua korttia.",
         "error": "Maksutavan lataaminen epäonnistui."
-      }
-    },
-    "gamers": {
-      "title": "Pelaajani",
-      "subtitle": "Hallitse pelaajatilejä ja ilmoittautumisia",
-      "joined": "Liittynyt {time}",
-      "noEnrollments": "Ei aktiivisia ilmoittautumisia. <link>Selaa kerhoja</link> ilmoittaaksesi tämän pelaajan.",
-      "empty": {
-        "title": "Ei vielä pelaajia",
-        "description": "Luo pelaajatili ilmoittautumalla kerhoon. Lapsesi kirjautuu omalla käyttäjänimellä ja salasanalla."
       }
     },
     "gamerDetail": {
