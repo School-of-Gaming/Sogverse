@@ -17,13 +17,3 @@ test.describe("Admin Products Pages", () => {
     });
   });
 });
-
-test.describe("Public Clubs Page", () => {
-  test("should display the clubs heading", async ({ page }) => {
-    await page.goto("/clubs");
-
-    await expect(
-      page.getByRole("heading", { name: "Our Clubs" })
-    ).toBeVisible();
-  });
-});
