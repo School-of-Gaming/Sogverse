@@ -49,6 +49,12 @@ interface FamilyProfileSelectorProps {
    * gamer→parent switch lands); the My Family section never auto-opens.
    */
   autoOpenAddGamerFromUrl?: boolean;
+  /**
+   * Server-prefetched family list to seed React Query (see `useFamily`). The
+   * /select-profile RSC passes it so the selector paints fully populated on
+   * first frame; omitted for in-session mounts (dialogs), which load client-side.
+   */
+  initialFamily?: FamilyMember[];
 }
 
 /**
@@ -65,10 +71,11 @@ interface FamilyProfileSelectorProps {
 export function FamilyProfileSelector({
   onSelfClick,
   autoOpenAddGamerFromUrl = false,
+  initialFamily,
 }: FamilyProfileSelectorProps = {}) {
   const t = useTranslations("family");
   const { user, profile } = useAuth();
-  const { data: family, isLoading, error } = useFamily();
+  const { data: family, isLoading, error } = useFamily({ initialData: initialFamily });
   const [committingTargetId, setCommittingTargetId] = useState<string | null>(null);
   const [switchError, setSwitchError] = useState<string | null>(null);
   const [addGamerOpen, setAddGamerOpen] = useState(false);
