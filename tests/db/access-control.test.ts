@@ -12,6 +12,10 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "get_user_role",
   "is_admin",
   "is_parent_of",
+  // RLS predicate for product-scoped read policies (00069). Evaluated in the
+  // caller's context by the read_*_via_product policies (TO anon,
+  // authenticated), so the role must hold EXECUTE — same as get_user_role.
+  "can_read_product",
   "get_my_gamers",
   "get_my_parents",
   "get_visible_products",
@@ -35,6 +39,10 @@ const AUTHENTICATED_ALLOWLIST = new Set([
  */
 const ANON_ALLOWLIST = new Set([
   "get_visible_products",
+  // See AUTHENTICATED_ALLOWLIST: the child-table read policies are
+  // TO anon, authenticated, so anon evaluates can_read_product too (it
+  // returns true only for the public visible-published branch).
+  "can_read_product",
 ]);
 
 describe("Access Control", () => {

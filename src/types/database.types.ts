@@ -1605,6 +1605,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      can_read_product: { Args: { p_product_id: string }; Returns: boolean }
       cancel_participation_v2: {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
