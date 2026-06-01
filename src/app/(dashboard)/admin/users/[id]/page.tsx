@@ -1,21 +1,92 @@
 import Link from "next/link";
-import { ArrowLeft, Users } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Package, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
+import { resolveLocale } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { NavChevron } from "@/components/ui/nav-chevron";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
-import { computeAge, formatDate } from "@/lib/utils";
+import { cn, computeAge, formatDate } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
 import { GamerService } from "@/services/gamers";
 import { MinecraftService } from "@/services/minecraft";
+import { ParticipationsService } from "@/services/participations";
+import type { AdminGamerParticipationRow } from "@/services/participations";
 import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
+import type { ParticipationStatus, ProductTypeV2 } from "@/types";
+
+/** Status → semantic badge classes (no raw Tailwind colors — see CLAUDE.md). */
+const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
+  active: "bg-success text-success-foreground",
+  waitlisted: "bg-warning text-warning-foreground",
+  reserving: "bg-muted text-muted-foreground",
+  completed: "bg-secondary text-secondary-foreground",
+};
+
+/**
+ * One assigned-product row: product name + assigned group, with a status
+ * badge, linking to that product's type-specific admin detail page.
+ *
+ * An *active* participation with no group is unplaced — the gamer has paid in
+ * but isn't in a cohort yet, so the admin needs to assign one. That row gets a
+ * warning treatment to flag the action. Waitlisted/awaiting-payment/completed
+ * rows have no group by design, so those stay neutral.
+ */
+function AssignedProductRow({
+  productType,
+  productId,
+  name,
+  groupName,
+  unassignedLabel,
+  needsGroupLabel,
+  status,
+  statusLabel,
+}: {
+  productType: ProductTypeV2;
+  productId: string;
+  name: string;
+  groupName: string | null;
+  unassignedLabel: string;
+  needsGroupLabel: string;
+  status: ParticipationStatus;
+  statusLabel: string;
+}) {
+  const needsGroup = status === "active" && groupName === null;
+  return (
+    <Link
+      href={ROUTES.admin.productV2(productType, productId)}
+      className={cn(
+        "group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground",
+        needsGroup && "border-warning bg-warning/5",
+      )}
+    >
+      <div className="min-w-0">
+        <p className="truncate text-sm font-medium">{name}</p>
+        {needsGroup ? (
+          <p className="flex items-center gap-1 truncate text-xs font-medium text-warning">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            {needsGroupLabel}
+          </p>
+        ) : (
+          <p className="truncate text-xs text-muted-foreground">
+            {groupName ?? unassignedLabel}
+          </p>
+        )}
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <Badge className={STATUS_BADGE_STYLES[status]}>{statusLabel}</Badge>
+        <NavChevron size="sm" />
+      </div>
+    </Link>
+  );
+}
 
 export default async function AdminUserDetailPage({
   params,
@@ -70,6 +141,60 @@ export default async function AdminUserDetailPage({
   const showMinecraft = isGamer || isGedu;
   const mcUsername = minecraftAccount?.minecraft_username ?? null;
   const mcUuid = minecraftAccount?.minecraft_uuid ?? null;
+
+  // Products this user is assigned to. For a gamer, their own participations;
+  // for a parent, every participation across their linked gamers (grouped per
+  // child below). Admin RLS (admin_full_access_participations_v2) permits the
+  // cross-user read. Fetched after the block above because the parent case
+  // needs the linked-gamer ids first.
+  const assignedGamerIds = isGamer
+    ? [userId]
+    : isCustomer
+      ? linkedGamers.map((g) => g.id)
+      : [];
+  const assignedParticipations = assignedGamerIds.length
+    ? await new ParticipationsService(supabase)
+        .getParticipationsForGamers(assignedGamerIds)
+        .catch(() => [] as AdminGamerParticipationRow[])
+    : [];
+
+  const participationsByGamer = new Map<string, AdminGamerParticipationRow[]>();
+  for (const row of assignedParticipations) {
+    const list = participationsByGamer.get(row.gamer_id) ?? [];
+    list.push(row);
+    participationsByGamer.set(row.gamer_id, list);
+  }
+
+  const uiLocale = resolveLocale(locale);
+  const statusLabels: Record<ParticipationStatus, string> = {
+    active: t("participationStatus.active"),
+    waitlisted: t("participationStatus.waitlisted"),
+    reserving: t("participationStatus.reserving"),
+    completed: t("participationStatus.completed"),
+  };
+
+  const renderAssignedProducts = (rows: AdminGamerParticipationRow[]) =>
+    rows
+      .filter((row) => row.product !== null)
+      .map((row) => {
+        const product = row.product!;
+        const name =
+          resolveTranslation(product.product_translations_v2, uiLocale)?.name.trim() ||
+          t("untitledProduct");
+        return (
+          <AssignedProductRow
+            key={row.id}
+            productType={product.product_type}
+            productId={product.id}
+            name={name}
+            groupName={row.group?.name ?? null}
+            unassignedLabel={t("unassignedGroup")}
+            needsGroupLabel={t("needsGroup")}
+            status={row.status}
+            statusLabel={statusLabels[row.status]}
+          />
+        );
+      });
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -130,31 +255,50 @@ export default async function AdminUserDetailPage({
           </CardHeader>
           <CardContent>
             {isCustomer && linkedGamers.length > 0 && (
-              <div className="space-y-2">
-                {linkedGamers.map((gamer) => (
-                  <Link
-                    key={gamer.id}
-                    href={ROUTES.admin.user(gamer.id)}
-                    className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <Identicon id={gamer.id} size={32} />
-                      </Avatar>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {gamer.first_name || t('unnamedGamer')}
+              <div className="space-y-4">
+                {linkedGamers.map((gamer) => {
+                  const rows = participationsByGamer.get(gamer.id) ?? [];
+                  return (
+                    <div key={gamer.id} className="space-y-2">
+                      <Link
+                        href={ROUTES.admin.user(gamer.id)}
+                        className="group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <Identicon id={gamer.id} size={32} />
+                          </Avatar>
+                          <div>
+                            <p className="text-sm font-medium">
+                              {gamer.first_name || t('unnamedGamer')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge className={ROLE_BADGE_STYLES.gamer}>
+                            {c("roleGamer")}
+                          </Badge>
+                          <NavChevron size="sm" />
+                        </div>
+                      </Link>
+
+                      {/* This gamer's assigned products, nested under the link */}
+                      <div className="ml-4 space-y-2 border-l border-border pl-4">
+                        <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                          <Package className="h-3.5 w-3.5" />
+                          {t('assignedProducts')}
                         </p>
+                        {rows.length > 0 ? (
+                          renderAssignedProducts(rows)
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {t('noAssignedProducts')}
+                          </p>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={ROLE_BADGE_STYLES.gamer}>
-                        {c("roleGamer")}
-                      </Badge>
-                      <NavChevron size="sm" />
-                    </div>
-                  </Link>
-                ))}
+                  );
+                })}
               </div>
             )}
             {isCustomer && linkedGamers.length === 0 && (
@@ -190,6 +334,28 @@ export default async function AdminUserDetailPage({
                   </Link>
                 ))}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* A gamer's own assigned products. (For parents, these are nested per
+          child inside the Linked Gamers card above — no separate section.) */}
+      {isGamer && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-primary" />
+              {t('assignedProducts')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {participationsByGamer.get(userId)?.length ? (
+              <div className="space-y-2">
+                {renderAssignedProducts(participationsByGamer.get(userId)!)}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">{t('noAssignedProducts')}</p>
             )}
           </CardContent>
         </Card>

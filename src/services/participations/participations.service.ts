@@ -154,6 +154,27 @@ export interface MyFamilySubRow {
 }
 
 /**
+ * Row shape returned by `getParticipationsForGamers()`. Powers the admin
+ * user-detail page's "Assigned products" surface, where an admin views every
+ * product a gamer (or a parent's gamers) is signed up to — across all statuses
+ * (active / waitlisted / reserving / completed), so support can see exactly
+ * what state each gamer is in. Reachable only for admins via the
+ * `admin_full_access_participations_v2` RLS policy.
+ */
+export type AdminGamerParticipationRow = Pick<
+  Participation,
+  "id" | "gamer_id" | "status" | "signed_up_at"
+> & {
+  product: {
+    id: string;
+    product_type: ProductTypeV2;
+    product_translations_v2: ProductTranslationV2[];
+  } | null;
+  /** Assigned cohort, or `null` for waitlisted/unassigned participations. */
+  group: { name: string } | null;
+};
+
+/**
  * Per-product participation counts for the browse + detail surfaces.
  */
 export interface ParticipationCounts {
@@ -228,6 +249,42 @@ export class ParticipationsService {
     if (error) throw error;
 
     return (data as RawMyParticipationRow[]).map(toMyParticipationRow);
+  }
+
+  /**
+   * Admin-only: every participation belonging to the given gamers, across all
+   * statuses, joined with product chrome (for the name + the type→admin-route
+   * link) and the assigned group name. Returns `[]` for empty input.
+   *
+   * Only reachable under the `admin_full_access_participations_v2` RLS policy —
+   * this is wired exclusively to the admin user-detail "Assigned products"
+   * surface. Ordered by gamer then newest signup so the page can group per
+   * child with a stable within-child order.
+   */
+  async getParticipationsForGamers(
+    gamerIds: string[],
+  ): Promise<AdminGamerParticipationRow[]> {
+    if (gamerIds.length === 0) return [];
+
+    const { data, error } = await this.supabase
+      .from("participations_v2")
+      .select(
+        `
+          id, gamer_id, status, signed_up_at,
+          product:products_v2(
+            id, product_type,
+            product_translations_v2(*)
+          ),
+          group:product_groups_v2(name)
+        `,
+      )
+      .in("gamer_id", gamerIds)
+      .order("gamer_id", { ascending: true })
+      .order("signed_up_at", { ascending: false });
+
+    if (error) throw error;
+
+    return data as AdminGamerParticipationRow[];
   }
 
   /**

@@ -695,6 +695,17 @@
       "unnamedGamer": "Unnamed Gamer",
       "unnamedUser": "Unnamed User",
       "noConnectedGamers": "No connected gamers",
+      "assignedProducts": "Assigned Products",
+      "noAssignedProducts": "No assigned products",
+      "unassignedGroup": "No group assigned",
+      "needsGroup": "Needs group assignment",
+      "untitledProduct": "Untitled product",
+      "participationStatus": {
+        "active": "Active",
+        "waitlisted": "Waitlisted",
+        "reserving": "Awaiting payment",
+        "completed": "Completed"
+      },
       "inviteNewGedu": "Invite New Gedu",
       "sendInvitation": "Send an invitation email to a new game educator",
       "newGeduInvitation": "New Gedu Invitation",

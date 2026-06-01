@@ -3,6 +3,7 @@ export type {
   MyParticipationRow,
   MyUpcomingSessionRow,
   MyFamilySubRow,
+  AdminGamerParticipationRow,
   ParticipationCounts,
   CreateParticipationInput,
   CreateParticipationResponse,
