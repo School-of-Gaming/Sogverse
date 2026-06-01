@@ -1,12 +1,12 @@
 # Voice Chat Architecture
 
-Daily.co-powered spatial voice (and optional video) chat for v2 product groups, with screen sharing, per-participant volume control, and moderator controls.
+Daily.co-powered spatial voice (and optional video) chat for product groups, with screen sharing, per-participant volume control, and moderator controls.
 
 > Looking for the on-the-fly voice rooms admins/gedus can spin up and share via short URL? See [instant-voice-rooms.md](./instant-voice-rooms.md). This document covers the schedule-driven, group-linked voice rooms.
 
 ## Overview
 
-Voice rooms are linked 1:1 to **v2 product groups** (`product_groups_v2`) and a specific session window: each group + session combination gets a dedicated Daily.co room that opens/closes automatically based on the product's weekly schedule. Access control is membership-based: gamers can only join rooms for groups they have an active `participations_v2` row in; gedus can join any group on a product they're assigned to (cross-group voice mobility, per the redesign §4.10); admins pass through.
+Voice rooms are linked 1:1 to **product groups** (`product_groups`) and a specific session window: each group + session combination gets a dedicated Daily.co room that opens/closes automatically based on the product's weekly schedule. Access control is membership-based: gamers can only join rooms for groups they have an active `participations` row in; gedus can join any group on a product they're assigned to (cross-group voice mobility, per `products-architecture.md` §4.10); admins pass through.
 
 Gamers reach a session from the dashboard `NextSessionCard` — clicking "Join Voice" while the session window is open navigates to `/voice/group/{groupId}` and `VoiceSessionPage` auto-joins. Gedus reach the same room from their dashboard `GroupCard` for the group they're assigned to (sister-group access in the same product is authorized but only surfaced from the group detail page). The spatial canvas lets participants drag avatars into zones (breakout rooms, broadcast) for zone-based audio isolation.
 
@@ -16,7 +16,7 @@ Gamers reach a session from the dashboard `NextSessionCard` — clicking "Join V
 
 ```
 Pages
-└── /voice/group/[id]  → VoiceSessionPage (auto-joins by product_groups_v2.id)
+└── /voice/group/[id]  → VoiceSessionPage (auto-joins by product_groups.id)
 
 (Instant rooms — separate flow, see instant-voice-rooms.md
  /admin/voice and /gedu host CreateInstantRoomCard.)
@@ -73,7 +73,7 @@ The provider owns positions in a shared `positionsRef` (`Map<string, SpatialPosi
 
 ## No Database Table — Daily.co Is Sole Source of Truth
 
-v2 voice rooms are not persisted to Postgres. There is no `voice_rooms_v2` table, no `daily_room_name` column on `product_groups_v2`, and no scheduler that pre-creates rooms. Everything the token endpoint needs to decide "is this room open, and what's its name" comes from `product_groups_v2`, `schedule_slots_v2`, and the current wall clock:
+Voice rooms are not persisted to Postgres. There is no `voice_rooms` table, no `daily_room_name` column on `product_groups`, and no scheduler that pre-creates rooms. Everything the token endpoint needs to decide "is this room open, and what's its name" comes from `product_groups`, `schedule_slots`, and the current wall clock:
 
 - **Room name** is content-addressable via `groupVoiceRoomName({groupId, windowOpensAt, timezone})` in `src/lib/daily.ts`. Format: `g-{groupId}-{YYYYMMDDHHMM}` where the timestamp is the window's open time formatted in the product's timezone. Same group + same session window → same room name, derived independently by every joiner with no coordination. Different weeks or different slots produce distinct names. Both pieces are load-bearing: the full UUID rules out cross-group collisions under `getOrCreateDailyRoom` (two groups sharing a name would silently land in each other's call), and the timestamp rules out cross-session collisions (a stale prior-session room could otherwise be returned to a new joiner with its already-passed `exp`).
 - **Room existence** is checked at join time via Daily.co's GET endpoint. If the room doesn't exist yet, the helper creates it on demand — see "Daily.co Room Lifecycle" below.
@@ -83,7 +83,7 @@ This means new product groups don't need any voice-room provisioning step. Likew
 
 ## Schedule-Driven Room Windows
 
-Each group inherits its schedule from one or more `schedule_slots_v2` rows on the linked product (each slot has `weekday`, `start_time`, `duration_minutes`, plus the product's `timezone`). A group with two slots in a week (e.g. Mon 11 PM and Tue 5 AM) has two distinct session windows — and therefore two distinct Daily room names — per week.
+Each group inherits its schedule from one or more `schedule_slots` rows on the linked product (each slot has `weekday`, `start_time`, `duration_minutes`, plus the product's `timezone`). A group with two slots in a week (e.g. Mon 11 PM and Tue 5 AM) has two distinct session windows — and therefore two distinct Daily room names — per week.
 
 **Session window** = `[sessionStart - BEFORE, sessionEnd + AFTER]` (configurable in `src/lib/constants/voice.ts`).
 
@@ -97,25 +97,25 @@ The `computeSessionWindow()` utility (in `src/lib/session-schedule.ts`) determin
 
 ### Token Endpoint (`POST /api/voice/token`)
 
-Request: `{ groupId: product_groups_v2.id }`. Gates run in this order:
+Request: `{ groupId: product_groups.id }`. Gates run in this order:
 
 1. **Role gate.** `requireRole(["gedu", "gamer", "admin"])` — customers are blocked.
 
 2. **Group existence + remoteness.** The group must exist and its product must be `is_remote = true`. In-person products have no voice room; the route returns 404 (matching the dashboard's "no destination" stance).
 
 3. **Membership gate.**
-   - **Gamer** — must have an active row in `participations_v2` for this `(group_id, gamer_id)`.
-   - **Gedu** — must have a row in `gedu_group_assignments_v2` for this `(product_id, gedu_id)`. The check is on `product_id`, not `group_id`, per the redesign's cross-group voice mobility rule (§4.10): a gedu assigned to a product can drop into any of its groups' rooms.
+   - **Gamer** — must have an active row in `participations` for this `(group_id, gamer_id)`.
+   - **Gedu** — must have a row in `gedu_group_assignments` for this `(product_id, gedu_id)`. The check is on `product_id`, not `group_id`, per the cross-group voice mobility rule (`products-architecture.md` §4.10): a gedu assigned to a product can drop into any of its groups' rooms.
    - **Admin** — bypass.
 
 4. **Session window gate.** Iterate all slots; at least one must currently be inside its open window. The first open slot's `windowOpensAt` / `windowClosesAt` drives the room name and the token's `exp`. No role bypasses the window — admins/gedus follow the same calendar as gamers.
 
 5. **Token issuance.** `is_owner = role !== 'gamer'` (admins and gedus are moderators; gamers are not). Token `exp = windowClosesAt + TOKEN_EXPIRY_GRACE_SECONDS`. When the token expires Daily.co auto-disconnects the participant.
 
-### What v2 deliberately does **not** check
+### What the token endpoint deliberately does **not** check
 
-- **No mid-session enrollment gate.** v1 blocked gamers whose `enrollment.created_at` was after the current session started — load-bearing for the sorg-token billing model where the first charge had to land on the next session, not the in-progress one. v2's credit-based billing has no equivalent dependency, so the gate is gone. Active membership is the binary access predicate; a gamer who joined 30s ago gets in just like one who joined a week ago.
-- **No always-open "lounge" rooms.** v1's Admin Lounge and Gedu Lounge are gone. If you need an ad-hoc room outside a scheduled session, use the instant-rooms flow (see `instant-voice-rooms.md`).
+- **No mid-session enrollment gate.** An earlier Sorg-token system blocked gamers whose `enrollment.created_at` was after the current session started — load-bearing for the token billing model where the first charge had to land on the next session, not the in-progress one. Credit-based billing has no equivalent dependency, so the gate is gone. Active membership is the binary access predicate; a gamer who joined 30s ago gets in just like one who joined a week ago.
+- **No always-open "lounge" rooms.** The old Admin Lounge and Gedu Lounge are gone. If you need an ad-hoc room outside a scheduled session, use the instant-rooms flow (see `instant-voice-rooms.md`).
 
 ### RPC Permissions
 
@@ -139,9 +139,9 @@ There is no provisioning step when a product group is added. The first joiner to
 2. Otherwise `POST /rooms` — if Daily creates it, use it.
 3. If the POST loses a duplicate-name race (two simultaneous first-joiners both saw "not found" before either POST landed), re-GET and use the winner's room.
 
-Daily.co returns the duplicate-name error as `400 invalid-request-error` with the literal info string `a room named X already exists` — not the 409 you'd expect — so callers must use the `isDailyDuplicateRoomError(err)` helper rather than branching on status alone. This was a bug in v1 (and briefly in v2 before being fixed): the swallow checked `status === 409`, never matched, and every non-first joiner hit a 500.
+Daily.co returns the duplicate-name error as `400 invalid-request-error` with the literal info string `a room named X already exists` — not the 409 you'd expect — so callers must use the `isDailyDuplicateRoomError(err)` helper rather than branching on status alone. An earlier version of this swallow checked `status === 409`, never matched, and every non-first joiner hit a 500.
 
-**Why get-or-create and not pre-create-on-window-open:** the pre-create path needs a cron/scheduler, gives no user-visible benefit (Daily room creation is sub-second), and the first-joiner latency cost of an extra GET is negligible. v1 had a related pattern (rooms created when a group was added via `commit_group_changes`); it was leftover infrastructure with no remaining users by the v2 cutover and was ripped out in migration 00060.
+**Why get-or-create and not pre-create-on-window-open:** the pre-create path needs a cron/scheduler, gives no user-visible benefit (Daily room creation is sub-second), and the first-joiner latency cost of an extra GET is negligible. An earlier pattern pre-created rooms when a group was added via `commit_group_changes`; it was leftover infrastructure with no remaining users and was ripped out in migration 00060.
 
 ### Cleanup
 
@@ -259,16 +259,16 @@ v1 chat ships with no moderation (see "In-Call Chat"). Because gamers are childr
 **Message rate limiting.** Outgoing/incoming chat has no rate limit. An authorized member (chat needs a valid meeting token, so this is an in-room participant, not an anonymous attacker) running a scripted `daily-js` client could flood many small messages. Per-message *size* is already bounded (Daily's transport cap + our receive-side `slice(0, 500)`) and the in-memory log is capped (`MAX_MESSAGES = 200`), so memory is safe — but high message *rate* causes render churn and a wall of spam on every other client. The effective fix follows the same "don't trust the sender, enforce on receipt" principle as the length cap: a receive-side limiter in `use-chat.ts` that drops/coalesces messages from any `fromId` exceeding N/sec, which bounds the churn on every victim regardless of the attacker's client. (Today the only backstop is Daily's own per-connection limits.)
 
 ### Persisted chat history
-Chat is currently ephemeral app-messages, so late joiners see nothing and there's no record. A `voice_messages_v2` table + Supabase Realtime would add scrollback, late-join backfill, and the audit trail moderation wants — at the cost of breaking the "no voice DB table" principle (new table, RLS, subscription). Deferred as out of scope for v1.
+Chat is currently ephemeral app-messages, so late joiners see nothing and there's no record. A `voice_messages` table + Supabase Realtime would add scrollback, late-join backfill, and the audit trail moderation wants — at the cost of breaking the "no voice DB table" principle (new table, RLS, subscription). Deferred as out of scope for v1.
 
 ### Gedu UI for scheduled rooms
-The token API already accepts gedus on v2 scheduled rooms (gated by `gedu_group_assignments_v2`), but the gedu dashboard has no join link for an upcoming session — a gedu has to know the URL to join. Surfacing this needs a "your sessions" list on the gedu dashboard analogous to the gamer's `NextSessionCard`.
+The token API already accepts gedus on scheduled rooms (gated by `gedu_group_assignments`), but the gedu dashboard has no join link for an upcoming session — a gedu has to know the URL to join. Surfacing this needs a "your sessions" list on the gedu dashboard analogous to the gamer's `NextSessionCard`.
 
 ### Persistent lock state across rejoins
 Currently lock state is ephemeral — if a locked gamer disconnects and rejoins, they get a fresh token with full permissions. A server-side lock store (e.g., in Supabase or Redis) + restricted token issuance would make locks survive reconnects.
 
 ### Add participant tracking to the database
-Currently participant presence is only tracked in Daily.co's runtime. Persisting join/leave events to a `voice_participations_v2` table would enable session history, analytics, and participant count display without joining the call.
+Currently participant presence is only tracked in Daily.co's runtime. Persisting join/leave events to a `voice_participations` table would enable session history, analytics, and participant count display without joining the call.
 
 ### Volume amplification above 100%
 Currently capped at 100% due to a Chrome limitation with WebRTC MediaStream sources (see `docs/chrome-webrtc-volume-bug.md`). If Chrome fixes [the underlying bug](https://issues.chromium.org/issues/40184923), a GainNode could be re-introduced in the analyser pipeline for amplification — but note that the analyser pipeline is intentionally separate from playback (see "Audio Pipeline" above), so a GainNode-based approach would require re-evaluating the architecture. Alternatively, if Daily.co adds per-subscriber server-side audio processing to their SFU, that would bypass the client-side limitation entirely.

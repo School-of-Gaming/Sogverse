@@ -15,7 +15,7 @@ import {
  * The hourly cron `process_session_credits` walks every active
  * participation on a paid consumer-club product, finds the session-start
  * instant that fell in the last hour, and applies the four-rule motion
- * table from docs/products-redesign.md §4.5:
+ * table from docs/products-architecture.md §4.5:
  *
  *   1. Sub-covered + cancelled in window  → +1 credit  (sub_cancel_credit)
  *   2. Sub-covered + no cancel            →  0         (sub_covered)

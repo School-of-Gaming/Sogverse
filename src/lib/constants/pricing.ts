@@ -1,4 +1,4 @@
-// Platform-wide pricing discounts per docs/products-redesign.md §4.5.
+// Platform-wide pricing discounts per docs/products-architecture.md §4.5.
 //
 // The admin only ever enters the base price_per_session and price_per_month
 // on a product. The derived prices (bundles, quarterly/yearly subs, family
@@ -15,7 +15,7 @@
  *
  * Discounts sit *below* the comparable subscription tier so that any sub
  * beats any bundle of the same duration — see the commitment ladder in
- * docs/products-redesign.md §4.5a and `SUBSCRIPTION_DISCOUNTS` below.
+ * docs/products-architecture.md §4.5a and `SUBSCRIPTION_DISCOUNTS` below.
  */
 export const BUNDLE_DISCOUNTS: Record<number, number> = {
   1: 0,

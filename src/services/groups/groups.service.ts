@@ -33,7 +33,7 @@ export interface ApplyGroupChangesResult {
 export class GroupsService {
   constructor(private supabase: AppSupabaseClient) {}
 
-  /** Loads the full Groups panel snapshot for a v2 product (admin-only). */
+  /** Loads the full Groups panel snapshot for a product (admin-only). */
   async getProductGroups(productId: string): Promise<ProductGroupsSnapshot> {
     const { data, error } = await this.supabase.rpc(
       "get_product_groups_with_details",
@@ -53,11 +53,10 @@ export class GroupsService {
    * route uses the user-context client from `requireRole` (no admin client
    * needed today).
    *
-   * If/when v2 grows email or Daily.co provisioning around the RPC (mirroring
-   * the v1 route at `src/app/api/admin/products/[id]/groups/apply/route.ts`),
-   * the route will need `createAdminClient()` to read product/profile rows
-   * and provision rooms — same pattern as v1. The RPC call itself doesn't
-   * change.
+   * If/when the apply route grows email or Daily.co provisioning around the
+   * RPC (mirroring the legacy provisioning logic), the route will need
+   * `createAdminClient()` to read product/profile rows and provision rooms.
+   * The RPC call itself doesn't change.
    */
   async applyChanges(
     productId: string,

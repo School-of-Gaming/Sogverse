@@ -1,6 +1,5 @@
-// Constants specific to the v2 participation lifecycle.
-// Pricing/discount constants live in src/lib/constants/pricing.ts and are
-// shared with the existing v1 paths.
+// Constants specific to the participation lifecycle.
+// Pricing/discount constants live in src/lib/constants/pricing.ts.
 
 /**
  * Stripe Checkout session lifetime. Stripe enforces a 30-minute minimum on

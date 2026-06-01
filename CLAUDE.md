@@ -118,9 +118,9 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 ### UI Component Reference
 A living style guide is available at `/admin/ui-components` (admin login required). It shows every component variant, composite patterns, and the color palette. **Reference this page before creating new UI patterns.** The source at `src/app/(dashboard)/admin/ui-components/page.tsx` serves as copy-paste examples.
 
-### Customer Enrollment
+### Customer Enrollment & Billing
 
-See `docs/customer-enrollment-architecture.md` for the enrollment flow, refund logic, weekly charge cron, and component map.
+See `docs/products-architecture.md` for the purchase / participation flow, the billing model (session bundles + family subscriptions), refund windows, and the session-credit cron.
 
 ### Voice Chat (Daily.co)
 
@@ -181,7 +181,7 @@ type _Generated = Database["public"]["Functions"]["my_rpc"]["Returns"][number];
 export type MyType = Omit<_Generated, "nullable_col"> & { nullable_col: string | null };
 ```
 
-**This applies to `.rpc()` returns and CHECK constraints — NOT to embedded `.from().select()` joins.** PostgREST joins are type-inferable, so a hand-written row shape + `as` cast there just throws away protection the generator already gives you. Instead, define the query in a standalone builder and derive the row type from it: `QueryData<ReturnType<typeof builder>>[number]` (import `QueryData` from `@supabase/supabase-js`). No hand-written type, no cast, and the select string and type can't drift. The one thing inference can't see is FK nullability — a to-one embed is typed `T | null` even when the FK column is `NOT NULL`. Add `!inner` to that embed (`product:products_v2!inner(...)`) to both mirror the constraint and recover the non-null type. See `getParticipationsForGamers` in `participations.service.ts`.
+**This applies to `.rpc()` returns and CHECK constraints — NOT to embedded `.from().select()` joins.** PostgREST joins are type-inferable, so a hand-written row shape + `as` cast there just throws away protection the generator already gives you. Instead, define the query in a standalone builder and derive the row type from it: `QueryData<ReturnType<typeof builder>>[number]` (import `QueryData` from `@supabase/supabase-js`). No hand-written type, no cast, and the select string and type can't drift. The one thing inference can't see is FK nullability — a to-one embed is typed `T | null` even when the FK column is `NOT NULL`. Add `!inner` to that embed (`product:products!inner(...)`) to both mirror the constraint and recover the non-null type. See `getParticipationsForGamers` in `participations.service.ts`.
 
 ### Function & Table Access Control
 

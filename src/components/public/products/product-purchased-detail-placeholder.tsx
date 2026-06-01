@@ -11,7 +11,7 @@ import type { MyParticipationRow, MyFamilySubRow } from "@/services/participatio
 import type { ProductType } from "@/types";
 
 // Intentionally unstyled placeholder for the post-purchase detail view. The
-// real page is out of scope for the v2-stripe-participations branch (see
+// real page is out of scope for now (see
 // docs/products-architecture.md), but we need *something* here to verify
 // that webhook fulfillment landed the right state in the DB and to anchor
 // the route shape — same `/clubs/[id]` URL, branch on whether the parent

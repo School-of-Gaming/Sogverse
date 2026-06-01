@@ -150,7 +150,7 @@ export function ProductBrowsePage({
 
   // Gedu rail: products this gedu is assigned to (via gedu_group_assignments).
   // Parallel to the parent's purchased rail above; filtered to the types this
-  // page surfaces. Step one of the gedu products v2 rollout — clicking a card
+  // page surfaces. Clicking a card
   // navigates to the same /clubs/[id] (or /camps, /events) route the parent
   // uses, where the detail page branches on role.
   const { data: geduAssignedProducts, isLoading: geduAssignedLoading } =

@@ -193,7 +193,7 @@ export async function POST(request: Request) {
   const stripeCustomerId = await getOrCreateStripeCustomer(admin, user.id);
 
   // Subscription branch: find-or-create the family Stripe sub.
-  // Per docs/products-redesign.md §4.5b — one sub per (customer, frequency,
+  // Per docs/products-architecture.md §4.5b — one sub per (customer, frequency,
   // currency); items per (gamer, club). If a sub already exists at this
   // (frequency, currency), add an item to it inline. No Stripe Checkout.
   if (isSubscription) {
@@ -317,7 +317,7 @@ export async function POST(request: Request) {
       ? returnPath
       : "/";
   // Success lands on the product detail page, which now branches to the
-  // purchased-detail view (placeholder for the v2 phase) once the webhook
+  // purchased-detail view (placeholder for now) once the webhook
   // flips the reservation to active. There's a 1–3s race window between
   // Stripe's redirect and the webhook landing — during that window the
   // detail page renders the signup panel briefly, then snaps to the

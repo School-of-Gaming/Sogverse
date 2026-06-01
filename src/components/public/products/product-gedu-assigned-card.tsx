@@ -21,7 +21,7 @@ import {
 // the gedu has been assigned to via gedu_group_assignments. Intentionally
 // smaller in surface than the parent's purchased card: no gamer chip, no
 // balance line, no registration state. Step one of the Gedu product-details
-// rollout (docs/products-redesign.md) — the rail entry + a click target into
+// rollout (docs/products-architecture.md) — the rail entry + a click target into
 // the gedu detail body.
 //
 // Single-file adapter + inline markup. The split-into-View-and-adapter shape
