@@ -740,6 +740,17 @@
       "unnamedGamer": "pong Hutlh toy'wI'",
       "unnamedUser": "pong Hutlh lo'wI'",
       "noConnectedGamers": "toy'wI'pu' jonbe'lu'",
+      "assignedProducts": "Dochmey nobbogh",
+      "noAssignedProducts": "Dochmey noblu'pu'be'",
+      "unassignedGroup": "ghom Sambe'",
+      "needsGroup": "ghom poQlu'",
+      "untitledProduct": "Doch pong Hutlh",
+      "participationStatus": {
+        "active": "vangtaH",
+        "waitlisted": "loStaH",
+        "reserving": "DIl loStaH",
+        "completed": "rInpu'"
+      },
       "inviteNewGedu": "Gedu chu' yIbej",
       "sendInvitation": "Gedu chu'vaD QIn ngeH",
       "newGeduInvitation": "Gedu chu' bejmoH",

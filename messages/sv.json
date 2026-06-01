@@ -695,6 +695,17 @@
       "unnamedGamer": "Namnlös spelare",
       "unnamedUser": "Namnlös användare",
       "noConnectedGamers": "Inga kopplade spelare",
+      "assignedProducts": "Kopplade produkter",
+      "noAssignedProducts": "Inga kopplade produkter",
+      "unassignedGroup": "Ingen grupp tilldelad",
+      "needsGroup": "Behöver en grupp",
+      "untitledProduct": "Namnlös produkt",
+      "participationStatus": {
+        "active": "Aktiv",
+        "waitlisted": "På väntelista",
+        "reserving": "Inväntar betalning",
+        "completed": "Avslutad"
+      },
       "inviteNewGedu": "Bjud in ny Gedu",
       "sendInvitation": "Skicka en inbjudan via e-post till en ny spelfostrare",
       "newGeduInvitation": "Ny Gedu-inbjudan",

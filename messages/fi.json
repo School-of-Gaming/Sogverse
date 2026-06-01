@@ -695,6 +695,17 @@
       "unnamedGamer": "Nimetön pelaaja",
       "unnamedUser": "Nimetön käyttäjä",
       "noConnectedGamers": "Ei liitettyjä pelaajia",
+      "assignedProducts": "Liitetyt tuotteet",
+      "noAssignedProducts": "Ei liitettyjä tuotteita",
+      "unassignedGroup": "Ei ryhmää määritetty",
+      "needsGroup": "Tarvitsee ryhmän",
+      "untitledProduct": "Nimetön tuote",
+      "participationStatus": {
+        "active": "Aktiivinen",
+        "waitlisted": "Jonossa",
+        "reserving": "Odottaa maksua",
+        "completed": "Päättynyt"
+      },
       "inviteNewGedu": "Kutsu uusi Gedu",
       "sendInvitation": "Lähetä kutsu uudelle pelikasvattajalle",
       "newGeduInvitation": "Uusi Gedu-kutsu",

@@ -23,6 +23,30 @@ function geduAssignedProductHref(
   }
 }
 
+/**
+ * Picks the admin product-details URL from a product's type. Unlike the gedu
+ * routes, each v2 product type has its own admin surface, so consumer and
+ * municipality clubs do NOT collapse — they map to distinct edit pages
+ * (`/admin/consumer-clubs/[id]` vs `/admin/municipality-clubs/[id]`). Used to
+ * link a gamer's/parent's assigned products from the admin user-detail page.
+ * The v1 `/admin/products/[id]` surface is dead (see TODO.md) — never target it.
+ */
+function adminProductV2Href(
+  productType: ProductTypeV2,
+  productId: string,
+): string {
+  switch (productType) {
+    case "consumer_club":
+      return `/admin/consumer-clubs/${productId}`;
+    case "municipality_club":
+      return `/admin/municipality-clubs/${productId}`;
+    case "camp":
+      return `/admin/camps/${productId}`;
+    case "event":
+      return `/admin/events/${productId}`;
+  }
+}
+
 /** Centralized route paths — import and reference instead of hardcoding string literals. */
 export const ROUTES = {
   home: "/",
@@ -70,6 +94,7 @@ export const ROUTES = {
     product: (id: string) => `/admin/products/${id}`,
     productEdit: (id: string) => `/admin/products/${id}/edit`,
     productClone: (id: string) => `/admin/products/add?clone=${id}`,
+    productV2: adminProductV2Href,
     consumerClubs: "/admin/consumer-clubs",
     consumerClubsNew: "/admin/consumer-clubs/new",
     municipalityClubs: "/admin/municipality-clubs",
