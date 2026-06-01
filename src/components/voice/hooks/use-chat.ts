@@ -1,23 +1,19 @@
 import { useCallback, useState } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
+import { parseUserName } from "@/lib/voice/user-name";
 import type { AppMessage, ChatMessage } from "./types";
 
 interface UseChatParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
 }
 
-/** Hard caps to keep a single misbehaving client from flooding memory. */
-const MAX_MESSAGE_LENGTH = 500;
-const MAX_MESSAGES = 200;
-
 /**
- * Extract a participant's display name from their Daily token's `user_name`
- * field (`userId|role|displayName|...` — see buildUserName / mapParticipant).
- * Returns "Unknown" when the participant or name slot is missing.
+ * Hard caps to keep a single misbehaving client from flooding memory.
+ * `MAX_MESSAGE_LENGTH` is exported so the composer input's `maxLength` and the
+ * receive-side trim stay the same number.
  */
-function displayName(p: { user_name?: string } | undefined): string {
-  return (p?.user_name || "").split("|")[2] || "Unknown";
-}
+export const MAX_MESSAGE_LENGTH = 500;
+const MAX_MESSAGES = 200;
 
 /**
  * Ephemeral voice chat over Daily's app-message channel. Messages live only in
@@ -52,10 +48,8 @@ export function useChat({ callObjectRef }: UseChatParams) {
       // Daily does not loop sendAppMessage back to the sender, so echo locally.
       append({
         id: crypto.randomUUID(),
-        sessionId: local.session_id,
-        userName: displayName(local),
+        userName: parseUserName(local.user_name).displayName,
         text: trimmed,
-        timestamp: Date.now(),
         isLocal: true,
       });
     },
@@ -70,10 +64,8 @@ export function useChat({ callObjectRef }: UseChatParams) {
       if (!text) return;
       append({
         id: crypto.randomUUID(),
-        sessionId: fromId,
-        userName: displayName(co.participants()[fromId]),
+        userName: parseUserName(co.participants()[fromId].user_name).displayName,
         text,
-        timestamp: Date.now(),
         isLocal: false,
       });
     },

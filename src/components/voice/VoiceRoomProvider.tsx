@@ -14,6 +14,7 @@ import type {
   DailyParticipant,
 } from "@daily-co/daily-js";
 import type { SpatialPosition } from "@/lib/constants/spatial";
+import { parseUserName } from "@/lib/voice/user-name";
 import type { VoiceRoomContextValue, VoiceParticipant, AppMessage, VoiceRole } from "./hooks/types";
 import { useAudioPipeline } from "./hooks/use-audio-pipeline";
 import { useSpatialPositions } from "./hooks/use-spatial-positions";
@@ -30,28 +31,13 @@ const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
 // ---------- Helpers ----------
 
 function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null, position: SpatialPosition): VoiceParticipant {
-  const raw = p.user_name || "";
-  const parts = raw.split("|");
-  const userId = parts[0] || p.session_id;
-  const role = parts[1] as VoiceRole;
-  const userName = parts[2] || "Unknown";
-
-  // Slots 3 & 4 carry the joiner's own Minecraft identity on group-room
-  // tokens (see buildUserName). Their *presence* is the badge gate: an
-  // absent slot (undefined — instant rooms never emit them) means "this
-  // room doesn't surface Minecraft" → no badge, while a present-but-empty
-  // slot ("") means "gedu/gamer with no linked account" → "(Unknown)".
-  // displayName is a single slot now (parts[2]); buildUserName strips `|`
-  // from it, so it can never bleed into the Minecraft slots.
-  const hasMinecraft = parts.length > 3;
-  const minecraftUsername = hasMinecraft ? parts[3] || null : undefined;
-  const minecraftUuid = hasMinecraft ? parts[4] || null : undefined;
+  const { userId, role, displayName, minecraftUsername, minecraftUuid } = parseUserName(p.user_name);
 
   return {
     sessionId: p.session_id,
-    userId,
-    role,
-    userName,
+    userId: userId || p.session_id,
+    role: role as VoiceRole,
+    userName: displayName,
     minecraftUsername,
     minecraftUuid,
     audioOn: !p.audio ? false : p.tracks.audio.state === "playable",

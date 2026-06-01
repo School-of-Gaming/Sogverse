@@ -62,10 +62,8 @@ export interface AudioNodes {
  */
 export interface ChatMessage {
   id: string;
-  sessionId: string;
   userName: string;
   text: string;
-  timestamp: number;
   isLocal: boolean;
 }
 
