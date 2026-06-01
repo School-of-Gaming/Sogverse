@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { type SessionWindow } from "@/lib/session-schedule";
 
 // --- Mocks ---
 
@@ -8,13 +7,6 @@ vi.mock("@/lib/supabase/admin", () => ({
   createAdminClient: vi.fn(() => ({
     from: (...args: unknown[]) => mockAdminFrom(...args),
   })),
-}));
-
-const mockComputeSessionWindow = vi.fn();
-const mockIsEnrolledForSession = vi.fn();
-vi.mock("@/lib/session-schedule", () => ({
-  computeSessionWindow: (...args: unknown[]) => mockComputeSessionWindow(...args),
-  isEnrolledForSession: (...args: unknown[]) => mockIsEnrolledForSession(...args),
 }));
 
 // Import after mocks
@@ -40,24 +32,6 @@ function createRequest(uuid?: string, apiKey?: string | null): Request {
   return new Request(url, { method: "GET", headers });
 }
 
-function makeSessionWindow(isOpen: boolean): SessionWindow {
-  const now = new Date();
-  return {
-    isOpen,
-    nextSessionStart: new Date(now.getTime() - 10 * 60_000),
-    windowOpensAt: new Date(now.getTime() - 15 * 60_000),
-    windowClosesAt: new Date(now.getTime() + 45 * 60_000),
-  };
-}
-
-const SCHEDULE = {
-  name: "Intro to Redstone",
-  day_of_week: 3,
-  start_time: "14:00",
-  timezone: "America/New_York",
-  duration_minutes: 60,
-};
-
 function mockPlayerLookup(profile: { id: string; first_name: string; role: string } | null) {
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "minecraft_accounts") {
@@ -74,7 +48,7 @@ function mockPlayerLookup(profile: { id: string; first_name: string; role: strin
         }),
       };
     }
-    return mockAdminFrom(table);
+    return {};
   });
 }
 
@@ -92,7 +66,7 @@ function mockPlayerLookupError() {
         }),
       };
     }
-    return mockAdminFrom(table);
+    return {};
   });
 }
 
@@ -162,279 +136,42 @@ describe("GET /api/minecraft/join-check", () => {
     expect(mockAdminFrom).toHaveBeenCalledWith("minecraft_accounts");
   });
 
-  // --- Gedu ---
+  // --- Session access: pending migration to the current product system ---
+  //
+  // The gedu/gamer session-gating queried the dropped v1 product/group/
+  // enrollment tables. Until it's rebuilt against participations_v2 /
+  // product_groups_v2, those roles get a 501. See the route for the spec.
 
-  describe("gedu", () => {
-    const geduProfile = { id: "gedu-1", first_name: "GeduSteve", role: "gedu" };
+  it("returns 501 for a gedu (session access not yet implemented)", async () => {
+    mockPlayerLookup({ id: "gedu-1", first_name: "GeduSteve", role: "gedu" });
+    const response = await GET(createRequest(MC_UUID_DASHED));
+    const data = await response.json();
 
-    it("allowed when assigned to group with active session", async () => {
-      // Step 1: player lookup returns gedu
-      // Step 2: product_groups query returns a group
-      mockAdminFrom.mockImplementation((table: string) => {
-        if (table === "minecraft_accounts") {
-          return {
-            select: () => ({
-              eq: () => ({
-                maybeSingle: vi.fn().mockResolvedValue({
-                  data: { user_id: geduProfile.id, profiles: geduProfile },
-                  error: null,
-                }),
-              }),
-            }),
-          };
-        }
-        if (table === "product_groups") {
-          return {
-            select: () => ({
-              eq: vi.fn().mockResolvedValue({
-                data: [{ id: "group-1", products: SCHEDULE }],
-                error: null,
-              }),
-            }),
-          };
-        }
-        return {};
-      });
-
-      mockComputeSessionWindow.mockReturnValue(makeSessionWindow(true));
-
-      const response = await GET(createRequest(MC_UUID_DASHED));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.allowed).toBe(true);
-      expect(data.role).toBe("gedu");
-      expect(data.firstName).toBe("GeduSteve");
-      expect(data.endTime).toBeDefined();
-      expect(data.reason).toBe("Intro to Redstone with GeduSteve");
-    });
-
-    it("denied when no groups assigned", async () => {
-      mockAdminFrom.mockImplementation((table: string) => {
-        if (table === "minecraft_accounts") {
-          return {
-            select: () => ({
-              eq: () => ({
-                maybeSingle: vi.fn().mockResolvedValue({
-                  data: { user_id: geduProfile.id, profiles: geduProfile },
-                  error: null,
-                }),
-              }),
-            }),
-          };
-        }
-        if (table === "product_groups") {
-          return {
-            select: () => ({
-              eq: vi.fn().mockResolvedValue({ data: [], error: null }),
-            }),
-          };
-        }
-        return {};
-      });
-
-      const response = await GET(createRequest(MC_UUID_DASHED));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.allowed).toBe(false);
-      expect(data.reason).toBe("No active session");
-    });
-
-    it("denied when session is not open", async () => {
-      mockAdminFrom.mockImplementation((table: string) => {
-        if (table === "minecraft_accounts") {
-          return {
-            select: () => ({
-              eq: () => ({
-                maybeSingle: vi.fn().mockResolvedValue({
-                  data: { user_id: geduProfile.id, profiles: geduProfile },
-                  error: null,
-                }),
-              }),
-            }),
-          };
-        }
-        if (table === "product_groups") {
-          return {
-            select: () => ({
-              eq: vi.fn().mockResolvedValue({
-                data: [{ id: "group-1", products: SCHEDULE }],
-                error: null,
-              }),
-            }),
-          };
-        }
-        return {};
-      });
-
-      mockComputeSessionWindow.mockReturnValue(makeSessionWindow(false));
-
-      const response = await GET(createRequest(MC_UUID_DASHED));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.allowed).toBe(false);
-      expect(data.reason).toBe("No active session");
-    });
+    expect(response.status).toBe(501);
+    expect(data.role).toBe("gedu");
+    expect(data.firstName).toBe("GeduSteve");
+    expect(data.error).toMatch(/pending migration/i);
   });
 
-  // --- Gamer ---
+  it("returns 501 for a gamer (session access not yet implemented)", async () => {
+    mockPlayerLookup({ id: "gamer-1", first_name: "CoolKid", role: "gamer" });
+    const response = await GET(createRequest(MC_UUID_DASHED));
+    const data = await response.json();
 
-  describe("gamer", () => {
-    const gamerProfile = { id: "gamer-1", first_name: "CoolKid", role: "gamer" };
+    expect(response.status).toBe(501);
+    expect(data.role).toBe("gamer");
+    expect(data.firstName).toBe("CoolKid");
+    expect(data.error).toMatch(/pending migration/i);
+  });
 
-    function mockGamerWithEnrollments(
-      enrollments: Array<{
-        created_at: string;
-        product_groups: {
-          gedu_id: string;
-          products: typeof SCHEDULE;
-          profiles: { first_name: string };
-        } | null;
-      }>,
-    ) {
-      mockAdminFrom.mockImplementation((table: string) => {
-        if (table === "minecraft_accounts") {
-          return {
-            select: () => ({
-              eq: () => ({
-                maybeSingle: vi.fn().mockResolvedValue({
-                  data: { user_id: gamerProfile.id, profiles: gamerProfile },
-                  error: null,
-                }),
-              }),
-            }),
-          };
-        }
-        if (table === "group_enrollments") {
-          return {
-            select: () => ({
-              eq: vi.fn().mockReturnValue({
-                eq: vi.fn().mockResolvedValue({
-                  data: enrollments,
-                  error: null,
-                }),
-              }),
-            }),
-          };
-        }
-        return {};
-      });
-    }
+  it("returns allowed=false for non-session roles (admin/customer)", async () => {
+    mockPlayerLookup({ id: "cust-1", first_name: "Parent", role: "customer" });
+    const response = await GET(createRequest(MC_UUID_DASHED));
+    const data = await response.json();
 
-    it("allowed when enrolled with active session", async () => {
-      mockGamerWithEnrollments([
-        {
-          created_at: "2025-01-01T00:00:00Z",
-          product_groups: {
-            gedu_id: "gedu-1",
-            products: SCHEDULE,
-            profiles: { first_name: "GeduSteve" },
-          },
-        },
-      ]);
-      mockComputeSessionWindow.mockReturnValue(makeSessionWindow(true));
-      mockIsEnrolledForSession.mockReturnValue(true);
-
-      const response = await GET(createRequest(MC_UUID_DASHED));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.allowed).toBe(true);
-      expect(data.role).toBe("gamer");
-      expect(data.firstName).toBe("CoolKid");
-      expect(data.endTime).toBeDefined();
-      expect(data.reason).toBe("Intro to Redstone with GeduSteve");
-    });
-
-    it("denied when no active enrollments", async () => {
-      mockGamerWithEnrollments([]);
-
-      const response = await GET(createRequest(MC_UUID_DASHED));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.allowed).toBe(false);
-      expect(data.reason).toBe("No active session");
-    });
-
-    it("denied when session is not open", async () => {
-      mockGamerWithEnrollments([
-        {
-          created_at: "2025-01-01T00:00:00Z",
-          product_groups: {
-            gedu_id: "gedu-1",
-            products: SCHEDULE,
-            profiles: { first_name: "GeduSteve" },
-          },
-        },
-      ]);
-      mockComputeSessionWindow.mockReturnValue(makeSessionWindow(false));
-
-      const response = await GET(createRequest(MC_UUID_DASHED));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.allowed).toBe(false);
-      expect(data.reason).toBe("No active session");
-    });
-
-    it("skips enrollment where gamer enrolled after session started", async () => {
-      mockGamerWithEnrollments([
-        {
-          created_at: "2025-06-01T00:00:00Z",
-          product_groups: {
-            gedu_id: "gedu-1",
-            products: SCHEDULE,
-            profiles: { first_name: "GeduSteve" },
-          },
-        },
-      ]);
-      mockComputeSessionWindow.mockReturnValue(makeSessionWindow(true));
-      mockIsEnrolledForSession.mockReturnValue(false);
-
-      const response = await GET(createRequest(MC_UUID_DASHED));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.allowed).toBe(false);
-      expect(data.reason).toBe("No active session");
-    });
-
-    it("uses first active session from multiple groups", async () => {
-      const SCHEDULE_2 = { ...SCHEDULE, name: "Advanced Building" };
-      mockGamerWithEnrollments([
-        {
-          created_at: "2025-01-01T00:00:00Z",
-          product_groups: {
-            gedu_id: "gedu-1",
-            products: SCHEDULE,
-            profiles: { first_name: "GeduSteve" },
-          },
-        },
-        {
-          created_at: "2025-01-01T00:00:00Z",
-          product_groups: {
-            gedu_id: "gedu-2",
-            products: SCHEDULE_2,
-            profiles: { first_name: "GeduAlex" },
-          },
-        },
-      ]);
-      // First group: not open. Second group: open.
-      mockComputeSessionWindow
-        .mockReturnValueOnce(makeSessionWindow(false))
-        .mockReturnValueOnce(makeSessionWindow(true));
-      mockIsEnrolledForSession.mockReturnValue(true);
-
-      const response = await GET(createRequest(MC_UUID_DASHED));
-      const data = await response.json();
-
-      expect(response.status).toBe(200);
-      expect(data.allowed).toBe(true);
-      expect(data.reason).toBe("Advanced Building with GeduAlex");
-    });
+    expect(response.status).toBe(200);
+    expect(data.allowed).toBe(false);
+    expect(data.reason).toBe("No active session");
   });
 
   // --- Error handling ---

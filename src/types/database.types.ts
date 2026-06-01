@@ -268,24 +268,6 @@ export type Database = {
           },
         ]
       }
-      games: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       gedu_group_assignments_v2: {
         Row: {
           created_at: string
@@ -358,61 +340,6 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      group_enrollments: {
-        Row: {
-          created_at: string
-          enrolled_by: string
-          gamer_id: string
-          group_id: string
-          id: string
-          last_charged_at: string | null
-          status: string
-          unenrolled_at: string | null
-        }
-        Insert: {
-          created_at?: string
-          enrolled_by: string
-          gamer_id: string
-          group_id: string
-          id?: string
-          last_charged_at?: string | null
-          status?: string
-          unenrolled_at?: string | null
-        }
-        Update: {
-          created_at?: string
-          enrolled_by?: string
-          gamer_id?: string
-          group_id?: string
-          id?: string
-          last_charged_at?: string | null
-          status?: string
-          unenrolled_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "group_enrollments_enrolled_by_fkey"
-            columns: ["enrolled_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_enrollments_gamer_id_fkey"
-            columns: ["gamer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "group_enrollments_group_id_fkey"
-            columns: ["group_id"]
-            isOneToOne: false
-            referencedRelation: "product_groups"
             referencedColumns: ["id"]
           },
         ]
@@ -665,48 +592,6 @@ export type Database = {
           },
         ]
       }
-      product_groups: {
-        Row: {
-          created_at: string
-          display_order: number
-          gedu_id: string
-          id: string
-          product_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_order?: number
-          gedu_id: string
-          id?: string
-          product_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_order?: number
-          gedu_id?: string
-          id?: string
-          product_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_groups_gedu_id_fkey"
-            columns: ["gedu_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_groups_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       product_groups_v2: {
         Row: {
           created_at: string
@@ -939,101 +824,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products_v2"
             referencedColumns: ["id"]
-          },
-        ]
-      }
-      products: {
-        Row: {
-          created_at: string | null
-          created_by: string
-          day_of_week: number
-          description: string
-          duration_minutes: number
-          game_id: string
-          id: string
-          image_path: string
-          is_remote: boolean
-          is_visible: boolean | null
-          location_id: string | null
-          max_age: number
-          min_age: number
-          name: string
-          padlet_url: string | null
-          spoken_language_code: string
-          start_time: string
-          timezone: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by: string
-          day_of_week: number
-          description: string
-          duration_minutes: number
-          game_id: string
-          id?: string
-          image_path: string
-          is_remote: boolean
-          is_visible?: boolean | null
-          location_id?: string | null
-          max_age: number
-          min_age: number
-          name: string
-          padlet_url?: string | null
-          spoken_language_code: string
-          start_time: string
-          timezone?: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string
-          day_of_week?: number
-          description?: string
-          duration_minutes?: number
-          game_id?: string
-          id?: string
-          image_path?: string
-          is_remote?: boolean
-          is_visible?: boolean | null
-          location_id?: string | null
-          max_age?: number
-          min_age?: number
-          name?: string
-          padlet_url?: string | null
-          spoken_language_code?: string
-          start_time?: string
-          timezone?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "products_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "products_game_id_fkey"
-            columns: ["game_id"]
-            isOneToOne: false
-            referencedRelation: "games"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "products_location_id_fkey"
-            columns: ["location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "products_spoken_language_code_fkey"
-            columns: ["spoken_language_code"]
-            isOneToOne: false
-            referencedRelation: "spoken_languages"
-            referencedColumns: ["code"]
           },
         ]
       }
@@ -1610,16 +1400,6 @@ export type Database = {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
-      commit_group_changes: {
-        Args: {
-          p_added_groups?: Json
-          p_deleted_group_ids?: string[]
-          p_enrollment_moves?: Json
-          p_product_id: string
-          p_updated_groups?: Json
-        }
-        Returns: Json
-      }
       commit_group_changes_v2: {
         Args: {
           p_added_groups?: Json
@@ -1686,16 +1466,6 @@ export type Database = {
         Args: { p_reservation_id: string }
         Returns: Json
       }
-      get_enrollment_groups: {
-        Args: { p_product_id: string }
-        Returns: {
-          gamer_count: number
-          gedu_first_name: string
-          group_id: string
-          max_gamer_age: number
-          min_gamer_age: number
-        }[]
-      }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
         Returns: Json
@@ -1740,33 +1510,6 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_my_groups: {
-        Args: never
-        Returns: {
-          day_of_week: number
-          display_order: number
-          duration_minutes: number
-          enrollment_id: string
-          game_id: string
-          game_name: string
-          gamer_date_of_birth: string
-          gamer_first_name: string
-          gamer_gender: string
-          gamer_id: string
-          gedu_first_name: string
-          gedu_id: string
-          group_id: string
-          product_description: string
-          product_id: string
-          product_image_path: string
-          product_max_age: number
-          product_min_age: number
-          product_name: string
-          product_padlet_url: string
-          start_time: string
-          timezone: string
-        }[]
-      }
       get_my_parents: {
         Args: never
         Returns: {
@@ -1794,55 +1537,9 @@ export type Database = {
         Args: { p_product_id: string }
         Returns: Json
       }
-      get_product_groups_with_details: {
-        Args: { p_product_id: string }
-        Returns: {
-          display_order: number
-          enrollment_id: string
-          gamer_date_of_birth: string
-          gamer_first_name: string
-          gamer_gender: Database["public"]["Enums"]["gender_type"]
-          gamer_id: string
-          gedu_email: string
-          gedu_first_name: string
-          gedu_id: string
-          group_id: string
-          product_id: string
-        }[]
-      }
       get_user_role: {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
-      }
-      get_visible_products: {
-        Args: never
-        Returns: {
-          created_at: string | null
-          created_by: string
-          day_of_week: number
-          description: string
-          duration_minutes: number
-          game_id: string
-          id: string
-          image_path: string
-          is_remote: boolean
-          is_visible: boolean | null
-          location_id: string | null
-          max_age: number
-          min_age: number
-          name: string
-          padlet_url: string | null
-          spoken_language_code: string
-          start_time: string
-          timezone: string
-          updated_at: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "products"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }

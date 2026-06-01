@@ -18,12 +18,6 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "can_read_product",
   "get_my_gamers",
   "get_my_parents",
-  "get_visible_products",
-  "get_product_groups_with_details",
-
-  "get_enrollment_groups",
-  "commit_group_changes",
-  "get_my_groups",
 
   "create_product_v2",
   "update_product_v2",
@@ -38,7 +32,6 @@ const AUTHENTICATED_ALLOWLIST = new Set([
  * Allowlist of functions that anonymous (unauthenticated) users can call.
  */
 const ANON_ALLOWLIST = new Set([
-  "get_visible_products",
   // See AUTHENTICATED_ALLOWLIST: the child-table read policies are
   // TO anon, authenticated, so anon evaluates can_read_product too (it
   // returns true only for the public visible-published branch).
@@ -112,11 +105,6 @@ describe("Access Control", () => {
     const WRITE_GRANT_ALLOWLIST = new Map<string, Set<string>>([
       ["parent_gamer", new Set(["DELETE"])],
       ["gamer_profiles", new Set(["UPDATE"])],
-      // Admin edits products/games directly from the browser client via
-      // `admin_full_access_{products,games} FOR ALL TO authenticated` — RLS
-      // restricts the authorisation, grants enable the underlying commands.
-      ["products", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["games", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["whatsapp_contacts", new Set(["INSERT", "UPDATE"])],
       ["whatsapp_messages", new Set(["INSERT", "UPDATE"])],
       // Gedus write their own coverage rows directly from the browser
