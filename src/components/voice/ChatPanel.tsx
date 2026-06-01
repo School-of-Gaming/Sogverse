@@ -11,18 +11,6 @@ import { useVoiceRoom } from "./VoiceRoomProvider";
 
 const MAX_MESSAGE_LENGTH = 500;
 
-// TEMP DEMO — hardcoded messages to preview how varying name lengths look in
-// the gutter. Rendered directly so they show without joining. REMOVE before committing.
-const FAKE_MESSAGES = [
-  { id: "d1", userName: "Sofia", text: "Welcome back, builders! Today we're building the village marketplace 🏘️", isLocal: false },
-  { id: "d2", userName: "Leo", text: "can we add a pumpkin farm??", isLocal: false },
-  { id: "d3", userName: "Sofia", text: "Love it Leo — who wants to lead the farm crew?", isLocal: false },
-  { id: "d4", userName: "Emilia", text: "me!! I'll plant the pumpkins", isLocal: true },
-  { id: "d5", userName: "Aleksanteri", text: "I'll gather wood for the stalls", isLocal: false },
-  { id: "d6", userName: "EnderQueen", text: "where do we all spawn?", isLocal: false },
-  { id: "d7", userName: "Sofia", text: "Meet me at the fountain in the center. Let's go team! 🛠️", isLocal: false },
-];
-
 /**
  * Ephemeral in-call chat, rendered between the voice room card and the
  * participant list. The message log is a fixed-height scroll area so incoming
@@ -57,21 +45,24 @@ export function ChatPanel() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div ref={logRef} className="h-48 space-y-1.5 overflow-y-auto pr-1">
-          {/* TEMP DEMO — rendering FAKE_MESSAGES instead of `messages`. */}
-          {FAKE_MESSAGES.map((m) => (
-            <div key={m.id} className="flex gap-2 text-sm leading-snug">
-              <span
-                title={m.userName}
-                className={cn(
-                  "w-20 shrink-0 truncate font-medium",
-                  m.isLocal ? "text-primary" : "text-muted-foreground",
-                )}
-              >
-                {m.userName}
-              </span>
-              <span className="min-w-0 flex-1 break-words text-foreground">{m.text}</span>
-            </div>
-          ))}
+          {messages.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground">{t("empty")}</p>
+          ) : (
+            messages.map((m) => (
+              <div key={m.id} className="flex gap-2 text-sm leading-snug">
+                <span
+                  title={m.userName}
+                  className={cn(
+                    "w-20 shrink-0 truncate font-medium",
+                    m.isLocal ? "text-primary" : "text-muted-foreground",
+                  )}
+                >
+                  {m.userName}
+                </span>
+                <span className="min-w-0 flex-1 break-words text-foreground">{m.text}</span>
+              </div>
+            ))
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
