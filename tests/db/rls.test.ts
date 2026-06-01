@@ -4,8 +4,6 @@ import type { Database } from "@/types/database.types";
 import {
   createAdminTestClient,
   createAuthenticatedClient,
-  resetEnrollmentState,
-  seedEnrollment,
 } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
@@ -17,7 +15,6 @@ describe("Row Level Security", () => {
   let customerClient: SupabaseClient<Database>;
   let customer2Client: SupabaseClient<Database>;
   let gamerClient: SupabaseClient<Database>;
-  let geduClient: SupabaseClient<Database>;
 
   beforeAll(async () => {
     admin = createAdminTestClient();
@@ -36,10 +33,6 @@ describe("Row Level Security", () => {
     gamerClient = await createAuthenticatedClient(
       TEST_CREDENTIALS.GAMER.email,
       TEST_CREDENTIALS.GAMER.password
-    );
-    geduClient = await createAuthenticatedClient(
-      TEST_CREDENTIALS.GEDU.email,
-      TEST_CREDENTIALS.GEDU.password
     );
   });
 
@@ -229,227 +222,6 @@ describe("Row Level Security", () => {
         .from("gamer_profiles")
         .select("user_id")
         .eq("user_id", TEST_IDS.GAMER)
-        .single();
-
-      expect(data).not.toBeNull();
-    });
-  });
-
-  // =========================================================================
-  // Products (visible products are public)
-  // =========================================================================
-
-  describe("products", () => {
-    it("any authenticated user can read visible products", async () => {
-      const { data, error } = await gamerClient
-        .from("products")
-        .select("id, name, is_visible")
-        .eq("id", TEST_IDS.PRODUCT)
-        .single();
-
-      expect(error).toBeNull();
-      expect(data!.is_visible).toBe(true);
-      expect(data!.name).toBe("Test Product");
-    });
-
-    it("non-admin cannot read hidden products", async () => {
-      // Create a hidden product via service-role
-      await admin
-        .from("products")
-        .insert({
-          id: "00000000-0000-0000-0000-000000000099",
-          name: "Hidden Product",
-          description: "Should not be visible",
-          image_path: "hidden.jpg",
-          is_visible: false,
-          created_by: TEST_IDS.ADMIN,
-          game_id: TEST_IDS.GAME,
-          day_of_week: 1,
-          start_time: "10:00",
-          timezone: "Europe/Helsinki",
-          duration_minutes: 60,
-          min_age: 6,
-          max_age: 12,
-          is_remote: true,
-          spoken_language_code: "en",
-        })
-        .select("id")
-        .single();
-
-      const { data } = await customerClient
-        .from("products")
-        .select("id")
-        .eq("id", "00000000-0000-0000-0000-000000000099");
-
-      expect(data).toEqual([]);
-
-      // Cleanup
-      await admin
-        .from("products")
-        .delete()
-        .eq("id", "00000000-0000-0000-0000-000000000099");
-    });
-
-    it("customer cannot insert a product", async () => {
-      const { error } = await customerClient.from("products").insert({
-        name: "Injected",
-        description: "Should be denied",
-        image_path: "x.jpg",
-        created_by: TEST_IDS.CUSTOMER,
-        game_id: TEST_IDS.GAME,
-        day_of_week: 1,
-        start_time: "10:00",
-        timezone: "Europe/Helsinki",
-        duration_minutes: 60,
-        min_age: 6,
-        max_age: 12,
-        is_remote: true,
-        spoken_language_code: "en",
-      });
-
-      expect(error).not.toBeNull();
-    });
-
-    it("admin can read hidden products", async () => {
-      // Create a hidden product via service-role
-      await admin.from("products").insert({
-        id: "00000000-0000-0000-0000-000000000098",
-        name: "Admin-Only Product",
-        description: "Hidden from non-admins",
-        image_path: "hidden2.jpg",
-        is_visible: false,
-        created_by: TEST_IDS.ADMIN,
-        game_id: TEST_IDS.GAME,
-        day_of_week: 2,
-        start_time: "11:00",
-        timezone: "Europe/Helsinki",
-        duration_minutes: 60,
-        min_age: 6,
-        max_age: 12,
-        is_remote: true,
-        spoken_language_code: "en",
-      });
-
-      const { data, error } = await adminClient
-        .from("products")
-        .select("id")
-        .eq("id", "00000000-0000-0000-0000-000000000098")
-        .single();
-
-      expect(error).toBeNull();
-      expect(data!.id).toBe("00000000-0000-0000-0000-000000000098");
-
-      // Cleanup
-      await admin
-        .from("products")
-        .delete()
-        .eq("id", "00000000-0000-0000-0000-000000000098");
-    });
-  });
-
-  // =========================================================================
-  // Product Groups & Enrollments
-  // =========================================================================
-
-  describe("product_groups", () => {
-    it("gedu can read own groups", async () => {
-      const { data, error } = await geduClient
-        .from("product_groups")
-        .select("id, product_id, gedu_id")
-        .eq("gedu_id", TEST_IDS.GEDU);
-
-      expect(error).toBeNull();
-      expect(data!.length).toBeGreaterThanOrEqual(1);
-      expect(data!.every((g) => g.gedu_id === TEST_IDS.GEDU)).toBe(true);
-    });
-
-    it("authenticated users can read groups for visible products", async () => {
-      const { data, error } = await customerClient
-        .from("product_groups")
-        .select("id, product_id")
-        .eq("product_id", TEST_IDS.PRODUCT);
-
-      expect(error).toBeNull();
-      expect(data!.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("customer cannot insert a product_group", async () => {
-      const { error } = await customerClient.from("product_groups").insert({
-        product_id: TEST_IDS.PRODUCT,
-        gedu_id: TEST_IDS.GEDU,
-        display_order: 99,
-      });
-
-      expect(error).not.toBeNull();
-    });
-  });
-
-  describe("group_enrollments", () => {
-    // Enrollment is not seeded — create it here for read-only assertions
-    beforeAll(async () => {
-      await resetEnrollmentState(admin);
-      await seedEnrollment(admin);
-    });
-
-    afterAll(async () => {
-      await resetEnrollmentState(admin);
-    });
-
-    it("gamer can read own enrollments", async () => {
-      const { data, error } = await gamerClient
-        .from("group_enrollments")
-        .select("id, group_id, gamer_id")
-        .eq("gamer_id", TEST_IDS.GAMER);
-
-      expect(error).toBeNull();
-      expect(data!.length).toBeGreaterThanOrEqual(1);
-      expect(data!.every((e) => e.gamer_id === TEST_IDS.GAMER)).toBe(true);
-    });
-
-    it("gedu can read enrollments for own groups", async () => {
-      const { data, error } = await geduClient
-        .from("group_enrollments")
-        .select("id, group_id, gamer_id")
-        .eq("group_id", TEST_IDS.GROUP);
-
-      expect(error).toBeNull();
-      expect(data!.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("customer can read enrollments for visible product groups", async () => {
-      const { data, error } = await customerClient
-        .from("group_enrollments")
-        .select("id, group_id")
-        .eq("group_id", TEST_IDS.GROUP);
-
-      expect(error).toBeNull();
-      expect(data!.length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("customer cannot insert an enrollment", async () => {
-      const { error } = await customerClient
-        .from("group_enrollments")
-        .insert({
-          group_id: TEST_IDS.GROUP,
-          gamer_id: TEST_IDS.GAMER,
-          enrolled_by: TEST_IDS.CUSTOMER,
-        });
-
-      expect(error).not.toBeNull();
-    });
-
-    it("gamer cannot delete own enrollment", async () => {
-      // PostgREST silently returns 0 rows when RLS filters out the target
-      await gamerClient
-        .from("group_enrollments")
-        .delete()
-        .eq("id", TEST_IDS.ENROLLMENT);
-
-      // Verify the enrollment still exists
-      const { data } = await admin
-        .from("group_enrollments")
-        .select("id")
-        .eq("id", TEST_IDS.ENROLLMENT)
         .single();
 
       expect(data).not.toBeNull();

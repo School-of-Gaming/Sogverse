@@ -65,15 +65,6 @@ export type MinecraftAccountUpdate = Database["public"]["Tables"]["minecraft_acc
 export type ParentGamer = Database["public"]["Tables"]["parent_gamer"]["Row"];
 export type ParentGamerInsert = Database["public"]["Tables"]["parent_gamer"]["Insert"];
 
-// products
-export type Product = Database["public"]["Tables"]["products"]["Row"];
-export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
-export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
-
-// games
-export type Game = Database["public"]["Tables"]["games"]["Row"];
-export type GameInsert = Database["public"]["Tables"]["games"]["Insert"];
-
 // feedback_submissions
 export type FeedbackSubmission = Database["public"]["Tables"]["feedback_submissions"]["Row"];
 
@@ -85,14 +76,6 @@ export type SpokenLanguage = Database["public"]["Tables"]["spoken_languages"]["R
 // locations
 export type Location = Database["public"]["Tables"]["locations"]["Row"];
 export type LocationInsert = Database["public"]["Tables"]["locations"]["Insert"];
-
-// product_groups
-export type ProductGroup = Database["public"]["Tables"]["product_groups"]["Row"];
-export type ProductGroupInsert = Database["public"]["Tables"]["product_groups"]["Insert"];
-
-// group_enrollments
-export type GroupEnrollment = Database["public"]["Tables"]["group_enrollments"]["Row"];
-export type GroupEnrollmentInsert = Database["public"]["Tables"]["group_enrollments"]["Insert"];
 
 // gedu_locations (a gedu's coverage areas for substitute matching — rows
 // can sit at any level of the location hierarchy)
@@ -413,40 +396,6 @@ export const WHATSAPP_DIRECTION = {
   OUTBOUND: "outbound",
 } as const;
 export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAPP_DIRECTION];
-
-// get_my_groups RPC — the generated type marks nullable LEFT JOIN fields as
-// non-nullable. Override to reflect that groups with no enrollments return null
-// for gamer-related columns (and gamer branch always returns null for DOB/gender).
-// Also overrides product_padlet_url which is nullable in the products table but
-// marked non-null by the type generator.
-type _MyGroupGenerated = Database["public"]["Functions"]["get_my_groups"]["Returns"][number];
-export type MyGroupWithDetails = Omit<
-  _MyGroupGenerated,
-  | "enrollment_id" | "gamer_id" | "gamer_first_name" | "gamer_date_of_birth" | "gamer_gender"
-  | "product_padlet_url"
-> & {
-  enrollment_id: string | null;
-  gamer_id: string | null;
-  gamer_first_name: string | null;
-  gamer_date_of_birth: string | null;
-  gamer_gender: string | null;
-  product_padlet_url: string | null;
-};
-
-// get_product_groups_with_details RPC — the generated return type incorrectly
-// marks LEFT JOIN fields as non-nullable. This override reflects that groups
-// with no enrollments return null for all gamer-related columns.
-type _GroupDetailsGenerated = Database["public"]["Functions"]["get_product_groups_with_details"]["Returns"][number];
-export type ProductGroupWithDetails = Omit<
-  _GroupDetailsGenerated,
-  "enrollment_id" | "gamer_id" | "gamer_first_name" | "gamer_date_of_birth" | "gamer_gender"
-> & {
-  enrollment_id: string | null;
-  gamer_id: string | null;
-  gamer_first_name: string | null;
-  gamer_date_of_birth: string | null;
-  gamer_gender: Database["public"]["Enums"]["gender_type"] | null;
-};
 
 // get_my_assigned_products RPC — the generator marks every column of an RPC
 // RETURNS TABLE row as non-nullable from the column type alone, missing
