@@ -88,60 +88,60 @@ export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"][
 // ---------------------------------------------------------------------------
 
 // Enums
-export type ProductTypeV2 = Database["public"]["Enums"]["product_type_v2"];
-export type BillingModeV2 = Database["public"]["Enums"]["billing_mode_v2"];
-export type ProductStatusV2 = Database["public"]["Enums"]["product_status_v2"];
-export type TopicKindV2 = Database["public"]["Enums"]["topic_kind_v2"];
+export type ProductType = Database["public"]["Enums"]["product_type"];
+export type BillingMode = Database["public"]["Enums"]["billing_mode"];
+export type ProductStatus = Database["public"]["Enums"]["product_status"];
+export type TopicKind = Database["public"]["Enums"]["topic_kind"];
 
-// products_v2
-export type ProductV2 = Database["public"]["Tables"]["products_v2"]["Row"];
-export type ProductV2Insert = Database["public"]["Tables"]["products_v2"]["Insert"];
-export type ProductV2Update = Database["public"]["Tables"]["products_v2"]["Update"];
+// products
+export type Product = Database["public"]["Tables"]["products"]["Row"];
+export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
+export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
-// schedule_slots_v2
-export type ScheduleSlotV2 = Database["public"]["Tables"]["schedule_slots_v2"]["Row"];
-export type ScheduleSlotV2Insert = Database["public"]["Tables"]["schedule_slots_v2"]["Insert"];
+// schedule_slots
+export type ScheduleSlot = Database["public"]["Tables"]["schedule_slots"]["Row"];
+export type ScheduleSlotInsert = Database["public"]["Tables"]["schedule_slots"]["Insert"];
 
-// topics_v2
-export type TopicV2 = Database["public"]["Tables"]["topics_v2"]["Row"];
-export type TopicV2Insert = Database["public"]["Tables"]["topics_v2"]["Insert"];
+// topics
+export type Topic = Database["public"]["Tables"]["topics"]["Row"];
+export type TopicInsert = Database["public"]["Tables"]["topics"]["Insert"];
 
-// tags_v2
-export type TagV2 = Database["public"]["Tables"]["tags_v2"]["Row"];
-export type TagV2Insert = Database["public"]["Tables"]["tags_v2"]["Insert"];
+// tags
+export type Tag = Database["public"]["Tables"]["tags"]["Row"];
+export type TagInsert = Database["public"]["Tables"]["tags"]["Insert"];
 
-// Translation tables — one row per (parent_id, locale). Parents (products_v2,
-// topics_v2, tags_v2) no longer carry name/description directly; the reader
+// Translation tables — one row per (parent_id, locale). Parents (products,
+// topics, tags) no longer carry name/description directly; the reader
 // resolves a locale via resolveTranslation() in src/lib/i18n/resolve-translation.ts.
-export type ProductTranslationV2 = Database["public"]["Tables"]["product_translations_v2"]["Row"];
-export type ProductTranslationV2Insert = Database["public"]["Tables"]["product_translations_v2"]["Insert"];
-export type TopicTranslationV2 = Database["public"]["Tables"]["topic_translations_v2"]["Row"];
-export type TopicTranslationV2Insert = Database["public"]["Tables"]["topic_translations_v2"]["Insert"];
-export type TagTranslationV2 = Database["public"]["Tables"]["tag_translations_v2"]["Row"];
-export type TagTranslationV2Insert = Database["public"]["Tables"]["tag_translations_v2"]["Insert"];
+export type ProductTranslation = Database["public"]["Tables"]["product_translations"]["Row"];
+export type ProductTranslationInsert = Database["public"]["Tables"]["product_translations"]["Insert"];
+export type TopicTranslation = Database["public"]["Tables"]["topic_translations"]["Row"];
+export type TopicTranslationInsert = Database["public"]["Tables"]["topic_translations"]["Insert"];
+export type TagTranslation = Database["public"]["Tables"]["tag_translations"]["Row"];
+export type TagTranslationInsert = Database["public"]["Tables"]["tag_translations"]["Insert"];
 
-// product_tags_v2
-export type ProductTagV2 = Database["public"]["Tables"]["product_tags_v2"]["Row"];
-export type ProductTagV2Insert = Database["public"]["Tables"]["product_tags_v2"]["Insert"];
+// product_tags
+export type ProductTag = Database["public"]["Tables"]["product_tags"]["Row"];
+export type ProductTagInsert = Database["public"]["Tables"]["product_tags"]["Insert"];
 
-// product_prices_v2
-export type ProductPriceV2 = Database["public"]["Tables"]["product_prices_v2"]["Row"];
-export type ProductPriceV2Insert = Database["public"]["Tables"]["product_prices_v2"]["Insert"];
-export type ProductPriceV2Update = Database["public"]["Tables"]["product_prices_v2"]["Update"];
+// product_prices
+export type ProductPrice = Database["public"]["Tables"]["product_prices"]["Row"];
+export type ProductPriceInsert = Database["public"]["Tables"]["product_prices"]["Insert"];
+export type ProductPriceUpdate = Database["public"]["Tables"]["product_prices"]["Update"];
 
-// holiday_calendars_v2 + calendar_holidays_v2 + product_holiday_calendars_v2
-export type HolidayCalendarV2 = Database["public"]["Tables"]["holiday_calendars_v2"]["Row"];
-export type HolidayCalendarV2Insert = Database["public"]["Tables"]["holiday_calendars_v2"]["Insert"];
-export type CalendarHolidayV2 = Database["public"]["Tables"]["calendar_holidays_v2"]["Row"];
-export type CalendarHolidayV2Insert = Database["public"]["Tables"]["calendar_holidays_v2"]["Insert"];
-export type ProductHolidayCalendarV2 = Database["public"]["Tables"]["product_holiday_calendars_v2"]["Row"];
-export type ProductHolidayCalendarV2Insert = Database["public"]["Tables"]["product_holiday_calendars_v2"]["Insert"];
+// holiday_calendars + calendar_holidays + product_holiday_calendars
+export type HolidayCalendar = Database["public"]["Tables"]["holiday_calendars"]["Row"];
+export type HolidayCalendarInsert = Database["public"]["Tables"]["holiday_calendars"]["Insert"];
+export type CalendarHoliday = Database["public"]["Tables"]["calendar_holidays"]["Row"];
+export type CalendarHolidayInsert = Database["public"]["Tables"]["calendar_holidays"]["Insert"];
+export type ProductHolidayCalendar = Database["public"]["Tables"]["product_holiday_calendars"]["Row"];
+export type ProductHolidayCalendarInsert = Database["public"]["Tables"]["product_holiday_calendars"]["Insert"];
 
-// site_details_v2 (member-visible) + site_staff_details_v2 (admin + Gedu only)
-export type SiteDetailsV2 = Database["public"]["Tables"]["site_details_v2"]["Row"];
-export type SiteDetailsV2Insert = Database["public"]["Tables"]["site_details_v2"]["Insert"];
-export type SiteStaffDetailsV2 = Database["public"]["Tables"]["site_staff_details_v2"]["Row"];
-export type SiteStaffDetailsV2Insert = Database["public"]["Tables"]["site_staff_details_v2"]["Insert"];
+// site_details (member-visible) + site_staff_details (admin + Gedu only)
+export type SiteDetails = Database["public"]["Tables"]["site_details"]["Row"];
+export type SiteDetailsInsert = Database["public"]["Tables"]["site_details"]["Insert"];
+export type SiteStaffDetails = Database["public"]["Tables"]["site_staff_details"]["Row"];
+export type SiteStaffDetailsInsert = Database["public"]["Tables"]["site_staff_details"]["Insert"];
 
 // Joined location shape shared by browse rows. The detail / card layers
 // only need the name + type plus one level of parent for display
@@ -159,32 +159,32 @@ export type BrowseRowLocation = {
 };
 
 // Joined shape consumed by the parent-facing browse pages
-// (src/components/public/products-v2/product-browse-page.tsx). The card
+// (src/components/public/products/product-browse-page.tsx). The card
 // renderer expects everything it needs to draw itself in one row — topic
 // label, all product translations, tag chips, prices per supported currency,
 // weekly schedule slots, and the joined location for in-person products.
 // Single source so the component props mirror the SELECT shape exactly.
-export type ProductV2BrowseRow = ProductV2 & {
-  topics_v2:
+export type ProductBrowseRow = Product & {
+  topics:
     | {
         slug: string;
-        kind: TopicKindV2;
+        kind: TopicKind;
         icon_path: string | null;
-        topic_translations_v2: TopicTranslationV2[];
+        topic_translations: TopicTranslation[];
       }
     | null;
-  product_translations_v2: ProductTranslationV2[];
-  product_tags_v2: {
-    tags_v2:
+  product_translations: ProductTranslation[];
+  product_tags: {
+    tags:
       | {
           slug: string;
-          tag_translations_v2: TagTranslationV2[];
+          tag_translations: TagTranslation[];
         }
       | null;
   }[];
-  product_prices_v2: ProductPriceV2[];
-  schedule_slots_v2: Pick<
-    ScheduleSlotV2,
+  product_prices: ProductPrice[];
+  schedule_slots: Pick<
+    ScheduleSlot,
     "weekday" | "start_time" | "duration_minutes"
   >[];
   locations: BrowseRowLocation | null;
@@ -196,15 +196,15 @@ export type ProductV2BrowseRow = ProductV2 & {
 // ---------------------------------------------------------------------------
 
 // Enums
-export type ParticipationStatus = Database["public"]["Enums"]["participation_status_v2"];
-export type SubscriptionFrequencyV2 = Database["public"]["Enums"]["subscription_frequency_v2"];
-export type PaymentPurposeV2 = Database["public"]["Enums"]["payment_purpose_v2"];
-export type RefundReasonV2 = Database["public"]["Enums"]["refund_reason_v2"];
-export type EffectiveProductStatusV2DB = Database["public"]["Enums"]["effective_product_status_v2"];
+export type ParticipationStatus = Database["public"]["Enums"]["participation_status"];
+export type SubscriptionFrequency = Database["public"]["Enums"]["subscription_frequency"];
+export type PaymentPurpose = Database["public"]["Enums"]["payment_purpose"];
+export type RefundReason = Database["public"]["Enums"]["refund_reason"];
+export type EffectiveProductStatusDB = Database["public"]["Enums"]["effective_product_status"];
 
-// participations_v2
-export type Participation = Database["public"]["Tables"]["participations_v2"]["Row"];
-export type ParticipationInsert = Database["public"]["Tables"]["participations_v2"]["Insert"];
+// participations
+export type Participation = Database["public"]["Tables"]["participations"]["Row"];
+export type ParticipationInsert = Database["public"]["Tables"]["participations"]["Insert"];
 
 /**
  * Derived 3-state placement vocabulary for participations.
@@ -220,7 +220,7 @@ export type ParticipationState = "waitlisted" | "unassigned" | "assigned";
 /**
  * Purchase shape selectors the client sends to the create-participation route.
  * Server recomputes prices from the product's stored base price + the
- * pricing-v2 constants — clients never send amounts.
+ * pricing constants — clients never send amounts.
  */
 export type PurchaseShape =
   | "bundle_1"
@@ -232,57 +232,57 @@ export type PurchaseShape =
   | "single_payment"
   | "free";
 
-// payments_v2
-export type Payment = Database["public"]["Tables"]["payments_v2"]["Row"];
-export type PaymentInsert = Database["public"]["Tables"]["payments_v2"]["Insert"];
+// payments
+export type Payment = Database["public"]["Tables"]["payments"]["Row"];
+export type PaymentInsert = Database["public"]["Tables"]["payments"]["Insert"];
 
-// refunds_v2
-export type Refund = Database["public"]["Tables"]["refunds_v2"]["Row"];
-export type RefundInsert = Database["public"]["Tables"]["refunds_v2"]["Insert"];
+// refunds
+export type Refund = Database["public"]["Tables"]["refunds"]["Row"];
+export type RefundInsert = Database["public"]["Tables"]["refunds"]["Insert"];
 
-// family_subscriptions_v2 + family_subscription_items_v2
-export type FamilySubscription = Database["public"]["Tables"]["family_subscriptions_v2"]["Row"];
-export type FamilySubscriptionInsert = Database["public"]["Tables"]["family_subscriptions_v2"]["Insert"];
-export type FamilySubscriptionItem = Database["public"]["Tables"]["family_subscription_items_v2"]["Row"];
-export type FamilySubscriptionItemInsert = Database["public"]["Tables"]["family_subscription_items_v2"]["Insert"];
+// family_subscriptions + family_subscription_items
+export type FamilySubscription = Database["public"]["Tables"]["family_subscriptions"]["Row"];
+export type FamilySubscriptionInsert = Database["public"]["Tables"]["family_subscriptions"]["Insert"];
+export type FamilySubscriptionItem = Database["public"]["Tables"]["family_subscription_items"]["Row"];
+export type FamilySubscriptionItemInsert = Database["public"]["Tables"]["family_subscription_items"]["Insert"];
 
-// product_subscription_prices_v2 (Stripe Price ID cache; admin-only)
-export type ProductSubscriptionPriceV2 = Database["public"]["Tables"]["product_subscription_prices_v2"]["Row"];
-export type ProductSubscriptionPriceV2Insert = Database["public"]["Tables"]["product_subscription_prices_v2"]["Insert"];
+// product_subscription_prices (Stripe Price ID cache; admin-only)
+export type ProductSubscriptionPrice = Database["public"]["Tables"]["product_subscription_prices"]["Row"];
+export type ProductSubscriptionPriceInsert = Database["public"]["Tables"]["product_subscription_prices"]["Insert"];
 
-// session_cancellations_v2 (ships now even though the cancel-session UI does not)
-export type SessionCancellationV2 = Database["public"]["Tables"]["session_cancellations_v2"]["Row"];
+// session_cancellations (ships now even though the cancel-session UI does not)
+export type SessionCancellation = Database["public"]["Tables"]["session_cancellations"]["Row"];
 
-// credit_deductions_v2 (cron audit ledger)
-export type CreditDeductionV2 = Database["public"]["Tables"]["credit_deductions_v2"]["Row"];
+// credit_deductions (cron audit ledger)
+export type CreditDeduction = Database["public"]["Tables"]["credit_deductions"]["Row"];
 
-// product_seat_counts_v2 (public-readable rollup feeding the realtime counter)
-export type ProductSeatCountV2 = Database["public"]["Tables"]["product_seat_counts_v2"]["Row"];
+// product_seat_counts (public-readable rollup feeding the realtime counter)
+export type ProductSeatCount = Database["public"]["Tables"]["product_seat_counts"]["Row"];
 
 // ---------------------------------------------------------------------------
 // products v2 — groups & gedu assignments (00049)
 // See docs/products-redesign.md §4.1, §5.4, §6.1a.
 // ---------------------------------------------------------------------------
 
-// product_groups_v2
-export type ProductGroupV2 = Database["public"]["Tables"]["product_groups_v2"]["Row"];
-export type ProductGroupV2Insert = Database["public"]["Tables"]["product_groups_v2"]["Insert"];
-export type ProductGroupV2Update = Database["public"]["Tables"]["product_groups_v2"]["Update"];
+// product_groups
+export type ProductGroup = Database["public"]["Tables"]["product_groups"]["Row"];
+export type ProductGroupInsert = Database["public"]["Tables"]["product_groups"]["Insert"];
+export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"]["Update"];
 
-// gedu_group_assignments_v2
-export type GeduGroupAssignmentV2 = Database["public"]["Tables"]["gedu_group_assignments_v2"]["Row"];
-export type GeduGroupAssignmentV2Insert = Database["public"]["Tables"]["gedu_group_assignments_v2"]["Insert"];
+// gedu_group_assignments
+export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
+export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
 
-// get_product_groups_v2_with_details — returns JSONB, so the generated type is
+// get_product_groups_with_details — returns JSONB, so the generated type is
 // `Json`. Define a structured shape that mirrors what the RPC produces so the
 // admin UI gets type safety without a Zod parse step.
-export interface GroupV2GeduDetail {
+export interface GroupGeduDetail {
   id: string;
   first_name: string;
   email: string | null;
 }
 
-export interface GroupV2ParticipationDetail {
+export interface GroupParticipationDetail {
   id: string;
   gamer_id: string;
   gamer_first_name: string;
@@ -296,25 +296,25 @@ export interface GroupV2ParticipationDetail {
   signed_up_at: string;
 }
 
-export interface ProductGroupV2WithDetails {
+export interface ProductGroupWithDetails {
   id: string;
   name: string;
   created_at: string;
-  gedus: GroupV2GeduDetail[];
-  participations: GroupV2ParticipationDetail[];
+  gedus: GroupGeduDetail[];
+  participations: GroupParticipationDetail[];
 }
 
-export interface ProductGroupsV2Snapshot {
+export interface ProductGroupsSnapshot {
   product_id: string;
-  groups: ProductGroupV2WithDetails[];
-  unassigned: GroupV2ParticipationDetail[];
+  groups: ProductGroupWithDetails[];
+  unassigned: GroupParticipationDetail[];
 }
 
 // get_gedu_assigned_product — the JSONB document that backs the gedu's
 // session-details page (entered from a dashboard session card, but
 // product-scoped). Lives at /gedu/clubs/[id], /gedu/camps/[id], or
 // /gedu/events/[id] depending on the product's type. The RPC raises 42501
-// unless the caller has a gedu_group_assignments_v2 row on the product —
+// unless the caller has a gedu_group_assignments row on the product —
 // hence the "assigned" name.
 //
 // Generated as `Json`; pin a structured shape here so consumers don't cast.
@@ -350,7 +350,7 @@ export interface GeduAssignedProductGroup {
 
 export interface GeduAssignedProductShell {
   id: string;
-  product_type: Database["public"]["Enums"]["product_type_v2"];
+  product_type: Database["public"]["Enums"]["product_type"];
   padlet_url: string | null;
   timezone: string;
   start_date: string | null;
@@ -399,10 +399,10 @@ export type WhatsAppDirection = (typeof WHATSAPP_DIRECTION)[keyof typeof WHATSAP
 
 // get_my_assigned_products RPC — the generator marks every column of an RPC
 // RETURNS TABLE row as non-nullable from the column type alone, missing
-// products_v2 columns that are actually nullable (start_date, end_date,
+// products columns that are actually nullable (start_date, end_date,
 // padlet_url). It also degrades the jsonb arrays (product_translations,
 // schedule_slots) to `Json`, which forces every consumer to cast. Tighten
-// both: nullability matches the underlying products_v2 schema, and the
+// both: nullability matches the underlying products schema, and the
 // arrays get structured shapes that mirror the jsonb_build_object calls in
 // the RPC body. Keep this alias adjacent to its source in
 // supabase/migrations/00061_get_my_assigned_products.sql.

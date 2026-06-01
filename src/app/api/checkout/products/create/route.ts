@@ -6,7 +6,7 @@ import {
   isSupportedCurrency,
   type SupportedCurrency,
 } from "@/lib/constants/currency";
-import type { ProductTypeV2, PurchaseShape } from "@/types";
+import type { ProductType, PurchaseShape } from "@/types";
 import {
   bundleSizeFromShape,
   computeBundleAmount,
@@ -91,16 +91,16 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
 
   const { data: product, error: productErr } = await admin
-    .from("products_v2")
+    .from("products")
     .select(
-      "id, product_type, billing_mode, seat_count, timezone, product_translations_v2(locale, name)",
+      "id, product_type, billing_mode, seat_count, timezone, product_translations(locale, name)",
     )
     .eq("id", productId)
     .single();
   if (productErr) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
-  const productName = pickProductName(product.product_translations_v2);
+  const productName = pickProductName(product.product_translations);
 
   if (purchaseShape === "free" && product.billing_mode !== "free") {
     return NextResponse.json(
@@ -139,7 +139,7 @@ export async function POST(request: Request) {
   // is bounded by the unique index firing on the second confirm — see the
   // webhook for the 23505 catch.
   const { data: rpcResult, error: rpcErr } = await admin.rpc(
-    "create_participation_v2",
+    "create_participation",
     {
       p_product_id: productId,
       p_gamer_id: gamerId,
@@ -213,7 +213,7 @@ export async function POST(request: Request) {
     }
 
     const { data: existingFamSub } = await admin
-      .from("family_subscriptions_v2")
+      .from("family_subscriptions")
       .select("id, stripe_subscription_id, status")
       .eq("customer_id", user.id)
       .eq("frequency", frequency)
@@ -260,22 +260,22 @@ export async function POST(request: Request) {
         // alone holds the seat, and the reservation we created two RPCs ago
         // is still 'reserving' until we flip it here.
         const { error: confirmErr } = await admin.rpc(
-          "confirm_reservation_v2",
+          "confirm_reservation",
           { p_reservation_id: reservationId, p_credits_to_grant: 0 },
         );
         if (confirmErr) {
-          throw new Error(`confirm_reservation_v2 failed: ${confirmErr.message}`);
+          throw new Error(`confirm_reservation failed: ${confirmErr.message}`);
         }
 
         // Link the participation to the family sub.
-        await admin.from("family_subscription_items_v2").insert({
+        await admin.from("family_subscription_items").insert({
           family_subscription_id: existingFamSub.id,
           participation_id: reservationId,
           stripe_subscription_item_id: newItem.id,
           stripe_price_id: priceRow.stripe_price_id,
         });
 
-        // The webhook will record the proration invoice as a payments_v2 row
+        // The webhook will record the proration invoice as a payments row
         // when invoice.paid fires; we don't insert one here to avoid
         // duplicate-event-id collisions.
 
@@ -324,7 +324,7 @@ export async function POST(request: Request) {
   // purchased view as soon as the participation queries refetch. The
   // `?signup=success` flag triggers the explicit invalidation in
   // ProductDetailPage's useEffect (and the realtime channel on
-  // product_seat_counts_v2 covers the late-webhook case).
+  // product_seat_counts covers the late-webhook case).
   const successPath = detailPathForType(product.product_type, productId);
   const successUrl = `${origin}${successPath}?signup=success`;
   // Cancel bounces back to the product page. We do NOT free the seat — the
@@ -346,7 +346,7 @@ export async function POST(request: Request) {
 
   // Stripe Checkout's session expiry IS our reservation lifetime: Stripe
   // refuses payment past `expires_at` and fires checkout.session.expired,
-  // which our webhook turns into expire_reservation_v2.
+  // which our webhook turns into expire_reservation.
   const expiresAt = Math.floor(Date.now() / 1000) + RESERVATION_LIFETIME_MINUTES * 60;
 
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -450,7 +450,7 @@ function pickProductName(
 }
 
 function detailPathForType(
-  productType: ProductTypeV2,
+  productType: ProductType,
   productId: string,
 ): string {
   switch (productType) {
@@ -468,7 +468,7 @@ async function rollbackReservation(
   admin: ReturnType<typeof createAdminClient>,
   reservationId: string,
 ): Promise<void> {
-  const { error } = await admin.rpc("expire_reservation_v2", {
+  const { error } = await admin.rpc("expire_reservation", {
     p_reservation_id: reservationId,
   });
   if (error) {

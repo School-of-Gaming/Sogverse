@@ -38,7 +38,7 @@ interface SubRow {
   stripe_subscription_id: string;
   stripe_customer_id: string;
   created_at: string;
-  family_subscription_items_v2: {
+  family_subscription_items: {
     id: string;
     participation_id: string;
     stripe_subscription_item_id: string;
@@ -91,7 +91,7 @@ describe("GET /api/family-subscriptions/me", () => {
         stripe_subscription_id: "sub_stripe_1",
         stripe_customer_id: "cus_stripe_1",
         created_at: "2026-04-15T00:00:00Z",
-        family_subscription_items_v2: [
+        family_subscription_items: [
           {
             id: ITEM_ID,
             participation_id: PARTICIPATION_ID,
@@ -122,7 +122,7 @@ describe("GET /api/family-subscriptions/me", () => {
     const body = (await res.json()) as Array<
       SubRow & {
         total_cents: number | null;
-        family_subscription_items_v2: Array<{
+        family_subscription_items: Array<{
           unit_amount_cents: number | null;
           stripe_price_currency: string | null;
           recurring_interval: string | null;
@@ -132,7 +132,7 @@ describe("GET /api/family-subscriptions/me", () => {
 
     expect(body).toHaveLength(1);
     expect(body[0].total_cents).toBe(4200);
-    expect(body[0].family_subscription_items_v2[0]).toMatchObject({
+    expect(body[0].family_subscription_items[0]).toMatchObject({
       unit_amount_cents: 4200,
       stripe_price_currency: "eur",
       recurring_interval: "month",
@@ -156,7 +156,7 @@ describe("GET /api/family-subscriptions/me", () => {
         stripe_subscription_id: "sub_stripe_1",
         stripe_customer_id: "cus_1",
         created_at: "2026-04-15T00:00:00Z",
-        family_subscription_items_v2: [
+        family_subscription_items: [
           {
             id: "item_1",
             participation_id: "p_1",
@@ -215,7 +215,7 @@ describe("GET /api/family-subscriptions/me", () => {
         stripe_subscription_id: "sub_stripe_missing",
         stripe_customer_id: "cus_1",
         created_at: "2026-04-15T00:00:00Z",
-        family_subscription_items_v2: [
+        family_subscription_items: [
           {
             id: ITEM_ID,
             participation_id: PARTICIPATION_ID,
@@ -236,13 +236,13 @@ describe("GET /api/family-subscriptions/me", () => {
 
     const body = (await res.json()) as Array<{
       total_cents: number | null;
-      family_subscription_items_v2: Array<{
+      family_subscription_items: Array<{
         unit_amount_cents: number | null;
       }>;
     }>;
     expect(body).toHaveLength(1);
     expect(body[0].total_cents).toBeNull();
-    expect(body[0].family_subscription_items_v2[0].unit_amount_cents).toBeNull();
+    expect(body[0].family_subscription_items[0].unit_amount_cents).toBeNull();
     expect(errorSpy).toHaveBeenCalledWith(
       expect.stringContaining("Stripe retrieve failed"),
       expect.objectContaining({

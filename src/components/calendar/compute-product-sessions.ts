@@ -1,10 +1,10 @@
-import type { ProductV2BrowseRow, ProductTypeV2 } from "@/types";
+import type { ProductBrowseRow, ProductType } from "@/types";
 
 // Pure date-walking that produces the session-date and skipped-date arrays
 // the calendar View renders. Lives in its own file so it's unit-testable
 // without React.
 //
-// Date model: products_v2.start_date / end_date are Postgres DATE columns,
+// Date model: products.start_date / end_date are Postgres DATE columns,
 // anchored conceptually in the product's timezone. We treat them as
 // pure date strings (YYYY-MM-DD) and walk by calendar days — no timezone
 // math needed for "which day is it on the calendar." The display layer
@@ -23,13 +23,13 @@ export interface SkippedSessionDate {
 }
 
 export interface ProductCalendarInput {
-  productType: ProductTypeV2;
+  productType: ProductType;
   startDate: string | null;
   endDate: string | null;
-  scheduleSlots: ProductV2BrowseRow["schedule_slots_v2"];
+  scheduleSlots: ProductBrowseRow["schedule_slots"];
   /**
    * Holiday rows linked to the product. Each entry's `date` is a
-   * YYYY-MM-DD string from `calendar_holidays_v2.date`. `reason`
+   * YYYY-MM-DD string from `calendar_holidays.date`. `reason`
    * falls back to the parent calendar's `name` if the admin didn't
    * set a per-date one (resolved upstream by the service layer).
    */
@@ -52,7 +52,7 @@ export interface ProductCalendarResult {
  * (no start/end date, or fewer than 2 sessions). The calendar View only
  * renders when this is non-null.
  *
- * Today this only marks holiday-driven skips. When `session_overrides_v2`
+ * Today this only marks holiday-driven skips. When `session_overrides`
  * (admin-cancel-session) ships, extend the input with those overrides and
  * union them into `skips` — no View change required.
  */

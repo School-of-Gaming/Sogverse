@@ -91,7 +91,7 @@ type ProductFixture = {
   billing_mode: "paid" | "free";
   seat_count: number | null;
   timezone: string;
-  product_translations_v2: { locale: string; name: string }[];
+  product_translations: { locale: string; name: string }[];
 };
 
 const PAID_CLUB: ProductFixture = {
@@ -100,7 +100,7 @@ const PAID_CLUB: ProductFixture = {
   billing_mode: "paid",
   seat_count: 10,
   timezone: "Europe/Helsinki",
-  product_translations_v2: [{ locale: "en", name: "Test Club" }],
+  product_translations: [{ locale: "en", name: "Test Club" }],
 };
 
 const PAID_CAMP: ProductFixture = {
@@ -129,14 +129,14 @@ type AdminMockOptions = {
 };
 
 type AdminInserts = {
-  family_subscription_items_v2: Record<string, unknown>[];
+  family_subscription_items: Record<string, unknown>[];
 };
 
 function mockAdmin(opts: AdminMockOptions = {}): AdminInserts {
-  const inserts: AdminInserts = { family_subscription_items_v2: [] };
+  const inserts: AdminInserts = { family_subscription_items: [] };
 
   mockAdminFrom.mockImplementation((table: string) => {
-    if (table === "products_v2") {
+    if (table === "products") {
       return {
         select: () => ({
           eq: () => ({
@@ -153,7 +153,7 @@ function mockAdmin(opts: AdminMockOptions = {}): AdminInserts {
         }),
       };
     }
-    if (table === "family_subscriptions_v2") {
+    if (table === "family_subscriptions") {
       return {
         select: () => ({
           eq: () => ({
@@ -170,10 +170,10 @@ function mockAdmin(opts: AdminMockOptions = {}): AdminInserts {
         }),
       };
     }
-    if (table === "family_subscription_items_v2") {
+    if (table === "family_subscription_items") {
       return {
         insert: (row: Record<string, unknown>) => {
-          inserts.family_subscription_items_v2.push(row);
+          inserts.family_subscription_items.push(row);
           return Promise.resolve({ data: null, error: null });
         },
       };
@@ -362,7 +362,7 @@ describe("POST /api/checkout/products/create", () => {
 
   // ── RPC outcomes that short-circuit Stripe ────────────────────────
 
-  it("returns status='full' when create_participation_v2 reports the seat is gone", async () => {
+  it("returns status='full' when create_participation reports the seat is gone", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CLUB });
     mockAdminRpc.mockResolvedValueOnce({ data: { kind: "full" }, error: null });
@@ -399,7 +399,7 @@ describe("POST /api/checkout/products/create", () => {
       participationId: RESERVATION_ID,
     });
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
-    expect(mockAdminRpc).toHaveBeenCalledWith("create_participation_v2", {
+    expect(mockAdminRpc).toHaveBeenCalledWith("create_participation", {
       p_product_id: PRODUCT_ID,
       p_gamer_id: GAMER_ID,
       p_customer_id: CUSTOMER_ID,
@@ -515,7 +515,7 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(400);
     expect(data.error).toBe("Product is not sold in eur");
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation_v2", {
+    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
       p_reservation_id: RESERVATION_ID,
     });
   });
@@ -537,7 +537,7 @@ describe("POST /api/checkout/products/create", () => {
 
     expect(res.status).toBe(502);
     expect(data.error).toBe("Stripe did not return a Checkout URL");
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation_v2", {
+    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
       p_reservation_id: RESERVATION_ID,
     });
   });
@@ -725,16 +725,16 @@ describe("POST /api/checkout/products/create", () => {
       productId: PRODUCT_ID,
     });
 
-    // confirm_reservation_v2 was called with credits_to_grant=0 — the webhook
+    // confirm_reservation was called with credits_to_grant=0 — the webhook
     // has no work to do for the inline-add path; the family sub link row is
     // written here in the route.
-    expect(mockAdminRpc).toHaveBeenNthCalledWith(2, "confirm_reservation_v2", {
+    expect(mockAdminRpc).toHaveBeenNthCalledWith(2, "confirm_reservation", {
       p_reservation_id: RESERVATION_ID,
       p_credits_to_grant: 0,
     });
 
-    expect(inserts.family_subscription_items_v2).toHaveLength(1);
-    expect(inserts.family_subscription_items_v2[0]).toMatchObject({
+    expect(inserts.family_subscription_items).toHaveLength(1);
+    expect(inserts.family_subscription_items[0]).toMatchObject({
       family_subscription_id: FAMILY_SUB_ROW_ID,
       participation_id: RESERVATION_ID,
       stripe_subscription_item_id: "si_new",
@@ -779,7 +779,7 @@ describe("POST /api/checkout/products/create", () => {
 
     expect(res.status).toBe(402);
     expect(data.error).toBe("Your card was declined.");
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation_v2", {
+    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
       p_reservation_id: RESERVATION_ID,
     });
   });
@@ -822,7 +822,7 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(502);
     // Generic error message — we don't leak internal details.
     expect(data.error).toBe("Could not add to your subscription. Please try again.");
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation_v2", {
+    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
       p_reservation_id: RESERVATION_ID,
     });
   });
@@ -850,7 +850,7 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(400);
     expect(data.error).toBe("Product is not sold in gbp");
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation_v2", {
+    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
       p_reservation_id: RESERVATION_ID,
     });
   });

@@ -48,7 +48,7 @@ export function expandUpcomingSessions(
     // practice — surfacing the button keeps the card layout stable rather
     // than reflowing for an edge case.
     const reportsHref = row.product.padletUrl ?? "#";
-    // The voice room route is keyed by `product_groups_v2.id` (UUID) and
+    // The voice room route is keyed by `product_groups.id` (UUID) and
     // only exists for remote products. Unassigned participations
     // (group_id IS NULL, redesign §4.10) get no voice access either —
     // both cases collapse to a `"#"` no-op so the locked/Live UX still

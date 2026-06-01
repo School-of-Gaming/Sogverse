@@ -19,11 +19,11 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "get_my_gamers",
   "get_my_parents",
 
-  "create_product_v2",
-  "update_product_v2",
+  "create_product",
+  "update_product",
 
-  "get_product_groups_v2_with_details",
-  "commit_group_changes_v2",
+  "get_product_groups_with_details",
+  "commit_group_changes",
   "get_gedu_assigned_product",
   "get_my_assigned_products",
 ]);
@@ -111,24 +111,24 @@ describe("Access Control", () => {
       // (setForGedu uses DELETE + INSERT). RLS enforces self-only access
       // and the role-is-gedu check on WITH CHECK.
       ["gedu_locations", new Set(["INSERT", "DELETE"])],
-      // products-v2 admin UI writes tables directly from the browser via
+      // products admin UI writes tables directly from the browser via
       // `admin_full_access_*` RLS policies (mirrors how the Sorg-era products
       // table works). Grants enable the underlying commands; RLS restricts
-      // authorisation. Stripped at cutover when the _v2 suffix is removed.
-      ["products_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["schedule_slots_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["topics_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["tags_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["product_tags_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["product_prices_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["holiday_calendars_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["calendar_holidays_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["product_holiday_calendars_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["site_details_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["site_staff_details_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["product_translations_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["topic_translations_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["tag_translations_v2", new Set(["INSERT", "UPDATE", "DELETE"])],
+      // authorisation. Stripped at cutover when the  suffix is removed.
+      ["products", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["topics", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["tags", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["product_tags", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["calendar_holidays", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["product_holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["site_details", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["site_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["product_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["topic_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["tag_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
     ]);
 
     const { data, error } = await admin.rpc("_list_table_grants");

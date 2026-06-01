@@ -13,17 +13,17 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
 /**
  * Mint a Daily.co meeting token for a v2 product group's voice room.
  *
- * Request body: `{ groupId: product_groups_v2.id }`.
+ * Request body: `{ groupId: product_groups.id }`.
  *
- * There is no backing `voice_rooms_v2` table — Daily.co is the single
+ * There is no backing `voice_rooms` table — Daily.co is the single
  * source of truth for room existence. We derive a deterministic room name
  * from the group + the current session window, get-or-create on demand,
  * and set Daily's `exp` to the session-window close so the platform reaps
  * the room (and ejects late joiners) once the window passes.
  *
  * Gates:
- *   1. Membership — gamers via `participations_v2.status = 'active'`, gedus
- *      via `gedu_group_assignments_v2` on the product (per redesign §4.10's
+ *   1. Membership — gamers via `participations.status = 'active'`, gedus
+ *      via `gedu_group_assignments` on the product (per redesign §4.10's
  *      cross-group voice mobility rule), admins pass through.
  *   2. Session window — at least one slot's window must be open right now.
  *
@@ -57,17 +57,17 @@ export async function POST(request: Request) {
     // Group → product → slots → timezone in one round trip. `!inner` is
     // important: it makes PostgREST fail the parent select on a missing
     // product (shouldn't happen given the FK, but defends against partially
-    // deleted rows). schedule_slots_v2 is keyed off `product_id`, so it
-    // nests inside the products_v2 join — `product_groups_v2 ↔
-    // schedule_slots_v2` is not a direct FK pair.
+    // deleted rows). schedule_slots is keyed off `product_id`, so it
+    // nests inside the products join — `product_groups ↔
+    // schedule_slots` is not a direct FK pair.
     const { data: group, error: groupErr } = await admin
-      .from("product_groups_v2")
+      .from("product_groups")
       .select(
         `
           id, product_id,
-          product:products_v2!inner(
+          product:products!inner(
             id, timezone, is_remote,
-            slots:schedule_slots_v2(weekday, start_time, duration_minutes)
+            slots:schedule_slots(weekday, start_time, duration_minutes)
           )
         `,
       )
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     // ---- Membership gate ----
     if (role === "gamer") {
       const { data: participation } = await admin
-        .from("participations_v2")
+        .from("participations")
         .select("id")
         .eq("group_id", groupId)
         .eq("gamer_id", user.id)
@@ -109,7 +109,7 @@ export async function POST(request: Request) {
       // Per redesign §4.10, the gedu assignment predicate is on
       // `product_id` (cross-group voice mobility), not `group_id`.
       const { data: assignment } = await admin
-        .from("gedu_group_assignments_v2")
+        .from("gedu_group_assignments")
         .select("group_id")
         .eq("gedu_id", user.id)
         .eq("product_id", group.product_id)

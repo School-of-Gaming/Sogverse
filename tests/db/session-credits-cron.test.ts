@@ -5,14 +5,14 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
 import {
-  createV2TestProduct,
-  createV2ScheduleSlot,
-  deleteV2TestProducts,
-  resetFamilySubsV2,
-} from "./v2-helpers";
+  createTestProduct,
+  createScheduleSlot,
+  deleteTestProducts,
+  resetFamilySubs,
+} from "./product-helpers";
 
 /**
- * The hourly cron `process_session_credits_v2` walks every active
+ * The hourly cron `process_session_credits` walks every active
  * participation on a paid consumer-club product, finds the session-start
  * instant that fell in the last hour, and applies the four-rule motion
  * table from docs/products-redesign.md §4.5:
@@ -92,11 +92,11 @@ function thirtyMinutesAgoSlot(): SessionTiming {
  * raised. The cron's outer EXCEPTION WHEN OTHERS catches everything and
  * increments `errors` in the return JSONB instead of propagating. Without
  * this assertion a real bug (like the BOOLEAN/INT mismatch we hit on the
- * GET DIAGNOSTICS line in apply_credit_motion_v2) shows up only as a
+ * GET DIAGNOSTICS line in apply_credit_motion) shows up only as a
  * missing-row failure three layers down.
  */
 async function runCron(admin: SupabaseClient<Database>): Promise<void> {
-  const { data, error } = await admin.rpc("process_session_credits_v2");
+  const { data, error } = await admin.rpc("process_session_credits");
   expect(error).toBeNull();
   expect((data as { errors: number }).errors).toBe(0);
 }
@@ -113,7 +113,7 @@ async function seedActiveParticipation(
   creditsRemaining: number,
 ): Promise<string> {
   const { data, error } = await admin
-    .from("participations_v2")
+    .from("participations")
     .insert({
       product_id: productId,
       gamer_id: gamerId,
@@ -128,8 +128,8 @@ async function seedActiveParticipation(
 }
 
 /**
- * Marks a participation as sub-covered by inserting a family_subscriptions_v2
- * row + family_subscription_items_v2 link. The cron's coverage check only
+ * Marks a participation as sub-covered by inserting a family_subscriptions
+ * row + family_subscription_items link. The cron's coverage check only
  * looks for an item row whose family_subscription has status IN ('active',
  * 'past_due', 'canceling') — we use 'active'.
  */
@@ -139,7 +139,7 @@ async function makeSubCovered(
   uniqueTag: string,
 ): Promise<void> {
   const { data: sub, error: subErr } = await admin
-    .from("family_subscriptions_v2")
+    .from("family_subscriptions")
     .insert({
       customer_id: TEST_IDS.CUSTOMER,
       stripe_subscription_id: `sub_test_${uniqueTag}`,
@@ -153,7 +153,7 @@ async function makeSubCovered(
   if (subErr) throw new Error(`makeSubCovered/sub: ${subErr.message}`);
 
   const { error: itemErr } = await admin
-    .from("family_subscription_items_v2")
+    .from("family_subscription_items")
     .insert({
       family_subscription_id: sub.id,
       participation_id: participationId,
@@ -163,14 +163,14 @@ async function makeSubCovered(
   if (itemErr) throw new Error(`makeSubCovered/item: ${itemErr.message}`);
 }
 
-describe("process_session_credits_v2 — four-rule motion table", () => {
+describe("process_session_credits — four-rule motion table", () => {
   let admin: SupabaseClient<Database>;
   let timing: SessionTiming;
 
   beforeAll(async () => {
     admin = createAdminTestClient();
-    await deleteV2TestProducts(admin, ALL_PRODUCTS);
-    await resetFamilySubsV2(admin);
+    await deleteTestProducts(admin, ALL_PRODUCTS);
+    await resetFamilySubs(admin);
 
     timing = thirtyMinutesAgoSlot();
 
@@ -178,14 +178,14 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     // schedule slot. consumer_club + paid is required for the cron to
     // pick the row up.
     for (const id of ALL_PRODUCTS) {
-      await createV2TestProduct(admin, {
+      await createTestProduct(admin, {
         id,
         productType: "consumer_club",
         billingMode: "paid",
         seatCount: 10,
         timezone: "UTC",
       });
-      await createV2ScheduleSlot(admin, id, {
+      await createScheduleSlot(admin, id, {
         weekday: timing.weekday,
         startTime: timing.startTime,
       });
@@ -193,20 +193,20 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
   });
 
   afterAll(async () => {
-    await deleteV2TestProducts(admin, ALL_PRODUCTS);
-    await resetFamilySubsV2(admin);
+    await deleteTestProducts(admin, ALL_PRODUCTS);
+    await resetFamilySubs(admin);
   });
 
   beforeEach(async () => {
     // Wipe all motion + cancellation rows from prior tests on these
-    // products. credit_deductions_v2 cascades from participations_v2,
+    // products. credit_deductions cascades from participations,
     // so deleting participations is enough — but we also delete sub
     // links so each test starts fresh.
     await admin
-      .from("participations_v2")
+      .from("participations")
       .delete()
       .in("product_id", ALL_PRODUCTS);
-    await resetFamilySubsV2(admin);
+    await resetFamilySubs(admin);
   });
 
   // ---------------------------------------------------------------------------
@@ -226,7 +226,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     const cancelledAt = new Date(
       timing.sessionStart.getTime() - (CHARGE_WINDOW_HOURS + 1) * 60 * 60_000,
     );
-    await admin.from("session_cancellations_v2").insert({
+    await admin.from("session_cancellations").insert({
       participation_id: participationId,
       session_date: timing.sessionDate,
       cancelled_at: cancelledAt.toISOString(),
@@ -235,7 +235,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     await runCron(admin);
 
     const { data: deduction } = await admin
-      .from("credit_deductions_v2")
+      .from("credit_deductions")
       .select("delta, reason")
       .eq("participation_id", participationId)
       .eq("session_date", timing.sessionDate)
@@ -244,7 +244,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     expect(deduction?.reason).toBe("sub_cancel_credit");
 
     const { data: row } = await admin
-      .from("participations_v2")
+      .from("participations")
       .select("credits_remaining")
       .eq("id", participationId)
       .single();
@@ -267,7 +267,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     await runCron(admin);
 
     const { data: deduction } = await admin
-      .from("credit_deductions_v2")
+      .from("credit_deductions")
       .select("delta, reason")
       .eq("participation_id", participationId)
       .single();
@@ -275,7 +275,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     expect(deduction?.reason).toBe("sub_covered");
 
     const { data: row } = await admin
-      .from("participations_v2")
+      .from("participations")
       .select("credits_remaining")
       .eq("id", participationId)
       .single();
@@ -287,7 +287,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
   // ---------------------------------------------------------------------------
 
   it("rule 3: bundle + cancelled in window logs delta=0 (no charge)", async () => {
-    // Bundle = no family_subscription_items_v2 row.
+    // Bundle = no family_subscription_items row.
     const participationId = await seedActiveParticipation(
       admin,
       PRODUCT_RULE_3,
@@ -298,7 +298,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     const cancelledAt = new Date(
       timing.sessionStart.getTime() - (CHARGE_WINDOW_HOURS + 1) * 60 * 60_000,
     );
-    await admin.from("session_cancellations_v2").insert({
+    await admin.from("session_cancellations").insert({
       participation_id: participationId,
       session_date: timing.sessionDate,
       cancelled_at: cancelledAt.toISOString(),
@@ -307,7 +307,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     await runCron(admin);
 
     const { data: deduction } = await admin
-      .from("credit_deductions_v2")
+      .from("credit_deductions")
       .select("delta, reason")
       .eq("participation_id", participationId)
       .single();
@@ -315,7 +315,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     expect(deduction?.reason).toBe("bundle_cancel_no_charge");
 
     const { data: row } = await admin
-      .from("participations_v2")
+      .from("participations")
       .select("credits_remaining")
       .eq("id", participationId)
       .single();
@@ -337,7 +337,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     await runCron(admin);
 
     const { data: deduction } = await admin
-      .from("credit_deductions_v2")
+      .from("credit_deductions")
       .select("delta, reason")
       .eq("participation_id", participationId)
       .single();
@@ -345,7 +345,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     expect(deduction?.reason).toBe("bundle_attended_or_no_show");
 
     const { data: row } = await admin
-      .from("participations_v2")
+      .from("participations")
       .select("credits_remaining")
       .eq("id", participationId)
       .single();
@@ -368,7 +368,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     await runCron(admin);
 
     const { data: deductions } = await admin
-      .from("credit_deductions_v2")
+      .from("credit_deductions")
       .select("delta, reason")
       .eq("participation_id", participationId)
       .eq("session_date", timing.sessionDate);
@@ -379,7 +379,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     expect(deductions![0].delta).toBe(-1);
 
     const { data: row } = await admin
-      .from("participations_v2")
+      .from("participations")
       .select("credits_remaining")
       .eq("id", participationId)
       .single();
@@ -401,7 +401,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     await runCron(admin);
 
     const { data: deduction } = await admin
-      .from("credit_deductions_v2")
+      .from("credit_deductions")
       .select("delta, reason")
       .eq("participation_id", participationId)
       .single();
@@ -412,7 +412,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     expect(deduction?.reason).toBe("bundle_attended_or_no_show_underflow_skipped");
 
     const { data: row } = await admin
-      .from("participations_v2")
+      .from("participations")
       .select("credits_remaining")
       .eq("id", participationId)
       .single();
@@ -438,7 +438,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
 
     // Cancellation entered AFTER the 24h cutoff — within (sessionStart-24h, sessionStart).
     const cancelledAt = new Date(timing.sessionStart.getTime() - 60 * 60_000);
-    await admin.from("session_cancellations_v2").insert({
+    await admin.from("session_cancellations").insert({
       participation_id: participationId,
       session_date: timing.sessionDate,
       cancelled_at: cancelledAt.toISOString(),
@@ -447,7 +447,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     await runCron(admin);
 
     const { data: deduction } = await admin
-      .from("credit_deductions_v2")
+      .from("credit_deductions")
       .select("delta, reason")
       .eq("participation_id", participationId)
       .single();
@@ -455,7 +455,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     expect(deduction?.reason).toBe("bundle_late_cancel_charged");
 
     const { data: row } = await admin
-      .from("participations_v2")
+      .from("participations")
       .select("credits_remaining")
       .eq("id", participationId)
       .single();
@@ -466,27 +466,27 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
   // Holiday calendar
   // ---------------------------------------------------------------------------
   //
-  // product_has_session_v2 returns false when the session_date is on a
+  // product_has_session returns false when the session_date is on a
   // holiday the product subscribes to. The cron must skip the row (no
   // deduction, no charge).
 
   it("a session_date that falls on a subscribed holiday is skipped", async () => {
     // Create the calendar + holiday + link from the cron's product to it.
-    await admin.from("holiday_calendars_v2").upsert({
+    await admin.from("holiday_calendars").upsert({
       id: HOLIDAY_CALENDAR,
       name: "v2-cron-test-holidays",
       timezone: "UTC",
     });
     await admin
-      .from("calendar_holidays_v2")
+      .from("calendar_holidays")
       .delete()
       .eq("calendar_id", HOLIDAY_CALENDAR);
-    await admin.from("calendar_holidays_v2").insert({
+    await admin.from("calendar_holidays").insert({
       calendar_id: HOLIDAY_CALENDAR,
       date: timing.sessionDate,
       reason: "test holiday",
     });
-    await admin.from("product_holiday_calendars_v2").upsert({
+    await admin.from("product_holiday_calendars").upsert({
       product_id: PRODUCT_HOLIDAY,
       calendar_id: HOLIDAY_CALENDAR,
     });
@@ -496,7 +496,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     await runCron(admin);
 
     const { data: deductions } = await admin
-      .from("credit_deductions_v2")
+      .from("credit_deductions")
       .select("id")
       .eq("product_id", PRODUCT_HOLIDAY)
       .eq("session_date", timing.sessionDate);
@@ -504,15 +504,15 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
 
     // Cleanup so the calendar doesn't leak into other tests.
     await admin
-      .from("product_holiday_calendars_v2")
+      .from("product_holiday_calendars")
       .delete()
       .eq("product_id", PRODUCT_HOLIDAY);
     await admin
-      .from("calendar_holidays_v2")
+      .from("calendar_holidays")
       .delete()
       .eq("calendar_id", HOLIDAY_CALENDAR);
     await admin
-      .from("holiday_calendars_v2")
+      .from("holiday_calendars")
       .delete()
       .eq("id", HOLIDAY_CALENDAR);
   });
@@ -524,13 +524,13 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
   // A product with two schedule slots on different weekdays produces two
   // rows in the cron's outer loop iteration for the same participation.
   // Only the slot whose computed session_start lands in the lookback
-  // window should result in a credit_deductions_v2 row this hour.
+  // window should result in a credit_deductions row this hour.
 
   it("multi-slot product: only the in-window slot produces a deduction", async () => {
     // Add a second slot 3 days off from the in-window slot — it can't
     // possibly land in the (NOW-1h, NOW) window for this run.
     const otherWeekday = (timing.weekday + 3) % 7;
-    await admin.from("schedule_slots_v2").insert({
+    await admin.from("schedule_slots").insert({
       product_id: PRODUCT_MULTI,
       weekday: otherWeekday,
       start_time: "09:00:00",
@@ -547,7 +547,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     await runCron(admin);
 
     const { data: deductions } = await admin
-      .from("credit_deductions_v2")
+      .from("credit_deductions")
       .select("delta, reason, session_date")
       .eq("participation_id", participationId);
 
@@ -560,7 +560,7 @@ describe("process_session_credits_v2 — four-rule motion table", () => {
     // Cleanup so this product is left with only the standard slot for
     // any subsequent test runs.
     await admin
-      .from("schedule_slots_v2")
+      .from("schedule_slots")
       .delete()
       .eq("product_id", PRODUCT_MULTI)
       .eq("weekday", otherWeekday);

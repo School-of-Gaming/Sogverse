@@ -7,7 +7,7 @@
  * `expires_at`, so this is also the floor for how long a reservation can be
  * held. The DB-side reservation has no separate timer: status='reserving'
  * holds the seat until either Stripe fires session.completed (→ confirm)
- * or session.expired (→ expire). See docs/products-v2-architecture.md
+ * or session.expired (→ expire). See docs/products-architecture.md
  * "Movie-ticket reservation model".
  */
 export const RESERVATION_LIFETIME_MINUTES = 30;

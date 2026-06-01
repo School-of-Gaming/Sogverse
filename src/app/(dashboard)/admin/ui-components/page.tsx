@@ -53,20 +53,20 @@ import { computeGlowStyle } from "@/lib/constants/spatial.config";
 import {
   ProductBrowseCardView,
   type ProductBrowseCardViewProps,
-} from "@/components/public/products-v2/product-browse-card-view";
+} from "@/components/public/products/product-browse-card-view";
 import {
   ProductPurchasedCardView,
   type ProductPurchasedCardViewProps,
-} from "@/components/public/products-v2/product-purchased-card-view";
-import { RegistrationPill } from "@/components/public/products-v2/registration-pill";
-import type { RegistrationState } from "@/components/public/products-v2/derive-registration-state";
-import { SignupPanel } from "@/components/public/products-v2/signup-panel";
+} from "@/components/public/products/product-purchased-card-view";
+import { RegistrationPill } from "@/components/public/products/registration-pill";
+import type { RegistrationState } from "@/components/public/products/derive-registration-state";
+import { SignupPanel } from "@/components/public/products/signup-panel";
 import {
   buildDetailFixture,
   PREVIEW_STATES,
   PREVIEW_TYPES,
   type PreviewStateKind,
-} from "@/components/public/products-v2/mock-detail-fixtures";
+} from "@/components/public/products/mock-detail-fixtures";
 import { PaymentMethodCardView } from "@/components/billing";
 
 /* ------------------------------------------------------------------ */
@@ -985,7 +985,7 @@ function DemoCaption({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ProductsV2Demo() {
+function ProductsDemo() {
   return (
     <div className="space-y-8">
       <SubSection title="Pill — every state">
@@ -1532,11 +1532,11 @@ export default function AdminUIComponentsPage() {
       {/* ============================================================ */}
       <Section title="Products v2 — Browse & Purchased Cards">
         <p className="text-sm text-muted-foreground -mt-2">
-          Parent-facing card surfaces for products_v2 (/clubs, /camps, /events).
+          Parent-facing card surfaces for products (/clubs, /camps, /events).
           The registration pill speaks parent voice and only appears when
           there&rsquo;s something actionable to say.
         </p>
-        <ProductsV2Demo />
+        <ProductsDemo />
       </Section>
 
       {/* ============================================================ */}
@@ -1672,7 +1672,7 @@ function ProductDetailPanelTile({
   stateKind: PreviewStateKind;
 }) {
   const fixture = buildDetailFixture(productType, stateKind);
-  const fullPageHref = `/preview/products-v2/${productType}/${stateKind}`;
+  const fullPageHref = `/preview/products/${productType}/${stateKind}`;
 
   return (
     <div className="rounded-lg border bg-muted/20 p-3 space-y-2">

@@ -3,7 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createV2TestProduct, deleteV2TestProducts } from "./v2-helpers";
+import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
  * Cross-customer RLS coverage for the financial tables in the v2
@@ -12,20 +12,20 @@ import { createV2TestProduct, deleteV2TestProducts } from "./v2-helpers";
  * once per table without copying boilerplate setup five times.
  *
  * Tables under test:
- *   - participations_v2          — direct customer_id ownership
- *   - payments_v2                — direct customer_id ownership
- *   - refunds_v2                 — ownership inherited via payment_id
- *   - product_seat_counts_v2     — public-readable rollup; assert anon CAN read
+ *   - participations          — direct customer_id ownership
+ *   - payments                — direct customer_id ownership
+ *   - refunds                 — ownership inherited via payment_id
+ *   - product_seat_counts     — public-readable rollup; assert anon CAN read
  *   - (writes against all tables) — confirm only admin role can mutate;
  *                                   customers must go through SECURITY DEFINER RPCs
  *
- * Other v2 tables (session_cancellations_v2, credit_deductions_v2,
- * family_subscriptions_v2, family_subscription_items_v2,
- * product_subscription_prices_v2) follow the same RLS shape; the
+ * Other v2 tables (session_cancellations, credit_deductions,
+ * family_subscriptions, family_subscription_items,
+ * product_subscription_prices) follow the same RLS shape; the
  * access-control catalog test in tests/db/access-control.test.ts will
  * fail CI if any of them lose RLS coverage. They're covered there, not
  * here — those rows hold no data a parent could harvest from another
- * parent that isn't already protected by the participations_v2 row's
+ * parent that isn't already protected by the participations row's
  * ownership chain (FKs cascade on customer deletion).
  */
 
@@ -75,21 +75,21 @@ describe("v2 participations / payments / refunds RLS", () => {
     // policies don't re-validate parent-gamer at the row level (the RPC
     // does that, and we're testing RLS reads here, not the RPC).
     await admin
-      .from("refunds_v2")
+      .from("refunds")
       .delete()
       .in("stripe_event_id", ["evt_rls_a", "evt_rls_b"]);
     await admin
-      .from("payments_v2")
+      .from("payments")
       .delete()
       .in("stripe_event_id", ["evt_rls_pa", "evt_rls_pb"]);
-    await deleteV2TestProducts(admin, ALL_PRODUCTS);
+    await deleteTestProducts(admin, ALL_PRODUCTS);
 
-    await createV2TestProduct(admin, { id: PRODUCT_A, seatCount: 10 });
-    await createV2TestProduct(admin, { id: PRODUCT_B, seatCount: 10 });
+    await createTestProduct(admin, { id: PRODUCT_A, seatCount: 10 });
+    await createTestProduct(admin, { id: PRODUCT_B, seatCount: 10 });
 
     // CUSTOMER's participation on PRODUCT_A.
     const partA = await admin
-      .from("participations_v2")
+      .from("participations")
       .insert({
         product_id: PRODUCT_A,
         gamer_id: TEST_IDS.GAMER,
@@ -106,7 +106,7 @@ describe("v2 participations / payments / refunds RLS", () => {
     // partial unique index `(product_id, gamer_id) WHERE active` doesn't
     // conflict, even though both rows reference the same gamer).
     const partB = await admin
-      .from("participations_v2")
+      .from("participations")
       .insert({
         product_id: PRODUCT_B,
         gamer_id: TEST_IDS.GAMER,
@@ -121,7 +121,7 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     // Payments — one each.
     const payA = await admin
-      .from("payments_v2")
+      .from("payments")
       .insert({
         customer_id: TEST_IDS.CUSTOMER,
         amount_cents: 1000,
@@ -136,7 +136,7 @@ describe("v2 participations / payments / refunds RLS", () => {
     customerPaymentId = payA.data.id;
 
     const payB = await admin
-      .from("payments_v2")
+      .from("payments")
       .insert({
         customer_id: TEST_IDS.CUSTOMER_2,
         amount_cents: 2000,
@@ -152,7 +152,7 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     // Refunds linked to each payment.
     const refA = await admin
-      .from("refunds_v2")
+      .from("refunds")
       .insert({
         payment_id: customerPaymentId,
         amount_cents: 1000,
@@ -166,7 +166,7 @@ describe("v2 participations / payments / refunds RLS", () => {
     customerRefundId = refA.data.id;
 
     const refB = await admin
-      .from("refunds_v2")
+      .from("refunds")
       .insert({
         payment_id: customer2PaymentId,
         amount_cents: 2000,
@@ -181,27 +181,27 @@ describe("v2 participations / payments / refunds RLS", () => {
   });
 
   afterAll(async () => {
-    // refunds_v2 doesn't cascade from anything we own — delete first.
+    // refunds doesn't cascade from anything we own — delete first.
     await admin
-      .from("refunds_v2")
+      .from("refunds")
       .delete()
       .in("stripe_event_id", ["evt_rls_a", "evt_rls_b"]);
     await admin
-      .from("payments_v2")
+      .from("payments")
       .delete()
       .in("stripe_event_id", ["evt_rls_pa", "evt_rls_pb"]);
     // Products cascade to participations.
-    await deleteV2TestProducts(admin, ALL_PRODUCTS);
+    await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 
   // ---------------------------------------------------------------------------
-  // participations_v2
+  // participations
   // ---------------------------------------------------------------------------
 
-  describe("participations_v2", () => {
+  describe("participations", () => {
     it("customer can SELECT own participation", async () => {
       const { data, error } = await customerClient
-        .from("participations_v2")
+        .from("participations")
         .select("id, customer_id")
         .eq("id", customerParticipationId)
         .maybeSingle();
@@ -211,7 +211,7 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     it("customer cannot SELECT another customer's participation", async () => {
       const { data, error } = await customerClient
-        .from("participations_v2")
+        .from("participations")
         .select("id")
         .eq("id", customer2ParticipationId);
       expect(error).toBeNull();
@@ -220,7 +220,7 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     it("customer's list query only returns their own rows", async () => {
       const { data, error } = await customerClient
-        .from("participations_v2")
+        .from("participations")
         .select("id, customer_id");
       expect(error).toBeNull();
       const owners = new Set((data ?? []).map((r) => r.customer_id));
@@ -237,14 +237,14 @@ describe("v2 participations / payments / refunds RLS", () => {
       // RLS is the gate — and there's no policy that lets anon see rows. So
       // the query succeeds silently with an empty result set.
       const { data, error } = await anonClient
-        .from("participations_v2")
+        .from("participations")
         .select("id");
       expect(error).toBeNull();
       expect(data).toEqual([]);
     });
 
     it("customer cannot INSERT a participation directly", async () => {
-      const { error } = await customerClient.from("participations_v2").insert({
+      const { error } = await customerClient.from("participations").insert({
         product_id: PRODUCT_A,
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
@@ -258,7 +258,7 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     it("customer cannot UPDATE their participation directly", async () => {
       const { error } = await customerClient
-        .from("participations_v2")
+        .from("participations")
         .update({ credits_remaining: 999 })
         .eq("id", customerParticipationId);
       expect(error).not.toBeNull();
@@ -266,7 +266,7 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     it("customer cannot DELETE their participation directly", async () => {
       const { error } = await customerClient
-        .from("participations_v2")
+        .from("participations")
         .delete()
         .eq("id", customerParticipationId);
       expect(error).not.toBeNull();
@@ -274,13 +274,13 @@ describe("v2 participations / payments / refunds RLS", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // payments_v2
+  // payments
   // ---------------------------------------------------------------------------
 
-  describe("payments_v2", () => {
+  describe("payments", () => {
     it("customer can SELECT own payment", async () => {
       const { data, error } = await customerClient
-        .from("payments_v2")
+        .from("payments")
         .select("id, customer_id, amount_cents")
         .eq("id", customerPaymentId)
         .maybeSingle();
@@ -290,7 +290,7 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     it("customer cannot SELECT another customer's payment", async () => {
       const { data, error } = await customerClient
-        .from("payments_v2")
+        .from("payments")
         .select("id")
         .eq("id", customer2PaymentId);
       expect(error).toBeNull();
@@ -298,13 +298,13 @@ describe("v2 participations / payments / refunds RLS", () => {
     });
 
     it("anon SELECT returns no rows (RLS blocks)", async () => {
-      const { data, error } = await anonClient.from("payments_v2").select("id");
+      const { data, error } = await anonClient.from("payments").select("id");
       expect(error).toBeNull();
       expect(data).toEqual([]);
     });
 
     it("customer cannot INSERT a payment directly", async () => {
-      const { error } = await customerClient.from("payments_v2").insert({
+      const { error } = await customerClient.from("payments").insert({
         customer_id: TEST_IDS.CUSTOMER,
         amount_cents: 99,
         currency: "eur",
@@ -316,13 +316,13 @@ describe("v2 participations / payments / refunds RLS", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // refunds_v2 (ownership inherited via payment_id)
+  // refunds (ownership inherited via payment_id)
   // ---------------------------------------------------------------------------
 
-  describe("refunds_v2", () => {
+  describe("refunds", () => {
     it("customer can SELECT a refund linked to their own payment", async () => {
       const { data, error } = await customerClient
-        .from("refunds_v2")
+        .from("refunds")
         .select("id, amount_cents")
         .eq("id", customerRefundId)
         .maybeSingle();
@@ -332,7 +332,7 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     it("customer cannot SELECT a refund linked to another customer's payment", async () => {
       const { data, error } = await customerClient
-        .from("refunds_v2")
+        .from("refunds")
         .select("id")
         .eq("id", customer2RefundId);
       expect(error).toBeNull();
@@ -343,7 +343,7 @@ describe("v2 participations / payments / refunds RLS", () => {
       // Verifies that customer 2's refund is selectable by customer 2 —
       // catches a regression where the policy USING clause is over-tight.
       const { data, error } = await customer2Client
-        .from("refunds_v2")
+        .from("refunds")
         .select("id, amount_cents")
         .eq("id", customer2RefundId)
         .maybeSingle();
@@ -352,20 +352,20 @@ describe("v2 participations / payments / refunds RLS", () => {
     });
 
     it("anon SELECT returns no rows (RLS blocks)", async () => {
-      const { data, error } = await anonClient.from("refunds_v2").select("id");
+      const { data, error } = await anonClient.from("refunds").select("id");
       expect(error).toBeNull();
       expect(data).toEqual([]);
     });
   });
 
   // ---------------------------------------------------------------------------
-  // product_seat_counts_v2 — public-readable rollup
+  // product_seat_counts — public-readable rollup
   // ---------------------------------------------------------------------------
 
-  describe("product_seat_counts_v2", () => {
+  describe("product_seat_counts", () => {
     it("anon CAN SELECT the rollup (it's the live seat counter)", async () => {
       const { data, error } = await anonClient
-        .from("product_seat_counts_v2")
+        .from("product_seat_counts")
         .select("active_count")
         .eq("product_id", PRODUCT_A)
         .maybeSingle();
@@ -376,7 +376,7 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     it("authenticated customer can SELECT the rollup for any product", async () => {
       const { data, error } = await customerClient
-        .from("product_seat_counts_v2")
+        .from("product_seat_counts")
         .select("active_count")
         .eq("product_id", PRODUCT_B) // not their product
         .maybeSingle();
@@ -386,19 +386,19 @@ describe("v2 participations / payments / refunds RLS", () => {
 
     it("no role can INSERT into the rollup directly", async () => {
       const { error: anonError } = await anonClient
-        .from("product_seat_counts_v2")
+        .from("product_seat_counts")
         .insert({ product_id: PRODUCT_A, active_count: 999 });
       expect(anonError).not.toBeNull();
 
       const { error: custError } = await customerClient
-        .from("product_seat_counts_v2")
+        .from("product_seat_counts")
         .insert({ product_id: PRODUCT_A, active_count: 999 });
       expect(custError).not.toBeNull();
     });
 
     it("customer cannot UPDATE the rollup", async () => {
       const { error } = await customerClient
-        .from("product_seat_counts_v2")
+        .from("product_seat_counts")
         .update({ active_count: 999 })
         .eq("product_id", PRODUCT_A);
       expect(error).not.toBeNull();

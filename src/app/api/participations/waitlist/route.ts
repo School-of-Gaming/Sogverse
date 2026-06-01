@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   const admin = createAdminClient();
-  const { data, error } = await admin.rpc("join_waitlist_v2", {
+  const { data, error } = await admin.rpc("join_waitlist", {
     p_product_id: productId,
     p_gamer_id: gamerId,
     p_customer_id: user.id,

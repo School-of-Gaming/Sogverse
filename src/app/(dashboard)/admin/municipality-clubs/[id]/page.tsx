@@ -1,4 +1,4 @@
-import { ProductV2DetailsPage } from "@/components/admin/products-v2/product-v2-details-page";
+import { ProductDetailsPage } from "@/components/admin/products/product-details-page";
 
 export default async function AdminMunicipalityClubDetailsPage({
   params,
@@ -7,6 +7,6 @@ export default async function AdminMunicipalityClubDetailsPage({
 }) {
   const { id } = await params;
   return (
-    <ProductV2DetailsPage productType="municipality_club" productId={id} />
+    <ProductDetailsPage productType="municipality_club" productId={id} />
   );
 }

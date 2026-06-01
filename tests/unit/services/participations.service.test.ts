@@ -25,7 +25,7 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
     expect(mockSupabase.from).not.toHaveBeenCalled();
   });
 
-  it("queries participations_v2 filtered by the given gamer ids", async () => {
+  it("queries participations filtered by the given gamer ids", async () => {
     const rows = [
       {
         id: "part-1",
@@ -35,7 +35,7 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
         product: {
           id: "prod-1",
           product_type: "camp",
-          product_translations_v2: [{ locale: "en", name: "Summer Camp" }],
+          product_translations: [{ locale: "en", name: "Summer Camp" }],
         },
         group: { name: "Group A" },
       },
@@ -50,7 +50,7 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
 
     const result = await service.getParticipationsForGamers(["g1", "g2"]);
 
-    expect(mockSupabase.from).toHaveBeenCalledWith("participations_v2");
+    expect(mockSupabase.from).toHaveBeenCalledWith("participations");
     expect(inFn).toHaveBeenCalledWith("gamer_id", ["g1", "g2"]);
     expect(result).toEqual(rows);
   });

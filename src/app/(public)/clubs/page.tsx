@@ -1,4 +1,4 @@
-import { ProductBrowsePage } from "@/components/public/products-v2/product-browse-page";
+import { ProductBrowsePage } from "@/components/public/products/product-browse-page";
 
 // Browse: consumer clubs only (per redesign §7.3).
 // Purchased: consumer + municipality clubs — a muni club registered via

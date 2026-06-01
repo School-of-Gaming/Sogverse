@@ -7,7 +7,7 @@ import { getClient } from "@/lib/supabase/client";
 import { resolveLocale } from "@/lib/constants/locales";
 import { expandUpcomingSessions } from "@/lib/upcoming-sessions";
 import { useNow } from "@/providers";
-import type { SessionAudience, SubscriptionFrequencyV2 } from "@/types";
+import type { SessionAudience, SubscriptionFrequency } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import {
@@ -16,10 +16,10 @@ import {
   type JoinWaitlistInput,
   type MyUpcomingSessionRow,
 } from "./participations.service";
-import { productV2Keys } from "../products-v2";
+import { productKeys } from "../products";
 
 export const participationKeys = {
-  all: ["participations-v2"] as const,
+  all: ["participations"] as const,
   mine: () => [...participationKeys.all, "mine"] as const,
   myUpcomingSessions: (audience: SessionAudience) =>
     [...participationKeys.all, "my-upcoming-sessions", audience] as const,
@@ -116,7 +116,7 @@ export function useParticipationCounts(productIds: string[]) {
  * CTA copy from "Subscribe" → "Add to your subscription".
  */
 export function useMyFamilySubAt(
-  frequency: SubscriptionFrequencyV2 | null,
+  frequency: SubscriptionFrequency | null,
   currency: SupportedCurrency,
 ) {
   const supabase = getClient();
@@ -141,7 +141,7 @@ export function useCreateParticipation() {
     onSuccess: () => {
       // Cascade through the key hierarchy — "all" hits both mine + counts.
       queryClient.invalidateQueries({ queryKey: participationKeys.all });
-      queryClient.invalidateQueries({ queryKey: productV2Keys.all });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
     },
   });
 }
@@ -154,7 +154,7 @@ export function useJoinWaitlist() {
     mutationFn: (input: JoinWaitlistInput) => service.joinWaitlist(input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: participationKeys.all });
-      queryClient.invalidateQueries({ queryKey: productV2Keys.all });
+      queryClient.invalidateQueries({ queryKey: productKeys.all });
     },
   });
 }
@@ -181,7 +181,7 @@ export function useProductSeatCountsRealtime(productId: string | undefined) {
         {
           event: "*",
           schema: "public",
-          table: "product_seat_counts_v2",
+          table: "product_seat_counts",
           filter: `product_id=eq.${productId}`,
         },
         () => {
