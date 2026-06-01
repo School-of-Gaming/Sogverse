@@ -83,8 +83,7 @@ export type GeduLocation = Database["public"]["Tables"]["gedu_locations"]["Row"]
 export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"]["Insert"];
 
 // ---------------------------------------------------------------------------
-// products v2 (parallel-phase schema — see docs/products-redesign.md)
-// Suffixes are stripped at cutover (§9).
+// products (see docs/products-architecture.md)
 // ---------------------------------------------------------------------------
 
 // Enums
@@ -191,8 +190,8 @@ export type ProductBrowseRow = Product & {
 };
 
 // ---------------------------------------------------------------------------
-// products v2 — participations, payments, family subs (00039)
-// See docs/products-redesign.md §§ 5.5, 5.7, 5.7a, 5.1a, 6.1.
+// products — participations, payments, family subs (00039)
+// See docs/products-architecture.md §§ 5.5, 5.7, 5.7a, 5.1a, 6.1.
 // ---------------------------------------------------------------------------
 
 // Enums
@@ -208,7 +207,7 @@ export type ParticipationInsert = Database["public"]["Tables"]["participations"]
 
 /**
  * Derived 3-state placement vocabulary for participations.
- * See products-redesign.md §3 "Participation state vocabulary":
+ * See products-architecture.md §3 "Participation state vocabulary":
  *   - 'waitlisted'  — `status = 'waitlisted'`
  *   - 'unassigned'  — `status = 'active' AND group_id IS NULL`
  *   - 'assigned'    — `status = 'active' AND group_id IS NOT NULL`
@@ -260,8 +259,8 @@ export type CreditDeduction = Database["public"]["Tables"]["credit_deductions"][
 export type ProductSeatCount = Database["public"]["Tables"]["product_seat_counts"]["Row"];
 
 // ---------------------------------------------------------------------------
-// products v2 — groups & gedu assignments (00049)
-// See docs/products-redesign.md §4.1, §5.4, §6.1a.
+// products — groups & gedu assignments (00049)
+// See docs/products-architecture.md §4.1, §5.4, §6.1a.
 // ---------------------------------------------------------------------------
 
 // product_groups

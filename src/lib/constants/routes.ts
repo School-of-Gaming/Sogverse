@@ -25,11 +25,11 @@ function geduAssignedProductHref(
 
 /**
  * Picks the admin product-details URL from a product's type. Unlike the gedu
- * routes, each v2 product type has its own admin surface, so consumer and
+ * routes, each product type has its own admin surface, so consumer and
  * municipality clubs do NOT collapse — they map to distinct edit pages
  * (`/admin/consumer-clubs/[id]` vs `/admin/municipality-clubs/[id]`). Used to
  * link a gamer's/parent's assigned products from the admin user-detail page.
- * The v1 `/admin/products/[id]` surface is dead (see TODO.md) — never target it.
+ * The legacy `/admin/products/[id]` surface is dead (see TODO.md) — never target it.
  */
 function adminProductHref(
   productType: ProductType,

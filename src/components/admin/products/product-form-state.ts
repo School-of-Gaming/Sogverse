@@ -49,7 +49,7 @@ export interface FormState {
 
   // Inline topic create — single-locale (admin's current UI locale).
   // Other-locale names get added later in the (yet-to-be-built) reference-data
-  // translation manager. See docs/products-redesign.md.
+  // translation manager. See docs/products-architecture.md.
   showNewTopic: boolean;
   newTopicName: string;
   newTopicKind: "game" | "subject";

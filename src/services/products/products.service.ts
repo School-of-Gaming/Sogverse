@@ -103,7 +103,7 @@ export type PriceInput = {
 
 // Shape accepted by /api/admin/products/create. Mirrors create_product()
 // RPC args, minus the image (uploaded separately as the last step so a failed
-// insert never leaves an orphan in the bucket — see docs/products-redesign.md).
+// insert never leaves an orphan in the bucket — see docs/products-architecture.md).
 //
 // `translations` must contain at least one entry, and at least one of those
 // entries must have locale 'en' or 'fi'. The RPC enforces the same rule;

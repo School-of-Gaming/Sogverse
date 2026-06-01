@@ -33,10 +33,9 @@ interface AddGamerDialogProps {
 /**
  * Reusable dialog for creating a gamer linked to the current parent.
  *
- * v1 form intentionally only asks for first name, birth month, birth year, and
+ * The form intentionally only asks for first name, birth month, birth year, and
  * an optional gender — no username / password / email. Gamers under this model
- * always sign in via account-switching from their parent's account; v2 will
- * replace this with direct gamer login (email + password).
+ * always sign in via account-switching from their parent's account.
  *
  * Designed for reuse: family selector wires it now; product / club / camp /
  * event detail pages should pass `open` / `onOpenChange` to drop it in when a

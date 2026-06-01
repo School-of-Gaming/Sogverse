@@ -9,7 +9,7 @@ export const voiceKeys = {
 };
 
 /**
- * Get a Daily.co meeting token for a v2 product group
+ * Get a Daily.co meeting token for a product group
  * (`product_groups.id`). The token endpoint derives the Daily room name
  * from the group + current session window and get-or-creates the room on
  * demand — no DB-side voice room table.

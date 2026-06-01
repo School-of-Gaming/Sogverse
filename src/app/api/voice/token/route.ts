@@ -11,7 +11,7 @@ import { computeSessionWindow } from "@/lib/session-schedule";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 
 /**
- * Mint a Daily.co meeting token for a v2 product group's voice room.
+ * Mint a Daily.co meeting token for a product group's voice room.
  *
  * Request body: `{ groupId: product_groups.id }`.
  *
@@ -28,10 +28,9 @@ import { VOICE_CONFIG } from "@/lib/constants/voice";
  *   2. Session window — at least one slot's window must be open right now.
  *
  * Notably absent: there is no "did you enroll before this session started?"
- * gate. v2 treats active membership as the binary access predicate — if
- * you're an active participant, you're in. (v1 had a mid-session enrollment
- * cut-off that was load-bearing for the sorg-token billing model; v2's
- * credit-based billing makes the cut-off irrelevant.)
+ * gate. Active membership is the binary access predicate — if
+ * you're an active participant, you're in. (Credit-based billing makes a
+ * mid-session enrollment cut-off irrelevant.)
  */
 export async function POST(request: Request) {
   try {

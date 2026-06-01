@@ -119,7 +119,7 @@ export async function deleteDailyRoom(name: string): Promise<void> {
 }
 
 /**
- * Deterministic Daily.co room name for a v2 product group's session.
+ * Deterministic Daily.co room name for a product group's session.
  *
  * Format: `g-{groupId}-{YYYYMMDDHHMM}` where the timestamp is the session
  * window's open time formatted in the product's timezone. Same group +

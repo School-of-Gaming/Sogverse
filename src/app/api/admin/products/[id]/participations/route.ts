@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * Admin-only comp-enrollment path: drops a gamer directly into a product
  * with status='active', bypassing payment, seat caps, registration windows,
  * and effective-status gates. The customer_id is resolved from parent_gamer
- * (v1: one parent per gamer; multi-parent reckoning is future work).
+ * (one parent per gamer; multi-parent reckoning is future work).
  *
  * Blocked on consumer_club (recurring subscription/bundle billing makes a
  * no-payment comp awkward and we don't model it yet). Camps, events, and
@@ -85,7 +85,7 @@ export async function POST(
     );
   }
 
-  // Resolve the gamer's parent. v1 assumes a single parent per gamer; if a
+  // Resolve the gamer's parent. We assume a single parent per gamer; if a
   // gamer is somehow linked to multiple parents we pick the oldest link
   // deterministically. Multi-parent UX is tracked for future work.
   const { data: parentLinks, error: parentError } = await admin

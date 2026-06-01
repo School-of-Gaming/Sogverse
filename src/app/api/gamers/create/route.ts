@@ -9,10 +9,8 @@ import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 type GenderValue = "boy" | "girl" | "non_binary";
 const VALID_GENDERS: readonly GenderValue[] = ["boy", "girl", "non_binary"];
 
-// v1 internal handle + password. Opaque on purpose: the parent never sees
-// either in v1 (gamer login is via account-switching from the parent),
-// and v2 will replace the username concept entirely with the gamer's
-// real email + a password they choose.
+// Internal handle + password. Opaque on purpose: the parent never sees
+// either (gamer login is via account-switching from the parent).
 function generateOpaqueGamerUsername(): string {
   return "g" + randomBytes(8).toString("hex");
 }

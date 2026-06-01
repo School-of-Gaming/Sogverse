@@ -47,7 +47,7 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
 
   // Seat math feeds active+reserving — reserving rows hold the seat for
   // 30 min during Stripe Checkout. The threshold check uses the same
-  // count; small over-count for in-flight reservations is acceptable in v1.
+  // count; small over-count for in-flight reservations is acceptable.
   const participationsCount =
     (counts?.activeCount ?? 0) + (counts?.reservingCount ?? 0);
 

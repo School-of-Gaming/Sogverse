@@ -10,8 +10,8 @@ import type { BatchGroupChanges } from "@/services/groups";
  * groups created in the same batch.
  *
  * Email notifications + Daily.co room provisioning are intentionally NOT done
- * here. The v1 route at api/admin/products/[id]/groups/apply/route.ts wires
- * those up; that code stays available for future reuse on the v2 surface.
+ * here. The legacy provisioning logic wires those up and stays available for
+ * future reuse.
  */
 export async function POST(
   request: Request,
