@@ -306,7 +306,7 @@ function SwitchToGamerDialogDemo() {
           open={open}
           onOpenChange={setOpen}
           gamerId="demo-gamer-id"
-          gamerDisplayName="JääKarhu"
+          gamerDisplayName="Aino"
           productName="Minecraft Club"
           redirectUrl="#"
         />
@@ -808,20 +808,20 @@ function buildLoadedSessions(
 const DEMO_SUMMARY_LINES: ChangeSegment[][] = [
   [
     { type: "text", value: "Move " },
-    { type: "gamer", value: "CoolKid" },
+    { type: "gamer", value: "Leo" },
     { type: "text", value: " from " },
-    { type: "gedu", value: "GeduSteve" },
+    { type: "gedu", value: "Steve" },
     { type: "text", value: "'s group to " },
-    { type: "gedu", value: "GeduMaria" },
+    { type: "gedu", value: "Maria" },
     { type: "text", value: "'s group" },
   ],
   [
     { type: "text", value: "Add group with " },
-    { type: "gedu", value: "GeduMaria" },
+    { type: "gedu", value: "Maria" },
   ],
   [
     { type: "text", value: "Delete " },
-    { type: "gedu", value: "GeduAlex" },
+    { type: "gedu", value: "Alex" },
     { type: "text", value: "'s group" },
   ],
   [
@@ -831,16 +831,16 @@ const DEMO_SUMMARY_LINES: ChangeSegment[][] = [
 
 const DEMO_PROGRESS_STEPS: StepItem[] = [
   { label: "Save group changes to database", status: "done" },
-  { label: "Notify CoolKid's parent about schedule change", status: "done" },
-  { label: "Notify PixelDude's parent about removal", status: "active" },
-  { label: "Notify GeduSteve about new assignment", status: "pending" },
+  { label: "Notify Leo's parent about schedule change", status: "done" },
+  { label: "Notify Max's parent about removal", status: "active" },
+  { label: "Notify Steve about new assignment", status: "pending" },
 ];
 
 const DEMO_ERROR_STEPS: StepItem[] = [
   { label: "Save group changes to database", status: "done" },
-  { label: "Notify CoolKid's parent about schedule change", status: "failed" },
-  { label: "Notify PixelDude's parent about removal", status: "done" },
-  { label: "Notify GeduSteve about new assignment", status: "pending" },
+  { label: "Notify Leo's parent about schedule change", status: "failed" },
+  { label: "Notify Max's parent about removal", status: "done" },
+  { label: "Notify Steve about new assignment", status: "pending" },
 ];
 
 function CommitFlowDialogDemo() {
@@ -1458,11 +1458,11 @@ export default function AdminUIComponentsPage() {
         <SubSection title="Identicons (different IDs)">
           <div className="flex flex-wrap items-center gap-4">
             {[
-              { id: "4babfc78-d197-496e-860d-48f1207f5bc6", name: "ShadowFox99" },
-              { id: "1a54d62e-828f-4a42-89f1-cc36185351b0", name: "JääKarhu" },
-              { id: "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47", name: "NovaBlitz" },
-              { id: "ff42551b-933b-4c37-9971-7fdbbeed0385", name: "TuliKettu42" },
-              { id: "1d589613-5fb0-4692-bcf1-029f8fc16b99", name: "PixelRogue" },
+              { id: "4babfc78-d197-496e-860d-48f1207f5bc6", name: "Emma" },
+              { id: "1a54d62e-828f-4a42-89f1-cc36185351b0", name: "Aino" },
+              { id: "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47", name: "Oliver" },
+              { id: "ff42551b-933b-4c37-9971-7fdbbeed0385", name: "Eero" },
+              { id: "1d589613-5fb0-4692-bcf1-029f8fc16b99", name: "Liam" },
             ].map(({ id, name }) => (
               <div key={id} className="flex flex-col items-center gap-1.5">
                 <Avatar>
@@ -1663,14 +1663,14 @@ export default function AdminUIComponentsPage() {
           <div className="space-y-4">
             <GamerCard
               id="8e86d931-500c-49ed-889d-c2cd10879a28"
-              firstName="MyrskySusi"
-              username="myrskysusi"
+              firstName="Venla"
+              username="venla"
               subtitle="Joined 3 days ago"
             />
             <GamerCard
               id="5aec0f5a-5398-46d7-a150-3554cf701beb"
-              firstName="CrimsonArrow"
-              username="crimsonarrow"
+              firstName="Lucas"
+              username="lucas"
               subtitle="Joined 2 weeks ago"
             />
           </div>
@@ -1685,8 +1685,8 @@ export default function AdminUIComponentsPage() {
             <UserRow
               user={{ id: "a1b2c3d4-0000-0000-0000-000000000001", first_name: "Jane", email: "jane@example.com", role: "customer" }}
               linkedGamers={[
-                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "MyrskySusi", email: null, role: "gamer" },
-                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "CrimsonArrow", email: null, role: "gamer" },
+                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "Venla", email: null, role: "gamer" },
+                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "Lucas", email: null, role: "gamer" },
               ]}
             />
             <UserRow
