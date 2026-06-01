@@ -43,6 +43,10 @@ const ZOE = {
   gamer_first_name: "Zoe",
   gamer_date_of_birth: "2015-01-01",
   gamer_gender: "girl" as const,
+  gamer_minecraft_username: null,
+  gamer_minecraft_uuid: null,
+  gamer_parent_first_name: null,
+  gamer_parent_last_name: null,
   status: "active" as const,
   signed_up_at: "2026-01-01T00:00:00Z",
 };
@@ -52,6 +56,10 @@ const YANNI = {
   gamer_first_name: "Yanni",
   gamer_date_of_birth: "2014-06-01",
   gamer_gender: "boy" as const,
+  gamer_minecraft_username: "yanni_mc",
+  gamer_minecraft_uuid: null,
+  gamer_parent_first_name: "Bob",
+  gamer_parent_last_name: "Smith",
   status: "active" as const,
   signed_up_at: "2026-01-02T00:00:00Z",
 };

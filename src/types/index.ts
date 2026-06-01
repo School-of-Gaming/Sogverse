@@ -305,6 +305,10 @@ export interface GroupV2ParticipationDetail {
   gamer_first_name: string;
   gamer_date_of_birth: string | null;
   gamer_gender: GenderType | null;
+  gamer_minecraft_username: string | null;
+  gamer_minecraft_uuid: string | null;
+  gamer_parent_first_name: string | null;
+  gamer_parent_last_name: string | null;
   status: ParticipationStatus;
   signed_up_at: string;
 }

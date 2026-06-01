@@ -657,7 +657,8 @@
         "genderGirl": "be'Hom",
         "genderNonBinary": "loDHomHey",
         "chip": {
-          "age": "{age} DIS"
+          "age": "{age} DIS",
+          "parent": "vavnI': {name}"
         },
         "unassigned": {
           "title": "ngu'be'pu'",
@@ -1156,8 +1157,7 @@
       "noParentEmail": "vavnI' QInHom tu'lu'be'",
       "emailCopied": "QInHom 'aQpu'",
       "copyAllParentEmails": "Hoch vavnI' QInHommey yI'aQ ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "Hoch vavnI' QInHommey 'aQpu'",
-      "minecraftUnknown": "(Sovbe'lu')"
+      "allEmailsCopied": "Hoch vavnI' QInHommey 'aQpu'"
     }
   },
   "groups": {
@@ -1531,7 +1531,8 @@
     "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH",
     "verified": "chellu'",
     "unverified": "{username} (chelbe'lu')",
-    "notProvided": "ngeHbe'lu'"
+    "notProvided": "ngeHbe'lu'",
+    "none": "(Sovbe'lu')"
   },
   "parent": {
     "placeholders": {

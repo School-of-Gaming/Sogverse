@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Check, Users } from "lucide-react";
+import { ArrowLeft, Users } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 
 import { ROUTES, ROLE_BADGE_STYLES, ROLE_LABEL_KEYS } from "@/lib/constants";
@@ -15,6 +15,7 @@ import { getServerTimezone } from "@/lib/timezone.server";
 import { UsersService } from "@/services/users";
 import { GamerService } from "@/services/gamers";
 import { MinecraftService } from "@/services/minecraft";
+import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
 
 export default async function AdminUserDetailPage({
   params,
@@ -22,10 +23,9 @@ export default async function AdminUserDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: userId } = await params;
-  const [t, c, tm, locale, timeZone] = await Promise.all([
+  const [t, c, locale, timeZone] = await Promise.all([
     getTranslations("admin.users"),
     getTranslations("common"),
-    getTranslations("minecraft"),
     getLocale(),
     getServerTimezone(),
   ]);
@@ -105,21 +105,7 @@ export default async function AdminUserDetailPage({
               </p>
             )}
             {showMinecraft && (
-              <p className="text-sm">
-                <span className="text-muted-foreground">{tm('label')}: </span>
-                {mcUsername && mcUuid ? (
-                  <span className="inline-flex items-center gap-1 text-success">
-                    {mcUsername}
-                    <Check className="h-4 w-4" aria-label={tm('verified')} />
-                  </span>
-                ) : mcUsername ? (
-                  <span className="text-warning" aria-label={tm('unverified', { username: mcUsername })}>
-                    {mcUsername}
-                  </span>
-                ) : (
-                  <span className="text-muted-foreground">{tm('notProvided')}</span>
-                )}
-              </p>
+              <MinecraftUsernameBadge username={mcUsername} uuid={mcUuid} size="base" />
             )}
             <div className="mt-2 flex items-center gap-3">
               <Badge className={ROLE_BADGE_STYLES[profile.role]}>

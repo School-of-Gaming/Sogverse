@@ -2,10 +2,11 @@
 
 import { memo } from "react";
 import { useDraggable } from "@dnd-kit/core";
-import { GripVertical } from "lucide-react";
+import { GripVertical, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
 import { computeAge, cn } from "@/lib/utils";
 import { useTimezone } from "@/providers";
 import type { GenderType } from "@/types";
@@ -21,6 +22,10 @@ interface ContentProps {
   firstName: string;
   dateOfBirth: string | null;
   gender: GenderType | null;
+  parentFirstName: string | null;
+  parentLastName: string | null;
+  minecraftUsername: string | null;
+  minecraftUuid: string | null;
 }
 
 // Memoized purely-visual content: dnd-kit re-renders the wrapper on every
@@ -30,6 +35,10 @@ const ChipContent = memo(function ChipContent({
   firstName,
   dateOfBirth,
   gender,
+  parentFirstName,
+  parentLastName,
+  minecraftUsername,
+  minecraftUuid,
 }: ContentProps) {
   const t = useTranslations("admin.productsV2.groupsPanel");
   const timeZone = useTimezone();
@@ -43,6 +52,8 @@ const ChipContent = memo(function ChipContent({
   }
   const detail = detailParts.join(" / ");
 
+  const parentName = [parentFirstName, parentLastName].filter(Boolean).join(" ");
+
   return (
     <>
       <Avatar className="h-7 w-7">
@@ -55,6 +66,20 @@ const ChipContent = memo(function ChipContent({
             {detail}
           </p>
         )}
+        {parentName && (
+          <p
+            className="flex items-center gap-1 text-[10px] leading-tight text-muted-foreground"
+            aria-label={t("chip.parent", { name: parentName })}
+          >
+            <User className="h-3 w-3 shrink-0" aria-hidden />
+            <span className="truncate">{parentName}</span>
+          </p>
+        )}
+        <MinecraftUsernameBadge
+          username={minecraftUsername}
+          uuid={minecraftUuid}
+          size="sm"
+        />
       </div>
       <GripVertical className="h-3 w-3 flex-shrink-0 text-muted-foreground" />
     </>
@@ -72,6 +97,10 @@ export function GamerChip({
   firstName,
   dateOfBirth,
   gender,
+  parentFirstName,
+  parentLastName,
+  minecraftUsername,
+  minecraftUuid,
   isMoved,
 }: GamerChipProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -97,6 +126,10 @@ export function GamerChip({
         firstName={firstName}
         dateOfBirth={dateOfBirth}
         gender={gender}
+        parentFirstName={parentFirstName}
+        parentLastName={parentLastName}
+        minecraftUsername={minecraftUsername}
+        minecraftUuid={minecraftUuid}
       />
     </div>
   );

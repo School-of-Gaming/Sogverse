@@ -612,7 +612,8 @@
         "genderGirl": "flicka",
         "genderNonBinary": "ickebinär",
         "chip": {
-          "age": "{age}å"
+          "age": "{age}å",
+          "parent": "Förälder: {name}"
         },
         "unassigned": {
           "title": "Otilldelade",
@@ -1111,8 +1112,7 @@
       "noParentEmail": "Ingen förälder-e-post sparad",
       "emailCopied": "E-post kopierad",
       "copyAllParentEmails": "Kopiera alla förälder-e-postadresser ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "Alla förälder-e-postadresser kopierade",
-      "minecraftUnknown": "(okänt)"
+      "allEmailsCopied": "Alla förälder-e-postadresser kopierade"
     }
   },
   "groups": {
@@ -1486,7 +1486,8 @@
     "mcHeadsAttribution": "Skin renderat av <link>mc-heads.net</link>",
     "verified": "Verifierad",
     "unverified": "{username} (ännu inte verifierad)",
-    "notProvided": "Inte angivet"
+    "notProvided": "Inte angivet",
+    "none": "(okänt)"
   },
   "parent": {
     "placeholders": {
