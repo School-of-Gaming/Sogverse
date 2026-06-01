@@ -31,15 +31,17 @@ Voice components (src/components/voice/)
 ├── Zone                — Renders a named zone rectangle on the canvas
 ├── VoiceControls       — Mic/camera/screen-share toggles, lock indicators, mic level
 ├── ScreenShareDisplay  — Renders screen share video with sharer badge and stop button
+├── ChatPanel           — Ephemeral in-call text chat (between voice room card and ParticipantList)
 ├── ParticipantList     — Always-visible list: speaking indicator, volume slider, mod controls
 └── MicLevelIndicator   — Real-time mic input level bar (Web Audio API)
 
 Internal hooks (src/components/voice/hooks/)
-├── types.ts                  — Shared types (VoiceParticipant, LockState, AppMessage, etc.)
+├── types.ts                  — Shared types (VoiceParticipant, LockState, ChatMessage, AppMessage, etc.)
 ├── use-audio-pipeline.ts     — Audio element playback, volume multipliers, AnalyserNodes, routing
 ├── use-spatial-positions.ts  — Spatial movement, zone detection, app messages, position sync
 ├── use-screen-share.ts       — Screen sharer detection, start/stop, auto-replace
-└── use-moderator-controls.ts — Mute, lock/unlock, lock state sync, moderator app messages
+├── use-moderator-controls.ts — Mute, lock/unlock, lock state sync, moderator app messages
+└── use-chat.ts               — Ephemeral chat log + send over the app-message channel
 
 API routes (src/app/api/voice/)
 └── token/route.ts  — POST (access control + Daily.co meeting token)
@@ -206,6 +208,18 @@ Lock states are synced via app messages (`moderatorLock`). When a new peer joins
 - **VoiceControls:** Lock indicator (lock icon) overlays mic/camera buttons when locally locked. Buttons are disabled.
 - **ParticipantList:** Shows mute/lock buttons for non-owner, non-local participants (visible to owners only). Lock badges shown on locked participants.
 
+## In-Call Chat
+
+Ephemeral text chat over the same Daily.co app-message channel as positions and moderation. `ChatPanel` (`src/components/voice/ChatPanel.tsx`) renders between the voice room card and `ParticipantList`; `use-chat.ts` owns the log and send logic; the provider routes the `chatMessage` app message into the hook from `handleAppMessage`.
+
+- **No persistence.** Messages live only in React state for the session and are cleared on `resetState()` (leave/disconnect). This matches the voice-wide "Daily.co is the sole source of truth — no DB table" model. Consequence: late joiners see no history.
+- **Sender identity is server-trusted.** Only `text` rides in the `chatMessage` payload. The display name is resolved from the sender's Daily-verified `fromId` (the `user_name` token field) at receive time, so a peer can't spoof another participant's name.
+- **Local echo.** Daily doesn't loop `sendAppMessage` back to the sender, so the hook appends the local user's own message on send.
+- **Caps.** Messages are trimmed to 500 chars and the in-memory log to the latest 200 entries, bounding a flooding client.
+- **Shared across room types.** Because `SpatialVoiceRoom` backs both scheduled group rooms and instant rooms, chat appears in both — including for unauthenticated guests on instant rooms.
+- **Layout.** The message log is a fixed-height scroll area so new messages never push `ParticipantList` (rendered below it) out from under the user — see CLAUDE.md § "Layout & Scrolling".
+- **No moderation (v1).** No profanity filter, no mod "clear/disable chat", no audit trail — a deliberate v1 scope choice. See Future improvements.
+
 ## Data Flow
 
 ### Joining a voice session
@@ -238,6 +252,12 @@ The `userName` field in Daily.co tokens encodes `userId|role|displayName` for cl
 | `NEXT_PUBLIC_DAILY_DOMAIN` | Both | Daily.co subdomain for room URLs |
 
 ## Future Improvements
+
+### Chat moderation & safety
+v1 chat ships with no moderation (see "In-Call Chat"). Because gamers are children, the likely follow-ups are: a profanity filter, a gedu/admin "clear chat" / "disable chat" control, and an audit trail for after-the-fact review. The first two are awkward on a pure broadcast channel (there's no central record to clear and no chokepoint to filter at) — they'd most naturally come with a server relay or the persisted message model below.
+
+### Persisted chat history
+Chat is currently ephemeral app-messages, so late joiners see nothing and there's no record. A `voice_messages_v2` table + Supabase Realtime would add scrollback, late-join backfill, and the audit trail moderation wants — at the cost of breaking the "no voice DB table" principle (new table, RLS, subscription). Deferred as out of scope for v1.
 
 ### Gedu UI for scheduled rooms
 The token API already accepts gedus on v2 scheduled rooms (gated by `gedu_group_assignments_v2`), but the gedu dashboard has no join link for an upcoming session — a gedu has to know the URL to join. Surfacing this needs a "your sessions" list on the gedu dashboard analogous to the gamer's `NextSessionCard`.

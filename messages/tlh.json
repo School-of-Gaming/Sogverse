@@ -1693,6 +1693,12 @@
     "shareScreen": "Daq yIngeH",
     "stopScreenShare": "Daq ngeH yImev",
     "broadcast": "Hoch ngeH",
+    "chat": {
+      "title": "ja'chuq",
+      "placeholder": "QIn yIghItlh…",
+      "send": "yIngeH",
+      "empty": "QIn tu'lu'be'"
+    },
     "instant": {
       "joinFailed": "Daq muv Dabe'lu'. yItoH'egh!",
       "share": {

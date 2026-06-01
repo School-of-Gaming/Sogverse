@@ -19,10 +19,11 @@ import { useAudioPipeline } from "./hooks/use-audio-pipeline";
 import { useSpatialPositions } from "./hooks/use-spatial-positions";
 import { useScreenShare } from "./hooks/use-screen-share";
 import { useModeratorControls } from "./hooks/use-moderator-controls";
+import { useChat } from "./hooks/use-chat";
 import { useWakeLock } from "./hooks/use-wake-lock";
 
 // Re-export types so existing imports from VoiceRoomProvider still work
-export type { VoiceParticipant, LockState } from "./hooks/types";
+export type { VoiceParticipant, LockState, ChatMessage } from "./hooks/types";
 
 const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
 
@@ -110,6 +111,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     setCameraOn,
   });
 
+  const chat = useChat({ callObjectRef });
+
   // --- Participant management ---
 
   const updateParticipants = useCallback((co: DailyCall) => {
@@ -166,6 +169,13 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Chat: append to the ephemeral in-memory log. Sender name is resolved
+    // from Daily's verified fromId inside the hook, not the payload.
+    if (msg.type === "chatMessage") {
+      chat.onChatMessage(msg, fromId, co);
+      return;
+    }
+
     // Spatial messages: posUpdate, moveUser
     spatial.onAppMessage(msg, fromId, co);
 
@@ -188,7 +198,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
     // Moderator messages: moderatorMute, moderatorLock
     moderator.onAppMessage(msg, fromId, co);
-  }, [spatial, moderator, updateParticipants, sendPositionTo]);
+  }, [spatial, moderator, chat, updateParticipants, sendPositionTo]);
 
   // --- Shared reset ---
 
@@ -206,7 +216,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     moderator.reset();
     screenShare.reset();
     audio.reset();
-  }, [spatial, moderator, screenShare, audio]);
+    chat.reset();
+  }, [spatial, moderator, screenShare, audio, chat]);
 
   // --- Join / Leave ---
 
@@ -432,8 +443,10 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       lockStates: moderator.lockStates,
       muteParticipant: moderator.muteParticipant,
       lockParticipant: moderator.lockParticipant,
+      messages: chat.messages,
+      sendChatMessage: chat.sendChatMessage,
     }),
-    [joined, joining, participants, micOn, cameraOn, cameraAllowed, join, leave, toggleMic, toggleCamera, callObject, spatial.localZone, localRole, spatial.moveLocal, spatial.moveOther, audio.getAnalyser, audio.volumeMultipliers, audio.setParticipantVolume, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant],
+    [joined, joining, participants, micOn, cameraOn, cameraAllowed, join, leave, toggleMic, toggleCamera, callObject, spatial.localZone, localRole, spatial.moveLocal, spatial.moveOther, audio.getAnalyser, audio.volumeMultipliers, audio.setParticipantVolume, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, chat.messages, chat.sendChatMessage],
   );
 
   return (

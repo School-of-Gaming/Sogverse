@@ -1648,6 +1648,12 @@
     "shareScreen": "Share screen",
     "stopScreenShare": "Stop screen share",
     "broadcast": "Broadcast",
+    "chat": {
+      "title": "Chat",
+      "placeholder": "Type a message…",
+      "send": "Send",
+      "empty": "No messages yet"
+    },
     "instant": {
       "joinFailed": "Couldn't join the room. Please try again.",
       "share": {

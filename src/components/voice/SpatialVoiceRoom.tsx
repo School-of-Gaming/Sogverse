@@ -11,6 +11,7 @@ import { useVoiceRoom } from "./VoiceRoomProvider";
 import { VoiceControls } from "./VoiceControls";
 import { SpatialCanvas } from "./SpatialCanvas";
 import { ScreenShareDisplay } from "./ScreenShareDisplay";
+import { ChatPanel } from "./ChatPanel";
 import { ParticipantList } from "./ParticipantList";
 
 interface SpatialVoiceRoomProps {
@@ -141,6 +142,9 @@ export function SpatialVoiceRoom({
           </div>
         </CardContent>
       </Card>
+
+      {/* Ephemeral in-call chat, between the voice room and the participants */}
+      <ChatPanel />
 
       {/* Participant list (always visible below the voice room card) */}
       <ParticipantList />
