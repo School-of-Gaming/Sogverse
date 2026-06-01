@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
-import { ParticipantRow } from "@/components/voice/ParticipantRow";
+import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
 import { ProductRow } from "@/components/admin/product-row";
 import { UserRow } from "@/components/admin/user-row";
@@ -388,10 +388,17 @@ function DialogDemo() {
 /*  Participant Card Demo                                              */
 /* ------------------------------------------------------------------ */
 
+// Roles + Minecraft fields exercise every badge state: gedu/gamer rows show
+// the badge (verified / unverified / "(Unknown)"), while non-gedu/gamer rows
+// (and rows with `minecraftUsername === undefined`) show none.
 const DEMO_PARTICIPANTS = [
   {
     userId: "4babfc78-d197-496e-860d-48f1207f5bc6",
-    userName: "ShadowFox99",
+    userName: "Emma",
+    role: "gedu",
+    // Verified — username + uuid.
+    minecraftUsername: "ShadowFox99",
+    minecraftUuid: "8f3a1c92-77de-4b01-9c2e-a1b2c3d4e5f6",
     isLocal: true,
     isOwner: true,
     audioOn: true,
@@ -399,7 +406,11 @@ const DEMO_PARTICIPANTS = [
   },
   {
     userId: "1a54d62e-828f-4a42-89f1-cc36185351b0",
-    userName: "JääKarhu",
+    userName: "Aino",
+    role: "gamer",
+    // Entered but unverified — username only.
+    minecraftUsername: "JaaKarhu",
+    minecraftUuid: null,
     isLocal: false,
     isOwner: false,
     audioOn: true,
@@ -407,7 +418,11 @@ const DEMO_PARTICIPANTS = [
   },
   {
     userId: "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47",
-    userName: "NovaBlitz",
+    userName: "Oliver",
+    role: "gamer",
+    // Linked-but-unset — renders the muted "(Unknown)" badge.
+    minecraftUsername: null,
+    minecraftUuid: null,
     isLocal: false,
     isOwner: false,
     audioOn: false,
@@ -415,7 +430,10 @@ const DEMO_PARTICIPANTS = [
   },
   {
     userId: "a3b7c912-45de-4f01-b8a2-9c6d3e7f1234",
-    userName: "xXx_DarkPhoenixRising_Legend_xXx",
+    userName: "Väinö",
+    role: "gedu",
+    minecraftUsername: "DarkPhoenixRising",
+    minecraftUuid: "2b7c4d1e-90ab-4f56-8c3d-e1f2a3b4c5d6",
     isLocal: false,
     isOwner: true,
     audioOn: true,
@@ -423,13 +441,16 @@ const DEMO_PARTICIPANTS = [
   },
   {
     userId: "d5e8f234-67ab-4c12-9d3e-a1b2c3d4e5f6",
-    userName: "TheUltimateGalaxyDestroyer9000",
+    userName: "Sofia",
+    role: "gamer",
+    minecraftUsername: "GalaxyDestroyer9000",
+    minecraftUuid: "5e8f2349-67ab-4c12-9d3e-a1b2c3d4e5f6",
     isLocal: false,
     isOwner: false,
     audioOn: true,
     videoOn: false,
   },
-];
+] satisfies ParticipantRowData[];
 
 /** Simulate speaking glow on a ref using a sine wave. Different phase offsets
  *  per participant so they don't pulse in sync. */

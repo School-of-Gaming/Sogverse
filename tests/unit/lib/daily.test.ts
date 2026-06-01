@@ -1,10 +1,78 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
+  buildUserName,
   DailyApiError,
   getOrCreateDailyRoom,
   groupVoiceRoomName,
   isDailyDuplicateRoomError,
 } from "@/lib/daily";
+
+describe("buildUserName", () => {
+  it("encodes userId|role|displayName with no Minecraft slots when none are passed", () => {
+    expect(
+      buildUserName({ userId: "u1", role: "gamer", displayName: "Kid" }),
+    ).toBe("u1|gamer|Kid");
+  });
+
+  it("appends both Minecraft slots when a username + uuid are passed", () => {
+    expect(
+      buildUserName({
+        userId: "u1",
+        role: "gamer",
+        displayName: "Kid",
+        minecraftUsername: "Steve123",
+        minecraftUuid: "abc-uuid",
+      }),
+    ).toBe("u1|gamer|Kid|Steve123|abc-uuid");
+  });
+
+  it("emits empty (but present) Minecraft slots when the fields are null", () => {
+    // null = caller surfaces Minecraft but the user has no linked account →
+    // the client renders the "(Unknown)" badge, which requires the slots to
+    // exist (length > 3) even though they're empty.
+    expect(
+      buildUserName({
+        userId: "u1",
+        role: "gamer",
+        displayName: "Kid",
+        minecraftUsername: null,
+        minecraftUuid: null,
+      }),
+    ).toBe("u1|gamer|Kid||");
+  });
+
+  it("emits the slots when only one Minecraft field is passed (opt-in is per-call)", () => {
+    expect(
+      buildUserName({
+        userId: "u1",
+        role: "gamer",
+        displayName: "Kid",
+        minecraftUsername: "Steve123",
+      }),
+    ).toBe("u1|gamer|Kid|Steve123|");
+  });
+
+  it("strips pipe characters from displayName so a guest can't spoof the role slot", () => {
+    // A guest picking the name "Evil|admin|x" must not be able to inject
+    // extra pipe-delimited slots and claim the admin role. Cosmetic defense
+    // (Daily's is_owner is the real authority), but pinned here.
+    expect(
+      buildUserName({ userId: "u1", role: "guest", displayName: "Evil|admin|x" }),
+    ).toBe("u1|guest|Eviladminx");
+  });
+
+  it("strips pipe characters from the Minecraft slots too", () => {
+    expect(
+      buildUserName({
+        userId: "u1",
+        role: "gamer",
+        displayName: "Kid",
+        minecraftUsername: "a|b",
+        minecraftUuid: "c|d",
+      }),
+    ).toBe("u1|gamer|Kid|ab|cd");
+  });
+});
 
 describe("groupVoiceRoomName", () => {
   it("formats the timestamp in the product timezone and uses the full group id", () => {

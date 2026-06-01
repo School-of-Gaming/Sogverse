@@ -88,6 +88,7 @@ function mockTables(opts: {
   } | null;
   participation?: { id: string } | null;
   geduAssignment?: { group_id: string } | null;
+  minecraftAccount?: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
 }) {
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "product_groups_v2") {
@@ -141,6 +142,17 @@ function mockTables(opts: {
                   .mockResolvedValue(mockSupabaseSuccess(opts.geduAssignment ?? null)),
               }),
             }),
+          }),
+        }),
+      };
+    }
+    if (table === "minecraft_accounts") {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi
+              .fn()
+              .mockResolvedValue(mockSupabaseSuccess(opts.minecraftAccount ?? null)),
           }),
         }),
       };
@@ -340,7 +352,29 @@ describe("POST /api/voice/token", () => {
         expect.objectContaining({
           isOwner: false,
           expUnix: expectedExp,
-          userName: "gamer-id|gamer|Kid",
+          // No Minecraft account → empty trailing slots, which the client
+          // renders as the "(Unknown)" badge.
+          userName: "gamer-id|gamer|Kid||",
+        }),
+      );
+    });
+
+    it("embeds the joiner's Minecraft username + uuid in the token user_name", async () => {
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({
+        group: {},
+        participation: { id: "participation-1" },
+        minecraftAccount: {
+          minecraft_username: "Steve123",
+          minecraft_uuid: "abc-uuid",
+        },
+      });
+
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userName: "gamer-id|gamer|Kid|Steve123|abc-uuid",
         }),
       );
     });
