@@ -37,6 +37,7 @@
     "save": "Spara",
     "delete": "Radera",
     "edit": "Redigera",
+    "clone": "Klona",
     "confirm": "Bekräfta",
     "continue": "Fortsätt",
     "submit": "Skicka",
@@ -326,6 +327,12 @@
         "back": "Tillbaka till produkten",
         "kicker": "Redigera {label}",
         "title": "Redigera {name}"
+      },
+      "clonePage": {
+        "back": "Tillbaka till produkten",
+        "kicker": "Klona {label}",
+        "title": "Klonar {name}",
+        "copySuffix": " (kopia)"
       },
       "sections": {
         "identity": "Identitet",
