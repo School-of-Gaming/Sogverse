@@ -174,27 +174,25 @@ export default async function AdminUserDetailPage({
   };
 
   const renderAssignedProducts = (rows: AdminGamerParticipationRow[]) =>
-    rows
-      .filter((row) => row.product !== null)
-      .map((row) => {
-        const product = row.product!;
-        const name =
-          resolveTranslation(product.product_translations_v2, uiLocale)?.name.trim() ||
-          t("untitledProduct");
-        return (
-          <AssignedProductRow
-            key={row.id}
-            productType={product.product_type}
-            productId={product.id}
-            name={name}
-            groupName={row.group?.name ?? null}
-            unassignedLabel={t("unassignedGroup")}
-            needsGroupLabel={t("needsGroup")}
-            status={row.status}
-            statusLabel={statusLabels[row.status]}
-          />
-        );
-      });
+    rows.map((row) => {
+      const product = row.product;
+      const name =
+        resolveTranslation(product.product_translations_v2, uiLocale)?.name.trim() ||
+        t("untitledProduct");
+      return (
+        <AssignedProductRow
+          key={row.id}
+          productType={product.product_type}
+          productId={product.id}
+          name={name}
+          groupName={row.group?.name ?? null}
+          unassignedLabel={t("unassignedGroup")}
+          needsGroupLabel={t("needsGroup")}
+          status={row.status}
+          statusLabel={statusLabels[row.status]}
+        />
+      );
+    });
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
