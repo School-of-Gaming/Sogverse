@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildCreateInput,
+  cloneFormState,
   validate,
 } from "@/components/admin/products-v2/product-v2-build";
 import {
@@ -8,6 +9,7 @@ import {
   type FormState,
 } from "@/components/admin/products-v2/product-v2-form-state";
 import { PRODUCT_TYPE_CONFIG } from "@/components/admin/products-v2/product-v2-type-config";
+import type { ProductV2AdminDetailRow } from "@/services/products-v2";
 
 // Validation + payload-building moved out of ProductV2Form so it can be
 // tested without rendering. These tests cover the *complex, easily-broken*
@@ -544,5 +546,145 @@ describe("buildCreateInput", () => {
     const s = validConsumerState();
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
     expect(out.timezone).toBe("Europe/Helsinki");
+  });
+});
+
+// A fully-populated detail row to clone from. Visible, with an image, two
+// locale names, prices, a schedule, and a real start date — so the clone's
+// "copy everything except the image, append the suffix to names" contract
+// can be checked against verbatim copies.
+function mockDetailRow(
+  overrides: Partial<ProductV2AdminDetailRow> = {},
+): ProductV2AdminDetailRow {
+  return {
+    id: "prod-1",
+    created_at: "2026-01-01T00:00:00Z",
+    created_by: "admin-1",
+    updated_at: "2026-01-01T00:00:00Z",
+    product_type: "consumer_club",
+    status: "pending",
+    billing_mode: "paid",
+    is_visible: true,
+    is_remote: true,
+    location_id: null,
+    topic_id: "topic-1",
+    min_age: 8,
+    max_age: 12,
+    spoken_language_code: "en",
+    padlet_url: "https://padlet.com/x",
+    image_path: "products/original.png",
+    start_date: "2026-09-01",
+    end_date: null,
+    signup_threshold: null,
+    seat_count: 10,
+    waitlist_enabled: false,
+    refund_policy_days: null,
+    registration_opens_at: "2020-01-01T00:00:00Z",
+    timezone: "Europe/Helsinki",
+    topics_v2: {
+      id: "topic-1",
+      slug: "minecraft",
+      kind: "game",
+      topic_translations_v2: [],
+    },
+    product_translations_v2: [
+      {
+        product_id: "prod-1",
+        locale: "en",
+        name: "Summer Club",
+        description: "A great club",
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+      {
+        product_id: "prod-1",
+        locale: "fi",
+        name: "Kesäkerho",
+        description: "Mahtava kerho",
+        created_at: "2026-01-01T00:00:00Z",
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+    ],
+    product_tags_v2: [],
+    product_prices_v2: [
+      { currency: "eur", price_per_session: 1000, price_per_month: 3000 },
+    ],
+    schedule_slots_v2: [
+      { weekday: 1, start_time: "16:00", duration_minutes: 90 },
+    ],
+    locations: null,
+    product_holiday_calendars_v2: [],
+    ...overrides,
+  };
+}
+
+describe("cloneFormState", () => {
+  it("clears the image so the clone can't share the source's bucket file", () => {
+    const state = cloneFormState(
+      mockDetailRow(),
+      consumerConfig,
+      "en",
+      " (Copy)",
+    );
+    expect(state.image).toBeNull();
+  });
+
+  it("appends the suffix to every locale's name, leaving descriptions intact", () => {
+    const state = cloneFormState(
+      mockDetailRow(),
+      consumerConfig,
+      "en",
+      " (Copy)",
+    );
+    expect(state.translations.en).toEqual({
+      name: "Summer Club (Copy)",
+      description: "A great club",
+    });
+    expect(state.translations.fi).toEqual({
+      name: "Kesäkerho (Copy)",
+      description: "Mahtava kerho",
+    });
+  });
+
+  it("copies dates, schedule, prices and visibility verbatim", () => {
+    const state = cloneFormState(
+      mockDetailRow(),
+      consumerConfig,
+      "en",
+      " (Copy)",
+    );
+    expect(state.startDate).toBe("2026-09-01");
+    expect(state.scheduleSlots).toEqual([
+      { weekday: 1, start_time: "16:00", duration_minutes: 90 },
+    ]);
+    expect(state.prices.eur).toEqual({ session: "10.00", month: "30.00" });
+    expect(state.isVisible).toBe(true);
+  });
+
+  it("preserves a hidden source's visibility (does not force-hide)", () => {
+    const state = cloneFormState(
+      mockDetailRow({ is_visible: false }),
+      consumerConfig,
+      "en",
+      " (Copy)",
+    );
+    expect(state.isVisible).toBe(false);
+  });
+
+  it("round-trips into a create payload that drops the image", () => {
+    const state = cloneFormState(
+      mockDetailRow(),
+      consumerConfig,
+      "en",
+      " (Copy)",
+    );
+    const out = buildCreateInput(state, "consumer_club", consumerConfig);
+    expect(out.image).toBeNull();
+    expect(out.status).toBe("pending");
+    expect(out.translations).toContainEqual({
+      locale: "en",
+      name: "Summer Club (Copy)",
+      description: "A great club",
+    });
   });
 });

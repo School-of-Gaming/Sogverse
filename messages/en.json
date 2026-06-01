@@ -37,6 +37,7 @@
     "save": "Save",
     "delete": "Delete",
     "edit": "Edit",
+    "clone": "Clone",
     "confirm": "Confirm",
     "continue": "Continue",
     "submit": "Submit",
@@ -326,6 +327,12 @@
         "back": "Back to product",
         "kicker": "Edit {label}",
         "title": "Edit {name}"
+      },
+      "clonePage": {
+        "back": "Back to product",
+        "kicker": "Clone {label}",
+        "title": "Cloning {name}",
+        "copySuffix": " (Copy)"
       },
       "sections": {
         "identity": "Identity",

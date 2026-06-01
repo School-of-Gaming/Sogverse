@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
+  Copy,
   Globe2,
   Languages,
   MapPin,
@@ -61,6 +62,7 @@ export function ProductV2DetailsPage({
 
   const listHref = `/admin/${config.routeSlug}`;
   const editHref = `/admin/${config.routeSlug}/${productId}/edit`;
+  const cloneHref = `/admin/${config.routeSlug}/new?cloneFrom=${productId}`;
 
   if (isLoading) {
     return (
@@ -138,6 +140,8 @@ export function ProductV2DetailsPage({
         hiddenLabel={t("detailsPage.hidden")}
         editHref={editHref}
         editLabel={c("edit")}
+        cloneHref={cloneHref}
+        cloneLabel={c("clone")}
       />
 
       <KeyFacts product={product} topicName={topicName} tags={tags} uiLocale={uiLocale} t={t} c={c} />
@@ -175,6 +179,8 @@ function HeaderCard({
   hiddenLabel,
   editHref,
   editLabel,
+  cloneHref,
+  cloneLabel,
 }: {
   imageUrl: string | null;
   kicker: string;
@@ -187,6 +193,8 @@ function HeaderCard({
   hiddenLabel: string;
   editHref: string;
   editLabel: string;
+  cloneHref: string;
+  cloneLabel: string;
 }) {
   return (
     <Card>
@@ -225,7 +233,14 @@ function HeaderCard({
             </span>
           </div>
         </div>
-        <div className="shrink-0">
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href={cloneHref}
+            className={buttonVariants({ variant: "outline" })}
+          >
+            <Copy className="mr-1 h-4 w-4" />
+            {cloneLabel}
+          </Link>
           <Link href={editHref} className={buttonVariants()}>
             <Pencil className="mr-1 h-4 w-4" />
             {editLabel}

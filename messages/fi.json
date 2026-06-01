@@ -37,6 +37,7 @@
     "save": "Tallenna",
     "delete": "Poista",
     "edit": "Muokkaa",
+    "clone": "Kloonaa",
     "confirm": "Vahvista",
     "continue": "Jatka",
     "submit": "Lähetä",
@@ -326,6 +327,12 @@
         "back": "Takaisin tuotteeseen",
         "kicker": "Muokkaa: {label}",
         "title": "Muokkaa: {name}"
+      },
+      "clonePage": {
+        "back": "Takaisin tuotteeseen",
+        "kicker": "Kloonaa: {label}",
+        "title": "Kloonataan: {name}",
+        "copySuffix": " (kopio)"
       },
       "sections": {
         "identity": "Perustiedot",

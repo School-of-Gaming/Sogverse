@@ -37,6 +37,7 @@
     "save": "yISaH",
     "delete": "yIHoH",
     "edit": "yIchoH",
+    "clone": "yIvelqa'",
     "confirm": "HIja'",
     "continue": "yIghoS",
     "submit": "yIlI'",
@@ -371,6 +372,12 @@
         "back": "Doch vIcheghmoH",
         "kicker": "{label} yIchoH",
         "title": "{name} yIchoH"
+      },
+      "clonePage": {
+        "back": "Doch vIcheghmoH",
+        "kicker": "{label} yIvelqa'",
+        "title": "{name} velqa'lu'",
+        "copySuffix": " (velqa')"
       },
       "sections": {
         "identity": "pong",
