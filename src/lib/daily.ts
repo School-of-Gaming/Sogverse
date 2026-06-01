@@ -187,54 +187,10 @@ export async function getOrCreateDailyRoom(
   }
 }
 
-/**
- * Build the `user_name` field for Daily.co meeting tokens.
- *
- * The format is pipe-delimited `userId|role|displayName` so the client can
- * decode role + identity from the participant data without a DB lookup.
- *
- * Group-room tokens append two more slots —
- * `userId|role|displayName|minecraftUsername|minecraftUuid` — carrying the
- * joiner's *own* Minecraft identity. This is the only way peers can render
- * the Minecraft badge: `minecraft_accounts` RLS forbids reading another
- * user's row, so a per-participant client query is impossible. Each token
- * carries only its owner's data (read server-side, where a self-read is
- * always allowed), and Daily broadcasts `user_name` to every peer.
- *
- * The slots are emitted whenever `minecraftUsername`/`minecraftUuid` are
- * passed at all (even as `null` → empty slot, which the client renders as
- * "(Unknown)"). Callers that don't surface Minecraft (instant rooms) omit
- * them, leaving a 3-segment name the client reads as "no badge."
- *
- * Pipe characters are stripped from every dynamic slot because the client
- * parser splits on `|` — if a guest could embed a `|` in their name, they
- * could spoof the `role` slot and have their avatar render with an "admin"
- * badge. The Daily-side `is_owner` flag (set server-side) is the actual
- * permission authority, so this is cosmetic only, but worth preventing —
- * guests pick their own names on instant voice rooms. (Minecraft usernames
- * and UUIDs can't contain `|`, but stripping keeps the slots positionally
- * stable regardless.)
- */
-export function buildUserName(parts: {
-  userId: string;
-  role: string;
-  displayName: string;
-  minecraftUsername?: string | null;
-  minecraftUuid?: string | null;
-}): string {
-  const safeName = parts.displayName.replaceAll("|", "");
-  const base = `${parts.userId}|${parts.role}|${safeName}`;
-
-  // Opt-in: a caller passing either Minecraft field (even null) signals a
-  // room that surfaces the badge, so always emit both slots together.
-  if (parts.minecraftUsername !== undefined || parts.minecraftUuid !== undefined) {
-    const safeMcUsername = (parts.minecraftUsername ?? "").replaceAll("|", "");
-    const safeMcUuid = (parts.minecraftUuid ?? "").replaceAll("|", "");
-    return `${base}|${safeMcUsername}|${safeMcUuid}`;
-  }
-
-  return base;
-}
+// The `user_name` pipe-encoding lives in one place (build + parse together).
+// Re-exported here so the token routes can keep importing it from `@/lib/daily`.
+export { buildUserName, parseUserName } from "@/lib/voice/user-name";
+export type { ParsedUserName } from "@/lib/voice/user-name";
 
 interface CreateTokenOptions {
   roomName: string;

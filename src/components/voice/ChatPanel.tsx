@@ -8,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVoiceRoom } from "./VoiceRoomProvider";
-
-const MAX_MESSAGE_LENGTH = 500;
+import { MAX_MESSAGE_LENGTH } from "./hooks/use-chat";
 
 /**
  * Ephemeral in-call chat, rendered between the voice room card and the
