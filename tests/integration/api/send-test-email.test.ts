@@ -258,8 +258,13 @@ describe("POST /api/admin/send-test-email", () => {
   const validTemplateBody = {
     mode: "template",
     toEmail: "test@example.com",
-    template: "groupAdded",
-    params: { geduName: "Alice", productName: "Minecraft 101" },
+    template: "feedback",
+    params: {
+      userName: "Jane Doe",
+      userRole: "customer",
+      userEmail: "jane@example.com",
+      message: "Great product!",
+    },
   };
 
   it("should send a template email and return messageId", async () => {
@@ -273,7 +278,7 @@ describe("POST /api/admin/send-test-email", () => {
     expect(mockSendTransactionalEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         toEmail: ["test@example.com"],
-        subject: expect.stringContaining("Minecraft 101"),
+        subject: expect.stringContaining("Jane Doe"),
       }),
     );
   });
@@ -294,7 +299,7 @@ describe("POST /api/admin/send-test-email", () => {
     mockAuthenticatedWithRole("admin");
 
     const response = await POST(
-      createRequest({ ...validTemplateBody, params: { geduName: "" } }),
+      createRequest({ ...validTemplateBody, params: { userName: "" } }),
     );
     const data = await response.json();
 
@@ -306,7 +311,7 @@ describe("POST /api/admin/send-test-email", () => {
     mockAuthenticatedWithRole("admin");
 
     const response = await POST(
-      createRequest({ toEmail: "test@example.com", template: "groupAdded", params: {} }),
+      createRequest({ toEmail: "test@example.com", template: "feedback", params: {} }),
     );
 
     expect(response.status).toBe(400);

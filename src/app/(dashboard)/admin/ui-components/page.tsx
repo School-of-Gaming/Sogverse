@@ -41,23 +41,15 @@ import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
-import { ProductRow } from "@/components/admin/product-row";
 import { UserRow } from "@/components/admin/user-row";
 import { GamerCard } from "@/components/customer/gamer-card";
-import { LoungeCard } from "@/components/ui/lounge-card";
-import { GroupCard } from "@/components/ui/group-card";
 import {
   SessionsSection,
   type NextSessionCardProps,
 } from "@/components/parent";
-import { formatScheduleLocal } from "@/lib/utils";
 import { useAuth, useNow } from "@/providers";
-import { useLocale } from "next-intl";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
 import { computeGlowStyle } from "@/lib/constants/spatial.config";
-import type { ChangeSegment } from "@/hooks/use-group-editor";
-import { ChangeSummaryList, StepProgressPanel } from "@/components/admin/commit-flow-parts";
-import type { StepItem } from "@/components/admin/commit-flow-parts";
 import {
   ProductBrowseCardView,
   type ProductBrowseCardViewProps,
@@ -544,129 +536,6 @@ function ParticipantCardDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Product Row Demo                                                   */
-/* ------------------------------------------------------------------ */
-
-const DEMO_PRODUCTS = [
-  {
-    id: "prod-1",
-    name: "Sogverse Pro",
-    description: "Weekly game-based social skills sessions with a certified educator",
-    image_path: "demo-placeholder.svg",
-    is_visible: true,
-    day_of_week: 3,
-    start_time: "15:00",
-    timezone: "America/New_York",
-    duration_minutes: 60,
-    min_age: 8,
-    max_age: 14,
-    game_id: "game-1",
-    created_by: "admin",
-    padlet_url: null,
-    created_at: null,
-    updated_at: null,
-    is_remote: true,
-    location_id: null,
-    spoken_language_code: "en",
-    games: { name: "Minecraft" },
-  },
-  {
-    id: "prod-2",
-    name: "Starter Pack",
-    description: "Intro sessions for younger gamers — small group, shorter format",
-    image_path: "demo-placeholder.svg",
-    is_visible: false,
-    day_of_week: 6,
-    start_time: "10:00",
-    timezone: "America/New_York",
-    duration_minutes: 45,
-    min_age: 6,
-    max_age: 10,
-    game_id: "game-2",
-    created_by: "admin",
-    padlet_url: null,
-    created_at: null,
-    updated_at: null,
-    is_remote: true,
-    location_id: null,
-    spoken_language_code: "en",
-    games: { name: "Roblox" },
-  },
-] as const;
-
-// Demo products: day_of_week (0=Mon–6=Sun), start_time, timezone (IANA).
-// `image` is a bucket-relative path. demo-placeholder.svg lives in the
-// product-images bucket and exists solely to back this style guide — don't
-// delete it from the bucket without updating the demo data here.
-const DEMO_GROUPS = [
-  { name: "Thursday Minecraft Club", gedu: "Rachel Morgan", gamers: 4, day: 3, time: "17:30", tz: "Europe/Helsinki",   image: "demo-placeholder.svg" },
-  { name: "Friday Creative Lab",     gedu: "Morgan Ellis",  gamers: 3, day: 4, time: "16:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
-  { name: "Weekend Warriors",        gedu: "Taylor Kim",    gamers: 2, day: 6, time: "15:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
-  { name: "Saturday Adventure Club", gedu: "Jordan Lee",    gamers: 6, day: 5, time: "10:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
-  { name: "Wednesday Roblox Group",  gedu: "Sam Rivera",    gamers: 5, day: 2, time: "17:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
-  { name: "Monday Builders",         gedu: "Alex Chen",     gamers: 3, day: 0, time: "16:00", tz: "America/New_York",  image: "demo-placeholder.svg" },
-] as const;
-
-/** Defers time-dependent values to after mount so SSR and client render match. */
-function GroupCardDemo() {
-  const locale = useLocale();
-
-  const [mounted, setMounted] = useState(false);
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- canonical post-hydration flag; see TODO.md "Audit setState-in-effect violations from eslint-plugin-react-hooks@7"
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) return null;
-  // eslint-disable-next-line react-hooks/purity -- demo-only; called once after mount guard
-  const now = Date.now();
-  const HOUR = 60 * 60_000;
-  const MIN = 60_000;
-
-  // [voiceIsOpen, countdown offset] per demo card
-  // Negative offset = session started in the past → shows "Session in progress"
-  const states: [boolean, number][] = [
-    [true,  -30 * MIN],           // Live — session in progress (started 30 min ago)
-    [true,  3 * MIN],             // Live — in buffer window, starts in 3 min
-    [false, 12 * MIN],            // < 1 hour (warning)
-    [false, 1 * HOUR + 30 * MIN], // 1–2 hours (warning)
-    [false, 5 * HOUR],            // Hours away (muted)
-    [false, 2 * 24 * HOUR],       // Days away (muted)
-  ];
-
-  return (
-    <div className="space-y-3">
-      {DEMO_GROUPS.map((g, i) => {
-        const [live, offset] = states[i];
-        return (
-          <GroupCard
-            key={g.name}
-            productName={g.name}
-            productImagePath={g.image}
-            geduName={g.gedu}
-            gamerCount={g.gamers}
-            schedule={formatScheduleLocal(g.day, g.time, g.tz, locale)}
-            voiceIsOpen={live}
-            voiceNextSessionStart={new Date(now + offset)}
-            onJoinClick={() => {}}
-            detailHref="#"
-          />
-        );
-      })}
-    </div>
-  );
-}
-
-function ProductRowDemo() {
-  const locale = useLocale();
-  return (
-    <div className="space-y-2">
-      {DEMO_PRODUCTS.map((product) => (
-        <ProductRow key={product.id} product={product} locale={locale} />
-      ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Parent Sessions Section Demo                                       */
 /* ------------------------------------------------------------------ */
 
@@ -799,104 +668,6 @@ function buildLoadedSessions(
       reportsHref: "#",
     };
   });
-}
-
-/* ------------------------------------------------------------------ */
-/*  Commit Flow Dialog Demo                                            */
-/* ------------------------------------------------------------------ */
-
-const DEMO_SUMMARY_LINES: ChangeSegment[][] = [
-  [
-    { type: "text", value: "Move " },
-    { type: "gamer", value: "Leo" },
-    { type: "text", value: " from " },
-    { type: "gedu", value: "Steve" },
-    { type: "text", value: "'s group to " },
-    { type: "gedu", value: "Maria" },
-    { type: "text", value: "'s group" },
-  ],
-  [
-    { type: "text", value: "Add group with " },
-    { type: "gedu", value: "Maria" },
-  ],
-  [
-    { type: "text", value: "Delete " },
-    { type: "gedu", value: "Alex" },
-    { type: "text", value: "'s group" },
-  ],
-  [
-    { type: "warning", value: "Product will be automatically hidden (no groups remaining)" },
-  ],
-];
-
-const DEMO_PROGRESS_STEPS: StepItem[] = [
-  { label: "Save group changes to database", status: "done" },
-  { label: "Notify Leo's parent about schedule change", status: "done" },
-  { label: "Notify Max's parent about removal", status: "active" },
-  { label: "Notify Steve about new assignment", status: "pending" },
-];
-
-const DEMO_ERROR_STEPS: StepItem[] = [
-  { label: "Save group changes to database", status: "done" },
-  { label: "Notify Leo's parent about schedule change", status: "failed" },
-  { label: "Notify Max's parent about removal", status: "done" },
-  { label: "Notify Steve about new assignment", status: "pending" },
-];
-
-function CommitFlowDialogDemo() {
-  const [phase, setPhase] = useState<"review" | "progress" | "error">("review");
-
-  return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        <Button size="sm" variant={phase === "review" ? "default" : "outline"} onClick={() => setPhase("review")}>Review</Button>
-        <Button size="sm" variant={phase === "progress" ? "default" : "outline"} onClick={() => setPhase("progress")}>Progress</Button>
-        <Button size="sm" variant={phase === "error" ? "default" : "outline"} onClick={() => setPhase("error")}>Error</Button>
-      </div>
-
-      <div className="rounded-lg border bg-card p-6 shadow-lg max-w-lg">
-        {phase === "review" && (
-          <>
-            <div className="space-y-1.5 mb-4">
-              <h4 className="text-lg font-semibold leading-none tracking-tight">Confirm Group Changes</h4>
-              <p className="text-sm text-muted-foreground">The following changes will be applied:</p>
-            </div>
-            <ChangeSummaryList lines={DEMO_SUMMARY_LINES} />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" size="sm">Cancel</Button>
-              <Button size="sm">Confirm</Button>
-            </div>
-          </>
-        )}
-
-        {phase === "progress" && (
-          <>
-            <div className="space-y-1.5 mb-4">
-              <h4 className="text-lg font-semibold leading-none tracking-tight">Applying Changes</h4>
-              <p className="text-sm text-muted-foreground">Saving and notifying impacted users...</p>
-            </div>
-            <StepProgressPanel steps={DEMO_PROGRESS_STEPS} />
-            <div className="flex justify-end mt-4">
-              <Button size="sm" disabled>Working...</Button>
-            </div>
-          </>
-        )}
-
-        {phase === "error" && (
-          <>
-            <div className="space-y-1.5 mb-4">
-              <h4 className="text-lg font-semibold leading-none tracking-tight">Applying Changes</h4>
-              <p className="text-sm text-muted-foreground">An error occurred.</p>
-            </div>
-            <StepProgressPanel steps={DEMO_ERROR_STEPS} errorMessage="Failed to deliver email notification" />
-            <div className="flex justify-end mt-4">
-              <Button size="sm">Close</Button>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -1647,14 +1418,6 @@ export default function AdminUIComponentsPage() {
       {/* Section 10: Composite Patterns                                */}
       {/* ============================================================ */}
       <Section title="Composite Patterns">
-        {/* -- Product Row (admin/products) -- */}
-        <SubSection title="Product Row (admin/products)">
-          <p className="text-sm text-muted-foreground mb-3">
-            Reusable product list row with image, schedule, price, and metadata. ChevronRight signals clickability. Used in admin/products.
-          </p>
-          <ProductRowDemo />
-        </SubSection>
-
         {/* -- Gamer Card (customer/gamers) -- */}
         <SubSection title="Gamer Card (customer/gamers)">
           <p className="text-sm text-muted-foreground mb-3">
@@ -1743,39 +1506,6 @@ export default function AdminUIComponentsPage() {
               </Card>
             ))}
           </div>
-        </SubSection>
-
-        {/* -- Lounge Card -- */}
-        <SubSection title="Lounge Card (shared)">
-          <p className="text-sm text-muted-foreground mb-3">
-            Banner card for always-open voice lounges. The Join button is rendered disabled — the v1 voice room system that backed these surfaces has been deleted; see TODO.md for the broader cleanup of the v1 groups UI.
-          </p>
-          <div className="space-y-3">
-            <LoungeCard
-              name="Gedu Lounge"
-              description="Connect with other educators anytime"
-            />
-            <LoungeCard
-              name="Admin Lounge"
-              description="Private admin voice channel"
-            />
-          </div>
-        </SubSection>
-
-        {/* -- Group Card -- */}
-        <SubSection title="Group Card (shared)">
-          <p className="text-sm text-muted-foreground mb-3">
-            Shared group card used across all roles. Shows product name, gamer count, schedule, and voice status. Self-updating countdown ticks every 60s. Clicking the card navigates to a detail page; the Join button navigates to the voice session.
-          </p>
-          <GroupCardDemo />
-        </SubSection>
-
-        {/* -- Commit Flow Dialog -- */}
-        <SubSection title="Commit Flow Dialog">
-          <p className="text-sm text-muted-foreground mb-3">
-            Multi-step commit dialog for applying group changes. Shows a review summary with colored segments (gamer, gedu, warning), then a live progress view with step icons and a progress bar.
-          </p>
-          <CommitFlowDialogDemo />
         </SubSection>
 
         {/* -- Loading Skeleton -- */}
