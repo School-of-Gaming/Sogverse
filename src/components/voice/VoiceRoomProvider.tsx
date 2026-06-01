@@ -33,13 +33,26 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null, pos
   const parts = raw.split("|");
   const userId = parts[0] || p.session_id;
   const role = parts[1] as VoiceRole;
-  const userName = parts.slice(2).join("|") || "Unknown";
+  const userName = parts[2] || "Unknown";
+
+  // Slots 3 & 4 carry the joiner's own Minecraft identity on group-room
+  // tokens (see buildUserName). Their *presence* is the badge gate: an
+  // absent slot (undefined — instant rooms never emit them) means "this
+  // room doesn't surface Minecraft" → no badge, while a present-but-empty
+  // slot ("") means "gedu/gamer with no linked account" → "(Unknown)".
+  // displayName is a single slot now (parts[2]); buildUserName strips `|`
+  // from it, so it can never bleed into the Minecraft slots.
+  const hasMinecraft = parts.length > 3;
+  const minecraftUsername = hasMinecraft ? parts[3] || null : undefined;
+  const minecraftUuid = hasMinecraft ? parts[4] || null : undefined;
 
   return {
     sessionId: p.session_id,
     userId,
     role,
     userName,
+    minecraftUsername,
+    minecraftUuid,
     audioOn: !p.audio ? false : p.tracks.audio.state === "playable",
     videoOn: !p.video ? false : p.tracks.video.state === "playable",
     screenShareOn: p.tracks.screenVideo.state === "playable",

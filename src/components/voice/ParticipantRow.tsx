@@ -5,12 +5,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { cn } from "@/lib/utils";
+import type { VoiceRole } from "./hooks/types";
 
 export interface ParticipantRowData {
   userId: string;
   userName: string;
+  role: VoiceRole;
+  /**
+   * The participant's Minecraft username/UUID (group rooms only). `null` =
+   * linked-but-unset → "(Unknown)"; `undefined` = no Minecraft context
+   * (instant rooms) → badge hidden. See VoiceParticipant.
+   */
+  minecraftUsername?: string | null;
+  minecraftUuid?: string | null;
   audioOn: boolean;
   videoOn: boolean;
   isLocal: boolean;
@@ -41,6 +51,13 @@ export function ParticipantRow({
 }: ParticipantRowProps) {
   const t = useTranslations('voice');
   const showModButtons = isModView && !p.isLocal && !p.isOwner;
+  // Show the Minecraft badge for gedu/gamer participants, but only when the
+  // token actually carried Minecraft context (group rooms). `undefined` ==
+  // no context (instant rooms) → hide; `null` == linked-but-unset → render
+  // "(Unknown)". See mapParticipant.
+  const showMinecraft =
+    (p.role === "gamer" || p.role === "gedu") &&
+    p.minecraftUsername !== undefined;
 
   return (
     <div
@@ -64,6 +81,14 @@ export function ParticipantRow({
             <span className="ml-1 text-xs text-muted-foreground">{t('you')}</span>
           )}
         </span>
+        {showMinecraft && (
+          <MinecraftUsernameBadge
+            username={p.minecraftUsername ?? null}
+            uuid={p.minecraftUuid ?? null}
+            size="sm"
+            className="shrink-0"
+          />
+        )}
         {p.isOwner && (
           <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
             <Crown className="h-3 w-3" />

@@ -18,6 +18,14 @@ export interface VoiceParticipant {
   userId: string;
   role: VoiceRole;
   userName: string;
+  /**
+   * The participant's own Minecraft username/UUID, decoded from the Daily
+   * token's `user_name` field (group rooms only). `null` = linked-but-unset
+   * (the badge renders "(Unknown)"); `undefined` = the room doesn't surface
+   * Minecraft (instant rooms) → no badge. See buildUserName / mapParticipant.
+   */
+  minecraftUsername?: string | null;
+  minecraftUuid?: string | null;
   audioOn: boolean;
   videoOn: boolean;
   screenShareOn: boolean;

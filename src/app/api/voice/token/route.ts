@@ -187,10 +187,24 @@ export async function POST(request: Request) {
       );
     }
 
+    // The joiner's own Minecraft identity rides along in the Daily token so
+    // peers can render the badge without a DB lookup — `minecraft_accounts`
+    // RLS forbids reading another user's row, so per-participant client
+    // fetches aren't possible. We read the joiner's own row (always passing
+    // the slots, even when there's no row, so the client shows "(Unknown)"
+    // rather than no badge for gamers/gedus).
+    const { data: minecraft } = await admin
+      .from("minecraft_accounts")
+      .select("minecraft_username, minecraft_uuid")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
     const userName = buildUserName({
       userId: user.id,
       role,
       displayName: profile.first_name,
+      minecraftUsername: minecraft?.minecraft_username ?? null,
+      minecraftUuid: minecraft?.minecraft_uuid ?? null,
     });
     const roomUrl = `https://${domain}.daily.co/${dailyRoomName}`;
     const isOwner = role !== "gamer";
