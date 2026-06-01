@@ -1,16 +1,6 @@
 import { z } from "zod";
 import { buildFeedbackEmail } from "./feedback";
 import {
-  buildGroupAddedEmail,
-  buildGroupDeletedEmail,
-  buildGroupReassignedOldGeduEmail,
-  buildGroupReassignedNewGeduEmail,
-  buildGroupReassignedParentEmail,
-  buildGamerMovedParentEmail,
-  buildGamerMovedOldGeduEmail,
-  buildGamerMovedNewGeduEmail,
-} from "./group-changes";
-import {
   buildEnrollmentParentEmail,
   buildEnrollmentGeduEmail,
   buildUnenrollmentParentEmail,
@@ -106,39 +96,6 @@ const feedbackParamsSchema = z.object({
   message: z.string().min(1),
 });
 
-const geduProductParamsSchema = z.object({
-  geduName: z.string().min(1),
-  productName: z.string().min(1),
-});
-
-const reassignParamsSchema = z.object({
-  oldGeduName: z.string().min(1),
-  newGeduName: z.string().min(1),
-  productName: z.string().min(1),
-});
-
-const parentGamerReassignParamsSchema = z.object({
-  parentName: z.string().min(1),
-  gamerName: z.string().min(1),
-  oldGeduName: z.string().min(1),
-  newGeduName: z.string().min(1),
-  productName: z.string().min(1),
-});
-
-const gamerMovedOldGeduParamsSchema = z.object({
-  geduName: z.string().min(1),
-  gamerName: z.string().min(1),
-  newGeduName: z.string().min(1),
-  productName: z.string().min(1),
-});
-
-const gamerMovedNewGeduParamsSchema = z.object({
-  geduName: z.string().min(1),
-  gamerName: z.string().min(1),
-  oldGeduName: z.string().min(1),
-  productName: z.string().min(1),
-});
-
 const enrollmentParentParamsSchema = z.object({
   parentName: z.string().min(1),
   gamerName: z.string().min(1),
@@ -220,106 +177,6 @@ export const templateRegistry: Record<string, TemplateDefinition> = {
     }),
     subject: (p, t) => t("feedback.subject", { displayName: p.userName as string, role: t(ROLE_LABEL_KEYS[p.userRole as UserRole]) }),
     fromNameKey: "senderFeedback",
-  },
-  groupAdded: {
-    label: "Group Added (Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-    schema: geduProductParamsSchema,
-    build: (p, t, locale) => buildGroupAddedEmail(t, locale, p as z.infer<typeof geduProductParamsSchema>),
-    subject: (p, t) => t("groupAdded.subject", { productName: p.productName as string }),
-    fromNameKey: "senderEnrollment",
-  },
-  groupDeleted: {
-    label: "Group Deleted (Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-    schema: geduProductParamsSchema,
-    build: (p, t, locale) => buildGroupDeletedEmail(t, locale, p as z.infer<typeof geduProductParamsSchema>),
-    subject: (p, t) => t("groupDeleted.subject", { productName: p.productName as string }),
-    fromNameKey: "senderEnrollment",
-  },
-  groupReassignedOldGedu: {
-    label: "Group Reassigned (Old Gedu)",
-    fields: [
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-    schema: reassignParamsSchema,
-    build: (p, t, locale) => buildGroupReassignedOldGeduEmail(t, locale, p as z.infer<typeof reassignParamsSchema>),
-    subject: (p, t) => t("groupReassignedOldGedu.subject", { productName: p.productName as string }),
-    fromNameKey: "senderEnrollment",
-  },
-  groupReassignedNewGedu: {
-    label: "Group Reassigned (New Gedu)",
-    fields: [
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-    schema: reassignParamsSchema,
-    build: (p, t, locale) => buildGroupReassignedNewGeduEmail(t, locale, p as z.infer<typeof reassignParamsSchema>),
-    subject: (p, t) => t("groupReassignedNewGedu.subject", { productName: p.productName as string }),
-    fromNameKey: "senderEnrollment",
-  },
-  groupReassignedParent: {
-    label: "Group Reassigned (Parent)",
-    fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-    schema: parentGamerReassignParamsSchema,
-    build: (p, t, locale) => buildGroupReassignedParentEmail(t, locale, p as z.infer<typeof parentGamerReassignParamsSchema>),
-    subject: (p, t) => t("groupReassignedParent.subject", { gamerName: p.gamerName as string, productName: p.productName as string }),
-    fromNameKey: "senderEnrollment",
-  },
-  gamerMovedParent: {
-    label: "Gamer Moved (Parent)",
-    fields: [
-      { key: "parentName", label: "Parent Name", placeholder: "Jane Doe" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-    schema: parentGamerReassignParamsSchema,
-    build: (p, t, locale) => buildGamerMovedParentEmail(t, locale, p as z.infer<typeof parentGamerReassignParamsSchema>),
-    subject: (p, t) => t("gamerMovedParent.subject", { gamerName: p.gamerName as string, productName: p.productName as string }),
-    fromNameKey: "senderEnrollment",
-  },
-  gamerMovedOldGedu: {
-    label: "Gamer Moved (Old Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Alice" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "newGeduName", label: "New Gedu Name", placeholder: "Bob" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-    schema: gamerMovedOldGeduParamsSchema,
-    build: (p, t, locale) => buildGamerMovedOldGeduEmail(t, locale, p as z.infer<typeof gamerMovedOldGeduParamsSchema>),
-    subject: (p, t) => t("gamerMovedOldGedu.subject", { gamerName: p.gamerName as string, productName: p.productName as string }),
-    fromNameKey: "senderEnrollment",
-  },
-  gamerMovedNewGedu: {
-    label: "Gamer Moved (New Gedu)",
-    fields: [
-      { key: "geduName", label: "Gedu Name", placeholder: "Bob" },
-      { key: "gamerName", label: "Gamer Name", placeholder: "Little Johnny" },
-      { key: "oldGeduName", label: "Old Gedu Name", placeholder: "Alice" },
-      { key: "productName", label: "Product Name", placeholder: "Minecraft 101" },
-    ],
-    schema: gamerMovedNewGeduParamsSchema,
-    build: (p, t, locale) => buildGamerMovedNewGeduEmail(t, locale, p as z.infer<typeof gamerMovedNewGeduParamsSchema>),
-    subject: (p, t) => t("gamerMovedNewGedu.subject", { gamerName: p.gamerName as string, productName: p.productName as string }),
-    fromNameKey: "senderEnrollment",
   },
   enrollmentParent: {
     label: "Enrollment (Parent)",
