@@ -9,10 +9,10 @@ vi.mock("next-intl", () => ({
     switch (key) {
       case "verified":
         return "Verified";
+      case "verifiedUser":
+        return `${params?.username} (verified)`;
       case "unverified":
         return `${params?.username} (not yet verified)`;
-      case "notProvided":
-        return "Not provided";
       case "none":
         return "(Unknown)";
       default:
@@ -28,7 +28,9 @@ describe("MinecraftUsernameBadge", () => {
     );
 
     expect(getByText("Steve")).toBeTruthy();
-    expect(getByLabelText("Verified").className).toContain("text-success");
+    expect(getByLabelText("Steve (verified)").className).toContain(
+      "text-success",
+    );
     // pickaxe + check = two svg icons when verified
     expect(container.querySelectorAll("svg")).toHaveLength(2);
   });
@@ -52,7 +54,7 @@ describe("MinecraftUsernameBadge", () => {
     );
 
     expect(getByText("(Unknown)")).toBeTruthy();
-    expect(getByLabelText("Not provided").className).toContain(
+    expect(getByLabelText("(Unknown)").className).toContain(
       "text-muted-foreground",
     );
   });
@@ -62,6 +64,6 @@ describe("MinecraftUsernameBadge", () => {
       <MinecraftUsernameBadge username="Steve" uuid="uuid-123" size="base" />,
     );
 
-    expect(getByLabelText("Verified").className).toContain("text-sm");
+    expect(getByLabelText("Steve (verified)").className).toContain("text-sm");
   });
 });

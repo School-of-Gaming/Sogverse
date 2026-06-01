@@ -46,7 +46,7 @@ export function MinecraftUsernameBadge({
           text,
           className,
         )}
-        aria-label={t("verified")}
+        aria-label={t("verifiedUser", { username })}
       >
         <Pickaxe className={cn("shrink-0", icon)} aria-hidden />
         <span className="truncate">{username}</span>
@@ -78,7 +78,7 @@ export function MinecraftUsernameBadge({
         text,
         className,
       )}
-      aria-label={t("notProvided")}
+      aria-label={t("none")}
     >
       <Pickaxe className={cn("shrink-0", icon)} aria-hidden />
       <span>{t("none")}</span>

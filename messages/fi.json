@@ -1485,6 +1485,7 @@
     "notFound": "Minecraft-tiliä ei löytynyt. Tarkista käyttäjänimi ja yritä uudelleen.",
     "mcHeadsAttribution": "Ulkoasu renderöity palvelulla <link>mc-heads.net</link>",
     "verified": "Vahvistettu",
+    "verifiedUser": "{username} (vahvistettu)",
     "unverified": "{username} (ei vielä vahvistettu)",
     "notProvided": "Ei annettu",
     "none": "(ei tiedossa)"
