@@ -294,10 +294,6 @@ ALTER POLICY admin_full_access_topics_v2 ON public.topics RENAME TO admin_full_a
 ALTER POLICY public_read_topics_v2 ON public.topics RENAME TO public_read_topics;
 
 -- 8. Function renames + body rewrites
--- (get_product_groups_v2_with_details carries `_v2` mid-name, not as a suffix,
---  so the generator missed its rename; do it explicitly. The generated
---  CREATE OR REPLACE further below rewrites its body to canonical names.)
-ALTER FUNCTION public.get_product_groups_v2_with_details(uuid) RENAME TO get_product_groups_with_details;
 ALTER FUNCTION public.apply_credit_motion_v2(p_participation_id uuid, p_session_date date, p_delta integer, p_reason text) RENAME TO apply_credit_motion;
 CREATE OR REPLACE FUNCTION public.apply_credit_motion(p_participation_id uuid, p_session_date date, p_delta integer, p_reason text)
  RETURNS boolean
