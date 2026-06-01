@@ -1,6 +1,6 @@
 import type { Database } from "@/types/database.types";
 
-type ProductTypeV2 = Database["public"]["Enums"]["product_type_v2"];
+type ProductType = Database["public"]["Enums"]["product_type"];
 
 /**
  * Picks the gedu session-details URL prefix from a product's type. All three
@@ -9,7 +9,7 @@ type ProductTypeV2 = Database["public"]["Enums"]["product_type_v2"];
  * about to teach. Consumer + municipality clubs collapse into `/clubs/`.
  */
 function geduAssignedProductHref(
-  productType: ProductTypeV2,
+  productType: ProductType,
   productId: string,
 ): string {
   switch (productType) {
@@ -31,8 +31,8 @@ function geduAssignedProductHref(
  * link a gamer's/parent's assigned products from the admin user-detail page.
  * The v1 `/admin/products/[id]` surface is dead (see TODO.md) — never target it.
  */
-function adminProductV2Href(
-  productType: ProductTypeV2,
+function adminProductHref(
+  productType: ProductType,
   productId: string,
 ): string {
   switch (productType) {
@@ -89,7 +89,7 @@ export const ROUTES = {
     users: "/admin/users",
     usersAdd: "/admin/users/add",
     user: (id: string) => `/admin/users/${id}`,
-    productV2: adminProductV2Href,
+    product: adminProductHref,
     consumerClubs: "/admin/consumer-clubs",
     consumerClubsNew: "/admin/consumer-clubs/new",
     municipalityClubs: "/admin/municipality-clubs",

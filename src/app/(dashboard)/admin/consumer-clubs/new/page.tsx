@@ -1,4 +1,4 @@
-import { NewProductV2Page } from "@/components/admin/products-v2/new-product-v2-page";
+import { NewProductPage } from "@/components/admin/products/new-product-page";
 
 export default async function NewConsumerClubPage({
   searchParams,
@@ -7,7 +7,7 @@ export default async function NewConsumerClubPage({
 }) {
   const { cloneFrom } = await searchParams;
   return (
-    <NewProductV2Page
+    <NewProductPage
       productType="consumer_club"
       cloneFrom={Array.isArray(cloneFrom) ? cloneFrom[0] : cloneFrom}
     />

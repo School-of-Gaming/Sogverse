@@ -1,7 +1,7 @@
 import "server-only";
 import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, SubscriptionFrequencyV2 } from "@/types";
+import type { Database, SubscriptionFrequency } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import {
   computeBundleCents,
@@ -22,7 +22,7 @@ async function loadBasePrice(
   currency: SupportedCurrency,
 ): Promise<ProductPrice | null> {
   const { data, error } = await admin
-    .from("product_prices_v2")
+    .from("product_prices")
     .select("price_per_session, price_per_month")
     .eq("product_id", productId)
     .eq("currency", currency)
@@ -64,7 +64,7 @@ export async function computeSinglePaymentAmount(
 
 interface SubscriptionPriceRow {
   product_id: string;
-  frequency: SubscriptionFrequencyV2;
+  frequency: SubscriptionFrequency;
   currency: string;
   stripe_price_id: string;
   unit_amount_cents: number;
@@ -73,18 +73,18 @@ interface SubscriptionPriceRow {
 /**
  * Lazy-create the Stripe Price for a (product, frequency, currency) tuple.
  *
- * Cached in `product_subscription_prices_v2`. If `price_per_month` later
+ * Cached in `product_subscription_prices`. If `price_per_month` later
  * changes on the admin form, existing subscribers keep their old Price —
  * Stripe Prices are immutable. A future admin action could recreate them.
  */
 export async function getOrCreateSubscriptionPrice(
   admin: SupabaseClient<Database>,
   productId: string,
-  frequency: SubscriptionFrequencyV2,
+  frequency: SubscriptionFrequency,
   currency: SupportedCurrency,
 ): Promise<SubscriptionPriceRow | null> {
   const { data: existing } = await admin
-    .from("product_subscription_prices_v2")
+    .from("product_subscription_prices")
     .select("product_id, frequency, currency, stripe_price_id, unit_amount_cents")
     .eq("product_id", productId)
     .eq("frequency", frequency)
@@ -124,7 +124,7 @@ export async function getOrCreateSubscriptionPrice(
   });
 
   const { data: inserted, error: insertErr } = await admin
-    .from("product_subscription_prices_v2")
+    .from("product_subscription_prices")
     .insert({
       product_id: productId,
       frequency,
@@ -138,7 +138,7 @@ export async function getOrCreateSubscriptionPrice(
   if (insertErr) {
     // Concurrent caller raced us — fetch the row they wrote.
     const { data: raced } = await admin
-      .from("product_subscription_prices_v2")
+      .from("product_subscription_prices")
       .select("product_id, frequency, currency, stripe_price_id, unit_amount_cents")
       .eq("product_id", productId)
       .eq("frequency", frequency)
@@ -152,34 +152,34 @@ export async function getOrCreateSubscriptionPrice(
 }
 
 /**
- * Look up a Stripe Product matching a products_v2 row, creating one on
+ * Look up a Stripe Product matching a products row, creating one on
  * first use. We cache the Stripe ID on the product row's `image_path`-style
  * metadata… actually we don't have a column for it yet. To avoid another
- * migration we search Stripe by metadata.product_v2_id; lazy and idempotent.
+ * migration we search Stripe by metadata.product_id; lazy and idempotent.
  */
 async function ensureStripeProductForProduct(
   admin: SupabaseClient<Database>,
-  productV2Id: string,
+  productId: string,
 ): Promise<string> {
-  // Look for an existing Stripe Product tagged with this product_v2 id.
+  // Look for an existing Stripe Product tagged with this product id.
   const search = await stripe.products.search({
-    query: `metadata['product_v2_id']:'${productV2Id}'`,
+    query: `metadata['product_id']:'${productId}'`,
     limit: 1,
   });
   if (search.data.length > 0) return search.data[0].id;
 
   const { data: product } = await admin
-    .from("products_v2")
-    .select("id, product_translations_v2(locale, name)")
-    .eq("id", productV2Id)
+    .from("products")
+    .select("id, product_translations(locale, name)")
+    .eq("id", productId)
     .single();
 
-  const translations = product?.product_translations_v2 ?? null;
+  const translations = product?.product_translations ?? null;
   const name = translations === null ? "School of Gaming product" : pickTranslationName(translations);
 
   const created = await stripe.products.create({
     name,
-    metadata: { product_v2_id: productV2Id },
+    metadata: { product_id: productId },
   });
   return created.id;
 }

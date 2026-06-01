@@ -70,7 +70,7 @@ export interface GroupSessionItem {
  * routes the gedu through the same `VoiceSessionPage` the gamer side
  * uses. Moderator rights come from the token endpoint (any non-gamer
  * role gets `isOwner: true`); cross-group access for sister groups is
- * authorized there too via `gedu_group_assignments_v2.product_id`.
+ * authorized there too via `gedu_group_assignments.product_id`.
  * In-person products and unassigned rows collapse to `"#"` for the
  * same locked-but-inert UX the gamer side renders.
  * `openGroupHref` points at the gedu's session-details page; the URL

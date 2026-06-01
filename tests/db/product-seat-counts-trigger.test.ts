@@ -3,12 +3,12 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
-import { createV2TestProduct, deleteV2TestProducts } from "./v2-helpers";
+import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * The product_seat_counts_v2 rollup is the single source of truth for
+ * The product_seat_counts rollup is the single source of truth for
  * Realtime-driven seat counters on parent surfaces (Supabase Realtime
- * filters by RLS, and participations_v2 hides other customers' rows, so
+ * filters by RLS, and participations hides other customers' rows, so
  * we can't subscribe directly — see migration 00039 for the rationale).
  *
  * Every test asserts the rollup row reflects the new counts *within the
@@ -36,7 +36,7 @@ async function readRollup(
   productId: string,
 ): Promise<RollupRow> {
   const { data, error } = await admin
-    .from("product_seat_counts_v2")
+    .from("product_seat_counts")
     .select("active_count, reserving_count, waitlist_count")
     .eq("product_id", productId)
     .single();
@@ -44,28 +44,28 @@ async function readRollup(
   return data;
 }
 
-describe("product_seat_counts_v2 trigger", () => {
+describe("product_seat_counts trigger", () => {
   let admin: SupabaseClient<Database>;
 
   beforeAll(async () => {
     admin = createAdminTestClient();
-    await deleteV2TestProducts(admin, [PRODUCT_TRIG]);
-    await createV2TestProduct(admin, { id: PRODUCT_TRIG, seatCount: 10 });
+    await deleteTestProducts(admin, [PRODUCT_TRIG]);
+    await createTestProduct(admin, { id: PRODUCT_TRIG, seatCount: 10 });
   });
 
   afterAll(async () => {
-    await deleteV2TestProducts(admin, [PRODUCT_TRIG]);
+    await deleteTestProducts(admin, [PRODUCT_TRIG]);
   });
 
   beforeEach(async () => {
     await admin
-      .from("participations_v2")
+      .from("participations")
       .delete()
       .eq("product_id", PRODUCT_TRIG);
   });
 
   it("seeds the rollup row at product creation with all-zero counts", async () => {
-    // The migration's seed insert + the AFTER-INSERT-on-products_v2
+    // The migration's seed insert + the AFTER-INSERT-on-products
     // path both ensure a rollup row exists from the start.
     const counts = await readRollup(admin, PRODUCT_TRIG);
     expect(counts).toEqual({
@@ -76,7 +76,7 @@ describe("product_seat_counts_v2 trigger", () => {
   });
 
   it("inserting an active row increments active_count", async () => {
-    await admin.from("participations_v2").insert({
+    await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
@@ -92,7 +92,7 @@ describe("product_seat_counts_v2 trigger", () => {
   });
 
   it("inserting a live reserving row increments reserving_count", async () => {
-    await admin.from("participations_v2").insert({
+    await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
@@ -111,9 +111,9 @@ describe("product_seat_counts_v2 trigger", () => {
   it("an expired reserving row does NOT count toward reserving_count", async () => {
     // The rollup is the "is the seat live right now?" view — used by
     // the parent's seat-counter UI. The seat-math RPC uses a different
-    // function (count_seats_taken_v2) that holds the seat regardless of
+    // function (count_seats_taken) that holds the seat regardless of
     // reserved_until. The two views diverge intentionally.
-    await admin.from("participations_v2").insert({
+    await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
@@ -130,7 +130,7 @@ describe("product_seat_counts_v2 trigger", () => {
   });
 
   it("inserting a waitlisted row increments waitlist_count", async () => {
-    await admin.from("participations_v2").insert({
+    await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
@@ -148,7 +148,7 @@ describe("product_seat_counts_v2 trigger", () => {
 
   it("transition reserving → active swaps the count", async () => {
     const { data: inserted } = await admin
-      .from("participations_v2")
+      .from("participations")
       .insert({
         product_id: PRODUCT_TRIG,
         gamer_id: TEST_IDS.GAMER,
@@ -166,7 +166,7 @@ describe("product_seat_counts_v2 trigger", () => {
     });
 
     await admin
-      .from("participations_v2")
+      .from("participations")
       .update({ status: "active", reserved_until: null, credits_remaining: 4 })
       .eq("id", inserted!.id);
 
@@ -179,7 +179,7 @@ describe("product_seat_counts_v2 trigger", () => {
 
   it("transition active → completed drops active_count", async () => {
     const { data: inserted } = await admin
-      .from("participations_v2")
+      .from("participations")
       .insert({
         product_id: PRODUCT_TRIG,
         gamer_id: TEST_IDS.GAMER,
@@ -191,7 +191,7 @@ describe("product_seat_counts_v2 trigger", () => {
       .single();
 
     await admin
-      .from("participations_v2")
+      .from("participations")
       .update({ status: "completed" })
       .eq("id", inserted!.id);
 
@@ -204,7 +204,7 @@ describe("product_seat_counts_v2 trigger", () => {
 
   it("deleting an active row decrements active_count", async () => {
     const { data: inserted } = await admin
-      .from("participations_v2")
+      .from("participations")
       .insert({
         product_id: PRODUCT_TRIG,
         gamer_id: TEST_IDS.GAMER,
@@ -217,7 +217,7 @@ describe("product_seat_counts_v2 trigger", () => {
 
     expect((await readRollup(admin, PRODUCT_TRIG)).active_count).toBe(1);
 
-    await admin.from("participations_v2").delete().eq("id", inserted!.id);
+    await admin.from("participations").delete().eq("id", inserted!.id);
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
       active_count: 0,
@@ -237,21 +237,21 @@ describe("product_seat_counts_v2 trigger", () => {
     // completed)` would conflict with the active rows already on both
     // seeded gamers. Waitlisted increments are covered by the dedicated
     // test above.
-    await admin.from("participations_v2").insert({
+    await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
       credits_remaining: 0,
     });
-    await admin.from("participations_v2").insert({
+    await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER_2,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
       credits_remaining: 0,
     });
-    await admin.from("participations_v2").insert({
+    await admin.from("participations").insert({
       // Same gamer as the first row but reserving — the partial unique
       // index excludes 'reserving' so this is allowed.
       product_id: PRODUCT_TRIG,
@@ -261,7 +261,7 @@ describe("product_seat_counts_v2 trigger", () => {
       reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
       credits_remaining: 0,
     });
-    await admin.from("participations_v2").insert({
+    await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER_2,
       customer_id: TEST_IDS.CUSTOMER_2,

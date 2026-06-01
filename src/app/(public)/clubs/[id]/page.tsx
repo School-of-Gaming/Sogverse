@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { ProductDetailPage } from "@/components/public/products-v2/product-detail-page";
+import { ProductDetailPage } from "@/components/public/products/product-detail-page";
 
 // Detail page shared by consumer-club and municipality-club rows. The
 // router only ever lands consumer clubs here from the parent /clubs

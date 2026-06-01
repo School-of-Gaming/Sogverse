@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createV2TestProduct, deleteV2TestProducts } from "./v2-helpers";
+import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
  * Auth + return-shape coverage for `get_gedu_assigned_product` (migrations
@@ -16,7 +16,7 @@ import { createV2TestProduct, deleteV2TestProducts } from "./v2-helpers";
  *   1. role gate     — only `gedu` passes; admin/customer/gamer are refused
  *                      (admin is NOT trusted here — the body hard-requires
  *                      role = 'gedu').
- *   2. assignment gate — a gedu must have a gedu_group_assignments_v2 row on
+ *   2. assignment gate — a gedu must have a gedu_group_assignments row on
  *                      the product. Wrong product / unknown product → 42501.
  *
  * The privacy invariant being pinned:
@@ -101,14 +101,14 @@ describe("get_gedu_assigned_product", () => {
       TEST_CREDENTIALS.GAMER.password,
     );
 
-    await deleteV2TestProducts(admin, ALL_PRODUCTS);
+    await deleteTestProducts(admin, ALL_PRODUCTS);
     for (const id of ALL_PRODUCTS) {
-      await createV2TestProduct(admin, { id, seatCount: 50 });
+      await createTestProduct(admin, { id, seatCount: 50 });
     }
 
     // PRODUCT_GEDU_ON: Cohort A owned by GEDU, Cohort B a sister group with
     // no caller assignment.
-    const created = await adminAuth.rpc("commit_group_changes_v2", {
+    const created = await adminAuth.rpc("commit_group_changes", {
       p_product_id: PRODUCT_GEDU_ON,
       p_added_groups: [
         { tempId: "tA", name: "Cohort A", geduIds: [TEST_IDS.GEDU] },
@@ -121,7 +121,7 @@ describe("get_gedu_assigned_product", () => {
     sisterGroupId = tempMap.tB;
 
     // GAMER in the caller's own group; GAMER_2 in the sister group.
-    await admin.from("participations_v2").insert([
+    await admin.from("participations").insert([
       {
         product_id: PRODUCT_GEDU_ON,
         gamer_id: TEST_IDS.GAMER,
@@ -160,14 +160,14 @@ describe("get_gedu_assigned_product", () => {
 
   afterAll(async () => {
     await admin
-      .from("participations_v2")
+      .from("participations")
       .delete()
       .in("product_id", ALL_PRODUCTS);
     await admin
       .from("minecraft_accounts")
       .delete()
       .eq("user_id", TEST_IDS.GAMER);
-    await deleteV2TestProducts(admin, ALL_PRODUCTS);
+    await deleteTestProducts(admin, ALL_PRODUCTS);
   });
 
   // ---------------------------------------------------------------------------
@@ -199,7 +199,7 @@ describe("get_gedu_assigned_product", () => {
 
   // ---------------------------------------------------------------------------
   // Assignment gate (second guard — same 42501 code, different reason).
-  // The product FK on gedu_group_assignments_v2 means an unknown id has no
+  // The product FK on gedu_group_assignments means an unknown id has no
   // assignment row either, so the dedicated P0002 branch is unreachable for
   // legitimate callers; we still pin both shapes refuse access.
   // ---------------------------------------------------------------------------
@@ -301,7 +301,7 @@ describe("get_gedu_assigned_product", () => {
 
       for (const { status, extras } of fixtures) {
         const { error: updateErr } = await admin
-          .from("participations_v2")
+          .from("participations")
           .update({ status, ...extras })
           .eq("product_id", PRODUCT_GEDU_ON)
           .eq("gamer_id", TEST_IDS.GAMER);
@@ -319,7 +319,7 @@ describe("get_gedu_assigned_product", () => {
       }
 
       await admin
-        .from("participations_v2")
+        .from("participations")
         .update({ status: "active" })
         .eq("product_id", PRODUCT_GEDU_ON)
         .eq("gamer_id", TEST_IDS.GAMER);

@@ -86,31 +86,31 @@ function createCompletedEvent(overrides: Partial<{
 // --- Mock builder for the admin client ---
 
 type AdminInserts = {
-  payments_v2: Record<string, unknown>[];
-  refunds_v2: Record<string, unknown>[];
-  family_subscriptions_v2: Record<string, unknown>[];
-  family_subscription_items_v2: Record<string, unknown>[];
-  participations_v2_deletes: { id: string; status: string }[];
+  payments: Record<string, unknown>[];
+  refunds: Record<string, unknown>[];
+  family_subscriptions: Record<string, unknown>[];
+  family_subscription_items: Record<string, unknown>[];
+  participations_deletes: { id: string; status: string }[];
 };
 
 type AdminMockOptions = {
-  /** Returned from the payments_v2 idempotency check (event-id dedup). */
+  /** Returned from the payments idempotency check (event-id dedup). */
   existingPayment?: { id: string } | null;
-  /** Returned from the family_subscriptions_v2 lookup before insert. */
+  /** Returned from the family_subscriptions lookup before insert. */
   existingFamSub?: { id: string } | null;
 };
 
 function mockAdmin(opts: AdminMockOptions = {}) {
   const inserts: AdminInserts = {
-    payments_v2: [],
-    refunds_v2: [],
-    family_subscriptions_v2: [],
-    family_subscription_items_v2: [],
-    participations_v2_deletes: [],
+    payments: [],
+    refunds: [],
+    family_subscriptions: [],
+    family_subscription_items: [],
+    participations_deletes: [],
   };
 
   mockAdminFrom.mockImplementation((table: string) => {
-    if (table === "payments_v2") {
+    if (table === "payments") {
       return {
         select: () => ({
           eq: () => ({
@@ -121,23 +121,23 @@ function mockAdmin(opts: AdminMockOptions = {}) {
         insert: (row: Record<string, unknown>) => ({
           select: () => ({
             single: () => {
-              const id = `payment_${inserts.payments_v2.length + 1}`;
-              inserts.payments_v2.push({ id, ...row });
+              const id = `payment_${inserts.payments.length + 1}`;
+              inserts.payments.push({ id, ...row });
               return Promise.resolve({ data: { id }, error: null });
             },
           }),
         }),
       };
     }
-    if (table === "refunds_v2") {
+    if (table === "refunds") {
       return {
         insert: (row: Record<string, unknown>) => {
-          inserts.refunds_v2.push(row);
+          inserts.refunds.push(row);
           return Promise.resolve({ data: null, error: null });
         },
       };
     }
-    if (table === "family_subscriptions_v2") {
+    if (table === "family_subscriptions") {
       return {
         select: () => ({
           eq: () => ({
@@ -148,27 +148,27 @@ function mockAdmin(opts: AdminMockOptions = {}) {
         insert: (row: Record<string, unknown>) => ({
           select: () => ({
             single: () => {
-              const id = `famsub_${inserts.family_subscriptions_v2.length + 1}`;
-              inserts.family_subscriptions_v2.push({ id, ...row });
+              const id = `famsub_${inserts.family_subscriptions.length + 1}`;
+              inserts.family_subscriptions.push({ id, ...row });
               return Promise.resolve({ data: { id }, error: null });
             },
           }),
         }),
       };
     }
-    if (table === "family_subscription_items_v2") {
+    if (table === "family_subscription_items") {
       return {
         insert: (row: Record<string, unknown>) => ({
           select: () => ({
             maybeSingle: () => {
-              inserts.family_subscription_items_v2.push(row);
+              inserts.family_subscription_items.push(row);
               return Promise.resolve({ data: null, error: null });
             },
           }),
         }),
       };
     }
-    if (table === "participations_v2") {
+    if (table === "participations") {
       // Only the duplicate_payment branch deletes from this table; capture
       // the (id, status) filter so tests can assert what was released.
       return {
@@ -181,7 +181,7 @@ function mockAdmin(opts: AdminMockOptions = {}) {
               eq: (col2: string, val2: string) => {
                 if (col2 === "id") filter.id = val2;
                 else if (col2 === "status") filter.status = val2;
-                inserts.participations_v2_deletes.push(filter);
+                inserts.participations_deletes.push(filter);
                 return Promise.resolve({ data: null, error: null });
               },
             };
@@ -222,7 +222,7 @@ describe("POST /api/webhooks/stripe/products", () => {
   });
 
   describe("checkout.session.completed — happy path", () => {
-    it("flips reserving → active and writes a payments_v2 row for a bundle", async () => {
+    it("flips reserving → active and writes a payments row for a bundle", async () => {
       mockConstructEvent.mockReturnValue(createCompletedEvent());
       const inserts = mockAdmin();
       mockAdminRpc.mockResolvedValue({
@@ -237,12 +237,12 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
 
-      expect(mockAdminRpc).toHaveBeenCalledWith("confirm_reservation_v2", {
+      expect(mockAdminRpc).toHaveBeenCalledWith("confirm_reservation", {
         p_reservation_id: RESERVATION_ID,
         p_credits_to_grant: 4,
       });
-      expect(inserts.payments_v2).toHaveLength(1);
-      expect(inserts.payments_v2[0]).toMatchObject({
+      expect(inserts.payments).toHaveLength(1);
+      expect(inserts.payments[0]).toMatchObject({
         stripe_event_id: "evt_completed_1",
         customer_id: CUSTOMER_ID,
         amount_cents: 10000,
@@ -250,10 +250,10 @@ describe("POST /api/webhooks/stripe/products", () => {
         purpose: "bundle",
         stripe_payment_intent_id: "pi_test_1",
       });
-      expect(inserts.refunds_v2).toHaveLength(0);
+      expect(inserts.refunds).toHaveLength(0);
     });
 
-    it("creates a family_subscriptions_v2 row on first subscription completion", async () => {
+    it("creates a family_subscriptions row on first subscription completion", async () => {
       mockConstructEvent.mockReturnValue(
         createCompletedEvent({
           paymentIntent: null,
@@ -288,16 +288,16 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
 
-      expect(inserts.family_subscriptions_v2).toHaveLength(1);
-      expect(inserts.family_subscriptions_v2[0]).toMatchObject({
+      expect(inserts.family_subscriptions).toHaveLength(1);
+      expect(inserts.family_subscriptions[0]).toMatchObject({
         customer_id: CUSTOMER_ID,
         stripe_subscription_id: "sub_new_1",
         frequency: "monthly",
         currency: "eur",
         status: "active",
       });
-      expect(inserts.family_subscription_items_v2).toHaveLength(1);
-      expect(inserts.family_subscription_items_v2[0]).toMatchObject({
+      expect(inserts.family_subscription_items).toHaveLength(1);
+      expect(inserts.family_subscription_items[0]).toMatchObject({
         family_subscription_id: "famsub_1",
         participation_id: RESERVATION_ID,
         stripe_subscription_item_id: "si_1",
@@ -331,7 +331,7 @@ describe("POST /api/webhooks/stripe/products", () => {
   });
 
   describe("checkout.session.completed — orphan", () => {
-    it("logs and writes nothing when confirm_reservation_v2 returns orphan", async () => {
+    it("logs and writes nothing when confirm_reservation returns orphan", async () => {
       mockConstructEvent.mockReturnValue(createCompletedEvent());
       const inserts = mockAdmin();
       mockAdminRpc.mockResolvedValue({
@@ -343,8 +343,8 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
 
-      expect(inserts.payments_v2).toHaveLength(0);
-      expect(inserts.refunds_v2).toHaveLength(0);
+      expect(inserts.payments).toHaveLength(0);
+      expect(inserts.refunds).toHaveLength(0);
       expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining("orphan confirmation"),
         expect.objectContaining({ reservationId: RESERVATION_ID }),
@@ -390,9 +390,9 @@ describe("POST /api/webhooks/stripe/products", () => {
         }),
       );
 
-      // Payments_v2 row recorded under the new purpose so admin can filter.
-      expect(inserts.payments_v2).toHaveLength(1);
-      expect(inserts.payments_v2[0]).toMatchObject({
+      // Payments row recorded under the new purpose so admin can filter.
+      expect(inserts.payments).toHaveLength(1);
+      expect(inserts.payments[0]).toMatchObject({
         purpose: "reservation_duplicate",
         stripe_event_id: "evt_completed_2",
         stripe_payment_intent_id: "pi_dup_1",
@@ -400,8 +400,8 @@ describe("POST /api/webhooks/stripe/products", () => {
       });
 
       // Orphan reserving row released so it doesn't permanently hold a seat.
-      expect(inserts.participations_v2_deletes).toHaveLength(1);
-      expect(inserts.participations_v2_deletes[0]).toEqual({
+      expect(inserts.participations_deletes).toHaveLength(1);
+      expect(inserts.participations_deletes[0]).toEqual({
         id: RESERVATION_ID,
         status: "reserving",
       });
@@ -425,7 +425,7 @@ describe("POST /api/webhooks/stripe/products", () => {
   });
 
   describe("checkout.session.expired", () => {
-    it("calls expire_reservation_v2 with the metadata reservation id", async () => {
+    it("calls expire_reservation with the metadata reservation id", async () => {
       mockConstructEvent.mockReturnValue({
         id: "evt_expired_1",
         type: "checkout.session.expired",
@@ -440,7 +440,7 @@ describe("POST /api/webhooks/stripe/products", () => {
 
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
-      expect(mockAdminRpc).toHaveBeenCalledWith("expire_reservation_v2", {
+      expect(mockAdminRpc).toHaveBeenCalledWith("expire_reservation", {
         p_reservation_id: RESERVATION_ID,
       });
     });

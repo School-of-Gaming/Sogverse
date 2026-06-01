@@ -10,14 +10,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
  * Why this is a route (and not a direct supabase read in the service): the
  * authoritative price for a subscription lives in Stripe — if we change a
  * product's local price, existing subs continue to be billed at their
- * locked-in Stripe price, so the local `product_subscription_prices_v2`
+ * locked-in Stripe price, so the local `product_subscription_prices`
  * cache can drift from what Stripe is actually charging. This route hits
  * Stripe's `subscriptions.retrieve` (with `items.data.price` expanded) so
  * the pricing rendered to the customer matches what they're actually paying.
  *
  * Auth: customer-only. We use the caller's RLS-restricted supabase client
  * (NOT the admin client) for the DB read, so the policy on
- * `family_subscriptions_v2` already enforces "customer can only see their
+ * `family_subscriptions` already enforces "customer can only see their
  * own subs". Belt-and-braces: we filter by `customer_id = user.id` anyway.
  *
  * Per-sub error handling: if Stripe `retrieve` throws for one sub (the
@@ -33,12 +33,12 @@ export async function GET() {
   const { user, supabase } = result;
 
   const { data: subs, error } = await supabase
-    .from("family_subscriptions_v2")
+    .from("family_subscriptions")
     .select(
       `
         id, status, frequency, currency, current_period_end,
         stripe_subscription_id, stripe_customer_id, created_at,
-        family_subscription_items_v2(
+        family_subscription_items(
           id, participation_id, stripe_subscription_item_id, stripe_price_id
         )
       `,
@@ -53,7 +53,7 @@ export async function GET() {
   const enriched = await Promise.all(
     subs.map(async (sub) => {
       const itemPricing = await fetchItemPricing(sub.stripe_subscription_id);
-      const items = sub.family_subscription_items_v2.map((item) => {
+      const items = sub.family_subscription_items.map((item) => {
         const pricing = itemPricing.get(item.stripe_subscription_item_id);
         return {
           ...item,
@@ -70,7 +70,7 @@ export async function GET() {
       const allItemsPriced = items.every((it) => it.unit_amount_cents !== null);
       return {
         ...sub,
-        family_subscription_items_v2: items,
+        family_subscription_items: items,
         total_cents: allItemsPriced ? totalCents : null,
       };
     }),

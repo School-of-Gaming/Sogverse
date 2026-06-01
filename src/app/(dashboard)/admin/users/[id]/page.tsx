@@ -20,7 +20,7 @@ import { MinecraftService } from "@/services/minecraft";
 import { ParticipationsService } from "@/services/participations";
 import type { AdminGamerParticipationRow } from "@/services/participations";
 import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
-import type { ParticipationStatus, ProductTypeV2 } from "@/types";
+import type { ParticipationStatus, ProductType } from "@/types";
 
 /** Status → semantic badge classes (no raw Tailwind colors — see CLAUDE.md). */
 const STATUS_BADGE_STYLES: Record<ParticipationStatus, string> = {
@@ -49,7 +49,7 @@ function AssignedProductRow({
   status,
   statusLabel,
 }: {
-  productType: ProductTypeV2;
+  productType: ProductType;
   productId: string;
   name: string;
   groupName: string | null;
@@ -61,7 +61,7 @@ function AssignedProductRow({
   const needsGroup = status === "active" && groupName === null;
   return (
     <Link
-      href={ROUTES.admin.productV2(productType, productId)}
+      href={ROUTES.admin.product(productType, productId)}
       className={cn(
         "group flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent hover:text-accent-foreground",
         needsGroup && "border-warning bg-warning/5",
@@ -144,7 +144,7 @@ export default async function AdminUserDetailPage({
 
   // Products this user is assigned to. For a gamer, their own participations;
   // for a parent, every participation across their linked gamers (grouped per
-  // child below). Admin RLS (admin_full_access_participations_v2) permits the
+  // child below). Admin RLS (admin_full_access_participations) permits the
   // cross-user read. Fetched after the block above because the parent case
   // needs the linked-gamer ids first.
   const assignedGamerIds = isGamer
@@ -177,7 +177,7 @@ export default async function AdminUserDetailPage({
     rows.map((row) => {
       const product = row.product;
       const name =
-        resolveTranslation(product.product_translations_v2, uiLocale)?.name.trim() ||
+        resolveTranslation(product.product_translations, uiLocale)?.name.trim() ||
         t("untitledProduct");
       return (
         <AssignedProductRow

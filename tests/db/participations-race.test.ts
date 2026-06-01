@@ -4,15 +4,15 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
 import {
-  createV2TestProduct,
-  deleteV2TestProducts,
-} from "./v2-helpers";
+  createTestProduct,
+  deleteTestProducts,
+} from "./product-helpers";
 
 /**
- * Concurrency + idempotency tests for the participations_v2 lifecycle.
+ * Concurrency + idempotency tests for the participations lifecycle.
  *
  * The whole point of this file is to verify that the gate lock on
- * products_v2 (the SELECT … FOR UPDATE at the top of every RPC)
+ * products (the SELECT … FOR UPDATE at the top of every RPC)
  * actually serializes seat math. None of these tests rely on wall-clock
  * timing — concurrency is exercised via Promise.all() and the DB-level
  * lock decides who wins.
@@ -36,7 +36,7 @@ const ALL_TEST_PRODUCTS = [
   PRODUCT_FREE_CAP,
 ];
 
-describe("participations_v2 race + idempotency", () => {
+describe("participations race + idempotency", () => {
   let admin: SupabaseClient<Database>;
 
   beforeAll(async () => {
@@ -44,18 +44,18 @@ describe("participations_v2 race + idempotency", () => {
     // Ensure no leftover rows from prior aborted runs — we hard-reset
     // before creating products so beforeAll is idempotent under the
     // shared local Supabase.
-    await deleteV2TestProducts(admin, ALL_TEST_PRODUCTS);
+    await deleteTestProducts(admin, ALL_TEST_PRODUCTS);
   });
 
   afterAll(async () => {
-    await deleteV2TestProducts(admin, ALL_TEST_PRODUCTS);
+    await deleteTestProducts(admin, ALL_TEST_PRODUCTS);
   });
 
   afterEach(async () => {
     // Wipe participations between tests but keep products around (cheaper
-    // than recreating). CASCADE handles family_subscription_items_v2 etc.
+    // than recreating). CASCADE handles family_subscription_items etc.
     await admin
-      .from("participations_v2")
+      .from("participations")
       .delete()
       .in("product_id", ALL_TEST_PRODUCTS);
   });
@@ -64,9 +64,9 @@ describe("participations_v2 race + idempotency", () => {
   // Concurrent reservations
   // ---------------------------------------------------------------------------
 
-  describe("create_participation_v2 — concurrent reservations on a 1-seat product", () => {
+  describe("create_participation — concurrent reservations on a 1-seat product", () => {
     beforeAll(async () => {
-      await createV2TestProduct(admin, {
+      await createTestProduct(admin, {
         id: PRODUCT_RACE_1SEAT,
         seatCount: 1,
       });
@@ -79,14 +79,14 @@ describe("participations_v2 race + idempotency", () => {
       const ITERATIONS = 20;
       for (let i = 0; i < ITERATIONS; i++) {
         const [a, b] = await Promise.all([
-          admin.rpc("create_participation_v2", {
+          admin.rpc("create_participation", {
             p_product_id: PRODUCT_RACE_1SEAT,
             p_gamer_id: TEST_IDS.GAMER,
             p_customer_id: TEST_IDS.CUSTOMER,
             p_purchase_shape: "bundle_1",
             p_currency: "eur",
           }),
-          admin.rpc("create_participation_v2", {
+          admin.rpc("create_participation", {
             p_product_id: PRODUCT_RACE_1SEAT,
             p_gamer_id: TEST_IDS.GAMER_2,
             p_customer_id: TEST_IDS.CUSTOMER,
@@ -108,7 +108,7 @@ describe("participations_v2 race + idempotency", () => {
         // Reset for the next iteration so we always start from a clean
         // 0/1 seat state.
         await admin
-          .from("participations_v2")
+          .from("participations")
           .delete()
           .eq("product_id", PRODUCT_RACE_1SEAT);
       }
@@ -118,7 +118,7 @@ describe("participations_v2 race + idempotency", () => {
       // Take the seat with one gamer, then verify a second attempt with
       // a different gamer returns 'full' even though the first row is
       // 'reserving' (not 'active').
-      const first = await admin.rpc("create_participation_v2", {
+      const first = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -127,7 +127,7 @@ describe("participations_v2 race + idempotency", () => {
       });
       expect((first.data as { kind: string }).kind).toBe("reserving");
 
-      const second = await admin.rpc("create_participation_v2", {
+      const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
         p_gamer_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -142,16 +142,16 @@ describe("participations_v2 race + idempotency", () => {
   // Reservation expiry
   // ---------------------------------------------------------------------------
 
-  describe("expire_reservation_v2", () => {
+  describe("expire_reservation", () => {
     beforeAll(async () => {
-      await createV2TestProduct(admin, {
+      await createTestProduct(admin, {
         id: PRODUCT_EXPIRED_RES,
         seatCount: 1,
       });
     });
 
     it("deletes a reserving row and frees the seat", async () => {
-      const created = await admin.rpc("create_participation_v2", {
+      const created = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_EXPIRED_RES,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -161,21 +161,21 @@ describe("participations_v2 race + idempotency", () => {
       const reservationId = (created.data as { participation_id: string })
         .participation_id;
 
-      const expired = await admin.rpc("expire_reservation_v2", {
+      const expired = await admin.rpc("expire_reservation", {
         p_reservation_id: reservationId,
       });
       expect((expired.data as { kind: string }).kind).toBe("expired");
 
       // Row is gone.
       const { data: row } = await admin
-        .from("participations_v2")
+        .from("participations")
         .select("id")
         .eq("id", reservationId)
         .maybeSingle();
       expect(row).toBeNull();
 
       // Seat is free — a new reservation succeeds.
-      const next = await admin.rpc("create_participation_v2", {
+      const next = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_EXPIRED_RES,
         p_gamer_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -188,7 +188,7 @@ describe("participations_v2 race + idempotency", () => {
     it("is a no-op on an already-confirmed (active) row", async () => {
       // Insert an active row directly — no reserving lifecycle.
       const { data: inserted, error } = await admin
-        .from("participations_v2")
+        .from("participations")
         .insert({
           product_id: PRODUCT_EXPIRED_RES,
           gamer_id: TEST_IDS.GAMER,
@@ -200,14 +200,14 @@ describe("participations_v2 race + idempotency", () => {
         .single();
       expect(error).toBeNull();
 
-      const result = await admin.rpc("expire_reservation_v2", {
+      const result = await admin.rpc("expire_reservation", {
         p_reservation_id: inserted!.id,
       });
       expect((result.data as { kind: string }).kind).toBe("noop");
 
       // Active row is still there.
       const { data: row } = await admin
-        .from("participations_v2")
+        .from("participations")
         .select("status")
         .eq("id", inserted!.id)
         .single();
@@ -216,19 +216,19 @@ describe("participations_v2 race + idempotency", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // confirm_reservation_v2
+  // confirm_reservation
   // ---------------------------------------------------------------------------
 
-  describe("confirm_reservation_v2", () => {
+  describe("confirm_reservation", () => {
     beforeAll(async () => {
-      await createV2TestProduct(admin, {
+      await createTestProduct(admin, {
         id: PRODUCT_CONFIRM,
         seatCount: 5,
       });
     });
 
     it("flips reserving → active and grants credits", async () => {
-      const created = await admin.rpc("create_participation_v2", {
+      const created = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_CONFIRM,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -238,7 +238,7 @@ describe("participations_v2 race + idempotency", () => {
       const reservationId = (created.data as { participation_id: string })
         .participation_id;
 
-      const confirmed = await admin.rpc("confirm_reservation_v2", {
+      const confirmed = await admin.rpc("confirm_reservation", {
         p_reservation_id: reservationId,
         p_credits_to_grant: 4,
       });
@@ -247,7 +247,7 @@ describe("participations_v2 race + idempotency", () => {
       expect(body.idempotent).toBe(false);
 
       const { data: row } = await admin
-        .from("participations_v2")
+        .from("participations")
         .select("status, credits_remaining, reserved_until")
         .eq("id", reservationId)
         .single();
@@ -259,7 +259,7 @@ describe("participations_v2 race + idempotency", () => {
     it("returns idempotent confirmed when the row is already active", async () => {
       // Insert directly as active (skip reserving).
       const { data: inserted } = await admin
-        .from("participations_v2")
+        .from("participations")
         .insert({
           product_id: PRODUCT_CONFIRM,
           gamer_id: TEST_IDS.GAMER_2,
@@ -270,7 +270,7 @@ describe("participations_v2 race + idempotency", () => {
         .select("id")
         .single();
 
-      const result = await admin.rpc("confirm_reservation_v2", {
+      const result = await admin.rpc("confirm_reservation", {
         p_reservation_id: inserted!.id,
         p_credits_to_grant: 4,
       });
@@ -280,7 +280,7 @@ describe("participations_v2 race + idempotency", () => {
 
       // Credits did NOT double — idempotent path leaves the row untouched.
       const { data: row } = await admin
-        .from("participations_v2")
+        .from("participations")
         .select("credits_remaining")
         .eq("id", inserted!.id)
         .single();
@@ -288,7 +288,7 @@ describe("participations_v2 race + idempotency", () => {
     });
 
     it("returns orphan when the reservation row does not exist", async () => {
-      const result = await admin.rpc("confirm_reservation_v2", {
+      const result = await admin.rpc("confirm_reservation", {
         p_reservation_id: "00000000-0000-0000-0000-000000000fff",
         p_credits_to_grant: 0,
       });
@@ -297,7 +297,7 @@ describe("participations_v2 race + idempotency", () => {
 
     it("returns orphan for a row in waitlisted state", async () => {
       const { data: inserted } = await admin
-        .from("participations_v2")
+        .from("participations")
         .insert({
           product_id: PRODUCT_CONFIRM,
           gamer_id: TEST_IDS.GAMER,
@@ -309,7 +309,7 @@ describe("participations_v2 race + idempotency", () => {
         .select("id")
         .single();
 
-      const result = await admin.rpc("confirm_reservation_v2", {
+      const result = await admin.rpc("confirm_reservation", {
         p_reservation_id: inserted!.id,
         p_credits_to_grant: 0,
       });
@@ -317,14 +317,14 @@ describe("participations_v2 race + idempotency", () => {
     });
 
     it("returns duplicate_payment when another active row exists for the same (product, gamer)", async () => {
-      // The "already signed up" guard in create_participation_v2 only blocks
+      // The "already signed up" guard in create_participation only blocks
       // active/waitlisted — a parent who clicks-abandons-clicks-again can
       // legitimately have two reserving rows. If both Stripe sessions
       // complete, the second confirm must NOT raise on the partial UNIQUE;
       // it must return duplicate_payment so the webhook can record the
       // duplicate charge instead of looping on Stripe retries.
       const { data: active } = await admin
-        .from("participations_v2")
+        .from("participations")
         .insert({
           product_id: PRODUCT_CONFIRM,
           gamer_id: TEST_IDS.GAMER,
@@ -336,7 +336,7 @@ describe("participations_v2 race + idempotency", () => {
         .single();
 
       const { data: reserving } = await admin
-        .from("participations_v2")
+        .from("participations")
         .insert({
           product_id: PRODUCT_CONFIRM,
           gamer_id: TEST_IDS.GAMER,
@@ -348,7 +348,7 @@ describe("participations_v2 race + idempotency", () => {
         .select("id")
         .single();
 
-      const result = await admin.rpc("confirm_reservation_v2", {
+      const result = await admin.rpc("confirm_reservation", {
         p_reservation_id: reserving!.id,
         p_credits_to_grant: 4,
       });
@@ -361,7 +361,7 @@ describe("participations_v2 race + idempotency", () => {
 
       // Reserving row left untouched — webhook is responsible for deleting it.
       const { data: row } = await admin
-        .from("participations_v2")
+        .from("participations")
         .select("status")
         .eq("id", reserving!.id)
         .single();
@@ -373,9 +373,9 @@ describe("participations_v2 race + idempotency", () => {
   // Waitlist concurrency + idempotency
   // ---------------------------------------------------------------------------
 
-  describe("join_waitlist_v2", () => {
+  describe("join_waitlist", () => {
     beforeAll(async () => {
-      await createV2TestProduct(admin, {
+      await createTestProduct(admin, {
         id: PRODUCT_WAITLIST,
         seatCount: 1,
         waitlistEnabled: true,
@@ -384,12 +384,12 @@ describe("participations_v2 race + idempotency", () => {
 
     it("two parallel joins for distinct gamers yield positions 1 and 2", async () => {
       const [a, b] = await Promise.all([
-        admin.rpc("join_waitlist_v2", {
+        admin.rpc("join_waitlist", {
           p_product_id: PRODUCT_WAITLIST,
           p_gamer_id: TEST_IDS.GAMER,
           p_customer_id: TEST_IDS.CUSTOMER,
         }),
-        admin.rpc("join_waitlist_v2", {
+        admin.rpc("join_waitlist", {
           p_product_id: PRODUCT_WAITLIST,
           p_gamer_id: TEST_IDS.GAMER_2,
           p_customer_id: TEST_IDS.CUSTOMER,
@@ -407,7 +407,7 @@ describe("participations_v2 race + idempotency", () => {
     });
 
     it("repeat call for the same (product, gamer) returns the existing row", async () => {
-      const first = await admin.rpc("join_waitlist_v2", {
+      const first = await admin.rpc("join_waitlist", {
         p_product_id: PRODUCT_WAITLIST,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -417,7 +417,7 @@ describe("participations_v2 race + idempotency", () => {
       const firstPos = (first.data as { waitlist_position: number })
         .waitlist_position;
 
-      const second = await admin.rpc("join_waitlist_v2", {
+      const second = await admin.rpc("join_waitlist", {
         p_product_id: PRODUCT_WAITLIST,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -431,7 +431,7 @@ describe("participations_v2 race + idempotency", () => {
 
       // And exactly one row exists.
       const { data: rows } = await admin
-        .from("participations_v2")
+        .from("participations")
         .select("id")
         .eq("product_id", PRODUCT_WAITLIST)
         .eq("gamer_id", TEST_IDS.GAMER);
@@ -444,15 +444,15 @@ describe("participations_v2 race + idempotency", () => {
   // ---------------------------------------------------------------------------
   //
   // The schema permits free products to have an explicit seat_count
-  // (chk_products_v2_seat_count_null_requires_free only requires NOT NULL
-  // when billing_mode<>'free'). Before 00043, create_participation_v2's free
+  // (chk_products_seat_count_null_requires_free only requires NOT NULL
+  // when billing_mode<>'free'). Before 00043, create_participation's free
   // path INSERTed an active row before any seat-count check, so a free
   // product with seat_count=1 silently accepted the second signup. The
   // gate now sits above the free branch.
 
-  describe("create_participation_v2 — free product with seat_count enforces cap", () => {
+  describe("create_participation — free product with seat_count enforces cap", () => {
     beforeAll(async () => {
-      await createV2TestProduct(admin, {
+      await createTestProduct(admin, {
         id: PRODUCT_FREE_CAP,
         billingMode: "free",
         seatCount: 1,
@@ -460,7 +460,7 @@ describe("participations_v2 race + idempotency", () => {
     });
 
     it("first free signup activates; second returns 'full'", async () => {
-      const first = await admin.rpc("create_participation_v2", {
+      const first = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_FREE_CAP,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -470,7 +470,7 @@ describe("participations_v2 race + idempotency", () => {
       expect(first.error).toBeNull();
       expect((first.data as { kind: string }).kind).toBe("free_active");
 
-      const second = await admin.rpc("create_participation_v2", {
+      const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_FREE_CAP,
         p_gamer_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
@@ -482,7 +482,7 @@ describe("participations_v2 race + idempotency", () => {
 
       // Sanity: only one row exists for the product.
       const { data: rows } = await admin
-        .from("participations_v2")
+        .from("participations")
         .select("id")
         .eq("product_id", PRODUCT_FREE_CAP);
       expect(rows?.length).toBe(1);

@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 /**
  * Authenticated group voice room. The `[id]` segment is
- * `product_groups_v2.id` — the token endpoint derives the Daily room name
+ * `product_groups.id` — the token endpoint derives the Daily room name
  * from the group + current session window, so there is no DB-side voice
  * room row to look up.
  *
