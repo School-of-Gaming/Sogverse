@@ -1648,6 +1648,12 @@
     "shareScreen": "Dela skärm",
     "stopScreenShare": "Sluta dela skärm",
     "broadcast": "Sändning",
+    "chat": {
+      "title": "Chatt",
+      "placeholder": "Skriv ett meddelande…",
+      "send": "Skicka",
+      "empty": "Inga meddelanden än"
+    },
     "instant": {
       "joinFailed": "Kunde inte gå med i rummet. Försök igen.",
       "share": {

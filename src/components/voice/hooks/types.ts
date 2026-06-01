@@ -50,6 +50,25 @@ export interface AudioNodes {
   analyser: AnalyserNode;
 }
 
+// ---------- Chat ----------
+
+/**
+ * An in-memory chat message. Voice chat is ephemeral — these live only in
+ * React state for the duration of the session (cleared on resetState) and are
+ * never persisted, matching the "Daily.co is the sole source of truth" voice
+ * design. `userName` is snapshotted from the sender's Daily-verified token at
+ * send/receive time (not trusted from the message payload), so a peer can't
+ * spoof another participant's name.
+ */
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  userName: string;
+  text: string;
+  timestamp: number;
+  isLocal: boolean;
+}
+
 // ---------- App Messages ----------
 
 /** App message types sent via Daily.co sendAppMessage */
@@ -59,6 +78,11 @@ export type AppMessage =
   | { type: "moveUser"; targetSessionId: string; position: SpatialPosition }
   | { type: "moderatorMute"; targetSessionId: string; track: "audio" | "video" }
   | { type: "moderatorLock"; targetSessionId: string; track: "audio" | "video"; locked: boolean }
+  /**
+   * A chat message broadcast to all peers. The sender's identity comes from
+   * Daily's verified `fromId` (not the payload), so only `text` travels here.
+   */
+  | { type: "chatMessage"; text: string }
   /**
    * Broadcast by a moderator on instant voice rooms right before they call
    * the end-for-everyone API. Lets other clients show the friendly
@@ -104,4 +128,7 @@ export interface VoiceRoomContextValue {
   lockStates: Map<string, LockState>;
   muteParticipant: (sessionId: string, track: "audio" | "video") => void;
   lockParticipant: (sessionId: string, track: "audio" | "video", locked: boolean) => void;
+  // Chat (ephemeral, app-message-backed)
+  messages: ChatMessage[];
+  sendChatMessage: (text: string) => void;
 }

@@ -1648,6 +1648,12 @@
     "shareScreen": "Jaa näyttö",
     "stopScreenShare": "Lopeta näytön jakaminen",
     "broadcast": "Kuulutus",
+    "chat": {
+      "title": "Keskustelu",
+      "placeholder": "Kirjoita viesti…",
+      "send": "Lähetä",
+      "empty": "Ei vielä viestejä"
+    },
     "instant": {
       "joinFailed": "Huoneeseen liittyminen epäonnistui. Yritä uudelleen.",
       "share": {
