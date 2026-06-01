@@ -1,5 +1,5 @@
-import { ProductV2ListPage } from "@/components/admin/products-v2/product-v2-list-page";
+import { ProductListPage } from "@/components/admin/products/product-list-page";
 
 export default function MunicipalityClubsPage() {
-  return <ProductV2ListPage productType="municipality_club" />;
+  return <ProductListPage productType="municipality_club" />;
 }

@@ -158,7 +158,7 @@ describe("POST /api/participations/waitlist", () => {
 
   // -- Happy path --
 
-  it("returns the new waitlist position when join_waitlist_v2 succeeds", async () => {
+  it("returns the new waitlist position when join_waitlist succeeds", async () => {
     mockAuthenticatedCustomer();
     mockAdminRpc.mockResolvedValue({
       data: {
@@ -180,7 +180,7 @@ describe("POST /api/participations/waitlist", () => {
       waitlistPosition: 3,
       status: "waitlisted",
     });
-    expect(mockAdminRpc).toHaveBeenCalledWith("join_waitlist_v2", {
+    expect(mockAdminRpc).toHaveBeenCalledWith("join_waitlist", {
       p_product_id: PRODUCT_ID,
       p_gamer_id: GAMER_ID,
       p_customer_id: CUSTOMER_ID,

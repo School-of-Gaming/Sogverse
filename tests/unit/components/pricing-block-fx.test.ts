@@ -3,7 +3,7 @@ import {
   applyFxAutoFill,
   type FxRates,
   type PricesMap,
-} from "@/components/admin/products-v2/pricing-block-fx";
+} from "@/components/admin/products/pricing-block-fx";
 import type { SupportedCurrency } from "@/lib/constants";
 
 // FX auto-fill: when admin types in EUR (the source), every other currency

@@ -139,8 +139,8 @@ describe("GET /api/minecraft/join-check", () => {
   // --- Session access: pending migration to the current product system ---
   //
   // The gedu/gamer session-gating queried the dropped v1 product/group/
-  // enrollment tables. Until it's rebuilt against participations_v2 /
-  // product_groups_v2, those roles get a 501. See the route for the spec.
+  // enrollment tables. Until it's rebuilt against participations /
+  // product_groups, those roles get a 501. See the route for the spec.
 
   it("returns 501 for a gedu (session access not yet implemented)", async () => {
     mockPlayerLookup({ id: "gedu-1", first_name: "GeduSteve", role: "gedu" });

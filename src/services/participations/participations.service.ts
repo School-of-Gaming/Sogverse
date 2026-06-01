@@ -1,12 +1,12 @@
 import type {
   AppSupabaseClient,
   Participation,
-  ProductTypeV2,
-  BillingModeV2,
-  ProductTranslationV2,
+  ProductType,
+  BillingMode,
+  ProductTranslation,
   PurchaseShape,
   SessionAudience,
-  SubscriptionFrequencyV2,
+  SubscriptionFrequency,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { QueryData } from "@supabase/supabase-js";
@@ -15,7 +15,7 @@ import type { QueryData } from "@supabase/supabase-js";
  * Row shape returned by `getMyParticipations()`. Joins the bare minimum the
  * purchased card needs to render — product chrome (name, image, type),
  * the placement state inputs (status, group_id), the credit balance, and
- * a flag indicating whether a live `family_subscription_items_v2` row
+ * a flag indicating whether a live `family_subscription_items` row
  * still points at this participation (= sub-covered).
  */
 export type MyParticipationRow = Pick<
@@ -31,11 +31,11 @@ export type MyParticipationRow = Pick<
 > & {
   product: {
     id: string;
-    product_type: ProductTypeV2;
-    billing_mode: BillingModeV2;
+    product_type: ProductType;
+    billing_mode: BillingMode;
     image_path: string | null;
     timezone: string;
-    product_translations_v2: ProductTranslationV2[];
+    product_translations: ProductTranslation[];
   } | null;
   /**
    * Joined gamer profile so the purchased card can render "For {name}"
@@ -50,7 +50,7 @@ export type MyParticipationRow = Pick<
     username: string | null;
   } | null;
   /**
-   * `true` when a live family_subscription_items_v2 row points at this
+   * `true` when a live family_subscription_items row points at this
    * participation. Drives the bundle-vs-sub coverage UI on the purchased card.
    */
   is_sub_covered: boolean;
@@ -74,7 +74,7 @@ export interface MyUpcomingSessionRow {
   };
   product: {
     id: string;
-    type: ProductTypeV2;
+    type: ProductType;
     timezone: string;
     /**
      * Inclusive start date in the product's local calendar (YYYY-MM-DD).
@@ -103,10 +103,10 @@ export interface MyUpcomingSessionRow {
      * at render time so the cache key doesn't need to include locale (and a
      * locale switch doesn't refetch).
      */
-    translations: ProductTranslationV2[];
+    translations: ProductTranslation[];
   };
   /**
-   * The `product_groups_v2.id` the gamer is placed in for this product, or
+   * The `product_groups.id` the gamer is placed in for this product, or
    * `null` for unassigned participations (redesign §4.10: no voice access).
    * The dashboard treats null as "no voice destination" — the button stays
    * inert exactly like an in-person product.
@@ -127,7 +127,7 @@ export interface MyUpcomingSessionRow {
  *
  * Pricing fields (`unit_amount_cents`, `stripe_price_currency`,
  * `recurring_interval`, `total_cents`) come from a live Stripe lookup, not
- * the local `product_subscription_prices_v2` cache: existing subs are
+ * the local `product_subscription_prices` cache: existing subs are
  * billed at their locked-in Stripe price, so the local cache can drift
  * from what's actually being charged. They're nullable to allow graceful
  * degradation if the Stripe call fails (e.g., sub deleted on Stripe).
@@ -135,13 +135,13 @@ export interface MyUpcomingSessionRow {
 export interface MyFamilySubRow {
   id: string;
   status: string;
-  frequency: SubscriptionFrequencyV2;
+  frequency: SubscriptionFrequency;
   currency: string;
   current_period_end: string | null;
   stripe_subscription_id: string;
   stripe_customer_id: string;
   created_at: string;
-  family_subscription_items_v2: {
+  family_subscription_items: {
     id: string;
     participation_id: string;
     stripe_subscription_item_id: string;
@@ -159,7 +159,7 @@ export interface MyFamilySubRow {
  * given gamers, across all statuses, joined with product chrome (name + the
  * type→admin-route link) and the assigned group name.
  *
- * `products_v2!inner` mirrors the schema — `participations_v2.product_id` is
+ * `products!inner` mirrors the schema — `participations.product_id` is
  * NOT NULL with ON DELETE CASCADE, so a participation can never outlive its
  * product. The inner join makes that guarantee explicit and lets the inferred
  * row type treat `product` as non-null. `group` stays a plain (nullable) embed
@@ -174,15 +174,15 @@ function buildGamerParticipationsQuery(
   gamerIds: string[],
 ) {
   return supabase
-    .from("participations_v2")
+    .from("participations")
     .select(
       `
         id, gamer_id, status, signed_up_at,
-        product:products_v2!inner(
+        product:products!inner(
           id, product_type,
-          product_translations_v2(*)
+          product_translations(*)
         ),
-        group:product_groups_v2(name)
+        group:product_groups(name)
       `,
     )
     .in("gamer_id", gamerIds)
@@ -197,7 +197,7 @@ function buildGamerParticipationsQuery(
  * a parent's gamers) is signed up to — across all statuses (active /
  * waitlisted / reserving / completed), so support can see exactly what state
  * each gamer is in. Reachable only for admins via the
- * `admin_full_access_participations_v2` RLS policy.
+ * `admin_full_access_participations` RLS policy.
  */
 export type AdminGamerParticipationRow = QueryData<
   ReturnType<typeof buildGamerParticipationsQuery>
@@ -253,21 +253,21 @@ export class ParticipationsService {
     if (!userId) return [];
 
     const { data, error } = await this.supabase
-      .from("participations_v2")
+      .from("participations")
       .select(
         `
           id, product_id, group_id, gamer_id, status,
           credits_remaining, waitlist_position, signed_up_at,
-          product:products_v2(
+          product:products(
             id, product_type, billing_mode, image_path, timezone,
-            product_translations_v2(*)
+            product_translations(*)
           ),
-          gamer:profiles!participations_v2_gamer_id_fkey(
+          gamer:profiles!participations_gamer_id_fkey(
             first_name, username
           ),
-          family_subscription_items_v2(
+          family_subscription_items(
             id,
-            family_subscription:family_subscriptions_v2(status)
+            family_subscription:family_subscriptions(status)
           )
         `,
       )
@@ -285,7 +285,7 @@ export class ParticipationsService {
    * statuses, joined with product chrome (for the name + the type→admin-route
    * link) and the assigned group name. Returns `[]` for empty input.
    *
-   * Only reachable under the `admin_full_access_participations_v2` RLS policy —
+   * Only reachable under the `admin_full_access_participations` RLS policy —
    * this is wired exclusively to the admin user-detail "Assigned products"
    * surface. Ordered by gamer then newest signup so the page can group per
    * child with a stable within-child order.
@@ -337,17 +337,17 @@ export class ParticipationsService {
       audience === "customer" ? "customer_id" : "gamer_id";
 
     const { data, error } = await this.supabase
-      .from("participations_v2")
+      .from("participations")
       .select(
         `
           gamer_id,
           group_id,
-          product:products_v2!inner(
+          product:products!inner(
             id, product_type, timezone, start_date, end_date, padlet_url, is_remote,
-            product_translations_v2(*),
-            schedule_slots_v2(weekday, start_time, duration_minutes)
+            product_translations(*),
+            schedule_slots(weekday, start_time, duration_minutes)
           ),
-          gamer:profiles!participations_v2_gamer_id_fkey(
+          gamer:profiles!participations_gamer_id_fkey(
             first_name, username
           )
         `,
@@ -367,9 +367,9 @@ export class ParticipationsService {
    * Aggregate counts feeding the seat-left pill, threshold progress, and
    * "already signed up" detection for the listed products.
    *
-   * Reads `product_seat_counts_v2` (public-readable, RLS-permissive) for
+   * Reads `product_seat_counts` (public-readable, RLS-permissive) for
    * the live counts; the `mySignupState` is derived per-customer by looking
-   * up `participations_v2` rows for any of their gamers on each product.
+   * up `participations` rows for any of their gamers on each product.
    */
   async getParticipationCounts(
     productIds: string[],
@@ -377,7 +377,7 @@ export class ParticipationsService {
     if (productIds.length === 0) return [];
 
     const { data: countsData, error: countsErr } = await this.supabase
-      .from("product_seat_counts_v2")
+      .from("product_seat_counts")
       .select("product_id, active_count, reserving_count, waitlist_count")
       .in("product_id", productIds);
     if (countsErr) throw countsErr;
@@ -399,7 +399,7 @@ export class ParticipationsService {
     const userId = claims?.claims.sub;
     if (userId) {
       const { data: mine } = await this.supabase
-        .from("participations_v2")
+        .from("participations")
         .select("product_id, status")
         .eq("customer_id", userId)
         .in("product_id", productIds);
@@ -447,7 +447,7 @@ export class ParticipationsService {
    * treated as no-live-sub on the server side.
    */
   async getFamilySubAt(
-    frequency: SubscriptionFrequencyV2,
+    frequency: SubscriptionFrequency,
     currency: SupportedCurrency,
   ): Promise<{ id: string; status: string } | null> {
     const { data: claims } = await this.supabase.auth.getClaims();
@@ -455,7 +455,7 @@ export class ParticipationsService {
     if (!userId) return null;
 
     const { data, error } = await this.supabase
-      .from("family_subscriptions_v2")
+      .from("family_subscriptions")
       .select("id, status")
       .eq("customer_id", userId)
       .eq("frequency", frequency)
@@ -518,11 +518,11 @@ type RawMyParticipationRow = Pick<
 > & {
   product: {
     id: string;
-    product_type: ProductTypeV2;
-    billing_mode: BillingModeV2;
+    product_type: ProductType;
+    billing_mode: BillingMode;
     image_path: string | null;
     timezone: string;
-    product_translations_v2: ProductTranslationV2[];
+    product_translations: ProductTranslation[];
   } | null;
   gamer: {
     first_name: string | null;
@@ -532,7 +532,7 @@ type RawMyParticipationRow = Pick<
   // this as a to-one relationship, so the embedded shape is a single
   // nullable object (not an array). At most one item ever links to a given
   // participation.
-  family_subscription_items_v2: {
+  family_subscription_items: {
     id: string;
     family_subscription: { status: string } | null;
   } | null;
@@ -543,14 +543,14 @@ interface RawMyUpcomingSessionRow {
   group_id: string | null;
   product: {
     id: string;
-    product_type: ProductTypeV2;
+    product_type: ProductType;
     timezone: string;
     start_date: string | null;
     end_date: string | null;
     padlet_url: string | null;
     is_remote: boolean;
-    product_translations_v2: ProductTranslationV2[];
-    schedule_slots_v2: Array<{
+    product_translations: ProductTranslation[];
+    schedule_slots: Array<{
       weekday: number;
       start_time: string;
       duration_minutes: number;
@@ -582,10 +582,10 @@ function toMyUpcomingSessionRow(row: RawMyUpcomingSessionRow): MyUpcomingSession
       endDate: product.end_date,
       padletUrl: product.padlet_url,
       isRemote: product.is_remote,
-      translations: product.product_translations_v2,
+      translations: product.product_translations,
     },
     groupId: row.group_id,
-    slots: product.schedule_slots_v2.map((s) => ({
+    slots: product.schedule_slots.map((s) => ({
       weekday: s.weekday,
       startTime: s.start_time,
       durationMinutes: s.duration_minutes,
@@ -595,12 +595,12 @@ function toMyUpcomingSessionRow(row: RawMyUpcomingSessionRow): MyUpcomingSession
 
 function toMyParticipationRow(row: RawMyParticipationRow): MyParticipationRow {
   // "Sub-covered" = the linked item exists AND its parent sub is live.
-  const item = row.family_subscription_items_v2;
+  const item = row.family_subscription_items;
   const isSubCovered =
     item !== null &&
     item.family_subscription !== null &&
     ["active", "canceling", "past_due"].includes(item.family_subscription.status);
-  const { family_subscription_items_v2: _items, ...rest } = row;
+  const { family_subscription_items: _items, ...rest } = row;
   void _items;
   return { ...rest, is_sub_covered: isSubCovered };
 }

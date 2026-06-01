@@ -9,7 +9,7 @@ import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
 import { useVoiceToken } from "@/services/voice";
 
 interface VoiceSessionPageProps {
-  /** A `product_groups_v2.id` — the token endpoint derives the Daily room name from the group + current session window. */
+  /** A `product_groups.id` — the token endpoint derives the Daily room name from the group + current session window. */
   groupId: string;
   backHref: string;
 }

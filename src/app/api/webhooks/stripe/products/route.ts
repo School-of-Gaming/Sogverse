@@ -5,12 +5,12 @@ import {
   bundleSizeFromShape,
   frequencyFromShape,
 } from "@/lib/stripe/participation-prices";
-import type { PaymentPurposeV2 } from "@/types";
+import type { PaymentPurpose } from "@/types";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_PRODUCTS_WEBHOOK_SECRET!;
 
-// Webhook idempotency: every payments_v2 / refunds_v2 row carries the
+// Webhook idempotency: every payments / refunds row carries the
 // stripe_event_id; UNIQUE constraints catch duplicate deliveries.
 //
 // Errors during writes return 500 so Stripe retries. Unhandled event types
@@ -91,9 +91,9 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
     return;
   }
 
-  // Idempotency on payments_v2 — UNIQUE on stripe_event_id is the safety net.
+  // Idempotency on payments — UNIQUE on stripe_event_id is the safety net.
   const { data: existingPayment } = await admin
-    .from("payments_v2")
+    .from("payments")
     .select("id")
     .eq("stripe_event_id", event.id)
     .maybeSingle();
@@ -116,14 +116,14 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
   //                        tab). Record the duplicate so admin can find and
   //                        refund it; release the orphan reserving row.
   const { data: confirmResult, error: confirmErr } = await admin.rpc(
-    "confirm_reservation_v2",
+    "confirm_reservation",
     {
       p_reservation_id: reservationId,
       p_credits_to_grant: creditsToGrant,
     },
   );
   if (confirmErr) {
-    throw new Error(`confirm_reservation_v2 failed: ${confirmErr.message}`);
+    throw new Error(`confirm_reservation failed: ${confirmErr.message}`);
   }
   const confirmJson = confirmResult as {
     kind: "confirmed" | "orphan" | "duplicate_payment";
@@ -143,7 +143,7 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
     // Rare: parent paid two Stripe sessions that both targeted the same
     // (product, gamer). The first webhook landed an active row; this one is
     // the duplicate charge. Log loudly and record the payment under
-    // `reservation_duplicate` so admin can find it from a payments_v2 query
+    // `reservation_duplicate` so admin can find it from a payments query
     // (filter on purpose='reservation_duplicate') when the customer reports
     // the double charge. No automated refund — admin issues it manually.
     console.error(
@@ -187,7 +187,7 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
 
     // Release the orphan reserving row so it doesn't permanently hold a seat.
     await admin
-      .from("participations_v2")
+      .from("participations")
       .delete()
       .eq("id", reservationId)
       .eq("status", "reserving");
@@ -214,15 +214,15 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
     },
   });
 
-  // Subscription mode: ensure the family_subscriptions_v2 row + item exist.
+  // Subscription mode: ensure the family_subscriptions row + item exist.
   if (isSubscription && typeof session.subscription === "string") {
     const subId = session.subscription;
     const sub = await stripe.subscriptions.retrieve(subId, { expand: ["items.data"] });
     const frequency = frequencyFromShape(purchaseShape);
 
-    // Find or create family_subscriptions_v2 row.
+    // Find or create family_subscriptions row.
     let { data: famSub } = await admin
-      .from("family_subscriptions_v2")
+      .from("family_subscriptions")
       .select("id")
       .eq("stripe_subscription_id", subId)
       .maybeSingle();
@@ -232,7 +232,7 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
         typeof session.customer === "string" ? session.customer : "";
       const periodEnd = currentPeriodEndOf(sub);
       const inserted = await admin
-        .from("family_subscriptions_v2")
+        .from("family_subscriptions")
         .insert({
           customer_id: customerId,
           stripe_subscription_id: subId,
@@ -254,7 +254,7 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
       if (sub.items.data.length > 0) {
         const item = sub.items.data[0];
         await admin
-          .from("family_subscription_items_v2")
+          .from("family_subscription_items")
           .insert({
             family_subscription_id: famSub.id,
             participation_id: confirmJson.participation_id,
@@ -272,7 +272,7 @@ async function handleCheckoutExpired(admin: Admin, event: Stripe.Event) {
   const session = event.data.object as Stripe.Checkout.Session;
   const reservationId = session.metadata?.reservationId;
   if (!reservationId) return;
-  await admin.rpc("expire_reservation_v2", { p_reservation_id: reservationId });
+  await admin.rpc("expire_reservation", { p_reservation_id: reservationId });
 }
 
 async function handleInvoicePaid(admin: Admin, event: Stripe.Event) {
@@ -285,14 +285,14 @@ async function handleInvoicePaid(admin: Admin, event: Stripe.Event) {
 
   const subId = invoice.subscription;
   const { data: famSub } = await admin
-    .from("family_subscriptions_v2")
+    .from("family_subscriptions")
     .select("id, customer_id, currency")
     .eq("stripe_subscription_id", subId)
     .maybeSingle();
   if (!famSub) return;
 
   const { data: existingPayment } = await admin
-    .from("payments_v2")
+    .from("payments")
     .select("id")
     .eq("stripe_event_id", event.id)
     .maybeSingle();
@@ -321,7 +321,7 @@ async function handleSubscriptionUpdated(admin: Admin, event: Stripe.Event) {
   // in Stripe Dashboard, so each fires for every sub on the account; the
   // only correct gate is "do we have a row for this stripe_subscription_id".
   const { data: ours } = await admin
-    .from("family_subscriptions_v2")
+    .from("family_subscriptions")
     .select("id")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
@@ -329,7 +329,7 @@ async function handleSubscriptionUpdated(admin: Admin, event: Stripe.Event) {
 
   const periodEnd = currentPeriodEndOf(sub);
   await admin
-    .from("family_subscriptions_v2")
+    .from("family_subscriptions")
     .update({
       status:
         sub.status === "active" && sub.cancel_at_period_end
@@ -364,23 +364,23 @@ async function handleSubscriptionDeleted(admin: Admin, event: Stripe.Event) {
   const sub = event.data.object as Stripe.Subscription;
 
   const { data: famSub } = await admin
-    .from("family_subscriptions_v2")
+    .from("family_subscriptions")
     .select("id")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
   if (!famSub) return; // Not a sub we manage — Sorg token sub etc.
 
   await admin
-    .from("family_subscriptions_v2")
+    .from("family_subscriptions")
     .update({ status: "cancelled" })
     .eq("id", famSub.id);
 
   // Removing items flips coverage on the linked participations to bundle-mode.
-  // The cron resolves coverage by joining family_subscription_items_v2 →
-  // family_subscriptions_v2.status — purging items here makes the cron see
+  // The cron resolves coverage by joining family_subscription_items →
+  // family_subscriptions.status — purging items here makes the cron see
   // those participations as not-sub-covered immediately.
   await admin
-    .from("family_subscription_items_v2")
+    .from("family_subscription_items")
     .delete()
     .eq("family_subscription_id", famSub.id);
 }
@@ -393,7 +393,7 @@ async function handleChargeRefunded(admin: Admin, event: Stripe.Event) {
   if (!paymentIntentId) return;
 
   const { data: payment } = await admin
-    .from("payments_v2")
+    .from("payments")
     .select("id, amount_cents")
     .eq("stripe_payment_intent_id", paymentIntentId)
     .maybeSingle();
@@ -402,7 +402,7 @@ async function handleChargeRefunded(admin: Admin, event: Stripe.Event) {
   // Pull the refund object from charge.refunds (the most recent one).
   // Each `charge.refunded` event corresponds to exactly one refund creation,
   // and Stripe sorts refunds.data newest-first — so data[0] is the refund this
-  // event is about. Don't iterate refunds.data here: refunds_v2 has UNIQUE on
+  // event is about. Don't iterate refunds.data here: refunds has UNIQUE on
   // BOTH stripe_event_id AND stripe_refund_id, and looping would try to INSERT
   // multiple rows sharing the same event_id, silently failing all but the first.
   const refunds = charge.refunds;
@@ -411,7 +411,7 @@ async function handleChargeRefunded(admin: Admin, event: Stripe.Event) {
 
   // Idempotency: UNIQUE on stripe_refund_id. INSERT and swallow duplicates.
   const { error } = await admin
-    .from("refunds_v2")
+    .from("refunds")
     .insert({
       payment_id: payment.id,
       amount_cents: latest.amount,
@@ -429,7 +429,7 @@ interface InsertPaymentParams {
   customerId: string;
   amountCents: number;
   currency: string;
-  purpose: PaymentPurposeV2;
+  purpose: PaymentPurpose;
   stripePaymentIntentId: string | null;
   stripeInvoiceId: string | null;
   metadata: Record<string, unknown>;
@@ -437,7 +437,7 @@ interface InsertPaymentParams {
 
 async function insertPaymentRow(admin: Admin, params: InsertPaymentParams) {
   const { data, error } = await admin
-    .from("payments_v2")
+    .from("payments")
     .insert({
       stripe_event_id: params.stripeEventId,
       customer_id: params.customerId,
@@ -457,7 +457,7 @@ async function insertPaymentRow(admin: Admin, params: InsertPaymentParams) {
   return data;
 }
 
-function paymentPurposeFor(purchaseShape: string): PaymentPurposeV2 {
+function paymentPurposeFor(purchaseShape: string): PaymentPurpose {
   if (purchaseShape.startsWith("bundle_")) return "bundle";
   if (purchaseShape.startsWith("subscription_")) return "subscription_invoice";
   return "single_payment";

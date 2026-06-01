@@ -2,13 +2,13 @@ import type {
   AppSupabaseClient,
   GeduAssignedProduct,
   MyAssignedProductRow,
-  ProductTranslationV2,
-  ProductTypeV2,
+  ProductTranslation,
+  ProductType,
 } from "@/types";
 
 /**
  * Row shape consumed by the gedu dashboard's "My Groups" section. One
- * entry per `gedu_group_assignments_v2` row for the signed-in gedu, with
+ * entry per `gedu_group_assignments` row for the signed-in gedu, with
  * the product shell + product-wide aggregates (group count, gamer count
  * across every group). The cards on the dashboard talk about *groups* —
  * the gedu's mental model — but the underlying truth is one card per
@@ -39,16 +39,16 @@ export interface MyAssignedProductSessionRow {
      * `/gedu/events/[id]` — so the gedu lands on a route that matches their
      * mental model.
      */
-    productType: ProductTypeV2;
+    productType: ProductType;
     /**
      * Raw translation rows. Resolved at render time so a locale switch
      * doesn't refetch.
      */
-    translations: Pick<ProductTranslationV2, "locale" | "name" | "description">[];
+    translations: Pick<ProductTranslation, "locale" | "name" | "description">[];
   };
   /** The gedu's own assigned group_id for this product. */
   groupId: string;
-  /** Total number of groups in the product (every `product_groups_v2` row). */
+  /** Total number of groups in the product (every `product_groups` row). */
   groupCount: number;
   /** Active participations summed across every group in the product. */
   gamerCount: number;

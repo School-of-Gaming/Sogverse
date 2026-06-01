@@ -1,4 +1,4 @@
-import { EditProductV2Page } from "@/components/admin/products-v2/edit-product-v2-page";
+import { EditProductPage } from "@/components/admin/products/edit-product-page";
 
 export default async function EditMunicipalityClubPage({
   params,
@@ -7,6 +7,6 @@ export default async function EditMunicipalityClubPage({
 }) {
   const { id } = await params;
   return (
-    <EditProductV2Page productType="municipality_club" productId={id} />
+    <EditProductPage productType="municipality_club" productId={id} />
   );
 }

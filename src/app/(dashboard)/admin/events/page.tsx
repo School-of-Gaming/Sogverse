@@ -1,5 +1,5 @@
-import { ProductV2ListPage } from "@/components/admin/products-v2/product-v2-list-page";
+import { ProductListPage } from "@/components/admin/products/product-list-page";
 
 export default function EventsPage() {
-  return <ProductV2ListPage productType="event" />;
+  return <ProductListPage productType="event" />;
 }

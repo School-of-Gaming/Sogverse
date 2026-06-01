@@ -1,4 +1,4 @@
-import { ProductV2DetailsPage } from "@/components/admin/products-v2/product-v2-details-page";
+import { ProductDetailsPage } from "@/components/admin/products/product-details-page";
 
 export default async function AdminEventDetailsPage({
   params,
@@ -6,5 +6,5 @@ export default async function AdminEventDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <ProductV2DetailsPage productType="event" productId={id} />;
+  return <ProductDetailsPage productType="event" productId={id} />;
 }

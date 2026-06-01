@@ -5,7 +5,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 
 /**
- * RLS coverage for site_details_v2. The table holds the member-visible
+ * RLS coverage for site_details. The table holds the member-visible
  * site address + notes. Migration 00030 originally made it anon-readable;
  * 00038 tightened it to admin + gedu only. This test pins the new
  * behaviour so a future migration that loosens the policy fails CI
@@ -16,7 +16,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
  * against. When that table lands, extend the policy AND this test
  * together (positive: enrolled-family customer can read; negative:
  * customer with no enrollment cannot). See
- * docs/products-v2-architecture.md § "Extend site_details_v2 read
+ * docs/products-architecture.md § "Extend site_details read
  * policy to purchasing customers" for the planned policy shape.
  */
 
@@ -30,7 +30,7 @@ function createAnonTestClient(): SupabaseClient<Database> {
   });
 }
 
-describe("site_details_v2 RLS", () => {
+describe("site_details RLS", () => {
   let admin: SupabaseClient<Database>;
   let anonClient: SupabaseClient<Database>;
   let adminClient: SupabaseClient<Database>;
@@ -57,7 +57,7 @@ describe("site_details_v2 RLS", () => {
 
     // Seed the row via service role — the table requires a `site` location,
     // and TEST_IDS.LOCATION_SITE is the only seeded site location.
-    await admin.from("site_details_v2").upsert({
+    await admin.from("site_details").upsert({
       location_id: TEST_IDS.LOCATION_SITE,
       address: TEST_ADDRESS,
       notes: "Park out back",
@@ -66,7 +66,7 @@ describe("site_details_v2 RLS", () => {
 
   afterAll(async () => {
     await admin
-      .from("site_details_v2")
+      .from("site_details")
       .delete()
       .eq("location_id", TEST_IDS.LOCATION_SITE);
   });
@@ -75,9 +75,9 @@ describe("site_details_v2 RLS", () => {
   // (e.g., if the seed row never landed or if RLS hid the row from
   // everyone, the "anon sees nothing" assertion would still hold).
 
-  it("admin can read site_details_v2", async () => {
+  it("admin can read site_details", async () => {
     const { data, error } = await adminClient
-      .from("site_details_v2")
+      .from("site_details")
       .select("address")
       .eq("location_id", TEST_IDS.LOCATION_SITE)
       .maybeSingle();
@@ -86,9 +86,9 @@ describe("site_details_v2 RLS", () => {
     expect(data?.address).toBe(TEST_ADDRESS);
   });
 
-  it("gedu can read site_details_v2", async () => {
+  it("gedu can read site_details", async () => {
     const { data, error } = await geduClient
-      .from("site_details_v2")
+      .from("site_details")
       .select("address")
       .eq("location_id", TEST_IDS.LOCATION_SITE)
       .maybeSingle();
@@ -99,9 +99,9 @@ describe("site_details_v2 RLS", () => {
 
   // Hardening assertions — these are the security-critical part.
 
-  it("anon cannot read site_details_v2", async () => {
+  it("anon cannot read site_details", async () => {
     const { data, error } = await anonClient
-      .from("site_details_v2")
+      .from("site_details")
       .select("address")
       .eq("location_id", TEST_IDS.LOCATION_SITE);
 
@@ -115,9 +115,9 @@ describe("site_details_v2 RLS", () => {
     expect(data).toBeNull();
   });
 
-  it("customer without an enrollment cannot read site_details_v2", async () => {
+  it("customer without an enrollment cannot read site_details", async () => {
     const { data, error } = await customerClient
-      .from("site_details_v2")
+      .from("site_details")
       .select("address")
       .eq("location_id", TEST_IDS.LOCATION_SITE);
 

@@ -76,8 +76,8 @@ function authAs(
 
 /**
  * Build the `from(...)` router used by the route. Three tables in order:
- * `product_groups_v2`, `participations_v2` (gamer-only), and
- * `gedu_group_assignments_v2` (gedu-only) — the mock dispatches by table
+ * `product_groups`, `participations` (gamer-only), and
+ * `gedu_group_assignments` (gedu-only) — the mock dispatches by table
  * name and returns the matching thenable shape.
  */
 function mockTables(opts: {
@@ -91,7 +91,7 @@ function mockTables(opts: {
   minecraftAccount?: { minecraft_username: string | null; minecraft_uuid: string | null } | null;
 }) {
   mockAdminFrom.mockImplementation((table: string) => {
-    if (table === "product_groups_v2") {
+    if (table === "product_groups") {
       const row = opts.group
         ? {
             id: GROUP_ID,
@@ -114,7 +114,7 @@ function mockTables(opts: {
         }),
       };
     }
-    if (table === "participations_v2") {
+    if (table === "participations") {
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
@@ -131,7 +131,7 @@ function mockTables(opts: {
         }),
       };
     }
-    if (table === "gedu_group_assignments_v2") {
+    if (table === "gedu_group_assignments") {
       return {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({

@@ -14,7 +14,7 @@ export type Database = {
   }
   public: {
     Tables: {
-      calendar_holidays_v2: {
+      calendar_holidays: {
         Row: {
           calendar_id: string
           date: string
@@ -35,15 +35,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "calendar_holidays_v2_calendar_id_fkey"
+            foreignKeyName: "calendar_holidays_calendar_id_fkey"
             columns: ["calendar_id"]
             isOneToOne: false
-            referencedRelation: "holiday_calendars_v2"
+            referencedRelation: "holiday_calendars"
             referencedColumns: ["id"]
           },
         ]
       }
-      credit_deductions_v2: {
+      credit_deductions: {
         Row: {
           delta: number
           gamer_id: string
@@ -76,24 +76,24 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "credit_deductions_v2_gamer_id_fkey"
+            foreignKeyName: "credit_deductions_gamer_id_fkey"
             columns: ["gamer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "credit_deductions_v2_participation_id_fkey"
+            foreignKeyName: "credit_deductions_participation_id_fkey"
             columns: ["participation_id"]
             isOneToOne: false
-            referencedRelation: "participations_v2"
+            referencedRelation: "participations"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "credit_deductions_v2_product_id_fkey"
+            foreignKeyName: "credit_deductions_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -121,7 +121,7 @@ export type Database = {
           },
         ]
       }
-      family_subscription_items_v2: {
+      family_subscription_items: {
         Row: {
           created_at: string
           family_subscription_id: string
@@ -148,29 +148,29 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "family_subscription_items_v2_family_subscription_id_fkey"
+            foreignKeyName: "family_subscription_items_family_subscription_id_fkey"
             columns: ["family_subscription_id"]
             isOneToOne: false
-            referencedRelation: "family_subscriptions_v2"
+            referencedRelation: "family_subscriptions"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "family_subscription_items_v2_participation_id_fkey"
+            foreignKeyName: "family_subscription_items_participation_id_fkey"
             columns: ["participation_id"]
             isOneToOne: true
-            referencedRelation: "participations_v2"
+            referencedRelation: "participations"
             referencedColumns: ["id"]
           },
         ]
       }
-      family_subscriptions_v2: {
+      family_subscriptions: {
         Row: {
           created_at: string
           currency: string
           current_period_end: string | null
           customer_id: string
           discount_coupon_id: string | null
-          frequency: Database["public"]["Enums"]["subscription_frequency_v2"]
+          frequency: Database["public"]["Enums"]["subscription_frequency"]
           id: string
           status: string
           stripe_customer_id: string
@@ -183,7 +183,7 @@ export type Database = {
           current_period_end?: string | null
           customer_id: string
           discount_coupon_id?: string | null
-          frequency: Database["public"]["Enums"]["subscription_frequency_v2"]
+          frequency: Database["public"]["Enums"]["subscription_frequency"]
           id?: string
           status: string
           stripe_customer_id: string
@@ -196,7 +196,7 @@ export type Database = {
           current_period_end?: string | null
           customer_id?: string
           discount_coupon_id?: string | null
-          frequency?: Database["public"]["Enums"]["subscription_frequency_v2"]
+          frequency?: Database["public"]["Enums"]["subscription_frequency"]
           id?: string
           status?: string
           stripe_customer_id?: string
@@ -205,7 +205,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "family_subscriptions_v2_customer_id_fkey"
+            foreignKeyName: "family_subscriptions_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -268,7 +268,7 @@ export type Database = {
           },
         ]
       }
-      gedu_group_assignments_v2: {
+      gedu_group_assignments: {
         Row: {
           created_at: string
           gedu_id: string
@@ -289,24 +289,24 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "gedu_group_assignments_v2_gedu_id_fkey"
+            foreignKeyName: "gedu_group_assignments_gedu_id_fkey"
             columns: ["gedu_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gedu_group_assignments_v2_group_id_fkey"
+            foreignKeyName: "gedu_group_assignments_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
-            referencedRelation: "product_groups_v2"
+            referencedRelation: "product_groups"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "gedu_group_assignments_v2_product_id_fkey"
+            foreignKeyName: "gedu_group_assignments_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -344,7 +344,7 @@ export type Database = {
           },
         ]
       }
-      holiday_calendars_v2: {
+      holiday_calendars: {
         Row: {
           created_at: string
           id: string
@@ -471,7 +471,7 @@ export type Database = {
           },
         ]
       }
-      participations_v2: {
+      participations: {
         Row: {
           created_at: string
           credits_remaining: number
@@ -482,7 +482,7 @@ export type Database = {
           product_id: string
           reserved_until: string | null
           signed_up_at: string
-          status: Database["public"]["Enums"]["participation_status_v2"]
+          status: Database["public"]["Enums"]["participation_status"]
           updated_at: string
           waitlist_position: number | null
         }
@@ -496,7 +496,7 @@ export type Database = {
           product_id: string
           reserved_until?: string | null
           signed_up_at?: string
-          status: Database["public"]["Enums"]["participation_status_v2"]
+          status: Database["public"]["Enums"]["participation_status"]
           updated_at?: string
           waitlist_position?: number | null
         }
@@ -510,42 +510,42 @@ export type Database = {
           product_id?: string
           reserved_until?: string | null
           signed_up_at?: string
-          status?: Database["public"]["Enums"]["participation_status_v2"]
+          status?: Database["public"]["Enums"]["participation_status"]
           updated_at?: string
           waitlist_position?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "participations_v2_customer_id_fkey"
+            foreignKeyName: "participations_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "participations_v2_gamer_id_fkey"
+            foreignKeyName: "participations_gamer_id_fkey"
             columns: ["gamer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "participations_v2_group_id_fkey"
+            foreignKeyName: "participations_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
-            referencedRelation: "product_groups_v2"
+            referencedRelation: "product_groups"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "participations_v2_product_id_fkey"
+            foreignKeyName: "participations_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
       }
-      payments_v2: {
+      payments: {
         Row: {
           amount_cents: number
           created_at: string
@@ -553,7 +553,7 @@ export type Database = {
           customer_id: string
           id: string
           metadata: Json
-          purpose: Database["public"]["Enums"]["payment_purpose_v2"]
+          purpose: Database["public"]["Enums"]["payment_purpose"]
           stripe_event_id: string
           stripe_invoice_id: string | null
           stripe_payment_intent_id: string | null
@@ -565,7 +565,7 @@ export type Database = {
           customer_id: string
           id?: string
           metadata?: Json
-          purpose: Database["public"]["Enums"]["payment_purpose_v2"]
+          purpose: Database["public"]["Enums"]["payment_purpose"]
           stripe_event_id: string
           stripe_invoice_id?: string | null
           stripe_payment_intent_id?: string | null
@@ -577,14 +577,14 @@ export type Database = {
           customer_id?: string
           id?: string
           metadata?: Json
-          purpose?: Database["public"]["Enums"]["payment_purpose_v2"]
+          purpose?: Database["public"]["Enums"]["payment_purpose"]
           stripe_event_id?: string
           stripe_invoice_id?: string | null
           stripe_payment_intent_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "payments_v2_customer_id_fkey"
+            foreignKeyName: "payments_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -592,7 +592,7 @@ export type Database = {
           },
         ]
       }
-      product_groups_v2: {
+      product_groups: {
         Row: {
           created_at: string
           id: string
@@ -616,15 +616,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_groups_v2_product_id_fkey"
+            foreignKeyName: "product_groups_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
       }
-      product_holiday_calendars_v2: {
+      product_holiday_calendars: {
         Row: {
           calendar_id: string
           created_at: string
@@ -642,22 +642,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_holiday_calendars_v2_calendar_id_fkey"
+            foreignKeyName: "product_holiday_calendars_calendar_id_fkey"
             columns: ["calendar_id"]
             isOneToOne: false
-            referencedRelation: "holiday_calendars_v2"
+            referencedRelation: "holiday_calendars"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "product_holiday_calendars_v2_product_id_fkey"
+            foreignKeyName: "product_holiday_calendars_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
       }
-      product_prices_v2: {
+      product_prices: {
         Row: {
           created_at: string
           currency: string
@@ -684,15 +684,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_prices_v2_product_id_fkey"
+            foreignKeyName: "product_prices_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
       }
-      product_seat_counts_v2: {
+      product_seat_counts: {
         Row: {
           active_count: number
           product_id: string
@@ -716,19 +716,19 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_seat_counts_v2_product_id_fkey"
+            foreignKeyName: "product_seat_counts_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: true
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
       }
-      product_subscription_prices_v2: {
+      product_subscription_prices: {
         Row: {
           created_at: string
           currency: string
-          frequency: Database["public"]["Enums"]["subscription_frequency_v2"]
+          frequency: Database["public"]["Enums"]["subscription_frequency"]
           product_id: string
           stripe_price_id: string
           unit_amount_cents: number
@@ -736,7 +736,7 @@ export type Database = {
         Insert: {
           created_at?: string
           currency: string
-          frequency: Database["public"]["Enums"]["subscription_frequency_v2"]
+          frequency: Database["public"]["Enums"]["subscription_frequency"]
           product_id: string
           stripe_price_id: string
           unit_amount_cents: number
@@ -744,22 +744,22 @@ export type Database = {
         Update: {
           created_at?: string
           currency?: string
-          frequency?: Database["public"]["Enums"]["subscription_frequency_v2"]
+          frequency?: Database["public"]["Enums"]["subscription_frequency"]
           product_id?: string
           stripe_price_id?: string
           unit_amount_cents?: number
         }
         Relationships: [
           {
-            foreignKeyName: "product_subscription_prices_v2_product_id_fkey"
+            foreignKeyName: "product_subscription_prices_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
       }
-      product_tags_v2: {
+      product_tags: {
         Row: {
           created_at: string
           product_id: string
@@ -777,22 +777,22 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_tags_v2_product_id_fkey"
+            foreignKeyName: "product_tags_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "product_tags_v2_tag_id_fkey"
+            foreignKeyName: "product_tags_tag_id_fkey"
             columns: ["tag_id"]
             isOneToOne: false
-            referencedRelation: "tags_v2"
+            referencedRelation: "tags"
             referencedColumns: ["id"]
           },
         ]
       }
-      product_translations_v2: {
+      product_translations: {
         Row: {
           created_at: string
           description: string
@@ -819,17 +819,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "product_translations_v2_product_id_fkey"
+            foreignKeyName: "product_translations_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
       }
-      products_v2: {
+      products: {
         Row: {
-          billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
+          billing_mode: Database["public"]["Enums"]["billing_mode"]
           created_at: string
           created_by: string
           end_date: string | null
@@ -841,21 +841,21 @@ export type Database = {
           max_age: number
           min_age: number
           padlet_url: string | null
-          product_type: Database["public"]["Enums"]["product_type_v2"]
+          product_type: Database["public"]["Enums"]["product_type"]
           refund_policy_days: number | null
           registration_opens_at: string
           seat_count: number | null
           signup_threshold: number | null
           spoken_language_code: string
           start_date: string | null
-          status: Database["public"]["Enums"]["product_status_v2"]
+          status: Database["public"]["Enums"]["product_status"]
           timezone: string
           topic_id: string
           updated_at: string
           waitlist_enabled: boolean
         }
         Insert: {
-          billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
+          billing_mode: Database["public"]["Enums"]["billing_mode"]
           created_at?: string
           created_by: string
           end_date?: string | null
@@ -867,21 +867,21 @@ export type Database = {
           max_age: number
           min_age: number
           padlet_url?: string | null
-          product_type: Database["public"]["Enums"]["product_type_v2"]
+          product_type: Database["public"]["Enums"]["product_type"]
           refund_policy_days?: number | null
           registration_opens_at: string
           seat_count?: number | null
           signup_threshold?: number | null
           spoken_language_code: string
           start_date?: string | null
-          status?: Database["public"]["Enums"]["product_status_v2"]
+          status?: Database["public"]["Enums"]["product_status"]
           timezone: string
           topic_id: string
           updated_at?: string
           waitlist_enabled?: boolean
         }
         Update: {
-          billing_mode?: Database["public"]["Enums"]["billing_mode_v2"]
+          billing_mode?: Database["public"]["Enums"]["billing_mode"]
           created_at?: string
           created_by?: string
           end_date?: string | null
@@ -893,14 +893,14 @@ export type Database = {
           max_age?: number
           min_age?: number
           padlet_url?: string | null
-          product_type?: Database["public"]["Enums"]["product_type_v2"]
+          product_type?: Database["public"]["Enums"]["product_type"]
           refund_policy_days?: number | null
           registration_opens_at?: string
           seat_count?: number | null
           signup_threshold?: number | null
           spoken_language_code?: string
           start_date?: string | null
-          status?: Database["public"]["Enums"]["product_status_v2"]
+          status?: Database["public"]["Enums"]["product_status"]
           timezone?: string
           topic_id?: string
           updated_at?: string
@@ -908,31 +908,31 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "products_v2_created_by_fkey"
+            foreignKeyName: "products_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "products_v2_location_id_fkey"
+            foreignKeyName: "products_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "products_v2_spoken_language_code_fkey"
+            foreignKeyName: "products_spoken_language_code_fkey"
             columns: ["spoken_language_code"]
             isOneToOne: false
             referencedRelation: "spoken_languages"
             referencedColumns: ["code"]
           },
           {
-            foreignKeyName: "products_v2_topic_id_fkey"
+            foreignKeyName: "products_topic_id_fkey"
             columns: ["topic_id"]
             isOneToOne: false
-            referencedRelation: "topics_v2"
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
         ]
@@ -982,13 +982,13 @@ export type Database = {
         }
         Relationships: []
       }
-      refunds_v2: {
+      refunds: {
         Row: {
           amount_cents: number
           created_at: string
           id: string
           payment_id: string
-          reason: Database["public"]["Enums"]["refund_reason_v2"]
+          reason: Database["public"]["Enums"]["refund_reason"]
           stripe_event_id: string
           stripe_refund_id: string
         }
@@ -997,7 +997,7 @@ export type Database = {
           created_at?: string
           id?: string
           payment_id: string
-          reason: Database["public"]["Enums"]["refund_reason_v2"]
+          reason: Database["public"]["Enums"]["refund_reason"]
           stripe_event_id: string
           stripe_refund_id: string
         }
@@ -1006,21 +1006,21 @@ export type Database = {
           created_at?: string
           id?: string
           payment_id?: string
-          reason?: Database["public"]["Enums"]["refund_reason_v2"]
+          reason?: Database["public"]["Enums"]["refund_reason"]
           stripe_event_id?: string
           stripe_refund_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "refunds_v2_payment_id_fkey"
+            foreignKeyName: "refunds_payment_id_fkey"
             columns: ["payment_id"]
             isOneToOne: false
-            referencedRelation: "payments_v2"
+            referencedRelation: "payments"
             referencedColumns: ["id"]
           },
         ]
       }
-      schedule_slots_v2: {
+      schedule_slots: {
         Row: {
           created_at: string
           duration_minutes: number
@@ -1050,15 +1050,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "schedule_slots_v2_product_id_fkey"
+            foreignKeyName: "schedule_slots_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "products_v2"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
       }
-      session_cancellations_v2: {
+      session_cancellations: {
         Row: {
           cancelled_at: string
           id: string
@@ -1079,15 +1079,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "session_cancellations_v2_participation_id_fkey"
+            foreignKeyName: "session_cancellations_participation_id_fkey"
             columns: ["participation_id"]
             isOneToOne: false
-            referencedRelation: "participations_v2"
+            referencedRelation: "participations"
             referencedColumns: ["id"]
           },
         ]
       }
-      site_details_v2: {
+      site_details: {
         Row: {
           address: string | null
           created_at: string
@@ -1111,7 +1111,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "site_details_v2_location_id_fkey"
+            foreignKeyName: "site_details_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: true
             referencedRelation: "locations"
@@ -1119,7 +1119,7 @@ export type Database = {
           },
         ]
       }
-      site_staff_details_v2: {
+      site_staff_details: {
         Row: {
           created_at: string
           location_id: string
@@ -1140,7 +1140,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "site_staff_details_v2_location_id_fkey"
+            foreignKeyName: "site_staff_details_location_id_fkey"
             columns: ["location_id"]
             isOneToOne: true
             referencedRelation: "locations"
@@ -1163,7 +1163,7 @@ export type Database = {
         }
         Relationships: []
       }
-      tag_translations_v2: {
+      tag_translations: {
         Row: {
           created_at: string
           description: string | null
@@ -1190,15 +1190,15 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "tag_translations_v2_tag_id_fkey"
+            foreignKeyName: "tag_translations_tag_id_fkey"
             columns: ["tag_id"]
             isOneToOne: false
-            referencedRelation: "tags_v2"
+            referencedRelation: "tags"
             referencedColumns: ["id"]
           },
         ]
       }
-      tags_v2: {
+      tags: {
         Row: {
           created_at: string
           id: string
@@ -1219,7 +1219,7 @@ export type Database = {
         }
         Relationships: []
       }
-      topic_translations_v2: {
+      topic_translations: {
         Row: {
           created_at: string
           description: string | null
@@ -1246,20 +1246,20 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "topic_translations_v2_topic_id_fkey"
+            foreignKeyName: "topic_translations_topic_id_fkey"
             columns: ["topic_id"]
             isOneToOne: false
-            referencedRelation: "topics_v2"
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
         ]
       }
-      topics_v2: {
+      topics: {
         Row: {
           created_at: string
           icon_path: string | null
           id: string
-          kind: Database["public"]["Enums"]["topic_kind_v2"]
+          kind: Database["public"]["Enums"]["topic_kind"]
           slug: string
           updated_at: string
         }
@@ -1267,7 +1267,7 @@ export type Database = {
           created_at?: string
           icon_path?: string | null
           id?: string
-          kind: Database["public"]["Enums"]["topic_kind_v2"]
+          kind: Database["public"]["Enums"]["topic_kind"]
           slug: string
           updated_at?: string
         }
@@ -1275,7 +1275,7 @@ export type Database = {
           created_at?: string
           icon_path?: string | null
           id?: string
-          kind?: Database["public"]["Enums"]["topic_kind_v2"]
+          kind?: Database["public"]["Enums"]["topic_kind"]
           slug?: string
           updated_at?: string
         }
@@ -1386,7 +1386,7 @@ export type Database = {
           table_name: string
         }[]
       }
-      apply_credit_motion_v2: {
+      apply_credit_motion: {
         Args: {
           p_delta: number
           p_participation_id: string
@@ -1396,11 +1396,11 @@ export type Database = {
         Returns: boolean
       }
       can_read_product: { Args: { p_product_id: string }; Returns: boolean }
-      cancel_participation_v2: {
+      cancel_participation: {
         Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
-      commit_group_changes_v2: {
+      commit_group_changes: {
         Args: {
           p_added_groups?: Json
           p_deleted_group_ids?: string[]
@@ -1412,13 +1412,13 @@ export type Database = {
         }
         Returns: Json
       }
-      confirm_reservation_v2: {
+      confirm_reservation: {
         Args: { p_credits_to_grant: number; p_reservation_id: string }
         Returns: Json
       }
-      count_active_seats_v2: { Args: { p_product_id: string }; Returns: number }
-      count_seats_taken_v2: { Args: { p_product_id: string }; Returns: number }
-      create_participation_v2: {
+      count_active_seats: { Args: { p_product_id: string }; Returns: number }
+      count_seats_taken: { Args: { p_product_id: string }; Returns: number }
+      create_participation: {
         Args: {
           p_currency: string
           p_customer_id: string
@@ -1428,9 +1428,9 @@ export type Database = {
         }
         Returns: Json
       }
-      create_product_v2: {
+      create_product: {
         Args: {
-          p_billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
+          p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
           p_holiday_calendar_ids?: string[]
           p_image_path?: string
@@ -1441,7 +1441,7 @@ export type Database = {
           p_min_age: number
           p_padlet_url?: string
           p_prices?: Json
-          p_product_type: Database["public"]["Enums"]["product_type_v2"]
+          p_product_type: Database["public"]["Enums"]["product_type"]
           p_refund_policy_days?: number
           p_registration_opens_at: string
           p_schedule_slots?: Json
@@ -1449,7 +1449,7 @@ export type Database = {
           p_signup_threshold?: number
           p_spoken_language_code: string
           p_start_date?: string
-          p_status?: Database["public"]["Enums"]["product_status_v2"]
+          p_status?: Database["public"]["Enums"]["product_status"]
           p_tag_ids?: string[]
           p_timezone: string
           p_topic_id: string
@@ -1458,14 +1458,11 @@ export type Database = {
         }
         Returns: string
       }
-      effective_status_v2: {
+      effective_status: {
         Args: { p_product_id: string }
-        Returns: Database["public"]["Enums"]["effective_product_status_v2"]
+        Returns: Database["public"]["Enums"]["effective_product_status"]
       }
-      expire_reservation_v2: {
-        Args: { p_reservation_id: string }
-        Returns: Json
-      }
+      expire_reservation: { Args: { p_reservation_id: string }; Returns: Json }
       get_gedu_assigned_product: {
         Args: { p_product_id: string }
         Returns: Json
@@ -1481,7 +1478,7 @@ export type Database = {
           padlet_url: string
           product_id: string
           product_translations: Json
-          product_type: Database["public"]["Enums"]["product_type_v2"]
+          product_type: Database["public"]["Enums"]["product_type"]
           schedule_slots: Json
           start_date: string
           timezone: string
@@ -1533,7 +1530,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_product_groups_v2_with_details: {
+      get_product_groups_with_details: {
         Args: { p_product_id: string }
         Returns: Json
       }
@@ -1543,7 +1540,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
-      join_waitlist_v2: {
+      join_waitlist: {
         Args: {
           p_customer_id: string
           p_gamer_id: string
@@ -1551,23 +1548,20 @@ export type Database = {
         }
         Returns: Json
       }
-      participation_state_v2: {
+      participation_state: {
         Args: {
           p_group_id: string
-          p_status: Database["public"]["Enums"]["participation_status_v2"]
+          p_status: Database["public"]["Enums"]["participation_status"]
         }
         Returns: string
       }
-      process_session_credits_v2: { Args: never; Returns: Json }
-      product_has_session_v2: {
+      process_session_credits: { Args: never; Returns: Json }
+      product_has_session: {
         Args: { p_product_id: string; p_session_date: string }
         Returns: boolean
       }
-      promote_from_waitlist_v2: {
-        Args: { p_product_id: string }
-        Returns: Json
-      }
-      refresh_product_seat_counts_v2: {
+      promote_from_waitlist: { Args: { p_product_id: string }; Returns: Json }
+      refresh_product_seat_counts: {
         Args: { p_product_id: string }
         Returns: undefined
       }
@@ -1575,9 +1569,9 @@ export type Database = {
         Args: { p_message: string; p_user_id: string }
         Returns: boolean
       }
-      update_product_v2: {
+      update_product: {
         Args: {
-          p_billing_mode: Database["public"]["Enums"]["billing_mode_v2"]
+          p_billing_mode: Database["public"]["Enums"]["billing_mode"]
           p_end_date?: string
           p_holiday_calendar_ids?: string[]
           p_id: string
@@ -1606,8 +1600,8 @@ export type Database = {
       }
     }
     Enums: {
-      billing_mode_v2: "paid" | "free" | "external_contract"
-      effective_product_status_v2:
+      billing_mode: "paid" | "free" | "external_contract"
+      effective_product_status:
         | "draft"
         | "pending"
         | "running"
@@ -1616,32 +1610,28 @@ export type Database = {
         | "expired"
       gender_type: "boy" | "girl" | "non_binary"
       location_type: "country" | "region" | "municipality" | "district" | "site"
-      participation_status_v2:
-        | "reserving"
-        | "active"
-        | "waitlisted"
-        | "completed"
-      payment_purpose_v2:
+      participation_status: "reserving" | "active" | "waitlisted" | "completed"
+      payment_purpose:
         | "bundle"
         | "subscription_invoice"
         | "single_payment"
         | "reservation_duplicate"
-      product_status_v2:
+      product_status:
         | "draft"
         | "pending"
         | "running"
         | "completed"
         | "cancelled"
-      product_type_v2: "consumer_club" | "municipality_club" | "camp" | "event"
-      refund_reason_v2:
+      product_type: "consumer_club" | "municipality_club" | "camp" | "event"
+      refund_reason:
         | "session_cancelled_in_window"
         | "admin_refund"
         | "product_cancelled"
         | "subscription_item_removed"
         | "subscription_period_proration"
         | "duplicate_payment"
-      subscription_frequency_v2: "monthly" | "quarterly" | "yearly"
-      topic_kind_v2: "game" | "subject"
+      subscription_frequency: "monthly" | "quarterly" | "yearly"
+      topic_kind: "game" | "subject"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -1770,8 +1760,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      billing_mode_v2: ["paid", "free", "external_contract"],
-      effective_product_status_v2: [
+      billing_mode: ["paid", "free", "external_contract"],
+      effective_product_status: [
         "draft",
         "pending",
         "running",
@@ -1781,27 +1771,16 @@ export const Constants = {
       ],
       gender_type: ["boy", "girl", "non_binary"],
       location_type: ["country", "region", "municipality", "district", "site"],
-      participation_status_v2: [
-        "reserving",
-        "active",
-        "waitlisted",
-        "completed",
-      ],
-      payment_purpose_v2: [
+      participation_status: ["reserving", "active", "waitlisted", "completed"],
+      payment_purpose: [
         "bundle",
         "subscription_invoice",
         "single_payment",
         "reservation_duplicate",
       ],
-      product_status_v2: [
-        "draft",
-        "pending",
-        "running",
-        "completed",
-        "cancelled",
-      ],
-      product_type_v2: ["consumer_club", "municipality_club", "camp", "event"],
-      refund_reason_v2: [
+      product_status: ["draft", "pending", "running", "completed", "cancelled"],
+      product_type: ["consumer_club", "municipality_club", "camp", "event"],
+      refund_reason: [
         "session_cancelled_in_window",
         "admin_refund",
         "product_cancelled",
@@ -1809,8 +1788,8 @@ export const Constants = {
         "subscription_period_proration",
         "duplicate_payment",
       ],
-      subscription_frequency_v2: ["monthly", "quarterly", "yearly"],
-      topic_kind_v2: ["game", "subject"],
+      subscription_frequency: ["monthly", "quarterly", "yearly"],
+      topic_kind: ["game", "subject"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },

@@ -70,13 +70,13 @@ export async function GET(request: Request) {
     // The original gating queried the legacy v1 product / product_groups /
     // group_enrollments tables, which have been dropped. It must be rebuilt
     // against the current schema before this endpoint can authorize access:
-    //   * gamer → an active participations_v2 row on a product whose session
-    //             window (schedule_slots_v2 + subscribed holiday calendars) is
+    //   * gamer → an active participations row on a product whose session
+    //             window (schedule_slots + subscribed holiday calendars) is
     //             open right now, and only if the participation covers it.
-    //   * gedu  → a gedu_group_assignments_v2 row on such a product.
+    //   * gedu  → a gedu_group_assignments row on such a product.
     // The window math currently lives in @/lib/session-schedule, but it's
     // shaped for the v1 single-slot product (day_of_week/start_time); v2 has
-    // multiple schedule_slots_v2 per product, so that helper needs reworking
+    // multiple schedule_slots per product, so that helper needs reworking
     // too. This endpoint was never wired in production, so it fails closed.
     // 501 lets a future caller distinguish "not implemented" from "denied".
     if (role === "gedu" || role === "gamer") {
