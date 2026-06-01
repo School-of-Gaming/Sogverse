@@ -1485,6 +1485,7 @@
     "notFound": "Minecraft account not found. Check the username and try again.",
     "mcHeadsAttribution": "Skin rendered by <link>mc-heads.net</link>",
     "verified": "Verified",
+    "verifiedUser": "{username} (verified)",
     "unverified": "{username} (not yet verified)",
     "notProvided": "Not provided",
     "none": "(Unknown)"

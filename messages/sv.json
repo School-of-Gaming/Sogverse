@@ -1485,6 +1485,7 @@
     "notFound": "Minecraft-kontot hittades inte. Kontrollera användarnamnet och försök igen.",
     "mcHeadsAttribution": "Skin renderat av <link>mc-heads.net</link>",
     "verified": "Verifierad",
+    "verifiedUser": "{username} (verifierad)",
     "unverified": "{username} (ännu inte verifierad)",
     "notProvided": "Inte angivet",
     "none": "(okänt)"

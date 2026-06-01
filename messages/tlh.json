@@ -1530,6 +1530,7 @@
     "notFound": "Minecraft account tu'be'lu'. pong yIchel je yIboq.",
     "mcHeadsAttribution": "Haj <link>mc-heads.net</link> chenmoH",
     "verified": "chellu'",
+    "verifiedUser": "{username} (chellu')",
     "unverified": "{username} (chelbe'lu')",
     "notProvided": "ngeHbe'lu'",
     "none": "(Sovbe'lu')"
