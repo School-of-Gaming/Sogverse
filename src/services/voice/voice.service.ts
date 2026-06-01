@@ -1,7 +1,7 @@
 import type { AppSupabaseClient } from "@/types";
 
 /**
- * Service-layer wrapper for the v2 voice room flow. The injected client is
+ * Service-layer wrapper for the voice room flow. The injected client is
  * not used directly — the only operation here is a POST to
  * `/api/voice/token`, which gates and mints server-side. Kept in the
  * standard service shape so React Query hooks have a single object to
@@ -12,7 +12,7 @@ export class VoiceService {
   constructor(_supabase: AppSupabaseClient) {}
 
   /**
-   * Mint a Daily.co meeting token for a v2 product group
+   * Mint a Daily.co meeting token for a product group
    * (`product_groups.id`). The token endpoint derives the Daily room
    * name from the group + current session window and get-or-creates the
    * room on demand — no DB-side voice room table.

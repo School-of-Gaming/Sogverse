@@ -143,7 +143,7 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   // Seat math feeds active+reserving for the seat-left pill. Reserving rows
   // count against the seat too — they're held for 30 min while the parent
   // is in Stripe Checkout. The threshold check uses the same number; the
-  // small over-count for in-flight reservations is acceptable in v1.
+  // small over-count for in-flight reservations is acceptable.
   const participationsCount =
     (myCount?.activeCount ?? 0) + (myCount?.reservingCount ?? 0);
 
@@ -158,7 +158,7 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
   // for the purchased view. Reserving rows are deliberately not surfaced —
   // the movie-ticket model treats the held seat as the parent's to retry
   // against (they just click Sign Up again), not as a "you're already signed
-  // up" state. See docs/plans/v2-stripe-participations-plan.md "Movie-ticket
+  // up" state. See docs/products-architecture.md "Movie-ticket
   // reservation model".
   const myParticipationState: MyParticipationState | null =
     myCount?.mySignupState === "active" ||

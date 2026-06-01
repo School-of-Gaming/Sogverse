@@ -41,7 +41,7 @@ export function ProductPurchasedCard({ participation }: ProductPurchasedCardProp
       return t("purchasedDetailUnassigned");
     }
     // assigned — schedule formatter would produce a real "next session" line
-    // once the calendar widget is plumbed in here. For v2 launch, the
+    // once the calendar widget is plumbed in here. For now, the
     // placeholder reads cleanly and the future detail page will carry the
     // calendar.
     return t("purchasedDetailNoSchedule");

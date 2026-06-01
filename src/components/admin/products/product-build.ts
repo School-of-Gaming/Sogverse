@@ -542,7 +542,7 @@ export function existingFormState(
  * all copied verbatim) with two deliberate departures:
  *   - `image` is cleared. Cloned products must not share a bucket file —
  *     editing one would clobber the other's image — so the admin picks a
- *     fresh one. Mirrors the v1 clone flow in admin/products/add.
+ *     fresh one. Mirrors the legacy clone flow in admin/products/add.
  *   - Each translation's name gets `copySuffix` appended (e.g. " (Copy)"),
  *     localized by the caller, so the clone is distinguishable and the admin
  *     is nudged to rename. The suffix is applied to every locale's name using

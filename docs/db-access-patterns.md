@@ -40,7 +40,7 @@ The service-role bypasses (1) and (2). SECURITY DEFINER functions bypass (1) by 
 
 ```ts
 const admin = createAdminClient();
-await admin.from("participations_v2").insert({ ... });
+await admin.from("participations").insert({ ... });
 ```
 
 - Bypasses grants and RLS.
@@ -112,8 +112,8 @@ Use when a route would otherwise use the service-role client to do a *specific*,
 Same as Model C, plus:
 
 ```sql
-REVOKE ALL ON participations_v2 FROM authenticated;
-GRANT SELECT ON participations_v2 TO authenticated;
+REVOKE ALL ON participations FROM authenticated;
+GRANT SELECT ON participations TO authenticated;
 ```
 
 The table is unwritable from the `authenticated` role at the grant level. The only way data ever lands in it is via SECURITY DEFINER RPCs (running as owner) or via the service-role client. RLS becomes a third layer for SELECT only.
@@ -134,9 +134,9 @@ Is the route doing storage / auth.admin.* / webhook work?
 └─ no
    │
    Does the route write to a sensitive table?
-   (participations_v2, payments_v2, refunds_v2,
-    token_balances, family_subscriptions_v2,
-    family_subscription_items_v2, anything else
+   (participations, payments, refunds,
+    token_balances, family_subscriptions,
+    family_subscription_items, anything else
     that holds money, seats, or enrollment state)
    ├─ yes → Model C or D (SECURITY DEFINER RPC + user-bound client)
    └─ no
@@ -151,15 +151,15 @@ The default is Model B. Models C/D are the upgrade for sensitive tables. Model A
 
 Per migration `00039`, these tables have `REVOKE ALL FROM authenticated` + `GRANT SELECT` only — writes must go through a SECURITY DEFINER RPC or the service-role client:
 
-- `participations_v2`
-- `payments_v2`
-- `refunds_v2`
-- `family_subscriptions_v2`
-- `family_subscription_items_v2`
-- `product_subscription_prices_v2` (no SELECT either — admin-only catalog)
-- `session_cancellations_v2`
-- `credit_deductions_v2`
-- `product_seat_counts_v2`
+- `participations`
+- `payments`
+- `refunds`
+- `family_subscriptions`
+- `family_subscription_items`
+- `product_subscription_prices` (no SELECT either — admin-only catalog)
+- `session_cancellations`
+- `credit_deductions`
+- `product_seat_counts`
 
 Plus `token_balances` (with its own `adjust_token_balance` RPC). Per CLAUDE.md: "All token balance changes must go through the `adjust_token_balance()` RPC."
 
@@ -170,7 +170,7 @@ When adding a new table that holds money, seats, enrollments, or analogous state
 A well-formed admin write RPC looks like this:
 
 ```sql
-CREATE OR REPLACE FUNCTION admin_<verb>_<noun>_v2(
+CREATE OR REPLACE FUNCTION admin_<verb>_<noun>(
   p_<param1> <type>,
   p_<param2> <type>
 )
@@ -202,8 +202,8 @@ $$;
 
 -- Lock down by default; grant to authenticated only because the role check
 -- inside makes it safe.
-REVOKE EXECUTE ON FUNCTION admin_<verb>_<noun>_v2(<types>) FROM public, anon;
-GRANT EXECUTE ON FUNCTION admin_<verb>_<noun>_v2(<types>) TO authenticated;
+REVOKE EXECUTE ON FUNCTION admin_<verb>_<noun>(<types>) FROM public, anon;
+GRANT EXECUTE ON FUNCTION admin_<verb>_<noun>(<types>) TO authenticated;
 ```
 
 Notes:
@@ -214,9 +214,9 @@ Notes:
 - **Be specific in error codes.** `42501` for forbidden, `P0002` for not-found, `22023` for bad-state, `23505` for unique-violation (PostgreSQL emits this one itself). The route handler maps these to HTTP status. Routes that map raw error messages leak DB internals — map codes, not messages.
 - **Per CLAUDE.md:** the RPC must be added to the allowlist in `tests/db/access-control.test.ts` because it's callable from `authenticated`. The role check inside is what makes that safe.
 
-## Worked example: `POST /api/admin/products-v2/[id]/participations`
+## Worked example: `POST /api/admin/products/[id]/participations`
 
-This route — admin comp-enroll, currently shipped on this branch — is the worked example. It writes to `participations_v2`, which is grant-locked. The route currently uses Model A (`createAdminClient`) because that was the established pattern when it was written. The architecturally-correct shape is Model D.
+This route — admin comp-enroll, currently shipped on this branch — is the worked example. It writes to `participations`, which is grant-locked. The route currently uses Model A (`createAdminClient`) because that was the established pattern when it was written. The architecturally-correct shape is Model D.
 
 ### Current shape (Model A)
 
@@ -229,7 +229,7 @@ const { user } = result;
 const admin = createAdminClient();
 
 const { data: product } = await admin
-  .from("products_v2").select("id, product_type").eq("id", productId).maybeSingle();
+  .from("products").select("id, product_type").eq("id", productId).maybeSingle();
 // ... consumer_club gate ...
 
 const { data: parentLinks } = await admin
@@ -238,7 +238,7 @@ const { data: parentLinks } = await admin
 // ... parent resolution ...
 
 const { data: inserted } = await admin
-  .from("participations_v2")
+  .from("participations")
   .insert({ product_id: productId, gamer_id, customer_id, status: "active", credits_remaining: 0 })
   .select("id").single();
 ```
@@ -248,8 +248,8 @@ Three round-trips, full service-role privileges throughout, business rules in Ty
 ### Target shape (Model D)
 
 ```sql
--- migration: 000XX_admin_add_gamer_to_product_v2.sql
-CREATE OR REPLACE FUNCTION admin_add_gamer_to_product_v2(
+-- migration: 000XX_admin_add_gamer_to_product.sql
+CREATE OR REPLACE FUNCTION admin_add_gamer_to_product(
   p_product_id uuid,
   p_gamer_id uuid
 ) RETURNS uuid
@@ -258,7 +258,7 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
-  v_product_type product_type_v2;
+  v_product_type product_type;
   v_customer_id uuid;
   v_participation_id uuid;
 BEGIN
@@ -266,7 +266,7 @@ BEGIN
     RAISE EXCEPTION 'forbidden' USING ERRCODE = '42501';
   END IF;
 
-  SELECT product_type INTO v_product_type FROM products_v2 WHERE id = p_product_id;
+  SELECT product_type INTO v_product_type FROM products WHERE id = p_product_id;
   IF NOT FOUND THEN
     RAISE EXCEPTION 'product_not_found' USING ERRCODE = 'P0002';
   END IF;
@@ -281,7 +281,7 @@ BEGIN
     RAISE EXCEPTION 'gamer_has_no_parent' USING ERRCODE = '22023';
   END IF;
 
-  INSERT INTO participations_v2 (product_id, gamer_id, customer_id, status, credits_remaining)
+  INSERT INTO participations (product_id, gamer_id, customer_id, status, credits_remaining)
   VALUES (p_product_id, p_gamer_id, v_customer_id, 'active', 0)
   RETURNING id INTO v_participation_id;
 
@@ -289,8 +289,8 @@ BEGIN
 END;
 $$;
 
-REVOKE EXECUTE ON FUNCTION admin_add_gamer_to_product_v2(uuid, uuid) FROM public, anon;
-GRANT EXECUTE ON FUNCTION admin_add_gamer_to_product_v2(uuid, uuid) TO authenticated;
+REVOKE EXECUTE ON FUNCTION admin_add_gamer_to_product(uuid, uuid) FROM public, anon;
+GRANT EXECUTE ON FUNCTION admin_add_gamer_to_product(uuid, uuid) TO authenticated;
 ```
 
 ```ts
@@ -299,7 +299,7 @@ const result = await requireRole("admin", { ... });
 if (result instanceof NextResponse) return result;
 const { user, supabase } = result;
 
-const { data, error } = await supabase.rpc("admin_add_gamer_to_product_v2", {
+const { data, error } = await supabase.rpc("admin_add_gamer_to_product", {
   p_product_id: productId,
   p_gamer_id: gamerId,
 });
@@ -316,7 +316,7 @@ return NextResponse.json({ participation_id: data });
 
 ### Why the target is better
 
-- **Three layers of defense for the write:** route `requireRole` + RPC `get_user_role()` check + grant lockdown on `participations_v2`. The service-role version has one (route check only).
+- **Three layers of defense for the write:** route `requireRole` + RPC `get_user_role()` check + grant lockdown on `participations`. The service-role version has one (route check only).
 - **One round-trip instead of three.**
 - **The trust boundary is the 30-line RPC body**, not "everything the service-role connection could possibly do."
 - **Service-role key isn't on the critical path.** A future key leak doesn't compromise this route's data.
@@ -324,7 +324,7 @@ return NextResponse.json({ participation_id: data });
 
 ### Why it isn't done yet
 
-It's a coordinated change: the routes that currently use `createAdminClient` for v2 admin writes form a small but real set, and converting them piecemeal creates inconsistency. The plan is a single sweep — see TODO.md "Convert v2 admin writes to SECURITY DEFINER RPCs."
+It's a coordinated change: the routes that currently use `createAdminClient` for admin writes form a small but real set, and converting them piecemeal creates inconsistency. The plan is a single sweep — see TODO.md "Convert admin writes to SECURITY DEFINER RPCs."
 
 ## What not to do
 

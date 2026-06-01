@@ -132,7 +132,7 @@ export interface CreateTopicInput {
   description?: string | null;
   /** UI locale at creation time — the row is written under this locale only.
    *  Other-locale names get added later in the (yet-to-be-built) reference-data
-   *  translation manager. See docs/products-redesign.md "Translations". */
+   *  translation manager. See docs/products-architecture.md "Translations". */
   locale: SupportedLocale;
 }
 

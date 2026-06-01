@@ -55,7 +55,7 @@ export type MyParticipationState = "waitlisted" | "active";
  * CTA copy hint for subscriptions. `inline_add` triggers "Add to subscription
  * · €X/mo (charged today)" copy, signalling that the parent's card on file
  * will be charged immediately for the prorated period — no Stripe Checkout
- * redirect. Per docs/products-redesign.md §4.5b.
+ * redirect. Per docs/products-architecture.md §4.5b.
  */
 export type SubCtaMode = "new" | "inline_add";
 

@@ -671,7 +671,7 @@ function buildLoadedSessions(
 }
 
 /* ------------------------------------------------------------------ */
-/*  Products v2 (browse + purchased cards, registration pill)          */
+/*  Products (browse + purchased cards, registration pill)             */
 /* ------------------------------------------------------------------ */
 
 // Every state where the pill earns a row. Default-open is intentionally
@@ -1528,9 +1528,9 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 11: Products v2 (parent browse + purchased)           */}
+      {/* Section 11: Products (parent browse + purchased)              */}
       {/* ============================================================ */}
-      <Section title="Products v2 — Browse & Purchased Cards">
+      <Section title="Products — Browse & Purchased Cards">
         <p className="text-sm text-muted-foreground -mt-2">
           Parent-facing card surfaces for products (/clubs, /camps, /events).
           The registration pill speaks parent voice and only appears when
@@ -1540,9 +1540,9 @@ export default function AdminUIComponentsPage() {
       </Section>
 
       {/* ============================================================ */}
-      {/* Section 12: Products v2 — Detail Page                          */}
+      {/* Section 12: Products — Detail Page                             */}
       {/* ============================================================ */}
-      <Section title="Products v2 — Detail Page">
+      <Section title="Products — Detail Page">
         <p className="text-sm text-muted-foreground -mt-2">
           Per-type detail pages (/clubs/[id], /camps/[id], /events/[id]).
           The right-side signup panel switches across registration states
@@ -1623,7 +1623,7 @@ function PaymentMethodCardDemo() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Section 12: Products v2 — Detail Page                              */
+/*  Section 12: Products — Detail Page                                 */
 /* ------------------------------------------------------------------ */
 
 function ProductDetailDemo() {
