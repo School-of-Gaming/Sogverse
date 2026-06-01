@@ -9,6 +9,7 @@ import type {
   SubscriptionFrequencyV2,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import type { QueryData } from "@supabase/supabase-js";
 
 /**
  * Row shape returned by `getMyParticipations()`. Joins the bare minimum the
@@ -154,25 +155,53 @@ export interface MyFamilySubRow {
 }
 
 /**
- * Row shape returned by `getParticipationsForGamers()`. Powers the admin
- * user-detail page's "Assigned products" surface, where an admin views every
- * product a gamer (or a parent's gamers) is signed up to — across all statuses
- * (active / waitlisted / reserving / completed), so support can see exactly
- * what state each gamer is in. Reachable only for admins via the
+ * Builds the admin "assigned products" query: every participation for the
+ * given gamers, across all statuses, joined with product chrome (name + the
+ * type→admin-route link) and the assigned group name.
+ *
+ * `products_v2!inner` mirrors the schema — `participations_v2.product_id` is
+ * NOT NULL with ON DELETE CASCADE, so a participation can never outlive its
+ * product. The inner join makes that guarantee explicit and lets the inferred
+ * row type treat `product` as non-null. `group` stays a plain (nullable) embed
+ * because `group_id` is nullable — waitlisted/unassigned rows have no cohort.
+ *
+ * Defined standalone so the row type can be inferred from it via `QueryData`,
+ * with no hand-written shape and no cast (the select string and the type stay
+ * in lockstep — drift becomes a compile error).
+ */
+function buildGamerParticipationsQuery(
+  supabase: AppSupabaseClient,
+  gamerIds: string[],
+) {
+  return supabase
+    .from("participations_v2")
+    .select(
+      `
+        id, gamer_id, status, signed_up_at,
+        product:products_v2!inner(
+          id, product_type,
+          product_translations_v2(*)
+        ),
+        group:product_groups_v2(name)
+      `,
+    )
+    .in("gamer_id", gamerIds)
+    .order("gamer_id", { ascending: true })
+    .order("signed_up_at", { ascending: false });
+}
+
+/**
+ * Row shape returned by `getParticipationsForGamers()`, inferred from
+ * `buildGamerParticipationsQuery`. Powers the admin user-detail page's
+ * "Assigned products" surface, where an admin views every product a gamer (or
+ * a parent's gamers) is signed up to — across all statuses (active /
+ * waitlisted / reserving / completed), so support can see exactly what state
+ * each gamer is in. Reachable only for admins via the
  * `admin_full_access_participations_v2` RLS policy.
  */
-export type AdminGamerParticipationRow = Pick<
-  Participation,
-  "id" | "gamer_id" | "status" | "signed_up_at"
-> & {
-  product: {
-    id: string;
-    product_type: ProductTypeV2;
-    product_translations_v2: ProductTranslationV2[];
-  } | null;
-  /** Assigned cohort, or `null` for waitlisted/unassigned participations. */
-  group: { name: string } | null;
-};
+export type AdminGamerParticipationRow = QueryData<
+  ReturnType<typeof buildGamerParticipationsQuery>
+>[number];
 
 /**
  * Per-product participation counts for the browse + detail surfaces.
@@ -266,25 +295,14 @@ export class ParticipationsService {
   ): Promise<AdminGamerParticipationRow[]> {
     if (gamerIds.length === 0) return [];
 
-    const { data, error } = await this.supabase
-      .from("participations_v2")
-      .select(
-        `
-          id, gamer_id, status, signed_up_at,
-          product:products_v2(
-            id, product_type,
-            product_translations_v2(*)
-          ),
-          group:product_groups_v2(name)
-        `,
-      )
-      .in("gamer_id", gamerIds)
-      .order("gamer_id", { ascending: true })
-      .order("signed_up_at", { ascending: false });
+    const { data, error } = await buildGamerParticipationsQuery(
+      this.supabase,
+      gamerIds,
+    );
 
     if (error) throw error;
 
-    return data as AdminGamerParticipationRow[];
+    return data;
   }
 
   /**
