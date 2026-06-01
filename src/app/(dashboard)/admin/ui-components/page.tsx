@@ -42,7 +42,6 @@ import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
 import { UserRow } from "@/components/admin/user-row";
-import { GamerCard } from "@/components/customer/gamer-card";
 import {
   SessionsSection,
   type NextSessionCardProps,
@@ -1418,27 +1417,6 @@ export default function AdminUIComponentsPage() {
       {/* Section 10: Composite Patterns                                */}
       {/* ============================================================ */}
       <Section title="Composite Patterns">
-        {/* -- Gamer Card (customer/gamers) -- */}
-        <SubSection title="Gamer Card (customer/gamers)">
-          <p className="text-sm text-muted-foreground mb-3">
-            Card shown to parents on their gamers list. Wrap in a Link for navigation. Used in customer/gamers.
-          </p>
-          <div className="space-y-4">
-            <GamerCard
-              id="8e86d931-500c-49ed-889d-c2cd10879a28"
-              firstName="Venla"
-              username="venla"
-              subtitle="Joined 3 days ago"
-            />
-            <GamerCard
-              id="5aec0f5a-5398-46d7-a150-3554cf701beb"
-              firstName="Lucas"
-              username="lucas"
-              subtitle="Joined 2 weeks ago"
-            />
-          </div>
-        </SubSection>
-
         {/* -- User Row (admin/users) -- */}
         <SubSection title="User Row (admin/users)">
           <p className="text-sm text-muted-foreground mb-3">
