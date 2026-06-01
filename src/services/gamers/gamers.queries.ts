@@ -3,7 +3,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { GamerService } from "./gamers.service";
-import { groupKeys } from "@/services/groups/groups.queries";
 import { minecraftKeys } from "@/services/minecraft/minecraft.queries";
 import { familyKeys } from "@/services/family";
 import type { CreateGamerInput } from "@/types";
@@ -103,9 +102,6 @@ export function useUpdateGamer() {
     }) => service.updateGamer(gamerId, updates),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: gamerKeys.myGamers() });
-      queryClient.invalidateQueries({
-        queryKey: groupKeys.mine(),
-      });
       queryClient.invalidateQueries({
         queryKey: gamerKeys.gamerProfile(variables.gamerId),
       });

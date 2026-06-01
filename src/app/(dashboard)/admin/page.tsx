@@ -29,7 +29,7 @@ export default function AdminDashboardPage() {
       value: "0",
       description: t('activeProducts'),
       icon: Package,
-      href: ROUTES.admin.products,
+      href: ROUTES.admin.consumerClubs,
     },
     {
       title: t('revenue'),

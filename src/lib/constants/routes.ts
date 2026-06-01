@@ -89,11 +89,6 @@ export const ROUTES = {
     users: "/admin/users",
     usersAdd: "/admin/users/add",
     user: (id: string) => `/admin/users/${id}`,
-    products: "/admin/products",
-    productsAdd: "/admin/products/add",
-    product: (id: string) => `/admin/products/${id}`,
-    productEdit: (id: string) => `/admin/products/${id}/edit`,
-    productClone: (id: string) => `/admin/products/add?clone=${id}`,
     productV2: adminProductV2Href,
     consumerClubs: "/admin/consumer-clubs",
     consumerClubsNew: "/admin/consumer-clubs/new",
@@ -112,15 +107,9 @@ export const ROUTES = {
   customer: {
     dashboard: "/parent",
     gamers: "/parent/gamers",
-    group: (groupId: string, gamerId?: string) =>
-      gamerId
-        ? `/parent/groups/${groupId}?gamer=${gamerId}`
-        : `/parent/groups/${groupId}`,
   },
   gamer: {
     dashboard: "/gamer",
-    groups: "/gamer/groups",
-    group: (groupId: string) => `/gamer/groups/${groupId}`,
   },
   gedu: {
     dashboard: "/gedu",
