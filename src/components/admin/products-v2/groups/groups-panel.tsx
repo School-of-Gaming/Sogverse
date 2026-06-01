@@ -72,6 +72,10 @@ function DragOverlayContent({
       firstName={overlay.gamer_first_name}
       dateOfBirth={overlay.gamer_date_of_birth}
       gender={overlay.gamer_gender}
+      parentFirstName={overlay.gamer_parent_first_name}
+      parentLastName={overlay.gamer_parent_last_name}
+      minecraftUsername={overlay.gamer_minecraft_username}
+      minecraftUuid={overlay.gamer_minecraft_uuid}
     />
   );
 }

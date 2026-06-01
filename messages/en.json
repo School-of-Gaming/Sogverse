@@ -612,7 +612,8 @@
         "genderGirl": "girl",
         "genderNonBinary": "non-binary",
         "chip": {
-          "age": "{age}y"
+          "age": "{age}y",
+          "parent": "Parent: {name}"
         },
         "unassigned": {
           "title": "Unassigned",
@@ -1111,8 +1112,7 @@
       "noParentEmail": "No parent email on file",
       "emailCopied": "Email copied",
       "copyAllParentEmails": "Copy all parent emails ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "All parent emails copied",
-      "minecraftUnknown": "(unknown)"
+      "allEmailsCopied": "All parent emails copied"
     }
   },
   "groups": {
@@ -1486,7 +1486,8 @@
     "mcHeadsAttribution": "Skin rendered by <link>mc-heads.net</link>",
     "verified": "Verified",
     "unverified": "{username} (not yet verified)",
-    "notProvided": "Not provided"
+    "notProvided": "Not provided",
+    "none": "(Unknown)"
   },
   "parent": {
     "placeholders": {

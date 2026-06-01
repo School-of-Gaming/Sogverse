@@ -1,9 +1,10 @@
 "use client";
 
-import { Check, Copy, Pickaxe } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn, computeAge } from "@/lib/utils";
 import { useTimezone } from "@/providers";
@@ -57,68 +58,15 @@ export function GamerRosterRow({ gamer }: GamerRosterRowProps) {
               {detail}
             </p>
           )}
-          <MinecraftBadge
+          <MinecraftUsernameBadge
             username={gamer.minecraft_username}
             uuid={gamer.minecraft_uuid}
+            size="sm"
           />
         </div>
       </div>
       <ParentEmailCell email={gamer.parent_email} />
     </li>
-  );
-}
-
-/**
- * Per-gamer Minecraft display. The pickaxe icon is the *only* hint that
- * this line is about Minecraft — adding "Minecraft:" to every row would
- * recreate the per-row noise problem we just removed from the parent
- * emails. Same color semantics as /admin/users/[id]: verified = success
- * green + check, entered-but-unverified = warning yellow, missing =
- * muted dash. The verbose copy lives in the aria-label.
- */
-function MinecraftBadge({
-  username,
-  uuid,
-}: {
-  username: string | null;
-  uuid: string | null;
-}) {
-  const t = useTranslations("gedu.sessionDetails");
-  const tm = useTranslations("minecraft");
-
-  if (username && uuid) {
-    return (
-      <p
-        className="inline-flex items-center gap-1 text-[11px] leading-tight text-success"
-        aria-label={tm("verified")}
-      >
-        <Pickaxe className="h-3 w-3 shrink-0" aria-hidden />
-        <span className="truncate">{username}</span>
-        <Check className="h-3 w-3 shrink-0" aria-hidden />
-      </p>
-    );
-  }
-
-  if (username) {
-    return (
-      <p
-        className="inline-flex items-center gap-1 text-[11px] leading-tight text-warning"
-        aria-label={tm("unverified", { username })}
-      >
-        <Pickaxe className="h-3 w-3 shrink-0" aria-hidden />
-        <span className="truncate">{username}</span>
-      </p>
-    );
-  }
-
-  return (
-    <p
-      className="inline-flex items-center gap-1 text-[11px] leading-tight text-muted-foreground"
-      aria-label={tm("notProvided")}
-    >
-      <Pickaxe className="h-3 w-3 shrink-0" aria-hidden />
-      <span>{t("minecraftUnknown")}</span>
-    </p>
   );
 }
 

@@ -191,6 +191,10 @@ export function GroupColumn({
                     firstName={p.gamer_first_name}
                     dateOfBirth={p.gamer_date_of_birth}
                     gender={p.gamer_gender}
+                    parentFirstName={p.gamer_parent_first_name}
+                    parentLastName={p.gamer_parent_last_name}
+                    minecraftUsername={p.gamer_minecraft_username}
+                    minecraftUuid={p.gamer_minecraft_uuid}
                     isMoved={p.isMoved}
                   />
                 ))}

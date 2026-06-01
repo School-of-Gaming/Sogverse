@@ -612,7 +612,8 @@
         "genderGirl": "tyttö",
         "genderNonBinary": "muunsukupuolinen",
         "chip": {
-          "age": "{age}v"
+          "age": "{age}v",
+          "parent": "Vanhempi: {name}"
         },
         "unassigned": {
           "title": "Nimeämättömät",
@@ -1111,8 +1112,7 @@
       "noParentEmail": "Vanhemman sähköpostia ei ole tallennettu",
       "emailCopied": "Sähköposti kopioitu",
       "copyAllParentEmails": "Kopioi kaikki vanhempien sähköpostit ({count, plural, one {#} other {#}})",
-      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu",
-      "minecraftUnknown": "(ei tiedossa)"
+      "allEmailsCopied": "Kaikki vanhempien sähköpostit kopioitu"
     }
   },
   "groups": {
@@ -1486,7 +1486,8 @@
     "mcHeadsAttribution": "Ulkoasu renderöity palvelulla <link>mc-heads.net</link>",
     "verified": "Vahvistettu",
     "unverified": "{username} (ei vielä vahvistettu)",
-    "notProvided": "Ei annettu"
+    "notProvided": "Ei annettu",
+    "none": "(ei tiedossa)"
   },
   "parent": {
     "placeholders": {
