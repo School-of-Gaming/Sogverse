@@ -1,4 +1,4 @@
-import type { Profile, CustomerProfile, GamerProfile, MinecraftAccount, Product, UserRole } from "@/types";
+import type { Profile, CustomerProfile, GamerProfile, MinecraftAccount, UserRole } from "@/types";
 
 // Mock data generators
 export function createMockProfile(overrides: Partial<Profile> = {}): Profile {
@@ -67,31 +67,6 @@ export function createMockMinecraftAccount(
     user_id: "test-gamer-id",
     minecraft_username: null,
     minecraft_uuid: null,
-    ...overrides,
-  };
-}
-
-export function createMockProduct(overrides: Partial<Product> = {}): Product {
-  return {
-    id: "test-product-id",
-    name: "Test Product",
-    description: "A test product description",
-    image_path: "test-image.jpg",
-    is_visible: true,
-    created_by: "test-admin-id",
-    game_id: "00000000-0000-0000-0000-000000000001",
-    day_of_week: 0,
-    start_time: "16:00",
-    timezone: "Europe/Helsinki",
-    duration_minutes: 60,
-    min_age: 7,
-    max_age: 12,
-    padlet_url: null,
-    is_remote: true,
-    location_id: null,
-    spoken_language_code: "en",
-    created_at: "2026-01-01T00:00:00.000Z",
-    updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
 }

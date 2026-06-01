@@ -229,48 +229,7 @@ INSERT INTO parent_gamer (id, parent_id, gamer_id) VALUES (
 );
 
 -- =============================================================================
--- 5. Game, Product, Group
--- =============================================================================
-
--- Test game (the 'Unassigned' game with id ...001 is already created by migration 00016)
-INSERT INTO games (id, name) VALUES (
-  '00000000-0000-0000-0000-000000000010', 'Test Game'
-);
-
--- Test product (Wednesday = 3, 15:00 Europe/Helsinki, visible)
-INSERT INTO products (id, name, description, image_path, is_visible, created_by, game_id, day_of_week, start_time, timezone, duration_minutes, min_age, max_age, is_remote, location_id, spoken_language_code) VALUES (
-  '00000000-0000-0000-0000-000000000020',
-  'Test Product',
-  'A test product for DB integration tests',
-  'test-product.jpg',
-  true,
-  '00000000-0000-0000-0000-000000000001', -- admin created it
-  '00000000-0000-0000-0000-000000000010', -- Test Game
-  3,      -- Wednesday
-  '15:00', -- 3 PM
-  'Europe/Helsinki',
-  60,     -- 1 hour
-  6,      -- min age
-  12,     -- max age
-  true,   -- is_remote (seeded test product is remote — in-person variants are created per-test)
-  NULL,   -- location_id
-  'en'    -- spoken_language_code (seeded by migration 00018)
-);
-
--- Test group (gedu assigned to the test product)
-INSERT INTO product_groups (id, product_id, gedu_id, display_order) VALUES (
-  '00000000-0000-0000-0000-000000000030',
-  '00000000-0000-0000-0000-000000000020', -- Test Product
-  '00000000-0000-0000-0000-000000000003', -- Test Gedu
-  0
-);
-
--- NOTE: Enrollments are NOT seeded here — they are mutable test state.
--- Test files that need enrollments create them via seedEnrollment() or the
--- enroll_gamer_in_group RPC. This prevents cross-file interference.
-
--- =============================================================================
--- 6. Locations (for product-location and gedu-coverage tests)
+-- 5. Locations (for product-location and gedu-coverage tests)
 -- =============================================================================
 -- Finland -> Uusimaa (region) -> Helsinki (municipality) -> Test School (site).
 -- The site is the leaf referenced by product-location tests.
@@ -282,7 +241,7 @@ INSERT INTO locations (id, name, type, parent_id, country_code) VALUES
   ('00000000-0000-0000-0000-000000000203', 'Test School', 'site',         '00000000-0000-0000-0000-000000000202', 'FI');
 
 -- =============================================================================
--- 7. Feedback Submissions
+-- 6. Feedback Submissions
 -- =============================================================================
 
 INSERT INTO feedback_submissions (user_id, message) VALUES
