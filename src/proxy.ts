@@ -161,6 +161,16 @@ export async function proxy(request: NextRequest) {
   // verified customer, so it lets us skip the profile lookup entirely — that's
   // the short-circuit that keeps logged-out and already-unlocked traffic on
   // public pages (e.g. /shop) from paying for a query.
+  //
+  // Note this treats cookie validity as proof of *current* customer role, not
+  // just unlock state — the token is an unforgeable HMAC over (userId,
+  // session_id), so only a genuine customer who unlocked THIS session could hold
+  // it. Not a security concern: the worst a stale cookie buys is acting as the
+  // account it was already minted for. The one theoretical gap is a mid-session
+  // role change (customer → gedu) leaving the old cookie treating them as a
+  // customer until re-login — and we treat role changes as a thing that doesn't
+  // happen mid-session. Privileged routes (`/admin`) are role-gated below
+  // regardless, so this never grants access the role itself wouldn't.
   let userRole: Database["public"]["Enums"]["user_role"] | null = null;
   if (userId) {
     const pinVerified =

@@ -60,6 +60,19 @@ account. Migrations `00075` / `00076`.
 There is no rate-limiting and no PIN-strength validation beyond "exactly 4
 digits" (a parent who picks `0000` has made their own trust call).
 
+**Why no rate-limiting (a deliberate decision, not an oversight).** `verify_my_pin`
+has no lockout, so the 10,000-combination space is in principle brute-forceable
+by scripting `POST /api/auth/pin/verify`. We accept this: the PIN's threat model
+is a *child on a shared device*, and a child who would script a brute-force
+against the API is, by that same token, old enough and capable enough that
+they'd be handling the payment/management actions the PIN guards anyway — the
+PIN was never meant to be a hard security boundary against that person, only a
+speed-bump against casual access. Treat this as the conscious "no." If the threat
+model ever widens beyond the on-device child (e.g. credential-stuffing from
+off-device), revisit it — a per-account failed-attempt counter with a short
+cooldown closes most of the gap cheaply. The `forgot`-email path is likewise
+un-throttled, matching the existing password-reset email (`forgot-password`).
+
 ## Routes
 
 - `POST /api/auth/pin/verify` — verify PIN, set the unlock cookie.

@@ -6,6 +6,7 @@ import { Lock, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getClient } from "@/lib/supabase/client";
 import { ROUTES } from "@/lib/constants";
+import { resolveInternalPath } from "@/lib/navigation/internal-path";
 import { PinService, usePinIsSet } from "@/services/pin";
 import { PinEntry } from "./pin-entry";
 import { PinSet } from "./pin-set";
@@ -33,18 +34,16 @@ export function UnlockGate({ initialPinIsSet }: { initialPinIsSet?: boolean }) {
 
   // Read ?redirect= from the URL once on mount (window.location, not
   // useSearchParams, to avoid forcing a Suspense boundary — same approach as
-  // reset-password-form). Only accept a same-origin path, and never the gate
-  // itself (would loop).
+  // reset-password-form). `resolveInternalPath` rejects any off-origin target
+  // (protocol-relative, backslash, absolute-URL, whitespace-smuggling variants)
+  // and falls back to the dashboard — never hand-roll this check. We then drop
+  // the gate itself as a target so success can't loop straight back here.
   useEffect(() => {
     const target = new URLSearchParams(window.location.search).get("redirect");
-    if (
-      target &&
-      target.startsWith("/") &&
-      !target.startsWith("//") &&
-      target !== ROUTES.customer.unlock
-    ) {
+    const safe = resolveInternalPath(target, ROUTES.customer.dashboard);
+    if (safe !== ROUTES.customer.unlock) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount-time URL read, mirrors reset-password-form
-      setRedirectTo(target);
+      setRedirectTo(safe);
     }
   }, []);
 
