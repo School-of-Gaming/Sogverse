@@ -22,6 +22,9 @@
       "gamerGroups": "Omat ryhmät",
       "gamerGroupDetails": "Ryhmän tiedot",
       "voiceSession": "Ääni-istunto",
+      "unlockPin": "Syötä PIN",
+      "resetPin": "Nollaa PIN",
+      "changePin": "Vaihda PIN",
       "privacy": "Tietosuojaseloste"
     }
   },
@@ -921,6 +924,43 @@
       "successDescription": "Tilisi on luotu onnistuneesti."
     }
   },
+  "pin": {
+    "create": {
+      "enterTitle": "Luo vanhemman PIN",
+      "confirmTitle": "Vahvista PIN",
+      "description": "Vanhemman PIN pitää perheesi turvassa. Vain sinä – et koskaan lapsesi – voit hyväksyä ostoksia tai hallita sitä, kenen kanssa he pelaavat. Lasten turvallisuus on kaiken tekemisemme ytimessä School of Gamingissa."
+    },
+    "unlock": {
+      "title": "Syötä vanhemman PIN",
+      "description": "PIN pitää lapsesi turvassa – vain sinä voit tehdä ostoksia tai hallita heidän tilejään. Lasten turvallisuus on kaiken tekemisemme ytimessä School of Gamingissa.",
+      "forgot": "Unohditko PIN-koodin?"
+    },
+    "mismatch": "PIN-koodit eivät täsmänneet. Yritetään uudelleen.",
+    "deleteDigit": "Poista viimeinen numero",
+    "forgotSent": {
+      "title": "Tarkista sähköpostisi",
+      "description": "Jos tilillesi on tallennettu sähköpostiosoite, lähetimme linkin PIN-koodin nollaamiseen. Linkki vanhenee 24 tunnin kuluttua.",
+      "back": "Takaisin PIN-koodin syöttöön"
+    },
+    "reset": {
+      "description": "Aseta uusi 4-numeroinen PIN, jonka vain sinä tiedät.",
+      "enterTitle": "Valitse uusi PIN",
+      "confirmTitle": "Vahvista uusi PIN",
+      "successTitle": "PIN nollattu",
+      "successDescription": "Vanhemman PIN on päivitetty. Kirjaudu sisään ja syötä se jatkaaksesi.",
+      "invalidTitle": "Linkki vanhentunut",
+      "invalidDescription": "Tämä PIN-koodin nollauslinkki on virheellinen tai vanhentunut. Kirjaudu sisään ja pyydä uusi.",
+      "backToLogin": "Takaisin kirjautumiseen"
+    },
+    "change": {
+      "newTitle": "Valitse uusi PIN",
+      "confirmTitle": "Vahvista uusi PIN",
+      "cancel": "Peruuta",
+      "successTitle": "PIN päivitetty",
+      "successDescription": "Vanhemman PIN on vaihdettu.",
+      "backToSettings": "Takaisin asetuksiin"
+    }
+  },
   "checkout": {
     "redirecting": "Ohjataan kassalle...",
     "error": "Jokin meni pieleen kassalle siirryttäessä. <link>Palaa takaisin</link> ja yritä uudelleen."
@@ -1567,6 +1607,7 @@
     "failedToUpdateProfile": "Profiilin päivittäminen epäonnistui.",
     "securityDescription": "Hallitse salasanaasi ja turvallisuusasetuksiasi",
     "changePassword": "Vaihda salasana",
+    "changePin": "Vaihda PIN",
     "minecraftAccount": "Minecraft-tili",
     "minecraftDescription": "Linkitä Minecraft Java Edition -tilisi",
     "minecraftSaved": "Minecraft-käyttäjänimi tallennettu!",

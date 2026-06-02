@@ -63,9 +63,11 @@ digits" (a parent who picks `0000` has made their own trust call).
 ## Routes
 
 - `POST /api/auth/pin/verify` — verify PIN, set the unlock cookie.
-- `POST /api/auth/pin` — create (no PIN set) or change (requires `currentPin`).
-  It will **not** overwrite an existing PIN without the current one — this is the
-  guard that stops a locked child at the gate from blind-overwriting the PIN.
+- `POST /api/auth/pin` — create (no PIN set) or change. Creating runs while
+  locked (nothing to protect yet); **overwriting** an existing PIN requires an
+  already-**unlocked** session — the same bar as changing a password requires
+  being logged in. That's the guard that stops a locked child at the gate from
+  overwriting the PIN; a forgotten PIN is reset via email, never here.
 - `POST /api/auth/pin/forgot` — email the parent a reset link (authenticated;
   the link goes only to the account email).
 - `POST /api/auth/pin/reset` — public, token-authorized; sets the PIN via
@@ -89,8 +91,43 @@ typically resets on their phone, then enters the new PIN at the gate on the
 locked device. (UI note: when reset happens in the same browser as a locked
 session, the page can chain a `verify` call to unlock and land on `/parent`.)
 
+## UI
+
+All PIN screens share one touchpad (`src/components/pin/`): a 10-key pad with
+filled dots, no confirm button — the 4th digit submits immediately. It accepts
+touch, click, and physical keyboard (0-9 + Backspace) at once. A wrong PIN
+shakes and clears for an instant retry (no error text). Creating or resetting a
+PIN requires entering it twice (`PinSet`); entering a known PIN is single-shot
+(`PinEntry`). Both hold the disabled state through the success transition so a
+fast double-tap can't fire twice (the loading-state rule).
+
+- **`/parent/unlock`** (`UnlockGate`) — the gate. Branches on `pin_is_set`
+  (resolved server-side and seeded into the client so there's no loading
+  skeleton): create-and-confirm, or enter-to-unlock with a "Forgot your PIN?"
+  link that emails the reset. Success is a full-page nav to the original
+  `?redirect=` target so the proxy re-runs against the fresh unlock cookie.
+  (No on-screen "switch profile" escape — the header avatar and browser back
+  already cover that.)
+- **`/reset-pin`** (`ResetPinForm`) — public landing for the email link. Sets
+  the new PIN from the URL token, then attempts a seamless unlock (verifies the
+  new PIN if the same browser is signed in as this parent) and otherwise shows
+  a success card pointing to sign-in.
+- **Settings → "Change PIN"** (`/parent/change-pin`, `ChangePinFlow`) — shown
+  only to customers, mirrors the "Change Password" button. Just enter + confirm
+  a new PIN — no current-PIN step, since reaching this page already required an
+  unlocked session (just as changing a password doesn't re-ask for it). No
+  forgot link; forgotten PINs reset only at the gate.
+
+Routing into the gate needs no special-casing in `select-profile`: switching
+into a parent (or "Continue as me") clears the unlock cookie / lands on
+`/parent`, which the proxy redirects to `/parent/unlock` automatically.
+
+There is no client-side handling of an API `403 PIN_REQUIRED`: within a live
+tab an unlocked session can't silently re-lock (the cookie is persistent and
+`session_id` is stable across refreshes), and every navigation is already
+gated by the proxy, so the 403 is unreachable in normal flow — it stays purely
+as the server-side defense-in-depth boundary.
+
 ## Status
 
-Logic layer implemented and tested. UI (the `/parent/unlock` gate page, the
-`/reset-pin` landing page, the settings "Change PIN" block, and the
-`select-profile` parent-tile routing) is intentionally not yet built.
+Logic and UI implemented and tested.

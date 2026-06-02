@@ -14,7 +14,7 @@ import { MinecraftUsernameField } from "@/components/minecraft/minecraft-usernam
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
-import { DISPLAY_NAME_MAX } from "@/lib/constants";
+import { DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
@@ -257,6 +257,14 @@ export function SettingsSectionContent() {
           >
             {t('changePassword')}
           </Button>
+          {profile?.role === "customer" && (
+            <Button
+              variant="outline"
+              onClick={() => router.push(ROUTES.customer.changePin)}
+            >
+              {t('changePin')}
+            </Button>
+          )}
           <form action="/api/auth/signout" method="post">
             <Button type="submit" variant="destructive">
               <LogOut className="h-4 w-4" />

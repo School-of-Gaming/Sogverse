@@ -25,8 +25,13 @@ export async function POST(request: Request) {
     console.error("pin/verify: verify_my_pin failed", error);
     return NextResponse.json({ error: "Failed to verify PIN" }, { status: 500 });
   }
+  // A wrong PIN is a normal outcome, not an auth failure (the session is valid —
+  // requireRole already passed), so it's a 200 with verified:false rather than a
+  // 401. That keeps an expected wrong guess out of the browser's error console
+  // and out of network-error monitoring; a real 401 then means the session
+  // itself failed.
   if (!ok) {
-    return NextResponse.json({ error: "Incorrect PIN" }, { status: 401 });
+    return NextResponse.json({ verified: false });
   }
 
   const { data: claimsData } = await supabase.auth.getClaims();
@@ -38,5 +43,5 @@ export async function POST(request: Request) {
   const token = await pinTokenFor(user.id, sessionId);
   (await cookies()).set(PIN_COOKIE_NAME, token, pinCookieOptions());
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ verified: true });
 }

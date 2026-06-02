@@ -22,6 +22,9 @@
       "voiceSession": "Röstsession",
       "help": "Hjälp",
       "shop": "Butik",
+      "unlockPin": "Ange PIN",
+      "resetPin": "Återställ PIN",
+      "changePin": "Byt PIN",
       "privacy": "Integritetspolicy"
     }
   },
@@ -921,6 +924,43 @@
       "successDescription": "Ditt konto har konfigurerats."
     }
   },
+  "pin": {
+    "create": {
+      "enterTitle": "Skapa en föräldra-PIN",
+      "confirmTitle": "Bekräfta din PIN",
+      "description": "Din föräldra-PIN håller din familj trygg. Bara du – aldrig dina barn – kan godkänna köp eller bestämma vilka de spelar med. Deras trygghet är kärnan i allt vi gör på School of Gaming."
+    },
+    "unlock": {
+      "title": "Ange din föräldra-PIN",
+      "description": "Din PIN håller dina barn trygga – bara du kan göra köp eller hantera deras konton. Deras trygghet är kärnan i allt vi gör på School of Gaming.",
+      "forgot": "Glömt din PIN?"
+    },
+    "mismatch": "PIN-koderna matchade inte. Vi försöker igen.",
+    "deleteDigit": "Radera sista siffran",
+    "forgotSent": {
+      "title": "Kolla din e-post",
+      "description": "Om ditt konto har en e-postadress registrerad har vi skickat en länk för att återställa din PIN. Länken upphör att gälla om 24 timmar.",
+      "back": "Tillbaka till PIN-inmatning"
+    },
+    "reset": {
+      "description": "Ange en ny 4-siffrig PIN som bara du känner till.",
+      "enterTitle": "Välj en ny PIN",
+      "confirmTitle": "Bekräfta din nya PIN",
+      "successTitle": "PIN återställd",
+      "successDescription": "Din föräldra-PIN har uppdaterats. Logga in och ange den för att fortsätta.",
+      "invalidTitle": "Länken har upphört",
+      "invalidDescription": "Den här länken för PIN-återställning är ogiltig eller har upphört. Logga in och begär en ny.",
+      "backToLogin": "Tillbaka till inloggning"
+    },
+    "change": {
+      "newTitle": "Välj en ny PIN",
+      "confirmTitle": "Bekräfta din nya PIN",
+      "cancel": "Avbryt",
+      "successTitle": "PIN uppdaterad",
+      "successDescription": "Din föräldra-PIN har ändrats.",
+      "backToSettings": "Tillbaka till inställningar"
+    }
+  },
   "checkout": {
     "redirecting": "Omdirigerar till kassan...",
     "error": "Något gick fel vid kassan. <link>Gå tillbaka</link> och försök igen."
@@ -1567,6 +1607,7 @@
     "failedToUpdateProfile": "Kunde inte uppdatera profilen.",
     "securityDescription": "Hantera ditt lösenord och säkerhetsinställningar",
     "changePassword": "Byt lösenord",
+    "changePin": "Byt PIN",
     "minecraftAccount": "Minecraft-konto",
     "minecraftDescription": "Koppla ditt Minecraft Java Edition-konto",
     "minecraftSaved": "Minecraft-användarnamn sparat!",
