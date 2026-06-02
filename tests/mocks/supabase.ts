@@ -45,6 +45,7 @@ export function createMockCustomerProfile(
   return {
     user_id: "test-user-id",
     stripe_customer_id: null,
+    pin_hash: null,
     ...overrides,
   };
 }

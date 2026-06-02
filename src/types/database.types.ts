@@ -100,14 +100,17 @@ export type Database = {
       }
       customer_profiles: {
         Row: {
+          pin_hash: string | null
           stripe_customer_id: string | null
           user_id: string
         }
         Insert: {
+          pin_hash?: string | null
           stripe_customer_id?: string | null
           user_id: string
         }
         Update: {
+          pin_hash?: string | null
           stripe_customer_id?: string | null
           user_id?: string
         }
@@ -1555,6 +1558,7 @@ export type Database = {
         }
         Returns: string
       }
+      pin_is_set: { Args: never; Returns: boolean }
       process_session_credits: { Args: never; Returns: Json }
       product_has_session: {
         Args: { p_product_id: string; p_session_date: string }
@@ -1563,6 +1567,11 @@ export type Database = {
       promote_from_waitlist: { Args: { p_product_id: string }; Returns: Json }
       refresh_product_seat_counts: {
         Args: { p_product_id: string }
+        Returns: undefined
+      }
+      set_my_pin: { Args: { p_pin: string }; Returns: undefined }
+      set_pin_for_user: {
+        Args: { p_pin: string; p_user_id: string }
         Returns: undefined
       }
       submit_feedback: {
@@ -1598,6 +1607,7 @@ export type Database = {
         }
         Returns: string
       }
+      verify_my_pin: { Args: { p_pin: string }; Returns: boolean }
     }
     Enums: {
       billing_mode: "paid" | "free" | "external_contract"

@@ -12,7 +12,10 @@ import type { FamilyMember } from "@/services/family/family.service";
  * own parent_gamer rows.
  */
 export async function GET() {
-  const auth = await requireRole(["customer", "gamer"]);
+  // allowUnverified: the profile chooser (/select-profile) and the lock gate
+  // both need the family list while the customer session is still locked, so
+  // the parent can see and switch to a gamer without first entering the PIN.
+  const auth = await requireRole(["customer", "gamer"], { allowUnverified: true });
   if (auth instanceof NextResponse) return auth;
   const { user, profile } = auth;
 

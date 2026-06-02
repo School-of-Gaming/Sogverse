@@ -61,6 +61,9 @@ export const ROUTES = {
   register: "/register",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
+  // Landing page for the parent-PIN reset email link. Like resetPassword, the
+  // user arrives via an email link with hash tokens, so it's a public route.
+  resetPin: "/reset-pin",
   setupAccount: "/setup-account",
   selectProfile: "/select-profile",
   help: "/help",
@@ -107,6 +110,9 @@ export const ROUTES = {
   customer: {
     dashboard: "/parent",
     gamers: "/parent/gamers",
+    // Lock gate: a customer session is redirected here until the parent PIN is
+    // entered (see src/proxy.ts and docs/parent-pin-architecture.md).
+    unlock: "/parent/unlock",
   },
   gamer: {
     dashboard: "/gamer",

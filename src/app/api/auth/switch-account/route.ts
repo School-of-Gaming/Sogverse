@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { generateGamerEmail } from "@/lib/utils";
+import { PIN_COOKIE_NAME } from "@/lib/pin-session";
 
 /**
  * Switch the current session to another family member.
@@ -23,7 +25,10 @@ import { generateGamerEmail } from "@/lib/utils";
  * separately and intentionally out of scope for this change.
  */
 export async function POST(request: Request) {
-  const auth = await requireRole(["customer", "gamer"]);
+  // allowUnverified: a locked customer (no PIN entered) must still be able to
+  // switch DOWN to one of their gamers — switching is how they hand the device
+  // back to a child without unlocking the parent account.
+  const auth = await requireRole(["customer", "gamer"], { allowUnverified: true });
   if (auth instanceof NextResponse) return auth;
   const { user, profile, supabase } = auth;
 
@@ -124,6 +129,11 @@ export async function POST(request: Request) {
     console.error("switch-account: verifyOtp failed", verifyError);
     return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
   }
+
+  // Clear the parent-PIN unlock cookie: the new session has a different
+  // session_id so the old token wouldn't match anyway, but dropping it keeps
+  // the cookie jar honest. Switching INTO a parent therefore always re-locks.
+  (await cookies()).delete(PIN_COOKIE_NAME);
 
   return NextResponse.json({ success: true });
 }

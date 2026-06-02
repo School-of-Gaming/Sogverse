@@ -4,7 +4,16 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextRequest } from "next/server";
+
+// pin-session reads PIN_COOKIE_SECRET lazily, so setting it before importing the
+// proxy is enough for the HMAC unlock-token helpers used below.
+process.env.PIN_COOKIE_SECRET = "test-pin-cookie-secret";
+
 import { proxy } from "@/proxy";
+import { PIN_COOKIE_NAME, pinTokenFor } from "@/lib/pin-session";
+
+const TEST_USER_ID = "test-user-id";
+const TEST_SESSION_ID = "test-session-id";
 
 // --- Mocks ---
 
@@ -37,19 +46,27 @@ vi.mock("@supabase/ssr", () => ({
 
 // --- Helpers ---
 
-function createNextRequest(pathname: string): NextRequest {
-  return new NextRequest(new URL(pathname, "http://localhost:3000"));
+function createNextRequest(pathname: string, cookie?: string): NextRequest {
+  const headers = cookie ? { cookie } : undefined;
+  return new NextRequest(new URL(pathname, "http://localhost:3000"), { headers });
 }
 
 function mockUser(role: string) {
   mockGetClaims.mockResolvedValue({
-    data: { claims: { sub: "test-user-id" } },
+    data: { claims: { sub: TEST_USER_ID, session_id: TEST_SESSION_ID } },
     error: null,
   });
   mockProfileQuery.mockResolvedValue({
     data: { role },
     error: null,
   });
+}
+
+// A request carrying a valid parent-PIN unlock cookie for the test customer —
+// i.e. an UNLOCKED customer session (the normal state after entering the PIN).
+async function unlockedCustomerRequest(pathname: string): Promise<NextRequest> {
+  const token = await pinTokenFor(TEST_USER_ID, TEST_SESSION_ID);
+  return createNextRequest(pathname, `${PIN_COOKIE_NAME}=${token}`);
 }
 
 function mockNoUser() {
@@ -158,7 +175,6 @@ describe("proxy", () => {
   describe("protected routes (correct role)", () => {
     it.each([
       ["/admin", "admin"],
-      ["/parent", "customer"],
       ["/gamer", "gamer"],
       ["/gedu", "gedu"],
     ])("allows %s for %s role", async (path, role) => {
@@ -166,14 +182,20 @@ describe("proxy", () => {
       const response = await proxy(createNextRequest(path));
       expect(response.status).toBe(200);
     });
+
+    it("allows /parent for an unlocked customer (valid PIN cookie)", async () => {
+      mockUser("customer");
+      const response = await proxy(await unlockedCustomerRequest("/parent"));
+      expect(response.status).toBe(200);
+    });
   });
 
   // --- Protected routes (wrong role → redirect to correct dashboard) ---
 
   describe("protected routes (wrong role)", () => {
-    it("redirects customer from /admin to /parent", async () => {
+    it("redirects unlocked customer from /admin to /parent", async () => {
       mockUser("customer");
-      const response = await proxy(createNextRequest("/admin"));
+      const response = await proxy(await unlockedCustomerRequest("/admin"));
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).pathname).toBe("/parent");
     });
@@ -204,10 +226,10 @@ describe("proxy", () => {
       expect(response.status).toBe(200);
     });
 
-    it("redirects customer from /preview/... to /parent", async () => {
+    it("redirects unlocked customer from /preview/... to /parent", async () => {
       mockUser("customer");
       const response = await proxy(
-        createNextRequest("/preview/products/consumer_club/open"),
+        await unlockedCustomerRequest("/preview/products/consumer_club/open"),
       );
       expect(response.status).toBe(307);
       expect(getRedirectUrl(response).pathname).toBe("/parent");
@@ -245,6 +267,58 @@ describe("proxy", () => {
       const url = getRedirectUrl(response);
       expect(url.pathname).toBe("/login");
       expect(url.searchParams.get("redirect")).toBe("/settings");
+    });
+  });
+
+  // --- Parent-PIN gate ---
+
+  describe("parent PIN gate", () => {
+    it("redirects a locked customer from /parent to the unlock gate", async () => {
+      mockUser("customer");
+      const response = await proxy(createNextRequest("/parent"));
+      expect(response.status).toBe(307);
+      const url = getRedirectUrl(response);
+      expect(url.pathname).toBe("/parent/unlock");
+      expect(url.searchParams.get("redirect")).toBe("/parent");
+    });
+
+    it("gates a locked customer even on a PUBLIC route (/shop)", async () => {
+      mockUser("customer");
+      const response = await proxy(createNextRequest("/shop"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/parent/unlock");
+    });
+
+    it("gates a locked customer before the wrong-role redirect (/admin → unlock)", async () => {
+      mockUser("customer");
+      const response = await proxy(createNextRequest("/admin"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/parent/unlock");
+    });
+
+    it.each(["/parent/unlock", "/select-profile", "/reset-pin"])(
+      "exempts %s so a locked customer is not trapped",
+      async (path) => {
+        mockUser("customer");
+        const response = await proxy(createNextRequest(path));
+        expect(response.status).toBe(200);
+      },
+    );
+
+    it("treats a cookie bound to a different session as locked (stale after switch/re-login)", async () => {
+      mockUser("customer");
+      const staleToken = await pinTokenFor(TEST_USER_ID, "some-other-session");
+      const response = await proxy(
+        createNextRequest("/parent", `${PIN_COOKIE_NAME}=${staleToken}`),
+      );
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/parent/unlock");
+    });
+
+    it("does not gate non-customer roles (signed-in gamer reaches /shop)", async () => {
+      mockUser("gamer");
+      const response = await proxy(createNextRequest("/shop"));
+      expect(response.status).toBe(200);
     });
   });
 

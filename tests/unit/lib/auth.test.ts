@@ -20,7 +20,16 @@ vi.mock("@/lib/supabase/server", () => ({
   createClient: vi.fn(async () => mockClient),
 }));
 
+const mockCookieGet = vi.fn();
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({ get: mockCookieGet })),
+}));
+
+// pin-session reads the secret lazily; set it before importing requireRole.
+process.env.PIN_COOKIE_SECRET = "auth-test-pin-secret";
+
 import { requireRole } from "@/lib/auth";
+import { pinTokenFor } from "@/lib/pin-session";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -80,5 +89,61 @@ describe("requireRole", () => {
     expect(res.user.email).toBe("admin@test.local");
     expect(res.profile.role).toBe("admin");
     expect(mockEq).toHaveBeenCalledWith("id", "u1");
+  });
+});
+
+describe("requireRole parent-PIN gate", () => {
+  function mockCustomer() {
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "u1", email: "p@test.local", session_id: "s1" } },
+      error: null,
+    });
+    mockSingle.mockResolvedValue({ data: { id: "u1", role: "customer" }, error: null });
+  }
+
+  it("returns 403 PIN_REQUIRED for a customer with no unlock cookie", async () => {
+    mockCustomer();
+    mockCookieGet.mockReturnValue(undefined);
+
+    const res = await requireRole("customer");
+    expect(res).toBeInstanceOf(NextResponse);
+    expect((res as NextResponse).status).toBe(403);
+    expect(await (res as NextResponse).json()).toMatchObject({ code: "PIN_REQUIRED" });
+  });
+
+  it("returns 403 for a customer whose cookie is bound to a different session", async () => {
+    mockCustomer();
+    mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "other-session") });
+
+    const res = await requireRole("customer");
+    expect((res as NextResponse).status).toBe(403);
+  });
+
+  it("passes a customer with a valid unlock cookie", async () => {
+    mockCustomer();
+    mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "s1") });
+
+    const res = await requireRole("customer");
+    expect(res).not.toBeInstanceOf(NextResponse);
+  });
+
+  it("passes a locked customer when allowUnverified is set", async () => {
+    mockCustomer();
+    mockCookieGet.mockReturnValue(undefined);
+
+    const res = await requireRole("customer", { allowUnverified: true });
+    expect(res).not.toBeInstanceOf(NextResponse);
+  });
+
+  it("never gates non-customer roles (gamer passes with no cookie)", async () => {
+    mockGetClaims.mockResolvedValue({
+      data: { claims: { sub: "g1", session_id: "s1" } },
+      error: null,
+    });
+    mockSingle.mockResolvedValue({ data: { id: "g1", role: "gamer" }, error: null });
+    mockCookieGet.mockReturnValue(undefined);
+
+    const res = await requireRole(["customer", "gamer"]);
+    expect(res).not.toBeInstanceOf(NextResponse);
   });
 });

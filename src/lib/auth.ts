@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
 import type { AuthenticatedUser, Profile, UserRole } from "@/types";
 
 type AuthSuccess<R extends UserRole> = {
@@ -23,7 +25,7 @@ type AuthSuccess<R extends UserRole> = {
  */
 export async function requireRole<const R extends UserRole>(
   allowedRoles: R | readonly R[],
-  options?: { forbiddenMessage?: string },
+  options?: { forbiddenMessage?: string; allowUnverified?: boolean },
 ): Promise<AuthSuccess<R> | NextResponse> {
   const supabase = await createClient();
   // `getClaims()` verifies the JWT locally against the project's ES256 JWKS —
@@ -61,6 +63,26 @@ export async function requireRole<const R extends UserRole>(
       { error: options?.forbiddenMessage ?? "Forbidden" },
       { status: 403 },
     );
+  }
+
+  // Parent-PIN gate (mirrors the page gate in src/proxy.ts): a customer session
+  // is "locked" until the parent enters their PIN. This is where it bites for
+  // API routes — checkout, subscription changes, gamer management. Scoped to
+  // `customer` so admin/gedu/gamer callers are never affected, even on routes
+  // that allow multiple roles. `allowUnverified` opts out the handful of routes
+  // a locked customer must still reach (the PIN routes, switch-account so they
+  // can drop to a gamer, family/list for the profile chooser). The unlock token
+  // is bound to (userId, session_id); see src/lib/pin-session.ts.
+  if (profile.role === "customer" && !options?.allowUnverified) {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(PIN_COOKIE_NAME)?.value;
+    const verified = await isPinTokenValid(token, claims.sub, claims.session_id);
+    if (!verified) {
+      return NextResponse.json(
+        { error: "PIN verification required", code: "PIN_REQUIRED" },
+        { status: 403 },
+      );
+    }
   }
 
   const user = { id: claims.sub, email: claims.email };

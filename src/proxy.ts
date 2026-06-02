@@ -4,6 +4,18 @@ import type { Database } from "@/types/database.types";
 
 import { ROUTES } from "@/lib/constants";
 import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
+import { PIN_COOKIE_NAME, isPinTokenValid } from "@/lib/pin-session";
+
+// Paths a LOCKED customer session may still reach (so the parent-PIN gate
+// doesn't trap them). `/api/*` is owned by requireRole(); auth routes are the
+// sign-in/out flow; the rest are the gate itself, the profile chooser (where
+// they can drop to a gamer or choose to enter the PIN), and the email-reset
+// landing page.
+function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
+  if (pathname.startsWith("/api/") || isAuthRoute) return true;
+  const exempt = [ROUTES.customer.unlock, ROUTES.selectProfile, ROUTES.resetPin];
+  return exempt.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
 
 // Routes that don't require authentication
 // resetPassword and setupAccount are public (not auth routes) because the user
@@ -12,7 +24,7 @@ import { ROLE_DASHBOARD_PATHS } from "@/lib/constants/roles";
 // by design — see docs/instant-voice-rooms.md. The authenticated group voice
 // room at /voice/group/[id] is carved back out below — it shares the prefix
 // but must require a session.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.clubs, ROUTES.camps, ROUTES.events, ROUTES.help, ROUTES.privacy, ROUTES.docs, ROUTES.resetPassword, ROUTES.setupAccount, ROUTES.voice.prefix];
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.clubs, ROUTES.camps, ROUTES.events, ROUTES.help, ROUTES.privacy, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.setupAccount, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — gamers join as participants, gedus
@@ -121,6 +133,7 @@ export async function proxy(request: NextRequest) {
   // proxy remains the single token-refresh point. See docs/performance.md.
   const { data: claimsData } = await supabase.auth.getClaims();
   const userId = claimsData?.claims.sub ?? null;
+  const sessionId = claimsData?.claims.session_id ?? null;
 
   // Helper: create a redirect that preserves refreshed auth cookies and CSP
   function redirect(url: URL) {
@@ -143,39 +156,54 @@ export async function proxy(request: NextRequest) {
   // Check if route is for authentication
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
-  // If user is logged in and trying to access auth routes, redirect to their dashboard
-  if (userId && isAuthRoute) {
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
+  // Resolve the caller's role once (when authenticated) and reuse it for every
+  // routing decision below. A valid PIN-unlock cookie is itself proof of a
+  // verified customer, so it lets us skip the profile lookup entirely — that's
+  // the short-circuit that keeps logged-out and already-unlocked traffic on
+  // public pages (e.g. /shop) from paying for a query.
+  let userRole: Database["public"]["Enums"]["user_role"] | null = null;
+  if (userId) {
+    const pinVerified =
+      sessionId !== null &&
+      (await isPinTokenValid(request.cookies.get(PIN_COOKIE_NAME)?.value, userId, sessionId));
 
-    if (!profileError) {
-      const profileRole = profile.role;
-      const dashboardPath = ROLE_DASHBOARD_PATHS[profileRole] || ROUTES.customer.dashboard;
-      return redirect(new URL(dashboardPath, request.url));
+    if (pinVerified) {
+      userRole = "customer";
+    } else {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single();
+      if (!profileError) userRole = profile.role;
+
+      // Parent-PIN gate: a locked customer session may not act as the parent
+      // ANYWHERE — including public pages like /shop — so this runs before the
+      // public-route early return. The boundary is the session's state, not the
+      // route. API routes are gated separately in requireRole().
+      if (userRole === "customer" && !isPinExemptPath(pathname, isAuthRoute)) {
+        const unlockUrl = new URL(ROUTES.customer.unlock, request.url);
+        unlockUrl.searchParams.set("redirect", pathname);
+        return redirect(unlockUrl);
+      }
     }
+  }
+
+  // Logged-in users on auth routes go to their dashboard.
+  if (userId && isAuthRoute && userRole) {
+    const dashboardPath = ROLE_DASHBOARD_PATHS[userRole] || ROUTES.customer.dashboard;
+    return redirect(new URL(dashboardPath, request.url));
   }
 
   // Signed-in parents, gamers, and gedus visiting the home page get bounced
   // to their dashboard — mirrors the SOG-logo behavior so the home page
   // isn't a dead-end for them. Admins pass through.
-  if (userId && pathname === ROUTES.home) {
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .single();
-
-    if (
-      !profileError &&
-      (profile.role === "customer" ||
-        profile.role === "gamer" ||
-        profile.role === "gedu")
-    ) {
-      return redirect(new URL(ROLE_DASHBOARD_PATHS[profile.role], request.url));
-    }
+  if (
+    userId &&
+    pathname === ROUTES.home &&
+    (userRole === "customer" || userRole === "gamer" || userRole === "gedu")
+  ) {
+    return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
   }
 
   // If public route or auth route, allow access
@@ -190,19 +218,10 @@ export async function proxy(request: NextRequest) {
     return redirect(loginUrl);
   }
 
-  // Get user profile for role-based access control
-  const { data: profileData, error: profileError } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", userId)
-    .single();
-
-  if (profileError) {
+  // Protected route but the role lookup failed → bounce to login.
+  if (!userRole) {
     return redirect(new URL(ROUTES.login, request.url));
   }
-
-  // Check role-based access
-  const userRole = profileData.role;
 
   // /settings is shared across roles — accessible to any authenticated user.
   if (pathname.startsWith(ROUTES.settings)) {
