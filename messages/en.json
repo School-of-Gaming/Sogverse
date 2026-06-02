@@ -22,6 +22,9 @@
       "voiceSession": "Voice Session",
       "help": "Help",
       "shop": "Shop",
+      "unlockPin": "Enter PIN",
+      "resetPin": "Reset PIN",
+      "changePin": "Change PIN",
       "privacy": "Privacy Policy"
     }
   },
@@ -921,6 +924,43 @@
       "successDescription": "Your account has been set up successfully."
     }
   },
+  "pin": {
+    "create": {
+      "enterTitle": "Create a parent PIN",
+      "confirmTitle": "Confirm your PIN",
+      "description": "Your parent PIN keeps your family safe. Only you — never your kids — can approve purchases or manage who they play with. Their safety is at the heart of everything we do at School of Gaming."
+    },
+    "unlock": {
+      "title": "Enter your parent PIN",
+      "description": "Your PIN keeps your kids safe — only you can make purchases or manage their accounts. Their safety is at the heart of everything we do at School of Gaming.",
+      "forgot": "Forgot your PIN?"
+    },
+    "mismatch": "Those PINs didn't match. Let's try again.",
+    "deleteDigit": "Delete last digit",
+    "forgotSent": {
+      "title": "Check your email",
+      "description": "If your account has an email on file, we've sent a link to reset your PIN. The link expires in 24 hours.",
+      "back": "Back to PIN entry"
+    },
+    "reset": {
+      "description": "Set a new 4-digit PIN that only you know.",
+      "enterTitle": "Choose a new PIN",
+      "confirmTitle": "Confirm your new PIN",
+      "successTitle": "PIN reset",
+      "successDescription": "Your parent PIN has been updated. Sign in and enter it to continue.",
+      "invalidTitle": "Link expired",
+      "invalidDescription": "This PIN reset link is invalid or has expired. Sign in and request a new one.",
+      "backToLogin": "Back to sign in"
+    },
+    "change": {
+      "newTitle": "Choose a new PIN",
+      "confirmTitle": "Confirm your new PIN",
+      "cancel": "Cancel",
+      "successTitle": "PIN updated",
+      "successDescription": "Your parent PIN has been changed.",
+      "backToSettings": "Back to settings"
+    }
+  },
   "checkout": {
     "redirecting": "Redirecting to checkout...",
     "error": "Something went wrong starting checkout. Please <link>go back</link> and try again."
@@ -1567,6 +1607,7 @@
     "failedToUpdateProfile": "Failed to update profile.",
     "securityDescription": "Manage your password and security settings",
     "changePassword": "Change Password",
+    "changePin": "Change PIN",
     "minecraftAccount": "Minecraft Account",
     "minecraftDescription": "Link your Minecraft Java Edition account",
     "minecraftSaved": "Minecraft username saved!",

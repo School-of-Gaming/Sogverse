@@ -22,6 +22,9 @@
       "voiceSession": "jatlh poH",
       "help": "boQ",
       "shop": "ngevwI'",
+      "unlockPin": "PIN yIghItlh",
+      "resetPin": "PIN yIchu'qa'",
+      "changePin": "PIN yIchoH",
       "privacy": "Privacy Policy"
     }
   },
@@ -966,6 +969,43 @@
       "successDescription": "Account chenmoHlu'. DaH yItoy'!"
     }
   },
+  "pin": {
+    "create": {
+      "enterTitle": "vav PIN yIchenmoH",
+      "confirmTitle": "PIN yI'ol",
+      "description": "qorDu'lI' Qan vav PIN. SoH neH — not puqpu'lI' — DI'on Damaghlaw' 'ej She'meH ghoStaH 'Iv Davu'. School of Gaming maHvaD potlh law' puqpu' QanmeH Qu'."
+    },
+    "unlock": {
+      "title": "vav PIN yIghItlh",
+      "description": "puqpu'lI' Qan PIN — SoH neH DI'on Damaghlaw' 'ej account'mey Davu'. School of Gaming maHvaD potlh law' puqpu' QanmeH Qu'.",
+      "forgot": "PIN DalIj'a'?"
+    },
+    "mismatch": "rapbe' PINmey. wInIDqa'.",
+    "deleteDigit": "mI' Qav yIteq",
+    "forgotSent": {
+      "title": "QIn yIlaD",
+      "description": "account QInDaq De' tu'lu'chugh, PIN chu'qa'meH ngoq wIngeHpu'. cha'maH loS rep ret ngoq Het.",
+      "back": "PIN ghItlhmeH yIchegh"
+    },
+    "reset": {
+      "description": "PIN chu' yIcher. SoH neH yISov.",
+      "enterTitle": "PIN chu' yIwIv",
+      "confirmTitle": "PIN chu' yI'ol",
+      "successTitle": "PIN chu'qa'lu'",
+      "successDescription": "vav PIN chu'moHlu'. yI'el 'ej yItaHmeH yIghItlh.",
+      "invalidTitle": "ngoq Het",
+      "invalidDescription": "PIN chu'qa' ngoqvam lughbe' pagh Hetpu'. yI'el 'ej chu' yItlhob.",
+      "backToLogin": "'elmeH yIchegh"
+    },
+    "change": {
+      "newTitle": "PIN chu' yIwIv",
+      "confirmTitle": "PIN chu' yI'ol",
+      "cancel": "yIqIl",
+      "successTitle": "PIN choHlu'",
+      "successDescription": "vav PIN choHlu'.",
+      "backToSettings": "DuHmeyDaq yIchegh"
+    }
+  },
   "checkout": {
     "redirecting": "checkout ghoS...",
     "error": "checkout Dabe'lu'. <link>peghegh</link> je boq."
@@ -1612,6 +1652,7 @@
     "failedToUpdateProfile": "SoQmoHwI' choH Dabe'lu'.",
     "securityDescription": "mu'mey je QaQ ngoQmey tI'ang",
     "changePassword": "mu'mey yIchoH",
+    "changePin": "PIN yIchoH",
     "minecraftAccount": "Minecraft Account",
     "minecraftDescription": "Minecraft Java Edition account jonmoH",
     "minecraftSaved": "Minecraft lo'wI' pong Sahlu'! Qapla'!",

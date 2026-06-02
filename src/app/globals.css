@@ -245,6 +245,23 @@ body {
   box-shadow: 0 0 20px hsla(42, 98%, 49%, 0.5);
 }
 
+/* Shake — wrong-PIN feedback on the PIN pad (src/components/pin). Plays once
+   per trigger; the dot row returns to its exact resting position so it never
+   violates the no-layout-shift rule (the motion is user-triggered and
+   self-reversing). Disabled under reduced-motion. */
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-8px); }
+  40%, 60% { transform: translateX(8px); }
+}
+.animate-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-shake { animation: none; }
+}
+
 /* Scrollbar styling for dark theme */
 ::-webkit-scrollbar {
   width: 8px;

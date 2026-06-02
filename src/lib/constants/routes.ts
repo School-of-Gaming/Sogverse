@@ -113,6 +113,9 @@ export const ROUTES = {
     // Lock gate: a customer session is redirected here until the parent PIN is
     // entered (see src/proxy.ts and docs/parent-pin-architecture.md).
     unlock: "/parent/unlock",
+    // Authenticated "Change PIN" flow, reached from the settings security card.
+    // Gated like the rest of /parent — only an unlocked customer can reach it.
+    changePin: "/parent/change-pin",
   },
   gamer: {
     dashboard: "/gamer",

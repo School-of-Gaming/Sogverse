@@ -36,7 +36,7 @@ import { POST as verifyPost } from "@/app/api/auth/pin/verify/route";
 import { POST as setPost } from "@/app/api/auth/pin/route";
 import { POST as forgotPost } from "@/app/api/auth/pin/forgot/route";
 import { POST as resetPost } from "@/app/api/auth/pin/reset/route";
-import { createPinResetToken } from "@/lib/pin-session";
+import { createPinResetToken, pinTokenFor } from "@/lib/pin-session";
 
 // --- Helpers ---
 
@@ -98,12 +98,13 @@ describe("POST /api/auth/pin/verify", () => {
     expect(mockCookieSet).toHaveBeenCalledWith("sog_pin_verified", expect.any(String), expect.any(Object));
   });
 
-  it("returns 401 and sets no cookie on an incorrect PIN", async () => {
+  it("returns 200 verified:false and sets no cookie on an incorrect PIN", async () => {
     authCustomer();
     setRpc({ verify_my_pin: { data: false, error: null } });
 
     const res = await verifyPost(request("/api/auth/pin/verify", { pin: "9999" }));
-    expect(res.status).toBe(401);
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ verified: false });
     expect(mockCookieSet).not.toHaveBeenCalled();
   });
 
@@ -127,35 +128,24 @@ describe("POST /api/auth/pin", () => {
     expect(mockCookieSet).toHaveBeenCalled();
   });
 
-  it("refuses to overwrite an existing PIN without the current one (locked-kid guard)", async () => {
+  it("refuses to overwrite an existing PIN from a locked session (child-at-gate guard)", async () => {
     authCustomer();
     setRpc({ pin_is_set: { data: true, error: null } });
+    mockCookieGet.mockReturnValue(undefined); // no valid unlock cookie
 
     const res = await setPost(request("/api/auth/pin", { pin: "0000" }));
     expect(res.status).toBe(403);
-    expect(await res.json()).toMatchObject({ code: "CURRENT_PIN_REQUIRED" });
+    expect(await res.json()).toMatchObject({ code: "PIN_LOCKED" });
     expect(mockRpc).not.toHaveBeenCalledWith("set_my_pin", expect.anything());
   });
 
-  it("returns 401 when the current PIN is wrong", async () => {
+  it("changes the PIN when the session is already unlocked", async () => {
     authCustomer();
-    setRpc({ pin_is_set: { data: true, error: null }, verify_my_pin: { data: false, error: null } });
+    setRpc({ pin_is_set: { data: true, error: null }, set_my_pin: { data: null, error: null } });
+    // A valid unlock cookie for this (user, session) proves the session is unlocked.
+    mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "s1") });
 
-    const res = await setPost(request("/api/auth/pin", { pin: "1234", currentPin: "0000" }));
-    expect(res.status).toBe(401);
-    expect(await res.json()).toMatchObject({ code: "BAD_CURRENT_PIN" });
-    expect(mockRpc).not.toHaveBeenCalledWith("set_my_pin", expect.anything());
-  });
-
-  it("changes the PIN when the current PIN is correct", async () => {
-    authCustomer();
-    setRpc({
-      pin_is_set: { data: true, error: null },
-      verify_my_pin: { data: true, error: null },
-      set_my_pin: { data: null, error: null },
-    });
-
-    const res = await setPost(request("/api/auth/pin", { pin: "5678", currentPin: "1234" }));
+    const res = await setPost(request("/api/auth/pin", { pin: "5678" }));
     expect(res.status).toBe(200);
     expect(mockRpc).toHaveBeenCalledWith("set_my_pin", { p_pin: "5678" });
   });
