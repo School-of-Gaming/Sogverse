@@ -1789,6 +1789,14 @@
       "ignore": "mu'mey chovmoH DatlhobHa'chugh, QIn yIleghQo'. mu'mey choHbe'lu'.",
       "button": "mu'mey yIchoH"
     },
+    "pinReset": {
+      "subject": "Sogverse vavpu' PIN yIchoH",
+      "heading": "vavpu' PIN yIchoH",
+      "body": "Sogverse vavpu' PIN chovmoH tlhob Suqlu'. PIN chu' (loS mI') yIwIv.",
+      "expiry": "ngeH Soch maH cha' rep Qav.",
+      "ignore": "PIN chovmoH DatlhobHa'chugh, QIn yIleghQo'. PIN choHbe'lu'.",
+      "button": "PIN yIchoH"
+    },
     "geduInvite": {
       "subject": "Sogverse bejmoH ngeHlu'",
       "heading": "Sogverse bIghoS!",

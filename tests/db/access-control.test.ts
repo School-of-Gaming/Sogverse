@@ -26,6 +26,13 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "commit_group_changes",
   "get_gedu_assigned_product",
   "get_my_assigned_products",
+
+  // Parent PIN (00075). auth.uid()-scoped, touch only the caller's own
+  // customer_profiles row; called from the PIN API routes via the user's
+  // server client. The pin_hash itself is never returned to the client.
+  "set_my_pin",
+  "verify_my_pin",
+  "pin_is_set",
 ]);
 
 /**

@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { PIN_COOKIE_NAME } from "@/lib/pin-session";
 
 // Sign-out handler. The SSR Supabase client clears the session cookies via
 // its setAll callback before we return the redirect. The browser follows the
@@ -12,5 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function POST(request: NextRequest) {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  // Drop the parent-PIN unlock cookie so the next session starts locked.
+  (await cookies()).delete(PIN_COOKIE_NAME);
   return NextResponse.redirect(new URL("/", request.url), { status: 303 });
 }

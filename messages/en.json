@@ -1744,6 +1744,14 @@
       "ignore": "If you didn’t request a password reset, you can safely ignore this email. Your password will not be changed.",
       "button": "Reset Password"
     },
+    "pinReset": {
+      "subject": "Reset your Sogverse parent PIN",
+      "heading": "Reset Your Parent PIN",
+      "body": "We received a request to reset the PIN for your Sogverse parent account. Click the button below to choose a new 4-digit PIN.",
+      "expiry": "This link will expire in 72 hours.",
+      "ignore": "If you didn’t request a PIN reset, you can safely ignore this email. Your PIN will not be changed.",
+      "button": "Reset PIN"
+    },
     "geduInvite": {
       "subject": "You’re invited to the Sogverse",
       "heading": "Welcome to the Sogverse",

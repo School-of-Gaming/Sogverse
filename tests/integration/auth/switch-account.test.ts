@@ -36,6 +36,12 @@ vi.mock("@/lib/supabase/server", () => ({
   })),
 }));
 
+// The route clears the parent-PIN unlock cookie on success.
+const mockCookieDelete = vi.fn();
+vi.mock("next/headers", () => ({
+  cookies: vi.fn(async () => ({ delete: mockCookieDelete })),
+}));
+
 // --- Helpers ---
 
 function createRequest(body: unknown): Request {
@@ -165,7 +171,7 @@ describe("POST /api/auth/switch-account", () => {
       setupAdminFrom({ target: null });
 
       await POST(createRequest({ userId: GAMER_A1 }));
-      expect(mockRequireRole).toHaveBeenCalledWith(["customer", "gamer"]);
+      expect(mockRequireRole).toHaveBeenCalledWith(["customer", "gamer"], { allowUnverified: true });
     });
 
     it("returns 400 when body is invalid JSON", async () => {
