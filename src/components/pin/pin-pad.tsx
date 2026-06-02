@@ -79,6 +79,9 @@ export function PinPad({
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
       if (locked) return;
+      // Leave modifier combos to the browser (Ctrl/Cmd+1 tab-switch, etc.) —
+      // don't swallow them into the PIN or preventDefault their shortcut.
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (e.key >= "0" && e.key <= "9") {
         if (value.length >= PIN_LENGTH) return;
         e.preventDefault();
