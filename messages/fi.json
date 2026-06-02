@@ -1789,7 +1789,7 @@
       "subject": "Nollaa Sogverse-vanhempaintilin PIN-koodi",
       "heading": "Nollaa vanhempaintilin PIN-koodi",
       "body": "Saimme pyynnön nollata Sogverse-vanhempaintilisi PIN-koodi. Napsauta alla olevaa painiketta valitaksesi uuden nelinumeroisen PIN-koodin.",
-      "expiry": "Tämä linkki vanhenee 72 tunnin kuluttua.",
+      "expiry": "Tämä linkki vanhenee 24 tunnin kuluttua.",
       "ignore": "Jos et pyytänyt PIN-koodin nollausta, voit jättää tämän sähköpostin huomiotta. PIN-koodiasi ei muuteta.",
       "button": "Nollaa PIN-koodi"
     },
