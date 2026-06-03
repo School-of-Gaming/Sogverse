@@ -13,7 +13,6 @@ export {
   productKeys,
   useProductsByType,
   useVisibleProductsByTypes,
-  useMyGeduAssignedProducts,
   useProductDetail,
   useProductAdmin,
   useCreateProduct,

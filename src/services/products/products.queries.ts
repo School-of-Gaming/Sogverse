@@ -16,8 +16,6 @@ export const productKeys = {
     [...productKeys.lists(), { type }] as const,
   visibleByTypes: (types: ProductType[]) =>
     [...productKeys.lists(), "visible", { types }] as const,
-  myGeduAssigned: () =>
-    [...productKeys.lists(), "my-gedu-assigned"] as const,
   detail: (id: string | undefined) =>
     [...productKeys.all, "detail", id] as const,
   adminDetail: (id: string | undefined) =>
@@ -58,22 +56,6 @@ export function useVisibleProductsByTypes(types: ProductType[]) {
   });
 }
 
-// All products the current gedu is assigned to (across types). Browse pages
-// filter client-side to the type they render — one fetch covers /clubs,
-// /camps, /events. `enabled` lets callers gate the query behind the
-// role check so non-gedu visitors don't waste a round trip.
-export function useMyGeduAssignedProducts({
-  enabled = true,
-}: { enabled?: boolean } = {}) {
-  const supabase = getClient();
-  const service = new ProductsService(supabase);
-
-  return useQuery({
-    queryKey: productKeys.myGeduAssigned(),
-    queryFn: () => service.listMyGeduAssigned(),
-    enabled,
-  });
-}
 
 export function useProductAdmin(id: string | undefined) {
   const supabase = getClient();
