@@ -24,6 +24,40 @@ function geduAssignedProductHref(
 }
 
 /**
+ * Public storefront detail URL for a product. A single `/shop/[id]` route
+ * serves every product type — the page derives the type from the fetched row.
+ * The URL ends in an opaque product id, so a per-type segment (`/shop/clubs/…`)
+ * would add nesting without improving readability; keep it flat.
+ */
+function publicProductHref(productId: string): string {
+  return `/shop/${productId}`;
+}
+
+/**
+ * Public storefront browse URL for a product's type — the "back to listing"
+ * target from a detail page. Lands on `/shop` with the matching category
+ * pre-selected. The `category` query param name and values mirror
+ * `use-shop-category.ts` (the parser) — keep the two in sync.
+ *
+ * Types the shop doesn't surface fall back to the bare `/shop`:
+ * - `municipality_club` — excluded from the storefront; muni clubs are reached
+ *   only via a direct public link, never navigated to from within the site.
+ * - `event` — intentionally deferred from this version of the shop (see
+ *   `shop-browse.tsx`).
+ */
+function shopBrowseHref(productType: ProductType): string {
+  switch (productType) {
+    case "consumer_club":
+      return "/shop?category=clubs";
+    case "camp":
+      return "/shop?category=camps";
+    case "municipality_club":
+    case "event":
+      return "/shop";
+  }
+}
+
+/**
  * Picks the admin product-details URL from a product's type. Unlike the gedu
  * routes, each product type has its own admin surface, so consumer and
  * municipality clubs do NOT collapse — they map to distinct edit pages
@@ -51,9 +85,10 @@ function adminProductHref(
 export const ROUTES = {
   home: "/",
   shop: "/shop",
-  clubs: "/clubs",
-  camps: "/camps",
-  events: "/events",
+  /** Public storefront product-detail URL (`/shop/[id]`, any product type). */
+  shopProduct: publicProductHref,
+  /** "Back to listing" URL — `/shop` with the type's category pre-selected. */
+  shopBrowse: shopBrowseHref,
   yty: "/#yty",
   about: "/#about",
   docs: "/docs",

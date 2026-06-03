@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type {
@@ -135,28 +136,15 @@ export function ProductDetailPageBody({
 
 function BackLink({ productType }: { productType: ProductType }) {
   const t = useTranslations("productDetail.back");
-  const href = backHref(productType);
   return (
     <Link
-      href={href}
+      href={ROUTES.shopBrowse(productType)}
       className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
     >
       <ArrowLeft className="h-3.5 w-3.5" />
       {t(productType)}
     </Link>
   );
-}
-
-function backHref(productType: ProductType): string {
-  switch (productType) {
-    case "consumer_club":
-    case "municipality_club":
-      return "/clubs";
-    case "camp":
-      return "/camps";
-    case "event":
-      return "/events";
-  }
 }
 
 function MainColumn({

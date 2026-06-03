@@ -218,17 +218,16 @@ describe("products purchaser-read RLS (00047)", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Rail surface: the join shape used by `getMyParticipations()` — assert
-  // RLS lets the embedded product through for active/waitlisted rows and
-  // nulls it out for reserving rows. This is what governs the parent
-  // "My Clubs / Camps / Events" rail.
+  // Purchaser product-read RLS: assert the embedded product join comes through
+  // for a customer's active/waitlisted participations and is nulled out for
+  // reserving rows. This is the `purchaser_read_products_v2` policy that lets a
+  // customer view a product they own even after an admin hides it.
   // ---------------------------------------------------------------------------
 
   it("rail join: active + waitlisted rows carry the product; reserving's product is filtered", async () => {
-    // Mirrors `getMyParticipations()`'s embedded join (just the columns
-    // we need for the assertion). The rail filter `p.product !== null`
-    // is what would drop a reserving row's card today; here we assert
-    // the underlying RLS shape that filter rests on.
+    // A customer reads their own participations with the product embedded
+    // (just the columns the assertion needs). RLS nulls the embedded product
+    // for rows the viewer isn't allowed to see; this asserts that shape.
     //
     // The embedded `product` is typed non-null by PostgREST because
     // `participations.product_id` is NOT NULL — but RLS can still

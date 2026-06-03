@@ -24,7 +24,9 @@ function isPinExemptPath(pathname: string, isAuthRoute: boolean): boolean {
 // by design — see docs/instant-voice-rooms.md. The authenticated group voice
 // room at /voice/group/[id] is carved back out below — it shares the prefix
 // but must require a session.
-const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.clubs, ROUTES.camps, ROUTES.events, ROUTES.help, ROUTES.privacy, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.setupAccount, ROUTES.voice.prefix];
+// ROUTES.shop covers the storefront and its product-detail pages (/shop/[id])
+// via the prefix match below.
+const PUBLIC_ROUTES = [ROUTES.home, ROUTES.shop, ROUTES.help, ROUTES.privacy, ROUTES.docs, ROUTES.resetPassword, ROUTES.resetPin, ROUTES.setupAccount, ROUTES.voice.prefix];
 
 // The /voice/* prefix is public for instant rooms, but /voice/group/[id] is
 // the authenticated group voice room — gamers join as participants, gedus

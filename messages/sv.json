@@ -1168,10 +1168,6 @@
     },
     "selectProfile": "Byt profil"
   },
-  "shop": {
-    "title": "Butik",
-    "intro": "Här anmäler du ditt barn till våra klubbar, läger och evenemang. Vi bygger fortfarande — kom tillbaka snart!"
-  },
   "help": {
     "title": "Hjälp",
     "intro": "Svar på vanliga frågor om Sogverse.",
@@ -1217,17 +1213,15 @@
       "camp": "Skollov förvandlade till spelfyllda äventyr – nya vänner, riktiga färdigheter och en Gedu med på resan.",
       "event": "Workshops, turneringar och fester – hoppa in när något fångar din spelares blick."
     },
-    "purchasedHeadings": {
-      "consumer_club": "Dina spelares klubbar",
-      "camp": "Dina spelares läger",
-      "event": "Dina spelares evenemang"
-    },
     "geduAssignedHeadings": {
       "consumer_club": "Mina klubbar",
       "camp": "Mina läger",
       "event": "Mina evenemang"
     },
     "filters": {
+      "type": "Typ",
+      "typeClubs": "Klubbar",
+      "typeCamps": "Läger",
       "topic": "Ämne",
       "tag": "Stil",
       "format": "Format",
@@ -1259,22 +1253,7 @@
       "pillOpensOn": "Öppnar {date}",
       "pillStarted": "Redan igång",
       "fullDisabled": "Fullt",
-      "online": "Online",
-      "verbConsumerClub": "Anmäld",
-      "verbMunicipalityClub": "Registrerad",
-      "verbCamp": "Anmäld",
-      "verbEvent": "Med",
-      "statusConfirmed": "Bekräftad",
-      "statusWaitlist": "Väntelista",
-      "purchasedDetailWaitlist": "Vi mejlar dig när en plats blir ledig",
-      "purchasedDetailWaitlistWithPosition": "{position} före dig i kön",
-      "purchasedDetailUnassigned": "Vi sätter ihop din grupp",
-      "purchasedDetailNoSchedule": "Schema kommer snart",
-      "balanceSessionsLeft": "{count, plural, one {# tillfälle kvar} other {# tillfällen kvar}}",
-      "balanceNoSessionsLeft": "Inga tillfällen kvar – köp fler",
-      "balanceSubscription": "Prenumeration",
-      "nextSession": "Nästa: {when}",
-      "gamersLabel": "För {names}"
+      "online": "Online"
     },
     "empty": {
       "noProducts": "Inget här ännu – nya är på väg.",

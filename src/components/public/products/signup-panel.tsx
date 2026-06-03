@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import type { ProductBrowseRow, SubscriptionFrequency } from "@/types";
 import { useCurrency } from "@/providers/currency-provider";
+import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { CURRENCY_CONFIG } from "@/lib/constants/currency";
 import {
@@ -170,7 +171,7 @@ export function SignupPanel({
     productType: product.product_type,
     state,
     myParticipationState: myParticipationState ?? null,
-    myProductsHref: "/clubs",
+    myProductsHref: ROUTES.shopBrowse(product.product_type),
     authState,
     pricingTracks: tracks,
     selectedPricingKey,

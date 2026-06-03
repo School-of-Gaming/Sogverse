@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { ProductBrowseRow } from "@/types";
@@ -55,7 +56,7 @@ export function ProductGeduAssignedCard({ product }: ProductGeduAssignedCardProp
 
   const name = tr?.name ?? "";
   const imagePath = product.image_path;
-  const detailHref = detailHrefFor(product.product_type, product.id);
+  const detailHref = ROUTES.shopProduct(product.id);
 
   return (
     <Card className="relative h-full overflow-visible border-primary/50 bg-primary/5 shadow-sm">
@@ -110,21 +111,6 @@ export function ProductGeduAssignedCard({ product }: ProductGeduAssignedCardProp
       </CardContent>
     </Card>
   );
-}
-
-function detailHrefFor(
-  productType: ProductBrowseRow["product_type"],
-  productId: string,
-): string {
-  switch (productType) {
-    case "consumer_club":
-    case "municipality_club":
-      return `/clubs/${productId}`;
-    case "camp":
-      return `/camps/${productId}`;
-    case "event":
-      return `/events/${productId}`;
-  }
 }
 
 function renderLocationLine(
