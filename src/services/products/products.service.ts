@@ -218,59 +218,10 @@ export class ProductsService {
     return data as ProductBrowseRow[];
   }
 
-  // Products the current Gedu is assigned to (via gedu_group_assignments).
-  // Returns the same shape as `listVisibleByTypes` so the public browse page
-  // can render gedu-owned rows with the same card adapters. Unlike
-  // listVisibleByTypes, this does NOT filter on is_visible / status: an
-  // assignment is the gedu's claim on the product, parallel to the customer's
-  // participation, so a hidden / draft / cancelled product they're on still
-  // shows up. The new `gedu_assigned_read_products` policy (migration
-  // 00056) lifts the visibility gate on products for the second query.
-  //
-  // Two-step (assignments → products) instead of an `!inner` join: a gedu can
-  // sit on multiple groups within the same product, so we have to dedupe
-  // product_ids before fetching products. JS dedup on the small assignment
-  // payload (a couple of UUIDs per row) reads cleaner than letting the join
-  // multiply rows out and deduping the larger product payloads downstream.
-  //
-  // RLS on the join table is `gedus_read_own_assignments` (migration 00050,
-  // which replaced the earlier team-visibility policy after it caused
-  // self-referential recursion). That policy already restricts the result to
-  // the caller's own rows; the explicit `.eq("gedu_id", userId)` here is
-  // belt-and-suspenders.
-  async listMyGeduAssigned(): Promise<ProductBrowseRow[]> {
-    const { data: claims } = await this.supabase.auth.getClaims();
-    const userId = claims?.claims.sub;
-    if (!userId) return [];
-
-    const { data: assignments, error: assignErr } = await this.supabase
-      .from("gedu_group_assignments")
-      .select("product_id")
-      .eq("gedu_id", userId);
-    if (assignErr) throw assignErr;
-
-    const productIds = Array.from(
-      new Set(assignments.map((a) => a.product_id)),
-    );
-    if (productIds.length === 0) return [];
-
-    const { data, error } = await this.supabase
-      .from("products")
-      .select(
-        "*, topics(slug, kind, icon_path, topic_translations(*)), product_translations(*), product_tags(tags(slug, tag_translations(*))), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))",
-      )
-      .in("id", productIds)
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-    return data as ProductBrowseRow[];
-  }
-
   // Single-product detail fetch for the parent-facing detail page
-  // (`/clubs/[id]`, `/camps/[id]`, `/events/[id]`). Returns the same shape
-  // as `listVisibleByTypes` plus a flattened `holidays` array sourced from
-  // the linked holiday calendars — that's everything the calendar widget
-  // and the signup panel need to render.
+  // (`/shop/[id]`). Returns the same shape as `listVisibleByTypes` plus a
+  // flattened `holidays` array sourced from the linked holiday calendars —
+  // that's everything the calendar widget and the signup panel need to render.
   //
   // RLS is the sole gate: a viewer reaches this row if either
   // `public_read_published_products` (visible + pending/running) OR
