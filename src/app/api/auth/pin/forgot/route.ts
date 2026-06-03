@@ -8,6 +8,7 @@ import { createPinResetToken } from "@/lib/pin-session";
 import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { detectLocaleFromHeader, isSupportedLocale } from "@/lib/constants/locales";
+import { getOrigin } from "@/lib/url";
 
 /**
  * Email the signed PIN-reset link to the parent's own inbox. Reachable from the
@@ -34,7 +35,12 @@ export async function POST(request: Request) {
     .eq("user_id", user.id)
     .single();
 
-  const origin = new URL(request.url).origin;
+  // Build the emailed link off the TRUSTED origin, not the raw Host header.
+  // `getOrigin` accepts the incoming Host only if it matches a known-trusted
+  // source, else falls back to canonical NEXT_PUBLIC_SITE_URL — so a spoofed
+  // `Host: evil.com` can't turn this reset link (which carries a valid token)
+  // into a credential-phishing URL. See src/lib/url.ts.
+  const origin = getOrigin(request);
   const token = await createPinResetToken(user.id, cp?.pin_hash ?? "", Date.now());
   const resetLink = `${origin}${ROUTES.resetPin}?token=${encodeURIComponent(token)}`;
 
