@@ -40,7 +40,7 @@ import {
 import { Identicon } from "@/components/ui/identicon";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
-import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
+import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { UserRow } from "@/components/admin/user-row";
 import {
   SessionsSection,
@@ -280,26 +280,27 @@ function VoiceAvatarDemo() {
 /*  Dialog Demo                                                        */
 /* ------------------------------------------------------------------ */
 
-function SwitchToGamerDialogDemo() {
+function SwitchProfileDialogDemo() {
   const [open, setOpen] = useState(false);
 
   return (
-    <Section title="Switch to Gamer Dialog">
-      <SubSection title="Parent → Gamer session switch">
+    <Section title="Switch Profile Dialog">
+      <SubSection title="Confirm an account switch (parent ↔ gamer)">
         <p className="text-sm text-muted-foreground mb-3">
-          Shown when a parent clicks &ldquo;Join&rdquo; on a voice session. Uses info color to signal
-          an attention-worthy auth action. Confirm button triggers session swap then full page navigation.
+          Shown when a parent clicks &ldquo;Join&rdquo; on a voice session, or a gamer clicks
+          &ldquo;Add Gamer.&rdquo; Uses info color to signal an attention-worthy auth action. The
+          avatar tile is the CTA — clicking it swaps the session then full-page navigates.
         </p>
         <Button variant="secondary" onClick={() => setOpen(true)}>
           Open Switch Dialog
         </Button>
-        <SwitchToGamerDialog
+        <SwitchProfileDialog
           open={open}
           onOpenChange={setOpen}
-          gamerId="demo-gamer-id"
-          gamerDisplayName="Aino"
-          productName="Minecraft Club"
+          target={{ id: "demo-gamer-id", role: "gamer", first_name: "Aino" }}
           redirectUrl="#"
+          title="Switch to Aino's profile to join Minecraft Club?"
+          oneWayWarning="You'll be signed out of your parent account."
         />
       </SubSection>
     </Section>
@@ -1396,9 +1397,9 @@ export default function AdminUIComponentsPage() {
       <DialogDemo />
 
       {/* ============================================================ */}
-      {/* Section 8b: Switch to Gamer Dialog                            */}
+      {/* Section 8b: Switch Profile Dialog                             */}
       {/* ============================================================ */}
-      <SwitchToGamerDialogDemo />
+      <SwitchProfileDialogDemo />
 
       {/* ============================================================ */}
       {/* Section 9: Participant Card                                   */}
