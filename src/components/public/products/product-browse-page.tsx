@@ -28,14 +28,16 @@ interface ProductBrowsePageProps {
 // Heading + subheading copy live under productBrowse.headings/subheadings,
 // keyed on the browseType. We resolve to literal keys here (rather than
 // templating with the type name) so next-intl's typed t() call narrows
-// to a known message path. Municipality clubs have no browse route; mapping
-// the type to the consumer-club copy is harmless and keeps the switch total.
-type HeadingKey = "consumer_club" | "camp" | "event";
+// to a known message path. The shop only ever browses consumer clubs and
+// camps, so those are the only two heading keys; municipality_club and event
+// never reach a browse grid but must appear in the Record to keep it total
+// over ProductType — they map to consumer-club copy and are never looked up.
+type HeadingKey = "consumer_club" | "camp";
 const HEADING_KEYS: Record<ProductType, HeadingKey> = {
   consumer_club: "consumer_club",
   municipality_club: "consumer_club",
   camp: "camp",
-  event: "event",
+  event: "consumer_club",
 };
 
 function headingFor(t: ReturnType<typeof useTranslations<"productBrowse">>, key: HeadingKey): string {
@@ -44,8 +46,6 @@ function headingFor(t: ReturnType<typeof useTranslations<"productBrowse">>, key:
       return t("headings.consumer_club");
     case "camp":
       return t("headings.camp");
-    case "event":
-      return t("headings.event");
   }
 }
 
@@ -58,8 +58,6 @@ function subheadingFor(
       return t("subheadings.consumer_club");
     case "camp":
       return t("subheadings.camp");
-    case "event":
-      return t("subheadings.event");
   }
 }
 

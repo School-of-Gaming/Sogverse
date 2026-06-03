@@ -1205,13 +1205,11 @@
   "productBrowse": {
     "headings": {
       "consumer_club": "Kerhomme",
-      "camp": "Leirimme",
-      "event": "Tapahtumamme"
+      "camp": "Leirimme"
     },
     "subheadings": {
       "consumer_club": "Viikoittaiset kerhot, joissa pelaajasi pelaa lempipelejään uusien kavereiden ja Gedun kanssa.",
-      "camp": "Koululomat täynnä peliseikkailuja – uusia kavereita, oikeita taitoja ja Gedu mukana matkassa.",
-      "event": "Työpajat, turnaukset ja juhlat – pudottaudu mukaan, kun jokin kiinnostaa."
+      "camp": "Koululomat täynnä peliseikkailuja – uusia kavereita, oikeita taitoja ja Gedu mukana matkassa."
     },
     "filters": {
       "type": "Tyyppi",
