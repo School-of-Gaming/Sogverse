@@ -2,10 +2,6 @@
 
 ## Cleanup
 
-- [ ] **SSR-prefetch the shop browse grid so it lands on first paint (no client spinner).** `/shop` (`ShopBrowse` → `ProductBrowsePage`) currently fetches client-side and shows a spinner until products + topics + tags + counts all resolve. The grid now loads every shop type in one query (`useVisibleProductsByTypes(SHOP_PRODUCT_TYPES)`) with the Type filter applied client-side, so it's a single query to seed. Prefetch it (plus `useTopics`, `useTags`, and `useParticipationCounts` for the product ids) in the `/shop` Server Component and seed React Query via `initialData`/`HydrationBoundary` — same pattern as the My Gamers SSR-prefetch (commit `2cc891f`) and `useMyUpcomingSessions`. Mind the `allLoaded` gate (it waits on all four) and the layout-shift rule. Related: the broader public-page dynamic-rendering item later in this list.
-
-- [ ] **Decide the fate of the now-unused family-subscriptions surfaces.** Removing the shop's purchased rail + purchased-detail placeholder left these orphaned: the API route `src/app/api/family-subscriptions/me/route.ts` (its only client caller, `ParticipationsService.getMyFamilySubs`, was deleted) and any `family-subscription`-keyed tests. Billing now lives in the Stripe Customer Portal, so confirm nothing else needs the route before deleting it (and its types/tests).
-
 - [ ] **Close the remaining group-management parity gaps.** The product/groups stack is now the only one; these are behaviours the old groups flow had that the current one doesn't yet:
   - The group-changes apply route sends no emails on commit (`src/app/api/admin/products/[id]/groups/apply/route.ts` has a comment saying so explicitly). Restore the per-change email notifications.
   - Group deletion silently unassigns enrolled gamers (`participations.group_id` has `ON DELETE SET NULL`). Add a warning segment to `commit-summary-dialog.tsx`, or change the FK to `ON DELETE RESTRICT`.
