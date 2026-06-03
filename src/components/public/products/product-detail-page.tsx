@@ -60,12 +60,13 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
   // invalidates queries; never run a Supabase data query inside it.
   useProductSeatCountsRealtime(product?.id);
 
-  // Stripe Checkout bounce-back. Success goes to the browse page (handled
-  // upstream), so a `signup=success` here only happens on legacy or copied
-  // URLs — invalidate just in case the realtime channel missed the rollup.
-  // We deliberately do NOT free the seat on `signup=canceled`: the
-  // movie-ticket model holds the seat for the full reservation lifetime, and
-  // the parent retries by clicking Sign Up again.
+  // Stripe Checkout success bounces back here — the checkout route sets
+  // success_url to /shop/[id]?signup=success. The flag triggers a query
+  // invalidation so the freshly-confirmed participation surfaces (the signup
+  // panel flips to its already-signed-up state) even if the realtime
+  // seat-count channel missed the rollup. We deliberately do NOT free the seat
+  // on `signup=canceled`: the movie-ticket model holds the seat for the full
+  // reservation lifetime, and the parent retries by clicking Sign Up again.
   const signupResult = searchParams.get("signup");
   useEffect(() => {
     if (signupResult === "success") {
