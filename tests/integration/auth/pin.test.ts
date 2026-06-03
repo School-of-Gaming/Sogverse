@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // pin-session reads the secret lazily; set before importing the routes.
 process.env.PIN_COOKIE_SECRET = "route-test-pin-secret";
+// The forgot route builds the emailed reset link via getOrigin(), which falls
+// back to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host (these
+// mock requests don't). A fake value keeps the suite hermetic and exercises the
+// production-representative path (untrusted Host → canonical origin).
+process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
 
 // --- Mocks ---
 
@@ -48,6 +53,8 @@ import { POST as setPost } from "@/app/api/auth/pin/route";
 import { POST as forgotPost } from "@/app/api/auth/pin/forgot/route";
 import { POST as resetPost } from "@/app/api/auth/pin/reset/route";
 import { createPinResetToken, pinTokenFor } from "@/lib/pin-session";
+// Mocked above; imported here as a handle to assert the reset-link origin.
+import { buildPinResetEmail } from "@/lib/email-templates/pin-reset";
 
 // --- Helpers ---
 
@@ -180,6 +187,27 @@ describe("POST /api/auth/pin/forgot", () => {
     const res = await forgotPost(request("/api/auth/pin/forgot", {}));
     expect(res.status).toBe(200);
     expect(mockSendEmail).not.toHaveBeenCalled();
+  });
+
+  // Regression: the emailed link must be built off the trusted origin
+  // (getOrigin → canonical NEXT_PUBLIC_SITE_URL here), never the attacker-
+  // controllable Host header — otherwise a spoofed Host turns the reset link,
+  // which carries a valid token, into a phishing URL.
+  it("builds the reset link off the trusted origin, ignoring a spoofed Host", async () => {
+    authCustomer();
+    // Both the URL and the Host header carry the attacker value, as a genuinely
+    // spoofed request would — so this fails if the route ever regresses to
+    // either `new URL(request.url).origin` or a raw Host read.
+    const spoofed = new Request("https://evil.com/api/auth/pin/forgot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", host: "evil.com" },
+      body: "{}",
+    });
+    await forgotPost(spoofed);
+
+    const link = vi.mocked(buildPinResetEmail).mock.calls[0][1];
+    expect(link.startsWith("https://test.sogverse.local")).toBe(true);
+    expect(link).not.toContain("evil.com");
   });
 });
 
