@@ -180,6 +180,31 @@
   --color-yty-glow: #fbbf24;
   --color-yty-valor: #fb7185;
   --color-yty-wit: #a78bfa;
+  /* Avatar palette — user-selectable icon-background colors. A full vibrant
+     wheel: avatars are identity tiles (rendered as the soft-tint treatment
+     bg-avatar-X/15 + text-avatar-X glyph), NOT status signals, so per the
+     Google/Slack/Apple convention they may reuse hues that mean something
+     elsewhere — context disambiguates a colored name tile from an alert.
+     Each shade is nudged off its exact semantic token. Two deliberate gaps:
+     no dedicated yellow (42-46° is brand/warning/glow AND the one hue that
+     fails contrast on the light-theme tint) and no mid-blue (~210° = info;
+     sky + indigo bracket it). Glyphs sit at L≈55-72% to read on both themes. */
+  --color-avatar-red: #f87171;
+  --color-avatar-coral: #fb8a5c;
+  --color-avatar-orange: #fb923c;
+  --color-avatar-lime: #a3e635;
+  --color-avatar-green: #4ade80;
+  --color-avatar-teal: #2dd4bf;
+  --color-avatar-cyan: #22d3ee;
+  --color-avatar-sky: #38bdf8;
+  --color-avatar-indigo: #818cf8;
+  --color-avatar-violet: #9b6bf7;
+  --color-avatar-fuchsia: #e879f9;
+  --color-avatar-magenta: #e85ad6;
+  --color-avatar-pink: #f472b6;
+  --color-avatar-rose: #f43f5e;
+  --color-avatar-slate: #94a3b8;
+  --color-avatar-stone: #a8a29e;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
