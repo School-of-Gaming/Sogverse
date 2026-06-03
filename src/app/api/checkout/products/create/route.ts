@@ -12,9 +12,9 @@ import {
   computeBundleAmount,
   computeSinglePaymentAmount,
   frequencyFromShape,
-  getOrCreateStripeCustomer,
   getOrCreateSubscriptionPrice,
 } from "@/lib/stripe/participation-prices";
+import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
 import { RESERVATION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import { getOrigin } from "@/lib/url";
 import { resolveInternalPath } from "@/lib/navigation/internal-path";

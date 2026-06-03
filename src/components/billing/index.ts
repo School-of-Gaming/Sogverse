@@ -1,5 +1,5 @@
 export {
-  PaymentMethodCard,
-  PaymentMethodCardView,
-  type PaymentMethodCardViewProps,
-} from "./PaymentMethodCard";
+  ManageBillingCard,
+  ManageBillingCardView,
+  type ManageBillingCardViewProps,
+} from "./ManageBillingCard";

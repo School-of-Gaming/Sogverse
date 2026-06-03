@@ -1557,11 +1557,12 @@
       }
     },
     "billing": {
-      "paymentMethod": {
-        "title": "Payment method",
-        "expires": "Expires {date}",
-        "empty": "No card on file.",
-        "error": "Couldn't load payment method."
+      "manage": {
+        "title": "Payment & billing",
+        "description": "Manage your saved cards, invoices, and subscriptions securely on Stripe.",
+        "cta": "Manage billing",
+        "opening": "Opening…",
+        "error": "Couldn't open the billing portal. Please try again."
       }
     },
     "gamerDetail": {

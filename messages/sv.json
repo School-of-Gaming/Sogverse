@@ -1557,11 +1557,12 @@
       }
     },
     "billing": {
-      "paymentMethod": {
-        "title": "Betalningsmetod",
-        "expires": "Giltigt till {date}",
-        "empty": "Inget kort sparat.",
-        "error": "Kunde inte hämta betalningsmetoden."
+      "manage": {
+        "title": "Betalning och fakturering",
+        "description": "Hantera dina sparade kort, fakturor och prenumerationer säkert i Stripe.",
+        "cta": "Hantera fakturering",
+        "opening": "Öppnar…",
+        "error": "Det gick inte att öppna faktureringsportalen. Försök igen."
       }
     },
     "gamerDetail": {

@@ -1557,11 +1557,12 @@
       }
     },
     "billing": {
-      "paymentMethod": {
-        "title": "Maksutapa",
-        "expires": "Voimassa {date} asti",
-        "empty": "Ei tallennettua korttia.",
-        "error": "Maksutavan lataaminen epäonnistui."
+      "manage": {
+        "title": "Maksut ja laskutus",
+        "description": "Hallinnoi tallennettuja kortteja, laskuja ja tilauksia turvallisesti Stripessä.",
+        "cta": "Hallinnoi laskutusta",
+        "opening": "Avataan…",
+        "error": "Laskutusportaalin avaaminen epäonnistui. Yritä uudelleen."
       }
     },
     "gamerDetail": {
