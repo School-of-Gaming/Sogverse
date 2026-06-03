@@ -1602,11 +1602,12 @@
       }
     },
     "billing": {
-      "paymentMethod": {
-        "title": "Huch DIlmeH mIw",
-        "expires": "{date} jajvaD Huch poH SuvwI'",
-        "empty": "DaH HuchHommey laD pagh.",
-        "error": "Huch DIlmeH mIw vIqonchu'be'."
+      "manage": {
+        "title": "Huch je tlhob",
+        "description": "Stripe Daq HuchHommey, jabbI'IDmey, je rarmeH tlhobmey DawIvlaH 'ej DaSeHlaH.",
+        "cta": "Huch yISeH",
+        "opening": "poSmoHlu'taH…",
+        "error": "Huch lojmIt poSmoHlu'pu'be'. yInIDqa'."
       }
     },
     "gamerDetail": {

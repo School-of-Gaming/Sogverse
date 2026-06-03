@@ -65,8 +65,6 @@ vi.mock("@/lib/stripe/participation-prices", async (importOriginal) => {
     await importOriginal<typeof import("@/lib/stripe/participation-prices")>();
   return {
     ...actual,
-    getOrCreateStripeCustomer: (...args: unknown[]) =>
-      mockGetOrCreateStripeCustomer(...args),
     getOrCreateSubscriptionPrice: (...args: unknown[]) =>
       mockGetOrCreateSubscriptionPrice(...args),
     computeBundleAmount: (...args: unknown[]) => mockComputeBundleAmount(...args),
@@ -74,6 +72,13 @@ vi.mock("@/lib/stripe/participation-prices", async (importOriginal) => {
       mockComputeSinglePaymentAmount(...args),
   };
 });
+
+// getOrCreateStripeCustomer moved to its own module (customer concern, not a
+// pricing one); it's the I/O boundary the checkout route hits, so stub it.
+vi.mock("@/lib/stripe/customer", () => ({
+  getOrCreateStripeCustomer: (...args: unknown[]) =>
+    mockGetOrCreateStripeCustomer(...args),
+}));
 
 // --- Fixtures ---
 

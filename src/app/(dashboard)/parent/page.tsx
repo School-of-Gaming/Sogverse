@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import { DashboardSectionPill, type DashboardSection } from "@/components/layout";
 import { MyGamersGrid } from "@/components/family";
-import { PaymentMethodCard } from "@/components/billing";
+import { ManageBillingCard } from "@/components/billing";
 import { ParentHelpSection, ParentSessionsSection } from "@/components/parent";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -90,7 +90,7 @@ function CustomerDashboardPageBody({
         <section id="billing" className="scroll-mt-32">
           <div className="mx-auto max-w-3xl space-y-6">
             <h2 className="text-3xl font-bold">{t('billing')}</h2>
-            <PaymentMethodCard />
+            <ManageBillingCard />
           </div>
         </section>
 

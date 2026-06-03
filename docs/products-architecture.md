@@ -261,6 +261,11 @@ The dialog copy is the load-bearing UX — a parent who cancels their sub and *t
 
 Wording will iterate during the detail-page design pass; the rule the wording must satisfy is in this section.
 
+**Stripe's Customer Portal can do "Cancel subscription" but never "Leave this club."** Billing management is delegated to Stripe's hosted Customer Portal (`src/app/api/parent/billing-portal/route.ts`, opened from `ManageBillingCard`) for payment methods, invoices, and whole-subscription cancel. The portal operates at the *subscription* level, not the *item* level — and Stripe disables the portal's "update subscription" feature entirely for subs with more than one item. So for a family sub (one sub, one item per club) the portal only ever offers **Cancel the whole sub**, which drops every club at once. There is no portal path to remove a single item. Consequences:
+
+- **Per-club removal must stay an in-app action** — the planned `unsubscribe_from_product` RPC (§6.6), never delegated to the portal.
+- **Whole-sub cancel via the portal is safe**: Stripe fires `customer.subscription.deleted` → `handleSubscriptionDeleted` (`src/app/api/webhooks/stripe/products/route.ts`) flips `status = 'cancelled'`, purges the `family_subscription_items` rows, and the credit cron flips those participations to bundle-mode. The DB stays consistent without any portal-specific handling.
+
 ### 4.5d Seat hold vs. club access — two independent gates with a grace window
 
 A participation row carries two distinct rights, not one:
