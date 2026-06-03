@@ -8,9 +8,17 @@
 --
 -- One PIN per parent account, stored as a bcrypt hash on customer_profiles.
 -- Verification and mutation go through auth.uid()-scoped SECURITY DEFINER RPCs;
--- the hash is never read by the client. There is intentionally no rate-limiting
--- and no PIN-strength validation beyond "exactly 4 digits" — the PIN blocks
--- young children, and a parent who picks 0000 has made their own trust call.
+-- the hash is never read by the client.
+--
+-- Intentionally NO rate-limiting and no PIN-strength validation beyond "exactly
+-- 4 digits". The threat model is a child on a shared, already-signed-in device,
+-- and the bar is "blocks young children" — not "resists a determined attacker".
+-- A 4-digit space (10k) is online-guessable, but a child would have to either
+-- script the verify RPC or grind it by hand against the gate's non-instant
+-- wrong-PIN feedback (a ~600ms shake/clear per attempt, see use-pin-field.ts),
+-- both of which clear the bar we care about. A parent who picks 0000 has made
+-- their own trust call. Adding attempt throttling is a tracked future
+-- improvement — see docs/parent-pin-architecture.md.
 
 -- pgcrypto provides crypt()/gen_salt(). On Supabase it lives in the extensions
 -- schema; `if not exists` is a no-op when it's already enabled (in whichever

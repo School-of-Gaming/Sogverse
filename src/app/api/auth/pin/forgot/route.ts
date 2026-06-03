@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL } from "@/lib/constants";
 import { ROUTES } from "@/lib/constants/routes";
@@ -23,8 +24,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   }
 
+  // Bind the token to the current PIN hash so it's single-use: completing the
+  // reset rotates the hash and the token stops validating (see pin-session.ts).
+  // Read via the admin client (bypasses RLS; the hash never leaves the server).
+  const admin = createAdminClient();
+  const { data: cp } = await admin
+    .from("customer_profiles")
+    .select("pin_hash")
+    .eq("user_id", user.id)
+    .single();
+
   const origin = new URL(request.url).origin;
-  const token = await createPinResetToken(user.id, Date.now());
+  const token = await createPinResetToken(user.id, cp?.pin_hash ?? "", Date.now());
   const resetLink = `${origin}${ROUTES.resetPin}?token=${encodeURIComponent(token)}`;
 
   const pref = profile.locale;

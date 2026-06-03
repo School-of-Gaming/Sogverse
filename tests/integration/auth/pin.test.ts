@@ -17,8 +17,19 @@ vi.mock("next/headers", () => ({
 }));
 
 const mockAdminRpc = vi.fn();
+// The admin client reads customer_profiles.pin_hash (forgot mints / reset
+// verifies the single-use token bound to it). Returns whatever mockPinHash is
+// set to for the current test.
+const mockPinHash = vi.fn<() => { data: { pin_hash: string | null } | null; error: unknown }>(
+  () => ({ data: { pin_hash: null }, error: null }),
+);
 vi.mock("@/lib/supabase/admin", () => ({
-  createAdminClient: vi.fn(() => ({ rpc: (...args: unknown[]) => mockAdminRpc(...args) })),
+  createAdminClient: vi.fn(() => ({
+    rpc: (...args: unknown[]) => mockAdminRpc(...args),
+    from: () => ({
+      select: () => ({ eq: () => ({ single: () => mockPinHash() }) }),
+    }),
+  })),
 }));
 
 const mockSendEmail = vi.fn();
@@ -77,6 +88,8 @@ function setRpc(handlers: Record<string, { data?: unknown; error?: unknown }>) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // clearAllMocks keeps implementations, so restore the default pin_hash read.
+  mockPinHash.mockReturnValue({ data: { pin_hash: null }, error: null });
 });
 
 // --- /api/auth/pin/verify ---
@@ -181,7 +194,8 @@ describe("POST /api/auth/pin/reset", () => {
 
   it("sets the PIN for the token's user via the admin RPC", async () => {
     mockAdminRpc.mockResolvedValue({ error: null });
-    const token = await createPinResetToken("reset-user", Date.now());
+    mockPinHash.mockReturnValue({ data: { pin_hash: "$2a$06$oldhash" }, error: null });
+    const token = await createPinResetToken("reset-user", "$2a$06$oldhash", Date.now());
 
     const res = await resetPost(request("/api/auth/pin/reset", { token, pin: "4321" }));
     expect(res.status).toBe(200);
@@ -191,8 +205,24 @@ describe("POST /api/auth/pin/reset", () => {
     });
   });
 
+  it("is single-use: rejects a token once the PIN hash has rotated (replay)", async () => {
+    mockAdminRpc.mockResolvedValue({ error: null });
+    const token = await createPinResetToken("reset-user", "$2a$06$oldhash", Date.now());
+
+    // First use: stored hash still matches the one the token was minted against.
+    mockPinHash.mockReturnValue({ data: { pin_hash: "$2a$06$oldhash" }, error: null });
+    expect((await resetPost(request("/api/auth/pin/reset", { token, pin: "4321" }))).status).toBe(200);
+
+    // Replay: the reset rotated pin_hash, so the same token no longer validates.
+    mockAdminRpc.mockClear();
+    mockPinHash.mockReturnValue({ data: { pin_hash: "$2a$06$NEWhash" }, error: null });
+    const replay = await resetPost(request("/api/auth/pin/reset", { token, pin: "0000" }));
+    expect(replay.status).toBe(400);
+    expect(mockAdminRpc).not.toHaveBeenCalled();
+  });
+
   it("returns 400 on a malformed PIN", async () => {
-    const token = await createPinResetToken("reset-user", Date.now());
+    const token = await createPinResetToken("reset-user", "$2a$06$oldhash", Date.now());
     const res = await resetPost(request("/api/auth/pin/reset", { token, pin: "12" }));
     expect(res.status).toBe(400);
     expect(mockAdminRpc).not.toHaveBeenCalled();

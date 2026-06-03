@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { verifyPinResetToken } from "@/lib/pin-session";
+import { resolvePinResetToken } from "@/lib/pin-session-server";
 
 const schema = z.object({
   token: z.string().min(1),
@@ -14,6 +14,10 @@ const schema = z.object({
  * Sets the PIN via the admin-only set_pin_for_user RPC — the only path that can
  * overwrite a PIN without proving the current one, and unreachable from a
  * locked child session because the token can't be obtained without the inbox.
+ *
+ * The token is single-use: it's bound to the PIN hash at mint time, so once this
+ * route rotates the hash the same link no longer validates (resolvePinResetToken,
+ * shared with the /reset-pin page so the UI and the write agree on validity).
  */
 export async function POST(request: Request) {
   const parsed = schema.safeParse(await request.json().catch(() => null));
@@ -21,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const userId = await verifyPinResetToken(parsed.data.token, Date.now());
+  const userId = await resolvePinResetToken(parsed.data.token);
   if (!userId) {
     return NextResponse.json(
       { error: "This reset link is invalid or has expired." },

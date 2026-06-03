@@ -8,6 +8,7 @@ import {
   isPinTokenValid,
   createPinResetToken,
   verifyPinResetToken,
+  parseResetTokenUserId,
 } from "@/lib/pin-session";
 
 const USER = "11111111-1111-1111-1111-111111111111";
@@ -50,40 +51,62 @@ describe("pin-session unlock token", () => {
 describe("pin-session reset token", () => {
   const NOW = 1_700_000_000_000;
   const TTL = 24 * 60 * 60 * 1000;
+  // Two distinct bcrypt-shaped hashes: the PIN's stored hash at mint time, and
+  // what it becomes after a reset rotates it. The token is bound to the former.
+  const OLD_HASH = "$2a$06$oldhasholdhasholdhashuOLD0000000000000000000000000000";
+  const NEW_HASH = "$2a$06$newhashnewhashnewhashuNEW1111111111111111111111111111";
 
   it("round-trips and returns the userId before expiry", async () => {
-    const token = await createPinResetToken(USER, NOW);
-    expect(await verifyPinResetToken(token, NOW)).toBe(USER);
-    expect(await verifyPinResetToken(token, NOW + TTL - 1)).toBe(USER);
+    const token = await createPinResetToken(USER, OLD_HASH, NOW);
+    expect(await verifyPinResetToken(token, OLD_HASH, NOW)).toBe(USER);
+    expect(await verifyPinResetToken(token, OLD_HASH, NOW + TTL - 1)).toBe(USER);
   });
 
   it("rejects once expired", async () => {
-    const token = await createPinResetToken(USER, NOW);
-    expect(await verifyPinResetToken(token, NOW + TTL + 1)).toBeNull();
+    const token = await createPinResetToken(USER, OLD_HASH, NOW);
+    expect(await verifyPinResetToken(token, OLD_HASH, NOW + TTL + 1)).toBeNull();
+  });
+
+  // Single-use regression: the token is bound to the PIN hash that existed when
+  // it was minted. The reset rotates pin_hash (bcrypt re-salts even for the same
+  // digits), so replaying the link — or replaying after any later change — fails.
+  it("is single-use: stops validating once the stored PIN hash changes", async () => {
+    const token = await createPinResetToken(USER, OLD_HASH, NOW);
+    // Valid while the stored hash is unchanged (the one real use).
+    expect(await verifyPinResetToken(token, OLD_HASH, NOW)).toBe(USER);
+    // After the reset rotates pin_hash, the same token no longer validates.
+    expect(await verifyPinResetToken(token, NEW_HASH, NOW)).toBeNull();
   });
 
   it("rejects a tampered userId", async () => {
-    const token = await createPinResetToken(USER, NOW);
+    const token = await createPinResetToken(USER, OLD_HASH, NOW);
     const [, exp, sig] = token.split(".");
     const forged = `33333333-3333-3333-3333-333333333333.${exp}.${sig}`;
-    expect(await verifyPinResetToken(forged, NOW)).toBeNull();
+    expect(await verifyPinResetToken(forged, OLD_HASH, NOW)).toBeNull();
   });
 
   it("rejects a tampered expiry (extending the window)", async () => {
-    const token = await createPinResetToken(USER, NOW);
+    const token = await createPinResetToken(USER, OLD_HASH, NOW);
     const [userId, exp, sig] = token.split(".");
     const forged = `${userId}.${Number(exp) + TTL}.${sig}`;
-    expect(await verifyPinResetToken(forged, NOW)).toBeNull();
+    expect(await verifyPinResetToken(forged, OLD_HASH, NOW)).toBeNull();
   });
 
   it("rejects a tampered signature", async () => {
-    const token = await createPinResetToken(USER, NOW);
+    const token = await createPinResetToken(USER, OLD_HASH, NOW);
     const [userId, exp] = token.split(".");
-    expect(await verifyPinResetToken(`${userId}.${exp}.deadbeef`, NOW)).toBeNull();
+    expect(await verifyPinResetToken(`${userId}.${exp}.deadbeef`, OLD_HASH, NOW)).toBeNull();
   });
 
   it("rejects a malformed token", async () => {
-    expect(await verifyPinResetToken("only.two", NOW)).toBeNull();
-    expect(await verifyPinResetToken("", NOW)).toBeNull();
+    expect(await verifyPinResetToken("only.two", OLD_HASH, NOW)).toBeNull();
+    expect(await verifyPinResetToken("", OLD_HASH, NOW)).toBeNull();
+  });
+
+  it("parseResetTokenUserId extracts the userId without verifying", async () => {
+    const token = await createPinResetToken(USER, OLD_HASH, NOW);
+    expect(parseResetTokenUserId(token)).toBe(USER);
+    expect(parseResetTokenUserId("only.two")).toBeNull();
+    expect(parseResetTokenUserId("")).toBeNull();
   });
 });
