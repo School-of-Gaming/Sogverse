@@ -198,7 +198,7 @@ export class ProductsService {
   // calls effectiveStatus() to surface those as "Ended" with a muted
   // visual treatment instead of letting them masquerade as live. Once the
   // cron flips them to `completed`, RLS hides them entirely.
-  async listVisibleByType(type: ProductType): Promise<ProductBrowseRow[]> {
+  async listVisibleByTypes(types: ProductType[]): Promise<ProductBrowseRow[]> {
     const { data, error } = await this.supabase
       .from("products")
       .select(
@@ -209,7 +209,7 @@ export class ProductsService {
         // any leaf location — surfaces as "Foo, undefined" in the UI.
         "*, topics(slug, kind, icon_path, topic_translations(*)), product_translations(*), product_tags(tags(slug, tag_translations(*))), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))"
       )
-      .eq("product_type", type)
+      .in("product_type", types)
       .eq("is_visible", true)
       .in("status", ["pending", "running"])
       .order("created_at", { ascending: false });
@@ -219,9 +219,9 @@ export class ProductsService {
   }
 
   // Products the current Gedu is assigned to (via gedu_group_assignments).
-  // Returns the same shape as `listVisibleByType` so the public browse page
+  // Returns the same shape as `listVisibleByTypes` so the public browse page
   // can render gedu-owned rows with the same card adapters. Unlike
-  // listVisibleByType, this does NOT filter on is_visible / status: an
+  // listVisibleByTypes, this does NOT filter on is_visible / status: an
   // assignment is the gedu's claim on the product, parallel to the customer's
   // participation, so a hidden / draft / cancelled product they're on still
   // shows up. The new `gedu_assigned_read_products` policy (migration
@@ -268,7 +268,7 @@ export class ProductsService {
 
   // Single-product detail fetch for the parent-facing detail page
   // (`/clubs/[id]`, `/camps/[id]`, `/events/[id]`). Returns the same shape
-  // as `listVisibleByType` plus a flattened `holidays` array sourced from
+  // as `listVisibleByTypes` plus a flattened `holidays` array sourced from
   // the linked holiday calendars — that's everything the calendar widget
   // and the signup panel need to render.
   //
@@ -295,7 +295,7 @@ export class ProductsService {
     if (!data) return null;
 
     // One direct cast to the row shape we read — same pattern as
-    // listVisibleByType above. `RawRow` extends ProductBrowseRow with
+    // listVisibleByTypes above. `RawRow` extends ProductBrowseRow with
     // the holiday-calendars join included in this query's select.
     type RawRow = ProductBrowseRow & {
       product_holiday_calendars?: {

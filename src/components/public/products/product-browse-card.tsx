@@ -1,6 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { ROUTES } from "@/lib/constants";
 import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useCurrency } from "@/providers/currency-provider";
@@ -91,7 +92,7 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
       spokenLanguageCode={product.spoken_language_code}
       price={price}
       state={state}
-      detailHref={detailHref(product.product_type, product.id)}
+      detailHref={ROUTES.shopProduct(product.id)}
     />
   );
 }
@@ -111,18 +112,6 @@ function resolveLocationLine(
     return { kind: "in_person", label: loc.site };
   }
   return { kind: "online_muni", label: loc.name };
-}
-
-function detailHref(productType: ProductBrowseRow["product_type"], id: string): string {
-  switch (productType) {
-    case "consumer_club":
-    case "municipality_club":
-      return `/clubs/${id}`;
-    case "camp":
-      return `/camps/${id}`;
-    case "event":
-      return `/events/${id}`;
-  }
 }
 
 function resolveTagLabels(

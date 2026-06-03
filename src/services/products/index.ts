@@ -12,7 +12,7 @@ export type {
 export {
   productKeys,
   useProductsByType,
-  useVisibleProductsByType,
+  useVisibleProductsByTypes,
   useMyGeduAssignedProducts,
   useProductDetail,
   useProductAdmin,

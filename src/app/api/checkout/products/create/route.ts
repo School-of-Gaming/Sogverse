@@ -6,7 +6,8 @@ import {
   isSupportedCurrency,
   type SupportedCurrency,
 } from "@/lib/constants/currency";
-import type { ProductType, PurchaseShape } from "@/types";
+import type { PurchaseShape } from "@/types";
+import { ROUTES } from "@/lib/constants";
 import {
   bundleSizeFromShape,
   computeBundleAmount,
@@ -322,7 +323,7 @@ export async function POST(request: Request) {
   // `?signup=success` flag triggers the explicit invalidation in
   // ProductDetailPage's useEffect (and the realtime channel on
   // product_seat_counts covers the late-webhook case).
-  const successPath = detailPathForType(product.product_type, productId);
+  const successPath = ROUTES.shopProduct(productId);
   const successUrl = `${origin}${successPath}?signup=success`;
   // Cancel bounces back to the product page. We do NOT free the seat — the
   // reserving row stays held until either Stripe fires session.completed
@@ -444,21 +445,6 @@ function pickProductName(
   if (fi) return fi.name;
   if (translations.length > 0) return translations[0].name;
   return "School of Gaming product";
-}
-
-function detailPathForType(
-  productType: ProductType,
-  productId: string,
-): string {
-  switch (productType) {
-    case "consumer_club":
-    case "municipality_club":
-      return `/clubs/${productId}`;
-    case "camp":
-      return `/camps/${productId}`;
-    case "event":
-      return `/events/${productId}`;
-  }
 }
 
 async function rollbackReservation(

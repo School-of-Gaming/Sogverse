@@ -37,10 +37,9 @@ export function Header() {
   const t = useTranslations("header");
   const c = useTranslations("common");
 
-  // While the storefront is being built, the navbar surfaces a single Shop
-  // entry instead of separate Clubs / Camps / Events links. The direct routes
-  // (ROUTES.clubs, ROUTES.camps, ROUTES.events) still resolve for anyone
-  // who has the URL — they're just not in the top nav for now.
+  // The storefront is a single Shop entry; clubs and camps are browsed within
+  // it via the in-page category selector. Events are not surfaced in the shop
+  // (see shop-browse.tsx).
   const navLinks = [
     { href: ROUTES.shop, label: t("nav.shop") },
     { href: ROUTES.help, label: t("nav.help") },

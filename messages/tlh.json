@@ -1213,10 +1213,6 @@
     },
     "selectProfile": "qa' choH"
   },
-  "shop": {
-    "title": "ngevwI'",
-    "intro": "naDev puqlIj ghom'a'mey, raghmey, wanI'mey je yIngeH. wIchu'taH — vorghoSchugh DaH yIcheghqa'!"
-  },
   "help": {
     "title": "boQ",
     "intro": "Sogverse SeghHommey jatlhlu'.",
@@ -1262,17 +1258,15 @@
       "camp": "QongDaq lopno' raghmey: Qujmey, juppu', ghoj'wI'pu' Dun.",
       "event": "wanI'mey wa': qep, qoH, lopno' — reH wanI' tu'lu'."
     },
-    "purchasedHeadings": {
-      "consumer_club": "DIvI'lI' ghom'a'meyDaj",
-      "camp": "DIvI'lI' raghmeyDaj",
-      "event": "DIvI'lI' wanI'meyDaj"
-    },
     "geduAssignedHeadings": {
       "consumer_club": "ghom'a'meywIj",
       "camp": "raghmeywIj",
       "event": "wanI'meywIj"
     },
     "filters": {
+      "type": "mIw",
+      "typeClubs": "ghom'a'mey",
+      "typeCamps": "raghmey",
       "topic": "mu'qaD",
       "tag": "Segh",
       "format": "rurmeH",
@@ -1304,22 +1298,7 @@
       "pillOpensOn": "{date} poSmoH",
       "pillStarted": "taghta'",
       "fullDisabled": "buy'",
-      "online": "QumDaq",
-      "verbConsumerClub": "ghoSta'",
-      "verbMunicipalityClub": "ghoSta'",
-      "verbCamp": "ghoSta'",
-      "verbEvent": "ghoSta'",
-      "statusConfirmed": "ngeHta'",
-      "statusWaitlist": "tetlh",
-      "purchasedDetailWaitlist": "pa' chu'DI', QIn wIqem",
-      "purchasedDetailWaitlistWithPosition": "{position} natlhqu'",
-      "purchasedDetailUnassigned": "ghom DamuS",
-      "purchasedDetailNoSchedule": "DaH poH'a' chu'lu'",
-      "balanceSessionsLeft": "{count, plural, one {# yIn ratlh} other {# yIn ratlh}}",
-      "balanceNoSessionsLeft": "Hoch lo'lu'pu' — qaSpa' yIje'",
-      "balanceSubscription": "DIvI'",
-      "nextSession": "veb: {when}",
-      "gamersLabel": "{names} vaD"
+      "online": "QumDaq"
     },
     "empty": {
       "noProducts": "DaH pagh tu'lu' — chu' chenmoH.",

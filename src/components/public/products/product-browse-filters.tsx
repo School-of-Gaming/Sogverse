@@ -9,6 +9,7 @@ import { useTopics, useTags } from "@/services/products";
 import { useSpokenLanguages } from "@/services/users";
 import { cn } from "@/lib/utils";
 import { useBrowseFilters } from "./use-browse-filters";
+import { useShopCategory } from "./use-shop-category";
 
 // Filter strip — three horizontally-scrollable chip rows (topic, tag,
 // format). Chips are pill-shaped with a clear active state (filled
@@ -27,6 +28,11 @@ export function ProductBrowseFilters() {
   const { data: topics } = useTopics();
   const { data: tags } = useTags();
   const { data: spokenLanguages } = useSpokenLanguages();
+  // Product category (Clubs | Camps) is a required, mutually-exclusive choice
+  // — it leads the filter card as the "Type" row. Unlike the other filters it
+  // lives in its own URL param (useShopCategory) and is never empty; Clear
+  // below leaves it untouched.
+  const { category, setCategory } = useShopCategory();
   const {
     topics: selectedTopics,
     tags: selectedTags,
@@ -72,6 +78,19 @@ export function ProductBrowseFilters() {
       </div>
 
       <div className="space-y-2">
+        <FilterRow label={t("type")}>
+          <Chip
+            label={t("typeClubs")}
+            active={category === "clubs"}
+            onToggle={() => setCategory("clubs")}
+          />
+          <Chip
+            label={t("typeCamps")}
+            active={category === "camps"}
+            onToggle={() => setCategory("camps")}
+          />
+        </FilterRow>
+
         {hasTopicRow && (
           <FilterRow label={t("topic")}>
             {games.map((tp) => {

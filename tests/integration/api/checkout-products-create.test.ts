@@ -485,7 +485,7 @@ describe("POST /api/checkout/products/create", () => {
       currency: "eur",
     });
     expect(params.success_url).toBe(
-      `http://localhost:3000/clubs/${PRODUCT_ID}?signup=success`,
+      `http://localhost:3000/shop/${PRODUCT_ID}?signup=success`,
     );
     // No returnPath in the body → cancel_url falls back to homepage.
     // (Real frontend always sends window.location.pathname, so happy-path
@@ -579,8 +579,8 @@ describe("POST /api/checkout/products/create", () => {
       unit_amount: 15000,
       product_data: { name: "Test Club" },
     });
-    // Camps land on /camps/[id], not /clubs/[id].
-    expect(params.success_url).toContain(`/camps/${PRODUCT_ID}?signup=success`);
+    // Every product type lands on the unified /shop/[id] detail route.
+    expect(params.success_url).toContain(`/shop/${PRODUCT_ID}?signup=success`);
   });
 
   // ── Subscription paths ───────────────────────────────────────────

@@ -6,12 +6,11 @@ import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   useMyGeduAssignedProducts,
-  useVisibleProductsByType,
+  useVisibleProductsByTypes,
   useTopics,
   useTags,
 } from "@/services/products";
 import {
-  useMyParticipations,
   useParticipationCounts,
   type ParticipationCounts,
 } from "@/services/participations";
@@ -19,28 +18,21 @@ import { useAuth } from "@/providers/auth-provider";
 import type { ProductType } from "@/types";
 import { filterProducts } from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
+import { SHOP_PRODUCT_TYPES } from "./use-shop-category";
 import { ProductBrowseCard } from "./product-browse-card";
 import { ProductBrowseFilters } from "./product-browse-filters";
 import { ProductGeduAssignedCard } from "./product-gedu-assigned-card";
-import { ProductPurchasedCard } from "./product-purchased-card";
 
 interface ProductBrowsePageProps {
-  /** Single type rendered in the browse grid below. */
+  /** Single type rendered in the browse grid (and the gedu-assigned rail). */
   browseType: ProductType;
-  /**
-   * Types pulled into the "your enrolled" section above. /clubs combines
-   * consumer + municipality so a parent who registered for a muni club via
-   * /registration sees it here too. /camps and /events are single-type.
-   */
-  purchasedTypes: ProductType[];
 }
 
 // Heading + subheading copy live under productBrowse.headings/subheadings,
 // keyed on the browseType. We resolve to literal keys here (rather than
 // templating with the type name) so next-intl's typed t() call narrows
-// to a known message path. Municipality-club browse is not used by any
-// route this pass; mapping it to the consumer-club copy is harmless and
-// keeps the switch total.
+// to a known message path. Municipality clubs have no browse route; mapping
+// the type to the consumer-club copy is harmless and keeps the switch total.
 type HeadingKey = "consumer_club" | "camp" | "event";
 const HEADING_KEYS: Record<ProductType, HeadingKey> = {
   consumer_club: "consumer_club",
@@ -74,20 +66,6 @@ function subheadingFor(
   }
 }
 
-function purchasedHeadingFor(
-  t: ReturnType<typeof useTranslations<"productBrowse">>,
-  key: HeadingKey,
-): string {
-  switch (key) {
-    case "consumer_club":
-      return t("purchasedHeadings.consumer_club");
-    case "camp":
-      return t("purchasedHeadings.camp");
-    case "event":
-      return t("purchasedHeadings.event");
-  }
-}
-
 function geduAssignedHeadingFor(
   t: ReturnType<typeof useTranslations<"productBrowse">>,
   key: HeadingKey,
@@ -102,16 +80,16 @@ function geduAssignedHeadingFor(
   }
 }
 
-export function ProductBrowsePage({
-  browseType,
-  purchasedTypes,
-}: ProductBrowsePageProps) {
+export function ProductBrowsePage({ browseType }: ProductBrowsePageProps) {
   const t = useTranslations("productBrowse");
   const { profile, isLoading: authLoading } = useAuth();
   const isGedu = profile?.role === "gedu";
 
+  // Load every shop-surfaced type in one fetch; the selected browseType is
+  // applied client-side below, so switching the Type filter is instant (no
+  // refetch). Counts (keyed on these ids) likewise cover all types at once.
   const { data: products, isLoading: productsLoading } =
-    useVisibleProductsByType(browseType);
+    useVisibleProductsByTypes(SHOP_PRODUCT_TYPES);
   // The filter chips read from the same topics/tags queries — wait on them
   // too so the filter row appears with chips the first time it shows up
   // (avoids a brief "Topic: " empty row on cold cache).
@@ -135,75 +113,57 @@ export function ProductBrowsePage({
     return map;
   }, [counts]);
 
-  // Real "your enrolled" rail (replaces the prior ?mock=1 gate).
-  // Gedus don't have participations — their parallel rail is driven by
-  // gedu_group_assignments (see useMyGeduAssignedProducts below).
-  const { data: myParticipations, isLoading: myParticipationsLoading } =
-    useMyParticipations({ enabled: !isGedu });
-  const purchasedRows = useMemo(() => {
-    if (!myParticipations) return [];
-    return myParticipations.filter(
-      (p) =>
-        p.product !== null && purchasedTypes.includes(p.product.product_type),
-    );
-  }, [myParticipations, purchasedTypes]);
-
-  // Gedu rail: products this gedu is assigned to (via gedu_group_assignments).
-  // Parallel to the parent's purchased rail above; filtered to the types this
-  // page surfaces. Clicking a card
-  // navigates to the same /clubs/[id] (or /camps, /events) route the parent
-  // uses, where the detail page branches on role.
+  // Gedu rail: products this gedu is assigned to (via gedu_group_assignments),
+  // filtered to this page's browse type. Parents have no parallel rail — every
+  // product (owned or not) renders the same way in the browse grid below.
+  // Clicking a rail card navigates to the same /shop/[id] route a parent uses,
+  // where the detail page branches on role.
   const { data: geduAssignedProducts, isLoading: geduAssignedLoading } =
     useMyGeduAssignedProducts({ enabled: isGedu });
   const geduAssignedRows = useMemo(() => {
     if (!geduAssignedProducts) return [];
-    return geduAssignedProducts.filter((p) =>
-      purchasedTypes.includes(p.product_type),
-    );
-  }, [geduAssignedProducts, purchasedTypes]);
+    return geduAssignedProducts.filter((p) => p.product_type === browseType);
+  }, [geduAssignedProducts, browseType]);
 
-  // Hide already-owned products from the browse grid below: the user's
-  // single entry point to a product they own is the rail above. For parents,
-  // "owned" = an active/waitlisted participation. For gedus, "owned" = an
-  // assignment row. Multi-gamer households still see one purchased card per
-  // gamer; the set dedupes by product id for the exclusion. We exclude on
-  // the full list (across types) rather than the type-filtered rows so a
-  // parent who bought a club can't see it linger in a different browse grid
-  // either.
-  const purchasedProductIds = useMemo(() => {
+  // Hide a gedu's assigned products from the browse grid: their single entry
+  // point to a product they teach is the rail above. Parents get no such
+  // exclusion — an owned product is just another browse card. The set spans
+  // all assigned types rather than the type-filtered rows; including other-type
+  // ids is harmless since the grid only renders browseType products.
+  const assignedProductIds = useMemo(() => {
     const ids = new Set<string>();
     if (isGedu) {
       for (const p of geduAssignedProducts ?? []) ids.add(p.id);
-    } else {
-      for (const p of myParticipations ?? []) {
-        if (p.product !== null) ids.add(p.product.id);
-      }
     }
     return ids;
-  }, [isGedu, myParticipations, geduAssignedProducts]);
+  }, [isGedu, geduAssignedProducts]);
 
   // Wait on every query the page renders before painting anything — including
-  // myParticipations + counts. Without this gate the browse grid lands first,
-  // the purchased rail pops in above it and shoves the grid down (CLAUDE.md
-  // layout-shift rule), and a parent gets a brief glimpse of an
-  // already-purchased product as a browse card before it's filtered out.
-  // Gedu role waits on the gedu-assigned query instead of myParticipations
-  // (those are mutually exclusive — see the `enabled` gating above).
+  // counts. Without this gate the browse grid lands first, the gedu rail pops
+  // in above it and shoves the grid down (CLAUDE.md layout-shift rule). The
+  // gedu-assigned query only runs for gedus (see the `enabled` gating above);
+  // for parents it resolves immediately.
   const allLoaded =
     !authLoading &&
     !productsLoading &&
     !topicsLoading &&
     !tagsLoading &&
-    !myParticipationsLoading &&
     !geduAssignedLoading &&
     !countsLoading;
 
+  // The Type filter is just a client-side narrowing of the all-types fetch to
+  // the selected browseType. Topic/tag/format/language filters apply on top.
+  const typeProducts = useMemo(
+    () => (products ?? []).filter((p) => p.product_type === browseType),
+    [products, browseType],
+  );
+
   const { topics, tags, format, languages } = useBrowseFilters();
   const filtered = useMemo(() => {
-    const base = filterProducts(products ?? [], { topics, tags, format, languages });
-    if (purchasedProductIds.size === 0) return base;
-    return base.filter((p) => !purchasedProductIds.has(p.id));
-  }, [products, topics, tags, format, languages, purchasedProductIds]);
+    const base = filterProducts(typeProducts, { topics, tags, format, languages });
+    if (assignedProductIds.size === 0) return base;
+    return base.filter((p) => !assignedProductIds.has(p.id));
+  }, [typeProducts, topics, tags, format, languages, assignedProductIds]);
 
   const headingKey = HEADING_KEYS[browseType];
 
@@ -238,19 +198,6 @@ export function ProductBrowsePage({
               </section>
             )}
 
-            {!isGedu && purchasedRows.length > 0 && (
-              <section className="space-y-3">
-                <h2 className="text-lg font-semibold">
-                  {purchasedHeadingFor(t, headingKey)}
-                </h2>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {purchasedRows.map((row) => (
-                    <ProductPurchasedCard key={row.id} participation={row} />
-                  ))}
-                </div>
-              </section>
-            )}
-
             <section className="space-y-3">
               <ProductBrowseFilters />
 
@@ -267,7 +214,7 @@ export function ProductBrowsePage({
               ) : (
                 <Card>
                   <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                    {(products?.length ?? 0) === 0
+                    {typeProducts.length === 0
                       ? t("empty.noProducts")
                       : t("empty.noMatches")}
                   </CardContent>

@@ -14,8 +14,8 @@ export const productKeys = {
   lists: () => [...productKeys.all, "list"] as const,
   listByType: (type: ProductType) =>
     [...productKeys.lists(), { type }] as const,
-  visibleByType: (type: ProductType) =>
-    [...productKeys.lists(), "visible", { type }] as const,
+  visibleByTypes: (types: ProductType[]) =>
+    [...productKeys.lists(), "visible", { types }] as const,
   myGeduAssigned: () =>
     [...productKeys.lists(), "my-gedu-assigned"] as const,
   detail: (id: string | undefined) =>
@@ -45,13 +45,16 @@ export function useProductsByType(type: ProductType) {
   });
 }
 
-export function useVisibleProductsByType(type: ProductType) {
+// Visible products across one or more types in a single fetch. The shop uses
+// this to load every browseable type (clubs + camps) at once so the in-page
+// Type filter is an instant client-side switch rather than a per-type refetch.
+export function useVisibleProductsByTypes(types: ProductType[]) {
   const supabase = getClient();
   const service = new ProductsService(supabase);
 
   return useQuery({
-    queryKey: productKeys.visibleByType(type),
-    queryFn: () => service.listVisibleByType(type),
+    queryKey: productKeys.visibleByTypes(types),
+    queryFn: () => service.listVisibleByTypes(types),
   });
 }
 

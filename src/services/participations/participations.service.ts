@@ -1,8 +1,6 @@
 import type {
   AppSupabaseClient,
-  Participation,
   ProductType,
-  BillingMode,
   ProductTranslation,
   PurchaseShape,
   SessionAudience,
@@ -10,51 +8,6 @@ import type {
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { QueryData } from "@supabase/supabase-js";
-
-/**
- * Row shape returned by `getMyParticipations()`. Joins the bare minimum the
- * purchased card needs to render — product chrome (name, image, type),
- * the placement state inputs (status, group_id), the credit balance, and
- * a flag indicating whether a live `family_subscription_items` row
- * still points at this participation (= sub-covered).
- */
-export type MyParticipationRow = Pick<
-  Participation,
-  | "id"
-  | "product_id"
-  | "group_id"
-  | "gamer_id"
-  | "status"
-  | "credits_remaining"
-  | "waitlist_position"
-  | "signed_up_at"
-> & {
-  product: {
-    id: string;
-    product_type: ProductType;
-    billing_mode: BillingMode;
-    image_path: string | null;
-    timezone: string;
-    product_translations: ProductTranslation[];
-  } | null;
-  /**
-   * Joined gamer profile so the purchased card can render "For {name}"
-   * without a second lookup. RLS already permits parents to read their
-   * gamers' profiles (same path the `parent_gamer` join uses elsewhere).
-   * Either field can be missing depending on how the gamer was created;
-   * the UI falls back to `first_name → username` and renders something
-   * either way.
-   */
-  gamer: {
-    first_name: string | null;
-    username: string | null;
-  } | null;
-  /**
-   * `true` when a live family_subscription_items row points at this
-   * participation. Drives the bundle-vs-sub coverage UI on the purchased card.
-   */
-  is_sub_covered: boolean;
-};
 
 /**
  * Row shape returned by `getMyUpcomingSessions()`. The parent dashboard's
@@ -117,41 +70,6 @@ export interface MyUpcomingSessionRow {
     startTime: string;
     durationMinutes: number;
   }>;
-}
-
-/**
- * Row shape returned by `getMyFamilySubs()`. Used by the purchased-detail
- * placeholder to surface the family sub + its linked items so support and
- * dev can spot Stripe↔DB drift (active sub + participation flagged
- * non-sub-covered = missing link row).
- *
- * Pricing fields (`unit_amount_cents`, `stripe_price_currency`,
- * `recurring_interval`, `total_cents`) come from a live Stripe lookup, not
- * the local `product_subscription_prices` cache: existing subs are
- * billed at their locked-in Stripe price, so the local cache can drift
- * from what's actually being charged. They're nullable to allow graceful
- * degradation if the Stripe call fails (e.g., sub deleted on Stripe).
- */
-export interface MyFamilySubRow {
-  id: string;
-  status: string;
-  frequency: SubscriptionFrequency;
-  currency: string;
-  current_period_end: string | null;
-  stripe_subscription_id: string;
-  stripe_customer_id: string;
-  created_at: string;
-  family_subscription_items: {
-    id: string;
-    participation_id: string;
-    stripe_subscription_item_id: string;
-    stripe_price_id: string;
-    unit_amount_cents: number | null;
-    stripe_price_currency: string | null;
-    recurring_interval: string | null;
-  }[];
-  /** Sum of all items' unit_amount_cents. Null if any item failed to price. */
-  total_cents: number | null;
 }
 
 /**
@@ -242,43 +160,6 @@ export type JoinWaitlistResponse = {
 
 export class ParticipationsService {
   constructor(private supabase: AppSupabaseClient) {}
-
-  /**
-   * The current customer's participations across all products. Used for the
-   * "your enrolled" purchased-card rail.
-   */
-  async getMyParticipations(): Promise<MyParticipationRow[]> {
-    const { data: claims } = await this.supabase.auth.getClaims();
-    const userId = claims?.claims.sub;
-    if (!userId) return [];
-
-    const { data, error } = await this.supabase
-      .from("participations")
-      .select(
-        `
-          id, product_id, group_id, gamer_id, status,
-          credits_remaining, waitlist_position, signed_up_at,
-          product:products(
-            id, product_type, billing_mode, image_path, timezone,
-            product_translations(*)
-          ),
-          gamer:profiles!participations_gamer_id_fkey(
-            first_name, username
-          ),
-          family_subscription_items(
-            id,
-            family_subscription:family_subscriptions(status)
-          )
-        `,
-      )
-      .eq("customer_id", userId)
-      .neq("status", "reserving")
-      .order("signed_up_at", { ascending: false });
-
-    if (error) throw error;
-
-    return (data as RawMyParticipationRow[]).map(toMyParticipationRow);
-  }
 
   /**
    * Admin-only: every participation belonging to the given gamers, across all
@@ -419,25 +300,6 @@ export class ParticipationsService {
   }
 
   /**
-   * The current customer's family subscriptions plus their items, enriched
-   * with live Stripe pricing. Used by the purchased-detail placeholder to
-   * surface Stripe↔DB drift (active family sub paired with a participation
-   * NOT flagged sub-covered = inline-add atomicity gap, link row missing).
-   *
-   * Reads via API route, not direct supabase: the route hits Stripe to get
-   * each item's actual locked-in price, since existing subs continue
-   * paying their original price after a local price change.
-   */
-  async getMyFamilySubs(): Promise<MyFamilySubRow[]> {
-    const response = await fetch("/api/family-subscriptions/me");
-    if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error ?? "Failed to load family subscriptions");
-    }
-    return (await response.json()) as MyFamilySubRow[];
-  }
-
-  /**
    * Read the current customer's family subscriptions for a given (frequency,
    * currency). Used on the signup panel to decide whether the next
    * subscribe is a Stripe-Checkout-new-sub or an inline-add.
@@ -505,39 +367,6 @@ export class ParticipationsService {
 // Adapters between the raw select shape and the row shape exposed to UI.
 // ---------------------------------------------------------------------------
 
-type RawMyParticipationRow = Pick<
-  Participation,
-  | "id"
-  | "product_id"
-  | "group_id"
-  | "gamer_id"
-  | "status"
-  | "credits_remaining"
-  | "waitlist_position"
-  | "signed_up_at"
-> & {
-  product: {
-    id: string;
-    product_type: ProductType;
-    billing_mode: BillingMode;
-    image_path: string | null;
-    timezone: string;
-    product_translations: ProductTranslation[];
-  } | null;
-  gamer: {
-    first_name: string | null;
-    username: string | null;
-  } | null;
-  // Migration 00045 added UNIQUE(participation_id) — PostgREST now treats
-  // this as a to-one relationship, so the embedded shape is a single
-  // nullable object (not an array). At most one item ever links to a given
-  // participation.
-  family_subscription_items: {
-    id: string;
-    family_subscription: { status: string } | null;
-  } | null;
-};
-
 interface RawMyUpcomingSessionRow {
   gamer_id: string;
   group_id: string | null;
@@ -591,18 +420,6 @@ function toMyUpcomingSessionRow(row: RawMyUpcomingSessionRow): MyUpcomingSession
       durationMinutes: s.duration_minutes,
     })),
   };
-}
-
-function toMyParticipationRow(row: RawMyParticipationRow): MyParticipationRow {
-  // "Sub-covered" = the linked item exists AND its parent sub is live.
-  const item = row.family_subscription_items;
-  const isSubCovered =
-    item !== null &&
-    item.family_subscription !== null &&
-    ["active", "canceling", "past_due"].includes(item.family_subscription.status);
-  const { family_subscription_items: _items, ...rest } = row;
-  void _items;
-  return { ...rest, is_sub_covered: isSubCovered };
 }
 
 function mergeSignupState(

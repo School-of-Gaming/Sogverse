@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers/auth-provider";
 import {
   useProductDetail,
@@ -15,15 +16,11 @@ import {
 import { useMyGamers } from "@/services/gamers";
 import {
   participationKeys,
-  useMyParticipations,
-  useMyFamilySubs,
   useParticipationCounts,
   useProductSeatCountsRealtime,
 } from "@/services/participations";
-import type { ProductType } from "@/types";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { ProductDetailPageBody } from "./product-detail-page-body";
-import { ProductPurchasedDetailPlaceholder } from "./product-purchased-detail-placeholder";
 import type { AuthState, MyParticipationState } from "./signup-panel-view";
 
 // Route-level adapter: fetches the product, resolves the auth state
@@ -34,10 +31,9 @@ import type { AuthState, MyParticipationState } from "./signup-panel-view";
 
 interface ProductDetailPageProps {
   productId: string;
-  productType: ProductType;
 }
 
-export function ProductDetailPage({ productId, productType }: ProductDetailPageProps) {
+export function ProductDetailPage({ productId }: ProductDetailPageProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
@@ -57,21 +53,6 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
     product ? [product.id] : [],
   );
   const myCount = counts?.[0];
-
-  // The purchased-detail branch (placeholder for now; real layout TBD) needs
-  // the actual participation rows, not just the `mySignupState` flag, so we
-  // pull the customer's full list and filter to this product. The browse
-  // page already prefetches this query, so on warm-cache navigation it's
-  // instant; on cold load we wait below.
-  const { data: myParticipations, isLoading: myParticipationsLoading } =
-    useMyParticipations({ enabled: isCustomer });
-
-  // Family subs for the post-purchase placeholder. Only fetched when the
-  // user is a logged-in customer; the placeholder uses this to surface
-  // Stripe↔DB drift (sub charging but participation flagged non-sub-covered).
-  // The route is customer-only (403 for other roles), so non-customer viewers
-  // of the public detail page must skip it entirely.
-  const { data: myFamilySubs } = useMyFamilySubs({ enabled: isCustomer });
 
   // Live seat-count updates for this single product. Browse pages don't
   // subscribe per-card (a 30-card grid is too many channels) — detail page
@@ -93,27 +74,25 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
     }
   }, [signupResult, queryClient]);
 
-  // Wait on every query whose result decides which branch (purchased vs.
-  // browse) renders, so we don't paint the signup panel and then snap to the
-  // placeholder a tick later. countsLoading carries `mySignupState` (the
-  // customer branch signal); myParticipationsLoading carries the rows the
-  // placeholder needs. For non-customers both queries return fast/empty.
-  // Gedus assigned to a product reach the gedu session-details page from
-  // /gedu/clubs/[id] (or /camps/[id] / /events/[id]) — the marketing route
-  // here shows them the public layout with a non_customer overlay, which is
-  // the right thing to surface for an enrolment-style URL.
+  // Wait on every query the signup panel depends on before painting, so we
+  // don't show the default registration CTA and then snap to the
+  // already-signed-up state a tick later. countsLoading carries
+  // `mySignupState` (the already-enrolled signal). For non-customers the
+  // customer-only queries return fast/empty. Gedus assigned to a product reach
+  // the gedu session-details page from /gedu/clubs/[id] (or /camps/[id] /
+  // /events/[id]) — the marketing route here shows them the public layout with
+  // a non_customer overlay, which is the right thing for an enrolment-style URL.
   if (
     productLoading ||
     authLoading ||
     (isCustomer && gamersLoading) ||
-    (isCustomer && countsLoading) ||
-    (isCustomer && myParticipationsLoading)
+    (isCustomer && countsLoading)
   ) {
     return <DetailLoadingSkeleton />;
   }
 
   if (isError || !product) {
-    return <DetailNotFound productType={productType} />;
+    return <DetailNotFound />;
   }
 
   const authState: AuthState = (() => {
@@ -153,49 +132,25 @@ export function ProductDetailPage({ productId, productType }: ProductDetailPageP
     participationsCount,
   });
 
-  // Already-signed-up override: if any of the customer's gamers has an
-  // active or waitlisted row on this product, swap the entire detail page
-  // for the purchased view. Reserving rows are deliberately not surfaced —
-  // the movie-ticket model treats the held seat as the parent's to retry
-  // against (they just click Sign Up again), not as a "you're already signed
-  // up" state. See docs/products-architecture.md "Movie-ticket
-  // reservation model".
+  // Already-signed-up signal: if any of the customer's gamers holds an active
+  // or waitlisted row on this product, the signup panel renders its
+  // already-signed-up state instead of the default registration CTA. The page
+  // is the same ProductDetailPageBody every product uses. Reserving rows are
+  // deliberately not surfaced — the movie-ticket model treats the held seat as
+  // the parent's to retry against (they just click Sign Up again). See
+  // docs/products-architecture.md "Movie-ticket reservation model".
   const myParticipationState: MyParticipationState | null =
     myCount?.mySignupState === "active" ||
     myCount?.mySignupState === "waitlisted"
       ? myCount.mySignupState
       : null;
 
-  if (myParticipationState !== null) {
-    // Filter the customer's full list down to rows for *this* product.
-    // Multi-gamer households get one row per enrolled gamer; the placeholder
-    // renders a block per row. The flag is on `participations.product_id`
-    // (not the joined product object) which is non-null by schema, so a
-    // simple equality is enough.
-    const rows = (myParticipations ?? []).filter(
-      (p) => p.product_id === product.id,
-    );
-    // Show ALL the customer's family subs, not just ones touching this
-    // product. This is a debugging surface — full subscription state
-    // visibility is the point. Per-item rendering in the placeholder shows
-    // which participation each item covers, so the user can tell at a glance
-    // which item is for the current product vs. another.
-    return (
-      <ProductPurchasedDetailPlaceholder
-        product={product}
-        productType={productType}
-        participations={rows}
-        familySubs={myFamilySubs ?? []}
-      />
-    );
-  }
-
   return (
     <ProductDetailPageBody
       product={product}
       state={state}
       authState={authState}
-      myParticipationState={null}
+      myParticipationState={myParticipationState}
     />
   );
 }
@@ -231,8 +186,10 @@ function DetailLoadingSkeleton() {
   );
 }
 
-function DetailNotFound({ productType }: { productType: ProductType }) {
+function DetailNotFound() {
   const t = useTranslations("productDetail");
+  // The product failed to load, so we don't know its type/category — send the
+  // user back to the shop's default listing rather than a type-specific one.
   return (
     <div className="container mx-auto px-4 py-12">
       <Card className="mx-auto max-w-md">
@@ -242,7 +199,7 @@ function DetailNotFound({ productType }: { productType: ProductType }) {
             {t("notFound.description")}
           </p>
           <Link
-            href={browseHref(productType)}
+            href={ROUTES.shop}
             className={buttonVariants({ className: "mt-4" })}
           >
             {t("notFound.cta")}
@@ -251,16 +208,4 @@ function DetailNotFound({ productType }: { productType: ProductType }) {
       </Card>
     </div>
   );
-}
-
-function browseHref(productType: ProductType): string {
-  switch (productType) {
-    case "consumer_club":
-    case "municipality_club":
-      return "/clubs";
-    case "camp":
-      return "/camps";
-    case "event":
-      return "/events";
-  }
 }

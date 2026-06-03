@@ -5,15 +5,14 @@ import { useSearchParams } from "next/navigation";
 import { ROUTES } from "@/lib/constants";
 
 // Allowlisted prefixes for post-auth redirects. Anything else is dropped
-// and the user lands on the fallback (their dashboard). Keep this in sync
-// with the public detail-page roots in `src/app/(public)/` — every product
-// type that exposes a "Sign in to enroll" CTA needs its root listed here,
-// or sign-in will silently send the user to their dashboard instead of
-// back to the page they came from.
+// and the user lands on the fallback (their dashboard). Public product detail
+// pages — which expose the "Sign in to enroll" CTA — live at `/shop/[id]`, so
+// the single `/shop/` prefix covers them and sign-in returns the user to the
+// product they came from. The trailing slash is required so the bare `/shop`
+// listing isn't itself a valid target (the redirect is meant for a specific
+// product) and so `/shopxyz`-style prefix confusion can't sneak through.
 const SAFE_REDIRECT_PREFIXES: readonly string[] = [
-  `${ROUTES.clubs}/`, // /clubs/[id]
-  `${ROUTES.camps}/`,    // /camps/[id]
-  `${ROUTES.events}/`,   // /events/[id]
+  `${ROUTES.shop}/`, // /shop/[id]
 ];
 
 /** Returns `redirect` if it points to a known safe destination, else `null`. */

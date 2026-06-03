@@ -20,27 +20,13 @@ import { productKeys } from "../products";
 
 export const participationKeys = {
   all: ["participations"] as const,
-  mine: () => [...participationKeys.all, "mine"] as const,
   myUpcomingSessions: (audience: SessionAudience) =>
     [...participationKeys.all, "my-upcoming-sessions", audience] as const,
-  myFamilySubs: () => [...participationKeys.all, "my-family-subs"] as const,
   countsByProducts: (productIds: string[]) =>
     [...participationKeys.all, "counts", { productIds: [...productIds].sort() }] as const,
   myFamilySub: (frequency: string, currency: string) =>
     [...participationKeys.all, "family-sub", { frequency, currency }] as const,
 };
-
-export function useMyParticipations({
-  enabled = true,
-}: { enabled?: boolean } = {}) {
-  const supabase = getClient();
-  const service = new ParticipationsService(supabase);
-  return useQuery({
-    queryKey: participationKeys.mine(),
-    queryFn: () => service.getMyParticipations(),
-    enabled,
-  });
-}
 
 /**
  * Drives the dashboard Sessions section on both `/parent` and `/gamer`.
@@ -78,26 +64,6 @@ export function useMyUpcomingSessions(
     () => expandUpcomingSessions(query.data, now, locale),
     [query.data, now, locale],
   );
-}
-
-/**
- * The current customer's family subscriptions plus their items. Drives the
- * "Family subscriptions" section on the purchased-detail placeholder so
- * Stripe↔DB drift (sub charging but participation flagged non-sub-covered)
- * is visible at a glance.
- *
- * Public surfaces (e.g. the product detail page, which any role can view)
- * must pass `enabled: isCustomer` — the underlying API route is gated to
- * customers and returns 403 to other roles.
- */
-export function useMyFamilySubs({ enabled = true }: { enabled?: boolean } = {}) {
-  const supabase = getClient();
-  const service = new ParticipationsService(supabase);
-  return useQuery({
-    queryKey: participationKeys.myFamilySubs(),
-    queryFn: () => service.getMyFamilySubs(),
-    enabled,
-  });
 }
 
 export function useParticipationCounts(productIds: string[]) {
