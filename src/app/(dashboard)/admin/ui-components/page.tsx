@@ -38,6 +38,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Identicon } from "@/components/ui/identicon";
+import { AvatarPickerMockup } from "@/components/admin/avatar-picker-mockup";
 import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
@@ -1121,6 +1122,23 @@ export default function AdminUIComponentsPage() {
 
         <SubSection title="Voice Room Avatar (speaking glow)">
           <VoiceAvatarDemo />
+        </SubSection>
+
+        <SubSection title="Avatar Picker — icon + color (mockup)">
+          <p className="text-sm text-muted-foreground mb-4">
+            Exploration to replace the deterministic identicon: users pick a
+            Lucide icon and a background color. Icons avoid the four Yty
+            elements (Heart/Sun/Sword/Brain) and the Minecraft pickaxe. Colors
+            span a full vibrant wheel — an avatar is an identity tile, not a
+            status signal, so (per the Google/Slack/Apple convention) it may
+            reuse hues that mean something elsewhere; each shade is nudged off
+            its exact semantic token, with deliberate gaps at yellow
+            (brand/warning-locked + poor light-theme contrast) and mid-blue
+            (reads as info). Rendered with the app&rsquo;s soft-tint
+            icon-circle pattern (bg-X/15 + text-X). Nothing here is wired to a
+            profile yet — it&rsquo;s purely to play with the lists.
+          </p>
+          <AvatarPickerMockup />
         </SubSection>
       </Section>
 
