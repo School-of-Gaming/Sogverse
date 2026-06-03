@@ -1205,13 +1205,11 @@
   "productBrowse": {
     "headings": {
       "consumer_club": "Our Clubs",
-      "camp": "Our Camps",
-      "event": "Our Events"
+      "camp": "Our Camps"
     },
     "subheadings": {
       "consumer_club": "Weekly clubs where your gamer plays the games they love with new friends and a Gedu who actually gets it.",
-      "camp": "School breaks turned into game-filled adventures — new friends, real skills, and a Gedu along for the ride.",
-      "event": "Workshops, tournaments and parties — drop in whenever something catches your gamer's eye."
+      "camp": "School breaks turned into game-filled adventures — new friends, real skills, and a Gedu along for the ride."
     },
     "filters": {
       "type": "Type",

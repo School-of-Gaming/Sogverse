@@ -1250,13 +1250,11 @@
   "productBrowse": {
     "headings": {
       "consumer_club": "ghom'a'meymaj",
-      "camp": "raghmeymaj",
-      "event": "wanI'meymaj"
+      "camp": "raghmeymaj"
     },
     "subheadings": {
       "consumer_club": "Hoch hogh ghom'a': QujmeyDaj Quj puqlI', juppu' tlhej, ghoj'wI' qoqDaq.",
-      "camp": "QongDaq lopno' raghmey: Qujmey, juppu', ghoj'wI'pu' Dun.",
-      "event": "wanI'mey wa': qep, qoH, lopno' — reH wanI' tu'lu'."
+      "camp": "QongDaq lopno' raghmey: Qujmey, juppu', ghoj'wI'pu' Dun."
     },
     "filters": {
       "type": "mIw",

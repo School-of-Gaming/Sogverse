@@ -1205,13 +1205,11 @@
   "productBrowse": {
     "headings": {
       "consumer_club": "Våra klubbar",
-      "camp": "Våra läger",
-      "event": "Våra evenemang"
+      "camp": "Våra läger"
     },
     "subheadings": {
       "consumer_club": "Veckovisa klubbar där din spelare spelar sina favoritspel med nya vänner och en Gedu som verkligen fattar.",
-      "camp": "Skollov förvandlade till spelfyllda äventyr – nya vänner, riktiga färdigheter och en Gedu med på resan.",
-      "event": "Workshops, turneringar och fester – hoppa in när något fångar din spelares blick."
+      "camp": "Skollov förvandlade till spelfyllda äventyr – nya vänner, riktiga färdigheter och en Gedu med på resan."
     },
     "filters": {
       "type": "Typ",
