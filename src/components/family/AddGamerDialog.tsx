@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCreateGamer } from "@/services/gamers";
+import { usePinStatus, pinKeys } from "@/services/pin";
+import { PinUnlockFlow } from "@/components/pin";
 import { useRequiredAuth } from "@/providers/auth-provider";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -40,13 +43,104 @@ interface AddGamerDialogProps {
  * Designed for reuse: family selector wires it now; product / club / camp /
  * event detail pages should pass `open` / `onOpenChange` to drop it in when a
  * parent without gamers tries to sign up.
+ *
+ * Adding a gamer requires an unlocked parent session, so this component is the
+ * single chokepoint that enforces it: it never renders the form for a locked
+ * session. Every call site gets the gate for free — see `AddGamerGate`.
  */
 export function AddGamerDialog({ open, onOpenChange, onCreated }: AddGamerDialogProps) {
   if (!open) return null;
-  return <AddGamerDialogInner onOpenChange={onOpenChange} onCreated={onCreated} />;
+  return <AddGamerGate onOpenChange={onOpenChange} onCreated={onCreated} />;
 }
 
-function AddGamerDialogInner({
+/**
+ * The PIN gate that fronts the form. Reaching the create-gamer API requires a
+ * PIN-unlocked customer session (`requireRole("customer")`); discovering that
+ * only on submit — after the parent fills the whole form — is the bad UX this
+ * exists to prevent. So we resolve the session's PIN state up front and:
+ *   - unlocked            → render the form.
+ *   - locked, no PIN yet  → create-a-PIN pad, then the form.
+ *   - locked, PIN set     → enter-PIN pad (+ forgot link), then the form.
+ *
+ * `unlocked` can't be read from the browser (HttpOnly cookie), so it comes from
+ * `usePinStatus`. On a successful unlock the verify/setPin response has already
+ * set the cookie, so the next create-gamer fetch carries it — no reload needed.
+ * We seed the status cache so the view swaps to the form and a reopen stays
+ * unlocked rather than re-prompting.
+ */
+function AddGamerGate({ onOpenChange, onCreated }: Omit<AddGamerDialogProps, "open">) {
+  const queryClient = useQueryClient();
+  const { data: status, isError } = usePinStatus();
+
+  // Status in flight (or failed): show the dialog shell with a no-interaction
+  // skeleton, so the form/pad simply appears in its final place when it lands
+  // (no-layout-shift rule — a skeleton with nothing clickable constrains nothing).
+  if (!status) {
+    return (
+      <GateShell onOpenChange={onOpenChange}>
+        <GatePlaceholder error={isError} onClose={() => onOpenChange(false)} />
+      </GateShell>
+    );
+  }
+
+  if (status.unlocked) {
+    return <AddGamerForm onOpenChange={onOpenChange} onCreated={onCreated} />;
+  }
+
+  return (
+    <GateShell onOpenChange={onOpenChange}>
+      <PinUnlockFlow
+        pinIsSet={status.isSet}
+        onUnlocked={() => {
+          // Swap to the form now AND keep a reopen unlocked. setQueryData
+          // re-renders this gate (status.unlocked → true), unmounting the pad —
+          // which is what holds its disabled state through the swap.
+          queryClient.setQueryData(pinKeys.status(), { isSet: true, unlocked: true });
+        }}
+      />
+    </GateShell>
+  );
+}
+
+/** Dialog shell for the pre-form states (loading + PIN pad), sized to the pad. */
+function GateShell({
+  onOpenChange,
+  children,
+}: {
+  onOpenChange: (open: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <div className="flex justify-center px-2 py-4">{children}</div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Loading spinner, or an error + close button if the status fetch failed. */
+function GatePlaceholder({ error, onClose }: { error: boolean; onClose: () => void }) {
+  const t = useTranslations("family.addGamerForm");
+  const c = useTranslations("common");
+  if (error) {
+    return (
+      <div className="flex min-h-[16rem] flex-col items-center justify-center gap-4 text-center">
+        <p className="text-sm text-destructive">{t("genericError")}</p>
+        <Button variant="outline" onClick={onClose}>
+          {c("cancel")}
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <div className="flex min-h-[16rem] items-center justify-center" aria-hidden="true">
+      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
+
+function AddGamerForm({
   onOpenChange,
   onCreated,
 }: Omit<AddGamerDialogProps, "open">) {
