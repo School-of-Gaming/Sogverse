@@ -21,11 +21,25 @@ import { PinNotice } from "./pin-notice";
  * cookie and lands them on the dashboard. Otherwise (the common
  * reset-on-your-phone case, or no session) we show a success notice pointing
  * back to sign-in.
+ *
+ * `tokenValid` is resolved server-side (the token is single-use; an expired or
+ * already-used link is invalid). When it's false we show the "link expired"
+ * notice straight away rather than prompting for a PIN — entering a PIN against
+ * a dead token would otherwise come back as a confusing "PINs didn't match".
  */
-export function ResetPinForm({ token }: { token: string | null }) {
+export function ResetPinForm({
+  token,
+  tokenValid,
+}: {
+  token: string | null;
+  tokenValid: boolean;
+}) {
   const t = useTranslations("pin");
   const service = useMemo(() => new PinService(getClient()), []);
   const [done, setDone] = useState(false);
+  // Covers the narrow race where the token was valid at page load but died
+  // before submit (e.g. a parallel reset). Swaps to the same "expired" notice.
+  const [expired, setExpired] = useState(false);
 
   const backToLogin = (
     <Button onClick={() => { window.location.href = ROUTES.login; }}>
@@ -33,7 +47,7 @@ export function ResetPinForm({ token }: { token: string | null }) {
     </Button>
   );
 
-  if (!token) {
+  if (!token || !tokenValid || expired) {
     return (
       <PinNotice
         icon={<ShieldX className="h-12 w-12 text-destructive" />}
@@ -62,7 +76,14 @@ export function ResetPinForm({ token }: { token: string | null }) {
       description={t("reset.description")}
       mismatchMessage={t("mismatch")}
       onSubmit={async (pin) => {
-        await service.reset(token, pin);
+        try {
+          await service.reset(token, pin);
+        } catch {
+          // The token was rejected at submit (expired/used between load and
+          // now). Swap to the "link expired" notice — NOT a PIN-mismatch retry.
+          setExpired(true);
+          return true; // hold the disabled state through the view swap
+        }
         // Seamless unlock when the reset happens in the same browser as a
         // locked session for this same parent.
         try {

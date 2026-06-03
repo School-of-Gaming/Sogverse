@@ -42,10 +42,18 @@ explicit `allowUnverified` flag, which is greppable and reviewable.
 `sog_pin_verified` holds an HMAC (`PIN_COOKIE_SECRET`) over `(userId,
 session_id)` — see `src/lib/pin-session.ts`. It is unforgeable, bound to the
 user (a stale cookie can't unlock another account), and bound to the auth
-`session_id`, which is stable across token refreshes (the unlock survives a
-browser close) but changes on re-login / account switch — so switching auto
-re-locks with no server state. The cookie is also explicitly cleared on
-sign-out and `switch-account` for hygiene. Persistent (no `maxAge`).
+`session_id`, which is stable across token refreshes (so the unlock holds across
+the session's lifetime) but changes on re-login / account switch — so switching
+auto re-locks with no server state. The cookie is also explicitly cleared on
+sign-out and `switch-account` for hygiene.
+
+**It's a session cookie** — no `maxAge`/`expires`. Verified empirically
+(Chromium): it survives closing a *tab* (the browser session is still alive) but
+is dropped when the whole *browser* is quit, so quitting and relaunching
+re-prompts for the PIN. This is best-effort, not a hard control — a browser with
+session-restore ("continue where you left off") can carry a session cookie
+across a restart. We treat that re-lock-on-quit as a little extra security for
+free, not a guarantee. An explicit inactivity TTL is a deferred improvement.
 
 ## Storage & RPCs
 
@@ -104,6 +112,20 @@ typically resets on their phone, then enters the new PIN at the gate on the
 locked device. (UI note: when reset happens in the same browser as a locked
 session, the page can chain a `verify` call to unlock and land on `/parent`.)
 
+**Single-use, by binding to the PIN hash.** The token's HMAC signs the account's
+*current* `pin_hash` along with `(userId, expiresAtMs)` — the hash goes into the
+signed payload, never into the token string. Completing a reset rotates
+`pin_hash` (bcrypt re-salts even for the same four digits), so the same link
+stops validating the instant it's used, and any link minted before a later PIN
+change dies too. This matters because the reset link lands in the *shared
+device's* browser history: without single-use, a child could replay it within
+the 24h window to set a PIN they know. `forgot` reads the current hash to mint
+the token; `reset` reads it (admin client, bypassing RLS — the hash never leaves
+the server) for the `userId` carried in the token, via `parseResetTokenUserId`,
+then verifies against it. (The token still rides in a `?token=` query param,
+which can appear in server logs; single-use is what neutralizes that, not the
+transport.)
+
 ## UI
 
 All PIN screens share one touchpad (`src/components/pin/`): a 10-key pad with
@@ -136,10 +158,25 @@ into a parent (or "Continue as me") clears the unlock cookie / lands on
 `/parent`, which the proxy redirects to `/parent/unlock` automatically.
 
 There is no client-side handling of an API `403 PIN_REQUIRED`: within a live
-tab an unlocked session can't silently re-lock (the cookie is persistent and
-`session_id` is stable across refreshes), and every navigation is already
-gated by the proxy, so the 403 is unreachable in normal flow — it stays purely
-as the server-side defense-in-depth boundary.
+tab an unlocked session can't silently re-lock (the cookie lives for the
+session's lifetime and `session_id` is stable across refreshes), and every
+navigation is already gated by the proxy, so the 403 is unreachable in normal
+flow — it stays purely as the server-side defense-in-depth boundary.
+
+## Future improvements
+
+- **Attempt throttling on `verify_my_pin`.** See "Why no rate-limiting" above —
+  a per-account failed-attempt counter with a short cooldown would close most of
+  the brute-force gap cheaply if the threat model ever widens past the on-device
+  child.
+- **Explicit unlock TTL.** Today re-lock is driven by `session_id` change and
+  browser-quit (session cookie); an inactivity timeout would re-lock a session
+  left open and idle on a shared device.
+- **Preserve the query string on the unlock redirect.** The proxy redirects a
+  locked customer with `?redirect=<pathname>`, dropping any query string on the
+  original target (the URL hash is never server-visible, so it's inherently
+  unpreservable). No `/parent` route reads query params today, so this is
+  currently moot; revisit if one starts to.
 
 ## Status
 

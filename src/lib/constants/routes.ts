@@ -61,8 +61,10 @@ export const ROUTES = {
   register: "/register",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
-  // Landing page for the parent-PIN reset email link. Like resetPassword, the
-  // user arrives via an email link with hash tokens, so it's a public route.
+  // Landing page for the parent-PIN reset email link. Public (no session): the
+  // user arrives from their inbox carrying a standalone signed token in a
+  // `?token=` query param (NOT a Supabase recovery hash like resetPassword). The
+  // token is single-use — bound to the current PIN hash; see pin-session.ts.
   resetPin: "/reset-pin",
   setupAccount: "/setup-account",
   selectProfile: "/select-profile",
