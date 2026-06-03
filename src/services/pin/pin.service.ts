@@ -20,6 +20,18 @@ export class PinService {
   }
 
   /**
+   * Whether a PIN exists (`isSet`) and whether THIS session is unlocked
+   * (`unlocked`). The unlock bit can't be read from the browser (HttpOnly
+   * cookie), so it comes from the server route. Drives UI that must gate on
+   * unlock state without bouncing through the full-page `/parent/unlock` gate.
+   */
+  async status(): Promise<{ isSet: boolean; unlocked: boolean }> {
+    const res = await fetch("/api/auth/pin/status");
+    if (!res.ok) throw new Error(await errorMessage(res, "Failed to load PIN status"));
+    return (await res.json()) as { isSet: boolean; unlocked: boolean };
+  }
+
+  /**
    * Verify a PIN and unlock the session. Returns `true` on the correct PIN
    * (the unlock cookie is now set), `false` on an incorrect one. A wrong PIN is
    * a 200 with `{ verified: false }` — only a genuine request failure (e.g. the

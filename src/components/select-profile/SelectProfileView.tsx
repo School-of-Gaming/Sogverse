@@ -33,6 +33,7 @@ export function SelectProfileView({
         {t("title")}
       </h1>
       <FamilyProfileSelector
+        autoOpenAddGamerFromUrl
         onSelfClick={() => {
           // Parents/gamers reaching their dashboard by choosing their own
           // tile. track() is sendBeacon-backed, so it survives the full-page

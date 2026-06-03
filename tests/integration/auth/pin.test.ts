@@ -50,6 +50,7 @@ vi.mock("@/lib/email-templates/pin-reset", () => ({
 
 import { POST as verifyPost } from "@/app/api/auth/pin/verify/route";
 import { POST as setPost } from "@/app/api/auth/pin/route";
+import { GET as statusGet } from "@/app/api/auth/pin/status/route";
 import { POST as forgotPost } from "@/app/api/auth/pin/forgot/route";
 import { POST as resetPost } from "@/app/api/auth/pin/reset/route";
 import { createPinResetToken, pinTokenFor } from "@/lib/pin-session";
@@ -168,6 +169,71 @@ describe("POST /api/auth/pin", () => {
     const res = await setPost(request("/api/auth/pin", { pin: "5678" }));
     expect(res.status).toBe(200);
     expect(mockRpc).toHaveBeenCalledWith("set_my_pin", { p_pin: "5678" });
+  });
+});
+
+// --- /api/auth/pin/status ---
+
+describe("GET /api/auth/pin/status", () => {
+  it("is reachable while locked (requireRole allowUnverified)", async () => {
+    authCustomer();
+    setRpc({ pin_is_set: { data: false, error: null } });
+    mockCookieGet.mockReturnValue(undefined);
+
+    await statusGet();
+    expect(mockRequireRole).toHaveBeenCalledWith("customer", { allowUnverified: true });
+  });
+
+  it("reports unlocked:true when the session holds a valid unlock cookie", async () => {
+    authCustomer();
+    setRpc({ pin_is_set: { data: true, error: null } });
+    // A valid token for this (user, session) is the proof of an unlocked session.
+    mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "s1") });
+
+    const res = await statusGet();
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ isSet: true, unlocked: true });
+  });
+
+  it("reports unlocked:false when there is no unlock cookie", async () => {
+    authCustomer();
+    setRpc({ pin_is_set: { data: true, error: null } });
+    mockCookieGet.mockReturnValue(undefined);
+
+    const res = await statusGet();
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ isSet: true, unlocked: false });
+  });
+
+  it("reports unlocked:false for a token minted for a different session", async () => {
+    authCustomer(); // claims session_id is "s1"
+    setRpc({ pin_is_set: { data: true, error: null } });
+    // Token bound to a different session must not unlock this one (re-lock on
+    // account switch / re-login relies on this binding).
+    mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "other-session") });
+
+    const res = await statusGet();
+    expect(await res.json()).toMatchObject({ unlocked: false });
+  });
+
+  it("mirrors pin_is_set in the isSet flag", async () => {
+    authCustomer();
+    setRpc({ pin_is_set: { data: false, error: null } });
+    mockCookieGet.mockReturnValue(undefined);
+
+    const res = await statusGet();
+    expect(await res.json()).toEqual({ isSet: false, unlocked: false });
+  });
+
+  it("returns 500 if the pin_is_set RPC fails", async () => {
+    authCustomer();
+    setRpc({ pin_is_set: { data: null, error: { message: "boom" } } });
+    // Silence the route's console.error for the expected failure path.
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await statusGet();
+    expect(res.status).toBe(500);
+    spy.mockRestore();
   });
 });
 

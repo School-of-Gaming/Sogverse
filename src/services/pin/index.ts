@@ -1,2 +1,2 @@
 export { PinService } from "./pin.service";
-export { pinKeys, usePinIsSet } from "./pin.queries";
+export { pinKeys, usePinIsSet, usePinStatus } from "./pin.queries";

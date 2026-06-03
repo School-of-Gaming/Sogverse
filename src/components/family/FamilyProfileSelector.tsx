@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/auth-provider";
 import { FamilyService, useFamily, type FamilyMember } from "@/services/family";
@@ -14,6 +14,25 @@ import {
 } from "./ProfileTiles";
 import { ROUTES } from "@/lib/constants";
 
+/**
+ * One-shot URL marker that carries a gamer's "Add Gamer" intent across the
+ * account switch into a parent. A gamer can't create gamers, so clicking
+ * "Add Gamer" must first switch into a parent — which loses the intent and
+ * strands them on the parent dashboard to re-click. Instead the switch lands on
+ * `/select-profile?action=add-gamer`; the selector reads this marker and
+ * auto-opens the dialog (whose PIN gate then handles unlock inline). Kept as a
+ * single source of truth so the writer (handleSwitch) and reader (the mount
+ * effect) can't drift.
+ *
+ * NOT a caller-supplied redirect, so the `resolveInternalPath` open-redirect
+ * rule (see CLAUDE.md) deliberately does not apply: this is a fixed flag whose
+ * value is only ever compared `=== value` and then stripped. It never becomes a
+ * navigation destination — the only target is the hardcoded `ROUTES.selectProfile`
+ * above. A crafted `?action=<anything-else>` simply fails the equality check and
+ * is ignored.
+ */
+const ADD_GAMER_INTENT = { param: "action", value: "add-gamer" } as const;
+
 interface FamilyProfileSelectorProps {
   /**
    * Override behavior when the viewer clicks their own tile. Default (unset)
@@ -23,6 +42,13 @@ interface FamilyProfileSelectorProps {
    * pick themselves to enter the parent dashboard.
    */
   onSelfClick?: () => void;
+  /**
+   * When set, honor the `ADD_GAMER_INTENT` URL marker on mount — read it, strip
+   * it, and auto-open the Add Gamer dialog once the viewer is known to be a
+   * parent. Only the /select-profile interstitial passes this (it's where the
+   * gamer→parent switch lands); the My Family section never auto-opens.
+   */
+  autoOpenAddGamerFromUrl?: boolean;
 }
 
 /**
@@ -36,19 +62,47 @@ interface FamilyProfileSelectorProps {
  * The "Add Gamer" tile opens AddGamerDialog. useCreateGamer's onSuccess
  * invalidates the family query so the new gamer slots into the row.
  */
-export function FamilyProfileSelector({ onSelfClick }: FamilyProfileSelectorProps = {}) {
+export function FamilyProfileSelector({
+  onSelfClick,
+  autoOpenAddGamerFromUrl = false,
+}: FamilyProfileSelectorProps = {}) {
   const t = useTranslations("family");
   const { user, profile } = useAuth();
   const { data: family, isLoading, error } = useFamily();
   const [committingTargetId, setCommittingTargetId] = useState<string | null>(null);
   const [switchError, setSwitchError] = useState<string | null>(null);
   const [addGamerOpen, setAddGamerOpen] = useState(false);
+  const [pendingAddGamerIntent, setPendingAddGamerIntent] = useState(false);
   const [selectParentOpen, setSelectParentOpen] = useState(false);
 
   const currentUserId = user?.id ?? null;
   const viewerIsCustomer = profile?.role === "customer";
 
-  async function handleSwitch(target: FamilyMember) {
+  // Honor the gamer→parent "Add Gamer" intent: read the URL marker once on
+  // mount and strip it (so a refresh/back doesn't reopen), recording a pending
+  // intent. We can't open here — the viewer's role isn't known yet — so the
+  // render derives the open state from `pendingAddGamerIntent && viewerIsCustomer`
+  // below. window.location (not useSearchParams) avoids forcing a Suspense
+  // boundary, matching unlock-gate's ?redirect= read.
+  useEffect(() => {
+    if (!autoOpenAddGamerFromUrl) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get(ADD_GAMER_INTENT.param) !== ADD_GAMER_INTENT.value) return;
+    params.delete(ADD_GAMER_INTENT.param);
+    const rest = params.toString();
+    window.history.replaceState(
+      null,
+      "",
+      rest ? `${window.location.pathname}?${rest}` : window.location.pathname,
+    );
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot mount-time URL read, mirrors unlock-gate
+    setPendingAddGamerIntent(true);
+  }, [autoOpenAddGamerFromUrl]);
+
+  async function handleSwitch(
+    target: FamilyMember,
+    options?: { addGamerIntent?: boolean },
+  ) {
     if (committingTargetId) return;
 
     if (target.id === currentUserId) {
@@ -68,7 +122,13 @@ export function FamilyProfileSelector({ onSelfClick }: FamilyProfileSelectorProp
       await service.switchAccount(target.id);
       // Full-page navigation so the new session cookies hydrate the root
       // layout (browser Supabase singleton is seeded at construction time).
-      navigateToDashboard(target.role);
+      if (options?.addGamerIntent && target.role === "customer") {
+        // Carry the intent into the parent so the dialog (and its PIN gate)
+        // auto-opens on /select-profile instead of dumping them on /parent.
+        navigateToAddGamerIntent();
+      } else {
+        navigateToDashboard(target.role);
+      }
     } catch (err) {
       setCommittingTargetId(null);
       setSwitchError(err instanceof Error ? err.message : t("switchFailed"));
@@ -118,6 +178,22 @@ export function FamilyProfileSelector({ onSelfClick }: FamilyProfileSelectorProp
     }
   }
 
+  // A pending gamer→parent intent opens the dialog as soon as we know the viewer
+  // is the parent (post-switch). Deriving it here — rather than in a second
+  // effect — keeps the role-gating reactive without another set-state-in-effect.
+  const showAddGamer = addGamerOpen || (pendingAddGamerIntent && viewerIsCustomer);
+
+  function handleAddGamerOpenChange(next: boolean) {
+    if (next) {
+      setAddGamerOpen(true);
+    } else {
+      // Closing clears both the manual flag and any honored intent so it can't
+      // re-open on the next render.
+      setAddGamerOpen(false);
+      setPendingAddGamerIntent(false);
+    }
+  }
+
   const isAnyCommitting = !!committingTargetId;
 
   return (
@@ -156,7 +232,7 @@ export function FamilyProfileSelector({ onSelfClick }: FamilyProfileSelectorProp
         )}
       </ProfileTilesRow>
 
-      <AddGamerDialog open={addGamerOpen} onOpenChange={setAddGamerOpen} />
+      <AddGamerDialog open={showAddGamer} onOpenChange={handleAddGamerOpenChange} />
       <SelectParentToAddGamerDialog
         open={selectParentOpen}
         onOpenChange={setSelectParentOpen}
@@ -165,9 +241,10 @@ export function FamilyProfileSelector({ onSelfClick }: FamilyProfileSelectorProp
           // Close before kicking off the switch so the underlying tile's
           // spinner is visible and a switch failure surfaces through the
           // selector's inline switchError (which the dialog backdrop
-          // would otherwise hide).
+          // would otherwise hide). The intent flag routes the switch to
+          // /select-profile?action=add-gamer so the dialog re-opens there.
           setSelectParentOpen(false);
-          handleSwitch(parent);
+          handleSwitch(parent, { addGamerIntent: true });
         }}
       />
     </div>
@@ -181,4 +258,14 @@ function byFirstName(a: FamilyMember, b: FamilyMember): number {
 function navigateToDashboard(role: FamilyMember["role"]) {
   window.location.href =
     role === "customer" ? ROUTES.customer.dashboard : ROUTES.gamer.dashboard;
+}
+
+/**
+ * Land on the parent's /select-profile carrying the Add Gamer intent marker, so
+ * the selector there auto-opens the dialog. Module-scope (like
+ * navigateToDashboard) because assigning window.location.href inside a component
+ * trips react-hooks/immutability — the navigation is a side effect, not state.
+ */
+function navigateToAddGamerIntent() {
+  window.location.href = `${ROUTES.selectProfile}?${ADD_GAMER_INTENT.param}=${ADD_GAMER_INTENT.value}`;
 }
