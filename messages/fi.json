@@ -1042,9 +1042,9 @@
     "addGamer": "Lisää pelaaja",
     "switchFailed": "Tilin vaihtaminen epäonnistui",
     "loadFailed": "Perheen lataaminen epäonnistui",
-    "selectParentToAddGamer": {
-      "title": "Valitse vanhempi pelaajan lisäämistä varten",
-      "description": "Vain vanhemmat voivat lisätä pelaajia. Valitse vanhemman profiili, johon vaihdetaan."
+    "switchToParentToAddGamer": {
+      "title": "Vaihda käyttäjän {name} profiiliin pelaajan lisäämistä varten?",
+      "oneWayWarning": "Sinut kirjataan ulos pelaajan tililtä."
     },
     "addGamerForm": {
       "title": "Lisää pelaaja",
@@ -1593,8 +1593,7 @@
     },
     "switchToGamer": {
       "title": "Vaihda käyttäjän {name} profiiliin ja liity ryhmään {productName}?",
-      "oneWayWarning": "Sinut kirjataan ulos vanhemman tililtä.",
-      "failedSwitch": "Tilin vaihtaminen epäonnistui"
+      "oneWayWarning": "Sinut kirjataan ulos vanhemman tililtä."
     }
   },
   "settings": {

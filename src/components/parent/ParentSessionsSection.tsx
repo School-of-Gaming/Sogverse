@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { SwitchToGamerDialog } from "@/components/customer/SwitchToGamerDialog";
+import { useTranslations } from "next-intl";
+import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import {
   useMyUpcomingSessions,
   type MyUpcomingSessionRow,
@@ -39,6 +40,7 @@ export function ParentSessionsSection({
 }: {
   initialRows: MyUpcomingSessionRow[];
 }) {
+  const t = useTranslations("parent");
   const sessions = useMyUpcomingSessions("customer", {
     initialData: initialRows,
   });
@@ -70,15 +72,22 @@ export function ParentSessionsSection({
       />
 
       {switchTarget && (
-        <SwitchToGamerDialog
+        <SwitchProfileDialog
           open={!!switchTarget}
           onOpenChange={(open) => {
             if (!open) setSwitchTarget(null);
           }}
-          gamerId={switchTarget.gamerId}
-          gamerDisplayName={switchTarget.gamerDisplayName}
-          productName={switchTarget.productName}
+          target={{
+            id: switchTarget.gamerId,
+            role: "gamer",
+            first_name: switchTarget.gamerDisplayName,
+          }}
           redirectUrl={switchTarget.redirectUrl}
+          title={t("switchToGamer.title", {
+            name: switchTarget.gamerDisplayName,
+            productName: switchTarget.productName,
+          })}
+          oneWayWarning={t("switchToGamer.oneWayWarning")}
         />
       )}
     </>

@@ -1087,9 +1087,9 @@
     "addGamer": "QujwI' chel",
     "switchFailed": "qaSbe' QunwI' choH",
     "loadFailed": "qorDu' polHa'lu'pu'",
-    "selectParentToAddGamer": {
-      "title": "QujwI' chelmeH vavpu' wIv",
-      "description": "QujwI' chel neH vavpu'. vav qun yIwIv."
+    "switchToParentToAddGamer": {
+      "title": "QujwI' chelmeH {name} pong yIchoH'a'?",
+      "oneWayWarning": "QujwI' account lup mejlu'."
     },
     "addGamerForm": {
       "title": "QujwI' chu' chel",
@@ -1638,8 +1638,7 @@
     },
     "switchToGamer": {
       "title": "{name}vaD pong yIchoH 'ej {productName}vaD yIghaj?",
-      "oneWayWarning": "vav/SoS account vIqaSlu'.",
-      "failedSwitch": "account choH Dabe'lu'"
+      "oneWayWarning": "vav/SoS account vIqaSlu'."
     }
   },
   "settings": {

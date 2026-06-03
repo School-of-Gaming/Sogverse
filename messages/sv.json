@@ -1042,9 +1042,9 @@
     "addGamer": "Lägg till gamer",
     "switchFailed": "Det gick inte att byta konto",
     "loadFailed": "Det gick inte att läsa in familjen",
-    "selectParentToAddGamer": {
-      "title": "Välj en föräldraprofil för att lägga till en gamer",
-      "description": "Endast föräldrar kan lägga till gamers. Välj en föräldraprofil att byta till."
+    "switchToParentToAddGamer": {
+      "title": "Byt till {name}s profil för att lägga till en gamer?",
+      "oneWayWarning": "Du loggas ut från ditt gamer-konto."
     },
     "addGamerForm": {
       "title": "Lägg till en gamer",
@@ -1593,8 +1593,7 @@
     },
     "switchToGamer": {
       "title": "Byt till {name}s profil för att gå med i {productName}?",
-      "oneWayWarning": "Du loggas ut från ditt föräldrakonto.",
-      "failedSwitch": "Kunde inte byta konto"
+      "oneWayWarning": "Du loggas ut från ditt föräldrakonto."
     }
   },
   "settings": {

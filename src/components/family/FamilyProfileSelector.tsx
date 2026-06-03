@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { useAuth } from "@/providers/auth-provider";
 import { FamilyService, useFamily, type FamilyMember } from "@/services/family";
 import { AddGamerDialog } from "./AddGamerDialog";
-import { SelectParentToAddGamerDialog } from "./SelectParentToAddGamerDialog";
+import { SwitchProfileDialog } from "./SwitchProfileDialog";
 import {
   AddGamerTile,
   ProfileTile,
@@ -21,14 +21,14 @@ import { ROUTES } from "@/lib/constants";
  * strands them on the parent dashboard to re-click. Instead the switch lands on
  * `/select-profile?action=add-gamer`; the selector reads this marker and
  * auto-opens the dialog (whose PIN gate then handles unlock inline). Kept as a
- * single source of truth so the writer (handleSwitch) and reader (the mount
- * effect) can't drift.
+ * single source of truth so the writer (the SwitchProfileDialog redirectUrl
+ * below) and reader (the mount effect) can't drift.
  *
  * NOT a caller-supplied redirect, so the `resolveInternalPath` open-redirect
  * rule (see CLAUDE.md) deliberately does not apply: this is a fixed flag whose
  * value is only ever compared `=== value` and then stripped. It never becomes a
- * navigation destination — the only target is the hardcoded `ROUTES.selectProfile`
- * above. A crafted `?action=<anything-else>` simply fails the equality check and
+ * navigation destination — the only target is the hardcoded `ROUTES.selectProfile`.
+ * A crafted `?action=<anything-else>` simply fails the equality check and
  * is ignored.
  */
 const ADD_GAMER_INTENT = { param: "action", value: "add-gamer" } as const;
@@ -80,7 +80,7 @@ export function FamilyProfileSelector({
   const [switchError, setSwitchError] = useState<string | null>(null);
   const [addGamerOpen, setAddGamerOpen] = useState(false);
   const [pendingAddGamerIntent, setPendingAddGamerIntent] = useState(false);
-  const [selectParentOpen, setSelectParentOpen] = useState(false);
+  const [switchToParentOpen, setSwitchToParentOpen] = useState(false);
 
   const currentUserId = user?.id ?? null;
   const viewerIsCustomer = profile?.role === "customer";
@@ -106,10 +106,7 @@ export function FamilyProfileSelector({
     setPendingAddGamerIntent(true);
   }, [autoOpenAddGamerFromUrl]);
 
-  async function handleSwitch(
-    target: FamilyMember,
-    options?: { addGamerIntent?: boolean },
-  ) {
+  async function handleSwitch(target: FamilyMember) {
     if (committingTargetId) return;
 
     if (target.id === currentUserId) {
@@ -129,13 +126,7 @@ export function FamilyProfileSelector({
       await service.switchAccount(target.id);
       // Full-page navigation so the new session cookies hydrate the root
       // layout (browser Supabase singleton is seeded at construction time).
-      if (options?.addGamerIntent && target.role === "customer") {
-        // Carry the intent into the parent so the dialog (and its PIN gate)
-        // auto-opens on /select-profile instead of dumping them on /parent.
-        navigateToAddGamerIntent();
-      } else {
-        navigateToDashboard(target.role);
-      }
+      navigateToDashboard(target.role);
     } catch (err) {
       setCommittingTargetId(null);
       setSwitchError(err instanceof Error ? err.message : t("switchFailed"));
@@ -169,10 +160,10 @@ export function FamilyProfileSelector({
   // UI-only cap — the API and DB happily accept more if a power user calls
   // the route directly.
   const underStevenBrownLimit = gamers.length < 7;
-  // Gamers can also see the tile. Clicking from a gamer's dashboard opens
-  // a "pick a parent to switch into" dialog instead of the form, since
-  // only parents can actually create gamers. Defensively hide the tile
-  // if a gamer has no linked parents (shouldn't happen in practice).
+  // Gamers can also see the tile. Clicking from a gamer's dashboard opens a
+  // confirm-switch dialog into their parent (only parents can create gamers)
+  // instead of the form. Defensively hide the tile if a gamer has no linked
+  // parents (shouldn't happen in practice).
   const canTriggerAddGamer = viewerIsCustomer
     ? underStevenBrownLimit
     : underStevenBrownLimit && parents.length > 0;
@@ -181,7 +172,7 @@ export function FamilyProfileSelector({
     if (viewerIsCustomer) {
       setAddGamerOpen(true);
     } else {
-      setSelectParentOpen(true);
+      setSwitchToParentOpen(true);
     }
   }
 
@@ -240,20 +231,22 @@ export function FamilyProfileSelector({
       </ProfileTilesRow>
 
       <AddGamerDialog open={showAddGamer} onOpenChange={handleAddGamerOpenChange} />
-      <SelectParentToAddGamerDialog
-        open={selectParentOpen}
-        onOpenChange={setSelectParentOpen}
-        parents={parents}
-        onPickParent={(parent) => {
-          // Close before kicking off the switch so the underlying tile's
-          // spinner is visible and a switch failure surfaces through the
-          // selector's inline switchError (which the dialog backdrop
-          // would otherwise hide). The intent flag routes the switch to
-          // /select-profile?action=add-gamer so the dialog re-opens there.
-          setSelectParentOpen(false);
-          handleSwitch(parent, { addGamerIntent: true });
-        }}
-      />
+      {/* Gamer → parent switch so a gamer can land on a parent who's allowed to
+          create gamers. The redirect carries the add-gamer intent marker, so the
+          dialog (past its PIN gate) auto-opens on /select-profile rather than
+          dumping the parent on /parent. The UI links exactly one parent per
+          gamer today (parents.length > 0 gates the tile), so we target the first
+          — revisit this if multi-parent linking ever returns. */}
+      {!viewerIsCustomer && parents[0] && (
+        <SwitchProfileDialog
+          open={switchToParentOpen}
+          onOpenChange={setSwitchToParentOpen}
+          target={parents[0]}
+          redirectUrl={`${ROUTES.selectProfile}?${ADD_GAMER_INTENT.param}=${ADD_GAMER_INTENT.value}`}
+          title={t("switchToParentToAddGamer.title", { name: parents[0].first_name })}
+          oneWayWarning={t("switchToParentToAddGamer.oneWayWarning")}
+        />
+      )}
     </div>
   );
 }
@@ -265,14 +258,4 @@ function byFirstName(a: FamilyMember, b: FamilyMember): number {
 function navigateToDashboard(role: FamilyMember["role"]) {
   window.location.href =
     role === "customer" ? ROUTES.customer.dashboard : ROUTES.gamer.dashboard;
-}
-
-/**
- * Land on the parent's /select-profile carrying the Add Gamer intent marker, so
- * the selector there auto-opens the dialog. Module-scope (like
- * navigateToDashboard) because assigning window.location.href inside a component
- * trips react-hooks/immutability — the navigation is a side effect, not state.
- */
-function navigateToAddGamerIntent() {
-  window.location.href = `${ROUTES.selectProfile}?${ADD_GAMER_INTENT.param}=${ADD_GAMER_INTENT.value}`;
 }

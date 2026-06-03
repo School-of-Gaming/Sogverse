@@ -1042,9 +1042,9 @@
     "addGamer": "Add Gamer",
     "switchFailed": "Failed to switch accounts",
     "loadFailed": "Failed to load family",
-    "selectParentToAddGamer": {
-      "title": "Select a parent profile to add a gamer",
-      "description": "Only parents can add gamers. Pick a parent profile to switch into."
+    "switchToParentToAddGamer": {
+      "title": "Switch to {name}'s profile to add a gamer?",
+      "oneWayWarning": "You'll be signed out of your gamer account."
     },
     "addGamerForm": {
       "title": "Add a gamer",
@@ -1593,8 +1593,7 @@
     },
     "switchToGamer": {
       "title": "Switch to {name}'s profile to join {productName}?",
-      "oneWayWarning": "You'll be signed out of your parent account.",
-      "failedSwitch": "Failed to switch accounts"
+      "oneWayWarning": "You'll be signed out of your parent account."
     }
   },
   "settings": {

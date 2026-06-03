@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
  * URLs, etc.) so this surface can't be turned into an open redirect —
  * `backHref` is fed straight to `window.location.href` on leave. Customers
  * are excluded —
- * they only ever reach a voice room through `SwitchToGamerDialog`, which
+ * they only ever reach a voice room through `SwitchProfileDialog`, which
  * swaps the session to a gamer first, so by the time we're here the role
  * is gamer/gedu/admin.
  */
