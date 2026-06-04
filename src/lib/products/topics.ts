@@ -14,8 +14,6 @@ import type { ProductTopic } from "@/types";
 // field a signup requires (Minecraft → Java username, Fortnite → Epic). A
 // `switch (product.topic)` over the enum is compiler-checked exhaustive.
 
-export type TopicKind = "game" | "subject";
-
 type TopicMeta =
   | { kind: "game"; label: string }
   | { kind: "subject"; labelKey: "webinar" };
@@ -38,7 +36,3 @@ export const GAME_TOPICS: readonly ProductTopic[] = PRODUCT_TOPIC_VALUES.filter(
 );
 export const SUBJECT_TOPICS: readonly ProductTopic[] =
   PRODUCT_TOPIC_VALUES.filter((t) => PRODUCT_TOPICS[t].kind === "subject");
-
-export function topicKind(topic: ProductTopic): TopicKind {
-  return PRODUCT_TOPICS[topic].kind;
-}
