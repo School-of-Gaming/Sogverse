@@ -128,8 +128,18 @@ export interface ParticipationCounts {
   activeCount: number;
   reservingCount: number;
   waitlistCount: number;
-  /** `'none' | 'reserving' | 'waitlisted' | 'active'` for the logged-in customer's gamers. */
-  mySignupState: "none" | "reserving" | "waitlisted" | "active";
+  /**
+   * Per-gamer signup state for the logged-in customer's children on this
+   * product, keyed by `gamer_id`. A gamer with no row is simply absent from
+   * the map. The detail page's signup form uses this to disable each
+   * already-signed-up child in the picker and label them in place.
+   *
+   * `reserving` is deliberately excluded — the movie-ticket reservation model
+   * treats a held seat as the parent's to retry against (they just click Sign
+   * Up again), so a reserving gamer stays selectable. See
+   * docs/products-architecture.md "Movie-ticket reservation model".
+   */
+  myGamerStates: Record<string, "active" | "waitlisted">;
 }
 
 export type CreateParticipationInput = {
@@ -248,8 +258,8 @@ export class ParticipationsService {
    * "already signed up" detection for the listed products.
    *
    * Reads `product_seat_counts` (public-readable, RLS-permissive) for
-   * the live counts; the `mySignupState` is derived per-customer by looking
-   * up `participations` rows for any of their gamers on each product.
+   * the live counts; `myGamerStates` is derived per-customer by looking
+   * up `participations` rows for each of their gamers on each product.
    */
   async getParticipationCounts(
     productIds: string[],
@@ -270,27 +280,28 @@ export class ParticipationsService {
         activeCount: row?.active_count ?? 0,
         reservingCount: row?.reserving_count ?? 0,
         waitlistCount: row?.waitlist_count ?? 0,
-        mySignupState: "none",
+        myGamerStates: {},
       });
     }
 
-    // Per-customer signup state on each of the listed products.
+    // Per-gamer signup state on each of the listed products.
     const { data: claims } = await this.supabase.auth.getClaims();
     const userId = claims?.claims.sub;
     if (userId) {
       const { data: mine } = await this.supabase
         .from("participations")
-        .select("product_id, status")
+        .select("product_id, gamer_id, status")
         .eq("customer_id", userId)
         .in("product_id", productIds);
       if (mine) {
         for (const row of mine) {
           const existing = countsByProduct.get(row.product_id);
           if (!existing) continue;
-          existing.mySignupState = mergeSignupState(
-            existing.mySignupState,
+          const next = mergeGamerSignupState(
+            existing.myGamerStates[row.gamer_id],
             row.status,
           );
+          if (next) existing.myGamerStates[row.gamer_id] = next;
         }
       }
     }
@@ -420,18 +431,20 @@ function toMyUpcomingSessionRow(row: RawMyUpcomingSessionRow): MyUpcomingSession
   };
 }
 
-function mergeSignupState(
-  current: ParticipationCounts["mySignupState"],
+type GamerSignupState = "active" | "waitlisted";
+
+function mergeGamerSignupState(
+  current: GamerSignupState | undefined,
   rowStatus: string,
-): ParticipationCounts["mySignupState"] {
-  // Priority order: active > waitlisted > reserving > none.
-  // If any of the customer's gamers is active on this product, the panel
-  // shows the already-signed-up state regardless of other rows.
-  if (current === "active") return "active";
-  if (rowStatus === "active") return "active";
-  if (current === "waitlisted") return "waitlisted";
-  if (rowStatus === "waitlisted") return "waitlisted";
-  if (current === "reserving") return "reserving";
-  if (rowStatus === "reserving") return "reserving";
-  return "none";
+): GamerSignupState | null {
+  // Priority order: active > waitlisted. A gamer can hold more than one row on
+  // a product (e.g. a stale waitlisted row plus a fresh active one); the
+  // strongest state wins so the picker shows "Signed up" over "On waitlist".
+  // `reserving` and any other status are ignored — only placed/waitlisted rows
+  // lock a child out of the picker.
+  if (current === "active" || rowStatus === "active") return "active";
+  if (current === "waitlisted" || rowStatus === "waitlisted") return "waitlisted";
+  // `current` is narrowed to `undefined` here (both states returned above), and
+  // `rowStatus` is something we don't lock on (reserving/other) — no change.
+  return null;
 }

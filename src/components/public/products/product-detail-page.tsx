@@ -21,7 +21,7 @@ import {
 } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
 import { ProductDetailPageBody } from "./product-detail-page-body";
-import type { AuthState, MyParticipationState } from "./signup-panel-view";
+import type { AuthState } from "./signup-panel-view";
 
 // Route-level adapter: fetches the product, resolves the auth state
 // (signed-in customer with gamers / customer with no gamers / non-
@@ -62,9 +62,10 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
 
   // Stripe Checkout success bounces back here — the checkout route sets
   // success_url to /shop/[id]?signup=success. The flag triggers a query
-  // invalidation so the freshly-confirmed participation surfaces (the signup
-  // panel flips to its already-signed-up state) even if the realtime
-  // seat-count channel missed the rollup. We deliberately do NOT free the seat
+  // invalidation so the freshly-confirmed participation surfaces (the
+  // just-signed-up child flips to a disabled "Signed up" row in the picker)
+  // even if the realtime seat-count channel missed the rollup. We deliberately
+  // do NOT free the seat
   // on `signup=canceled`: the movie-ticket model holds the seat for the full
   // reservation lifetime, and the parent retries by clicking Sign Up again.
   const signupResult = searchParams.get("signup");
@@ -76,9 +77,9 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
   }, [signupResult, queryClient]);
 
   // Wait on every query the signup panel depends on before painting, so we
-  // don't show the default registration CTA and then snap to the
-  // already-signed-up state a tick later. countsLoading carries
-  // `mySignupState` (the already-enrolled signal). For non-customers the
+  // don't show a child as selectable and then snap them to a disabled
+  // "Signed up" row a tick later. countsLoading carries `myGamerStates`
+  // (the per-child already-enrolled signal). For non-customers the
   // customer-only queries return fast/empty. Gedus assigned to a product reach
   // the gedu session-details page from /gedu/clubs/[id] (or /camps/[id] /
   // /events/[id]) — the marketing route here shows them the public layout with
@@ -110,12 +111,17 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
     if (!gamers || gamers.length === 0) {
       return { kind: "no_gamers", addGamerHref: "/parent" };
     }
+    // Each gamer carries their own signup state on this product (active /
+    // waitlisted), so the picker can disable an already-enrolled child in
+    // place rather than hiding the whole signup form behind a status panel.
+    const gamerStates = myCount?.myGamerStates ?? {};
     return {
       kind: "ready",
       gamers: gamers.map((g) => ({
         id: g.id,
         name: g.first_name || g.username,
         age: null,
+        signupState: gamerStates[g.id] ?? null,
       })),
     };
   })();
@@ -133,25 +139,11 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
     participationsCount,
   });
 
-  // Already-signed-up signal: if any of the customer's gamers holds an active
-  // or waitlisted row on this product, the signup panel renders its
-  // already-signed-up state instead of the default registration CTA. The page
-  // is the same ProductDetailPageBody every product uses. Reserving rows are
-  // deliberately not surfaced — the movie-ticket model treats the held seat as
-  // the parent's to retry against (they just click Sign Up again). See
-  // docs/products-architecture.md "Movie-ticket reservation model".
-  const myParticipationState: MyParticipationState | null =
-    myCount?.mySignupState === "active" ||
-    myCount?.mySignupState === "waitlisted"
-      ? myCount.mySignupState
-      : null;
-
   return (
     <ProductDetailPageBody
       product={product}
       state={state}
       authState={authState}
-      myParticipationState={myParticipationState}
     />
   );
 }

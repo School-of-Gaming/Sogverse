@@ -16,7 +16,7 @@ import { SessionCalendarView } from "@/components/calendar/session-calendar-view
 import { ProductWhenWhereCard } from "./product-when-where-card";
 import type { RegistrationState } from "./derive-registration-state";
 import { SignupPanel } from "./signup-panel";
-import type { AuthState, MyParticipationState } from "./signup-panel-view";
+import type { AuthState } from "./signup-panel-view";
 
 // Page body — same role as the cards' "View": layout + presentation,
 // with sub-adapters handling their own state. Owns nothing about
@@ -34,11 +34,6 @@ export interface ProductDetailPageBodyProps {
   };
   state: RegistrationState;
   authState: AuthState;
-  /**
-   * When set, the parent (or one of their gamers) is already on this product
-   * — the panel renders the status panel instead of the signup form.
-   */
-  myParticipationState?: MyParticipationState | null;
   /** Render the panel frozen at this instant for deterministic mocks. */
   fixedNowMs?: number;
   /** Mockup preview banner is shown if this is true (preview route). */
@@ -49,7 +44,6 @@ export function ProductDetailPageBody({
   product,
   state,
   authState,
-  myParticipationState,
   fixedNowMs,
   previewBanner,
 }: ProductDetailPageBodyProps) {
@@ -126,7 +120,6 @@ export function ProductDetailPageBody({
               product={product}
               state={state}
               authState={authState}
-              myParticipationState={myParticipationState ?? null}
               fixedNowMs={fixedNowMs}
             />
           </div>

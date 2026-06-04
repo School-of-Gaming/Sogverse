@@ -10,6 +10,7 @@ import type {
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
+import { effectiveStatus } from "@/components/admin/products/effective-status";
 
 // `topic` is a column on Product (the product_topic enum) — its label is
 // resolved client-side via PRODUCT_TOPICS, so no join is needed here.
@@ -163,11 +164,17 @@ export class ProductsService {
   // pages without seeing draft/cancelled rows. Joins everything the browse
   // card needs in one round trip.
   //
-  // We deliberately *don't* filter on end_date — a `running` row whose
-  // end_date has already passed still comes back here. The card layer
-  // calls effectiveStatus() to surface those as "Ended" with a muted
-  // visual treatment instead of letting them masquerade as live. Once the
-  // cron flips them to `completed`, RLS hides them entirely.
+  // The stored-status filter below keeps draft/cancelled/completed rows out,
+  // but it can't catch a row stored as `running` whose `end_date` has already
+  // passed — that product has finished and must not appear in the storefront.
+  // There is no cron flipping stored status, so we make the call here in JS:
+  // `effectiveStatus()` downgrades such a row to `completed` (or `expired`)
+  // and we drop it. The comparison is date-only against the product's *own*
+  // timezone (a finished-yesterday camp in Helsinki must not linger for a UTC
+  // viewer — CLAUDE.md "Date & Time"); `effectiveStatus()` already projects
+  // `now` into `product.timezone`. The active-participation count is irrelevant
+  // to the ended decision (only `end_date` drives completed/expired), so 0 is
+  // safe to pass.
   async listVisibleByTypes(types: ProductType[]): Promise<ProductBrowseRow[]> {
     const { data, error } = await this.supabase
       .from("products")
@@ -185,7 +192,12 @@ export class ProductsService {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data as ProductBrowseRow[];
+
+    const now = new Date();
+    return (data as ProductBrowseRow[]).filter((row) => {
+      const status = effectiveStatus(row, now, 0);
+      return status !== "completed" && status !== "expired";
+    });
   }
 
   // Single-product detail fetch for the parent-facing detail page

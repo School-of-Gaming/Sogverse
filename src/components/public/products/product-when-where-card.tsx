@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { Clock, Globe, MapPin, Sparkles, Users } from "lucide-react";
+import { Clock, Globe, Languages, MapPin, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -64,7 +64,7 @@ export function ProductWhenWhereCard({ product }: ProductWhenWhereCardProps) {
         <DetailRow icon={Users} label={t("info.ageRange")}>
           {t("info.ages", { min: product.min_age, max: product.max_age })}
         </DetailRow>
-        <DetailRow icon={Sparkles} label={t("info.language")}>
+        <DetailRow icon={Languages} label={t("info.language")}>
           <LanguageFlag code={product.spoken_language_code} />
         </DetailRow>
       </CardContent>
