@@ -113,7 +113,7 @@ export function ProductBrowseCardView({
                 consistent right-edge anchor regardless of topic length. */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               {topicLabel && (
-                <p className="text-xs font-medium uppercase tracking-wide text-primary">
+                <p className="text-xs font-medium tracking-wide text-primary">
                   {topicLabel}
                 </p>
               )}
