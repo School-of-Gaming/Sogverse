@@ -1470,10 +1470,14 @@
       "title": "{name}s nästa pass",
       "startsIn": "Börjar om {countdown}",
       "inProgress": "Pass pågår",
-      "reports": "Rapporter"
+      "reports": "Rapporter",
+      "awaitingGedu": "Varje spelare paras ihop med en Gedu som verkligen förstår dem och kompisar att spela med. Vi ordnar {name}s plats just nu.",
+      "awaitingGeduGamer": "Du är med! Vi letar upp den perfekta Gedun åt dig och kompisar att spela med."
     },
     "upcomingSession": {
-      "gamerLabel": "För {name}"
+      "gamerLabel": "För {name}",
+      "awaitingGedu": "Hittar rätt Gedu",
+      "awaitingGeduGamer": "Letar efter din Gedu"
     },
     "help": {
       "contact": {

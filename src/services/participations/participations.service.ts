@@ -15,9 +15,11 @@ import type { QueryData } from "@supabase/supabase-js";
  * (for camp/event termination), the timezone (so we can compute occurrences
  * in product-local wall time), and the Padlet URL for the reports link.
  *
- * Filtered to active-and-assigned participations: waitlisted rows have no
- * placement and unassigned rows aren't on a schedule yet, so neither makes
- * sense on a "next session" list.
+ * Filtered to active participations (assigned and unassigned alike);
+ * waitlisted rows are excluded since they have no placement. `groupId` is
+ * null for unassigned rows — the adapter turns those into "awaiting Gedu
+ * placement" cards (full schedule, disabled Join button) so a fresh
+ * purchase shows up before an admin has placed the gamer in a group.
  */
 export interface MyUpcomingSessionRow {
   gamer: {
@@ -196,13 +198,21 @@ export class ParticipationsService {
   }
 
   /**
-   * The logged-in user's *placed* participations, joined with the bits the
+   * The logged-in user's *active* participations, joined with the bits the
    * dashboard Sessions section needs to render one card per upcoming
    * occurrence: per-product weekly slots, start/end-date bounds, timezone,
    * and the Padlet URL for the reports link.
    *
-   * Filtered to `status='active' AND group_id IS NOT NULL` — waitlisted rows
-   * aren't scheduled yet, and unassigned rows have no placement either.
+   * Filtered to `status='active'` only — waitlisted rows aren't scheduled
+   * yet, but BOTH assigned (`group_id IS NOT NULL`) and unassigned
+   * (`group_id IS NULL`) rows are returned. The schedule lives on the
+   * *product* (`schedule_slots`), not the group, so an unassigned gamer's
+   * sessions are identical to an assigned one's — the only difference is
+   * there's no voice room to join yet. The adapter keys off `group_id`
+   * (null → "awaiting Gedu placement" card with a disabled Join button) so
+   * a parent sees their purchase reflected immediately instead of an empty
+   * section while an admin places the gamer in a group.
+   *
    * Expansion into concrete (start, end) pairs is the adapter's job
    * (`src/lib/upcoming-sessions.ts`); this method just hands back the raw
    * rows with everything that expansion needs in one round trip.
@@ -243,8 +253,7 @@ export class ParticipationsService {
         `,
       )
       .eq(audienceColumn, userId)
-      .eq("status", "active")
-      .not("group_id", "is", null);
+      .eq("status", "active");
 
     if (error) throw error;
 

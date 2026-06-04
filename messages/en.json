@@ -1470,10 +1470,14 @@
       "title": "{name}'s next session",
       "startsIn": "Starts in {countdown}",
       "inProgress": "Session in progress",
-      "reports": "Your reports"
+      "reports": "Your reports",
+      "awaitingGedu": "Every gamer is hand-matched with a Gedu who truly gets them and friends they'll click with. We're finding {name}'s place now.",
+      "awaitingGeduGamer": "You're all signed up! We're finding you the perfect Gedu and the friends you'll play with."
     },
     "upcomingSession": {
-      "gamerLabel": "For {name}"
+      "gamerLabel": "For {name}",
+      "awaitingGedu": "Finding the right Gedu",
+      "awaitingGeduGamer": "Finding your Gedu"
     },
     "help": {
       "contact": {

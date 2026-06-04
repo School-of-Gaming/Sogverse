@@ -13,9 +13,12 @@ import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import type { MyUpcomingSessionRow } from "@/services/participations";
 
 /**
- * Expand the viewer's placed participations into a flat, time-sorted list of
+ * Expand the viewer's active participations into a flat, time-sorted list of
  * concrete upcoming sessions for the dashboard Sessions section (drives both
- * `/parent` and `/gamer`).
+ * `/parent` and `/gamer`). Includes not-yet-placed (unassigned)
+ * participations — those expand to the same occurrence cards, flagged
+ * `awaiting` so the card renders a disabled Join button + "matching with a
+ * Gedu" copy instead of a live/locked CTA.
  *
  * One emitted entry per (participation, slot, future occurrence). Sessions
  * whose voice window has already closed (`end + SESSION_WINDOW_AFTER` < now)
@@ -48,11 +51,18 @@ export function expandUpcomingSessions(
     // practice — surfacing the button keeps the card layout stable rather
     // than reflowing for an edge case.
     const reportsHref = row.product.padletUrl ?? "#";
+    // `group_id IS NULL` means the gamer is purchased-but-not-yet-placed.
+    // The schedule still comes off the product, so we emit the full set of
+    // occurrence cards exactly as for an assigned gamer — only the action
+    // zone differs: `awaiting` keeps the Join button disabled (no room to
+    // join until an admin places them with a Gedu) and surfaces the
+    // friendly "matching with a Gedu" copy. See NextSessionCard /
+    // UpcomingSessionCard.
+    const awaiting = row.groupId === null;
     // The voice room route is keyed by `product_groups.id` (UUID) and
-    // only exists for remote products. Unassigned participations
-    // (group_id IS NULL, redesign §4.10) get no voice access either —
-    // both cases collapse to a `"#"` no-op so the locked/Live UX still
-    // renders honestly off `voiceIsOpen` while the button stays inert.
+    // only exists for remote products. Unassigned participations and
+    // in-person products both collapse to a `"#"` no-op — the button stays
+    // inert either way.
     const voiceHref =
       row.product.isRemote && row.groupId
         ? ROUTES.voice.groupSession(row.groupId)
@@ -86,6 +96,7 @@ export function expandUpcomingSessions(
         voiceIsOpen: false,
         voiceHref,
         reportsHref,
+        awaiting,
       });
     }
   }
@@ -96,7 +107,11 @@ export function expandUpcomingSessions(
 
   if (sessions.length > 0) {
     const first = sessions[0];
-    first.voiceIsOpen = isVoiceWindowOpen(first.sessionStart, first.sessionEnd, now);
+    // Awaiting cards never go "live" — there's no room to join until the
+    // gamer is placed — so the button stays disabled through the window too.
+    first.voiceIsOpen =
+      !first.awaiting &&
+      isVoiceWindowOpen(first.sessionStart, first.sessionEnd, now);
   }
 
   return sessions;

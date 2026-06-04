@@ -536,12 +536,12 @@ function ParticipantCardDemo() {
 /*  Parent Sessions Section Demo                                       */
 /* ------------------------------------------------------------------ */
 
-// Four states demoed side by side: loading (`sessions={null}`), empty
-// (`sessions={[]}`), and two non-empty stacks — one where the soonest
-// session is already live (`NextSessionCard` with the active join CTA),
-// one where it's still in the future (countdown + locked CTA). The two
-// non-empty stacks include three trailing `UpcomingSessionCard`s so the
-// total height matches the loading + empty states. All demo sessions run
+// Four states demoed side by side: empty (`sessions={[]}`), live (soonest
+// session already joinable — `NextSessionCard` with the active join CTA),
+// countdown (soonest still in the future — countdown + locked CTA), and
+// awaiting (purchased but not yet placed — disabled Join + "matching with a
+// Gedu" copy). The non-empty stacks include three trailing
+// `UpcomingSessionCard`s so the total height matches. All demo sessions run
 // 14:00–16:30 local; the live one anchors to the most recent 14:00 (today
 // if past, otherwise yesterday) so it always displays as "in progress".
 const SESSIONS_HOUR_MS = 3_600_000;
@@ -597,9 +597,17 @@ function SessionsSectionDemo() {
     SESSIONS_COUNTDOWN_FIRST_GAMER,
     now,
   );
+  // Purchased-but-not-yet-placed: same schedule cards, but each is flagged
+  // `awaiting` so the Join button stays disabled and the "matching with a
+  // Gedu" copy shows. Reuses the countdown stack (all future, so the head
+  // is already locked) to demo the prominent + compact awaiting states.
+  const awaitingPlacement = countdownFirst.map((s) => ({
+    ...s,
+    awaiting: true,
+  }));
 
   return (
-    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-3">
+    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
       <div className="flex flex-col gap-2">
         <DemoCaption>No sessions</DemoCaption>
         <SessionsSection sessions={[]} />
@@ -611,6 +619,10 @@ function SessionsSectionDemo() {
       <div className="flex flex-col gap-2">
         <DemoCaption>Loaded — countdown</DemoCaption>
         <SessionsSection sessions={countdownFirst} />
+      </div>
+      <div className="flex flex-col gap-2">
+        <DemoCaption>Awaiting Gedu placement</DemoCaption>
+        <SessionsSection sessions={awaitingPlacement} />
       </div>
     </div>
   );
