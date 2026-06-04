@@ -1,8 +1,23 @@
-import type { Profile, ProfileUpdate, UserRole, ParentGamer, AppSupabaseClient } from "@/types";
+import type { Profile, ProfileUpdate, UserRole, ParentGamer, SpokenLanguage, AppSupabaseClient } from "@/types";
 import { escapeLikePattern } from "@/lib/utils";
 
 export class UsersService {
   constructor(private supabase: AppSupabaseClient) {}
+
+  /**
+   * Reference set of spoken (human) languages from the `spoken_languages`
+   * table. Public reference data — used by the shop's language filter (anon-
+   * readable). Distinct from the UI locale (see CLAUDE.md "Locale vs. Spoken
+   * Language").
+   */
+  async getSpokenLanguages(): Promise<SpokenLanguage[]> {
+    const { data, error } = await this.supabase
+      .from("spoken_languages")
+      .select("code, name");
+
+    if (error) throw error;
+    return data;
+  }
 
   async getProfile(userId: string): Promise<Profile> {
     const { data, error } = await this.supabase

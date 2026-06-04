@@ -6,6 +6,7 @@ import { LanguageFlag } from "@/components/ui/language-flag";
 import { GAME_TOPICS, SUBJECT_TOPICS } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
+import type { SpokenLanguage } from "@/types";
 import { cn } from "@/lib/utils";
 import { useBrowseFilters } from "./use-browse-filters";
 import { useShopCategory } from "./use-shop-category";
@@ -22,10 +23,20 @@ import { useShopCategory } from "./use-shop-category";
 // No match-count display: the visible card grid already conveys that
 // information at a glance, and surfacing a count next to a "Clear"
 // button made the meta row's height jump when the button appeared.
-export function ProductBrowseFilters() {
+interface ProductBrowseFiltersProps {
+  /** Server-prefetched spoken-language set so the Language row paints with the
+   *  rest of the strip instead of popping in after its own fetch resolves. */
+  initialSpokenLanguages: SpokenLanguage[];
+}
+
+export function ProductBrowseFilters({
+  initialSpokenLanguages,
+}: ProductBrowseFiltersProps) {
   const t = useTranslations("productBrowse.filters");
   const topicLabel = useTopicLabel();
-  const { data: spokenLanguages } = useSpokenLanguages();
+  const { data: spokenLanguages } = useSpokenLanguages({
+    initialData: initialSpokenLanguages,
+  });
   // Product category (Clubs | Camps) is a required, mutually-exclusive choice
   // — it leads the filter card as the "Type" row. Unlike the other filters it
   // lives in its own URL param (useShopCategory) and is never empty; Clear

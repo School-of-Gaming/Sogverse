@@ -15,6 +15,7 @@ import {
   type CreateParticipationInput,
   type JoinWaitlistInput,
   type MyUpcomingSessionRow,
+  type ParticipationCounts,
 } from "./participations.service";
 import { productKeys } from "../products";
 
@@ -66,13 +67,21 @@ export function useMyUpcomingSessions(
   );
 }
 
-export function useParticipationCounts(productIds: string[]) {
+// `initialData` (optional) is the server-prefetched seat counts from the shop
+// page's Server Component (see `shop/page.tsx`), keyed on the same product ids
+// the grid renders. When present the seat pills paint on the first frame with
+// the products; the hook still refetches on mount.
+export function useParticipationCounts(
+  productIds: string[],
+  options?: { initialData?: ParticipationCounts[] },
+) {
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
   return useQuery({
     queryKey: participationKeys.countsByProducts(productIds),
     queryFn: () => service.getParticipationCounts(productIds),
     enabled: productIds.length > 0,
+    initialData: options?.initialData,
   });
 }
 

@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
-import type { ProductType } from "@/types";
+import type { ProductType, ProductBrowseRow } from "@/types";
 import {
   ProductsService,
   type CreateProductInput,
@@ -49,13 +49,21 @@ export function useProductsByType(type: ProductType) {
 // Visible products across one or more types in a single fetch. The shop uses
 // this to load every browseable type (clubs + camps) at once so the in-page
 // Type filter is an instant client-side switch rather than a per-type refetch.
-export function useVisibleProductsByTypes(types: ProductType[]) {
+//
+// `initialData` (optional) is the server-prefetched product list from the shop
+// page's Server Component (see `shop/page.tsx`). When present the grid paints
+// on the first frame with no spinner; the hook still refetches on mount.
+export function useVisibleProductsByTypes(
+  types: ProductType[],
+  options?: { initialData?: ProductBrowseRow[] },
+) {
   const supabase = getClient();
   const service = new ProductsService(supabase);
 
   return useQuery({
     queryKey: productKeys.visibleByTypes(types),
     queryFn: () => service.listVisibleByTypes(types),
+    initialData: options?.initialData,
   });
 }
 
