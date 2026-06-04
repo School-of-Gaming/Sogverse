@@ -2,9 +2,12 @@
 
 import { useFormatter, useTranslations } from "next-intl";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Identicon } from "@/components/ui/identicon";
 import { cn, formatCurrencyFromCents } from "@/lib/utils";
+import { MAX_GAMERS_PER_PARENT } from "@/lib/constants";
 import type { ProductType } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { CountdownClock, useCountdownDone } from "./countdown-clock";
@@ -27,8 +30,10 @@ import type { PricingOption } from "./pricing-options";
 export type AuthState =
   | { kind: "unauthenticated"; signInHref: string; createAccountHref: string }
   | { kind: "non_customer" }
-  | { kind: "no_gamers"; addGamerHref: string }
   | {
+      // A signed-in customer. `gamers` may be empty — the picker always renders
+      // an "Add a child" row, so the zero-gamer case needs no separate state;
+      // it's just a picker with no selectable rows yet.
       kind: "ready";
       gamers: readonly {
         id: string;
@@ -73,6 +78,8 @@ export interface SignupPanelViewProps {
   /** Resolved by the adapter; null while the user has no gamer selected. */
   selectedGamerId: string | null;
   onSelectGamer: (gamerId: string) => void;
+  /** Opens the Add Gamer dialog (owned by the adapter). */
+  onAddGamer: () => void;
   agreed: boolean;
   onAgreedChange: (next: boolean) => void;
   onSubmit: () => void;
@@ -329,13 +336,11 @@ function PreOpenPanel(props: SignupPanelViewProps) {
         {...props}
         helperText={t("preOpenHelper")}
         // Idle copy flips with the countdown: pre-zero we tell the parent
-        // registration isn't open yet; post-zero (countdown done but the
-        // form isn't filled in) we tell them what's left to do, otherwise
-        // the button would still read "not yet open" after the clock has
-        // visibly hit zero — which contradicts the banner above.
-        ctaLabelIdle={
-          isOpen ? t("ctaPreOpenChooseChild") : t("ctaPreOpenIdle", { verb })
-        }
+        // registration isn't open yet; post-zero it reads as the live action
+        // label (same as the open panel) so it never contradicts the banner.
+        // The "no gamer selected" case is handled centrally in SignupForm
+        // (ctaSelectGamer), so it doesn't need a special idle label here.
+        ctaLabelIdle={isOpen ? activeLabel : t("ctaPreOpenIdle", { verb })}
         ctaLabelActive={isOpen ? activeLabel : t("ctaPreOpenReady")}
         active={isOpen}
       />
@@ -462,8 +467,6 @@ function FormOrAuth(props: FormOrAuthProps) {
       );
     case "non_customer":
       return <NonCustomerOverlay />;
-    case "no_gamers":
-      return <NoGamersOverlay addGamerHref={props.authState.addGamerHref} />;
     case "ready":
       // selectedGamerId comes through `props` (it's a top-level View prop,
       // not part of the AuthState union — see SignupPanelViewProps).
@@ -510,32 +513,19 @@ function NonCustomerOverlay() {
   );
 }
 
-function NoGamersOverlay({ addGamerHref }: { addGamerHref: string }) {
-  const t = useTranslations("productDetail.signupPanel");
-  return (
-    <div className="space-y-3">
-      <div className="rounded-md border border-border bg-muted/30 p-4">
-        <p className="text-sm font-semibold">{t("noGamersTitle")}</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {t("noGamersDescription")}
-        </p>
-      </div>
-      <Link
-        href={addGamerHref}
-        className={buttonVariants({ size: "lg", className: "w-full text-base" })}
-      >
-        {t("ctaAddGamer")}
-      </Link>
-    </div>
-  );
-}
-
 function SignupForm(
   props: FormOrAuthProps & {
     gamers: Extract<AuthState, { kind: "ready" }>["gamers"];
   },
 ) {
   const t = useTranslations("productDetail.signupPanel");
+  // The "Add Gamer" row reuses the family namespace's label so the wording
+  // stays in lockstep with the family selector / My Gamers tile.
+  const tFamily = useTranslations("family");
+  // Steven Brown Rule — hide the add affordance at the cap, same as the family
+  // selector / My Gamers grid. `gamers` is the parent's full roster (enrolled
+  // ones included), so its length is the right count to test.
+  const canAddGamer = props.gamers.length < MAX_GAMERS_PER_PARENT;
   const formReady = props.selectedGamerId !== null && props.agreed;
   const clickable = formReady && props.active && !props.submitting;
 
@@ -543,7 +533,9 @@ function SignupForm(
     <div className="space-y-4">
       <div className="rounded-md border border-border bg-muted/30 p-4">
         <h3 id="gamer-picker-label" className="text-sm font-semibold">
-          {t("whoAreYouSigningUp")}
+          {/* Per-type heading — matches the product's action verb
+              (enrol / register / sign up / join). */}
+          {t(`whoAreYouSigningUp.${props.productType}`)}
         </h3>
         {props.helperText && (
           <p className="mt-1 text-xs text-muted-foreground">{props.helperText}</p>
@@ -568,38 +560,43 @@ function SignupForm(
                 disabled={alreadyOn !== null}
                 onClick={() => props.onSelectGamer(g.id)}
                 className={cn(
-                  "flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors",
+                  "flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
                   alreadyOn !== null
-                    ? "cursor-not-allowed border-input bg-muted/40"
+                    ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
                     : selected
                       ? "border-primary bg-primary/10"
                       : "border-input hover:bg-accent hover:text-accent-foreground",
                 )}
               >
-                <span>
-                  <span
-                    className={cn(
-                      "font-medium",
-                      alreadyOn !== null && "text-muted-foreground",
-                    )}
-                  >
-                    {g.name}
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md">
+                    <Identicon id={g.id} />
                   </span>
-                  {g.age !== null && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {t("agePill", { age: g.age })}
+                  <span className="min-w-0">
+                    <span
+                      className={cn(
+                        "font-medium",
+                        alreadyOn !== null && "text-muted-foreground",
+                      )}
+                    >
+                      {g.name}
                     </span>
-                  )}
+                    {g.age !== null && (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {t("agePill", { age: g.age })}
+                      </span>
+                    )}
+                  </span>
                 </span>
                 {alreadyOn !== null ? (
-                  <span className="text-xs font-semibold text-muted-foreground">
+                  <span className="shrink-0 text-xs font-semibold text-muted-foreground">
                     {alreadyOn === "active"
-                      ? t("gamerAlreadySignedUp")
+                      ? t(`gamerAlreadySignedUp.${props.productType}`)
                       : t("gamerAlreadyWaitlisted")}
                   </span>
                 ) : (
                   selected && (
-                    <span className="text-xs font-semibold text-primary">
+                    <span className="shrink-0 text-xs font-semibold text-primary">
                       {t("selected")}
                     </span>
                   )
@@ -607,6 +604,21 @@ function SignupForm(
               </button>
             );
           })}
+          {/* "Add Gamer" row — opens the reusable AddGamerDialog (owned by the
+              adapter). This is why there's no separate no-gamers state: zero
+              gamer rows above + this row is the empty case. It sits inside the
+              radiogroup but is an action, not a radio option. Hidden at the
+              Steven Brown cap, matching every other add-gamer affordance. */}
+          {canAddGamer && (
+            <button
+              type="button"
+              onClick={props.onAddGamer}
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-input px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-foreground"
+            >
+              <Plus className="h-4 w-4" />
+              {tFamily("addGamer")}
+            </button>
+          )}
         </div>
       </div>
 
@@ -625,9 +637,14 @@ function SignupForm(
       >
         {props.submitting
           ? t("ctaSubmitting")
-          : formReady
-            ? props.ctaLabelActive
-            : props.ctaLabelIdle}
+          : // When registration is actionable but no gamer is selected (zero
+            // gamers, or all already enrolled), prompt to pick one rather than
+            // showing the action verb on a dead button.
+            props.active && props.selectedGamerId === null
+            ? t("ctaSelectGamer")
+            : formReady
+              ? props.ctaLabelActive
+              : props.ctaLabelIdle}
       </Button>
 
       {props.submitError && (

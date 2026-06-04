@@ -162,7 +162,7 @@
           "label": "Consumer club",
           "plural": "Consumer clubs",
           "tagline": "Weekly, ongoing, parents pay per session.",
-          "blurb": "Parents enroll their child and pay per session. Clubs run week after week with no end date unless you set one.",
+          "blurb": "Parents enrol their child and pay per session. Clubs run week after week with no end date unless you set one.",
           "traits": {
             "1": "Weekly · one day per week",
             "2": "No end date by default",
@@ -282,7 +282,7 @@
           },
           "metrics": {
             "title": "Business metrics",
-            "body": "Enrollment counts, revenue, and refunds for this product will land here once payments data is wired up."
+            "body": "Enrolment counts, revenue, and refunds for this product will land here once payments data is wired up."
           }
         }
       },
@@ -1289,24 +1289,28 @@
       "bannerRunningLate": "This one's already underway",
       "bannerEnded": "This one's wrapped",
       "verb": {
-        "consumer_club": "Enroll",
+        "consumer_club": "Enrol",
         "municipality_club": "Register",
         "camp": "Sign up",
         "event": "Join"
       },
       "ctaPreOpenIdle": "{verb} — not yet open",
       "ctaPreOpenReady": "Ready when sign-up opens",
-      "ctaPreOpenChooseChild": "Pick a child first",
       "ctaActive": "{verb} now",
       "ctaActiveWithPrice": "{verb} now {price}",
       "ctaInlineAddSub": "Add to your subscription · {price} (charged today)",
       "ctaSubmitting": "One moment…",
+      "ctaSelectGamer": "Select a gamer",
       "ctaWaitlist": "Join the waitlist",
       "ctaThreshold": "Reserve a spot",
       "ctaSignIn": "Sign in to register",
       "ctaCreateAccount": "Create account",
-      "ctaAddGamer": "Add a child first",
-      "gamerAlreadySignedUp": "Signed up",
+      "gamerAlreadySignedUp": {
+        "consumer_club": "Already enrolled",
+        "municipality_club": "Already registered",
+        "camp": "Already signed up",
+        "event": "Already joined"
+      },
       "gamerAlreadyWaitlisted": "On waitlist",
       "nonCustomerNote": "Only parents can register a gamer here.",
       "preOpenHelper": "Pick your child and agree to the rules so it's a one-tap sign-up the moment it opens.",
@@ -1326,11 +1330,14 @@
         "camp": "I understand School of Gaming has zero tolerance for bullying and toxic behavior.",
         "event": "I understand School of Gaming has zero tolerance for bullying and toxic behavior."
       },
-      "whoAreYouSigningUp": "Who are you signing up?",
+      "whoAreYouSigningUp": {
+        "consumer_club": "Who are you enrolling?",
+        "municipality_club": "Who are you registering?",
+        "camp": "Who are you signing up?",
+        "event": "Who's joining?"
+      },
       "selected": "Selected",
-      "agePill": "Age {age}",
-      "noGamersTitle": "Add a child to your account",
-      "noGamersDescription": "We need to know who to sign up. Add a child first — it takes a minute."
+      "agePill": "Age {age}"
     },
     "pricing": {
       "title": "Pricing",

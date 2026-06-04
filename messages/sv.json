@@ -1296,17 +1296,21 @@
       },
       "ctaPreOpenIdle": "{verb} – inte öppen ännu",
       "ctaPreOpenReady": "Redo när anmälan öppnar",
-      "ctaPreOpenChooseChild": "Välj ett barn först",
       "ctaActive": "{verb} nu",
       "ctaActiveWithPrice": "{verb} nu {price}",
       "ctaInlineAddSub": "Lägg till i din prenumeration · {price} (debiteras i dag)",
       "ctaSubmitting": "Ett ögonblick…",
+      "ctaSelectGamer": "Välj en gamer",
       "ctaWaitlist": "Gå med på väntelistan",
       "ctaThreshold": "Reservera en plats",
       "ctaSignIn": "Logga in för att anmäla",
       "ctaCreateAccount": "Skapa konto",
-      "ctaAddGamer": "Lägg till ett barn först",
-      "gamerAlreadySignedUp": "Anmäld",
+      "gamerAlreadySignedUp": {
+        "consumer_club": "Redan anmäld",
+        "municipality_club": "Redan registrerad",
+        "camp": "Redan anmäld",
+        "event": "Redan med"
+      },
       "gamerAlreadyWaitlisted": "På väntelistan",
       "nonCustomerNote": "Endast föräldrar kan anmäla en spelare här.",
       "preOpenHelper": "Välj ditt barn och godkänn reglerna så blir det en knapptryckning så fort anmälan öppnar.",
@@ -1326,11 +1330,14 @@
         "camp": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende.",
         "event": "Jag förstår att School of Gaming har nolltolerans mot mobbning och toxiskt beteende."
       },
-      "whoAreYouSigningUp": "Vem anmäler du?",
+      "whoAreYouSigningUp": {
+        "consumer_club": "Vem anmäler du?",
+        "municipality_club": "Vem registrerar du?",
+        "camp": "Vem anmäler du?",
+        "event": "Vem går med?"
+      },
       "selected": "Vald",
-      "agePill": "Ålder {age}",
-      "noGamersTitle": "Lägg till ett barn på ditt konto",
-      "noGamersDescription": "Vi behöver veta vem du anmäler. Lägg till ett barn först – det tar en minut."
+      "agePill": "Ålder {age}"
     },
     "pricing": {
       "title": "Pris",

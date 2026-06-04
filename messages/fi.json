@@ -1296,17 +1296,21 @@
       },
       "ctaPreOpenIdle": "{verb} – ei vielä avoinna",
       "ctaPreOpenReady": "Valmis – odotetaan avaamista",
-      "ctaPreOpenChooseChild": "Valitse lapsi ensin",
       "ctaActive": "{verb} nyt",
       "ctaActiveWithPrice": "{verb} nyt {price}",
       "ctaInlineAddSub": "Lisää tilaukseesi · {price} (veloitetaan tänään)",
       "ctaSubmitting": "Hetki…",
+      "ctaSelectGamer": "Valitse pelaaja",
       "ctaWaitlist": "Liity jonotuslistalle",
       "ctaThreshold": "Varaa paikka",
       "ctaSignIn": "Kirjaudu sisään ilmoittautuaksesi",
       "ctaCreateAccount": "Luo tili",
-      "ctaAddGamer": "Lisää lapsi ensin",
-      "gamerAlreadySignedUp": "Ilmoitettu",
+      "gamerAlreadySignedUp": {
+        "consumer_club": "Jo ilmoitettu",
+        "municipality_club": "Jo rekisteröity",
+        "camp": "Jo ilmoitettu",
+        "event": "Jo liittynyt"
+      },
       "gamerAlreadyWaitlisted": "Jonossa",
       "nonCustomerNote": "Vain vanhempi voi ilmoittaa pelaajan tähän.",
       "preOpenHelper": "Valitse lapsi ja hyväksy säännöt, niin ilmoittautuminen onnistuu yhdellä napautuksella heti, kun se avautuu.",
@@ -1326,11 +1330,14 @@
         "camp": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä.",
         "event": "Ymmärrän, että School of Gaming ei suvaitse minkäänlaista kiusaamista tai myrkyllistä käyttäytymistä."
       },
-      "whoAreYouSigningUp": "Kenet ilmoitat?",
+      "whoAreYouSigningUp": {
+        "consumer_club": "Kenet ilmoitat?",
+        "municipality_club": "Kenet rekisteröit?",
+        "camp": "Kenet ilmoitat?",
+        "event": "Kuka liittyy?"
+      },
       "selected": "Valittu",
-      "agePill": "Ikä {age}",
-      "noGamersTitle": "Lisää lapsi tilillesi",
-      "noGamersDescription": "Meidän on tiedettävä, kenet ilmoitat. Lisää lapsi ensin – se vie minuutin."
+      "agePill": "Ikä {age}"
     },
     "pricing": {
       "title": "Hinta",

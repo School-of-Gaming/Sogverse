@@ -108,16 +108,15 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
     if (!isCustomer) {
       return { kind: "non_customer" };
     }
-    if (!gamers || gamers.length === 0) {
-      return { kind: "no_gamers", addGamerHref: "/parent" };
-    }
-    // Each gamer carries their own signup state on this product (active /
-    // waitlisted), so the picker can disable an already-enrolled child in
-    // place rather than hiding the whole signup form behind a status panel.
+    // A signed-in customer is always "ready" — even with zero gamers. The
+    // picker renders whatever gamers exist (possibly none) and the CTA stays
+    // disabled until one is selected, so the no-gamers case needs no separate
+    // state. Each gamer carries its own signup state (active / waitlisted) so
+    // the picker can disable an already-enrolled child in place.
     const gamerStates = myCount?.myGamerStates ?? {};
     return {
       kind: "ready",
-      gamers: gamers.map((g) => ({
+      gamers: (gamers ?? []).map((g) => ({
         id: g.id,
         name: g.first_name || g.username,
         age: null,
