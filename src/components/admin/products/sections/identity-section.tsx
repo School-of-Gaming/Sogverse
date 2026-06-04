@@ -1,8 +1,7 @@
 "use client";
 
-import { Check, Loader2, Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -11,17 +10,15 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import {
-  useCreateTag,
-  useCreateTopic,
-  useTags,
-  useTopics,
-} from "@/services/products";
+  GAME_TOPICS,
+  SUBJECT_TOPICS,
+} from "@/lib/products/topics";
+import { useTopicLabel } from "@/lib/products/use-topic-label";
+import type { ProductTopic } from "@/types";
 import { Field, FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
 import {
-  TOPIC_KIND_ORDER,
   type FormState,
   type TranslationDraft,
 } from "../product-form-state";
@@ -32,7 +29,6 @@ interface IdentitySectionProps {
   setState: React.Dispatch<React.SetStateAction<FormState>>;
   config: ProductTypeConfig;
   uiLocale: SupportedLocale;
-  setError: (msg: string | null) => void;
 }
 
 export function IdentitySection({
@@ -40,15 +36,9 @@ export function IdentitySection({
   setState,
   config,
   uiLocale,
-  setError,
 }: IdentitySectionProps) {
   const t = useTranslations("admin.products");
-  const c = useTranslations("common");
-
-  const { data: topics } = useTopics();
-  const { data: tags } = useTags();
-  const createTopic = useCreateTopic();
-  const createTag = useCreateTag();
+  const topicLabel = useTopicLabel();
 
   const addedLocales = SUPPORTED_LOCALES.filter(
     (l) => state.translations[l] !== undefined,
@@ -98,49 +88,6 @@ export function IdentitySection({
             : s.activeLocale,
       };
     });
-  }
-
-  async function handleCreateTopic() {
-    const name = state.newTopicName.trim();
-    if (!name) return;
-    setError(null);
-    try {
-      const created = await createTopic.mutateAsync({
-        name,
-        kind: state.newTopicKind,
-        locale: uiLocale,
-      });
-      setState((s) => ({
-        ...s,
-        topicId: created.id,
-        showNewTopic: false,
-        newTopicName: "",
-        newTopicKind: "game",
-      }));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("errors.createFailed"));
-    }
-  }
-
-  async function handleCreateTag() {
-    const name = state.newTagName.trim();
-    if (!name) return;
-    setError(null);
-    try {
-      const created = await createTag.mutateAsync({ name, locale: uiLocale });
-      setState((s) => {
-        const next = new Set(s.tagIds);
-        next.add(created.id);
-        return {
-          ...s,
-          tagIds: next,
-          showNewTag: false,
-          newTagName: "",
-        };
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("errors.createFailed"));
-    }
   }
 
   return (
@@ -257,216 +204,31 @@ export function IdentitySection({
         required
         hint={t("hints.topicHint")}
       >
-        {state.showNewTopic ? (
-          <div className="space-y-2 rounded-md border border-input bg-muted/20 p-3">
-            <Input
-              placeholder={t("placeholders.newTopicName")}
-              value={state.newTopicName}
-              onChange={(e) =>
-                setState({ ...state, newTopicName: e.target.value })
-              }
-              autoFocus
-              disabled={createTopic.isPending}
-            />
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                {t("labels.groupTopicUnder")}
-              </span>
-              {TOPIC_KIND_ORDER.map((kind) => (
-                <button
-                  key={kind}
-                  type="button"
-                  onClick={() => setState({ ...state, newTopicKind: kind })}
-                  disabled={createTopic.isPending}
-                  className={cn(
-                    "rounded-md border px-3 py-1 text-xs transition-colors",
-                    state.newTopicKind === kind
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-input text-muted-foreground hover:border-foreground hover:text-foreground"
-                  )}
-                >
-                  {t(`topicKindSingular.${kind}`)}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("translations.inlineCreateHint", {
-                locale: LOCALE_CONFIG[uiLocale].nativeLabel,
-              })}
-            </p>
-            <div className="flex justify-end gap-2 pt-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={createTopic.isPending}
-                onClick={() =>
-                  setState({
-                    ...state,
-                    newTopicName: "",
-                    showNewTopic: false,
-                  })
-                }
-              >
-                {c("cancel")}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={!state.newTopicName.trim() || createTopic.isPending}
-                onClick={handleCreateTopic}
-              >
-                {createTopic.isPending && (
-                  <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                )}
-                {t("actions.addTopic")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex gap-2">
-            <select
-              id="p-topic"
-              value={state.topicId}
-              onChange={(e) =>
-                setState({ ...state, topicId: e.target.value })
-              }
-              required
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            >
-              <option value="">{t("placeholders.selectTopic")}</option>
-              {TOPIC_KIND_ORDER.map((kind) => {
-                const group =
-                  topics?.filter((topic) => topic.kind === kind) ?? [];
-                if (group.length === 0) return null;
-                return (
-                  <optgroup key={kind} label={t(`topicKinds.${kind}`)}>
-                    {group.map((topic) => {
-                      const tr = resolveTranslation(
-                        topic.topic_translations,
-                        uiLocale,
-                      );
-                      return (
-                        <option key={topic.id} value={topic.id}>
-                          {tr?.name ?? topic.slug}
-                        </option>
-                      );
-                    })}
-                  </optgroup>
-                );
-              })}
-            </select>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={() => setState({ ...state, showNewTopic: true })}
-              title={t("actions.addNewTopic")}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </Field>
-
-      <Field label={t("labels.tags")} hint={t("hints.tagsHint")}>
-        <div className="flex flex-wrap items-center gap-2">
-          {tags?.map((tag) => {
-            const selected = state.tagIds.has(tag.id);
-            const tr = resolveTranslation(tag.tag_translations, uiLocale);
-            const tagName = tr?.name ?? tag.slug;
-            const tagDescription = tr?.description ?? null;
-            return (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => {
-                  const next = new Set(state.tagIds);
-                  if (selected) next.delete(tag.id);
-                  else next.add(tag.id);
-                  setState({ ...state, tagIds: next });
-                }}
-                className={cn(
-                  "rounded-full border px-3 py-1 text-xs transition-colors",
-                  selected
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-input text-muted-foreground hover:border-foreground hover:text-foreground"
-                )}
-                title={tagDescription ?? undefined}
-              >
-                {selected && <Check className="mr-1 inline h-3 w-3" />}
-                {tagName}
-              </button>
-            );
-          })}
-
-          {state.showNewTag ? (
-            <span className="inline-flex items-center gap-1">
-              <Input
-                value={state.newTagName}
-                onChange={(e) =>
-                  setState({ ...state, newTagName: e.target.value })
-                }
-                placeholder={t("placeholders.newTagName")}
-                autoFocus
-                className="h-7 w-40 text-xs"
-                disabled={createTag.isPending}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void handleCreateTag();
-                  }
-                  if (e.key === "Escape") {
-                    setState({
-                      ...state,
-                      newTagName: "",
-                      showNewTag: false,
-                    });
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                size="sm"
-                className="h-7 px-2 text-xs"
-                disabled={!state.newTagName.trim() || createTag.isPending}
-                onClick={handleCreateTag}
-              >
-                {createTag.isPending ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  t("actions.addTagShort")
-                )}
-              </Button>
-              <button
-                type="button"
-                onClick={() =>
-                  setState({ ...state, newTagName: "", showNewTag: false })
-                }
-                className="rounded p-1 text-muted-foreground hover:text-foreground"
-                aria-label={c("cancel")}
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setState({ ...state, showNewTag: true })}
-              className="inline-flex items-center gap-1 rounded-full border border-dashed border-input px-3 py-1 text-xs text-muted-foreground hover:border-foreground hover:text-foreground"
-            >
-              <Plus className="h-3 w-3" />
-              {t("actions.addNewTag")}
-            </button>
-          )}
-        </div>
-        {state.showNewTag && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t("translations.inlineCreateHint", {
-              locale: LOCALE_CONFIG[uiLocale].nativeLabel,
-            })}
-          </p>
-        )}
+        <select
+          id="p-topic"
+          value={state.topic}
+          onChange={(e) =>
+            setState({ ...state, topic: e.target.value as ProductTopic | "" })
+          }
+          required
+          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="">{t("placeholders.selectTopic")}</option>
+          <optgroup label={t("topicKinds.game")}>
+            {GAME_TOPICS.map((topic) => (
+              <option key={topic} value={topic}>
+                {topicLabel(topic)}
+              </option>
+            ))}
+          </optgroup>
+          <optgroup label={t("topicKinds.subject")}>
+            {SUBJECT_TOPICS.map((topic) => (
+              <option key={topic} value={topic}>
+                {topicLabel(topic)}
+              </option>
+            ))}
+          </optgroup>
+        </select>
       </Field>
 
       <Field

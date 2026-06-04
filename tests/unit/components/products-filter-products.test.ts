@@ -1,13 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { filterProducts } from "@/components/public/products/filter-products";
-import type { ProductBrowseRow } from "@/types";
+import type { ProductBrowseRow, ProductTopic } from "@/types";
 
 // Minimal row factory — only the fields filterProducts() looks at need
 // real values. Everything else is filled with a placeholder cast.
 function row(overrides: {
   id: string;
-  topicSlug: string | null;
-  tagSlugs: string[];
+  topic: ProductTopic;
   isRemote?: boolean;
   spokenLanguageCode?: string;
 }): ProductBrowseRow {
@@ -15,17 +14,7 @@ function row(overrides: {
     id: overrides.id,
     is_remote: overrides.isRemote ?? false,
     spoken_language_code: overrides.spokenLanguageCode ?? "en",
-    topics: overrides.topicSlug
-      ? {
-          slug: overrides.topicSlug,
-          kind: "game",
-          icon_path: null,
-          topic_translations: [],
-        }
-      : null,
-    product_tags: overrides.tagSlugs.map((s) => ({
-      tags: { slug: s, tag_translations: [] },
-    })),
+    topic: overrides.topic,
     product_translations: [],
     product_prices: [],
     schedule_slots: [],
@@ -35,112 +24,57 @@ function row(overrides: {
 
 const A = row({
   id: "a",
-  topicSlug: "minecraft",
-  tagSlugs: ["beginner"],
+  topic: "minecraft",
   isRemote: true,
   spokenLanguageCode: "en",
 });
 const B = row({
   id: "b",
-  topicSlug: "fortnite",
-  tagSlugs: ["competitive", "neurodiversity-friendly"],
+  topic: "fortnite",
   isRemote: false,
   spokenLanguageCode: "fi",
 });
 const C = row({
   id: "c",
-  topicSlug: "pokemon-go",
-  tagSlugs: [],
+  topic: "webinar",
   isRemote: true,
   spokenLanguageCode: "fi",
 });
-const NO_TOPIC = row({
-  id: "d",
-  topicSlug: null,
-  tagSlugs: ["beginner"],
-  isRemote: false,
-  spokenLanguageCode: "sv",
-});
 
-const ALL = [A, B, C, NO_TOPIC];
+const ALL = [A, B, C];
 
 describe("filterProducts", () => {
   it("returns everything when filters are empty", () => {
     expect(
-      filterProducts(ALL, { topics: [], tags: [], format: null, languages: [] }),
+      filterProducts(ALL, { topics: [], format: null, languages: [] }),
     ).toEqual(ALL);
   });
 
-  it("matches a single topic slug", () => {
+  it("matches a single topic", () => {
     expect(
       filterProducts(ALL, {
         topics: ["minecraft"],
-        tags: [],
         format: null,
         languages: [],
       }).map((p) => p.id),
     ).toEqual(["a"]);
   });
 
-  it("OR-combines topic slugs", () => {
+  it("OR-combines topics", () => {
     const ids = filterProducts(ALL, {
       topics: ["minecraft", "fortnite"],
-      tags: [],
       format: null,
       languages: [],
     }).map((p) => p.id);
     expect(ids).toEqual(["a", "b"]);
   });
 
-  it("excludes products without a topic when a topic filter is set", () => {
-    const ids = filterProducts(ALL, {
-      topics: ["minecraft"],
-      tags: [],
-      format: null,
-      languages: [],
-    }).map((p) => p.id);
-    expect(ids).not.toContain("d");
-  });
-
-  it("matches when a product has any of the selected tags", () => {
-    expect(
-      filterProducts(ALL, {
-        topics: [],
-        tags: ["competitive"],
-        format: null,
-        languages: [],
-      }).map((p) => p.id),
-    ).toEqual(["b"]);
-  });
-
-  it("OR-combines tag slugs across products", () => {
-    const ids = filterProducts(ALL, {
-      topics: [],
-      tags: ["beginner", "competitive"],
-      format: null,
-      languages: [],
-    }).map((p) => p.id);
-    // A has beginner, B has competitive, D has beginner. C has neither.
-    expect(ids.sort()).toEqual(["a", "b", "d"]);
-  });
-
-  it("ANDs topic and tag filters together", () => {
-    const ids = filterProducts(ALL, {
-      topics: ["minecraft", "fortnite"],
-      tags: ["competitive"],
-      format: null,
-      languages: [],
-    }).map((p) => p.id);
-    // Only B passes both: topic ∈ set AND has 'competitive'.
-    expect(ids).toEqual(["b"]);
-  });
-
   it("returns nothing when no product matches", () => {
+    // B is the only Fortnite product, but it's in-person.
     expect(
       filterProducts(ALL, {
-        topics: ["roblox"],
-        tags: [],
-        format: null,
+        topics: ["fortnite"],
+        format: "online",
         languages: [],
       }),
     ).toEqual([]);
@@ -149,7 +83,6 @@ describe("filterProducts", () => {
   it("format=online keeps only remote products", () => {
     const ids = filterProducts(ALL, {
       topics: [],
-      tags: [],
       format: "online",
       languages: [],
     }).map((p) => p.id);
@@ -160,29 +93,25 @@ describe("filterProducts", () => {
   it("format=in_person keeps only in-person products", () => {
     const ids = filterProducts(ALL, {
       topics: [],
-      tags: [],
       format: "in_person",
       languages: [],
     }).map((p) => p.id);
-    // B and D are in-person.
-    expect(ids.sort()).toEqual(["b", "d"]);
+    expect(ids).toEqual(["b"]);
   });
 
-  it("ANDs format with topic and tag filters", () => {
+  it("ANDs format with topic filters", () => {
     const ids = filterProducts(ALL, {
       topics: ["minecraft", "fortnite"],
-      tags: ["beginner", "competitive"],
       format: "online",
       languages: [],
     }).map((p) => p.id);
-    // A passes topic+tag and is online; B passes but is in-person.
+    // A passes topic and is online; B passes topic but is in-person.
     expect(ids).toEqual(["a"]);
   });
 
   it("matches a single spoken-language code", () => {
     const ids = filterProducts(ALL, {
       topics: [],
-      tags: [],
       format: null,
       languages: ["fi"],
     }).map((p) => p.id);
@@ -193,18 +122,15 @@ describe("filterProducts", () => {
   it("OR-combines language codes", () => {
     const ids = filterProducts(ALL, {
       topics: [],
-      tags: [],
       format: null,
-      languages: ["fi", "sv"],
+      languages: ["en", "fi"],
     }).map((p) => p.id);
-    // B, C are fi; D is sv.
-    expect(ids.sort()).toEqual(["b", "c", "d"]);
+    expect(ids.sort()).toEqual(["a", "b", "c"]);
   });
 
-  it("ANDs language with topic / tag / format filters", () => {
+  it("ANDs language with topic and format filters", () => {
     const ids = filterProducts(ALL, {
       topics: ["minecraft", "fortnite"],
-      tags: [],
       format: null,
       languages: ["en"],
     }).map((p) => p.id);

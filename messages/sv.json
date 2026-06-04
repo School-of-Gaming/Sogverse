@@ -255,7 +255,6 @@
         },
         "fields": {
           "topic": "Ämne",
-          "tags": "Taggar",
           "padletUrl": "Padlet",
           "locales": "Språk",
           "ageRange": "Åldersintervall",
@@ -334,7 +333,6 @@
         "name": "Namn",
         "description": "Beskrivning",
         "topic": "Ämne",
-        "tags": "Taggar",
         "padletUrl": "Padlet-URL",
         "minAge": "Min ålder",
         "maxAge": "Max ålder",
@@ -360,7 +358,6 @@
         "paid": "Betalt",
         "billing": "Fakturering",
         "paidByMunicipality": "Betalas av kommunen",
-        "groupTopicUnder": "Gruppera under:",
         "seatCount": "Antal platser",
         "noSeatLimit": "Ingen platsgräns",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
@@ -369,8 +366,6 @@
       },
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
-        "newTopicName": "Nytt ämne (t.ex. Among Us, Digital balans)",
-        "newTagName": "Taggens namn",
         "padletUrl": "https://padlet.com/...",
         "threshold": "t.ex. 8",
         "noLimit": "Ingen gräns",
@@ -390,10 +385,6 @@
       "topicKinds": {
         "game": "Spel",
         "subject": "Ämnen"
-      },
-      "topicKindSingular": {
-        "game": "Spel",
-        "subject": "Ämne"
       },
       "locationPicker": {
         "searchPlaceholder": "Sök efter land, region, kommun eller lokal…",
@@ -451,8 +442,7 @@
         "scheduledDescription": "Föräldrar ser en nedräkning till dess. Användbart för biljettsläpp-liknande lanseringar."
       },
       "hints": {
-        "topicHint": "Det primära ämnet — ett per produkt. Vad tillfällena faktiskt handlar om.",
-        "tagsHint": "Valfritt. Hjälper föräldrar filtrera produkter när de bläddrar.",
+        "topicHint": "Produktens ämne — ett spel (Minecraft, Fortnite) eller ett ämne (webbinarium).",
         "padletHint": "Valfritt. Delas med familjer efter att de anmält sig.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
@@ -499,11 +489,7 @@
       },
       "actions": {
         "cancel": "Avbryt",
-        "createLabel": "Skapa {label}",
-        "addTopic": "Lägg till ämne",
-        "addNewTopic": "Lägg till nytt ämne",
-        "addNewTag": "Lägg till ny tagg",
-        "addTagShort": "Lägg till"
+        "createLabel": "Skapa {label}"
       },
       "status": {
         "draft": "Utkast",
@@ -1216,7 +1202,6 @@
       "typeClubs": "Klubbar",
       "typeCamps": "Läger",
       "topic": "Ämne",
-      "tag": "Stil",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "På plats",
@@ -1253,6 +1238,9 @@
       "noMatches": "Inga träffar. Prova att rensa filtren."
     }
   },
+  "topics": {
+    "webinar": "Webbinarium"
+  },
   "productDetail": {
     "back": {
       "consumer_club": "Alla klubbar",
@@ -1269,9 +1257,7 @@
     "sections": {
       "whenWhere": "När och var",
       "calendar": "Schema",
-      "tags": "Vad du kan vänta dig",
-      "topicsLabel": "Fokus",
-      "tagsLabel": "Stämning"
+      "topic": "Ämne"
     },
     "info": {
       "schedule": "Schema",

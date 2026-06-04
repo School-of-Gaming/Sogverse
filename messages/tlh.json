@@ -300,7 +300,6 @@
         },
         "fields": {
           "topic": "Doch",
-          "tags": "qonta'",
           "padletUrl": "Padlet",
           "locales": "Hol",
           "ageRange": "ben'a'",
@@ -378,8 +377,7 @@
       "labels": {
         "name": "pong",
         "description": "QIn",
-        "topic": "mu'meH",
-        "tags": "ngoQmey",
+        "topic": "Doch",
         "padletUrl": "Padlet URL",
         "minAge": "DIS mach",
         "maxAge": "DIS tIn",
@@ -405,7 +403,6 @@
         "paid": "Huch",
         "billing": "Huch nIDqu'",
         "paidByMunicipality": "veng Huch nob",
-        "groupTopicUnder": "ghom:",
         "seatCount": "pa' mI'",
         "noSeatLimit": "pa' mI' Sub pagh",
         "waitlistToggle": "pa' tebDI', tetlh teb yIchu'",
@@ -413,9 +410,7 @@
         "makeVisible": "vavmey legh"
       },
       "placeholders": {
-        "selectTopic": "mu'meH yIwIv…",
-        "newTopicName": "mu'meH chu' (e.g. Among Us, De' yIn)",
-        "newTagName": "ngoQ pong",
+        "selectTopic": "Doch yIwIv…",
         "padletUrl": "https://padlet.com/...",
         "threshold": "e.g. 8",
         "noLimit": "Sub pagh",
@@ -435,10 +430,6 @@
       "topicKinds": {
         "game": "QujmeH",
         "subject": "paQDI'norgh"
-      },
-      "topicKindSingular": {
-        "game": "Quj",
-        "subject": "paQDI'norghHom"
       },
       "locationPicker": {
         "searchPlaceholder": "Sepjup, Sep, veng, Daq yInej…",
@@ -496,8 +487,7 @@
         "scheduledDescription": "vavmey ghItlh tagh DIS lulegh."
       },
       "hints": {
-        "topicHint": "mu'meH pIn — wa' per De'. Doch qaStaHvISmey lop.",
-        "tagsHint": "vItlhutlh. vavmey nej De'mey rar.",
+        "topicHint": "Doch — Quj (Minecraft, Fortnite) ghap paQDI'norgh (ja'chuq).",
         "padletHint": "vItlhutlh. ghItlh ghu'pu'vaD.",
         "deliveredInHint": "qaStaHvISmeyDaq Hol pIn.",
         "onlineNoLocation": "rurmey — Daq poQbe'. Hoch vavmey nej Hoch lulegh, qo'Daq pagh.",
@@ -523,7 +513,7 @@
       "errors": {
         "translationRequired": "wa' Hol pong QIn je poQ",
         "translationIncomplete": "{locale} chajDaq pong QIn je yIchov, pagh yIpe'.",
-        "topicRequired": "mu'meH poQ",
+        "topicRequired": "Doch poQlu'",
         "spokenLanguageRequired": "Hol poQ",
         "minAgeInvalid": "DIS mach mI' 'oHnIS",
         "maxAgeInvalid": "DIS tIn DIS mach tIn 'oHnIS",
@@ -544,11 +534,7 @@
       },
       "actions": {
         "cancel": "pegh",
-        "createLabel": "{label} yIchu'",
-        "addTopic": "mu'meH yIchu'",
-        "addNewTopic": "mu'meH chu' yIchu'",
-        "addNewTag": "ngoQ chu' yIchu'",
-        "addTagShort": "yIchu'"
+        "createLabel": "{label} yIchu'"
       },
       "status": {
         "draft": "chu'Ha'",
@@ -1260,8 +1246,7 @@
       "type": "mIw",
       "typeClubs": "ghom'a'mey",
       "typeCamps": "raghmey",
-      "topic": "mu'qaD",
-      "tag": "Segh",
+      "topic": "Doch",
       "format": "rurmeH",
       "formatOnline": "QumDaq",
       "formatInPerson": "Daqvam",
@@ -1298,6 +1283,9 @@
       "noMatches": "pagh Sam. tetlh yISay'moH."
     }
   },
+  "topics": {
+    "webinar": "ja'chuq"
+  },
   "productDetail": {
     "back": {
       "consumer_club": "Hoch ghom'a'mey yIchegh",
@@ -1314,9 +1302,7 @@
     "sections": {
       "whenWhere": "ghorgh & nuqDaq",
       "calendar": "jaj tetlh",
-      "tags": "nuq Daloy",
-      "topicsLabel": "mu'qaD",
-      "tagsLabel": "Segh"
+      "topic": "Doch"
     },
     "info": {
       "schedule": "jaj tetlh",

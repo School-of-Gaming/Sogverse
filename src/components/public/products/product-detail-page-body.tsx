@@ -4,16 +4,12 @@ import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
 import { ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import type {
-  ProductBrowseRow,
-  ProductType,
-  TagTranslation,
-} from "@/types";
+import { useTopicLabel } from "@/lib/products/use-topic-label";
+import type { ProductBrowseRow, ProductType } from "@/types";
 import { formatInTimeZone } from "date-fns-tz";
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
 import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
@@ -59,12 +55,9 @@ export function ProductDetailPageBody({
 }: ProductDetailPageBodyProps) {
   const uiLocale = resolveLocale(useLocale());
   const t = useTranslations("productDetail");
+  const getTopicLabel = useTopicLabel();
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
-  const topicTr = resolveTranslation(
-    product.topics?.topic_translations,
-    uiLocale,
-  );
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
@@ -118,7 +111,7 @@ export function ProductDetailPageBody({
             page width. Without this on mobile the default implicit
             track is `auto`, which sizes to content. */}
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <MainColumn product={product} topicLabel={topicTr?.name ?? null} />
+          <MainColumn product={product} topicLabel={getTopicLabel(product.topic)} />
           <div className="lg:sticky lg:top-6 lg:self-start">
             <SignupPanel
               product={product}
@@ -152,12 +145,9 @@ function MainColumn({
   topicLabel,
 }: {
   product: ProductDetailPageBodyProps["product"];
-  topicLabel: string | null;
+  topicLabel: string;
 }) {
   const t = useTranslations("productDetail");
-  const uiLocale = resolveLocale(useLocale());
-
-  const tagLabels = resolveTagLabels(product.product_tags, uiLocale);
 
   return (
     <div className="space-y-6">
@@ -165,41 +155,18 @@ function MainColumn({
 
       <CalendarCard product={product} />
 
-      {(topicLabel || tagLabels.length > 0) && (
-        <Card>
-          <CardContent className="p-5 sm:p-6">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              {t("sections.tags")}
-            </h2>
-            {topicLabel && (
-              <div className="mt-3">
-                <p className="text-xs text-muted-foreground">
-                  {t("sections.topicsLabel")}
-                </p>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                    {topicLabel}
-                  </span>
-                </div>
-              </div>
-            )}
-            {tagLabels.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs text-muted-foreground">
-                  {t("sections.tagsLabel")}
-                </p>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {tagLabels.map((label) => (
-                    <Badge key={label} variant="outline" className="text-[10px]">
-                      {label}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardContent className="p-5 sm:p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            {t("sections.topic")}
+          </h2>
+          <div className="mt-3 flex flex-wrap gap-1.5">
+            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+              {topicLabel}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -245,20 +212,4 @@ function CalendarCard({
       </CardContent>
     </Card>
   );
-}
-
-function resolveTagLabels(
-  productTags: ProductBrowseRow["product_tags"],
-  uiLocale: ReturnType<typeof resolveLocale>,
-): string[] {
-  return productTags
-    .map((pt) => {
-      if (!pt.tags) return null;
-      const tr = resolveTranslation<TagTranslation>(
-        pt.tags.tag_translations,
-        uiLocale,
-      );
-      return tr?.name ?? pt.tags.slug;
-    })
-    .filter((s): s is string => Boolean(s));
 }

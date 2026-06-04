@@ -124,9 +124,6 @@ describe("Access Control", () => {
       // authorisation. Stripped at cutover when the  suffix is removed.
       ["products", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["schedule_slots", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["topics", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["tags", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["product_tags", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_prices", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["holiday_calendars", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["calendar_holidays", new Set(["INSERT", "UPDATE", "DELETE"])],
@@ -134,8 +131,6 @@ describe("Access Control", () => {
       ["site_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["topic_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
-      ["tag_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
     ]);
 
     const { data, error } = await admin.rpc("_list_table_grants");

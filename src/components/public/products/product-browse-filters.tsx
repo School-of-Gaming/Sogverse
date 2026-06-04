@@ -1,18 +1,18 @@
 "use client";
 
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Sliders, X, Globe, MapPin } from "lucide-react";
-import { resolveLocale } from "@/lib/constants/locales";
-import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import { useTopics, useTags } from "@/services/products";
+import { GAME_TOPICS, SUBJECT_TOPICS } from "@/lib/products/topics";
+import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
 import { cn } from "@/lib/utils";
 import { useBrowseFilters } from "./use-browse-filters";
 import { useShopCategory } from "./use-shop-category";
 
-// Filter strip — three horizontally-scrollable chip rows (topic, tag,
-// format). Chips are pill-shaped with a clear active state (filled
+// Filter strip — horizontally-scrollable chip rows (type, topic, format,
+// language). The topic row groups games then subjects (one divider
+// between). Chips are pill-shaped with a clear active state (filled
 // primary) so taps register on small phone screens; rows are scrollable
 // rather than wrapping so they never push the cards down on overflow.
 //
@@ -24,9 +24,7 @@ import { useShopCategory } from "./use-shop-category";
 // button made the meta row's height jump when the button appeared.
 export function ProductBrowseFilters() {
   const t = useTranslations("productBrowse.filters");
-  const uiLocale = resolveLocale(useLocale());
-  const { data: topics } = useTopics();
-  const { data: tags } = useTags();
+  const topicLabel = useTopicLabel();
   const { data: spokenLanguages } = useSpokenLanguages();
   // Product category (Clubs | Camps) is a required, mutually-exclusive choice
   // — it leads the filter card as the "Type" row. Unlike the other filters it
@@ -35,21 +33,15 @@ export function ProductBrowseFilters() {
   const { category, setCategory } = useShopCategory();
   const {
     topics: selectedTopics,
-    tags: selectedTags,
     format: selectedFormat,
     languages: selectedLanguages,
     hasAny,
     toggleTopic,
-    toggleTag,
     toggleFormat,
     toggleLanguage,
     clear,
   } = useBrowseFilters();
 
-  const games = (topics ?? []).filter((tp) => tp.kind === "game");
-  const subjects = (topics ?? []).filter((tp) => tp.kind === "subject");
-  const hasTopicRow = games.length > 0 || subjects.length > 0;
-  const hasTagRow = (tags?.length ?? 0) > 0;
   const hasLanguageRow = (spokenLanguages?.length ?? 0) > 0;
 
   return (
@@ -91,51 +83,27 @@ export function ProductBrowseFilters() {
           />
         </FilterRow>
 
-        {hasTopicRow && (
-          <FilterRow label={t("topic")}>
-            {games.map((tp) => {
-              const tr = resolveTranslation(tp.topic_translations, uiLocale);
-              return (
-                <Chip
-                  key={tp.id}
-                  label={tr?.name ?? tp.slug}
-                  active={selectedTopics.includes(tp.slug.toLowerCase())}
-                  onToggle={() => toggleTopic(tp.slug)}
-                />
-              );
-            })}
-            {subjects.length > 0 && games.length > 0 && (
-              <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-border" />
-            )}
-            {subjects.map((tp) => {
-              const tr = resolveTranslation(tp.topic_translations, uiLocale);
-              return (
-                <Chip
-                  key={tp.id}
-                  label={tr?.name ?? tp.slug}
-                  active={selectedTopics.includes(tp.slug.toLowerCase())}
-                  onToggle={() => toggleTopic(tp.slug)}
-                />
-              );
-            })}
-          </FilterRow>
-        )}
-
-        {hasTagRow && (
-          <FilterRow label={t("tag")}>
-            {tags!.map((tg) => {
-              const tr = resolveTranslation(tg.tag_translations, uiLocale);
-              return (
-                <Chip
-                  key={tg.id}
-                  label={tr?.name ?? tg.slug}
-                  active={selectedTags.includes(tg.slug.toLowerCase())}
-                  onToggle={() => toggleTag(tg.slug)}
-                />
-              );
-            })}
-          </FilterRow>
-        )}
+        <FilterRow label={t("topic")}>
+          {GAME_TOPICS.map((topic) => (
+            <Chip
+              key={topic}
+              label={topicLabel(topic)}
+              active={selectedTopics.includes(topic)}
+              onToggle={() => toggleTopic(topic)}
+            />
+          ))}
+          {SUBJECT_TOPICS.length > 0 && GAME_TOPICS.length > 0 && (
+            <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-border" />
+          )}
+          {SUBJECT_TOPICS.map((topic) => (
+            <Chip
+              key={topic}
+              label={topicLabel(topic)}
+              active={selectedTopics.includes(topic)}
+              onToggle={() => toggleTopic(topic)}
+            />
+          ))}
+        </FilterRow>
 
         <FilterRow label={t("format")}>
           <Chip

@@ -7,15 +7,14 @@ import { TEST_IDS } from "./constants";
  * fixtures — tests create products inline via these helpers.
  *
  * Stable UUIDs in the 0xxxxxx-...-xxxxxxxx5xx range are reserved for v2
- * test scaffolding (topic + reusable resources). Each test file picks
- * its own product UUID *sub-range* to avoid cross-file collisions when CI
- * parallelizes db tests (vitest runs files in separate workers, so two
- * files sharing a product id race on products_pkey — one file's insert
- * lands between the other's delete and insert → duplicate-key failure).
+ * test scaffolding. Each test file picks its own product UUID *sub-range*
+ * to avoid cross-file collisions when CI parallelizes db tests (vitest
+ * runs files in separate workers, so two files sharing a product id race
+ * on products_pkey — one file's insert lands between the other's delete
+ * and insert → duplicate-key failure).
  *
  * Allocation registry — keep this current when adding a v2 db test. The
  * suffix is the last byte of the UUID (`...0000000005XX`):
- *   5a1            topic (this file, shared by all)
  *   5b1–5b5        participations-race.test.ts
  *   5b6–5b7        participations-rls.test.ts
  *   5c1            product-seat-counts-trigger.test.ts
@@ -26,12 +25,11 @@ import { TEST_IDS } from "./constants";
  *   5f3            product-translations-trigger.test.ts
  */
 
-// One topic for every v2 test product. Idempotent on rerun.
-const TEST_TOPIC_ID = "00000000-0000-0000-0000-0000000005a1";
-
 export interface ProductOptions {
   id?: string;
   productType?: Database["public"]["Enums"]["product_type"];
+  /** Fixed product_topic enum value. Default: "minecraft". */
+  topic?: Database["public"]["Enums"]["product_topic"];
   billingMode?: Database["public"]["Enums"]["billing_mode"];
   status?: Database["public"]["Enums"]["product_status"];
   /** null = unlimited seats. Default: 1 (small enough for race tests). */
@@ -48,22 +46,6 @@ export interface ProductOptions {
 }
 
 /**
- * Ensures the shared test topic exists. v2 products require a topic FK.
- * Safe to call repeatedly; no-op if the row already exists.
- */
-export async function ensureTestTopic(
-  admin: SupabaseClient<Database>,
-): Promise<string> {
-  await admin
-    .from("topics")
-    .upsert(
-      { id: TEST_TOPIC_ID, slug: "v2-db-test-topic", kind: "subject" },
-      { onConflict: "id" },
-    );
-  return TEST_TOPIC_ID;
-}
-
-/**
  * Creates a v2 product with sensible defaults: paid consumer_club, 1 seat,
  * status='pending' so create_participation accepts signups, registration
  * already open. Returns the product id.
@@ -75,12 +57,11 @@ export async function createTestProduct(
   admin: SupabaseClient<Database>,
   options: ProductOptions = {},
 ): Promise<string> {
-  const topicId = await ensureTestTopic(admin);
   const productId = options.id ?? crypto.randomUUID();
 
   const { error } = await admin.from("products").insert({
     id: productId,
-    topic_id: topicId,
+    topic: options.topic ?? "minecraft",
     product_type: options.productType ?? "consumer_club",
     billing_mode: options.billingMode ?? "paid",
     status: options.status ?? "pending",

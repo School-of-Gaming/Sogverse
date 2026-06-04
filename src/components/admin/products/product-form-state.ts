@@ -1,6 +1,6 @@
 import { DEFAULT_CURRENCY, type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { ProductType } from "@/types";
+import type { ProductTopic, ProductType } from "@/types";
 import type {
   ProductTypeConfig,
   StartMode,
@@ -10,7 +10,6 @@ import type { ScheduleSlotDraft } from "./schedule-slots-editor";
 // Module-level constants — listed here rather than inline so the lint rule
 // against literal strings (i18n) doesn't fire for these structural keys.
 export const PAID_MODE_VALUES = ["paid", "free"] as const;
-export const TOPIC_KIND_ORDER = ["game", "subject"] as const;
 export const REGISTRATION_OPENS_MODE_VALUES = [
   "immediately",
   "scheduled",
@@ -38,25 +37,14 @@ export interface FormState {
   translations: Partial<Record<SupportedLocale, TranslationDraft>>;
   activeLocale: SupportedLocale;
 
-  // Identity (non-translated)
-  topicId: string;
-  tagIds: Set<string>;
+  // Identity (non-translated). `topic` is the fixed product_topic enum; ""
+  // is the unselected state the create form starts in.
+  topic: ProductTopic | "";
   padletUrl: string;
   // File   — newly picked replacement (admin uploaded a fresh image).
   // string — existing image_path on the product (edit-mode load).
   // null   — no image, or admin cleared the existing one.
   image: File | string | null;
-
-  // Inline topic create — single-locale (admin's current UI locale).
-  // Other-locale names get added later in the (yet-to-be-built) reference-data
-  // translation manager. See docs/products-architecture.md.
-  showNewTopic: boolean;
-  newTopicName: string;
-  newTopicKind: "game" | "subject";
-
-  // Inline tag create
-  showNewTag: boolean;
-  newTagName: string;
 
   // Audience
   minAge: string;
@@ -138,15 +126,9 @@ export function initialState(
   return {
     translations: { [uiLocale]: { name: "", description: "" } },
     activeLocale: uiLocale,
-    topicId: "",
-    tagIds: new Set(),
+    topic: "",
     padletUrl: "",
     image: null,
-    showNewTopic: false,
-    newTopicName: "",
-    newTopicKind: "game",
-    showNewTag: false,
-    newTagName: "",
     minAge: "7",
     maxAge: "12",
     spokenLanguageCode: "",

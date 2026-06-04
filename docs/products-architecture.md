@@ -154,18 +154,23 @@ Session dates are **not** stored. They are computed on read from:
 
 Rendering converts `(session_date, start_time, product.timezone)` into an absolute moment, then displays it in the viewer's locale with an explicit "Helsinki time / your time" label when they differ.
 
-### 4.4 Topic + tags (no more `game`)
+### 4.4 Topic (fixed enum)
 
-`game_id` on products is replaced by:
+`game_id` on products is replaced by **`topic`** — one per product, a fixed Postgres enum `product_topic` (migration 00078):
 
-- **`topic_id`** — one per product. Examples: Minecraft, Fortnite, Pokémon GO, Online Security, Game Design. Admin-managed.
-- **`product_tags`** — many per product. Controlled vocabulary. Examples: `neurodiversity-friendly`, `competitive`, `chill`, `beginner`, `advanced`.
+```
+product_topic = { minecraft, fortnite, webinar }
+```
 
-The `games` concept is retired. A "game" is just a topic that happens to be a game.
+Modeling it as an enum gives DB-level protection (no invalid topic can be inserted) and a type-safe union in the generated TS, so future per-topic logic (e.g. "Minecraft signups require a Java username, Fortnite an Epic account") gets compiler-enforced exhaustive handling.
 
-**Topic kind — games vs subjects.** Topics carry a `kind` classification (`game` | `subject`). Kind drives UI grouping wherever topics are listed — topic pickers separate "Games" from "Subjects" in two optgroups. Kind is **not** a branch in business logic.
+**Topic kind — games vs subjects.** The game/subject split is still meaningful but lives in **code**, not the DB — it's a pure function of the enum value. `src/lib/products/topics.ts` (`PRODUCT_TOPICS`) maps each value to its `kind` (`game` | `subject`) and its display label. Minecraft and Fortnite are games; Webinar is a subject. Kind drives UI grouping wherever topics are listed (pickers/filters separate "Games" from "Subjects"); it is **not** a branch in business logic.
 
-**Inline creation during product create.** Both topics and tags can be created inline from the admin create-product form; committed immediately, available to other admins. Slugs auto-derived, uniqueness conflicts surface as a create error.
+**Labels & i18n.** "Topic" is the general category label in both code and UI; Games and Subjects are the kinds underneath it. Game *values* are brand proper nouns — their labels are literals (identical in every locale, never translated). Subject *values* localize through the next-intl `topics` message namespace (Webinar → webinaari / webbinarium / …). `useTopicLabel()` (`src/lib/products/use-topic-label.ts`) resolves either.
+
+**No inline creation.** The topic set is fixed in code, so there is no admin create flow — the picker is a static select sourced from `PRODUCT_TOPICS`.
+
+**Tags removed.** The earlier `tags` / `product_tags` / `tag_translations` triad (the shop "Vibe" filter) was dropped wholesale in migration 00078 — unused in the current product, cheaper to re-add later than to carry.
 
 ### 4.5 Billing model — fiat currency, bundles, and family subscriptions
 
@@ -497,7 +502,7 @@ products
 
   name                  text
   description           text
-  topic_id              uuid → topics.id
+  topic                 enum('minecraft','fortnite','webinar')  -- fixed set; see §4.4
   min_age               int
   max_age               int
   spoken_language_code  text
@@ -551,24 +556,10 @@ schedule_slots
   duration_minutes      int
   unique(product_id, weekday)
 
-topics
-  id                    uuid pk
-  slug                  text unique
-  name                  text
-  kind                  enum('game','subject')
-  description           text
-  icon_path             text
-
-tags
-  id                    uuid pk
-  slug                  text unique
-  name                  text
-  description           text
-
-product_tags
-  product_id            uuid → products.id ON DELETE CASCADE
-  tag_id                uuid → tags.id
-  primary key (product_id, tag_id)
+-- `topic` is a fixed enum column on products (see §4.4). There is no topics
+-- table — the game/subject split and display labels live in code
+-- (src/lib/products/topics.ts). The tags / product_tags / tag_translations
+-- triad was dropped in migration 00078.
 ```
 
 ### 5.1a Pricing tables
@@ -601,9 +592,9 @@ product_subscription_prices
   -- existing subs retain their original rate until they cancel and re-subscribe.
 ```
 
-### 5.1b Translations — products, topics, tags
+### 5.1b Translations — products
 
-User-visible text on `products`, `topics`, `tags` lives in per-locale child tables, not on the parent rows. The parent carries only structural data (id, slug, kind, FKs). Admins decide which locales to provide; not every parent has every locale.
+User-visible text on `products` lives in a per-locale child table, not on the parent row. The parent carries only structural data (id, FKs, the `topic` enum). Admins decide which locales to provide; not every product has every locale. (Topic labels are not DB-backed — see §4.4: games are literals, the Webinar subject localizes through the next-intl `topics` namespace.)
 
 ```sql
 product_translations
@@ -612,9 +603,6 @@ product_translations
   name         text NOT NULL
   description  text NOT NULL
   primary key (product_id, locale)
-
-topic_translations (same shape; description nullable)
-tag_translations   (same shape; description nullable)
 ```
 
 **Resolution rule.** The reader picks one row per parent for display, walking the fallback chain in `src/lib/i18n/resolve-translation.ts`:
@@ -628,10 +616,6 @@ Sending all available translations to the client is intentional — payloads sta
 **Must-have-≥1-translation rule for products.** Every product must keep at least one translation row in any locale at all times. Enforced two ways:
 - `create_product()` / `update_product()` reject an empty `p_translations` payload.
 - A BEFORE-DELETE trigger on `product_translations` raises if the delete would leave the product with no rows. (CASCADE on parent delete is allowed via a "parent gone?" check.)
-
-The same rule applies to topics and tags — they're shared reference data that may exist in only one locale at first.
-
-**Inline create stays single-locale.** When the admin clicks "+ Create new topic" / "+ Create new tag" in the product form, the new row is written with one translation — the admin's current UI locale. Other-locale translations for shared reference data get added later via a "Manage topic & tag translations" admin UI (not yet built — tracked as a follow-up).
 
 The product form itself is multi-locale: a language tabs strip in the Identity card lets the admin add/remove locales and edit per-locale name + description. Initial tab is the admin's UI locale.
 
@@ -880,7 +864,6 @@ Baseline SELECT policies per role:
 | `product_subscription_prices` | ✗ | own customer's path only | ✗ | ✗ |
 | `site_details` | public (member-visible info — address, parking, wifi) | — | — | — |
 | `site_staff_details` | ✗ | ✗ | ✗ | Gedus assigned to a product at this site *(fine-grained gating lands with `gedu_group_assignments`; placeholder is any Gedu)* |
-| `topics`, `tags`, `product_tags` | all | — | — | — |
 | `holiday_calendars`, `calendar_holidays`, `product_holiday_calendars` | all | — | — | — |
 | `product_groups` | ✗ | ✗ (parents never see groups) | own group only | any group on products Gedu is on |
 | `gedu_group_assignments` | ✗ | assignments on products where own gamer participates | own group only | own + colleagues on assigned products |
@@ -1138,7 +1121,6 @@ The unified shape is proven against the two product lines closest to real users.
 - ○ Calendar view with computed sessions, overrides, substitutions.
 - ○ Standalone holiday-calendar management screen.
 - ○ Lifecycle action buttons ("Start product" / "Cancel product"), threshold-hit notifications, payment reporting dashboard.
-- ○ Manage topic & tag translations admin UI (Phase 3 — see §10 Phase 3).
 
 **Form internals.**
 - ✓ State + reducers extracted to `product-form-state.ts`; build pipeline (form state → RPC payload) extracted to `product-build.ts`; per-type field availability + scheduling shape + pricing shape configured in `product-type-config.ts`.
@@ -1184,7 +1166,6 @@ The unified shape is proven against the two product lines closest to real users.
 - Term / season templates.
 - Sibling-discount tier ladder (expand the flat `FAMILY_DISCOUNT_PERCENT` into a multi-tier lookup) if business wants it.
 - First-session-free / promo codes.
-- **Manage topic & tag translations admin UI.** Inline-create from the product form writes a single translation in the admin's current UI locale (see §5.1b). To complete the multi-locale story for shared reference data, add an admin page that lists all topics + tags with their existing translations and lets an admin add/edit translations for additional locales. Until this exists, parents on a locale that lacks a topic/tag translation see the fallback (en → fi → first available).
 - **Atomic inline-add for subscriptions.** The inline-add path (`POST /api/checkout/products/create` when a live family sub already exists) does three things in sequence: `subscriptions.update` (Stripe charges proration) → `confirm_reservation` (DB flips reserving → active) → `family_subscription_items.insert` (link row). A DB blip between the second and third step leaves the parent paying for a sub but with no link row, so the cron treats them as bundle-mode-with-0-credits. Symptom: parent cancels a session ≥24h ahead, expects the sub-covered "bank a credit" perk, sees no credit appear; contacts support; support manually inserts the link row (and back-fills `credits_remaining` if appropriate). Not a double-charge — the cron never makes Stripe API calls. Likelihood is rare but real (~1 in 5–10k inline-adds). Fix when frequency justifies it: collapse steps 2+3 into a single RPC, or invert the order (write link row first as `pending`, call Stripe, then confirm). The purchased-product detail page surfaces the family sub + its items so this drift is visible at a glance during testing and support investigations.
 - **Inline-add CTA copy overflow.** When the parent has a live family sub and the next add is a yearly tier (e.g., `€600.00` charged today), the CTA "Add to your subscription · €600.00 (charged today)" is too long to fit on a single-line button on `signup-panel-view.tsx` (`ctaInlineAddSub` in messages files). Word-wraps awkwardly on narrow widths. Options when fixing: (a) drop the price suffix and surface the proration amount in the panel body above the button instead, (b) shorten the CTA to "Add · €600.00" with a smaller "charged today" caption underneath, or (c) keep one-line on desktop and stack on narrow widths. Lowest-effort: option (b). Affects all four locales' `ctaInlineAddSub` strings.
 
@@ -1217,7 +1198,7 @@ Flagged inline as `OPEN` in the sections they affect.
 - **DST / tz edge cases on per-session deduction.** When a camp crosses a DST boundary, does the session at 17:00 local still deduct 1 credit? Probably yes — deduction is per-session, not per-hour. *Test note:* `process_session_credits` is currently exercised only with `timezone='UTC'` in `tests/db/session-credits-cron.test.ts`. Real products will run in `Europe/Helsinki`, `America/New_York`, etc. Hard to test deterministically without mocking `NOW()` or the slot timezone, so the plan is a manual staging smoke once a non-UTC product runs through a DST transition, then a regression test if it ever bites.
 - **`promote_from_waitlist` lifecycle is not yet wired.** Function shipped in 00039 as a forward-looking stub per §6.1. As written it (a) holds no `FOR UPDATE` lock so two concurrent webhook workers could pick the same row, and (b) doesn't transition the row's status — it stays `'waitlisted'`, which makes a subsequent `create_participation` for that gamer hit the existing-row guard with "already on waitlist". Zero TS callers, zero tests today. The intended flow (cancel → admin emails next-on-waitlist → parent clicks → re-checkout) needs an additional RPC to convert a waitlist row into a reservation without tripping the existing-row check, plus the cancellation RPCs need to actually invoke it. Defer until the waitlist-promotion phase starts; rewrite with locking + transition + race tests parallel to `tests/db/participations-race.test.ts`.
 - **Event account requirement for truly free events.** The platform requires an account for all participations. Consider magic-link + gamer-only capture later if friction is too high.
-- **Topic taxonomy depth.** Sub-topics (Minecraft — Survival vs Redstone) — add `topics.parent_id` if needed. Not yet.
+- **Topic taxonomy depth.** Sub-topics (Minecraft — Survival vs Redstone) or new topics — add a value to the `product_topic` enum (and a `PRODUCT_TOPICS` entry), or graduate back to a `topics` table if the set ever needs to be admin-managed again. Not yet.
 - **Calendar view as a first-class parent feature.** "Everything my kids are doing this week" across products is obvious future UX. Design the per-gamer session query to support it.
 - **Gedu schedule-conflict prevention.** §4.1 enforces one-group-per-product via unique on `gedu_group_assignments`. Cross-product time conflicts are human-enforced.
 - ~~**`site_details.access_notes` visibility.**~~ *Resolved:* split into two tables — `site_details` (member-visible: address, parking, wifi) is publicly SELECT-able; `site_staff_details` (gate codes, back-entrance directions, ops notes) is admin + Gedu only. See §4.8.
@@ -1364,7 +1345,7 @@ Form (src/components/admin/products/)
 ├── product-type-config.ts          — Per-type field availability, scheduling shape, pricing shape
 ├── effective-status.ts             — Derived status helper (TS twin of SQL effective_status())
 └── sections/
-    ├── identity-section.tsx         — Name/description per locale, topic, image, tags
+    ├── identity-section.tsx         — Name/description per locale, topic (fixed enum), image
     ├── audience-section.tsx         — Age range, spoken languages, group seat count
     ├── when-section.tsx             — Start/end date, schedule slots, holiday calendars
     ├── where-section.tsx            — Location picker (site or jurisdiction depending on type)
@@ -1391,20 +1372,18 @@ API routes (admin-only)
 ├── /api/admin/products/[id]/update  — Calls update_product RPC; uploads new blob first, deletes old/orphan blob after
 ├── /api/admin/locations/create      — Inline create from location picker
 ├── /api/admin/locations/[id]        — PATCH name only
-├── /api/admin/topics/create         — Inline create + single-locale translation
-├── /api/admin/tags/create           — Inline create + single-locale translation
 ├── /api/admin/site-notes            — Upsert site_details / site_staff_details
 └── /api/admin/fx-rates              — Proxies frankfurter.dev (cached 6h via fetch data cache)
 
 Services (src/services/products/)
 ├── products.service.ts              — Read methods (listByType, getByIdForAdmin); write goes through API routes
 ├── products.queries.ts              — useProductsByType, useProductAdmin, useCreateProduct, useUpdateProduct
-├── reference-data.queries.ts        — useTopics, useTags, useHolidayCalendars, etc.
+├── reference-data.queries.ts        — useHolidayCalendars, useSiteDetails, etc.
 └── fx.queries.ts                    — useFxRates (calls /api/admin/fx-rates)
 
 Parent browse + detail (src/components/public/products/)
 ├── product-browse-page.tsx          — Page orchestrator: heading, filters, browse grid, empty states
-├── product-browse-filters.tsx       — Topic / tag / format chips + clear-all
+├── product-browse-filters.tsx       — Type / game / format / language chips + clear-all
 ├── product-browse-card{,-view}.tsx  — Browse-card adapter + presentational View
 ├── product-purchased-card{,-view}.tsx — Purchased-card adapter + View
 ├── registration-pill.tsx            — RegistrationPill (outline chip) + useRegistrationCta hook
@@ -1562,11 +1541,9 @@ The `expire_reservation` RPC stays around — the webhook calls it on `checkout.
 - **Admin details page — gamer/group management surface.** Once participations land, the details page should host gamer→group assignment plus an "unassigned gamers" tray so admins can do roster work without leaving the product. Cancel-product and Save-as-draft buttons also live here.
 - **Gedu session-details page — unassigned-gamers tray.** `get_gedu_assigned_product` returns `groups[]` only; new signups not yet placed in a group (`participations.group_id IS NULL`, `status = 'active'`) are invisible to the gedu. Add a read-only "Awaiting assignment" section (extend the RPC's return JSONB with an `unassigned[]` array). Gedus can't move gamers — that's still admin-only via `commit_group_changes`. Also: `SessionDetailsPage` conflates a genuine forbidden (`null`) with transient errors — check `isError` separately and reserve `NotAssignedState` for the `42501` case.
 - **Extend `site_details` read policy to purchasing customers.** Migration `00038_site_details_restrict_to_staff.sql` tightened `site_details` to admin + gedu only. The handoff intent was admin + gedu + customers who have purchased a product at that site. Add a third SELECT policy on `site_details` keyed on an active participation at the site, with positive/negative cases in `tests/db/site-details-rls.test.ts`. Leave `site_staff_details` admin + gedu only.
-- **Inline topic / tag create can leave orphan parent rows on transient failure.** `POST /api/admin/topics/create` and `/api/admin/tags/create` insert the parent row, then the translation row, then roll back the parent on translation failure. An interruption between the two awaits strands a parent with no translation. **Fix:** move both inserts into a single SQL function (`create_topic`, `create_tag`) that writes both atomically, matching `create_product`.
 - **`update_product` silently wipes parent fields the form doesn't surface.** It accepts every editable column with `DEFAULT NULL`; any field the build pipeline (`buildSharedFields` in `product-build.ts`) omits lands as `NULL`. Concrete trap: `refund_policy_days` is in the schema but no UI sets it; a future feature/backfill that populates it would get nulled on the next form edit. **Fix:** make the route pass through fields the client didn't send (mirrors `image_path` "keep current"), or take an explicit "set" sentinel per optional column.
 - **CTA stays active when a price row is missing for the viewer's currency.** The admin form validates all three currencies (`product-build.ts`), but the DB doesn't enforce it (`product_prices` is a `(product_id, currency)` PK with no count constraint). A product missing a currency renders "Not in {currency}" in the price slot but the CTA stays active — once Stripe Checkout is wired, a parent could click Sign up on a product they can't buy. **Fix:** plumb price availability into the CTA decision (disable or hide with a "Switch to {available currency}" hint), parallel to the `ended` treatment.
 - **Events should remain purchasable on their start day until the actual start time.** `deriveRegistrationState` returns `running_late` for any camp or event whose `effectiveStatus` is `running`, and `effectiveStatus` flips to `running` at 00:00 local on `start_date`. For camps this is correct (the cohort started together — CPO confirmed). For events it's wrong: a Friday 18:00 party becomes `running_late` at Friday 00:00. **Fix:** for `event` only, combine `start_date` with the first `schedule_slots.start_time` to get an instant and return `running_late` once `now >= startInstant`. Also clean up the `running_late` card to show a soft "already underway" line instead of an orphaned price block.
-- **Browse page gates entire surface on four queries.** `ProductBrowsePage` waits on `useVisibleProductsByTypes`, `useTopics`, `useTags`, and `useParticipationCounts` together before painting. Topics and tags are platform-wide and almost always cached. **Fix:** scope the spinner to `productsLoading` only; render `<ProductBrowseFilters>` with empty chip rows while the rest load (the row position is already reserved, so no layout shift).
 - **`effective_status` SQL twin maintenance.** The TS helper uses `date-fns-tz` to compare `start_date` / `end_date` against `now` in the product's timezone and derives an `expired` state for pending products whose `end_date` passed without satisfying the start conditions. Keep the SQL function `effective_status(product_id)` in lockstep when DB-side filters need to match the client.
 - **Image hero + lightbox.** The image renders as a 1:1 thumbnail in the hero today; a future "tap to enlarge" wouldn't break the layout.
 - **Dead-end detail panels.** Browse-card CTAs only link to actionable states; `FullClosedPanel` / `RunningLatePanel` / `EndedPanel` have no normal browse → detail entry. They render defensively for direct-URL access and in-session state transitions. The UI Components page is the canonical regression surface for them — keep its preview tiles current.

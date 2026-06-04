@@ -2,8 +2,9 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { ROUTES } from "@/lib/constants";
-import { resolveLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useCurrency } from "@/providers/currency-provider";
 import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
@@ -38,13 +39,10 @@ interface ProductBrowseCardProps {
 export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
   const uiLocale = resolveLocale(useLocale());
+  const topicLabel = useTopicLabel();
   const { currency } = useCurrency();
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
-  const topicTr = resolveTranslation(
-    product.topics?.topic_translations,
-    uiLocale,
-  );
 
   // Seat math feeds active+reserving — reserving rows hold the seat for
   // 30 min during Stripe Checkout. The threshold check uses the same
@@ -83,12 +81,11 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
       name={tr?.name ?? ""}
       description={tr?.description ?? null}
       imagePath={product.image_path}
-      topicLabel={topicTr?.name ?? null}
+      topicLabel={topicLabel(product.topic)}
       scheduleLines={scheduleLines}
       ageLine={t("ages", { min: product.min_age, max: product.max_age })}
       seatsHint={seatsHint}
       locationLine={locationLine}
-      tagLabels={resolveTagLabels(product, uiLocale)}
       spokenLanguageCode={product.spoken_language_code}
       price={price}
       state={state}
@@ -112,18 +109,5 @@ function resolveLocationLine(
     return { kind: "in_person", label: loc.site };
   }
   return { kind: "online_muni", label: loc.name };
-}
-
-function resolveTagLabels(
-  product: ProductBrowseRow,
-  uiLocale: SupportedLocale,
-): string[] {
-  return product.product_tags
-    .map((pt) => {
-      if (!pt.tags) return null;
-      const tr = resolveTranslation(pt.tags.tag_translations, uiLocale);
-      return tr?.name ?? pt.tags.slug;
-    })
-    .filter((s): s is string => Boolean(s));
 }
 

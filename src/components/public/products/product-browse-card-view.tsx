@@ -5,7 +5,6 @@ import { useTranslations } from "next-intl";
 import { Users, Hourglass, MapPin, Globe } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { cn } from "@/lib/utils";
@@ -42,7 +41,6 @@ export interface ProductBrowseCardViewProps {
    * the session happens.
    */
   locationLine: LocationLine;
-  tagLabels: readonly string[];
   /**
    * Spoken-language code (`fi` / `en` / `sv`) the product is delivered in.
    * Rendered as flag + uppercase code on the topic row so parents can see
@@ -74,7 +72,6 @@ export function ProductBrowseCardView({
   ageLine,
   seatsHint,
   locationLine,
-  tagLabels,
   spokenLanguageCode,
   price,
   state,
@@ -154,8 +151,6 @@ export function ProductBrowseCardView({
             {description}
           </p>
         )}
-
-        <TagChips labels={tagLabels} />
 
         <div className="mt-auto border-t pt-3">
           {isEnded ? (
@@ -260,17 +255,4 @@ function PriceBlock({ price }: { price: ProductPriceLine }) {
         </span>
       );
   }
-}
-
-function TagChips({ labels }: { labels: readonly string[] }) {
-  if (labels.length === 0) return null;
-  return (
-    <div className="flex flex-wrap gap-1">
-      {labels.map((label) => (
-        <Badge key={label} variant="outline" className="text-[10px]">
-          {label}
-        </Badge>
-      ))}
-    </div>
-  );
 }

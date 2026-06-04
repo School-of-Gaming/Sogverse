@@ -255,7 +255,6 @@
         },
         "fields": {
           "topic": "Topic",
-          "tags": "Tags",
           "padletUrl": "Padlet",
           "locales": "Languages",
           "ageRange": "Age range",
@@ -334,7 +333,6 @@
         "name": "Name",
         "description": "Description",
         "topic": "Topic",
-        "tags": "Tags",
         "padletUrl": "Padlet URL",
         "minAge": "Min age",
         "maxAge": "Max age",
@@ -360,7 +358,6 @@
         "paid": "Paid",
         "billing": "Billing",
         "paidByMunicipality": "Paid by the municipality",
-        "groupTopicUnder": "Group this under:",
         "seatCount": "Seat count",
         "noSeatLimit": "No seat limit",
         "waitlistToggle": "Enable waitlist when seats are full",
@@ -369,8 +366,6 @@
       },
       "placeholders": {
         "selectTopic": "Select a topic…",
-        "newTopicName": "New topic name (e.g. Among Us, Digital wellness)",
-        "newTagName": "Tag name",
         "padletUrl": "https://padlet.com/...",
         "threshold": "e.g. 8",
         "noLimit": "No limit",
@@ -390,10 +385,6 @@
       "topicKinds": {
         "game": "Games",
         "subject": "Subjects"
-      },
-      "topicKindSingular": {
-        "game": "Game",
-        "subject": "Subject"
       },
       "locationPicker": {
         "searchPlaceholder": "Search by country, region, municipality, or site…",
@@ -451,8 +442,7 @@
         "scheduledDescription": "Parents see a countdown until then. Useful for ticket-drop style launches."
       },
       "hints": {
-        "topicHint": "The primary subject — one per product. What the sessions are actually about.",
-        "tagsHint": "Optional. Helps parents filter products when they're browsing.",
+        "topicHint": "The topic this product covers — a game (Minecraft, Fortnite) or a subject (Webinar).",
         "padletHint": "Optional. Shared with families after they sign up.",
         "deliveredInHint": "The primary language used during sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",
@@ -499,11 +489,7 @@
       },
       "actions": {
         "cancel": "Cancel",
-        "createLabel": "Create {label}",
-        "addTopic": "Add topic",
-        "addNewTopic": "Add new topic",
-        "addNewTag": "Add new tag",
-        "addTagShort": "Add"
+        "createLabel": "Create {label}"
       },
       "status": {
         "draft": "Draft",
@@ -1216,7 +1202,6 @@
       "typeClubs": "Clubs",
       "typeCamps": "Camps",
       "topic": "Topic",
-      "tag": "Vibe",
       "format": "Format",
       "formatOnline": "Online",
       "formatInPerson": "In person",
@@ -1253,6 +1238,9 @@
       "noMatches": "No matches. Try clearing your filters."
     }
   },
+  "topics": {
+    "webinar": "Webinar"
+  },
   "productDetail": {
     "back": {
       "consumer_club": "All clubs",
@@ -1269,9 +1257,7 @@
     "sections": {
       "whenWhere": "When & where",
       "calendar": "Schedule",
-      "tags": "What to expect",
-      "topicsLabel": "Focus",
-      "tagsLabel": "Vibe"
+      "topic": "Topic"
     },
     "info": {
       "schedule": "Schedule",
