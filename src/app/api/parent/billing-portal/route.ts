@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { requireRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
+import { getPortalConfigurationId } from "@/lib/stripe/portal-configuration";
 import { getOrigin } from "@/lib/url";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -43,6 +44,10 @@ export async function POST(request: Request) {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
+      // Our own configuration (not Stripe's dashboard default), so the portal
+      // never offers plan switching for tiers we don't sell. See
+      // `getPortalConfigurationId`.
+      configuration: await getPortalConfigurationId(),
       // Send them back to the Billing section they came from. `getOrigin`
       // only trusts known hosts, so a spoofed Host can't redirect elsewhere.
       return_url: `${getOrigin(request)}/parent#billing`,
