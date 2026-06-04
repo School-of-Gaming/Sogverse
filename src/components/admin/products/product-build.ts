@@ -149,10 +149,10 @@ export function validate(
   }
 
   const billingMode = effectiveBillingMode(config, state.paidMode);
-  const canUncap = config.productType === "event" && billingMode === "free";
-  const seatInputDisabled = canUncap && state.uncapped;
 
-  if (!seatInputDisabled) {
+  // Any product type may be uncapped (seat_count = null); only validate the
+  // count when the admin chose a limited number of seats.
+  if (!state.uncapped) {
     const seat = Number(state.seatCount);
     if (!Number.isInteger(seat) || seat < 1) return err("seatCountInvalid");
   }
@@ -257,14 +257,13 @@ function buildSharedFields(
   const pricingShape = effectivePricingShape(config);
   const usesDate = startModeUsesDate(state.startMode);
   const usesThreshold = startModeUsesThreshold(state.startMode);
-  const canUncap = config.productType === "event" && billingMode === "free";
-  const seatInputDisabled = canUncap && state.uncapped;
   const showPricing =
     billingMode === "paid" && config.pricingShape !== "external";
 
   const minAge = Number(state.minAge);
   const maxAge = Number(state.maxAge);
-  const seat = seatInputDisabled ? null : Number(state.seatCount);
+  // Uncapped (no seat limit) → null for any product type; otherwise the count.
+  const seat = state.uncapped ? null : Number(state.seatCount);
 
   let finalSlots = state.scheduleSlots;
   if (config.scheduleShape === "single_date" && state.startDate) {

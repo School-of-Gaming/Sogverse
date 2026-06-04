@@ -358,16 +358,15 @@
         "billing": "Laskutus",
         "paidByMunicipality": "Kunta maksaa",
         "seatCount": "Paikkamäärä",
-        "noSeatLimit": "Ei paikkarajaa",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
         "signupThreshold": "Ilmoittautumisraja aloitukseen",
-        "makeVisible": "Näkyy vanhemmille"
+        "makeVisible": "Näkyy vanhemmille",
+        "seatLimit": "Paikkaraja"
       },
       "placeholders": {
         "selectTopic": "Valitse aihe…",
         "padletUrl": "https://padlet.com/...",
         "threshold": "esim. 8",
-        "noLimit": "Ei rajaa",
         "name": {
           "consumerClub": "esim. Minecraft Redstone -kerho",
           "municipalityClub": "esim. Tapiolan Minecraft-kerho · Kevät 2026",
@@ -451,8 +450,10 @@
         "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
         "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
-        "seatCanUncap": "Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa (esim. webinaari, julkinen kävely).",
-        "visibleHint": "Poista valinta pitääksesi tuote piilossa, kun se on vielä tekeillä. Laita päälle, kun olet valmis vanhempien näkemään sen."
+        "visibleHint": "Poista valinta pitääksesi tuote piilossa, kun se on vielä tekeillä. Laita päälle, kun olet valmis vanhempien näkemään sen.",
+        "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
+        "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
+        "startDateToday": "Lukittu toistaiseksi tähän päivään."
       },
       "errors": {
         "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",
@@ -615,6 +616,12 @@
           "applying": "Tallennetaan…",
           "genericError": "Jokin meni pieleen. Yritä uudelleen."
         }
+      },
+      "seatLimitModes": {
+        "limited": "Rajattu määrä paikkoja",
+        "limitedDescription": "Rajaa, kuinka moni pelaaja voi liittyä. Kun paikat täyttyvät, uudet ilmoittautujat voivat siirtyä jonotuslistalle.",
+        "unlimited": "Ei paikkarajaa",
+        "unlimitedDescription": "Kuka tahansa ilmoittautunut pääsee mukaan — ei rajaa."
       }
     },
     "users": {

@@ -5,9 +5,11 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Field, FormSection } from "../form-primitives";
+import { FORM_LOCKS } from "../form-locks";
 import { PricingBlock } from "../pricing-block";
 import {
   PAID_MODE_VALUES,
+  SEAT_LIMIT_MODE_VALUES,
   effectiveBillingMode,
   effectivePricingShape,
   type FormState,
@@ -33,9 +35,11 @@ export function BillingSection({
   const pricingShape = effectivePricingShape(config);
   const showExternalInfo = billingMode === "external_contract";
 
-  // Free events can have no seat limit; the rest always do.
-  const canUncap = config.productType === "event" && billingMode === "free";
-  const seatInputDisabled = canUncap && state.uncapped;
+  // Seats: every product type may be capped or uncapped (no seat count). The
+  // chooser and the waitlist toggle are pre-prod-locked for now (form-locks.ts)
+  // — defaulted to "no seat limit" / waitlist off in initialState.
+  const lockSeat = FORM_LOCKS.seatCount;
+  const lockWaitlist = FORM_LOCKS.waitlist;
 
   return (
     <FormSection
@@ -110,51 +114,80 @@ export function BillingSection({
         </Field>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <Field label={t("labels.seatLimit")} hint={t("hints.seatLimitHint")}>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {SEAT_LIMIT_MODE_VALUES.map((mode) => {
+            const active = state.uncapped === (mode === "unlimited");
+            return (
+              <label
+                key={mode}
+                className={cn(
+                  "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
+                  active ? "border-primary bg-primary/5" : "border-input",
+                  lockSeat
+                    ? "cursor-not-allowed opacity-60"
+                    : cn(
+                        "cursor-pointer",
+                        !active && "hover:border-foreground/30"
+                      )
+                )}
+              >
+                <input
+                  type="radio"
+                  name="seatLimitMode"
+                  checked={active}
+                  disabled={lockSeat}
+                  onChange={() =>
+                    setState({ ...state, uncapped: mode === "unlimited" })
+                  }
+                  className="mt-1 h-4 w-4"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="font-medium">
+                    {t(`seatLimitModes.${mode}`)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {t(`seatLimitModes.${mode}Description`)}
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      </Field>
+
+      {!state.uncapped && (
         <Field
           label={t("labels.seatCount")}
           htmlFor="p-seat"
-          required={!seatInputDisabled}
-          hint={canUncap ? t("hints.seatCanUncap") : t("hints.seatHint")}
+          required
+          hint={t("hints.seatHint")}
         >
           <Input
             id="p-seat"
             type="number"
             min="1"
-            value={seatInputDisabled ? "" : state.seatCount}
+            value={state.seatCount}
             onChange={(e) =>
               setState({ ...state, seatCount: e.target.value })
             }
-            disabled={seatInputDisabled}
-            placeholder={
-              seatInputDisabled ? t("placeholders.noLimit") : undefined
-            }
-            required={!seatInputDisabled}
+            className="max-w-[220px]"
+            required
           />
         </Field>
+      )}
 
-        {canUncap && (
-          <div className="flex items-end pb-2">
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={state.uncapped}
-                onChange={(e) =>
-                  setState({ ...state, uncapped: e.target.checked })
-                }
-                className="h-4 w-4"
-              />
-              <span>{t("labels.noSeatLimit")}</span>
-            </label>
-          </div>
-        )}
-      </div>
-
-      {!seatInputDisabled && (
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+      {!state.uncapped && (
+        <label
+          className={cn(
+            "flex items-center gap-2 text-sm text-muted-foreground",
+            lockWaitlist ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+          )}
+        >
           <input
             type="checkbox"
             checked={state.waitlistEnabled}
+            disabled={lockWaitlist}
             onChange={(e) =>
               setState({ ...state, waitlistEnabled: e.target.checked })
             }

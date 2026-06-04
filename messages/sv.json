@@ -358,16 +358,15 @@
         "billing": "Fakturering",
         "paidByMunicipality": "Betalas av kommunen",
         "seatCount": "Antal platser",
-        "noSeatLimit": "Ingen platsgräns",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
         "signupThreshold": "Antal anmälningar för att starta",
-        "makeVisible": "Synlig för föräldrar"
+        "makeVisible": "Synlig för föräldrar",
+        "seatLimit": "Platsgräns"
       },
       "placeholders": {
         "selectTopic": "Välj ett ämne…",
         "padletUrl": "https://padlet.com/...",
         "threshold": "t.ex. 8",
-        "noLimit": "Ingen gräns",
         "name": {
           "consumerClub": "t.ex. Minecraft Redstone-klubb",
           "municipalityClub": "t.ex. Tapiola Minecraft-klubb · Vår 2026",
@@ -451,8 +450,10 @@
         "pricingMonthly": "Debiteras varje månad så länge prenumerationen är aktiv. Avsluta när som helst.",
         "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
         "seatHint": "När fullt går nya anmälningar till väntelistan.",
-        "seatCanUncap": "Gratis evenemang behöver ingen platsgräns (t.ex. ett webbinarium, en offentlig promenad).",
-        "visibleHint": "Avmarkera för att hålla produkten dold medan du fortfarande arbetar på den. Slå på när du är redo att föräldrar ska se den."
+        "visibleHint": "Avmarkera för att hålla produkten dold medan du fortfarande arbetar på den. Slå på när du är redo att föräldrar ska se den.",
+        "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
+        "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
+        "startDateToday": "Låst till dagens datum tills vidare."
       },
       "errors": {
         "translationRequired": "Minst ett språk med namn och beskrivning krävs",
@@ -615,6 +616,12 @@
           "applying": "Sparar…",
           "genericError": "Något gick fel. Försök igen."
         }
+      },
+      "seatLimitModes": {
+        "limited": "Begränsat antal platser",
+        "limitedDescription": "Begränsa hur många spelare som kan delta. När det är fullt kan nya anmälningar gå till en väntelista.",
+        "unlimited": "Ingen platsgräns",
+        "unlimitedDescription": "Alla som anmäler sig får delta — ingen gräns."
       }
     },
     "users": {
