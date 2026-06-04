@@ -453,7 +453,8 @@
         "visibleHint": "Uncheck to keep the product hidden while you're still setting it up. Turn it on when you're ready for parents to see it.",
         "seatLimitHint": "Cap the number of gamers, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
-        "startDateToday": "Locked to today's date for now."
+        "startDateToday": "Locked to today's date for now.",
+        "startDateLocked": "Start date is locked for now."
       },
       "errors": {
         "translationRequired": "At least one language with name and description is required",
