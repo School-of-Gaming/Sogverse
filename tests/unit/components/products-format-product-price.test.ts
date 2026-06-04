@@ -13,8 +13,7 @@ function priceRow(
   return {
     product_id: "p",
     currency: over.currency,
-    price_per_session: over.price_per_session ?? 0,
-    price_per_month: over.price_per_month ?? 0,
+    price_cents: over.price_cents ?? 0,
     created_at: "2026-04-01T00:00:00Z",
     updated_at: "2026-04-01T00:00:00Z",
   } as ProductPrice;
@@ -43,13 +42,12 @@ describe("formatProductPrice", () => {
     expect(line.kind).toBe("external");
   });
 
-  it("consumer_club renders a monthly subscription from price_per_month", () => {
+  it("consumer_club renders a monthly subscription from price_cents", () => {
     const line = formatProductPrice({
       prices: [
         priceRow({
           currency: "eur",
-          price_per_session: 0,
-          price_per_month: 4500,
+          price_cents: 4500,
         }),
       ],
       billingMode: "paid",
@@ -64,13 +62,12 @@ describe("formatProductPrice", () => {
     }
   });
 
-  it("camp upfront_total falls into kind=upfront and uses price_per_session", () => {
+  it("camp upfront_total falls into kind=upfront and uses price_cents", () => {
     const line = formatProductPrice({
       prices: [
         priceRow({
           currency: "eur",
-          price_per_session: 12000,
-          price_per_month: 0,
+          price_cents: 12000,
         }),
       ],
       billingMode: "paid",
@@ -90,8 +87,7 @@ describe("formatProductPrice", () => {
       prices: [
         priceRow({
           currency: "gbp",
-          price_per_session: 1500,
-          price_per_month: 0,
+          price_cents: 1500,
         }),
       ],
       billingMode: "paid",
@@ -110,8 +106,7 @@ describe("formatProductPrice", () => {
       prices: [
         priceRow({
           currency: "eur",
-          price_per_session: 2000,
-          price_per_month: 4500,
+          price_cents: 4500,
         }),
       ],
       billingMode: "paid",

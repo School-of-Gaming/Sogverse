@@ -48,14 +48,13 @@ export function formatProductPrice({
     // Consumer clubs bill as a flat monthly subscription.
     return {
       kind: "subscription",
-      perMonth: formatCurrencyFromCents(row.price_per_month, currency, locale),
+      perMonth: formatCurrencyFromCents(row.price_cents, currency, locale),
     };
   }
 
-  // camp / event upfront — the admin form stores the total in
-  // price_per_session for upfront_total products (see product-build.ts).
+  // camp / event upfront — the single product price.
   return {
     kind: "upfront",
-    total: formatCurrencyFromCents(row.price_per_session, currency, locale),
+    total: formatCurrencyFromCents(row.price_cents, currency, locale),
   };
 }

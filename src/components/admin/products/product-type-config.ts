@@ -24,9 +24,9 @@ export type BillingOption =
   | { mode: "free_or_paid" };                                           // event
 
 // Pricing shape — drives the Capacity & billing card. Each paid type collects
-// a single price: consumer clubs a flat monthly subscription (`price_per_month`),
-// camps and events a one-time total (`price_per_session`). Municipality clubs
-// are invoiced off-site; the form shows an info card instead of a price input.
+// a single `price_cents`: consumer clubs charge it as a flat monthly
+// subscription, camps and events as a one-time total. Municipality clubs are
+// invoiced off-site; the form shows an info card instead of a price input.
 export type PricingShape = "monthly" | "upfront_total" | "external" | "none";
 
 export interface ProductTypeConfig {

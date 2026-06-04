@@ -600,24 +600,21 @@ export type Database = {
         Row: {
           created_at: string
           currency: string
-          price_per_month: number
-          price_per_session: number
+          price_cents: number
           product_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           currency: string
-          price_per_month: number
-          price_per_session: number
+          price_cents: number
           product_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           currency?: string
-          price_per_month?: number
-          price_per_session?: number
+          price_cents?: number
           product_id?: string
           updated_at?: string
         }

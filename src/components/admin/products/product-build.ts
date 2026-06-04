@@ -252,10 +252,10 @@ function weekdayFromDateString(dateStr: string): number {
  *     `weekdayFromDateString` for the TZ caveat.
  *   - end_date for single_date events mirrors start_date so list/detail
  *     code only has to look at end_date for "is it over".
- *   - Prices are stored in *cents*. Consumer clubs put the monthly
- *     subscription price in price_per_month (price_per_session = 0);
- *     camps/events put the upfront total in price_per_session
- *     (price_per_month = 0). Downstream billing branches on product type.
+ *   - Prices are stored in *cents* as a single `price_cents` per currency.
+ *     For consumer clubs it's the monthly subscription price; for camps/events
+ *     the one upfront total. Downstream billing branches on product type to
+ *     decide how that amount is charged.
  */
 function buildSharedFields(
   state: FormState,
@@ -321,15 +321,14 @@ function buildSharedFields(
           // `validate()` blocks submit when the relevant field is
           // blank/invalid, so the null fallback is unreachable in practice.
           // Consumer clubs charge the monthly price; camps/events the upfront
-          // total. The unused column is written as 0.
-          const sessionCents =
-            pricingShape === "monthly" ? 0 : (decimalToCents(row.session) ?? 0);
-          const monthCents =
-            pricingShape === "monthly" ? (decimalToCents(row.month) ?? 0) : 0;
+          // total. Either way it's the single `price_cents`.
+          const priceCents =
+            pricingShape === "monthly"
+              ? (decimalToCents(row.month) ?? 0)
+              : (decimalToCents(row.session) ?? 0);
           return {
             currency,
-            price_per_session: sessionCents,
-            price_per_month: monthCents,
+            price_cents: priceCents,
           };
         })
       : [],
@@ -457,6 +456,12 @@ export function existingFormState(
   // Per-currency record. Rows we don't have stay blank — that's invalid
   // for paid products, but the form's validate() will catch it on save
   // and the read-only details page handles missing rows separately.
+  //
+  // The DB stores one `price_cents`; the form has two input slots
+  // (session/month) but only ever uses the one its pricing shape selects.
+  // Load the stored amount into that slot and leave the other blank.
+  const priceField =
+    effectivePricingShape(config) === "monthly" ? "month" : "session";
   const prices: FormState["prices"] = {
     eur: { session: "", month: "" },
     gbp: { session: "", month: "" },
@@ -466,8 +471,9 @@ export function existingFormState(
     const cur = row.currency as SupportedCurrency;
     if (cur in prices) {
       prices[cur] = {
-        session: centsToDecimalString(row.price_per_session),
-        month: centsToDecimalString(row.price_per_month),
+        session: "",
+        month: "",
+        [priceField]: centsToDecimalString(row.price_cents),
       };
     }
   }

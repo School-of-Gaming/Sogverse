@@ -37,8 +37,7 @@ export type ProductAdminDetailRow = Product & {
   product_translations: ProductTranslation[];
   product_prices: {
     currency: string;
-    price_per_session: number;
-    price_per_month: number;
+    price_cents: number;
   }[];
   schedule_slots: {
     weekday: number;
@@ -73,8 +72,7 @@ export type ScheduleSlotInput = {
 
 export type PriceInput = {
   currency: SupportedCurrency;
-  price_per_session: number;
-  price_per_month: number;
+  price_cents: number;
 };
 
 // Shape accepted by /api/admin/products/create. Mirrors create_product()
@@ -280,7 +278,7 @@ export class ProductsService {
     const { data, error } = await this.supabase
       .from("products")
       .select(
-        "*, product_translations(*), product_prices(currency, price_per_session, price_per_month), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
+        "*, product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
       )
       .eq("id", id)
       .maybeSingle();

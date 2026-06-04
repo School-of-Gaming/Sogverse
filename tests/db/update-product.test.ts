@@ -68,7 +68,7 @@ describe("update_product", () => {
       .insert({ product_id: PRODUCT_ID, weekday: 0, start_time: "16:00", duration_minutes: 60 });
     await admin
       .from("product_prices")
-      .insert({ product_id: PRODUCT_ID, currency: "eur", price_per_session: 1000, price_per_month: 4000 });
+      .insert({ product_id: PRODUCT_ID, currency: "eur", price_cents: 4000 });
   }
 
   it("admin can update parent fields and wipe-and-replace children", async () => {
@@ -96,9 +96,9 @@ describe("update_product", () => {
         { weekday: 3, start_time: "17:00", duration_minutes: 90 },
       ],
       p_prices: [
-        { currency: "eur", price_per_session: 1500, price_per_month: 5000 },
-        { currency: "gbp", price_per_session: 1300, price_per_month: 4400 },
-        { currency: "usd", price_per_session: 1700, price_per_month: 5600 },
+        { currency: "eur", price_cents: 5000 },
+        { currency: "gbp", price_cents: 4400 },
+        { currency: "usd", price_cents: 5600 },
       ],
     });
 
@@ -142,7 +142,7 @@ describe("update_product", () => {
 
     const { data: prices } = await admin
       .from("product_prices")
-      .select("currency, price_per_session")
+      .select("currency, price_cents")
       .eq("product_id", PRODUCT_ID);
     expect(prices?.length).toBe(3);
   });

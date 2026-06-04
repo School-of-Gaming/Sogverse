@@ -195,10 +195,10 @@ There is exactly **one purchase option per product type** — the `purchase_shap
 
 The valid `purchase_shape` values are exactly `subscription_monthly`, `single_payment`, and `free`.
 
-Paid products store their price per supported currency in `product_prices` (see §5.1a) as two columns, **price per month** and **price per session**, used by type:
+Paid products store one price per supported currency in `product_prices` (see §5.1a) as a single `price_cents` column. What the amount means is decided by product type:
 
-- **Consumer club** → `price_per_month` holds the monthly subscription price. `price_per_session` is written as `0`.
-- **Camp / paid event** → `price_per_session` holds the single upfront total. (`price_per_month` is unused for these types.)
+- **Consumer club** → `price_cents` is charged as the monthly subscription price.
+- **Camp / paid event** → `price_cents` is charged once as the upfront total.
 
 The server recomputes the final charge from the product's stored base price at every Checkout Session creation. The client only sends a `(product_id, gamer_id, currency)` selector — it never sends an amount. Tamper-proof by design.
 
@@ -530,8 +530,8 @@ product_prices
   currency              text          -- 'eur' | 'gbp' | 'usd'; enforced via CHECK against
                                         -- supported-currency list kept in sync with
                                         -- src/lib/constants/currency.ts
-  price_per_month       int           -- smallest unit (cents / pence). Consumer-club monthly sub price.
-  price_per_session     int           -- smallest unit. Camp/event single upfront total; 0 for clubs.
+  price_cents           int           -- smallest unit (cents / pence). The single product price:
+                                        -- consumer-club monthly sub, or camp/event upfront total.
   primary key (product_id, currency)
   -- A product sold in N currencies has N rows. Leaving a currency blank in the admin UI
   -- means "not sold in this currency" — parents on that currency see the product as
@@ -545,7 +545,7 @@ product_subscription_prices
   unit_amount_cents     int                     -- snapshot for display; Stripe is authoritative
   created_at            timestamptz
   primary key (product_id, currency)
-  -- If price_per_month changes after Prices are created, existing subscribers keep the
+  -- If price_cents changes after Prices are created, existing subscribers keep the
   -- old Price (Stripe Prices are immutable). A future admin action can recreate Prices;
   -- existing subs retain their original rate until they cancel and re-subscribe.
 ```
@@ -834,7 +834,7 @@ All RPCs in this section begin with `SELECT 1 FROM products WHERE id = $1 FOR UP
 - **`create_participation(product_id, gamer_id, customer_id, purchase_shape, currency)`**
   After the gate lock: validates age/language match, checks `registration_opens_at`, verifies effective status (via `effective_status()`) permits signup, counts current `active` + non-expired `reserving` participations to decide whether a seat is available. Behaviour by `purchase_shape`:
   - `subscription_monthly` (consumer club) — if a seat is available, inserts a `participations` row with `status='reserving'` and `reserved_until = now() + 30 minutes`, then resolves or creates the Stripe Price for `(product_id, currency)`, creates a Stripe Checkout Session in subscription mode keyed to the reserving row, returns the Checkout URL. The `checkout.session.completed` webhook finds or creates the `family_subscriptions` row for `(customer_id, currency)`, attaches the subscription item aligned to the existing `billing_cycle_anchor`, and flips the reserving row to `active`. If full, returns `{ full: true }` — UI offers `join_waitlist` instead.
-  - `single_payment` (camp / paid event) — same reservation pattern with one-shot inline `price_data` Checkout (`unit_amount = price_per_session` in the selected currency); webhook flips reserving → active on completion.
+  - `single_payment` (camp / paid event) — same reservation pattern with one-shot inline `price_data` Checkout (`unit_amount = price_cents` in the selected currency); webhook flips reserving → active on completion.
   - `free` — directly inserts `status='active'`, no reservation, no Stripe.
 
   The reservation-row insert is the *seat-holding* mechanism (§4.6a). Without it, two parents can both pass the gate, both proceed to Stripe, and one is stuck with a charge against an already-full club.
@@ -953,8 +953,8 @@ Seat state ("8 of 10 seats · 3 on waitlist"), schedule with skipped dates surfa
 
 **Pricing display — a single price line driven by the stored base price.** For paid products, the detail page shows exactly one option:
 
-- **Consumer club** — the monthly subscription price from `product_prices.price_per_month`. E.g., "€45/mo".
-- **Camp / paid event** — the single upfront total from `product_prices.price_per_session`. E.g., "€160".
+- **Consumer club** — the monthly subscription price from `product_prices.price_cents`. E.g., "€45/mo".
+- **Camp / paid event** — the single upfront total from `product_prices.price_cents`. E.g., "€160".
 - All amounts in the user's selected currency (resolved via the existing `CurrencyProvider`). If the product has no row in `product_prices` for the selected currency, the product shows as unavailable to that parent.
 
 ---
@@ -962,7 +962,7 @@ Seat state ("8 of 10 seats · 3 on waitlist"), schedule with skipped dates surfa
 ## 8. Admin UX
 
 - Single **"Create product"** form with a product type selector that reveals/hides fields by type. Lets admins pre-create 0 or more Gedu Groups each with 0 or more Gedus (§4.1).
-- **Per-currency pricing inputs**. For `billing_mode='paid'` products, the form collects a single price per supported currency (EUR / GBP / USD today) — a monthly price for consumer clubs (stored in `price_per_month`), or a total for camps/events (stored in `price_per_session`). Leaving a currency blank means "not sold in this currency." Inline preview panel shows the price parents will see. Server recomputes on save — no client-submitted prices.
+- **Per-currency pricing inputs**. For `billing_mode='paid'` products, the form collects a single price per supported currency (EUR / GBP / USD today) — a monthly price for consumer clubs or a total for camps/events, stored either way in `price_cents`. Leaving a currency blank means "not sold in this currency." Inline preview panel shows the price parents will see. Server recomputes on save — no client-submitted prices.
 - **Product management page** per product has a **Groups panel** with an Unassigned column (inbox) and one column per group. Drag-and-drop for moves. Add/rename/delete group controls. Add/remove Gedu controls per group.
 - **Gedu picker** supports search by name/email/bio and filter by `profiles.spoken_languages`.
 - **Calendar view** per product shows computed sessions with overrides applied; admins cancel/reschedule/substitute directly from it.
@@ -1264,7 +1264,6 @@ Form (src/components/admin/products/)
 Shared building blocks
 ├── form-primitives.tsx              — Section, Field, etc.
 ├── pricing-block.tsx + pricing-block-fx.ts — Currency tabs, FX auto-fill logic
-├── price-previews.tsx               — Per-currency rendered price summary
 ├── location-picker.tsx              — Country-aware hierarchy + inline create
 ├── gedu-picker-sheet.tsx            — Searchable Sheet for gedu assignment
 ├── image-picker.tsx                 — Upload + preview

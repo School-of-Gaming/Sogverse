@@ -446,7 +446,6 @@ async function insertPaymentRow(admin: Admin, params: InsertPaymentParams) {
 }
 
 function paymentPurposeFor(purchaseShape: string): PaymentPurpose {
-  if (purchaseShape.startsWith("bundle_")) return "bundle";
   if (purchaseShape.startsWith("subscription_")) return "subscription_invoice";
   return "single_payment";
 }
