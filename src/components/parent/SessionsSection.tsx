@@ -80,6 +80,7 @@ export function SessionsSection({
       <NextSessionCard
         key={sessionKey(next)}
         {...next}
+        audience={audience}
         onJoinClick={onJoinClick ? () => onJoinClick(next) : undefined}
       />
       {upcoming.map((s) => (
@@ -89,6 +90,8 @@ export function SessionsSection({
           gamerSeed={s.gamerSeed}
           productName={s.productName}
           sessionStart={s.sessionStart}
+          awaiting={s.awaiting}
+          audience={audience}
         />
       ))}
     </div>

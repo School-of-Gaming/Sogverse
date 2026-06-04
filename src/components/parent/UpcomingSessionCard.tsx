@@ -1,10 +1,12 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
+import { UserRoundSearch } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { useTimezone } from "@/providers";
+import type { SessionAudience } from "@/types";
 import { formatDate, formatTime } from "@/lib/utils";
 
 /**
@@ -26,6 +28,18 @@ export interface UpcomingSessionCardProps {
   productName: string;
   /** When the session starts — drives the date/time label. */
   sessionStart: Date;
+  /**
+   * The gamer is purchased but not yet placed in a group. The card still
+   * shows the real schedule; this just adds a small "matching with a Gedu"
+   * badge so a not-yet-joinable session isn't mistaken for a normal one.
+   * Defaults to `false`. See `NextSessionCard` for the prominent variant.
+   */
+  awaiting?: boolean;
+  /**
+   * Whose dashboard this renders on — drives the audience-specific awaiting
+   * badge (`"gamer"` speaks to the child). Defaults to `"customer"`.
+   */
+  audience?: SessionAudience;
 }
 
 export function UpcomingSessionCard({
@@ -33,6 +47,8 @@ export function UpcomingSessionCard({
   gamerSeed,
   productName,
   sessionStart,
+  awaiting = false,
+  audience = "customer",
 }: UpcomingSessionCardProps) {
   const t = useTranslations("parent.upcomingSession");
   const locale = useLocale();
@@ -59,6 +75,17 @@ export function UpcomingSessionCard({
             </span>
             <span className="shrink-0">{`${dateLabel} · ${timeLabel}`}</span>
           </div>
+          {/* Not-yet-placed: keep the real schedule above, flag the pending
+              Gedu match so this isn't read as a joinable session. Static icon
+              (no animation) — placement isn't necessarily imminent. */}
+          {awaiting && (
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-info">
+              <UserRoundSearch className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">
+                {t(audience === "gamer" ? "awaitingGeduGamer" : "awaitingGedu")}
+              </span>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

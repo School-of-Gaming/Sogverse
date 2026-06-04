@@ -1515,10 +1515,14 @@
       "title": "{name} veb may'",
       "startsIn": "{countdown} qaSpa' SoQ",
       "inProgress": "poH ghoStaH",
-      "reports": "DaHoSmey"
+      "reports": "DaHoSmey",
+      "awaitingGedu": "Hoch vumwI'vaD Gedu QaQ wIwIv — ghaH yajbogh Gedu. DaH {name} Daq wIqel.",
+      "awaitingGeduGamer": "bImuv! Gedu QaQ Duyajbogh wIqel, 'ej tlhejwI'pu' wIqel."
     },
     "upcomingSession": {
-      "gamerLabel": "{name}vaD"
+      "gamerLabel": "{name}vaD",
+      "awaitingGedu": "Gedu wInej",
+      "awaitingGeduGamer": "GedulIj wInej"
     },
     "help": {
       "contact": {

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { ExternalLink, FileText } from "lucide-react";
+import { ExternalLink, FileText, UserRoundSearch } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { useNow, useTimezone } from "@/providers";
+import type { SessionAudience } from "@/types";
 import { cn, formatDate, formatTime } from "@/lib/utils";
 import {
   formatCountdownCompound,
@@ -73,6 +74,23 @@ export interface NextSessionCardProps {
   onJoinClick?: () => void;
   /** External reports URL — opens in a new tab. */
   reportsHref: string;
+  /**
+   * The gamer is purchased but not yet placed in a group (`group_id IS
+   * NULL`). The full schedule still renders — the schedule lives on the
+   * product, not the group — but the Join button stays disabled (there's no
+   * room to join until placement) and a friendly "we're matching {name}
+   * with a Gedu" caption appears beneath it, so a fresh purchase reads as
+   * "we're on it" rather than an empty section. Defaults to `false`.
+   */
+  awaiting?: boolean;
+  /**
+   * Whose dashboard this renders on. Only the `awaiting` caption differs:
+   * `"customer"` speaks *about* the child ("we're finding {name}'s place"),
+   * `"gamer"` speaks *to* the child ("we're finding you a Gedu"). Mirrors
+   * the audience split the empty state already uses. Defaults to
+   * `"customer"`.
+   */
+  audience?: SessionAudience;
 }
 
 export function NextSessionCard({
@@ -85,6 +103,8 @@ export function NextSessionCard({
   voiceHref,
   onJoinClick,
   reportsHref,
+  awaiting = false,
+  audience = "customer",
 }: NextSessionCardProps) {
   const t = useTranslations("parent.nextSession");
   const locale = useLocale();
@@ -153,6 +173,23 @@ export function NextSessionCard({
             onJoinClick={onJoinClick}
           />
         </div>
+
+        {/* Purchased-but-not-yet-placed: the Join button above stays
+            disabled, this explains *why* in a reassuring, human way — a real
+            person is hand-matching the gamer with a Gedu. Deliberately
+            static (no animation): placement can take up to a day, so a
+            pulsing/loading cue would wrongly imply it's seconds away. */}
+        {awaiting && (
+          <div className="flex items-start gap-2 text-left">
+            <UserRoundSearch className="mt-0.5 h-4 w-4 shrink-0 text-info" />
+            <p className="text-xs text-muted-foreground">
+              {t(
+                audience === "gamer" ? "awaitingGeduGamer" : "awaitingGedu",
+                { name: gamerFirstName },
+              )}
+            </p>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-2">
           <p className="text-xs text-muted-foreground">{countdownLine}</p>

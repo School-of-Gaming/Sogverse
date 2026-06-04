@@ -277,6 +277,39 @@ describe("expandUpcomingSessions", () => {
     expect(out[0].voiceHref).toBe("#");
   });
 
+  it("flags unassigned participations as awaiting; assigned ones are not", () => {
+    const unassigned = expandUpcomingSessions(
+      [makeRow({ groupId: null })],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+    const assigned = expandUpcomingSessions(
+      [makeRow()], // groupId defaults to GROUP_ID
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+    expect(unassigned.every((s) => s.awaiting)).toBe(true);
+    expect(assigned.every((s) => s.awaiting)).toBe(false);
+  });
+
+  it("never marks an awaiting session live, even inside the voice window", () => {
+    // An unassigned gamer has no room to join, so the Join button must stay
+    // disabled through the window too — `voiceIsOpen` is forced false.
+    const row = makeRow({
+      groupId: null,
+      slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }],
+    });
+    // 15:30 UTC is mid-session: an assigned gamer would be live here.
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-02-25T15:30:00Z"),
+      "en",
+    );
+    expect(out[0].sessionStart.toISOString()).toBe("2026-02-25T15:00:00.000Z");
+    expect(out[0].awaiting).toBe(true);
+    expect(out[0].voiceIsOpen).toBe(false);
+  });
+
   it("leaves voiceHref as '#' for in-person products (no voice room)", () => {
     const row = makeRow({
       product: {
