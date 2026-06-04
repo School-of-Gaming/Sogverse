@@ -12,6 +12,10 @@ import type { ProductBrowseRow } from "@/types";
 // - `languages`: list of spoken-language codes (`fi`, `en`, `sv`).
 //   Single-valued on a product (`spoken_language_code`) — a product passes
 //   when its language is in the selected set. OR semantics across the set.
+// - `age`: a single gamer age, or null. A product passes when the age falls
+//   within its [min_age, max_age] band. Null means "any age" and skips the
+//   filter. The selectable ages come from the product age band in
+//   `@/lib/constants/gamer-age` (see `product-browse-filters.tsx`).
 //
 // Filters AND together: a product must pass every active filter.
 // Empty filter values are no-ops, so unset filters always pass.
@@ -26,12 +30,14 @@ export interface BrowseFilters {
   topics: string[];
   format: ProductFormat | null;
   languages: string[];
+  age: number | null;
 }
 
 export const EMPTY_FILTERS: BrowseFilters = {
   topics: [],
   format: null,
   languages: [],
+  age: null,
 };
 
 export function filterProducts(
@@ -51,6 +57,9 @@ export function filterProducts(
       if (!filters.languages.includes(p.spoken_language_code.toLowerCase())) {
         return false;
       }
+    }
+    if (filters.age !== null) {
+      if (filters.age < p.min_age || filters.age > p.max_age) return false;
     }
     return true;
   });

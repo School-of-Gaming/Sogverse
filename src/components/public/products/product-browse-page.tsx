@@ -106,10 +106,10 @@ export function ProductBrowsePage({
     [products, browseType],
   );
 
-  const { topics, format, languages } = useBrowseFilters();
+  const { topics, format, languages, age } = useBrowseFilters();
   const filtered = useMemo(
-    () => filterProducts(typeProducts, { topics, format, languages }),
-    [typeProducts, topics, format, languages],
+    () => filterProducts(typeProducts, { topics, format, languages, age }),
+    [typeProducts, topics, format, languages, age],
   );
 
   const headingKey = HEADING_KEYS[browseType];

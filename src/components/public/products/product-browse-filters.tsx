@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Sliders, X, Globe, MapPin } from "lucide-react";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { GAME_TOPICS, SUBJECT_TOPICS } from "@/lib/products/topics";
+import { productAgeOptions } from "@/lib/constants/gamer-age";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
 import type { SpokenLanguage } from "@/types";
@@ -46,14 +47,17 @@ export function ProductBrowseFilters({
     topics: selectedTopics,
     format: selectedFormat,
     languages: selectedLanguages,
+    age: selectedAge,
     hasAny,
     toggleTopic,
     toggleFormat,
     toggleLanguage,
+    setAge,
     clear,
   } = useBrowseFilters();
 
   const hasLanguageRow = (spokenLanguages?.length ?? 0) > 0;
+  const ageOptions = productAgeOptions();
 
   return (
     <div className="rounded-xl border bg-card/50 p-3 sm:p-4">
@@ -144,6 +148,24 @@ export function ProductBrowseFilters({
             ))}
           </FilterRow>
         )}
+
+        {/* Age is single-valued (a gamer has one age) — like the Format row,
+            tapping the active chip clears it back to "any age". The chips span
+            the product age band from @/lib/constants/gamer-age, the same source
+            the Add Gamer enrollment window derives from. */}
+        <FilterRow label={t("age")}>
+          {ageOptions.map((a) => (
+            <Chip
+              key={a}
+              // Fixed min-width + centered tabular digits so single-digit ages
+              // (7–9) match the width of the two-digit ones (10–17).
+              className="min-w-[2.5rem] justify-center tabular-nums"
+              label={String(a)}
+              active={selectedAge === a}
+              onToggle={() => setAge(selectedAge === a ? null : a)}
+            />
+          ))}
+        </FilterRow>
       </div>
     </div>
   );
@@ -173,11 +195,13 @@ function Chip({
   active,
   onToggle,
   icon,
+  className,
 }: {
   label: string;
   active: boolean;
   onToggle: () => void;
   icon?: React.ReactNode;
+  className?: string;
 }) {
   return (
     <button
@@ -189,6 +213,7 @@ function Chip({
         active
           ? "border-primary bg-primary text-primary-foreground shadow-sm"
           : "border-input bg-background text-foreground/80 hover:border-primary/40 hover:bg-accent",
+        className,
       )}
     >
       {icon}
