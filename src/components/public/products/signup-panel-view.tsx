@@ -30,14 +30,25 @@ export type AuthState =
   | { kind: "no_gamers"; addGamerHref: string }
   | {
       kind: "ready";
-      gamers: readonly { id: string; name: string; age: number | null }[];
+      gamers: readonly {
+        id: string;
+        name: string;
+        age: number | null;
+        /**
+         * When set, this child already holds a seat (`active`) or a waitlist
+         * spot (`waitlisted`) on the product — the picker shows them disabled
+         * and labels their state in place instead of letting the parent sign
+         * them up a second time.
+         */
+        signupState?: MyParticipationState | null;
+      }[];
     };
 
 /**
- * One of the customer's gamers already has a seat or is on the waitlist for
- * this product. The detail page detects this via
- * `useParticipationCounts(...).mySignupState` and passes it through; when
- * non-null, the panel replaces the signup form with a status panel.
+ * Per-gamer signup state on a product: the child already holds a seat
+ * (`active`) or a waitlist spot (`waitlisted`). The detail page derives this
+ * from `useParticipationCounts(...).myGamerStates` and threads it onto each
+ * gamer in the `ready` auth state.
  *
  * `reserving` is intentionally not part of this union — the movie-ticket
  * reservation model treats a held seat as the parent's to retry against
@@ -56,14 +67,6 @@ export type SubCtaMode = "new" | "inline_add";
 export interface SignupPanelViewProps {
   productType: ProductType;
   state: RegistrationState;
-  /**
-   * When set, the parent (or one of their gamers) is already on this product
-   * — render the already-signed-up status panel instead of dispatching by
-   * `state`.
-   */
-  myParticipationState: MyParticipationState | null;
-  /** Link to the parent's purchased-products list, used by the active panel. */
-  myProductsHref: string;
   authState: AuthState;
   /** The single purchase option for this product (one per type). */
   pricingOption: PricingOption;
@@ -88,14 +91,6 @@ export interface SignupPanelViewProps {
 }
 
 export function SignupPanelView(props: SignupPanelViewProps) {
-  if (props.myParticipationState !== null) {
-    return (
-      <AlreadySignedUpPanel
-        kind={props.myParticipationState}
-        myProductsHref={props.myProductsHref}
-      />
-    );
-  }
   switch (props.state.kind) {
     case "ended":
       return <EndedPanel productType={props.productType} />;
@@ -112,45 +107,6 @@ export function SignupPanelView(props: SignupPanelViewProps) {
     case "open":
       return <OpenPanel {...props} />;
   }
-}
-
-// ---------- Variant: already signed up ----------
-
-function AlreadySignedUpPanel({
-  kind,
-  myProductsHref,
-}: {
-  kind: MyParticipationState;
-  myProductsHref: string;
-}) {
-  const t = useTranslations("productDetail.signupPanel");
-  if (kind === "waitlisted") {
-    return (
-      <PanelShell banner={t("alreadySignedUpWaitlistBanner")} tone="secondary">
-        <p className="text-sm text-muted-foreground">
-          {t("alreadySignedUpWaitlistNote")}
-        </p>
-      </PanelShell>
-    );
-  }
-  // active
-  return (
-    <PanelShell banner={t("alreadySignedUpActiveBanner")} tone="primary">
-      <p className="text-sm text-muted-foreground">
-        {t("alreadySignedUpActiveNote")}
-      </p>
-      <Link
-        href={myProductsHref}
-        className={buttonVariants({
-          size: "lg",
-          variant: "outline",
-          className: "w-full text-base",
-        })}
-      >
-        {t("ctaViewMyProducts")}
-      </Link>
-    </PanelShell>
-  );
 }
 
 // ---------- Shared shell ----------
@@ -576,7 +532,7 @@ function NoGamersOverlay({ addGamerHref }: { addGamerHref: string }) {
 
 function SignupForm(
   props: FormOrAuthProps & {
-    gamers: readonly { id: string; name: string; age: number | null }[];
+    gamers: Extract<AuthState, { kind: "ready" }>["gamers"];
   },
 ) {
   const t = useTranslations("productDetail.signupPanel");
@@ -598,6 +554,10 @@ function SignupForm(
           className="mt-3 space-y-2"
         >
           {props.gamers.map((g) => {
+            // A child already holding a seat / waitlist spot can't be signed up
+            // again — the row is disabled and labels its state in place rather
+            // than offering itself for selection.
+            const alreadyOn = g.signupState ?? null;
             const selected = props.selectedGamerId === g.id;
             return (
               <button
@@ -605,26 +565,44 @@ function SignupForm(
                 type="button"
                 role="radio"
                 aria-checked={selected}
+                disabled={alreadyOn !== null}
                 onClick={() => props.onSelectGamer(g.id)}
                 className={cn(
                   "flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm transition-colors",
-                  selected
-                    ? "border-primary bg-primary/10"
-                    : "border-input hover:bg-accent hover:text-accent-foreground",
+                  alreadyOn !== null
+                    ? "cursor-not-allowed border-input bg-muted/40"
+                    : selected
+                      ? "border-primary bg-primary/10"
+                      : "border-input hover:bg-accent hover:text-accent-foreground",
                 )}
               >
                 <span>
-                  <span className="font-medium">{g.name}</span>
+                  <span
+                    className={cn(
+                      "font-medium",
+                      alreadyOn !== null && "text-muted-foreground",
+                    )}
+                  >
+                    {g.name}
+                  </span>
                   {g.age !== null && (
                     <span className="ml-2 text-xs text-muted-foreground">
                       {t("agePill", { age: g.age })}
                     </span>
                   )}
                 </span>
-                {selected && (
-                  <span className="text-xs font-semibold text-primary">
-                    {t("selected")}
+                {alreadyOn !== null ? (
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {alreadyOn === "active"
+                      ? t("gamerAlreadySignedUp")
+                      : t("gamerAlreadyWaitlisted")}
                   </span>
+                ) : (
+                  selected && (
+                    <span className="text-xs font-semibold text-primary">
+                      {t("selected")}
+                    </span>
+                  )
                 )}
               </button>
             );

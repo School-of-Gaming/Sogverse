@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import type { ProductBrowseRow } from "@/types";
-import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import {
@@ -16,7 +15,6 @@ import { buildPricingOption, type PricingOption } from "./pricing-options";
 import {
   SignupPanelView,
   type AuthState,
-  type MyParticipationState,
   type SignupPanelViewProps,
   type SubCtaMode,
 } from "./signup-panel-view";
@@ -33,8 +31,6 @@ interface SignupPanelProps {
   >;
   state: RegistrationState;
   authState: AuthState;
-  /** Already-signed-up state for any of the customer's gamers; null if none. */
-  myParticipationState?: MyParticipationState | null;
   /** Render the panel frozen at this instant for deterministic mocks. */
   fixedNowMs?: number;
 }
@@ -43,7 +39,6 @@ export function SignupPanel({
   product,
   state,
   authState,
-  myParticipationState = null,
   fixedNowMs,
 }: SignupPanelProps) {
   const uiLocale = resolveLocale(useLocale());
@@ -66,12 +61,21 @@ export function SignupPanel({
   const [userPickedGamerId, setUserPickedGamerId] = useState<string | null>(
     null,
   );
+  // Only children who aren't already on the product can be selected. The
+  // default falls to the first selectable child (skipping any that are already
+  // signed up / waitlisted); a user pick of a locked child is ignored. When
+  // every child is already on, this resolves to null and the CTA stays
+  // disabled — the page still renders, the picker just shows their states.
+  const selectableGamers =
+    authState.kind === "ready"
+      ? authState.gamers.filter((g) => !g.signupState)
+      : [];
   const selectedGamerId: string | null =
     authState.kind === "ready"
       ? userPickedGamerId !== null &&
-        authState.gamers.some((g) => g.id === userPickedGamerId)
+        selectableGamers.some((g) => g.id === userPickedGamerId)
         ? userPickedGamerId
-        : (authState.gamers[0]?.id ?? null)
+        : (selectableGamers[0]?.id ?? null)
       : null;
 
   const [agreed, setAgreed] = useState(false);
@@ -100,7 +104,8 @@ export function SignupPanel({
   // the navigation/panel-swap hasn't happened yet, so the CTA briefly
   // re-enables. Only cleared on retry-able outcomes (`full`, error). For
   // 'redirect', the page unloads. For 'subscribed' / 'free_confirmed', the
-  // panel swaps to AlreadySignedUpPanel via the myParticipationState refresh.
+  // participation queries refetch and the just-signed-up child flips to its
+  // disabled "Signed up" row in the picker.
   const [committing, setCommitting] = useState(false);
 
   const purchaseShape = purchaseShapeFor(pricingOption);
@@ -156,8 +161,6 @@ export function SignupPanel({
   const viewProps: SignupPanelViewProps = {
     productType: product.product_type,
     state,
-    myParticipationState: myParticipationState ?? null,
-    myProductsHref: ROUTES.shopBrowse(product.product_type),
     authState,
     pricingOption,
     selectedGamerId,
