@@ -69,8 +69,8 @@ export function SessionsSection({
   if (sessions.length === 0) {
     const placeholderKey =
       audience === "gamer"
-        ? "upcomingSessionsPlaceholderGamer"
-        : "upcomingSessionsPlaceholderParent";
+        ? "upcomingSessionsEmptyStateGamer"
+        : "upcomingSessionsEmptyStateParent";
     return <p className="text-muted-foreground">{t(placeholderKey)}</p>;
   }
 
