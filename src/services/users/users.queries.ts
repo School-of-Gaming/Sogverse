@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { UsersService } from "./users.service";
-import type { ProfileUpdate, UserRole } from "@/types";
+import type { ProfileUpdate, UserRole, SpokenLanguage } from "@/types";
 
 const userKeys = {
   all: ["users"] as const,
@@ -86,19 +86,23 @@ export function useParentGamerLinks() {
 /**
  * Fetch the reference set of spoken languages (human languages) from the
  * `spoken_languages` table. Distinct from `useLocaleControl` (UI locale).
+ *
+ * `initialData` (optional) is the server-prefetched set from a page's Server
+ * Component (see `shop/page.tsx`). When present the language filter row paints
+ * with the rest of the page on the first frame instead of popping in after its
+ * own client fetch resolves (CLAUDE.md layout-shift rule); the hook still
+ * refetches on mount.
  */
-export function useSpokenLanguages() {
+export function useSpokenLanguages(options?: {
+  initialData?: SpokenLanguage[];
+}) {
   const supabase = getClient();
+  const service = new UsersService(supabase);
 
   return useQuery({
     queryKey: userKeys.spokenLanguages(),
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("spoken_languages")
-        .select("code, name");
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => service.getSpokenLanguages(),
+    initialData: options?.initialData,
   });
 }
 

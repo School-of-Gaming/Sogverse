@@ -2,14 +2,13 @@
 
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useVisibleProductsByTypes } from "@/services/products";
 import {
   useParticipationCounts,
   type ParticipationCounts,
 } from "@/services/participations";
-import type { ProductType } from "@/types";
+import type { ProductType, ProductBrowseRow, SpokenLanguage } from "@/types";
 import { filterProducts } from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
 import { SHOP_PRODUCT_TYPES } from "./use-shop-category";
@@ -19,6 +18,12 @@ import { ProductBrowseFilters } from "./product-browse-filters";
 interface ProductBrowsePageProps {
   /** Single type rendered in the browse grid. */
   browseType: ProductType;
+  /** Server-prefetched product list (all shop types) — see `shop/page.tsx`. */
+  initialProducts: ProductBrowseRow[];
+  /** Server-prefetched seat counts keyed on the prefetched products' ids. */
+  initialCounts: ParticipationCounts[];
+  /** Server-prefetched spoken-language reference set for the filter strip. */
+  initialSpokenLanguages: SpokenLanguage[];
 }
 
 // Heading + subheading copy live under productBrowse.headings/subheadings,
@@ -57,14 +62,23 @@ function subheadingFor(
   }
 }
 
-export function ProductBrowsePage({ browseType }: ProductBrowsePageProps) {
+export function ProductBrowsePage({
+  browseType,
+  initialProducts,
+  initialCounts,
+  initialSpokenLanguages,
+}: ProductBrowsePageProps) {
   const t = useTranslations("productBrowse");
 
   // Load every shop-surfaced type in one fetch; the selected browseType is
   // applied client-side below, so switching the Type filter is instant (no
   // refetch). Counts (keyed on these ids) likewise cover all types at once.
-  const { data: products, isLoading: productsLoading } =
-    useVisibleProductsByTypes(SHOP_PRODUCT_TYPES);
+  // `initialProducts` is server-prefetched (shop/page.tsx), so `data` is
+  // populated on the first frame and there's no loading state to gate on; the
+  // hook still refetches on mount.
+  const { data: products } = useVisibleProductsByTypes(SHOP_PRODUCT_TYPES, {
+    initialData: initialProducts,
+  });
   // The filter chips are a fixed list (PRODUCT_TOPICS) — no query to await.
 
   // Pre-fetch participation counts for every product in one query so each
@@ -74,8 +88,9 @@ export function ProductBrowsePage({ browseType }: ProductBrowsePageProps) {
     () => (products ?? []).map((p) => p.id),
     [products],
   );
-  const { data: counts, isLoading: countsLoading } =
-    useParticipationCounts(productIds);
+  const { data: counts } = useParticipationCounts(productIds, {
+    initialData: initialCounts,
+  });
   const countsByProduct = useMemo(() => {
     const map = new Map<string, ParticipationCounts>();
     for (const c of counts ?? []) {
@@ -83,10 +98,6 @@ export function ProductBrowsePage({ browseType }: ProductBrowsePageProps) {
     }
     return map;
   }, [counts]);
-
-  // Wait on every query the page renders before painting, so the grid doesn't
-  // land first and then reflow as counts arrive (CLAUDE.md layout-shift rule).
-  const allLoaded = !productsLoading && !countsLoading;
 
   // The Type filter is just a client-side narrowing of the all-types fetch to
   // the selected browseType. Topic/format/language filters apply on top.
@@ -115,35 +126,31 @@ export function ProductBrowsePage({ browseType }: ProductBrowsePageProps) {
       </header>
 
       <div className="mx-auto mt-8 max-w-6xl">
-        {!allLoaded ? (
-          <div className="flex justify-center py-16">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <section className="space-y-3">
-            <ProductBrowseFilters />
+        <section className="space-y-3">
+          <ProductBrowseFilters
+            initialSpokenLanguages={initialSpokenLanguages}
+          />
 
-            {filtered.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {filtered.map((p) => (
-                  <ProductBrowseCard
-                    key={p.id}
-                    product={p}
-                    counts={countsByProduct.get(p.id) ?? null}
-                  />
-                ))}
-              </div>
-            ) : (
-              <Card>
-                <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                  {typeProducts.length === 0
-                    ? t("empty.noProducts")
-                    : t("empty.noMatches")}
-                </CardContent>
-              </Card>
-            )}
-          </section>
-        )}
+          {filtered.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((p) => (
+                <ProductBrowseCard
+                  key={p.id}
+                  product={p}
+                  counts={countsByProduct.get(p.id) ?? null}
+                />
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+                {typeProducts.length === 0
+                  ? t("empty.noProducts")
+                  : t("empty.noMatches")}
+              </CardContent>
+            </Card>
+          )}
+        </section>
       </div>
     </div>
   );
