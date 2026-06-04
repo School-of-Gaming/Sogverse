@@ -37,7 +37,9 @@ CREATE TYPE public.product_topic AS ENUM ('minecraft', 'fortnite', 'webinar');
 -- 2. products.topic — add, backfill from the old topic slug, lock NOT NULL.
 --    topic_id is NOT NULL with an ON DELETE RESTRICT FK to topics, so every
 --    product has exactly one topic row to map. Slugs other than the two games
---    collapse to 'webinar' (the only subject value we keep).
+--    collapse to 'minecraft' — the default product topic, and the safe landing
+--    spot for any legacy slug we no longer model (Minecraft is the dominant
+--    catalog, so a mislabel here is the least-surprising one to clean up by hand).
 -- ============================================================
 ALTER TABLE public.products ADD COLUMN topic public.product_topic;
 
@@ -45,14 +47,14 @@ UPDATE public.products p
 SET topic = CASE t.slug
   WHEN 'minecraft' THEN 'minecraft'::public.product_topic
   WHEN 'fortnite'  THEN 'fortnite'::public.product_topic
-  ELSE 'webinar'::public.product_topic
+  ELSE 'minecraft'::public.product_topic
 END
 FROM public.topics t
 WHERE p.topic_id = t.id;
 
 -- Defensive: any row the JOIN somehow missed (shouldn't happen given the
--- NOT NULL FK) lands on the safe subject default.
-UPDATE public.products SET topic = 'webinar' WHERE topic IS NULL;
+-- NOT NULL FK) lands on the same 'minecraft' default.
+UPDATE public.products SET topic = 'minecraft' WHERE topic IS NULL;
 
 ALTER TABLE public.products ALTER COLUMN topic SET NOT NULL;
 
