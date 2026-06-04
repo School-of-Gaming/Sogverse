@@ -469,7 +469,12 @@ describe("POST /api/checkout/products/create", () => {
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.mode).toBe("payment");
     expect(params.customer).toBe(STRIPE_CUSTOMER_ID);
-    expect(params.adaptive_pricing).toEqual({ enabled: false });
+    // Adaptive Pricing presents the customer's local currency; we settle EUR.
+    expect(params.adaptive_pricing).toEqual({ enabled: true });
+    // One-time payments offer to save the card for future purchases.
+    expect(params.saved_payment_method_options).toEqual({
+      payment_method_save: "enabled",
+    });
     expect(params.line_items).toHaveLength(1);
     expect(params.line_items[0]).toMatchObject({
       quantity: 1,
@@ -811,13 +816,13 @@ describe("POST /api/checkout/products/create", () => {
       createRequest({
         ...VALID_BODY,
         purchaseShape: "subscription_monthly",
-        currency: "gbp",
+        currency: "eur",
       }),
     );
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toBe("Product is not sold in gbp");
+    expect(data.error).toBe("Product is not sold in eur");
     expect(mockStripeSessionCreate).not.toHaveBeenCalled();
     expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
       p_reservation_id: RESERVATION_ID,

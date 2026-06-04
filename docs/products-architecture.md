@@ -35,7 +35,7 @@ An earlier `products` schema was built for a single product line — weekly cons
 Two things define this design:
 
 1. **Four product types as first-class citizens** (consumer clubs, municipality clubs, camps, events) instead of one.
-2. **Real-currency pricing.** Products are priced in real currency (EUR, GBP, USD today; additional currencies later) using manual per-currency admin input. Each product type has exactly one purchase option: consumer clubs are a flat monthly family subscription; camps and paid events are a single upfront payment; events can also be free. Checkout uses Stripe with the user's selected currency as the authoritative price — no Stripe Adaptive Pricing, no exchange-rate-derived amounts.
+2. **EUR pricing with Adaptive Pricing at checkout.** Products are authored, displayed, and recorded in EUR. Stripe Checkout's Adaptive Pricing presents each customer their local currency and settles us in EUR (§4.5). Each product type has exactly one purchase option: consumer clubs are a flat monthly family subscription; camps and paid events are a single upfront payment; events can also be free.
 
 ---
 
@@ -172,9 +172,11 @@ Modeling it as an enum gives DB-level protection (no invalid topic can be insert
 
 **Tags removed.** The earlier `tags` / `product_tags` / `tag_translations` triad (the shop "Vibe" filter) was dropped wholesale in migration 00078 — unused in the current product, cheaper to re-add later than to carry.
 
-### 4.5 Billing model — fiat currency, one purchase option per type
+### 4.5 Billing model — EUR-only authoring, Adaptive Pricing at checkout, one purchase option per type
 
-Products are priced in real currency (EUR, GBP, USD today; additional currencies later). Pricing is **manually set by admins per currency** — no exchange-rate derivation, no Stripe Adaptive Pricing, no auto-conversion. The user's currency selection in the app header (existing `CurrencyProvider`) is authoritative end-to-end: UI shows that currency, Stripe Checkout charges in that currency, Stripe converts to our EUR payout at settlement.
+The platform is locked to **EUR**: admins author prices in EUR, customers see EUR, and our records (`payments`, `family_subscriptions`) are in EUR. Stripe Checkout's **Adaptive Pricing** presents each customer their local currency and converts, while the Session/PaymentIntent still report our EUR integration currency — Stripe settles us in EUR at the price we set. So "buy in another currency" works without modelling other currencies internally.
+
+The single seam for re-enabling multi-currency is `SUPPORTED_CURRENCIES` in `src/lib/constants/currency.ts`. The data model below is deliberately kept currency-keyed (the `currency` columns and `IN ('eur','gbp','usd')` CHECKs stay) so it's dormant-but-present, not deleted — see `TODO.md` § "Re-enabling non-EUR currencies" for the restore steps. There is no currency selector and no FX/exchange-rate logic in the app.
 
 `products.billing_mode` is a required enum:
 
@@ -195,18 +197,19 @@ There is exactly **one purchase option per product type** — the `purchase_shap
 
 The valid `purchase_shape` values are exactly `subscription_monthly`, `single_payment`, and `free`.
 
-Paid products store one price per supported currency in `product_prices` (see §5.1a) as a single `price_cents` column. What the amount means is decided by product type:
+Paid products store their price in `product_prices` (see §5.1a) as a single `price_cents` column, keyed by `(product_id, currency)` — today only an `eur` row is written. What the amount means is decided by product type:
 
 - **Consumer club** → `price_cents` is charged as the monthly subscription price.
 - **Camp / paid event** → `price_cents` is charged once as the upfront total.
 
-The server recomputes the final charge from the product's stored base price at every Checkout Session creation. The client only sends a `(product_id, gamer_id, currency)` selector — it never sends an amount. Tamper-proof by design.
+The server recomputes the final charge from the product's stored base price at every Checkout Session creation. The client sends a `(product_id, gamer_id, purchase_shape, currency)` selector — `currency` is always `eur` today — and never an amount. Tamper-proof by design.
 
-**Stripe integration shape:**
+**Stripe integration shape** (`src/app/api/checkout/products/create/route.ts`):
 
-- **Monthly subscriptions (consumer clubs)**: require real Stripe Price IDs. **Lazy-created on first subscribe**, keyed by `(product_id, currency)` and cached in `product_subscription_prices` (§5.1a). One Stripe "Product" per club; one Price per currency for that club. Existing subscribers keep their original Price through any base-price change (Prices are immutable in Stripe).
-- **Camps / paid events**: inline Checkout Session with `price_data: { currency, unit_amount }` computed server-side, one-shot for one seat. `adaptive_pricing: { enabled: false }` so Stripe does not offer conversion.
-- **Currency stickiness on subs**: once a family subscribes in GBP, that Stripe subscription is GBP forever. No parent-facing warning; handled silently in code.
+- **Monthly subscriptions (consumer clubs)**: require real Stripe Price IDs. **Lazy-created on first subscribe**, keyed by `(product_id, currency)` and cached in `product_subscription_prices` (§5.1a) — today one EUR Price per club. Existing subscribers keep their original Price through any base-price change (Prices are immutable in Stripe).
+- **Camps / paid events**: inline Checkout Session with `price_data: { currency, unit_amount }` (EUR) computed server-side, one-shot for one seat.
+- **Adaptive Pricing**: every Session sets `adaptive_pricing: { enabled: true }`. Stripe presents the customer's local currency and converts; the Session/PaymentIntent and the recorded `amount_total`/`currency` stay EUR (our integration currency), so the `payments`/`family_subscriptions` rows are EUR. Relies on EUR being a Stripe settlement currency under single-currency settlement. We do not record the customer's presentment currency — it's available in `session.presentment_details` if ever needed (see the TODO re-enable section).
+- **Save card**: one-time payments set `saved_payment_method_options: { payment_method_save: "enabled" }`, offering the customer a checkbox to save the card (saved with `allow_redisplay: always`, so it's prefilled on their next Checkout and manageable via the billing portal). Subscriptions save the card by necessity. The card lands on the same Stripe Customer the billing portal manages (`getOrCreateStripeCustomer`).
 
 **Cancellation and refund windows:**
 
@@ -524,18 +527,18 @@ schedule_slots
 ### 5.1a Pricing tables
 
 ```sql
--- Manually-entered per-currency base prices. No FX derivation.
+-- Admin-entered base prices, keyed by currency. EUR-only today (§4.5); the
+-- CHECK still admits 'eur' | 'gbp' | 'usd' so the table is re-enable-ready.
 product_prices
   product_id            uuid → products.id ON DELETE CASCADE
-  currency              text          -- 'eur' | 'gbp' | 'usd'; enforced via CHECK against
-                                        -- supported-currency list kept in sync with
-                                        -- src/lib/constants/currency.ts
-  price_cents           int           -- smallest unit (cents / pence). The single product price:
+  currency              text          -- CHECK 'eur' | 'gbp' | 'usd'; only 'eur' written today.
+                                        -- Allowed set kept in sync with src/lib/constants/currency.ts
+  price_cents           int           -- smallest unit (cents). The single product price:
                                         -- consumer-club monthly sub, or camp/event upfront total.
   primary key (product_id, currency)
-  -- A product sold in N currencies has N rows. Leaving a currency blank in the admin UI
-  -- means "not sold in this currency" — parents on that currency see the product as
-  -- unavailable. Adding a new currency later is application-level INSERTs, not a migration.
+  -- One row per currency the product is sold in (today: just the eur row). A missing row
+  -- means "not sold in this currency" — the product shows as unavailable. Widening to more
+  -- currencies is application-level INSERTs, not a migration.
 
 -- Stripe Price IDs for monthly subscriptions. Lazy-populated.
 product_subscription_prices
@@ -834,7 +837,7 @@ All RPCs in this section begin with `SELECT 1 FROM products WHERE id = $1 FOR UP
 - **`create_participation(product_id, gamer_id, customer_id, purchase_shape, currency)`**
   After the gate lock: validates age/language match, checks `registration_opens_at`, verifies effective status (via `effective_status()`) permits signup, counts current `active` + non-expired `reserving` participations to decide whether a seat is available. Behaviour by `purchase_shape`:
   - `subscription_monthly` (consumer club) — if a seat is available, inserts a `participations` row with `status='reserving'` and `reserved_until = now() + 30 minutes`, then resolves or creates the Stripe Price for `(product_id, currency)`, creates a Stripe Checkout Session in subscription mode keyed to the reserving row, returns the Checkout URL. The `checkout.session.completed` webhook finds or creates the `family_subscriptions` row for `(customer_id, currency)`, attaches the subscription item aligned to the existing `billing_cycle_anchor`, and flips the reserving row to `active`. If full, returns `{ full: true }` — UI offers `join_waitlist` instead.
-  - `single_payment` (camp / paid event) — same reservation pattern with one-shot inline `price_data` Checkout (`unit_amount = price_cents` in the selected currency); webhook flips reserving → active on completion.
+  - `single_payment` (camp / paid event) — same reservation pattern with one-shot inline `price_data` Checkout (`unit_amount = price_cents`, EUR); webhook flips reserving → active on completion.
   - `free` — directly inserts `status='active'`, no reservation, no Stripe.
 
   The reservation-row insert is the *seat-holding* mechanism (§4.6a). Without it, two parents can both pass the gate, both proceed to Stripe, and one is stuck with a charge against an already-full club.
@@ -955,14 +958,14 @@ Seat state ("8 of 10 seats · 3 on waitlist"), schedule with skipped dates surfa
 
 - **Consumer club** — the monthly subscription price from `product_prices.price_cents`. E.g., "€45/mo".
 - **Camp / paid event** — the single upfront total from `product_prices.price_cents`. E.g., "€160".
-- All amounts in the user's selected currency (resolved via the existing `CurrencyProvider`). If the product has no row in `product_prices` for the selected currency, the product shows as unavailable to that parent.
+- All amounts in EUR (§4.5). If the product has no EUR row in `product_prices`, it shows as unavailable.
 
 ---
 
 ## 8. Admin UX
 
 - Single **"Create product"** form with a product type selector that reveals/hides fields by type. Lets admins pre-create 0 or more Gedu Groups each with 0 or more Gedus (§4.1).
-- **Per-currency pricing inputs**. For `billing_mode='paid'` products, the form collects a single price per supported currency (EUR / GBP / USD today) — a monthly price for consumer clubs or a total for camps/events, stored either way in `price_cents`. Leaving a currency blank means "not sold in this currency." Inline preview panel shows the price parents will see. Server recomputes on save — no client-submitted prices.
+- **EUR pricing input**. For `billing_mode='paid'` products, the form collects a single EUR price — a monthly price for consumer clubs or a total for camps/events, stored either way in `price_cents`. Inline preview panel shows the price parents will see. Server recomputes on save — no client-submitted prices.
 - **Product management page** per product has a **Groups panel** with an Unassigned column (inbox) and one column per group. Drag-and-drop for moves. Add/rename/delete group controls. Add/remove Gedu controls per group.
 - **Gedu picker** supports search by name/email/bio and filter by `profiles.spoken_languages`.
 - **Calendar view** per product shows computed sessions with overrides applied; admins cancel/reschedule/substitute directly from it.
@@ -1021,7 +1024,7 @@ The unified shape is proven against the two product lines closest to real users.
 **Admin UI** — at `/admin/{consumer-clubs,municipality-clubs,camps,events}{,/new}`.
 - ✓ List page per product type (`ProductListPage`, type-discriminated).
 - ✓ Create form per product type sharing one shell (`product-form.tsx`) split into per-section components — identity, audience, when, where, billing, registration, visibility (`src/components/admin/products/sections/*`). Group management was deliberately removed from the form; admins manage groups from the per-product details page (§7.3).
-- ✓ Per-currency pricing block with live FX auto-fill (`pricing-block.tsx` + `pricing-block-fx.ts`, FX rates proxied via `/api/admin/fx-rates` cached 6h) and rendered price previews.
+- ✓ EUR pricing block (`pricing-block.tsx`) — a single EUR price input and rendered price previews.
 - ✓ Country-aware location picker with inline create (`location-picker.tsx` + `/api/admin/locations/{create,[id]}`).
 - ✓ Inline-create for topics and tags (single-locale, in admin's current UI locale) via `/api/admin/{topics,tags}/create`.
 - ✓ Site notes editor — separate member-visible vs staff-only fields against `site_details` / `site_staff_details` (`/api/admin/site-notes`).
@@ -1041,7 +1044,7 @@ The unified shape is proven against the two product lines closest to real users.
 - ✓ Cents helper + currency-aware formatting in `src/lib/constants/{currency,pricing}.ts` and `src/lib/utils.ts`.
 
 **Tests.**
-- ✓ Unit: `products-build`, `effective-status`, `pricing-block-fx`, `pricing`, `resolve-translation`, `participation-state-of`.
+- ✓ Unit: `products-build`, `effective-status`, `pricing`, `resolve-translation`, `participation-state-of`.
 - ✓ Integration (route handlers): `products-create`, `checkout-products-create`, `participations-waitlist`, `stripe-webhook-products`.
 - ✓ DB: `participations-race` (parallel reservations on a 1-seat product, expired-reservation handling, parallel waitlist monotonicity, idempotent waitlist join, free-product seat cap), `participations-rls` (consolidated cross-customer IDOR coverage for participations / payments / refunds / product_seat_counts; other product tables covered via the `access-control.test.ts` catalog check), `product-seat-counts-trigger` (insert/update/delete recomputes the rollup).
 - ✓ DB access-control: `products` family + all financial tables covered by `tests/db/access-control.test.ts`.
@@ -1099,7 +1102,7 @@ Flagged inline as `OPEN` in the sections they affect.
 - ~~**Subscription semantics: top-up balance vs rolling access.**~~ *Resolved:* **flat monthly subscription, no credits.** A consumer club is a single monthly Stripe subscription item; while the sub is active, attendance is unlimited. There is no per-session credit balance, no cancel-in-window accrual, no `credits_remaining`. Cancelling stops the club at period end (§4.5c).
 - **Grace window length on failed sub payment.** Parent is notified; gamer is held out of sessions; seat held for some period before admin reclaims it. `OPEN — defer`.
 - ~~**Refund policy on `cancel_participation`.**~~ *Resolved:* **no Stripe refund on customer-initiated participation cancellation**, ever. "Leave this club" stops the club at period end with paid-through access until then (§4.5c). For camps and paid events, customer-initiated cancellation is not self-serve — parents contact support and admin uses `admin_remove_participation` to issue a refund if appropriate.
-- **Subscription currency change UX.** Stripe subs are currency-sticky; code handles silently. No parent-facing warning. `OPEN — revisit if support complaints`.
+- ~~**Subscription currency change UX.**~~ *Moot under EUR-only (§4.5):* every family subscription is EUR, so there's no currency-change path. Revisit if multi-currency is re-enabled.
 - **Single-group auto-assign.** When a product has exactly one group, auto-assign new participations instead of routing through the inbox? Defer until we see inbox in real use.
 - **Unassigned inbox notifications.** WhatsApp / email / in-app nudges to admins when the inbox has sat non-empty for N hours. Future phase.
 - **Attendance → removal policy.** N-unexcused-absences threshold, approval flow, appeal path. Defer until attendance tracking ships.
@@ -1256,14 +1259,14 @@ Form (src/components/admin/products/)
     ├── audience-section.tsx         — Age range, spoken languages, group seat count
     ├── when-section.tsx             — Start/end date, schedule slots, holiday calendars
     ├── where-section.tsx            — Location picker (site or jurisdiction depending on type)
-    ├── billing-section.tsx          — Pricing block, FX auto-fill, refund policy
+    ├── billing-section.tsx          — Pricing block, refund policy
     ├── registration-section.tsx     — Registration opens at (immediate vs scheduled)
     ├── groups-section.tsx           — Inline group + gedu setup
     └── visibility-section.tsx       — Status, is_visible toggle
 
 Shared building blocks
 ├── form-primitives.tsx              — Section, Field, etc.
-├── pricing-block.tsx + pricing-block-fx.ts — Currency tabs, FX auto-fill logic
+├── pricing-block.tsx                — Single EUR price input
 ├── location-picker.tsx              — Country-aware hierarchy + inline create
 ├── gedu-picker-sheet.tsx            — Searchable Sheet for gedu assignment
 ├── image-picker.tsx                 — Upload + preview
@@ -1278,14 +1281,12 @@ API routes (admin-only)
 ├── /api/admin/products/[id]/update  — Calls update_product RPC; uploads new blob first, deletes old/orphan blob after
 ├── /api/admin/locations/create      — Inline create from location picker
 ├── /api/admin/locations/[id]        — PATCH name only
-├── /api/admin/site-notes            — Upsert site_details / site_staff_details
-└── /api/admin/fx-rates              — Proxies frankfurter.dev (cached 6h via fetch data cache)
+└── /api/admin/site-notes            — Upsert site_details / site_staff_details
 
 Services (src/services/products/)
 ├── products.service.ts              — Read methods (listByType, getByIdForAdmin); write goes through API routes
 ├── products.queries.ts              — useProductsByType, useProductAdmin, useCreateProduct, useUpdateProduct
-├── reference-data.queries.ts        — useHolidayCalendars, useSiteDetails, etc.
-└── fx.queries.ts                    — useFxRates (calls /api/admin/fx-rates)
+└── reference-data.queries.ts        — useHolidayCalendars, useSiteDetails, etc.
 
 Parent browse + detail (src/components/public/products/)
 ├── product-browse-page.tsx          — Page orchestrator: heading, filters, browse grid, empty states
@@ -1408,7 +1409,7 @@ Route: `/shop/[id]` — one flat route for every product type. `product-detail-p
 
 **Hero** is a 1:1 product image plus the type label, name, and tagline. The two-column body stacks below: the left column carries description, when-and-where, the session calendar, and the topics/tags card; the right column is a 380px sticky signup panel on desktop that drops below the main column on mobile. **No gedu surface on the parent detail page** — gedu / group identity is a SOG-internal concern.
 
-**Pricing — a single price line.** There is one purchase option per type: consumer clubs show one monthly subscription row, camps and paid events show one upfront price line, and free / external_contract products show a single non-clickable hint row. All amounts in the viewer's selected currency.
+**Pricing — a single price line.** There is one purchase option per type: consumer clubs show one monthly subscription row, camps and paid events show one upfront price line, and free / external_contract products show a single non-clickable hint row. All amounts in EUR (§4.5).
 
 **Signup-panel registration states.** The same `deriveRegistrationState` that powers browse cards drives the panel: `closed_pre` shows a live countdown clock with the form pre-fillable and a disabled "{verb} — not yet open" CTA that flips to active at zero without remounting; `open` shows an optional almost-full banner + active CTA with the chosen price; `pending_thr` a threshold progress bar + "Reserve a spot"; `full_waitlist` a waitlist explainer + secondary "Join the waitlist"; `full_closed` disabled "Fully booked"; `running_late` / `ended` a muted note with no form. Auth overlays sit on top: unauthenticated visitors see a "Sign in to register" / "Create account" pair, customers with no gamers see "Add a child first" linking to `/parent/gamers`, non-customer roles see an explainer.
 
@@ -1438,7 +1439,7 @@ The `expire_reservation` RPC stays around — the webhook calls it on `checkout.
 
 - **`useTranslations` types don't cross function boundaries.** Helper functions that take `ReturnType<typeof useTranslations<"productBrowse.card">>` trip TS2589 ("excessively deep"). Closure-bind `t` inside the component and write small literal-key dispatcher helpers (see `headingFor` in `product-browse-page.tsx`).
 - **Lucide icons must not be aliased to a local variable in render.** `react-hooks/static-components` flags `const Icon = iconFor(state)` as dynamic component creation. Wrap the switch in a tiny component (`<StateIcon state={state} className=… />`).
-- **The View shouldn't depend on the currency provider.** Currency lookup happens in the adapter; the View receives an already-formatted `ProductPriceLine`. Same rule for locale-aware date formatting.
+- **The View receives an already-formatted price.** The adapter resolves the EUR `product_prices` row and formats it into a `ProductPriceLine`; the View just renders it. Same rule for locale-aware date formatting — the View stays presentational.
 
 ### Future improvements (detail-page surfaces)
 

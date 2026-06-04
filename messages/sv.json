@@ -91,8 +91,7 @@
     "roleAdmin": "Administratör",
     "roleParent": "Förälder",
     "roleGamer": "Spelare",
-    "roleGedu": "Gedu",
-    "selectCurrency": "Välj valuta"
+    "roleGedu": "Gedu"
   },
   "about": {
     "hero": {
@@ -412,8 +411,6 @@
         "noStaffNotes": "Inga personalanteckningar för denna lokal."
       },
       "pricing": {
-        "currencyPickerLabel": "Valuta",
-        "fxSuggested": "Förslag från dagens EUR-kurs ({rate}). Redigera vid behov.",
         "perMonthLabel": "Pris per månad",
         "totalLabel": "Totalpris"
       },
@@ -1331,7 +1328,6 @@
     },
     "pricing": {
       "title": "Pris",
-      "pricesIn": "Priser i",
       "subscriptionHint": "Faktureras månadsvis · avsluta när som helst.",
       "free": "Gratis",
       "freeHint": "Ingen betalning behövs.",

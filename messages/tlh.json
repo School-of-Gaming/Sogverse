@@ -91,8 +91,7 @@
     "roleAdmin": "Admin",
     "roleParent": "vav/SoS",
     "roleGamer": "toy'wI'",
-    "roleGedu": "Gedu",
-    "selectCurrency": "Huch yIwIv"
+    "roleGedu": "Gedu"
   },
   "about": {
     "hero": {
@@ -457,8 +456,6 @@
         "noStaffNotes": "Qu' De' pagh."
       },
       "pricing": {
-        "currencyPickerLabel": "Huch mIw",
-        "fxSuggested": "DaHjaj EUR mI' vo' ({rate}). yIchoH DaneHchugh.",
         "perMonthLabel": "Huch per jar",
         "totalLabel": "Huch Hoch"
       },
@@ -1376,7 +1373,6 @@
     },
     "pricing": {
       "title": "Huch",
-      "pricesIn": "Huch yIwIv",
       "subscriptionHint": "jar Hoch Huch lo' · DaH yIqIl 'e' DaneHchugh, yIqIl.",
       "free": "Huch pagh",
       "freeHint": "Huch poQbe'.",

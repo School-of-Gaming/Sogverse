@@ -5,7 +5,7 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { useCurrency } from "@/providers/currency-provider";
+import { DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import type { ParticipationCounts } from "@/services/participations";
 import { deriveRegistrationState } from "./derive-registration-state";
@@ -40,7 +40,7 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
   const t = useTranslations("productBrowse.card");
   const uiLocale = resolveLocale(useLocale());
   const topicLabel = useTopicLabel();
-  const { currency } = useCurrency();
+  const currency = DEFAULT_CURRENCY;
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
 

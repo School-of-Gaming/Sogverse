@@ -1,63 +1,39 @@
 import { describe, it, expect } from "vitest";
-import { detectCurrencyFromLocale, isSupportedCurrency } from "@/lib/constants/currency";
+import {
+  isSupportedCurrency,
+  SUPPORTED_CURRENCIES,
+  DEFAULT_CURRENCY,
+} from "@/lib/constants/currency";
 
-describe("detectCurrencyFromLocale", () => {
-  it("maps en-US to usd", () => {
-    expect(detectCurrencyFromLocale("en-US")).toBe("usd");
+// The platform is locked to EUR (see src/lib/constants/currency.ts). These
+// tests guard the lockdown: only `eur` is supported until currencies are
+// deliberately re-enabled.
+
+describe("EUR-only lockdown", () => {
+  it("supports exactly eur", () => {
+    expect([...SUPPORTED_CURRENCIES]).toEqual(["eur"]);
   });
 
-  it("maps en-GB to gbp", () => {
-    expect(detectCurrencyFromLocale("en-GB")).toBe("gbp");
-  });
-
-  it("maps de-DE to eur", () => {
-    expect(detectCurrencyFromLocale("de-DE")).toBe("eur");
-  });
-
-  it("maps fr to eur (language-only code)", () => {
-    expect(detectCurrencyFromLocale("fr")).toBe("eur");
-  });
-
-  it("maps es-ES to eur", () => {
-    expect(detectCurrencyFromLocale("es-ES")).toBe("eur");
-  });
-
-  it("maps it to eur (language-only code)", () => {
-    expect(detectCurrencyFromLocale("it")).toBe("eur");
-  });
-
-  it("maps nl-NL to eur", () => {
-    expect(detectCurrencyFromLocale("nl-NL")).toBe("eur");
-  });
-
-  it("maps unknown locale to eur (default)", () => {
-    expect(detectCurrencyFromLocale("ja-JP")).toBe("eur");
-  });
-
-  it("maps empty string to eur (default)", () => {
-    expect(detectCurrencyFromLocale("")).toBe("eur");
-  });
-
-  it("maps en (no region) to eur (default)", () => {
-    expect(detectCurrencyFromLocale("en")).toBe("eur");
+  it("defaults to eur", () => {
+    expect(DEFAULT_CURRENCY).toBe("eur");
   });
 });
 
 describe("isSupportedCurrency", () => {
-  it("returns true for usd", () => {
-    expect(isSupportedCurrency("usd")).toBe(true);
-  });
-
-  it("returns true for gbp", () => {
-    expect(isSupportedCurrency("gbp")).toBe(true);
-  });
-
   it("returns true for eur", () => {
     expect(isSupportedCurrency("eur")).toBe(true);
   });
 
-  it("returns false for uppercase USD", () => {
-    expect(isSupportedCurrency("USD")).toBe(false);
+  it("returns false for gbp (locked down)", () => {
+    expect(isSupportedCurrency("gbp")).toBe(false);
+  });
+
+  it("returns false for usd (locked down)", () => {
+    expect(isSupportedCurrency("usd")).toBe(false);
+  });
+
+  it("returns false for uppercase EUR", () => {
+    expect(isSupportedCurrency("EUR")).toBe(false);
   });
 
   it("returns false for unknown currency", () => {

@@ -3,10 +3,9 @@
 import { useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import type { ProductBrowseRow } from "@/types";
-import { useCurrency } from "@/providers/currency-provider";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
-import { CURRENCY_CONFIG } from "@/lib/constants/currency";
+import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import {
   useCreateParticipation,
   useJoinWaitlist,
@@ -48,7 +47,9 @@ export function SignupPanel({
   fixedNowMs,
 }: SignupPanelProps) {
   const uiLocale = resolveLocale(useLocale());
-  const { currency } = useCurrency();
+  // Platform is EUR-only; Stripe Adaptive Pricing handles the customer's
+  // local currency at checkout. See src/lib/constants/currency.ts.
+  const currency = DEFAULT_CURRENCY;
 
   const pricingOption = useMemo(
     () =>

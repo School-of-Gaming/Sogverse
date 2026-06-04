@@ -41,8 +41,6 @@ function validConsumerState(): FormState {
   s.paidMode = "paid";
   s.prices = {
     eur: { session: "10.00", month: "30.00" },
-    gbp: { session: "8.50", month: "26.00" },
-    usd: { session: "11.00", month: "33.00" },
   };
   s.seatCount = "10";
   return s;
@@ -267,14 +265,13 @@ describe("validate", () => {
       expect(validate(s, eventConfig)).toBeNull();
     });
 
-    it("rejects missing monthly price for paid consumer clubs and reports the offending currency", () => {
+    it("rejects missing monthly price for paid consumer clubs", () => {
       const s = validConsumerState();
-      s.prices.gbp = { session: "8.50", month: "" };
+      s.prices.eur = { session: "8.50", month: "" };
       const result = validate(s, consumerConfig);
       expect(result).toEqual({
         messageKey: "priceMonthMissing",
-        values: { currency: "GBP" },
-        focusCurrency: "gbp",
+        values: { currency: "EUR" },
       });
     });
 
@@ -283,7 +280,6 @@ describe("validate", () => {
       s.prices.eur = { session: "10.00", month: "-30.00" };
       const result = validate(s, consumerConfig);
       expect(result?.messageKey).toBe("priceMonthNegative");
-      expect(result?.focusCurrency).toBe("eur");
     });
 
     it("validates the monthly price for clubs and the session total for camps", () => {
@@ -298,8 +294,6 @@ describe("validate", () => {
       camp.endDate = "2026-09-05";
       camp.prices = {
         eur: { session: "100", month: "" },
-        gbp: { session: "85", month: "" },
-        usd: { session: "110", month: "" },
       };
       expect(validate(camp, campConfig)).toBeNull();
 
@@ -317,8 +311,6 @@ describe("validate", () => {
       s.locationId = "muni-id";
       s.prices = {
         eur: { session: "", month: "" },
-        gbp: { session: "", month: "" },
-        usd: { session: "", month: "" },
       };
       expect(validate(s, muniConfig)).toBeNull();
     });
@@ -355,8 +347,7 @@ describe("buildCreateInput", () => {
     const s = validConsumerState();
     s.prices.eur = { session: "10.005", month: "30.99" };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
-    const eur = out.prices.find((p) => p.currency === "eur")!;
-    expect(eur.price_cents).toBe(3099);
+    expect(out.prices).toEqual([{ currency: "eur", price_cents: 3099 }]);
   });
 
   it("uses the upfront total as price_cents for upfront_total products (camp)", () => {
@@ -368,13 +359,9 @@ describe("buildCreateInput", () => {
     s.endDate = "2026-09-05";
     s.prices = {
       eur: { session: "100", month: "" },
-      gbp: { session: "85", month: "" },
-      usd: { session: "110", month: "" },
     };
     const out = buildCreateInput(s, "camp", campConfig);
-    expect(out.prices.find((p) => p.currency === "eur")!.price_cents).toBe(
-      10000,
-    );
+    expect(out.prices).toEqual([{ currency: "eur", price_cents: 10000 }]);
   });
 
   it("emits an empty prices array for external_contract billing (muni)", () => {

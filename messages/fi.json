@@ -91,8 +91,7 @@
     "roleAdmin": "Ylläpitäjä",
     "roleParent": "Vanhempi",
     "roleGamer": "Pelaaja",
-    "roleGedu": "Gedu",
-    "selectCurrency": "Valitse valuutta"
+    "roleGedu": "Gedu"
   },
   "about": {
     "hero": {
@@ -412,8 +411,6 @@
         "noStaffNotes": "Ei henkilökunnan tietoja tälle toimipisteelle."
       },
       "pricing": {
-        "currencyPickerLabel": "Valuutta",
-        "fxSuggested": "Ehdotus tämän päivän EUR-kurssilla ({rate}). Muokkaa halutessasi.",
         "perMonthLabel": "Hinta per kuukausi",
         "totalLabel": "Kokonaishinta"
       },
@@ -1331,7 +1328,6 @@
     },
     "pricing": {
       "title": "Hinta",
-      "pricesIn": "Hinnat valuutassa",
       "subscriptionHint": "Laskutetaan kuukausittain · peru milloin tahansa.",
       "free": "Maksuton",
       "freeHint": "Maksua ei tarvita.",
