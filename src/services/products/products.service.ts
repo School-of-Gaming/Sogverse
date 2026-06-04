@@ -10,7 +10,7 @@ import type {
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import { effectiveStatus } from "@/components/admin/products/effective-status";
+import { effectiveStatus } from "@/lib/products/effective-status";
 
 // `topic` is a column on Product (the product_topic enum) — its label is
 // resolved client-side via PRODUCT_TOPICS, so no join is needed here.

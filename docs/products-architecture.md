@@ -419,7 +419,7 @@ products.status ∈ {
 - `pending` upgrades to `running` when **start_date has been reached** AND **any signup_threshold is met** (active participations ≥ threshold; counts use `participations.status='active'`). With neither condition set, the product stays `pending` until admin manually starts it.
 - A stored or derived `running` downgrades to `completed` once `end_date` has passed.
 
-This avoids a fragile pending-tick cron and a stale-status class of bug. The DB stores facts; the application derives state. The TypeScript helper (`src/components/admin/products/effective-status.ts`) and a sibling SQL function `effective_status(product_id)` share the same rule — the SQL form is what RLS / list queries call when they need to filter by effective state.
+This avoids a fragile pending-tick cron and a stale-status class of bug. The DB stores facts; the application derives state. The TypeScript helper (`src/lib/products/effective-status.ts`) and a sibling SQL function `effective_status(product_id)` share the same rule — the SQL form is what RLS / list queries call when they need to filter by effective state.
 
 **Signup threshold — a single mechanism for all four product types.** `products.signup_threshold` (nullable int) counts active participations only. When set, the threshold gates the derived transition above. Admins get a notification ("Tuesday Minecraft has 8 active signups — ready to start") for visibility — the transition is automatic once the count reaches the threshold, no admin click required.
 
@@ -1014,7 +1014,7 @@ The unified shape is proven against the two product lines closest to real users.
 
 **RPCs (§6).**
 - ✓ `create_product` — atomic insert across products + translations + schedule slots + tags + prices + holiday calendars; rejects empty translation payloads.
-- ✓ Effective-status derivation — TS helper (`src/components/admin/products/effective-status.ts`) and SQL twin `effective_status(product_id)` both ship.
+- ✓ Effective-status derivation — TS helper (`src/lib/products/effective-status.ts`) and SQL twin `effective_status(product_id)` both ship.
 - ◐ Participation lifecycle — `create_participation`, `confirm_reservation`, `expire_reservation`, `join_waitlist`, `cancel_participation` ship; `promote_from_waitlist` ships as a stub (not wired into a customer flow — see §11); `admin_remove_participation` not started.
 - ○ Session operations (`cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `record_attendance`).
 - ◐ Subscription management — first-ever sub goes through Stripe Checkout; inline-add of an additional gamer to an existing family sub uses `subscriptions.update` with `always_invoice` + `error_if_incomplete` (synchronous via the checkout route). `unsubscribe_from_product` not started.
@@ -1253,7 +1253,6 @@ Form (src/components/admin/products/)
 ├── product-form-state.ts           — Form state shape, defaults, reducers
 ├── product-build.ts                — Form state → RPC payload (build/validate + reverse transform)
 ├── product-type-config.ts          — Per-type field availability, scheduling shape, pricing shape
-├── effective-status.ts             — Derived status helper (TS twin of SQL effective_status())
 └── sections/
     ├── identity-section.tsx         — Name/description per locale, topic (fixed enum), image
     ├── audience-section.tsx         — Age range, spoken languages, group seat count

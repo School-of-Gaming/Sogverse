@@ -1,4 +1,4 @@
-import { effectiveStatus } from "@/components/admin/products/effective-status";
+import { effectiveStatus } from "@/lib/products/effective-status";
 import type { ProductType, Product } from "@/types";
 
 // Registration state for the parent-facing browse + purchased cards.
