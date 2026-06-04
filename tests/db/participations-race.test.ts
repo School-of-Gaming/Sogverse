@@ -424,12 +424,11 @@ describe("participations race + idempotency", () => {
   // Free products honor seat_count
   // ---------------------------------------------------------------------------
   //
-  // The schema permits free products to have an explicit seat_count
-  // (chk_products_seat_count_null_requires_free only requires NOT NULL
-  // when billing_mode<>'free'). Before 00043, create_participation's free
-  // path INSERTed an active row before any seat-count check, so a free
-  // product with seat_count=1 silently accepted the second signup. The
-  // gate now sits above the free branch.
+  // The schema permits any product, free included, to carry an explicit
+  // seat_count (seat_count is optional for every billing mode). Before 00043,
+  // create_participation's free path INSERTed an active row before any
+  // seat-count check, so a free product with seat_count=1 silently accepted
+  // the second signup. The gate now sits above the free branch.
 
   describe("create_participation — free product with seat_count enforces cap", () => {
     beforeAll(async () => {

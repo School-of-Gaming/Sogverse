@@ -453,7 +453,8 @@
         "visibleHint": "Poista valinta pitääksesi tuote piilossa, kun se on vielä tekeillä. Laita päälle, kun olet valmis vanhempien näkemään sen.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
         "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
-        "startDateToday": "Lukittu toistaiseksi tähän päivään."
+        "startDateToday": "Lukittu toistaiseksi tähän päivään.",
+        "startDateLocked": "Aloituspäivä on toistaiseksi lukittu."
       },
       "errors": {
         "translationRequired": "Vähintään yksi kieli, jossa on nimi ja kuvaus, vaaditaan",

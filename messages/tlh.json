@@ -498,7 +498,8 @@
         "visibleHint": "DochlIj DachenmoHtaHvIS, So'lu' yIchu'Ha'. naDevDaq vavmey lulegh, yIchu'.",
         "seatLimitHint": "pa' mI' yIgheS pagh Sub Hutlh yIqaw.",
         "holidayComingSoon": "jaj Do' De'wI' tugh chol. DaH Hoch ghum qaS.",
-        "startDateToday": "DaHjaj Daq poSmoHlu'pu'."
+        "startDateToday": "DaHjaj Daq poSmoHlu'pu'.",
+        "startDateLocked": "DaH taghDaq poSmoHlu'pu'."
       },
       "errors": {
         "translationRequired": "wa' Hol pong QIn je poQ",

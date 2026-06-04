@@ -165,8 +165,8 @@ describe("update_product", () => {
       p_is_remote: true,
       p_timezone: "Europe/Helsinki",
       p_registration_opens_at: new Date().toISOString(),
-      // Required by chk_products_seat_count_null_requires_free when
-      // billing_mode is paid — null seat_count is only legal for free.
+      // A concrete cap; seat_count may also be null for any billing mode
+      // (uncapped) since 00083 dropped chk_products_seat_count_null_requires_free.
       p_seat_count: 10,
     });
     expect(error).toBeNull();

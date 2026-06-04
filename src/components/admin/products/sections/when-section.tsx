@@ -1,5 +1,6 @@
 "use client";
 
+import { formatInTimeZone } from "date-fns-tz";
 import { Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { FORM_LOCKS } from "../form-locks";
 import { HolidayCalendarOption } from "../holiday-calendar-option";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import {
+  FIXED_TIMEZONE,
   startModeUsesDate,
   startModeUsesThreshold,
   type FormState,
@@ -34,11 +36,18 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
   const showHolidayCalendars = config.hasHolidayCalendars;
 
   // Pre-prod UI locks (see form-locks.ts). The start trigger is pinned to the
-  // type's default ("On a specific date") and consumer clubs start today.
+  // type's default ("On a specific date") and the consumer-club start date is
+  // frozen — to today on a fresh form (set in initialState), to the saved date
+  // on edit/clone. Word the hint to match the actual value so an edit form
+  // doesn't claim "today" for a past date.
   const lockStartMode = FORM_LOCKS.startMode;
-  const lockStartDateToday =
+  const lockStartDate =
     FORM_LOCKS.consumerClubStartDateToday &&
     productType === "consumer_club";
+  const lockedToToday =
+    lockStartDate &&
+    state.startDate ===
+      formatInTimeZone(new Date(), FIXED_TIMEZONE, "yyyy-MM-dd");
 
   return (
     <FormSection
@@ -107,7 +116,13 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
             }
             htmlFor="p-start-date"
             required
-            hint={lockStartDateToday ? t("hints.startDateToday") : undefined}
+            hint={
+              lockStartDate
+                ? lockedToToday
+                  ? t("hints.startDateToday")
+                  : t("hints.startDateLocked")
+                : undefined
+            }
           >
             <Input
               id="p-start-date"
@@ -116,7 +131,7 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
               onChange={(e) =>
                 setState({ ...state, startDate: e.target.value })
               }
-              disabled={lockStartDateToday}
+              disabled={lockStartDate}
               required
             />
           </Field>

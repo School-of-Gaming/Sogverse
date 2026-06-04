@@ -453,7 +453,8 @@
         "visibleHint": "Avmarkera för att hålla produkten dold medan du fortfarande arbetar på den. Slå på när du är redo att föräldrar ska se den.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
         "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
-        "startDateToday": "Låst till dagens datum tills vidare."
+        "startDateToday": "Låst till dagens datum tills vidare.",
+        "startDateLocked": "Startdatumet är låst tills vidare."
       },
       "errors": {
         "translationRequired": "Minst ett språk med namn och beskrivning krävs",
