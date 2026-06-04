@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
+import { LanguageFlag } from "@/components/ui/language-flag";
 import { cn } from "@/lib/utils";
 import { useSpokenLanguages } from "@/services/users";
 import { Field, FormSection } from "../form-primitives";
@@ -58,12 +59,17 @@ export function AudienceSection({ state, setState }: AudienceSectionProps) {
                   setState({ ...state, spokenLanguageCode: lang.code })
                 }
                 className={cn(
-                  "rounded-md border px-3 py-1.5 text-sm transition-colors",
+                  "inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors",
                   state.spokenLanguageCode === lang.code
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-input text-muted-foreground hover:border-foreground hover:text-foreground"
                 )}
               >
+                <LanguageFlag
+                  code={lang.code}
+                  showCode={false}
+                  title={lang.name}
+                />
                 {lang.name}
               </button>
             ))}

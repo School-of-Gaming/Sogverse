@@ -1,6 +1,8 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductTopic, ProductType } from "@/types";
+import { FORM_LOCKS } from "./form-locks";
 import type {
   ProductTypeConfig,
   StartMode,
@@ -14,6 +16,10 @@ export const REGISTRATION_OPENS_MODE_VALUES = [
   "immediately",
   "scheduled",
 ] as const;
+// Seat-limit chooser values. "limited" pairs with a seat-count input;
+// "unlimited" means no seat cap (seat_count = null) and is available for every
+// product type. Maps to the `uncapped` boolean: unlimited ⇔ uncapped.
+export const SEAT_LIMIT_MODE_VALUES = ["limited", "unlimited"] as const;
 
 // 15-minute-interval time picker — same pattern as schedule-slots-editor.tsx,
 // where the rationale comment lives (Chrome's <input type="time"> ignores `step`).
@@ -27,6 +33,7 @@ export const FIXED_TIMEZONE = "Europe/Helsinki";
 export type PaidMode = (typeof PAID_MODE_VALUES)[number];
 export type RegistrationOpensMode =
   (typeof REGISTRATION_OPENS_MODE_VALUES)[number];
+export type SeatLimitMode = (typeof SEAT_LIMIT_MODE_VALUES)[number];
 
 export type TranslationDraft = { name: string; description: string };
 
@@ -121,6 +128,15 @@ export function initialState(
   // Events default to free; everything else has a real billing mode already.
   const initialPaidMode: PaidMode =
     config.billing.mode === "free_or_paid" ? "free" : "paid";
+  // Consumer clubs launch starting today while the start-date control is
+  // locked (see FORM_LOCKS.consumerClubStartDateToday). Helsinki-local "today"
+  // — the form is fixed to FIXED_TIMEZONE — never UTC (see CLAUDE.md "Date &
+  // Time Formatting").
+  const lockedConsumerStartDate =
+    FORM_LOCKS.consumerClubStartDateToday &&
+    config.productType === "consumer_club"
+      ? formatInTimeZone(new Date(), FIXED_TIMEZONE, "yyyy-MM-dd")
+      : "";
   return {
     translations: { [uiLocale]: { name: "", description: "" } },
     activeLocale: uiLocale,
@@ -133,7 +149,7 @@ export function initialState(
     isRemote: true,
     locationId: null,
     startMode: config.allowedStartModes[0],
-    startDate: "",
+    startDate: lockedConsumerStartDate,
     endDate: "",
     scheduleSlots: defaultSlots(config),
     holidayCalendarIds: new Set(),
@@ -143,8 +159,10 @@ export function initialState(
       eur: { session: "", month: "" },
     },
     seatCount: defaultSeats(config.productType),
-    uncapped: false,
-    waitlistEnabled: true,
+    // Locked to uncapped (no seat count) for now — see FORM_LOCKS.seatCount.
+    uncapped: FORM_LOCKS.seatCount,
+    // Locked off for now — see FORM_LOCKS.waitlist.
+    waitlistEnabled: !FORM_LOCKS.waitlist,
     registrationOpensMode: "immediately",
     registrationOpensDate: "",
     registrationOpensHour: "10",

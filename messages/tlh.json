@@ -403,16 +403,15 @@
         "billing": "Huch nIDqu'",
         "paidByMunicipality": "veng Huch nob",
         "seatCount": "pa' mI'",
-        "noSeatLimit": "pa' mI' Sub pagh",
         "waitlistToggle": "pa' tebDI', tetlh teb yIchu'",
         "signupThreshold": "ghItlh mI' taghmeH",
-        "makeVisible": "vavmey legh"
+        "makeVisible": "vavmey legh",
+        "seatLimit": "pa' mI' Sub"
       },
       "placeholders": {
         "selectTopic": "Doch yIwIv…",
         "padletUrl": "https://padlet.com/...",
         "threshold": "e.g. 8",
-        "noLimit": "Sub pagh",
         "name": {
           "consumerClub": "e.g. Minecraft Redstone ghomHom",
           "municipalityClub": "e.g. Tapiola Minecraft ghomHom · 2026 Hut",
@@ -496,8 +495,10 @@
         "pricingMonthly": "jar Hoch Huch lo' qaStaHvIS rar yoH. DaH yIqIl 'e' DaneHchugh, yIqIl.",
         "pricingUpfront": "ghItlh wa' Huch lo'. poH nab Sov pagh, Huch rapchu'.",
         "seatHint": "tebDI', ghItlh chu'mey tetlh teb Daq jaH.",
-        "seatCanUncap": "Huch pagh Qu' pa' mI' Sub poQbe' (e.g. webinar, ghom yIt).",
-        "visibleHint": "DochlIj DachenmoHtaHvIS, So'lu' yIchu'Ha'. naDevDaq vavmey lulegh, yIchu'."
+        "visibleHint": "DochlIj DachenmoHtaHvIS, So'lu' yIchu'Ha'. naDevDaq vavmey lulegh, yIchu'.",
+        "seatLimitHint": "pa' mI' yIgheS pagh Sub Hutlh yIqaw.",
+        "holidayComingSoon": "jaj Do' De'wI' tugh chol. DaH Hoch ghum qaS.",
+        "startDateToday": "DaHjaj Daq poSmoHlu'pu'."
       },
       "errors": {
         "translationRequired": "wa' Hol pong QIn je poQ",
@@ -660,6 +661,12 @@
           "applying": "Qonlu'taH…",
           "genericError": "vay' Qaw'. ghopaq yIqIH."
         }
+      },
+      "seatLimitModes": {
+        "limited": "pa' mI' poHlu'bogh",
+        "limitedDescription": "pa' mI' yIgheS. tebDI', chu'mey tetlh teb Daq jaH.",
+        "unlimited": "pa' mI' Sub pagh",
+        "unlimitedDescription": "ghISbogh Hoch jaH — Sub pagh."
       }
     },
     "users": {

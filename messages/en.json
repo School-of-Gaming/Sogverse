@@ -358,16 +358,15 @@
         "billing": "Billing",
         "paidByMunicipality": "Paid by the municipality",
         "seatCount": "Seat count",
-        "noSeatLimit": "No seat limit",
         "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "makeVisible": "Visible to parents"
+        "makeVisible": "Visible to parents",
+        "seatLimit": "Seat limit"
       },
       "placeholders": {
         "selectTopic": "Select a topic…",
         "padletUrl": "https://padlet.com/...",
         "threshold": "e.g. 8",
-        "noLimit": "No limit",
         "name": {
           "consumerClub": "e.g. Minecraft Redstone kerho",
           "municipalityClub": "e.g. Tapiola Minecraft Club · Spring 2026",
@@ -451,8 +450,10 @@
         "pricingMonthly": "Charged every month while the subscription is active. Cancel anytime.",
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
         "seatHint": "When full, new signups go to the waitlist.",
-        "seatCanUncap": "Free events can have no seat limit (e.g. a webinar, a public walk).",
-        "visibleHint": "Uncheck to keep the product hidden while you're still setting it up. Turn it on when you're ready for parents to see it."
+        "visibleHint": "Uncheck to keep the product hidden while you're still setting it up. Turn it on when you're ready for parents to see it.",
+        "seatLimitHint": "Cap the number of gamers, or run with no limit.",
+        "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
+        "startDateToday": "Locked to today's date for now."
       },
       "errors": {
         "translationRequired": "At least one language with name and description is required",
@@ -615,6 +616,12 @@
           "applying": "Saving…",
           "genericError": "Something went wrong. Please try again."
         }
+      },
+      "seatLimitModes": {
+        "limited": "Limited seats",
+        "limitedDescription": "Cap how many gamers can join. When full, new signups can go to a waitlist.",
+        "unlimited": "No seat limit",
+        "unlimitedDescription": "Anyone who signs up can join — there's no cap."
       }
     },
     "users": {

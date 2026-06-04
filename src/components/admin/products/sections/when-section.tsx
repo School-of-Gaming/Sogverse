@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useHolidayCalendars } from "@/services/products";
 import { Field, FormSection, InfoCallout } from "../form-primitives";
+import { FORM_LOCKS } from "../form-locks";
 import { HolidayCalendarOption } from "../holiday-calendar-option";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import {
@@ -32,6 +33,13 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
   const usesThreshold = startModeUsesThreshold(state.startMode);
   const showHolidayCalendars = config.hasHolidayCalendars;
 
+  // Pre-prod UI locks (see form-locks.ts). The start trigger is pinned to the
+  // type's default ("On a specific date") and consumer clubs start today.
+  const lockStartMode = FORM_LOCKS.startMode;
+  const lockStartDateToday =
+    FORM_LOCKS.consumerClubStartDateToday &&
+    productType === "consumer_club";
+
   return (
     <FormSection
       title={t("sections.when")}
@@ -44,16 +52,24 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
               <label
                 key={option}
                 className={cn(
-                  "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
+                  "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
                   state.startMode === option
                     ? "border-primary bg-primary/5"
-                    : "border-input hover:border-foreground/30"
+                    : "border-input",
+                  lockStartMode
+                    ? "cursor-not-allowed opacity-60"
+                    : cn(
+                        "cursor-pointer",
+                        state.startMode !== option &&
+                          "hover:border-foreground/30"
+                      )
                 )}
               >
                 <input
                   type="radio"
                   name="startTrigger"
                   checked={state.startMode === option}
+                  disabled={lockStartMode}
                   onChange={() =>
                     setState({
                       ...state,
@@ -91,6 +107,7 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
             }
             htmlFor="p-start-date"
             required
+            hint={lockStartDateToday ? t("hints.startDateToday") : undefined}
           >
             <Input
               id="p-start-date"
@@ -99,6 +116,7 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
               onChange={(e) =>
                 setState({ ...state, startDate: e.target.value })
               }
+              disabled={lockStartDateToday}
               required
             />
           </Field>
@@ -188,21 +206,25 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
           label={t("labels.holidayCalendars")}
           hint={t("hints.holidayHint")}
         >
-          <div className="space-y-2">
-            {calendars?.map((cal) => (
-              <HolidayCalendarOption
-                key={cal.id}
-                calendar={cal}
-                checked={state.holidayCalendarIds.has(cal.id)}
-                onToggle={() => {
-                  const next = new Set(state.holidayCalendarIds);
-                  if (next.has(cal.id)) next.delete(cal.id);
-                  else next.add(cal.id);
-                  setState({ ...state, holidayCalendarIds: next });
-                }}
-              />
-            ))}
-          </div>
+          {FORM_LOCKS.holidayCalendars ? (
+            <InfoCallout text={t("hints.holidayComingSoon")} />
+          ) : (
+            <div className="space-y-2">
+              {calendars?.map((cal) => (
+                <HolidayCalendarOption
+                  key={cal.id}
+                  calendar={cal}
+                  checked={state.holidayCalendarIds.has(cal.id)}
+                  onToggle={() => {
+                    const next = new Set(state.holidayCalendarIds);
+                    if (next.has(cal.id)) next.delete(cal.id);
+                    else next.add(cal.id);
+                    setState({ ...state, holidayCalendarIds: next });
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </Field>
       )}
     </FormSection>

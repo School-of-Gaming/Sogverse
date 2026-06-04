@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Field, FormSection, InfoCallout } from "../form-primitives";
+import { FORM_LOCKS } from "../form-locks";
 import {
   HOUR_OPTIONS,
   MINUTE_OPTIONS,
@@ -22,6 +23,10 @@ export function RegistrationSection({
 }: RegistrationSectionProps) {
   const t = useTranslations("admin.products");
 
+  // Pre-prod UI lock (see form-locks.ts): registration always opens
+  // immediately, so the chooser is pinned to "Right away".
+  const lockTiming = FORM_LOCKS.registrationTiming;
+
   return (
     <FormSection
       title={t("sections.registration")}
@@ -33,16 +38,24 @@ export function RegistrationSection({
             <label
               key={option}
               className={cn(
-                "flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition-colors",
+                "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
                 state.registrationOpensMode === option
                   ? "border-primary bg-primary/5"
-                  : "border-input hover:border-foreground/30"
+                  : "border-input",
+                lockTiming
+                  ? "cursor-not-allowed opacity-60"
+                  : cn(
+                      "cursor-pointer",
+                      state.registrationOpensMode !== option &&
+                        "hover:border-foreground/30"
+                    )
               )}
             >
               <input
                 type="radio"
                 name="registrationOpensMode"
                 checked={state.registrationOpensMode === option}
+                disabled={lockTiming}
                 onChange={() =>
                   setState({ ...state, registrationOpensMode: option })
                 }

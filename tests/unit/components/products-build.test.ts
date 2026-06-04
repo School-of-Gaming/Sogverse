@@ -42,6 +42,9 @@ function validConsumerState(): FormState {
   s.prices = {
     eur: { session: "10.00", month: "30.00" },
   };
+  // initialState now defaults uncapped=true (pre-prod seat lock), so the
+  // baseline "capped club" must opt back into a real seat count explicitly.
+  s.uncapped = false;
   s.seatCount = "10";
   return s;
 }
@@ -263,6 +266,16 @@ describe("validate", () => {
         { weekday: 0, start_time: "18:00", duration_minutes: 90 },
       ];
       expect(validate(s, eventConfig)).toBeNull();
+    });
+
+    it("allows a paid consumer club to be uncapped (no seat count)", () => {
+      // Seat caps are now orthogonal to billing — any type may opt out of a
+      // seat count, not just free events. (DB constraint
+      // chk_products_seat_count_null_requires_free was dropped in 00083.)
+      const s = validConsumerState();
+      s.uncapped = true;
+      s.seatCount = "";
+      expect(validate(s, consumerConfig)).toBeNull();
     });
 
     it("rejects missing monthly price for paid consumer clubs", () => {
@@ -509,6 +522,15 @@ describe("buildCreateInput", () => {
     ];
     const out = buildCreateInput(s, "event", eventConfig);
     expect(out.seat_count).toBeNull();
+  });
+
+  it("emits null seat_count when a paid consumer club is uncapped", () => {
+    const s = validConsumerState();
+    s.uncapped = true;
+    s.seatCount = ""; // ignored when uncapped
+    const out = buildCreateInput(s, "consumer_club", consumerConfig);
+    expect(out.seat_count).toBeNull();
+    expect(out.billing_mode).toBe("paid");
   });
 
   it("only emits signup_threshold when the start mode uses one", () => {
