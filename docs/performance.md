@@ -67,7 +67,7 @@ With identity now verified locally (Completed: `getClaims`), the remaining per-r
 **Why a type, not a lint.** A `no-restricted-syntax` ESLint rule was prototyped and rejected: it nags forever once the codebase is clean ("don't do this bad thing" long after everyone stopped). The type narrowing is self-documenting, catches the regression strictly earlier (red squiggle + `type-check`/build failure, before the line can run or merge), and adds zero runtime code. It deliberately scopes to the **server client + service layer** — the actual F1 fan-out surface. The browser client keeps `getUser` for the rare client-side case needing the live GoTrue `User`.
 
 **Survivors converted** (the 11 calls I3 catalogued):
-- `api/user/locale`, `api/user/currency` → the getClaims-backed `getUser()` helper from `server.ts` (they only need the id).
+- `api/user/locale` → the getClaims-backed `getUser()` helper from `server.ts` (it only needs the id).
 - Service layer (`participations` ×4, `minecraft`, `products`) → `getClaims()` directly. Confirmed each only reads `.id` to scope a query; RLS enforces the real authorization, so trusting the signed JWT until expiry is the same trade-off already accepted on the hot path.
 - OAuth `api/auth/callback/route.ts` → `getClaims()` on the just-exchanged session (the freshly-minted token verifies locally; no need for a server round-trip to read the role).
 - Client components (`auth-provider`, `setup-account-form`) → `getClaims()` for consistency, even though browser-side `getUser` is harmless. Both only used `.id`. The browser client *type* stays permissive.

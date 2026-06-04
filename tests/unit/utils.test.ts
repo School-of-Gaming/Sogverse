@@ -28,9 +28,7 @@ describe("cn (className merge utility)", () => {
 });
 
 describe("formatCurrency", () => {
-  it("falls back to CURRENCY_CONFIG locale when navigator is unavailable", () => {
-    // In test/server environments there's no navigator, so it should
-    // fall back to the hardcoded locale from CURRENCY_CONFIG
+  it("formats with the given locale and currency symbol", () => {
     const result = formatCurrency(100, "eur", "en-GB");
     expect(result).toContain("€");
     expect(result).toContain("100");

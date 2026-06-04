@@ -82,6 +82,10 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
   const customerId = session.metadata?.customerId;
   const gamerId = session.metadata?.gamerId;
   const productId = session.metadata?.productId;
+  // Our integration currency, always EUR. Safe to pair with `amount_total`
+  // below: even with Adaptive Pricing on, `session.amount_total`/`currency`
+  // report the EUR settlement amount we receive — the customer's local
+  // currency lives in `session.presentment_details`, which we don't record.
   const currency = session.metadata?.currency;
   if (!reservationId || !purchaseShape || !customerId || !gamerId || !productId || !currency) {
     return;
