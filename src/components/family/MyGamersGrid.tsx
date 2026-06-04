@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useFamily, type FamilyMember } from "@/services/family";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, MAX_GAMERS_PER_PARENT } from "@/lib/constants";
 import { AddGamerDialog } from "./AddGamerDialog";
 import {
   AddGamerTile,
@@ -47,8 +47,8 @@ export function MyGamersGrid({ initialFamily }: { initialFamily?: FamilyMember[]
   }
 
   const gamers = family.filter((m) => m.role === "gamer").sort(byFirstName);
-  // Same Steven Brown limit as FamilyProfileSelector — see that file for lore.
-  const canAddGamer = gamers.length < 7;
+  // Steven Brown Rule (UI-only cap) — see MAX_GAMERS_PER_PARENT for lore.
+  const canAddGamer = gamers.length < MAX_GAMERS_PER_PARENT;
 
   return (
     <div className="space-y-4">

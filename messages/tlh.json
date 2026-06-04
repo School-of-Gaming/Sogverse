@@ -1341,17 +1341,21 @@
       },
       "ctaPreOpenIdle": "{verb} — DaH poSbe'",
       "ctaPreOpenReady": "qonta' poSDI' SuD",
-      "ctaPreOpenChooseChild": "wa' puq yIwIv",
       "ctaActive": "DaH {verb}",
       "ctaActiveWithPrice": "DaH {verb} {price}",
       "ctaInlineAddSub": "DIvI'lIj-Daq yIchel · {price} (DaHjaj DIl)",
       "ctaSubmitting": "yIloS…",
+      "ctaSelectGamer": "QujwI' yIwIv",
       "ctaWaitlist": "tetlh DaqaD",
       "ctaThreshold": "pa' yIpol",
       "ctaSignIn": "qonmeH yI'el",
       "ctaCreateAccount": "Account chu' chenmoH",
-      "ctaAddGamer": "puq yIchel",
-      "gamerAlreadySignedUp": "qonta'",
+      "gamerAlreadySignedUp": {
+        "consumer_club": "muvpu'",
+        "municipality_club": "qonpu'",
+        "camp": "muvpu'",
+        "event": "muvpu'"
+      },
       "gamerAlreadyWaitlisted": "tetlhDaq",
       "nonCustomerNote": "vavmey neH puq qonlaH naDev.",
       "preOpenHelper": "puqlI' yIwIv 'ej chutmey yIlaj — qonta' poSDI' wa' tlhopwI' lo'meH.",
@@ -1371,11 +1375,14 @@
         "camp": "qIp 'ej tlhejHa' vuvbe' School of Gaming, jIyaj.",
         "event": "qIp 'ej tlhejHa' vuvbe' School of Gaming, jIyaj."
       },
-      "whoAreYouSigningUp": "'Iv qonbogh SoH?",
+      "whoAreYouSigningUp": {
+        "consumer_club": "'Iv muvbogh SoH?",
+        "municipality_club": "'Iv qonbogh SoH?",
+        "camp": "'Iv muvbogh SoH?",
+        "event": "'Iv muvbogh SoH?"
+      },
       "selected": "wIvlu'",
-      "agePill": "qan {age}",
-      "noGamersTitle": "tlhIH account puq yIchel",
-      "noGamersDescription": "'Iv DaqonneS SaH wIneHbogh. nung puq yIchel — tup wa' poH neH."
+      "agePill": "qan {age}"
     },
     "pricing": {
       "title": "Huch",

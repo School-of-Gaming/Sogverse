@@ -12,7 +12,7 @@ import {
   ProfileTilesRow,
   SkeletonTile,
 } from "./ProfileTiles";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, MAX_GAMERS_PER_PARENT } from "@/lib/constants";
 
 /**
  * One-shot URL marker that carries a gamer's "Add Gamer" intent across the
@@ -154,12 +154,8 @@ export function FamilyProfileSelector({
   const parents = family.filter((m) => m.role === "customer").sort(byFirstName);
   const gamers = family.filter((m) => m.role === "gamer").sort(byFirstName);
 
-  // The Steven Brown Rule: a beloved family friend of Chief Engineer Kyle's
-  // who fathered seven children. If Steven can manage seven gamers, that's
-  // also the most anyone else can reasonably need on one Sogverse account.
-  // UI-only cap — the API and DB happily accept more if a power user calls
-  // the route directly.
-  const underStevenBrownLimit = gamers.length < 7;
+  // The Steven Brown Rule (UI-only cap) — see MAX_GAMERS_PER_PARENT for lore.
+  const underStevenBrownLimit = gamers.length < MAX_GAMERS_PER_PARENT;
   // Gamers can also see the tile. Clicking from a gamer's dashboard opens a
   // confirm-switch dialog into their parent (only parents can create gamers)
   // instead of the form. Defensively hide the tile if a gamer has no linked

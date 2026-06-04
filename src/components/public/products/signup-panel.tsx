@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useLocale } from "next-intl";
 import type { ProductBrowseRow } from "@/types";
+import { AddGamerDialog } from "@/components/family";
 import { resolveLocale } from "@/lib/constants/locales";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import {
@@ -80,6 +81,7 @@ export function SignupPanel({
 
   const [agreed, setAgreed] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [addGamerOpen, setAddGamerOpen] = useState(false);
 
   // Inline-add detection: only meaningful for subscriptions (consumer clubs).
   // We pre-check whether the customer already has a live family sub in this
@@ -165,6 +167,7 @@ export function SignupPanel({
     pricingOption,
     selectedGamerId,
     onSelectGamer: setUserPickedGamerId,
+    onAddGamer: () => setAddGamerOpen(true),
     agreed,
     onAgreedChange: setAgreed,
     onSubmit: handleSubmit,
@@ -177,7 +180,20 @@ export function SignupPanel({
     fixedNowMs,
   };
 
-  return <SignupPanelView {...viewProps} />;
+  return (
+    <>
+      <SignupPanelView {...viewProps} />
+      {/* Reusable family dialog — handles its own PIN gate (create/enter PIN)
+          before showing the form, so no pre-check is needed here. On success
+          we pre-select the new gamer; useCreateGamer invalidates the gamers
+          query, so the child appears in the picker and resolves as selected. */}
+      <AddGamerDialog
+        open={addGamerOpen}
+        onOpenChange={setAddGamerOpen}
+        onCreated={(gamerId) => setUserPickedGamerId(gamerId)}
+      />
+    </>
+  );
 }
 
 function purchaseShapeFor(
