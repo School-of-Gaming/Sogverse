@@ -255,7 +255,6 @@
         },
         "fields": {
           "topic": "Aihe",
-          "tags": "Tunnisteet",
           "padletUrl": "Padlet",
           "locales": "Kielet",
           "ageRange": "Ikäryhmä",
@@ -334,7 +333,6 @@
         "name": "Nimi",
         "description": "Kuvaus",
         "topic": "Aihe",
-        "tags": "Tunnisteet",
         "padletUrl": "Padlet-osoite",
         "minAge": "Alaikäraja",
         "maxAge": "Yläikäraja",
@@ -360,7 +358,6 @@
         "paid": "Maksullinen",
         "billing": "Laskutus",
         "paidByMunicipality": "Kunta maksaa",
-        "groupTopicUnder": "Ryhmittele:",
         "seatCount": "Paikkamäärä",
         "noSeatLimit": "Ei paikkarajaa",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
@@ -369,8 +366,6 @@
       },
       "placeholders": {
         "selectTopic": "Valitse aihe…",
-        "newTopicName": "Uuden aiheen nimi (esim. Among Us, Digihyvinvointi)",
-        "newTagName": "Tunnisteen nimi",
         "padletUrl": "https://padlet.com/...",
         "threshold": "esim. 8",
         "noLimit": "Ei rajaa",
@@ -390,10 +385,6 @@
       "topicKinds": {
         "game": "Pelit",
         "subject": "Aineet"
-      },
-      "topicKindSingular": {
-        "game": "Peli",
-        "subject": "Aine"
       },
       "locationPicker": {
         "searchPlaceholder": "Hae maan, alueen, kunnan tai toimipisteen mukaan…",
@@ -451,8 +442,7 @@
         "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
       },
       "hints": {
-        "topicHint": "Pääaihe — yksi per tuote. Mistä kerrat oikeasti kertovat.",
-        "tagsHint": "Valinnainen. Auttaa vanhempia suodattamaan tuotteita selatessaan.",
+        "topicHint": "Tuotteen aihe — peli (Minecraft, Fortnite) tai aine (webinaari).",
         "padletHint": "Valinnainen. Jaetaan perheille ilmoittautumisen jälkeen.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",
@@ -499,11 +489,7 @@
       },
       "actions": {
         "cancel": "Peruuta",
-        "createLabel": "Luo {label}",
-        "addTopic": "Lisää aihe",
-        "addNewTopic": "Lisää uusi aihe",
-        "addNewTag": "Lisää uusi tunniste",
-        "addTagShort": "Lisää"
+        "createLabel": "Luo {label}"
       },
       "status": {
         "draft": "Luonnos",
@@ -1216,7 +1202,6 @@
       "typeClubs": "Kerhot",
       "typeCamps": "Leirit",
       "topic": "Aihe",
-      "tag": "Tyyli",
       "format": "Muoto",
       "formatOnline": "Verkossa",
       "formatInPerson": "Paikan päällä",
@@ -1253,6 +1238,9 @@
       "noMatches": "Ei osumia. Kokeile tyhjentää suodattimet."
     }
   },
+  "topics": {
+    "webinar": "Webinaari"
+  },
   "productDetail": {
     "back": {
       "consumer_club": "Kaikki kerhot",
@@ -1269,9 +1257,7 @@
     "sections": {
       "whenWhere": "Milloin ja missä",
       "calendar": "Aikataulu",
-      "tags": "Mitä odottaa",
-      "topicsLabel": "Aihe",
-      "tagsLabel": "Tunnelma"
+      "topic": "Aihe"
     },
     "info": {
       "schedule": "Aikataulu",

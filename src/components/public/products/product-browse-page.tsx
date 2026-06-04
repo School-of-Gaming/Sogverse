@@ -4,11 +4,7 @@ import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  useVisibleProductsByTypes,
-  useTopics,
-  useTags,
-} from "@/services/products";
+import { useVisibleProductsByTypes } from "@/services/products";
 import {
   useParticipationCounts,
   type ParticipationCounts,
@@ -69,11 +65,7 @@ export function ProductBrowsePage({ browseType }: ProductBrowsePageProps) {
   // refetch). Counts (keyed on these ids) likewise cover all types at once.
   const { data: products, isLoading: productsLoading } =
     useVisibleProductsByTypes(SHOP_PRODUCT_TYPES);
-  // The filter chips read from the same topics/tags queries — wait on them
-  // too so the filter row appears with chips the first time it shows up
-  // (avoids a brief "Topic: " empty row on cold cache).
-  const { isLoading: topicsLoading } = useTopics();
-  const { isLoading: tagsLoading } = useTags();
+  // The filter chips are a fixed list (PRODUCT_TOPICS) — no query to await.
 
   // Pre-fetch participation counts for every product in one query so each
   // card doesn't issue its own request. Cards read counts via the shared
@@ -93,22 +85,20 @@ export function ProductBrowsePage({ browseType }: ProductBrowsePageProps) {
   }, [counts]);
 
   // Wait on every query the page renders before painting, so the grid doesn't
-  // land first and then reflow as topics/tags/counts arrive (CLAUDE.md
-  // layout-shift rule).
-  const allLoaded =
-    !productsLoading && !topicsLoading && !tagsLoading && !countsLoading;
+  // land first and then reflow as counts arrive (CLAUDE.md layout-shift rule).
+  const allLoaded = !productsLoading && !countsLoading;
 
   // The Type filter is just a client-side narrowing of the all-types fetch to
-  // the selected browseType. Topic/tag/format/language filters apply on top.
+  // the selected browseType. Topic/format/language filters apply on top.
   const typeProducts = useMemo(
     () => (products ?? []).filter((p) => p.product_type === browseType),
     [products, browseType],
   );
 
-  const { topics, tags, format, languages } = useBrowseFilters();
+  const { topics, format, languages } = useBrowseFilters();
   const filtered = useMemo(
-    () => filterProducts(typeProducts, { topics, tags, format, languages }),
-    [typeProducts, topics, tags, format, languages],
+    () => filterProducts(typeProducts, { topics, format, languages }),
+    [typeProducts, topics, format, languages],
   );
 
   const headingKey = HEADING_KEYS[browseType];

@@ -20,7 +20,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     id: "00000000-0000-0000-0000-0000000005a1",
     product_type: "consumer_club",
     billing_mode: "paid",
-    topic_id: "topic-1",
+    topic: "minecraft",
     min_age: 7,
     max_age: 12,
     spoken_language_code: "en",
@@ -42,12 +42,6 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     created_by: "admin-1",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    topics: {
-      id: "topic-1",
-      slug: "minecraft",
-      kind: "game",
-      topic_translations: [{ locale: "en", name: "Minecraft" }],
-    },
     product_translations: [
       {
         product_id: "00000000-0000-0000-0000-0000000005a1",
@@ -56,15 +50,6 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
         description: "Build castles together.",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      },
-    ],
-    product_tags: [
-      {
-        tag_id: "tag-1",
-        tags: {
-          slug: "creative",
-          tag_translations: [{ locale: "en", name: "Creative" }],
-        },
       },
     ],
     product_prices: [
@@ -91,8 +76,7 @@ describe("existingFormState", () => {
       en: { name: "Build Club", description: "Build castles together." },
     });
     expect(state.activeLocale).toBe("en");
-    expect(state.topicId).toBe("topic-1");
-    expect(state.tagIds).toEqual(new Set(["tag-1"]));
+    expect(state.topic).toBe("minecraft");
     expect(state.minAge).toBe("7");
     expect(state.maxAge).toBe("12");
     expect(state.startDate).toBe("2026-09-01");
@@ -210,13 +194,12 @@ describe("buildUpdateInput round-trip", () => {
     const input = buildUpdateInput(state, consumerConfig);
 
     expect(input.billing_mode).toBe("paid");
-    expect(input.topic_id).toBe("topic-1");
+    expect(input.topic).toBe("minecraft");
     expect(input.min_age).toBe(7);
     expect(input.max_age).toBe(12);
     expect(input.start_date).toBe("2026-09-01");
     expect(input.end_date).toBe(null);
     expect(input.signup_threshold).toBe(null);
-    expect(input.tag_ids).toEqual(["tag-1"]);
     expect(input.holiday_calendar_ids).toEqual(["cal-1"]);
     expect(input.image).toBe("abc.png");
     expect(input.prices).toEqual([

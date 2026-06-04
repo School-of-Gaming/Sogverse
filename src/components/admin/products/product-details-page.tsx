@@ -12,7 +12,7 @@ import {
   Languages,
   MapPin,
   Pencil,
-  Tag as TagIcon,
+  Shapes,
   Users,
   Wallet,
   ExternalLink,
@@ -28,6 +28,7 @@ import {
   useProductAdmin,
   type ProductAdminDetailRow,
 } from "@/services/products";
+import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { effectiveStatus } from "./effective-status";
 import { GroupsPanel } from "./groups/groups-panel";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
@@ -55,6 +56,7 @@ export function ProductDetailsPage({
   const t = useTranslations("admin.products");
   const c = useTranslations("common");
   const uiLocale = resolveLocale(useLocale());
+  const topicLabel = useTopicLabel();
   const label = t(`types.${config.i18nKey}.label`);
   const plural = t(`types.${config.i18nKey}.plural`);
 
@@ -100,23 +102,11 @@ export function ProductDetailsPage({
   }
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
-  const topicTr = resolveTranslation(
-    product.topics?.topic_translations ?? [],
-    uiLocale,
-  );
   const status = effectiveStatus(product, new Date(), 0);
   const imageUrl = product.image_path
     ? productImageUrl(product.image_path)
     : null;
-  const topicName = topicTr?.name ?? product.topics?.slug ?? null;
-
-  const tags = product.product_tags
-    .map((pt) => {
-      if (!pt.tags) return null;
-      const ttr = resolveTranslation(pt.tags.tag_translations, uiLocale);
-      return ttr?.name ?? pt.tags.slug;
-    })
-    .filter((n): n is string => n !== null);
+  const topicName = topicLabel(product.topic);
 
   return (
     <div className="space-y-6">
@@ -144,7 +134,7 @@ export function ProductDetailsPage({
         cloneLabel={c("clone")}
       />
 
-      <KeyFacts product={product} topicName={topicName} tags={tags} uiLocale={uiLocale} t={t} c={c} />
+      <KeyFacts product={product} topicName={topicName} uiLocale={uiLocale} t={t} c={c} />
 
       <GroupsPanel productId={productId} productType={productType} />
 
@@ -260,14 +250,12 @@ function HeaderCard({
 function KeyFacts({
   product,
   topicName,
-  tags,
   uiLocale,
   t,
   c,
 }: {
   product: ProductAdminDetailRow;
   topicName: string | null;
-  tags: string[];
   uiLocale: string;
   t: ReturnType<typeof useTranslations<"admin.products">>;
   c: ReturnType<typeof useTranslations<"common">>;
@@ -375,20 +363,8 @@ function KeyFacts({
           )}
         </Fact>
 
-        <Fact icon={TagIcon} label={t("detailsPage.fields.topic")}>
+        <Fact icon={Shapes} label={t("detailsPage.fields.topic")}>
           {topicName ?? <span className="text-muted-foreground">{c("notSet")}</span>}
-          {tags.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {tags.map((name) => (
-                <span
-                  key={name}
-                  className="rounded-full border px-2 py-0.5 text-xs"
-                >
-                  {name}
-                </span>
-              ))}
-            </div>
-          )}
         </Fact>
 
         {product.padlet_url && (

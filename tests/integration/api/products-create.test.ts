@@ -74,7 +74,7 @@ const validBody = {
   product_type: "consumer_club",
   billing_mode: "paid",
   translations: [{ locale: "en", name: "X", description: "Y" }],
-  topic_id: "topic-id",
+  topic: "minecraft",
   min_age: 7,
   max_age: 12,
   spoken_language_code: "en",

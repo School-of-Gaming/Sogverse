@@ -6,7 +6,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { ProductFormat } from "./filter-products";
 
 const TOPIC_PARAM = "topic";
-const TAG_PARAM = "tag";
 const FORMAT_PARAM = "format";
 const LANGUAGE_PARAM = "lang";
 
@@ -41,10 +40,6 @@ export function useBrowseFilters() {
     () => parseList(searchParams.get(TOPIC_PARAM)),
     [searchParams],
   );
-  const tags = useMemo(
-    () => parseList(searchParams.get(TAG_PARAM)),
-    [searchParams],
-  );
   const format = useMemo(
     () => parseFormat(searchParams.get(FORMAT_PARAM)),
     [searchParams],
@@ -54,15 +49,11 @@ export function useBrowseFilters() {
     [searchParams],
   );
   const hasAny =
-    topics.length > 0 ||
-    tags.length > 0 ||
-    format !== null ||
-    languages.length > 0;
+    topics.length > 0 || format !== null || languages.length > 0;
 
   const writeNext = useCallback(
     (next: {
       topics?: string[];
-      tags?: string[];
       format?: ProductFormat | null;
       languages?: string[];
     }) => {
@@ -70,10 +61,6 @@ export function useBrowseFilters() {
       if (next.topics !== undefined) {
         if (next.topics.length === 0) params.delete(TOPIC_PARAM);
         else params.set(TOPIC_PARAM, next.topics.join(","));
-      }
-      if (next.tags !== undefined) {
-        if (next.tags.length === 0) params.delete(TAG_PARAM);
-        else params.set(TAG_PARAM, next.tags.join(","));
       }
       if (next.format !== undefined) {
         if (next.format === null) params.delete(FORMAT_PARAM);
@@ -100,17 +87,6 @@ export function useBrowseFilters() {
     [topics, writeNext],
   );
 
-  const toggleTag = useCallback(
-    (slug: string) => {
-      const lower = slug.toLowerCase();
-      const next = tags.includes(lower)
-        ? tags.filter((t) => t !== lower)
-        : [...tags, lower];
-      writeNext({ tags: next });
-    },
-    [tags, writeNext],
-  );
-
   const toggleFormat = useCallback(
     (value: ProductFormat) => {
       writeNext({ format: format === value ? null : value });
@@ -130,17 +106,15 @@ export function useBrowseFilters() {
   );
 
   const clear = useCallback(() => {
-    writeNext({ topics: [], tags: [], format: null, languages: [] });
+    writeNext({ topics: [], format: null, languages: [] });
   }, [writeNext]);
 
   return {
     topics,
-    tags,
     format,
     languages,
     hasAny,
     toggleTopic,
-    toggleTag,
     toggleFormat,
     toggleLanguage,
     clear,

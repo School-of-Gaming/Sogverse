@@ -90,7 +90,9 @@ export type GeduLocationInsert = Database["public"]["Tables"]["gedu_locations"][
 export type ProductType = Database["public"]["Enums"]["product_type"];
 export type BillingMode = Database["public"]["Enums"]["billing_mode"];
 export type ProductStatus = Database["public"]["Enums"]["product_status"];
-export type TopicKind = Database["public"]["Enums"]["topic_kind"];
+// Fixed set of product topics. The game/subject split + display labels live
+// in src/lib/products/topics.ts (PRODUCT_TOPICS).
+export type ProductTopic = Database["public"]["Enums"]["product_topic"];
 
 // products
 export type Product = Database["public"]["Tables"]["products"]["Row"];
@@ -101,27 +103,12 @@ export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 export type ScheduleSlot = Database["public"]["Tables"]["schedule_slots"]["Row"];
 export type ScheduleSlotInsert = Database["public"]["Tables"]["schedule_slots"]["Insert"];
 
-// topics
-export type Topic = Database["public"]["Tables"]["topics"]["Row"];
-export type TopicInsert = Database["public"]["Tables"]["topics"]["Insert"];
-
-// tags
-export type Tag = Database["public"]["Tables"]["tags"]["Row"];
-export type TagInsert = Database["public"]["Tables"]["tags"]["Insert"];
-
-// Translation tables — one row per (parent_id, locale). Parents (products,
-// topics, tags) no longer carry name/description directly; the reader
-// resolves a locale via resolveTranslation() in src/lib/i18n/resolve-translation.ts.
+// Product translation table — one row per (product_id, locale). Products no
+// longer carry name/description directly; the reader resolves a locale via
+// resolveTranslation() in src/lib/i18n/resolve-translation.ts. (Topic names
+// are not DB-backed — see src/lib/products/topics.ts.)
 export type ProductTranslation = Database["public"]["Tables"]["product_translations"]["Row"];
 export type ProductTranslationInsert = Database["public"]["Tables"]["product_translations"]["Insert"];
-export type TopicTranslation = Database["public"]["Tables"]["topic_translations"]["Row"];
-export type TopicTranslationInsert = Database["public"]["Tables"]["topic_translations"]["Insert"];
-export type TagTranslation = Database["public"]["Tables"]["tag_translations"]["Row"];
-export type TagTranslationInsert = Database["public"]["Tables"]["tag_translations"]["Insert"];
-
-// product_tags
-export type ProductTag = Database["public"]["Tables"]["product_tags"]["Row"];
-export type ProductTagInsert = Database["public"]["Tables"]["product_tags"]["Insert"];
 
 // product_prices
 export type ProductPrice = Database["public"]["Tables"]["product_prices"]["Row"];
@@ -159,28 +146,13 @@ export type BrowseRowLocation = {
 
 // Joined shape consumed by the parent-facing browse pages
 // (src/components/public/products/product-browse-page.tsx). The card
-// renderer expects everything it needs to draw itself in one row — topic
-// label, all product translations, tag chips, prices per supported currency,
-// weekly schedule slots, and the joined location for in-person products.
-// Single source so the component props mirror the SELECT shape exactly.
+// renderer expects everything it needs to draw itself in one row — the topic
+// enum (label resolved via PRODUCT_TOPICS), all product translations, prices
+// per supported currency, weekly schedule slots, and the joined location for
+// in-person products. Single source so the component props mirror the SELECT
+// shape exactly. (`topic` is a column on Product, so no join is needed.)
 export type ProductBrowseRow = Product & {
-  topics:
-    | {
-        slug: string;
-        kind: TopicKind;
-        icon_path: string | null;
-        topic_translations: TopicTranslation[];
-      }
-    | null;
   product_translations: ProductTranslation[];
-  product_tags: {
-    tags:
-      | {
-          slug: string;
-          tag_translations: TagTranslation[];
-        }
-      | null;
-  }[];
   product_prices: ProductPrice[];
   schedule_slots: Pick<
     ScheduleSlot,

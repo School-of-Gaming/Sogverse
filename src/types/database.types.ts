@@ -762,39 +762,6 @@ export type Database = {
           },
         ]
       }
-      product_tags: {
-        Row: {
-          created_at: string
-          product_id: string
-          tag_id: string
-        }
-        Insert: {
-          created_at?: string
-          product_id: string
-          tag_id: string
-        }
-        Update: {
-          created_at?: string
-          product_id?: string
-          tag_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "product_tags_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "product_tags_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       product_translations: {
         Row: {
           created_at: string
@@ -853,7 +820,7 @@ export type Database = {
           start_date: string | null
           status: Database["public"]["Enums"]["product_status"]
           timezone: string
-          topic_id: string
+          topic: Database["public"]["Enums"]["product_topic"]
           updated_at: string
           waitlist_enabled: boolean
         }
@@ -879,7 +846,7 @@ export type Database = {
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
           timezone: string
-          topic_id: string
+          topic: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
           waitlist_enabled?: boolean
         }
@@ -905,7 +872,7 @@ export type Database = {
           start_date?: string | null
           status?: Database["public"]["Enums"]["product_status"]
           timezone?: string
-          topic_id?: string
+          topic?: Database["public"]["Enums"]["product_topic"]
           updated_at?: string
           waitlist_enabled?: boolean
         }
@@ -930,13 +897,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "spoken_languages"
             referencedColumns: ["code"]
-          },
-          {
-            foreignKeyName: "products_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "topics"
-            referencedColumns: ["id"]
           },
         ]
       }
@@ -1166,124 +1126,6 @@ export type Database = {
         }
         Relationships: []
       }
-      tag_translations: {
-        Row: {
-          created_at: string
-          description: string | null
-          locale: string
-          name: string
-          tag_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          locale: string
-          name: string
-          tag_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          locale?: string
-          name?: string
-          tag_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tag_translations_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "tags"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tags: {
-        Row: {
-          created_at: string
-          id: string
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      topic_translations: {
-        Row: {
-          created_at: string
-          description: string | null
-          locale: string
-          name: string
-          topic_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          locale: string
-          name: string
-          topic_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          locale?: string
-          name?: string
-          topic_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "topic_translations_topic_id_fkey"
-            columns: ["topic_id"]
-            isOneToOne: false
-            referencedRelation: "topics"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      topics: {
-        Row: {
-          created_at: string
-          icon_path: string | null
-          id: string
-          kind: Database["public"]["Enums"]["topic_kind"]
-          slug: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          icon_path?: string | null
-          id?: string
-          kind: Database["public"]["Enums"]["topic_kind"]
-          slug: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          icon_path?: string | null
-          id?: string
-          kind?: Database["public"]["Enums"]["topic_kind"]
-          slug?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       whatsapp_contacts: {
         Row: {
           created_at: string
@@ -1453,9 +1295,8 @@ export type Database = {
           p_spoken_language_code: string
           p_start_date?: string
           p_status?: Database["public"]["Enums"]["product_status"]
-          p_tag_ids?: string[]
           p_timezone: string
-          p_topic_id: string
+          p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
           p_waitlist_enabled?: boolean
         }
@@ -1599,9 +1440,8 @@ export type Database = {
           p_signup_threshold?: number
           p_spoken_language_code: string
           p_start_date?: string
-          p_tag_ids?: string[]
           p_timezone: string
-          p_topic_id: string
+          p_topic: Database["public"]["Enums"]["product_topic"]
           p_translations: Json
           p_waitlist_enabled?: boolean
         }
@@ -1632,6 +1472,7 @@ export type Database = {
         | "running"
         | "completed"
         | "cancelled"
+      product_topic: "minecraft" | "fortnite" | "webinar"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       refund_reason:
         | "session_cancelled_in_window"
@@ -1641,7 +1482,6 @@ export type Database = {
         | "subscription_period_proration"
         | "duplicate_payment"
       subscription_frequency: "monthly" | "quarterly" | "yearly"
-      topic_kind: "game" | "subject"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -1789,6 +1629,7 @@ export const Constants = {
         "reservation_duplicate",
       ],
       product_status: ["draft", "pending", "running", "completed", "cancelled"],
+      product_topic: ["minecraft", "fortnite", "webinar"],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       refund_reason: [
         "session_cancelled_in_window",
@@ -1799,7 +1640,6 @@ export const Constants = {
         "duplicate_payment",
       ],
       subscription_frequency: ["monthly", "quarterly", "yearly"],
-      topic_kind: ["game", "subject"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },

@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_CREDENTIALS, TEST_IDS } from "./constants";
-import { ensureTestTopic, deleteTestProducts } from "./product-helpers";
+import { deleteTestProducts } from "./product-helpers";
 
 /**
  * DB-level coverage for update_product(). Cousin of the create RPC,
@@ -26,11 +26,9 @@ const PRODUCT_ID = "00000000-0000-0000-0000-0000000005f1";
 
 describe("update_product", () => {
   let admin: SupabaseClient<Database>;
-  let topicId: string;
 
-  beforeAll(async () => {
+  beforeAll(() => {
     admin = createAdminTestClient();
-    topicId = await ensureTestTopic(admin);
   });
 
   afterAll(async () => {
@@ -46,7 +44,7 @@ describe("update_product", () => {
       id: PRODUCT_ID,
       product_type: "consumer_club",
       billing_mode: "paid",
-      topic_id: topicId,
+      topic: "minecraft",
       min_age: 7,
       max_age: 12,
       spoken_language_code: "en",
@@ -83,7 +81,7 @@ describe("update_product", () => {
         { locale: "en", name: "New", description: "New desc" },
         { locale: "fi", name: "Uusi", description: "Uusi kuvaus" },
       ],
-      p_topic_id: topicId,
+      p_topic: "minecraft",
       p_min_age: 8,
       p_max_age: 14,
       p_spoken_language_code: "en",
@@ -160,7 +158,7 @@ describe("update_product", () => {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [{ locale: "en", name: "Whatever", description: "" }],
-      p_topic_id: topicId,
+      p_topic: "minecraft",
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
@@ -192,7 +190,7 @@ describe("update_product", () => {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [{ locale: "en", name: "Hacker", description: "" }],
-      p_topic_id: topicId,
+      p_topic: "minecraft",
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
@@ -214,7 +212,7 @@ describe("update_product", () => {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [{ locale: "sv", name: "Bara svenska", description: "" }],
-      p_topic_id: topicId,
+      p_topic: "minecraft",
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
@@ -239,7 +237,7 @@ describe("update_product", () => {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [],
-      p_topic_id: topicId,
+      p_topic: "minecraft",
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",
@@ -257,7 +255,7 @@ describe("update_product", () => {
       p_id: fakeId,
       p_billing_mode: "paid",
       p_translations: [{ locale: "en", name: "Doesn't exist", description: "" }],
-      p_topic_id: topicId,
+      p_topic: "minecraft",
       p_min_age: 7,
       p_max_age: 12,
       p_spoken_language_code: "en",

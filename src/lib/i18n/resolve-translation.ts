@@ -1,8 +1,8 @@
 // Pick the best translation for a user's locale.
 //
-// The translation tables (product_translations, topic_translations,
-// tag_translations) hold one row per (parent_id, locale). Admins decide
-// which locales to provide; not every parent has every locale. This helper
+// The product_translations table holds one row per (product_id, locale).
+// Admins decide which locales to provide; not every product has every
+// locale. This helper
 // walks the fallback order:
 //
 //   1. The user's current UI locale.

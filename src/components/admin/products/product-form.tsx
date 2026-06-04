@@ -92,7 +92,6 @@ export function ProductFormShell({
         setState={setState}
         config={config}
         uiLocale={uiLocale}
-        setError={setError}
       />
       <AudienceSection state={state} setState={setState} />
       <WhereSection state={state} setState={setState} config={config} />

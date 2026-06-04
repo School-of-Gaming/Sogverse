@@ -30,7 +30,7 @@ function validConsumerState(): FormState {
     en: { name: "Test Club", description: "A great club" },
   };
   s.activeLocale = "en";
-  s.topicId = "topic-id";
+  s.topic = "minecraft";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
   s.locationId = null;
@@ -96,7 +96,7 @@ describe("validate", () => {
   describe("identity", () => {
     it("requires a topic", () => {
       const s = validConsumerState();
-      s.topicId = "";
+      s.topic = "";
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "topicRequired",
       });
@@ -567,7 +567,7 @@ function mockDetailRow(
     is_visible: true,
     is_remote: true,
     location_id: null,
-    topic_id: "topic-1",
+    topic: "minecraft",
     min_age: 8,
     max_age: 12,
     spoken_language_code: "en",
@@ -581,12 +581,6 @@ function mockDetailRow(
     refund_policy_days: null,
     registration_opens_at: "2020-01-01T00:00:00Z",
     timezone: "Europe/Helsinki",
-    topics: {
-      id: "topic-1",
-      slug: "minecraft",
-      kind: "game",
-      topic_translations: [],
-    },
     product_translations: [
       {
         product_id: "prod-1",
@@ -605,7 +599,6 @@ function mockDetailRow(
         updated_at: "2026-01-01T00:00:00Z",
       },
     ],
-    product_tags: [],
     product_prices: [
       { currency: "eur", price_per_session: 1000, price_per_month: 3000 },
     ],

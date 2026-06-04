@@ -20,7 +20,7 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
 function friendlyRpcError(err: { code?: string; message: string }): string {
   switch (err.code) {
     case "23503": // foreign_key_violation
-      return "Something you selected (topic, location, tag, or holiday calendar) is no longer available. Please refresh the page and try again.";
+      return "Something you selected (location or holiday calendar) is no longer available. Please refresh the page and try again.";
     case "23505": // unique_violation
       return "A product with these details already exists. Please change something and try again.";
     default:
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
     p_product_type: body.product_type as RpcArgs["p_product_type"],
     p_billing_mode: body.billing_mode as RpcArgs["p_billing_mode"],
     p_translations: body.translations as RpcArgs["p_translations"],
-    p_topic_id: body.topic_id as string,
+    p_topic: body.topic as RpcArgs["p_topic"],
     p_min_age: body.min_age as number,
     p_max_age: body.max_age as number,
     p_spoken_language_code: body.spoken_language_code as string,
@@ -116,7 +116,6 @@ export async function POST(request: Request) {
     p_refund_policy_days:
       (body.refund_policy_days as number | null) ?? undefined,
     p_schedule_slots: body.schedule_slots as RpcArgs["p_schedule_slots"],
-    p_tag_ids: (body.tag_ids as string[] | undefined) ?? undefined,
     p_prices: body.prices as RpcArgs["p_prices"],
     p_holiday_calendar_ids:
       (body.holiday_calendar_ids as string[] | undefined) ?? undefined,
@@ -132,7 +131,7 @@ export async function POST(request: Request) {
 
   if (rpcError) {
     // The form validates everything client-side, so RPC errors here are
-    // mostly race conditions (an admin deleted a topic / location / tag
+    // mostly race conditions (an admin deleted a location / holiday calendar
     // between page load and submit). Translate Postgres native error
     // codes to actionable messages; RAISE EXCEPTION messages from our
     // own functions are already user-friendly and pass through.

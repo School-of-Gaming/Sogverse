@@ -115,7 +115,7 @@ export function validate(
     }
   }
 
-  if (!state.topicId) return err("topicRequired");
+  if (!state.topic) return err("topicRequired");
   if (!state.spokenLanguageCode) return err("spokenLanguageRequired");
 
   const minAge = Number(state.minAge);
@@ -292,7 +292,8 @@ function buildSharedFields(
   return {
     billing_mode: billingMode,
     translations,
-    topic_id: state.topicId,
+    // validate() guarantees a non-empty topic before we ever build a payload.
+    topic: state.topic as Exclude<FormState["topic"], "">,
     min_age: minAge,
     max_age: maxAge,
     spoken_language_code: state.spokenLanguageCode,
@@ -315,7 +316,6 @@ function buildSharedFields(
     registration_opens_at: resolveRegistrationOpensAt(state),
     is_visible: state.isVisible,
     schedule_slots: finalSlots,
-    tag_ids: Array.from(state.tagIds),
     prices: showPricing
       ? SUPPORTED_CURRENCIES.map((currency) => {
           const row = state.prices[currency];
@@ -494,15 +494,9 @@ export function existingFormState(
   return {
     translations,
     activeLocale,
-    topicId: product.topic_id,
-    tagIds: new Set(product.product_tags.map((pt) => pt.tag_id)),
+    topic: product.topic,
     padletUrl: product.padlet_url ?? "",
     image: product.image_path ?? null,
-    showNewTopic: false,
-    newTopicName: "",
-    newTopicKind: "game",
-    showNewTag: false,
-    newTagName: "",
     minAge: String(product.min_age),
     maxAge: String(product.max_age),
     spokenLanguageCode: product.spoken_language_code,

@@ -20,17 +20,11 @@ export {
 } from "./products.queries";
 export {
   referenceKeys,
-  useTopics,
-  useTags,
   useHolidayCalendars,
   useSiteDetails,
-  useCreateTopic,
-  useCreateTag,
   useUpdateSiteNotes,
   type SiteDetailsBundle,
   type HolidayCalendarWithDates,
-  type CreateTopicInput,
-  type CreateTagInput,
   type UpdateSiteNotesInput,
 } from "./reference-data.queries";
 export { fxKeys, useFxRatesFromEur, type FxRates } from "./fx.queries";

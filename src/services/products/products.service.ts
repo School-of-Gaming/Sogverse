@@ -3,6 +3,7 @@ import type {
   Product,
   ProductTranslation,
   ProductType,
+  ProductTopic,
   BillingMode,
   ProductStatus,
   ProductBrowseRow,
@@ -10,17 +11,9 @@ import type {
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
 
-// Topic translations join is read locale-agnostic; the client picks the row
-// to display via resolveTranslation. List/detail views always need at least
-// the topic name + slug, plus all topic translations so admin tooling can
-// switch locales without re-fetching.
+// `topic` is a column on Product (the product_topic enum) — its label is
+// resolved client-side via PRODUCT_TOPICS, so no join is needed here.
 export type ProductWithDetails = Product & {
-  topics:
-    | {
-        slug: string;
-        topic_translations: { locale: string; name: string }[];
-      }
-    | null;
   product_translations: ProductTranslation[];
 };
 
@@ -37,28 +30,11 @@ export type ProductDetailRow = ProductBrowseRow & {
 // Admin-only single-product detail. Unlike ProductDetailRow this is
 // NOT filtered on is_visible / status, so admins can fetch drafts and
 // cancelled rows. Carries everything the form needs to round-trip an
-// edit (tag IDs, holiday calendar IDs) plus readable strings the
-// details page renders (tag/topic translations, location chain,
-// holiday calendar names).
+// edit (holiday calendar IDs) plus readable strings the details page
+// renders (location chain, holiday calendar names). The topic enum
+// rides along on the base Product columns.
 export type ProductAdminDetailRow = Product & {
-  topics:
-    | {
-        id: string;
-        slug: string;
-        kind: string;
-        topic_translations: { locale: string; name: string }[];
-      }
-    | null;
   product_translations: ProductTranslation[];
-  product_tags: {
-    tag_id: string;
-    tags:
-      | {
-          slug: string;
-          tag_translations: { locale: string; name: string }[];
-        }
-      | null;
-  }[];
   product_prices: {
     currency: string;
     price_per_session: number;
@@ -112,7 +88,7 @@ export type CreateProductInput = {
   product_type: ProductType;
   billing_mode: BillingMode;
   translations: ProductTranslationInput[];
-  topic_id: string;
+  topic: ProductTopic;
   min_age: number;
   max_age: number;
   spoken_language_code: string;
@@ -129,7 +105,6 @@ export type CreateProductInput = {
   registration_opens_at: string;
   is_visible: boolean;
   schedule_slots: ScheduleSlotInput[];
-  tag_ids: string[];
   prices: PriceInput[];
   holiday_calendar_ids: string[];
   image: File | null;
@@ -148,7 +123,7 @@ export type CreateProductInput = {
 export type UpdateProductInput = {
   billing_mode: BillingMode;
   translations: ProductTranslationInput[];
-  topic_id: string;
+  topic: ProductTopic;
   min_age: number;
   max_age: number;
   spoken_language_code: string;
@@ -164,7 +139,6 @@ export type UpdateProductInput = {
   registration_opens_at: string;
   is_visible: boolean;
   schedule_slots: ScheduleSlotInput[];
-  tag_ids: string[];
   prices: PriceInput[];
   holiday_calendar_ids: string[];
   image: File | string | null;
@@ -176,9 +150,7 @@ export class ProductsService {
   async listByType(type: ProductType): Promise<ProductWithDetails[]> {
     const { data, error } = await this.supabase
       .from("products")
-      .select(
-        "*, topics(slug, topic_translations(locale, name)), product_translations(*)"
-      )
+      .select("*, product_translations(*)")
       .eq("product_type", type)
       .order("created_at", { ascending: false });
 
@@ -207,7 +179,7 @@ export class ProductsService {
         // like the same thing but PostgREST resolves it to the *children*
         // (rows whose parent_id points back here) and returns `[]` for
         // any leaf location — surfaces as "Foo, undefined" in the UI.
-        "*, topics(slug, kind, icon_path, topic_translations(*)), product_translations(*), product_tags(tags(slug, tag_translations(*))), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))"
+        "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))"
       )
       .in("product_type", types)
       .eq("is_visible", true)
@@ -237,7 +209,7 @@ export class ProductsService {
     const { data, error } = await this.supabase
       .from("products")
       .select(
-        "*, topics(slug, kind, icon_path, topic_translations(*)), product_translations(*), product_tags(tags(slug, tag_translations(*))), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason)))",
+        "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason)))",
       )
       .eq("id", id)
       .maybeSingle();
@@ -308,7 +280,7 @@ export class ProductsService {
     const { data, error } = await this.supabase
       .from("products")
       .select(
-        "*, topics(id, slug, kind, topic_translations(locale, name)), product_translations(*), product_tags(tag_id, tags(slug, tag_translations(locale, name))), product_prices(currency, price_per_session, price_per_month), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
+        "*, product_translations(*), product_prices(currency, price_per_session, price_per_month), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
       )
       .eq("id", id)
       .maybeSingle();

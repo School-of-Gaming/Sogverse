@@ -128,17 +128,12 @@ function buildBaseProduct(
     waitlist_enabled: stateKind === "full_waitlist",
     registration_opens_at: registrationOpensAt,
     image_path: null,
-    topic_id: "mock-topic-1",
+    // Fixed product_topic enum; the label is resolved via PRODUCT_TOPICS, so
+    // the value just needs to be valid. Events get Fortnite, the rest
+    // Minecraft — enough to exercise both game chips in the preview.
+    topic: productType === "event" ? "fortnite" : "minecraft",
     created_at: new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString(),
     updated_at: new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString(),
-    topics: {
-      slug: "minecraft",
-      kind: "game",
-      icon_path: null,
-      topic_translations: [
-        { locale: "en", name: "Minecraft", topic_id: "mock-topic-1" } as never,
-      ],
-    },
     product_translations: [
       {
         locale: "en",
@@ -146,28 +141,6 @@ function buildBaseProduct(
         description: copy.description,
         product_id: `mock-${productType}-${stateKind}`,
       } as never,
-    ],
-    product_tags: [
-      {
-        tags: {
-          slug: "creative",
-          tag_translations: [
-            { locale: "en", name: "Creative", tag_id: "mock-tag-1" } as never,
-          ],
-        },
-      },
-      {
-        tags: {
-          slug: "beginner",
-          tag_translations: [
-            {
-              locale: "en",
-              name: "Beginner friendly",
-              tag_id: "mock-tag-2",
-            } as never,
-          ],
-        },
-      },
     ],
     product_prices:
       billingMode === "free" || billingMode === "external_contract"
