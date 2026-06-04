@@ -1,4 +1,4 @@
-import { DEFAULT_CURRENCY, type SupportedCurrency } from "@/lib/constants";
+import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import type { ProductTopic, ProductType } from "@/types";
 import type {
@@ -65,13 +65,11 @@ export interface FormState {
 
   // Capacity & billing
   paidMode: PaidMode;
+  // Per-currency price map. The platform is EUR-only (see
+  // src/lib/constants/currency.ts), so this currently holds a single `eur`
+  // row — the shape is kept currency-keyed so re-enabling currencies is a
+  // matter of widening SUPPORTED_CURRENCIES, not reshaping form state.
   prices: Record<SupportedCurrency, { session: string; month: string }>;
-  // Currencies the admin has manually typed into. When EUR changes, every
-  // non-EUR currency NOT in this set is re-filled from the EUR value via
-  // FX. Adding to this set is a one-way "lock" — auto-fill won't overwrite
-  // a value the admin has edited.
-  manualEdits: Set<SupportedCurrency>;
-  activeCurrency: SupportedCurrency;
   seatCount: string;
   uncapped: boolean;
   waitlistEnabled: boolean;
@@ -143,11 +141,7 @@ export function initialState(
     paidMode: initialPaidMode,
     prices: {
       eur: { session: "", month: "" },
-      gbp: { session: "", month: "" },
-      usd: { session: "", month: "" },
     },
-    manualEdits: new Set(),
-    activeCurrency: DEFAULT_CURRENCY,
     seatCount: defaultSeats(config.productType),
     uncapped: false,
     waitlistEnabled: true,

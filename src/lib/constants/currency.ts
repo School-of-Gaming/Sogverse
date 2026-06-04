@@ -1,10 +1,17 @@
 // Single source of truth for supported currencies.
-// When adding a new currency, also update CURRENCY_CONFIG below and
-// ensure Stripe Products have prices in the new currency.
-// Order matters for any UI that iterates this list (admin pricing picker,
-// parent currency picker). EUR first = home currency. Admin-facing forms
-// expect this order specifically.
-export const SUPPORTED_CURRENCIES = ["eur", "gbp", "usd"] as const;
+//
+// The platform is locked to EUR. Admins author prices in EUR, customers see
+// EUR, and our records (payments, subscriptions) are in EUR. Stripe Checkout's
+// Adaptive Pricing presents each customer their local currency and settles us
+// in EUR at the price we set — so "buy in another currency" works without us
+// modelling other currencies internally.
+//
+// This list is the seam for turning multi-currency back on. The data model
+// (per-currency `product_prices` rows, `currency` columns) is deliberately
+// kept currency-agnostic, so re-enabling is: add currencies here, restore the
+// selection UI, and thread the chosen currency through. See the
+// "Re-enabling non-EUR currencies" section in TODO.md.
+export const SUPPORTED_CURRENCIES = ["eur"] as const;
 export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[number];
 export const DEFAULT_CURRENCY: SupportedCurrency = "eur";
 
@@ -12,37 +19,8 @@ export const CURRENCY_CONFIG: Record<
   SupportedCurrency,
   { symbol: string; label: string }
 > = {
-  usd: { symbol: "$", label: "USD" },
-  gbp: { symbol: "\u00A3", label: "GBP" },
-  eur: { symbol: "\u20AC", label: "EUR" },
+  eur: { symbol: "€", label: "EUR" },
 };
-
-/**
- * Map a browser locale (e.g. "en-US", "de-DE", "fr") to a supported currency.
- * Falls back to DEFAULT_CURRENCY for unrecognized locales.
- */
-export function detectCurrencyFromLocale(locale: string): SupportedCurrency {
-  const region = locale.split("-")[1]?.toUpperCase();
-  if (region === "US") return "usd";
-  if (region === "GB") return "gbp";
-
-  // European countries that use EUR
-  const eurRegions = new Set([
-    "DE", "FR", "ES", "IT", "NL", "PT", "AT", "BE", "FI", "IE", "GR",
-    "LU", "SK", "SI", "EE", "LV", "LT", "MT", "CY", "HR",
-  ]);
-  if (region && eurRegions.has(region)) return "eur";
-
-  // Language-only codes (no region): map common European languages to EUR
-  const lang = locale.split("-")[0]?.toLowerCase();
-  const eurLanguages = new Set([
-    "de", "fr", "es", "it", "nl", "pt", "fi", "el", "sk", "sl", "et",
-    "lv", "lt", "mt", "hr",
-  ]);
-  if (eurLanguages.has(lang)) return "eur";
-
-  return DEFAULT_CURRENCY;
-}
 
 export function isSupportedCurrency(value: unknown): value is SupportedCurrency {
   return (

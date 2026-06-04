@@ -86,37 +86,33 @@ describe("formatProductPrice", () => {
     const line = formatProductPrice({
       prices: [
         priceRow({
-          currency: "gbp",
+          currency: "eur",
           price_cents: 1500,
         }),
       ],
       billingMode: "paid",
       productType: "event",
-      currency: "gbp",
+      currency: "eur",
       locale: "en",
     });
     expect(line.kind).toBe("upfront");
     if (line.kind === "upfront") {
-      expect(line.total).toMatch(/£|GBP/);
+      expect(line.total).toMatch(/15/);
+      expect(line.total).toMatch(/€|EUR/);
     }
   });
 
-  it("returns kind=unavailable when the user's currency has no row", () => {
+  it("returns kind=unavailable when the product has no EUR price row", () => {
     const line = formatProductPrice({
-      prices: [
-        priceRow({
-          currency: "eur",
-          price_cents: 4500,
-        }),
-      ],
+      prices: [],
       billingMode: "paid",
       productType: "consumer_club",
-      currency: "usd",
+      currency: "eur",
       locale: "en",
     });
     expect(line.kind).toBe("unavailable");
     if (line.kind === "unavailable") {
-      expect(line.currency).toBe("USD");
+      expect(line.currency).toBe("EUR");
     }
   });
 });

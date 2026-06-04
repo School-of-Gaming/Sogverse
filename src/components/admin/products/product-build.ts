@@ -10,7 +10,6 @@
 
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import {
-  DEFAULT_CURRENCY,
   SUPPORTED_CURRENCIES,
   type SupportedCurrency,
 } from "@/lib/constants";
@@ -68,20 +67,13 @@ export type ValidationFailure = {
   messageKey: ValidationKey;
   /** Interpolation values for t(). */
   values?: Record<string, string | number>;
-  /** Currency tab the form should switch to so the bad input is visible. */
-  focusCurrency?: SupportedCurrency;
 };
 
 function err(
   messageKey: ValidationKey,
   values?: Record<string, string | number>,
-  focusCurrency?: SupportedCurrency,
 ): ValidationFailure {
-  return focusCurrency !== undefined
-    ? { messageKey, values, focusCurrency }
-    : values !== undefined
-      ? { messageKey, values }
-      : { messageKey };
+  return values !== undefined ? { messageKey, values } : { messageKey };
 }
 
 /**
@@ -182,10 +174,10 @@ export function validate(
 
       const trimmed = row[field].trim();
       if (trimmed === "")
-        return err(missingKey, { currency: currencyLabel }, currency);
+        return err(missingKey, { currency: currencyLabel });
       const value = Number(trimmed);
       if (!Number.isFinite(value) || value < 0)
-        return err(negativeKey, { currency: currencyLabel }, currency);
+        return err(negativeKey, { currency: currencyLabel });
     }
   }
 
@@ -418,10 +410,6 @@ function inferStartMode(
  * row's data fields.
  *
  * Decisions baked in:
- *   - `manualEdits` is seeded with all 3 currencies. Otherwise editing
- *     the EUR price would FX-overwrite the persisted GBP/USD values that
- *     the admin chose deliberately. Admin clears a cell to opt back into
- *     auto-fill.
  *   - `registrationOpensMode` is derived: in the future ⇒ scheduled (with
  *     the date/hour/minute fields populated from the timestamp in
  *     Helsinki TZ). In the past ⇒ "immediately" (the form will re-resolve
@@ -453,9 +441,10 @@ export function existingFormState(
         ? "en"
         : (translationLocales[0] ?? uiLocale);
 
-  // Per-currency record. Rows we don't have stay blank — that's invalid
-  // for paid products, but the form's validate() will catch it on save
-  // and the read-only details page handles missing rows separately.
+  // EUR-only price map. A blank row is invalid for paid products, but
+  // validate() catches that on save. Legacy non-EUR `product_prices` rows
+  // (from before the EUR-only lockdown) are ignored — `cur in prices` only
+  // admits the eur row.
   //
   // The DB stores one `price_cents`; the form has two input slots
   // (session/month) but only ever uses the one its pricing shape selects.
@@ -464,8 +453,6 @@ export function existingFormState(
     effectivePricingShape(config) === "monthly" ? "month" : "session";
   const prices: FormState["prices"] = {
     eur: { session: "", month: "" },
-    gbp: { session: "", month: "" },
-    usd: { session: "", month: "" },
   };
   for (const row of product.product_prices) {
     const cur = row.currency as SupportedCurrency;
@@ -522,8 +509,6 @@ export function existingFormState(
       product.signup_threshold != null ? String(product.signup_threshold) : "",
     paidMode,
     prices,
-    manualEdits: new Set(SUPPORTED_CURRENCIES),
-    activeCurrency: DEFAULT_CURRENCY,
     seatCount: product.seat_count != null ? String(product.seat_count) : "",
     uncapped: product.seat_count == null,
     waitlistEnabled: product.waitlist_enabled,

@@ -3,7 +3,6 @@
 import { useTranslations } from "next-intl";
 import { formatCurrencyFromCents } from "@/lib/utils";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import { CurrencyPicker } from "@/components/layout/currency-picker";
 import type { PricingOption } from "./pricing-options";
 
 // Single-option price display. There is one purchase option per product, so
@@ -22,26 +21,9 @@ export function PricingPanelView({
   currency,
   locale,
 }: PricingPanelViewProps) {
-  // Free / external products don't display a price, so the currency picker
-  // would just be visual noise. For `unavailable` we keep it — that branch is
-  // literally "this currency isn't sold here", so the picker is the fix.
-  const showCurrencyPicker =
-    option.kind !== "free" && option.kind !== "external";
-
   return (
     <div className="space-y-3">
-      {showCurrencyPicker && <CurrencyPickerRow />}
       <OptionRow option={option} currency={currency} locale={locale} />
-    </div>
-  );
-}
-
-function CurrencyPickerRow() {
-  const t = useTranslations("productDetail.pricing");
-  return (
-    <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-      <span>{t("pricesIn")}</span>
-      <CurrencyPicker />
     </div>
   );
 }

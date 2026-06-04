@@ -335,9 +335,14 @@ export async function POST(request: Request) {
   // which our webhook turns into expire_reservation.
   const expiresAt = Math.floor(Date.now() / 1000) + RESERVATION_LIFETIME_MINUTES * 60;
 
+  // Adaptive Pricing presents each customer their local currency and lets
+  // Stripe convert, while the Session/PaymentIntent still report our EUR
+  // integration currency and settle us in EUR at the price we set. That's
+  // how "buy in another currency" works without us modelling other
+  // currencies internally. See src/lib/constants/currency.ts.
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
     customer: stripeCustomerId,
-    adaptive_pricing: { enabled: false },
+    adaptive_pricing: { enabled: true },
     expires_at: expiresAt,
     metadata,
     success_url: successUrl,
@@ -365,6 +370,13 @@ export async function POST(request: Request) {
         },
       },
     ];
+    // Offer to save the card for future purchases. Checked = saved with
+    // `allow_redisplay: always`, so it's offered/prefilled on the customer's
+    // next Checkout and manageable from the billing portal. Subscriptions
+    // (the other branch) already save the card by necessity.
+    sessionParams.saved_payment_method_options = {
+      payment_method_save: "enabled",
+    };
   } else {
     // First-time subscription — went through the inline-add branch's
     // `getOrCreateSubscriptionPrice` failure check already.

@@ -65,14 +65,6 @@ export function ProductFormShell({
     const failure = validate(state, config);
     if (failure) {
       setError(t(`errors.${failure.messageKey}`, failure.values));
-      // Switch the pricing block to the failing currency tab so the admin
-      // sees an empty/invalid field where the message says it is.
-      if (failure.focusCurrency) {
-        setState((prev) => ({
-          ...prev,
-          activeCurrency: failure.focusCurrency!,
-        }));
-      }
       return;
     }
 

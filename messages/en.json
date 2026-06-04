@@ -91,8 +91,7 @@
     "roleAdmin": "Admin",
     "roleParent": "Parent",
     "roleGamer": "Gamer",
-    "roleGedu": "Gedu",
-    "selectCurrency": "Select currency"
+    "roleGedu": "Gedu"
   },
   "about": {
     "hero": {
@@ -412,8 +411,6 @@
         "noStaffNotes": "No staff notes for this site."
       },
       "pricing": {
-        "currencyPickerLabel": "Currency",
-        "fxSuggested": "Suggested from today's EUR rate ({rate}). Edit to override.",
         "perMonthLabel": "Price per month",
         "totalLabel": "Total price"
       },
@@ -1331,7 +1328,6 @@
     },
     "pricing": {
       "title": "Pricing",
-      "pricesIn": "Prices in",
       "subscriptionHint": "Billed monthly · cancel anytime.",
       "free": "Free",
       "freeHint": "No payment needed.",

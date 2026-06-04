@@ -9,8 +9,8 @@ import type { ProductAdminDetailRow } from "@/services/products";
 // Verifies the `existingFormState` reverse transform: a fetched product
 // row is mapped back into FormState such that round-tripping it through
 // buildUpdateInput re-emits the same values. Catches regressions in
-// startMode inference, currency cents↔decimal conversion, manualEdits
-// seeding, and the registration-mode (immediate vs scheduled) branch.
+// startMode inference, currency cents↔decimal conversion, and the
+// registration-mode (immediate vs scheduled) branch.
 
 const consumerConfig = PRODUCT_TYPE_CONFIG.consumer_club;
 
@@ -92,17 +92,10 @@ describe("existingFormState", () => {
     const state = existingFormState(product, consumerConfig, "en");
 
     // Consumer clubs are monthly, so price_cents loads into `month`; the
-    // unused `session` slot stays blank.
+    // unused `session` slot stays blank. Legacy non-EUR rows on the product
+    // (gbp/usd) are ignored under the EUR-only lockdown.
     expect(state.prices.eur).toEqual({ session: "", month: "45.00" });
-    expect(state.prices.gbp).toEqual({ session: "", month: "39.00" });
-    expect(state.prices.usd).toEqual({ session: "", month: "51.00" });
-  });
-
-  it("seeds manualEdits with all currencies so editing EUR doesn't FX-overwrite GBP/USD", () => {
-    const product = syntheticConsumerProduct();
-    const state = existingFormState(product, consumerConfig, "en");
-
-    expect(state.manualEdits).toEqual(new Set(["eur", "gbp", "usd"]));
+    expect(Object.keys(state.prices)).toEqual(["eur"]);
   });
 
   it("derives registrationOpensMode = 'immediately' for a past timestamp", () => {
@@ -204,11 +197,11 @@ describe("buildUpdateInput round-trip", () => {
     expect(input.holiday_calendar_ids).toEqual(["cal-1"]);
     expect(input.image).toBe("abc.png");
     // Consumer clubs charge a monthly subscription; the single price_cents
-    // round-trips from the persisted row's monthly amount.
+    // round-trips from the persisted row's monthly amount. EUR-only, so the
+    // payload carries a single eur row even though the source had legacy
+    // gbp/usd rows.
     expect(input.prices).toEqual([
       { currency: "eur", price_cents: 4500 },
-      { currency: "gbp", price_cents: 3900 },
-      { currency: "usd", price_cents: 5100 },
     ]);
     expect(input.translations).toEqual([
       { locale: "en", name: "Build Club", description: "Build castles together." },

@@ -27,4 +27,3 @@ export {
   type HolidayCalendarWithDates,
   type UpdateSiteNotesInput,
 } from "./reference-data.queries";
-export { fxKeys, useFxRatesFromEur, type FxRates } from "./fx.queries";

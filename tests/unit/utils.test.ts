@@ -31,16 +31,16 @@ describe("formatCurrency", () => {
   it("falls back to CURRENCY_CONFIG locale when navigator is unavailable", () => {
     // In test/server environments there's no navigator, so it should
     // fall back to the hardcoded locale from CURRENCY_CONFIG
-    const result = formatCurrency(100, "gbp", "en-GB");
-    expect(result).toContain("£");
+    const result = formatCurrency(100, "eur", "en-GB");
+    expect(result).toContain("€");
     expect(result).toContain("100");
   });
 });
 
 describe("formatCurrencyFromCents", () => {
   it("divides cents by 100 before formatting", () => {
-    const result = formatCurrencyFromCents(1500, "usd", "en-US");
-    expect(result).toContain("$");
+    const result = formatCurrencyFromCents(1500, "eur", "en-US");
+    expect(result).toContain("€");
     expect(result).toContain("15");
   });
 });

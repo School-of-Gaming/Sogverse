@@ -4,7 +4,6 @@ import { CircleDollarSign, Gift, Info } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { useFxRatesFromEur } from "@/services/products";
 import { Field, FormSection } from "../form-primitives";
 import { PricingBlock } from "../pricing-block";
 import {
@@ -27,7 +26,6 @@ export function BillingSection({
   config,
 }: BillingSectionProps) {
   const t = useTranslations("admin.products");
-  const fxRatesQuery = useFxRatesFromEur(true);
 
   const billingMode = effectiveBillingMode(config, state.paidMode);
   const isPaid = billingMode === "paid";
@@ -106,13 +104,8 @@ export function BillingSection({
         >
           <PricingBlock
             shape={pricingShape}
-            state={{
-              prices: state.prices,
-              manualEdits: state.manualEdits,
-              activeCurrency: state.activeCurrency,
-            }}
+            state={{ prices: state.prices }}
             onChange={(next) => setState({ ...state, ...next })}
-            fxRates={fxRatesQuery.data}
           />
         </Field>
       )}

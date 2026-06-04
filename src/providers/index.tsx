@@ -5,7 +5,6 @@ import { NextIntlClientProvider } from "next-intl";
 import { QueryProvider } from "./query-provider";
 import { AuthProvider } from "./auth-provider";
 import { LocaleProvider } from "./locale-provider";
-import { CurrencyProvider } from "./currency-provider";
 import { TimezoneProvider } from "./timezone-provider";
 import { NowProvider } from "./now-provider";
 import { ThemeProvider } from "./theme-provider";
@@ -52,13 +51,11 @@ export function Providers({
               to the viewer's actual zone. Tracked in TODO.md. */}
           <NextIntlClientProvider locale={initialLocale} messages={messages} timeZone={DEFAULT_TIMEZONE}>
             <LocaleProvider>
-              <CurrencyProvider>
-                <TimezoneProvider initialTimezone={initialTimezone}>
-                  <NowProvider initialNow={initialNow}>
-                    {children}
-                  </NowProvider>
-                </TimezoneProvider>
-              </CurrencyProvider>
+              <TimezoneProvider initialTimezone={initialTimezone}>
+                <NowProvider initialNow={initialNow}>
+                  {children}
+                </NowProvider>
+              </TimezoneProvider>
             </LocaleProvider>
           </NextIntlClientProvider>
         </AuthProvider>
@@ -72,6 +69,5 @@ export { QueryProvider } from "./query-provider";
 export { ThemeProvider } from "./theme-provider";
 export { AuthProvider } from "./auth-provider";
 export { LocaleProvider, useLocaleControl } from "./locale-provider";
-export { CurrencyProvider, useCurrency } from "./currency-provider";
 export { TimezoneProvider, useTimezone } from "./timezone-provider";
 export { NowProvider, useNow } from "./now-provider";

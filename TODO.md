@@ -91,6 +91,26 @@
 
   **How to verify after splitting:** open a file in each target subtree, check that `/context` shows the nested CLAUDE.md as loaded and the root file is correspondingly leaner. Confirm a sample rule (e.g., the `commit_group_changes` RPC rule) no longer appears in a fresh-session context dump until a `src/services/groups/*` file is touched.
 
+### Re-enabling non-EUR currencies
+
+The platform is deliberately locked to EUR. Admins author prices in EUR, customers see EUR, and our records (`payments`, `family_subscriptions`) are in EUR. Stripe Checkout's **Adaptive Pricing** (enabled in `src/app/api/checkout/products/create/route.ts`) already presents each customer their local currency and settles us in EUR at the price we set — so "buy in another currency" works today without us modelling other currencies internally.
+
+The **data model was kept currency-agnostic on purpose** so this is reversible: `product_prices`, `payments`, `family_subscriptions`, and `product_subscription_prices` are all still keyed/columned by `currency` (the `IN ('eur','gbp','usd')` CHECKs were left in place), and the service/data layer (`buildPricingOption`, `formatProductPrice`, `getMyFamilySub`, `getOrCreateSubscriptionPrice`, `computeSinglePaymentAmount`, the checkout route, the webhook) all still take/thread a `currency`. What was deleted is only the **selection/authoring layer**.
+
+The seam is `SUPPORTED_CURRENCIES` in `src/lib/constants/currency.ts`. To turn currencies back on:
+
+1. **Widen the constant.** `SUPPORTED_CURRENCIES = ["eur", "gbp", "usd", …]` and add matching `CURRENCY_CONFIG` entries (symbol + label). This alone re-activates the validate/build loops in `product-build.ts` (they iterate `SUPPORTED_CURRENCIES`) and the per-currency `family_subscriptions` lookups.
+2. **Restore the customer currency selector.** The picker + provider were deleted — recover them from git (the EUR-only-checkout branch / its merge commit): `src/providers/currency-provider.tsx`, `src/hooks/use-currency.ts`, `src/components/layout/currency-picker.tsx`, plus the `CurrencyProvider` wrapper/export in `src/providers/index.tsx`. Re-point `signup-panel.tsx` and `product-browse-card.tsx` from the `DEFAULT_CURRENCY` constant back to `useCurrency()`, and re-add `<CurrencyPickerRow />` in `pricing-panel-view.tsx`.
+3. **Restore persistence + detection (optional).** `src/app/api/user/currency/route.ts` (writes `profiles.currency` — the column was kept, still unused), the `"currency"` cookie logic, and `detectCurrencyFromLocale()` in `currency.ts`. Only needed if you want the chosen currency to stick across sessions/devices.
+4. **Restore the admin per-currency UI + FX suggestion.** Re-add the currency tabs, `manualEdits`/`activeCurrency`/`focusCurrency` to `FormState` + `product-build.ts`, and the FX auto-fill trio: `src/components/admin/products/pricing-block-fx.ts`, `src/app/api/admin/fx-rates/route.ts`, `src/services/products/fx.queries.ts`. All recoverable from git.
+5. **Restore i18n keys:** `common.selectCurrency`, `admin.products.pricing.{currencyPickerLabel,fxSuggested}`, `productDetail.pricing.pricesIn` across `messages/{en,fi,sv,tlh}.json`.
+6. **Decide on Adaptive Pricing.** Once you present multiple currencies *yourself*, decide whether to keep Adaptive Pricing on (it can still convert into currencies you don't list) or turn it off and rely solely on your authored per-currency prices.
+
+**Gotchas / things that did NOT change (so re-enabling stays safe):**
+- We do **not** record the customer's presentment currency. `payments`/`family_subscriptions` store EUR (our settlement currency) because, under single-currency settlement, Adaptive Pricing settles us the exact EUR price we set. If you later want "what the customer actually paid", it's in `session.presentment_details` (`presentment_amount` + `presentment_currency`) on the webhook event — capture it then; it needs a small schema add.
+- Stripe `Price` objects are immutable. `getOrCreateSubscriptionPrice` lazily creates one EUR Price per product; existing subscribers keep their old Price if the admin later changes the amount.
+- Legacy `product_prices` rows in non-EUR currencies (from before the lockdown) are harmless and ignored — `existingFormState` only loads the `eur` row.
+
 ### Convert admin writes to SECURITY DEFINER RPCs
 
 See `docs/db-access-patterns.md` for the full architectural rationale. Short version: routes that currently use `createAdminClient` (service-role) to write to sensitive tables (`participations`, `payments`, `refunds`, family subscriptions, etc.) hold full database privileges for the duration of the request. The correct shape is a SECURITY DEFINER RPC called via the user-bound client from `requireRole` — three layers of defense (route role check + RPC role check + grant lockdown) instead of one, and the trust boundary becomes the RPC body rather than "everything the service-role connection could do."
@@ -114,7 +134,7 @@ See `docs/db-access-patterns.md` for the full architectural rationale. Short ver
 *Candidates for conversion (writes normal tables — user-bound client + RLS is enough, no RPC needed):*
 - [ ] `src/app/api/admin/locations/create/route.ts`, `src/app/api/admin/locations/[id]/route.ts` — admin locations CRUD.
 - [ ] `src/app/api/admin/create-game/route.ts` — admin games write.
-- [ ] `src/app/api/user/locale/route.ts`, `src/app/api/user/currency/route.ts` — user updates own profile column.
+- [ ] `src/app/api/user/locale/route.ts` — user updates own profile column.
 - [ ] `src/app/api/minecraft/account/route.ts` — gamer/gedu own minecraft account.
 - [ ] `src/app/api/admin/whatsapp/send/route.ts` — admin DB write + external API call.
 
