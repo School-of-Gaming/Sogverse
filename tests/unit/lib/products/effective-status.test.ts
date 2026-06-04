@@ -4,7 +4,7 @@ import {
   pendingHintKey,
   type LifecycleInputs,
   type PendingHintInputs,
-} from "@/components/admin/products/effective-status";
+} from "@/lib/products/effective-status";
 
 // effectiveStatus is the fact that drives the admin list status pill and
 // (eventually) what parents see on browse. Since it derives from stored

@@ -11,7 +11,7 @@ import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { formatDate } from "@/lib/utils";
-import { effectiveStatus, pendingHintKey } from "./effective-status";
+import { effectiveStatus, pendingHintKey } from "@/lib/products/effective-status";
 import { ProductTypeInfoCard } from "./product-type-info-card";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";

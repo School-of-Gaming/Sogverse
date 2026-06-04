@@ -29,7 +29,7 @@ import {
   type ProductAdminDetailRow,
 } from "@/services/products";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import { effectiveStatus } from "./effective-status";
+import { effectiveStatus } from "@/lib/products/effective-status";
 import { GroupsPanel } from "./groups/groups-panel";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";

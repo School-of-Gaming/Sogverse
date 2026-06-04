@@ -389,9 +389,7 @@ function OpenPanel(props: SignupPanelViewProps) {
       // call to action; a loud primary banner here would compete with it. The
       // urgent (almost-full) banner stays loud — that's a real scarcity signal,
       // not a duplicated CTA.
-      banner={
-        urgent ? t("bannerAlmostFull") : t(`noun.${props.productType}`)
-      }
+      banner={urgent ? t("bannerAlmostFull") : t(`noun.${props.productType}`)}
       tone={urgent ? "warning" : "muted"}
     >
       {props.state.seatCount !== null && (
@@ -494,7 +492,10 @@ function UnauthenticatedOverlay({
     <div className="flex flex-col gap-2">
       <Link
         href={signInHref}
-        className={buttonVariants({ size: "lg", className: "w-full text-base" })}
+        className={buttonVariants({
+          size: "lg",
+          className: "w-full text-base",
+        })}
       >
         {t("ctaSignIn")}
       </Link>
@@ -546,77 +547,84 @@ function SignupForm(
           {t(`whoAreYouSigningUp.${props.productType}`)}
         </h3>
         {props.helperText && (
-          <p className="mt-1 text-xs text-muted-foreground">{props.helperText}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {props.helperText}
+          </p>
         )}
-        <div
-          role="radiogroup"
-          aria-labelledby="gamer-picker-label"
-          className="mt-3 space-y-2"
-        >
-          {props.gamers.map((g) => {
-            // A child already holding a seat / waitlist spot can't be signed up
-            // again — the row is disabled and labels its state in place rather
-            // than offering itself for selection.
-            const alreadyOn = g.signupState ?? null;
-            const selected = props.selectedGamerId === g.id;
-            return (
-              <button
-                key={g.id}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                disabled={alreadyOn !== null}
-                onClick={() => props.onSelectGamer(g.id)}
-                className={cn(
-                  "flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
-                  alreadyOn !== null
-                    ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
-                    : selected
-                      ? "border-primary bg-primary/10"
-                      : "border-input hover:bg-accent hover:text-accent-foreground",
-                )}
-              >
-                <span className="flex min-w-0 items-center gap-2.5">
-                  <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md">
-                    <Identicon id={g.id} />
-                  </span>
-                  <span className="min-w-0">
-                    <span
-                      className={cn(
-                        "font-medium",
-                        alreadyOn !== null && "text-muted-foreground",
-                      )}
-                    >
-                      {g.name}
+        <div className="mt-3 space-y-2">
+          <div
+            role="radiogroup"
+            aria-labelledby="gamer-picker-label"
+            className="space-y-2"
+          >
+            {props.gamers.map((g) => {
+              // A child already holding a seat / waitlist spot can't be signed up
+              // again — the row is disabled and labels its state in place rather
+              // than offering itself for selection.
+              const alreadyOn = g.signupState ?? null;
+              const selected = props.selectedGamerId === g.id;
+              return (
+                <button
+                  key={g.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  disabled={alreadyOn !== null}
+                  onClick={() => props.onSelectGamer(g.id)}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
+                    alreadyOn !== null
+                      ? "cursor-not-allowed border-input bg-muted/40 opacity-60"
+                      : selected
+                        ? "border-primary bg-primary/10"
+                        : "border-input hover:bg-accent hover:text-accent-foreground",
+                  )}
+                >
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <span className="relative h-8 w-8 shrink-0 overflow-hidden rounded-md">
+                      <Identicon id={g.id} />
                     </span>
-                    {g.age !== null && (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        {t("agePill", { age: g.age })}
+                    <span className="min-w-0">
+                      <span
+                        className={cn(
+                          "font-medium",
+                          alreadyOn !== null && "text-muted-foreground",
+                        )}
+                      >
+                        {g.name}
                       </span>
-                    )}
-                  </span>
-                </span>
-                {alreadyOn !== null ? (
-                  <span className="shrink-0 text-xs font-semibold text-muted-foreground">
-                    {alreadyOn === "active"
-                      ? t(`gamerAlreadySignedUp.${props.productType}`)
-                      : t("gamerAlreadyWaitlisted")}
-                  </span>
-                ) : (
-                  selected && (
-                    <span className="shrink-0 text-xs font-semibold text-primary">
-                      {t("selected")}
+                      {g.age !== null && (
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {t("agePill", { age: g.age })}
+                        </span>
+                      )}
                     </span>
-                  )
-                )}
-              </button>
-            );
-          })}
+                  </span>
+                  {alreadyOn !== null ? (
+                    <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+                      {alreadyOn === "active"
+                        ? t(`gamerAlreadySignedUp.${props.productType}`)
+                        : t("gamerAlreadyWaitlisted")}
+                    </span>
+                  ) : (
+                    selected && (
+                      <span className="shrink-0 text-xs font-semibold text-primary">
+                        {t("selected")}
+                      </span>
+                    )
+                  )}
+                </button>
+              );
+            })}
+          </div>
           {/* "Add Gamer" row — opens the reusable AddGamerDialog (owned by the
               adapter). This is why there's no separate no-gamers state: zero
-              gamer rows above + this row is the empty case. It sits inside the
-              radiogroup but is an action, not a radio option. Hidden at the
-              Steven Brown cap, matching every other add-gamer affordance. */}
+              gamer rows above + this row is the empty case. It's an action, not
+              a radio option, so it sits OUTSIDE the radiogroup above — a
+              radiogroup must contain only its radios, or assistive tech mis-
+              announces the count and arrow-key navigation lands on a non-choice.
+              Hidden at the Steven Brown cap, matching every other add-gamer
+              affordance. */}
           {canAddGamer && (
             <button
               type="button"
