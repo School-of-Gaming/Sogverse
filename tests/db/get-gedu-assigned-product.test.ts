@@ -128,7 +128,6 @@ describe("get_gedu_assigned_product", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: myGroupId,
-        credits_remaining: 1,
       },
       {
         product_id: PRODUCT_GEDU_ON,
@@ -136,7 +135,6 @@ describe("get_gedu_assigned_product", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: sisterGroupId,
-        credits_remaining: 1,
       },
     ]);
 

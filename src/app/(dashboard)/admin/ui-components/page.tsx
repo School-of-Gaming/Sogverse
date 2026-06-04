@@ -707,9 +707,8 @@ const DEMO_REGISTRATION_STATES: { label: string; state: RegistrationState }[] = 
 
 // One sample of each price shape so the price block is exercised across
 // the demo browse cards.
-const SAMPLE_PRICE_BUNDLE: ProductBrowseCardViewProps["price"] = {
-  kind: "bundle_or_sub",
-  perSession: "€18.00",
+const SAMPLE_PRICE_SUBSCRIPTION: ProductBrowseCardViewProps["price"] = {
+  kind: "subscription",
   perMonth: "€55.00",
 };
 const SAMPLE_PRICE_UPFRONT: ProductBrowseCardViewProps["price"] = {
@@ -733,7 +732,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       seatsHint: { kind: "capacity", count: 8 },
       locationLine: { kind: "online", label: "Online" },
       spokenLanguageCode: "fi",
-      price: SAMPLE_PRICE_BUNDLE,
+      price: SAMPLE_PRICE_SUBSCRIPTION,
       state: { kind: "open", seatCount: 8, seatsLeft: 6, waitlistEnabled: false },
     },
   },
@@ -750,7 +749,7 @@ const BROWSE_DEMO_CARDS: { label: string; props: ProductBrowseCardViewProps }[] 
       seatsHint: { kind: "capacity", count: 8 },
       locationLine: { kind: "in_person", label: "Tapiolan koulu" },
       spokenLanguageCode: "en",
-      price: SAMPLE_PRICE_BUNDLE,
+      price: SAMPLE_PRICE_SUBSCRIPTION,
       state: { kind: "open", seatCount: 8, seatsLeft: 2, waitlistEnabled: false },
     },
   },

@@ -43,12 +43,12 @@ describe("formatProductPrice", () => {
     expect(line.kind).toBe("external");
   });
 
-  it("consumer_club EUR renders both bundle and monthly", () => {
+  it("consumer_club renders a monthly subscription from price_per_month", () => {
     const line = formatProductPrice({
       prices: [
         priceRow({
           currency: "eur",
-          price_per_session: 2000,
+          price_per_session: 0,
           price_per_month: 4500,
         }),
       ],
@@ -57,12 +57,10 @@ describe("formatProductPrice", () => {
       currency: "eur",
       locale: "en",
     });
-    expect(line.kind).toBe("bundle_or_sub");
-    if (line.kind === "bundle_or_sub") {
-      // 10-bundle at 12% off → per-session £17.60 / €17.60 / $17.60.
-      // Just check the currency symbol is present.
-      expect(line.perSession).toMatch(/€|EUR/);
+    expect(line.kind).toBe("subscription");
+    if (line.kind === "subscription") {
       expect(line.perMonth).toMatch(/€|EUR/);
+      expect(line.perMonth).toMatch(/45/);
     }
   });
 

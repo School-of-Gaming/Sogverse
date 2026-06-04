@@ -179,10 +179,8 @@ export function effectiveBillingMode(
 
 export function effectivePricingShape(
   config: ProductTypeConfig,
-): "session_and_month" | "upfront_total" {
-  return config.pricingShape === "session_and_month"
-    ? "session_and_month"
-    : "upfront_total";
+): "monthly" | "upfront_total" {
+  return config.pricingShape === "monthly" ? "monthly" : "upfront_total";
 }
 
 export function startModeUsesDate(mode: StartMode): boolean {

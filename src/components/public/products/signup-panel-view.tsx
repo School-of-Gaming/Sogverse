@@ -9,14 +9,8 @@ import type { ProductType } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import { CountdownClock, useCountdownDone } from "./countdown-clock";
 import type { RegistrationState } from "./derive-registration-state";
-import {
-  PricingPanelView,
-} from "./pricing-panel-view";
-import {
-  findOption,
-  type PricingOption,
-  type PricingTracks,
-} from "./pricing-options";
+import { PricingPanelView } from "./pricing-panel-view";
+import type { PricingOption } from "./pricing-options";
 
 // Top-level Signup Panel View. Pure presentational: takes resolved
 // state and emits intent callbacks. Renders the right banner + body
@@ -71,9 +65,8 @@ export interface SignupPanelViewProps {
   /** Link to the parent's purchased-products list, used by the active panel. */
   myProductsHref: string;
   authState: AuthState;
-  pricingTracks: PricingTracks;
-  selectedPricingKey: PricingOption["key"];
-  onSelectPricing: (key: PricingOption["key"]) => void;
+  /** The single purchase option for this product (one per type). */
+  pricingOption: PricingOption;
   /** Resolved by the adapter; null while the user has no gamer selected. */
   selectedGamerId: string | null;
   onSelectGamer: (gamerId: string) => void;
@@ -235,9 +228,7 @@ function FullClosedPanel(props: SignupPanelViewProps) {
   return (
     <PanelShell banner={t("bannerFullClosed")} tone="destructive">
       <PricingPanelView
-        tracks={props.pricingTracks}
-        selectedKey={props.selectedPricingKey}
-        onSelect={props.onSelectPricing}
+        option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
       />
@@ -256,9 +247,7 @@ function FullWaitlistPanel(props: SignupPanelViewProps) {
     <PanelShell banner={t("bannerWaitlist")} tone="destructive">
       <WaitlistInfo />
       <PricingPanelView
-        tracks={props.pricingTracks}
-        selectedKey={props.selectedPricingKey}
-        onSelect={props.onSelectPricing}
+        option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
       />
@@ -320,9 +309,7 @@ function ThresholdPanel(props: SignupPanelViewProps) {
         {t("thresholdHelper", { count: threshold })}
       </p>
       <PricingPanelView
-        tracks={props.pricingTracks}
-        selectedKey={props.selectedPricingKey}
-        onSelect={props.onSelectPricing}
+        option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
       />
@@ -354,8 +341,7 @@ function PreOpenPanel(props: SignupPanelViewProps) {
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
-    props.pricingTracks,
-    props.selectedPricingKey,
+    props.pricingOption,
     props.currency,
     props.locale,
     props.subCtaMode,
@@ -379,9 +365,7 @@ function PreOpenPanel(props: SignupPanelViewProps) {
   return (
     <PanelShell banner={banner} tone={tone}>
       <PricingPanelView
-        tracks={props.pricingTracks}
-        selectedKey={props.selectedPricingKey}
-        onSelect={props.onSelectPricing}
+        option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
       />
@@ -424,8 +408,7 @@ function OpenPanel(props: SignupPanelViewProps) {
   const verb = useVerb(props.productType);
   const activeLabel = useActiveCtaLabel(
     verb,
-    props.pricingTracks,
-    props.selectedPricingKey,
+    props.pricingOption,
     props.currency,
     props.locale,
     props.subCtaMode,
@@ -454,9 +437,7 @@ function OpenPanel(props: SignupPanelViewProps) {
         />
       )}
       <PricingPanelView
-        tracks={props.pricingTracks}
-        selectedKey={props.selectedPricingKey}
-        onSelect={props.onSelectPricing}
+        option={props.pricingOption}
         currency={props.currency}
         locale={props.locale}
       />
@@ -718,38 +699,34 @@ function useVerb(productType: ProductType): string {
 // typed message inference trips on that — see products architecture doc).
 function useActiveCtaLabel(
   verb: string,
-  pricingTracks: PricingTracks,
-  selectedKey: PricingOption["key"],
+  option: PricingOption,
   currency: SupportedCurrency,
   locale: string,
   subCtaMode: SubCtaMode,
 ): string {
   const t = useTranslations("productDetail.signupPanel");
-  const option = findOption(pricingTracks, selectedKey);
   const price = priceForCta(option, currency, locale);
   if (price === null) return t("ctaActive", { verb });
-  // Inline-add path: parent already has a live family sub at this
-  // (frequency, currency). Copy makes it explicit that the card on file
-  // will be charged today for the prorated period.
-  if (subCtaMode === "inline_add" && option?.kind === "subscription") {
+  // Inline-add path: parent already has a live family sub in this currency.
+  // Copy makes it explicit that the card on file will be charged today for
+  // the prorated period.
+  if (subCtaMode === "inline_add" && option.kind === "subscription") {
     return t("ctaInlineAddSub", { price });
   }
   return t("ctaActiveWithPrice", { verb, price });
 }
 
 function priceForCta(
-  option: PricingOption | null,
+  option: PricingOption,
   currency: SupportedCurrency,
   locale: string,
 ): string | null {
-  if (!option) return null;
   switch (option.kind) {
     case "free":
     case "external":
     case "unavailable":
       return null;
     case "subscription":
-    case "bundle":
     case "upfront":
       return formatCurrencyFromCents(option.totalCents, currency, locale);
   }

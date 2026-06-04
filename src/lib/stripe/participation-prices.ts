@@ -1,13 +1,8 @@
 import "server-only";
 import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database, SubscriptionFrequency } from "@/types";
+import type { Database } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
-import {
-  computeBundleCents,
-  computeSubscriptionCents,
-  SUBSCRIPTION_FREQUENCY_MONTHS,
-} from "@/lib/constants/pricing";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -32,22 +27,6 @@ async function loadBasePrice(
 }
 
 /**
- * Bundle total in smallest currency unit (cents/pence).
- * The admin enters `price_per_session` per currency; `BUNDLE_DISCOUNTS`
- * applies. Returns `null` if the product has no row in the requested currency.
- */
-export async function computeBundleAmount(
-  admin: SupabaseClient<Database>,
-  productId: string,
-  bundleSize: number,
-  currency: SupportedCurrency,
-): Promise<number | null> {
-  const base = await loadBasePrice(admin, productId, currency);
-  if (!base) return null;
-  return computeBundleCents(base.price_per_session, bundleSize);
-}
-
-/**
  * Single-payment total in smallest currency unit. Used for camps and paid
  * events — those store their total in `price_per_session` (the per-attendance
  * price column).
@@ -64,14 +43,13 @@ export async function computeSinglePaymentAmount(
 
 interface SubscriptionPriceRow {
   product_id: string;
-  frequency: SubscriptionFrequency;
   currency: string;
   stripe_price_id: string;
   unit_amount_cents: number;
 }
 
 /**
- * Lazy-create the Stripe Price for a (product, frequency, currency) tuple.
+ * Lazy-create the monthly Stripe Price for a (product, currency) pair.
  *
  * Cached in `product_subscription_prices`. If `price_per_month` later
  * changes on the admin form, existing subscribers keep their old Price —
@@ -80,14 +58,12 @@ interface SubscriptionPriceRow {
 export async function getOrCreateSubscriptionPrice(
   admin: SupabaseClient<Database>,
   productId: string,
-  frequency: SubscriptionFrequency,
   currency: SupportedCurrency,
 ): Promise<SubscriptionPriceRow | null> {
   const { data: existing } = await admin
     .from("product_subscription_prices")
-    .select("product_id, frequency, currency, stripe_price_id, unit_amount_cents")
+    .select("product_id, currency, stripe_price_id, unit_amount_cents")
     .eq("product_id", productId)
-    .eq("frequency", frequency)
     .eq("currency", currency)
     .maybeSingle();
 
@@ -101,24 +77,15 @@ export async function getOrCreateSubscriptionPrice(
   // Ensure the product has a Stripe Product. Look up by metadata.
   const stripeProductId = await ensureStripeProductForProduct(admin, productId);
 
-  const months = SUBSCRIPTION_FREQUENCY_MONTHS[frequency];
-  const unitAmount = computeSubscriptionCents(base.price_per_month, frequency);
-
-  // Use Stripe's `year` interval for yearly so the receipt and customer
-  // portal read cleanly; monthly/quarterly stay on `month` × N.
-  const recurring: Stripe.PriceCreateParams.Recurring =
-    frequency === "yearly"
-      ? { interval: "year", interval_count: 1 }
-      : { interval: "month", interval_count: months };
+  const unitAmount = base.price_per_month;
 
   const stripePrice = await stripe.prices.create({
     product: stripeProductId,
     currency,
     unit_amount: unitAmount,
-    recurring,
+    recurring: { interval: "month", interval_count: 1 },
     metadata: {
       productId,
-      frequency,
       currency,
     },
   });
@@ -127,21 +94,19 @@ export async function getOrCreateSubscriptionPrice(
     .from("product_subscription_prices")
     .insert({
       product_id: productId,
-      frequency,
       currency,
       stripe_price_id: stripePrice.id,
       unit_amount_cents: unitAmount,
     })
-    .select("product_id, frequency, currency, stripe_price_id, unit_amount_cents")
+    .select("product_id, currency, stripe_price_id, unit_amount_cents")
     .single();
 
   if (insertErr) {
     // Concurrent caller raced us — fetch the row they wrote.
     const { data: raced } = await admin
       .from("product_subscription_prices")
-      .select("product_id, frequency, currency, stripe_price_id, unit_amount_cents")
+      .select("product_id, currency, stripe_price_id, unit_amount_cents")
       .eq("product_id", productId)
-      .eq("frequency", frequency)
       .eq("currency", currency)
       .maybeSingle();
     if (raced !== null) return raced;
@@ -193,34 +158,6 @@ function pickTranslationName(
   if (fi) return fi.name;
   if (translations.length > 0) return translations[0].name;
   return "School of Gaming product";
-}
-
-/**
- * Bundle size encoded in the purchase shape. Throws if the shape is not a bundle.
- */
-export function bundleSizeFromShape(shape: string): number {
-  switch (shape) {
-    case "bundle_1": return 1;
-    case "bundle_4": return 4;
-    case "bundle_10": return 10;
-    default:
-      throw new Error(`not a bundle shape: ${shape}`);
-  }
-}
-
-/**
- * Subscription frequency encoded in the purchase shape. Throws if not a sub.
- */
-export function frequencyFromShape(
-  shape: string,
-): "monthly" | "quarterly" | "yearly" {
-  switch (shape) {
-    case "subscription_monthly": return "monthly";
-    case "subscription_quarterly": return "quarterly";
-    case "subscription_yearly": return "yearly";
-    default:
-      throw new Error(`not a subscription shape: ${shape}`);
-  }
 }
 
 export type { SubscriptionPriceRow };

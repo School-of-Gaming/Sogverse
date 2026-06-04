@@ -90,7 +90,6 @@ describe("products gamer-read RLS (00067)", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: activeGroupId,
-        credits_remaining: 0,
       },
       {
         product_id: HIDDEN_WAITLISTED_PRODUCT,
@@ -98,7 +97,6 @@ describe("products gamer-read RLS (00067)", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "waitlisted",
         waitlist_position: 1,
-        credits_remaining: 0,
       },
       {
         product_id: HIDDEN_RESERVING_PRODUCT,
@@ -106,7 +104,6 @@ describe("products gamer-read RLS (00067)", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "reserving",
         reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
-        credits_remaining: 0,
       },
     ]);
     if (seed.error) throw seed.error;

@@ -169,25 +169,23 @@ export function validate(
     billingMode === "paid" && config.pricingShape !== "external";
   const pricingShape = effectivePricingShape(config);
   if (showPricing) {
+    // Each paid type collects a single price: `month` for the consumer-club
+    // monthly subscription, `session` for the camp/event upfront total.
+    const field = pricingShape === "monthly" ? "month" : "session";
+    const missingKey =
+      pricingShape === "monthly" ? "priceMonthMissing" : "priceSessionMissing";
+    const negativeKey =
+      pricingShape === "monthly" ? "priceMonthNegative" : "priceSessionNegative";
     for (const currency of SUPPORTED_CURRENCIES) {
       const row = state.prices[currency];
       const currencyLabel = currency.toUpperCase();
 
-      const sessionTrimmed = row.session.trim();
-      if (sessionTrimmed === "")
-        return err("priceSessionMissing", { currency: currencyLabel }, currency);
-      const session = Number(sessionTrimmed);
-      if (!Number.isFinite(session) || session < 0)
-        return err("priceSessionNegative", { currency: currencyLabel }, currency);
-
-      if (pricingShape === "session_and_month") {
-        const monthTrimmed = row.month.trim();
-        if (monthTrimmed === "")
-          return err("priceMonthMissing", { currency: currencyLabel }, currency);
-        const month = Number(monthTrimmed);
-        if (!Number.isFinite(month) || month < 0)
-          return err("priceMonthNegative", { currency: currencyLabel }, currency);
-      }
+      const trimmed = row[field].trim();
+      if (trimmed === "")
+        return err(missingKey, { currency: currencyLabel }, currency);
+      const value = Number(trimmed);
+      if (!Number.isFinite(value) || value < 0)
+        return err(negativeKey, { currency: currencyLabel }, currency);
     }
   }
 
@@ -254,9 +252,10 @@ function weekdayFromDateString(dateStr: string): number {
  *     `weekdayFromDateString` for the TZ caveat.
  *   - end_date for single_date events mirrors start_date so list/detail
  *     code only has to look at end_date for "is it over".
- *   - Prices are stored in *cents*. For upfront_total products we put the
- *     whole total in price_per_session and 0 in price_per_month; downstream
- *     billing branches on billing_mode.
+ *   - Prices are stored in *cents*. Consumer clubs put the monthly
+ *     subscription price in price_per_month (price_per_session = 0);
+ *     camps/events put the upfront total in price_per_session
+ *     (price_per_month = 0). Downstream billing branches on product type.
  */
 function buildSharedFields(
   state: FormState,
@@ -319,14 +318,14 @@ function buildSharedFields(
     prices: showPricing
       ? SUPPORTED_CURRENCIES.map((currency) => {
           const row = state.prices[currency];
-          // `validate()` blocks submit when these are blank/invalid, so the
-          // null fallback is unreachable in practice. The shared helper is
-          // what the admin preview also uses — display = Stripe charge.
-          const sessionCents = decimalToCents(row.session) ?? 0;
+          // `validate()` blocks submit when the relevant field is
+          // blank/invalid, so the null fallback is unreachable in practice.
+          // Consumer clubs charge the monthly price; camps/events the upfront
+          // total. The unused column is written as 0.
+          const sessionCents =
+            pricingShape === "monthly" ? 0 : (decimalToCents(row.session) ?? 0);
           const monthCents =
-            pricingShape === "session_and_month"
-              ? (decimalToCents(row.month) ?? 0)
-              : 0;
+            pricingShape === "monthly" ? (decimalToCents(row.month) ?? 0) : 0;
           return {
             currency,
             price_per_session: sessionCents,

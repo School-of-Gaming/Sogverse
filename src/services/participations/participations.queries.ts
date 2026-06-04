@@ -7,7 +7,7 @@ import { getClient } from "@/lib/supabase/client";
 import { resolveLocale } from "@/lib/constants/locales";
 import { expandUpcomingSessions } from "@/lib/upcoming-sessions";
 import { useNow } from "@/providers";
-import type { SessionAudience, SubscriptionFrequency } from "@/types";
+import type { SessionAudience } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import {
@@ -24,8 +24,8 @@ export const participationKeys = {
     [...participationKeys.all, "my-upcoming-sessions", audience] as const,
   countsByProducts: (productIds: string[]) =>
     [...participationKeys.all, "counts", { productIds: [...productIds].sort() }] as const,
-  myFamilySub: (frequency: string, currency: string) =>
-    [...participationKeys.all, "family-sub", { frequency, currency }] as const,
+  myFamilySub: (currency: string) =>
+    [...participationKeys.all, "family-sub", { currency }] as const,
 };
 
 /**
@@ -77,23 +77,21 @@ export function useParticipationCounts(productIds: string[]) {
 }
 
 /**
- * Whether the logged-in customer already has a live family sub at the
- * given (frequency, currency). The signup panel uses this to switch the
- * CTA copy from "Subscribe" → "Add to your subscription".
+ * Whether the logged-in customer already has a live family sub in the given
+ * currency. The signup panel uses this to switch the CTA copy from
+ * "Subscribe" → "Add to your subscription". `enabled` gates the fetch to
+ * subscription products (consumer clubs) only.
  */
-export function useMyFamilySubAt(
-  frequency: SubscriptionFrequency | null,
+export function useMyFamilySub(
   currency: SupportedCurrency,
+  enabled: boolean,
 ) {
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
   return useQuery({
-    queryKey: participationKeys.myFamilySub(frequency ?? "_none", currency),
-    queryFn: () =>
-      frequency === null
-        ? Promise.resolve(null)
-        : service.getFamilySubAt(frequency, currency),
-    enabled: frequency !== null,
+    queryKey: participationKeys.myFamilySub(currency),
+    queryFn: () => service.getMyFamilySub(currency),
+    enabled,
   });
 }
 

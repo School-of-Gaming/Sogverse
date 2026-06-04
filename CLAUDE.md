@@ -124,7 +124,7 @@ A living style guide is available at `/admin/ui-components` (admin login require
 
 ### Customer Enrollment & Billing
 
-See `docs/products-architecture.md` for the purchase / participation flow, the billing model (session bundles + family subscriptions), refund windows, and the session-credit cron.
+See `docs/products-architecture.md` for the purchase / participation flow, the billing model (monthly family subscriptions for clubs, single upfront payments for camps/events), and refund windows.
 
 ### Voice Chat (Daily.co)
 

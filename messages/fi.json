@@ -414,16 +414,8 @@
       "pricing": {
         "currencyPickerLabel": "Valuutta",
         "fxSuggested": "Ehdotus tämän päivän EUR-kurssilla ({rate}). Muokkaa halutessasi.",
-        "perSessionLabel": "Hinta per kerta",
         "perMonthLabel": "Hinta per kuukausi",
-        "totalLabel": "Kokonaishinta",
-        "bundleHeading": "Mitä vanhemmat maksavat paketeista",
-        "bundleSingle": "Yksittäinen kerta",
-        "bundleMulti": "{size} kertaa (säästö {discount}%)",
-        "subHeading": "Mitä vanhemmat maksavat tilauksista",
-        "subMonthly": "Kuukausittain",
-        "subQuarterly": "Neljännesvuosittain (säästö {discount}%)",
-        "subYearly": "Vuosittain (säästö {discount}%)"
+        "totalLabel": "Kokonaishinta"
       },
       "startModes": {
         "label": "Miten tämä alkaa?",
@@ -459,7 +451,7 @@
         "freeDetail": "Ei maksua. Kuka tahansa voi liittyä yhdellä klikkauksella.",
         "paidDetail": "Kertamaksu ilmoittautumisen yhteydessä.",
         "paidByMunicipality": "Ei asiakaslaskutusta tämän järjestelmän sisällä. School of Gaming laskuttaa kuntaa suoraan.",
-        "pricingPerSession": "Veloitetaan jokaisesta lapsen osallistumiskerrasta. Kk-hinta näkyy tilaajille — johdetaan tästä luvusta viikoittain/kuukausittain.",
+        "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
         "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
         "seatCanUncap": "Ilmaisilla tapahtumilla ei tarvitse olla paikkarajaa (esim. webinaari, julkinen kävely).",
@@ -1211,9 +1203,7 @@
     },
     "card": {
       "ages": "Ikä {min}–{max}",
-      "perSession": "{price} / kerta",
       "perMonth": "{price} / kk",
-      "orChoice": "tai",
       "upfrontTotal": "{price}",
       "free": "Maksuton",
       "externalContract": "Kuntasi rahoittama",
@@ -1342,24 +1332,14 @@
     "pricing": {
       "title": "Hinta",
       "pricesIn": "Hinnat valuutassa",
-      "subscribeHeading": "Tilaus (säästät enemmän)",
-      "bundleHeading": "Tai osta kerralla",
-      "perSession": "{price} / kerta",
-      "subscribeMonthly": "Kuukausi",
-      "subscribeQuarterly": "Kolme kuukautta",
-      "subscribeYearly": "Vuosi",
-      "bundleSingle": "Yksittäinen kerta",
-      "bundleN": "{count} kertaa",
-      "savings": "Säästä {percent} %",
+      "subscriptionHint": "Laskutetaan kuukausittain · peru milloin tahansa.",
       "free": "Maksuton",
       "freeHint": "Maksua ei tarvita.",
       "external": "Sinulle maksuton · kuntasi maksaa",
       "externalHint": "Maksua ei tarvita – kuntasi kattaa kustannukset.",
       "upfrontHint": "Kertamaksu.",
       "notAvailable": "Hinta ei vielä saatavilla valuutassa {currency}.",
-      "cadenceMonth": "/ kk",
-      "cadenceQuarter": "/ 3 kk",
-      "cadenceYear": "/ vuosi"
+      "cadenceMonth": "/ kk"
     },
     "countdown": {
       "days": "pv",

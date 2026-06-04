@@ -1,4 +1,3 @@
-import { computeSubscriptionCents } from "@/lib/constants/pricing";
 import {
   CURRENCY_CONFIG,
   type SupportedCurrency,
@@ -18,7 +17,7 @@ import type { BillingMode, ProductPrice, ProductType } from "@/types";
 export type ProductPriceLine =
   | { kind: "free" }
   | { kind: "external" }
-  | { kind: "bundle_or_sub"; perSession: string; perMonth: string }
+  | { kind: "subscription"; perMonth: string }
   | { kind: "upfront"; total: string }
   | { kind: "unavailable"; currency: string };
 
@@ -46,18 +45,10 @@ export function formatProductPrice({
   }
 
   if (productType === "consumer_club") {
-    // Show base monthly + base per-session. Bundle/sub discounts surface
-    // on the detail / checkout pages (this card is a glance) — that's
-    // also why the figure here matches a single drop-in session, not the
-    // discounted bundle price.
+    // Consumer clubs bill as a flat monthly subscription.
     return {
-      kind: "bundle_or_sub",
-      perSession: formatCurrencyFromCents(row.price_per_session, currency, locale),
-      perMonth: formatCurrencyFromCents(
-        computeSubscriptionCents(row.price_per_month, "monthly"),
-        currency,
-        locale,
-      ),
+      kind: "subscription",
+      perMonth: formatCurrencyFromCents(row.price_per_month, currency, locale),
     };
   }
 

@@ -19,8 +19,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *   - (writes against all tables) — confirm only admin role can mutate;
  *                                   customers must go through SECURITY DEFINER RPCs
  *
- * Other v2 tables (session_cancellations, credit_deductions,
- * family_subscriptions, family_subscription_items,
+ * Other tables (family_subscriptions, family_subscription_items,
  * product_subscription_prices) follow the same RLS shape; the
  * access-control catalog test in tests/db/access-control.test.ts will
  * fail CI if any of them lose RLS coverage. They're covered there, not
@@ -95,7 +94,6 @@ describe("v2 participations / payments / refunds RLS", () => {
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
-        credits_remaining: 0,
       })
       .select("id")
       .single();
@@ -112,7 +110,6 @@ describe("v2 participations / payments / refunds RLS", () => {
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER_2,
         status: "active",
-        credits_remaining: 0,
       })
       .select("id")
       .single();
@@ -249,7 +246,6 @@ describe("v2 participations / payments / refunds RLS", () => {
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
-        credits_remaining: 0,
       });
       // No INSERT policy + no GRANT for the table → either 42501
       // (privilege denied) or RLS check failure (42501 / 42501-like).
@@ -259,7 +255,7 @@ describe("v2 participations / payments / refunds RLS", () => {
     it("customer cannot UPDATE their participation directly", async () => {
       const { error } = await customerClient
         .from("participations")
-        .update({ credits_remaining: 999 })
+        .update({ status: "completed" })
         .eq("id", customerParticipationId);
       expect(error).not.toBeNull();
     });

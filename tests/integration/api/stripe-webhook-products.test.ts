@@ -75,7 +75,7 @@ function createCompletedEvent(overrides: Partial<{
           productId: PRODUCT_ID,
           gamerId: GAMER_ID,
           customerId: CUSTOMER_ID,
-          purchaseShape: overrides.purchaseShape ?? "bundle_4",
+          purchaseShape: overrides.purchaseShape ?? "single_payment",
           currency: overrides.currency ?? "eur",
         },
       },
@@ -222,7 +222,7 @@ describe("POST /api/webhooks/stripe/products", () => {
   });
 
   describe("checkout.session.completed — happy path", () => {
-    it("flips reserving → active and writes a payments row for a bundle", async () => {
+    it("flips reserving → active and writes a payments row for a single_payment", async () => {
       mockConstructEvent.mockReturnValue(createCompletedEvent());
       const inserts = mockAdmin();
       mockAdminRpc.mockResolvedValue({
@@ -239,7 +239,6 @@ describe("POST /api/webhooks/stripe/products", () => {
 
       expect(mockAdminRpc).toHaveBeenCalledWith("confirm_reservation", {
         p_reservation_id: RESERVATION_ID,
-        p_credits_to_grant: 4,
       });
       expect(inserts.payments).toHaveLength(1);
       expect(inserts.payments[0]).toMatchObject({
@@ -247,7 +246,7 @@ describe("POST /api/webhooks/stripe/products", () => {
         customer_id: CUSTOMER_ID,
         amount_cents: 10000,
         currency: "eur",
-        purpose: "bundle",
+        purpose: "single_payment",
         stripe_payment_intent_id: "pi_test_1",
       });
       expect(inserts.refunds).toHaveLength(0);
@@ -292,7 +291,6 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(inserts.family_subscriptions[0]).toMatchObject({
         customer_id: CUSTOMER_ID,
         stripe_subscription_id: "sub_new_1",
-        frequency: "monthly",
         currency: "eur",
         status: "active",
       });

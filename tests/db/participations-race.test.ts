@@ -83,14 +83,14 @@ describe("participations race + idempotency", () => {
             p_product_id: PRODUCT_RACE_1SEAT,
             p_gamer_id: TEST_IDS.GAMER,
             p_customer_id: TEST_IDS.CUSTOMER,
-            p_purchase_shape: "bundle_1",
+            p_purchase_shape: "subscription_monthly",
             p_currency: "eur",
           }),
           admin.rpc("create_participation", {
             p_product_id: PRODUCT_RACE_1SEAT,
             p_gamer_id: TEST_IDS.GAMER_2,
             p_customer_id: TEST_IDS.CUSTOMER,
-            p_purchase_shape: "bundle_1",
+            p_purchase_shape: "subscription_monthly",
             p_currency: "eur",
           }),
         ]);
@@ -122,7 +122,7 @@ describe("participations race + idempotency", () => {
         p_product_id: PRODUCT_RACE_1SEAT,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
-        p_purchase_shape: "bundle_1",
+        p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
       expect((first.data as { kind: string }).kind).toBe("reserving");
@@ -131,7 +131,7 @@ describe("participations race + idempotency", () => {
         p_product_id: PRODUCT_RACE_1SEAT,
         p_gamer_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
-        p_purchase_shape: "bundle_1",
+        p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
       expect((second.data as { kind: string }).kind).toBe("full");
@@ -155,7 +155,7 @@ describe("participations race + idempotency", () => {
         p_product_id: PRODUCT_EXPIRED_RES,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
-        p_purchase_shape: "bundle_1",
+        p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
       const reservationId = (created.data as { participation_id: string })
@@ -179,7 +179,7 @@ describe("participations race + idempotency", () => {
         p_product_id: PRODUCT_EXPIRED_RES,
         p_gamer_id: TEST_IDS.GAMER_2,
         p_customer_id: TEST_IDS.CUSTOMER,
-        p_purchase_shape: "bundle_1",
+        p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
       expect((next.data as { kind: string }).kind).toBe("reserving");
@@ -194,7 +194,6 @@ describe("participations race + idempotency", () => {
           gamer_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
-          credits_remaining: 0,
         })
         .select("id")
         .single();
@@ -227,32 +226,29 @@ describe("participations race + idempotency", () => {
       });
     });
 
-    it("flips reserving → active and grants credits", async () => {
+    it("flips reserving → active", async () => {
       const created = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_CONFIRM,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
-        p_purchase_shape: "bundle_4",
+        p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
       const reservationId = (created.data as { participation_id: string })
         .participation_id;
 
       const confirmed = await admin.rpc("confirm_reservation", {
-        p_reservation_id: reservationId,
-        p_credits_to_grant: 4,
-      });
+        p_reservation_id: reservationId,      });
       const body = confirmed.data as { kind: string; idempotent?: boolean };
       expect(body.kind).toBe("confirmed");
       expect(body.idempotent).toBe(false);
 
       const { data: row } = await admin
         .from("participations")
-        .select("status, credits_remaining, reserved_until")
+        .select("status, reserved_until")
         .eq("id", reservationId)
         .single();
       expect(row?.status).toBe("active");
-      expect(row?.credits_remaining).toBe(4);
       expect(row?.reserved_until).toBeNull();
     });
 
@@ -265,33 +261,20 @@ describe("participations race + idempotency", () => {
           gamer_id: TEST_IDS.GAMER_2,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
-          credits_remaining: 4,
         })
         .select("id")
         .single();
 
       const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: inserted!.id,
-        p_credits_to_grant: 4,
-      });
+        p_reservation_id: inserted!.id,      });
       const body = result.data as { kind: string; idempotent?: boolean };
       expect(body.kind).toBe("confirmed");
       expect(body.idempotent).toBe(true);
-
-      // Credits did NOT double — idempotent path leaves the row untouched.
-      const { data: row } = await admin
-        .from("participations")
-        .select("credits_remaining")
-        .eq("id", inserted!.id)
-        .single();
-      expect(row?.credits_remaining).toBe(4);
     });
 
     it("returns orphan when the reservation row does not exist", async () => {
       const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: "00000000-0000-0000-0000-000000000fff",
-        p_credits_to_grant: 0,
-      });
+        p_reservation_id: "00000000-0000-0000-0000-000000000fff",      });
       expect((result.data as { kind: string }).kind).toBe("orphan");
     });
 
@@ -304,15 +287,12 @@ describe("participations race + idempotency", () => {
           customer_id: TEST_IDS.CUSTOMER,
           status: "waitlisted",
           waitlist_position: 1,
-          credits_remaining: 0,
         })
         .select("id")
         .single();
 
       const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: inserted!.id,
-        p_credits_to_grant: 0,
-      });
+        p_reservation_id: inserted!.id,      });
       expect((result.data as { kind: string }).kind).toBe("orphan");
     });
 
@@ -330,7 +310,6 @@ describe("participations race + idempotency", () => {
           gamer_id: TEST_IDS.GAMER,
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
-          credits_remaining: 4,
         })
         .select("id")
         .single();
@@ -343,15 +322,12 @@ describe("participations race + idempotency", () => {
           customer_id: TEST_IDS.CUSTOMER,
           status: "reserving",
           reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
-          credits_remaining: 0,
         })
         .select("id")
         .single();
 
       const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: reserving!.id,
-        p_credits_to_grant: 4,
-      });
+        p_reservation_id: reserving!.id,      });
       const body = result.data as {
         kind: string;
         existing_participation_id?: string;

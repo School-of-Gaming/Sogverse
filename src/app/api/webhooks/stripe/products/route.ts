@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  bundleSizeFromShape,
-  frequencyFromShape,
-} from "@/lib/stripe/participation-prices";
 import type { PaymentPurpose } from "@/types";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -100,9 +96,6 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
   if (existingPayment) return;
 
   const isSubscription = purchaseShape.startsWith("subscription_");
-  const isBundle = purchaseShape.startsWith("bundle_");
-
-  const creditsToGrant = isBundle ? bundleSizeFromShape(purchaseShape) : 0;
 
   // Confirm reservation. The RPC returns one of:
   //   'confirmed'        — happy path: row flipped reserving → active
@@ -117,10 +110,7 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
   //                        refund it; release the orphan reserving row.
   const { data: confirmResult, error: confirmErr } = await admin.rpc(
     "confirm_reservation",
-    {
-      p_reservation_id: reservationId,
-      p_credits_to_grant: creditsToGrant,
-    },
+    { p_reservation_id: reservationId },
   );
   if (confirmErr) {
     throw new Error(`confirm_reservation failed: ${confirmErr.message}`);
@@ -218,7 +208,6 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
   if (isSubscription && typeof session.subscription === "string") {
     const subId = session.subscription;
     const sub = await stripe.subscriptions.retrieve(subId, { expand: ["items.data"] });
-    const frequency = frequencyFromShape(purchaseShape);
 
     // Find or create family_subscriptions row.
     let { data: famSub } = await admin
@@ -237,7 +226,6 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
           customer_id: customerId,
           stripe_subscription_id: subId,
           stripe_customer_id: stripeCustomerId,
-          frequency,
           currency,
           status: sub.status,
           current_period_end:

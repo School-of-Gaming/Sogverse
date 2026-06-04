@@ -168,7 +168,6 @@ export type ProductBrowseRow = Product & {
 
 // Enums
 export type ParticipationStatus = Database["public"]["Enums"]["participation_status"];
-export type SubscriptionFrequency = Database["public"]["Enums"]["subscription_frequency"];
 export type PaymentPurpose = Database["public"]["Enums"]["payment_purpose"];
 export type RefundReason = Database["public"]["Enums"]["refund_reason"];
 export type EffectiveProductStatusDB = Database["public"]["Enums"]["effective_product_status"];
@@ -194,12 +193,7 @@ export type ParticipationState = "waitlisted" | "unassigned" | "assigned";
  * pricing constants — clients never send amounts.
  */
 export type PurchaseShape =
-  | "bundle_1"
-  | "bundle_4"
-  | "bundle_10"
   | "subscription_monthly"
-  | "subscription_quarterly"
-  | "subscription_yearly"
   | "single_payment"
   | "free";
 
@@ -220,12 +214,6 @@ export type FamilySubscriptionItemInsert = Database["public"]["Tables"]["family_
 // product_subscription_prices (Stripe Price ID cache; admin-only)
 export type ProductSubscriptionPrice = Database["public"]["Tables"]["product_subscription_prices"]["Row"];
 export type ProductSubscriptionPriceInsert = Database["public"]["Tables"]["product_subscription_prices"]["Insert"];
-
-// session_cancellations (ships now even though the cancel-session UI does not)
-export type SessionCancellation = Database["public"]["Tables"]["session_cancellations"]["Row"];
-
-// credit_deductions (cron audit ledger)
-export type CreditDeduction = Database["public"]["Tables"]["credit_deductions"]["Row"];
 
 // product_seat_counts (public-readable rollup feeding the realtime counter)
 export type ProductSeatCount = Database["public"]["Tables"]["product_seat_counts"]["Row"];

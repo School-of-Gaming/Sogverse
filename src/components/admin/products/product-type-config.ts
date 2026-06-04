@@ -23,12 +23,11 @@ export type BillingOption =
   | { mode: "external_contract"; required: true }                       // municipality_club
   | { mode: "free_or_paid" };                                           // event
 
-// Pricing shape — drives the Capacity & billing card. Only consumer clubs
-// run on a recurring per-session model with a subscription option, so they
-// need both `price_per_session` AND `price_per_month`. Camps and events are
-// upfront-only, so they collect a single total. Municipality clubs are
-// invoiced off-site; the form shows an info card instead of a price input.
-export type PricingShape = "session_and_month" | "upfront_total" | "external" | "none";
+// Pricing shape — drives the Capacity & billing card. Each paid type collects
+// a single price: consumer clubs a flat monthly subscription (`price_per_month`),
+// camps and events a one-time total (`price_per_session`). Municipality clubs
+// are invoiced off-site; the form shows an info card instead of a price input.
+export type PricingShape = "monthly" | "upfront_total" | "external" | "none";
 
 export interface ProductTypeConfig {
   productType: ProductType;
@@ -54,7 +53,7 @@ export const PRODUCT_TYPE_CONFIG: Record<ProductType, ProductTypeConfig> = {
     routeSlug: "consumer-clubs",
     scheduleShape: "weekly_ongoing",
     billing: { mode: "paid", required: true },
-    pricingShape: "session_and_month",
+    pricingShape: "monthly",
     allowsRemote: true,
     allowsInPerson: true,
     requiresMunicipalityWhenOnline: false,

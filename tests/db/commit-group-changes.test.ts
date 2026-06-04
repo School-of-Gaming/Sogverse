@@ -228,7 +228,6 @@ describe("commit_group_changes", () => {
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
           group_id: groupId,
-          credits_remaining: 1,
         })
         .select("id")
         .single();
@@ -378,7 +377,6 @@ describe("commit_group_changes", () => {
           customer_id: TEST_IDS.CUSTOMER,
           status: "active",
           group_id: null,
-          credits_remaining: 1,
         })
         .select("id")
         .single();
@@ -589,7 +587,6 @@ describe("get_product_groups_with_details", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: groupA,
-        credits_remaining: 1,
       },
       {
         product_id: PRODUCT_DETAILS,
@@ -597,7 +594,6 @@ describe("get_product_groups_with_details", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: null,
-        credits_remaining: 1,
       },
     ]);
 
