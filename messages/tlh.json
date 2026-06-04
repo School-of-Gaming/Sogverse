@@ -1324,7 +1324,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerOpen": "DaH {verb}",
       "bannerAlmostFull": "nom — pa' puS neH",
       "bannerCountdown": "qonta' poSlaw' {date}",
       "bannerCountdownDone": "qonta' poS",
@@ -1338,6 +1337,12 @@
         "municipality_club": "yIqon",
         "camp": "yImuv",
         "event": "yImuv"
+      },
+      "noun": {
+        "consumer_club": "muvghach",
+        "municipality_club": "qonghach",
+        "camp": "muvghach",
+        "event": "muvghach"
       },
       "ctaPreOpenIdle": "{verb} — DaH poSbe'",
       "ctaPreOpenReady": "qonta' poSDI' SuD",

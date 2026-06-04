@@ -1279,7 +1279,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerOpen": "{verb} nu",
       "bannerAlmostFull": "Snabbt nu – bara några platser kvar",
       "bannerCountdown": "Anmälan öppnar {date}",
       "bannerCountdownDone": "Anmälan är öppen",
@@ -1293,6 +1292,12 @@
         "municipality_club": "Registrera dig",
         "camp": "Anmäl dig",
         "event": "Gå med"
+      },
+      "noun": {
+        "consumer_club": "Anmälan",
+        "municipality_club": "Registrering",
+        "camp": "Anmälan",
+        "event": "Deltagande"
       },
       "ctaPreOpenIdle": "{verb} – inte öppen ännu",
       "ctaPreOpenReady": "Redo när anmälan öppnar",

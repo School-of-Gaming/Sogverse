@@ -1279,7 +1279,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerOpen": "{verb} nyt",
       "bannerAlmostFull": "Paikat täyttyvät – vain muutama jäljellä",
       "bannerCountdown": "Ilmoittautuminen avautuu {date}",
       "bannerCountdownDone": "Ilmoittautuminen on auki",
@@ -1293,6 +1292,12 @@
         "municipality_club": "Rekisteröidy",
         "camp": "Ilmoittaudu",
         "event": "Liity"
+      },
+      "noun": {
+        "consumer_club": "Ilmoittautuminen",
+        "municipality_club": "Rekisteröinti",
+        "camp": "Ilmoittautuminen",
+        "event": "Liittyminen"
       },
       "ctaPreOpenIdle": "{verb} – ei vielä avoinna",
       "ctaPreOpenReady": "Valmis – odotetaan avaamista",
