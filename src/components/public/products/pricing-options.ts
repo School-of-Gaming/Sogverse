@@ -45,10 +45,9 @@ export function buildPricingOption({
 
   if (productType === "consumer_club") {
     // Consumer clubs bill as a flat monthly subscription.
-    return { kind: "subscription", totalCents: row.price_per_month };
+    return { kind: "subscription", totalCents: row.price_cents };
   }
 
-  // Camps and paid events are a single upfront total — the admin form stores
-  // it in `price_per_session` (the per-attendance price column).
-  return { kind: "upfront", totalCents: row.price_per_session };
+  // Camps and paid events are a single upfront total.
+  return { kind: "upfront", totalCents: row.price_cents };
 }

@@ -300,16 +300,16 @@ function KeyFacts({
   const priceLines = SUPPORTED_CURRENCIES.flatMap((cur) => {
     const row = product.product_prices.find((p) => p.currency === cur);
     if (!row) return [];
-    // Consumer clubs charge a monthly subscription (price_per_month);
-    // camps/events an upfront total (price_per_session).
+    // Consumer clubs charge a monthly subscription; camps/events an upfront
+    // total. Either way it's the single `price_cents`; only the label differs.
     if (product.product_type === "consumer_club") {
       return [
         `${cur.toUpperCase()} ${t("detailsPage.perMonth", {
-          amount: (row.price_per_month / 100).toFixed(2),
+          amount: (row.price_cents / 100).toFixed(2),
         })}`,
       ];
     }
-    return [`${cur.toUpperCase()} ${(row.price_per_session / 100).toFixed(2)}`];
+    return [`${cur.toUpperCase()} ${(row.price_cents / 100).toFixed(2)}`];
   });
 
   return (

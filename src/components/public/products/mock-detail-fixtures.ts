@@ -300,13 +300,13 @@ function buildPriceRows(
   productType: ProductType,
   stateKind: PreviewStateKind,
 ): unknown[] {
-  const eurSession = productType === "consumer_club" ? 1000 : 9000;
-  const eurMonth = 3600;
+  // Consumer clubs price as a monthly subscription; camps/events as one
+  // upfront total. Either way it's the single `price_cents` per currency.
+  const eurPrice = productType === "consumer_club" ? 3600 : 9000;
   return SUPPORTED_CURRENCIES.map((currency) => ({
     product_id: `mock-${productType}-${stateKind}`,
     currency,
-    price_per_session: Math.round(eurSession * FX_FROM_EUR[currency]),
-    price_per_month: Math.round(eurMonth * FX_FROM_EUR[currency]),
+    price_cents: Math.round(eurPrice * FX_FROM_EUR[currency]),
   }));
 }
 

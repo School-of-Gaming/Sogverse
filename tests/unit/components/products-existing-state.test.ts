@@ -53,9 +53,9 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
       },
     ],
     product_prices: [
-      { currency: "eur", price_per_session: 1500, price_per_month: 4500 },
-      { currency: "gbp", price_per_session: 1300, price_per_month: 3900 },
-      { currency: "usd", price_per_session: 1700, price_per_month: 5100 },
+      { currency: "eur", price_cents: 4500 },
+      { currency: "gbp", price_cents: 3900 },
+      { currency: "usd", price_cents: 5100 },
     ],
     schedule_slots: [
       { weekday: 1, start_time: "16:00", duration_minutes: 90 },
@@ -87,14 +87,15 @@ describe("existingFormState", () => {
     expect(state.image).toBe("abc.png");
   });
 
-  it("converts prices cents → decimal strings", () => {
+  it("loads price_cents into the month slot for a monthly product", () => {
     const product = syntheticConsumerProduct();
     const state = existingFormState(product, consumerConfig, "en");
 
-    expect(state.prices.eur.session).toBe("15.00");
-    expect(state.prices.eur.month).toBe("45.00");
-    expect(state.prices.gbp.session).toBe("13.00");
-    expect(state.prices.usd.month).toBe("51.00");
+    // Consumer clubs are monthly, so price_cents loads into `month`; the
+    // unused `session` slot stays blank.
+    expect(state.prices.eur).toEqual({ session: "", month: "45.00" });
+    expect(state.prices.gbp).toEqual({ session: "", month: "39.00" });
+    expect(state.prices.usd).toEqual({ session: "", month: "51.00" });
   });
 
   it("seeds manualEdits with all currencies so editing EUR doesn't FX-overwrite GBP/USD", () => {
@@ -202,12 +203,12 @@ describe("buildUpdateInput round-trip", () => {
     expect(input.signup_threshold).toBe(null);
     expect(input.holiday_calendar_ids).toEqual(["cal-1"]);
     expect(input.image).toBe("abc.png");
-    // Consumer clubs charge a monthly subscription only — price_per_session is
-    // forced to 0 on build regardless of what the persisted row held.
+    // Consumer clubs charge a monthly subscription; the single price_cents
+    // round-trips from the persisted row's monthly amount.
     expect(input.prices).toEqual([
-      { currency: "eur", price_per_session: 0, price_per_month: 4500 },
-      { currency: "gbp", price_per_session: 0, price_per_month: 3900 },
-      { currency: "usd", price_per_session: 0, price_per_month: 5100 },
+      { currency: "eur", price_cents: 4500 },
+      { currency: "gbp", price_cents: 3900 },
+      { currency: "usd", price_cents: 5100 },
     ]);
     expect(input.translations).toEqual([
       { locale: "en", name: "Build Club", description: "Build castles together." },

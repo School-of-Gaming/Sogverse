@@ -7,8 +7,7 @@ import type { SupportedCurrency } from "@/lib/constants/currency";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 interface ProductPrice {
-  price_per_session: number;
-  price_per_month: number;
+  price_cents: number;
 }
 
 async function loadBasePrice(
@@ -18,7 +17,7 @@ async function loadBasePrice(
 ): Promise<ProductPrice | null> {
   const { data, error } = await admin
     .from("product_prices")
-    .select("price_per_session, price_per_month")
+    .select("price_cents")
     .eq("product_id", productId)
     .eq("currency", currency)
     .maybeSingle();
@@ -28,8 +27,7 @@ async function loadBasePrice(
 
 /**
  * Single-payment total in smallest currency unit. Used for camps and paid
- * events — those store their total in `price_per_session` (the per-attendance
- * price column).
+ * events — those store their one upfront total in `price_cents`.
  */
 export async function computeSinglePaymentAmount(
   admin: SupabaseClient<Database>,
@@ -38,7 +36,7 @@ export async function computeSinglePaymentAmount(
 ): Promise<number | null> {
   const base = await loadBasePrice(admin, productId, currency);
   if (!base) return null;
-  return base.price_per_session;
+  return base.price_cents;
 }
 
 interface SubscriptionPriceRow {
@@ -51,7 +49,7 @@ interface SubscriptionPriceRow {
 /**
  * Lazy-create the monthly Stripe Price for a (product, currency) pair.
  *
- * Cached in `product_subscription_prices`. If `price_per_month` later
+ * Cached in `product_subscription_prices`. If `price_cents` later
  * changes on the admin form, existing subscribers keep their old Price —
  * Stripe Prices are immutable. A future admin action could recreate them.
  */
@@ -77,7 +75,7 @@ export async function getOrCreateSubscriptionPrice(
   // Ensure the product has a Stripe Product. Look up by metadata.
   const stripeProductId = await ensureStripeProductForProduct(admin, productId);
 
-  const unitAmount = base.price_per_month;
+  const unitAmount = base.price_cents;
 
   const stripePrice = await stripe.prices.create({
     product: stripeProductId,

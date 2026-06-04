@@ -238,7 +238,8 @@ describe("participations race + idempotency", () => {
         .participation_id;
 
       const confirmed = await admin.rpc("confirm_reservation", {
-        p_reservation_id: reservationId,      });
+        p_reservation_id: reservationId,
+      });
       const body = confirmed.data as { kind: string; idempotent?: boolean };
       expect(body.kind).toBe("confirmed");
       expect(body.idempotent).toBe(false);
@@ -266,7 +267,8 @@ describe("participations race + idempotency", () => {
         .single();
 
       const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: inserted!.id,      });
+        p_reservation_id: inserted!.id,
+      });
       const body = result.data as { kind: string; idempotent?: boolean };
       expect(body.kind).toBe("confirmed");
       expect(body.idempotent).toBe(true);
@@ -274,7 +276,8 @@ describe("participations race + idempotency", () => {
 
     it("returns orphan when the reservation row does not exist", async () => {
       const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: "00000000-0000-0000-0000-000000000fff",      });
+        p_reservation_id: "00000000-0000-0000-0000-000000000fff",
+      });
       expect((result.data as { kind: string }).kind).toBe("orphan");
     });
 
@@ -292,7 +295,8 @@ describe("participations race + idempotency", () => {
         .single();
 
       const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: inserted!.id,      });
+        p_reservation_id: inserted!.id,
+      });
       expect((result.data as { kind: string }).kind).toBe("orphan");
     });
 
@@ -327,7 +331,8 @@ describe("participations race + idempotency", () => {
         .single();
 
       const result = await admin.rpc("confirm_reservation", {
-        p_reservation_id: reserving!.id,      });
+        p_reservation_id: reserving!.id,
+      });
       const body = result.data as {
         kind: string;
         existing_participation_id?: string;

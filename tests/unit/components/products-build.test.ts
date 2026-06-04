@@ -348,19 +348,18 @@ describe("validate", () => {
 });
 
 describe("buildCreateInput", () => {
-  it("converts the monthly price to cents and zeros price_per_session for clubs", () => {
-    // Consumer clubs charge a flat monthly subscription, so the monthly price
-    // goes to price_per_month and price_per_session is forced to 0. The
-    // session input is ignored. See decimalToCents in src/lib/utils.ts.
+  it("converts the monthly price to cents as price_cents for clubs", () => {
+    // Consumer clubs charge a flat monthly subscription, so the monthly input
+    // becomes price_cents and the session input is ignored. See decimalToCents
+    // in src/lib/utils.ts.
     const s = validConsumerState();
     s.prices.eur = { session: "10.005", month: "30.99" };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
     const eur = out.prices.find((p) => p.currency === "eur")!;
-    expect(eur.price_per_session).toBe(0);
-    expect(eur.price_per_month).toBe(3099);
+    expect(eur.price_cents).toBe(3099);
   });
 
-  it("zeros out price_per_month for upfront_total products (camp)", () => {
+  it("uses the upfront total as price_cents for upfront_total products (camp)", () => {
     const s = validConsumerState();
     s.scheduleSlots = [
       { weekday: 0, start_time: "10:00", duration_minutes: 180 },
@@ -373,8 +372,7 @@ describe("buildCreateInput", () => {
       usd: { session: "110", month: "" },
     };
     const out = buildCreateInput(s, "camp", campConfig);
-    expect(out.prices.every((p) => p.price_per_month === 0)).toBe(true);
-    expect(out.prices.find((p) => p.currency === "eur")!.price_per_session).toBe(
+    expect(out.prices.find((p) => p.currency === "eur")!.price_cents).toBe(
       10000,
     );
   });
@@ -597,9 +595,7 @@ function mockDetailRow(
         updated_at: "2026-01-01T00:00:00Z",
       },
     ],
-    product_prices: [
-      { currency: "eur", price_per_session: 1000, price_per_month: 3000 },
-    ],
+    product_prices: [{ currency: "eur", price_cents: 3000 }],
     schedule_slots: [
       { weekday: 1, start_time: "16:00", duration_minutes: 90 },
     ],
@@ -648,7 +644,9 @@ describe("cloneFormState", () => {
     expect(state.scheduleSlots).toEqual([
       { weekday: 1, start_time: "16:00", duration_minutes: 90 },
     ]);
-    expect(state.prices.eur).toEqual({ session: "10.00", month: "30.00" });
+    // consumer_club is a monthly product, so the stored price_cents loads into
+    // the `month` slot; the unused `session` slot stays blank.
+    expect(state.prices.eur).toEqual({ session: "", month: "30.00" });
     expect(state.isVisible).toBe(true);
   });
 
