@@ -3,11 +3,16 @@
 import { useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import {
+  MIN_PRODUCT_AGE,
+  MAX_PRODUCT_AGE,
+} from "@/lib/constants/gamer-age";
 import type { ProductFormat } from "./filter-products";
 
 const TOPIC_PARAM = "topic";
 const FORMAT_PARAM = "format";
 const LANGUAGE_PARAM = "lang";
+const AGE_PARAM = "age";
 
 function parseList(raw: string | null): string[] {
   if (!raw) return [];
@@ -20,6 +25,18 @@ function parseList(raw: string | null): string[] {
 function parseFormat(raw: string | null): ProductFormat | null {
   if (raw === "online" || raw === "in_person") return raw;
   return null;
+}
+
+// A single gamer age, clamped to the product age band. Anything out of range
+// or unparseable reads as "any age" (null) so a hand-edited URL can't surface
+// an option the filter never offered.
+function parseAge(raw: string | null): number | null {
+  if (!raw) return null;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < MIN_PRODUCT_AGE || n > MAX_PRODUCT_AGE) {
+    return null;
+  }
+  return n;
 }
 
 // URL-state hook for the topic + tag + format chip filters.
@@ -48,14 +65,22 @@ export function useBrowseFilters() {
     () => parseList(searchParams.get(LANGUAGE_PARAM)),
     [searchParams],
   );
+  const age = useMemo(
+    () => parseAge(searchParams.get(AGE_PARAM)),
+    [searchParams],
+  );
   const hasAny =
-    topics.length > 0 || format !== null || languages.length > 0;
+    topics.length > 0 ||
+    format !== null ||
+    languages.length > 0 ||
+    age !== null;
 
   const writeNext = useCallback(
     (next: {
       topics?: string[];
       format?: ProductFormat | null;
       languages?: string[];
+      age?: number | null;
     }) => {
       const params = new URLSearchParams(searchParams.toString());
       if (next.topics !== undefined) {
@@ -69,6 +94,10 @@ export function useBrowseFilters() {
       if (next.languages !== undefined) {
         if (next.languages.length === 0) params.delete(LANGUAGE_PARAM);
         else params.set(LANGUAGE_PARAM, next.languages.join(","));
+      }
+      if (next.age !== undefined) {
+        if (next.age === null) params.delete(AGE_PARAM);
+        else params.set(AGE_PARAM, String(next.age));
       }
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
@@ -105,18 +134,27 @@ export function useBrowseFilters() {
     [languages, writeNext],
   );
 
+  const setAge = useCallback(
+    (value: number | null) => {
+      writeNext({ age: value });
+    },
+    [writeNext],
+  );
+
   const clear = useCallback(() => {
-    writeNext({ topics: [], format: null, languages: [] });
+    writeNext({ topics: [], format: null, languages: [], age: null });
   }, [writeNext]);
 
   return {
     topics,
     format,
     languages,
+    age,
     hasAny,
     toggleTopic,
     toggleFormat,
     toggleLanguage,
+    setAge,
     clear,
   };
 }

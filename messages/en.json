@@ -1203,6 +1203,7 @@
       "formatOnline": "Online",
       "formatInPerson": "In person",
       "language": "Language",
+      "age": "Age",
       "clearAll": "Clear",
       "filterBy": "Filter by"
     },
