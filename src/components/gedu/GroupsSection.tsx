@@ -31,7 +31,7 @@ export function GroupsSection({
   if (items.length === 0) {
     return (
       <p className="text-muted-foreground">
-        {t("upcomingSessionsPlaceholderGedu")}
+        {t("upcomingSessionsEmptyStateGedu")}
       </p>
     );
   }
