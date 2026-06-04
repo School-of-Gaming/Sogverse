@@ -11,14 +11,10 @@ import {
   SUPPORTED_CURRENCIES,
   type SupportedCurrency,
 } from "@/lib/constants";
-import {
-  BundlePricePreview,
-  SubscriptionPricePreview,
-} from "./price-previews";
 import { applyFxAutoFill } from "./pricing-block-fx";
 import type { FxRates } from "@/services/products";
 
-export type PricingShapeUI = "session_and_month" | "upfront_total";
+export type PricingShapeUI = "monthly" | "upfront_total";
 
 export interface PricingBlockState {
   prices: Record<SupportedCurrency, { session: string; month: string }>;
@@ -42,6 +38,11 @@ export function PricingBlock({
   const t = useTranslations("admin.products.pricing");
   const { prices, manualEdits, activeCurrency } = state;
 
+  // Each paid type collects a single price: `month` for the consumer-club
+  // monthly subscription, `session` for the camp/event upfront total. The
+  // DB keeps both columns; the unused one is written as 0 in product-build.
+  const field: "session" | "month" = shape === "monthly" ? "month" : "session";
+
   // Re-fill every non-EUR currency from EUR × today's rate whenever EUR
   // changes — except currencies the admin has manually overridden. The
   // effect doesn't add the auto-filled currencies to `manualEdits`, so
@@ -58,11 +59,7 @@ export function PricingBlock({
     onChange({ ...state, activeCurrency: currency });
   };
 
-  const setRow = (
-    currency: SupportedCurrency,
-    field: "session" | "month",
-    value: string
-  ) => {
+  const setRow = (currency: SupportedCurrency, value: string) => {
     // EUR is the FX source — it's never auto-filled, so it never needs
     // to be locked. Only non-EUR keystrokes mark a currency as manual.
     const nextManualEdits =
@@ -86,8 +83,7 @@ export function PricingBlock({
     !manualEdits.has(activeCurrency) &&
     Boolean(fxRates);
 
-  const sessionLabel =
-    shape === "session_and_month" ? t("perSessionLabel") : t("totalLabel");
+  const label = shape === "monthly" ? t("perMonthLabel") : t("totalLabel");
 
   return (
     <div className="space-y-3">
@@ -128,72 +124,27 @@ export function PricingBlock({
         </p>
       )}
 
-      {/* Inputs for the active tab */}
-      <div
-        className={cn(
-          "grid gap-4",
-          shape === "session_and_month" ? "sm:grid-cols-2" : "sm:grid-cols-1"
-        )}
-      >
-        <div className="space-y-1.5">
-          <Label htmlFor={`price-session-${activeCurrency}`}>
-            {sessionLabel}
-            <span className="ml-0.5 text-destructive">*</span>
-          </Label>
-          <div className="relative">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-              {CURRENCY_CONFIG[activeCurrency].symbol}
-            </span>
-            <Input
-              id={`price-session-${activeCurrency}`}
-              type="number"
-              min="0"
-              step="0.01"
-              value={prices[activeCurrency].session}
-              onChange={(e) =>
-                setRow(activeCurrency, "session", e.target.value)
-              }
-              required
-              className="pl-7"
-            />
-          </div>
-          {shape === "session_and_month" && (
-            <BundlePricePreview
-              value={prices[activeCurrency].session}
-              currency={activeCurrency}
-            />
-          )}
+      {/* Single price input for the active tab */}
+      <div className="space-y-1.5">
+        <Label htmlFor={`price-${activeCurrency}`}>
+          {label}
+          <span className="ml-0.5 text-destructive">*</span>
+        </Label>
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+            {CURRENCY_CONFIG[activeCurrency].symbol}
+          </span>
+          <Input
+            id={`price-${activeCurrency}`}
+            type="number"
+            min="0"
+            step="0.01"
+            value={prices[activeCurrency][field]}
+            onChange={(e) => setRow(activeCurrency, e.target.value)}
+            required
+            className="pl-7"
+          />
         </div>
-
-        {shape === "session_and_month" && (
-          <div className="space-y-1.5">
-            <Label htmlFor={`price-month-${activeCurrency}`}>
-              {t("perMonthLabel")}
-              <span className="ml-0.5 text-destructive">*</span>
-            </Label>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                {CURRENCY_CONFIG[activeCurrency].symbol}
-              </span>
-              <Input
-                id={`price-month-${activeCurrency}`}
-                type="number"
-                min="0"
-                step="0.01"
-                value={prices[activeCurrency].month}
-                onChange={(e) =>
-                  setRow(activeCurrency, "month", e.target.value)
-                }
-                required
-                className="pl-7"
-              />
-            </div>
-            <SubscriptionPricePreview
-              value={prices[activeCurrency].month}
-              currency={activeCurrency}
-            />
-          </div>
-        )}
       </div>
     </div>
   );

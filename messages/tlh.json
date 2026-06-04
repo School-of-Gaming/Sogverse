@@ -459,16 +459,8 @@
       "pricing": {
         "currencyPickerLabel": "Huch mIw",
         "fxSuggested": "DaHjaj EUR mI' vo' ({rate}). yIchoH DaneHchugh.",
-        "perSessionLabel": "Huch per qaStaHvIS",
         "perMonthLabel": "Huch per jar",
-        "totalLabel": "Huch Hoch",
-        "bundleHeading": "vavmey Huch DIghaj",
-        "bundleSingle": "wa' qaStaHvIS",
-        "bundleMulti": "{size} qaStaHvISmey ({discount}% cheghlu')",
-        "subHeading": "vavmey Huch ghItlhmey",
-        "subMonthly": "jar",
-        "subQuarterly": "wejmaH jaj ({discount}% cheghlu')",
-        "subYearly": "DIS ({discount}% cheghlu')"
+        "totalLabel": "Huch Hoch"
       },
       "startModes": {
         "label": "chay' tagh?",
@@ -504,7 +496,7 @@
         "freeDetail": "Huch pagh. Hoch wa' chu'wI' lo'.",
         "paidDetail": "ghItlh wa' Huch.",
         "paidByMunicipality": "QumDaq vavmey Huch pagh. School of Gaming veng nIDqu'.",
-        "pricingPerSession": "qaStaHvIS Hoch puq lopvaD Huch lulo'lu'. jar Huch ghItlhwI' luleghbogh — vam mI' vo' Hogh/jar tlhutlh.",
+        "pricingMonthly": "jar Hoch Huch lo' qaStaHvIS rar yoH. DaH yIqIl 'e' DaneHchugh, yIqIl.",
         "pricingUpfront": "ghItlh wa' Huch lo'. poH nab Sov pagh, Huch rapchu'.",
         "seatHint": "tebDI', ghItlh chu'mey tetlh teb Daq jaH.",
         "seatCanUncap": "Huch pagh Qu' pa' mI' Sub poQbe' (e.g. webinar, ghom yIt).",
@@ -1256,9 +1248,7 @@
     },
     "card": {
       "ages": "ben {min}–{max}",
-      "perSession": "{price} / wanI'",
       "perMonth": "{price} / jar",
-      "orChoice": "qoj",
       "upfrontTotal": "{price}",
       "free": "Huch Hutlh",
       "externalContract": "yejquv DIl",
@@ -1387,24 +1377,14 @@
     "pricing": {
       "title": "Huch",
       "pricesIn": "Huch yIwIv",
-      "subscribeHeading": "rar (pIm Huch nIQ)",
-      "bundleHeading": "pagh Huch wa'logh ngIp",
-      "perSession": "{price} / qaStaHvIS",
-      "subscribeMonthly": "jar Hoch",
-      "subscribeQuarterly": "wej jar Hoch",
-      "subscribeYearly": "DIS Hoch",
-      "bundleSingle": "wa' qaStaHvIS",
-      "bundleN": "{count} qaStaHvIS",
-      "savings": "{percent} % nIQ",
+      "subscriptionHint": "jar Hoch Huch lo' · DaH yIqIl 'e' DaneHchugh, yIqIl.",
       "free": "Huch pagh",
       "freeHint": "Huch poQbe'.",
       "external": "Huch pagh SoH · veng Huch nob",
       "externalHint": "Huch poQbe' — veng Huch nob.",
       "upfrontHint": "wa'logh Huch.",
       "notAvailable": "{currency} Huch DaH ghajbe'.",
-      "cadenceMonth": "/ jar",
-      "cadenceQuarter": "wej jar Hoch",
-      "cadenceYear": "DIS Hoch"
+      "cadenceMonth": "/ jar"
     },
     "countdown": {
       "days": "jaj",

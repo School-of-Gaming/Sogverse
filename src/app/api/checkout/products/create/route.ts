@@ -9,10 +9,7 @@ import {
 import type { PurchaseShape } from "@/types";
 import { ROUTES } from "@/lib/constants";
 import {
-  bundleSizeFromShape,
-  computeBundleAmount,
   computeSinglePaymentAmount,
-  frequencyFromShape,
   getOrCreateSubscriptionPrice,
 } from "@/lib/stripe/participation-prices";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
@@ -24,7 +21,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Discriminated success bodies. Client switches on `status`.
 //
-//   redirect       — bundle / single-payment / first-ever sub at this
+//   redirect       — single-payment / first-ever sub at this
 //                    (frequency, currency). Send the parent to Stripe Checkout.
 //   subscribed     — inline-add to an existing family sub. Already paid.
 //   free_confirmed — free event; no Stripe involvement.
@@ -36,12 +33,7 @@ type CreateResponseBody =
   | { status: "full" };
 
 const ALLOWED_SHAPES: ReadonlySet<PurchaseShape> = new Set<PurchaseShape>([
-  "bundle_1",
-  "bundle_4",
-  "bundle_10",
   "subscription_monthly",
-  "subscription_quarterly",
-  "subscription_yearly",
   "single_payment",
   "free",
 ]);
@@ -116,19 +108,18 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const isBundle = purchaseShape.startsWith("bundle_");
   const isSubscription = purchaseShape.startsWith("subscription_");
   const isSinglePayment = purchaseShape === "single_payment";
 
   if (isSinglePayment && product.product_type === "consumer_club") {
     return NextResponse.json(
-      { error: "Consumer clubs use bundles or subscriptions, not single-payment" },
+      { error: "Consumer clubs use subscriptions, not single-payment" },
       { status: 400 },
     );
   }
-  if ((isBundle || isSubscription) && product.product_type !== "consumer_club") {
+  if (isSubscription && product.product_type !== "consumer_club") {
     return NextResponse.json(
-      { error: "Only consumer clubs accept bundles or subscriptions" },
+      { error: "Only consumer clubs accept subscriptions" },
       { status: 400 },
     );
   }
@@ -195,15 +186,13 @@ export async function POST(request: Request) {
   const stripeCustomerId = await getOrCreateStripeCustomer(admin, user.id);
 
   // Subscription branch: find-or-create the family Stripe sub.
-  // Per docs/products-architecture.md §4.5b — one sub per (customer, frequency,
-  // currency); items per (gamer, club). If a sub already exists at this
-  // (frequency, currency), add an item to it inline. No Stripe Checkout.
+  // Per docs/products-architecture.md §4.5b — one monthly sub per (customer,
+  // currency); items per (gamer, club). If a sub already exists in this
+  // currency, add an item to it inline. No Stripe Checkout.
   if (isSubscription) {
-    const frequency = frequencyFromShape(purchaseShape);
     const priceRow = await getOrCreateSubscriptionPrice(
       admin,
       productId,
-      frequency,
       currency,
     );
     if (!priceRow) {
@@ -218,7 +207,6 @@ export async function POST(request: Request) {
       .from("family_subscriptions")
       .select("id, stripe_subscription_id, status")
       .eq("customer_id", user.id)
-      .eq("frequency", frequency)
       .eq("currency", currency)
       .maybeSingle();
 
@@ -263,7 +251,7 @@ export async function POST(request: Request) {
         // is still 'reserving' until we flip it here.
         const { error: confirmErr } = await admin.rpc(
           "confirm_reservation",
-          { p_reservation_id: reservationId, p_credits_to_grant: 0 },
+          { p_reservation_id: reservationId },
         );
         if (confirmErr) {
           throw new Error(`confirm_reservation failed: ${confirmErr.message}`);
@@ -297,8 +285,8 @@ export async function POST(request: Request) {
         );
       }
     }
-    // No live sub at this (frequency, currency) — fall through to the
-    // Stripe Checkout flow below.
+    // No live sub in this currency — fall through to the Stripe Checkout
+    // flow below.
   }
 
   const origin = getOrigin(request);
@@ -357,30 +345,7 @@ export async function POST(request: Request) {
     line_items: [],
   };
 
-  if (isBundle) {
-    const bundleSize = bundleSizeFromShape(purchaseShape);
-    const amount = await computeBundleAmount(admin, productId, bundleSize, currency);
-    if (amount === null) {
-      await rollbackReservation(admin, reservationId);
-      return NextResponse.json(
-        { error: `Product is not sold in ${currency}` },
-        { status: 400 },
-      );
-    }
-    sessionParams.mode = "payment";
-    sessionParams.line_items = [
-      {
-        quantity: 1,
-        price_data: {
-          currency,
-          unit_amount: amount,
-          product_data: {
-            name: `${productName} — ${bundleSize}-session bundle`,
-          },
-        },
-      },
-    ];
-  } else if (isSinglePayment) {
+  if (isSinglePayment) {
     const amount = await computeSinglePaymentAmount(admin, productId, currency);
     if (amount === null) {
       await rollbackReservation(admin, reservationId);
@@ -403,11 +368,9 @@ export async function POST(request: Request) {
   } else {
     // First-time subscription — went through the inline-add branch's
     // `getOrCreateSubscriptionPrice` failure check already.
-    const frequency = frequencyFromShape(purchaseShape);
     const priceRow = await getOrCreateSubscriptionPrice(
       admin,
       productId,
-      frequency,
       currency,
     );
     if (!priceRow) {

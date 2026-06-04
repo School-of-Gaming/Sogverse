@@ -76,7 +76,6 @@ describe("product_groups + gedu_group_assignments RLS", () => {
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
       group_id: groupX1,
-      credits_remaining: 1,
     });
 
     // Group on product Y with no relevant ownership.
@@ -266,7 +265,6 @@ describe("completed participation loses RLS visibility on v2 groups", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
         group_id: groupZ,
-        credits_remaining: 1,
       })
       .select("id")
       .single();

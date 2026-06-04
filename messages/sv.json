@@ -414,16 +414,8 @@
       "pricing": {
         "currencyPickerLabel": "Valuta",
         "fxSuggested": "Förslag från dagens EUR-kurs ({rate}). Redigera vid behov.",
-        "perSessionLabel": "Pris per tillfälle",
         "perMonthLabel": "Pris per månad",
-        "totalLabel": "Totalpris",
-        "bundleHeading": "Vad föräldrar betalar för paket",
-        "bundleSingle": "Ett tillfälle",
-        "bundleMulti": "{size} tillfällen (spara {discount}%)",
-        "subHeading": "Vad föräldrar betalar för prenumerationer",
-        "subMonthly": "Månadsvis",
-        "subQuarterly": "Kvartalsvis (spara {discount}%)",
-        "subYearly": "Årligen (spara {discount}%)"
+        "totalLabel": "Totalpris"
       },
       "startModes": {
         "label": "Hur startar detta?",
@@ -459,7 +451,7 @@
         "freeDetail": "Ingen avgift. Alla kan delta med ett klick.",
         "paidDetail": "Engångsavgift vid anmälan.",
         "paidByMunicipality": "Ingen kundfakturering inom detta system. School of Gaming fakturerar kommunen direkt.",
-        "pricingPerSession": "Debiteras för varje tillfälle barnet deltar. Månadspriset är vad prenumeranter ser — härleds vecko-/månadsvis från detta tal.",
+        "pricingMonthly": "Debiteras varje månad så länge prenumerationen är aktiv. Avsluta när som helst.",
         "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
         "seatHint": "När fullt går nya anmälningar till väntelistan.",
         "seatCanUncap": "Gratis evenemang behöver ingen platsgräns (t.ex. ett webbinarium, en offentlig promenad).",
@@ -1211,9 +1203,7 @@
     },
     "card": {
       "ages": "Ålder {min}–{max}",
-      "perSession": "{price} / pass",
       "perMonth": "{price} / mån",
-      "orChoice": "eller",
       "upfrontTotal": "{price}",
       "free": "Gratis",
       "externalContract": "Finansieras av din kommun",
@@ -1342,24 +1332,14 @@
     "pricing": {
       "title": "Pris",
       "pricesIn": "Priser i",
-      "subscribeHeading": "Prenumerera (sparar mer)",
-      "bundleHeading": "Eller betala när du går",
-      "perSession": "{price} / pass",
-      "subscribeMonthly": "Månadsvis",
-      "subscribeQuarterly": "Var tredje månad",
-      "subscribeYearly": "Årsvis",
-      "bundleSingle": "Enstaka pass",
-      "bundleN": "{count} pass",
-      "savings": "Spara {percent} %",
+      "subscriptionHint": "Faktureras månadsvis · avsluta när som helst.",
       "free": "Gratis",
       "freeHint": "Ingen betalning behövs.",
       "external": "Gratis för dig · betalas av din kommun",
       "externalHint": "Ingen betalning behövs – din kommun täcker kostnaden.",
       "upfrontHint": "Engångsbetalning.",
       "notAvailable": "Pris inte tillgängligt i {currency} ännu.",
-      "cadenceMonth": "/ mån",
-      "cadenceQuarter": "var 3:e mån",
-      "cadenceYear": "per år"
+      "cadenceMonth": "/ mån"
     },
     "countdown": {
       "days": "dagar",

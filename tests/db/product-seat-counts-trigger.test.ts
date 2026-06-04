@@ -81,7 +81,6 @@ describe("product_seat_counts trigger", () => {
       gamer_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
-      credits_remaining: 0,
     });
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
@@ -98,7 +97,6 @@ describe("product_seat_counts trigger", () => {
       customer_id: TEST_IDS.CUSTOMER,
       status: "reserving",
       reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
-      credits_remaining: 0,
     });
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
@@ -119,7 +117,6 @@ describe("product_seat_counts trigger", () => {
       customer_id: TEST_IDS.CUSTOMER,
       status: "reserving",
       reserved_until: new Date(Date.now() - 60_000).toISOString(),
-      credits_remaining: 0,
     });
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
@@ -136,7 +133,6 @@ describe("product_seat_counts trigger", () => {
       customer_id: TEST_IDS.CUSTOMER,
       status: "waitlisted",
       waitlist_position: 1,
-      credits_remaining: 0,
     });
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
@@ -155,7 +151,6 @@ describe("product_seat_counts trigger", () => {
         customer_id: TEST_IDS.CUSTOMER,
         status: "reserving",
         reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
-        credits_remaining: 0,
       })
       .select("id")
       .single();
@@ -167,7 +162,7 @@ describe("product_seat_counts trigger", () => {
 
     await admin
       .from("participations")
-      .update({ status: "active", reserved_until: null, credits_remaining: 4 })
+      .update({ status: "active", reserved_until: null })
       .eq("id", inserted!.id);
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({
@@ -185,7 +180,6 @@ describe("product_seat_counts trigger", () => {
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
-        credits_remaining: 0,
       })
       .select("id")
       .single();
@@ -210,7 +204,6 @@ describe("product_seat_counts trigger", () => {
         gamer_id: TEST_IDS.GAMER,
         customer_id: TEST_IDS.CUSTOMER,
         status: "active",
-        credits_remaining: 0,
       })
       .select("id")
       .single();
@@ -242,14 +235,12 @@ describe("product_seat_counts trigger", () => {
       gamer_id: TEST_IDS.GAMER,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
-      credits_remaining: 0,
     });
     await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
       gamer_id: TEST_IDS.GAMER_2,
       customer_id: TEST_IDS.CUSTOMER,
       status: "active",
-      credits_remaining: 0,
     });
     await admin.from("participations").insert({
       // Same gamer as the first row but reserving — the partial unique
@@ -259,7 +250,6 @@ describe("product_seat_counts trigger", () => {
       customer_id: TEST_IDS.CUSTOMER_2,
       status: "reserving",
       reserved_until: new Date(Date.now() + 30 * 60_000).toISOString(),
-      credits_remaining: 0,
     });
     await admin.from("participations").insert({
       product_id: PRODUCT_TRIG,
@@ -267,7 +257,6 @@ describe("product_seat_counts trigger", () => {
       customer_id: TEST_IDS.CUSTOMER_2,
       status: "reserving",
       reserved_until: new Date(Date.now() - 60_000).toISOString(),
-      credits_remaining: 0,
     });
 
     expect(await readRollup(admin, PRODUCT_TRIG)).toEqual({

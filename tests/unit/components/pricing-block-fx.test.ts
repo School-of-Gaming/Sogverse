@@ -10,11 +10,14 @@ import type { SupportedCurrency } from "@/lib/constants";
 // gets re-filled from EUR × today's rate. Currencies the admin has manually
 // edited (the "manualEdits" lock set) are skipped — that lock is sticky.
 //
-// The component used to inline this logic in a useEffect. Subtle bits:
+// Each paid type collects a single price field: `month` for the consumer-club
+// monthly subscription, `session` for the camp/event upfront total. The other
+// field is always blanked on non-EUR rows.
+//
+// Subtle bits:
 //   - returns null when no change is needed (otherwise the effect would
 //     re-fire on its own state update and the form thrashes)
-//   - empty EUR ⇒ no fill at all (nothing to derive from)
-//   - upfront_total shape ⇒ month is always blanked on non-EUR
+//   - empty EUR source field ⇒ no fill at all (nothing to derive from)
 
 const RATES: FxRates = { eur: 1, gbp: 0.86, usd: 1.07 };
 
@@ -29,39 +32,39 @@ function pricesOf(
 describe("applyFxAutoFill", () => {
   it("returns null when fxRates is undefined", () => {
     const result = applyFxAutoFill({
-      prices: pricesOf({ session: "10", month: "30" }),
+      prices: pricesOf({ session: "", month: "30" }),
       manualEdits: new Set(),
-      shape: "session_and_month",
+      shape: "monthly",
       fxRates: undefined,
     });
     expect(result).toBeNull();
   });
 
-  it("returns null when EUR session and month are both empty", () => {
+  it("returns null when the EUR source field is empty", () => {
     const result = applyFxAutoFill({
       prices: pricesOf({ session: "", month: "" }),
       manualEdits: new Set(),
-      shape: "session_and_month",
+      shape: "monthly",
       fxRates: RATES,
     });
     expect(result).toBeNull();
   });
 
-  it("fills GBP and USD from EUR for session_and_month", () => {
+  it("fills GBP and USD month from EUR for the monthly shape", () => {
     const result = applyFxAutoFill({
-      prices: pricesOf({ session: "10", month: "30" }),
+      prices: pricesOf({ session: "", month: "30" }),
       manualEdits: new Set(),
-      shape: "session_and_month",
+      shape: "monthly",
       fxRates: RATES,
     });
     expect(result).not.toBeNull();
-    expect(result!.gbp).toEqual({ session: "8.60", month: "25.80" });
-    expect(result!.usd).toEqual({ session: "10.70", month: "32.10" });
+    expect(result!.gbp).toEqual({ session: "", month: "25.80" });
+    expect(result!.usd).toEqual({ session: "", month: "32.10" });
     // EUR is never overwritten by auto-fill — admin types it.
-    expect(result!.eur).toEqual({ session: "10", month: "30" });
+    expect(result!.eur).toEqual({ session: "", month: "30" });
   });
 
-  it("blanks the month field on non-EUR currencies for upfront_total", () => {
+  it("fills GBP and USD session from EUR for the upfront_total shape", () => {
     const result = applyFxAutoFill({
       prices: pricesOf({ session: "100", month: "" }),
       manualEdits: new Set(),
@@ -75,25 +78,25 @@ describe("applyFxAutoFill", () => {
   it("skips currencies that are in manualEdits (sticky lock)", () => {
     const result = applyFxAutoFill({
       prices: pricesOf(
-        { session: "10", month: "30" },
-        { session: "9999", month: "9999" }, // admin's manual override
+        { session: "", month: "30" },
+        { session: "", month: "9999" }, // admin's manual override
       ),
       manualEdits: new Set<SupportedCurrency>(["gbp"]),
-      shape: "session_and_month",
+      shape: "monthly",
       fxRates: RATES,
     });
     expect(result).not.toBeNull();
     // GBP is locked — should not change.
-    expect(result!.gbp).toEqual({ session: "9999", month: "9999" });
+    expect(result!.gbp).toEqual({ session: "", month: "9999" });
     // USD is unlocked — should be filled.
-    expect(result!.usd.session).toBe("10.70");
+    expect(result!.usd.month).toBe("32.10");
   });
 
   it("returns null when every non-EUR currency is locked (no work to do)", () => {
     const result = applyFxAutoFill({
-      prices: pricesOf({ session: "10", month: "30" }),
+      prices: pricesOf({ session: "", month: "30" }),
       manualEdits: new Set<SupportedCurrency>(["gbp", "usd"]),
-      shape: "session_and_month",
+      shape: "monthly",
       fxRates: RATES,
     });
     expect(result).toBeNull();
@@ -103,25 +106,15 @@ describe("applyFxAutoFill", () => {
     // Already auto-filled — calling again should noop.
     const result = applyFxAutoFill({
       prices: pricesOf(
-        { session: "10", month: "30" },
-        { session: "8.60", month: "25.80" },
-        { session: "10.70", month: "32.10" },
+        { session: "", month: "30" },
+        { session: "", month: "25.80" },
+        { session: "", month: "32.10" },
       ),
       manualEdits: new Set(),
-      shape: "session_and_month",
+      shape: "monthly",
       fxRates: RATES,
     });
     expect(result).toBeNull();
-  });
-
-  it("blanks the session field on non-EUR when EUR session is empty but month is set", () => {
-    const result = applyFxAutoFill({
-      prices: pricesOf({ session: "", month: "30" }),
-      manualEdits: new Set(),
-      shape: "session_and_month",
-      fxRates: RATES,
-    });
-    expect(result!.gbp).toEqual({ session: "", month: "25.80" });
   });
 
   it("rounds to two decimal places (toFixed(2))", () => {

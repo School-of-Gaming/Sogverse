@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useLocale } from "next-intl";
-import type { ProductBrowseRow, SubscriptionFrequency } from "@/types";
+import type { ProductBrowseRow } from "@/types";
 import { useCurrency } from "@/providers/currency-provider";
 import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
@@ -10,14 +10,10 @@ import { CURRENCY_CONFIG } from "@/lib/constants/currency";
 import {
   useCreateParticipation,
   useJoinWaitlist,
-  useMyFamilySubAt,
+  useMyFamilySub,
   type CreateParticipationInput,
 } from "@/services/participations";
-import {
-  buildPricingOptions,
-  findOption,
-  type PricingOption,
-} from "./pricing-options";
+import { buildPricingOption, type PricingOption } from "./pricing-options";
 import {
   SignupPanelView,
   type AuthState,
@@ -54,9 +50,9 @@ export function SignupPanel({
   const uiLocale = resolveLocale(useLocale());
   const { currency } = useCurrency();
 
-  const tracks = useMemo(
+  const pricingOption = useMemo(
     () =>
-      buildPricingOptions({
+      buildPricingOption({
         prices: product.product_prices,
         billingMode: product.billing_mode,
         productType: product.product_type,
@@ -65,14 +61,6 @@ export function SignupPanel({
       }),
     [product.product_prices, product.billing_mode, product.product_type, currency],
   );
-
-  const [userPickedKey, setUserPickedKey] = useState<
-    PricingOption["key"] | null
-  >(null);
-  const selectedPricingKey: PricingOption["key"] =
-    userPickedKey !== null && findOption(tracks, userPickedKey) !== null
-      ? userPickedKey
-      : tracks.defaultKey;
 
   const [userPickedGamerId, setUserPickedGamerId] = useState<string | null>(
     null,
@@ -88,16 +76,13 @@ export function SignupPanel({
   const [agreed, setAgreed] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Inline-add detection: only meaningful if the selected pricing is a
-  // subscription. We pre-check whether the customer already has a live
-  // family sub at the requested (frequency, currency); the route will
-  // do the same check authoritatively on submit.
-  const selectedOption = findOption(tracks, selectedPricingKey);
-  const subFrequency: SubscriptionFrequency | null =
-    selectedOption?.kind === "subscription" ? selectedOption.frequency : null;
-  const { data: existingFamSub } = useMyFamilySubAt(subFrequency, currency);
+  // Inline-add detection: only meaningful for subscriptions (consumer clubs).
+  // We pre-check whether the customer already has a live family sub in this
+  // currency; the route will do the same check authoritatively on submit.
+  const isSubscription = pricingOption.kind === "subscription";
+  const { data: existingFamSub } = useMyFamilySub(currency, isSubscription);
   const subCtaMode: SubCtaMode =
-    subFrequency !== null
+    isSubscription
     && existingFamSub !== null
     && existingFamSub !== undefined
     && ["active", "canceling", "past_due"].includes(existingFamSub.status)
@@ -117,7 +102,7 @@ export function SignupPanel({
   // panel swaps to AlreadySignedUpPanel via the myParticipationState refresh.
   const [committing, setCommitting] = useState(false);
 
-  const purchaseShape = purchaseShapeFor(selectedOption);
+  const purchaseShape = purchaseShapeFor(pricingOption);
 
   const handleSubmit = () => {
     if (!selectedGamerId || !purchaseShape) return;
@@ -173,9 +158,7 @@ export function SignupPanel({
     myParticipationState: myParticipationState ?? null,
     myProductsHref: ROUTES.shopBrowse(product.product_type),
     authState,
-    pricingTracks: tracks,
-    selectedPricingKey,
-    onSelectPricing: setUserPickedKey,
+    pricingOption,
     selectedGamerId,
     onSelectGamer: setUserPickedGamerId,
     agreed,
@@ -194,19 +177,11 @@ export function SignupPanel({
 }
 
 function purchaseShapeFor(
-  option: PricingOption | null,
+  option: PricingOption,
 ): CreateParticipationInput["purchaseShape"] | null {
-  if (!option) return null;
   switch (option.kind) {
     case "subscription":
-      if (option.frequency === "monthly") return "subscription_monthly";
-      if (option.frequency === "quarterly") return "subscription_quarterly";
-      return "subscription_yearly";
-    case "bundle":
-      if (option.bundleSize === 1) return "bundle_1";
-      if (option.bundleSize === 4) return "bundle_4";
-      if (option.bundleSize === 10) return "bundle_10";
-      return null;
+      return "subscription_monthly";
     case "upfront":
       return "single_payment";
     case "free":

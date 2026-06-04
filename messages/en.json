@@ -414,16 +414,8 @@
       "pricing": {
         "currencyPickerLabel": "Currency",
         "fxSuggested": "Suggested from today's EUR rate ({rate}). Edit to override.",
-        "perSessionLabel": "Price per session",
         "perMonthLabel": "Price per month",
-        "totalLabel": "Total price",
-        "bundleHeading": "What parents pay for bundles",
-        "bundleSingle": "Single session",
-        "bundleMulti": "{size} sessions (save {discount}%)",
-        "subHeading": "What parents pay for subscriptions",
-        "subMonthly": "Monthly",
-        "subQuarterly": "Quarterly (save {discount}%)",
-        "subYearly": "Yearly (save {discount}%)"
+        "totalLabel": "Total price"
       },
       "startModes": {
         "label": "How does this start?",
@@ -459,7 +451,7 @@
         "freeDetail": "No charge. Anyone can join with one click.",
         "paidDetail": "One-time charge at signup.",
         "paidByMunicipality": "No customer billing inside this system. School of Gaming invoices the municipality directly.",
-        "pricingPerSession": "Charged for each session the child attends. The monthly rate is what subscribers see — derived weekly/monthly from this number.",
+        "pricingMonthly": "Charged every month while the subscription is active. Cancel anytime.",
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
         "seatHint": "When full, new signups go to the waitlist.",
         "seatCanUncap": "Free events can have no seat limit (e.g. a webinar, a public walk).",
@@ -1211,9 +1203,7 @@
     },
     "card": {
       "ages": "Ages {min}–{max}",
-      "perSession": "{price} / session",
       "perMonth": "{price} / month",
-      "orChoice": "or",
       "upfrontTotal": "{price}",
       "free": "Free",
       "externalContract": "Funded by your municipality",
@@ -1342,24 +1332,14 @@
     "pricing": {
       "title": "Pricing",
       "pricesIn": "Prices in",
-      "subscribeHeading": "Subscribe (saves more)",
-      "bundleHeading": "Or pay as you go",
-      "perSession": "{price} / session",
-      "subscribeMonthly": "Monthly",
-      "subscribeQuarterly": "Every 3 months",
-      "subscribeYearly": "Yearly",
-      "bundleSingle": "Single session",
-      "bundleN": "{count} sessions",
-      "savings": "Save {percent}%",
+      "subscriptionHint": "Billed monthly · cancel anytime.",
       "free": "Free",
       "freeHint": "No payment needed.",
       "external": "Free to you · paid by your municipality",
       "externalHint": "No payment needed — your municipality covers the cost.",
       "upfrontHint": "One-time payment.",
       "notAvailable": "Pricing isn't available in {currency} yet.",
-      "cadenceMonth": "/ month",
-      "cadenceQuarter": "every 3 months",
-      "cadenceYear": "every year"
+      "cadenceMonth": "/ month"
     },
     "countdown": {
       "days": "days",

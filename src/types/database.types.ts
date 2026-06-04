@@ -43,61 +43,6 @@ export type Database = {
           },
         ]
       }
-      credit_deductions: {
-        Row: {
-          delta: number
-          gamer_id: string
-          id: string
-          participation_id: string
-          processed_at: string
-          product_id: string
-          reason: string
-          session_date: string
-        }
-        Insert: {
-          delta: number
-          gamer_id: string
-          id?: string
-          participation_id: string
-          processed_at?: string
-          product_id: string
-          reason: string
-          session_date: string
-        }
-        Update: {
-          delta?: number
-          gamer_id?: string
-          id?: string
-          participation_id?: string
-          processed_at?: string
-          product_id?: string
-          reason?: string
-          session_date?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "credit_deductions_gamer_id_fkey"
-            columns: ["gamer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "credit_deductions_participation_id_fkey"
-            columns: ["participation_id"]
-            isOneToOne: false
-            referencedRelation: "participations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "credit_deductions_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       customer_profiles: {
         Row: {
           pin_hash: string | null
@@ -172,8 +117,6 @@ export type Database = {
           currency: string
           current_period_end: string | null
           customer_id: string
-          discount_coupon_id: string | null
-          frequency: Database["public"]["Enums"]["subscription_frequency"]
           id: string
           status: string
           stripe_customer_id: string
@@ -185,8 +128,6 @@ export type Database = {
           currency: string
           current_period_end?: string | null
           customer_id: string
-          discount_coupon_id?: string | null
-          frequency: Database["public"]["Enums"]["subscription_frequency"]
           id?: string
           status: string
           stripe_customer_id: string
@@ -198,8 +139,6 @@ export type Database = {
           currency?: string
           current_period_end?: string | null
           customer_id?: string
-          discount_coupon_id?: string | null
-          frequency?: Database["public"]["Enums"]["subscription_frequency"]
           id?: string
           status?: string
           stripe_customer_id?: string
@@ -477,7 +416,6 @@ export type Database = {
       participations: {
         Row: {
           created_at: string
-          credits_remaining: number
           customer_id: string
           gamer_id: string
           group_id: string | null
@@ -491,7 +429,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          credits_remaining?: number
           customer_id: string
           gamer_id: string
           group_id?: string | null
@@ -505,7 +442,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          credits_remaining?: number
           customer_id?: string
           gamer_id?: string
           group_id?: string | null
@@ -731,7 +667,6 @@ export type Database = {
         Row: {
           created_at: string
           currency: string
-          frequency: Database["public"]["Enums"]["subscription_frequency"]
           product_id: string
           stripe_price_id: string
           unit_amount_cents: number
@@ -739,7 +674,6 @@ export type Database = {
         Insert: {
           created_at?: string
           currency: string
-          frequency: Database["public"]["Enums"]["subscription_frequency"]
           product_id: string
           stripe_price_id: string
           unit_amount_cents: number
@@ -747,7 +681,6 @@ export type Database = {
         Update: {
           created_at?: string
           currency?: string
-          frequency?: Database["public"]["Enums"]["subscription_frequency"]
           product_id?: string
           stripe_price_id?: string
           unit_amount_cents?: number
@@ -1021,35 +954,6 @@ export type Database = {
           },
         ]
       }
-      session_cancellations: {
-        Row: {
-          cancelled_at: string
-          id: string
-          participation_id: string
-          session_date: string
-        }
-        Insert: {
-          cancelled_at?: string
-          id?: string
-          participation_id: string
-          session_date: string
-        }
-        Update: {
-          cancelled_at?: string
-          id?: string
-          participation_id?: string
-          session_date?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "session_cancellations_participation_id_fkey"
-            columns: ["participation_id"]
-            isOneToOne: false
-            referencedRelation: "participations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       site_details: {
         Row: {
           address: string | null
@@ -1231,15 +1135,6 @@ export type Database = {
           table_name: string
         }[]
       }
-      apply_credit_motion: {
-        Args: {
-          p_delta: number
-          p_participation_id: string
-          p_reason: string
-          p_session_date: string
-        }
-        Returns: boolean
-      }
       can_read_product: { Args: { p_product_id: string }; Returns: boolean }
       cancel_participation: {
         Args: { p_participation_id: string; p_reason: string }
@@ -1257,10 +1152,7 @@ export type Database = {
         }
         Returns: Json
       }
-      confirm_reservation: {
-        Args: { p_credits_to_grant: number; p_reservation_id: string }
-        Returns: Json
-      }
+      confirm_reservation: { Args: { p_reservation_id: string }; Returns: Json }
       count_active_seats: { Args: { p_product_id: string }; Returns: number }
       count_seats_taken: { Args: { p_product_id: string }; Returns: number }
       create_participation: {
@@ -1400,7 +1292,6 @@ export type Database = {
         Returns: string
       }
       pin_is_set: { Args: never; Returns: boolean }
-      process_session_credits: { Args: never; Returns: Json }
       product_has_session: {
         Args: { p_product_id: string; p_session_date: string }
         Returns: boolean
@@ -1481,7 +1372,6 @@ export type Database = {
         | "subscription_item_removed"
         | "subscription_period_proration"
         | "duplicate_payment"
-      subscription_frequency: "monthly" | "quarterly" | "yearly"
       user_role: "admin" | "customer" | "gamer" | "gedu"
     }
     CompositeTypes: {
@@ -1639,7 +1529,6 @@ export const Constants = {
         "subscription_period_proration",
         "duplicate_payment",
       ],
-      subscription_frequency: ["monthly", "quarterly", "yearly"],
       user_role: ["admin", "customer", "gamer", "gedu"],
     },
   },

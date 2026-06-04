@@ -300,14 +300,16 @@ function KeyFacts({
   const priceLines = SUPPORTED_CURRENCIES.flatMap((cur) => {
     const row = product.product_prices.find((p) => p.currency === cur);
     if (!row) return [];
-    const session = (row.price_per_session / 100).toFixed(2);
-    const month =
-      row.price_per_month > 0
-        ? ` · ${t("detailsPage.perMonth", {
-            amount: (row.price_per_month / 100).toFixed(2),
-          })}`
-        : "";
-    return [`${cur.toUpperCase()} ${session}${month}`];
+    // Consumer clubs charge a monthly subscription (price_per_month);
+    // camps/events an upfront total (price_per_session).
+    if (product.product_type === "consumer_club") {
+      return [
+        `${cur.toUpperCase()} ${t("detailsPage.perMonth", {
+          amount: (row.price_per_month / 100).toFixed(2),
+        })}`,
+      ];
+    }
+    return [`${cur.toUpperCase()} ${(row.price_per_session / 100).toFixed(2)}`];
   });
 
   return (

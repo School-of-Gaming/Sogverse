@@ -221,26 +221,12 @@ function PriceBlock({ price }: { price: ProductPriceLine }) {
           {t("externalContract")}
         </span>
       );
-    case "bundle_or_sub":
-      // Two distinct billing models — pay-per-session for flexibility,
-      // monthly subscription for commitment (often a better effective
-      // rate). The explicit "or" divider with hairlines makes the
-      // alternative clear; without it, two stacked prices read as a
-      // single thing in two formats.
+    case "subscription":
+      // Consumer clubs bill as a flat monthly subscription.
       return (
-        <div className="flex flex-col items-start gap-1 leading-tight">
-          <span className="text-sm font-semibold text-foreground">
-            {t("perSession", { price: price.perSession })}
-          </span>
-          <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-            <span aria-hidden className="h-px w-3 bg-border" />
-            {t("orChoice")}
-            <span aria-hidden className="h-px w-3 bg-border" />
-          </span>
-          <span className="text-sm font-semibold text-foreground">
-            {t("perMonth", { price: price.perMonth })}
-          </span>
-        </div>
+        <span className="text-base font-semibold text-foreground">
+          {t("perMonth", { price: price.perMonth })}
+        </span>
       );
     case "upfront":
       return (

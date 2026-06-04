@@ -33,10 +33,10 @@ export type PricesMap = Record<
 export interface FxAutoFillInputs {
   prices: PricesMap;
   manualEdits: ReadonlySet<SupportedCurrency>;
-  /** Whether the form has a separate per-month price (`session_and_month`)
-   *  or a single total (`upfront_total`). For upfront_total, the month
-   *  field is always blanked out for non-EUR currencies. */
-  shape: "session_and_month" | "upfront_total";
+  /** Which single price field this product type collects: `month` for the
+   *  consumer-club monthly subscription, `session` for the camp/event
+   *  upfront total. The other field is always blanked for non-EUR rows. */
+  shape: "monthly" | "upfront_total";
   /** EUR-base rates, e.g. `{ eur: 1, gbp: 0.86, usd: 1.07 }`. */
   fxRates: FxRates | undefined;
 }
@@ -53,13 +53,10 @@ export function applyFxAutoFill({
 }: FxAutoFillInputs): PricesMap | null {
   if (!fxRates) return null;
 
-  const eurSession = Number(prices.eur.session);
-  const eurMonth = Number(prices.eur.month);
-  const eurSessionFilled =
-    prices.eur.session !== "" && Number.isFinite(eurSession);
-  const eurMonthFilled =
-    prices.eur.month !== "" && Number.isFinite(eurMonth);
-  if (!eurSessionFilled && !eurMonthFilled) return null;
+  const field: "session" | "month" = shape === "monthly" ? "month" : "session";
+  const eurValue = Number(prices.eur[field]);
+  const eurFilled = prices.eur[field] !== "" && Number.isFinite(eurValue);
+  if (!eurFilled) return null;
 
   const targets = SUPPORTED_CURRENCIES.filter(
     (c) => c !== DEFAULT_CURRENCY && !manualEdits.has(c) && fxRates[c],
@@ -69,14 +66,13 @@ export function applyFxAutoFill({
   const next: PricesMap = { ...prices };
   let anyChanged = false;
   for (const c of targets) {
-    const rate = fxRates[c];
-    const nextSession = eurSessionFilled ? (eurSession * rate).toFixed(2) : "";
-    const nextMonth =
-      shape === "session_and_month" && eurMonthFilled
-        ? (eurMonth * rate).toFixed(2)
-        : "";
-    if (next[c].session !== nextSession || next[c].month !== nextMonth) {
-      next[c] = { session: nextSession, month: nextMonth };
+    const converted = (eurValue * fxRates[c]).toFixed(2);
+    const nextRow =
+      field === "month"
+        ? { session: "", month: converted }
+        : { session: converted, month: "" };
+    if (next[c].session !== nextRow.session || next[c].month !== nextRow.month) {
+      next[c] = nextRow;
       anyChanged = true;
     }
   }

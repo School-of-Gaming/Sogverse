@@ -99,8 +99,8 @@ export function BillingSection({
         <Field
           label={t("labels.pricing")}
           hint={
-            pricingShape === "session_and_month"
-              ? t("hints.pricingPerSession")
+            pricingShape === "monthly"
+              ? t("hints.pricingMonthly")
               : t("hints.pricingUpfront")
           }
         >

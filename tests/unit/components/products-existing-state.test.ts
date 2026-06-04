@@ -202,10 +202,12 @@ describe("buildUpdateInput round-trip", () => {
     expect(input.signup_threshold).toBe(null);
     expect(input.holiday_calendar_ids).toEqual(["cal-1"]);
     expect(input.image).toBe("abc.png");
+    // Consumer clubs charge a monthly subscription only — price_per_session is
+    // forced to 0 on build regardless of what the persisted row held.
     expect(input.prices).toEqual([
-      { currency: "eur", price_per_session: 1500, price_per_month: 4500 },
-      { currency: "gbp", price_per_session: 1300, price_per_month: 3900 },
-      { currency: "usd", price_per_session: 1700, price_per_month: 5100 },
+      { currency: "eur", price_per_session: 0, price_per_month: 4500 },
+      { currency: "gbp", price_per_session: 0, price_per_month: 3900 },
+      { currency: "usd", price_per_session: 0, price_per_month: 5100 },
     ]);
     expect(input.translations).toEqual([
       { locale: "en", name: "Build Club", description: "Build castles together." },

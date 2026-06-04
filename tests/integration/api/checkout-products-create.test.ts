@@ -52,12 +52,10 @@ vi.mock("@/lib/supabase/admin", () => ({
 
 // --- participation-prices helpers ---
 //
-// Keep the pure utilities (bundleSizeFromShape, frequencyFromShape) real;
-// stub the I/O ones so we can drive failure paths cleanly.
+// Stub the I/O helpers so we can drive failure paths cleanly.
 
 const mockGetOrCreateStripeCustomer = vi.fn();
 const mockGetOrCreateSubscriptionPrice = vi.fn();
-const mockComputeBundleAmount = vi.fn();
 const mockComputeSinglePaymentAmount = vi.fn();
 
 vi.mock("@/lib/stripe/participation-prices", async (importOriginal) => {
@@ -67,7 +65,6 @@ vi.mock("@/lib/stripe/participation-prices", async (importOriginal) => {
     ...actual,
     getOrCreateSubscriptionPrice: (...args: unknown[]) =>
       mockGetOrCreateSubscriptionPrice(...args),
-    computeBundleAmount: (...args: unknown[]) => mockComputeBundleAmount(...args),
     computeSinglePaymentAmount: (...args: unknown[]) =>
       mockComputeSinglePaymentAmount(...args),
   };
@@ -159,17 +156,16 @@ function mockAdmin(opts: AdminMockOptions = {}): AdminInserts {
       };
     }
     if (table === "family_subscriptions") {
+      // Route queries by (customer_id, currency) — two .eq() then maybeSingle.
       return {
         select: () => ({
           eq: () => ({
             eq: () => ({
-              eq: () => ({
-                maybeSingle: () =>
-                  Promise.resolve({
-                    data: opts.existingFamSub ?? null,
-                    error: null,
-                  }),
-              }),
+              maybeSingle: () =>
+                Promise.resolve({
+                  data: opts.existingFamSub ?? null,
+                  error: null,
+                }),
             }),
           }),
         }),
@@ -238,10 +234,13 @@ function createRequest(
   });
 }
 
-const VALID_BUNDLE_BODY = {
+// Default body is a subscription on the consumer club — most direct-use
+// tests mock PAID_CLUB, and subscription_monthly is the valid paid shape
+// there. Single-payment tests override purchaseShape + product to a camp.
+const VALID_BODY = {
   productId: PRODUCT_ID,
   gamerId: GAMER_ID,
-  purchaseShape: "bundle_4",
+  purchaseShape: "subscription_monthly",
   currency: "eur",
 };
 
@@ -257,7 +256,7 @@ describe("POST /api/checkout/products/create", () => {
 
   it("returns 401 when not authenticated", async () => {
     mockUnauthenticated();
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
+    const res = await POST(createRequest(VALID_BODY));
     expect(res.status).toBe(401);
     expect(mockAdminRpc).not.toHaveBeenCalled();
   });
@@ -265,7 +264,7 @@ describe("POST /api/checkout/products/create", () => {
   it("returns 403 for non-customer roles", async () => {
     for (const role of ["gamer", "gedu", "admin"]) {
       mockForbidden(role);
-      const res = await POST(createRequest(VALID_BUNDLE_BODY));
+      const res = await POST(createRequest(VALID_BODY));
       expect(res.status).toBe(403);
     }
     expect(mockAdminRpc).not.toHaveBeenCalled();
@@ -282,8 +281,8 @@ describe("POST /api/checkout/products/create", () => {
   });
 
   it.each([
-    ["productId", { gamerId: GAMER_ID, purchaseShape: "bundle_4", currency: "eur" }],
-    ["gamerId", { productId: PRODUCT_ID, purchaseShape: "bundle_4", currency: "eur" }],
+    ["productId", { gamerId: GAMER_ID, purchaseShape: "subscription_monthly", currency: "eur" }],
+    ["gamerId", { productId: PRODUCT_ID, purchaseShape: "subscription_monthly", currency: "eur" }],
     ["purchaseShape", { productId: PRODUCT_ID, gamerId: GAMER_ID, currency: "eur" }],
   ])("returns 400 when %s is missing", async (_field, body) => {
     mockAuthenticatedCustomer();
@@ -295,8 +294,10 @@ describe("POST /api/checkout/products/create", () => {
 
   it("returns 400 when purchaseShape is not in the allowed set", async () => {
     mockAuthenticatedCustomer();
+    // bundle_4 used to be a valid shape; bundles are gone, so the route now
+    // rejects it as an unsupported shape.
     const res = await POST(
-      createRequest({ ...VALID_BUNDLE_BODY, purchaseShape: "bundle_999" }),
+      createRequest({ ...VALID_BODY, purchaseShape: "bundle_4" }),
     );
     const data = await res.json();
     expect(res.status).toBe(400);
@@ -306,7 +307,7 @@ describe("POST /api/checkout/products/create", () => {
   it("returns 400 when currency is not supported", async () => {
     mockAuthenticatedCustomer();
     const res = await POST(
-      createRequest({ ...VALID_BUNDLE_BODY, currency: "jpy" }),
+      createRequest({ ...VALID_BODY, currency: "jpy" }),
     );
     const data = await res.json();
     expect(res.status).toBe(400);
@@ -318,7 +319,7 @@ describe("POST /api/checkout/products/create", () => {
   it("returns 404 when the product is not found", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: null });
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
+    const res = await POST(createRequest(VALID_BODY));
     expect(res.status).toBe(404);
     expect(mockAdminRpc).not.toHaveBeenCalled();
   });
@@ -327,7 +328,7 @@ describe("POST /api/checkout/products/create", () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CLUB });
     const res = await POST(
-      createRequest({ ...VALID_BUNDLE_BODY, purchaseShape: "free" }),
+      createRequest({ ...VALID_BODY, purchaseShape: "free" }),
     );
     const data = await res.json();
     expect(res.status).toBe(400);
@@ -339,7 +340,7 @@ describe("POST /api/checkout/products/create", () => {
   it("returns 400 when a paid shape is sent for a free product", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: FREE_EVENT });
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
+    const res = await POST(createRequest(VALID_BODY));
     const data = await res.json();
     expect(res.status).toBe(400);
     expect(data.error).toBe("Paid purchase shapes only apply to paid products");
@@ -349,20 +350,20 @@ describe("POST /api/checkout/products/create", () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CLUB });
     const res = await POST(
-      createRequest({ ...VALID_BUNDLE_BODY, purchaseShape: "single_payment" }),
+      createRequest({ ...VALID_BODY, purchaseShape: "single_payment" }),
     );
     const data = await res.json();
     expect(res.status).toBe(400);
-    expect(data.error).toContain("Consumer clubs use bundles or subscriptions");
+    expect(data.error).toBe("Consumer clubs use subscriptions, not single-payment");
   });
 
-  it("returns 400 when a bundle is sent for a non-club product type", async () => {
+  it("returns 400 when a subscription is sent for a non-club product type", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CAMP });
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
+    const res = await POST(createRequest(VALID_BODY));
     const data = await res.json();
     expect(res.status).toBe(400);
-    expect(data.error).toBe("Only consumer clubs accept bundles or subscriptions");
+    expect(data.error).toBe("Only consumer clubs accept subscriptions");
   });
 
   // ── RPC outcomes that short-circuit Stripe ────────────────────────
@@ -372,7 +373,7 @@ describe("POST /api/checkout/products/create", () => {
     mockAdmin({ product: PAID_CLUB });
     mockAdminRpc.mockResolvedValueOnce({ data: { kind: "full" }, error: null });
 
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
+    const res = await POST(createRequest(VALID_BODY));
     const data = await res.json();
 
     expect(res.status).toBe(200);
@@ -421,7 +422,7 @@ describe("POST /api/checkout/products/create", () => {
       error: { code: "23505", message: "duplicate active participation" },
     });
 
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
+    const res = await POST(createRequest(VALID_BODY));
     const data = await res.json();
 
     expect(res.status).toBe(409);
@@ -436,120 +437,13 @@ describe("POST /api/checkout/products/create", () => {
       error: { code: "23514", message: "check_violation: not parent of gamer" },
     });
 
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
+    const res = await POST(createRequest(VALID_BODY));
     expect(res.status).toBe(400);
-  });
-
-  // ── Bundle redirect path ──────────────────────────────────────────
-
-  it("creates a Stripe Checkout session for a bundle and returns the redirect URL", async () => {
-    mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CLUB });
-    mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "reserving", participation_id: RESERVATION_ID },
-      error: null,
-    });
-    mockComputeBundleAmount.mockResolvedValue(3800);
-    mockStripeSessionCreate.mockResolvedValue({
-      url: "https://checkout.stripe.com/c/test_bundle",
-    });
-
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
-    const data = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(data).toEqual({
-      status: "redirect",
-      checkoutUrl: "https://checkout.stripe.com/c/test_bundle",
-    });
-
-    const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.mode).toBe("payment");
-    expect(params.customer).toBe(STRIPE_CUSTOMER_ID);
-    expect(params.adaptive_pricing).toEqual({ enabled: false });
-    expect(params.line_items).toHaveLength(1);
-    expect(params.line_items[0]).toMatchObject({
-      quantity: 1,
-      price_data: {
-        currency: "eur",
-        unit_amount: 3800,
-        product_data: { name: "Test Club — 4-session bundle" },
-      },
-    });
-    expect(params.metadata).toEqual({
-      reservationId: RESERVATION_ID,
-      customerId: CUSTOMER_ID,
-      gamerId: GAMER_ID,
-      productId: PRODUCT_ID,
-      purchaseShape: "bundle_4",
-      currency: "eur",
-    });
-    expect(params.success_url).toBe(
-      `http://localhost:3000/shop/${PRODUCT_ID}?signup=success`,
-    );
-    // No returnPath in the body → cancel_url falls back to homepage.
-    // (Real frontend always sends window.location.pathname, so happy-path
-    // browser flows use that and never hit this fallback.)
-    expect(params.cancel_url).toBe(
-      "http://localhost:3000/?signup=canceled",
-    );
-    // expires_at sits ~30 minutes in the future (Stripe enforces a 30-min floor).
-    expect(params.expires_at).toBeGreaterThan(Math.floor(Date.now() / 1000));
-    expect(mockComputeBundleAmount).toHaveBeenCalledWith(
-      expect.anything(),
-      PRODUCT_ID,
-      4,
-      "eur",
-    );
-  });
-
-  it("rolls the reservation back when the product has no price in the requested currency (bundle)", async () => {
-    mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CLUB });
-    mockAdminRpc
-      .mockResolvedValueOnce({
-        data: { kind: "reserving", participation_id: RESERVATION_ID },
-        error: null,
-      })
-      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
-    mockComputeBundleAmount.mockResolvedValue(null);
-
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
-    const data = await res.json();
-
-    expect(res.status).toBe(400);
-    expect(data.error).toBe("Product is not sold in eur");
-    expect(mockStripeSessionCreate).not.toHaveBeenCalled();
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
-      p_reservation_id: RESERVATION_ID,
-    });
-  });
-
-  it("rolls the reservation back when Stripe returns a session without a URL", async () => {
-    mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CLUB });
-    mockAdminRpc
-      .mockResolvedValueOnce({
-        data: { kind: "reserving", participation_id: RESERVATION_ID },
-        error: null,
-      })
-      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
-    mockComputeBundleAmount.mockResolvedValue(3800);
-    mockStripeSessionCreate.mockResolvedValue({ url: null });
-
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
-    const data = await res.json();
-
-    expect(res.status).toBe(502);
-    expect(data.error).toBe("Stripe did not return a Checkout URL");
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
-      p_reservation_id: RESERVATION_ID,
-    });
   });
 
   // ── Single-payment redirect path ──────────────────────────────────
 
-  it("creates a single_payment checkout session for a camp", async () => {
+  it("creates a Stripe Checkout session for a single_payment camp and returns the redirect URL", async () => {
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CAMP });
     mockAdminRpc.mockResolvedValueOnce({
@@ -562,25 +456,102 @@ describe("POST /api/checkout/products/create", () => {
     });
 
     const res = await POST(
-      createRequest({
-        ...VALID_BUNDLE_BODY,
-        purchaseShape: "single_payment",
-      }),
+      createRequest({ ...VALID_BODY, purchaseShape: "single_payment" }),
     );
     const data = await res.json();
 
     expect(res.status).toBe(200);
-    expect(data.status).toBe("redirect");
+    expect(data).toEqual({
+      status: "redirect",
+      checkoutUrl: "https://checkout.stripe.com/c/test_camp",
+    });
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
     expect(params.mode).toBe("payment");
-    expect(params.line_items[0].price_data).toMatchObject({
+    expect(params.customer).toBe(STRIPE_CUSTOMER_ID);
+    expect(params.adaptive_pricing).toEqual({ enabled: false });
+    expect(params.line_items).toHaveLength(1);
+    expect(params.line_items[0]).toMatchObject({
+      quantity: 1,
+      price_data: {
+        currency: "eur",
+        unit_amount: 15000,
+        product_data: { name: "Test Club" },
+      },
+    });
+    expect(params.metadata).toEqual({
+      reservationId: RESERVATION_ID,
+      customerId: CUSTOMER_ID,
+      gamerId: GAMER_ID,
+      productId: PRODUCT_ID,
+      purchaseShape: "single_payment",
       currency: "eur",
-      unit_amount: 15000,
-      product_data: { name: "Test Club" },
     });
     // Every product type lands on the unified /shop/[id] detail route.
-    expect(params.success_url).toContain(`/shop/${PRODUCT_ID}?signup=success`);
+    expect(params.success_url).toBe(
+      `http://localhost:3000/shop/${PRODUCT_ID}?signup=success`,
+    );
+    // No returnPath in the body → cancel_url falls back to homepage.
+    // (Real frontend always sends window.location.pathname, so happy-path
+    // browser flows use that and never hit this fallback.)
+    expect(params.cancel_url).toBe(
+      "http://localhost:3000/?signup=canceled",
+    );
+    // expires_at sits ~30 minutes in the future (Stripe enforces a 30-min floor).
+    expect(params.expires_at).toBeGreaterThan(Math.floor(Date.now() / 1000));
+    expect(mockComputeSinglePaymentAmount).toHaveBeenCalledWith(
+      expect.anything(),
+      PRODUCT_ID,
+      "eur",
+    );
+  });
+
+  it("rolls the reservation back when the product has no price in the requested currency (single_payment)", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CAMP });
+    mockAdminRpc
+      .mockResolvedValueOnce({
+        data: { kind: "reserving", participation_id: RESERVATION_ID },
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
+    mockComputeSinglePaymentAmount.mockResolvedValue(null);
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "single_payment" }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(data.error).toBe("Product is not sold in eur");
+    expect(mockStripeSessionCreate).not.toHaveBeenCalled();
+    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
+      p_reservation_id: RESERVATION_ID,
+    });
+  });
+
+  it("rolls the reservation back when Stripe returns a session without a URL", async () => {
+    mockAuthenticatedCustomer();
+    mockAdmin({ product: PAID_CAMP });
+    mockAdminRpc
+      .mockResolvedValueOnce({
+        data: { kind: "reserving", participation_id: RESERVATION_ID },
+        error: null,
+      })
+      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
+    mockComputeSinglePaymentAmount.mockResolvedValue(15000);
+    mockStripeSessionCreate.mockResolvedValue({ url: null });
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "single_payment" }),
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(502);
+    expect(data.error).toBe("Stripe did not return a Checkout URL");
+    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
+      p_reservation_id: RESERVATION_ID,
+    });
   });
 
   // ── Subscription paths ───────────────────────────────────────────
@@ -594,7 +565,6 @@ describe("POST /api/checkout/products/create", () => {
     });
     mockGetOrCreateSubscriptionPrice.mockResolvedValue({
       product_id: PRODUCT_ID,
-      frequency: "monthly",
       currency: "eur",
       stripe_price_id: STRIPE_PRICE_ID,
       unit_amount_cents: 5000,
@@ -605,7 +575,7 @@ describe("POST /api/checkout/products/create", () => {
 
     const res = await POST(
       createRequest({
-        ...VALID_BUNDLE_BODY,
+        ...VALID_BODY,
         purchaseShape: "subscription_monthly",
       }),
     );
@@ -642,7 +612,6 @@ describe("POST /api/checkout/products/create", () => {
     });
     mockGetOrCreateSubscriptionPrice.mockResolvedValue({
       product_id: PRODUCT_ID,
-      frequency: "monthly",
       currency: "eur",
       stripe_price_id: STRIPE_PRICE_ID,
       unit_amount_cents: 5000,
@@ -653,7 +622,7 @@ describe("POST /api/checkout/products/create", () => {
 
     const res = await POST(
       createRequest({
-        ...VALID_BUNDLE_BODY,
+        ...VALID_BODY,
         purchaseShape: "subscription_monthly",
       }),
     );
@@ -684,7 +653,6 @@ describe("POST /api/checkout/products/create", () => {
       });
     mockGetOrCreateSubscriptionPrice.mockResolvedValue({
       product_id: PRODUCT_ID,
-      frequency: "monthly",
       currency: "eur",
       stripe_price_id: STRIPE_PRICE_ID,
       unit_amount_cents: 5000,
@@ -701,7 +669,7 @@ describe("POST /api/checkout/products/create", () => {
 
     const res = await POST(
       createRequest({
-        ...VALID_BUNDLE_BODY,
+        ...VALID_BODY,
         purchaseShape: "subscription_monthly",
       }),
     );
@@ -730,12 +698,10 @@ describe("POST /api/checkout/products/create", () => {
       productId: PRODUCT_ID,
     });
 
-    // confirm_reservation was called with credits_to_grant=0 — the webhook
-    // has no work to do for the inline-add path; the family sub link row is
-    // written here in the route.
+    // confirm_reservation flips reserving → active for the inline-add path;
+    // the family sub link row is written here in the route.
     expect(mockAdminRpc).toHaveBeenNthCalledWith(2, "confirm_reservation", {
       p_reservation_id: RESERVATION_ID,
-      p_credits_to_grant: 0,
     });
 
     expect(inserts.family_subscription_items).toHaveLength(1);
@@ -765,7 +731,6 @@ describe("POST /api/checkout/products/create", () => {
       .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
     mockGetOrCreateSubscriptionPrice.mockResolvedValue({
       product_id: PRODUCT_ID,
-      frequency: "monthly",
       currency: "eur",
       stripe_price_id: STRIPE_PRICE_ID,
       unit_amount_cents: 5000,
@@ -776,7 +741,7 @@ describe("POST /api/checkout/products/create", () => {
 
     const res = await POST(
       createRequest({
-        ...VALID_BUNDLE_BODY,
+        ...VALID_BODY,
         purchaseShape: "subscription_monthly",
       }),
     );
@@ -807,7 +772,6 @@ describe("POST /api/checkout/products/create", () => {
       .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
     mockGetOrCreateSubscriptionPrice.mockResolvedValue({
       product_id: PRODUCT_ID,
-      frequency: "monthly",
       currency: "eur",
       stripe_price_id: STRIPE_PRICE_ID,
       unit_amount_cents: 5000,
@@ -818,7 +782,7 @@ describe("POST /api/checkout/products/create", () => {
 
     const res = await POST(
       createRequest({
-        ...VALID_BUNDLE_BODY,
+        ...VALID_BODY,
         purchaseShape: "subscription_monthly",
       }),
     );
@@ -845,7 +809,7 @@ describe("POST /api/checkout/products/create", () => {
 
     const res = await POST(
       createRequest({
-        ...VALID_BUNDLE_BODY,
+        ...VALID_BODY,
         purchaseShape: "subscription_monthly",
         currency: "gbp",
       }),
@@ -889,7 +853,7 @@ describe("POST /api/checkout/products/create", () => {
       error: null,
     });
 
-    const res = await POST(createRequest(VALID_BUNDLE_BODY));
+    const res = await POST(createRequest(VALID_BODY));
     expect(res.status).toBe(500);
   });
 
@@ -897,18 +861,22 @@ describe("POST /api/checkout/products/create", () => {
 
   it("uses the provided returnPath for the cancel URL when it starts with /", async () => {
     mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CLUB });
+    mockAdmin({ product: PAID_CAMP });
     mockAdminRpc.mockResolvedValueOnce({
       data: { kind: "reserving", participation_id: RESERVATION_ID },
       error: null,
     });
-    mockComputeBundleAmount.mockResolvedValue(3800);
+    mockComputeSinglePaymentAmount.mockResolvedValue(15000);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/c/x",
     });
 
     await POST(
-      createRequest({ ...VALID_BUNDLE_BODY, returnPath: "/clubs/listing" }),
+      createRequest({
+        ...VALID_BODY,
+        purchaseShape: "single_payment",
+        returnPath: "/clubs/listing",
+      }),
     );
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
@@ -919,19 +887,20 @@ describe("POST /api/checkout/products/create", () => {
 
   it("falls back to homepage when returnPath does not start with /", async () => {
     mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CLUB });
+    mockAdmin({ product: PAID_CAMP });
     mockAdminRpc.mockResolvedValueOnce({
       data: { kind: "reserving", participation_id: RESERVATION_ID },
       error: null,
     });
-    mockComputeBundleAmount.mockResolvedValue(3800);
+    mockComputeSinglePaymentAmount.mockResolvedValue(15000);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/c/x",
     });
 
     await POST(
       createRequest({
-        ...VALID_BUNDLE_BODY,
+        ...VALID_BODY,
+        purchaseShape: "single_payment",
         returnPath: "https://evil.example.com",
       }),
     );
@@ -949,19 +918,20 @@ describe("POST /api/checkout/products/create", () => {
     // The abnormal path always lands on the homepage, never on a guessed
     // product page; the user is somewhere safe and familiar.
     mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CLUB });
+    mockAdmin({ product: PAID_CAMP });
     mockAdminRpc.mockResolvedValueOnce({
       data: { kind: "reserving", participation_id: RESERVATION_ID },
       error: null,
     });
-    mockComputeBundleAmount.mockResolvedValue(3800);
+    mockComputeSinglePaymentAmount.mockResolvedValue(15000);
     mockStripeSessionCreate.mockResolvedValue({
       url: "https://checkout.stripe.com/c/x",
     });
 
     await POST(
       createRequest({
-        ...VALID_BUNDLE_BODY,
+        ...VALID_BODY,
+        purchaseShape: "single_payment",
         returnPath: "//evil.com/path",
       }),
     );

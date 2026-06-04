@@ -267,12 +267,12 @@ describe("validate", () => {
       expect(validate(s, eventConfig)).toBeNull();
     });
 
-    it("rejects missing per-session price for paid consumer clubs and reports the offending currency", () => {
+    it("rejects missing monthly price for paid consumer clubs and reports the offending currency", () => {
       const s = validConsumerState();
-      s.prices.gbp = { session: "", month: "26.00" };
+      s.prices.gbp = { session: "8.50", month: "" };
       const result = validate(s, consumerConfig);
       expect(result).toEqual({
-        messageKey: "priceSessionMissing",
+        messageKey: "priceMonthMissing",
         values: { currency: "GBP" },
         focusCurrency: "gbp",
       });
@@ -280,13 +280,13 @@ describe("validate", () => {
 
     it("rejects negative price", () => {
       const s = validConsumerState();
-      s.prices.eur = { session: "-10", month: "30.00" };
+      s.prices.eur = { session: "10.00", month: "-30.00" };
       const result = validate(s, consumerConfig);
-      expect(result?.messageKey).toBe("priceSessionNegative");
+      expect(result?.messageKey).toBe("priceMonthNegative");
       expect(result?.focusCurrency).toBe("eur");
     });
 
-    it("requires per-month price only for session_and_month shapes", () => {
+    it("validates the monthly price for clubs and the session total for camps", () => {
       // Camp is upfront_total — month is irrelevant.
       const camp = validConsumerState();
       camp.scheduleSlots = [
@@ -348,17 +348,15 @@ describe("validate", () => {
 });
 
 describe("buildCreateInput", () => {
-  it("converts prices to cents via the shared decimalToCents helper", () => {
-    // The same helper drives the admin pricing preview, so the cents value
-    // displayed and the cents value sent to Stripe agree by construction.
-    // Float precision means individual half-cent inputs may round either
-    // direction (10.005→1001, 1.005→100); what matters is that all consumers
-    // round identically. See decimalToCents in src/lib/utils.ts.
+  it("converts the monthly price to cents and zeros price_per_session for clubs", () => {
+    // Consumer clubs charge a flat monthly subscription, so the monthly price
+    // goes to price_per_month and price_per_session is forced to 0. The
+    // session input is ignored. See decimalToCents in src/lib/utils.ts.
     const s = validConsumerState();
     s.prices.eur = { session: "10.005", month: "30.99" };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
     const eur = out.prices.find((p) => p.currency === "eur")!;
-    expect(eur.price_per_session).toBe(1001);
+    expect(eur.price_per_session).toBe(0);
     expect(eur.price_per_month).toBe(3099);
   });
 

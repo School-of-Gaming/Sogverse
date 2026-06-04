@@ -116,7 +116,6 @@ export async function POST(
       gamer_id: gamerId,
       customer_id: customerId,
       status: "active",
-      credits_remaining: 0,
     })
     .select("id")
     .single();

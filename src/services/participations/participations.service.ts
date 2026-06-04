@@ -4,7 +4,6 @@ import type {
   ProductTranslation,
   PurchaseShape,
   SessionAudience,
-  SubscriptionFrequency,
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { QueryData } from "@supabase/supabase-js";
@@ -300,16 +299,16 @@ export class ParticipationsService {
   }
 
   /**
-   * Read the current customer's family subscriptions for a given (frequency,
-   * currency). Used on the signup panel to decide whether the next
-   * subscribe is a Stripe-Checkout-new-sub or an inline-add.
+   * Read the current customer's family subscription for a given currency.
+   * Used on the signup panel to decide whether the next subscribe is a
+   * Stripe-Checkout-new-sub or an inline-add. Subscriptions are monthly-only,
+   * so a customer has at most one family sub per currency.
    *
-   * Returns the row's `id` and `status` if a row exists at this tuple, or
-   * `null` otherwise. Anything other than active / canceling / past_due is
-   * treated as no-live-sub on the server side.
+   * Returns the row's `id` and `status` if a row exists, or `null` otherwise.
+   * Anything other than active / canceling / past_due is treated as
+   * no-live-sub on the server side.
    */
-  async getFamilySubAt(
-    frequency: SubscriptionFrequency,
+  async getMyFamilySub(
     currency: SupportedCurrency,
   ): Promise<{ id: string; status: string } | null> {
     const { data: claims } = await this.supabase.auth.getClaims();
@@ -320,7 +319,6 @@ export class ParticipationsService {
       .from("family_subscriptions")
       .select("id, status")
       .eq("customer_id", userId)
-      .eq("frequency", frequency)
       .eq("currency", currency)
       .maybeSingle();
     if (error) return null;
