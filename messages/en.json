@@ -1279,7 +1279,6 @@
       "skipLine": "{date} · {reason}"
     },
     "signupPanel": {
-      "bannerOpen": "{verb} now",
       "bannerAlmostFull": "Going fast — only a few seats left",
       "bannerCountdown": "Sign-up opens at {date}",
       "bannerCountdownDone": "Sign-up is now open",
@@ -1293,6 +1292,12 @@
         "municipality_club": "Register",
         "camp": "Sign up",
         "event": "Join"
+      },
+      "noun": {
+        "consumer_club": "Enrolment",
+        "municipality_club": "Registration",
+        "camp": "Sign-up",
+        "event": "Joining"
       },
       "ctaPreOpenIdle": "{verb} — not yet open",
       "ctaPreOpenReady": "Ready when sign-up opens",

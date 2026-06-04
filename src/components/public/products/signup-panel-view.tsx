@@ -383,8 +383,16 @@ function OpenPanel(props: SignupPanelViewProps) {
 
   return (
     <PanelShell
-      banner={urgent ? t("bannerAlmostFull") : t("bannerOpen", { verb })}
-      tone={urgent ? "warning" : "primary"}
+      // Non-urgent open state: the banner is a neutral section label naming the
+      // *noun* of the action (Enrolment / Registration / …), deliberately NOT a
+      // second "{verb} now" CTA. The solid-primary Enrol button below is the one
+      // call to action; a loud primary banner here would compete with it. The
+      // urgent (almost-full) banner stays loud — that's a real scarcity signal,
+      // not a duplicated CTA.
+      banner={
+        urgent ? t("bannerAlmostFull") : t(`noun.${props.productType}`)
+      }
+      tone={urgent ? "warning" : "muted"}
     >
       {props.state.seatCount !== null && (
         // TODO(participations): drop the `?? seatCount` fallback once
