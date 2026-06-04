@@ -58,6 +58,7 @@ export function ProductDetailPageBody({
   const getTopicLabel = useTopicLabel();
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
+  const topicLabel = getTopicLabel(product.topic);
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
@@ -81,6 +82,14 @@ export function ProductDetailPageBody({
           <div className="min-w-0">
             <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
               {t(`typeLabel.${product.product_type}`)}
+              {/* Topic (game brand / subject) sits beside the type label as the
+                  most scannable "what's this about" attribute — surfaced here in
+                  the hero rather than its own near-empty card lower down. The
+                  middot separator is a CSS pseudo-element, not a text node, so it
+                  stays out of the translation system. */}
+              <span className="normal-case text-primary before:mx-1.5 before:text-muted-foreground/50 before:content-['·']">
+                {topicLabel}
+              </span>
             </p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
               {tr?.name}
@@ -111,7 +120,7 @@ export function ProductDetailPageBody({
             page width. Without this on mobile the default implicit
             track is `auto`, which sizes to content. */}
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <MainColumn product={product} topicLabel={getTopicLabel(product.topic)} />
+          <MainColumn product={product} />
           <div className="lg:sticky lg:top-6 lg:self-start">
             <SignupPanel
               product={product}
@@ -142,31 +151,14 @@ function BackLink({ productType }: { productType: ProductType }) {
 
 function MainColumn({
   product,
-  topicLabel,
 }: {
   product: ProductDetailPageBodyProps["product"];
-  topicLabel: string;
 }) {
-  const t = useTranslations("productDetail");
-
   return (
     <div className="space-y-6">
       <ProductWhenWhereCard product={product} />
 
       <CalendarCard product={product} />
-
-      <Card>
-        <CardContent className="p-5 sm:p-6">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("sections.topic")}
-          </h2>
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-              {topicLabel}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
