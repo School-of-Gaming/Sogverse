@@ -8,8 +8,10 @@ import {
 } from "@/lib/constants/currency";
 import {
   isSupportedLocale,
+  resolveLocale,
   type SupportedLocale,
 } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import type { PurchaseShape } from "@/types";
 import { ROUTES } from "@/lib/constants";
 import {
@@ -100,10 +102,17 @@ export async function POST(request: Request) {
   }
   // Prefer the parent's locale for every customer-facing name we control on
   // the Checkout page: the single-payment line item (inline price_data) and the
-  // subscription description both use this. The subscription line item itself is
-  // the one name we can't localize here — it's the cached Stripe Product's name,
-  // shared across all locales (see getOrCreateSubscriptionPrice).
-  const productName = pickProductName(product.product_translations, profile.locale);
+  // subscription description both use this. `resolveLocale` coerces the nullable
+  // profile locale to a SupportedLocale (→ 'en' when absent), and
+  // `resolveTranslation` walks the shared fallback chain (locale → en → first).
+  // The subscription line item itself is the one name we can't localize here —
+  // it's the cached Stripe Product's name, shared across all locales (see
+  // getOrCreateSubscriptionPrice).
+  const productName =
+    resolveTranslation(
+      product.product_translations,
+      resolveLocale(profile.locale),
+    )?.name ?? "School of Gaming product";
 
   if (purchaseShape === "free" && product.billing_mode !== "free") {
     return NextResponse.json(
@@ -369,25 +378,6 @@ function stripeCheckoutLocale(
   appLocale: string | null,
 ): Stripe.Checkout.SessionCreateParams.Locale {
   return isSupportedLocale(appLocale) ? APP_TO_STRIPE_LOCALE[appLocale] : "auto";
-}
-
-// Pick the customer-facing product name, preferring the parent's locale, then
-// English, then Finnish, then whatever exists. Used for the names we control on
-// the Checkout page (single-payment line item + subscription description).
-function pickProductName(
-  translations: { locale: string; name: string }[],
-  preferredLocale: string | null,
-): string {
-  if (preferredLocale) {
-    const preferred = translations.find((t) => t.locale === preferredLocale);
-    if (preferred) return preferred.name;
-  }
-  const en = translations.find((t) => t.locale === "en");
-  if (en) return en.name;
-  const fi = translations.find((t) => t.locale === "fi");
-  if (fi) return fi.name;
-  if (translations.length > 0) return translations[0].name;
-  return "School of Gaming product";
 }
 
 async function rollbackReservation(
