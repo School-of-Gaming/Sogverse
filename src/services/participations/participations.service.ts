@@ -154,7 +154,6 @@ export type CreateParticipationInput = {
 
 export type CreateParticipationResponse =
   | { status: "redirect"; checkoutUrl: string }
-  | { status: "subscribed"; participationId: string }
   | { status: "free_confirmed"; participationId: string }
   | { status: "full" };
 
@@ -316,33 +315,6 @@ export class ParticipationsService {
     }
 
     return [...countsByProduct.values()];
-  }
-
-  /**
-   * Read the current customer's family subscription for a given currency.
-   * Used on the signup panel to decide whether the next subscribe is a
-   * Stripe-Checkout-new-sub or an inline-add. Subscriptions are monthly-only,
-   * so a customer has at most one family sub per currency.
-   *
-   * Returns the row's `id` and `status` if a row exists, or `null` otherwise.
-   * Anything other than active / canceling / past_due is treated as
-   * no-live-sub on the server side.
-   */
-  async getMyFamilySub(
-    currency: SupportedCurrency,
-  ): Promise<{ id: string; status: string } | null> {
-    const { data: claims } = await this.supabase.auth.getClaims();
-    const userId = claims?.claims.sub;
-    if (!userId) return null;
-
-    const { data, error } = await this.supabase
-      .from("family_subscriptions")
-      .select("id, status")
-      .eq("customer_id", userId)
-      .eq("currency", currency)
-      .maybeSingle();
-    if (error) return null;
-    return data ?? null;
   }
 
   // ------------------------------------------------------------------

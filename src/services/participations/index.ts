@@ -12,7 +12,6 @@ export {
   participationKeys,
   useMyUpcomingSessions,
   useParticipationCounts,
-  useMyFamilySub,
   useCreateParticipation,
   useJoinWaitlist,
   useProductSeatCountsRealtime,

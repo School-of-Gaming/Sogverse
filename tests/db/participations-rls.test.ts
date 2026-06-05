@@ -19,8 +19,8 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *   - (writes against all tables) — confirm only admin role can mutate;
  *                                   customers must go through SECURITY DEFINER RPCs
  *
- * Other tables (family_subscriptions, family_subscription_items,
- * product_subscription_prices) follow the same RLS shape; the
+ * Other tables (family_subscriptions, product_subscription_prices)
+ * follow the same RLS shape; the
  * access-control catalog test in tests/db/access-control.test.ts will
  * fail CI if any of them lose RLS coverage. They're covered there, not
  * here — those rows hold no data a parent could harvest from another

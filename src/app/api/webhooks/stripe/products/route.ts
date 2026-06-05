@@ -208,54 +208,37 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
     },
   });
 
-  // Subscription mode: ensure the family_subscriptions row + item exist.
-  if (isSubscription && typeof session.subscription === "string") {
+  // Subscription mode: record the per-participation family_subscriptions row.
+  // Each subscription Checkout creates a brand-new Stripe sub (one per
+  // gamer×club), so there's nothing to find-or-merge — just insert, keyed to
+  // the participation. Idempotent on webhook replay via the UNIQUE
+  // participation_id / stripe_subscription_id (insert and swallow 23505).
+  if (
+    isSubscription &&
+    typeof session.subscription === "string" &&
+    confirmJson.participation_id !== undefined
+  ) {
     const subId = session.subscription;
-    const sub = await stripe.subscriptions.retrieve(subId, { expand: ["items.data"] });
+    const sub = await stripe.subscriptions.retrieve(subId, {
+      expand: ["items.data"],
+    });
+    const stripeCustomerId =
+      typeof session.customer === "string" ? session.customer : "";
+    const periodEnd = currentPeriodEndOf(sub);
 
-    // Find or create family_subscriptions row.
-    let { data: famSub } = await admin
-      .from("family_subscriptions")
-      .select("id")
-      .eq("stripe_subscription_id", subId)
-      .maybeSingle();
-
-    if (!famSub) {
-      const stripeCustomerId =
-        typeof session.customer === "string" ? session.customer : "";
-      const periodEnd = currentPeriodEndOf(sub);
-      const inserted = await admin
-        .from("family_subscriptions")
-        .insert({
-          customer_id: customerId,
-          stripe_subscription_id: subId,
-          stripe_customer_id: stripeCustomerId,
-          currency,
-          status: sub.status,
-          current_period_end:
-            periodEnd !== null
-              ? new Date(periodEnd * 1000).toISOString()
-              : null,
-        })
-        .select("id")
-        .single();
-      famSub = inserted.data;
-    }
-
-    if (famSub !== null && confirmJson.participation_id !== undefined) {
-      if (sub.items.data.length > 0) {
-        const item = sub.items.data[0];
-        await admin
-          .from("family_subscription_items")
-          .insert({
-            family_subscription_id: famSub.id,
-            participation_id: confirmJson.participation_id,
-            stripe_subscription_item_id: item.id,
-            stripe_price_id: item.price.id,
-          })
-          .select()
-          .maybeSingle();
-      }
+    const { error: subErr } = await admin.from("family_subscriptions").insert({
+      customer_id: customerId,
+      participation_id: confirmJson.participation_id,
+      stripe_subscription_id: subId,
+      stripe_customer_id: stripeCustomerId,
+      stripe_price_id: sub.items.data[0]?.price.id ?? null,
+      currency,
+      status: sub.status,
+      current_period_end:
+        periodEnd !== null ? new Date(periodEnd * 1000).toISOString() : null,
+    });
+    if (subErr && subErr.code !== "23505") {
+      throw subErr;
     }
   }
 }
@@ -308,10 +291,9 @@ async function handleInvoicePaid(admin: Admin, event: Stripe.Event) {
 async function handleSubscriptionUpdated(admin: Admin, event: Stripe.Event) {
   const sub = event.data.object as Stripe.Subscription;
 
-  // Bail explicitly if this isn't a sub we manage. Both the legacy Sorg
-  // token webhook and this one subscribe to customer.subscription.* events
-  // in Stripe Dashboard, so each fires for every sub on the account; the
-  // only correct gate is "do we have a row for this stripe_subscription_id".
+  // Only act on subs we have a row for. The webhook subscribes to
+  // customer.subscription.* at the account level, so it fires for every sub on
+  // the account; "do we have a row for this stripe_subscription_id" is the gate.
   const { data: ours } = await admin
     .from("family_subscriptions")
     .select("id")
@@ -357,24 +339,27 @@ async function handleSubscriptionDeleted(admin: Admin, event: Stripe.Event) {
 
   const { data: famSub } = await admin
     .from("family_subscriptions")
-    .select("id")
+    .select("participation_id")
     .eq("stripe_subscription_id", sub.id)
     .maybeSingle();
-  if (!famSub) return; // Not a sub we manage — Sorg token sub etc.
+  // No row → nothing to do. The normal way to hit this is a *replayed*
+  // deletion: the first delivery already tore the participation down (which
+  // CASCADE-removed this row), so a redelivery finds nothing. Returning here
+  // keeps the replay a clean 200 instead of a null-deref 500 that Stripe would
+  // retry forever. (Also covers any sub on the account not created by this flow.)
+  if (!famSub) return;
 
-  await admin
-    .from("family_subscriptions")
-    .update({ status: "cancelled" })
-    .eq("id", famSub.id);
-
-  // Removing items flips coverage on the linked participations to bundle-mode.
-  // The cron resolves coverage by joining family_subscription_items →
-  // family_subscriptions.status — purging items here makes the cron see
-  // those participations as not-sub-covered immediately.
-  await admin
-    .from("family_subscription_items")
-    .delete()
-    .eq("family_subscription_id", famSub.id);
+  // Portal-only cancellation (§4.5c): the parent cancelled this club's sub in
+  // Stripe's hosted portal, Stripe fired this event, and now we tear the
+  // participation down. Stripe has ALREADY cancelled the sub, so this path must
+  // not call Stripe again — `cancel_participation` only touches our DB.
+  // Hard-deleting the participation CASCADEs the family_subscriptions row away.
+  // Idempotent: a replay finds no row (already gone) and returns kind='noop'.
+  const { error } = await admin.rpc("cancel_participation", {
+    p_participation_id: famSub.participation_id,
+    p_reason: "subscription_cancelled",
+  });
+  if (error) throw error;
 }
 
 async function handleChargeRefunded(admin: Admin, event: Stripe.Event) {

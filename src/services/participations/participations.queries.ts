@@ -8,7 +8,6 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { expandUpcomingSessions } from "@/lib/upcoming-sessions";
 import { useNow } from "@/providers";
 import type { SessionAudience } from "@/types";
-import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import {
   ParticipationsService,
@@ -25,8 +24,6 @@ export const participationKeys = {
     [...participationKeys.all, "my-upcoming-sessions", audience] as const,
   countsByProducts: (productIds: string[]) =>
     [...participationKeys.all, "counts", { productIds: [...productIds].sort() }] as const,
-  myFamilySub: (currency: string) =>
-    [...participationKeys.all, "family-sub", { currency }] as const,
 };
 
 /**
@@ -82,25 +79,6 @@ export function useParticipationCounts(
     queryFn: () => service.getParticipationCounts(productIds),
     enabled: productIds.length > 0,
     initialData: options?.initialData,
-  });
-}
-
-/**
- * Whether the logged-in customer already has a live family sub in the given
- * currency. The signup panel uses this to switch the CTA copy from
- * "Subscribe" → "Add to your subscription". `enabled` gates the fetch to
- * subscription products (consumer clubs) only.
- */
-export function useMyFamilySub(
-  currency: SupportedCurrency,
-  enabled: boolean,
-) {
-  const supabase = getClient();
-  const service = new ParticipationsService(supabase);
-  return useQuery({
-    queryKey: participationKeys.myFamilySub(currency),
-    queryFn: () => service.getMyFamilySub(currency),
-    enabled,
   });
 }
 
