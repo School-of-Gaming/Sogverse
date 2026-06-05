@@ -189,30 +189,21 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
     return;
   }
 
-  // Confirmed — record payment row.
-  await insertPaymentRow(admin, {
-    stripeEventId: event.id,
-    customerId,
-    amountCents: session.amount_total ?? 0,
-    currency,
-    purpose: paymentPurposeFor(purchaseShape),
-    stripePaymentIntentId:
-      typeof session.payment_intent === "string" ? session.payment_intent : null,
-    stripeInvoiceId:
-      typeof session.invoice === "string" ? session.invoice : null,
-    metadata: {
-      gamerId,
-      productId,
-      purchaseShape,
-      reservationId,
-    },
-  });
-
-  // Subscription mode: record the per-participation family_subscriptions row.
+  // Subscription mode: record the per-participation family_subscriptions row
+  // BEFORE the payment row, on purpose. The payment row is this handler's commit
+  // marker — the idempotency guard at the top reads "a payment exists for this
+  // event" as "this event is fully processed" and short-circuits the whole
+  // handler. Writing the sub row first makes that invariant true: if the sub
+  // insert fails, no payment row lands, so Stripe's retry re-runs the handler
+  // (confirm_reservation is idempotent) and gets another shot at the sub row —
+  // instead of the guard skipping it forever and leaving a live, untracked
+  // recurring Stripe sub (renewals would then drop in handleInvoicePaid, and
+  // a cancellation would find no row to tear the participation down).
+  //
   // Each subscription Checkout creates a brand-new Stripe sub (one per
-  // gamer×club), so there's nothing to find-or-merge — just insert, keyed to
-  // the participation. Idempotent on webhook replay via the UNIQUE
-  // participation_id / stripe_subscription_id (insert and swallow 23505).
+  // gamer×club), so there's nothing to find-or-merge — just insert, keyed to the
+  // participation. Idempotent on replay via the UNIQUE participation_id /
+  // stripe_subscription_id (insert and swallow 23505).
   if (
     isSubscription &&
     typeof session.subscription === "string" &&
@@ -241,6 +232,27 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
       throw subErr;
     }
   }
+
+  // Confirmed — record the payment row LAST. It's the commit marker the
+  // idempotency guard at the top keys on (see the sub-row note above), so it
+  // must come after every other write this handler makes.
+  await insertPaymentRow(admin, {
+    stripeEventId: event.id,
+    customerId,
+    amountCents: session.amount_total ?? 0,
+    currency,
+    purpose: paymentPurposeFor(purchaseShape),
+    stripePaymentIntentId:
+      typeof session.payment_intent === "string" ? session.payment_intent : null,
+    stripeInvoiceId:
+      typeof session.invoice === "string" ? session.invoice : null,
+    metadata: {
+      gamerId,
+      productId,
+      purchaseShape,
+      reservationId,
+    },
+  });
 }
 
 async function handleCheckoutExpired(admin: Admin, event: Stripe.Event) {
