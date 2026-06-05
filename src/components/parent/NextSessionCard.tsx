@@ -56,9 +56,12 @@ export interface NextSessionCardProps {
   /** When the session ends. Drives the start–end time range label. */
   sessionEnd: Date;
   /**
-   * Whether the voice room is currently joinable. Pass
+   * Whether the session's voice *window* is currently open. Pass
    * `computeSessionWindow(schedule, now).isOpen` — the same value the rest
-   * of the app uses, so liveness is consistent everywhere.
+   * of the app uses, so liveness is consistent everywhere. This drives the
+   * live card styling + the active Join CTA. For a placed gamer it's also
+   * join-ability; an `awaiting` gamer's window still opens on schedule (live
+   * card) but the Join button is gated separately — see `awaiting`.
    */
   voiceIsOpen: boolean;
   /** Where the active "Join voice room" link navigates. */
@@ -77,10 +80,13 @@ export interface NextSessionCardProps {
   /**
    * The gamer is purchased but not yet placed in a group (`group_id IS
    * NULL`). The full schedule still renders — the schedule lives on the
-   * product, not the group — but the Join button stays disabled (there's no
-   * room to join until placement) and a friendly "we're matching {name}
-   * with a Gedu" caption appears beneath it, so a fresh purchase reads as
-   * "we're on it" rather than an empty section. Defaults to `false`.
+   * product, not the group — and the card still goes "live" on schedule
+   * (`voiceIsOpen` styling + "in progress"), but the Join button is always
+   * gated: a future session shows the locked "Opens …" label, and an
+   * in-progress one shows a disabled "matching with a Gedu" button (there's
+   * no room to join until placement). A friendly "we're matching {name} with
+   * a Gedu" caption appears beneath it either way, so a fresh purchase reads
+   * as "we're on it" rather than an empty section. Defaults to `false`.
    */
   awaiting?: boolean;
   /**
@@ -171,6 +177,7 @@ export function NextSessionCard({
             opensDate={opensDate}
             opensTime={opensTime}
             onJoinClick={onJoinClick}
+            awaiting={awaiting}
           />
         </div>
 

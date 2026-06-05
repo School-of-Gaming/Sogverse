@@ -1722,7 +1722,8 @@
   },
   "voiceButton": {
     "joinVoice": "ghogh pa'Daq yIghoS",
-    "locked": "{date} {time}Daq poSmoH"
+    "locked": "{date} {time}Daq poSmoH",
+    "awaitingMatch": "Gedu wInej"
   },
   "yty": {
     "hero": {

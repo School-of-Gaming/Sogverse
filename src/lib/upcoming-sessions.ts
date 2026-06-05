@@ -107,11 +107,17 @@ export function expandUpcomingSessions(
 
   if (sessions.length > 0) {
     const first = sessions[0];
-    // Awaiting cards never go "live" — there's no room to join until the
-    // gamer is placed — so the button stays disabled through the window too.
-    first.voiceIsOpen =
-      !first.awaiting &&
-      isVoiceWindowOpen(first.sessionStart, first.sessionEnd, now);
+    // `voiceIsOpen` tracks the *window*, not join-ability: an awaiting
+    // gamer's session still goes live on schedule (the card keeps its live
+    // styling + "in progress"), they just can't join until placement — the
+    // Join button gates that on `awaiting`, swapping the active CTA for a
+    // disabled "matching with a Gedu" state. See NextSessionCard /
+    // JoinVoiceButton.
+    first.voiceIsOpen = isVoiceWindowOpen(
+      first.sessionStart,
+      first.sessionEnd,
+      now,
+    );
   }
 
   return sessions;

@@ -1677,7 +1677,8 @@
   },
   "voiceButton": {
     "joinVoice": "Liity äänihuoneeseen",
-    "locked": "Avautuu {date} klo {time}"
+    "locked": "Avautuu {date} klo {time}",
+    "awaitingMatch": "Etsitään Gedua"
   },
   "yty": {
     "hero": {

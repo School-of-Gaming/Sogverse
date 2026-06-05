@@ -1677,7 +1677,8 @@
   },
   "voiceButton": {
     "joinVoice": "Join voice room",
-    "locked": "Opens {date} at {time}"
+    "locked": "Opens {date} at {time}",
+    "awaitingMatch": "Matching with a Gedu"
   },
   "yty": {
     "hero": {

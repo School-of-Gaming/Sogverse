@@ -536,14 +536,21 @@ function ParticipantCardDemo() {
 /*  Parent Sessions Section Demo                                       */
 /* ------------------------------------------------------------------ */
 
-// Four states demoed side by side: empty (`sessions={[]}`), live (soonest
-// session already joinable — `NextSessionCard` with the active join CTA),
-// countdown (soonest still in the future — countdown + locked CTA), and
-// awaiting (purchased but not yet placed — disabled Join + "matching with a
-// Gedu" copy). The non-empty stacks include three trailing
-// `UpcomingSessionCard`s so the total height matches. All demo sessions run
-// 14:00–16:30 local; the live one anchors to the most recent 14:00 (today
-// if past, otherwise yesterday) so it always displays as "in progress".
+// Two labeled groups. "Loaded states" (3-up): empty (`sessions={[]}`),
+// countdown (soonest still in the future — countdown + locked CTA), and live
+// (soonest session already joinable — `NextSessionCard` with the active join
+// CTA). Countdown precedes live so the columns line up by type with the
+// awaiting pair below.
+// "Awaiting Gedu placement" (same 3-col track, two filled): purchased but
+// not yet placed — countdown
+// (head still upcoming, locked "Opens …" Join) and live (head's window open
+// *now*, so the card keeps the live gradient + "Session in progress" and
+// swaps the Join CTA for a disabled "matching with a Gedu" button). Both
+// awaiting variants also carry the "matching with a Gedu" caption. The
+// non-empty stacks include three trailing `UpcomingSessionCard`s so the
+// total height matches. All demo sessions run 14:00–16:30 local; the live
+// ones anchor to the most recent 14:00 (today if past, otherwise yesterday)
+// so they always display as "in progress".
 const SESSIONS_HOUR_MS = 3_600_000;
 const SESSIONS_MINUTE_MS = 60_000;
 const SESSIONS_DAY_MS = 24 * SESSIONS_HOUR_MS;
@@ -605,25 +612,53 @@ function SessionsSectionDemo() {
     ...s,
     awaiting: true,
   }));
+  // Awaiting + live: the head session's window is open *now*, so the card
+  // keeps its live styling (gradient + "Session in progress") — but the
+  // gamer still isn't placed, so the active Join CTA is swapped for a
+  // disabled "matching with a Gedu" button. `voiceIsOpen` stays true
+  // (window-open is independent of join-ability — the button gates on
+  // `awaiting`), exactly as the adapter now emits it.
+  const awaitingLive = liveFirst.map((s) => ({
+    ...s,
+    awaiting: true,
+  }));
 
   return (
-    <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
-      <div className="flex flex-col gap-2">
-        <DemoCaption>No sessions</DemoCaption>
-        <SessionsSection sessions={[]} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <DemoCaption>Loaded — live now</DemoCaption>
-        <SessionsSection sessions={liveFirst} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <DemoCaption>Loaded — countdown</DemoCaption>
-        <SessionsSection sessions={countdownFirst} />
-      </div>
-      <div className="flex flex-col gap-2">
-        <DemoCaption>Awaiting Gedu placement</DemoCaption>
-        <SessionsSection sessions={awaitingPlacement} />
-      </div>
+    <div className="space-y-8">
+      <SubSection title="Loaded states">
+        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="flex flex-col gap-2">
+            <DemoCaption>No sessions</DemoCaption>
+            <SessionsSection sessions={[]} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Countdown</DemoCaption>
+            <SessionsSection sessions={countdownFirst} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Live now</DemoCaption>
+            <SessionsSection sessions={liveFirst} />
+          </div>
+        </div>
+      </SubSection>
+      <SubSection title="Awaiting Gedu placement">
+        {/* Same 3-col track as "Loaded states" so card widths line up across
+            both groups. At the 3-col breakpoint the leading spacer leaves
+            column 1 empty so the pair sits under the "countdown" + "live"
+            loaded cards above; it collapses away below `lg` so the two cards
+            still fill the 2-col layout. */}
+        <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="hidden lg:block" aria-hidden="true" />
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Countdown</DemoCaption>
+            <SessionsSection sessions={awaitingPlacement} />
+          </div>
+          <div className="flex flex-col gap-2">
+            <DemoCaption>Live now</DemoCaption>
+            <SessionsSection sessions={awaitingLive} />
+          </div>
+        </div>
+      </SubSection>
     </div>
   );
 }
