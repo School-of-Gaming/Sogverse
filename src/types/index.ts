@@ -205,11 +205,10 @@ export type PaymentInsert = Database["public"]["Tables"]["payments"]["Insert"];
 export type Refund = Database["public"]["Tables"]["refunds"]["Row"];
 export type RefundInsert = Database["public"]["Tables"]["refunds"]["Insert"];
 
-// family_subscriptions + family_subscription_items
+// family_subscriptions — one Stripe subscription per (gamer, club) participation.
+// "Family" is historical: a row is one gamer in one club, not a family's whole bill.
 export type FamilySubscription = Database["public"]["Tables"]["family_subscriptions"]["Row"];
 export type FamilySubscriptionInsert = Database["public"]["Tables"]["family_subscriptions"]["Insert"];
-export type FamilySubscriptionItem = Database["public"]["Tables"]["family_subscription_items"]["Row"];
-export type FamilySubscriptionItemInsert = Database["public"]["Tables"]["family_subscription_items"]["Insert"];
 
 // product_subscription_prices (Stripe Price ID cache; admin-only)
 export type ProductSubscriptionPrice = Database["public"]["Tables"]["product_subscription_prices"]["Row"];

@@ -89,15 +89,18 @@ type AdminInserts = {
   payments: Record<string, unknown>[];
   refunds: Record<string, unknown>[];
   family_subscriptions: Record<string, unknown>[];
-  family_subscription_items: Record<string, unknown>[];
   participations_deletes: { id: string; status: string }[];
 };
 
 type AdminMockOptions = {
   /** Returned from the payments idempotency check (event-id dedup). */
   existingPayment?: { id: string } | null;
-  /** Returned from the family_subscriptions lookup before insert. */
-  existingFamSub?: { id: string } | null;
+  /**
+   * Returned from a `family_subscriptions` SELECT lookup. The deleted/updated/
+   * invoice handlers look the row up by stripe_subscription_id; the
+   * checkout-completed handler doesn't (each sub is brand-new — it just inserts).
+   */
+  famSubRow?: Record<string, unknown> | null;
 };
 
 function mockAdmin(opts: AdminMockOptions = {}) {
@@ -105,7 +108,6 @@ function mockAdmin(opts: AdminMockOptions = {}) {
     payments: [],
     refunds: [],
     family_subscriptions: [],
-    family_subscription_items: [],
     participations_deletes: [],
   };
 
@@ -142,30 +144,15 @@ function mockAdmin(opts: AdminMockOptions = {}) {
         select: () => ({
           eq: () => ({
             maybeSingle: () =>
-              Promise.resolve({ data: opts.existingFamSub ?? null, error: null }),
+              Promise.resolve({ data: opts.famSubRow ?? null, error: null }),
           }),
         }),
-        insert: (row: Record<string, unknown>) => ({
-          select: () => ({
-            single: () => {
-              const id = `famsub_${inserts.family_subscriptions.length + 1}`;
-              inserts.family_subscriptions.push({ id, ...row });
-              return Promise.resolve({ data: { id }, error: null });
-            },
-          }),
-        }),
-      };
-    }
-    if (table === "family_subscription_items") {
-      return {
-        insert: (row: Record<string, unknown>) => ({
-          select: () => ({
-            maybeSingle: () => {
-              inserts.family_subscription_items.push(row);
-              return Promise.resolve({ data: null, error: null });
-            },
-          }),
-        }),
+        // One per-participation row per subscription; the route inserts and
+        // swallows 23505 on replay. The mock returns no error.
+        insert: (row: Record<string, unknown>) => {
+          inserts.family_subscriptions.push(row);
+          return Promise.resolve({ error: null });
+        },
       };
     }
     if (table === "participations") {
@@ -252,7 +239,7 @@ describe("POST /api/webhooks/stripe/products", () => {
       expect(inserts.refunds).toHaveLength(0);
     });
 
-    it("creates a family_subscriptions row on first subscription completion", async () => {
+    it("writes a per-participation family_subscriptions row on subscription completion", async () => {
       mockConstructEvent.mockReturnValue(
         createCompletedEvent({
           paymentIntent: null,
@@ -261,7 +248,7 @@ describe("POST /api/webhooks/stripe/products", () => {
           purchaseShape: "subscription_monthly",
         }),
       );
-      const inserts = mockAdmin({ existingFamSub: null });
+      const inserts = mockAdmin();
       mockAdminRpc.mockResolvedValue({
         data: {
           kind: "confirmed",
@@ -287,19 +274,16 @@ describe("POST /api/webhooks/stripe/products", () => {
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);
 
+      // One sub row, keyed to the participation, with the Price snapshot. There
+      // is no separate item join row anymore — the sub IS the (gamer, club) link.
       expect(inserts.family_subscriptions).toHaveLength(1);
       expect(inserts.family_subscriptions[0]).toMatchObject({
         customer_id: CUSTOMER_ID,
+        participation_id: RESERVATION_ID,
         stripe_subscription_id: "sub_new_1",
+        stripe_price_id: "price_test_1",
         currency: "eur",
         status: "active",
-      });
-      expect(inserts.family_subscription_items).toHaveLength(1);
-      expect(inserts.family_subscription_items[0]).toMatchObject({
-        family_subscription_id: "famsub_1",
-        participation_id: RESERVATION_ID,
-        stripe_subscription_item_id: "si_1",
-        stripe_price_id: "price_test_1",
       });
     });
   });
@@ -449,6 +433,44 @@ describe("POST /api/webhooks/stripe/products", () => {
         type: "checkout.session.expired",
         data: { object: { id: "cs_expired_2", metadata: {} } },
       });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      expect(mockAdminRpc).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("customer.subscription.deleted — portal-only cancel teardown", () => {
+    function createDeletedEvent(subId: string) {
+      return {
+        id: "evt_deleted_1",
+        type: "customer.subscription.deleted",
+        data: { object: { id: subId } },
+      };
+    }
+
+    it("tears the participation down via cancel_participation when we own the sub", async () => {
+      mockConstructEvent.mockReturnValue(createDeletedEvent("sub_live_1"));
+      mockAdmin({ famSubRow: { participation_id: RESERVATION_ID } });
+      mockAdminRpc.mockResolvedValue({
+        data: { kind: "cancelled" },
+        error: null,
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+
+      // Stripe already cancelled the sub — we only tear down our DB. Deleting
+      // the participation CASCADEs the family_subscriptions row away.
+      expect(mockAdminRpc).toHaveBeenCalledWith("cancel_participation", {
+        p_participation_id: RESERVATION_ID,
+        p_reason: "subscription_cancelled",
+      });
+    });
+
+    it("is a no-op for a sub we don't have a row for (e.g. a replayed deletion)", async () => {
+      mockConstructEvent.mockReturnValue(createDeletedEvent("sub_unknown"));
+      mockAdmin({ famSubRow: null });
 
       const res = await POST(createWebhookRequest());
       expect(res.status).toBe(200);

@@ -69,48 +69,6 @@ export type Database = {
           },
         ]
       }
-      family_subscription_items: {
-        Row: {
-          created_at: string
-          family_subscription_id: string
-          id: string
-          participation_id: string
-          stripe_price_id: string
-          stripe_subscription_item_id: string
-        }
-        Insert: {
-          created_at?: string
-          family_subscription_id: string
-          id?: string
-          participation_id: string
-          stripe_price_id: string
-          stripe_subscription_item_id: string
-        }
-        Update: {
-          created_at?: string
-          family_subscription_id?: string
-          id?: string
-          participation_id?: string
-          stripe_price_id?: string
-          stripe_subscription_item_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "family_subscription_items_family_subscription_id_fkey"
-            columns: ["family_subscription_id"]
-            isOneToOne: false
-            referencedRelation: "family_subscriptions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "family_subscription_items_participation_id_fkey"
-            columns: ["participation_id"]
-            isOneToOne: true
-            referencedRelation: "participations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       family_subscriptions: {
         Row: {
           created_at: string
@@ -118,8 +76,10 @@ export type Database = {
           current_period_end: string | null
           customer_id: string
           id: string
+          participation_id: string
           status: string
           stripe_customer_id: string
+          stripe_price_id: string | null
           stripe_subscription_id: string
           updated_at: string
         }
@@ -129,8 +89,10 @@ export type Database = {
           current_period_end?: string | null
           customer_id: string
           id?: string
+          participation_id: string
           status: string
           stripe_customer_id: string
+          stripe_price_id?: string | null
           stripe_subscription_id: string
           updated_at?: string
         }
@@ -140,8 +102,10 @@ export type Database = {
           current_period_end?: string | null
           customer_id?: string
           id?: string
+          participation_id?: string
           status?: string
           stripe_customer_id?: string
+          stripe_price_id?: string | null
           stripe_subscription_id?: string
           updated_at?: string
         }
@@ -151,6 +115,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "family_subscriptions_participation_id_fkey"
+            columns: ["participation_id"]
+            isOneToOne: true
+            referencedRelation: "participations"
             referencedColumns: ["id"]
           },
         ]

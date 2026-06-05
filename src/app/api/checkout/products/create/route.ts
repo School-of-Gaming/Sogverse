@@ -21,14 +21,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Discriminated success bodies. Client switches on `status`.
 //
-//   redirect       — single-payment / first-ever sub at this
-//                    (frequency, currency). Send the parent to Stripe Checkout.
-//   subscribed     — inline-add to an existing family sub. Already paid.
+//   redirect       — paid signup (single-payment OR subscription). Always send
+//                    the parent to Stripe Checkout — even with a saved card —
+//                    for the trust/safety moment. Each subscription is its own
+//                    Stripe sub (one per gamer×club), so there is no inline add.
 //   free_confirmed — free event; no Stripe involvement.
 //   full           — seat gone; UI flips to waitlist CTA.
 type CreateResponseBody =
   | { status: "redirect"; checkoutUrl: string }
-  | { status: "subscribed"; participationId: string }
   | { status: "free_confirmed"; participationId: string }
   | { status: "full" };
 
@@ -185,109 +185,13 @@ export async function POST(request: Request) {
 
   const stripeCustomerId = await getOrCreateStripeCustomer(admin, user.id);
 
-  // Subscription branch: find-or-create the family Stripe sub.
-  // Per docs/products-architecture.md §4.5b — one monthly sub per (customer,
-  // currency); items per (gamer, club). If a sub already exists in this
-  // currency, add an item to it inline. No Stripe Checkout.
-  if (isSubscription) {
-    const priceRow = await getOrCreateSubscriptionPrice(
-      admin,
-      productId,
-      currency,
-    );
-    if (!priceRow) {
-      await rollbackReservation(admin, reservationId);
-      return NextResponse.json(
-        { error: `Product is not sold in ${currency}` },
-        { status: 400 },
-      );
-    }
-
-    const { data: existingFamSub } = await admin
-      .from("family_subscriptions")
-      .select("id, stripe_subscription_id, status")
-      .eq("customer_id", user.id)
-      .eq("currency", currency)
-      .maybeSingle();
-
-    // Treat anything other than active / canceling / past_due as "no live
-    // sub" — a cancelled row from a prior life shouldn't block a new sub.
-    const hasLiveSub = existingFamSub !== null
-      && ["active", "canceling", "past_due"].includes(existingFamSub.status);
-
-    if (hasLiveSub) {
-      // Inline add: subscriptions.update with always_invoice +
-      // error_if_incomplete so this call FAILS if the card declines.
-      // No Stripe Checkout, no redirect.
-      try {
-        const updated = await stripe.subscriptions.update(
-          existingFamSub.stripe_subscription_id,
-          {
-            items: [{ price: priceRow.stripe_price_id }],
-            proration_behavior: "always_invoice",
-            payment_behavior: "error_if_incomplete",
-            metadata: {
-              customerId: user.id,
-              gamerId,
-              productId,
-              purchaseShape,
-              currency,
-              reservationId,
-            },
-          },
-        );
-
-        // Find the newly-added item (the one matching our Stripe Price).
-        const newItem = updated.items.data.find(
-          (it) => it.price.id === priceRow.stripe_price_id,
-        );
-        if (!newItem) {
-          throw new Error("Stripe sub update did not include the new item");
-        }
-
-        // Confirm reservation synchronously — flips reserving → active.
-        // The simplified RPC can no longer return a race-loss kind: status
-        // alone holds the seat, and the reservation we created two RPCs ago
-        // is still 'reserving' until we flip it here.
-        const { error: confirmErr } = await admin.rpc(
-          "confirm_reservation",
-          { p_reservation_id: reservationId },
-        );
-        if (confirmErr) {
-          throw new Error(`confirm_reservation failed: ${confirmErr.message}`);
-        }
-
-        // Link the participation to the family sub.
-        await admin.from("family_subscription_items").insert({
-          family_subscription_id: existingFamSub.id,
-          participation_id: reservationId,
-          stripe_subscription_item_id: newItem.id,
-          stripe_price_id: priceRow.stripe_price_id,
-        });
-
-        // The webhook will record the proration invoice as a payments row
-        // when invoice.paid fires; we don't insert one here to avoid
-        // duplicate-event-id collisions.
-
-        return NextResponse.json({
-          status: "subscribed",
-          participationId: reservationId,
-        } satisfies CreateResponseBody);
-      } catch (err) {
-        await rollbackReservation(admin, reservationId);
-        const message =
-          err instanceof Stripe.errors.StripeCardError
-            ? err.message
-            : "Could not add to your subscription. Please try again.";
-        return NextResponse.json(
-          { error: message },
-          { status: err instanceof Stripe.errors.StripeCardError ? 402 : 502 },
-        );
-      }
-    }
-    // No live sub in this currency — fall through to the Stripe Checkout
-    // flow below.
-  }
+  // Every paid signup — single-payment AND subscription — goes through Stripe
+  // Checkout. Each consumer-club subscription is its own Stripe subscription
+  // (one per gamer×club), created fresh below in `mode: "subscription"`. There
+  // is no inline `subscriptions.update`: a parent with a card on file still
+  // sees Checkout (the trust moment), and one sub per club means each is
+  // independently cancelable from the Stripe portal. See
+  // docs/products-architecture.md §4.5b / §4.5c.
 
   const origin = getOrigin(request);
   // Resolve the caller-supplied return path to a safe same-origin path —
@@ -378,8 +282,6 @@ export async function POST(request: Request) {
       payment_method_save: "enabled",
     };
   } else {
-    // First-time subscription — went through the inline-add branch's
-    // `getOrCreateSubscriptionPrice` failure check already.
     const priceRow = await getOrCreateSubscriptionPrice(
       admin,
       productId,
@@ -394,7 +296,15 @@ export async function POST(request: Request) {
     }
     sessionParams.mode = "subscription";
     sessionParams.line_items = [{ quantity: 1, price: priceRow.stripe_price_id }];
-    sessionParams.subscription_data = { metadata };
+    // Describe the sub as "{Club} — {Child}". A family has one Stripe sub per
+    // gamer×club, all listed together in the hosted portal; without a per-sub
+    // description they'd be indistinguishable there (and two kids in the same
+    // club would show as two identical rows). This is the label the parent
+    // reads when deciding which one to cancel.
+    sessionParams.subscription_data = {
+      metadata,
+      description: `${productName} — ${await pickGamerName(admin, gamerId)}`,
+    };
   }
 
   const session = await stripe.checkout.sessions.create(sessionParams);
@@ -409,6 +319,21 @@ export async function POST(request: Request) {
 
   const respBody: CreateResponseBody = { status: "redirect", checkoutUrl: session.url };
   return NextResponse.json(respBody);
+}
+
+// Resolve a short display name for the gamer, for the Stripe subscription
+// description (what the parent sees in the billing portal). Falls back through
+// username to a generic label so the description is never blank.
+async function pickGamerName(
+  admin: ReturnType<typeof createAdminClient>,
+  gamerId: string,
+): Promise<string> {
+  const { data } = await admin
+    .from("profiles")
+    .select("first_name, username")
+    .eq("id", gamerId)
+    .maybeSingle();
+  return data?.first_name || data?.username || "your child";
 }
 
 function pickProductName(

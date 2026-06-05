@@ -3,37 +3,21 @@ import { POST } from "@/app/api/checkout/products/create/route";
 import { NextResponse } from "next/server";
 
 // --- Stripe mock ---
+//
+// The route's only Stripe call is `checkout.sessions.create` — every paid
+// signup (single-payment AND subscription) goes through hosted Checkout now.
+// There is no `subscriptions.update` inline-add path anymore.
 
-// `new Stripe()` runs at module load (vi.mock hoisting fires before normal
-// `const` declarations), so we shuttle the inner mocks through vi.hoisted.
-const {
-  mockStripeSessionCreate,
-  mockStripeSubscriptionsUpdate,
-  StripeCardErrorCtor,
-} = vi.hoisted(() => {
-  class StripeCardError extends Error {
-    constructor(message: string) {
-      super(message);
-      this.name = "StripeCardError";
-    }
-  }
-  return {
-    mockStripeSessionCreate: vi.fn(),
-    mockStripeSubscriptionsUpdate: vi.fn(),
-    StripeCardErrorCtor: StripeCardError,
-  };
-});
+const { mockStripeSessionCreate } = vi.hoisted(() => ({
+  mockStripeSessionCreate: vi.fn(),
+}));
 
 vi.mock("stripe", () => {
   const StripeMock = vi.fn(function () {
     return {
       checkout: { sessions: { create: mockStripeSessionCreate } },
-      subscriptions: { update: mockStripeSubscriptionsUpdate },
     };
   }) as unknown as typeof import("stripe").default;
-  (StripeMock as unknown as { errors: unknown }).errors = {
-    StripeCardError: StripeCardErrorCtor,
-  };
   return { default: StripeMock };
 });
 
@@ -85,7 +69,7 @@ const GAMER_ID = "33333333-3333-3333-3333-333333333333";
 const RESERVATION_ID = "44444444-4444-4444-4444-444444444444";
 const STRIPE_CUSTOMER_ID = "cus_test_customer";
 const STRIPE_PRICE_ID = "price_test_monthly";
-const FAMILY_SUB_ROW_ID = "55555555-5555-5555-5555-555555555555";
+const GAMER_FIRST_NAME = "Liam";
 
 type ProductFixture = {
   id: string;
@@ -118,24 +102,16 @@ const FREE_EVENT: ProductFixture = {
 
 // --- Mock builders ---
 
-type FamSubRow = {
-  id: string;
-  stripe_subscription_id: string;
-  status: "active" | "canceling" | "past_due" | "canceled";
-};
-
 type AdminMockOptions = {
   product?: ProductFixture | null;
   productErr?: { message: string } | null;
-  existingFamSub?: FamSubRow | null;
+  /** Gamer profile returned for the subscription-description lookup. */
+  gamer?: { first_name: string | null; username: string | null } | null;
 };
 
-type AdminInserts = {
-  family_subscription_items: Record<string, unknown>[];
-};
-
-function mockAdmin(opts: AdminMockOptions = {}): AdminInserts {
-  const inserts: AdminInserts = { family_subscription_items: [] };
+function mockAdmin(opts: AdminMockOptions = {}): void {
+  const gamer =
+    opts.gamer ?? { first_name: GAMER_FIRST_NAME, username: null };
 
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "products") {
@@ -155,34 +131,19 @@ function mockAdmin(opts: AdminMockOptions = {}): AdminInserts {
         }),
       };
     }
-    if (table === "family_subscriptions") {
-      // Route queries by (customer_id, currency) — two .eq() then maybeSingle.
+    if (table === "profiles") {
+      // Subscription branch looks up the gamer's name for the Stripe sub
+      // description (what the parent sees in the billing portal).
       return {
         select: () => ({
           eq: () => ({
-            eq: () => ({
-              maybeSingle: () =>
-                Promise.resolve({
-                  data: opts.existingFamSub ?? null,
-                  error: null,
-                }),
-            }),
+            maybeSingle: () => Promise.resolve({ data: gamer, error: null }),
           }),
         }),
       };
     }
-    if (table === "family_subscription_items") {
-      return {
-        insert: (row: Record<string, unknown>) => {
-          inserts.family_subscription_items.push(row);
-          return Promise.resolve({ data: null, error: null });
-        },
-      };
-    }
     throw new Error(`Unexpected table in admin mock: ${table}`);
   });
-
-  return inserts;
 }
 
 function mockUnauthenticated() {
@@ -559,11 +520,11 @@ describe("POST /api/checkout/products/create", () => {
     });
   });
 
-  // ── Subscription paths ───────────────────────────────────────────
+  // ── Subscription path — always Stripe Checkout ────────────────────
 
-  it("creates a subscription checkout session when no live family sub exists", async () => {
+  it("creates a subscription checkout session for a consumer club", async () => {
     mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CLUB, existingFamSub: null });
+    mockAdmin({ product: PAID_CLUB });
     mockAdminRpc.mockResolvedValueOnce({
       data: { kind: "reserving", participation_id: RESERVATION_ID },
       error: null,
@@ -579,14 +540,12 @@ describe("POST /api/checkout/products/create", () => {
     });
 
     const res = await POST(
-      createRequest({
-        ...VALID_BODY,
-        purchaseShape: "subscription_monthly",
-      }),
+      createRequest({ ...VALID_BODY, purchaseShape: "subscription_monthly" }),
     );
     const data = await res.json();
 
     expect(res.status).toBe(200);
+    // Even with a card on file the parent always lands on hosted Checkout.
     expect(data.status).toBe("redirect");
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
@@ -596,214 +555,17 @@ describe("POST /api/checkout/products/create", () => {
       price: STRIPE_PRICE_ID,
     });
     // Sub metadata is mirrored onto subscription_data so the webhook can find
-    // the reservation when invoice.paid fires before checkout.session.completed.
-    expect(params.subscription_data).toEqual({ metadata: params.metadata });
-    expect(mockStripeSubscriptionsUpdate).not.toHaveBeenCalled();
-  });
-
-  it("treats a 'canceled' family sub as no live sub and falls through to Checkout", async () => {
-    mockAuthenticatedCustomer();
-    mockAdmin({
-      product: PAID_CLUB,
-      existingFamSub: {
-        id: FAMILY_SUB_ROW_ID,
-        stripe_subscription_id: "sub_dead",
-        status: "canceled",
-      },
-    });
-    mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "reserving", participation_id: RESERVATION_ID },
-      error: null,
-    });
-    mockGetOrCreateSubscriptionPrice.mockResolvedValue({
-      product_id: PRODUCT_ID,
-      currency: "eur",
-      stripe_price_id: STRIPE_PRICE_ID,
-      unit_amount_cents: 5000,
-    });
-    mockStripeSessionCreate.mockResolvedValue({
-      url: "https://checkout.stripe.com/c/test_resub",
-    });
-
-    const res = await POST(
-      createRequest({
-        ...VALID_BODY,
-        purchaseShape: "subscription_monthly",
-      }),
-    );
-
-    expect(res.status).toBe(200);
-    expect(mockStripeSubscriptionsUpdate).not.toHaveBeenCalled();
-    expect(mockStripeSessionCreate).toHaveBeenCalled();
-  });
-
-  it("inline-adds to a live family sub and confirms the reservation synchronously", async () => {
-    mockAuthenticatedCustomer();
-    const inserts = mockAdmin({
-      product: PAID_CLUB,
-      existingFamSub: {
-        id: FAMILY_SUB_ROW_ID,
-        stripe_subscription_id: "sub_live_1",
-        status: "active",
-      },
-    });
-    mockAdminRpc
-      .mockResolvedValueOnce({
-        data: { kind: "reserving", participation_id: RESERVATION_ID },
-        error: null,
-      })
-      .mockResolvedValueOnce({
-        data: { kind: "confirmed" },
-        error: null,
-      });
-    mockGetOrCreateSubscriptionPrice.mockResolvedValue({
-      product_id: PRODUCT_ID,
-      currency: "eur",
-      stripe_price_id: STRIPE_PRICE_ID,
-      unit_amount_cents: 5000,
-    });
-    mockStripeSubscriptionsUpdate.mockResolvedValue({
-      id: "sub_live_1",
-      items: {
-        data: [
-          { id: "si_existing", price: { id: "price_other" } },
-          { id: "si_new", price: { id: STRIPE_PRICE_ID } },
-        ],
-      },
-    });
-
-    const res = await POST(
-      createRequest({
-        ...VALID_BODY,
-        purchaseShape: "subscription_monthly",
-      }),
-    );
-    const data = await res.json();
-
-    expect(res.status).toBe(200);
-    expect(data).toEqual({
-      status: "subscribed",
-      participationId: RESERVATION_ID,
-    });
-    expect(mockStripeSessionCreate).not.toHaveBeenCalled();
-
-    // Stripe sub update was called with always_invoice + error_if_incomplete
-    // so a card decline aborts the call (instead of leaving the new item dangling).
-    const updateArgs = mockStripeSubscriptionsUpdate.mock.calls[0];
-    expect(updateArgs[0]).toBe("sub_live_1");
-    expect(updateArgs[1]).toMatchObject({
-      items: [{ price: STRIPE_PRICE_ID }],
-      proration_behavior: "always_invoice",
-      payment_behavior: "error_if_incomplete",
-    });
-    expect(updateArgs[1].metadata).toMatchObject({
-      reservationId: RESERVATION_ID,
-      customerId: CUSTOMER_ID,
-      gamerId: GAMER_ID,
-      productId: PRODUCT_ID,
-    });
-
-    // confirm_reservation flips reserving → active for the inline-add path;
-    // the family sub link row is written here in the route.
-    expect(mockAdminRpc).toHaveBeenNthCalledWith(2, "confirm_reservation", {
-      p_reservation_id: RESERVATION_ID,
-    });
-
-    expect(inserts.family_subscription_items).toHaveLength(1);
-    expect(inserts.family_subscription_items[0]).toMatchObject({
-      family_subscription_id: FAMILY_SUB_ROW_ID,
-      participation_id: RESERVATION_ID,
-      stripe_subscription_item_id: "si_new",
-      stripe_price_id: STRIPE_PRICE_ID,
-    });
-  });
-
-  it("returns 402 and rolls back when the inline-add card declines", async () => {
-    mockAuthenticatedCustomer();
-    mockAdmin({
-      product: PAID_CLUB,
-      existingFamSub: {
-        id: FAMILY_SUB_ROW_ID,
-        stripe_subscription_id: "sub_live_1",
-        status: "active",
-      },
-    });
-    mockAdminRpc
-      .mockResolvedValueOnce({
-        data: { kind: "reserving", participation_id: RESERVATION_ID },
-        error: null,
-      })
-      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
-    mockGetOrCreateSubscriptionPrice.mockResolvedValue({
-      product_id: PRODUCT_ID,
-      currency: "eur",
-      stripe_price_id: STRIPE_PRICE_ID,
-      unit_amount_cents: 5000,
-    });
-    mockStripeSubscriptionsUpdate.mockRejectedValue(
-      new StripeCardErrorCtor("Your card was declined."),
-    );
-
-    const res = await POST(
-      createRequest({
-        ...VALID_BODY,
-        purchaseShape: "subscription_monthly",
-      }),
-    );
-    const data = await res.json();
-
-    expect(res.status).toBe(402);
-    expect(data.error).toBe("Your card was declined.");
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
-      p_reservation_id: RESERVATION_ID,
-    });
-  });
-
-  it("returns 502 and rolls back when the inline-add hits a non-card error", async () => {
-    mockAuthenticatedCustomer();
-    mockAdmin({
-      product: PAID_CLUB,
-      existingFamSub: {
-        id: FAMILY_SUB_ROW_ID,
-        stripe_subscription_id: "sub_live_1",
-        status: "past_due",
-      },
-    });
-    mockAdminRpc
-      .mockResolvedValueOnce({
-        data: { kind: "reserving", participation_id: RESERVATION_ID },
-        error: null,
-      })
-      .mockResolvedValueOnce({ data: { kind: "expired" }, error: null });
-    mockGetOrCreateSubscriptionPrice.mockResolvedValue({
-      product_id: PRODUCT_ID,
-      currency: "eur",
-      stripe_price_id: STRIPE_PRICE_ID,
-      unit_amount_cents: 5000,
-    });
-    mockStripeSubscriptionsUpdate.mockRejectedValue(
-      new Error("stripe API down"),
-    );
-
-    const res = await POST(
-      createRequest({
-        ...VALID_BODY,
-        purchaseShape: "subscription_monthly",
-      }),
-    );
-    const data = await res.json();
-
-    expect(res.status).toBe(502);
-    // Generic error message — we don't leak internal details.
-    expect(data.error).toBe("Could not add to your subscription. Please try again.");
-    expect(mockAdminRpc).toHaveBeenLastCalledWith("expire_reservation", {
-      p_reservation_id: RESERVATION_ID,
+    // the reservation, and a per-sub description ("{Club} — {Child}") makes each
+    // of a family's subs distinguishable in the hosted billing portal.
+    expect(params.subscription_data).toEqual({
+      metadata: params.metadata,
+      description: `Test Club — ${GAMER_FIRST_NAME}`,
     });
   });
 
   it("rolls back and returns 400 when the product is not sold in the requested currency (sub branch)", async () => {
     mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CLUB, existingFamSub: null });
+    mockAdmin({ product: PAID_CLUB });
     mockAdminRpc
       .mockResolvedValueOnce({
         data: { kind: "reserving", participation_id: RESERVATION_ID },

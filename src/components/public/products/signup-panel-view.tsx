@@ -61,14 +61,6 @@ export type AuthState =
  */
 export type MyParticipationState = "waitlisted" | "active";
 
-/**
- * CTA copy hint for subscriptions. `inline_add` triggers "Add to subscription
- * · €X/mo (charged today)" copy, signalling that the parent's card on file
- * will be charged immediately for the prorated period — no Stripe Checkout
- * redirect. Per docs/products-architecture.md §4.5b.
- */
-export type SubCtaMode = "new" | "inline_add";
-
 export interface SignupPanelViewProps {
   productType: ProductType;
   state: RegistrationState;
@@ -85,8 +77,6 @@ export interface SignupPanelViewProps {
   onSubmit: () => void;
   /** Separate from onSubmit — the waitlist branch calls this. */
   onJoinWaitlist: () => void;
-  /** Sub CTA copy — `'inline_add'` when the parent already has a live sub. */
-  subCtaMode: SubCtaMode;
   /** Mutation-state hint for disabling the CTA while in flight. */
   submitting?: boolean;
   /** Server-side error from the most recent submit. */
@@ -307,7 +297,6 @@ function PreOpenPanel(props: SignupPanelViewProps) {
     props.pricingOption,
     props.currency,
     props.locale,
-    props.subCtaMode,
   );
 
   if (props.state.kind !== "closed_pre") return null;
@@ -372,7 +361,6 @@ function OpenPanel(props: SignupPanelViewProps) {
     props.pricingOption,
     props.currency,
     props.locale,
-    props.subCtaMode,
   );
 
   if (props.state.kind !== "open") return null;
@@ -713,17 +701,10 @@ function useActiveCtaLabel(
   option: PricingOption,
   currency: SupportedCurrency,
   locale: string,
-  subCtaMode: SubCtaMode,
 ): string {
   const t = useTranslations("productDetail.signupPanel");
   const price = priceForCta(option, currency, locale);
   if (price === null) return t("ctaActive", { verb });
-  // Inline-add path: parent already has a live family sub in this currency.
-  // Copy makes it explicit that the card on file will be charged today for
-  // the prorated period.
-  if (subCtaMode === "inline_add" && option.kind === "subscription") {
-    return t("ctaInlineAddSub", { price });
-  }
   return t("ctaActiveWithPrice", { verb, price });
 }
 

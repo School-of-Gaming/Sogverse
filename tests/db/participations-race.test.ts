@@ -53,7 +53,7 @@ describe("participations race + idempotency", () => {
 
   afterEach(async () => {
     // Wipe participations between tests but keep products around (cheaper
-    // than recreating). CASCADE handles family_subscription_items etc.
+    // than recreating). CASCADE handles family_subscriptions etc.
     await admin
       .from("participations")
       .delete()

@@ -29,23 +29,11 @@ Inconsistent with every other status-shaped column in this migration. Loses type
 
 These will fire eventually, but not today. Defer-able with care.
 
-### `process_session_credits` has no catch-up window
-
-Migration 00039:1271-1272, scheduled hourly in 00042. Hardcoded `NOW() - INTERVAL '1 hour'` window. One missed cron tick (deploy, DB restart, lock contention) = that hour of charges silently skipped. No replay, no high-water-mark, no error.
-
-**Fix:** parameterize the window (`p_window_start TIMESTAMPTZ DEFAULT NOW() - INTERVAL '1 hour'`, `p_window_end DEFAULT NOW()`) so an operator can replay a missed range. Better still: persist `last_success_end` and default `window_start := COALESCE(last_success_end, NOW() - 1h)`. The `UNIQUE(participation_id, session_date)` on `credit_deductions` already protects against double-charging on replay, so widening the window is safe.
-
 ### Realtime rollup `reserving_count` and `count_seats_taken` disagree
 
 00039:469 (rollup uses `reserved_until > NOW()`) vs 00041:25-30 (RPC dropped the time check, status alone holds the seat). Each query individually looks correct — together they diverge. Browse page fed by the rollup eventually shows "seats available" while `create_participation` returns `kind='full'`. UX glitch: parent clicks → mid-click flip to waitlist.
 
 **Fix:** make the rollup match RPC semantics — `COUNT(*) FILTER (WHERE status = 'reserving')` with no time filter.
-
-### `subscriptions.update` metadata replaces, doesn't merge
-
-`src/app/api/checkout/products/create/route.ts:238-246`. When parent inline-adds gamer #2, this overwrites the metadata (incl. `reservationId`) that was set for gamer #1. Future audit trails / Stripe-side debugging can only see the latest add.
-
-**Fix:** either drop the `subscription.metadata` write entirely (link rows are already the source of truth) or GET-then-PUT-merge the metadata.
 
 ### `invoice.subscription` is deprecated on newer Stripe API versions
 
@@ -71,12 +59,6 @@ Migration 00039:1043-1077. Function picks the lowest-position waitlist row and r
 
 **Fix:** make the RPC actually mutate. `SELECT … FOR UPDATE SKIP LOCKED` against the waitlist row, then transition status atomically inside the function.
 
-### `session_cancellations` lacks audit columns
-
-Migration 00039:363-369. No `cancelled_by` / `cancellation_source`. When the cancel-session UI ships and a customer cancels, you can't tell from the row whether the customer or an admin did it — exactly the question that arises in chargebacks.
-
-**Fix:** add `cancelled_by UUID REFERENCES profiles(id)` (nullable for system-initiated) and `cancellation_source TEXT` (`'customer'|'admin'|'system'`) before the cancel-session RPC ships against this table.
-
 ---
 
 ## Test gaps
@@ -91,15 +73,11 @@ Migration 00039:363-369. No `cancelled_by` / `cancellation_source`. When the can
 - **Replay where `confirmJson.idempotent === true`** — the dedup-bypassed-but-idempotent path.
 - **Unknown event types return 200** — easy regression catcher.
 
-### RLS IDOR tests skipped for four tables
+### RLS IDOR test skipped for `family_subscriptions`
 
-`tests/db/participations-rls.test.ts:24-30`. The comment dismisses cross-customer tests for `family_subscriptions`, `family_subscription_items`, `credit_deductions`, `session_cancellations` on the assumption that the participation ownership chain protects them. That's wrong for `family_subscriptions.stripe_customer_id` (direct PII, keyed on its own `customer_id` column, not via participations).
+`tests/db/participations-rls.test.ts`. The comment dismisses a cross-customer test for `family_subscriptions` on the assumption that the participation ownership chain protects it. That's wrong for `family_subscriptions.stripe_customer_id` (direct PII, keyed on its own `customer_id` column, not via participations).
 
-**Fix:** add four cross-customer tests mirroring the symmetric refunds test that's already in this file. The helpers exist.
-
-### `apply_credit_motion` underflow regression test
-
-The bundle-credit underflow path is fragile if the dedup key ever changes. Add a regression test: `credits_remaining=0 → underflow row inserted → buy more credits → next session charges normally`. Catches the class of bug where the underflow row would block all future motion.
+**Fix:** add a cross-customer test mirroring the symmetric refunds test that's already in this file. The helpers exist.
 
 ---
 
@@ -119,12 +97,6 @@ These don't break flows, but real customers see them.
 
 **Fix:** add `<Loader2 className="animate-spin" />` per house convention. Add `aria-busy={submitting}` while there.
 
-### Inline-add CTA copy overflow at high prices
-
-`signup-panel-view.tsx` `ctaInlineAddSub`. When the parent has a live family sub and the next add is a yearly tier (e.g., `€600.00` charged today), "Add to your subscription · €600.00 (charged today)" is too long for a single-line button. Word-wraps awkwardly.
-
-**Fix options:** drop price from CTA and surface in panel body; or shorten to "Add · €600.00" with a smaller "charged today" caption underneath; or stack on narrow widths.
-
 ### Other a11y polish
 
 - Submit-error focus management — when error lands on `'full'` race, no audible cue + no focus move.
@@ -143,18 +115,15 @@ These don't break flows, but real customers see them.
 
 These are documented in `products-architecture.md` already; listing here as a cross-reference:
 
-- **Cancel flow + cascade audit-trail loss** — `cancel_participation` hard-deletes; CASCADE wipes `credit_deductions` and `session_cancellations`. Documented as TODO in `products-architecture.md` §5.5; **must be addressed before the cancel UI ships**, not before this PR merges.
-- **Inline-add atomicity gap** — three-step sequence (Stripe charge → DB confirm → link insert) can drop the link row on a DB blip. Documented in `products-architecture.md` Phase 3 future improvements. The purchased-product detail placeholder surfaces this drift visually for testing/support.
 - **Stripe redirect URLs in security audit scope** — `docs/SECURITY_REPORT.md` (2026-03-01) didn't cover redirect URL validation; the Host-header open redirect (fixed) and `//evil.com/path` returnPath bypass (in scope below) both slipped through. Add to the next audit's coverage.
 
 ---
 
 ## Suggested order if/when picking these up
 
-1. **Schema lock-ins** — migrations are cheap before data exists, expensive after. `family_subscription_items UNIQUE(participation_id)` and the `family_subscriptions.status` enum are both one-shot.
+1. **Schema lock-in** — the `family_subscriptions.status` enum is a one-shot migration, cheap before data exists.
 2. **`returnPath: "//evil.com/path"` fix** — security, ~5 min. Already in scope for this PR / next iteration.
 3. **Webhook tests for the recurring-revenue hot loop** — high-value coverage, no schema risk.
 4. **Stripe API version pin + `invoice.subscription` shape** — silent-bomb prevention, one-time SDK change.
 5. **Realtime rollup vs. RPC seat-math fix** — UX glitch, two-line change.
-6. **Catch-up window for `process_session_credits`** — production reliability before going live.
-7. **Everything else** — handle as part of polishing for launch.
+6. **Everything else** — handle as part of polishing for launch.

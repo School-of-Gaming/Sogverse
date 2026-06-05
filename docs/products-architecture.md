@@ -215,28 +215,20 @@ The server recomputes the final charge from the product's stored base price at e
 
 | Purchase shape | Rule |
 |---|---|
-| Consumer-club subscription | Cancel via Stripe's Customer Portal (whole sub) or in-app per-club (`unsubscribe_from_product`). The sub stops at period end; the family keeps paid-through access until then per Stripe's default. No mid-period refund. See §4.5c. |
+| Consumer-club subscription | Cancel via Stripe's Customer Portal — each club is its own single-item sub, cancelled independently (§4.5c). The sub stops at period end; the child keeps paid-through access until then per Stripe's default. No mid-period refund. |
 | Customer-initiated cancellation of a camp / paid event | Not self-serve today. Parents contact customer support; admin issues the refund (or doesn't) via `admin_remove_participation`. |
 | Admin-initiated cancellation of a whole product | Full refund per §6.3 (refund pro-rata current-period sub charges via Stripe; full camp/event refunds via Stripe). |
 | Admin-initiated removal of a single gamer | Admin can force a Stripe refund outside the normal window — `reason='admin_refund'` on the `refunds` row. |
 
 The `refund_policy_days` cutoff window for one-shot paid products (camp/event) lives on the product (§5.1).
 
-### 4.5c Cancelling a club subscription — whole-sub vs. per-club
+### 4.5c Cancelling a club subscription — portal-only, one sub at a time
 
-A family subscription is one Stripe subscription with one item per (gamer, club). Cancelling comes in two shapes; both stop the affected club(s) at period end (paid-through access until then), with no mid-period refund.
+Each club subscription is its own Stripe sub, so cancellation is **delegated entirely to Stripe's hosted Customer Portal** — there is no in-app cancel action and no custom per-item removal RPC. The parent opens the portal (`src/app/api/parent/billing-portal/route.ts`, from `ManageBillingCard`), sees one entry per club they subscribe to (each labelled `"{Club} — {Child}"`, §4.5b), and cancels exactly the one(s) they want. Cancellation stops that club at period end (paid-through access until then), with no mid-period refund — Stripe's default.
 
-| Action | What stops |
-|---|---|
-| **Cancel subscription** (whole sub, via Stripe Customer Portal) | Every club on the sub stops at period end. All participations on the sub are torn down on the `customer.subscription.deleted` webhook. |
-| **Leave this club** (per-club, in-app) | Just this club's item is removed from Stripe; the participation is hard-deleted. If it was the last item, the whole sub is scheduled to cancel at period end. |
+This is the payoff of one-sub-per-participation: on the old shared family sub the portal disabled item editing (Stripe disables "update subscription" for multi-item subs), so it could only offer "cancel everything." Now every sub is single-item, so the portal's per-subscription cancel *is* per-club cancel. The portal config (`src/lib/stripe/portal-configuration.ts`) leaves plan-switching off and cancellation on.
 
-The detail page (not yet built; this is forward-looking spec) must surface the two as visibly separate decisions. A parent who cancels their whole sub and *thinks* they only left one club — or vice versa — will be confused weeks later when a child is or isn't still expected to show up. Confirm-dialog wording iterates during the detail-page design pass; the rule it must satisfy is that each option states exactly which club(s) it ends and that access continues until period end.
-
-**Stripe's Customer Portal can do "Cancel subscription" but never "Leave this club."** Billing management is delegated to Stripe's hosted Customer Portal (`src/app/api/parent/billing-portal/route.ts`, opened from `ManageBillingCard`) for payment methods, invoices, and whole-subscription cancel. The portal operates at the *subscription* level, not the *item* level — and Stripe disables the portal's "update subscription" feature entirely for subs with more than one item. So for a family sub (one sub, one item per club) the portal only ever offers **Cancel the whole sub**, which drops every club at once. There is no portal path to remove a single item. Consequences:
-
-- **Per-club removal must stay an in-app action** — the planned `unsubscribe_from_product` RPC (§6.5), never delegated to the portal.
-- **Whole-sub cancel via the portal is safe**: Stripe fires `customer.subscription.deleted` → `handleSubscriptionDeleted` (`src/app/api/webhooks/stripe/products/route.ts`) flips `status = 'cancelled'` and purges the `family_subscription_items` rows. The DB stays consistent without any portal-specific handling.
+**Teardown is webhook-driven.** When the parent cancels in the portal, Stripe fires `customer.subscription.deleted` at period end → `handleSubscriptionDeleted` (`src/app/api/webhooks/stripe/products/route.ts`) looks the row up by `stripe_subscription_id`, reads its `participation_id`, and calls `cancel_participation` to hard-delete the participation (which CASCADE-removes the `family_subscriptions` row). Stripe has already cancelled the sub, so this path never calls Stripe back. The handler is idempotent: a replayed deletion finds no row (already torn down) and returns a clean 200. During the cancel-pending window, `customer.subscription.updated` with `cancel_at_period_end` records `status = 'canceling'`, which the access checks treat as still-live so the child keeps access until the period actually ends.
 
 ### 4.5d Seat hold vs. club access — two independent gates with a grace window
 
@@ -288,14 +280,19 @@ Pricing, discounts, subscription shapes, and checkout flows are the most volatil
 
 Correctness invariants that do **not** get relaxed by this principle: idempotency on webhooks (event_id uniqueness on every payment/refund row), race-safe seat counting via `FOR UPDATE`, refund auditability (every money movement recorded in `payments` / `refunds`), and no client-supplied prices (server always recomputes from the product's stored per-currency base price).
 
-### 4.5b Family subscriptions — one monthly sub per family
+### 4.5b Subscriptions — one Stripe subscription per (gamer, club)
 
-Parents think of their School of Gaming bill as one monthly payment, not as N×M separate subs across kids and clubs. The schema and Stripe integration reflect that:
+Each consumer-club signup is its **own** monthly Stripe subscription: one `family_subscriptions` row, one Stripe sub, for exactly one (gamer, club) pair. The table keeps the historical name `family_subscriptions`, but a row is no longer a family's whole bill — it's one child in one club. Subscriptions are monthly only — there is no frequency dimension.
 
-- **One Stripe subscription per (customer, currency).** A family that subscribes has one `family_subscriptions` row backed by one Stripe subscription. Every club + gamer combo they sign up for is a `subscription_item` on that one Stripe sub. Subscriptions are monthly only — there is no frequency dimension.
-- **Billing cycle alignment via `billing_cycle_anchor`.** When a family adds a second (or Nth) club to an existing sub mid-cycle, Stripe prorates the remaining partial period and the new item renews on the same anchor day as the rest. One renewal date for the family. Stripe does all the math.
+> **Earlier model (removed):** one shared sub per (customer, currency) with one `subscription_item` per (gamer, club), and a `family_subscription_items` join table. The first club went through Stripe Checkout; every later club was an inline `stripe.subscriptions.update` against the existing sub. That made one renewal date for the family but blocked the three things below. The join table is dropped; the link to the participation now lives directly on the `family_subscriptions` row (`participation_id`, unique).
 
-Every paid club a family signs up for is an item on this one monthly sub — there is no separate pay-as-you-go path. Each item is a (gamer, club) pair.
+Three reasons a sub-per-participation wins over the shared family sub:
+
+- **Always Stripe Checkout — even with a card on file.** Every paid signup (single-payment and subscription alike) creates a fresh Checkout Session and redirects the parent to Stripe's hosted page. Seeing the familiar Stripe checkout on every purchase is the trust/safety moment we want. The shared-sub model could only do this for the *first* club; subsequent clubs were a silent server-side `subscriptions.update` with no redirect.
+- **Per-club cancellation through Stripe's portal.** Stripe's hosted Customer Portal cancels at the *subscription* level and disables item editing for multi-item subs — so on a shared family sub the portal could only "cancel everything." One sub per (gamer, club) makes each club independently cancelable straight from the portal, with no custom in-app per-item removal needed (§4.5c).
+- **Unlocks deferred billing later.** Because each sub stands alone, a future signup for a club that starts in the future can anchor *that* sub's first charge to the product's start date (`subscription_data.billing_cycle_anchor` / `trial_end`) without touching any other club. Impossible to do per-club on one shared sub. Not built yet — tracked in `TODO.md`.
+
+What we give up: a family with several clubs now has several Stripe subs, each with its own renewal date and its own line on the card statement, rather than one consolidated monthly charge. Each sub carries a `description` of the form `"{Club} — {Child}"` so the parent can tell them apart in the billing portal and on statements.
 
 ### 4.6 Capacity and waitlist
 
@@ -685,7 +682,7 @@ participations
   -- CHECK: status='waitlisted' → waitlist_position IS NOT NULL
 ```
 
-There is no per-session credit balance on a participation. A consumer-club participation's coverage is simply the existence of a live `family_subscription_items` row pointing at it; camps/events are covered by their one-time `payments` row.
+There is no per-session credit balance on a participation. A consumer-club participation's coverage is simply the existence of a live `family_subscriptions` row pointing at it (`participation_id`); camps/events are covered by their one-time `payments` row.
 
 **Hard-delete on cancellation.** Cancellation (customer- or admin-initiated) hard-deletes the row via `cancel_participation` / `admin_remove_participation`. No soft-delete column; cancelled rows are physically gone so `UNIQUE(product_id, gamer_id)` works on re-signup.
 
@@ -757,33 +754,26 @@ refunds
 ### 5.7a Family subscriptions
 
 ```sql
-family_subscriptions
+family_subscriptions   -- one row = one Stripe sub = one (gamer, club) participation
   id                         uuid pk
-  customer_id                uuid → profiles.id
+  customer_id                uuid → profiles.id      -- the paying parent
+  participation_id           uuid → participations.id ON DELETE CASCADE  -- unique
   stripe_subscription_id     text unique
   stripe_customer_id         text
+  stripe_price_id            text                  -- Price the sub was created at (immutable snapshot)
   currency                   text                  -- locked at sub creation (Stripe invariant)
-  status                     enum('active','past_due','cancelled','incomplete')
+  status                     enum('active','past_due','cancelled','incomplete','canceling')
   current_period_end         timestamptz
   created_at, updated_at
-  unique(customer_id, currency)
-
-family_subscription_items
-  id                              uuid pk
-  family_subscription_id          uuid → family_subscriptions.id ON DELETE CASCADE
-  participation_id                uuid → participations.id ON DELETE CASCADE
-  stripe_subscription_item_id     text unique
-  stripe_price_id                 text             -- the Price this item references at creation
-  created_at                      timestamptz
-  unique(family_subscription_id, participation_id)
+  unique(participation_id)
 ```
 
 **Shape:**
 
-- At most one `family_subscriptions` row per (customer, currency). Subscriptions are monthly only.
-- Each item is a (gamer, product) pair represented by a `participations` row and a Stripe subscription item.
-- The family's total monthly bill is Stripe-computed from the items' Prices. There is no multi-child discount coupon.
-- `family_subscriptions.status` and `current_period_end` are maintained by webhooks (`customer.subscription.updated`, `customer.subscription.deleted`), not by the app directly. The app's RPCs call Stripe; Stripe fires webhooks; webhooks update our DB.
+- One `family_subscriptions` row per participation (one gamer × one club). The historical "family" name is kept; a row is one child in one club, not a family's whole bill (§4.5b). Subscriptions are monthly only.
+- The link to the (gamer, club) is `participation_id` directly on the row — there is no separate item join table. Deleting the participation CASCADEs the sub row away (the teardown path on cancellation, §4.5c).
+- `stripe_price_id` snapshots the immutable Stripe Price the sub was created at, mirroring `product_subscription_prices`.
+- `family_subscriptions.status` and `current_period_end` are maintained by webhooks (`customer.subscription.updated`, `customer.subscription.deleted`), not by the app directly. The checkout route creates the Stripe sub via Checkout; Stripe fires webhooks; webhooks write/update our DB.
 
 ### 5.8 Row Level Security
 
@@ -813,7 +803,6 @@ Baseline SELECT policies per role:
 | `payments` | ✗ | `customer_id = auth.uid()` | ✗ | ✗ |
 | `refunds` | ✗ | via own payments | ✗ | ✗ |
 | `family_subscriptions` | ✗ | `customer_id = auth.uid()` | ✗ | ✗ |
-| `family_subscription_items` | ✗ | via own family_subscriptions | ✗ | ✗ |
 
 **Non-obvious rules:**
 
@@ -845,16 +834,10 @@ All RPCs in this section begin with `SELECT 1 FROM products WHERE id = $1 FOR UP
 - **`join_waitlist(product_id, gamer_id, customer_id)`**
   After the gate lock: inserts a `participations` row with `status='waitlisted'` and the next `waitlist_position`. No Stripe call, no charge, no pre-authorization. Returns the position so the UI can confirm.
 
-- **`cancel_participation(participation_id)`**
-  Customer-initiated "Leave this club" action. After the gate lock: hard-DELETEs the participation, removes any linked `family_subscription_items` row from Stripe (cancels the sub at period end if this was the last item), then promotes the lowest-position waitlisted row by emailing them — promotion is opt-in, not auto-charge. No Stripe refunds in any branch:
+- **`cancel_participation(participation_id, reason)`**
+  The teardown for a cancelled participation. After the gate lock: reads the linked `stripe_subscription_id` off `family_subscriptions` (so an *admin*-initiated cancel can cancel the whole Stripe sub), then hard-DELETEs the participation — which CASCADEs the `family_subscriptions` row away. Returns the `stripe_subscription_id` for the caller. No Stripe refunds in any branch.
 
-  | Coverage | Rule |
-  |---|---|
-  | Subscription item | Remove item from Stripe. No refund on the current period; the family keeps paid-through access until period end per Stripe's default. |
-  | Single payment (camp / event) | No customer-initiated refund. Parents contact customer support; admin uses `admin_remove_participation` to issue a refund if appropriate. |
-  | Free / external_contract | No money movement. |
-
-  See §4.5c for the parent-facing UX rule that distinguishes "Leave this club" from "Cancel my subscription" — they must be visibly separate actions on the (out-of-scope) detail page.
+  This is the RPC the `customer.subscription.deleted` webhook calls when a parent cancels a club in Stripe's portal (§4.5c). On that path Stripe has **already** cancelled the sub, so the webhook does not call Stripe back — it only runs this DB teardown. (Customer-initiated cancellation is portal-only; there is no in-app "Leave this club" action and no `unsubscribe_from_product` RPC.)
 
 - **`admin_remove_participation(participation_id, reason)`**
   Admin-initiated. Same as `cancel_participation` including hard-DELETE and waitlist promotion, with the ability to force a Stripe refund outside the normal window — `reason='admin_refund'` on the `refunds` row.
@@ -898,12 +881,14 @@ There is **no** session-credit system: no `process_session_credits` cron, no `cr
 
 Groups and `commit_group_changes` are retained and generalized for all product types.
 
-### 6.5 Family subscription management
+### 6.5 Subscription management
 
-- **`subscribe_to_product(product_id, gamer_id, currency)`** — customer-initiated (actually called via a Checkout flow; see §6.1 `create_participation` with `purchase_shape=subscription_monthly`). Ensures `product_subscription_prices` has a Stripe Price for `(product_id, currency)`, lazy-creating on Stripe if missing. Finds or creates a `family_subscriptions` row for `(customer_id, currency)`. If it exists, adds an item via `stripe.subscriptions.update` aligned to the existing `billing_cycle_anchor`. If not, creates a new Stripe subscription anchored to today.
-- **`unsubscribe_from_product(participation_id)`** — removes the Stripe subscription item. Hard-deletes the participation. If the sub now has zero items, schedules the sub to cancel at period end on Stripe.
+There is no `subscribe_to_product` / `unsubscribe_from_product` RPC. The flow is route- and portal-driven:
 
-Webhooks (`invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`) update `family_subscriptions.status` and `current_period_end` from Stripe's state. Webhook-driven, not client-driven. All webhook handlers use `stripe_event_id` uniqueness on `payments` / `refunds` as the idempotency gate.
+- **Subscribe** — the checkout route (`/api/checkout/products/create`) handles `purchase_shape=subscription_monthly`: it reserves the seat (`create_participation`), lazy-creates the Stripe Price for `(product_id, currency)` via `getOrCreateSubscriptionPrice`, and creates a **fresh** Stripe Checkout Session in `mode: "subscription"` — one Stripe sub per (gamer, club), every time (even with a card on file). The `checkout.session.completed` webhook writes the per-participation `family_subscriptions` row.
+- **Unsubscribe** — portal-only (§4.5c). The parent cancels the club's sub in Stripe's hosted portal; `customer.subscription.deleted` → `cancel_participation` tears the participation down. No in-app cancel path.
+
+Webhooks (`invoice.paid`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded`) update `family_subscriptions.status` and `current_period_end` from Stripe's state, and tear down the participation on deletion. Webhook-driven, not client-driven. All webhook handlers use `stripe_event_id` uniqueness on `payments` / `refunds` as the idempotency gate.
 
 ---
 
@@ -979,8 +964,8 @@ Seat state ("8 of 10 seats · 3 on waitlist"), schedule with skipped dates surfa
 
 The objects that make up this domain (tables, RPCs, enums, types, service classes, query-key factories, constants, API routes):
 
-- Tables: `products`, `product_prices`, `product_subscription_prices`, `participations`, `payments`, `refunds`, `family_subscriptions`, `family_subscription_items`, `product_groups`, `gedu_group_assignments`, `schedule_slots`, `session_overrides`, `session_substitutions`, `session_attendance`, `session_notes`, `holiday_calendars`, `calendar_holidays`, `product_holiday_calendars`, `site_details`, `site_staff_details`, `product_seat_counts`.
-- RPCs: `create_participation`, `confirm_reservation`, `expire_reservation`, `cancel_participation`, `admin_remove_participation`, `promote_from_waitlist`, `commit_group_changes`, `cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `set_substitute`, `record_attendance`, `start_product`, `cancel_product`, `finalize_completed_products`, `subscribe_to_product`, `unsubscribe_from_product`, `product_has_session`.
+- Tables: `products`, `product_prices`, `product_subscription_prices`, `participations`, `payments`, `refunds`, `family_subscriptions`, `product_groups`, `gedu_group_assignments`, `schedule_slots`, `session_overrides`, `session_substitutions`, `session_attendance`, `session_notes`, `holiday_calendars`, `calendar_holidays`, `product_holiday_calendars`, `site_details`, `site_staff_details`, `product_seat_counts`.
+- RPCs: `create_participation`, `confirm_reservation`, `expire_reservation`, `cancel_participation`, `admin_remove_participation`, `promote_from_waitlist`, `commit_group_changes`, `cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `set_substitute`, `record_attendance`, `start_product`, `cancel_product`, `finalize_completed_products`, `product_has_session`.
 - Enums: `product_type`, `billing_mode`, `product_status`, `participation_status`, `payment_purpose`, `refund_reason`, `session_note_visibility`, `session_attendance_status`, `topic_kind`.
 - Code: `services/products/*`, `services/participations/*` (family-subscription reads/RPCs live here too), `productsKeys`, `ParticipationsService`, etc.
 - Routes: admin management at `/admin/products/*`; Checkout endpoints at `/api/checkout/products/*`; webhook at `/api/webhooks/stripe/products`. Parent-facing routes are `/shop` (browse) and `/shop/[id]` (detail, any product type), plus `/registration` for muni clubs.
@@ -1008,7 +993,7 @@ The unified shape is proven against the two product lines closest to real users.
 - ✓ `gedu_group_assignments` (multi-Gedu join with denormalized `product_id` for the `unique(gedu_id, product_id)` constraint and a BEFORE-trigger that mirrors `product_id` from the group).
 - ✓ `participations` (with `'reserving'` status + `reserved_until`, partial unique index excluding reserving rows). No `credits_remaining` — there is no per-session credit balance.
 - ✓ `payments`, `refunds` (UNIQUE on `stripe_event_id`).
-- ✓ `family_subscriptions` (monthly only; `(customer, currency)` unique), `family_subscription_items`, `product_subscription_prices` (`(product, currency)` PK).
+- ✓ `family_subscriptions` (monthly only; one per participation — `participation_id` unique; one Stripe sub per gamer×club). `product_subscription_prices` (`(product, currency)` PK). The old `family_subscription_items` join table was dropped in `00084`.
 - ✓ `product_seat_counts` (public-readable rollup with trigger-driven counts + Realtime publication).
 - ○ `session_overrides`, `session_substitutions`, `session_attendance`, `session_notes`.
 
@@ -1017,7 +1002,7 @@ The unified shape is proven against the two product lines closest to real users.
 - ✓ Effective-status derivation — TS helper (`src/lib/products/effective-status.ts`) and SQL twin `effective_status(product_id)` both ship.
 - ◐ Participation lifecycle — `create_participation`, `confirm_reservation`, `expire_reservation`, `join_waitlist`, `cancel_participation` ship; `promote_from_waitlist` ships as a stub (not wired into a customer flow — see §11); `admin_remove_participation` not started.
 - ○ Session operations (`cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `record_attendance`).
-- ◐ Subscription management — first-ever sub goes through Stripe Checkout; inline-add of an additional gamer to an existing family sub uses `subscriptions.update` with `always_invoice` + `error_if_incomplete` (synchronous via the checkout route). `unsubscribe_from_product` not started.
+- ✓ Subscription management — every consumer-club signup creates its own Stripe sub via Checkout (one per gamer×club); the `checkout.session.completed` webhook writes the per-participation `family_subscriptions` row. Cancellation is portal-only: `customer.subscription.deleted` → `cancel_participation` teardown. There is no inline-add path and no `unsubscribe_from_product` RPC.
 - ○ Lifecycle transitions (`start_product`, `cancel_product`, `finalize_completed_products`).
 - ✓ Group mutations (`commit_group_changes`) — atomic batch with the staged-changes pattern, extended for named groups, multi-Gedu, and the unassigned inbox. Companion read RPC `get_product_groups_with_details(p_product_id)` returns a single JSONB document with `groups[]` (each with `gedus[]` + `participations[]`) and `unassigned[]` for the panel.
 
@@ -1057,8 +1042,8 @@ The unified shape is proven against the two product lines closest to real users.
 - ✓ Already-signed-up detection on the detail page → renders `AlreadySignedUpPanel` (active / waitlisted variants) instead of the signup form.
 - ✓ Owned products are shown identically to every other product — no separate purchased rail. The shop loads all shop-surfaced types in one query and the Type filter narrows client-side, so there's a single source for owned and unowned alike.
 - ✓ All `?mock=1` gates and `mock-purchased` fixtures deleted from parent surfaces.
-- ○ Purchased-state layout for `/shop/[id]`: sub management, session calendar, per-gamer attendance, add-another-gamer affordance, leave-club / cancel-sub confirms. The current `AlreadySignedUpPanel` is the placeholder until this lands. See §13 "Future improvements (detail-page surfaces)".
-- ○ Customer-facing self-cancel flows (cancel-sub, leave-club).
+- ○ Purchased-state layout for `/shop/[id]`: sub management, session calendar, per-gamer attendance, add-another-gamer affordance. The current `AlreadySignedUpPanel` is the placeholder until this lands. See §13 "Future improvements (detail-page surfaces)".
+- ✓ Customer-facing cancellation is portal-only — the Stripe billing portal lists each club's sub (one per gamer×club) and cancels them independently (§4.5c). No in-app leave-club/cancel-sub UI.
 
 **Stripe**: Checkout endpoints, lazy-created Prices for subs, webhook handlers that write `payments` / `refunds`.
 - ✓ `POST /api/checkout/products/create` — auth-gated to customers, validates shape × billing_mode × product_type, holds a `'reserving'` row for 30 min before any Stripe call. Single-payment uses inline `price_data`; subs lazy-resolve a `product_subscription_prices` row and create the Stripe Price on first use.
@@ -1080,8 +1065,6 @@ The unified shape is proven against the two product lines closest to real users.
 - Term / season templates.
 - Sibling / multi-child discount (a Stripe coupon, or a multi-tier lookup) if business wants it. Would need a fresh column + coupon wiring — an earlier `discount_coupon_id` column existed but was dropped as dead code.
 - First-session-free / promo codes.
-- **Atomic inline-add for subscriptions.** The inline-add path (`POST /api/checkout/products/create` when a live family sub already exists) does three things in sequence: `subscriptions.update` (Stripe charges proration) → `confirm_reservation` (DB flips reserving → active) → `family_subscription_items.insert` (link row). A DB blip between the second and third step leaves the parent paying for a sub item with no link row, so the club doesn't show as covered. Symptom: parent paid but the participation isn't tied to the sub; support manually inserts the link row. Not a double-charge. Likelihood is rare but real (~1 in 5–10k inline-adds). Fix when frequency justifies it: collapse steps 2+3 into a single RPC, or invert the order (write link row first as `pending`, call Stripe, then confirm). The purchased-product detail page surfaces the family sub + its items so this drift is visible at a glance during testing and support investigations.
-- **Inline-add CTA copy overflow.** When the parent has a live family sub and inline-adds a club, the CTA "Add to your subscription · €45.00 (charged today)" can be too long to fit on a single-line button on `signup-panel-view.tsx` (`ctaInlineAddSub` in messages files), especially in longer-worded locales. Word-wraps awkwardly on narrow widths. Options when fixing: (a) drop the price suffix and surface the proration amount in the panel body above the button instead, (b) shorten the CTA to "Add · €45.00" with a smaller "charged today" caption underneath, or (c) keep one-line on desktop and stack on narrow widths. Lowest-effort: option (b). Affects all four locales' `ctaInlineAddSub` strings.
 
 ### Phase 4 — on-platform municipality billing
 
@@ -1414,7 +1397,7 @@ Route: `/shop/[id]` — one flat route for every product type. `product-detail-p
 
 **Preview / mock route.** `/preview/products/[type]/[state]` renders the body with a `buildDetailFixture(type, state)` payload. Public route inside `(public)` so it picks up the parent-eye chrome; never indexed (`metadata.robots = { index: false, follow: false }`); reachable only via `/admin/ui-components` "Preview full page →" links. Designers can poke at all 32 (type × state) cells without seeding data.
 
-**Click target.** The active CTA POSTs to `/api/checkout/products/create` with `{ productId, gamerId, purchaseShape, currency }`. The route returns one of `redirect` (Stripe Checkout URL), `subscribed` (inline-add to existing family sub, no redirect), `free_confirmed` (free event, no Stripe), or `full` (UI flips to waitlist CTA).
+**Click target.** The active CTA POSTs to `/api/checkout/products/create` with `{ productId, gamerId, purchaseShape, currency }`. The route returns one of `redirect` (Stripe Checkout URL — every paid signup, subscriptions included), `free_confirmed` (free event, no Stripe), or `full` (UI flips to waitlist CTA).
 
 ### Movie-ticket reservation model
 

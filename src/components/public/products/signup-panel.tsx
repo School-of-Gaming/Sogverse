@@ -9,7 +9,6 @@ import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import {
   useCreateParticipation,
   useJoinWaitlist,
-  useMyFamilySub,
   type CreateParticipationInput,
 } from "@/services/participations";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
@@ -17,13 +16,13 @@ import {
   SignupPanelView,
   type AuthState,
   type SignupPanelViewProps,
-  type SubCtaMode,
 } from "./signup-panel-view";
 import type { RegistrationState } from "./derive-registration-state";
 
-// Adapter: owns the form state (gamer / agreed / pricing pick), resolves the
-// user's existing family sub status to drive the inline-add CTA copy, and
-// fires the create-participation / join-waitlist mutations.
+// Adapter: owns the form state (gamer / agreed / pricing pick) and fires the
+// create-participation / join-waitlist mutations. Every paid signup goes
+// through Stripe Checkout (one Stripe sub per gamer×club for subscriptions),
+// so there's no "add to existing sub" branch to detect.
 
 interface SignupPanelProps {
   product: Pick<
@@ -83,19 +82,6 @@ export function SignupPanel({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [addGamerOpen, setAddGamerOpen] = useState(false);
 
-  // Inline-add detection: only meaningful for subscriptions (consumer clubs).
-  // We pre-check whether the customer already has a live family sub in this
-  // currency; the route will do the same check authoritatively on submit.
-  const isSubscription = pricingOption.kind === "subscription";
-  const { data: existingFamSub } = useMyFamilySub(currency, isSubscription);
-  const subCtaMode: SubCtaMode =
-    isSubscription
-    && existingFamSub !== null
-    && existingFamSub !== undefined
-    && ["active", "canceling", "past_due"].includes(existingFamSub.status)
-      ? "inline_add"
-      : "new";
-
   const createMutation = useCreateParticipation();
   const waitlistMutation = useJoinWaitlist();
 
@@ -105,9 +91,9 @@ export function SignupPanel({
   // it flips false the instant React Query dispatches the success state, but
   // the navigation/panel-swap hasn't happened yet, so the CTA briefly
   // re-enables. Only cleared on retry-able outcomes (`full`, error). For
-  // 'redirect', the page unloads. For 'subscribed' / 'free_confirmed', the
-  // participation queries refetch and the just-signed-up child flips to its
-  // disabled "Signed up" row in the picker.
+  // 'redirect', the page unloads. For 'free_confirmed', the participation
+  // queries refetch and the just-signed-up child flips to its disabled
+  // "Signed up" row in the picker.
   const [committing, setCommitting] = useState(false);
 
   const purchaseShape = purchaseShapeFor(pricingOption);
@@ -172,7 +158,6 @@ export function SignupPanel({
     onAgreedChange: setAgreed,
     onSubmit: handleSubmit,
     onJoinWaitlist: handleJoinWaitlist,
-    subCtaMode,
     submitting: committing,
     submitError,
     currency,
