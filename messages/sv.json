@@ -1303,6 +1303,7 @@
       "ctaPreOpenReady": "Redo när anmälan öppnar",
       "ctaActive": "{verb} nu",
       "ctaActiveWithPrice": "{verb} nu {price}",
+      "ctaActiveWithPriceSub": "{verb} nu · {price}/mån",
       "ctaSubmitting": "Ett ögonblick…",
       "ctaSelectGamer": "Välj en gamer",
       "ctaWaitlist": "Gå med på väntelistan",

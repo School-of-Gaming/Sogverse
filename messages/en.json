@@ -1303,6 +1303,7 @@
       "ctaPreOpenReady": "Ready when sign-up opens",
       "ctaActive": "{verb} now",
       "ctaActiveWithPrice": "{verb} now {price}",
+      "ctaActiveWithPriceSub": "{verb} now · {price}/mo",
       "ctaSubmitting": "One moment…",
       "ctaSelectGamer": "Select a gamer",
       "ctaWaitlist": "Join the waitlist",
