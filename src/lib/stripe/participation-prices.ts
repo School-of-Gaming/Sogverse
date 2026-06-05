@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
+import { DEFAULT_LOCALE } from "@/lib/constants/locales";
+import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -137,25 +139,18 @@ async function ensureStripeProductForProduct(
     .eq("id", productId)
     .single();
 
-  const translations = product?.product_translations ?? null;
-  const name = translations === null ? "School of Gaming product" : pickTranslationName(translations);
+  // The cached Stripe Product is shared across all locales (one per club, named
+  // once at first subscription), so there's no viewer locale to prefer — resolve
+  // at the default locale and walk the shared fallback chain (en → first).
+  const name =
+    resolveTranslation(product?.product_translations, DEFAULT_LOCALE)?.name ??
+    "School of Gaming product";
 
   const created = await stripe.products.create({
     name,
     metadata: { product_id: productId },
   });
   return created.id;
-}
-
-function pickTranslationName(
-  translations: { locale: string; name: string }[],
-): string {
-  const en = translations.find((t) => t.locale === "en");
-  if (en) return en.name;
-  const fi = translations.find((t) => t.locale === "fi");
-  if (fi) return fi.name;
-  if (translations.length > 0) return translations[0].name;
-  return "School of Gaming product";
 }
 
 export type { SubscriptionPriceRow };
