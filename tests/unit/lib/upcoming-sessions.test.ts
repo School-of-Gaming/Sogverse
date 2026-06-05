@@ -292,14 +292,16 @@ describe("expandUpcomingSessions", () => {
     expect(assigned.every((s) => s.awaiting)).toBe(false);
   });
 
-  it("never marks an awaiting session live, even inside the voice window", () => {
-    // An unassigned gamer has no room to join, so the Join button must stay
-    // disabled through the window too — `voiceIsOpen` is forced false.
+  it("reports the window open for an in-progress awaiting session", () => {
+    // `voiceIsOpen` tracks the window, not join-ability: an unplaced gamer's
+    // session still goes live on schedule (the card keeps its live styling),
+    // so the flag is true mid-session. Join-gating lives in the button,
+    // which swaps the CTA for a disabled "matching" state when `awaiting`.
     const row = makeRow({
       groupId: null,
       slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }],
     });
-    // 15:30 UTC is mid-session: an assigned gamer would be live here.
+    // 15:30 UTC is mid-session.
     const out = expandUpcomingSessions(
       [row],
       new Date("2026-02-25T15:30:00Z"),
@@ -307,7 +309,7 @@ describe("expandUpcomingSessions", () => {
     );
     expect(out[0].sessionStart.toISOString()).toBe("2026-02-25T15:00:00.000Z");
     expect(out[0].awaiting).toBe(true);
-    expect(out[0].voiceIsOpen).toBe(false);
+    expect(out[0].voiceIsOpen).toBe(true);
   });
 
   it("leaves voiceHref as '#' for in-person products (no voice room)", () => {

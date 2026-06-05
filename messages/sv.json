@@ -1677,7 +1677,8 @@
   },
   "voiceButton": {
     "joinVoice": "Gå med i röstrum",
-    "locked": "Öppnar {date} kl. {time}"
+    "locked": "Öppnar {date} kl. {time}",
+    "awaitingMatch": "Hittar en Gedu"
   },
   "yty": {
     "hero": {
