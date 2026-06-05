@@ -158,76 +158,76 @@ export function NextSessionCard({
   // clipped by the card's own `overflow-hidden`.
   return (
     <div className="relative">
-    <Card
-      className={cn(
-        "overflow-hidden",
-        voiceIsOpen &&
-          "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
-      )}
-    >
-      <CardHeader className="pb-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12">
-            <Identicon id={gamerSeed ?? gamerFirstName} size={48} />
-          </Avatar>
-          <div className="min-w-0 flex-1 space-y-0.5 pr-6">
-            <p className="text-lg font-semibold leading-tight">
-              {productName}
-            </p>
-            <p className="truncate text-sm font-medium text-muted-foreground">
-              {t("title", { name: gamerFirstName })}
-            </p>
-            <p className="text-sm text-muted-foreground">{sessionTimeLabel}</p>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4 pt-0">
-        <div className="flex justify-center">
-          <JoinVoiceButton
-            voiceIsOpen={voiceIsOpen}
-            voiceHref={voiceHref}
-            opensDate={opensDate}
-            opensTime={opensTime}
-            onJoinClick={onJoinClick}
-            awaiting={awaiting}
-          />
-        </div>
-
-        {/* Purchased-but-not-yet-placed: the Join button above stays
-            disabled, this explains *why* in a reassuring, human way — the
-            instructor will sort the gamer into a group before the session.
-            Deliberately static (no animation): placement can take up to a day,
-            so a pulsing/loading cue would wrongly imply it's seconds away. */}
-        {awaiting && (
-          <div className="flex items-start gap-2 text-left">
-            <UserRoundSearch className="mt-0.5 h-4 w-4 shrink-0 text-info" />
-            <p className="text-xs text-muted-foreground">
-              {tAwaiting(audience === "gamer" ? "gamer" : "customer", {
-                name: gamerFirstName,
-              })}
-            </p>
-          </div>
+      <Card
+        className={cn(
+          "overflow-hidden",
+          voiceIsOpen &&
+            "border-primary/40 bg-gradient-to-r from-primary/5 to-transparent",
         )}
+      >
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12">
+              <Identicon id={gamerSeed ?? gamerFirstName} size={48} />
+            </Avatar>
+            <div className="min-w-0 flex-1 space-y-0.5 pr-6">
+              <p className="text-lg font-semibold leading-tight">
+                {productName}
+              </p>
+              <p className="truncate text-sm font-medium text-muted-foreground">
+                {t("title", { name: gamerFirstName })}
+              </p>
+              <p className="text-sm text-muted-foreground">{sessionTimeLabel}</p>
+            </div>
+          </div>
+        </CardHeader>
 
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">{countdownLine}</p>
-          <Link
-            href={reportsHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              buttonVariants({ size: "sm", variant: "outline" }),
-              "gap-1.5",
-            )}
-          >
-            <FileText className="h-4 w-4" />
-            {t("reports")}
-            <ExternalLink className="h-3 w-3 text-muted-foreground" />
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+        <CardContent className="space-y-4 pt-0">
+          <div className="flex justify-center">
+            <JoinVoiceButton
+              voiceIsOpen={voiceIsOpen}
+              voiceHref={voiceHref}
+              opensDate={opensDate}
+              opensTime={opensTime}
+              onJoinClick={onJoinClick}
+              awaiting={awaiting}
+            />
+          </div>
+
+          {/* Purchased-but-not-yet-placed: the Join button above stays
+              disabled, this explains *why* in a reassuring, human way — the
+              instructor will sort the gamer into a group before the session.
+              Deliberately static (no animation): placement can take up to a day,
+              so a pulsing/loading cue would wrongly imply it's seconds away. */}
+          {awaiting && (
+            <div className="flex items-start gap-2 text-left">
+              <UserRoundSearch className="mt-0.5 h-4 w-4 shrink-0 text-info" />
+              <p className="text-xs text-muted-foreground">
+                {tAwaiting(audience === "gamer" ? "gamer" : "customer", {
+                  name: gamerFirstName,
+                })}
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">{countdownLine}</p>
+            <Link
+              href={reportsHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                buttonVariants({ size: "sm", variant: "outline" }),
+                "gap-1.5",
+              )}
+            >
+              <FileText className="h-4 w-4" />
+              {t("reports")}
+              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
       {/* Shown only when the club's sub is past_due. The badge adapts to
           audience: parents get a clickable money badge, gamers a
           non-interactive alert that tells them to ask a parent. */}

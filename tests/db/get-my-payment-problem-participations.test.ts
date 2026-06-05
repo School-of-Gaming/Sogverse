@@ -137,7 +137,7 @@ describe("get_my_payment_problem_participations", () => {
     expect(ids).toEqual([pastDueParticipationId]);
   });
 
-  it("returns nothing for an unrelated family", async () => {
+  it("never returns another family's past_due participation", async () => {
     const otherCustomer = await createAuthenticatedClient(
       TEST_CREDENTIALS.CUSTOMER_2.email,
       TEST_CREDENTIALS.CUSTOMER_2.password,

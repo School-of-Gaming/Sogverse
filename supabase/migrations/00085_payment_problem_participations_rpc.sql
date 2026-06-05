@@ -22,6 +22,15 @@
 -- Stripe cancels the subscription (which hard-deletes the participation and the
 -- family_subscriptions row with it, so a cancelled enrollment simply disappears
 -- — there's no row left for this function to return).
+--
+-- This `past_due`-only filter is correct ONLY because of a Stripe dashboard
+-- setting: Settings → Billing → Subscriptions and emails → "Manage failed
+-- payments" → Subscription status = "cancel the subscription" when all retries
+-- fail (verified in live, 2026-06). With that setting a sub only ever ends in
+-- `past_due` (during retries) → cancelled (deleted). If that dropdown is ever
+-- changed to "mark the subscription as unpaid", failed renewals will terminate
+-- in `unpaid` instead — a real payment problem this filter would silently miss.
+-- If you flip it, widen the filter to status IN ('past_due', 'unpaid').
 
 CREATE OR REPLACE FUNCTION public.get_my_payment_problem_participations()
   RETURNS TABLE (participation_id uuid)
