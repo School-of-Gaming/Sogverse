@@ -6,6 +6,10 @@ import {
   isSupportedCurrency,
   type SupportedCurrency,
 } from "@/lib/constants/currency";
+import {
+  isSupportedLocale,
+  type SupportedLocale,
+} from "@/lib/constants/locales";
 import type { PurchaseShape } from "@/types";
 import { ROUTES } from "@/lib/constants";
 import {
@@ -43,7 +47,7 @@ export async function POST(request: Request) {
     forbiddenMessage: "Only customers can sign gamers up for products",
   });
   if (result instanceof NextResponse) return result;
-  const { user } = result;
+  const { user, profile } = result;
 
   let body: {
     productId?: string;
@@ -94,7 +98,12 @@ export async function POST(request: Request) {
   if (productErr) {
     return NextResponse.json({ error: "Product not found" }, { status: 404 });
   }
-  const productName = pickProductName(product.product_translations);
+  // Prefer the parent's locale for every customer-facing name we control on
+  // the Checkout page: the single-payment line item (inline price_data) and the
+  // subscription description both use this. The subscription line item itself is
+  // the one name we can't localize here — it's the cached Stripe Product's name,
+  // shared across all locales (see getOrCreateSubscriptionPrice).
+  const productName = pickProductName(product.product_translations, profile.locale);
 
   if (purchaseShape === "free" && product.billing_mode !== "free") {
     return NextResponse.json(
@@ -247,6 +256,10 @@ export async function POST(request: Request) {
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
     customer: stripeCustomerId,
     adaptive_pricing: { enabled: true },
+    // Render Stripe's own chrome ("Subscribe", "Pay", field labels) in the
+    // parent's app locale. Falls back to 'auto' (browser Accept-Language) for
+    // locales Stripe doesn't support — e.g. Klingon.
+    locale: stripeCheckoutLocale(profile.locale),
     expires_at: expiresAt,
     metadata,
     success_url: successUrl,
@@ -336,9 +349,39 @@ async function pickGamerName(
   return data?.first_name || data?.username || "your child";
 }
 
+// Stripe Checkout's `locale` is its own fixed enum, not our SUPPORTED_LOCALES.
+// This map is `Record<SupportedLocale, …>`, so the compiler forces an entry for
+// every app locale — add one to SUPPORTED_LOCALES and the build fails here until
+// it's mapped (no silent fall-through to the wrong language). Use Stripe's
+// matching locale where it has one; 'auto' (Stripe reads Accept-Language) for
+// locales Stripe doesn't speak, like Klingon.
+const APP_TO_STRIPE_LOCALE: Record<
+  SupportedLocale,
+  Stripe.Checkout.SessionCreateParams.Locale
+> = {
+  en: "en",
+  fi: "fi",
+  sv: "sv",
+  tlh: "auto",
+};
+
+function stripeCheckoutLocale(
+  appLocale: string | null,
+): Stripe.Checkout.SessionCreateParams.Locale {
+  return isSupportedLocale(appLocale) ? APP_TO_STRIPE_LOCALE[appLocale] : "auto";
+}
+
+// Pick the customer-facing product name, preferring the parent's locale, then
+// English, then Finnish, then whatever exists. Used for the names we control on
+// the Checkout page (single-payment line item + subscription description).
 function pickProductName(
   translations: { locale: string; name: string }[],
+  preferredLocale: string | null,
 ): string {
+  if (preferredLocale) {
+    const preferred = translations.find((t) => t.locale === preferredLocale);
+    if (preferred) return preferred.name;
+  }
   const en = translations.find((t) => t.locale === "en");
   if (en) return en.name;
   const fi = translations.find((t) => t.locale === "fi");

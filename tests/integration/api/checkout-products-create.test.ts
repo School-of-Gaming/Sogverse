@@ -172,10 +172,10 @@ function mockForbidden(role: string) {
   );
 }
 
-function mockAuthenticatedCustomer() {
+function mockAuthenticatedCustomer(locale: string | null = null) {
   mockRequireRole.mockResolvedValue({
     user: { id: CUSTOMER_ID },
-    profile: { role: "customer" },
+    profile: { role: "customer", locale },
     supabase: {},
   });
 }
@@ -561,6 +561,71 @@ describe("POST /api/checkout/products/create", () => {
       metadata: params.metadata,
       description: `Test Club — ${GAMER_FIRST_NAME}`,
     });
+    // No app locale on the profile → Stripe chrome falls back to 'auto'.
+    expect(params.locale).toBe("auto");
+  });
+
+  it("localizes the Stripe chrome and description to the parent's locale", async () => {
+    mockAuthenticatedCustomer("fi");
+    mockAdmin({
+      product: {
+        ...PAID_CLUB,
+        product_translations: [
+          { locale: "en", name: "Test Club" },
+          { locale: "fi", name: "Testikerho" },
+        ],
+      },
+    });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "reserving", participation_id: RESERVATION_ID },
+      error: null,
+    });
+    mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+      product_id: PRODUCT_ID,
+      currency: "eur",
+      stripe_price_id: STRIPE_PRICE_ID,
+      unit_amount_cents: 5000,
+    });
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/c/test_sub_fi",
+    });
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "subscription_monthly" }),
+    );
+    expect(res.status).toBe(200);
+
+    const params = mockStripeSessionCreate.mock.calls[0][0];
+    // Stripe's own chrome renders in Finnish…
+    expect(params.locale).toBe("fi");
+    // …and the description we control uses the Finnish product name.
+    expect(params.subscription_data.description).toBe(
+      `Testikerho — ${GAMER_FIRST_NAME}`,
+    );
+  });
+
+  it("falls Stripe chrome back to 'auto' for a locale Stripe doesn't speak (Klingon)", async () => {
+    mockAuthenticatedCustomer("tlh");
+    mockAdmin({ product: PAID_CLUB });
+    mockAdminRpc.mockResolvedValueOnce({
+      data: { kind: "reserving", participation_id: RESERVATION_ID },
+      error: null,
+    });
+    mockGetOrCreateSubscriptionPrice.mockResolvedValue({
+      product_id: PRODUCT_ID,
+      currency: "eur",
+      stripe_price_id: STRIPE_PRICE_ID,
+      unit_amount_cents: 5000,
+    });
+    mockStripeSessionCreate.mockResolvedValue({
+      url: "https://checkout.stripe.com/c/test_sub_tlh",
+    });
+
+    const res = await POST(
+      createRequest({ ...VALID_BODY, purchaseShape: "subscription_monthly" }),
+    );
+    expect(res.status).toBe(200);
+    expect(mockStripeSessionCreate.mock.calls[0][0].locale).toBe("auto");
   });
 
   it("rolls back and returns 400 when the product is not sold in the requested currency (sub branch)", async () => {
