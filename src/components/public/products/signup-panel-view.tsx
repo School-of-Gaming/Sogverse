@@ -705,6 +705,12 @@ function useActiveCtaLabel(
   const t = useTranslations("productDetail.signupPanel");
   const price = priceForCta(option, currency, locale);
   if (price === null) return t("ctaActive", { verb });
+  // Consumer clubs are a monthly subscription — the CTA carries a "/mo"
+  // cadence so the button doesn't read like a one-time charge. Single-payment
+  // (upfront) products keep the bare price.
+  if (option.kind === "subscription") {
+    return t("ctaActiveWithPriceSub", { verb, price });
+  }
   return t("ctaActiveWithPrice", { verb, price });
 }
 

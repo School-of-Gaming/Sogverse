@@ -1303,6 +1303,7 @@
       "ctaPreOpenReady": "Valmis – odotetaan avaamista",
       "ctaActive": "{verb} nyt",
       "ctaActiveWithPrice": "{verb} nyt {price}",
+      "ctaActiveWithPriceSub": "{verb} nyt · {price}/kk",
       "ctaSubmitting": "Hetki…",
       "ctaSelectGamer": "Valitse pelaaja",
       "ctaWaitlist": "Liity jonotuslistalle",

@@ -1348,6 +1348,7 @@
       "ctaPreOpenReady": "qonta' poSDI' SuD",
       "ctaActive": "DaH {verb}",
       "ctaActiveWithPrice": "DaH {verb} {price}",
+      "ctaActiveWithPriceSub": "DaH {verb} · {price}/jar",
       "ctaSubmitting": "yIloS…",
       "ctaSelectGamer": "QujwI' yIwIv",
       "ctaWaitlist": "tetlh DaqaD",
