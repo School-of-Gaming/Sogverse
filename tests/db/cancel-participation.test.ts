@@ -20,11 +20,11 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *     *replayed* deletion into a clean 200 instead of a null-deref 500 Stripe
  *     would retry forever.
  *
- * Own UUID range (…05c_) so rows never collide with participations-race.test.ts
- * when CI runs the db suite in parallel.
+ * Own UUID suffix (…05c2, registered in product-helpers.ts) so rows never
+ * collide with another db test file when CI runs the suite in parallel.
  */
 
-const PRODUCT_CANCEL = "00000000-0000-0000-0000-0000000005c1";
+const PRODUCT_CANCEL = "00000000-0000-0000-0000-0000000005c2";
 const ALL_TEST_PRODUCTS = [PRODUCT_CANCEL];
 
 describe("cancel_participation", () => {
