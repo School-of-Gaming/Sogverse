@@ -71,37 +71,37 @@ export function UpcomingSessionCard({
 
   return (
     <div className="relative">
-    <Card>
-      <CardContent className="flex items-center gap-3 p-3 pt-3">
-        <Avatar className="h-8 w-8">
-          <Identicon id={gamerSeed ?? gamerFirstName} size={32} />
-        </Avatar>
-        <div className="min-w-0 flex-1 pr-6">
-          <p className="truncate text-sm font-medium">{productName}</p>
-          <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
-            <span className="truncate">
-              {t("gamerLabel", { name: gamerFirstName })}
-            </span>
-            <span className="shrink-0">{`${dateLabel} · ${timeLabel}`}</span>
-          </div>
-          {/* Not-yet-placed: keep the real schedule above, explain that the
-              gamer will be sorted into a group before the session. Only the
-              icon carries the info color (the sentence stays muted), matching
-              `NextSessionCard`. Static icon (no animation) — placement isn't
-              necessarily imminent. */}
-          {awaiting && (
-            <div className="mt-1 flex items-start gap-1.5">
-              <UserRoundSearch className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info" />
-              <span className="text-xs text-muted-foreground">
-                {tAwaiting(audience === "gamer" ? "gamer" : "customer", {
-                  name: gamerFirstName,
-                })}
+      <Card>
+        <CardContent className="flex items-center gap-3 p-3 pt-3">
+          <Avatar className="h-8 w-8">
+            <Identicon id={gamerSeed ?? gamerFirstName} size={32} />
+          </Avatar>
+          <div className="min-w-0 flex-1 pr-6">
+            <p className="truncate text-sm font-medium">{productName}</p>
+            <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
+              <span className="truncate">
+                {t("gamerLabel", { name: gamerFirstName })}
               </span>
+              <span className="shrink-0">{`${dateLabel} · ${timeLabel}`}</span>
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            {/* Not-yet-placed: keep the real schedule above, explain that the
+                gamer will be sorted into a group before the session. Only the
+                icon carries the info color (the sentence stays muted), matching
+                `NextSessionCard`. Static icon (no animation) — placement isn't
+                necessarily imminent. */}
+            {awaiting && (
+              <div className="mt-1 flex items-start gap-1.5">
+                <UserRoundSearch className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info" />
+                <span className="text-xs text-muted-foreground">
+                  {tAwaiting(audience === "gamer" ? "gamer" : "customer", {
+                    name: gamerFirstName,
+                  })}
+                </span>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
       {/* Shown only when the club's sub is past_due. Audience-aware: clickable
           money badge for parents, non-interactive "ask a parent" alert for
           gamers. */}

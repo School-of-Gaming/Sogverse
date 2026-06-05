@@ -1521,7 +1521,6 @@
         "error": "Couldn't open the billing portal. Please try again."
       },
       "alert": {
-        "label": "Payment issue",
         "tooltip": "Payment problem — update your card to keep this club active",
         "gamerTooltip": "Something's not right — ask a parent to check this"
       }

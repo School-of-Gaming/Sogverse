@@ -1521,7 +1521,6 @@
         "error": "Laskutusportaalin avaaminen epäonnistui. Yritä uudelleen."
       },
       "alert": {
-        "label": "Maksuongelma",
         "tooltip": "Maksuongelma – päivitä korttitietosi, jotta kerho pysyy aktiivisena",
         "gamerTooltip": "Jokin ei ole kunnossa – pyydä vanhempaasi tarkistamaan tämä"
       }
