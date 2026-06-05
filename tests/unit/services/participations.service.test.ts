@@ -67,3 +67,82 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("ParticipationsService.getMyUpcomingSessions", () => {
+  function createMockSupabase() {
+    return { from: vi.fn(), rpc: vi.fn(), auth: { getClaims: vi.fn() } };
+  }
+
+  let mockSupabase: ReturnType<typeof createMockSupabase>;
+  let service: ParticipationsService;
+
+  // Chain: from().select().eq(audienceColumn, userId).eq("status", "active")
+  function mockParticipationsQuery(rows: unknown[]) {
+    const eq2 = vi.fn().mockResolvedValue(mockSupabaseSuccess(rows));
+    const eq1 = vi.fn().mockReturnValue({ eq: eq2 });
+    const select = vi.fn().mockReturnValue({ eq: eq1 });
+    mockSupabase.from.mockReturnValue({ select });
+  }
+
+  function rawRow(id: string, gamerFirstName: string) {
+    return {
+      id,
+      gamer_id: `gamer-${id}`,
+      group_id: "group-1",
+      product: {
+        id: "prod-1",
+        product_type: "consumer_club",
+        timezone: "UTC",
+        start_date: null,
+        end_date: null,
+        padlet_url: null,
+        is_remote: true,
+        product_translations: [],
+        schedule_slots: [],
+      },
+      gamer: { first_name: gamerFirstName, username: null },
+    };
+  }
+
+  beforeEach(() => {
+    mockSupabase = createMockSupabase();
+    service = new ParticipationsService(
+      mockSupabase as unknown as SupabaseClient<Database>,
+    );
+    mockSupabase.auth.getClaims.mockResolvedValue({
+      data: { claims: { sub: "user-1" } },
+    });
+  });
+
+  it("flags only the participations returned by the payment-problem RPC", async () => {
+    mockParticipationsQuery([rawRow("p1", "Alex"), rawRow("p2", "Bobby")]);
+    mockSupabase.rpc.mockResolvedValue(
+      mockSupabaseSuccess([{ participation_id: "p1" }]),
+    );
+
+    const result = await service.getMyUpcomingSessions("customer");
+
+    expect(mockSupabase.rpc).toHaveBeenCalledWith(
+      "get_my_payment_problem_participations",
+    );
+    expect(result.find((r) => r.gamer.firstName === "Alex")?.paymentProblem).toBe(
+      true,
+    );
+    expect(
+      result.find((r) => r.gamer.firstName === "Bobby")?.paymentProblem,
+    ).toBe(false);
+  });
+
+  it("degrades to no payment problem (and does not throw) when the RPC errors", async () => {
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    mockParticipationsQuery([rawRow("p1", "Alex")]);
+    mockSupabase.rpc.mockResolvedValue(mockSupabaseError("boom"));
+
+    const result = await service.getMyUpcomingSessions("customer");
+
+    expect(result[0].paymentProblem).toBe(false);
+    consoleError.mockRestore();
+  });
+});

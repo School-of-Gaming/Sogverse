@@ -12,6 +12,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
+import { PaymentProblemBadge } from "./PaymentProblemBadge";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { cn, formatDate, formatTime } from "@/lib/utils";
@@ -98,6 +99,12 @@ export interface NextSessionCardProps {
    * state already uses. Defaults to `"customer"`.
    */
   audience?: SessionAudience;
+  /**
+   * The club's subscription has a payment problem (`past_due`). Shows the
+   * corner payment-problem badge — a clickable money badge for parents, a
+   * non-interactive "ask a parent" alert for gamers. Defaults to `false`.
+   */
+  paymentProblem?: boolean;
 }
 
 export function NextSessionCard({
@@ -112,6 +119,7 @@ export function NextSessionCard({
   reportsHref,
   awaiting = false,
   audience = "customer",
+  paymentProblem = false,
 }: NextSessionCardProps) {
   const t = useTranslations("parent.nextSession");
   const tAwaiting = useTranslations("parent.awaiting");
@@ -146,7 +154,10 @@ export function NextSessionCard({
   });
   const opensTime = formatTime(sessionStart, locale, timeZone);
 
+  // `relative` shell so the corner badge can hang off the card without being
+  // clipped by the card's own `overflow-hidden`.
   return (
+    <div className="relative">
     <Card
       className={cn(
         "overflow-hidden",
@@ -159,7 +170,7 @@ export function NextSessionCard({
           <Avatar className="h-12 w-12">
             <Identicon id={gamerSeed ?? gamerFirstName} size={48} />
           </Avatar>
-          <div className="min-w-0 flex-1 space-y-0.5">
+          <div className="min-w-0 flex-1 space-y-0.5 pr-6">
             <p className="text-lg font-semibold leading-tight">
               {productName}
             </p>
@@ -217,5 +228,10 @@ export function NextSessionCard({
         </div>
       </CardContent>
     </Card>
+      {/* Shown only when the club's sub is past_due. The badge adapts to
+          audience: parents get a clickable money badge, gamers a
+          non-interactive alert that tells them to ask a parent. */}
+      {paymentProblem && <PaymentProblemBadge audience={audience} showAlert />}
+    </div>
   );
 }

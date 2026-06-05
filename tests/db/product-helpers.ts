@@ -19,6 +19,7 @@ import { TEST_IDS } from "./constants";
  *   5b6–5b7        participations-rls.test.ts
  *   5c1            product-seat-counts-trigger.test.ts
  *   5c2            cancel-participation.test.ts
+ *   5c3–5c5        get-my-payment-problem-participations.test.ts
  *   5d1–5da        session-credits-cron.test.ts
  *   5e1–5e4        products-gamer-rls.test.ts
  *   5e5–5e8        products-purchaser-rls.test.ts

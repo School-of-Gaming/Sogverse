@@ -1564,6 +1564,11 @@
         "cta": "Huch yISeH",
         "opening": "poSmoHlu'taH…",
         "error": "Huch lojmIt poSmoHlu'pu'be'. yInIDqa'."
+      },
+      "alert": {
+        "label": "Huch Qob!",
+        "tooltip": "Huch Qob! DaSDIq yIchoH 'ej tlhejwI' wo' yItaHmoH",
+        "gamerTooltip": "wanI' qaS! SoSlI' vavlI' je yIja'"
       }
     },
     "gamerDetail": {

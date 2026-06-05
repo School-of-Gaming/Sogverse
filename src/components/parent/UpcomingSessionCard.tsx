@@ -5,6 +5,7 @@ import { UserRoundSearch } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
+import { PaymentProblemBadge } from "./PaymentProblemBadge";
 import { useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { formatDate, formatTime } from "@/lib/utils";
@@ -40,6 +41,11 @@ export interface UpcomingSessionCardProps {
    * badge (`"gamer"` speaks to the child). Defaults to `"customer"`.
    */
   audience?: SessionAudience;
+  /**
+   * The club's subscription has a payment problem (`past_due`). Shows the
+   * corner payment-problem badge (audience-aware). Defaults to `false`.
+   */
+  paymentProblem?: boolean;
 }
 
 export function UpcomingSessionCard({
@@ -49,6 +55,7 @@ export function UpcomingSessionCard({
   sessionStart,
   awaiting = false,
   audience = "customer",
+  paymentProblem = false,
 }: UpcomingSessionCardProps) {
   const t = useTranslations("parent.upcomingSession");
   const tAwaiting = useTranslations("parent.awaiting");
@@ -63,12 +70,13 @@ export function UpcomingSessionCard({
   const timeLabel = formatTime(sessionStart, locale, timeZone);
 
   return (
+    <div className="relative">
     <Card>
       <CardContent className="flex items-center gap-3 p-3 pt-3">
         <Avatar className="h-8 w-8">
           <Identicon id={gamerSeed ?? gamerFirstName} size={32} />
         </Avatar>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 pr-6">
           <p className="truncate text-sm font-medium">{productName}</p>
           <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
             <span className="truncate">
@@ -94,5 +102,10 @@ export function UpcomingSessionCard({
         </div>
       </CardContent>
     </Card>
+      {/* Shown only when the club's sub is past_due. Audience-aware: clickable
+          money badge for parents, non-interactive "ask a parent" alert for
+          gamers. */}
+      {paymentProblem && <PaymentProblemBadge audience={audience} />}
+    </div>
   );
 }

@@ -97,6 +97,9 @@ export function expandUpcomingSessions(
         voiceHref,
         reportsHref,
         awaiting,
+        // Per-participation: every occurrence of a past_due club's sub carries
+        // the flag, so the badge shows on all of that club's cards.
+        paymentProblem: row.paymentProblem,
       });
     }
   }
