@@ -101,6 +101,12 @@ type AdminMockOptions = {
    * checkout-completed handler doesn't (each sub is brand-new — it just inserts).
    */
   famSubRow?: Record<string, unknown> | null;
+  /**
+   * Error returned from the `family_subscriptions` INSERT. `23505` is the
+   * swallowed duplicate (replay); anything else bubbles to a 500 so Stripe
+   * retries. When set, the row is not captured in `inserts`.
+   */
+  famSubInsertError?: { code: string; message: string } | null;
 };
 
 function mockAdmin(opts: AdminMockOptions = {}) {
@@ -148,8 +154,13 @@ function mockAdmin(opts: AdminMockOptions = {}) {
           }),
         }),
         // One per-participation row per subscription; the route inserts and
-        // swallows 23505 on replay. The mock returns no error.
+        // swallows 23505 on replay. On a forced insert error, don't capture the
+        // row — mirrors a real failed write so tests can assert the payment row
+        // (the commit marker) wasn't reached.
         insert: (row: Record<string, unknown>) => {
+          if (opts.famSubInsertError) {
+            return Promise.resolve({ error: opts.famSubInsertError });
+          }
           inserts.family_subscriptions.push(row);
           return Promise.resolve({ error: null });
         },
@@ -285,6 +296,69 @@ describe("POST /api/webhooks/stripe/products", () => {
         currency: "eur",
         status: "active",
       });
+    });
+  });
+
+  describe("checkout.session.completed — sub row gates the payment commit marker", () => {
+    function subscriptionCompletion() {
+      mockConstructEvent.mockReturnValue(
+        createCompletedEvent({
+          paymentIntent: null,
+          subscription: "sub_new_1",
+          invoice: "in_first_1",
+          purchaseShape: "subscription_monthly",
+        }),
+      );
+      mockAdminRpc.mockResolvedValue({
+        data: {
+          kind: "confirmed",
+          participation_id: RESERVATION_ID,
+          idempotent: false,
+        },
+        error: null,
+      });
+      mockSubscriptionsRetrieve.mockResolvedValue({
+        id: "sub_new_1",
+        status: "active",
+        items: {
+          data: [
+            { id: "si_1", price: { id: "price_test_1" }, current_period_end: 1900000000 },
+          ],
+        },
+      });
+    }
+
+    it("does not write the payment row when the sub insert fails (so Stripe's retry re-runs)", async () => {
+      subscriptionCompletion();
+      // Non-23505 sub insert error → handler throws → 500 so Stripe retries.
+      const inserts = mockAdmin({
+        famSubInsertError: { code: "23503", message: "fk violation" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(500);
+
+      // The payment row is the commit marker the top-of-handler idempotency
+      // guard keys on. Because the sub row is written first, a failed sub insert
+      // leaves no payment behind — so the retry re-runs the whole handler instead
+      // of short-circuiting and orphaning a live recurring Stripe sub. (Under the
+      // old order — payment first — this row would already be written and the
+      // retry would skip the sub forever.)
+      expect(inserts.payments).toHaveLength(0);
+    });
+
+    it("swallows a duplicate (23505) sub insert on replay and still records the payment", async () => {
+      subscriptionCompletion();
+      const inserts = mockAdmin({
+        famSubInsertError: { code: "23505", message: "duplicate key" },
+      });
+
+      const res = await POST(createWebhookRequest());
+      expect(res.status).toBe(200);
+      // Sub row already existed (replay) → swallowed, not re-captured — but the
+      // handler runs to completion and the payment commit marker still lands.
+      expect(inserts.family_subscriptions).toHaveLength(0);
+      expect(inserts.payments).toHaveLength(1);
     });
   });
 
