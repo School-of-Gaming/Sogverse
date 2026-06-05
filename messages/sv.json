@@ -1519,6 +1519,11 @@
         "cta": "Hantera fakturering",
         "opening": "Öppnar…",
         "error": "Det gick inte att öppna faktureringsportalen. Försök igen."
+      },
+      "alert": {
+        "label": "Betalningsproblem",
+        "tooltip": "Betalningsproblem – uppdatera ditt kort för att behålla klubben aktiv",
+        "gamerTooltip": "Något är fel – be en förälder att kolla det här"
       }
     },
     "gamerDetail": {

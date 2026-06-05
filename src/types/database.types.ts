@@ -1234,6 +1234,12 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_my_payment_problem_participations: {
+        Args: never
+        Returns: {
+          participation_id: string
+        }[]
+      }
       get_product_groups_with_details: {
         Args: { p_product_id: string }
         Returns: Json

@@ -71,6 +71,14 @@ export interface MyUpcomingSessionRow {
     startTime: string;
     durationMinutes: number;
   }>;
+  /**
+   * The participation's club subscription is `past_due` (a card declined or
+   * expired). Drives the payment-problem badge on the session cards. Always
+   * `false` for non-subscription products and healthy subs. Sourced from
+   * `get_my_payment_problem_participations`, not the row itself — see
+   * `getMyUpcomingSessions`.
+   */
+  paymentProblem: boolean;
 }
 
 /**
@@ -235,30 +243,52 @@ export class ParticipationsService {
     const audienceColumn =
       audience === "customer" ? "customer_id" : "gamer_id";
 
-    const { data, error } = await this.supabase
-      .from("participations")
-      .select(
-        `
-          gamer_id,
-          group_id,
-          product:products!inner(
-            id, product_type, timezone, start_date, end_date, padlet_url, is_remote,
-            product_translations(*),
-            schedule_slots(weekday, start_time, duration_minutes)
-          ),
-          gamer:profiles!participations_gamer_id_fkey(
-            first_name, username
+    // Fetch the sessions and the payment-problem flags concurrently. The flags
+    // come from `get_my_payment_problem_participations` (00085) rather than a
+    // `family_subscriptions` embed because gamers have no SELECT access to that
+    // table — the RPC self-scopes via auth.uid() and returns only participation
+    // ids (no money), so it works identically for both audiences.
+    const [{ data, error }, { data: problemRows, error: problemError }] =
+      await Promise.all([
+        this.supabase
+          .from("participations")
+          .select(
+            `
+              id,
+              gamer_id,
+              group_id,
+              product:products!inner(
+                id, product_type, timezone, start_date, end_date, padlet_url, is_remote,
+                product_translations(*),
+                schedule_slots(weekday, start_time, duration_minutes)
+              ),
+              gamer:profiles!participations_gamer_id_fkey(
+                first_name, username
+              )
+            `,
           )
-        `,
-      )
-      .eq(audienceColumn, userId)
-      .eq("status", "active");
+          .eq(audienceColumn, userId)
+          .eq("status", "active"),
+        this.supabase.rpc("get_my_payment_problem_participations"),
+      ]);
 
     if (error) throw error;
 
+    // The badge is a secondary signal — if the flags query fails, degrade to
+    // "no problem" rather than breaking the whole sessions list.
+    if (problemError) {
+      console.error(
+        "[getMyUpcomingSessions] payment-problem flags failed:",
+        problemError,
+      );
+    }
+    const problemIds = new Set(
+      (problemRows ?? []).map((row) => row.participation_id),
+    );
+
     return (data as RawMyUpcomingSessionRow[])
       .filter((row) => row.product !== null && row.gamer !== null)
-      .map(toMyUpcomingSessionRow);
+      .map((row) => toMyUpcomingSessionRow(row, problemIds.has(row.id)));
   }
 
   /**
@@ -358,6 +388,7 @@ export class ParticipationsService {
 // ---------------------------------------------------------------------------
 
 interface RawMyUpcomingSessionRow {
+  id: string;
   gamer_id: string;
   group_id: string | null;
   product: {
@@ -381,7 +412,10 @@ interface RawMyUpcomingSessionRow {
   } | null;
 }
 
-function toMyUpcomingSessionRow(row: RawMyUpcomingSessionRow): MyUpcomingSessionRow {
+function toMyUpcomingSessionRow(
+  row: RawMyUpcomingSessionRow,
+  paymentProblem: boolean,
+): MyUpcomingSessionRow {
   // Non-null on both fields is asserted by the `!inner` join on product +
   // the `.filter()` step above for gamer; this narrows for downstream code.
   const product = row.product!;
@@ -409,6 +443,7 @@ function toMyUpcomingSessionRow(row: RawMyUpcomingSessionRow): MyUpcomingSession
       startTime: s.start_time,
       durationMinutes: s.duration_minutes,
     })),
+    paymentProblem,
   };
 }
 

@@ -92,6 +92,7 @@ export function SessionsSection({
           sessionStart={s.sessionStart}
           awaiting={s.awaiting}
           audience={audience}
+          paymentProblem={s.paymentProblem}
         />
       ))}
     </div>

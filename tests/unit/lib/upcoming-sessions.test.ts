@@ -39,6 +39,7 @@ function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessi
     slots: overrides.slots ?? [
       { weekday: 2, startTime: "15:00", durationMinutes: 120 }, // Wed 15:00 UTC
     ],
+    paymentProblem: false,
     ...overrides,
   };
 }
@@ -275,6 +276,20 @@ describe("expandUpcomingSessions", () => {
       "en",
     );
     expect(out[0].voiceHref).toBe("#");
+  });
+
+  it("propagates paymentProblem to every emitted occurrence", () => {
+    const now = new Date("2026-02-25T08:00:00Z");
+    const flagged = expandUpcomingSessions(
+      [makeRow({ paymentProblem: true })],
+      now,
+      "en",
+    );
+    expect(flagged.length).toBeGreaterThan(0);
+    expect(flagged.every((s) => s.paymentProblem === true)).toBe(true);
+
+    const healthy = expandUpcomingSessions([makeRow()], now, "en");
+    expect(healthy.every((s) => s.paymentProblem === false)).toBe(true);
   });
 
   it("flags unassigned participations as awaiting; assigned ones are not", () => {
