@@ -84,17 +84,18 @@ export interface NextSessionCardProps {
    * (`voiceIsOpen` styling + "in progress"), but the Join button is always
    * gated: a future session shows the locked "Opens …" label, and an
    * in-progress one shows a disabled "matching with a Gedu" button (there's
-   * no room to join until placement). A friendly "we're matching {name} with
-   * a Gedu" caption appears beneath it either way, so a fresh purchase reads
-   * as "we're on it" rather than an empty section. Defaults to `false`.
+   * no room to join until placement). A friendly "you're in — your instructor
+   * will place you in a group" caption appears beneath it either way, so a
+   * fresh purchase reads as "we're on it" rather than an empty section.
+   * Defaults to `false`.
    */
   awaiting?: boolean;
   /**
    * Whose dashboard this renders on. Only the `awaiting` caption differs:
-   * `"customer"` speaks *about* the child ("we're finding {name}'s place"),
-   * `"gamer"` speaks *to* the child ("we're finding you a Gedu"). Mirrors
-   * the audience split the empty state already uses. Defaults to
-   * `"customer"`.
+   * `"customer"` speaks *about* the child ("{name} is in! Their instructor
+   * will place them…"), `"gamer"` speaks *to* the child ("you're all signed
+   * up! We'll put you in your group…"). Mirrors the audience split the empty
+   * state already uses. Defaults to `"customer"`.
    */
   audience?: SessionAudience;
 }
@@ -113,6 +114,7 @@ export function NextSessionCard({
   audience = "customer",
 }: NextSessionCardProps) {
   const t = useTranslations("parent.nextSession");
+  const tAwaiting = useTranslations("parent.awaiting");
   const locale = useLocale();
   const timeZone = useTimezone();
   // `useNow()` is seeded server-side at request time, so the first client
@@ -182,18 +184,17 @@ export function NextSessionCard({
         </div>
 
         {/* Purchased-but-not-yet-placed: the Join button above stays
-            disabled, this explains *why* in a reassuring, human way — a real
-            person is hand-matching the gamer with a Gedu. Deliberately
-            static (no animation): placement can take up to a day, so a
-            pulsing/loading cue would wrongly imply it's seconds away. */}
+            disabled, this explains *why* in a reassuring, human way — the
+            instructor will sort the gamer into a group before the session.
+            Deliberately static (no animation): placement can take up to a day,
+            so a pulsing/loading cue would wrongly imply it's seconds away. */}
         {awaiting && (
           <div className="flex items-start gap-2 text-left">
             <UserRoundSearch className="mt-0.5 h-4 w-4 shrink-0 text-info" />
             <p className="text-xs text-muted-foreground">
-              {t(
-                audience === "gamer" ? "awaitingGeduGamer" : "awaitingGedu",
-                { name: gamerFirstName },
-              )}
+              {tAwaiting(audience === "gamer" ? "gamer" : "customer", {
+                name: gamerFirstName,
+              })}
             </p>
           </div>
         )}

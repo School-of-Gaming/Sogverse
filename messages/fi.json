@@ -1470,14 +1470,14 @@
       "title": "{name}: seuraava sessio",
       "startsIn": "Alkaa {countdown} kuluttua",
       "inProgress": "Sessio käynnissä",
-      "reports": "Raportit",
-      "awaitingGedu": "Jokainen pelaaja saa rinnalleen Gedun, joka aidosti ymmärtää häntä, sekä kavereita, joiden kanssa on kiva pelata. Etsimme parhaillaan pelaajalle {name} sopivaa paikkaa.",
-      "awaitingGeduGamer": "Olet mukana! Etsimme sinulle parasta Gedua ja kavereita, joiden kanssa pelata."
+      "reports": "Raportit"
     },
     "upcomingSession": {
-      "gamerLabel": "Pelaaja: {name}",
-      "awaitingGedu": "Etsitään sopivaa Gedua",
-      "awaitingGeduGamer": "Etsitään sinulle Gedua"
+      "gamerLabel": "Pelaaja: {name}"
+    },
+    "awaiting": {
+      "customer": "{name} on mukana! Ohjaaja sijoittaa hänet ryhmään ennen ensimmäisen session alkua.",
+      "gamer": "Olet mukana! Sijoitamme sinut ryhmääsi ennen seuraavan session alkua."
     },
     "help": {
       "contact": {

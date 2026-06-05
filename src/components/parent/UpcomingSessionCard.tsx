@@ -30,8 +30,8 @@ export interface UpcomingSessionCardProps {
   sessionStart: Date;
   /**
    * The gamer is purchased but not yet placed in a group. The card still
-   * shows the real schedule; this just adds a small "matching with a Gedu"
-   * badge so a not-yet-joinable session isn't mistaken for a normal one.
+   * shows the real schedule; this just adds a small "you're in — group coming"
+   * caption so a not-yet-joinable session isn't mistaken for a normal one.
    * Defaults to `false`. See `NextSessionCard` for the prominent variant.
    */
   awaiting?: boolean;
@@ -51,6 +51,7 @@ export function UpcomingSessionCard({
   audience = "customer",
 }: UpcomingSessionCardProps) {
   const t = useTranslations("parent.upcomingSession");
+  const tAwaiting = useTranslations("parent.awaiting");
   const locale = useLocale();
   const timeZone = useTimezone();
   const dateLabel = formatDate(sessionStart, locale, {
@@ -75,14 +76,18 @@ export function UpcomingSessionCard({
             </span>
             <span className="shrink-0">{`${dateLabel} · ${timeLabel}`}</span>
           </div>
-          {/* Not-yet-placed: keep the real schedule above, flag the pending
-              Gedu match so this isn't read as a joinable session. Static icon
-              (no animation) — placement isn't necessarily imminent. */}
+          {/* Not-yet-placed: keep the real schedule above, explain that the
+              gamer will be sorted into a group before the session. Only the
+              icon carries the info color (the sentence stays muted), matching
+              `NextSessionCard`. Static icon (no animation) — placement isn't
+              necessarily imminent. */}
           {awaiting && (
-            <div className="mt-1 flex items-center gap-1.5 text-xs text-info">
-              <UserRoundSearch className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">
-                {t(audience === "gamer" ? "awaitingGeduGamer" : "awaitingGedu")}
+            <div className="mt-1 flex items-start gap-1.5">
+              <UserRoundSearch className="mt-0.5 h-3.5 w-3.5 shrink-0 text-info" />
+              <span className="text-xs text-muted-foreground">
+                {tAwaiting(audience === "gamer" ? "gamer" : "customer", {
+                  name: gamerFirstName,
+                })}
               </span>
             </div>
           )}
