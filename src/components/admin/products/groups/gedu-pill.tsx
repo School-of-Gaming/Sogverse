@@ -12,6 +12,12 @@ interface GeduPillProps {
   email?: string | null;
   /** An add/remove for this Gedu is saving — greyed and the remove button is disabled. */
   isSaving?: boolean;
+  /**
+   * The whole group is busy (rename/delete in flight) — disable removal without
+   * greying the pill (the card itself already dims). Keeps the remove button
+   * mounted so the layout doesn't shift.
+   */
+  disabled?: boolean;
   onRemove?: () => void;
 }
 
@@ -20,6 +26,7 @@ export function GeduPill({
   firstName,
   email,
   isSaving,
+  disabled,
   onRemove,
 }: GeduPillProps) {
   const t = useTranslations("admin.products.groupsPanel");
@@ -44,7 +51,7 @@ export function GeduPill({
         <button
           type="button"
           onClick={onRemove}
-          disabled={isSaving}
+          disabled={isSaving || disabled}
           aria-label={t("gedu.removeAria", { name: firstName })}
           className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
         >
