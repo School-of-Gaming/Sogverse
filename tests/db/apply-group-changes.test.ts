@@ -608,10 +608,10 @@ describe("get_product_groups_with_details", () => {
       groups: Array<{
         id: string;
         name: string;
-        gedus: Array<{ id: string; assigned_at: string }>;
-        participations: Array<{ gamer_id: string; updated_at: string }>;
+        gedus: Array<{ id: string }>;
+        participations: Array<{ gamer_id: string }>;
       }>;
-      unassigned: Array<{ gamer_id: string; updated_at: string }>;
+      unassigned: Array<{ gamer_id: string }>;
     };
 
     expect(result.product_id).toBe(PRODUCT_DETAILS);
@@ -623,13 +623,52 @@ describe("get_product_groups_with_details", () => {
     ]);
     expect(result.unassigned.map((p) => p.gamer_id)).toEqual([TEST_IDS.GAMER_2]);
 
-    // The client owns display order, so the RPC must surface the timestamps it
-    // sorts by: updated_at per participation, assigned_at per group Gedu.
-    expect(result.groups[0].gedus[0].assigned_at).toEqual(expect.any(String));
-    expect(result.groups[0].participations[0].updated_at).toEqual(
-      expect.any(String),
-    );
-    expect(result.unassigned[0].updated_at).toEqual(expect.any(String));
+    // Cleanup.
+    await admin
+      .from("participations")
+      .delete()
+      .eq("product_id", PRODUCT_DETAILS);
+  });
+
+  it("orders participations by updated_at (most recently moved last)", async () => {
+    const setup = await adminAuth.rpc("apply_group_changes", {
+      p_product_id: PRODUCT_DETAILS,
+      p_added_groups: [{ tempId: "tA", name: "Alpha", geduIds: [] }],
+    });
+    const groupA = (setup.data as { tempMap: Record<string, string> }).tempMap
+      .tA;
+
+    // Two gamers in the group; GAMER_2 touched more recently than GAMER, so the
+    // RPC must return GAMER first and GAMER_2 last.
+    await admin.from("participations").insert([
+      {
+        product_id: PRODUCT_DETAILS,
+        gamer_id: TEST_IDS.GAMER,
+        customer_id: TEST_IDS.CUSTOMER,
+        status: "active",
+        group_id: groupA,
+        updated_at: "2026-01-01T00:00:00Z",
+      },
+      {
+        product_id: PRODUCT_DETAILS,
+        gamer_id: TEST_IDS.GAMER_2,
+        customer_id: TEST_IDS.CUSTOMER,
+        status: "active",
+        group_id: groupA,
+        updated_at: "2026-02-01T00:00:00Z",
+      },
+    ]);
+
+    const { data } = await adminAuth.rpc("get_product_groups_with_details", {
+      p_product_id: PRODUCT_DETAILS,
+    });
+    const result = data as {
+      groups: Array<{ participations: Array<{ gamer_id: string }> }>;
+    };
+    expect(result.groups[0].participations.map((p) => p.gamer_id)).toEqual([
+      TEST_IDS.GAMER,
+      TEST_IDS.GAMER_2,
+    ]);
 
     // Cleanup.
     await admin

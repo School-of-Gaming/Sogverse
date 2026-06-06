@@ -238,8 +238,6 @@ export interface GroupGeduDetail {
   id: string;
   first_name: string;
   email: string | null;
-  /** When this Gedu was assigned to the group (gedu_group_assignments.created_at). Client sorts by this. */
-  assigned_at: string;
 }
 
 export interface GroupParticipationDetail {
@@ -254,8 +252,6 @@ export interface GroupParticipationDetail {
   gamer_parent_last_name: string | null;
   status: ParticipationStatus;
   signed_up_at: string;
-  /** Bumped on every group move (participations_updated_at trigger). Client sorts by this. */
-  updated_at: string;
 }
 
 export interface ProductGroupWithDetails {

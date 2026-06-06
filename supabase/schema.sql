@@ -1233,7 +1233,7 @@ BEGIN
     RAISE EXCEPTION 'Product not found' USING ERRCODE = 'P0002';
   END IF;
 
-  SELECT COALESCE(jsonb_agg(g ORDER BY g->>'id'), '[]'::jsonb)
+  SELECT COALESCE(jsonb_agg(g ORDER BY g->>'created_at', g->>'id'), '[]'::jsonb)
     INTO v_groups
     FROM (
       SELECT jsonb_build_object(
@@ -1243,12 +1243,11 @@ BEGIN
         'gedus', COALESCE((
           SELECT jsonb_agg(
                    jsonb_build_object(
-                     'id',          gp.id,
-                     'first_name',  gp.first_name,
-                     'email',       gp.email,
-                     'assigned_at', ga.created_at
+                     'id',         gp.id,
+                     'first_name', gp.first_name,
+                     'email',      gp.email
                    )
-                   ORDER BY gp.id
+                   ORDER BY ga.created_at, gp.id
                  )
             FROM gedu_group_assignments ga
             JOIN profiles gp ON gp.id = ga.gedu_id
@@ -1267,10 +1266,9 @@ BEGIN
                      'gamer_parent_first_name',  parent.first_name,
                      'gamer_parent_last_name',   parent.last_name,
                      'status',                   p.status,
-                     'signed_up_at',             p.signed_up_at,
-                     'updated_at',               p.updated_at
+                     'signed_up_at',             p.signed_up_at
                    )
-                   ORDER BY p.id
+                   ORDER BY p.updated_at, p.id
                  )
             FROM participations p
             JOIN profiles gmp ON gmp.id = p.gamer_id
@@ -1304,10 +1302,9 @@ BEGIN
              'gamer_parent_first_name',  parent.first_name,
              'gamer_parent_last_name',   parent.last_name,
              'status',                   p.status,
-             'signed_up_at',             p.signed_up_at,
-             'updated_at',               p.updated_at
+             'signed_up_at',             p.signed_up_at
            )
-           ORDER BY p.id
+           ORDER BY p.updated_at, p.id
          ), '[]'::jsonb)
     INTO v_unassigned
     FROM participations p
