@@ -12,7 +12,7 @@ Every protected request — page load, API call, and every RSC prefetch — veri
 2. **`src/app/layout.tsx`** (root, `layout.tsx:55`) and **`src/app/(dashboard)/layout.tsx`** — each calls `getUserWithProfile()`, which does another local `getClaims()` + a `profiles` query.
 3. API routes add one more local `getClaims()` + profile query via `requireRole` (`src/lib/auth.ts`).
 
-Identity verification is **local crypto** at every layer (~0.7ms each), so repeating it per layer no longer costs network round-trips — the F1 waterfall is gone (see Completed improvements). The residual per-render cost is the **`profiles.role` query repeated at each layer** (~12ms warm); eliminating that is the role-in-JWT move (I2 / TODO.md §"Consider moving role into JWT claims").
+Identity verification is **local crypto** at every layer (~0.7ms each), so repeating it per layer no longer costs network round-trips — the F1 waterfall is gone (see Completed improvements). The residual per-render cost is the **`profiles.role` query repeated at each layer** (~12ms warm) — quantified as **F3** and addressed by the authorization model + **I2** below.
 
 RSC prefetch runs on Next's default (`prefetch={true}`; the `prefetch={false}` workarounds were reverted). It's now a net positive — prefetches warm caches before clicks, and each one's auth is a local verify, so even a ~37-prefetch fan-out completes without saturation.
 
@@ -27,7 +27,7 @@ RSC prefetch runs on Next's default (`prefetch={true}`; the `prefetch={false}` w
 - GoTrue's DB pool is a **fixed 10** (`max_open_conns:10` / `max_pool_size:10`), project-wide, shared across all auth traffic — from GoTrue's own config log line. This is the hard ceiling.
 - Recovery required a **full project restart** (bounces the GoTrue + pooler containers); the "fast database reboot" did *not* fix it (Postgres uptime never reset).
 - **Signed-in only** — signed-out pages worked. The proxy only does auth round-trips when a session exists.
-- Prod ran a **partial auth migration**: F1 (`getClaims` hot path, PR #46) deployed ~14:19 UTC, but the I3 survivor conversion was still on `dev`, so prod was still calling `getUser` (`/user`) on the service-layer data path. See the I3 entry.
+- Prod ran a **partial auth migration**: F1 (`getClaims` hot path, PR #46) deployed ~14:19 UTC, but the I3 survivor conversion was still on `dev`, so prod was still calling `getUser` (`/user`) on the service-layer data path. See the I3 entry. *(Since resolved: I3 shipped to prod in `ebd341b` on `main` — the partial-migration state that caused this no longer exists.)*
 - The proxy has **no timeout** on its Supabase auth calls, so hung requests rode to Vercel's 300s function limit → 504s, and browser + proxy retries re-fired into the wedged pool (retry storm).
 
 **Inferred (not proven).**
@@ -37,7 +37,7 @@ RSC prefetch runs on Next's default (`prefetch={true}`; the `prefetch={false}` w
 **Why 10 connections is normally plenty (and what broke that).** At ~300 DAU the true auth-DB demand — logins (~0.3/s peak, ~10–30ms each) + hourly token refreshes — is a small fraction of *one* connection; a connection is held only for the brief query, then released. The pool saturates only when peak concurrent demand approaches 10 *or* connections are held longer. The per-request `getUser` pattern was the multiplier: a single page load fanned out 24–53 RSC prefetches (F1) plus service-layer reads, turning each active user into dozens of concurrent GoTrue DB ops — which, with no-timeout retries holding connections open, crossed the saturation knee.
 
 **Mitigations (priority).**
-1. **Ship the I3 survivor conversion to prod** — removes the residual per-load `getUser`; no cost; already built on `dev`. The direct recurrence-reducer.
+1. **Ship the I3 survivor conversion to prod** — **DONE** (`ebd341b` on `main`). Removed the residual per-load `getUser`; the partial-migration state that caused the incident no longer exists. The direct recurrence-reducer.
 2. **Confirm with Supabase support** whether the 10-connection cap is raisable without a paid compute bump.
 3. **Longer access-token TTL** (Auth setting) — fewer token refreshes = less irreducible GoTrue load.
 - *Compute bump* raises the hard ceiling but costs money — deferred; the load that saturated the pool is being deleted, not grown. *Proxy timeout / fail-open* was considered and rejected as a band-aid that masks the root cause rather than removing the per-request GoTrue dependency.
@@ -48,15 +48,70 @@ RSC prefetch runs on Next's default (`prefetch={true}`; the `prefetch={false}` w
 
 ### F2 — Public marketing pages aren't edge-cacheable
 
-Tracked in TODO.md §"Make the public marketing pages edge-cacheable — they're paying the dynamic-rendering tax for nothing." Short version: `src/app/layout.tsx:55-62` calls `getUserWithProfile()`, `headers()`, `getLocale()`, `cookies()` — any one marks the whole subtree dynamic, so every public-page visit goes through a serverless function (~400-700ms TTFB) instead of being served from the edge CDN. The locale cookie is the load-bearing dynamic input; auth/CSP-nonce/timezone reads are needs of the `(dashboard)` group leaked into the root layout.
+Home and other `(public)` routes load with ~400–700ms TTFB on prod even on fast connections, because they're dynamically rendered per-request instead of served from the edge CDN. No single line is "wrong" — the chain from symptom to root cause:
 
-Full chain, blockers, and sequencing options live in the TODO item. Brought into this doc once it's actively being scoped.
+1. The home page is pure static content (translated copy + icons, no DB queries) — it *should* be edge-cacheable.
+2. But `src/app/layout.tsx:55-62` (root layout) calls `getUserWithProfile()`, `headers()`, `getLocale()`, and `cookies()`. Any one marks the whole subtree dynamic — Next can't pre-render output that depends on the request.
+3. So Vercel routes every visit through a serverless function: proxy + token refresh + Supabase auth round-trip + render + stream. ~400–700ms before first byte; the edge CDN never serves it from cache.
+4. The load-bearing dynamic read for *public* pages is `getLocale()` — the locale cookie tells next-intl which translation to emit, so the same URL returns different bodies per request, which Vercel won't cache. The auth call, CSP nonce, and timezone cookie are `(dashboard)` needs leaked into the root layout.
+
+**Architectural fix — locale-in-URL:** `/fi`, `/en`, `/sv` each get a statically pre-rendered home page; bare `/` does an edge redirect on `Accept-Language`. Detailed in `docs/i18n-architecture.md` § "Locale-in-URL routing with translated slugs" (~L166-199; that doc frames it as SEO/sharing — add the perf bullet when picked up: TTFB ~400–700ms → ~50ms globally, an edge CDN file).
+
+**What blocks a plain `export const dynamic = 'force-static'`:** even with locale solved you must (a) move `getUserWithProfile()` out of root layout into `(dashboard)/layout.tsx`, (b) skip CSP-nonce generation in `src/proxy.ts` for public paths (the per-request nonce makes every response unique HTML), and (c) scope the timezone cookie read similarly. None hard individually — the work is untangling four concerns currently mixed in the root layout.
+
+**Sequencing:**
+- *Small first win, no architecture change:* split layouts so `(public)/layout.tsx` doesn't call `getUserWithProfile()` — saves a Supabase round-trip (~50–150ms) per marketing hit without making anything static-eligible. Reversible.
+- *Full win:* execute locale-in-URL *and* scope auth/nonce/timezone to the dashboard layout in one PR. Home goes static, TTFB ~50ms globally, SEO/sharing land as a side effect. Beats the canonical F2 baseline (`download=660ms` on `/` warm — see the benchmark log).
+
+**Related — F2b, the first-device-login reload.** `LocaleProvider` reconciles a stale `locale` cookie against `profile.locale` on mount and calls `router.refresh()`, producing a visible second render on the first page after signing in on a new device. Root cause: next-intl's `getRequestConfig` runs before auth and can only read cookies/headers, so client-side reconciliation is the only option — "cookie as a cache of profile state," and new devices always miss the cache. This is a canary: any future pre-render preference (timezone, theme-critical CSS, feature flags) hits the same pattern. The locale-in-URL move (F2 full win) makes it **moot** (no cookie-as-cache dance when locale is in the path); until then, two narrower fixes — (a) write preference cookies server-side during the auth callback so SSR sees them next request (cheap per login, no per-render cost — the better default), or (b) thread the authenticated user through `getRequestConfig` to read the profile directly (per-request DB cost, no divergence). If the full win ships, F2b retires with it.
+
+### F3 — Per-request role lookup is fanned out and partly redundant
+
+On one protected dashboard navigation, `SELECT role FROM profiles` runs at the proxy (`src/proxy.ts`), the root layout (`getUserWithProfile`, `src/app/layout.tsx`), the `(dashboard)` layout (`getUserWithProfile` again — **same render**), and each `requireRole` API call (`src/lib/auth.ts:41`), plus RLS's `get_user_role()` (`STABLE`, so cached to one call per statement). ~12ms warm each. The two layouts fetching the **same row in the same render** is pure waste; it also multiplies under RSC prefetch fan-out (every prefetch re-runs the layout auth chain) — the same load shape as the 2026-05-31 incident, though here it lands on Postgres (which stayed healthy) rather than GoTrue. Identity at these layers is already free (F1); only the role query remains. Fix shape: the authorization model + I2 below.
+
+### F4 — Server-prefetched data refetches immediately on mount (double fetch)
+
+Every hook pairing server-prefetched `initialData` with a client `useQuery` (`useVisibleProductsByTypes`, `useParticipationCounts`, `useSpokenLanguages`, plus `useFamily`, `useMyUpcomingSessions`, the assignments/pin hooks) inherits the app default `staleTime: 0`, so data is fetched on the server for SSR and then **immediately refetched on mount** — every such query runs twice on first load. This is the established, intentional pattern (freshness — seat counts especially), so it's not a defect. But for near-static reference data (products, spoken languages) the second fetch is pure waste; a small per-hook `staleTime` would let the seeded data satisfy the first mount. Weigh globally if anyone revisits the prefetch convention — no action needed today.
 
 ## Recommended improvements
 
-### I2 — Move role into JWT `app_metadata` claims (the auth-path residual)
+### The authorization model — where role must be live (frames F3 + I2)
 
-With identity now verified locally (Completed: `getClaims`), the remaining per-render auth cost is the `profiles.role` lookup at each layer (proxy + both layouts + every `requireRole`). A custom access-token hook that writes `role` into `app_metadata` lets all of them read role off the verified JWT — and lets RLS's `get_user_role()` drop its `SELECT role FROM profiles`. Full shape + the role-staleness-until-token-refresh trade-off live in TODO.md §"Consider moving role into JWT claims". Conditional: do it when the residual profile lookup proves to matter, or when next editing the RLS policies. **Not a guard against the 2026-05-31 incident:** it relieves Postgres (the `profiles` query), but that incident was GoTrue connection-pool saturation — Postgres was healthy throughout (18/60 connections used).
+Three concerns ride on the per-request `profiles` lookup and are easily conflated:
+
+- **Authentication** (who is this) — verified locally via `getClaims` at every layer (~0.7ms; see Completed). Correctly cheap — leave it.
+- **Authorization** (what role) — the residual cost (F3): queried at the proxy, both layouts, and every `requireRole`, plus RLS's `get_user_role()`.
+- **Liveness / revocation** (is this session still valid *now* — not deleted, demoted, or a compromised account we must kill).
+
+The trap: **liveness is currently an accidental side-effect of the authorization query.** A deleted/demoted user is caught only because every layer happens to re-`SELECT role FROM profiles` and notices the row changed — it was never a deliberate revocation mechanism. This is why the F1 trade-off note leans on that re-query to stay safe, and why naively "put role in the JWT everywhere" is dangerous: it optimizes the authorization query and **silently deletes the liveness mechanism riding on it.**
+
+Separate the three by asking *where can an actual breach happen?* — only two places:
+
+1. **RLS at the database** — the real authority for all data access; backstops any forgotten app-layer check.
+2. **Routes using the admin/service-role client** (`createAdminClient()`), which *bypass* RLS — here `requireRole` is the only guard on a privileged write.
+
+**Rule (target model): role is live authorization only at RLS and on admin-client routes; everywhere else it is advisory and may be read from the verified JWT.** Advisory role going stale only ever degrades to "wrong dashboard chrome for a few minutes while RLS denies the data underneath" — not a breach.
+
+This matches our invariant: roles never change in normal operation (the one manual write — promote a new user to `admin` — happens *before* that account first signs in, so no live session goes stale). The only staleness that matters is the **break-glass reverse path** — killing a compromised admin or deleting an account — which must bite instantly, and is exactly what stays live at RLS + admin-client routes. Bake the immutable thing into the token for speed; keep a live check only for the emergency.
+
+### I2 — Dedupe the role fetch; make app-layer role advisory
+
+Supersedes the earlier "move role into JWT everywhere" framing. Ordered by value/risk:
+
+1. **`React.cache()` the per-render profile fetch** (`getUserWithProfile`) — collapses the root + `(dashboard)` layout queries to one per render. Zero new attack surface, a few lines; likely the bulk of the measurable win, and it compounds across the prefetch multiplier (F3). **Do this first, regardless of the rest.**
+2. **Read advisory role from the JWT** at the app layers (proxy routing, layout chrome) — a custom access-token hook writes `role` into `app_metadata`; those queries drop to ~0ms. Only worth it if a trace *after* step 1 still shows the residual lookups mattering.
+3. **Keep RLS and admin-client routes live** — `get_user_role()` unchanged (already cheap, must stay live); admin-client (`createAdminClient`) routes keep a live `profiles` role check (rare, privileged — the real boundary).
+
+**Security guardrails if step 2 ships:**
+- Role lives **only** in `app_metadata` (server/hook-written), never `user_metadata` — the latter is user-writable via `supabase.auth.updateUser` (`setup-account-form.tsx`, `reset-password-form.tsx`), so a role read from there is instant self-promotion to admin.
+- The access-token hook is private (`REVOKE EXECUTE` from `authenticated`/`anon`/`public`, grant only `supabase_auth_admin` — CLAUDE.md "private by default"), reads the live `profiles` row, and **fails closed** (missing profile → lowest privilege, never `admin`).
+- `profiles.role` stays the single source of truth; the JWT claim is a derived cache.
+
+**Explicitly rejected: RLS reading role from the JWT.** It reopens the revocation hole — a stolen or stale admin token is DB-honored with zero liveness check until expiry — to optimize `get_user_role()`, already the cheapest site in the stack. It also pulls against the incident's mitigation #3 (a *longer* token TTL to cut GoTrue load widens exactly this stale-token window).
+
+**Not a guard against the 2026-05-31 incident** — it relieves Postgres (the `profiles` query); that incident was GoTrue connection-pool saturation, Postgres healthy throughout (18/60 connections).
+
+**Related cleanup:** retiring `is_admin()` for inline `get_user_role() = 'admin'` (TODO.md) touches the same RLS files — do them together if either is picked up.
 
 ## Completed improvements
 
