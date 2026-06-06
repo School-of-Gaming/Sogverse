@@ -28,10 +28,6 @@ export function useProductGroups(productId: string) {
     queryKey: groupsKeys.byProduct(productId),
     queryFn: () => service.getProductGroups(productId),
     enabled: !!productId,
-    // The one place display order is decided — runs over both server data and
-    // optimistically-patched cache, so they can never disagree. See
-    // orderSnapshotForDisplay.
-    select: orderSnapshotForDisplay,
   });
 }
 
@@ -54,54 +50,16 @@ export function useProductGroups(productId: string) {
 const groupMutationBase = (productId: string) =>
   [...groupsKeys.byProduct(productId), "mutation"] as const;
 
-// ─── Display ordering (frontend-owned) ───────────────────────────────────────
-//
-// The RPC returns each list in a deterministic-but-arbitrary order (by id) and
-// hands us the timestamps to sort by; the client decides display order. This is
-// the single sort policy — applied in `useProductGroups`'s `select`, so it runs
-// identically over server data and over optimistically-patched cache. Because
-// there's exactly one sort (not a server ORDER BY plus a client guess), an
-// optimistic chip can't disagree with the settled order, so nothing jumps on
-// reconcile. The rule everywhere: most-recently-touched sorts last.
-//   - groups by created_at (newest group last)
-//   - participations by updated_at (a move bumps it, so the moved chip goes last)
-//   - group Gedus by assigned_at (a freshly added Gedu goes last)
-// Ties break by id. Comparison is by parsed instant (getTime), so the optimistic
-// `toISOString()` "Z" form and Postgres's "+00:00" form compare correctly.
+// Display order is owned by the server: get_product_groups_with_details orders
+// participations by updated_at and group Gedus by their assignment time, so the
+// most-recently-touched row is last. A move bumps updated_at (DB trigger) and a
+// new Gedu gets a fresh assignment row — exactly where the optimistic patches
+// below append the row. So the optimistic order and the settle-refetch order
+// agree by construction: the client just renders the array it's given and
+// appends on a move, with no client-side re-sort and no comparing browser vs
+// server clocks (that mismatch was the source of the chip-reorder flicker).
 
 type Participation = ProductGroupsSnapshot["unassigned"][number];
-
-const byInstantThenId = (
-  aTime: string,
-  bTime: string,
-  aId: string,
-  bId: string,
-): number =>
-  new Date(aTime).getTime() - new Date(bTime).getTime() ||
-  aId.localeCompare(bId);
-
-const sortParticipations = (list: Participation[]): Participation[] =>
-  [...list].sort((a, b) =>
-    byInstantThenId(a.updated_at, b.updated_at, a.id, b.id),
-  );
-
-export function orderSnapshotForDisplay(
-  snapshot: ProductGroupsSnapshot,
-): ProductGroupsSnapshot {
-  return {
-    ...snapshot,
-    groups: [...snapshot.groups]
-      .sort((a, b) => byInstantThenId(a.created_at, b.created_at, a.id, b.id))
-      .map((g) => ({
-        ...g,
-        gedus: [...g.gedus].sort((a, b) =>
-          byInstantThenId(a.assigned_at, b.assigned_at, a.id, b.id),
-        ),
-        participations: sortParticipations(g.participations),
-      })),
-    unassigned: sortParticipations(snapshot.unassigned),
-  };
-}
 
 // ─── Optimistic cache patches (pure) ─────────────────────────────────────────
 
@@ -130,10 +88,9 @@ function withParticipationMoved(
   };
 
   if (!moved) return snapshot;
-  // Bump updated_at so the display sort lands it at the end of its new list —
-  // mirrors what the move's UPDATE does server-side (the real updated_at the
-  // settle refetch returns will likewise be the newest).
-  const landed: Participation = { ...moved, updated_at: new Date().toISOString() };
+  // Append to the end of the destination list. The server orders by updated_at,
+  // and the move bumps updated_at, so the settle refetch lands it here too.
+  const landed = moved;
 
   if (toGroupId === null) {
     return { ...stripped, unassigned: [...stripped.unassigned, landed] };
@@ -314,8 +271,6 @@ export function useAddGedu(productId: string) {
             id: geduId,
             first_name: firstName,
             email,
-            // Newest assignment → sorts last, matching the settle refetch.
-            assigned_at: new Date().toISOString(),
           }),
         );
       }
