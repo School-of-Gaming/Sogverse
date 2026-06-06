@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/database.types";
@@ -69,7 +70,14 @@ export async function getUser() {
   return claimsToUser(data.claims);
 }
 
-export async function getUserWithProfile() {
+// Wrapped in React `cache()` so the root layout and the (dashboard) layout —
+// which both call this within a single RSC render — share one `profiles` query
+// instead of each firing its own. The cache is request-scoped (a fresh cache per
+// render), so there's no cross-request leakage. Must be created at module scope
+// to memoize; wrapping it inside a component would silently do nothing. Only
+// dedupes calls within one render — the proxy and `requireRole` are separate
+// requests and keep their own lookups. See docs/performance.md (I2, step 1).
+export const getUserWithProfile = cache(async () => {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   const user = data?.claims ? claimsToUser(data.claims) : null;
@@ -90,4 +98,4 @@ export async function getUserWithProfile() {
   }
 
   return { user, profile };
-}
+});
