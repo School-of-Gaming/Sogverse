@@ -608,10 +608,10 @@ describe("get_product_groups_with_details", () => {
       groups: Array<{
         id: string;
         name: string;
-        gedus: Array<{ id: string }>;
-        participations: Array<{ gamer_id: string }>;
+        gedus: Array<{ id: string; assigned_at: string }>;
+        participations: Array<{ gamer_id: string; updated_at: string }>;
       }>;
-      unassigned: Array<{ gamer_id: string }>;
+      unassigned: Array<{ gamer_id: string; updated_at: string }>;
     };
 
     expect(result.product_id).toBe(PRODUCT_DETAILS);
@@ -622,6 +622,14 @@ describe("get_product_groups_with_details", () => {
       TEST_IDS.GAMER,
     ]);
     expect(result.unassigned.map((p) => p.gamer_id)).toEqual([TEST_IDS.GAMER_2]);
+
+    // The client owns display order, so the RPC must surface the timestamps it
+    // sorts by: updated_at per participation, assigned_at per group Gedu.
+    expect(result.groups[0].gedus[0].assigned_at).toEqual(expect.any(String));
+    expect(result.groups[0].participations[0].updated_at).toEqual(
+      expect.any(String),
+    );
+    expect(result.unassigned[0].updated_at).toEqual(expect.any(String));
 
     // Cleanup.
     await admin
