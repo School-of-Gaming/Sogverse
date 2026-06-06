@@ -195,9 +195,8 @@ export function GroupColumn({
                     firstName={ge.first_name}
                     email={ge.email}
                     isSaving={pending.gedus.has(`${group.id}:${ge.id}`)}
-                    onRemove={
-                      busy ? undefined : () => onRemoveGedu(group.id, ge.id)
-                    }
+                    disabled={busy}
+                    onRemove={() => onRemoveGedu(group.id, ge.id)}
                   />
                 ))}
               </div>
