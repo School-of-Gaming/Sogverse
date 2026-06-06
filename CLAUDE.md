@@ -169,12 +169,28 @@ supabase link --project-ref "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d
    supabase gen types typescript --project-id "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" 2>/dev/null > src/types/database.types.ts
    ```
    `2>/dev/null` swallows the CLI's "new version available" notice so it doesn't end up in the output file. `cut -d= -f2-` (note the trailing `-`) keeps any `=` characters inside the value itself.
-4. Check `src/types/index.ts` — add convenience aliases for any new tables/enums
-5. Commit migration + updated types + tests together in the PR
+4. Dump the current schema to `supabase/schema.sql`:
+   ```bash
+   PGPASSWORD=$(grep '^SUPABASE_DB_PASSWORD=' .env.local | cut -d= -f2-) pg_dump \
+     -h aws-1-eu-north-1.pooler.supabase.com -p 5432 \
+     -U "postgres.$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d= -f2-)" -d postgres \
+     --schema=public --schema-only --no-owner 2>/dev/null \
+     | grep -vE '^[\](un)?restrict ' > supabase/schema.sql
+   ```
+   This is the current-state companion to `database.types.ts` — it captures what the type generator can't (function bodies, RLS policies, triggers, grants, constraints) in one authoritative file. Run it exactly as written: raw `pg_dump` (not `supabase db dump`, which needs Docker), the `5432` session pooler (not the `6543` transaction pooler), and the `grep -vE` that strips pg_dump 18's volatile `\restrict` guard lines so the diff reflects only real schema changes.
+5. Check `src/types/index.ts` — add convenience aliases for any new tables/enums
+6. Commit migration + updated types + `schema.sql` + tests together in the PR
 
 This avoids a chicken-and-egg problem where tests reference functions that aren't in the generated types yet.
 
-**Rule: To understand the current schema, read `database.types.ts` and `src/types/index.ts` — not migrations.** Migrations show the history of changes, not the current state. `database.types.ts` is auto-generated from the live schema and is always authoritative. Only read migration files when you need to understand RLS policies, grants, triggers, or function implementations — things the type generator doesn't capture. When you do, remember migrations are append-only history: a later migration can supersede an earlier one (drop a constraint, rewrite a function, relax a rule). Never trust the first match — grep **every** migration touching the object and read the **highest-numbered** one, since that reflects the current state.
+**Rule: To understand the current schema, read the committed current-state files — not migrations.** Two files hold the live state, and between them they cover almost everything:
+
+- **`database.types.ts` + `src/types/index.ts`** — table/column/function *shapes* (types, signatures, enums). Auto-generated from the live schema.
+- **`supabase/schema.sql`** — the things the type generator can't see: function bodies, RLS policies, triggers, grants, constraints. A `pg_dump` of the live `public` schema (see step 4 of the migration workflow).
+
+Both are regenerated on every migration and reflect current state, so you never reconstruct it by hand. Migrations are append-only history — a later one can supersede an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly why eyeballing them for current state goes wrong.
+
+A few objects live **outside** the `public` schema and are therefore **not** in `schema.sql` — so you have to be aware they exist or you'll assume `schema.sql` is the whole story when it isn't. These are: triggers attached to `auth.users` (e.g. the new-user → profile handler), RLS policies on `storage.objects`, and pg_cron jobs (the last two aren't even DDL — they're rows in `storage.buckets`/`cron.job` — so no dump captures them). This is a small, stable set that rarely changes. For *only* these, current state lives in migration history: grep **every** migration touching the object and trust the **highest-numbered** one. Do not hardcode a migration number for them anywhere — the correct file moves the moment one is superseded, which is the staleness trap this rule exists to avoid.
 
 **Rule: Verify generated nullability matches what the SQL actually guarantees.** PostgreSQL has two ways to make a "nullable" column non-null in practice that the type generator can't see: RPC `RETURNS TABLE` columns produced by an INNER JOIN (the generator infers from the base column type alone, missing that the JOIN forbids null), and CHECK constraints that encode conditional invariants like "column X is NOT NULL whenever predicate P holds." Both are real, enforced guarantees, and both leave the generated type nullable everywhere. After pushing and regenerating, check the affected types in `database.types.ts` — the compiler trusts the column/function signature, not the query or the constraint.
 
