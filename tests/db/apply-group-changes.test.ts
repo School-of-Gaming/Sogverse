@@ -663,9 +663,11 @@ describe("get_product_groups_with_details", () => {
       p_product_id: PRODUCT_DETAILS,
     });
     const result = data as {
-      groups: Array<{ participations: Array<{ gamer_id: string }> }>;
+      groups: Array<{ id: string; participations: Array<{ gamer_id: string }> }>;
     };
-    expect(result.groups[0].participations.map((p) => p.gamer_id)).toEqual([
+    // A prior test leaves its own group behind, so target the one we created.
+    const alpha = result.groups.find((g) => g.id === groupA);
+    expect(alpha?.participations.map((p) => p.gamer_id)).toEqual([
       TEST_IDS.GAMER,
       TEST_IDS.GAMER_2,
     ]);
