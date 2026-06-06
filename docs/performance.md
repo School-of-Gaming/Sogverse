@@ -8,8 +8,8 @@ Findings (`F`) describe what we've observed and the root cause. Improvements (`I
 
 Every protected request — page load, API call, and every RSC prefetch — verifies the caller's identity at three layers:
 
-1. **`src/proxy.ts`** (`proxy.ts:122`) — `supabase.auth.getClaims()` verifies the JWT **locally** against the project's published ES256 JWKS (no GoTrue round-trip). The `getSession()` it calls internally still refreshes a near-expiry token and rotates the cookie, so the proxy stays the single token-refresh point. Then queries `profiles.role` for role-based routing.
-2. **`src/app/layout.tsx`** (root, `layout.tsx:55`) and **`src/app/(dashboard)/layout.tsx`** — each calls `getUserWithProfile()` (a local `getClaims()` + a `profiles` query). The two now share **one** query per render via React `cache()` (I2 step 1).
+1. **`src/proxy.ts`** (`proxy.ts:136`) — `supabase.auth.getClaims()` verifies the JWT **locally** against the project's published ES256 JWKS (no GoTrue round-trip). The `getSession()` it calls internally still refreshes a near-expiry token and rotates the cookie, so the proxy stays the single token-refresh point. Then queries `profiles.role` for role-based routing.
+2. **`src/app/layout.tsx`** (root, `layout.tsx:56`) and **`src/app/(dashboard)/layout.tsx`** — each calls `getUserWithProfile()` (a local `getClaims()` + a `profiles` query). The two now share **one** query per render via React `cache()` (I2 step 1).
 3. API routes add one more local `getClaims()` + profile query via `requireRole` (`src/lib/auth.ts`).
 
 Identity verification is **local crypto** at every layer (~0.7ms each), so repeating it per layer no longer costs network round-trips — the F1 waterfall is gone (see Completed improvements). The residual cost is the **`profiles.role` lookup**: the two layouts now share one fetch per render (`cache()`, I2 step 1), leaving one lookup **per request-context** — the proxy, the render, and each `requireRole` call. Quantified as **F3**; removing the rest is the authorization model + **I2** below.
