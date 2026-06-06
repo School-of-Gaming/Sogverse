@@ -22,7 +22,7 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
  *
  * Writes we verify:
  *   - everyone (admin, customer, gedu, gamer): direct INSERT/UPDATE/DELETE
- *     against either table is rejected. Mutations flow through commit_group_changes.
+ *     against either table is rejected. Mutations flow through apply_group_changes.
  */
 
 const PRODUCT_X = "00000000-0000-0000-0000-0000000007b1";
@@ -64,7 +64,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
     }
 
     // Group on product X with GEDU assigned + GAMER participating.
-    const x = await adminAuth.rpc("commit_group_changes", {
+    const x = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_X,
       p_added_groups: [{ tempId: "tX1", name: "X1", geduIds: [TEST_IDS.GEDU] }],
     });
@@ -79,7 +79,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
     });
 
     // Group on product Y with no relevant ownership.
-    const y = await adminAuth.rpc("commit_group_changes", {
+    const y = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_Y,
       p_added_groups: [{ tempId: "tY1", name: "Y1", geduIds: [] }],
     });
@@ -251,7 +251,7 @@ describe("completed participation loses RLS visibility on v2 groups", () => {
     await deleteTestProducts(admin, [PRODUCT_Z]);
     await createTestProduct(admin, { id: PRODUCT_Z, seatCount: 50 });
 
-    const created = await adminAuth.rpc("commit_group_changes", {
+    const created = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_Z,
       p_added_groups: [{ tempId: "tZ", name: "Z", geduIds: [TEST_IDS.GEDU] }],
     });

@@ -141,7 +141,7 @@ There is no provisioning step when a product group is added. The first joiner to
 
 Daily.co returns the duplicate-name error as `400 invalid-request-error` with the literal info string `a room named X already exists` — not the 409 you'd expect — so callers must use the `isDailyDuplicateRoomError(err)` helper rather than branching on status alone. An earlier version of this swallow checked `status === 409`, never matched, and every non-first joiner hit a 500.
 
-**Why get-or-create and not pre-create-on-window-open:** the pre-create path needs a cron/scheduler, gives no user-visible benefit (Daily room creation is sub-second), and the first-joiner latency cost of an extra GET is negligible. An earlier pattern pre-created rooms when a group was added via `commit_group_changes`; it was leftover infrastructure with no remaining users and was ripped out in migration 00060.
+**Why get-or-create and not pre-create-on-window-open:** the pre-create path needs a cron/scheduler, gives no user-visible benefit (Daily room creation is sub-second), and the first-joiner latency cost of an extra GET is negligible. An earlier pattern pre-created rooms when a group was added via `apply_group_changes`; it was leftover infrastructure with no remaining users and was ripped out in migration 00060.
 
 ### Cleanup
 

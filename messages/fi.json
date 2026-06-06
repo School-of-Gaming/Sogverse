@@ -580,42 +580,26 @@
           "nameLabel": "Ryhmän nimi",
           "namePlaceholder": "Anna ryhmälle nimi",
           "nameRequired": "Ryhmä tarvitsee nimen.",
-          "nameRequiredHint": "Joillakin ryhmillä ei ole vielä nimeä.",
+          "editAria": "Nimeä {name} uudelleen",
+          "saveNameAria": "Tallenna nimi",
+          "cancelEditAria": "Peruuta",
           "deleteAria": "Poista {name}",
           "gamerCount": "{count, plural, =0 {Ei pelaajia} =1 {1 pelaaja} other {# pelaajaa}}",
-          "new": "Uusi",
-          "markedForDeletion": "Poistetaan",
           "assignedGedus": "Gedut",
           "noGedus": "Ei vielä Geduja.",
           "addGedu": "Lisää Gedu",
           "gamersLabel": "Pelaajat",
           "empty": "Ei pelaajia vielä — vedä joku tähän.",
-          "willBeDeleted": "Nämä pelaajat siirtyvät Nimeämättömiin, kun tallennat.",
-          "geduStatusFootnote": "Joitakin muutoksia ei ole vielä tallennettu.",
           "deleteConfirmTitle": "Poistetaanko {name}?",
           "deleteConfirmEmpty": "Ryhmässä ei ole pelaajia, joten poistaminen vain poistaa Gedu-nimitykset.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {Tässä ryhmässä on 1 pelaaja} other {Tässä ryhmässä on # pelaajaa}}. He siirtyvät Nimeämättömiin, kun tallennat."
+          "deleteConfirmWithGamers": "{count, plural, =1 {Tässä ryhmässä on 1 pelaaja} other {Tässä ryhmässä on # pelaajaa}}. He siirtyvät Nimeämättömiin."
         },
         "gedu": {
-          "pendingAdd": "Lisätään",
-          "pendingRemove": "Poistetaan",
           "removeAria": "Poista {name}"
         },
         "picker": {
           "addTitle": "Lisää Gedu ryhmään {name}",
           "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina."
-        },
-        "commitBar": {
-          "summary": "{count, plural, =1 {1 tallentamaton muutos} other {# tallentamatonta muutosta}}",
-          "discard": "Hylkää",
-          "review": "Tarkista muutokset"
-        },
-        "summary": {
-          "title": "Tarkista muutokset",
-          "description": "Kaikki muutokset tallennetaan yhdessä. Jos yksi ei tallennu, mikään ei tallennu.",
-          "apply": "Tallenna muutokset",
-          "applying": "Tallennetaan…",
-          "genericError": "Jokin meni pieleen. Yritä uudelleen."
         }
       },
       "seatLimitModes": {

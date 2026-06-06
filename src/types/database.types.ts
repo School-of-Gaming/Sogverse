@@ -1103,12 +1103,7 @@ export type Database = {
           table_name: string
         }[]
       }
-      can_read_product: { Args: { p_product_id: string }; Returns: boolean }
-      cancel_participation: {
-        Args: { p_participation_id: string; p_reason: string }
-        Returns: Json
-      }
-      commit_group_changes: {
+      apply_group_changes: {
         Args: {
           p_added_groups?: Json
           p_deleted_group_ids?: string[]
@@ -1118,6 +1113,11 @@ export type Database = {
           p_product_id: string
           p_renamed_groups?: Json
         }
+        Returns: Json
+      }
+      can_read_product: { Args: { p_product_id: string }; Returns: boolean }
+      cancel_participation: {
+        Args: { p_participation_id: string; p_reason: string }
         Returns: Json
       }
       confirm_reservation: { Args: { p_reservation_id: string }; Returns: Json }

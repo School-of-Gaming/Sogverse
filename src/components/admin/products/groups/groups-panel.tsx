@@ -14,20 +14,23 @@ import { Plus, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useGroupEditor } from "@/hooks/use-group-editor";
 import {
+  useAddGedu,
   useAdminAddGamerToProduct,
+  useCreateGroup,
+  useDeleteGroup,
+  useGroupPending,
+  useMoveParticipation,
   useProductGroups,
+  useRemoveGedu,
+  useRenameGroup,
 } from "@/services/groups";
 import { GamerPickerSheet } from "../gamer-picker-sheet";
 import { GeduPickerSheet } from "../gedu-picker-sheet";
-import { CommitBar } from "./commit-bar";
-import { CommitSummaryDialog } from "./commit-summary-dialog";
 import { GamerChip } from "./gamer-chip";
 import { GroupColumn } from "./group-column";
 import { UnassignedCard } from "./unassigned-card";
-import type { EffectiveSnapshot } from "@/hooks/use-group-editor";
-import type { ProductType } from "@/types";
+import type { ProductGroupsSnapshot, ProductType } from "@/types";
 
 interface GroupsPanelProps {
   productId: string;
@@ -38,30 +41,26 @@ interface GroupsPanelProps {
 // dnd-kit context so we don't propagate it through props (which would re-render
 // the entire panel on every pointer move).
 function DragOverlayContent({
-  effective,
+  snapshot,
 }: {
-  effective: EffectiveSnapshot;
+  snapshot: ProductGroupsSnapshot | undefined;
 }) {
   const { active } = useDndContext();
 
   const overlay = useMemo(() => {
-    if (!active) return null;
+    if (!active || !snapshot) return null;
     const data = active.data.current as
       | { participationId: string; gamerId: string; firstName: string }
       | undefined;
     if (!data) return null;
 
-    // Find the participation in the effective snapshot to grab DOB/gender.
     const all = [
-      ...effective.unassigned,
-      ...effective.groups.flatMap((g) => g.participations),
+      ...snapshot.unassigned,
+      ...snapshot.groups.flatMap((g) => g.participations),
     ];
-    const found = all.find((p) => p.id === data.participationId);
-    if (!found) return null;
-
-    return found;
+    return all.find((p) => p.id === data.participationId) ?? null;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally keyed on active?.id rather than the ref-changing `active` object
-  }, [active?.id, effective]);
+  }, [active?.id, snapshot]);
 
   if (!overlay) return null;
 
@@ -83,24 +82,25 @@ function DragOverlayContent({
 export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const { data: snapshot, isLoading } = useProductGroups(productId);
+  const pending = useGroupPending(productId);
 
-  const { dispatch, effective, changeSummary, batchPayload } =
-    useGroupEditor(snapshot);
+  const move = useMoveParticipation(productId);
+  const rename = useRenameGroup(productId);
+  const createGroup = useCreateGroup(productId);
+  const addGedu = useAddGedu(productId);
+  const removeGedu = useRemoveGedu(productId);
+  const deleteGroup = useDeleteGroup(productId);
+  const addGamer = useAdminAddGamerToProduct(productId);
 
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
   const [gamerPickerOpen, setGamerPickerOpen] = useState(false);
-  const [summaryOpen, setSummaryOpen] = useState(false);
-
-  const addGamer = useAdminAddGamerToProduct(productId);
 
   // Recurring billing on consumer clubs makes a no-payment comp awkward, so
   // the Add Gamer affordance is hidden for that product type. Route enforces
   // this too (defense in depth).
   const canAddGamer = productType !== "consumer_club";
 
-  // Server snapshot drives the "already added" disabled state inside the
-  // picker. The effective snapshot here may include staged moves, but
-  // enrollment (any non-reserving participation) is what really blocks a re-add.
+  // Any enrolled gamer blocks a re-add via the picker.
   const enrolledGamerIds = useMemo(() => {
     const ids = new Set<string>();
     if (!snapshot) return ids;
@@ -111,14 +111,21 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
     return ids;
   }, [snapshot]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-  );
+  // One Gedu per product (DB unique constraint), so the picker excludes anyone
+  // already assigned to any group. Removals aren't optimistic, so a Gedu mid-
+  // removal stays excluded until the settle refetch — correct.
+  const allAssignedGeduIds = useMemo(() => {
+    if (!snapshot) return [];
+    const ids = new Set<string>();
+    for (const g of snapshot.groups) {
+      for (const ge of g.gedus) ids.add(ge.id);
+    }
+    return Array.from(ids);
+  }, [snapshot]);
 
-  // Where each participation lives on the server. The reducer needs this to
-  // recognize round-trip drags (back to the original column) as no-ops and
-  // cancel any previously staged move.
-  const serverPlacementById = useMemo(() => {
+  // Where each participation currently lives, to recognize a drop back onto the
+  // same column as a no-op (skip the round-trip mutation entirely).
+  const placementById = useMemo(() => {
     const map = new Map<string, string | null>();
     if (!snapshot) return map;
     for (const g of snapshot.groups) {
@@ -127,6 +134,10 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
     for (const p of snapshot.unassigned) map.set(p.id, null);
     return map;
   }, [snapshot]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { over, active } = event;
@@ -140,50 +151,21 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
       | undefined;
     if (!dragData || !dropData) return;
 
-    dispatch({
-      type: "MOVE_PARTICIPATION",
+    const current = placementById.get(dragData.participationId) ?? null;
+    if (current === dropData.toGroupId) return; // dropped back where it started
+
+    move.mutate({
       participationId: dragData.participationId,
       toGroupId: dropData.toGroupId,
-      serverGroupId: serverPlacementById.get(dragData.participationId) ?? null,
     });
   };
 
   const handleAddGroup = () => {
-    // Default name: "Group A", "Group B", … indexed by current group count.
-    // Effective groups gives us the count after staged changes — what the
-    // admin will see immediately above the new card.
-    const liveCount = effective.groups.filter((g) => !g.isDeleted).length;
+    // Default name: "Group A", "Group B", … indexed by the current group count
+    // (which includes any optimistic cards already on screen).
+    const liveCount = snapshot?.groups.length ?? 0;
     const letter = String.fromCharCode(65 + liveCount);
-    dispatch({
-      type: "ADD_GROUP",
-      name: t("group.defaultName", { letter }),
-    });
-  };
-
-  // The picker sheet shows for the group the admin clicked "Add Gedu" on.
-  // We exclude Gedus already assigned to that group OR to any other group on
-  // this product (the unique constraint at the DB level enforces one group
-  // per Gedu per product, so the picker reflects that).
-  const allAssignedGeduIds = useMemo(() => {
-    const ids = new Set<string>();
-    for (const g of effective.groups) {
-      if (g.isDeleted) continue;
-      for (const ge of g.gedus) {
-        if (!ge.isPendingRemove) ids.add(ge.id);
-      }
-    }
-    return Array.from(ids);
-  }, [effective.groups]);
-
-  // Live groups with blank/whitespace names — block commit until each one
-  // gets a real name. The DB rejects via chk_product_groups_name_not_blank,
-  // but failing that late means the admin only finds out after clicking Apply.
-  const hasBlankNames = effective.groups.some(
-    (g) => !g.isDeleted && !g.name.trim(),
-  );
-
-  const handleSuccess = () => {
-    dispatch({ type: "RESET" });
+    createGroup.mutate({ name: t("group.defaultName", { letter }) });
   };
 
   if (isLoading) {
@@ -205,7 +187,9 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
     );
   }
 
-  const hasGroups = effective.groups.length > 0;
+  const groups = snapshot?.groups ?? [];
+  const unassigned = snapshot?.unassigned ?? [];
+  const hasGroups = groups.length > 0;
 
   return (
     <div className="space-y-3">
@@ -228,7 +212,12 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
               {t("unassigned.addGamer")}
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={handleAddGroup}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleAddGroup}
+            disabled={createGroup.isPending}
+          >
             <Plus className="mr-1 h-4 w-4" />
             {t("addGroup")}
           </Button>
@@ -237,22 +226,22 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="space-y-3">
-          <UnassignedCard participations={effective.unassigned} />
+          <UnassignedCard
+            participations={unassigned}
+            pendingMoveIds={pending.moves}
+          />
 
           {hasGroups ? (
-            effective.groups.map((g) => (
+            groups.map((g) => (
               <GroupColumn
                 key={g.id}
                 group={g}
-                onRename={(groupId, name) =>
-                  dispatch({ type: "RENAME_GROUP", groupId, name })
-                }
-                onDelete={(groupId) =>
-                  dispatch({ type: "DELETE_GROUP", groupId })
-                }
+                pending={pending}
+                onRename={(groupId, name) => rename.mutate({ groupId, name })}
+                onDelete={(groupId) => deleteGroup.mutate({ groupId })}
                 onAddGedu={(groupId) => setPickerForGroupId(groupId)}
                 onRemoveGedu={(groupId, geduId) =>
-                  dispatch({ type: "REMOVE_GEDU", groupId, geduId })
+                  removeGedu.mutate({ groupId, geduId })
                 }
               />
             ))
@@ -268,6 +257,7 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
                   size="sm"
                   className="mt-4"
                   onClick={handleAddGroup}
+                  disabled={createGroup.isPending}
                 >
                   <Plus className="mr-1 h-4 w-4" />
                   {t("empty.addFirst")}
@@ -278,19 +268,9 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
         </div>
 
         <DragOverlay>
-          <DragOverlayContent effective={effective} />
+          <DragOverlayContent snapshot={snapshot} />
         </DragOverlay>
       </DndContext>
-
-      <CommitBar
-        summary={changeSummary}
-        onReview={() => setSummaryOpen(true)}
-        onDiscard={() => dispatch({ type: "RESET" })}
-        reviewDisabled={hasBlankNames}
-        reviewDisabledReason={
-          hasBlankNames ? t("group.nameRequiredHint") : undefined
-        }
-      />
 
       {/* GamerPickerSheet and GeduPickerSheet are deliberately rendered
           OUTSIDE the DndContext above. dnd-kit re-renders subscribed children
@@ -312,15 +292,13 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
           if (!open) setPickerForGroupId(null);
         }}
         title={t("picker.addTitle", {
-          name:
-            effective.groups.find((g) => g.id === pickerForGroupId)?.name ?? "",
+          name: groups.find((g) => g.id === pickerForGroupId)?.name ?? "",
         })}
         description={t("picker.addDescription")}
         excludeIds={allAssignedGeduIds}
         onSelect={(gedu) => {
           if (!pickerForGroupId) return;
-          dispatch({
-            type: "ADD_GEDU",
+          addGedu.mutate({
             groupId: pickerForGroupId,
             geduId: gedu.id,
             firstName: gedu.first_name,
@@ -329,17 +307,6 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
           setPickerForGroupId(null);
         }}
       />
-
-      {summaryOpen && (
-        <CommitSummaryDialog
-          open
-          onOpenChange={setSummaryOpen}
-          summary={changeSummary}
-          productId={productId}
-          batchPayload={batchPayload}
-          onSuccess={handleSuccess}
-        />
-      )}
     </div>
   );
 }

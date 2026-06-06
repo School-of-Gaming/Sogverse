@@ -108,7 +108,7 @@ describe("get_gedu_assigned_product", () => {
 
     // PRODUCT_GEDU_ON: Cohort A owned by GEDU, Cohort B a sister group with
     // no caller assignment.
-    const created = await adminAuth.rpc("commit_group_changes", {
+    const created = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_GEDU_ON,
       p_added_groups: [
         { tempId: "tA", name: "Cohort A", geduIds: [TEST_IDS.GEDU] },

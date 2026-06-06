@@ -74,7 +74,7 @@ describe("products gamer-read RLS (00067)", () => {
     // The active product gets a real group so the gamer's participation can
     // be placed — this lets the dashboard join-shape assertion (which
     // requires group_id NOT NULL) exercise the same query the dashboard runs.
-    const created = await adminAuth.rpc("commit_group_changes", {
+    const created = await adminAuth.rpc("apply_group_changes", {
       p_product_id: HIDDEN_ACTIVE_PRODUCT,
       p_added_groups: [{ tempId: "tA", name: "Cohort A", geduIds: [] }],
     });

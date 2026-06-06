@@ -108,7 +108,7 @@ All templates use `wrapInLayout()` which produces a table-based HTML email with:
 ### Group change notifications (inline in `/api/admin/products/[id]/groups/apply`)
 
 1. The apply route receives both `batch` (group mutations) and `notify` (notification payloads) from the client
-2. After the `commit_group_changes` RPC succeeds, the route resolves gedu/gamer/parent profiles from the database
+2. After the `apply_group_changes` RPC succeeds, the route resolves gedu/gamer/parent profiles from the database
 3. Sends emails for each change type (added, deleted, reassigned, moved) via `Promise.allSettled()`
 4. Notification failures don't fail the commit
 

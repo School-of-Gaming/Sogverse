@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { Trash2, UserPlus, Users } from "lucide-react";
+import { Check, Pencil, Trash2, UserPlus, Users, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -18,12 +17,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import type { EffectiveGroup } from "@/hooks/use-group-editor";
+import type { GroupPending } from "@/services/groups";
+import type { ProductGroupWithDetails } from "@/types";
 import { GamerChip } from "./gamer-chip";
 import { GeduPill } from "./gedu-pill";
 
 interface GroupColumnProps {
-  group: EffectiveGroup;
+  group: ProductGroupWithDetails;
+  pending: GroupPending;
   onRename: (groupId: string, name: string) => void;
   onDelete: (groupId: string) => void;
   onAddGedu: (groupId: string) => void;
@@ -32,6 +33,7 @@ interface GroupColumnProps {
 
 export function GroupColumn({
   group,
+  pending,
   onRename,
   onDelete,
   onAddGedu,
@@ -40,21 +42,38 @@ export function GroupColumn({
   const t = useTranslations("admin.products.groupsPanel");
   const c = useTranslations("common");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(group.name);
+
+  // A "temp-" id is an optimistic card whose create hasn't persisted yet; its
+  // id isn't real, so no action can target it until the settle refetch.
+  const isTemp = group.id.startsWith("temp-");
+  const isDeleting = pending.deletes.has(group.id);
+  const isSaving = isTemp || pending.renames.has(group.id);
+  const busy = isSaving || isDeleting;
 
   const { setNodeRef, isOver } = useDroppable({
     id: `group-target-${group.id}`,
     data: { toGroupId: group.id },
-    disabled: group.isDeleted,
+    disabled: busy,
   });
 
-  // Effective Gedus that haven't been marked for removal still count toward
-  // the "active" Gedu list shown in the count.
-  const activeGedus = group.gedus.filter((g) => !g.isPendingRemove);
+  const startEdit = () => {
+    setDraft(group.name);
+    setEditing(true);
+  };
 
-  // Live (non-deleted) groups must have a non-blank name before the admin
-  // can review/apply. Surface the error inline so they don't have to hunt
-  // for the offending column.
-  const hasBlankName = !group.isDeleted && !group.name.trim();
+  const commitEdit = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) return; // Save is disabled; guard the Enter path too.
+    if (trimmed !== group.name) onRename(group.id, trimmed);
+    setEditing(false);
+  };
+
+  const cancelEdit = () => {
+    setDraft(group.name);
+    setEditing(false);
+  };
 
   return (
     <>
@@ -62,42 +81,79 @@ export function GroupColumn({
         ref={setNodeRef}
         className={cn(
           "transition-colors",
-          group.isDeleted && "opacity-40",
-          group.isNew && "border-primary/30",
-          isOver && !group.isDeleted && "border-primary bg-primary/5",
+          isDeleting && "opacity-40",
+          isSaving && !isDeleting && "opacity-60",
+          isOver && !busy && "border-primary bg-primary/5",
         )}
       >
         <CardHeader className="space-y-3 pb-3">
           <div className="flex items-start gap-2">
             <div className="flex-1 space-y-1.5">
-              <Label
-                htmlFor={`group-${group.id}-name`}
-                className="text-xs uppercase tracking-wide text-muted-foreground"
-              >
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">
                 {t("group.nameLabel")}
               </Label>
-              <Input
-                id={`group-${group.id}-name`}
-                value={group.name}
-                onChange={(e) => onRename(group.id, e.target.value)}
-                disabled={group.isDeleted}
-                placeholder={t("group.namePlaceholder")}
-                aria-invalid={hasBlankName || undefined}
-                aria-describedby={
-                  hasBlankName ? `group-${group.id}-name-error` : undefined
-                }
-                className={cn(
-                  hasBlankName &&
-                    "border-destructive focus-visible:ring-destructive",
-                )}
-              />
-              {hasBlankName && (
-                <p
-                  id={`group-${group.id}-name-error`}
-                  className="text-xs text-destructive"
-                >
-                  {t("group.nameRequired")}
-                </p>
+              {editing ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <Input
+                      autoFocus
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          commitEdit();
+                        } else if (e.key === "Escape") {
+                          e.preventDefault();
+                          cancelEdit();
+                        }
+                      }}
+                      placeholder={t("group.namePlaceholder")}
+                      aria-invalid={!draft.trim() || undefined}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={commitEdit}
+                      disabled={!draft.trim()}
+                      aria-label={t("group.saveNameAria")}
+                    >
+                      <Check className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={cancelEdit}
+                      aria-label={t("group.cancelEditAria")}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {!draft.trim() && (
+                    <p className="text-xs text-destructive">
+                      {t("group.nameRequired")}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <span className="font-medium">{group.name}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground"
+                    onClick={startEdit}
+                    disabled={busy}
+                    aria-label={t("group.editAria", { name: group.name })}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               )}
             </div>
             <Button
@@ -106,7 +162,7 @@ export function GroupColumn({
               size="icon"
               className="mt-6 h-8 w-8 text-destructive hover:text-destructive"
               onClick={() => setConfirmDelete(true)}
-              disabled={group.isDeleted}
+              disabled={busy}
               title={t("group.deleteAria", { name: group.name })}
               aria-label={t("group.deleteAria", { name: group.name })}
             >
@@ -119,16 +175,6 @@ export function GroupColumn({
             <span>
               {t("group.gamerCount", { count: group.participations.length })}
             </span>
-            {group.isNew && (
-              <Badge variant="secondary" className="text-[10px]">
-                {t("group.new")}
-              </Badge>
-            )}
-            {group.isDeleted && (
-              <Badge variant="outline" className="text-[10px]">
-                {t("group.markedForDeletion")}
-              </Badge>
-            )}
           </div>
         </CardHeader>
 
@@ -148,12 +194,9 @@ export function GroupColumn({
                     geduId={ge.id}
                     firstName={ge.first_name}
                     email={ge.email}
-                    isPending={ge.isPending}
-                    isPendingRemove={ge.isPendingRemove}
+                    isSaving={pending.gedus.has(`${group.id}:${ge.id}`)}
                     onRemove={
-                      group.isDeleted
-                        ? undefined
-                        : () => onRemoveGedu(group.id, ge.id)
+                      busy ? undefined : () => onRemoveGedu(group.id, ge.id)
                     }
                   />
                 ))}
@@ -164,7 +207,7 @@ export function GroupColumn({
               variant="outline"
               size="sm"
               onClick={() => onAddGedu(group.id)}
-              disabled={group.isDeleted}
+              disabled={busy}
               className="gap-1.5"
             >
               <UserPlus className="h-4 w-4" />
@@ -178,9 +221,7 @@ export function GroupColumn({
               {t("group.gamersLabel")}
             </Label>
             {group.participations.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {group.isDeleted ? t("group.willBeDeleted") : t("group.empty")}
-              </p>
+              <p className="text-sm text-muted-foreground">{t("group.empty")}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {group.participations.map((p) => (
@@ -195,19 +236,12 @@ export function GroupColumn({
                     parentLastName={p.gamer_parent_last_name}
                     minecraftUsername={p.gamer_minecraft_username}
                     minecraftUuid={p.gamer_minecraft_uuid}
-                    isMoved={p.isMoved}
+                    isPending={pending.moves.has(p.id)}
                   />
                 ))}
               </div>
             )}
           </div>
-
-          {/* Tiny status footnote when active gedu count differs from total */}
-          {activeGedus.length !== group.gedus.length && (
-            <p className="text-[10px] text-muted-foreground">
-              {t("group.geduStatusFootnote")}
-            </p>
-          )}
         </CardContent>
       </Card>
 
