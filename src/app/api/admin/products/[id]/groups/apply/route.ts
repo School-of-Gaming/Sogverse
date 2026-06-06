@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
-import type { BatchGroupChanges } from "@/services/groups";
+import type { GroupChangeSet } from "@/services/groups";
 
 /**
  * POST /api/admin/products/[id]/groups/apply
  *
- * Applies a batch of staged group changes via the commit_group_changes RPC.
- * The RPC handles atomicity, locks the product row, and resolves temp ids for
- * groups created in the same batch.
+ * Applies a group change set via the apply_group_changes RPC. The admin panel
+ * auto-saves each action as a single-change set; the RPC still handles
+ * atomicity, locks the product row, and resolves temp ids for a group created
+ * in the same set.
  *
  * Email notifications + Daily.co room provisioning are intentionally NOT done
  * here. The legacy provisioning logic wires those up and stays available for
@@ -25,9 +26,9 @@ export async function POST(
 
   const { id: productId } = await params;
 
-  let batch: BatchGroupChanges;
+  let changes: GroupChangeSet;
   try {
-    batch = (await request.json()) as BatchGroupChanges;
+    changes = (await request.json()) as GroupChangeSet;
   } catch {
     return NextResponse.json(
       { error: "Request body must be valid JSON" },
@@ -35,14 +36,14 @@ export async function POST(
     );
   }
 
-  const { data, error } = await supabase.rpc("commit_group_changes", {
+  const { data, error } = await supabase.rpc("apply_group_changes", {
     p_product_id: productId,
-    p_added_groups: batch.addedGroups,
-    p_renamed_groups: batch.renamedGroups,
-    p_deleted_group_ids: batch.deletedGroupIds,
-    p_gedu_assignments_added: batch.geduAssignmentsAdded,
-    p_gedu_assignments_removed: batch.geduAssignmentsRemoved,
-    p_participation_moves: batch.participationMoves,
+    p_added_groups: changes.addedGroups,
+    p_renamed_groups: changes.renamedGroups,
+    p_deleted_group_ids: changes.deletedGroupIds,
+    p_gedu_assignments_added: changes.geduAssignmentsAdded,
+    p_gedu_assignments_removed: changes.geduAssignmentsRemoved,
+    p_participation_moves: changes.participationMoves,
   });
 
   if (error) {

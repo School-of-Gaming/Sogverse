@@ -6,7 +6,7 @@ import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 
 /**
- * Tests for commit_group_changes + get_product_groups_with_details.
+ * Tests for apply_group_changes + get_product_groups_with_details.
  * Each describe block uses its own product UUID so CI parallelism doesn't
  * cause cross-file contention.
  */
@@ -34,7 +34,7 @@ const ALL_PRODUCTS = [
 const GEDU_A = TEST_IDS.GEDU;
 const GEDU_B = TEST_IDS.ADMIN;
 
-describe("commit_group_changes", () => {
+describe("apply_group_changes", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
 
@@ -67,7 +67,7 @@ describe("commit_group_changes", () => {
     });
 
     it("creates a group and returns the temp id mapping", async () => {
-      const { data, error } = await adminAuth.rpc("commit_group_changes", {
+      const { data, error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
         p_added_groups: [{ tempId: "t1", name: "Group A", geduIds: [] }],
       });
@@ -87,7 +87,7 @@ describe("commit_group_changes", () => {
     });
 
     it("creates a group with inline Gedu assignments", async () => {
-      const { data } = await adminAuth.rpc("commit_group_changes", {
+      const { data } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
         p_added_groups: [
           { tempId: "t1", name: "Group A", geduIds: [GEDU_A, GEDU_B] },
@@ -104,7 +104,7 @@ describe("commit_group_changes", () => {
     });
 
     it("rejects a blank name", async () => {
-      const { error } = await adminAuth.rpc("commit_group_changes", {
+      const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
         p_added_groups: [{ tempId: "t1", name: "   ", geduIds: [] }],
       });
@@ -112,7 +112,7 @@ describe("commit_group_changes", () => {
     });
 
     it("creates multiple groups in one call", async () => {
-      const { data } = await adminAuth.rpc("commit_group_changes", {
+      const { data } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
         p_added_groups: [
           { tempId: "t1", name: "Group A", geduIds: [] },
@@ -144,7 +144,7 @@ describe("commit_group_changes", () => {
     let groupId: string;
 
     beforeAll(async () => {
-      const { data } = await adminAuth.rpc("commit_group_changes", {
+      const { data } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_RENAME,
         p_added_groups: [{ tempId: "t1", name: "Initial", geduIds: [] }],
       });
@@ -152,7 +152,7 @@ describe("commit_group_changes", () => {
     });
 
     it("updates the name", async () => {
-      const { error } = await adminAuth.rpc("commit_group_changes", {
+      const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_RENAME,
         p_renamed_groups: [{ groupId, name: "Renamed" }],
       });
@@ -167,7 +167,7 @@ describe("commit_group_changes", () => {
     });
 
     it("rejects a blank rename via the table-level check constraint", async () => {
-      const { error } = await adminAuth.rpc("commit_group_changes", {
+      const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_RENAME,
         p_renamed_groups: [{ groupId, name: "   " }],
       });
@@ -192,14 +192,14 @@ describe("commit_group_changes", () => {
     });
 
     it("cascades to gedu assignments", async () => {
-      const created = await adminAuth.rpc("commit_group_changes", {
+      const created = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_DELETE,
         p_added_groups: [{ tempId: "t1", name: "Group A", geduIds: [GEDU_A] }],
       });
       const groupId = (created.data as { tempMap: Record<string, string> })
         .tempMap.t1;
 
-      await adminAuth.rpc("commit_group_changes", {
+      await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_DELETE,
         p_deleted_group_ids: [groupId],
       });
@@ -212,7 +212,7 @@ describe("commit_group_changes", () => {
     });
 
     it("sends participations back to the unassigned inbox", async () => {
-      const created = await adminAuth.rpc("commit_group_changes", {
+      const created = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_DELETE,
         p_added_groups: [{ tempId: "t1", name: "Group A", geduIds: [] }],
       });
@@ -232,7 +232,7 @@ describe("commit_group_changes", () => {
         .select("id")
         .single();
 
-      await adminAuth.rpc("commit_group_changes", {
+      await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_DELETE,
         p_deleted_group_ids: [groupId],
       });
@@ -248,14 +248,14 @@ describe("commit_group_changes", () => {
 
     it("ignores groups that belong to a different product", async () => {
       // Create a group on PRODUCT_BASIC and try to delete it via PRODUCT_DELETE.
-      const created = await adminAuth.rpc("commit_group_changes", {
+      const created = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_BASIC,
         p_added_groups: [{ tempId: "t1", name: "G", geduIds: [] }],
       });
       const otherId = (created.data as { tempMap: Record<string, string> })
         .tempMap.t1;
 
-      await adminAuth.rpc("commit_group_changes", {
+      await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_DELETE,
         p_deleted_group_ids: [otherId],
       });
@@ -286,7 +286,7 @@ describe("commit_group_changes", () => {
     });
 
     it("moving a Gedu from group A to group B in one call clears the unique conflict", async () => {
-      const setup = await adminAuth.rpc("commit_group_changes", {
+      const setup = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_GEDU_SWAP,
         p_added_groups: [
           { tempId: "tA", name: "Group A", geduIds: [GEDU_A] },
@@ -297,7 +297,7 @@ describe("commit_group_changes", () => {
       const groupA = map.tA;
       const groupB = map.tB;
 
-      const { error } = await adminAuth.rpc("commit_group_changes", {
+      const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_GEDU_SWAP,
         p_gedu_assignments_removed: [{ groupId: groupA, geduId: GEDU_A }],
         p_gedu_assignments_added: [{ groupId: groupB, geduId: GEDU_A }],
@@ -312,7 +312,7 @@ describe("commit_group_changes", () => {
     });
 
     it("rejects assigning the same Gedu to two groups in one product", async () => {
-      const setup = await adminAuth.rpc("commit_group_changes", {
+      const setup = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_GEDU_SWAP,
         p_added_groups: [
           { tempId: "tA", name: "Group A", geduIds: [GEDU_A] },
@@ -322,7 +322,7 @@ describe("commit_group_changes", () => {
       const groupB = (setup.data as { tempMap: Record<string, string> })
         .tempMap.tB;
 
-      const { error } = await adminAuth.rpc("commit_group_changes", {
+      const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_GEDU_SWAP,
         p_gedu_assignments_added: [{ groupId: groupB, geduId: GEDU_A }],
       });
@@ -330,7 +330,7 @@ describe("commit_group_changes", () => {
     });
 
     it("can assign Gedus to brand-new groups via temp id resolution", async () => {
-      const { data, error } = await adminAuth.rpc("commit_group_changes", {
+      const { data, error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_GEDU_SWAP,
         p_added_groups: [
           { tempId: "tA", name: "Group A", geduIds: [] },
@@ -358,7 +358,7 @@ describe("commit_group_changes", () => {
     let participationId: string;
 
     beforeAll(async () => {
-      const setup = await adminAuth.rpc("commit_group_changes", {
+      const setup = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_MOVES,
         p_added_groups: [
           { tempId: "tA", name: "A", geduIds: [] },
@@ -395,7 +395,7 @@ describe("commit_group_changes", () => {
     });
 
     it("moves a participation from unassigned to a group", async () => {
-      await adminAuth.rpc("commit_group_changes", {
+      await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_MOVES,
         p_participation_moves: [{ participationId, toGroupId: groupA }],
       });
@@ -408,7 +408,7 @@ describe("commit_group_changes", () => {
     });
 
     it("moves a participation from group A to group B", async () => {
-      await adminAuth.rpc("commit_group_changes", {
+      await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_MOVES,
         p_participation_moves: [{ participationId, toGroupId: groupB }],
       });
@@ -421,7 +421,7 @@ describe("commit_group_changes", () => {
     });
 
     it("toGroupId=null sends the participation back to the inbox", async () => {
-      await adminAuth.rpc("commit_group_changes", {
+      await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_MOVES,
         p_participation_moves: [{ participationId, toGroupId: null }],
       });
@@ -434,7 +434,7 @@ describe("commit_group_changes", () => {
     });
 
     it("can move a participation to a brand-new group via temp id resolution", async () => {
-      const { data } = await adminAuth.rpc("commit_group_changes", {
+      const { data } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_MOVES,
         p_added_groups: [{ tempId: "tNew", name: "Brand New", geduIds: [] }],
         p_participation_moves: [
@@ -468,7 +468,7 @@ describe("commit_group_changes", () => {
         product_id: PRODUCT_MOVES,
       });
 
-      const { error } = await adminAuth.rpc("commit_group_changes", {
+      const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_MOVES,
         // Will fail: GEDU_A already assigned to groupA in this product.
         p_gedu_assignments_added: [{ groupId: groupB, geduId: GEDU_A }],
@@ -502,7 +502,7 @@ describe("commit_group_changes", () => {
         TEST_CREDENTIALS.CUSTOMER.email,
         TEST_CREDENTIALS.CUSTOMER.password,
       );
-      const { error } = await customerAuth.rpc("commit_group_changes", {
+      const { error } = await customerAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_VALIDATION,
         p_added_groups: [{ tempId: "t1", name: "X", geduIds: [] }],
       });
@@ -511,7 +511,7 @@ describe("commit_group_changes", () => {
     });
 
     it("raises P0002 when the product does not exist", async () => {
-      const { error } = await adminAuth.rpc("commit_group_changes", {
+      const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: "00000000-0000-0000-0000-0000000007ff",
         p_added_groups: [{ tempId: "t1", name: "X", geduIds: [] }],
       });
@@ -522,7 +522,7 @@ describe("commit_group_changes", () => {
       // Create a group on PRODUCT_BASIC and try to insert an assignment
       // claiming a different product. The trigger should reject it.
       const { data: created } = await adminAuth.rpc(
-        "commit_group_changes",
+        "apply_group_changes",
         {
           p_product_id: PRODUCT_VALIDATION,
           p_added_groups: [{ tempId: "t1", name: "G", geduIds: [] }],
@@ -570,7 +570,7 @@ describe("get_product_groups_with_details", () => {
   });
 
   it("returns groups, their gedus + participations, and the unassigned inbox", async () => {
-    const setup = await adminAuth.rpc("commit_group_changes", {
+    const setup = await adminAuth.rpc("apply_group_changes", {
       p_product_id: PRODUCT_DETAILS,
       p_added_groups: [
         { tempId: "tA", name: "Alpha", geduIds: [GEDU_A] },

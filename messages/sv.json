@@ -580,42 +580,26 @@
           "nameLabel": "Gruppnamn",
           "namePlaceholder": "Namnge gruppen",
           "nameRequired": "Ge gruppen ett namn.",
-          "nameRequiredHint": "Vissa grupper har inget namn ännu.",
+          "editAria": "Byt namn på {name}",
+          "saveNameAria": "Spara namn",
+          "cancelEditAria": "Avbryt",
           "deleteAria": "Ta bort {name}",
           "gamerCount": "{count, plural, =0 {Inga spelare} =1 {1 spelare} other {# spelare}}",
-          "new": "Ny",
-          "markedForDeletion": "Tas bort",
           "assignedGedus": "Geduer",
           "noGedus": "Inga Geduer än.",
           "addGedu": "Lägg till Gedu",
           "gamersLabel": "Spelare",
           "empty": "Inga spelare här än — dra in någon.",
-          "willBeDeleted": "Dessa spelare flyttas till Otilldelade när du sparar.",
-          "geduStatusFootnote": "Vissa ändringar här är inte sparade ännu.",
           "deleteConfirmTitle": "Ta bort {name}?",
           "deleteConfirmEmpty": "Ingen är i den här gruppen, så att ta bort den rensar bara Gedu-tilldelningarna.",
-          "deleteConfirmWithGamers": "{count, plural, =1 {1 spelare finns i denna grupp} other {# spelare finns i denna grupp}}. De flyttas till Otilldelade när du sparar."
+          "deleteConfirmWithGamers": "{count, plural, =1 {1 spelare finns i denna grupp} other {# spelare finns i denna grupp}}. De flyttas till Otilldelade."
         },
         "gedu": {
-          "pendingAdd": "Läggs till",
-          "pendingRemove": "Tas bort",
           "removeAria": "Ta bort {name}"
         },
         "picker": {
           "addTitle": "Lägg till Gedu i {name}",
           "addDescription": "En Gedu kan bara leda en grupp per produkt. De som redan är tilldelade är gråa."
-        },
-        "commitBar": {
-          "summary": "{count, plural, =1 {1 osparad ändring} other {# osparade ändringar}}",
-          "discard": "Avvisa",
-          "review": "Granska ändringar"
-        },
-        "summary": {
-          "title": "Granska ändringar",
-          "description": "Alla dessa sparas tillsammans. Om någon inte kan sparas så sparas ingen.",
-          "apply": "Spara ändringar",
-          "applying": "Sparar…",
-          "genericError": "Något gick fel. Försök igen."
         }
       },
       "seatLimitModes": {

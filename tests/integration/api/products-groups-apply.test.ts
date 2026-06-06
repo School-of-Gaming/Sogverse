@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/admin/products/[id]/groups/apply/route";
-import type { BatchGroupChanges } from "@/services/groups";
+import type { GroupChangeSet } from "@/services/groups";
 
-// The apply route is a thin wrapper around commit_group_changes — it
-// validates auth, parses the JSON body, and forwards the batch to the RPC.
-// Email notification + Daily.co provisioning live on the v1 route and stay
+// The apply route is a thin wrapper around apply_group_changes — it
+// validates auth, parses the JSON body, and forwards the change set to the RPC.
+// Email notification + Daily.co provisioning live on the legacy route and stay
 // out of scope here. These tests verify auth gating, body parsing, and
 // error code mapping; the RPC's behavior is covered in db tests.
 
@@ -41,7 +41,7 @@ function mockNonAdmin() {
 
 const PRODUCT_ID = "11111111-1111-1111-1111-111111111111";
 
-const emptyBatch: BatchGroupChanges = {
+const emptyBatch: GroupChangeSet = {
   addedGroups: [],
   renamedGroups: [],
   deletedGroupIds: [],
@@ -87,11 +87,11 @@ describe("POST /api/admin/products/[id]/groups/apply", () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it("forwards the batch to commit_group_changes in the right shape", async () => {
+  it("forwards the change set to apply_group_changes in the right shape", async () => {
     mockAuthenticatedAdmin();
     mockRpc.mockResolvedValue({ data: { tempMap: {} }, error: null });
 
-    const batch: BatchGroupChanges = {
+    const batch: GroupChangeSet = {
       addedGroups: [{ tempId: "t1", name: "Group A", geduIds: ["g1"] }],
       renamedGroups: [{ groupId: "G1", name: "Renamed" }],
       deletedGroupIds: ["G2"],
@@ -109,7 +109,7 @@ describe("POST /api/admin/products/[id]/groups/apply", () => {
     expect(body).toEqual({ tempMap: {} });
 
     expect(mockRpc).toHaveBeenCalledTimes(1);
-    expect(mockRpc).toHaveBeenCalledWith("commit_group_changes", {
+    expect(mockRpc).toHaveBeenCalledWith("apply_group_changes", {
       p_product_id: PRODUCT_ID,
       p_added_groups: batch.addedGroups,
       p_renamed_groups: batch.renamedGroups,

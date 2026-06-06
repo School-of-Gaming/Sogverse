@@ -780,7 +780,7 @@ family_subscriptions   -- one row = one Stripe sub = one (gamer, club) participa
 Every new table has RLS enabled. Policy shape follows the existing codebase:
 
 - **Admin = full access.** `get_user_role() = 'admin'` USING/WITH CHECK on every table.
-- **Writes are RPC-gated.** Tables mutated by `SECURITY DEFINER` RPCs (participations, payments, refunds, family subs and items, group/assignment mutations via `commit_group_changes`, substitutions) grant no INSERT/UPDATE/DELETE to `authenticated`.
+- **Writes are RPC-gated.** Tables mutated by `SECURITY DEFINER` RPCs (participations, payments, refunds, family subs and items, group/assignment mutations via `apply_group_changes`, substitutions) grant no INSERT/UPDATE/DELETE to `authenticated`.
 - **`auth.uid()` and `get_user_role()` always wrapped in `(select ...)`** for the initplan optimization used throughout existing migrations.
 
 Baseline SELECT policies per role:
@@ -847,7 +847,7 @@ All RPCs in this section begin with `SELECT 1 FROM products WHERE id = $1 FOR UP
 
 ### 6.1a Group mutations
 
-The `commit_group_changes` RPC is the sole write path for `product_groups`, `gedu_group_assignments`, and `participations.group_id`. Extended for the unassigned inbox column — additive.
+The `apply_group_changes` RPC is the sole write path for `product_groups`, `gedu_group_assignments`, and `participations.group_id`. Extended for the unassigned inbox column — additive.
 
 ### 6.2 Session-level operations
 
@@ -879,7 +879,7 @@ Already dropped (migrations `00052_drop_sorg_enrollment_cron.sql` and `00059_dro
 
 There is **no** session-credit system: no `process_session_credits` cron, no `credit_deductions` / `session_cancellations` ledgers, no `apply_credit_motion` RPC, no `participations.credits_remaining` column. Club billing is a flat monthly Stripe subscription with no per-session accounting.
 
-Groups and `commit_group_changes` are retained and generalized for all product types.
+Groups and `apply_group_changes` are retained and generalized for all product types.
 
 ### 6.5 Subscription management
 
@@ -965,7 +965,7 @@ Seat state ("8 of 10 seats · 3 on waitlist"), schedule with skipped dates surfa
 The objects that make up this domain (tables, RPCs, enums, types, service classes, query-key factories, constants, API routes):
 
 - Tables: `products`, `product_prices`, `product_subscription_prices`, `participations`, `payments`, `refunds`, `family_subscriptions`, `product_groups`, `gedu_group_assignments`, `schedule_slots`, `session_overrides`, `session_substitutions`, `session_attendance`, `session_notes`, `holiday_calendars`, `calendar_holidays`, `product_holiday_calendars`, `site_details`, `site_staff_details`, `product_seat_counts`.
-- RPCs: `create_participation`, `confirm_reservation`, `expire_reservation`, `cancel_participation`, `admin_remove_participation`, `promote_from_waitlist`, `commit_group_changes`, `cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `set_substitute`, `record_attendance`, `start_product`, `cancel_product`, `finalize_completed_products`, `product_has_session`.
+- RPCs: `create_participation`, `confirm_reservation`, `expire_reservation`, `cancel_participation`, `admin_remove_participation`, `promote_from_waitlist`, `apply_group_changes`, `cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `set_substitute`, `record_attendance`, `start_product`, `cancel_product`, `finalize_completed_products`, `product_has_session`.
 - Enums: `product_type`, `billing_mode`, `product_status`, `participation_status`, `payment_purpose`, `refund_reason`, `session_note_visibility`, `session_attendance_status`, `topic_kind`.
 - Code: `services/products/*`, `services/participations/*` (family-subscription reads/RPCs live here too), `productsKeys`, `ParticipationsService`, etc.
 - Routes: admin management at `/admin/products/*`; Checkout endpoints at `/api/checkout/products/*`; webhook at `/api/webhooks/stripe/products`. Parent-facing routes are `/shop` (browse) and `/shop/[id]` (detail, any product type), plus `/registration` for muni clubs.
@@ -1004,7 +1004,7 @@ The unified shape is proven against the two product lines closest to real users.
 - ○ Session operations (`cancel_session`, `reschedule_session`, `request_substitute`, `assign_substitute`, `record_attendance`).
 - ✓ Subscription management — every consumer-club signup creates its own Stripe sub via Checkout (one per gamer×club); the `checkout.session.completed` webhook writes the per-participation `family_subscriptions` row. Cancellation is portal-only: `customer.subscription.deleted` → `cancel_participation` teardown. There is no inline-add path and no `unsubscribe_from_product` RPC.
 - ○ Lifecycle transitions (`start_product`, `cancel_product`, `finalize_completed_products`).
-- ✓ Group mutations (`commit_group_changes`) — atomic batch with the staged-changes pattern, extended for named groups, multi-Gedu, and the unassigned inbox. Companion read RPC `get_product_groups_with_details(p_product_id)` returns a single JSONB document with `groups[]` (each with `gedus[]` + `participations[]`) and `unassigned[]` for the panel.
+- ✓ Group mutations (`apply_group_changes`) — applies a set of group changes atomically (named groups, multi-Gedu, the unassigned inbox). The admin panel auto-saves each action as a single-change set; the RPC still applies its parts in a fixed order within one transaction, which keeps destructive actions (delete-group cascading gamers back to unassigned) safe. Companion read RPC `get_product_groups_with_details(p_product_id)` returns a single JSONB document with `groups[]` (each with `gedus[]` + `participations[]`) and `unassigned[]` for the panel.
 
 **Admin UI** — at `/admin/{consumer-clubs,municipality-clubs,camps,events}{,/new}`.
 - ✓ List page per product type (`ProductListPage`, type-discriminated).
@@ -1016,7 +1016,7 @@ The unified shape is proven against the two product lines closest to real users.
 - ✓ Holiday-calendar checkbox selector on the form (read-only against existing rows; no admin CRUD UI for managing calendars yet).
 - ✓ Type-specific helper card on list pages (`product-type-info-card.tsx`).
 - ✓ Image picker + upload (`image-picker.tsx`).
-- ✓ Groups panel — drag-and-drop UI on the details page (`src/components/admin/products/groups/`). Unassigned column + one card per group with editable name, multi-Gedu pills (add via `GeduPickerSheet`, remove via X button), and droppable participant area. Staged-changes commit-bar pattern via `useGroupEditor`; review summary, then atomic apply through `commit_group_changes`.
+- ✓ Groups panel — drag-and-drop UI on the details page (`src/components/admin/products/groups/`). Unassigned column + one card per group with an inline-editable name (edit icon → input → Enter/Save), multi-Gedu pills (add via `GeduPickerSheet`, remove via X button), and droppable participant area. Each action auto-saves immediately through per-action React Query mutations (`useMoveParticipation`, `useRenameGroup`, `useCreateGroup`, `useAddGedu`, `useRemoveGedu`, `useDeleteGroup`) with optimistic updates that revert on error; the touched element greys out until the write settles. All writes funnel through `apply_group_changes`. Group delete keeps a confirmation dialog (it's destructive); adding a gamer to the product stays a separate enrollment action (`useAdminAddGamerToProduct` → `/participations`).
 - ✓ Edit-product form (thin wrapper around the shared shell; pre-populated via the reverse transform — see §13).
 - ○ Calendar view with computed sessions, overrides, substitutions.
 - ○ Standalone holiday-calendar management screen.
@@ -1428,7 +1428,7 @@ The `expire_reservation` RPC stays around — the webhook calls it on `checkout.
 - **Purchased-state layout for `/shop/[id]`.** The big one. Same route, substantially different UI when the viewer has at least one enrolled gamer: sub management (cancel sub, next billing date), session calendar and per-gamer attendance, **add-another-gamer affordance** (the gap left by today's "go back to browse and pick a different gamer" workaround), leave-club / cancel-sub confirms. Today an enrolled viewer just gets `AlreadySignedUpPanel` in the standard body. **Skeleton caveat:** the body shows `DetailLoadingSkeleton` (hero + 2-column with a tall signup panel); a real purchased layout has a different shape and the skeleton will then reflow visibly — branch the skeleton too when the layout is designed (the CLAUDE.md "no in-place shift" rule).
 - **Admin-cancel-session UI.** `session_overrides` is designed but not shipped. When it lands, extend `computeProductSessions` to merge those rows into `skips` — the calendar View needs no change.
 - **Admin details page — gamer/group management surface.** Once participations land, the details page should host gamer→group assignment plus an "unassigned gamers" tray so admins can do roster work without leaving the product. Cancel-product and Save-as-draft buttons also live here.
-- **Gedu session-details page — unassigned-gamers tray.** `get_gedu_assigned_product` returns `groups[]` only; new signups not yet placed in a group (`participations.group_id IS NULL`, `status = 'active'`) are invisible to the gedu. Add a read-only "Awaiting assignment" section (extend the RPC's return JSONB with an `unassigned[]` array). Gedus can't move gamers — that's still admin-only via `commit_group_changes`. Also: `SessionDetailsPage` conflates a genuine forbidden (`null`) with transient errors — check `isError` separately and reserve `NotAssignedState` for the `42501` case.
+- **Gedu session-details page — unassigned-gamers tray.** `get_gedu_assigned_product` returns `groups[]` only; new signups not yet placed in a group (`participations.group_id IS NULL`, `status = 'active'`) are invisible to the gedu. Add a read-only "Awaiting assignment" section (extend the RPC's return JSONB with an `unassigned[]` array). Gedus can't move gamers — that's still admin-only via `apply_group_changes`. Also: `SessionDetailsPage` conflates a genuine forbidden (`null`) with transient errors — check `isError` separately and reserve `NotAssignedState` for the `42501` case.
 - **Extend `site_details` read policy to purchasing customers.** Migration `00038_site_details_restrict_to_staff.sql` tightened `site_details` to admin + gedu only. The handoff intent was admin + gedu + customers who have purchased a product at that site. Add a third SELECT policy on `site_details` keyed on an active participation at the site, with positive/negative cases in `tests/db/site-details-rls.test.ts`. Leave `site_staff_details` admin + gedu only.
 - **`update_product` silently wipes parent fields the form doesn't surface.** It accepts every editable column with `DEFAULT NULL`; any field the build pipeline (`buildSharedFields` in `product-build.ts`) omits lands as `NULL`. Concrete trap: `refund_policy_days` is in the schema but no UI sets it; a future feature/backfill that populates it would get nulled on the next form edit. **Fix:** make the route pass through fields the client didn't send (mirrors `image_path` "keep current"), or take an explicit "set" sentinel per optional column.
 - **CTA stays active when a price row is missing for the viewer's currency.** The admin form validates all three currencies (`product-build.ts`), but the DB doesn't enforce it (`product_prices` is a `(product_id, currency)` PK with no count constraint). A product missing a currency renders "Not in {currency}" in the price slot but the CTA stays active — once Stripe Checkout is wired, a parent could click Sign up on a product they can't buy. **Fix:** plumb price availability into the CTA decision (disable or hide with a "Switch to {available currency}" hint), parallel to the `ended` treatment.

@@ -88,7 +88,8 @@ const ChipContent = memo(function ChipContent({
 
 interface GamerChipProps extends ContentProps {
   participationId: string;
-  isMoved?: boolean;
+  /** A move for this gamer is saving — greyed out and undraggable until it settles. */
+  isPending?: boolean;
 }
 
 export function GamerChip({
@@ -101,11 +102,12 @@ export function GamerChip({
   parentLastName,
   minecraftUsername,
   minecraftUuid,
-  isMoved,
+  isPending,
 }: GamerChipProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `participation-${participationId}`,
     data: { participationId, gamerId, firstName },
+    disabled: isPending,
   });
 
   return (
@@ -113,12 +115,13 @@ export function GamerChip({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      aria-disabled={isPending || undefined}
       className={cn(
-        "flex cursor-grab items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+        "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+        isPending
+          ? "cursor-progress border-border bg-muted text-foreground opacity-50"
+          : "cursor-grab border-border bg-muted text-foreground",
         isDragging && "opacity-50",
-        isMoved
-          ? "border-primary/30 bg-primary/10 text-primary"
-          : "border-border bg-muted text-foreground",
       )}
     >
       <ChipContent

@@ -6,18 +6,23 @@ import { useTranslations } from "next-intl";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { EffectiveSnapshot } from "@/hooks/use-group-editor";
+import type { GroupParticipationDetail } from "@/types";
 import { GamerChip } from "./gamer-chip";
 
 interface UnassignedCardProps {
-  participations: EffectiveSnapshot["unassigned"];
+  participations: GroupParticipationDetail[];
+  /** participation ids with an in-flight move (greyed/undraggable). */
+  pendingMoveIds: Set<string>;
 }
 
-export function UnassignedCard({ participations }: UnassignedCardProps) {
+export function UnassignedCard({
+  participations,
+  pendingMoveIds,
+}: UnassignedCardProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const { setNodeRef, isOver } = useDroppable({
     id: `group-target-unassigned`,
-    // toGroupId=null is the unassigned-inbox sentinel for the reducer.
+    // toGroupId=null is the unassigned-inbox sentinel.
     data: { toGroupId: null },
   });
 
@@ -60,7 +65,7 @@ export function UnassignedCard({ participations }: UnassignedCardProps) {
                 parentLastName={p.gamer_parent_last_name}
                 minecraftUsername={p.gamer_minecraft_username}
                 minecraftUuid={p.gamer_minecraft_uuid}
-                isMoved={p.isMoved}
+                isPending={pendingMoveIds.has(p.id)}
               />
             ))}
           </div>
