@@ -240,7 +240,7 @@
         "online": "Verkossa",
         "onlineWithin": "Verkossa ({name})",
         "locationMissing": "—",
-        "uncapped": "Ei rajaa (maksuton tapahtuma)",
+        "uncapped": "Ei paikkarajaa",
         "visible": "Näkyy vanhemmille",
         "hidden": "Piilotettu vanhemmilta",
         "waitlistOn": "jonotuslista käytössä",

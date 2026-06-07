@@ -240,7 +240,7 @@
         "online": "Online",
         "onlineWithin": "Online (within {name})",
         "locationMissing": "—",
-        "uncapped": "No cap (free event)",
+        "uncapped": "No seat limit",
         "visible": "Visible to parents",
         "hidden": "Hidden from parents",
         "waitlistOn": "waitlist on",
