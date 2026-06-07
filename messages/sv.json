@@ -240,7 +240,7 @@
         "online": "Online",
         "onlineWithin": "Online (inom {name})",
         "locationMissing": "—",
-        "uncapped": "Ingen begränsning (gratis evenemang)",
+        "uncapped": "Ingen platsgräns",
         "visible": "Synlig för föräldrar",
         "hidden": "Dold för föräldrar",
         "waitlistOn": "väntelista på",
