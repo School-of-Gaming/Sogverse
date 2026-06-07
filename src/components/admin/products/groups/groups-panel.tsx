@@ -35,6 +35,18 @@ import type { ProductGroupsSnapshot, ProductType } from "@/types";
 interface GroupsPanelProps {
   productId: string;
   productType: ProductType;
+  /**
+   * True when this product has a joinable voice room: remote, and with a
+   * session still ahead of it. False for in-person products and for
+   * completed ones (no future occurrence) — the Join button is hidden.
+   */
+  voiceAvailable: boolean;
+  /** Whether the shared session window is currently open. */
+  voiceIsOpen: boolean;
+  /** Pre-formatted "next open" date label for the locked Join button. */
+  opensDate: string;
+  /** Pre-formatted "next open" time label for the locked Join button. */
+  opensTime: string;
 }
 
 // Renders the chip in the floating overlay during a drag. Reads `active` from
@@ -79,7 +91,14 @@ function DragOverlayContent({
   );
 }
 
-export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
+export function GroupsPanel({
+  productId,
+  productType,
+  voiceAvailable,
+  voiceIsOpen,
+  opensDate,
+  opensTime,
+}: GroupsPanelProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const { data: snapshot, isLoading } = useProductGroups(productId);
   const pending = useGroupPending(productId);
@@ -237,6 +256,10 @@ export function GroupsPanel({ productId, productType }: GroupsPanelProps) {
                 key={g.id}
                 group={g}
                 pending={pending}
+                voiceAvailable={voiceAvailable}
+                voiceIsOpen={voiceIsOpen}
+                opensDate={opensDate}
+                opensTime={opensTime}
                 onRename={(groupId, name) => rename.mutate({ groupId, name })}
                 onDelete={(groupId) => deleteGroup.mutate({ groupId })}
                 onAddGedu={(groupId) => setPickerForGroupId(groupId)}

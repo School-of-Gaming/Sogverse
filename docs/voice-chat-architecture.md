@@ -91,6 +91,8 @@ The `computeSessionWindow()` utility (in `src/lib/session-schedule.ts`) determin
 
 **Client-side:** The dashboard `NextSessionCard` calls `computeSessionWindow()` to decide between "Join Voice" (open) and "Opens at …" (locked). A 30-second `useNow()` tick keeps the countdown / state flip live without polling.
 
+**Join surfaces.** Every surface that offers a join renders the shared `JoinVoiceButton` (`src/components/voice/JoinVoiceButton.tsx`): the parent/gamer `NextSessionCard`, the gedu dashboard `GroupCard` and session-details page, and the **admin product-details page** — one button per group card in `GroupsPanel` (`src/components/admin/products/groups/`), so an admin can drop into any group's room (the token endpoint already moderators them in via the role bypass). The group-card surfaces resolve the open/locked state once per product with `computeVoiceState()` (`src/lib/voice-window.ts`), which enumerates the product's next occurrence and applies the same `isVoiceWindowOpen()` boundary. It also returns `hasUpcomingSession`; the admin page hides the button when that's false — a completed product has no future session, so there's nothing to join. The dashboard cards never hit that case because they only ever list future sessions, which is why the admin page is the one surface that needs the gate.
+
 **Server-side:** The token endpoint independently computes the session window over every slot and rejects with 403 if no slot is open right now. This is the security boundary — client-side `isOpen` is display-only.
 
 ## Access Control Model
