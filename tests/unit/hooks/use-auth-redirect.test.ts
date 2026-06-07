@@ -41,4 +41,20 @@ describe("resolveSafeRedirect", () => {
     // The allowlist requires the trailing slash specifically to block this.
     expect(resolveSafeRedirect("/shopxyz")).toBe(null);
   });
+
+  it("rejects path traversal that escapes the /shop/ allowlist", () => {
+    // `/shop/../admin` passes a naive startsWith("/shop/"), but the browser
+    // normalizes it to `/admin` on navigation. We normalize (collapse `..`)
+    // BEFORE the prefix check, so the allowlist sees the real destination.
+    expect(resolveSafeRedirect("/shop/../admin")).toBe(null);
+    expect(resolveSafeRedirect("/shop/../../parent/billing")).toBe(null);
+    // Percent-encoded dot-dot is a double-dot segment per the URL spec.
+    expect(resolveSafeRedirect("/shop/%2e%2e/admin")).toBe(null);
+  });
+
+  it("normalizes in-allowlist traversal to the real path", () => {
+    // A `..` that stays within /shop/ is harmless; it collapses and is
+    // returned as the normalized path the browser would actually visit.
+    expect(resolveSafeRedirect("/shop/x/../abc-123")).toBe("/shop/abc-123");
+  });
 });

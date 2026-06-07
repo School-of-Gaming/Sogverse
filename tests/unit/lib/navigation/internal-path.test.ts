@@ -57,6 +57,14 @@ describe("resolveInternalPath", () => {
         resolveInternalPath("https://internal.invalid@evil.com", FALLBACK),
       ).toBe(FALLBACK);
     });
+
+    it("collapses .. traversal to the normalized same-origin path", () => {
+      // The parser normalizes `..` during construction, so the returned path
+      // is the one the browser would actually navigate to — callers layering
+      // an allowlist on top (resolveSafeRedirect) check the real destination,
+      // not the raw string.
+      expect(resolveInternalPath("/shop/../admin", FALLBACK)).toBe("/admin");
+    });
   });
 
   describe("missing / malformed input falls back", () => {
