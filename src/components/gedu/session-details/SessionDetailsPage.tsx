@@ -8,22 +8,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PadletLink } from "@/components/ui/padlet-link";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import {
-  endDateToCutoff,
-  enumerateRowOccurrences,
-  OPEN_ENDED_OCCURRENCE_CAP,
-  startDateToCutoff,
-} from "@/lib/session-occurrence";
-import { VOICE_CONFIG } from "@/lib/constants/voice";
-import { isVoiceWindowOpen } from "@/lib/voice-window";
+import { computeVoiceState } from "@/lib/voice-window";
 import { ROUTES } from "@/lib/constants";
-import { formatDate, formatTime } from "@/lib/utils";
 import { useNow, useTimezone } from "@/providers";
 import { useGeduAssignedProduct } from "@/services/assignments";
-import type {
-  GeduAssignedProduct,
-  GeduAssignedProductShell,
-} from "@/types";
+import type { GeduAssignedProduct } from "@/types";
 import { AssignedGroupCard } from "./AssignedGroupCard";
 import { PeerGroupCard } from "./PeerGroupCard";
 
@@ -188,70 +177,4 @@ function Loaded({ data }: { data: GeduAssignedProduct }) {
       )}
     </div>
   );
-}
-
-/**
- * Resolve the next session occurrence + voice-window state for the page.
- * Every group on the product shares the same schedule, so we compute it
- * once at the page level and thread the same `(voiceIsOpen, opensDate,
- * opensTime)` triple into every group card. Reuses the same primitive
- * (`enumerateRowOccurrences`) and the shared `isVoiceWindowOpen` helper the
- * dashboard expansion uses, so the lock-state windows can never drift
- * between the dashboard card and this page.
- *
- * Falls back to "voice closed, no scheduled date" when the product has
- * no future occurrence in the iteration window (camp ended, no remaining
- * slots) — the button stays disabled with empty labels.
- *
- * KNOWN / out of scope: `voiceIsOpen` is computed from the schedule alone,
- * independent of `is_remote`. For an in-person product the cards still pass
- * `voiceIsOpen` through, so the Join button renders enabled but inert
- * (`voiceHref` is `"#"` for in-person — see `AssignedGroupCard`). This is
- * the same trap the gedu dashboard `GroupCard` has (`TODO.md`); in-person
- * products are out of scope for now, so we leave it rather than gating the
- * live state on `is_remote` here.
- */
-function computeVoiceState(args: {
-  product: GeduAssignedProductShell;
-  now: Date;
-  locale: string;
-  timeZone: string;
-}): { voiceIsOpen: boolean; opensDate: string; opensTime: string } {
-  const { product, now, locale, timeZone } = args;
-  const windowCloseMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
-
-  const slots = product.schedule_slots.map((s) => ({
-    weekday: s.weekday,
-    startTime: s.start_time,
-    durationMinutes: s.duration_minutes,
-  }));
-
-  const occurrences = enumerateRowOccurrences({
-    slots,
-    timezone: product.timezone,
-    now,
-    startBoundary: startDateToCutoff(product.start_date, product.timezone),
-    endBoundary: endDateToCutoff(product.end_date, product.timezone),
-    cap:
-      product.end_date === null ? OPEN_ENDED_OCCURRENCE_CAP : Number.POSITIVE_INFINITY,
-    windowCloseMs,
-  });
-  occurrences.sort((a, b) => a.start.getTime() - b.start.getTime());
-
-  if (occurrences.length === 0) {
-    return { voiceIsOpen: false, opensDate: "", opensTime: "" };
-  }
-
-  const next = occurrences[0];
-
-  return {
-    voiceIsOpen: isVoiceWindowOpen(next.start, next.end, now),
-    opensDate: formatDate(next.start, locale, {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      timeZone,
-    }),
-    opensTime: formatTime(next.start, locale, timeZone),
-  };
 }

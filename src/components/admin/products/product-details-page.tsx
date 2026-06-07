@@ -30,6 +30,8 @@ import {
 } from "@/services/products";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { effectiveStatus } from "@/lib/products/effective-status";
+import { computeVoiceState } from "@/lib/voice-window";
+import { useNow, useTimezone } from "@/providers";
 import { GroupsPanel } from "./groups/groups-panel";
 import { PRODUCT_TYPE_CONFIG } from "./product-type-config";
 import type { ProductType } from "@/types";
@@ -55,7 +57,10 @@ export function ProductDetailsPage({
   const config = PRODUCT_TYPE_CONFIG[productType];
   const t = useTranslations("admin.products");
   const c = useTranslations("common");
-  const uiLocale = resolveLocale(useLocale());
+  const locale = useLocale();
+  const uiLocale = resolveLocale(locale);
+  const timeZone = useTimezone();
+  const now = useNow();
   const topicLabel = useTopicLabel();
   const label = t(`types.${config.i18nKey}.label`);
   const plural = t(`types.${config.i18nKey}.plural`);
@@ -103,6 +108,15 @@ export function ProductDetailsPage({
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const status = effectiveStatus(product, new Date(), 0);
+  // Every group on the product shares one schedule, so resolve the voice
+  // window once here and thread it into each group's Join button. `useNow`
+  // ticks so the live/locked flip happens without a reload. A room only
+  // exists for a remote product with a session still ahead of it — a
+  // completed product (no future occurrence) has nothing to join, so
+  // `voiceAvailable` is false and GroupsPanel hides the button entirely
+  // rather than render a label-less "Opens at" state.
+  const voice = computeVoiceState({ product, now, locale, timeZone });
+  const voiceAvailable = product.is_remote && voice.hasUpcomingSession;
   const imageUrl = product.image_path
     ? productImageUrl(product.image_path)
     : null;
@@ -136,7 +150,14 @@ export function ProductDetailsPage({
 
       <KeyFacts product={product} topicName={topicName} uiLocale={uiLocale} t={t} c={c} />
 
-      <GroupsPanel productId={productId} productType={productType} />
+      <GroupsPanel
+        productId={productId}
+        productType={productType}
+        voiceAvailable={voiceAvailable}
+        voiceIsOpen={voice.voiceIsOpen}
+        opensDate={voice.opensDate}
+        opensTime={voice.opensTime}
+      />
 
       <FuturePlaceholder
         icon={Clock}

@@ -16,7 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
 import type { GroupPending } from "@/services/groups";
 import type { ProductGroupWithDetails } from "@/types";
 import { GamerChip } from "./gamer-chip";
@@ -25,6 +27,17 @@ import { GeduPill } from "./gedu-pill";
 interface GroupColumnProps {
   group: ProductGroupWithDetails;
   pending: GroupPending;
+  /**
+   * True when this product has a joinable voice room: remote, with a session
+   * still ahead. False for in-person and completed products — no Join button.
+   */
+  voiceAvailable: boolean;
+  /** Whether the shared session window is currently open. */
+  voiceIsOpen: boolean;
+  /** Pre-formatted "next open" date label for the locked Join button. */
+  opensDate: string;
+  /** Pre-formatted "next open" time label for the locked Join button. */
+  opensTime: string;
   onRename: (groupId: string, name: string) => void;
   onDelete: (groupId: string) => void;
   onAddGedu: (groupId: string) => void;
@@ -34,6 +47,10 @@ interface GroupColumnProps {
 export function GroupColumn({
   group,
   pending,
+  voiceAvailable,
+  voiceIsOpen,
+  opensDate,
+  opensTime,
   onRename,
   onDelete,
   onAddGedu,
@@ -48,6 +65,14 @@ export function GroupColumn({
   // A "temp-" id is an optimistic card whose create hasn't persisted yet; its
   // id isn't real, so no action can target it until the settle refetch.
   const isTemp = group.id.startsWith("temp-");
+  // Voice room link for this group. `voiceAvailable` already encodes the
+  // product-level gate (remote + a session still ahead); a not-yet-persisted
+  // (temp) group has no real id to key a room — gate on both. Admins pass the
+  // same token gate as gedus (visible moderator), so the shared
+  // JoinVoiceButton + `/voice/group/[id]` route work unchanged; the button
+  // auto-appends `?back=` so leaving returns to this admin page.
+  const showVoice = voiceAvailable && !isTemp;
+  const voiceHref = ROUTES.voice.groupSession(group.id);
   const isDeleting = pending.deletes.has(group.id);
   const isSaving = isTemp || pending.renames.has(group.id);
   const busy = isSaving || isDeleting;
@@ -156,18 +181,31 @@ export function GroupColumn({
                 </div>
               )}
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="mt-6 h-8 w-8 text-destructive hover:text-destructive"
-              onClick={() => setConfirmDelete(true)}
-              disabled={busy}
-              title={t("group.deleteAria", { name: group.name })}
-              aria-label={t("group.deleteAria", { name: group.name })}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {/* Right-side action cluster: Join (live/locked) sits left of the
+                destructive Delete. `mt-6` drops the cluster to align with the
+                group name under its label. */}
+            <div className="mt-6 flex shrink-0 items-center gap-2">
+              {showVoice && (
+                <JoinVoiceButton
+                  voiceIsOpen={voiceIsOpen}
+                  voiceHref={voiceHref}
+                  opensDate={opensDate}
+                  opensTime={opensTime}
+                />
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive"
+                onClick={() => setConfirmDelete(true)}
+                disabled={busy}
+                title={t("group.deleteAria", { name: group.name })}
+                aria-label={t("group.deleteAria", { name: group.name })}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
