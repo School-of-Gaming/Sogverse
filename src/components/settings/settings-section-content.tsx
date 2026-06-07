@@ -20,9 +20,13 @@ import { isValidPhoneNumber } from "react-phone-number-input";
 import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
 import { toE164Digits } from "@/lib/utils";
 import { useMyMinecraftAccount, useUpdateMyMinecraft } from "@/services/minecraft";
-import { isGamerProfile, type ProfileUpdate } from "@/types";
+import { isGamerProfile, type ProfileUpdate, type SpokenLanguage } from "@/types";
 
-export function SettingsSectionContent() {
+export function SettingsSectionContent({
+  initialSpokenLanguages,
+}: {
+  initialSpokenLanguages: SpokenLanguage[];
+}) {
   const t = useTranslations('settings');
   const c = useTranslations('common');
   const { user, profile, refreshProfile } = useAuth();
@@ -33,7 +37,9 @@ export function SettingsSectionContent() {
   const isGamer = isGamerProfile(profile);
   const { data: mcAccount } = useMyMinecraftAccount();
   const updateMyMc = useUpdateMyMinecraft();
-  const { data: availableLanguages } = useSpokenLanguages();
+  const { data: availableLanguages } = useSpokenLanguages({
+    initialData: initialSpokenLanguages,
+  });
 
   const [firstName, setFirstName] = useState(profile?.first_name ?? "");
   const [lastName, setLastName] = useState(profile?.last_name ?? "");
