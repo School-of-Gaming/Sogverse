@@ -16,6 +16,7 @@ import { getClient } from "@/lib/supabase/client";
 import { toE164Digits } from "@/lib/utils";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
 import { useSpokenLanguages } from "@/services/users";
+import type { SpokenLanguage } from "@/types";
 
 const setupAccountSchema = z.object({
   firstName: z.string().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
@@ -27,7 +28,11 @@ const setupAccountSchema = z.object({
   path: ["confirmPassword"],
 });
 
-export function SetupAccountForm() {
+export function SetupAccountForm({
+  initialSpokenLanguages,
+}: {
+  initialSpokenLanguages: SpokenLanguage[];
+}) {
   const t = useTranslations('auth');
   const c = useTranslations('common');
   const [firstName, setFirstName] = useState("");
@@ -45,7 +50,9 @@ export function SetupAccountForm() {
   const [sessionEmail, setSessionEmail] = useState("");
 
   const supabase = getClient();
-  const { data: availableLanguages } = useSpokenLanguages();
+  const { data: availableLanguages } = useSpokenLanguages({
+    initialData: initialSpokenLanguages,
+  });
 
   // generateLink() uses implicit flow (tokens in URL hash) because there's
   // no PKCE challenge. The @supabase/ssr client is configured for PKCE mode
