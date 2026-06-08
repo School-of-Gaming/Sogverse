@@ -179,7 +179,6 @@ export type CreateParticipationInput = {
  * the product row can't: which product, who it's for, and the row's status.
  */
 export interface ParticipationConfirmation {
-  id: string;
   status: ParticipationStatus;
   productId: string;
   /** Gamer's first name (or username fallback); null → page shows "Your child". */
@@ -395,8 +394,13 @@ export class ParticipationsService {
 
   /**
    * The single participation behind a just-completed signup, for the purchase
-   * confirmation page (`/shop/confirmation?p=<id>`). Gated by RLS to the owning
-   * customer (`customer_id = auth.uid()`) — a parent only ever reads their own.
+   * confirmation page (`/shop/confirmation?p=<id>`). Gated entirely by RLS:
+   * `customer_select_own_participations` (`customer_id = auth.uid()`) is the
+   * intended path — a parent reading their own purchase. Note RLS *also* lets a
+   * gamer read their OWN row (`gamer_select_own_participations`,
+   * `gamer_id = auth.uid()`), so a logged-in child who somehow has the `?p=`
+   * link can load their own confirmation. That's not the intended flow but it's
+   * harmless: own data only (no IDOR), and the product detail is public anyway.
    * Returns null when the id matches nothing the caller may see (a stale or
    * forged `?p=` link), which the page renders as a friendly "couldn't find
    * that order" fallback.
@@ -418,7 +422,7 @@ export class ParticipationsService {
       .from("participations")
       .select(
         `
-          id, status, product_id,
+          status, product_id,
           gamer:profiles!participations_gamer_id_fkey(first_name, username)
         `,
       )
@@ -429,7 +433,6 @@ export class ParticipationsService {
     if (!data) return null;
 
     return {
-      id: data.id,
       status: data.status,
       productId: data.product_id,
       gamerName: data.gamer.first_name || data.gamer.username || null,

@@ -40,6 +40,13 @@ export function PurchaseConfirmationView({
   const productName = tr?.name ?? "";
   const gamer = gamerName ?? t("fallbackGamer");
 
+  // Price is recomputed from the product's *current* prices, not stored as a
+  // receipt of what was charged. For the fresh post-checkout view that's
+  // correct. Honest caveat: the page is RLS-revisitable (no consumed flag), so
+  // if an admin later changes the product's price, a parent reopening an old
+  // confirmation link sees the new price on a summary captioned as their order.
+  // Accepted — this is a "what you signed up for" confirmation, not a billing
+  // receipt; the authoritative record lives in Stripe / My SOG.
   const pricingOption = buildPricingOption({
     prices: product.product_prices,
     billingMode: product.billing_mode,
