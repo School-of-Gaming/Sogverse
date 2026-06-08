@@ -1824,12 +1824,6 @@
       "gamerNote": "This feedback is from a gamer account. Replies will go to their parent ({parentEmail})."
     }
   },
-  "mouseflow": {
-    "title": "Help us improve Sogverse",
-    "body": "Sogverse is in Beta. To learn how people actually use the site — so we can make it better for everyone — we'd like to record your visit (mouse movements, clicks, and which pages you visit). Only Sogverse admins can see this, and we will delete all of it once Beta ends.",
-    "accept": "Yes, help improve Sogverse",
-    "decline": "No thanks"
-  },
   "privacy": {
     "title": "Privacy Policy",
     "lastUpdated": "Last updated: {date}",
@@ -1914,8 +1908,7 @@
           "Brevo — sends our emails, such as receipts and reminders.",
           "Daily.co — powers the live voice and video sessions.",
           "Vercel — hosts the website and provides anonymous, cookie-free usage statistics.",
-          "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp.",
-          "Mouseflow — only if you agree: helps us see how the site is used during our Beta period (see below)."
+          "Meta (WhatsApp) — used to send some messages and reminders to families who prefer WhatsApp."
         ]
       },
       "cookies": {
@@ -1923,8 +1916,7 @@
         "paragraphs": [
           "We don't use advertising or tracking cookies, and we don't follow you around the internet.",
           "We use a small number of necessary cookies to keep you securely logged in — the site can't work without these, so they don't need your consent.",
-          "To understand things like how many people visit and whether they're using a phone or a computer, we use Vercel's analytics. It's privacy-friendly: no cookies, and it doesn't identify you personally.",
-          "During our Beta period we also use a tool called Mouseflow that can record how the site is used (mouse movements, clicks, and pages visited) so we can improve it. This only runs if you choose \"Yes\" on the banner, and we delete all of it once Beta ends. You can decline and the site works exactly the same."
+          "To understand things like how many people visit and whether they're using a phone or a computer, we use Vercel's analytics. It's privacy-friendly: no cookies, and it doesn't identify you personally."
         ]
       },
       "voice": {
@@ -1936,8 +1928,7 @@
       "retention": {
         "heading": "How long we keep your information",
         "paragraphs": [
-          "We keep your information for as long as you have an account with us. If you close your account, we delete or anonymise your information — except where the law requires us to keep certain records longer, such as Finnish accounting law, which requires payment records to be kept for several years.",
-          "Mouseflow recordings, if you agreed to them, are deleted when our Beta period ends."
+          "We keep your information for as long as you have an account with us. If you close your account, we delete or anonymise your information — except where the law requires us to keep certain records longer, such as Finnish accounting law, which requires payment records to be kept for several years."
         ]
       },
       "storage": {

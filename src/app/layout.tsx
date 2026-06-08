@@ -3,7 +3,6 @@ import { cookies, headers } from "next/headers";
 import { Inter, Press_Start_2P } from "next/font/google";
 import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { Providers } from "@/providers";
-import { MouseflowConsent } from "@/components/layout";
 import { getUserWithProfile } from "@/lib/supabase/server";
 import { resolveTimezone, TIMEZONE_COOKIE_NAME } from "@/lib/timezone";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -92,7 +91,6 @@ export default async function RootLayout({
               offset to clear them. The document is the single scroll
               container; no inner element should set h-screen overflow-auto. */}
           {children}
-          <MouseflowConsent nonce={nonce} />
         </Providers>
         <SpeedInsights />
         <Analytics />

@@ -1824,12 +1824,6 @@
       "gamerNote": "Denna feedback kommer från ett spelarkonto. Svar skickas till deras förälder ({parentEmail})."
     }
   },
-  "mouseflow": {
-    "title": "Hjälp oss göra Sogverse bättre",
-    "body": "Sogverse är i Beta. För att lära oss hur människor faktiskt använder webbplatsen — så att vi kan göra den bättre för alla — skulle vi vilja spela in ditt besök (musrörelser, klick och vilka sidor du besöker). Endast Sogverses administratörer kan se detta, och vi kommer att radera allt när Beta tar slut.",
-    "accept": "Ja, hjälp till att förbättra Sogverse",
-    "decline": "Nej tack"
-  },
   "privacy": {
     "title": "Integritetspolicy",
     "lastUpdated": "Senast uppdaterad: {date}",
@@ -1914,8 +1908,7 @@
           "Brevo – skickar våra e-postmeddelanden, till exempel kvitton och påminnelser.",
           "Daily.co – möjliggör de direktsända röst- och videoträffarna.",
           "Vercel – är värd för webbplatsen och tillhandahåller anonym, cookiefri användningsstatistik.",
-          "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp.",
-          "Mouseflow – endast om du godkänner det: hjälper oss att se hur webbplatsen används under betaperioden (se nedan)."
+          "Meta (WhatsApp) – för att skicka vissa meddelanden och påminnelser till familjer som hellre använder WhatsApp."
         ]
       },
       "cookies": {
@@ -1923,8 +1916,7 @@
         "paragraphs": [
           "Vi använder inga reklam- eller spårningscookies, och vi följer dig inte runt på internet.",
           "Vi använder ett fåtal nödvändiga cookies för att hålla dig säkert inloggad – webbplatsen fungerar inte utan dem, så de kräver inte ditt samtycke.",
-          "För att förstå sådant som hur många som besöker oss och om de använder telefon eller dator använder vi Vercels analys. Den är integritetsvänlig: inga cookies och ingen personlig identifiering.",
-          "Under betaperioden använder vi även ett verktyg som heter Mouseflow, som kan spela in hur webbplatsen används (musrörelser, klick och besökta sidor) så att vi kan förbättra den. Detta sker endast om du väljer \"Ja\" i bannern, och vi raderar allt när betaperioden tar slut. Du kan tacka nej, och webbplatsen fungerar precis likadant."
+          "För att förstå sådant som hur många som besöker oss och om de använder telefon eller dator använder vi Vercels analys. Den är integritetsvänlig: inga cookies och ingen personlig identifiering."
         ]
       },
       "voice": {
@@ -1936,8 +1928,7 @@
       "retention": {
         "heading": "Hur länge vi sparar dina uppgifter",
         "paragraphs": [
-          "Vi sparar dina uppgifter så länge du har ett konto hos oss. Om du avslutar ditt konto raderar eller anonymiserar vi dina uppgifter – utom när lagen kräver att vi sparar vissa uppgifter längre, till exempel den finländska bokföringslagen som kräver att betalningsuppgifter sparas i flera år.",
-          "Mouseflow-inspelningar, om du godkänt dem, raderas när betaperioden tar slut."
+          "Vi sparar dina uppgifter så länge du har ett konto hos oss. Om du avslutar ditt konto raderar eller anonymiserar vi dina uppgifter – utom när lagen kräver att vi sparar vissa uppgifter längre, till exempel den finländska bokföringslagen som kräver att betalningsuppgifter sparas i flera år."
         ]
       },
       "storage": {

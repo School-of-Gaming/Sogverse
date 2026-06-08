@@ -1869,12 +1869,6 @@
       "gamerNote": "QIn'vam toy'wI' account vo'. jangmey vav/SoS naDev ({parentEmail}) ghoS."
     }
   },
-  "mouseflow": {
-    "title": "Sogverse yIDubmoH",
-    "body": "Sogverse Beta 'oH. nuq Dalo'? 'e' wIyajqu' wIneH — vaj Hoch chaH yIDubmoH. Daqonta'bogh wIqonchugh maQap (DaQwI' vIH, jonta', je paq DaghoSpu'bogh). Sogverse pIn'a'pu' neH lulegh, je Beta rInchugh, Hoch wIteq.",
-    "accept": "HIja', Sogverse yIDubmoH",
-    "decline": "ghobe'"
-  },
   "privacy": {
     "title": "Privacy Policy (batlh So'wI')",
     "lastUpdated": "Last updated: {date}",
@@ -1959,8 +1953,7 @@
           "Brevo — sends our messages, such as receipts and reminders.",
           "Daily.co — powers the live voice and video sessions.",
           "Vercel — hosts the site and gives anonymous, cookie-free battle statistics.",
-          "Meta (WhatsApp) — to send some messages to houses who favor WhatsApp.",
-          "Mouseflow — only with your blessing: shows how the site is used during our Beta (see below)."
+          "Meta (WhatsApp) — to send some messages to houses who favor WhatsApp."
         ]
       },
       "cookies": {
@@ -1968,8 +1961,7 @@
         "paragraphs": [
           "We use no advertising or tracking cookies, and we do not stalk you across the stars.",
           "We use a few necessary cookies to keep you securely logged in — the site cannot fight without them, so they need no consent.",
-          "To learn how many visit and whether by phone or computer, we use Vercel's analytics — honorable and private: no cookies, and no naming you.",
-          "During Beta we also use Mouseflow, which may record how the site is used (mouse moves, clicks, pages) so we may forge it better. It runs only if you choose \"Yes\" on the banner, and we destroy all of it when Beta ends. Refuse, and the site fights on just the same."
+          "To learn how many visit and whether by phone or computer, we use Vercel's analytics — honorable and private: no cookies, and no naming you."
         ]
       },
       "voice": {
@@ -1981,8 +1973,7 @@
       "retention": {
         "heading": "How long we keep your data",
         "paragraphs": [
-          "We keep your data as long as you hold an account with us. Close it, and we destroy or anonymize your data — save where the law commands we keep certain records longer, as Finnish accounting law demands payment records be kept for several years.",
-          "Mouseflow recordings, if you allowed them, are destroyed when Beta ends."
+          "We keep your data as long as you hold an account with us. Close it, and we destroy or anonymize your data — save where the law commands we keep certain records longer, as Finnish accounting law demands payment records be kept for several years."
         ]
       },
       "storage": {
