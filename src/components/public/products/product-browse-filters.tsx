@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Sliders, X, Globe, MapPin } from "lucide-react";
 import { LanguageFlag } from "@/components/ui/language-flag";
 import { GAME_TOPICS } from "@/lib/products/topics";
@@ -9,8 +9,16 @@ import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
 import type { SpokenLanguage } from "@/types";
 import { cn } from "@/lib/utils";
+import { productTypeSupportsDayFilter } from "./filter-products";
+import { formatWeekday } from "./format-product-schedule";
 import { useBrowseFilters } from "./use-browse-filters";
-import { useShopCategory } from "./use-shop-category";
+import { CATEGORY_TYPE, useShopCategory } from "./use-shop-category";
+
+// Weekdays for the Clubs-only "Days" row, in fixed Mon→Sun order (0=Mon..6=Sun,
+// matching `schedule_slots.weekday`). Hardcoded Monday-first: this is a filter,
+// not a calendar, so the locale's first-day-of-week convention doesn't matter
+// here. The per-chip labels are still localised via `formatWeekday`.
+const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 // Filter strip — horizontally-scrollable chip rows (type, game, format,
 // language). The game row lists the game topics; subject topics (e.g.
@@ -35,6 +43,7 @@ export function ProductBrowseFilters({
   initialSpokenLanguages,
 }: ProductBrowseFiltersProps) {
   const t = useTranslations("productBrowse.filters");
+  const locale = useLocale();
   const topicLabel = useTopicLabel();
   const { data: spokenLanguages } = useSpokenLanguages({
     initialData: initialSpokenLanguages,
@@ -49,16 +58,25 @@ export function ProductBrowseFilters({
     format: selectedFormat,
     languages: selectedLanguages,
     age: selectedAge,
-    hasAny,
+    days: selectedDays,
+    hasNonDayFilters,
     toggleTopic,
     toggleFormat,
     toggleLanguage,
     setAge,
+    toggleDay,
     clear,
   } = useBrowseFilters();
 
   const hasLanguageRow = (spokenLanguages?.length ?? 0) > 0;
   const ageOptions = productAgeOptions();
+
+  // The Days row only applies to clubs (same gate as the row's visibility
+  // below). A `?days=` carried over from Clubs lingers in the URL on Camps by
+  // design, but it shouldn't light up Clear there — so only count selected days
+  // toward Clear when the filter is actually active in this context.
+  const daysActive = productTypeSupportsDayFilter(CATEGORY_TYPE[category]);
+  const showClear = hasNonDayFilters || (daysActive && selectedDays.length > 0);
 
   return (
     <div className="rounded-xl border bg-card/50 p-3 sm:p-4">
@@ -73,11 +91,11 @@ export function ProductBrowseFilters({
         <button
           type="button"
           onClick={clear}
-          aria-hidden={!hasAny}
-          tabIndex={hasAny ? 0 : -1}
+          aria-hidden={!showClear}
+          tabIndex={showClear ? 0 : -1}
           className={cn(
             "inline-flex items-center gap-1 rounded-full border border-input px-2 py-0.5 text-xs font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-            !hasAny && "invisible pointer-events-none",
+            !showClear && "invisible pointer-events-none",
           )}
         >
           <X className="h-3 w-3" aria-hidden />
@@ -163,6 +181,39 @@ export function ProductBrowseFilters({
             />
           ))}
         </FilterRow>
+
+        {/* Days is a Clubs-only filter: clubs meet on a recurring weekly
+            schedule, camps run over a date range. Rendered last so toggling
+            the Type chip to Camps removes the row without shifting any row
+            above it. Chip labels show the short weekday on phones and the full
+            name from `sm:` up — both come from Intl via `formatWeekday`. */}
+        {daysActive && (
+          <FilterRow label={t("days")}>
+            {WEEKDAYS.map((w) => (
+              <Chip
+                key={w}
+                // Fixed, centered width so all seven chips line up like the Age
+                // row. Two widths because the label is responsive: ~3-char
+                // short form on phones, full weekday name from `sm:` up. 5.5rem
+                // fits the en/sv full names; the longest fi name ("keskiviikko")
+                // slightly exceeds it and that one chip grows past the floor.
+                className="min-w-[2.75rem] justify-center sm:min-w-[5.5rem]"
+                active={selectedDays.includes(w)}
+                onToggle={() => toggleDay(w)}
+                label={
+                  <>
+                    <span className="sm:hidden">
+                      {formatWeekday(w, locale, "short")}
+                    </span>
+                    <span className="hidden sm:inline">
+                      {formatWeekday(w, locale, "long")}
+                    </span>
+                  </>
+                }
+              />
+            ))}
+          </FilterRow>
+        )}
       </div>
     </div>
   );
@@ -194,7 +245,7 @@ function Chip({
   icon,
   className,
 }: {
-  label: string;
+  label: React.ReactNode;
   active: boolean;
   onToggle: () => void;
   icon?: React.ReactNode;
