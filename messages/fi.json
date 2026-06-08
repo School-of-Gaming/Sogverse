@@ -1824,12 +1824,6 @@
       "gamerNote": "Tämä palaute on pelaajatililtä. Vastaukset ohjataan hänen vanhemmalleen ({parentEmail})."
     }
   },
-  "mouseflow": {
-    "title": "Auta meitä parantamaan Sogversea",
-    "body": "Sogverse on Beta-vaiheessa. Jotta opimme, miten sivustoa todella käytetään — ja voimme tehdä siitä paremman kaikille — haluaisimme tallentaa vierailusi (hiiren liikkeet, klikkaukset ja vieraillut sivut). Vain Sogversen ylläpitäjät näkevät nämä tiedot, ja poistamme kaiken, kun Beta päättyy.",
-    "accept": "Kyllä, autan parantamaan Sogversea",
-    "decline": "Ei kiitos"
-  },
   "privacy": {
     "title": "Tietosuojaseloste",
     "lastUpdated": "Päivitetty viimeksi: {date}",
@@ -1914,8 +1908,7 @@
           "Brevo – lähettää sähköpostimme, kuten kuitit ja muistutukset.",
           "Daily.co – mahdollistaa suorat ääni- ja videotapaamiset.",
           "Vercel – ylläpitää sivustoa ja tarjoaa nimettömät, evästeettömät käyttötilastot.",
-          "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia.",
-          "Mouseflow – vain jos annat luvan: auttaa meitä näkemään, miten sivustoa käytetään beetavaiheen aikana (katso jäljempänä)."
+          "Meta (WhatsApp) – joidenkin viestien ja muistutusten lähettämiseen perheille, jotka käyttävät mieluummin WhatsAppia."
         ]
       },
       "cookies": {
@@ -1923,8 +1916,7 @@
         "paragraphs": [
           "Emme käytä mainos- tai seurantaevästeitä emmekä seuraa sinua ympäri internetiä.",
           "Käytämme muutamaa välttämätöntä evästettä, jotta pysyt turvallisesti kirjautuneena – sivusto ei toimi ilman niitä, joten ne eivät vaadi suostumustasi.",
-          "Ymmärtääksemme esimerkiksi sen, kuinka moni vierailee sivustolla ja käyttääkö hän puhelinta vai tietokonetta, käytämme Vercelin analytiikkaa. Se on yksityisyysystävällistä: ei evästeitä eikä henkilökohtaista tunnistamista.",
-          "Beetavaiheen aikana käytämme myös Mouseflow-nimistä työkalua, joka voi tallentaa sivuston käyttöä (hiiren liikkeet, klikkaukset ja vieraillut sivut), jotta voimme parantaa sitä. Tämä toimii vain, jos valitset bannerista \"Kyllä\", ja poistamme kaiken aineiston, kun beetavaihe päättyy. Voit kieltäytyä, ja sivusto toimii silti täsmälleen samoin."
+          "Ymmärtääksemme esimerkiksi sen, kuinka moni vierailee sivustolla ja käyttääkö hän puhelinta vai tietokonetta, käytämme Vercelin analytiikkaa. Se on yksityisyysystävällistä: ei evästeitä eikä henkilökohtaista tunnistamista."
         ]
       },
       "voice": {
@@ -1936,8 +1928,7 @@
       "retention": {
         "heading": "Kuinka kauan säilytämme tietojasi",
         "paragraphs": [
-          "Säilytämme tietojasi niin kauan kuin sinulla on tili meillä. Jos suljet tilisi, poistamme tai anonymisoimme tietosi – paitsi silloin, kun laki edellyttää meitä säilyttämään tietyt tiedot pidempään, kuten Suomen kirjanpitolaki, joka velvoittaa säilyttämään maksutiedot useita vuosia.",
-          "Mouseflow-tallenteet, jos annoit niihin luvan, poistetaan beetavaiheen päättyessä."
+          "Säilytämme tietojasi niin kauan kuin sinulla on tili meillä. Jos suljet tilisi, poistamme tai anonymisoimme tietosi – paitsi silloin, kun laki edellyttää meitä säilyttämään tietyt tiedot pidempään, kuten Suomen kirjanpitolaki, joka velvoittaa säilyttämään maksutiedot useita vuosia."
         ]
       },
       "storage": {
