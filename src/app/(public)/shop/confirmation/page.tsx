@@ -41,7 +41,14 @@ export default async function ShopConfirmationPage({
     }
   } catch {
     // RLS miss / stale id / transient error → render the friendly fallback
-    // rather than a 500. A real purchaser never lands in here.
+    // rather than a 500. A real purchaser effectively never lands here.
+    //
+    // Honest edge case: a transient DB/network blip is swallowed the same way,
+    // so a parent who *just* paid could momentarily see the "couldn't find
+    // that order" copy — alarming wording right after a charge. We accept it:
+    // the failure is rare, the purchase is safe (it's in My SOG regardless),
+    // and a simple page reload re-fetches and shows the real confirmation. Not
+    // worth distinguishing transient errors from genuine misses today.
   }
 
   if (!product) return <PurchaseConfirmationFallback />;
