@@ -4,26 +4,22 @@ import { useTranslations } from "next-intl";
 import { ExternalLink, Gamepad2, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { PRODUCT_TOPICS, isGameTopic } from "@/lib/products/topics";
-import type { ProductTopic } from "@/types";
+import { PRODUCT_TOPICS } from "@/lib/products/topics";
+import type { GameTopic } from "@/lib/products/topics";
 
 // "About the game" card on the product detail page. Helps a non-gamer parent
 // understand the game their child will play, what (if anything) they need to
 // buy, and where to get it.
 //
-// Renders ONLY for game topics (Minecraft editions, Fortnite); subjects like
-// Webinar have no game, so the caller guards on PRODUCT_TOPICS[topic].kind.
-// The brand name and PEGI rating are literals from PRODUCT_TOPICS (never
-// translated); the description, "not included" note and link label come from
-// the productDetail.gameInfo.games.<topic> message namespace.
+// Takes a GameTopic (not ProductTopic): the caller narrows with isGameTopic, so
+// subjects like Webinar — which have no game to describe — never reach here, and
+// the `gameInfo.games.<topic>` message keys below can't land on the
+// non-existent `webinar` branch. The brand name and PEGI rating are literals
+// from PRODUCT_TOPICS (never translated); the description, "not included" note
+// and link label come from the productDetail.gameInfo.games.<topic> namespace.
 
-export function GameInfoCard({ topic }: { topic: ProductTopic }) {
+export function GameInfoCard({ topic }: { topic: GameTopic }) {
   const t = useTranslations("productDetail");
-
-  // Subjects have no game facts — nothing to show. The caller already guards
-  // on this; narrowing `topic` (not just meta) keeps the message keys below
-  // off the non-existent `gameInfo.games.webinar.*` branch.
-  if (!isGameTopic(topic)) return null;
   const meta = PRODUCT_TOPICS[topic];
 
   const g = (key: "description" | "note" | "linkLabel") =>

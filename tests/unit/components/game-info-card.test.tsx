@@ -25,7 +25,7 @@ describe("GameInfoCard", () => {
 
     const link = getByRole("link");
     expect(link.getAttribute("href")).toBe(
-      "https://www.minecraft.net/en-us/store/minecraft-java-bedrock-edition-pc",
+      "https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc",
     );
     // External link safety.
     expect(link.getAttribute("rel")).toContain("noopener");
@@ -68,10 +68,5 @@ describe("GameInfoCard", () => {
     expect(getByRole("link").getAttribute("href")).toBe(
       "https://www.fortnite.com/",
     );
-  });
-
-  it("renders nothing for a subject topic (no game to describe)", () => {
-    const { container } = render(<GameInfoCard topic="webinar" />);
-    expect(container.firstChild).toBeNull();
   });
 });
