@@ -9,7 +9,10 @@ import {
   type ParticipationCounts,
 } from "@/services/participations";
 import type { ProductType, ProductBrowseRow, SpokenLanguage } from "@/types";
-import { filterProducts } from "./filter-products";
+import {
+  filterProducts,
+  productTypeSupportsDayFilter,
+} from "./filter-products";
 import { useBrowseFilters } from "./use-browse-filters";
 import { SHOP_PRODUCT_TYPES } from "./use-shop-category";
 import { ProductBrowseCard } from "./product-browse-card";
@@ -106,10 +109,21 @@ export function ProductBrowsePage({
     [products, browseType],
   );
 
-  const { topics, format, languages, age } = useBrowseFilters();
+  const { topics, format, languages, age, days } = useBrowseFilters();
+  // Days is a Clubs-only filter (recurring weekly schedule). Camps run over a
+  // date range, so even though their slots carry weekdays we never narrow them
+  // by day — drop a stale `?days=` when the browse type doesn't support it.
+  const supportsDays = productTypeSupportsDayFilter(browseType);
   const filtered = useMemo(
-    () => filterProducts(typeProducts, { topics, format, languages, age }),
-    [typeProducts, topics, format, languages, age],
+    () =>
+      filterProducts(typeProducts, {
+        topics,
+        format,
+        languages,
+        age,
+        days: supportsDays ? days : [],
+      }),
+    [typeProducts, topics, format, languages, age, days, supportsDays],
   );
 
   const headingKey = HEADING_KEYS[browseType];

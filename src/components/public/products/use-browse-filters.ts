@@ -13,6 +13,7 @@ const TOPIC_PARAM = "topic";
 const FORMAT_PARAM = "format";
 const LANGUAGE_PARAM = "lang";
 const AGE_PARAM = "age";
+const DAYS_PARAM = "days";
 
 function parseList(raw: string | null): string[] {
   if (!raw) return [];
@@ -20,6 +21,20 @@ function parseList(raw: string | null): string[] {
     .split(",")
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
+}
+
+// Weekdays as integers 0=Mon..6=Sun (matching `schedule_slots.weekday`).
+// Anything out of range or unparseable is dropped so a hand-edited URL can't
+// surface a day the filter never offered; the result is deduped and sorted so
+// `?days=4,0,4` normalises to `[0, 4]`.
+function parseDays(raw: string | null): number[] {
+  if (!raw) return [];
+  const seen = new Set<number>();
+  for (const part of raw.split(",")) {
+    const n = Number(part.trim());
+    if (Number.isInteger(n) && n >= 0 && n <= 6) seen.add(n);
+  }
+  return [...seen].sort((a, b) => a - b);
 }
 
 function parseFormat(raw: string | null): ProductFormat | null {
@@ -69,11 +84,22 @@ export function useBrowseFilters() {
     () => parseAge(searchParams.get(AGE_PARAM)),
     [searchParams],
   );
-  const hasAny =
+  const days = useMemo(
+    () => parseDays(searchParams.get(DAYS_PARAM)),
+    [searchParams],
+  );
+  // Split out the non-day filters: whether the day filter counts as "active"
+  // is context-dependent (it only applies to clubs — see
+  // `productTypeSupportsDayFilter`), and only the caller knows the current
+  // category. Exposing `hasNonDayFilters` lets the filter strip decide whether
+  // a stale `?days=` should light up the Clear button without re-deriving this
+  // whole chain. `hasAny` keeps its old meaning for any other consumer.
+  const hasNonDayFilters =
     topics.length > 0 ||
     format !== null ||
     languages.length > 0 ||
     age !== null;
+  const hasAny = hasNonDayFilters || days.length > 0;
 
   const writeNext = useCallback(
     (next: {
@@ -81,6 +107,7 @@ export function useBrowseFilters() {
       format?: ProductFormat | null;
       languages?: string[];
       age?: number | null;
+      days?: number[];
     }) => {
       const params = new URLSearchParams(searchParams.toString());
       if (next.topics !== undefined) {
@@ -98,6 +125,10 @@ export function useBrowseFilters() {
       if (next.age !== undefined) {
         if (next.age === null) params.delete(AGE_PARAM);
         else params.set(AGE_PARAM, String(next.age));
+      }
+      if (next.days !== undefined) {
+        if (next.days.length === 0) params.delete(DAYS_PARAM);
+        else params.set(DAYS_PARAM, next.days.join(","));
       }
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
@@ -141,8 +172,18 @@ export function useBrowseFilters() {
     [writeNext],
   );
 
+  const toggleDay = useCallback(
+    (weekday: number) => {
+      const next = days.includes(weekday)
+        ? days.filter((d) => d !== weekday)
+        : [...days, weekday].sort((a, b) => a - b);
+      writeNext({ days: next });
+    },
+    [days, writeNext],
+  );
+
   const clear = useCallback(() => {
-    writeNext({ topics: [], format: null, languages: [], age: null });
+    writeNext({ topics: [], format: null, languages: [], age: null, days: [] });
   }, [writeNext]);
 
   return {
@@ -150,11 +191,14 @@ export function useBrowseFilters() {
     format,
     languages,
     age,
+    days,
     hasAny,
+    hasNonDayFilters,
     toggleTopic,
     toggleFormat,
     toggleLanguage,
     setAge,
+    toggleDay,
     clear,
   };
 }

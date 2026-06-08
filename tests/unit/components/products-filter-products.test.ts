@@ -11,6 +11,9 @@ function row(overrides: {
   spokenLanguageCode?: string;
   minAge?: number;
   maxAge?: number;
+  // Weekdays (0=Mon..6=Sun) the product's recurring schedule touches. Each
+  // becomes a schedule_slot; only `weekday` matters for filterProducts().
+  weekdays?: number[];
 }): ProductBrowseRow {
   return {
     id: overrides.id,
@@ -21,7 +24,11 @@ function row(overrides: {
     max_age: overrides.maxAge ?? 17,
     product_translations: [],
     product_prices: [],
-    schedule_slots: [],
+    schedule_slots: (overrides.weekdays ?? []).map((weekday) => ({
+      weekday,
+      start_time: "16:00:00",
+      duration_minutes: 60,
+    })),
     locations: null,
   } as unknown as ProductBrowseRow;
 }
@@ -33,6 +40,7 @@ const A = row({
   spokenLanguageCode: "en",
   minAge: 7,
   maxAge: 9,
+  weekdays: [0, 2], // Mon, Wed
 });
 const B = row({
   id: "b",
@@ -41,6 +49,7 @@ const B = row({
   spokenLanguageCode: "fi",
   minAge: 12,
   maxAge: 17,
+  weekdays: [4], // Fri
 });
 const C = row({
   id: "c",
@@ -49,6 +58,7 @@ const C = row({
   spokenLanguageCode: "fi",
   minAge: 7,
   maxAge: 17,
+  weekdays: [], // schedule TBD — no slots
 });
 
 const ALL = [A, B, C];
@@ -56,7 +66,13 @@ const ALL = [A, B, C];
 describe("filterProducts", () => {
   it("returns everything when filters are empty", () => {
     expect(
-      filterProducts(ALL, { topics: [], format: null, languages: [], age: null }),
+      filterProducts(ALL, {
+        topics: [],
+        format: null,
+        languages: [],
+        age: null,
+        days: [],
+      }),
     ).toEqual(ALL);
   });
 
@@ -67,6 +83,7 @@ describe("filterProducts", () => {
         format: null,
         languages: [],
         age: null,
+        days: [],
       }).map((p) => p.id),
     ).toEqual(["a"]);
   });
@@ -77,6 +94,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       age: null,
+      days: [],
     }).map((p) => p.id);
     expect(ids).toEqual(["a", "b"]);
   });
@@ -89,6 +107,7 @@ describe("filterProducts", () => {
         format: "online",
         languages: [],
         age: null,
+        days: [],
       }),
     ).toEqual([]);
   });
@@ -99,6 +118,7 @@ describe("filterProducts", () => {
       format: "online",
       languages: [],
       age: null,
+      days: [],
     }).map((p) => p.id);
     // A and C are remote.
     expect(ids.sort()).toEqual(["a", "c"]);
@@ -110,6 +130,7 @@ describe("filterProducts", () => {
       format: "in_person",
       languages: [],
       age: null,
+      days: [],
     }).map((p) => p.id);
     expect(ids).toEqual(["b"]);
   });
@@ -120,6 +141,7 @@ describe("filterProducts", () => {
       format: "online",
       languages: [],
       age: null,
+      days: [],
     }).map((p) => p.id);
     // A passes topic and is online; B passes topic but is in-person.
     expect(ids).toEqual(["a"]);
@@ -131,6 +153,7 @@ describe("filterProducts", () => {
       format: null,
       languages: ["fi"],
       age: null,
+      days: [],
     }).map((p) => p.id);
     // B and C are Finnish.
     expect(ids.sort()).toEqual(["b", "c"]);
@@ -142,6 +165,7 @@ describe("filterProducts", () => {
       format: null,
       languages: ["en", "fi"],
       age: null,
+      days: [],
     }).map((p) => p.id);
     expect(ids.sort()).toEqual(["a", "b", "c"]);
   });
@@ -152,6 +176,7 @@ describe("filterProducts", () => {
       format: null,
       languages: ["en"],
       age: null,
+      days: [],
     }).map((p) => p.id);
     // A is minecraft_java + en; B is fortnite but fi.
     expect(ids).toEqual(["a"]);
@@ -163,6 +188,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       age: 8,
+      days: [],
     }).map((p) => p.id);
     // A is 7–9, C is 7–17 (both include 8); B is 12–17.
     expect(ids.sort()).toEqual(["a", "c"]);
@@ -174,6 +200,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       age: 9,
+      days: [],
     }).map((p) => p.id);
     // 9 is A's max_age (inclusive) and inside C's band.
     expect(lower.sort()).toEqual(["a", "c"]);
@@ -183,6 +210,7 @@ describe("filterProducts", () => {
       format: null,
       languages: [],
       age: 12,
+      days: [],
     }).map((p) => p.id);
     // 12 is B's min_age (inclusive) and inside C's band; A tops out at 9.
     expect(upper.sort()).toEqual(["b", "c"]);
@@ -194,8 +222,56 @@ describe("filterProducts", () => {
       format: "online",
       languages: [],
       age: 15,
+      days: [],
     }).map((p) => p.id);
     // 15 is in B (12–17) and C (7–17), but B is in-person — only C is online.
     expect(ids).toEqual(["c"]);
+  });
+
+  it("days matches products whose schedule touches a selected weekday", () => {
+    // A meets Mon/Wed (0,2), B meets Fri (4), C has no slots.
+    const ids = filterProducts(ALL, {
+      topics: [],
+      format: null,
+      languages: [],
+      age: null,
+      days: [2], // Wed
+    }).map((p) => p.id);
+    expect(ids).toEqual(["a"]);
+  });
+
+  it("OR-combines days (match-any across the selected set)", () => {
+    const ids = filterProducts(ALL, {
+      topics: [],
+      format: null,
+      languages: [],
+      age: null,
+      days: [0, 4], // Mon or Fri
+    }).map((p) => p.id);
+    // A meets Mon, B meets Fri; C has no slots so it never matches.
+    expect(ids.sort()).toEqual(["a", "b"]);
+  });
+
+  it("days excludes products with no schedule slots", () => {
+    const ids = filterProducts(ALL, {
+      topics: [],
+      format: null,
+      languages: [],
+      age: null,
+      days: [1, 3, 5], // Tue/Thu/Sat — nobody meets these
+    }).map((p) => p.id);
+    expect(ids).toEqual([]);
+  });
+
+  it("ANDs days with other filters", () => {
+    const ids = filterProducts(ALL, {
+      topics: [],
+      format: "online",
+      languages: [],
+      age: null,
+      days: [0], // Mon
+    }).map((p) => p.id);
+    // A meets Mon and is online; B meets Fri (wrong day); only A passes.
+    expect(ids).toEqual(["a"]);
   });
 });
