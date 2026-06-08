@@ -430,7 +430,7 @@
         "scheduledDescription": "Parents see a countdown until then. Useful for ticket-drop style launches."
       },
       "hints": {
-        "topicHint": "The topic this product covers — a game (Minecraft, Fortnite) or a subject (Webinar).",
+        "topicHint": "The topic this product covers — a game (like Minecraft or Fortnite) or a subject (like Webinar).",
         "padletHint": "Optional. Shared with families after they sign up.",
         "deliveredInHint": "The primary language used during sessions.",
         "onlineNoLocation": "Online and available to anyone — no location needed. Any parent browsing will see this, no matter where they live.",

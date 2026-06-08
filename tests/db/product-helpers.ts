@@ -30,7 +30,7 @@ import { TEST_IDS } from "./constants";
 export interface ProductOptions {
   id?: string;
   productType?: Database["public"]["Enums"]["product_type"];
-  /** Fixed product_topic enum value. Default: "minecraft". */
+  /** Fixed product_topic enum value. Default: "minecraft_java". */
   topic?: Database["public"]["Enums"]["product_topic"];
   billingMode?: Database["public"]["Enums"]["billing_mode"];
   status?: Database["public"]["Enums"]["product_status"];
@@ -63,7 +63,7 @@ export async function createTestProduct(
 
   const { error } = await admin.from("products").insert({
     id: productId,
-    topic: options.topic ?? "minecraft",
+    topic: options.topic ?? "minecraft_java",
     product_type: options.productType ?? "consumer_club",
     billing_mode: options.billingMode ?? "paid",
     status: options.status ?? "pending",

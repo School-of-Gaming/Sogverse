@@ -1337,7 +1337,12 @@ export type Database = {
         | "running"
         | "completed"
         | "cancelled"
-      product_topic: "minecraft" | "fortnite" | "webinar"
+      product_topic:
+        | "minecraft_java"
+        | "minecraft_education"
+        | "minecraft_bedrock"
+        | "fortnite"
+        | "webinar"
       product_type: "consumer_club" | "municipality_club" | "camp" | "event"
       refund_reason:
         | "session_cancelled_in_window"
@@ -1493,7 +1498,13 @@ export const Constants = {
         "reservation_duplicate",
       ],
       product_status: ["draft", "pending", "running", "completed", "cancelled"],
-      product_topic: ["minecraft", "fortnite", "webinar"],
+      product_topic: [
+        "minecraft_java",
+        "minecraft_education",
+        "minecraft_bedrock",
+        "fortnite",
+        "webinar",
+      ],
       product_type: ["consumer_club", "municipality_club", "camp", "event"],
       refund_reason: [
         "session_cancelled_in_window",

@@ -28,7 +28,7 @@ function row(overrides: {
 
 const A = row({
   id: "a",
-  topic: "minecraft",
+  topic: "minecraft_java",
   isRemote: true,
   spokenLanguageCode: "en",
   minAge: 7,
@@ -63,7 +63,7 @@ describe("filterProducts", () => {
   it("matches a single topic", () => {
     expect(
       filterProducts(ALL, {
-        topics: ["minecraft"],
+        topics: ["minecraft_java"],
         format: null,
         languages: [],
         age: null,
@@ -73,7 +73,7 @@ describe("filterProducts", () => {
 
   it("OR-combines topics", () => {
     const ids = filterProducts(ALL, {
-      topics: ["minecraft", "fortnite"],
+      topics: ["minecraft_java", "fortnite"],
       format: null,
       languages: [],
       age: null,
@@ -116,7 +116,7 @@ describe("filterProducts", () => {
 
   it("ANDs format with topic filters", () => {
     const ids = filterProducts(ALL, {
-      topics: ["minecraft", "fortnite"],
+      topics: ["minecraft_java", "fortnite"],
       format: "online",
       languages: [],
       age: null,
@@ -148,12 +148,12 @@ describe("filterProducts", () => {
 
   it("ANDs language with topic and format filters", () => {
     const ids = filterProducts(ALL, {
-      topics: ["minecraft", "fortnite"],
+      topics: ["minecraft_java", "fortnite"],
       format: null,
       languages: ["en"],
       age: null,
     }).map((p) => p.id);
-    // A is minecraft + en; B is fortnite but fi.
+    // A is minecraft_java + en; B is fortnite but fi.
     expect(ids).toEqual(["a"]);
   });
 

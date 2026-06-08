@@ -5,8 +5,9 @@ import type { ProductTopic } from "@/types";
 // pure function of the enum value and lives here in code.
 //
 // Two label rules:
-//   - Games (Minecraft, Fortnite) are brand proper nouns: identical in every
-//     locale, so their labels are literals here and never go through i18n.
+//   - Games (the Minecraft editions, Fortnite) are brand proper nouns:
+//     identical in every locale, so their labels are literals here and never
+//     go through i18n.
 //   - Subjects (Webinar) localize, so they carry a key into the next-intl
 //     `topics` message namespace (resolved by useTopicLabel).
 //
@@ -19,14 +20,18 @@ type TopicMeta =
   | { kind: "subject"; labelKey: "webinar" };
 
 export const PRODUCT_TOPICS = {
-  minecraft: { kind: "game", label: "Minecraft" },
+  minecraft_java: { kind: "game", label: "Minecraft Java" },
+  minecraft_education: { kind: "game", label: "Minecraft Education" },
+  minecraft_bedrock: { kind: "game", label: "Minecraft Bedrock" },
   fortnite: { kind: "game", label: "Fortnite" },
   webinar: { kind: "subject", labelKey: "webinar" },
 } as const satisfies Record<ProductTopic, TopicMeta>;
 
 // Display order for pickers and filter chips: games first, then subjects.
 export const PRODUCT_TOPIC_VALUES = [
-  "minecraft",
+  "minecraft_java",
+  "minecraft_education",
+  "minecraft_bedrock",
   "fortnite",
   "webinar",
 ] as const satisfies readonly ProductTopic[];
