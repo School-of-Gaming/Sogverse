@@ -201,7 +201,7 @@ type _Generated = Database["public"]["Functions"]["my_rpc"]["Returns"][number];
 export type MyType = Omit<_Generated, "nullable_col"> & { nullable_col: string | null };
 ```
 
-**This applies to `.rpc()` returns and CHECK constraints — NOT to embedded `.from().select()` joins.** PostgREST joins are type-inferable, so a hand-written row shape + `as` cast there just throws away protection the generator already gives you. Instead, define the query in a standalone builder and derive the row type from it: `QueryData<ReturnType<typeof builder>>[number]` (import `QueryData` from `@supabase/supabase-js`). No hand-written type, no cast, and the select string and type can't drift. The one thing inference can't see is FK nullability — a to-one embed is typed `T | null` even when the FK column is `NOT NULL`. Add `!inner` to that embed (`product:products!inner(...)`) to both mirror the constraint and recover the non-null type. See `getParticipationsForGamers` in `participations.service.ts`.
+**This applies to `.rpc()` returns and CHECK constraints — NOT to embedded `.from().select()` joins.** PostgREST joins are type-inferable, so a hand-written row shape + `as` cast there just throws away protection the generator already gives you. Instead, define the query in a standalone builder and derive the row type from it: `QueryData<ReturnType<typeof builder>>[number]` (import `QueryData` from `@supabase/supabase-js`). No hand-written type, no cast, and the select string and type can't drift.
 
 ### Function & Table Access Control
 
