@@ -6,7 +6,7 @@ export type { Database, Json } from "./database.types";
 export { Constants } from "./database.types";
 
 import type { SupabaseClient, User } from "@supabase/supabase-js";
-import type { Database } from "./database.types";
+import type { Database, Json } from "./database.types";
 
 // ---------------------------------------------------------------------------
 // Convenience type aliases
@@ -107,8 +107,50 @@ export type ScheduleSlotInsert = Database["public"]["Tables"]["schedule_slots"][
 // longer carry name/description directly; the reader resolves a locale via
 // resolveTranslation() in src/lib/i18n/resolve-translation.ts. (Topic names
 // are not DB-backed — see src/lib/products/topics.ts.)
+//
+// Two description columns (migration 00091): `short_description` (the teaser
+// shown on cards, the detail hero, and admin lists) and `long_description`
+// (the optional structured blurb rendered only on the shop detail page —
+// shape below).
 export type ProductTranslation = Database["public"]["Tables"]["product_translations"]["Row"];
 export type ProductTranslationInsert = Database["public"]["Tables"]["product_translations"]["Insert"];
+
+/**
+ * One block of a product's structured long description. The flat, ordered
+ * array renders top-to-bottom on the shop detail page: `heading` blocks become
+ * semantic headings, `paragraph` blocks become `<p>`. Plain text only — no
+ * inline marks (bold/links). If those are ever needed, `text` becomes an
+ * inline-node array (a localized, lossless follow-up migration).
+ */
+export type ProductLongDescriptionBlock = {
+  type: "heading" | "paragraph";
+  text: string;
+};
+export type ProductLongDescription = ProductLongDescriptionBlock[];
+
+/**
+ * Narrow a `product_translations.long_description` value (generated as
+ * `Json | null`) into the structured block array. The DB CHECK
+ * `product_translations_long_description_check` only enforces NULL-or-array
+ * (migration 00092 deliberately dropped the deeper per-element validator —
+ * see its header), so the per-block filtering here is the real read-side guard:
+ * it drops anything that isn't a well-formed `{ type, text }` block. On the
+ * write side the block-editor UI is the matching guard. Returns `[]` for
+ * null/non-array/garbage so call sites can map directly.
+ */
+export function parseLongDescription(
+  value: Json | null | undefined,
+): ProductLongDescription {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (block): block is ProductLongDescriptionBlock =>
+      typeof block === "object" &&
+      block !== null &&
+      !Array.isArray(block) &&
+      (block.type === "heading" || block.type === "paragraph") &&
+      typeof block.text === "string",
+  );
+}
 
 // product_prices
 export type ProductPrice = Database["public"]["Tables"]["product_prices"]["Row"];

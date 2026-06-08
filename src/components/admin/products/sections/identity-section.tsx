@@ -18,6 +18,7 @@ import { useTopicLabel } from "@/lib/products/use-topic-label";
 import type { ProductTopic } from "@/types";
 import { Field, FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
+import { LongDescriptionBlocksEditor } from "../long-description-blocks-editor";
 import {
   type FormState,
   type TranslationDraft,
@@ -46,9 +47,13 @@ export function IdentitySection({
   const addableLocales = SUPPORTED_LOCALES.filter(
     (l) => state.translations[l] === undefined,
   );
-  const activeDraft: TranslationDraft = state.translations[
-    state.activeLocale
-  ] ?? { name: "", description: "" };
+  const emptyDraft: TranslationDraft = {
+    name: "",
+    shortDescription: "",
+    longDescription: [],
+  };
+  const activeDraft: TranslationDraft =
+    state.translations[state.activeLocale] ?? emptyDraft;
 
   function setActiveTranslation(patch: Partial<TranslationDraft>) {
     setState((s) => ({
@@ -56,7 +61,7 @@ export function IdentitySection({
       translations: {
         ...s.translations,
         [s.activeLocale]: {
-          ...(s.translations[s.activeLocale] ?? { name: "", description: "" }),
+          ...(s.translations[s.activeLocale] ?? emptyDraft),
           ...patch,
         },
       },
@@ -68,7 +73,7 @@ export function IdentitySection({
       ...s,
       translations: {
         ...s.translations,
-        [locale]: { name: "", description: "" },
+        [locale]: { name: "", shortDescription: "", longDescription: [] },
       },
       activeLocale: locale,
     }));
@@ -176,20 +181,33 @@ export function IdentitySection({
       </Field>
 
       <Field
-        label={t("labels.description")}
-        htmlFor={`p-description-${state.activeLocale}`}
+        label={t("labels.shortDescription")}
+        htmlFor={`p-short-description-${state.activeLocale}`}
         required
+        hint={t("hints.shortDescription")}
       >
         <textarea
-          id={`p-description-${state.activeLocale}`}
+          id={`p-short-description-${state.activeLocale}`}
           placeholder={t(`placeholders.description.${config.i18nKey}`)}
-          value={activeDraft.description}
+          value={activeDraft.shortDescription}
           onChange={(e) =>
-            setActiveTranslation({ description: e.target.value })
+            setActiveTranslation({ shortDescription: e.target.value })
           }
           rows={3}
           required
           className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+      </Field>
+
+      <Field
+        label={t("labels.longDescription")}
+        hint={t("hints.longDescription")}
+      >
+        <LongDescriptionBlocksEditor
+          value={activeDraft.longDescription}
+          onChange={(longDescription) =>
+            setActiveTranslation({ longDescription })
+          }
         />
       </Field>
 

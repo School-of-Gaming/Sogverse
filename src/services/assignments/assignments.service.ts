@@ -2,7 +2,6 @@ import type {
   AppSupabaseClient,
   GeduAssignedProduct,
   MyAssignedProductRow,
-  ProductTranslation,
   ProductType,
 } from "@/types";
 
@@ -42,9 +41,11 @@ export interface MyAssignedProductSessionRow {
     productType: ProductType;
     /**
      * Raw translation rows. Resolved at render time so a locale switch
-     * doesn't refetch.
+     * doesn't refetch. The `description` key carries the short teaser — the
+     * gedu RPC keeps that output key even though the column was renamed to
+     * `short_description` (migration 00091).
      */
-    translations: Pick<ProductTranslation, "locale" | "name" | "description">[];
+    translations: MyAssignedProductRow["product_translations"];
   };
   /** The gedu's own assigned group_id for this product. */
   groupId: string;

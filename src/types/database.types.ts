@@ -666,26 +666,29 @@ export type Database = {
       product_translations: {
         Row: {
           created_at: string
-          description: string
           locale: string
+          long_description: Json | null
           name: string
           product_id: string
+          short_description: string
           updated_at: string
         }
         Insert: {
           created_at?: string
-          description: string
           locale: string
+          long_description?: Json | null
           name: string
           product_id: string
+          short_description: string
           updated_at?: string
         }
         Update: {
           created_at?: string
-          description?: string
           locale?: string
+          long_description?: Json | null
           name?: string
           product_id?: string
+          short_description?: string
           updated_at?: string
         }
         Relationships: [

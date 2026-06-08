@@ -136,7 +136,7 @@ export function ProductDetailsPage({
         imageUrl={imageUrl}
         kicker={label}
         title={tr?.name ?? t("list.untitled")}
-        description={tr?.description ?? null}
+        description={tr?.short_description ?? null}
         statusKey={status}
         statusLabel={t(`status.${status}`)}
         isVisible={product.is_visible}

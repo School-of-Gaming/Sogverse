@@ -1,7 +1,7 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { type SupportedCurrency } from "@/lib/constants";
 import type { SupportedLocale } from "@/lib/constants/locales";
-import type { ProductTopic, ProductType } from "@/types";
+import type { ProductLongDescription, ProductTopic, ProductType } from "@/types";
 import { FORM_LOCKS } from "./form-locks";
 import type {
   ProductTypeConfig,
@@ -35,10 +35,18 @@ export type RegistrationOpensMode =
   (typeof REGISTRATION_OPENS_MODE_VALUES)[number];
 export type SeatLimitMode = (typeof SEAT_LIMIT_MODE_VALUES)[number];
 
-export type TranslationDraft = { name: string; description: string };
+// Per-locale draft. `shortDescription` is the required teaser (the old single
+// `description`); `longDescription` is the optional structured blurb edited as
+// an ordered list of heading/paragraph blocks. An empty `longDescription`
+// array means "no long description" and submits as SQL NULL.
+export type TranslationDraft = {
+  name: string;
+  shortDescription: string;
+  longDescription: ProductLongDescription;
+};
 
 export interface FormState {
-  // Per-locale name + description. Admin starts with one tab (their UI locale)
+  // Per-locale name + descriptions. Admin starts with one tab (their UI locale)
   // and can add more. Submission writes one product_translations row per
   // locale present in this map. At least one filled locale is required (any).
   translations: Partial<Record<SupportedLocale, TranslationDraft>>;
@@ -138,7 +146,9 @@ export function initialState(
       ? formatInTimeZone(new Date(), FIXED_TIMEZONE, "yyyy-MM-dd")
       : "";
   return {
-    translations: { [uiLocale]: { name: "", description: "" } },
+    translations: {
+      [uiLocale]: { name: "", shortDescription: "", longDescription: [] },
+    },
     activeLocale: uiLocale,
     topic: "",
     padletUrl: "",

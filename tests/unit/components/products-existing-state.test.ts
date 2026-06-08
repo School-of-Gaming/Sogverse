@@ -47,7 +47,8 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
         product_id: "00000000-0000-0000-0000-0000000005a1",
         locale: "en",
         name: "Build Club",
-        description: "Build castles together.",
+        short_description: "Build castles together.",
+        long_description: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -73,7 +74,11 @@ describe("existingFormState", () => {
     const state = existingFormState(product, consumerConfig, "en");
 
     expect(state.translations).toEqual({
-      en: { name: "Build Club", description: "Build castles together." },
+      en: {
+        name: "Build Club",
+        shortDescription: "Build castles together.",
+        longDescription: [],
+      },
     });
     expect(state.activeLocale).toBe("en");
     expect(state.topic).toBe("minecraft_java");
@@ -145,7 +150,8 @@ describe("existingFormState", () => {
         product_id: product.id,
         locale: "en",
         name: "Build Club",
-        description: "Build castles together.",
+        short_description: "Build castles together.",
+        long_description: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -153,7 +159,8 @@ describe("existingFormState", () => {
         product_id: product.id,
         locale: "sv",
         name: "Byggklubb",
-        description: "Bygg slott tillsammans.",
+        short_description: "Bygg slott tillsammans.",
+        long_description: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -170,7 +177,8 @@ describe("existingFormState", () => {
         product_id: product.id,
         locale: "fi",
         name: "Rakentajien kerho",
-        description: "Rakennetaan yhdessä.",
+        short_description: "Rakennetaan yhdessä.",
+        long_description: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
@@ -204,7 +212,12 @@ describe("buildUpdateInput round-trip", () => {
       { currency: "eur", price_cents: 4500 },
     ]);
     expect(input.translations).toEqual([
-      { locale: "en", name: "Build Club", description: "Build castles together." },
+      {
+        locale: "en",
+        name: "Build Club",
+        short_description: "Build castles together.",
+        long_description: null,
+      },
     ]);
   });
 });

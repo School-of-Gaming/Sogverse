@@ -27,7 +27,11 @@ const campConfig = PRODUCT_TYPE_CONFIG.camp;
 function validConsumerState(): FormState {
   const s = initialState(consumerConfig, "en");
   s.translations = {
-    en: { name: "Test Club", description: "A great club" },
+    en: {
+      name: "Test Club",
+      shortDescription: "A great club",
+      longDescription: [],
+    },
   };
   s.activeLocale = "en";
   s.topic = "minecraft_java";
@@ -53,7 +57,9 @@ describe("validate", () => {
   describe("translations", () => {
     it("requires at least one filled locale", () => {
       const s = validConsumerState();
-      s.translations = { en: { name: "", description: "" } };
+      s.translations = {
+        en: { name: "", shortDescription: "", longDescription: [] },
+      };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationRequired",
       });
@@ -65,7 +71,7 @@ describe("validate", () => {
       // still resolves for any viewer.
       const s = validConsumerState();
       s.translations = {
-        sv: { name: "Klubb", description: "En klubb" },
+        sv: { name: "Klubb", shortDescription: "En klubb", longDescription: [] },
       };
       expect(validate(s, consumerConfig)).toBeNull();
     });
@@ -73,8 +79,12 @@ describe("validate", () => {
     it("rejects a half-filled locale tab", () => {
       const s = validConsumerState();
       s.translations = {
-        en: { name: "Test Club", description: "A great club" },
-        sv: { name: "Klubb", description: "" },
+        en: {
+          name: "Test Club",
+          shortDescription: "A great club",
+          longDescription: [],
+        },
+        sv: { name: "Klubb", shortDescription: "", longDescription: [] },
       };
       const result = validate(s, consumerConfig);
       expect(result).toEqual({
@@ -86,7 +96,7 @@ describe("validate", () => {
     it("accepts whitespace-only as empty (trims for emptiness check)", () => {
       const s = validConsumerState();
       s.translations = {
-        en: { name: "   ", description: "   " },
+        en: { name: "   ", shortDescription: "   ", longDescription: [] },
       };
       expect(validate(s, consumerConfig)).toEqual({
         messageKey: "translationRequired",
@@ -489,13 +499,18 @@ describe("buildCreateInput", () => {
   it("trims translation name and description", () => {
     const s = validConsumerState();
     s.translations = {
-      en: { name: "  Padded Club  ", description: "  Padded desc  " },
+      en: {
+        name: "  Padded Club  ",
+        shortDescription: "  Padded desc  ",
+        longDescription: [],
+      },
     };
     const out = buildCreateInput(s, "consumer_club", consumerConfig);
     expect(out.translations[0]).toEqual({
       locale: "en",
       name: "Padded Club",
-      description: "Padded desc",
+      short_description: "Padded desc",
+      long_description: null,
     });
   });
 
@@ -591,7 +606,8 @@ function mockDetailRow(
         product_id: "prod-1",
         locale: "en",
         name: "Summer Club",
-        description: "A great club",
+        short_description: "A great club",
+        long_description: null,
         created_at: "2026-01-01T00:00:00Z",
         updated_at: "2026-01-01T00:00:00Z",
       },
@@ -599,7 +615,8 @@ function mockDetailRow(
         product_id: "prod-1",
         locale: "fi",
         name: "Kesäkerho",
-        description: "Mahtava kerho",
+        short_description: "Mahtava kerho",
+        long_description: null,
         created_at: "2026-01-01T00:00:00Z",
         updated_at: "2026-01-01T00:00:00Z",
       },
@@ -634,11 +651,13 @@ describe("cloneFormState", () => {
     );
     expect(state.translations.en).toEqual({
       name: "Summer Club (Copy)",
-      description: "A great club",
+      shortDescription: "A great club",
+      longDescription: [],
     });
     expect(state.translations.fi).toEqual({
       name: "Kesäkerho (Copy)",
-      description: "Mahtava kerho",
+      shortDescription: "Mahtava kerho",
+      longDescription: [],
     });
   });
 
@@ -682,7 +701,8 @@ describe("cloneFormState", () => {
     expect(out.translations).toContainEqual({
       locale: "en",
       name: "Summer Club (Copy)",
-      description: "A great club",
+      short_description: "A great club",
+      long_description: null,
     });
   });
 });

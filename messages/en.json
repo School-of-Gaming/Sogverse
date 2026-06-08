@@ -330,7 +330,8 @@
       },
       "labels": {
         "name": "Name",
-        "description": "Description",
+        "shortDescription": "Short description",
+        "longDescription": "Long description",
         "topic": "Topic",
         "padletUrl": "Padlet URL",
         "minAge": "Min age",
@@ -379,6 +380,18 @@
           "camp": "Days, total hours, theme of the week.",
           "event": "One-line pitch for the event — what, where, for whom."
         }
+      },
+      "longDescription": {
+        "empty": "No long description yet. Add a heading or a paragraph to build one.",
+        "headingLabel": "Heading",
+        "paragraphLabel": "Paragraph",
+        "headingPlaceholder": "Section heading",
+        "paragraphPlaceholder": "Write a paragraph…",
+        "addHeading": "Add heading",
+        "addParagraph": "Add paragraph",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "remove": "Remove"
       },
       "topicKinds": {
         "game": "Games",
@@ -430,6 +443,8 @@
         "scheduledDescription": "Parents see a countdown until then. Useful for ticket-drop style launches."
       },
       "hints": {
+        "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
+        "longDescription": "Optional. Shown only on the product's detail page. Build it from headings and paragraphs.",
         "topicHint": "The topic this product covers — a game (like Minecraft or Fortnite) or a subject (like Webinar).",
         "padletHint": "Optional. Shared with families after they sign up.",
         "deliveredInHint": "The primary language used during sessions.",

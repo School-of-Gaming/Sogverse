@@ -73,7 +73,9 @@ function mockAuthenticatedNonAdmin() {
 const validBody = {
   product_type: "consumer_club",
   billing_mode: "paid",
-  translations: [{ locale: "en", name: "X", description: "Y" }],
+  translations: [
+    { locale: "en", name: "X", short_description: "Y", long_description: null },
+  ],
   topic: "minecraft_java",
   min_age: 7,
   max_age: 12,

@@ -2,6 +2,7 @@ import type {
   AppSupabaseClient,
   Product,
   ProductTranslation,
+  ProductLongDescription,
   ProductType,
   ProductTopic,
   BillingMode,
@@ -62,7 +63,9 @@ export type ProductAdminDetailRow = Product & {
 export type ProductTranslationInput = {
   locale: SupportedLocale;
   name: string;
-  description: string;
+  short_description: string;
+  // null = no long description for this locale (the RPC stores SQL NULL).
+  long_description: ProductLongDescription | null;
 };
 
 export type ScheduleSlotInput = {

@@ -123,7 +123,7 @@ describe("products gamer-read RLS (00067)", () => {
       product_id: HIDDEN_ACTIVE_PRODUCT,
       locale: "en",
       name: "Hidden Active Camp",
-      description: "Seeded for the dashboard-join RLS assertion.",
+      short_description: "Seeded for the dashboard-join RLS assertion.",
     });
     if (trans.error) throw trans.error;
   });

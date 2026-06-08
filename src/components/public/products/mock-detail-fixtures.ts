@@ -1,4 +1,8 @@
-import type { BrowseRowLocation, ProductType } from "@/types";
+import type {
+  BrowseRowLocation,
+  ProductLongDescription,
+  ProductType,
+} from "@/types";
 import { SUPPORTED_CURRENCIES } from "@/lib/constants/currency";
 import type { ProductDetailRow } from "@/services/products";
 import type { RegistrationState } from "./derive-registration-state";
@@ -138,7 +142,8 @@ function buildBaseProduct(
       {
         locale: "en",
         name: copy.name,
-        description: copy.description,
+        short_description: copy.description,
+        long_description: copy.long ?? null,
         product_id: `mock-${productType}-${stateKind}`,
       } as never,
     ],
@@ -156,6 +161,8 @@ function buildBaseProduct(
 interface TypeCopy {
   name: string;
   description: string;
+  /** Optional structured long description — exercises the detail-page card. */
+  long?: ProductLongDescription;
   isRemote: boolean;
 }
 
@@ -164,6 +171,22 @@ const COPY: Record<ProductType, TypeCopy> = {
     name: "Minecraft Redstone Club",
     description:
       "We build little machines together — doors that open on command, sorters, traps, small factories. A playful way to learn how circuits actually think.",
+    long: [
+      { type: "heading", text: "What happens each week" },
+      {
+        type: "paragraph",
+        text: "Every session starts with a quick show-and-tell of what the group built last time, then we take on one new contraption together — a hidden door, an item sorter, an automatic farm.",
+      },
+      {
+        type: "paragraph",
+        text: "Gedus keep the pace gentle and hands-on. There's no winning or losing, just steady building and plenty of \"wait, how did you do that?\" moments.",
+      },
+      { type: "heading", text: "What your child takes away" },
+      {
+        type: "paragraph",
+        text: "Logical thinking, a bit of patience, and the quiet confidence that comes from making a machine work. Friendships, too — the same gamers come back week after week.",
+      },
+    ],
     isRemote: true,
   },
   municipality_club: {
@@ -176,6 +199,18 @@ const COPY: Record<ProductType, TypeCopy> = {
     name: "Spring Break Roblox Camp",
     description:
       "Five days of game design. Each day we play a different style and end the week with a kid-built obby everyone can try.",
+    long: [
+      { type: "heading", text: "The week at a glance" },
+      {
+        type: "paragraph",
+        text: "Monday we play and pull apart a few favourite games. By Friday each camper has built an obby of their own that the whole group plays through together.",
+      },
+      { type: "heading", text: "Who it's for" },
+      {
+        type: "paragraph",
+        text: "Curious kids who love games and want to try making one. No prior experience needed — just a laptop and an account.",
+      },
+    ],
     isRemote: false,
   },
   event: {

@@ -701,13 +701,14 @@ BEGIN
   FOR v_translation IN SELECT * FROM jsonb_array_elements(p_translations)
   LOOP
     INSERT INTO public.product_translations (
-      product_id, locale, name, description
+      product_id, locale, name, short_description, long_description
     )
     VALUES (
       v_product_id,
       v_translation->>'locale',
       v_translation->>'name',
-      COALESCE(v_translation->>'description', '')
+      COALESCE(v_translation->>'short_description', ''),
+      NULLIF(v_translation->'long_description', 'null'::jsonb)
     );
   END LOOP;
 
@@ -922,7 +923,7 @@ BEGIN
                jsonb_build_object(
                  'locale',      pt.locale,
                  'name',        pt.name,
-                 'description', pt.description
+                 'description', pt.short_description
                )
              )
         FROM product_translations pt
@@ -1054,7 +1055,7 @@ BEGIN
                jsonb_build_object(
                  'locale',      pt.locale,
                  'name',        pt.name,
-                 'description', pt.description
+                 'description', pt.short_description
                )
              )
         FROM product_translations pt
@@ -1824,18 +1825,20 @@ BEGIN
   FOR v_translation IN SELECT * FROM jsonb_array_elements(p_translations)
   LOOP
     INSERT INTO public.product_translations (
-      product_id, locale, name, description
+      product_id, locale, name, short_description, long_description
     )
     VALUES (
       p_id,
       v_translation->>'locale',
       v_translation->>'name',
-      COALESCE(v_translation->>'description', '')
+      COALESCE(v_translation->>'short_description', ''),
+      NULLIF(v_translation->'long_description', 'null'::jsonb)
     )
     ON CONFLICT (product_id, locale) DO UPDATE SET
-      name        = EXCLUDED.name,
-      description = EXCLUDED.description,
-      updated_at  = NOW();
+      name              = EXCLUDED.name,
+      short_description = EXCLUDED.short_description,
+      long_description  = EXCLUDED.long_description,
+      updated_at        = NOW();
 
     v_locales := array_append(v_locales, v_translation->>'locale');
   END LOOP;
@@ -2392,9 +2395,11 @@ CREATE TABLE public.product_translations (
     product_id uuid NOT NULL,
     locale text NOT NULL,
     name text NOT NULL,
-    description text NOT NULL,
+    short_description text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    long_description jsonb,
+    CONSTRAINT product_translations_long_description_check CHECK (((long_description IS NULL) OR (jsonb_typeof(long_description) = 'array'::text))),
     CONSTRAINT product_translations_name_check CHECK ((length(TRIM(BOTH FROM name)) > 0))
 );
 
