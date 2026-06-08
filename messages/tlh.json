@@ -1282,7 +1282,33 @@
     "sections": {
       "whenWhere": "ghorgh & nuqDaq",
       "calendar": "jaj tetlh",
-      "topic": "Doch"
+      "topic": "Doch",
+      "game": "Qujvam De'"
+    },
+    "gameInfo": {
+      "pegi": "PEGI {age}",
+      "games": {
+        "minecraft_java": {
+          "description": "Minecraft 'oH chenmoHmeH Quj quv'e'. nagh qo'Daq lengtaH puqpu', Doch luSuq, qachmey'a' luchenmoH – juHHom, veng, qo' naQ ghap. Suvbe'lu', QaplaHbe'lu'; jot 'ej tlhab Daq 'oH, vaj nuD 'ej Qatlh Sov luSamlaH. ”Java” 'oH mung Quj'e', De'wI'mey Windows, Mac, Linux je lo'meH; ghojmoHwI'pu'maj lulo'.",
+          "note": "ghojmoHghachmaj luSuvmeH, De'wI'Daq Minecraft poQ puqlI'. Minecraft.net-Daq ”Minecraft: Java & Bedrock Edition for PC” ponglu' – wa' wa'logh DIl (tlhachID ghobe'), mIllogh lo'bogh ngaSbogh. console, telategh, tablet je mIllogh pIm lI'be'.",
+          "linkLabel": "De'wI'vaD Minecraft yIje'"
+        },
+        "minecraft_bedrock": {
+          "description": "Minecraft 'oH chenmoHmeH Quj quv'e'. nagh qo'Daq lengtaH puqpu', Doch luSuq, qachmey'a' luchenmoH – juHHom, veng, qo' naQ ghap. Suvbe'lu', QaplaHbe'lu'; jot 'ej tlhab Daq 'oH. ”Bedrock” 'oH mIllogh qImroQ (Xbox, PlayStation, Switch), telategh, tablet, Windows De'wI' je lo'bogh.",
+          "note": "Qujvam'e' luSuvmeH, Minecraft Bedrock poQ puqlI'. ngeHbe'lu' – janlIj Quj jan rurbogh malja'Daq yIje' (rap Quj, 'ach jan pImmo' Daq pIm). qImroQDaq, online Suvmey luSuvmeH, qImroQ Huch-membership poQlaH.",
+          "linkLabel": "nuqDaq Suqlu'"
+        },
+        "minecraft_education": {
+          "description": "Minecraft 'oH chenmoHmeH Quj quv'e'. nagh qo'Daq lengtaH puqpu', Doch luSuq, qachmey'a' luchenmoH. Minecraft Education 'oH ghojmoHmeH pa'vaD chenmoHbogh mIllogh: rap chenmoHmeH qo' Dun, 'ach ghojmoHwI'vaD jan chu'mey, 'ej ghojmoHwI' Dev, mob Quj net qaSmoHbe'.",
+          "note": "ghojwI'choH pat pagh Microsoft 365 Education-Daq qel net tlhob, malja'Daq je'be'lu'. Qujvam DIlmeH puqlI' poQchugh, ghotlh maH, 'ej DInIS.",
+          "linkLabel": "Minecraft Education De'"
+        },
+        "fortnite": {
+          "description": "Fortnite 'oH 'IH, na'rural online Quj'e', ghochDaq ghom chenmoH 'ej tlhup ngajbogh ghochmeyDaq Suvchuq. tlhIng'a' Suy', tlhIngan jaj rur – juppu' tlhej puqpu'. wovbogh 'ej teHbe'bogh 'IH ('Iw ghobe', SuvwI'Hey ghobe'), 'ach qugh Suvmey, latlhpu' tlhej online.",
+          "note": "Fortnite yISuqmeH DIl HInobbe' – Quj naQ yIje'be'. Epic Games-Daq HInob tlhab chenmoH puqlI'. wejwI' DachmeH (Sut latlh je) Huch poQlu', 'ach SoH yI'el lojmIt.",
+          "linkLabel": "Fortnite yISuq"
+        }
+      }
     },
     "info": {
       "schedule": "jaj tetlh",
