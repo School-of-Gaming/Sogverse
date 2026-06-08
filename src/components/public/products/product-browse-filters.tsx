@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Sliders, X, Globe, MapPin } from "lucide-react";
 import { LanguageFlag } from "@/components/ui/language-flag";
-import { GAME_TOPICS, SUBJECT_TOPICS } from "@/lib/products/topics";
+import { GAME_TOPICS } from "@/lib/products/topics";
 import { productAgeOptions } from "@/lib/constants/gamer-age";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { useSpokenLanguages } from "@/services/users";
@@ -12,9 +12,10 @@ import { cn } from "@/lib/utils";
 import { useBrowseFilters } from "./use-browse-filters";
 import { useShopCategory } from "./use-shop-category";
 
-// Filter strip — horizontally-scrollable chip rows (type, topic, format,
-// language). The topic row groups games then subjects (one divider
-// between). Chips are pill-shaped with a clear active state (filled
+// Filter strip — horizontally-scrollable chip rows (type, game, format,
+// language). The game row lists the game topics; subject topics (e.g.
+// Webinar) are temporarily dropped — see the TODO in the row below.
+// Chips are pill-shaped with a clear active state (filled
 // primary) so taps register on small phone screens; rows are scrollable
 // rather than wrapping so they never push the cards down on overflow.
 //
@@ -107,17 +108,13 @@ export function ProductBrowseFilters({
               onToggle={() => toggleTopic(topic)}
             />
           ))}
-          {SUBJECT_TOPICS.length > 0 && GAME_TOPICS.length > 0 && (
-            <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-border" />
-          )}
-          {SUBJECT_TOPICS.map((topic) => (
-            <Chip
-              key={topic}
-              label={topicLabel(topic)}
-              active={selectedTopics.includes(topic)}
-              onToggle={() => toggleTopic(topic)}
-            />
-          ))}
+          {/* TODO: Re-introduce subject topics (e.g. Webinar) here when we
+              bring them back. Render SUBJECT_TOPICS after a divider:
+                {SUBJECT_TOPICS.length > 0 && GAME_TOPICS.length > 0 && (
+                  <span aria-hidden className="mx-1 h-6 w-px shrink-0 bg-border" />
+                )}
+                {SUBJECT_TOPICS.map((topic) => ( <Chip ... /> ))}
+              and add SUBJECT_TOPICS back to the topics import above. */}
         </FilterRow>
 
         <FilterRow label={t("format")}>
