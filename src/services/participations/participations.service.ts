@@ -1,5 +1,6 @@
 import type {
   AppSupabaseClient,
+  ParticipationSubscriptionState,
   ProductType,
   ProductTranslation,
   PurchaseShape,
@@ -75,10 +76,21 @@ export interface MyUpcomingSessionRow {
    * The participation's club subscription is `past_due` (a card declined or
    * expired). Drives the payment-problem badge on the session cards. Always
    * `false` for non-subscription products and healthy subs. Sourced from
-   * `get_my_payment_problem_participations`, not the row itself — see
+   * `get_my_participation_subscription_states`, not the row itself — see
    * `getMyUpcomingSessions`.
    */
   paymentProblem: boolean;
+  /**
+   * When the parent has cancelled this club's subscription (Stripe
+   * `cancel_at_period_end` → our `canceling` status), the instant their paid
+   * access ends (`current_period_end`). `null` for healthy/past_due subs and
+   * non-subscription products. Drives two things: the expander clamps the
+   * session list to occurrences on or before this instant (both audiences),
+   * and the parent dashboard shows an "access until {date}" badge. Sourced
+   * from `get_my_participation_subscription_states` — see
+   * `getMyUpcomingSessions`.
+   */
+  subscriptionEndsAt: Date | null;
 }
 
 /**
@@ -243,12 +255,14 @@ export class ParticipationsService {
     const audienceColumn =
       audience === "customer" ? "customer_id" : "gamer_id";
 
-    // Fetch the sessions and the payment-problem flags concurrently. The flags
-    // come from `get_my_payment_problem_participations` (00085) rather than a
-    // `family_subscriptions` embed because gamers have no SELECT access to that
-    // table — the RPC self-scopes via auth.uid() and returns only participation
-    // ids (no money), so it works identically for both audiences.
-    const [{ data, error }, { data: problemRows, error: problemError }] =
+    // Fetch the sessions and the subscription-state signals concurrently. The
+    // signals come from `get_my_participation_subscription_states` (00093)
+    // rather than a `family_subscriptions` embed because gamers have no SELECT
+    // access to that table — the RPC self-scopes via auth.uid() and returns
+    // only participation id + status + period end (no money), so it works
+    // identically for both audiences. One RPC carries both the past_due flag
+    // and the canceling access-until date; the client derives each below.
+    const [{ data, error }, { data: subRows, error: subError }] =
       await Promise.all([
         this.supabase
           .from("participations")
@@ -269,26 +283,44 @@ export class ParticipationsService {
           )
           .eq(audienceColumn, userId)
           .eq("status", "active"),
-        this.supabase.rpc("get_my_payment_problem_participations"),
+        this.supabase.rpc("get_my_participation_subscription_states"),
       ]);
 
     if (error) throw error;
 
-    // The badge is a secondary signal — if the flags query fails, degrade to
-    // "no problem" rather than breaking the whole sessions list.
-    if (problemError) {
+    // The badges are a secondary signal — if the state query fails, degrade to
+    // "no problem / not canceling" rather than breaking the whole sessions list.
+    if (subError) {
       console.error(
-        "[getMyUpcomingSessions] payment-problem flags failed:",
-        problemError,
+        "[getMyUpcomingSessions] subscription-state signals failed:",
+        subError,
       );
     }
+    // Past_due → payment-problem badge. Canceling → the instant paid access
+    // ends, used both to clamp the session list and to render the
+    // access-until badge. `current_period_end` is loosened to nullable in the
+    // alias (the generator over-promises non-null); a canceling row missing it
+    // simply yields no clamp + no badge.
+    const states = (subRows ?? []) as ParticipationSubscriptionState[];
     const problemIds = new Set(
-      (problemRows ?? []).map((row) => row.participation_id),
+      states.filter((s) => s.status === "past_due").map((s) => s.participation_id),
     );
+    const cancelEnds = new Map<string, Date>();
+    for (const s of states) {
+      if (s.status === "canceling" && s.current_period_end !== null) {
+        cancelEnds.set(s.participation_id, new Date(s.current_period_end));
+      }
+    }
 
     return (data as RawMyUpcomingSessionRow[])
       .filter((row) => row.product !== null && row.gamer !== null)
-      .map((row) => toMyUpcomingSessionRow(row, problemIds.has(row.id)));
+      .map((row) =>
+        toMyUpcomingSessionRow(
+          row,
+          problemIds.has(row.id),
+          cancelEnds.get(row.id) ?? null,
+        ),
+      );
   }
 
   /**
@@ -415,6 +447,7 @@ interface RawMyUpcomingSessionRow {
 function toMyUpcomingSessionRow(
   row: RawMyUpcomingSessionRow,
   paymentProblem: boolean,
+  subscriptionEndsAt: Date | null,
 ): MyUpcomingSessionRow {
   // Non-null on both fields is asserted by the `!inner` join on product +
   // the `.filter()` step above for gamer; this narrows for downstream code.
@@ -444,6 +477,7 @@ function toMyUpcomingSessionRow(
       durationMinutes: s.duration_minutes,
     })),
     paymentProblem,
+    subscriptionEndsAt,
   };
 }
 

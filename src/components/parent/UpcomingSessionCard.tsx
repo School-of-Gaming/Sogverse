@@ -6,6 +6,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { PaymentProblemBadge } from "./PaymentProblemBadge";
+import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
+import type { SessionCancellation } from "./NextSessionCard";
 import { useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { formatDate, formatTime } from "@/lib/utils";
@@ -46,6 +48,12 @@ export interface UpcomingSessionCardProps {
    * corner payment-problem badge (audience-aware). Defaults to `false`.
    */
   paymentProblem?: boolean;
+  /**
+   * Present when the parent has cancelled this club's subscription. Renders the
+   * muted "Won't renew" / "Last session" badge — parent only (see `audience`);
+   * gamer cards show no badge. `null`/undefined otherwise.
+   */
+  cancellation?: SessionCancellation | null;
 }
 
 export function UpcomingSessionCard({
@@ -56,6 +64,7 @@ export function UpcomingSessionCard({
   awaiting = false,
   audience = "customer",
   paymentProblem = false,
+  cancellation = null,
 }: UpcomingSessionCardProps) {
   const t = useTranslations("parent.upcomingSession");
   const tAwaiting = useTranslations("parent.awaiting");
@@ -106,6 +115,17 @@ export function UpcomingSessionCard({
           money badge for parents, non-interactive "ask a parent" alert for
           gamers. */}
       {paymentProblem && <PaymentProblemBadge audience={audience} />}
+      {/* Parent-only "Won't renew" / "Last session" note for a cancelled sub
+          (mutually exclusive with past_due). Gamer cards are just clamped, no
+          badge. */}
+      {cancellation && audience === "customer" && (
+        <SubscriptionEndingBadge
+          accessUntil={cancellation.accessUntil}
+          lastSessionStart={cancellation.lastSessionStart}
+          isLastSession={cancellation.isLastSession}
+          gamerFirstName={gamerFirstName}
+        />
+      )}
     </div>
   );
 }

@@ -18,10 +18,11 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "can_read_product",
   "get_my_gamers",
   "get_my_parents",
-  // Read-time signal for the dashboard payment-problem badge (00085).
-  // auth.uid()-scoped (customer_id OR gamer_id), returns only participation
-  // ids — no money. Called from the browser by both parents and gamers.
-  "get_my_payment_problem_participations",
+  // Read-time signals for the dashboard payment-problem + access-until badges
+  // (00093, supersedes 00085). auth.uid()-scoped (customer_id OR gamer_id),
+  // returns participation id + status + current_period_end — no money. Called
+  // from the browser by both parents and gamers.
+  "get_my_participation_subscription_states",
 
   "create_product",
   "update_product",

@@ -1507,6 +1507,12 @@
     "upcomingSession": {
       "gamerLabel": "Pelaaja: {name}"
     },
+    "subscriptionEnding": {
+      "wontRenew": "Ei uusiudu",
+      "lastSession": "Viimeinen kerta",
+      "tooltip": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {lastSession}, ja käyttöoikeus jatkuu {accessUntil} asti.",
+      "tooltipSameDay": "Peruit tämän jäsenyyden – se ei uusiudu. {name}: viimeinen kerta on {lastSession}."
+    },
     "awaiting": {
       "customer": "{name} on mukana! Ohjaaja sijoittaa hänet ryhmään ennen ensimmäisen session alkua.",
       "gamer": "Olet mukana! Sijoitamme sinut ryhmääsi ennen seuraavan session alkua."

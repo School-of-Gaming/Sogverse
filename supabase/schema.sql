@@ -1198,17 +1198,17 @@ $$;
 
 
 --
--- Name: get_my_payment_problem_participations(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: get_my_participation_subscription_states(); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.get_my_payment_problem_participations() RETURNS TABLE(participation_id uuid)
+CREATE FUNCTION public.get_my_participation_subscription_states() RETURNS TABLE(participation_id uuid, status text, current_period_end timestamp with time zone)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
-  SELECT fs.participation_id
+  SELECT fs.participation_id, fs.status, fs.current_period_end
   FROM public.family_subscriptions fs
   JOIN public.participations p ON p.id = fs.participation_id
-  WHERE fs.status = 'past_due'
+  WHERE fs.status IN ('past_due', 'canceling')
     AND (
       p.customer_id = (SELECT auth.uid())
       OR p.gamer_id = (SELECT auth.uid())
@@ -4475,12 +4475,12 @@ GRANT ALL ON FUNCTION public.get_my_parents() TO service_role;
 
 
 --
--- Name: FUNCTION get_my_payment_problem_participations(); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION get_my_participation_subscription_states(); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.get_my_payment_problem_participations() FROM PUBLIC;
-GRANT ALL ON FUNCTION public.get_my_payment_problem_participations() TO service_role;
-GRANT ALL ON FUNCTION public.get_my_payment_problem_participations() TO authenticated;
+REVOKE ALL ON FUNCTION public.get_my_participation_subscription_states() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO service_role;
+GRANT ALL ON FUNCTION public.get_my_participation_subscription_states() TO authenticated;
 
 
 --

@@ -1507,6 +1507,12 @@
     "upcomingSession": {
       "gamerLabel": "För {name}"
     },
+    "subscriptionEnding": {
+      "wontRenew": "Förnyas inte",
+      "lastSession": "Sista passet",
+      "tooltip": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {lastSession}, och du har tillgång till {accessUntil}.",
+      "tooltipSameDay": "Du har sagt upp medlemskapet — det förnyas inte. {name}s sista pass är {lastSession}."
+    },
     "awaiting": {
       "customer": "{name} är med! Ledaren placerar hen i en grupp innan det första passet börjar.",
       "gamer": "Du är med! Vi placerar dig i din grupp innan nästa pass börjar."

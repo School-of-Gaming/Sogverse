@@ -114,26 +114,60 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     });
   });
 
-  it("flags only the participations returned by the payment-problem RPC", async () => {
+  it("derives the payment-problem flag from past_due rows of the subscription-state RPC", async () => {
     mockParticipationsQuery([rawRow("p1", "Alex"), rawRow("p2", "Bobby")]);
     mockSupabase.rpc.mockResolvedValue(
-      mockSupabaseSuccess([{ participation_id: "p1" }]),
+      mockSupabaseSuccess([
+        { participation_id: "p1", status: "past_due", current_period_end: null },
+      ]),
     );
 
     const result = await service.getMyUpcomingSessions("customer");
 
     expect(mockSupabase.rpc).toHaveBeenCalledWith(
-      "get_my_payment_problem_participations",
+      "get_my_participation_subscription_states",
     );
-    expect(result.find((r) => r.gamer.firstName === "Alex")?.paymentProblem).toBe(
-      true,
-    );
-    expect(
-      result.find((r) => r.gamer.firstName === "Bobby")?.paymentProblem,
-    ).toBe(false);
+    const alex = result.find((r) => r.gamer.firstName === "Alex");
+    const bobby = result.find((r) => r.gamer.firstName === "Bobby");
+    expect(alex?.paymentProblem).toBe(true);
+    expect(alex?.subscriptionEndsAt).toBeNull();
+    expect(bobby?.paymentProblem).toBe(false);
   });
 
-  it("degrades to no payment problem (and does not throw) when the RPC errors", async () => {
+  it("derives subscriptionEndsAt from canceling rows (and never flags them as a payment problem)", async () => {
+    mockParticipationsQuery([rawRow("p1", "Alex")]);
+    mockSupabase.rpc.mockResolvedValue(
+      mockSupabaseSuccess([
+        {
+          participation_id: "p1",
+          status: "canceling",
+          current_period_end: "2026-06-30T20:59:59.999Z",
+        },
+      ]),
+    );
+
+    const result = await service.getMyUpcomingSessions("customer");
+
+    expect(result[0].paymentProblem).toBe(false);
+    expect(result[0].subscriptionEndsAt).toEqual(
+      new Date("2026-06-30T20:59:59.999Z"),
+    );
+  });
+
+  it("leaves subscriptionEndsAt null for a canceling row missing current_period_end", async () => {
+    mockParticipationsQuery([rawRow("p1", "Alex")]);
+    mockSupabase.rpc.mockResolvedValue(
+      mockSupabaseSuccess([
+        { participation_id: "p1", status: "canceling", current_period_end: null },
+      ]),
+    );
+
+    const result = await service.getMyUpcomingSessions("customer");
+
+    expect(result[0].subscriptionEndsAt).toBeNull();
+  });
+
+  it("degrades to no signals (and does not throw) when the RPC errors", async () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
@@ -143,6 +177,7 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     const result = await service.getMyUpcomingSessions("customer");
 
     expect(result[0].paymentProblem).toBe(false);
+    expect(result[0].subscriptionEndsAt).toBeNull();
     consoleError.mockRestore();
   });
 });

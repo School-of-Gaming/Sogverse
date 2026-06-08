@@ -5,6 +5,7 @@ import { AlertTriangle, CreditCard, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { SessionAudience } from "@/types";
 import { cn } from "@/lib/utils";
+import { BADGE_FRAME } from "./session-card-badge";
 
 /**
  * Circular corner alert that straddles the top-right corner of a session card
@@ -37,10 +38,13 @@ import { cn } from "@/lib/utils";
  * "Auth Architecture".
  */
 
-// Shared corner styling. Solid fill + a ring in the page colour so the badge
-// reads as a cut-out sitting on top of the corner rather than painted inside it.
-const BADGE_BASE =
-  "absolute -right-2 -top-2 z-10 inline-flex h-7 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm ring-2 ring-background";
+// Shared corner geometry (`BADGE_FRAME`) + this badge's own severity fill. The
+// solid `destructive` fill reads as "problem"; the ring in the page colour
+// makes it a cut-out sitting on top of the corner rather than painted inside.
+const BADGE_BASE = cn(
+  BADGE_FRAME,
+  "bg-destructive text-destructive-foreground",
+);
 
 export function PaymentProblemBadge({
   /** Whose dashboard this renders on. Drives interactivity + icon. */

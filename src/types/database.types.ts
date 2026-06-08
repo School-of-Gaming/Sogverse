@@ -1237,10 +1237,12 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_my_payment_problem_participations: {
+      get_my_participation_subscription_states: {
         Args: never
         Returns: {
+          current_period_end: string
           participation_id: string
+          status: string
         }[]
       }
       get_product_groups_with_details: {

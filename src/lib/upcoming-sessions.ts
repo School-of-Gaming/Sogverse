@@ -31,6 +31,17 @@ import type { MyUpcomingSessionRow } from "@/services/participations";
  * the only card that consumes it (`UpcomingSessionCard` is info-only), so
  * computing windows for every entry would be wasted work.
  */
+/**
+ * The earlier of two optional UTC cutoffs (the product's end date and a
+ * cancelled subscription's paid-through instant). `null` means "no bound on
+ * this side", so the other wins; both null means unbounded.
+ */
+function earlierBoundary(a: Date | null, b: Date | null): Date | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return a.getTime() <= b.getTime() ? a : b;
+}
+
 export function expandUpcomingSessions(
   rows: MyUpcomingSessionRow[],
   now: Date,
@@ -71,8 +82,24 @@ export function expandUpcomingSessions(
       row.product.startDate,
       row.product.timezone,
     );
-    const endBoundary = endDateToCutoff(row.product.endDate, row.product.timezone);
-    const cap = row.product.endDate === null ? OPEN_ENDED_OCCURRENCE_CAP : Infinity;
+    const productEnd = endDateToCutoff(row.product.endDate, row.product.timezone);
+    // A cancelled club subscription caps the list at the paid-through instant
+    // (`current_period_end`). Clamp to whichever terminates first — the
+    // product's own end date or the subscription end — so a canceling sub
+    // hides sessions the family no longer has access to. `subscriptionEndsAt`
+    // is an exact UTC instant; it slots straight in alongside the product's
+    // end-of-day cutoff. Only set when the sub is `canceling`, so an active
+    // (monthly-renewing) sub never clamps. Applies to both audiences.
+    const subEnd = row.subscriptionEndsAt;
+    const endBoundary = earlierBoundary(productEnd, subEnd);
+    // Open-ended clubs normally cap at the next N occurrences. A canceling sub
+    // gives a real terminal date, so — like an end-dated product — emit every
+    // remaining paid session up to it rather than an arbitrary N, letting the
+    // parent see exactly what they still have until access ends.
+    const cap =
+      row.product.endDate === null && subEnd === null
+        ? OPEN_ENDED_OCCURRENCE_CAP
+        : Infinity;
 
     const occurrences = enumerateRowOccurrences({
       slots: row.slots,
@@ -84,7 +111,14 @@ export function expandUpcomingSessions(
       windowCloseMs,
     });
 
-    for (const occ of occurrences) {
+    // The participation's final remaining occurrence (occurrences are sorted
+    // ascending within the row). For a canceling sub this is the gamer's last
+    // session before access ends — every card of the participation references
+    // it (tooltip), and the card that *is* it shows the "Last session" badge.
+    const lastIndex = occurrences.length - 1;
+    const lastOccurrence = occurrences[lastIndex];
+
+    occurrences.forEach((occ, index) => {
       sessions.push({
         gamerFirstName: row.gamer.firstName,
         gamerSeed: row.gamer.id,
@@ -100,8 +134,20 @@ export function expandUpcomingSessions(
         // Per-participation: every occurrence of a past_due club's sub carries
         // the flag, so the badge shows on all of that club's cards.
         paymentProblem: row.paymentProblem,
+        // Set only for canceling subs (subEnd != null), else null. Drives the
+        // parent-only "Won't renew" / "Last session" badge; gamer cards just
+        // show fewer occurrences (clamped above) with no badge. accessUntil +
+        // lastSessionStart are constant across the participation's cards;
+        // isLastSession marks the final occurrence.
+        cancellation: subEnd
+          ? {
+              accessUntil: subEnd,
+              lastSessionStart: lastOccurrence.start,
+              isLastSession: index === lastIndex,
+            }
+          : null,
       });
-    }
+    });
   }
 
   sessions.sort(

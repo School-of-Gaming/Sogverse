@@ -1552,6 +1552,12 @@
     "upcomingSession": {
       "gamerLabel": "{name}vaD"
     },
+    "subscriptionEnding": {
+      "wontRenew": "qaSqa'be'",
+      "lastSession": "Qu' Qav",
+      "tooltip": "may'morgh DanatlhHa'pu'! qaSqa'be'. {name} Qu' Qav 'oH {lastSession}'e', {accessUntil} tlhab SoH.",
+      "tooltipSameDay": "may'morgh DanatlhHa'pu'! qaSqa'be'. {name} Qu' Qav 'oH {lastSession}'e'."
+    },
     "awaiting": {
       "customer": "{name} muvpu'! may' wa'DIch Sutlhpa', ghom DajojDaq lanlu'.",
       "gamer": "bImuvpu'! may' veb Sutlhpa', ghomlIjDaq qalanlu'."
