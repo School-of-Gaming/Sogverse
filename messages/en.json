@@ -325,8 +325,8 @@
         },
         "registration": "Registration timing",
         "registrationDescription": "Pick when parents can start signing up.",
-        "visibility": "Visibility",
-        "visibilityDescription": "Control whether parents can see this while you're still setting it up."
+        "visibility": "Shop visibility",
+        "visibilityDescription": "Control whether this product is listed in the shop. It doesn't affect anyone already taking part."
       },
       "labels": {
         "name": "Name",
@@ -344,7 +344,6 @@
         "startDate": "Start date",
         "date": "Date",
         "endDate": "End date",
-        "endDateOptional": "End date (optional)",
         "eventDate": "Event date",
         "seasonEndDate": "Season end date",
         "schedule": "Schedule",
@@ -361,7 +360,7 @@
         "seatCount": "Seat count",
         "waitlistToggle": "Enable waitlist when seats are full",
         "signupThreshold": "Signups needed to start",
-        "makeVisible": "Visible to parents",
+        "makeVisible": "List this product in the shop",
         "seatLimit": "Seat limit"
       },
       "placeholders": {
@@ -442,6 +441,12 @@
         "scheduled": "At a specific time",
         "scheduledDescription": "Parents see a countdown until then. Useful for ticket-drop style launches."
       },
+      "endDateModes": {
+        "ongoing": "No end date",
+        "ongoingDescription": "The club runs indefinitely until you decide to wind it down.",
+        "dated": "Set an end date",
+        "datedDescription": "The club runs until a specific date, then completes automatically."
+      },
       "hints": {
         "shortDescription": "A one-line teaser shown on browse cards, listings, and the top of the detail page.",
         "longDescription": "Optional. Shown only on the product's detail page. Build it from headings and paragraphs.",
@@ -453,7 +458,6 @@
         "municipalityHint": "Municipality clubs are always tied to a specific municipality — the one paying for it. Parents from that municipality (or anywhere smaller inside it) will see it when they browse.",
         "siteHint": "Where sessions physically happen.",
         "eventSingleDay": "Events happen on a single date.",
-        "endDateOpt": "Leave blank for an ongoing club with no end date.",
         "thresholdOnly": "No fixed start date yet. Parents see a \"X of Y needed\" counter while it fills up. You press Start once you have enough sign-ups and pick the first session date then.",
         "thresholdWithDate": "If fewer than this many parents sign up by the start date, you'll need to cancel and refund from the product's page.",
         "timezoneFixedHelsinki": "Times are in Europe/Helsinki. Parents see them converted to their local timezone automatically.",
@@ -465,7 +469,7 @@
         "pricingMonthly": "Charged every month while the subscription is active. Cancel anytime.",
         "pricingUpfront": "Charged once at signup. Same total no matter the duration.",
         "seatHint": "When full, new signups go to the waitlist.",
-        "visibleHint": "Uncheck to keep the product hidden while you're still setting it up. Turn it on when you're ready for parents to see it.",
+        "visibleHint": "This only controls the shop. Uncheck it while you're still setting up, or to stop new sign-ups. Parents, gamers, and educators already taking part still see their sessions on their My SOG page — unchecking only removes it from the shop.",
         "seatLimitHint": "Cap the number of gamers, or run with no limit.",
         "holidayComingSoon": "Holiday calendars are coming soon. For now, every scheduled session runs.",
         "startDateToday": "Locked to today's date for now.",
@@ -510,8 +514,11 @@
         "hour": "Hour",
         "minute": "Minute",
         "startTime": "Start time",
-        "durationMin": "Duration (min)",
-        "minSuffix": "min",
+        "startHour": "Start hour",
+        "startMinute": "Start minute",
+        "endHour": "End hour",
+        "endMinute": "End minute",
+        "to": "to",
         "addDay": "Add another day",
         "removeSlot": "Remove",
         "sameAsEventDate": "Same as event date",

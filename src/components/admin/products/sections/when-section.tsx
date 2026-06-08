@@ -12,6 +12,7 @@ import { FORM_LOCKS } from "../form-locks";
 import { HolidayCalendarOption } from "../holiday-calendar-option";
 import { ScheduleSlotsEditor } from "../schedule-slots-editor";
 import {
+  END_DATE_MODE_VALUES,
   FIXED_TIMEZONE,
   startModeUsesDate,
   startModeUsesThreshold,
@@ -107,65 +108,127 @@ export function WhenSection({ state, setState, config }: WhenSectionProps) {
       )}
 
       {usesDate && (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field
-            label={
-              productType === "event"
-                ? t("labels.eventDate")
-                : t("labels.startDate")
-            }
-            htmlFor="p-start-date"
-            required
-            hint={
-              lockStartDate
-                ? lockedToToday
-                  ? t("hints.startDateToday")
-                  : t("hints.startDateLocked")
-                : undefined
-            }
-          >
-            <Input
-              id="p-start-date"
-              type="date"
-              value={state.startDate}
-              onChange={(e) =>
-                setState({ ...state, startDate: e.target.value })
-              }
-              disabled={lockStartDate}
-              required
-            />
-          </Field>
-          {productType === "event" ? (
-            <div className="flex items-end text-xs text-muted-foreground">
-              <Info className="mr-1.5 inline h-3.5 w-3.5" />
-              {t("hints.eventSingleDay")}
-            </div>
-          ) : (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field
               label={
-                productType === "consumer_club"
-                  ? t("labels.endDateOptional")
-                  : productType === "municipality_club"
-                    ? t("labels.seasonEndDate")
-                    : t("labels.endDate")
+                productType === "event"
+                  ? t("labels.eventDate")
+                  : t("labels.startDate")
               }
-              htmlFor="p-end-date"
+              htmlFor="p-start-date"
+              required
               hint={
-                productType === "consumer_club"
-                  ? t("hints.endDateOpt")
+                lockStartDate
+                  ? lockedToToday
+                    ? t("hints.startDateToday")
+                    : t("hints.startDateLocked")
                   : undefined
               }
-              required={productType !== "consumer_club"}
             >
               <Input
-                id="p-end-date"
+                id="p-start-date"
                 type="date"
-                value={state.endDate}
+                value={state.startDate}
                 onChange={(e) =>
-                  setState({ ...state, endDate: e.target.value })
+                  setState({ ...state, startDate: e.target.value })
                 }
-                required={productType !== "consumer_club"}
+                disabled={lockStartDate}
+                required
               />
+            </Field>
+            {productType === "event" ? (
+              <div className="flex items-end text-xs text-muted-foreground">
+                <Info className="mr-1.5 inline h-3.5 w-3.5" />
+                {t("hints.eventSingleDay")}
+              </div>
+            ) : productType === "consumer_club" ? null : (
+              // Municipality clubs and camps always have a fixed end date.
+              <Field
+                label={
+                  productType === "municipality_club"
+                    ? t("labels.seasonEndDate")
+                    : t("labels.endDate")
+                }
+                htmlFor="p-end-date"
+                required
+              >
+                <Input
+                  id="p-end-date"
+                  type="date"
+                  value={state.endDate}
+                  onChange={(e) =>
+                    setState({ ...state, endDate: e.target.value })
+                  }
+                  required
+                />
+              </Field>
+            )}
+          </div>
+
+          {/* Consumer clubs are ongoing by default. The admin picks "no end
+              date" or "set an end date"; the date input only shows for the
+              latter — avoids Safari's native date field, which can't be left
+              blank to mean "ongoing". */}
+          {productType === "consumer_club" && (
+            <Field label={t("labels.endDate")}>
+              <div className="space-y-2">
+                {END_DATE_MODE_VALUES.map((option) => {
+                  const active = state.hasEndDate === (option === "dated");
+                  return (
+                    <label
+                      key={option}
+                      className={cn(
+                        "flex items-start gap-3 rounded-md border p-3 text-sm transition-colors",
+                        active
+                          ? "border-primary bg-primary/5"
+                          : "border-input",
+                        "cursor-pointer",
+                        !active && "hover:border-foreground/30"
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="endDateMode"
+                        checked={active}
+                        onChange={() =>
+                          setState({
+                            ...state,
+                            hasEndDate: option === "dated",
+                            // Clear the date when going back to ongoing so a
+                            // stale value can't leak into the payload.
+                            endDate:
+                              option === "ongoing" ? "" : state.endDate,
+                          })
+                        }
+                        className="mt-1 h-4 w-4"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium">
+                          {t(`endDateModes.${option}`)}
+                        </div>
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          {t(`endDateModes.${option}Description`)}
+                        </div>
+                      </div>
+                    </label>
+                  );
+                })}
+              </div>
+              {state.hasEndDate && (
+                <div className="mt-3 max-w-[240px]">
+                  <Input
+                    id="p-end-date"
+                    type="date"
+                    aria-label={t("labels.endDate")}
+                    value={state.endDate}
+                    onChange={(e) =>
+                      setState({ ...state, endDate: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+              )}
             </Field>
           )}
         </div>

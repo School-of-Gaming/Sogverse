@@ -325,8 +325,8 @@
         },
         "registration": "Registreringstid",
         "registrationDescription": "Välj när föräldrar kan börja anmäla sig.",
-        "visibility": "Synlighet",
-        "visibilityDescription": "Bestäm om föräldrar kan se detta medan du fortfarande arbetar på det."
+        "visibility": "Synlighet i butiken",
+        "visibilityDescription": "Bestäm om produkten visas i butiken. Det påverkar inte någon som redan deltar."
       },
       "labels": {
         "name": "Namn",
@@ -344,7 +344,6 @@
         "startDate": "Startdatum",
         "date": "Datum",
         "endDate": "Slutdatum",
-        "endDateOptional": "Slutdatum (valfritt)",
         "eventDate": "Evenemangsdatum",
         "seasonEndDate": "Terminens slutdatum",
         "schedule": "Schema",
@@ -361,7 +360,7 @@
         "seatCount": "Antal platser",
         "waitlistToggle": "Aktivera väntelista när platserna är fulla",
         "signupThreshold": "Antal anmälningar för att starta",
-        "makeVisible": "Synlig för föräldrar",
+        "makeVisible": "Visa produkten i butiken",
         "seatLimit": "Platsgräns"
       },
       "placeholders": {
@@ -442,6 +441,12 @@
         "scheduled": "Vid en specifik tid",
         "scheduledDescription": "Föräldrar ser en nedräkning till dess. Användbart för biljettsläpp-liknande lanseringar."
       },
+      "endDateModes": {
+        "ongoing": "Inget slutdatum",
+        "ongoingDescription": "Klubben pågår tills vidare tills du bestämmer dig för att avsluta den.",
+        "dated": "Ange ett slutdatum",
+        "datedDescription": "Klubben pågår fram till ett visst datum och avslutas sedan automatiskt."
+      },
       "hints": {
         "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
         "longDescription": "Valfritt. Visas endast på produktens detaljsida. Bygg den av rubriker och stycken.",
@@ -453,7 +458,6 @@
         "municipalityHint": "Kommunklubbar är alltid kopplade till en specifik kommun — den som betalar. Föräldrar från den kommunen (eller mindre område inom den) ser den när de bläddrar.",
         "siteHint": "Var tillfällena fysiskt äger rum.",
         "eventSingleDay": "Evenemang äger rum ett enda datum.",
-        "endDateOpt": "Lämna tomt för en pågående klubb utan slutdatum.",
         "thresholdOnly": "Inget fast startdatum än. Föräldrar ser en räknare \"X av Y behövs\" medan den fylls. Du trycker Starta när du har tillräckligt med anmälningar och väljer första tillfällets datum då.",
         "thresholdWithDate": "Om färre än så här många föräldrar anmäler sig till startdatumet behöver du ställa in den och återbetala från produktsidan.",
         "timezoneFixedHelsinki": "Tider är i tidszonen Europe/Helsinki. Föräldrar ser dem omräknade till sin egen tidszon automatiskt.",
@@ -465,7 +469,7 @@
         "pricingMonthly": "Debiteras varje månad så länge prenumerationen är aktiv. Avsluta när som helst.",
         "pricingUpfront": "Debiteras en gång vid anmälan. Samma totalbelopp oavsett längd.",
         "seatHint": "När fullt går nya anmälningar till väntelistan.",
-        "visibleHint": "Avmarkera för att hålla produkten dold medan du fortfarande arbetar på den. Slå på när du är redo att föräldrar ska se den.",
+        "visibleHint": "Detta styr bara butiken. Avmarkera medan du fortfarande arbetar på produkten, eller för att stoppa nya anmälningar. Föräldrar, gamers och pedagoger som redan deltar ser fortfarande sina tillfällen på sin My SOG-sida — att avmarkera tar bara bort den från butiken.",
         "seatLimitHint": "Begränsa antalet deltagare eller kör utan gräns.",
         "holidayComingSoon": "Lovkalendrar kommer snart. Tills vidare körs varje schemalagt tillfälle.",
         "startDateToday": "Låst till dagens datum tills vidare.",
@@ -510,8 +514,11 @@
         "hour": "Timme",
         "minute": "Minut",
         "startTime": "Starttid",
-        "durationMin": "Längd (min)",
-        "minSuffix": "min",
+        "startHour": "Starttimme",
+        "startMinute": "Startminut",
+        "endHour": "Sluttimme",
+        "endMinute": "Slutminut",
+        "to": "till",
         "addDay": "Lägg till en dag till",
         "removeSlot": "Ta bort",
         "sameAsEventDate": "Samma som evenemangsdatum",

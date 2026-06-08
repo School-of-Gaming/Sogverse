@@ -20,6 +20,12 @@ export const REGISTRATION_OPENS_MODE_VALUES = [
 // "unlimited" means no seat cap (seat_count = null) and is available for every
 // product type. Maps to the `uncapped` boolean: unlimited ⇔ uncapped.
 export const SEAT_LIMIT_MODE_VALUES = ["limited", "unlimited"] as const;
+// End-date chooser values for consumer clubs (the only ongoing type). "ongoing"
+// means no end date (end_date = null); "dated" pairs with a date input. Maps to
+// the `hasEndDate` boolean: dated ⇔ hasEndDate. A mutually-exclusive radio
+// instead of a "leave blank for ongoing" date input — Safari's native date
+// field won't accept an empty value, so "blank means ongoing" wasn't reachable.
+export const END_DATE_MODE_VALUES = ["ongoing", "dated"] as const;
 
 // 15-minute-interval time picker — same pattern as schedule-slots-editor.tsx,
 // where the rationale comment lives (Chrome's <input type="time"> ignores `step`).
@@ -73,6 +79,11 @@ export interface FormState {
   // When
   startMode: StartMode;
   startDate: string;
+  // Whether a consumer club has a fixed end date. `false` ⇒ ongoing (end_date
+  // null), `endDate` is ignored. Only the consumer-club form surfaces this
+  // choice; other types always require an end date, so the flag is unused for
+  // them. See END_DATE_MODE_VALUES.
+  hasEndDate: boolean;
   endDate: string;
   scheduleSlots: ScheduleSlotDraft[];
   holidayCalendarIds: Set<string>;
@@ -160,6 +171,7 @@ export function initialState(
     locationId: null,
     startMode: config.allowedStartModes[0],
     startDate: lockedConsumerStartDate,
+    hasEndDate: false,
     endDate: "",
     scheduleSlots: defaultSlots(config),
     holidayCalendarIds: new Set(),
