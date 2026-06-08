@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useLocale } from "next-intl";
 import type { ProductBrowseRow } from "@/types";
 import { AddGamerDialog } from "@/components/family";
+import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import {
@@ -41,6 +43,7 @@ export function SignupPanel({
   authState,
   fixedNowMs,
 }: SignupPanelProps) {
+  const router = useRouter();
   const uiLocale = resolveLocale(useLocale());
   // Platform is EUR-only; Stripe Adaptive Pricing handles the customer's
   // local currency at checkout. See src/lib/constants/currency.ts.
@@ -90,10 +93,10 @@ export function SignupPanel({
   // the click and the outcome. `mutation.isPending` alone doesn't suffice —
   // it flips false the instant React Query dispatches the success state, but
   // the navigation/panel-swap hasn't happened yet, so the CTA briefly
-  // re-enables. Only cleared on retry-able outcomes (`full`, error). For
-  // 'redirect', the page unloads. For 'free_confirmed', the participation
-  // queries refetch and the just-signed-up child flips to its disabled
-  // "Signed up" row in the picker.
+  // re-enables. Only cleared on retry-able outcomes (`full`, error). For both
+  // 'redirect' (Stripe) and 'free_confirmed' (router.push to the confirmation
+  // page) the outgoing page unloads/unmounts, so the flag stays set through
+  // the navigation.
   const [committing, setCommitting] = useState(false);
 
   const purchaseShape = purchaseShapeFor(pricingOption);
@@ -107,7 +110,6 @@ export function SignupPanel({
       gamerId: selectedGamerId,
       purchaseShape,
       currency,
-      returnPath: typeof window !== "undefined" ? window.location.pathname : undefined,
     };
     createMutation.mutate(input, {
       onSuccess: (response) => {
@@ -115,12 +117,18 @@ export function SignupPanel({
           window.location.href = response.checkoutUrl;
           return;
         }
-        if (response.status === "full") {
-          // Seat went between the click and the server-side check. The panel
-          // will swap to FullWaitlistPanel once participation queries refetch
-          // — release so the new "Join the waitlist" button is clickable.
-          setCommitting(false);
+        if (response.status === "free_confirmed") {
+          // Free events skip Stripe — send the parent to the same confirmation
+          // page the paid flow lands on. Keep `committing` set so the CTA stays
+          // disabled through the navigation (the panel unmounts on push).
+          router.push(ROUTES.shopConfirmation(response.participationId));
+          return;
         }
+        // Only 'full' remains: the seat went between the click and the
+        // server-side check. The panel will swap to FullWaitlistPanel once
+        // participation queries refetch — release so the new "Join the
+        // waitlist" button is clickable.
+        setCommitting(false);
       },
       onError: (err) => {
         setCommitting(false);

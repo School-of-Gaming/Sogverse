@@ -3,6 +3,7 @@ export type {
   MyUpcomingSessionRow,
   AdminGamerParticipationRow,
   ParticipationCounts,
+  ParticipationConfirmation,
   CreateParticipationInput,
   CreateParticipationResponse,
   JoinWaitlistInput,

@@ -953,6 +953,43 @@
     "redirecting": "Omdirigerar till kassan...",
     "error": "Något gick fel vid kassan. <link>Gå tillbaka</link> och försök igen."
   },
+  "purchaseConfirmation": {
+    "heading": "Allt klart!",
+    "subheading": {
+      "consumer_club": "{gamer} är anmäld till {product}.",
+      "municipality_club": "{gamer} är registrerad för {product}.",
+      "camp": "{gamer} är anmäld till {product}.",
+      "event": "{gamer} har gått med i {product}."
+    },
+    "fallbackGamer": "Ditt barn",
+    "summaryTitle": "Din beställning",
+    "forLabel": {
+      "consumer_club": "Anmäld",
+      "municipality_club": "Registrerad",
+      "camp": "Anmäld",
+      "event": "Deltar"
+    },
+    "priceLabel": "Pris",
+    "price": {
+      "subscription": "{amount} / månad",
+      "upfront": "{amount} (engångsbetalning)",
+      "free": "Gratis"
+    },
+    "nextTitle": "Vad händer nu",
+    "next": {
+      "placement": "Vi placerar {gamer} i en grupp med en spelpedagog. Tillfällena visas sedan under Min SOG.",
+      "subscription": "Du faktureras varje månad. Du kan hantera eller avsluta när som helst från Min SOG.",
+      "oneTime": "Detta var en engångsbetalning – det finns inget mer att betala.",
+      "refund": "Kostnadsfri avbokning inom {days} dagar efter ditt köp."
+    },
+    "goToDashboard": "Gå till Min SOG",
+    "keepBrowsing": "Fortsätt bläddra",
+    "notFound": {
+      "title": "Vi kunde inte hitta den beställningen",
+      "description": "Länken kan vara gammal eller ofullständig. Dina köp finns alltid i Min SOG.",
+      "cta": "Gå till Min SOG"
+    }
+  },
   "docs": {
     "minecraftApi": {
       "title": "Minecraft Server API",

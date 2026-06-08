@@ -453,15 +453,14 @@ describe("POST /api/checkout/products/create", () => {
       purchaseShape: "single_payment",
       currency: "eur",
     });
-    // Every product type lands on the unified /shop/[id] detail route.
+    // Success lands on the purchase-confirmation page, keyed by the reservation
+    // (participation) id.
     expect(params.success_url).toBe(
-      `http://localhost:3000/shop/${PRODUCT_ID}?signup=success`,
+      `http://localhost:3000/shop/confirmation?p=${RESERVATION_ID}`,
     );
-    // No returnPath in the body → cancel_url falls back to homepage.
-    // (Real frontend always sends window.location.pathname, so happy-path
-    // browser flows use that and never hit this fallback.)
+    // Cancel bounces straight back to the product page so the parent can retry.
     expect(params.cancel_url).toBe(
-      "http://localhost:3000/?signup=canceled",
+      `http://localhost:3000/shop/${PRODUCT_ID}`,
     );
     // expires_at sits ~30 minutes in the future (Stripe enforces a 30-min floor).
     expect(params.expires_at).toBeGreaterThan(Math.floor(Date.now() / 1000));
@@ -689,66 +688,12 @@ describe("POST /api/checkout/products/create", () => {
     expect(res.status).toBe(500);
   });
 
-  // ── returnPath sanitization ───────────────────────────────────────
+  // ── redirect URLs ─────────────────────────────────────────────────
 
-  it("uses the provided returnPath for the cancel URL when it starts with /", async () => {
-    mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CAMP });
-    mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "reserving", participation_id: RESERVATION_ID },
-      error: null,
-    });
-    mockComputeSinglePaymentAmount.mockResolvedValue(15000);
-    mockStripeSessionCreate.mockResolvedValue({
-      url: "https://checkout.stripe.com/c/x",
-    });
-
-    await POST(
-      createRequest({
-        ...VALID_BODY,
-        purchaseShape: "single_payment",
-        returnPath: "/clubs/listing",
-      }),
-    );
-
-    const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.cancel_url).toBe(
-      "http://localhost:3000/clubs/listing?signup=canceled",
-    );
-  });
-
-  it("falls back to homepage when returnPath does not start with /", async () => {
-    mockAuthenticatedCustomer();
-    mockAdmin({ product: PAID_CAMP });
-    mockAdminRpc.mockResolvedValueOnce({
-      data: { kind: "reserving", participation_id: RESERVATION_ID },
-      error: null,
-    });
-    mockComputeSinglePaymentAmount.mockResolvedValue(15000);
-    mockStripeSessionCreate.mockResolvedValue({
-      url: "https://checkout.stripe.com/c/x",
-    });
-
-    await POST(
-      createRequest({
-        ...VALID_BODY,
-        purchaseShape: "single_payment",
-        returnPath: "https://evil.example.com",
-      }),
-    );
-
-    const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.cancel_url).toBe(
-      "http://localhost:3000/?signup=canceled",
-    );
-  });
-
-  it("rejects protocol-relative returnPath like //evil.com/path and falls back to homepage", async () => {
-    // `//evil.com/path` passes a naïve startsWith("/") check but produces
-    // `https://localhost:3000//evil.com/path` which most browsers parse as
-    // an absolute URL to evil.com — open redirect after Stripe's redirect.
-    // The abnormal path always lands on the homepage, never on a guessed
-    // product page; the user is somewhere safe and familiar.
+  it("derives the cancel URL from the product, ignoring any caller-supplied path", async () => {
+    // Cancel is no longer caller-influenced: it's always the product page,
+    // built server-side from productId. A stray `returnPath` in the body is
+    // ignored, so there's no open-redirect surface to sanitize.
     mockAuthenticatedCustomer();
     mockAdmin({ product: PAID_CAMP });
     mockAdminRpc.mockResolvedValueOnce({
@@ -769,8 +714,9 @@ describe("POST /api/checkout/products/create", () => {
     );
 
     const params = mockStripeSessionCreate.mock.calls[0][0];
-    expect(params.cancel_url).toBe(
-      "http://localhost:3000/?signup=canceled",
+    expect(params.success_url).toBe(
+      `http://localhost:3000/shop/confirmation?p=${RESERVATION_ID}`,
     );
+    expect(params.cancel_url).toBe(`http://localhost:3000/shop/${PRODUCT_ID}`);
   });
 });

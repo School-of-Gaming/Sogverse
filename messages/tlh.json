@@ -998,6 +998,43 @@
     "redirecting": "checkout ghoS...",
     "error": "checkout Dabe'lu'. <link>peghegh</link> je boq."
   },
+  "purchaseConfirmation": {
+    "heading": "Qapla'! Doch Dalajpu'!",
+    "subheading": {
+      "consumer_club": "{product} QujmeH ghItlhlu'pu' {gamer}.",
+      "municipality_club": "{product} QujmeH ghItlhlu'pu' {gamer}.",
+      "camp": "{product} QujmeH ghItlhlu'pu' {gamer}.",
+      "event": "{product}Daq jeSpu' {gamer}."
+    },
+    "fallbackGamer": "puqlIj",
+    "summaryTitle": "ralHa'ghachlIj",
+    "forLabel": {
+      "consumer_club": "ghItlhlu'pu'",
+      "municipality_club": "ghItlhlu'pu'",
+      "camp": "ghItlhlu'pu'",
+      "event": "jeSwI'"
+    },
+    "priceLabel": "wagh",
+    "price": {
+      "subscription": "{amount} / jar",
+      "upfront": "{amount} (wa'logh DIl)",
+      "free": "wagh Hutlh"
+    },
+    "nextTitle": "qaStaHvIS",
+    "next": {
+      "placement": "ghojmoHwI' tlhej ghomDaq {gamer} wIlanpu'. My SOG-Daq Qu'mey legh.",
+      "subscription": "Hoch jar DaDIlnIS. My SOG-Daq Dajondaq ghap Damevmeh laH.",
+      "oneTime": "wa'logh neH DIl — latlh DIl Hutlh.",
+      "refund": "{days} jaj qaSpa', wagh Hutlh Damevchugh laH."
+    },
+    "goToDashboard": "My SOG yIghoS",
+    "keepBrowsing": "yIqIm taH",
+    "notFound": {
+      "title": "ralHa'ghaj vISamlaHbe'",
+      "description": "ngaq qan ghap naQbe'. reH My SOG-Daq DochlIj DaSammeH laH.",
+      "cta": "My SOG yIghoS"
+    }
+  },
   "docs": {
     "minecraftApi": {
       "title": "Minecraft Server API",
