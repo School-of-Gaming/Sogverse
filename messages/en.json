@@ -25,7 +25,9 @@
       "unlockPin": "Enter PIN",
       "resetPin": "Reset PIN",
       "changePin": "Change PIN",
-      "privacy": "Privacy Policy"
+      "privacy": "Privacy Policy",
+      "terms": "Terms and Conditions",
+      "antiBullying": "Anti-Bullying and Discipline"
     }
   },
   "common": {
@@ -1105,7 +1107,9 @@
     "contact": {
       "email": "Email: {email}"
     },
-    "privacy": "Privacy Policy"
+    "privacy": "Privacy Policy",
+    "terms": "Terms & Conditions",
+    "antiBullying": "Anti-Bullying"
   },
   "gamer": {
     "welcome": "Welcome, Gamer!",
@@ -2062,6 +2066,174 @@
         "paragraphs": [
           "To use any of the rights above, or if you have a question about your privacy or your child's information, just email hello@sog.gg. There's no charge, we'll always reply, and email is the best way to reach us.",
           "If you're ever unhappy with how we've handled your information, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto) at tietosuoja.fi."
+        ]
+      }
+    }
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "lastUpdated": "Last updated: {date}",
+    "intro": {
+      "heading": "The short version",
+      "paragraphs": [
+        "These are the terms for using Sogverse and signing your child up for our clubs, camps, and events. We've written them in plain language, because we want you to actually understand what you're agreeing to — not wade through legal jargon.",
+        "In short: our clubs happen online, with your child always supervised by a trained educator. You can cancel a monthly club whenever you like, and there's a money-back guarantee on your child's first session. If you ever have a question, email kanslia@sog.gg and a real person will help."
+      ]
+    },
+    "sections": {
+      "whoWeAre": {
+        "heading": "Who you're agreeing with",
+        "paragraphs": [
+          "Sogverse is run by School of Gaming Galactic Oy (\"School of Gaming\", \"we\", \"us\"), a Finnish company. These terms apply whenever you use Sogverse or buy one of our clubs, camps, or events.",
+          "Our official details:"
+        ],
+        "bullets": [
+          "School of Gaming Galactic Oy (business ID 3110461-1)",
+          "Isokatu 56, 90100 Oulu, Finland",
+          "Email: kanslia@sog.gg"
+        ]
+      },
+      "service": {
+        "heading": "How our clubs work",
+        "paragraphs": [
+          "Almost everything we do happens online — your child joins their club, camp, or event from home, through our website. If a particular product works differently (for example, an in-person event), we'll always say so clearly on that product's page before you buy."
+        ]
+      },
+      "games": {
+        "heading": "The games your child plays",
+        "paragraphs": [
+          "Our clubs are built around video games made by other companies, such as Minecraft. We follow Finland's official age-rating guidance.",
+          "In practice this means a child may play a game rated for up to three years above their own age, as long as a parent is present and comfortable with it — but never a game rated 18+. When you sign your child up, you're confirming you're happy with the age ratings of the games involved."
+        ]
+      },
+      "online": {
+        "heading": "Staying safe online",
+        "paragraphs": [
+          "The tools we use for live sessions have their own minimum-age rules, set by the companies that make them and by local law. To keep things safe and above board, children under 13 take part using their parent's account, and every session is supervised by one of our trained educators (we call them Gedus). Children are never online with us unsupervised."
+        ]
+      },
+      "pricing": {
+        "heading": "Prices and payment",
+        "paragraphs": [
+          "All prices are shown in euros and include VAT. We may change our prices from time to time, but a change will never affect a club you're already paying for without us telling you first."
+        ]
+      },
+      "clubsCancellation": {
+        "heading": "Cancelling a monthly club",
+        "paragraphs": [
+          "Our clubs run as a monthly subscription, and you're free to cancel whenever you like — there's no fixed commitment. You can do it yourself from your account, and your child keeps their place until the end of the month you've already paid for.",
+          "We also want you to be able to try us with confidence. If your child attends their first session and it turns out not to be the right fit, let us know within 2 days of that first session and we'll give you a full refund."
+        ]
+      },
+      "campsCancellation": {
+        "heading": "Cancelling a camp",
+        "paragraphs": [
+          "Camps are booked and paid for as a one-off, so the cancellation terms are a little different. If you need to cancel a camp:"
+        ],
+        "bullets": [
+          "14 days or more before the camp starts: you get a full refund.",
+          "Between 7 and 14 days before: we refund you minus a €50 administration fee.",
+          "Less than 7 days before: we're unable to refund the payment, because the place has been held and prepared for your child — unless it's a medical emergency or something genuinely outside your control.",
+          "If your child can't attend because of illness, we'll refund you when you send us a doctor's certificate at kanslia@sog.gg."
+        ]
+      },
+      "conduct": {
+        "heading": "Behaviour and removing a child from a club",
+        "paragraphs": [
+          "We want every child to feel safe and welcome, so we don't tolerate bullying or behaviour that spoils things for others. When a problem comes up, we always start by supporting the child and helping them put it right — our full approach is set out in our Anti-Bullying and Discipline policy.",
+          "Only after those supportive steps, and in the case of ongoing toxic or disruptive behaviour or bullying, may we end a child's participation. We'll always talk it through with you first."
+        ]
+      },
+      "privacy": {
+        "heading": "Your family's privacy",
+        "paragraphs": [
+          "We take the privacy of your family — and your child especially — very seriously, and we handle your information in line with Finnish and EU data-protection law. Our Privacy Policy explains exactly what we collect and why."
+        ]
+      },
+      "changes": {
+        "heading": "Changes to these terms",
+        "paragraphs": [
+          "We may update these terms from time to time, for example if we add a new kind of club or change how something works. When we make an important change, we'll update the date at the top of this page, and where it matters we'll let you know directly."
+        ]
+      },
+      "contact": {
+        "heading": "Getting in touch",
+        "paragraphs": [
+          "If anything here is unclear, or you'd like to talk something through, just email kanslia@sog.gg. There's a real person at the other end, and we're always happy to help."
+        ]
+      }
+    }
+  },
+  "discipline": {
+    "title": "Anti-Bullying and Discipline",
+    "lastUpdated": "Last updated: {date}",
+    "intro": {
+      "heading": "The short version",
+      "paragraphs": [
+        "Every child should feel safe, respected, and welcome in our clubs. Bullying and unkindness have no place here, and we take them seriously.",
+        "When something goes wrong, we don't just punish — we help. We use a calm, step-by-step approach that focuses on helping a child understand what happened, make it right, and do better next time. We only move to a firmer step if the behaviour keeps happening, and we keep you informed the whole way through."
+      ]
+    },
+    "sections": {
+      "commitment": {
+        "heading": "Our promise to your child",
+        "paragraphs": [
+          "Our clubs are a place to learn, make friends, and have fun — and that only works if everyone feels safe. We're committed to a community free of bullying, harassment, and cruelty, where every child is treated with respect by our educators and by each other."
+        ]
+      },
+      "approach": {
+        "heading": "How we handle problems",
+        "paragraphs": [
+          "When a child behaves in a way that hurts or disrupts others, our educators (we call them Gedus) respond in a way that's calm, kind, and right for the child's age. The goal is always to help the child understand the effect of what they did and to put it right — not simply to punish.",
+          "We deal with most situations gently, with a quiet word. If the behaviour continues, we take firmer steps, one at a time. The steps below are the ladder we follow, and you'll always be kept in the loop as we go."
+        ]
+      },
+      "step1": {
+        "heading": "Step 1 — A reminder and putting things right",
+        "paragraphs": [
+          "The Gedu talks with your child about what happened and how it affected others, and helps them find a better way to handle it. It's gentle and matter-of-fact — for example: \"Remember not to take things from someone else's chest without asking. You could ask them if they'd like to trade instead.\""
+        ]
+      },
+      "step2": {
+        "heading": "Step 2 — A quiet word",
+        "paragraphs": [
+          "If it happens again, the Gedu has a one-on-one chat with your child to think through what they did and how it affects others. We'll also let you know at home that we've talked with your child about their behaviour in the club."
+        ]
+      },
+      "step3": {
+        "heading": "Step 3 — Stepping in during the session",
+        "paragraphs": [
+          "If the disruptive behaviour carries on, the Gedu steps in to stop it during the session — for example by muting your child for a moment or limiting what they can do in the game. The Gedu speaks with your child privately, and we message you at home."
+        ]
+      },
+      "step4": {
+        "heading": "Step 4 — A time-out from a session",
+        "paragraphs": [
+          "If things still don't settle, the Gedu may ask your child to sit out the rest of that session. If a longer break is needed, we'll tell you in advance. The Gedu talks it through privately with your child, we message you at home, and our office (kanslia@sog.gg) joins the conversation."
+        ]
+      },
+      "step5": {
+        "heading": "Step 5 — Time away from the community",
+        "paragraphs": [
+          "If the behaviour continues despite everything above, a child may be removed from the SOG community for a while — that means their clubs, our Minecraft server, and our Discord. Our office gets in touch with you to explain the decision, and we talk it through with your child too."
+        ]
+      },
+      "step6": {
+        "heading": "Step 6 — A fresh start later",
+        "paragraphs": [
+          "Time away isn't necessarily the end. Your child can come back when you and they both feel ready for it. If they return and the behaviour hasn't changed, we'll step them out of the activity for good rather than starting the ladder over — but our hope, always, is a fresh start that works."
+        ]
+      },
+      "partnership": {
+        "heading": "We're in this together",
+        "paragraphs": [
+          "You know your child best, and we get the best results when we work together. If you have any worries about how your child is getting on — or if you think they're being treated unkindly by someone else — please tell us. Sharing the same expectations at home and in the club makes a real difference."
+        ]
+      },
+      "contact": {
+        "heading": "Getting in touch",
+        "paragraphs": [
+          "If you have any questions about this policy, or you'd like to talk about something that's happened, email our office at kanslia@sog.gg. There's a real person at the other end, and we're here to help."
         ]
       }
     }
