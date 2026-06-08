@@ -183,12 +183,12 @@ supabase link --project-ref "$(grep '^SUPABASE_PROJECT_REF=' .env.local | cut -d
 
 This avoids a chicken-and-egg problem where tests reference functions that aren't in the generated types yet.
 
-**Rule: To understand the current schema, read the committed current-state files — not migrations.** Two files hold the live state, and between them they cover almost everything:
+**Rule: To understand the current schema — or to copy any existing object's definition into a new migration — read the committed current-state files, not migrations.** Two files hold the live state, and between them they cover almost everything:
 
 - **`database.types.ts` + `src/types/index.ts`** — table/column/function *shapes* (types, signatures, enums). Auto-generated from the live schema.
 - **`supabase/schema.sql`** — the things the type generator can't see: function bodies, RLS policies, triggers, grants, constraints. A `pg_dump` of the live `public` schema (see step 4 of the migration workflow).
 
-Both are regenerated on every migration and reflect current state, so you never reconstruct it by hand. Migrations are append-only history — a later one can supersede an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly why eyeballing them for current state goes wrong.
+Both are regenerated on every migration and reflect current state, so you never reconstruct it by hand. Migrations are append-only history — a later one can supersede an earlier one (drop a constraint, rewrite a function, relax a rule), which is exactly why eyeballing them for current state goes wrong. So when a migration must drop and recreate an object — e.g. a function, to repoint it at a changed type — copy its body from `schema.sql`, never from the migration that first defined it; that copy may already be superseded.
 
 A few objects live **outside** the `public` schema and are therefore **not** in `schema.sql` — so you have to be aware they exist or you'll assume `schema.sql` is the whole story when it isn't. These are: triggers attached to `auth.users` (e.g. the new-user → profile handler), RLS policies on `storage.objects`, and pg_cron jobs (the last two aren't even DDL — they're rows in `storage.buckets`/`cron.job` — so no dump captures them). This is a small, stable set that rarely changes. For *only* these, current state lives in migration history: grep **every** migration touching the object and trust the **highest-numbered** one. Do not hardcode a migration number for them anywhere — the correct file moves the moment one is superseded, which is the staleness trap this rule exists to avoid.
 
