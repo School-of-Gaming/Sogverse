@@ -513,7 +513,6 @@
         "day": "Dag",
         "hour": "Timme",
         "minute": "Minut",
-        "startTime": "Starttid",
         "startHour": "Starttimme",
         "startMinute": "Startminut",
         "endHour": "Sluttimme",
