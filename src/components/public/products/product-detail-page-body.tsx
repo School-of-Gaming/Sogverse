@@ -11,7 +11,11 @@ import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { isGameTopic } from "@/lib/products/topics";
 import { parseLongDescription } from "@/types";
-import type { ProductBrowseRow, ProductType } from "@/types";
+import type {
+  ProductBrowseRow,
+  ProductLongDescription,
+  ProductType,
+} from "@/types";
 import { LongDescription } from "./long-description";
 import { formatInTimeZone } from "date-fns-tz";
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
@@ -57,6 +61,7 @@ export function ProductDetailPageBody({
 
   const tr = resolveTranslation(product.product_translations, uiLocale);
   const topicLabel = getTopicLabel(product.topic);
+  const longDescription = parseLongDescription(tr?.long_description);
 
   return (
     <div className="container mx-auto px-4 py-8 sm:py-12">
@@ -118,7 +123,7 @@ export function ProductDetailPageBody({
             page width. Without this on mobile the default implicit
             track is `auto`, which sizes to content. */}
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <MainColumn product={product} />
+          <MainColumn product={product} longDescription={longDescription} />
           {/* Pin the whole panel just below the sticky site header (64px) with
               a 1rem comfort gap — matches the --header-height offset convention
               used elsewhere. Without the offset the card's top tucks under the
@@ -152,16 +157,14 @@ function BackLink({ productType }: { productType: ProductType }) {
 
 function MainColumn({
   product,
+  longDescription,
 }: {
   product: ProductDetailPageBodyProps["product"];
+  longDescription: ProductLongDescription;
 }) {
   // The game card only applies to game topics (Minecraft editions, Fortnite);
   // subjects like Webinar have no game to describe. isGameTopic narrows
   // product.topic to GameTopic so it can be passed straight to GameInfoCard.
-  const uiLocale = resolveLocale(useLocale());
-  const tr = resolveTranslation(product.product_translations, uiLocale);
-  const longDescription = parseLongDescription(tr?.long_description);
-
   return (
     <div className="space-y-6">
       {/* Marketing blurb first — the expanded pitch under the hero, ahead of

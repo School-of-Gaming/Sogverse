@@ -9,13 +9,18 @@ import type { ProductLongDescription } from "@/types";
 //
 // `whitespace-pre-line` on paragraphs keeps any intentional line breaks the
 // admin typed inside a single block.
+//
+// Vertical rhythm is set per block (not via a container `space-y`, which would
+// fight these margins): paragraphs sit a tight `mt-2` apart, headings get a
+// roomier `mt-5` so each section stands clear of the one above. `first:mt-0`
+// drops the leading gap on whichever block opens the card.
 
 export function LongDescription({ blocks }: { blocks: ProductLongDescription }) {
   if (blocks.length === 0) return null;
 
   return (
     <Card>
-      <CardContent className="space-y-2 p-5 sm:p-6">
+      <CardContent className="p-5 sm:p-6">
         {blocks.map((block, i) =>
           block.type === "heading" ? (
             <h2
@@ -27,7 +32,7 @@ export function LongDescription({ blocks }: { blocks: ProductLongDescription }) 
           ) : (
             <p
               key={i}
-              className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground"
+              className="mt-2 whitespace-pre-line text-sm leading-relaxed text-muted-foreground first:mt-0"
             >
               {block.text}
             </p>
