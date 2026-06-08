@@ -87,6 +87,14 @@ export const ROUTES = {
   shop: "/shop",
   /** Public storefront product-detail URL (`/shop/[id]`, any product type). */
   shopProduct: publicProductHref,
+  /**
+   * Post-purchase confirmation page, keyed by the participation just created
+   * (Stripe `success_url` and the free-signup redirect both land here). The
+   * static `/shop/confirmation` segment outranks the `/shop/[id]` dynamic
+   * route in the App Router, so the opaque product ids it serves never collide.
+   */
+  shopConfirmation: (participationId: string) =>
+    `/shop/confirmation?p=${participationId}`,
   /** "Back to listing" URL — `/shop` with the type's category pre-selected. */
   shopBrowse: shopBrowseHref,
   yty: "/#yty",

@@ -1,5 +1,6 @@
 import type {
   AppSupabaseClient,
+  ParticipationStatus,
   ParticipationSubscriptionState,
   ProductType,
   ProductTranslation,
@@ -169,8 +170,21 @@ export type CreateParticipationInput = {
   gamerId: string;
   purchaseShape: PurchaseShape;
   currency: SupportedCurrency;
-  returnPath?: string;
 };
+
+/**
+ * The single participation behind a just-completed signup, for the purchase
+ * confirmation page. The page joins this to the full product detail (via
+ * `useProductDetail`) for pricing + schedule, so this shape carries only what
+ * the product row can't: which product, who it's for, and the row's status.
+ */
+export interface ParticipationConfirmation {
+  id: string;
+  status: ParticipationStatus;
+  productId: string;
+  /** Gamer's first name (or username fallback); null → page shows "Your child". */
+  gamerName: string | null;
+}
 
 export type CreateParticipationResponse =
   | { status: "redirect"; checkoutUrl: string }
@@ -377,6 +391,49 @@ export class ParticipationsService {
     }
 
     return [...countsByProduct.values()];
+  }
+
+  /**
+   * The single participation behind a just-completed signup, for the purchase
+   * confirmation page (`/shop/confirmation?p=<id>`). Gated by RLS to the owning
+   * customer (`customer_id = auth.uid()`) — a parent only ever reads their own.
+   * Returns null when the id matches nothing the caller may see (a stale or
+   * forged `?p=` link), which the page renders as a friendly "couldn't find
+   * that order" fallback.
+   *
+   * Status is returned but NOT gated on. After Stripe Checkout the redirect
+   * waits on our webhook (`confirm_reservation` has run → 'active'), and free
+   * signups arrive 'active' — but every field the page displays lives on the
+   * row from creation, so a rare still-'reserving' row renders identically. We
+   * don't poll.
+   *
+   * TODO(waitlist): waitlisted signups never route here today — the 'full'
+   * create outcome keeps its own waitlist CTA on the product page. If that
+   * changes, branch the confirmation copy on `status === 'waitlisted'`.
+   */
+  async getConfirmation(
+    participationId: string,
+  ): Promise<ParticipationConfirmation | null> {
+    const { data, error } = await this.supabase
+      .from("participations")
+      .select(
+        `
+          id, status, product_id,
+          gamer:profiles!participations_gamer_id_fkey(first_name, username)
+        `,
+      )
+      .eq("id", participationId)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      status: data.status,
+      productId: data.product_id,
+      gamerName: data.gamer.first_name || data.gamer.username || null,
+    };
   }
 
   // ------------------------------------------------------------------

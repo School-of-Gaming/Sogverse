@@ -953,6 +953,43 @@
     "redirecting": "Redirecting to checkout...",
     "error": "Something went wrong starting checkout. Please <link>go back</link> and try again."
   },
+  "purchaseConfirmation": {
+    "heading": "You're all set!",
+    "subheading": {
+      "consumer_club": "{gamer} is enrolled in {product}.",
+      "municipality_club": "{gamer} is registered for {product}.",
+      "camp": "{gamer} is signed up for {product}.",
+      "event": "{gamer} is joining {product}."
+    },
+    "fallbackGamer": "Your child",
+    "summaryTitle": "Your order",
+    "forLabel": {
+      "consumer_club": "Enrolled",
+      "municipality_club": "Registered",
+      "camp": "Signed up",
+      "event": "Joined"
+    },
+    "priceLabel": "Price",
+    "price": {
+      "subscription": "{amount} / month",
+      "upfront": "{amount} (one-time)",
+      "free": "Free"
+    },
+    "nextTitle": "What happens next",
+    "next": {
+      "placement": "We'll place {gamer} in a group with a game educator. The sessions will then appear under My SOG.",
+      "subscription": "You'll be billed every month. You can manage or cancel anytime from My SOG.",
+      "oneTime": "This was a one-time payment — there's nothing more to pay.",
+      "refund": "Free cancellation within {days} days of your purchase."
+    },
+    "goToDashboard": "Go to My SOG",
+    "keepBrowsing": "Keep browsing",
+    "notFound": {
+      "title": "We couldn't find that order",
+      "description": "This link may be old or incomplete. Your purchases are always available in My SOG.",
+      "cta": "Go to My SOG"
+    }
+  },
   "docs": {
     "minecraftApi": {
       "title": "Minecraft Server API",

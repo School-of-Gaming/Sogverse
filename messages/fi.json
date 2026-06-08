@@ -953,6 +953,43 @@
     "redirecting": "Ohjataan kassalle...",
     "error": "Jokin meni pieleen kassalle siirryttäessä. <link>Palaa takaisin</link> ja yritä uudelleen."
   },
+  "purchaseConfirmation": {
+    "heading": "Valmista tuli!",
+    "subheading": {
+      "consumer_club": "{gamer} on ilmoitettu toimintaan {product}.",
+      "municipality_club": "{gamer} on rekisteröity toimintaan {product}.",
+      "camp": "{gamer} on ilmoitettu toimintaan {product}.",
+      "event": "{gamer} on liittynyt toimintaan {product}."
+    },
+    "fallbackGamer": "Lapsesi",
+    "summaryTitle": "Tilauksesi",
+    "forLabel": {
+      "consumer_club": "Ilmoitettu",
+      "municipality_club": "Rekisteröity",
+      "camp": "Ilmoitettu",
+      "event": "Liittynyt"
+    },
+    "priceLabel": "Hinta",
+    "price": {
+      "subscription": "{amount} / kk",
+      "upfront": "{amount} (kertamaksu)",
+      "free": "Ilmainen"
+    },
+    "nextTitle": "Mitä seuraavaksi tapahtuu",
+    "next": {
+      "placement": "{gamer} sijoitetaan ryhmään, jossa toimii peliohjaaja. Tämän jälkeen tapaamiset näkyvät Oma SOG -sivulla.",
+      "subscription": "Maksu veloitetaan kuukausittain. Voit hallita tai peruuttaa tilauksen milloin tahansa Oma SOG -sivulla.",
+      "oneTime": "Tämä oli kertamaksu – muuta maksettavaa ei ole.",
+      "refund": "Maksuton peruutus {days} päivän kuluessa ostosta."
+    },
+    "goToDashboard": "Siirry Oma SOG -sivulle",
+    "keepBrowsing": "Jatka selailua",
+    "notFound": {
+      "title": "Tilausta ei löytynyt",
+      "description": "Linkki saattaa olla vanha tai puutteellinen. Ostoksesi löytyvät aina Oma SOG -sivulta.",
+      "cta": "Siirry Oma SOG -sivulle"
+    }
+  },
   "docs": {
     "minecraftApi": {
       "title": "Minecraft-palvelimen API",

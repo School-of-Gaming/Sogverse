@@ -1,21 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useQueryClient } from "@tanstack/react-query";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers/auth-provider";
-import {
-  useProductDetail,
-  productKeys,
-} from "@/services/products";
+import { useProductDetail } from "@/services/products";
 import { useMyGamers } from "@/services/gamers";
 import {
-  participationKeys,
   useParticipationCounts,
   useProductSeatCountsRealtime,
 } from "@/services/participations";
@@ -35,9 +29,7 @@ interface ProductDetailPageProps {
 
 export function ProductDetailPage({ productId }: ProductDetailPageProps) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const redirectParam = `?redirect=${encodeURIComponent(pathname)}`;
-  const queryClient = useQueryClient();
 
   const { user, profile, isLoading: authLoading } = useAuth();
   const isCustomer = profile?.role === "customer";
@@ -59,22 +51,6 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
   // is the only realtime subscriber. Per CLAUDE.md the callback only
   // invalidates queries; never run a Supabase data query inside it.
   useProductSeatCountsRealtime(product?.id);
-
-  // Stripe Checkout success bounces back here — the checkout route sets
-  // success_url to /shop/[id]?signup=success. The flag triggers a query
-  // invalidation so the freshly-confirmed participation surfaces (the
-  // just-signed-up child flips to a disabled "Signed up" row in the picker)
-  // even if the realtime seat-count channel missed the rollup. We deliberately
-  // do NOT free the seat
-  // on `signup=canceled`: the movie-ticket model holds the seat for the full
-  // reservation lifetime, and the parent retries by clicking Sign Up again.
-  const signupResult = searchParams.get("signup");
-  useEffect(() => {
-    if (signupResult === "success") {
-      queryClient.invalidateQueries({ queryKey: participationKeys.all });
-      queryClient.invalidateQueries({ queryKey: productKeys.all });
-    }
-  }, [signupResult, queryClient]);
 
   // Wait on every query the signup panel depends on before painting, so we
   // don't show a child as selectable and then snap them to a disabled

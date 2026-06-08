@@ -21,7 +21,6 @@ import {
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customer";
 import { RESERVATION_LIFETIME_MINUTES } from "@/lib/constants/participations";
 import { getOrigin } from "@/lib/url";
-import { resolveInternalPath } from "@/lib/navigation/internal-path";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -56,7 +55,6 @@ export async function POST(request: Request) {
     gamerId?: string;
     purchaseShape?: PurchaseShape;
     currency?: string;
-    returnPath?: string;
   };
   try {
     body = await request.json();
@@ -64,7 +62,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { productId, gamerId, purchaseShape, currency: rawCurrency, returnPath } = body;
+  const { productId, gamerId, purchaseShape, currency: rawCurrency } = body;
 
   if (!productId || !gamerId || !purchaseShape) {
     return NextResponse.json(
@@ -212,36 +210,21 @@ export async function POST(request: Request) {
   // docs/products-architecture.md §4.5b / §4.5c.
 
   const origin = getOrigin(request);
-  // Resolve the caller-supplied return path to a safe same-origin path —
-  // `resolveInternalPath` rejects every open-redirect variant (protocol-relative
-  // `//evil.com`, backslash `/\evil.com`, absolute URLs, whitespace smuggling),
-  // which a naïve `startsWith("/")` check would let through.
-  //
-  // The fallback is the homepage — never the product detail page. The
-  // fallback only fires when something abnormal happened (broken frontend,
-  // attacker forging the request body), so we don't try to deduce where
-  // the user "should" have gone; we send them somewhere safe and familiar.
-  // The success path is independently type-aware (see successPath below),
-  // so happy-path users still land on the correct product page.
-  const safeReturnPath = resolveInternalPath(returnPath, "/");
-  // Success lands on the product detail page, which now branches to the
-  // purchased-detail view (placeholder for now) once the webhook
-  // flips the reservation to active. There's a 1–3s race window between
-  // Stripe's redirect and the webhook landing — during that window the
-  // detail page renders the signup panel briefly, then snaps to the
-  // purchased view as soon as the participation queries refetch. The
-  // `?signup=success` flag triggers the explicit invalidation in
-  // ProductDetailPage's useEffect (and the realtime channel on
-  // product_seat_counts covers the late-webhook case).
-  const successPath = ROUTES.shopProduct(productId);
-  const successUrl = `${origin}${successPath}?signup=success`;
-  // Cancel bounces back to the product page. We do NOT free the seat — the
-  // reserving row stays held until either Stripe fires session.completed
-  // (→ confirm) or session.expired (→ expire). A parent who clicks Sign Up
-  // again creates a fresh reservation (their old row stays held until its
-  // session expires). On the rare last-seat case they'd see "Fully booked"
-  // and can join the waitlist instead.
-  const cancelUrl = `${origin}${safeReturnPath}?signup=canceled`;
+  // Success lands on the dedicated purchase-confirmation page, keyed by this
+  // reservation id. By the time Stripe redirects, the `checkout.session.completed`
+  // webhook has already run `confirm_reservation` (Stripe waits up to 10s for
+  // our endpoint to respond before redirecting), so the row is 'active' — but
+  // every field the page shows lives on the row from creation, so the page
+  // renders correctly even in the rare case the redirect beats the webhook. No
+  // polling, no `?signup=` flag.
+  const successUrl = `${origin}${ROUTES.shopConfirmation(reservationId)}`;
+  // Cancel bounces straight back to the product page so the parent can retry.
+  // We do NOT free the seat — the reserving row stays held until either Stripe
+  // fires session.completed (→ confirm) or session.expired (→ expire). A parent
+  // who clicks Sign Up again creates a fresh reservation (their old row stays
+  // held until its session expires). On the rare last-seat case they'd see
+  // "Fully booked" and can join the waitlist instead.
+  const cancelUrl = `${origin}${ROUTES.shopProduct(productId)}`;
 
   const metadata = {
     reservationId,
