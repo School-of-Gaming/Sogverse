@@ -46,8 +46,11 @@ export const PRODUCT_TOPICS = {
     // and Bedrock are a constant point of parental confusion — they're bought
     // in different places — so Java links to the *computer* purchase (what our
     // remote clubs need) and Bedrock to the device picker below. The copy
-    // cross-references them too.
-    url: "https://www.minecraft.net/en-us/store/minecraft-java-bedrock-edition-pc",
+    // cross-references them too. Locale-less form: minecraft.net redirects by the
+    // visitor's Accept-Language to their regional store (verified fi-fi/sv-se),
+    // so we don't hardcode /en-us/ — same region-neutral rule as the Bedrock
+    // store links below.
+    url: "https://www.minecraft.net/store/minecraft-java-bedrock-edition-pc",
   },
   minecraft_education: {
     kind: "game",
@@ -142,8 +145,7 @@ export function isGameTopic(topic: ProductTopic): topic is GameTopic {
   return PRODUCT_TOPICS[topic].kind === "game";
 }
 
-export const GAME_TOPICS: readonly ProductTopic[] = PRODUCT_TOPIC_VALUES.filter(
-  (t) => PRODUCT_TOPICS[t].kind === "game",
-);
+export const GAME_TOPICS: readonly ProductTopic[] =
+  PRODUCT_TOPIC_VALUES.filter(isGameTopic);
 export const SUBJECT_TOPICS: readonly ProductTopic[] =
-  PRODUCT_TOPIC_VALUES.filter((t) => PRODUCT_TOPICS[t].kind === "subject");
+  PRODUCT_TOPIC_VALUES.filter((t) => !isGameTopic(t));
