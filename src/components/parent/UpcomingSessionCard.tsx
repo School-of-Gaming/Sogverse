@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { PaymentProblemBadge } from "./PaymentProblemBadge";
 import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
-import type { SessionCancellation } from "./NextSessionCard";
+import type { SessionCancellation } from "./session-card-badge";
 import { useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { formatDate, formatTime } from "@/lib/utils";
