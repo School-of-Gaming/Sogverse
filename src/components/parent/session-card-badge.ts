@@ -18,3 +18,21 @@
  */
 export const BADGE_FRAME =
   "absolute -right-2 -top-2 z-10 inline-flex h-7 items-center justify-center rounded-full shadow-sm ring-2 ring-background";
+
+/**
+ * Per-card cancellation context for a `canceling` club subscription. Built in
+ * `expandUpcomingSessions` and carried by every remaining card of the
+ * participation, so it lives here — the shared home for the session-card badge
+ * concern — rather than in either card component. `accessUntil`/
+ * `lastSessionStart` are constant across the participation's cards (they
+ * describe the participation); `isLastSession` varies per occurrence.
+ * Parent-only — see `SubscriptionEndingBadge`.
+ */
+export interface SessionCancellation {
+  /** Instant paid access ends (`current_period_end`). */
+  accessUntil: Date;
+  /** Start of the participation's final remaining session. */
+  lastSessionStart: Date;
+  /** Whether THIS card is that final session. */
+  isLastSession: boolean;
+}

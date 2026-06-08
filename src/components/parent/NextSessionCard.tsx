@@ -14,6 +14,7 @@ import {
 import { Identicon } from "@/components/ui/identicon";
 import { PaymentProblemBadge } from "./PaymentProblemBadge";
 import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
+import type { SessionCancellation } from "./session-card-badge";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { cn, formatDate, formatTime } from "@/lib/utils";
@@ -45,22 +46,6 @@ import {
  * Date / countdown formatting is shared with the gedu `GroupCard` via
  * `src/lib/session-format.ts` so the two surfaces can't drift.
  */
-
-/**
- * Per-card cancellation context for a `canceling` club subscription. Built in
- * `expandUpcomingSessions` and carried by every remaining card of the
- * participation. `accessUntil`/`lastSessionStart` are constant across the
- * participation's cards (they describe the participation); `isLastSession`
- * varies per occurrence. Parent-only — see `SubscriptionEndingBadge`.
- */
-export interface SessionCancellation {
-  /** Instant paid access ends (`current_period_end`). */
-  accessUntil: Date;
-  /** Start of the participation's final remaining session. */
-  lastSessionStart: Date;
-  /** Whether THIS card is that final session. */
-  isLastSession: boolean;
-}
 
 export interface NextSessionCardProps {
   /** First name shown in the header — "{name}'s next session". */

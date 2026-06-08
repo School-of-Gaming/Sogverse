@@ -13,6 +13,17 @@ import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import type { MyUpcomingSessionRow } from "@/services/participations";
 
 /**
+ * The earlier of two optional UTC cutoffs (the product's end date and a
+ * cancelled subscription's paid-through instant). `null` means "no bound on
+ * this side", so the other wins; both null means unbounded.
+ */
+function earlierBoundary(a: Date | null, b: Date | null): Date | null {
+  if (a === null) return b;
+  if (b === null) return a;
+  return a.getTime() <= b.getTime() ? a : b;
+}
+
+/**
  * Expand the viewer's active participations into a flat, time-sorted list of
  * concrete upcoming sessions for the dashboard Sessions section (drives both
  * `/parent` and `/gamer`). Includes not-yet-placed (unassigned)
@@ -31,17 +42,6 @@ import type { MyUpcomingSessionRow } from "@/services/participations";
  * the only card that consumes it (`UpcomingSessionCard` is info-only), so
  * computing windows for every entry would be wasted work.
  */
-/**
- * The earlier of two optional UTC cutoffs (the product's end date and a
- * cancelled subscription's paid-through instant). `null` means "no bound on
- * this side", so the other wins; both null means unbounded.
- */
-function earlierBoundary(a: Date | null, b: Date | null): Date | null {
-  if (a === null) return b;
-  if (b === null) return a;
-  return a.getTime() <= b.getTime() ? a : b;
-}
-
 export function expandUpcomingSessions(
   rows: MyUpcomingSessionRow[],
   now: Date,
