@@ -730,13 +730,12 @@ BEGIN
     FOR v_price IN SELECT * FROM jsonb_array_elements(p_prices)
     LOOP
       INSERT INTO public.product_prices (
-        product_id, currency, price_per_session, price_per_month
+        product_id, currency, price_cents
       )
       VALUES (
         v_product_id,
         v_price->>'currency',
-        (v_price->>'price_per_session')::INTEGER,
-        (v_price->>'price_per_month')::INTEGER
+        (v_price->>'price_cents')::INTEGER
       );
     END LOOP;
   END IF;
@@ -1870,13 +1869,12 @@ BEGIN
     FOR v_price IN SELECT * FROM jsonb_array_elements(p_prices)
     LOOP
       INSERT INTO public.product_prices (
-        product_id, currency, price_per_session, price_per_month
+        product_id, currency, price_cents
       )
       VALUES (
         p_id,
         v_price->>'currency',
-        (v_price->>'price_per_session')::INTEGER,
-        (v_price->>'price_per_month')::INTEGER
+        (v_price->>'price_cents')::INTEGER
       );
     END LOOP;
   END IF;
