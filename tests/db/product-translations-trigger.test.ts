@@ -38,7 +38,7 @@ describe("ensure_product_keeps_at_least_one_translation trigger", () => {
       product_id: PRODUCT_ID,
       locale,
       name: `Name in ${locale}`,
-      description: `Description in ${locale}`,
+      short_description: `Description in ${locale}`,
     }));
     const { error } = await admin
       .from("product_translations")

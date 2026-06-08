@@ -79,7 +79,7 @@ export function ProductBrowseCard({ product, counts }: ProductBrowseCardProps) {
   return (
     <ProductBrowseCardView
       name={tr?.name ?? ""}
-      description={tr?.description ?? null}
+      description={tr?.short_description ?? null}
       imagePath={product.image_path}
       topicLabel={topicLabel(product.topic)}
       scheduleLines={scheduleLines}

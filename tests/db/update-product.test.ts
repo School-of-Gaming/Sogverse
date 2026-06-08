@@ -60,8 +60,8 @@ describe("update_product", () => {
     // Seed one of every child set so the wipe-and-replace assertions have
     // something to delete.
     await admin.from("product_translations").insert([
-      { product_id: PRODUCT_ID, locale: "en", name: "Old", description: "Old desc" },
-      { product_id: PRODUCT_ID, locale: "fi", name: "Vanha", description: "Vanha kuvaus" },
+      { product_id: PRODUCT_ID, locale: "en", name: "Old", short_description: "Old desc" },
+      { product_id: PRODUCT_ID, locale: "fi", name: "Vanha", short_description: "Vanha kuvaus" },
     ]);
     await admin
       .from("schedule_slots")
@@ -78,8 +78,8 @@ describe("update_product", () => {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
       p_translations: [
-        { locale: "en", name: "New", description: "New desc" },
-        { locale: "fi", name: "Uusi", description: "Uusi kuvaus" },
+        { locale: "en", name: "New", short_description: "New desc" },
+        { locale: "fi", name: "Uusi", short_description: "Uusi kuvaus" },
       ],
       p_topic: "minecraft_java",
       p_min_age: 8,
@@ -157,7 +157,7 @@ describe("update_product", () => {
     const { error } = await admin.rpc("update_product", {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
-      p_translations: [{ locale: "en", name: "Whatever", description: "" }],
+      p_translations: [{ locale: "en", name: "Whatever", short_description: "" }],
       p_topic: "minecraft_java",
       p_min_age: 7,
       p_max_age: 12,
@@ -189,7 +189,7 @@ describe("update_product", () => {
     const { error } = await customer.rpc("update_product", {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
-      p_translations: [{ locale: "en", name: "Hacker", description: "" }],
+      p_translations: [{ locale: "en", name: "Hacker", short_description: "" }],
       p_topic: "minecraft_java",
       p_min_age: 7,
       p_max_age: 12,
@@ -211,7 +211,7 @@ describe("update_product", () => {
     const { error } = await admin.rpc("update_product", {
       p_id: PRODUCT_ID,
       p_billing_mode: "paid",
-      p_translations: [{ locale: "sv", name: "Bara svenska", description: "" }],
+      p_translations: [{ locale: "sv", name: "Bara svenska", short_description: "" }],
       p_topic: "minecraft_java",
       p_min_age: 7,
       p_max_age: 12,
@@ -254,7 +254,7 @@ describe("update_product", () => {
     const { error } = await admin.rpc("update_product", {
       p_id: fakeId,
       p_billing_mode: "paid",
-      p_translations: [{ locale: "en", name: "Doesn't exist", description: "" }],
+      p_translations: [{ locale: "en", name: "Doesn't exist", short_description: "" }],
       p_topic: "minecraft_java",
       p_min_age: 7,
       p_max_age: 12,
@@ -268,5 +268,66 @@ describe("update_product", () => {
     // SQL-standard 02000/no_data). Asserting on the code rather than the
     // message so a copy tweak doesn't break the test.
     expect(error?.code).toBe("P0002");
+  });
+
+  it("stores and round-trips a structured long_description", async () => {
+    await freshProduct();
+
+    const longDesc = [
+      { type: "heading", text: "What you'll learn" },
+      { type: "paragraph", text: "Build a redstone door together." },
+    ];
+
+    const { error } = await admin.rpc("update_product", {
+      p_id: PRODUCT_ID,
+      p_billing_mode: "paid",
+      p_translations: [
+        {
+          locale: "en",
+          name: "New",
+          short_description: "Teaser",
+          long_description: longDesc,
+        },
+        // null long_description folds to SQL NULL (no long description).
+        { locale: "fi", name: "Uusi", short_description: "", long_description: null },
+      ],
+      p_topic: "minecraft_java",
+      p_min_age: 7,
+      p_max_age: 12,
+      p_spoken_language_code: "en",
+      p_is_remote: true,
+      p_timezone: "Europe/Helsinki",
+      p_registration_opens_at: new Date().toISOString(),
+      p_seat_count: 10,
+    });
+    expect(error).toBeNull();
+
+    const { data: rows } = await admin
+      .from("product_translations")
+      .select("locale, short_description, long_description")
+      .eq("product_id", PRODUCT_ID)
+      .order("locale", { ascending: true });
+    expect(rows).toEqual([
+      { locale: "en", short_description: "Teaser", long_description: longDesc },
+      { locale: "fi", short_description: "", long_description: null },
+    ]);
+  });
+
+  it("rejects a non-array long_description via the CHECK constraint", async () => {
+    await freshProduct();
+
+    // Direct insert — admin bypasses RLS but not the CHECK. The lightweight
+    // guard (00092) only enforces NULL-or-array: a JSON string (or any
+    // non-array) violates product_translations_long_description_check. Finer
+    // block-shape validation lives in the UI on write and parseLongDescription
+    // on read.
+    const { error } = await admin.from("product_translations").insert({
+      product_id: PRODUCT_ID,
+      locale: "sv",
+      name: "Bad",
+      short_description: "",
+      long_description: "not an array",
+    });
+    expect(error?.code).toBe("23514"); // check_violation
   });
 });

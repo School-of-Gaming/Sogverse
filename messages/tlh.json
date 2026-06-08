@@ -375,7 +375,8 @@
       },
       "labels": {
         "name": "pong",
-        "description": "QIn",
+        "shortDescription": "QIn ngaj",
+        "longDescription": "QIn nI'",
         "topic": "Doch",
         "padletUrl": "Padlet URL",
         "minAge": "DIS mach",
@@ -424,6 +425,18 @@
           "camp": "jajmey, rep mI', Hogh paQDI'norgh.",
           "event": "Qu' QInHom — nuq, nuqDaq, 'Iv lop."
         }
+      },
+      "longDescription": {
+        "empty": "QIn nI' tu'be'. nargh pagh 'ay' yIchu'.",
+        "headingLabel": "nargh",
+        "paragraphLabel": "'ay'",
+        "headingPlaceholder": "'ay' nargh",
+        "paragraphPlaceholder": "'ay' yIghItlh…",
+        "addHeading": "nargh yIchu'",
+        "addParagraph": "'ay' yIchu'",
+        "moveUp": "Dung yIvIH",
+        "moveDown": "bIng yIvIH",
+        "remove": "yIteq"
       },
       "topicKinds": {
         "game": "QujmeH",
@@ -475,6 +488,8 @@
         "scheduledDescription": "vavmey ghItlh tagh DIS lulegh."
       },
       "hints": {
+        "shortDescription": "wa' tlhegh QIn. browse 'aqroSmeyDaq, tetlhmeyDaq, je 'aqroS tlhopDaq cha'lu'.",
+        "longDescription": "vItlhutlh. Doch 'aqroSDaq neH cha'lu'. nargh je 'ay'mey lo'.",
         "topicHint": "Doch — Quj (Minecraft, Fortnite, je latlh) ghap paQDI'norgh (ja'chuq).",
         "padletHint": "vItlhutlh. ghItlh ghu'pu'vaD.",
         "deliveredInHint": "qaStaHvISmeyDaq Hol pIn.",

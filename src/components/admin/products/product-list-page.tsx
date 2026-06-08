@@ -155,7 +155,7 @@ export function ProductListPage({ productType }: ProductListPageProps) {
                       )}
                     </div>
                     <p className="truncate text-sm text-muted-foreground">
-                      {tr?.description ?? ""}
+                      {tr?.short_description ?? ""}
                     </p>
                     <div className="mt-1 flex flex-wrap gap-3 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1">

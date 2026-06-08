@@ -10,7 +10,9 @@ import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
 import { isGameTopic } from "@/lib/products/topics";
+import { parseLongDescription } from "@/types";
 import type { ProductBrowseRow, ProductType } from "@/types";
+import { LongDescription } from "./long-description";
 import { formatInTimeZone } from "date-fns-tz";
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
 import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
@@ -90,19 +92,19 @@ export function ProductDetailPageBody({
             <h1 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
               {tr?.name}
             </h1>
-            {/* Description on its own row at mobile width — squeezing it
+            {/* Short description on its own row at mobile width — squeezing it
                 next to a 96px thumbnail makes it 4-5 cramped lines.
                 Spans both columns from sm+ via the `sm:hidden` swap. */}
-            {tr?.description && (
+            {tr?.short_description && (
               <p className="mt-2 hidden text-muted-foreground sm:block">
-                {tr.description}
+                {tr.short_description}
               </p>
             )}
           </div>
 
-          {tr?.description && (
+          {tr?.short_description && (
             <p className="col-span-2 text-muted-foreground sm:hidden">
-              {tr.description}
+              {tr.short_description}
             </p>
           )}
         </div>
@@ -117,7 +119,11 @@ export function ProductDetailPageBody({
             track is `auto`, which sizes to content. */}
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
           <MainColumn product={product} />
-          <div className="lg:sticky lg:top-6 lg:self-start">
+          {/* Pin the whole panel just below the sticky site header (64px) with
+              a 1rem comfort gap — matches the --header-height offset convention
+              used elsewhere. Without the offset the card's top tucks under the
+              header. */}
+          <div className="lg:sticky lg:top-[calc(var(--header-height)+1rem)] lg:self-start">
             <SignupPanel
               product={product}
               state={state}
@@ -152,8 +158,16 @@ function MainColumn({
   // The game card only applies to game topics (Minecraft editions, Fortnite);
   // subjects like Webinar have no game to describe. isGameTopic narrows
   // product.topic to GameTopic so it can be passed straight to GameInfoCard.
+  const uiLocale = resolveLocale(useLocale());
+  const tr = resolveTranslation(product.product_translations, uiLocale);
+  const longDescription = parseLongDescription(tr?.long_description);
+
   return (
     <div className="space-y-6">
+      {/* Marketing blurb first — the expanded pitch under the hero, ahead of
+          the logistics cards. Omitted when the admin left it empty. */}
+      <LongDescription blocks={longDescription} />
+
       <ProductWhenWhereCard product={product} />
 
       {isGameTopic(product.topic) && <GameInfoCard topic={product.topic} />}

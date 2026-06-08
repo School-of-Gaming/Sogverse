@@ -330,7 +330,8 @@
       },
       "labels": {
         "name": "Namn",
-        "description": "Beskrivning",
+        "shortDescription": "Kort beskrivning",
+        "longDescription": "Lång beskrivning",
         "topic": "Ämne",
         "padletUrl": "Padlet-URL",
         "minAge": "Min ålder",
@@ -379,6 +380,18 @@
           "camp": "Dagar, totalt antal timmar, veckans tema.",
           "event": "En kort sammanfattning av evenemanget — vad, var, för vem."
         }
+      },
+      "longDescription": {
+        "empty": "Ingen lång beskrivning ännu. Lägg till en rubrik eller ett stycke för att börja.",
+        "headingLabel": "Rubrik",
+        "paragraphLabel": "Stycke",
+        "headingPlaceholder": "Avsnittsrubrik",
+        "paragraphPlaceholder": "Skriv ett stycke…",
+        "addHeading": "Lägg till rubrik",
+        "addParagraph": "Lägg till stycke",
+        "moveUp": "Flytta upp",
+        "moveDown": "Flytta ner",
+        "remove": "Ta bort"
       },
       "topicKinds": {
         "game": "Spel",
@@ -430,6 +443,8 @@
         "scheduledDescription": "Föräldrar ser en nedräkning till dess. Användbart för biljettsläpp-liknande lanseringar."
       },
       "hints": {
+        "shortDescription": "En enradig text som visas på bläddringskort, listor och högst upp på detaljsidan.",
+        "longDescription": "Valfritt. Visas endast på produktens detaljsida. Bygg den av rubriker och stycken.",
         "topicHint": "Produktens ämne — ett spel (som Minecraft eller Fortnite) eller ett ämne (som webbinarium).",
         "padletHint": "Valfritt. Delas med familjer efter att de anmält sig.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",

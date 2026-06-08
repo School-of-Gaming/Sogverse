@@ -27,7 +27,8 @@ function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessi
         {
           locale: "en",
           name: "Minecraft Club",
-          description: "",
+          short_description: "",
+          long_description: null,
           product_id: PRODUCT_ID,
           created_at: "",
           updated_at: "",
@@ -89,7 +90,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "en",
             name: "Spring Camp",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",
@@ -124,7 +126,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "en",
             name: "Long Run",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",
@@ -230,7 +233,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "en",
             name: "Minecraft Club",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",
@@ -238,7 +242,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "fi",
             name: "Minecraft-kerho",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",
@@ -341,7 +346,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "en",
             name: "In-person Club",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",
@@ -371,7 +377,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "en",
             name: "Padlet-less Club",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",
@@ -405,7 +412,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "en",
             name: "Kyle's Tech Camp",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",
@@ -453,7 +461,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "en",
             name: "Kyle's Tech Camp",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",
@@ -498,7 +507,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "en",
             name: "Helsinki Club",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",
@@ -538,7 +548,8 @@ describe("expandUpcomingSessions", () => {
           {
             locale: "en",
             name: "Helsinki Club",
-            description: "",
+            short_description: "",
+            long_description: null,
             product_id: PRODUCT_ID,
             created_at: "",
             updated_at: "",

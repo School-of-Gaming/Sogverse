@@ -330,7 +330,8 @@
       },
       "labels": {
         "name": "Nimi",
-        "description": "Kuvaus",
+        "shortDescription": "Lyhyt kuvaus",
+        "longDescription": "Pitkä kuvaus",
         "topic": "Aihe",
         "padletUrl": "Padlet-osoite",
         "minAge": "Alaikäraja",
@@ -379,6 +380,18 @@
           "camp": "Päivät, kokonaistunnit, viikon teema.",
           "event": "Yksirivinen kuvaus tapahtumasta — mitä, missä, kenelle."
         }
+      },
+      "longDescription": {
+        "empty": "Ei vielä pitkää kuvausta. Lisää otsikko tai kappale aloittaaksesi.",
+        "headingLabel": "Otsikko",
+        "paragraphLabel": "Kappale",
+        "headingPlaceholder": "Osion otsikko",
+        "paragraphPlaceholder": "Kirjoita kappale…",
+        "addHeading": "Lisää otsikko",
+        "addParagraph": "Lisää kappale",
+        "moveUp": "Siirrä ylös",
+        "moveDown": "Siirrä alas",
+        "remove": "Poista"
       },
       "topicKinds": {
         "game": "Pelit",
@@ -430,6 +443,8 @@
         "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
       },
       "hints": {
+        "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
+        "longDescription": "Valinnainen. Näkyy vain tuotteen tuotesivulla. Koosta se otsikoista ja kappaleista.",
         "topicHint": "Tuotteen aihe — peli (kuten Minecraft tai Fortnite) tai aine (kuten webinaari).",
         "padletHint": "Valinnainen. Jaetaan perheille ilmoittautumisen jälkeen.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",

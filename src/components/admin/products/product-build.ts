@@ -24,6 +24,7 @@ import type {
   ProductAdminDetailRow,
   UpdateProductInput,
 } from "@/services/products";
+import { parseLongDescription } from "@/types";
 import type { ProductType } from "@/types";
 import {
   effectiveBillingMode,
@@ -94,13 +95,13 @@ export function validate(
     TranslationDraft,
   ][];
   const filledLocales = entries
-    .filter(([, v]) => v.name.trim() && v.description.trim())
+    .filter(([, v]) => v.name.trim() && v.shortDescription.trim())
     .map(([k]) => k);
 
   if (filledLocales.length === 0) return err("translationRequired");
 
   for (const [locale, v] of entries) {
-    if (!v.name.trim() || !v.description.trim()) {
+    if (!v.name.trim() || !v.shortDescription.trim()) {
       return err("translationIncomplete", {
         locale: LOCALE_CONFIG[locale].label,
       });
@@ -273,11 +274,21 @@ function buildSharedFields(
 
   const translations = (
     Object.entries(state.translations) as [SupportedLocale, TranslationDraft][]
-  ).map(([locale, v]) => ({
-    locale,
-    name: v.name.trim(),
-    description: v.description.trim(),
-  }));
+  ).map(([locale, v]) => {
+    // Trim each block's text and drop any that end up empty — a half-typed
+    // block (heading added, text not filled) must neither block submit nor
+    // trip the DB's non-empty-text CHECK. An all-empty result becomes null
+    // ("no long description"), matching how the RPC folds it to SQL NULL.
+    const blocks = v.longDescription
+      .map((b) => ({ type: b.type, text: b.text.trim() }))
+      .filter((b) => b.text.length > 0);
+    return {
+      locale,
+      name: v.name.trim(),
+      short_description: v.shortDescription.trim(),
+      long_description: blocks.length > 0 ? blocks : null,
+    };
+  });
 
   return {
     billing_mode: billingMode,
@@ -428,7 +439,11 @@ export function existingFormState(
   const translations: Partial<Record<SupportedLocale, TranslationDraft>> = {};
   for (const t of product.product_translations) {
     if (isSupportedLocale(t.locale)) {
-      translations[t.locale] = { name: t.name, description: t.description };
+      translations[t.locale] = {
+        name: t.name,
+        shortDescription: t.short_description,
+        longDescription: parseLongDescription(t.long_description),
+      };
     }
   }
 
