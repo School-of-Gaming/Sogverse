@@ -513,7 +513,6 @@
         "day": "Day",
         "hour": "Hour",
         "minute": "Minute",
-        "startTime": "Start time",
         "startHour": "Start hour",
         "startMinute": "Start minute",
         "endHour": "End hour",
