@@ -130,8 +130,8 @@ function buildBaseProduct(
     image_path: null,
     // Fixed product_topic enum; the label is resolved via PRODUCT_TOPICS, so
     // the value just needs to be valid. Events get Fortnite, the rest
-    // Minecraft — enough to exercise both game chips in the preview.
-    topic: productType === "event" ? "fortnite" : "minecraft",
+    // Minecraft Java — enough to exercise both game chips in the preview.
+    topic: productType === "event" ? "fortnite" : "minecraft_java",
     created_at: new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString(),
     updated_at: new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString(),
     product_translations: [

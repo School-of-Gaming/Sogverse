@@ -123,7 +123,9 @@ CREATE TYPE public.product_status AS ENUM (
 --
 
 CREATE TYPE public.product_topic AS ENUM (
-    'minecraft',
+    'minecraft_java',
+    'minecraft_education',
+    'minecraft_bedrock',
     'fortnite',
     'webinar'
 );
@@ -728,12 +730,13 @@ BEGIN
     FOR v_price IN SELECT * FROM jsonb_array_elements(p_prices)
     LOOP
       INSERT INTO public.product_prices (
-        product_id, currency, price_cents
+        product_id, currency, price_per_session, price_per_month
       )
       VALUES (
         v_product_id,
         v_price->>'currency',
-        (v_price->>'price_cents')::INTEGER
+        (v_price->>'price_per_session')::INTEGER,
+        (v_price->>'price_per_month')::INTEGER
       );
     END LOOP;
   END IF;
@@ -1867,12 +1870,13 @@ BEGIN
     FOR v_price IN SELECT * FROM jsonb_array_elements(p_prices)
     LOOP
       INSERT INTO public.product_prices (
-        product_id, currency, price_cents
+        product_id, currency, price_per_session, price_per_month
       )
       VALUES (
         p_id,
         v_price->>'currency',
-        (v_price->>'price_cents')::INTEGER
+        (v_price->>'price_per_session')::INTEGER,
+        (v_price->>'price_per_month')::INTEGER
       );
     END LOOP;
   END IF;

@@ -430,7 +430,7 @@
         "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
       },
       "hints": {
-        "topicHint": "Tuotteen aihe — peli (Minecraft, Fortnite) tai aine (webinaari).",
+        "topicHint": "Tuotteen aihe — peli (kuten Minecraft tai Fortnite) tai aine (kuten webinaari).",
         "padletHint": "Valinnainen. Jaetaan perheille ilmoittautumisen jälkeen.",
         "deliveredInHint": "Pääkieli, jota kerroilla käytetään.",
         "onlineNoLocation": "Verkossa ja avoin kaikille — sijaintia ei tarvita. Kaikki selailevat vanhemmat näkevät tämän asuinpaikasta riippumatta.",

@@ -30,7 +30,7 @@ function validConsumerState(): FormState {
     en: { name: "Test Club", description: "A great club" },
   };
   s.activeLocale = "en";
-  s.topic = "minecraft";
+  s.topic = "minecraft_java";
   s.spokenLanguageCode = "en";
   s.isRemote = true;
   s.locationId = null;
@@ -572,7 +572,7 @@ function mockDetailRow(
     is_visible: true,
     is_remote: true,
     location_id: null,
-    topic: "minecraft",
+    topic: "minecraft_java",
     min_age: 8,
     max_age: 12,
     spoken_language_code: "en",

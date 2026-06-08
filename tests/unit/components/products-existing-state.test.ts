@@ -20,7 +20,7 @@ function syntheticConsumerProduct(): ProductAdminDetailRow {
     id: "00000000-0000-0000-0000-0000000005a1",
     product_type: "consumer_club",
     billing_mode: "paid",
-    topic: "minecraft",
+    topic: "minecraft_java",
     min_age: 7,
     max_age: 12,
     spoken_language_code: "en",
@@ -76,7 +76,7 @@ describe("existingFormState", () => {
       en: { name: "Build Club", description: "Build castles together." },
     });
     expect(state.activeLocale).toBe("en");
-    expect(state.topic).toBe("minecraft");
+    expect(state.topic).toBe("minecraft_java");
     expect(state.minAge).toBe("7");
     expect(state.maxAge).toBe("12");
     expect(state.startDate).toBe("2026-09-01");
@@ -188,7 +188,7 @@ describe("buildUpdateInput round-trip", () => {
     const input = buildUpdateInput(state, consumerConfig);
 
     expect(input.billing_mode).toBe("paid");
-    expect(input.topic).toBe("minecraft");
+    expect(input.topic).toBe("minecraft_java");
     expect(input.min_age).toBe(7);
     expect(input.max_age).toBe(12);
     expect(input.start_date).toBe("2026-09-01");

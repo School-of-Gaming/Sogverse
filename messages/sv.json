@@ -430,7 +430,7 @@
         "scheduledDescription": "Föräldrar ser en nedräkning till dess. Användbart för biljettsläpp-liknande lanseringar."
       },
       "hints": {
-        "topicHint": "Produktens ämne — ett spel (Minecraft, Fortnite) eller ett ämne (webbinarium).",
+        "topicHint": "Produktens ämne — ett spel (som Minecraft eller Fortnite) eller ett ämne (som webbinarium).",
         "padletHint": "Valfritt. Delas med familjer efter att de anmält sig.",
         "deliveredInHint": "Det primära språk som används under tillfällena.",
         "onlineNoLocation": "Online och tillgänglig för alla — ingen plats behövs. Alla föräldrar som bläddrar ser detta, oavsett var de bor.",
