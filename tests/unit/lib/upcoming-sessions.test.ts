@@ -41,6 +41,7 @@ function makeRow(overrides: Partial<MyUpcomingSessionRow> = {}): MyUpcomingSessi
       { weekday: 2, startTime: "15:00", durationMinutes: 120 }, // Wed 15:00 UTC
     ],
     paymentProblem: false,
+    subscriptionEndsAt: null,
     ...overrides,
   };
 }
@@ -565,5 +566,166 @@ describe("expandUpcomingSessions", () => {
     );
     expect(out[0].sessionStart.toISOString()).toBe("2026-03-25T15:00:00.000Z");
     expect(out[1].sessionStart.toISOString()).toBe("2026-04-01T14:00:00.000Z");
+  });
+
+  // --- Cancelled-subscription clamping (subscriptionEndsAt) ----------------
+
+  it("clamps a canceling open-ended club to its subscription end, hiding later sessions", () => {
+    // Open-ended weekly Wed club whose sub is canceling, paid through Mar 11.
+    // Without the clamp this emits the usual 8; with it, only the occurrences
+    // on or before the paid-through instant survive.
+    const row = makeRow({
+      subscriptionEndsAt: new Date("2026-03-11T23:59:59Z"),
+      slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }], // Wed
+    });
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-02-25T08:00:00Z"), // Wed morning
+      "en",
+    );
+    expect(out.map((s) => s.sessionStart.toISOString())).toEqual([
+      "2026-02-25T15:00:00.000Z",
+      "2026-03-04T15:00:00.000Z",
+      "2026-03-11T15:00:00.000Z",
+    ]);
+  });
+
+  it("lifts the 8-cap for a canceling open-ended club, emitting every session in the paid window", () => {
+    // Two slots over ~5 weeks of remaining access = 10 occurrences. An
+    // open-ended club is normally capped at 8, but a canceling sub gives a
+    // real terminal date, so the parent should see all 10 (everything they
+    // still paid for), not a truncated 8.
+    const row = makeRow({
+      subscriptionEndsAt: new Date("2026-03-31T23:59:59Z"),
+      slots: [
+        { weekday: 1, startTime: "15:00", durationMinutes: 60 }, // Tue
+        { weekday: 3, startTime: "15:00", durationMinutes: 60 }, // Thu
+      ],
+    });
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+    expect(out.length).toBeGreaterThan(8);
+    expect(
+      out.every(
+        (s) => s.sessionStart.getTime() <= new Date("2026-03-31T23:59:59Z").getTime(),
+      ),
+    ).toBe(true);
+  });
+
+  it("clamps to the product end_date when it falls before the subscription end", () => {
+    // Camp ends Mar 4; sub paid through Mar 31. The earlier bound (the camp's
+    // own end date) must win.
+    const row = makeRow({
+      subscriptionEndsAt: new Date("2026-03-31T23:59:59Z"),
+      product: {
+        id: PRODUCT_ID,
+        type: "camp",
+        timezone: "UTC",
+        startDate: null,
+        endDate: "2026-03-04",
+        padletUrl: null,
+        isRemote: true,
+        translations: [
+          {
+            locale: "en",
+            name: "Short Camp",
+            short_description: "",
+            long_description: null,
+            product_id: PRODUCT_ID,
+            created_at: "",
+            updated_at: "",
+          },
+        ],
+      },
+      slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }], // Wed
+    });
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+    expect(out.map((s) => s.sessionStart.toISOString())).toEqual([
+      "2026-02-25T15:00:00.000Z",
+      "2026-03-04T15:00:00.000Z",
+    ]);
+  });
+
+  it("clamps to the subscription end when it falls before the product end_date", () => {
+    // End-dated club runs through Mar 31, but the sub is canceling and paid
+    // only through Mar 11. The earlier bound (the subscription) must win.
+    const row = makeRow({
+      subscriptionEndsAt: new Date("2026-03-11T23:59:59Z"),
+      product: {
+        id: PRODUCT_ID,
+        type: "consumer_club",
+        timezone: "UTC",
+        startDate: null,
+        endDate: "2026-03-31",
+        padletUrl: null,
+        isRemote: true,
+        translations: [
+          {
+            locale: "en",
+            name: "Dated Club",
+            short_description: "",
+            long_description: null,
+            product_id: PRODUCT_ID,
+            created_at: "",
+            updated_at: "",
+          },
+        ],
+      },
+      slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }], // Wed
+    });
+    const out = expandUpcomingSessions(
+      [row],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+    expect(out.map((s) => s.sessionStart.toISOString())).toEqual([
+      "2026-02-25T15:00:00.000Z",
+      "2026-03-04T15:00:00.000Z",
+      "2026-03-11T15:00:00.000Z",
+    ]);
+  });
+
+  it("attaches cancellation info to every card of a canceling sub and flags exactly the final session", () => {
+    const now = new Date("2026-02-25T08:00:00Z");
+    const subEnd = new Date("2026-03-11T23:59:59Z");
+    const out = expandUpcomingSessions(
+      [makeRow({ subscriptionEndsAt: subEnd })],
+      now,
+      "en",
+    );
+    expect(out.length).toBeGreaterThan(1);
+
+    // Single participation, globally sorted → the last card is the final
+    // session. Every card shares the same accessUntil + lastSessionStart.
+    const finalStart = out[out.length - 1].sessionStart;
+    expect(out.every((s) => s.cancellation?.accessUntil === subEnd)).toBe(true);
+    expect(
+      out.every(
+        (s) =>
+          s.cancellation?.lastSessionStart.getTime() === finalStart.getTime(),
+      ),
+    ).toBe(true);
+
+    // Exactly one card — the latest — is flagged as the last session.
+    const flagged = out.filter((s) => s.cancellation?.isLastSession);
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].sessionStart.getTime()).toBe(finalStart.getTime());
+  });
+
+  it("attaches no cancellation info for a healthy (non-canceling) sub", () => {
+    const out = expandUpcomingSessions(
+      [makeRow()],
+      new Date("2026-02-25T08:00:00Z"),
+      "en",
+    );
+    expect(out.length).toBeGreaterThan(0);
+    expect(out.every((s) => s.cancellation === null)).toBe(true);
   });
 });

@@ -427,6 +427,23 @@ export type MyAssignedProductRow = Omit<
   }>;
 };
 
+// get_my_participation_subscription_states RPC (00093) — money-free read of the
+// caller's past_due/canceling subs feeding the dashboard payment-problem and
+// access-until badges. The generator types `current_period_end` non-nullable
+// from the RETURNS TABLE column alone, but family_subscriptions.current_period_end
+// IS nullable and no CHECK forbids null on these statuses, so the guarantee is
+// false. Loosen it to `string | null` so call sites are forced to handle the
+// (rare, Stripe-always-provides-it-in-practice) null. Keep adjacent to its
+// source in supabase/migrations/00093_subscription_states_rpc.sql.
+type _SubscriptionStateGenerated =
+  Database["public"]["Functions"]["get_my_participation_subscription_states"]["Returns"][number];
+export type ParticipationSubscriptionState = Omit<
+  _SubscriptionStateGenerated,
+  "current_period_end"
+> & {
+  current_period_end: string | null;
+};
+
 // ---------------------------------------------------------------------------
 // App-level types (not generated)
 // ---------------------------------------------------------------------------

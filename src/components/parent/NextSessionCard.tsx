@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
 import { PaymentProblemBadge } from "./PaymentProblemBadge";
+import { SubscriptionEndingBadge } from "./SubscriptionEndingBadge";
 import { useNow, useTimezone } from "@/providers";
 import type { SessionAudience } from "@/types";
 import { cn, formatDate, formatTime } from "@/lib/utils";
@@ -44,6 +45,22 @@ import {
  * Date / countdown formatting is shared with the gedu `GroupCard` via
  * `src/lib/session-format.ts` so the two surfaces can't drift.
  */
+
+/**
+ * Per-card cancellation context for a `canceling` club subscription. Built in
+ * `expandUpcomingSessions` and carried by every remaining card of the
+ * participation. `accessUntil`/`lastSessionStart` are constant across the
+ * participation's cards (they describe the participation); `isLastSession`
+ * varies per occurrence. Parent-only — see `SubscriptionEndingBadge`.
+ */
+export interface SessionCancellation {
+  /** Instant paid access ends (`current_period_end`). */
+  accessUntil: Date;
+  /** Start of the participation's final remaining session. */
+  lastSessionStart: Date;
+  /** Whether THIS card is that final session. */
+  isLastSession: boolean;
+}
 
 export interface NextSessionCardProps {
   /** First name shown in the header — "{name}'s next session". */
@@ -105,6 +122,13 @@ export interface NextSessionCardProps {
    * non-interactive "ask a parent" alert for gamers. Defaults to `false`.
    */
   paymentProblem?: boolean;
+  /**
+   * Present when the parent has cancelled this club's subscription. Renders the
+   * muted "Won't renew" / "Last session" badge — parent only (see `audience`);
+   * gamer cards are just clamped to the paid window with no badge.
+   * `null`/undefined for healthy and non-subscription products.
+   */
+  cancellation?: SessionCancellation | null;
 }
 
 export function NextSessionCard({
@@ -120,6 +144,7 @@ export function NextSessionCard({
   awaiting = false,
   audience = "customer",
   paymentProblem = false,
+  cancellation = null,
 }: NextSessionCardProps) {
   const t = useTranslations("parent.nextSession");
   const tAwaiting = useTranslations("parent.awaiting");
@@ -232,6 +257,17 @@ export function NextSessionCard({
           audience: parents get a clickable money badge, gamers a
           non-interactive alert that tells them to ask a parent. */}
       {paymentProblem && <PaymentProblemBadge audience={audience} showAlert />}
+      {/* Shown only when the parent cancelled the sub (mutually exclusive with
+          past_due). Parent-only and informational — the gamer's cards are just
+          clamped to the paid window. */}
+      {cancellation && audience === "customer" && (
+        <SubscriptionEndingBadge
+          accessUntil={cancellation.accessUntil}
+          lastSessionStart={cancellation.lastSessionStart}
+          isLastSession={cancellation.isLastSession}
+          gamerFirstName={gamerFirstName}
+        />
+      )}
     </div>
   );
 }

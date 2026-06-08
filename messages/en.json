@@ -1507,6 +1507,12 @@
     "upcomingSession": {
       "gamerLabel": "For {name}"
     },
+    "subscriptionEnding": {
+      "wontRenew": "Won't renew",
+      "lastSession": "Last session",
+      "tooltip": "You canceled this membership — it won't renew. {name}'s last session is {lastSession}, and access runs through {accessUntil}.",
+      "tooltipSameDay": "You canceled this membership — it won't renew. {name}'s last session is {lastSession}."
+    },
     "awaiting": {
       "customer": "{name} is in! Their instructor will place them in a group before the first session starts.",
       "gamer": "You're all signed up! We'll put you in your group before the next session begins."
