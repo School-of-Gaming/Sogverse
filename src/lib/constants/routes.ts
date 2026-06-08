@@ -113,6 +113,8 @@ export const ROUTES = {
   selectProfile: "/select-profile",
   help: "/help",
   privacy: "/privacy",
+  termsAndConditions: "/terms-and-conditions",
+  antiBullying: "/anti-bullying-and-discipline",
   settings: "/settings",
   /**
    * Voice rooms. Two shapes share the `/voice` prefix:

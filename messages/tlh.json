@@ -25,7 +25,9 @@
       "unlockPin": "PIN yIghItlh",
       "resetPin": "PIN yIchu'qa'",
       "changePin": "PIN yIchoH",
-      "privacy": "Privacy Policy"
+      "privacy": "Privacy Policy",
+      "terms": "Terms and Conditions",
+      "antiBullying": "Anti-Bullying and Discipline"
     }
   },
   "common": {
@@ -1150,7 +1152,9 @@
     "contact": {
       "email": "QIn: {email}"
     },
-    "privacy": "Privacy Policy (So'wI')"
+    "privacy": "Privacy Policy (So'wI')",
+    "terms": "Terms of the Pact",
+    "antiBullying": "Code of Honor"
   },
   "gamer": {
     "welcome": "nuqneH, toy'wI'!",
@@ -2107,6 +2111,174 @@
         "paragraphs": [
           "To wield any right above, or for any question about your privacy or your child's data, hail hello@sog.gg. No charge, we always answer, and the surest channel is email — our House does not muster around a letterbox.",
           "If our handling of your data dishonors you, you have the right to complain to the Finnish Data Protection Ombudsman (Tietosuojavaltuutetun toimisto, tietosuoja.fi). Qapla'!"
+        ]
+      }
+    }
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "lastUpdated": "Last updated: {date}",
+    "intro": {
+      "heading": "The short version, warrior",
+      "paragraphs": [
+        "These are the terms of the pact you forge when you use Sogverse and send your young one into our clubs, camps, and events. We have written them in plain tongue, for an honorable pact is one both sides truly understand — not one buried in the riddles of lawyers.",
+        "In short: our clubs are fought online, and a trained educator stands watch over your child at all times. You may break a monthly club whenever you choose, and your child's first battle carries a coin-back oath. Have a question? Hail kanslia@sog.gg — a true warrior of flesh and blood will answer. Qapla'!"
+      ]
+    },
+    "sections": {
+      "whoWeAre": {
+        "heading": "Whose House you treat with",
+        "paragraphs": [
+          "Sogverse is commanded by School of Gaming Galactic Oy (\"School of Gaming\", \"we\", \"us\"), a Finnish House. These terms bind whenever you use Sogverse or claim one of our clubs, camps, or events.",
+          "Our standard and seal:"
+        ],
+        "bullets": [
+          "School of Gaming Galactic Oy (business ID 3110461-1)",
+          "Isokatu 56, 90100 Oulu, Finland",
+          "Email: kanslia@sog.gg"
+        ]
+      },
+      "service": {
+        "heading": "How our clubs are waged",
+        "paragraphs": [
+          "Nearly all our battles are fought online — your child joins their club, camp, or event from the home hearth, through our website. Should a particular campaign be waged differently (an in-person muster, say), we declare it plainly on that product's page before you claim it."
+        ]
+      },
+      "games": {
+        "heading": "The games your child does battle in",
+        "paragraphs": [
+          "Our clubs are forged around video games made by other Houses, such as Minecraft. We honor Finland's official age-rating guidance.",
+          "In plain terms: a child may take up a game rated up to three years above their own age, so long as a parent stands beside them and is at ease with it — but never a game rated 18+. When you send your child to the field, you affirm you are content with the age ratings of the games in play."
+        ]
+      },
+      "online": {
+        "heading": "Honor and safety online",
+        "paragraphs": [
+          "The tools we wield for live sessions carry their own minimum-age laws, set by the Houses that forge them and by local law. To keep the field honorable, children under 13 take part through a parent's account, and every session is watched over by one of our trained educators (we call them Gedus). No child is ever online with us unguarded."
+        ]
+      },
+      "pricing": {
+        "heading": "Tribute and payment",
+        "paragraphs": [
+          "All prices are shown in euro and include VAT. We may change our tribute from time to time, but a change shall never fall upon a club you already pay for without word given to you first."
+        ]
+      },
+      "clubsCancellation": {
+        "heading": "Breaking a monthly club",
+        "paragraphs": [
+          "Our clubs run as a monthly subscription, and you are free to break the pact whenever you will — no chains of fixed commitment. You may do it yourself from your account, and your child holds their place until the end of the moon you have already paid for.",
+          "We would have you test your steel with confidence. If your child fights their first session and the field is not the right one, send us word within 2 days of that first session and we will return your coin in full."
+        ]
+      },
+      "campsCancellation": {
+        "heading": "Calling off a camp",
+        "paragraphs": [
+          "Camps are claimed and paid as a single strike, so their terms of withdrawal differ a little. Should you need to call off a camp:"
+        ],
+        "bullets": [
+          "14 days or more before the camp begins: your coin is returned in full.",
+          "Between 7 and 14 days before: we return your coin less a €50 administration tribute.",
+          "Fewer than 7 days before: we cannot return the payment, for the place has been held and made ready for your child — unless a medical emergency or a force beyond your command intervenes.",
+          "If your child cannot muster because of illness, we return your coin when you send us a healer's certificate at kanslia@sog.gg."
+        ]
+      },
+      "conduct": {
+        "heading": "Conduct and casting a child from a club",
+        "paragraphs": [
+          "We would have every child stand safe and welcome, so we suffer no bullying nor conduct that spoils the field for others. When trouble rises, we begin always by standing with the child and helping them set it right — our full code is laid out in our Anti-Bullying and Discipline policy.",
+          "Only after those steps of support, and where toxic or disruptive conduct or bullying endures, may we end a child's part in the battle. We will always counsel it through with you first."
+        ]
+      },
+      "privacy": {
+        "heading": "Your House's privacy",
+        "paragraphs": [
+          "We hold the privacy of your House — and your child above all — as a matter of honor, and we handle your data under Finnish and EU data-protection law. Our Privacy Policy declares plainly what we gather and why."
+        ]
+      },
+      "changes": {
+        "heading": "Changes to these terms",
+        "paragraphs": [
+          "We may sharpen these terms from time to time — should we raise a new kind of club or change how a thing is waged. When the change is one of weight, we update the date at the head of this page, and where it matters we send you word directly."
+        ]
+      },
+      "contact": {
+        "heading": "Hail us",
+        "paragraphs": [
+          "If aught here is unclear, or you would counsel something through, hail kanslia@sog.gg. A true warrior of flesh and blood stands at the other end, and we answer gladly. Qapla'!"
+        ]
+      }
+    }
+  },
+  "discipline": {
+    "title": "Anti-Bullying and Discipline",
+    "lastUpdated": "Last updated: {date}",
+    "intro": {
+      "heading": "The short version, warrior",
+      "paragraphs": [
+        "Every child shall stand safe, respected, and welcome in our clubs. Bullying and cruelty hold no honor here, and we meet them head-on.",
+        "When a thing goes wrong, we do not merely punish — we aid. We follow a calm path, rung by rung, set on helping a child grasp what happened, set it right, and fight with more honor next time. We climb to a firmer rung only if the conduct endures, and we keep you informed every step of the climb."
+      ]
+    },
+    "sections": {
+      "commitment": {
+        "heading": "Our oath to your child",
+        "paragraphs": [
+          "Our clubs are a place to learn, to win comrades, and to revel — and that holds only if all stand safe. We are sworn to a community free of bullying, harassment, and cruelty, where every child is met with respect by our educators and by one another."
+        ]
+      },
+      "approach": {
+        "heading": "How we meet trouble",
+        "paragraphs": [
+          "When a child acts in a way that wounds or disrupts others, our educators (we call them Gedus) answer in a manner calm, kind, and fit for the child's years. The aim is ever to help the child grasp the effect of their deed and to set it right — not merely to punish.",
+          "Most matters we settle gently, with a quiet word. If the conduct endures, we take firmer steps, one rung at a time. The rungs below are the ladder we climb, and you are kept at our side as we go."
+        ]
+      },
+      "step1": {
+        "heading": "Rung 1 — A reminder and setting it right",
+        "paragraphs": [
+          "The Gedu speaks with your child about what happened and how it struck others, and helps them find a better way to wield it. It is gentle and plain — for instance: \"Remember not to take from another's chest without leave. You might ask whether they would trade instead.\""
+        ]
+      },
+      "step2": {
+        "heading": "Rung 2 — A quiet word",
+        "paragraphs": [
+          "Should it happen again, the Gedu holds a one-on-one council with your child to weigh what they did and how it strikes others. We also send word to the hearth that we have spoken with your child about their conduct in the club."
+        ]
+      },
+      "step3": {
+        "heading": "Rung 3 — Stepping in mid-session",
+        "paragraphs": [
+          "If the disruptive conduct carries on, the Gedu steps in to halt it during the session — by muting your child a moment, say, or limiting what they may do in the game. The Gedu speaks with your child apart, and we send word to the hearth."
+        ]
+      },
+      "step4": {
+        "heading": "Rung 4 — A time apart from a session",
+        "paragraphs": [
+          "If the field still will not settle, the Gedu may bid your child sit out the rest of that session. Should a longer rest be needed, we tell you beforehand. The Gedu counsels it through with your child apart, we send word to the hearth, and our chancery (kanslia@sog.gg) joins the council."
+        ]
+      },
+      "step5": {
+        "heading": "Rung 5 — Time apart from the community",
+        "paragraphs": [
+          "If the conduct endures despite all above, a child may be set apart from the SOG community for a time — their clubs, our Minecraft server, and our Discord. Our chancery hails you to lay out the ruling, and we counsel it through with your child as well."
+        ]
+      },
+      "step6": {
+        "heading": "Rung 6 — A fresh muster later",
+        "paragraphs": [
+          "Time apart need not be the end. Your child may return when both you and they stand ready. Should they return and the conduct stand unchanged, we set them apart from the field for good rather than begin the ladder anew — yet our hope, always, is a fresh start that holds. Qapla'!"
+        ]
+      },
+      "partnership": {
+        "heading": "We stand shoulder to shoulder",
+        "paragraphs": [
+          "You know your child best, and our finest victories come when we fight side by side. If you fear for how your child fares — or suspect another treats them without honor — send us word. Speaking the same expectations at the hearth and in the club strikes true."
+        ]
+      },
+      "contact": {
+        "heading": "Hail us",
+        "paragraphs": [
+          "If you hold any question on this code, or would counsel a thing that has come to pass, hail our chancery at kanslia@sog.gg. A true warrior of flesh and blood stands at the other end, and we are here to aid. Qapla'!"
         ]
       }
     }

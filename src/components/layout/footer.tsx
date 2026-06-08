@@ -26,12 +26,26 @@ export function Footer() {
           >
             {t('contact.email', { email: SUPPORT_EMAIL })}
           </a>
-          <Link
-            href={ROUTES.privacy}
-            className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-          >
-            {t('privacy')}
-          </Link>
+          <nav className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link
+              href={ROUTES.privacy}
+              className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              {t('privacy')}
+            </Link>
+            <Link
+              href={ROUTES.termsAndConditions}
+              className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              {t('terms')}
+            </Link>
+            <Link
+              href={ROUTES.antiBullying}
+              className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+            >
+              {t('antiBullying')}
+            </Link>
+          </nav>
           <div className="w-full border-t border-border pt-4">
             <Copyright />
           </div>

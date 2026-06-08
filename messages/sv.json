@@ -25,7 +25,9 @@
       "unlockPin": "Ange PIN",
       "resetPin": "Återställ PIN",
       "changePin": "Byt PIN",
-      "privacy": "Integritetspolicy"
+      "privacy": "Integritetspolicy",
+      "terms": "Användarvillkor",
+      "antiBullying": "Mot mobbning och disciplin"
     }
   },
   "common": {
@@ -1105,7 +1107,9 @@
     "contact": {
       "email": "E-post: {email}"
     },
-    "privacy": "Integritetspolicy"
+    "privacy": "Integritetspolicy",
+    "terms": "Användarvillkor",
+    "antiBullying": "Mot mobbning"
   },
   "gamer": {
     "welcome": "Välkommen, spelare!",
@@ -2062,6 +2066,174 @@
         "paragraphs": [
           "Om du vill använda någon av rättigheterna ovan eller har en fråga om din integritet eller ditt barns uppgifter är det bara att mejla hello@sog.gg. Det är kostnadsfritt, vi svarar alltid, och e-post är det bästa sättet att nå oss.",
           "Om du är missnöjd med hur vi har hanterat dina uppgifter har du rätt att lämna in ett klagomål till dataombudsmannens byrå i Finland (tietosuoja.fi)."
+        ]
+      }
+    }
+  },
+  "terms": {
+    "title": "Användarvillkor",
+    "lastUpdated": "Senast uppdaterad: {date}",
+    "intro": {
+      "heading": "Kort sagt",
+      "paragraphs": [
+        "Det här är villkoren för att använda Sogverse och anmäla ditt barn till våra klubbar, läger och evenemang. Vi har skrivit dem på ett enkelt språk, eftersom vi vill att du faktiskt ska förstå vad du går med på – inte tvingas vada genom juridiskt krångel.",
+        "Kort sagt: våra klubbar hålls online, och ditt barn har alltid en utbildad pedagog som håller uppsikt. Du kan säga upp en månadsklubb när du vill, och ditt barns första gång omfattas av en pengarna-tillbaka-garanti. Om du undrar över något är det bara att mejla kanslia@sog.gg, så hjälper en riktig människa dig."
+      ]
+    },
+    "sections": {
+      "whoWeAre": {
+        "heading": "Vem du ingår avtal med",
+        "paragraphs": [
+          "Sogverse drivs av School of Gaming Galactic Oy (”School of Gaming”, ”vi”, ”oss”), ett finländskt företag. Dessa villkor gäller varje gång du använder Sogverse eller köper någon av våra klubbar, läger eller evenemang.",
+          "Våra officiella uppgifter:"
+        ],
+        "bullets": [
+          "School of Gaming Galactic Oy (FO-nummer 3110461-1)",
+          "Isokatu 56, 90100 Uleåborg, Finland",
+          "E-post: kanslia@sog.gg"
+        ]
+      },
+      "service": {
+        "heading": "Så fungerar våra klubbar",
+        "paragraphs": [
+          "Nästan allt vi gör sker online – ditt barn deltar i sin klubb, sitt läger eller sitt evenemang hemifrån via vår webbplats. Om en viss produkt fungerar annorlunda, till exempel ett evenemang på plats, säger vi alltid det tydligt på produktens sida innan du köper."
+        ]
+      },
+      "games": {
+        "heading": "Spelen ditt barn spelar",
+        "paragraphs": [
+          "Våra klubbar byggs kring videospel som andra företag har gjort, till exempel Minecraft. Vi följer Finlands officiella åldersrekommendationer.",
+          "I praktiken innebär det att ett barn får spela ett spel med en åldersgräns på upp till tre år över barnets egen ålder, så länge en förälder är närvarande och tycker att det är okej – men aldrig ett spel med åldersgränsen 18 år. När du anmäler ditt barn bekräftar du samtidigt att du är bekväm med åldersgränserna för de spel som används."
+        ]
+      },
+      "online": {
+        "heading": "Trygghet online",
+        "paragraphs": [
+          "Verktygen vi använder för livesessioner har egna åldersgränser, som sätts av företagen bakom dem och av lokal lag. För att allt ska vara tryggt och korrekt deltar barn under 13 år via förälderns konto, och varje session övervakas av en av våra utbildade pedagoger (vi kallar dem geduer). Barn är aldrig online hos oss utan uppsikt."
+        ]
+      },
+      "pricing": {
+        "heading": "Priser och betalning",
+        "paragraphs": [
+          "Alla priser visas i euro och inkluderar moms. Vi kan ändra våra priser då och då, men en ändring påverkar aldrig en klubb du redan betalar för utan att vi berättar det först."
+        ]
+      },
+      "clubsCancellation": {
+        "heading": "Säga upp en månadsklubb",
+        "paragraphs": [
+          "Våra klubbar löper som en månadsprenumeration, och du är fri att säga upp den när du vill – det finns ingen bindningstid. Du kan göra det själv från ditt konto, och ditt barn behåller sin plats till slutet av den månad du redan har betalat för.",
+          "Vi vill också att du ska kunna prova oss med trygghet. Om ditt barn deltar i sin första gång och det visar sig att det inte passar, hör av dig inom 2 dagar från den första gången så ger vi dig full återbetalning."
+        ]
+      },
+      "campsCancellation": {
+        "heading": "Avboka ett läger",
+        "paragraphs": [
+          "Läger bokas och betalas som en engångskostnad, så avbokningsvillkoren ser lite annorlunda ut. Om du behöver avboka ett läger:"
+        ],
+        "bullets": [
+          "14 dagar eller mer innan lägret börjar: du får full återbetalning.",
+          "Mellan 7 och 14 dagar innan: vi återbetalar dig minus en administrativ avgift på 50 euro.",
+          "Mindre än 7 dagar innan: vi kan tyvärr inte återbetala beloppet, eftersom platsen har hållits och förberetts för ditt barn – om det inte rör sig om ett akut sjukdomsfall eller något helt utanför din kontroll.",
+          "Om ditt barn inte kan delta på grund av sjukdom återbetalar vi dig när du skickar oss ett läkarintyg till kanslia@sog.gg."
+        ]
+      },
+      "conduct": {
+        "heading": "Beteende och att ta ett barn ur en klubb",
+        "paragraphs": [
+          "Vi vill att varje barn ska känna sig tryggt och välkommet, så vi accepterar inte mobbning eller beteende som förstör för andra. När ett problem uppstår börjar vi alltid med att stötta barnet och hjälpa det att ställa saker till rätta – hela vårt arbetssätt beskrivs i vår policy mot mobbning och om disciplin.",
+          "Först efter dessa stödjande steg, och vid fortsatt toxiskt eller störande beteende eller mobbning, kan vi avsluta ett barns deltagande. Vi pratar alltid igenom det med dig först."
+        ]
+      },
+      "privacy": {
+        "heading": "Din familjs integritet",
+        "paragraphs": [
+          "Vi tar din familjs – och särskilt ditt barns – integritet på största allvar, och vi hanterar dina uppgifter i enlighet med finländsk och europeisk dataskyddslagstiftning. Vår integritetspolicy förklarar exakt vad vi samlar in och varför."
+        ]
+      },
+      "changes": {
+        "heading": "Ändringar av dessa villkor",
+        "paragraphs": [
+          "Vi kan uppdatera dessa villkor då och då, till exempel om vi lägger till en ny sorts klubb eller ändrar hur något fungerar. När vi gör en viktig ändring uppdaterar vi datumet högst upp på den här sidan, och när det är viktigt berättar vi det direkt för dig."
+        ]
+      },
+      "contact": {
+        "heading": "Kontakta oss",
+        "paragraphs": [
+          "Om något här är oklart, eller om du vill prata igenom något, är det bara att mejla kanslia@sog.gg. Det är en riktig människa i andra änden, och vi hjälper gärna till."
+        ]
+      }
+    }
+  },
+  "discipline": {
+    "title": "Mot mobbning och disciplin",
+    "lastUpdated": "Senast uppdaterad: {date}",
+    "intro": {
+      "heading": "Kort sagt",
+      "paragraphs": [
+        "Varje barn ska känna sig tryggt, respekterat och välkommet i våra klubbar. Mobbning och elakhet hör inte hemma här, och vi tar dem på allvar.",
+        "När något går snett straffar vi inte bara – vi hjälper. Vi använder ett lugnt tillvägagångssätt steg för steg som fokuserar på att hjälpa barnet förstå vad som hände, ställa det till rätta och göra bättre nästa gång. Vi går vidare till ett bestämdare steg bara om beteendet fortsätter, och vi håller dig informerad hela vägen."
+      ]
+    },
+    "sections": {
+      "commitment": {
+        "heading": "Vårt löfte till ditt barn",
+        "paragraphs": [
+          "Våra klubbar är en plats för att lära, få vänner och ha kul – och det fungerar bara om alla känner sig trygga. Vi är engagerade i en gemenskap fri från mobbning, trakasserier och elakhet, där varje barn behandlas med respekt av våra pedagoger och av varandra."
+        ]
+      },
+      "approach": {
+        "heading": "Så hanterar vi problem",
+        "paragraphs": [
+          "När ett barn beter sig på ett sätt som sårar eller stör andra svarar våra pedagoger (vi kallar dem geduer) på ett sätt som är lugnt, vänligt och anpassat efter barnets ålder. Målet är alltid att hjälpa barnet förstå effekten av det de gjorde och att ställa det till rätta – inte att bara straffa.",
+          "Vi hanterar de flesta situationer varsamt, med ett lugnt samtal. Om beteendet fortsätter tar vi bestämdare steg, ett i taget. Stegen nedan är den trappa vi följer, och du hålls alltid med på vägen."
+        ]
+      },
+      "step1": {
+        "heading": "Steg 1 – En påminnelse och att ställa till rätta",
+        "paragraphs": [
+          "Geduen pratar med ditt barn om vad som hände och hur det påverkade andra, och hjälper barnet hitta ett bättre sätt att hantera det. Det är milt och sakligt – till exempel: ”Kom ihåg att inte ta saker ur någon annans kista utan att fråga. Du kan fråga om de vill byta i stället.”"
+        ]
+      },
+      "step2": {
+        "heading": "Steg 2 – Ett lugnt samtal",
+        "paragraphs": [
+          "Om det händer igen pratar geduen enskilt med ditt barn för att tänka igenom vad barnet gjorde och hur det påverkar andra. Vi berättar också hemma att vi har pratat med ditt barn om beteendet i klubben."
+        ]
+      },
+      "step3": {
+        "heading": "Steg 3 – Att gripa in under sessionen",
+        "paragraphs": [
+          "Om det störande beteendet fortsätter griper geduen in för att stoppa det under sessionen – till exempel genom att stänga av ditt barns mikrofon en stund eller begränsa vad barnet kan göra i spelet. Geduen pratar enskilt med ditt barn, och vi hör av oss hem."
+        ]
+      },
+      "step4": {
+        "heading": "Steg 4 – En paus från en session",
+        "paragraphs": [
+          "Om det ändå inte lugnar sig kan geduen be ditt barn sitta över resten av den sessionen. Om en längre paus behövs berättar vi det i förväg. Geduen pratar igenom det enskilt med ditt barn, vi hör av oss hem, och vårt kansli (kanslia@sog.gg) kommer med i samtalet."
+        ]
+      },
+      "step5": {
+        "heading": "Steg 5 – Tid borta från gemenskapen",
+        "paragraphs": [
+          "Om beteendet fortsätter trots allt ovanstående kan ett barn tas bort från SOG-gemenskapen en tid – det vill säga barnets klubbar, vår Minecraft-server och vår Discord. Vårt kansli kontaktar dig för att förklara beslutet, och vi pratar igenom det med ditt barn också."
+        ]
+      },
+      "step6": {
+        "heading": "Steg 6 – En ny start senare",
+        "paragraphs": [
+          "Tid borta är inte nödvändigtvis slutet. Ditt barn kan komma tillbaka när både du och barnet känner er redo för det. Om barnet kommer tillbaka och beteendet inte har ändrats tar vi barnet ur verksamheten för gott i stället för att börja om trappan – men vår förhoppning är alltid en ny start som fungerar."
+        ]
+      },
+      "partnership": {
+        "heading": "Vi gör det här tillsammans",
+        "paragraphs": [
+          "Du känner ditt barn bäst, och vi når de bästa resultaten när vi samarbetar. Om du oroar dig för hur ditt barn har det – eller om du tror att någon annan behandlar barnet illa – berätta det för oss. När vi pratar om samma förväntningar hemma och i klubben gör det verklig skillnad."
+        ]
+      },
+      "contact": {
+        "heading": "Kontakta oss",
+        "paragraphs": [
+          "Om du har frågor om den här policyn, eller vill prata om något som har hänt, mejla vårt kansli på kanslia@sog.gg. Det är en riktig människa i andra änden, och vi finns här för att hjälpa till."
         ]
       }
     }

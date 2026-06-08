@@ -25,7 +25,9 @@
       "unlockPin": "Syötä PIN",
       "resetPin": "Nollaa PIN",
       "changePin": "Vaihda PIN",
-      "privacy": "Tietosuojaseloste"
+      "privacy": "Tietosuojaseloste",
+      "terms": "Käyttöehdot",
+      "antiBullying": "Kiusaamisen ehkäisy ja kurinpito"
     }
   },
   "common": {
@@ -1105,7 +1107,9 @@
     "contact": {
       "email": "Sähköposti: {email}"
     },
-    "privacy": "Tietosuojaseloste"
+    "privacy": "Tietosuojaseloste",
+    "terms": "Käyttöehdot",
+    "antiBullying": "Kiusaamisen ehkäisy"
   },
   "gamer": {
     "welcome": "Tervetuloa, pelaaja!",
@@ -2062,6 +2066,174 @@
         "paragraphs": [
           "Jos haluat käyttää mitä tahansa yllä mainituista oikeuksista tai sinulla on kysyttävää yksityisyydestäsi tai lapsesi tiedoista, lähetä viesti osoitteeseen hello@sog.gg. Se on maksutonta, vastaamme aina, ja sähköposti on paras tapa tavoittaa meidät.",
           "Jos olet tyytymätön siihen, miten olemme käsitelleet tietojasi, sinulla on oikeus tehdä valitus tietosuojavaltuutetun toimistolle (tietosuoja.fi)."
+        ]
+      }
+    }
+  },
+  "terms": {
+    "title": "Käyttöehdot",
+    "lastUpdated": "Päivitetty viimeksi: {date}",
+    "intro": {
+      "heading": "Lyhyesti",
+      "paragraphs": [
+        "Nämä ovat Sogversen käyttöehdot ja ehdot, joilla ilmoitat lapsesi kerhoihin, leireille ja tapahtumiin. Olemme kirjoittaneet ne selkeällä kielellä, koska haluamme sinun ymmärtävän, mihin sitoudut – emme halua piilottaa asioita lakitekstin taakse.",
+        "Lyhyesti: kerhomme toimivat verkossa, ja koulutettu ohjaaja valvoo lastasi aina. Voit perua kuukausittaisen kerhon milloin tahansa, ja lapsesi ensimmäiseen kertaan liittyy rahat takaisin -takuu. Jos sinulla on kysyttävää, lähetä viesti osoitteeseen kanslia@sog.gg, niin oikea ihminen auttaa."
+      ]
+    },
+    "sections": {
+      "whoWeAre": {
+        "heading": "Kenen kanssa teet sopimuksen",
+        "paragraphs": [
+          "Sogversea pyörittää School of Gaming Galactic Oy (”School of Gaming”, ”me”), suomalainen yritys. Nämä ehdot koskevat aina, kun käytät Sogversea tai ostat jonkin kerhomme, leirimme tai tapahtumamme.",
+          "Viralliset tietomme:"
+        ],
+        "bullets": [
+          "School of Gaming Galactic Oy (y-tunnus 3110461-1)",
+          "Isokatu 56, 90100 Oulu",
+          "Sähköposti: kanslia@sog.gg"
+        ]
+      },
+      "service": {
+        "heading": "Miten kerhomme toimivat",
+        "paragraphs": [
+          "Lähes kaikki toimintamme tapahtuu verkossa – lapsesi osallistuu kerhoon, leirille tai tapahtumaan kotoa käsin verkkosivustomme kautta. Jos jokin tuote toimii toisin, esimerkiksi lähitapahtuma, kerromme siitä aina selkeästi tuotteen sivulla ennen ostoa."
+        ]
+      },
+      "games": {
+        "heading": "Pelit, joita lapsesi pelaa",
+        "paragraphs": [
+          "Kerhomme rakentuvat muiden yritysten tekemien videopelien, kuten Minecraftin, ympärille. Noudatamme Suomen virallisia ikärajasuosituksia.",
+          "Käytännössä tämä tarkoittaa, että lapsi voi pelata peliä, jonka ikäraja on enintään kolme vuotta hänen omaa ikäänsä korkeampi, kunhan vanhempi on paikalla ja hyväksyy sen – mutta ei koskaan peliä, jonka ikäraja on 18 vuotta. Kun ilmoitat lapsesi mukaan, vahvistat samalla hyväksyväsi käytettävien pelien ikärajat."
+        ]
+      },
+      "online": {
+        "heading": "Turvallisesti verkossa",
+        "paragraphs": [
+          "Live-istunnoissa käyttämillämme työkaluilla on omat ikärajansa, jotka niiden valmistajat ja paikallinen laki määräävät. Jotta kaikki on turvallista ja asianmukaista, alle 13-vuotiaat osallistuvat vanhemman tilin kautta, ja koulutettu ohjaajamme (kutsumme heitä geduiksi) valvoo jokaista istuntoa. Lapset eivät ole koskaan verkossa kanssamme ilman valvontaa."
+        ]
+      },
+      "pricing": {
+        "heading": "Hinnat ja maksaminen",
+        "paragraphs": [
+          "Kaikki hinnat näkyvät euroina ja sisältävät arvonlisäveron. Voimme muuttaa hintojamme ajoittain, mutta muutos ei koskaan vaikuta kerhoon, josta jo maksat, ilman että kerromme siitä ensin."
+        ]
+      },
+      "clubsCancellation": {
+        "heading": "Kuukausittaisen kerhon peruminen",
+        "paragraphs": [
+          "Kerhomme toimivat kuukausitilauksena, ja voit perua sen milloin tahansa – mitään määräaikaista sitoutumista ei ole. Voit tehdä sen itse omalta tililtäsi, ja lapsesi säilyttää paikkansa sen kuukauden loppuun, jonka olet jo maksanut.",
+          "Haluamme myös, että voit kokeilla meitä huoletta. Jos lapsesi osallistuu ensimmäiseen kertaan eikä se tunnu sopivalta, kerro meille kahden päivän kuluessa tästä ensimmäisestä kerrasta, niin palautamme koko maksun."
+        ]
+      },
+      "campsCancellation": {
+        "heading": "Leirin peruminen",
+        "paragraphs": [
+          "Leirit varataan ja maksetaan kertamaksuna, joten niiden perumisehdot ovat hieman erilaiset. Jos joudut perumaan leirin:"
+        ],
+        "bullets": [
+          "Vähintään 14 päivää ennen leirin alkua: saat koko maksun takaisin.",
+          "7–14 päivää ennen: palautamme maksun, mutta pidätämme 50 euron hallinnointikulun.",
+          "Alle 7 päivää ennen: emme valitettavasti voi palauttaa maksua, koska paikka on varattu ja valmisteltu lapsellesi – ellei kyseessä ole sairaustapaus tai muu sinusta riippumaton syy.",
+          "Jos lapsesi ei voi osallistua sairauden vuoksi, palautamme maksun, kun lähetät meille lääkärintodistuksen osoitteeseen kanslia@sog.gg."
+        ]
+      },
+      "conduct": {
+        "heading": "Käytös ja lapsen poistaminen kerhosta",
+        "paragraphs": [
+          "Haluamme jokaisen lapsen tuntevan olonsa turvalliseksi ja tervetulleeksi, joten emme hyväksy kiusaamista tai käytöstä, joka pilaa muiden kokemuksen. Kun ongelma syntyy, lähdemme aina liikkeelle tukemalla lasta ja auttamalla häntä korjaamaan tilanteen – koko toimintatapamme on kuvattu kiusaamisen ehkäisyn ja kurinpidon ohjeessamme.",
+          "Vasta näiden tukea antavien vaiheiden jälkeen, ja jos myrkyllinen tai häiritsevä käytös tai kiusaaminen jatkuu, voimme päättää lapsen osallistumisen. Keskustelemme asiasta aina ensin kanssasi."
+        ]
+      },
+      "privacy": {
+        "heading": "Perheesi yksityisyys",
+        "paragraphs": [
+          "Suhtaudumme perheesi – ja erityisesti lapsesi – yksityisyyteen erittäin vakavasti, ja käsittelemme tietojasi Suomen ja EU:n tietosuojalainsäädännön mukaisesti. Tietosuojaselosteemme kertoo tarkalleen, mitä keräämme ja miksi."
+        ]
+      },
+      "changes": {
+        "heading": "Muutokset näihin ehtoihin",
+        "paragraphs": [
+          "Voimme päivittää näitä ehtoja ajoittain, esimerkiksi jos lisäämme uudenlaisen kerhon tai muutamme jonkin asian toimintaa. Kun teemme merkittävän muutoksen, päivitämme tämän sivun yläreunan päivämäärän, ja tärkeissä asioissa ilmoitamme siitä sinulle suoraan."
+        ]
+      },
+      "contact": {
+        "heading": "Yhteydenotto",
+        "paragraphs": [
+          "Jos jokin tässä jää epäselväksi tai haluat keskustella jostakin, lähetä viesti osoitteeseen kanslia@sog.gg. Linjan toisessa päässä on oikea ihminen, ja autamme mielellämme."
+        ]
+      }
+    }
+  },
+  "discipline": {
+    "title": "Kiusaamisen ehkäisy ja kurinpito",
+    "lastUpdated": "Päivitetty viimeksi: {date}",
+    "intro": {
+      "heading": "Lyhyesti",
+      "paragraphs": [
+        "Jokaisen lapsen tulee tuntea olonsa turvalliseksi, arvostetuksi ja tervetulleeksi kerhoissamme. Kiusaamiselle ja ilkeydelle ei ole täällä sijaa, ja suhtaudumme niihin vakavasti.",
+        "Kun jokin menee pieleen, emme pelkästään rankaise – me autamme. Käytämme rauhallista, askel askeleelta etenevää tapaa, joka keskittyy auttamaan lasta ymmärtämään tapahtunutta, korjaamaan tilanteen ja toimimaan paremmin seuraavalla kerralla. Siirrymme tiukempaan vaiheeseen vain, jos käytös jatkuu, ja pidämme sinut ajan tasalla koko ajan."
+      ]
+    },
+    "sections": {
+      "commitment": {
+        "heading": "Lupauksemme lapsellesi",
+        "paragraphs": [
+          "Kerhomme ovat paikka oppia, saada kavereita ja pitää hauskaa – ja se onnistuu vain, jos jokainen tuntee olonsa turvalliseksi. Olemme sitoutuneet yhteisöön, jossa ei ole kiusaamista, häirintää eikä ilkeyttä ja jossa sekä ohjaajat että lapset kohtelevat toisiaan kunnioittavasti."
+        ]
+      },
+      "approach": {
+        "heading": "Miten käsittelemme ongelmia",
+        "paragraphs": [
+          "Kun lapsi käyttäytyy tavalla, joka satuttaa tai häiritsee muita, ohjaajamme (kutsumme heitä geduiksi) reagoivat rauhallisesti, ystävällisesti ja lapsen ikään sopivalla tavalla. Tavoitteena on aina auttaa lasta ymmärtämään tekonsa vaikutus ja korjaamaan tilanne – ei pelkkä rankaiseminen.",
+          "Hoidamme useimmat tilanteet hellävaraisesti, juttelemalla kahden kesken. Jos käytös jatkuu, otamme tiukempia askelia yksi kerrallaan. Alla olevat vaiheet ovat portaikko, jota seuraamme, ja pidämme sinut mukana koko matkan."
+        ]
+      },
+      "step1": {
+        "heading": "Vaihe 1 – Muistutus ja virheen korjaaminen",
+        "paragraphs": [
+          "Gedu keskustelee lapsesi kanssa siitä, mitä tapahtui ja miten se vaikutti muihin, ja auttaa häntä löytämään paremman tavan toimia. Se on lempeää ja arkista – esimerkiksi: ”Muistathan, ettet ota toisen arkusta ilman lupaa. Voit kysyä, haluaisiko toinen käydä vaihtokauppaa kanssasi.”"
+        ]
+      },
+      "step2": {
+        "heading": "Vaihe 2 – Kahdenkeskinen juttelu",
+        "paragraphs": [
+          "Jos tilanne toistuu, gedu juttelee lapsesi kanssa kahden kesken ja pohtii yhdessä hänen kanssaan tekoa ja sen vaikutusta muihin. Kerromme myös kotiin, että olemme keskustelleet lapsesi kanssa hänen käytöksestään kerhossa."
+        ]
+      },
+      "step3": {
+        "heading": "Vaihe 3 – Puuttuminen istunnon aikana",
+        "paragraphs": [
+          "Jos häiritsevä käytös jatkuu, gedu puuttuu siihen istunnon aikana – esimerkiksi mykistämällä lapsen hetkeksi tai rajoittamalla sitä, mitä hän voi pelissä tehdä. Gedu juttelee lapsesi kanssa kahden kesken, ja me viestimme kotiin."
+        ]
+      },
+      "step4": {
+        "heading": "Vaihe 4 – Jäähy istunnosta",
+        "paragraphs": [
+          "Jos tilanne ei vieläkään rauhoitu, gedu voi pyytää lasta jäämään pois istunnon loppuosasta. Jos tarvitaan pidempi tauko, kerromme siitä etukäteen. Gedu juttelee asian läpi kahden kesken lapsesi kanssa, me viestimme kotiin, ja kanslia (kanslia@sog.gg) liittyy mukaan keskusteluun."
+        ]
+      },
+      "step5": {
+        "heading": "Vaihe 5 – Tauko yhteisöstä",
+        "paragraphs": [
+          "Jos käytös jatkuu kaikesta edellä kuvatusta huolimatta, lapsi voidaan poistaa SOG-yhteisöstä joksikin aikaa – tämä tarkoittaa hänen kerhojaan, Minecraft-palvelintamme ja Discordiamme. Kanslia ottaa sinuun yhteyttä ja kertoo päätöksestä, ja juttelemme tilanteesta myös lapsesi kanssa."
+        ]
+      },
+      "step6": {
+        "heading": "Vaihe 6 – Uusi alku myöhemmin",
+        "paragraphs": [
+          "Tauko ei välttämättä ole loppu. Lapsesi voi palata, kun sekä sinä että hän tunnette olevanne siihen valmiita. Jos hän palaa eikä käytös ole muuttunut, poistamme hänet toiminnasta pysyvästi sen sijaan, että aloittaisimme portaikon alusta – mutta toiveemme on aina onnistunut uusi alku."
+        ]
+      },
+      "partnership": {
+        "heading": "Teemme tätä yhdessä",
+        "paragraphs": [
+          "Sinä tunnet lapsesi parhaiten, ja saamme parhaat tulokset, kun toimimme yhdessä. Jos sinua huolettaa, miten lapsellasi menee – tai jos epäilet, että joku kohtelee häntä ilkeästi – kerro meille. Kun kotona ja kerhossa puhutaan samoista odotuksista, sillä on suuri merkitys."
+        ]
+      },
+      "contact": {
+        "heading": "Yhteydenotto",
+        "paragraphs": [
+          "Jos sinulla on kysyttävää tästä ohjeesta tai haluat keskustella jostakin tapahtuneesta, lähetä kanslialle viesti osoitteeseen kanslia@sog.gg. Linjan toisessa päässä on oikea ihminen, ja autamme mielellämme."
         ]
       }
     }
