@@ -136,11 +136,11 @@ export function validate(
   const usesThreshold = startModeUsesThreshold(state.startMode);
   if (usesDate) {
     if (!state.startDate) return err("startDateRequired");
-    if (
-      config.scheduleShape !== "single_date" &&
-      config.scheduleShape !== "weekly_ongoing" &&
-      !state.endDate
-    ) {
+    if (config.scheduleShape === "weekly_ongoing") {
+      // Consumer clubs are ongoing by default; only require an end date once
+      // the admin has explicitly opted into one (hasEndDate).
+      if (state.hasEndDate && !state.endDate) return err("endDateRequired");
+    } else if (config.scheduleShape !== "single_date" && !state.endDate) {
       return err("endDateRequired");
     }
   }
@@ -310,7 +310,12 @@ function buildSharedFields(
       ? null
       : config.scheduleShape === "single_date"
         ? state.startDate || null
-        : state.endDate || null,
+        : config.scheduleShape === "weekly_ongoing"
+          ? // Ongoing unless the admin opted into an end date.
+            state.hasEndDate
+            ? state.endDate || null
+            : null
+          : state.endDate || null,
     timezone: FIXED_TIMEZONE,
     seat_count: seat,
     waitlist_enabled: state.waitlistEnabled,
@@ -510,6 +515,7 @@ export function existingFormState(
     locationId: product.location_id,
     startMode: inferStartMode(product, config),
     startDate: product.start_date ?? "",
+    hasEndDate: product.end_date != null,
     endDate: product.end_date ?? "",
     scheduleSlots: product.schedule_slots.map((s) => ({
       weekday: s.weekday,

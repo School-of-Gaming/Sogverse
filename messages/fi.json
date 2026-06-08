@@ -325,8 +325,8 @@
         },
         "registration": "Ilmoittautumisaika",
         "registrationDescription": "Valitse, milloin vanhemmat voivat alkaa ilmoittautua.",
-        "visibility": "Näkyvyys",
-        "visibilityDescription": "Hallitse, näkevätkö vanhemmat tämän vielä tekeillä olevana."
+        "visibility": "Näkyvyys kaupassa",
+        "visibilityDescription": "Hallitse, näkyykö tuote kaupassa. Tämä ei vaikuta niihin, jotka jo osallistuvat."
       },
       "labels": {
         "name": "Nimi",
@@ -344,7 +344,6 @@
         "startDate": "Alkupäivä",
         "date": "Päivämäärä",
         "endDate": "Loppupäivä",
-        "endDateOptional": "Loppupäivä (valinnainen)",
         "eventDate": "Tapahtumapäivä",
         "seasonEndDate": "Lukukauden loppupäivä",
         "schedule": "Aikataulu",
@@ -361,7 +360,7 @@
         "seatCount": "Paikkamäärä",
         "waitlistToggle": "Käytä jonotuslistaa, kun paikat täynnä",
         "signupThreshold": "Ilmoittautumisraja aloitukseen",
-        "makeVisible": "Näkyy vanhemmille",
+        "makeVisible": "Näytä tuote kaupassa",
         "seatLimit": "Paikkaraja"
       },
       "placeholders": {
@@ -442,6 +441,12 @@
         "scheduled": "Tiettyyn aikaan",
         "scheduledDescription": "Vanhemmat näkevät lähtölaskennan siihen asti. Hyödyllinen lippumyyntimäisille avauksille."
       },
+      "endDateModes": {
+        "ongoing": "Ei loppupäivää",
+        "ongoingDescription": "Kerho jatkuu toistaiseksi, kunnes päätät lopettaa sen.",
+        "dated": "Aseta loppupäivä",
+        "datedDescription": "Kerho jatkuu tiettyyn päivään asti ja päättyy sitten automaattisesti."
+      },
       "hints": {
         "shortDescription": "Yhden rivin esittely, joka näkyy selauskorteissa, listoissa ja tuotesivun yläosassa.",
         "longDescription": "Valinnainen. Näkyy vain tuotteen tuotesivulla. Koosta se otsikoista ja kappaleista.",
@@ -453,7 +458,6 @@
         "municipalityHint": "Kuntakerhot ovat aina sidottu tiettyyn kuntaan — siihen joka sen maksaa. Sen kunnan (tai sen sisällä olevan pienemmän alueen) vanhemmat näkevät sen selatessaan.",
         "siteHint": "Missä kerrat fyysisesti tapahtuvat.",
         "eventSingleDay": "Tapahtumat ovat yhden päivän mittaisia.",
-        "endDateOpt": "Jätä tyhjäksi jatkuvalle kerholle ilman loppupäivää.",
         "thresholdOnly": "Ei vielä kiinteää alkupäivää. Vanhemmat näkevät \"X / Y tarvitaan\" -laskurin sen täyttyessä. Painat Aloita kun ilmoittautuneita on tarpeeksi ja valitset ensimmäisen kerran päivän silloin.",
         "thresholdWithDate": "Jos vanhempia ilmoittautuu vähemmän kuin tämä alkupäivään mennessä, sinun täytyy perua ja palauttaa maksut tuotesivulta.",
         "timezoneFixedHelsinki": "Ajat ovat aikavyöhykkeellä Europe/Helsinki. Vanhemmat näkevät ne automaattisesti omalla aikavyöhykkeellään.",
@@ -465,7 +469,7 @@
         "pricingMonthly": "Veloitetaan joka kuukausi tilauksen ollessa voimassa. Voit perua milloin tahansa.",
         "pricingUpfront": "Veloitetaan kerran ilmoittautuessa. Sama kokonaishinta riippumatta kestosta.",
         "seatHint": "Kun täynnä, uudet ilmoittautujat menevät jonotuslistalle.",
-        "visibleHint": "Poista valinta pitääksesi tuote piilossa, kun se on vielä tekeillä. Laita päälle, kun olet valmis vanhempien näkemään sen.",
+        "visibleHint": "Tämä vaikuttaa vain kauppaan. Poista valinta, kun tuote on vielä tekeillä tai kun haluat lopettaa uudet ilmoittautumiset. Vanhemmat, pelaajat ja ohjaajat, jotka jo osallistuvat, näkevät kertansa edelleen My SOG -sivullaan — valinnan poistaminen poistaa tuotteen vain kaupasta.",
         "seatLimitHint": "Rajaa osallistujamäärä tai pidä se rajattomana.",
         "holidayComingSoon": "Lomakalenterit tulevat pian. Toistaiseksi jokainen aikataulutettu kerta pidetään.",
         "startDateToday": "Lukittu toistaiseksi tähän päivään.",
@@ -510,8 +514,11 @@
         "hour": "Tunti",
         "minute": "Minuutti",
         "startTime": "Alkuaika",
-        "durationMin": "Kesto (min)",
-        "minSuffix": "min",
+        "startHour": "Alkamistunti",
+        "startMinute": "Alkamisminuutti",
+        "endHour": "Päättymistunti",
+        "endMinute": "Päättymisminuutti",
+        "to": "–",
         "addDay": "Lisää toinen päivä",
         "removeSlot": "Poista",
         "sameAsEventDate": "Sama kuin tapahtumapäivä",

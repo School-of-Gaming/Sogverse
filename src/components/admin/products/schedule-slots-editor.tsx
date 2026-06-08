@@ -3,7 +3,14 @@
 import { Clock, Plus, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  addMinutes,
+  hourOf,
+  minutesBetween,
+  minuteOf,
+  withHour,
+  withMinute,
+} from "@/lib/time-of-day";
 import type { ProductType } from "@/types";
 
 export interface ScheduleSlotDraft {
@@ -21,6 +28,10 @@ const HOUR_OPTIONS: string[] = Array.from({ length: 24 }, (_, i) =>
   String(i).padStart(2, "0")
 );
 const MINUTE_OPTIONS: string[] = ["00", "15", "30", "45"];
+
+// Smallest selectable session length. The time picker is on a 15-minute grid,
+// so the shortest gap between start and a later end is one step.
+const MIN_DURATION_MINUTES = 15;
 
 interface ScheduleSlotsEditorProps {
   productType: ProductType;
@@ -44,6 +55,17 @@ export function ScheduleSlotsEditor({
     onChange(slots.map((s, i) => (i === idx ? { ...s, ...patch } : s)));
   }
 
+  // The data model stores start_time + duration_minutes, but admins think in
+  // start/end, so the editor shows an end-time picker and recomputes the stored
+  // duration when it changes. Changing the *start* (handled inline) keeps the
+  // duration, so the session slides while its length holds.
+  function setEndTime(idx: number, slot: ScheduleSlotDraft, endTime: string) {
+    const duration = minutesBetween(slot.start_time, endTime);
+    updateSlot(idx, {
+      duration_minutes: Math.max(MIN_DURATION_MINUTES, duration),
+    });
+  }
+
   function removeSlot(idx: number) {
     onChange(slots.filter((_, i) => i !== idx));
   }
@@ -59,12 +81,14 @@ export function ScheduleSlotsEditor({
 
   return (
     <div className="space-y-3">
-      {slots.map((slot, i) => (
+      {slots.map((slot, i) => {
+        const endTime = addMinutes(slot.start_time, slot.duration_minutes);
+        return (
         <div
           key={i}
           className="grid grid-cols-12 gap-2 rounded-md border border-input bg-muted/20 p-3"
         >
-          <div className="col-span-12 sm:col-span-5">
+          <div className="col-span-12 sm:col-span-4">
             {productType === "event" ? (
               <div className="flex h-10 items-center px-2 text-sm text-muted-foreground">
                 {t("sameAsEventDate")}
@@ -87,59 +111,80 @@ export function ScheduleSlotsEditor({
               </select>
             )}
           </div>
-          <div className="col-span-6 flex items-center gap-1 sm:col-span-3">
-            <select
-              aria-label={t("hour")}
-              value={slot.start_time.slice(0, 2)}
-              onChange={(e) =>
-                updateSlot(i, {
-                  start_time: `${e.target.value}:${slot.start_time.slice(3, 5)}`,
-                })
-              }
-              disabled={disabled}
-              className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
-            >
-              {HOUR_OPTIONS.map((h) => (
-                <option key={h} value={h}>
-                  {h}
-                </option>
-              ))}
-            </select>
-            <span className="text-muted-foreground">:</span>
-            <select
-              aria-label={t("minute")}
-              value={slot.start_time.slice(3, 5)}
-              onChange={(e) =>
-                updateSlot(i, {
-                  start_time: `${slot.start_time.slice(0, 2)}:${e.target.value}`,
-                })
-              }
-              disabled={disabled}
-              className="flex h-10 flex-1 rounded-md border border-input bg-background px-2 text-sm"
-            >
-              {MINUTE_OPTIONS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="col-span-5 sm:col-span-3">
+          <div className="col-span-11 flex flex-wrap items-center gap-x-2 gap-y-2 sm:col-span-7">
             <div className="flex items-center gap-1">
-              <Input
-                aria-label={t("durationMin")}
-                type="number"
-                min="1"
-                value={slot.duration_minutes}
+              <select
+                aria-label={t("startHour")}
+                value={hourOf(slot.start_time)}
                 onChange={(e) =>
-                  updateSlot(i, { duration_minutes: Number(e.target.value) })
+                  updateSlot(i, {
+                    start_time: withHour(slot.start_time, Number(e.target.value)),
+                  })
                 }
                 disabled={disabled}
-                className="h-10"
-              />
-              <span className="shrink-0 text-xs text-muted-foreground">
-                {t("minSuffix")}
-              </span>
+                className="flex h-10 w-16 rounded-md border border-input bg-background px-2 text-sm"
+              >
+                {HOUR_OPTIONS.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+              <span className="text-muted-foreground">:</span>
+              <select
+                aria-label={t("startMinute")}
+                value={minuteOf(slot.start_time)}
+                onChange={(e) =>
+                  updateSlot(i, {
+                    start_time: withMinute(
+                      slot.start_time,
+                      Number(e.target.value)
+                    ),
+                  })
+                }
+                disabled={disabled}
+                className="flex h-10 w-16 rounded-md border border-input bg-background px-2 text-sm"
+              >
+                {MINUTE_OPTIONS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <span className="text-xs text-muted-foreground">{t("to")}</span>
+            <div className="flex items-center gap-1">
+              <select
+                aria-label={t("endHour")}
+                value={hourOf(endTime)}
+                onChange={(e) =>
+                  setEndTime(i, slot, withHour(endTime, Number(e.target.value)))
+                }
+                disabled={disabled}
+                className="flex h-10 w-16 rounded-md border border-input bg-background px-2 text-sm"
+              >
+                {HOUR_OPTIONS.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+              <span className="text-muted-foreground">:</span>
+              <select
+                aria-label={t("endMinute")}
+                value={minuteOf(endTime)}
+                onChange={(e) =>
+                  setEndTime(i, slot, withMinute(endTime, Number(e.target.value)))
+                }
+                disabled={disabled}
+                className="flex h-10 w-16 rounded-md border border-input bg-background px-2 text-sm"
+              >
+                {MINUTE_OPTIONS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="col-span-1 flex items-center justify-end">
@@ -157,7 +202,8 @@ export function ScheduleSlotsEditor({
             )}
           </div>
         </div>
-      ))}
+        );
+      })}
       {multiDay && slots.length < 7 && (
         <Button
           type="button"

@@ -1,3 +1,4 @@
+import { addMinutes, clockTime } from "@/lib/time-of-day";
 import type { ProductBrowseRow } from "@/types";
 
 // Schedule formatting for the browse + purchased cards and the detail
@@ -14,8 +15,8 @@ import type { ProductBrowseRow } from "@/types";
 // reach for date-fns-tz only for timezone-aware computation. Times are
 // stored as Postgres TIME ("HH:MM:SS") in the product's local timezone
 // (see redesign §4.3) — they don't need conversion to render the clock
-// face. Just slice off the seconds and add `duration_minutes` for the
-// end-time clock.
+// face. The wall-clock arithmetic (strip seconds, add `duration_minutes`
+// for the end time) lives in `@/lib/time-of-day`.
 
 export type ProductScheduleSummary =
   | { kind: "tbd" }
@@ -76,23 +77,6 @@ export function formatWeekday(
   return new Intl.DateTimeFormat(locale, { weekday: form }).format(d);
 }
 
-function formatClockTime(time: string): string {
-  // Postgres TIME comes back as "HH:MM:SS"; strip seconds for display.
-  return time.slice(0, 5);
-}
-
-function addMinutesToClock(time: string, minutes: number): string {
-  const [hh, mm] = time.split(":").map(Number);
-  const total = hh * 60 + mm + minutes;
-  // Wrap on a 24h clock — duration that crosses midnight is rare but the
-  // formatter shouldn't render "26:30". Day-of-week becomes ambiguous in
-  // that case; the calendar grid still anchors to the start day.
-  const wrapped = ((total % (24 * 60)) + 24 * 60) % (24 * 60);
-  const eh = String(Math.floor(wrapped / 60)).padStart(2, "0");
-  const em = String(wrapped % 60).padStart(2, "0");
-  return `${eh}:${em}`;
-}
-
 function formatDateOnly(date: string, locale: string): string {
   // Date-only string. Anchor to UTC noon so locale rendering doesn't tip
   // it into the previous day for negative-offset zones.
@@ -133,8 +117,8 @@ function buildTimeGroups(
   const groups: ScheduleTimeGroup[] = [];
   for (const bucketSlots of buckets.values()) {
     const weekdays = bucketSlots.map((s) => s.weekday);
-    const startTime = formatClockTime(bucketSlots[0].start_time);
-    const endTime = addMinutesToClock(
+    const startTime = clockTime(bucketSlots[0].start_time);
+    const endTime = addMinutes(
       bucketSlots[0].start_time,
       bucketSlots[0].duration_minutes,
     );
@@ -238,11 +222,8 @@ export function formatProductSchedule({
       const time =
         slots.length > 0
           ? {
-              start: formatClockTime(slots[0].start_time),
-              end: addMinutesToClock(
-                slots[0].start_time,
-                slots[0].duration_minutes,
-              ),
+              start: clockTime(slots[0].start_time),
+              end: addMinutes(slots[0].start_time, slots[0].duration_minutes),
             }
           : null;
       return {

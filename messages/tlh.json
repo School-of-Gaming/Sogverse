@@ -370,8 +370,8 @@
         },
         "registration": "ghItlh poH",
         "registrationDescription": "ghItlh tagh poH yIwIv.",
-        "visibility": "leghlu'",
-        "visibilityDescription": "DochlIj DachenmoHtaHvIS, vavmey legh 'e' yIqotlh."
+        "visibility": "mIrDaq leghlu'",
+        "visibilityDescription": "mIrDaq Doch legh 'e' yIqotlh. ghoStaHbogh nuvpu' luQaHbe'."
       },
       "labels": {
         "name": "pong",
@@ -389,7 +389,6 @@
         "startDate": "jaj tagh",
         "date": "jaj",
         "endDate": "jaj van",
-        "endDateOptional": "jaj van (vItlhutlh)",
         "eventDate": "Qu' jaj",
         "seasonEndDate": "DIS Hut van jaj",
         "schedule": "poH",
@@ -406,7 +405,7 @@
         "seatCount": "pa' mI'",
         "waitlistToggle": "pa' tebDI', tetlh teb yIchu'",
         "signupThreshold": "ghItlh mI' taghmeH",
-        "makeVisible": "vavmey legh",
+        "makeVisible": "mIrDaq Doch yI'ang",
         "seatLimit": "pa' mI' Sub"
       },
       "placeholders": {
@@ -487,6 +486,12 @@
         "scheduled": "poH ngu'lu'pu'bogh",
         "scheduledDescription": "vavmey ghItlh tagh DIS lulegh."
       },
+      "endDateModes": {
+        "ongoing": "jaj van Hutlh",
+        "ongoingDescription": "ghom taH; bImevqang 'e' DawIvDI' mev.",
+        "dated": "jaj van yIngu'",
+        "datedDescription": "jaj van ngu'lu'pu'bogh ghoStaHvIS ghom; ngugh mev."
+      },
       "hints": {
         "shortDescription": "wa' tlhegh QIn. browse 'aqroSmeyDaq, tetlhmeyDaq, je 'aqroS tlhopDaq cha'lu'.",
         "longDescription": "vItlhutlh. Doch 'aqroSDaq neH cha'lu'. nargh je 'ay'mey lo'.",
@@ -498,7 +503,6 @@
         "municipalityHint": "ghomHom veng Sub veng — Huch nob veng. veng vavmey (qoj qo'Daq Sov vengDaq) lulegh.",
         "siteHint": "qaStaHvIS Daq mab.",
         "eventSingleDay": "Qu'mey wa' jaj qaS.",
-        "endDateOpt": "ghomHom taH 'e' yIyajchugh, chIm yIdaj.",
         "thresholdOnly": "jaj tagh DaH pagh. vavmey \"X / Y poQ\" laSvargh lulegh teb. ghItlh law' tIghaj 'ej tagh yIqotlh, jaj tagh yIngu' qIb.",
         "thresholdWithDate": "jaj taghDaq ghItlh law' pumchugh, De' Daq tlhotlh 'ej Huch chegh.",
         "timezoneFixedHelsinki": "poHmey Europe/Helsinki Daq. vavmey Daq poHchaj choHlu'.",
@@ -510,7 +514,7 @@
         "pricingMonthly": "jar Hoch Huch lo' qaStaHvIS rar yoH. DaH yIqIl 'e' DaneHchugh, yIqIl.",
         "pricingUpfront": "ghItlh wa' Huch lo'. poH nab Sov pagh, Huch rapchu'.",
         "seatHint": "tebDI', ghItlh chu'mey tetlh teb Daq jaH.",
-        "visibleHint": "DochlIj DachenmoHtaHvIS, So'lu' yIchu'Ha'. naDevDaq vavmey lulegh, yIchu'.",
+        "visibleHint": "mIrDaq neH qotlh. DochlIj DachenmoHtaHvIS, ghap ghItlh chu' DamevmeH, yIchu'Ha'. ghoStaHbogh vavmey, QujwI'pu', ghojmoHwI'pu' je, My SOG HaqwI'chajDaq Qu'chaj lulegh taH — yIchu'Ha'chugh, mIrDaq neH Doch teqlu'.",
         "seatLimitHint": "pa' mI' yIgheS pagh Sub Hutlh yIqaw.",
         "holidayComingSoon": "jaj Do' De'wI' tugh chol. DaH Hoch ghum qaS.",
         "startDateToday": "DaHjaj Daq poSmoHlu'pu'.",
@@ -555,8 +559,11 @@
         "hour": "rep",
         "minute": "tup",
         "startTime": "poH tagh",
-        "durationMin": "poH nab (min)",
-        "minSuffix": "min",
+        "startHour": "rep tagh",
+        "startMinute": "tup tagh",
+        "endHour": "rep mev",
+        "endMinute": "tup mev",
+        "to": "–",
         "addDay": "jaj chu' yIchu'",
         "removeSlot": "yIteq",
         "sameAsEventDate": "Qu' jaj rurmoH",

@@ -23,6 +23,7 @@ import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { clockTime } from "@/lib/time-of-day";
 import { DAYS_OF_WEEK, formatDate } from "@/lib/utils";
 import {
   useProductAdmin,
@@ -284,7 +285,7 @@ function KeyFacts({
   const scheduleLines = product.schedule_slots.map((s) =>
     t("detailsPage.scheduleRow", {
       day: DAYS_OF_WEEK[s.weekday],
-      time: s.start_time.slice(0, 5),
+      time: clockTime(s.start_time),
       duration: s.duration_minutes,
     }),
   );

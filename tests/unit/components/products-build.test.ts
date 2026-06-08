@@ -220,8 +220,18 @@ describe("validate", () => {
 
     it("does NOT require endDate for consumer clubs (weekly_ongoing)", () => {
       const s = validConsumerState();
+      s.hasEndDate = false;
       s.endDate = "";
       expect(validate(s, consumerConfig)).toBeNull();
+    });
+
+    it("requires endDate for a consumer club once an end date is opted in", () => {
+      const s = validConsumerState();
+      s.hasEndDate = true;
+      s.endDate = "";
+      expect(validate(s, consumerConfig)).toEqual({
+        messageKey: "endDateRequired",
+      });
     });
 
     it("does NOT require endDate for events (single_date)", () => {
@@ -395,6 +405,22 @@ describe("buildCreateInput", () => {
     const out = buildCreateInput(s, "municipality_club", muniConfig);
     expect(out.prices).toEqual([]);
     expect(out.billing_mode).toBe("external_contract");
+  });
+
+  it("writes a consumer club's end_date only when one is opted in", () => {
+    // Ongoing (the default) → null; opting into a date carries it through.
+    const ongoing = validConsumerState();
+    expect(ongoing.hasEndDate).toBe(false);
+    expect(
+      buildCreateInput(ongoing, "consumer_club", consumerConfig).end_date
+    ).toBe(null);
+
+    const dated = validConsumerState();
+    dated.hasEndDate = true;
+    dated.endDate = "2026-12-15";
+    expect(
+      buildCreateInput(dated, "consumer_club", consumerConfig).end_date
+    ).toBe("2026-12-15");
   });
 
   it("emits empty prices for free events", () => {
