@@ -9,11 +9,13 @@ import { ROUTES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
+import { PRODUCT_TOPICS } from "@/lib/products/topics";
 import type { ProductBrowseRow, ProductType } from "@/types";
 import { formatInTimeZone } from "date-fns-tz";
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
 import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
 import { ProductWhenWhereCard } from "./product-when-where-card";
+import { GameInfoCard } from "./game-info-card";
 import type { RegistrationState } from "./derive-registration-state";
 import { SignupPanel } from "./signup-panel";
 import type { AuthState } from "./signup-panel-view";
@@ -147,9 +149,15 @@ function MainColumn({
 }: {
   product: ProductDetailPageBodyProps["product"];
 }) {
+  // The game card only applies to game topics (Minecraft editions, Fortnite);
+  // subjects like Webinar have no game to describe.
+  const showGameCard = PRODUCT_TOPICS[product.topic].kind === "game";
+
   return (
     <div className="space-y-6">
       <ProductWhenWhereCard product={product} />
+
+      {showGameCard && <GameInfoCard topic={product.topic} />}
 
       <CalendarCard product={product} />
     </div>

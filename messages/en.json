@@ -1237,7 +1237,33 @@
     "sections": {
       "whenWhere": "When & where",
       "calendar": "Schedule",
-      "topic": "Topic"
+      "topic": "Topic",
+      "game": "About the game"
+    },
+    "gameInfo": {
+      "pegi": "PEGI {age}",
+      "games": {
+        "minecraft_java": {
+          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There's no winning or losing; it's a calm, open-ended space to create and problem-solve. \"Java\" is the original version for Windows, Mac and Linux computers — the one our remote clubs use, because it supports the tools our instructors rely on.",
+          "note": "For our clubs your child needs Minecraft on a computer. On Minecraft.net it's sold as \"Minecraft: Java & Bedrock Edition for PC\" — a single one-time purchase (not a subscription) that includes the version we use. The separate console, phone and tablet version won't work for these clubs.",
+          "linkLabel": "Get Minecraft for PC"
+        },
+        "minecraft_bedrock": {
+          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine, from a cosy house to a whole city. There's no winning or losing; it's a calm, open-ended space to create and problem-solve. \"Bedrock\" is the version that runs on consoles (Xbox, PlayStation, Switch), phones, tablets and Windows PCs.",
+          "note": "Your child needs Minecraft Bedrock for this club. It isn't included in the price — buy it from the store that matches the device your child will play on (the same game, sold in a different place on each device). On a games console, playing online may also need that console's paid online membership.",
+          "linkLabel": "Where to get it"
+        },
+        "minecraft_education": {
+          "description": "Minecraft is a creative building game — think digital LEGO. Children explore a blocky world, gather materials and build whatever they imagine. Minecraft Education is a version made for the classroom: the same friendly, open-ended building, plus extra tools for teachers, designed for guided activities led by an instructor rather than solo play.",
+          "note": "This edition is normally provided through a school or a Microsoft 365 Education account rather than bought in a shop. If your child needs access for this club, just ask — we'll help you sort it out.",
+          "linkLabel": "About Minecraft Education"
+        },
+        "fortnite": {
+          "description": "Fortnite is a colourful, cartoon-style online game where players team up and compete in short, round-based matches. It's hugely popular and very social — kids play together with friends. The look is bright and non-realistic (no blood or gore), though matches are competitive and played online with others.",
+          "note": "Fortnite is free to download and play — you don't buy the game itself. Your child creates a free Epic Games account to play. Some optional extras (outfits and such) cost money, which you can limit with parental controls.",
+          "linkLabel": "Get Fortnite"
+        }
+      }
     },
     "info": {
       "schedule": "Schedule",

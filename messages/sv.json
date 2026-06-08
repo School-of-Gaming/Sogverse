@@ -1237,7 +1237,33 @@
     "sections": {
       "whenWhere": "När och var",
       "calendar": "Schema",
-      "topic": "Ämne"
+      "topic": "Ämne",
+      "game": "Om spelet"
+    },
+    "gameInfo": {
+      "pegi": "PEGI {age}",
+      "games": {
+        "minecraft_java": {
+          "description": "Minecraft är ett kreativt byggspel – tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Java” är originalversionen för Windows-, Mac- och Linux-datorer, och det är den våra distansklubbar använder eftersom den stöder verktygen våra instruktörer behöver.",
+          "note": "För våra klubbar behöver ditt barn Minecraft på en dator. På Minecraft.net säljs det som ”Minecraft: Java & Bedrock Edition for PC” – ett enda engångsköp (inte en prenumeration) som inkluderar versionen vi använder. Den separata versionen för konsol, telefon och surfplatta fungerar inte för de här klubbarna.",
+          "linkLabel": "Skaffa Minecraft för PC"
+        },
+        "minecraft_bedrock": {
+          "description": "Minecraft är ett kreativt byggspel — tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig, från ett mysigt hus till en hel stad. Det finns inget att vinna eller förlora; det är ett lugnt och öppet utrymme för att skapa och lösa problem. ”Bedrock” är versionen som körs på konsoler (Xbox, PlayStation, Switch), telefoner, surfplattor och Windows-datorer.",
+          "note": "Ditt barn behöver Minecraft Bedrock för den här klubben. Den ingår inte i priset — köp den från butiken som matchar enheten ditt barn ska spela på (samma spel, men säljs på olika ställen för olika enheter). På en spelkonsol kan onlinespel dessutom kräva konsolens betalda onlinemedlemskap.",
+          "linkLabel": "Var du köper det"
+        },
+        "minecraft_education": {
+          "description": "Minecraft är ett kreativt byggspel — tänk digitalt Lego. Barn utforskar en värld av block, samlar material och bygger vad de kan föreställa sig. Minecraft Education är en version gjord för klassrummet: samma trevliga och öppna byggande, plus extra verktyg för lärare, utformad för guidade aktiviteter som leds av en instruktör snarare än för ensamspel.",
+          "note": "Den här versionen tillhandahålls vanligtvis via en skola eller ett Microsoft 365 Education-konto snarare än köps i en butik. Om ditt barn behöver tillgång för den här klubben, fråga oss bara, så hjälper vi dig att ordna det.",
+          "linkLabel": "Om Minecraft Education"
+        },
+        "fortnite": {
+          "description": "Fortnite är ett färgglatt onlinespel i tecknad stil där spelare bildar lag och tävlar i korta matcher, omgång för omgång. Det är enormt populärt och väldigt socialt, och barn spelar tillsammans med vänner. Stilen är ljus och orealistisk, utan blod eller våld, även om matcherna är tävlingsinriktade och spelas online med andra.",
+          "note": "Fortnite är gratis att ladda ner och spela – du köper inte själva spelet. Ditt barn skapar ett gratis Epic Games-konto för att spela. Vissa valfria extrasaker, som utstyrslar, kostar pengar, och du kan begränsa dem med föräldrakontroller.",
+          "linkLabel": "Skaffa Fortnite"
+        }
+      }
     },
     "info": {
       "schedule": "Schema",

@@ -1237,7 +1237,33 @@
     "sections": {
       "whenWhere": "Milloin ja missä",
       "calendar": "Aikataulu",
-      "topic": "Aihe"
+      "topic": "Aihe",
+      "game": "Tietoa pelistä"
+    },
+    "gameInfo": {
+      "pegi": "PEGI {age}",
+      "games": {
+        "minecraft_java": {
+          "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii, kodikkaasta talosta kokonaiseen kaupunkiin. Pelissä ei voiteta eikä hävitä; se on rauhallinen ja avoin tila luoda ja ratkaista ongelmia. ”Java” on alkuperäinen versio Windows-, Mac- ja Linux-tietokoneille, ja sitä etäkerhomme käyttävät, koska se tukee ohjaajiemme tarvitsemia työkaluja.",
+          "note": "Kerhojamme varten lapsesi tarvitsee Minecraftin tietokoneella. Minecraft.net-sivustolla se myydään nimellä ”Minecraft: Java & Bedrock Edition for PC” – yksi kertaluonteinen osto (ei tilaus), joka sisältää käyttämämme version. Erillinen konsoli-, puhelin- ja tablettiversio ei toimi näissä kerhoissa.",
+          "linkLabel": "Hanki Minecraft tietokoneelle"
+        },
+        "minecraft_bedrock": {
+          "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii, kodikkaasta talosta kokonaiseen kaupunkiin. Pelissä ei voiteta eikä hävitä; se on rauhallinen ja avoin tila luoda ja ratkaista ongelmia. ”Bedrock” on versio, joka toimii konsoleilla (Xbox, PlayStation, Switch), puhelimilla, tableteilla ja Windows-tietokoneilla.",
+          "note": "Lapsesi tarvitsee tähän kerhoon Minecraft Bedrockin. Se ei sisälly hintaan – osta se kaupasta, joka vastaa laitetta, jolla lapsesi pelaa (sama peli, mutta myydään eri paikassa eri laitteille). Pelikonsolilla verkkopelaaminen voi lisäksi vaatia kyseisen konsolin maksullisen verkkojäsenyyden.",
+          "linkLabel": "Mistä sen saa"
+        },
+        "minecraft_education": {
+          "description": "Minecraft on luova rakennuspeli – ajattele digitaalista legoa. Lapset tutkivat palikkamaailmaa, keräävät materiaaleja ja rakentavat mitä mielikuvitus keksii. Minecraft Education on luokkahuoneeseen tehty versio: samaa mukavaa ja avointa rakentamista, mutta mukana on lisätyökaluja opettajille, ja se on suunniteltu ohjaajan johtamaan toimintaan eikä yksin pelaamiseen.",
+          "note": "Tämä versio hankitaan yleensä koulun tai Microsoft 365 Education -tilin kautta, ei kaupasta. Jos lapsesi tarvitsee sen tähän kerhoon, kysy meiltä, niin autamme järjestämään sen.",
+          "linkLabel": "Tietoa Minecraft Educationista"
+        },
+        "fortnite": {
+          "description": "Fortnite on värikäs ja piirrosmainen verkkopeli, jossa pelaajat muodostavat joukkueita ja kilpailevat lyhyissä, eräpohjaisissa otteluissa. Se on erittäin suosittu ja hyvin sosiaalinen, ja lapset pelaavat yhdessä kavereiden kanssa. Ulkoasu on kirkas ja epärealistinen, eikä siinä ole verta eikä väkivaltaa, vaikka ottelut ovat kilpailullisia ja niitä pelataan verkossa muiden kanssa.",
+          "note": "Fortnite on ilmainen ladata ja pelata – itse peliä ei osteta. Lapsesi luo pelaamista varten ilmaisen Epic Games -tilin. Jotkin valinnaiset lisät, kuten asut, maksavat, ja voit rajoittaa niitä lapsilukon asetuksilla.",
+          "linkLabel": "Hanki Fortnite"
+        }
+      }
     },
     "info": {
       "schedule": "Aikataulu",
