@@ -1,4 +1,5 @@
 import type { Profile, GamerProfileRow, ParentGamer, CreateGamerInput, GamerProfile, AppSupabaseClient } from "@/types";
+import { isGamerProfile } from "@/types";
 
 export class GamerService {
   constructor(private supabase: AppSupabaseClient) {}
@@ -7,24 +8,29 @@ export class GamerService {
     const { data, error } = await this.supabase
       .from("parent_gamer")
       .select(`
-        gamer:profiles!parent_gamer_gamer_id_fkey (*)
+        gamer:profiles!parent_gamer_gamer_id_fkey!inner (*)
       `)
       .eq("parent_id", parentId);
 
     if (error) throw error;
-    return data.map((row: { gamer: unknown }) => row.gamer as GamerProfileRow);
+    // `!inner` makes `gamer` a non-null Profile; `isGamerProfile` narrows it to
+    // the username-non-null `GamerProfileRow` (the auth_identifier_check CHECK
+    // guarantees username for gamers — see types/index.ts). The link FK only
+    // ever points at gamer profiles, so the guard never drops a row; it
+    // replaces the old `as GamerProfileRow` cast with a checked narrowing.
+    return data.map((row) => row.gamer).filter(isGamerProfile);
   }
 
   async getLinkedParents(gamerId: string): Promise<Profile[]> {
     const { data, error } = await this.supabase
       .from("parent_gamer")
       .select(`
-        parent:profiles!parent_gamer_parent_id_fkey (*)
+        parent:profiles!parent_gamer_parent_id_fkey!inner (*)
       `)
       .eq("gamer_id", gamerId);
 
     if (error) throw error;
-    return data.map((row: { parent: unknown }) => row.parent as Profile);
+    return data.map((row) => row.parent);
   }
 
   async getMyGamers(): Promise<GamerProfileRow[]> {

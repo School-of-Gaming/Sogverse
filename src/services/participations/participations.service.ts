@@ -277,25 +277,7 @@ export class ParticipationsService {
     // and the canceling access-until date; the client derives each below.
     const [{ data, error }, { data: subRows, error: subError }] =
       await Promise.all([
-        this.supabase
-          .from("participations")
-          .select(
-            `
-              id,
-              gamer_id,
-              group_id,
-              product:products!inner(
-                id, product_type, timezone, start_date, end_date, padlet_url, is_remote,
-                product_translations(*),
-                schedule_slots(weekday, start_time, duration_minutes)
-              ),
-              gamer:profiles!participations_gamer_id_fkey(
-                first_name, username
-              )
-            `,
-          )
-          .eq(audienceColumn, userId)
-          .eq("status", "active"),
+        buildMyUpcomingSessionsQuery(this.supabase, audienceColumn, userId),
         this.supabase.rpc("get_my_participation_subscription_states"),
       ]);
 
@@ -325,15 +307,13 @@ export class ParticipationsService {
       }
     }
 
-    return (data as RawMyUpcomingSessionRow[])
-      .filter((row) => row.product !== null && row.gamer !== null)
-      .map((row) =>
-        toMyUpcomingSessionRow(
-          row,
-          problemIds.has(row.id),
-          cancelEnds.get(row.id) ?? null,
-        ),
-      );
+    return data.map((row) =>
+      toMyUpcomingSessionRow(
+        row,
+        problemIds.has(row.id),
+        cancelEnds.get(row.id) ?? null,
+      ),
+    );
   }
 
   /**
@@ -479,40 +459,51 @@ export class ParticipationsService {
 // Adapters between the raw select shape and the row shape exposed to UI.
 // ---------------------------------------------------------------------------
 
-interface RawMyUpcomingSessionRow {
-  id: string;
-  gamer_id: string;
-  group_id: string | null;
-  product: {
-    id: string;
-    product_type: ProductType;
-    timezone: string;
-    start_date: string | null;
-    end_date: string | null;
-    padlet_url: string | null;
-    is_remote: boolean;
-    product_translations: ProductTranslation[];
-    schedule_slots: Array<{
-      weekday: number;
-      start_time: string;
-      duration_minutes: number;
-    }>;
-  } | null;
-  gamer: {
-    first_name: string | null;
-    username: string | null;
-  } | null;
+/**
+ * Builds the upcoming-sessions query for one audience. Both embeds use
+ * `!inner` (`product_id` and `gamer_id` are NOT-NULL FKs, so an inner join
+ * drops nothing), which lets the inferred row treat `product` and `gamer` as
+ * non-null — no post-filter, no `!` assertions in the mapper. Standalone so
+ * the row type can be inferred via `QueryData` with no hand-written shape and
+ * no cast (select string and type stay in lockstep — drift is a compile error).
+ */
+function buildMyUpcomingSessionsQuery(
+  supabase: AppSupabaseClient,
+  audienceColumn: "customer_id" | "gamer_id",
+  userId: string,
+) {
+  return supabase
+    .from("participations")
+    .select(
+      `
+        id,
+        gamer_id,
+        group_id,
+        product:products!inner(
+          id, product_type, timezone, start_date, end_date, padlet_url, is_remote,
+          product_translations(*),
+          schedule_slots(weekday, start_time, duration_minutes)
+        ),
+        gamer:profiles!participations_gamer_id_fkey!inner(
+          first_name, username
+        )
+      `,
+    )
+    .eq(audienceColumn, userId)
+    .eq("status", "active");
 }
+
+type RawMyUpcomingSessionRow = QueryData<
+  ReturnType<typeof buildMyUpcomingSessionsQuery>
+>[number];
 
 function toMyUpcomingSessionRow(
   row: RawMyUpcomingSessionRow,
   paymentProblem: boolean,
   subscriptionEndsAt: Date | null,
 ): MyUpcomingSessionRow {
-  // Non-null on both fields is asserted by the `!inner` join on product +
-  // the `.filter()` step above for gamer; this narrows for downstream code.
-  const product = row.product!;
-  const gamer = row.gamer!;
+  // Both non-null via the `!inner` joins in buildMyUpcomingSessionsQuery.
+  const { product, gamer } = row;
   // Mirror the purchased-card fallback chain so a missing first_name still
   // renders something readable. The seed comes from `gamer_id` regardless,
   // so the identicon stays stable across name edits.

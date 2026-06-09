@@ -186,22 +186,10 @@ export type BrowseRowLocation = {
   } | null;
 };
 
-// Joined shape consumed by the parent-facing browse pages
-// (src/components/public/products/product-browse-page.tsx). The card
-// renderer expects everything it needs to draw itself in one row — the topic
-// enum (label resolved via PRODUCT_TOPICS), all product translations, prices
-// per supported currency, weekly schedule slots, and the joined location for
-// in-person products. Single source so the component props mirror the SELECT
-// shape exactly. (`topic` is a column on Product, so no join is needed.)
-export type ProductBrowseRow = Product & {
-  product_translations: ProductTranslation[];
-  product_prices: ProductPrice[];
-  schedule_slots: Pick<
-    ScheduleSlot,
-    "weekday" | "start_time" | "duration_minutes"
-  >[];
-  locations: BrowseRowLocation | null;
-};
+// `ProductBrowseRow` is inferred from the browse query in products.service.ts
+// (single source of truth — the select string and the row type can't drift).
+// Re-exported here so consumers keep importing it from `@/types`.
+export type { ProductBrowseRow } from "@/services/products/products.service";
 
 // ---------------------------------------------------------------------------
 // products — participations, payments, family subs (00039)
