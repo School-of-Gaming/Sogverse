@@ -170,6 +170,110 @@ describe("expandUpcomingSessions", () => {
     ]);
   });
 
+  // --- Per-pairing "next" promotion (isNext) -------------------------------
+
+  it("marks only the first occurrence of a single participation as isNext", () => {
+    const out = expandUpcomingSessions(
+      [makeRow({ slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }] })],
+      new Date("2026-02-23T08:00:00Z"), // Monday — several occurrences ahead
+      "en",
+    );
+    expect(out.length).toBeGreaterThan(1);
+    expect(out[0].isNext).toBe(true);
+    expect(out.slice(1).every((s) => s.isNext === false)).toBe(true);
+  });
+
+  it("promotes the first occurrence of every gamer × product, not just the globally soonest", () => {
+    // The point of the change: two gamers each in their own club both get a
+    // promoted card (Join button + Padlet link), not just whoever's session
+    // is soonest. Later occurrences of each pairing stay compact.
+    const rowA = makeRow({
+      gamer: { id: GAMER_ID, firstName: "Alex" },
+      slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }], // Wed
+    });
+    const rowB = makeRow({
+      gamer: { id: "33333333-3333-3333-3333-333333333333", firstName: "Bobby" },
+      slots: [{ weekday: 3, startTime: "10:00", durationMinutes: 60 }], // Thu
+    });
+    const out = expandUpcomingSessions(
+      [rowA, rowB],
+      new Date("2026-02-23T08:00:00Z"), // Monday
+      "en",
+    );
+    const promoted = out.filter((s) => s.isNext);
+    expect(promoted).toHaveLength(2);
+    expect(new Set(promoted.map((s) => s.gamerFirstName))).toEqual(
+      new Set(["Alex", "Bobby"]),
+    );
+    // Each gamer's *first* (soonest) card is the promoted one.
+    expect(out.find((s) => s.gamerFirstName === "Alex")?.isNext).toBe(true);
+    expect(out.find((s) => s.gamerFirstName === "Bobby")?.isNext).toBe(true);
+  });
+
+  it("promotes once per product when a single gamer is in two products", () => {
+    const PRODUCT_B = "44444444-4444-4444-4444-444444444444";
+    const clubA = makeRow({
+      slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }],
+    });
+    const clubB = makeRow({
+      product: {
+        id: PRODUCT_B,
+        type: "consumer_club",
+        timezone: "UTC",
+        startDate: null,
+        endDate: null,
+        padletUrl: null,
+        isRemote: true,
+        translations: [
+          {
+            locale: "en",
+            name: "Second Club",
+            short_description: "",
+            long_description: null,
+            product_id: PRODUCT_B,
+            created_at: "",
+            updated_at: "",
+          },
+        ],
+      },
+      slots: [{ weekday: 3, startTime: "10:00", durationMinutes: 60 }],
+    });
+    const out = expandUpcomingSessions(
+      [clubA, clubB],
+      new Date("2026-02-23T08:00:00Z"),
+      "en",
+    );
+    const promoted = out.filter((s) => s.isNext);
+    expect(promoted).toHaveLength(2);
+    expect(new Set(promoted.map((s) => s.productName))).toEqual(
+      new Set(["Minecraft Club", "Second Club"]),
+    );
+  });
+
+  it("computes voiceIsOpen for every promoted card and leaves compact cards false", () => {
+    // Two gamers both mid-session right now → both promoted cards report the
+    // window open; their later (compact) occurrences stay false.
+    const rowA = makeRow({
+      gamer: { id: GAMER_ID, firstName: "Alex" },
+      slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }], // Wed 15:00-16:00
+    });
+    const rowB = makeRow({
+      gamer: { id: "33333333-3333-3333-3333-333333333333", firstName: "Bobby" },
+      slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }],
+    });
+    const out = expandUpcomingSessions(
+      [rowA, rowB],
+      new Date("2026-02-25T15:30:00Z"), // mid-session for both
+      "en",
+    );
+    const promoted = out.filter((s) => s.isNext);
+    expect(promoted).toHaveLength(2);
+    expect(promoted.every((s) => s.voiceIsOpen === true)).toBe(true);
+    expect(
+      out.filter((s) => !s.isNext).every((s) => s.voiceIsOpen === false),
+    ).toBe(true);
+  });
+
   it("keeps an in-progress session at the top of the list (window still open)", () => {
     const row = makeRow({
       slots: [{ weekday: 2, startTime: "15:00", durationMinutes: 60 }], // Wed 15:00-16:00
