@@ -589,7 +589,8 @@
           "title": "Nimeämättömät",
           "subtitle": "Pelaajat, jotka ovat maksaneet mutta eivät ole vielä missään ryhmässä. Vedä heidät ryhmään sijoittaaksesi.",
           "empty": "Kaikilla on ryhmä.",
-          "addGamer": "Lisää pelaaja"
+          "addGamer": "Lisää pelaaja",
+          "removeGamer": "Poista pelaaja"
         },
         "empty": {
           "title": "Ei vielä ryhmiä",
@@ -621,6 +622,12 @@
         "picker": {
           "addTitle": "Lisää Gedu ryhmään {name}",
           "addDescription": "Yksi Gedu voi vetää vain yhden ryhmän per tuote. Muualle nimetyt näkyvät harmaina."
+        },
+        "removeGamer": {
+          "confirmTitle": "Poistetaanko {name} tästä tuotteesta?",
+          "confirmDescription": "{name} poistetaan ilmoittautuneista, ja hän menettää pääsyn välittömästi.",
+          "noRefundWarning": "Hyvitystä ei makseta. Jos tämä asiakas on maksanut, hän ei saa rahojaan takaisin.",
+          "confirmCta": "Poista pelaaja"
         }
       },
       "seatLimitModes": {

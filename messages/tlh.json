@@ -634,7 +634,8 @@
           "title": "ngu'be'pu'",
           "subtitle": "DIl Suvwl'pu', 'ach ghomDaq pagh. ghomvaD yIngeH ngu'meH.",
           "empty": "Hoch ghom ghaj.",
-          "addGamer": "Suvwl' yIchel"
+          "addGamer": "Suvwl' yIchel",
+          "removeGamer": "Suvwl' yIteq"
         },
         "empty": {
           "title": "ghommey pagh",
@@ -666,6 +667,12 @@
         "picker": {
           "addTitle": "{name} ghomvaD Gedu yIchu'",
           "addDescription": "wa' Gedu, wa' ghom — Hoch Daq. ngu'lu'pu' wovbe'."
+        },
+        "removeGamer": {
+          "confirmTitle": "ngoptlhInvamvo' {name} yIteq'a'?",
+          "confirmDescription": "ngu'be'choH {name}, 'ej DaH 'el laHbe'.",
+          "noRefundWarning": "Huch nobHa'lu'be'! DIlta' 'e' DIl, vaj HuchDaj Suqqa'be'.",
+          "confirmCta": "Suvwl' yIteq"
         }
       },
       "seatLimitModes": {

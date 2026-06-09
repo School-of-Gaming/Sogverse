@@ -6,17 +6,21 @@ import {
   DragOverlay,
   PointerSensor,
   useDndContext,
+  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
 } from "@dnd-kit/core";
-import { Plus, UserPlus, Users } from "lucide-react";
+import { AlertTriangle, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { cn } from "@/lib/utils";
 import {
   useAddGedu,
   useAdminAddGamerToProduct,
+  useAdminRemoveGamerFromProduct,
   useCreateGroup,
   useDeleteGroup,
   useGroupPending,
@@ -91,6 +95,47 @@ function DragOverlayContent({
   );
 }
 
+// The gamer action in the panel header. At rest it's the "Add gamer" button;
+// the moment a gamer chip is being dragged it becomes a destructive "Remove
+// gamer" drop zone. The swap is user-initiated (by the drag itself), so it
+// doesn't violate the no-in-place-reflow rule. It lives inside the DndContext
+// and subscribes to dnd state, so only this node re-renders on pointer move —
+// not the whole panel.
+function HeaderGamerAction({ onAddGamer }: { onAddGamer: () => void }) {
+  const t = useTranslations("admin.products.groupsPanel");
+  const { active } = useDndContext();
+  const draggingGamer = !!(
+    active?.data.current as { participationId?: string } | undefined
+  )?.participationId;
+
+  const { setNodeRef, isOver } = useDroppable({
+    id: "remove-gamer-zone",
+    data: { remove: true },
+  });
+
+  if (draggingGamer) {
+    return (
+      <div
+        ref={setNodeRef}
+        className={cn(
+          "flex items-center gap-1.5 rounded-md border border-dashed border-destructive px-3 py-1.5 text-sm font-medium text-destructive transition-colors",
+          isOver && "bg-destructive/10",
+        )}
+      >
+        <Trash2 className="h-4 w-4" />
+        {t("unassigned.removeGamer")}
+      </div>
+    );
+  }
+
+  return (
+    <Button variant="outline" size="sm" onClick={onAddGamer}>
+      <UserPlus className="mr-1 h-4 w-4" />
+      {t("unassigned.addGamer")}
+    </Button>
+  );
+}
+
 export function GroupsPanel({
   productId,
   productType,
@@ -110,9 +155,15 @@ export function GroupsPanel({
   const removeGedu = useRemoveGedu(productId);
   const deleteGroup = useDeleteGroup(productId);
   const addGamer = useAdminAddGamerToProduct(productId);
+  const removeGamer = useAdminRemoveGamerFromProduct(productId);
 
   const [pickerForGroupId, setPickerForGroupId] = useState<string | null>(null);
   const [gamerPickerOpen, setGamerPickerOpen] = useState(false);
+  // The gamer pending removal-confirmation (id + name for the dialog copy), or
+  // null when the confirm dialog is closed. The mutation only fires on confirm.
+  const [removing, setRemoving] = useState<{ id: string; name: string } | null>(
+    null,
+  );
 
   // Recurring billing on consumer clubs makes a no-payment comp awkward, so
   // the Add Gamer affordance is hidden for that product type. Route enforces
@@ -163,12 +214,21 @@ export function GroupsPanel({
     if (!over) return;
 
     const dragData = active.data.current as
-      | { participationId: string }
+      | { participationId: string; firstName: string }
       | undefined;
     const dropData = over.data.current as
       | { toGroupId: string | null }
+      | { remove: true }
       | undefined;
     if (!dragData || !dropData) return;
+
+    if ("remove" in dropData) {
+      // Admin removal is a hard delete with no refund — confirm before
+      // mutating. Stash the chip's identity for the dialog copy; the mutation
+      // fires only when the admin confirms.
+      setRemoving({ id: dragData.participationId, name: dragData.firstName });
+      return;
+    }
 
     const current = placementById.get(dragData.participationId) ?? null;
     if (current === dropData.toGroupId) return; // dropped back where it started
@@ -210,44 +270,43 @@ export function GroupsPanel({
   const unassigned = snapshot?.unassigned ?? [];
   const hasGroups = groups.length > 0;
 
+  // Greyed/undraggable chips: an in-flight move OR an in-flight admin removal.
+  const busyChipIds = new Set<string>([...pending.moves, ...pending.removes]);
+
   return (
     <div className="space-y-3">
-      <div className="flex flex-row items-center justify-between">
-        <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <Users className="h-5 w-5 text-muted-foreground" />
-            {t("title")}
-          </h2>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {canAddGamer && (
+      {/* The header is inside the DndContext so the "Add gamer" button can swap
+          to a "Remove gamer" drop zone mid-drag (HeaderGamerAction). The picker
+          sheets are deliberately kept OUTSIDE it — see the note below. */}
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <div className="flex flex-row items-center justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              {t("title")}
+            </h2>
+            <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            {canAddGamer && (
+              <HeaderGamerAction onAddGamer={() => setGamerPickerOpen(true)} />
+            )}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setGamerPickerOpen(true)}
+              onClick={handleAddGroup}
+              disabled={createGroup.isPending}
             >
-              <UserPlus className="mr-1 h-4 w-4" />
-              {t("unassigned.addGamer")}
+              <Plus className="mr-1 h-4 w-4" />
+              {t("addGroup")}
             </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleAddGroup}
-            disabled={createGroup.isPending}
-          >
-            <Plus className="mr-1 h-4 w-4" />
-            {t("addGroup")}
-          </Button>
+          </div>
         </div>
-      </div>
 
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
         <div className="space-y-3">
           <UnassignedCard
             participations={unassigned}
-            pendingMoveIds={pending.moves}
+            pendingChipIds={busyChipIds}
           />
 
           {hasGroups ? (
@@ -330,6 +389,26 @@ export function GroupsPanel({
           setPickerForGroupId(null);
         }}
       />
+
+      {removing && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setRemoving(null);
+          }}
+          title={t("removeGamer.confirmTitle", { name: removing.name })}
+          description={t("removeGamer.confirmDescription", {
+            name: removing.name,
+          })}
+          confirmLabel={t("removeGamer.confirmCta")}
+          onConfirm={() => removeGamer.mutate({ participationId: removing.id })}
+        >
+          <div className="flex items-start gap-2 rounded-md border border-destructive bg-destructive/10 px-3 py-2.5 text-sm font-semibold text-destructive">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span>{t("removeGamer.noRefundWarning")}</span>
+          </div>
+        </ConfirmDialog>
+      )}
     </div>
   );
 }

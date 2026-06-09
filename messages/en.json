@@ -589,7 +589,8 @@
           "title": "Unassigned",
           "subtitle": "Gamers who've paid but aren't in a group yet. Drag them into one to place them.",
           "empty": "Everyone has a group.",
-          "addGamer": "Add gamer"
+          "addGamer": "Add gamer",
+          "removeGamer": "Remove gamer"
         },
         "empty": {
           "title": "No groups yet",
@@ -621,6 +622,12 @@
         "picker": {
           "addTitle": "Add Gedu to {name}",
           "addDescription": "A Gedu can only run one group per product. Anyone already assigned is greyed out."
+        },
+        "removeGamer": {
+          "confirmTitle": "Remove {name} from this product?",
+          "confirmDescription": "{name} will be unenrolled and lose access immediately.",
+          "noRefundWarning": "No refund is issued. If this customer paid, they will not get their money back.",
+          "confirmCta": "Remove gamer"
         }
       },
       "seatLimitModes": {

@@ -589,7 +589,8 @@
           "title": "Otilldelade",
           "subtitle": "Spelare som har betalat men ännu inte är i en grupp. Dra dem in i en för att placera dem.",
           "empty": "Alla har en grupp.",
-          "addGamer": "Lägg till spelare"
+          "addGamer": "Lägg till spelare",
+          "removeGamer": "Ta bort spelare"
         },
         "empty": {
           "title": "Inga grupper än",
@@ -621,6 +622,12 @@
         "picker": {
           "addTitle": "Lägg till Gedu i {name}",
           "addDescription": "En Gedu kan bara leda en grupp per produkt. De som redan är tilldelade är gråa."
+        },
+        "removeGamer": {
+          "confirmTitle": "Ta bort {name} från den här produkten?",
+          "confirmDescription": "{name} avregistreras och förlorar åtkomsten omedelbart.",
+          "noRefundWarning": "Ingen återbetalning sker. Om den här kunden har betalat får de inte tillbaka pengarna.",
+          "confirmCta": "Ta bort spelare"
         }
       },
       "seatLimitModes": {

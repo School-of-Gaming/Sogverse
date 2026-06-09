@@ -5,6 +5,8 @@ import {
   useMutationState,
   useQuery,
   useQueryClient,
+  type QueryClient,
+  type QueryKey,
 } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
 import { GroupsService } from "./groups.service";
@@ -285,6 +287,35 @@ export function useAddGedu(productId: string) {
   });
 }
 
+// ─── Destructive-action mutation config (shared) ─────────────────────────────
+//
+// Delete-group, remove-Gedu and remove-gamer share a shape: no optimistic
+// removal — the element greys via the pending registry while saving, then the
+// settle refetch drops it. The subtle, easy-to-regress part is WHERE the
+// invalidation lives. We await it INSIDE mutationFn (not in onSettled) so the
+// mutation stays `pending` — and the element stays greyed — until the snapshot
+// without it has actually landed. Invalidating in onSettled flips status to
+// success the moment the write resolves, un-greying the element for the frame
+// or two before the refetch removes it (a visible grey → ungrey → gone
+// flicker). This reasoning lives here once so all three can't drift apart.
+function destructiveSettle<TVars>(
+  queryClient: QueryClient,
+  key: QueryKey,
+  run: (vars: TVars) => Promise<void>,
+) {
+  return {
+    mutationFn: async (vars: TVars) => {
+      await run(vars);
+      await queryClient.invalidateQueries({ queryKey: key });
+    },
+    // Removal failed — the element is still in the snapshot. Reconcile with
+    // server truth; it un-greys as the mutation leaves pending.
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: key });
+    },
+  };
+}
+
 interface RemoveGeduVars {
   groupId: string;
   geduId: string;
@@ -295,15 +326,11 @@ export function useRemoveGedu(productId: string) {
   const service = new GroupsService(getClient());
   const key = groupsKeys.byProduct(productId);
 
-  // Destructive: no optimistic removal. The pill greys while saving (pending
-  // registry) and disappears on the settle refetch.
   return useMutation({
     mutationKey: [...groupMutationBase(productId), "removeGedu"],
-    mutationFn: ({ groupId, geduId }: RemoveGeduVars) =>
+    ...destructiveSettle(queryClient, key, ({ groupId, geduId }: RemoveGeduVars) =>
       service.removeGedu(productId, groupId, geduId),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key });
-    },
+    ),
   });
 }
 
@@ -316,16 +343,11 @@ export function useDeleteGroup(productId: string) {
   const service = new GroupsService(getClient());
   const key = groupsKeys.byProduct(productId);
 
-  // Destructive: no optimistic removal. The card greys while saving and is
-  // removed on the settle refetch (which also reflects the gamers cascading
-  // back to unassigned).
   return useMutation({
     mutationKey: [...groupMutationBase(productId), "delete"],
-    mutationFn: ({ groupId }: DeleteVars) =>
+    ...destructiveSettle(queryClient, key, ({ groupId }: DeleteVars) =>
       service.deleteGroup(productId, groupId),
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: key });
-    },
+    ),
   });
 }
 
@@ -352,6 +374,30 @@ export function useAdminAddGamerToProduct(productId: string) {
   });
 }
 
+/**
+ * Admin un-enrollment mutation — hard-deletes a participation (inverse of
+ * useAdminAddGamerToProduct). Destructive, so no optimistic removal: the chip
+ * greys via the pending registry (`removes`) while in flight and disappears on
+ * the settle refetch, matching the delete-group / remove-Gedu model (shared
+ * `destructiveSettle` config, which also documents the flicker it avoids).
+ * Keyed into groupMutationBase so the pending registry can surface it.
+ */
+export function useAdminRemoveGamerFromProduct(productId: string) {
+  const queryClient = useQueryClient();
+  const service = new GroupsService(getClient());
+  const key = groupsKeys.byProduct(productId);
+
+  return useMutation({
+    mutationKey: [...groupMutationBase(productId), "removeGamer"],
+    ...destructiveSettle(
+      queryClient,
+      key,
+      ({ participationId }: { participationId: string }) =>
+        service.removeGamerFromProduct(productId, participationId),
+    ),
+  });
+}
+
 // ─── Pending registry ────────────────────────────────────────────────────────
 //
 // Derives which elements have an in-flight mutation from React Query's mutation
@@ -368,6 +414,8 @@ interface PendingVars {
 export interface GroupPending {
   /** participation ids with an in-flight move */
   moves: Set<string>;
+  /** participation ids with an in-flight admin removal */
+  removes: Set<string>;
   /** group ids with an in-flight rename */
   renames: Set<string>;
   /** group ids with an in-flight delete */
@@ -388,6 +436,7 @@ export function useGroupPending(productId: string): GroupPending {
   });
 
   const moves = new Set<string>();
+  const removes = new Set<string>();
   const renames = new Set<string>();
   const deletes = new Set<string>();
   const gedus = new Set<string>();
@@ -396,6 +445,8 @@ export function useGroupPending(productId: string): GroupPending {
   for (const { action, vars } of entries) {
     if (action === "move" && vars?.participationId) {
       moves.add(vars.participationId);
+    } else if (action === "removeGamer" && vars?.participationId) {
+      removes.add(vars.participationId);
     } else if (action === "rename" && vars?.groupId) {
       renames.add(vars.groupId);
     } else if (action === "delete" && vars?.groupId) {
@@ -411,5 +462,5 @@ export function useGroupPending(productId: string): GroupPending {
     }
   }
 
-  return { moves, renames, deletes, gedus, creating };
+  return { moves, removes, renames, deletes, gedus, creating };
 }

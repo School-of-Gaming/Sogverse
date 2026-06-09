@@ -11,13 +11,13 @@ import { GamerChip } from "./gamer-chip";
 
 interface UnassignedCardProps {
   participations: GroupParticipationDetail[];
-  /** participation ids with an in-flight move (greyed/undraggable). */
-  pendingMoveIds: Set<string>;
+  /** participation ids with an in-flight move or removal (greyed/undraggable). */
+  pendingChipIds: Set<string>;
 }
 
 export function UnassignedCard({
   participations,
-  pendingMoveIds,
+  pendingChipIds,
 }: UnassignedCardProps) {
   const t = useTranslations("admin.products.groupsPanel");
   const { setNodeRef, isOver } = useDroppable({
@@ -65,7 +65,7 @@ export function UnassignedCard({
                 parentLastName={p.gamer_parent_last_name}
                 minecraftUsername={p.gamer_minecraft_username}
                 minecraftUuid={p.gamer_minecraft_uuid}
-                isPending={pendingMoveIds.has(p.id)}
+                isPending={pendingChipIds.has(p.id)}
               />
             ))}
           </div>

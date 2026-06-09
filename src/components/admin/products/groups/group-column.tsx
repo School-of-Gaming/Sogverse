@@ -8,14 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { JoinVoiceButton } from "@/components/voice/JoinVoiceButton";
@@ -273,7 +266,7 @@ export function GroupColumn({
                     parentLastName={p.gamer_parent_last_name}
                     minecraftUsername={p.gamer_minecraft_username}
                     minecraftUuid={p.gamer_minecraft_uuid}
-                    isPending={pending.moves.has(p.id)}
+                    isPending={pending.moves.has(p.id) || pending.removes.has(p.id)}
                   />
                 ))}
               </div>
@@ -282,38 +275,20 @@ export function GroupColumn({
         </CardContent>
       </Card>
 
-      {confirmDelete && (
-        <Dialog open onOpenChange={setConfirmDelete}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {t("group.deleteConfirmTitle", { name: group.name })}
-              </DialogTitle>
-              <DialogDescription>
-                {group.participations.length === 0
-                  ? t("group.deleteConfirmEmpty")
-                  : t("group.deleteConfirmWithGamers", {
-                      count: group.participations.length,
-                    })}
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setConfirmDelete(false)}>
-                {c("cancel")}
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  onDelete(group.id);
-                  setConfirmDelete(false);
-                }}
-              >
-                {c("delete")}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title={t("group.deleteConfirmTitle", { name: group.name })}
+        description={
+          group.participations.length === 0
+            ? t("group.deleteConfirmEmpty")
+            : t("group.deleteConfirmWithGamers", {
+                count: group.participations.length,
+              })
+        }
+        confirmLabel={c("delete")}
+        onConfirm={() => onDelete(group.id)}
+      />
     </>
   );
 }
