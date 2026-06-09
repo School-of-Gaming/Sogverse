@@ -7,11 +7,71 @@ import type {
   ProductTopic,
   BillingMode,
   ProductStatus,
-  ProductBrowseRow,
 } from "@/types";
+import type { QueryData } from "@supabase/supabase-js";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { effectiveStatus } from "@/lib/products/effective-status";
+
+// ---------------------------------------------------------------------------
+// Query builders + inferred row types. Each select lives in a standalone
+// builder so its row type is derived via `QueryData<ReturnType<...>>` — the
+// select string and the type can't drift (CLAUDE.md § "Verify generated
+// nullability"). `!inner` recovers a non-null embed across a NOT-NULL FK;
+// plain embeds (nullable FKs like `location_id`) stay nullable.
+//
+// `parent:parent_id(...)` (column-name form) embeds the parent location via
+// the FK on parent_id. The `locations!parent_id` form looks like the same
+// thing but PostgREST resolves it to the *children* (rows whose parent_id
+// points back here) and returns `[]` for any leaf location — surfaces as
+// "Foo, undefined" in the UI.
+// ---------------------------------------------------------------------------
+
+function buildVisibleProductsQuery(
+  supabase: AppSupabaseClient,
+  types: ProductType[],
+) {
+  return supabase
+    .from("products")
+    .select(
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))",
+    )
+    .in("product_type", types)
+    .eq("is_visible", true)
+    .in("status", ["pending", "running"])
+    .order("created_at", { ascending: false });
+}
+
+// Joined shape consumed by the parent-facing browse pages
+// (src/components/public/products/product-browse-page.tsx) and re-exported
+// from `@/types` so consumers import it there. The card renderer expects
+// everything it needs in one row — the topic enum (label resolved via
+// PRODUCT_TOPICS), all translations, prices per currency, weekly schedule
+// slots, and the joined location for in-person products. (`topic` is a column
+// on Product, so no join is needed.)
+export type ProductBrowseRow = QueryData<
+  ReturnType<typeof buildVisibleProductsQuery>
+>[number];
+
+function buildProductDetailQuery(supabase: AppSupabaseClient, id: string) {
+  return supabase
+    .from("products")
+    .select(
+      "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason)))",
+    )
+    .eq("id", id)
+    .maybeSingle();
+}
+
+function buildAdminProductQuery(supabase: AppSupabaseClient, id: string) {
+  return supabase
+    .from("products")
+    .select(
+      "*, product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
+    )
+    .eq("id", id)
+    .maybeSingle();
+}
 
 // `topic` is a column on Product (the product_topic enum) — its label is
 // resolved client-side via PRODUCT_TOPICS, so no join is needed here.
@@ -19,46 +79,23 @@ export type ProductWithDetails = Product & {
   product_translations: ProductTranslation[];
 };
 
-// Parent-facing single-product detail. Shares the browse row's joins
-// and adds a flattened `holidays` array — every (date, reason) pair
-// pulled from the product's linked holiday calendars. The reason
-// falls back to the calendar's `name` if the admin didn't set a
-// per-date one. Consumed by the detail page calendar widget. The
-// signup panel also reads `product_prices` off this row.
+// Parent-facing single-product detail. Shares the browse row's joins and adds
+// a flattened `holidays` array — every (date, reason) pair pulled from the
+// product's linked holiday calendars. The reason falls back to the calendar's
+// `name` if the admin didn't set a per-date one. Consumed by the detail page
+// calendar widget; the signup panel also reads `product_prices` off this row.
 export type ProductDetailRow = ProductBrowseRow & {
   holidays: { date: string; reason: string }[];
 };
 
-// Admin-only single-product detail. Unlike ProductDetailRow this is
-// NOT filtered on is_visible / status, so admins can fetch drafts and
-// cancelled rows. Carries everything the form needs to round-trip an
-// edit (holiday calendar IDs) plus readable strings the details page
-// renders (location chain, holiday calendar names). The topic enum
-// rides along on the base Product columns.
-export type ProductAdminDetailRow = Product & {
-  product_translations: ProductTranslation[];
-  product_prices: {
-    currency: string;
-    price_cents: number;
-  }[];
-  schedule_slots: {
-    weekday: number;
-    start_time: string;
-    duration_minutes: number;
-  }[];
-  locations:
-    | {
-        id: string;
-        name: string;
-        type: string;
-        parent: { id: string; name: string; type: string } | null;
-      }
-    | null;
-  product_holiday_calendars: {
-    calendar_id: string;
-    holiday_calendars: { name: string } | null;
-  }[];
-};
+// Admin-only single-product detail, inferred from buildAdminProductQuery
+// (`NonNullable` strips the `maybeSingle()` `| null`). Unlike ProductDetailRow
+// this is NOT filtered on is_visible / status, so admins can fetch drafts and
+// cancelled rows. Carries the IDs the form needs to round-trip an edit plus
+// readable strings (location chain, holiday calendar names).
+export type ProductAdminDetailRow = NonNullable<
+  QueryData<ReturnType<typeof buildAdminProductQuery>>
+>;
 
 export type ProductTranslationInput = {
   locale: SupportedLocale;
@@ -157,7 +194,7 @@ export class ProductsService {
       .order("created_at", { ascending: false });
 
     if (error) throw error;
-    return data as ProductWithDetails[];
+    return data;
   }
 
   // Parent-facing list: only visible products in a parent-relevant lifecycle
@@ -179,25 +216,15 @@ export class ProductsService {
   // to the ended decision (only `end_date` drives completed/expired), so 0 is
   // safe to pass.
   async listVisibleByTypes(types: ProductType[]): Promise<ProductBrowseRow[]> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select(
-        // `parent:parent_id(...)` (column-name form) embeds the parent row
-        // via the FK on parent_id. The `locations!parent_id` form looks
-        // like the same thing but PostgREST resolves it to the *children*
-        // (rows whose parent_id points back here) and returns `[]` for
-        // any leaf location — surfaces as "Foo, undefined" in the UI.
-        "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type))"
-      )
-      .in("product_type", types)
-      .eq("is_visible", true)
-      .in("status", ["pending", "running"])
-      .order("created_at", { ascending: false });
+    const { data, error } = await buildVisibleProductsQuery(
+      this.supabase,
+      types,
+    );
 
     if (error) throw error;
 
     const now = new Date();
-    return (data as ProductBrowseRow[]).filter((row) => {
+    return data.filter((row) => {
       const status = effectiveStatus(row, now, 0);
       return status !== "completed" && status !== "expired";
     });
@@ -219,44 +246,27 @@ export class ProductsService {
   async getDetailById(
     id: string,
   ): Promise<ProductDetailRow | null> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select(
-        "*, product_translations(*), product_prices(*), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(holiday_calendars(name, calendar_holidays(date, reason)))",
-      )
-      .eq("id", id)
-      .maybeSingle();
+    const { data, error } = await buildProductDetailQuery(this.supabase, id);
 
     if (error) throw error;
     if (!data) return null;
-
-    // One direct cast to the row shape we read — same pattern as
-    // listVisibleByTypes above. `RawRow` extends ProductBrowseRow with
-    // the holiday-calendars join included in this query's select.
-    type RawRow = ProductBrowseRow & {
-      product_holiday_calendars?: {
-        holiday_calendars: {
-          name: string;
-          calendar_holidays: { date: string; reason: string | null }[];
-        } | null;
-      }[];
-    };
-    const row = data as RawRow;
 
     // Flatten linked-calendar holidays into a single array. Each row keeps
     // its per-date `reason` if the admin filled one in; otherwise the
     // calendar's own `name` is the fallback (e.g., "Finnish national
     // holidays" reads better than a blank row in the UI).
     const holidays: { date: string; reason: string }[] = [];
-    for (const link of row.product_holiday_calendars ?? []) {
+    for (const link of data.product_holiday_calendars) {
+      // `holiday_calendars` is non-null — the junction's `calendar_id` is a
+      // NOT-NULL FK, so the inferred embed can't be null (the old hand-written
+      // raw type over-declared it nullable).
       const cal = link.holiday_calendars;
-      if (!cal) continue;
       for (const h of cal.calendar_holidays) {
         holidays.push({ date: h.date, reason: h.reason ?? cal.name });
       }
     }
 
-    return { ...row, holidays };
+    return { ...data, holidays };
   }
 
   async createProduct(input: CreateProductInput): Promise<string> {
@@ -290,17 +300,10 @@ export class ProductsService {
   async getByIdForAdmin(
     id: string,
   ): Promise<ProductAdminDetailRow | null> {
-    const { data, error } = await this.supabase
-      .from("products")
-      .select(
-        "*, product_translations(*), product_prices(currency, price_cents), schedule_slots(weekday, start_time, duration_minutes), locations(id, name, type, parent:parent_id(id, name, type)), product_holiday_calendars(calendar_id, holiday_calendars(name))",
-      )
-      .eq("id", id)
-      .maybeSingle();
+    const { data, error } = await buildAdminProductQuery(this.supabase, id);
 
     if (error) throw error;
-    if (!data) return null;
-    return data as ProductAdminDetailRow;
+    return data;
   }
 
   async updateProduct(id: string, input: UpdateProductInput): Promise<string> {
