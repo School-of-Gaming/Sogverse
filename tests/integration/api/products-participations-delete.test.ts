@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { DELETE } from "@/app/api/admin/products/[id]/participations/[participationId]/route";
 import { mockSupabaseError, mockSupabaseSuccess } from "../../mocks/supabase";
+import { getBoolean, getString } from "../../helpers/json";
 import type { ProductType } from "@/types";
 
 // The admin remove-gamer route does two reads and one RPC:
@@ -165,8 +166,8 @@ describe("DELETE /api/admin/products/[id]/participations/[participationId]", () 
     });
     const response = await DELETE(createRequest(), { params });
     expect(response.status).toBe(400);
-    const body = (await response.json()) as { error: string };
-    expect(body.error).toContain("consumer club");
+    const error = getString(await response.json(), "error");
+    expect(error).toContain("consumer club");
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
@@ -205,8 +206,8 @@ describe("DELETE /api/admin/products/[id]/participations/[participationId]", () 
     });
     const response = await DELETE(createRequest(), { params });
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { ok: boolean };
-    expect(body.ok).toBe(true);
+    const okFlag = getBoolean(await response.json(), "ok");
+    expect(okFlag).toBe(true);
     expect(mockRpc).toHaveBeenCalledWith("cancel_participation", {
       p_participation_id: PARTICIPATION_ID,
       p_reason: "admin_cancelled",

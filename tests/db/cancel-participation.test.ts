@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
+import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
 import { TEST_IDS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { getString } from "../helpers/json";
 
 /**
  * Behavior of the cancel_participation RPC (SECURITY DEFINER), recreated in
@@ -78,12 +80,14 @@ describe("cancel_participation", () => {
       p_participation_id: participation!.id,
       p_reason: "subscription_cancelled",
     });
-    const body = result.data as {
-      kind: string;
-      stripe_subscription_id?: string | null;
-      previous_status?: string;
-      reason?: string;
-    };
+    const body = z
+      .object({
+        kind: z.string(),
+        stripe_subscription_id: z.string().nullable().optional(),
+        previous_status: z.string().optional(),
+        reason: z.string().optional(),
+      })
+      .parse(result.data);
     expect(body.kind).toBe("cancelled");
     expect(body.stripe_subscription_id).toBe("sub_cancel_test_1");
     expect(body.previous_status).toBe("active");
@@ -111,7 +115,7 @@ describe("cancel_participation", () => {
       p_participation_id: "00000000-0000-0000-0000-000000000ffe",
       p_reason: "subscription_cancelled",
     });
-    expect((result.data as { kind: string }).kind).toBe("noop");
+    expect(getString(result.data, "kind")).toBe("noop");
   });
 
   it("cancels a participation with no sub row and returns a null stripe sub id", async () => {
@@ -132,10 +136,12 @@ describe("cancel_participation", () => {
       p_participation_id: participation!.id,
       p_reason: "admin_cancelled",
     });
-    const body = result.data as {
-      kind: string;
-      stripe_subscription_id?: string | null;
-    };
+    const body = z
+      .object({
+        kind: z.string(),
+        stripe_subscription_id: z.string().nullable().optional(),
+      })
+      .parse(result.data);
     expect(body.kind).toBe("cancelled");
     expect(body.stripe_subscription_id).toBeNull();
   });

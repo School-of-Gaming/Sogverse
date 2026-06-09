@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, waitFor } from "@testing-library/react";
 import { LocaleProvider, useLocaleControl } from "@/providers/locale-provider";
 import type { Profile } from "@/types";
+import { createMockProfile } from "../../mocks/supabase";
 
 // Shared mock state for useAuth — updated per test via mockAuth.*
 const mockAuth = vi.hoisted(() => ({
@@ -99,7 +100,7 @@ describe("LocaleProvider", () => {
     // provider should reconcile the cookie to match the profile so the next
     // SSR render loads the right messages bundle.
     document.cookie = "locale=en;path=/";
-    mockAuth.profile = { locale: "fi" } as Profile;
+    mockAuth.profile = createMockProfile({ locale: "fi" });
     mockAuth.user = { id: "user-1" };
 
     render(
@@ -119,7 +120,7 @@ describe("LocaleProvider", () => {
     // currently-loaded messages bundle won't flip until next-intl re-runs.
     // The provider must explicitly trigger a re-render.
     document.cookie = "locale=en;path=/";
-    mockAuth.profile = { locale: "fi" } as Profile;
+    mockAuth.profile = createMockProfile({ locale: "fi" });
     mockAuth.user = { id: "user-1" };
 
     render(
@@ -138,7 +139,7 @@ describe("LocaleProvider", () => {
     // provider must not write the cookie again or trigger a refresh — that
     // would add a redundant render on every page load.
     document.cookie = "locale=fi;path=/";
-    mockAuth.profile = { locale: "fi" } as Profile;
+    mockAuth.profile = createMockProfile({ locale: "fi" });
     mockAuth.user = { id: "user-1" };
 
     // render() is wrapped in act(), so mount effects are flushed before it
@@ -161,7 +162,7 @@ describe("LocaleProvider", () => {
     // reconcile effect must not interpret this as drift and roll the
     // cookie back to the stale profile value on the next re-render.
     document.cookie = "locale=en;path=/";
-    mockAuth.profile = { locale: "en" } as Profile;
+    mockAuth.profile = createMockProfile({ locale: "en" });
     mockAuth.user = { id: "user-1" };
 
     const { rerender } = render(

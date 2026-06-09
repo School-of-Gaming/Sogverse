@@ -7,6 +7,8 @@ import {
   createTestProduct,
   deleteTestProducts,
 } from "./product-helpers";
+import { z } from "zod";
+import { getString, getNumber } from "../helpers/json";
 
 /**
  * Concurrency + idempotency tests for the participations lifecycle.
@@ -99,8 +101,8 @@ describe("participations race + idempotency", () => {
         expect(b.error, `iteration ${i}: b.error`).toBeNull();
 
         const kinds = [
-          (a.data as { kind: string }).kind,
-          (b.data as { kind: string }).kind,
+          getString(a.data, "kind"),
+          getString(b.data, "kind"),
         ].sort();
 
         expect(kinds, `iteration ${i}`).toEqual(["full", "reserving"]);
@@ -125,7 +127,7 @@ describe("participations race + idempotency", () => {
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      expect((first.data as { kind: string }).kind).toBe("reserving");
+      expect(getString(first.data, "kind")).toBe("reserving");
 
       const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
@@ -134,7 +136,7 @@ describe("participations race + idempotency", () => {
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      expect((second.data as { kind: string }).kind).toBe("full");
+      expect(getString(second.data, "kind")).toBe("full");
     });
   });
 
@@ -158,13 +160,12 @@ describe("participations race + idempotency", () => {
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      const reservationId = (created.data as { participation_id: string })
-        .participation_id;
+      const reservationId = getString(created.data, "participation_id");
 
       const expired = await admin.rpc("expire_reservation", {
         p_reservation_id: reservationId,
       });
-      expect((expired.data as { kind: string }).kind).toBe("expired");
+      expect(getString(expired.data, "kind")).toBe("expired");
 
       // Row is gone.
       const { data: row } = await admin
@@ -182,7 +183,7 @@ describe("participations race + idempotency", () => {
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      expect((next.data as { kind: string }).kind).toBe("reserving");
+      expect(getString(next.data, "kind")).toBe("reserving");
     });
 
     it("is a no-op on an already-confirmed (active) row", async () => {
@@ -202,7 +203,7 @@ describe("participations race + idempotency", () => {
       const result = await admin.rpc("expire_reservation", {
         p_reservation_id: inserted!.id,
       });
-      expect((result.data as { kind: string }).kind).toBe("noop");
+      expect(getString(result.data, "kind")).toBe("noop");
 
       // Active row is still there.
       const { data: row } = await admin
@@ -234,13 +235,14 @@ describe("participations race + idempotency", () => {
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      const reservationId = (created.data as { participation_id: string })
-        .participation_id;
+      const reservationId = getString(created.data, "participation_id");
 
       const confirmed = await admin.rpc("confirm_reservation", {
         p_reservation_id: reservationId,
       });
-      const body = confirmed.data as { kind: string; idempotent?: boolean };
+      const body = z
+        .object({ kind: z.string(), idempotent: z.boolean().optional() })
+        .parse(confirmed.data);
       expect(body.kind).toBe("confirmed");
       expect(body.idempotent).toBe(false);
 
@@ -269,7 +271,9 @@ describe("participations race + idempotency", () => {
       const result = await admin.rpc("confirm_reservation", {
         p_reservation_id: inserted!.id,
       });
-      const body = result.data as { kind: string; idempotent?: boolean };
+      const body = z
+        .object({ kind: z.string(), idempotent: z.boolean().optional() })
+        .parse(result.data);
       expect(body.kind).toBe("confirmed");
       expect(body.idempotent).toBe(true);
     });
@@ -278,7 +282,7 @@ describe("participations race + idempotency", () => {
       const result = await admin.rpc("confirm_reservation", {
         p_reservation_id: "00000000-0000-0000-0000-000000000fff",
       });
-      expect((result.data as { kind: string }).kind).toBe("orphan");
+      expect(getString(result.data, "kind")).toBe("orphan");
     });
 
     it("returns orphan for a row in waitlisted state", async () => {
@@ -297,7 +301,7 @@ describe("participations race + idempotency", () => {
       const result = await admin.rpc("confirm_reservation", {
         p_reservation_id: inserted!.id,
       });
-      expect((result.data as { kind: string }).kind).toBe("orphan");
+      expect(getString(result.data, "kind")).toBe("orphan");
     });
 
     it("returns duplicate_payment when another active row exists for the same (product, gamer)", async () => {
@@ -333,10 +337,12 @@ describe("participations race + idempotency", () => {
       const result = await admin.rpc("confirm_reservation", {
         p_reservation_id: reserving!.id,
       });
-      const body = result.data as {
-        kind: string;
-        existing_participation_id?: string;
-      };
+      const body = z
+        .object({
+          kind: z.string(),
+          existing_participation_id: z.string().optional(),
+        })
+        .parse(result.data);
       expect(body.kind).toBe("duplicate_payment");
       expect(body.existing_participation_id).toBe(active!.id);
 
@@ -381,8 +387,8 @@ describe("participations race + idempotency", () => {
       expect(b.error).toBeNull();
 
       const positions = [
-        (a.data as { waitlist_position: number }).waitlist_position,
-        (b.data as { waitlist_position: number }).waitlist_position,
+        getNumber(a.data, "waitlist_position"),
+        getNumber(b.data, "waitlist_position"),
       ].sort();
       expect(positions).toEqual([1, 2]);
     });
@@ -393,22 +399,16 @@ describe("participations race + idempotency", () => {
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
       });
-      const firstId = (first.data as { participation_id: string })
-        .participation_id;
-      const firstPos = (first.data as { waitlist_position: number })
-        .waitlist_position;
+      const firstId = getString(first.data, "participation_id");
+      const firstPos = getNumber(first.data, "waitlist_position");
 
       const second = await admin.rpc("join_waitlist", {
         p_product_id: PRODUCT_WAITLIST,
         p_gamer_id: TEST_IDS.GAMER,
         p_customer_id: TEST_IDS.CUSTOMER,
       });
-      expect((second.data as { participation_id: string }).participation_id).toBe(
-        firstId,
-      );
-      expect((second.data as { waitlist_position: number }).waitlist_position).toBe(
-        firstPos,
-      );
+      expect(getString(second.data, "participation_id")).toBe(firstId);
+      expect(getNumber(second.data, "waitlist_position")).toBe(firstPos);
 
       // And exactly one row exists.
       const { data: rows } = await admin
@@ -448,7 +448,7 @@ describe("participations race + idempotency", () => {
         p_currency: "eur",
       });
       expect(first.error).toBeNull();
-      expect((first.data as { kind: string }).kind).toBe("free_active");
+      expect(getString(first.data, "kind")).toBe("free_active");
 
       const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_FREE_CAP,
@@ -458,7 +458,7 @@ describe("participations race + idempotency", () => {
         p_currency: "eur",
       });
       expect(second.error).toBeNull();
-      expect((second.data as { kind: string }).kind).toBe("full");
+      expect(getString(second.data, "kind")).toBe("full");
 
       // Sanity: only one row exists for the product.
       const { data: rows } = await admin

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { z } from "zod";
 import { POST } from "@/app/api/gamers/create/route";
 import { NextResponse } from "next/server";
 
@@ -266,10 +267,12 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated credential
     await POST(createRequest({ firstName: "Lily", dateOfBirth: "2018-04-15" }));
 
     expect(mockCreateUser).toHaveBeenCalledTimes(1);
-    const callArg = mockCreateUser.mock.calls[0][0] as {
-      email: string;
-      password: string;
-    };
+    const callArg = z
+      .object({
+        email: z.string(),
+        password: z.string(),
+      })
+      .parse(mockCreateUser.mock.calls[0][0]);
     // Opaque internal username shape: "g" + 16 hex chars.
     expect(callArg.email).toMatch(/^g[0-9a-f]{16}@gamer\.sogverse\.internal$/);
     // Auto-generated password is a non-empty random string.

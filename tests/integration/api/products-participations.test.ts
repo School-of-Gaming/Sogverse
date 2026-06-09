@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NextResponse } from "next/server";
 import { POST } from "@/app/api/admin/products/[id]/participations/route";
 import { mockSupabaseError, mockSupabaseSuccess } from "../../mocks/supabase";
+import { getString } from "../../helpers/json";
 import type { ProductType } from "@/types";
 
 // The admin add-gamer route does three reads and one write:
@@ -151,8 +152,8 @@ describe("POST /api/admin/products/[id]/participations", () => {
     mockAuthenticatedAdmin();
     const response = await POST(createRequest({}), { params });
     expect(response.status).toBe(400);
-    const body = (await response.json()) as { error: string };
-    expect(body.error).toContain("gamerId");
+    const error = getString(await response.json(), "error");
+    expect(error).toContain("gamerId");
     expect(mockFrom).not.toHaveBeenCalled();
   });
 
@@ -170,8 +171,8 @@ describe("POST /api/admin/products/[id]/participations", () => {
     });
     const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
     expect(response.status).toBe(400);
-    const body = (await response.json()) as { error: string };
-    expect(body.error).toContain("consumer club");
+    const error = getString(await response.json(), "error");
+    expect(error).toContain("consumer club");
   });
 
   it("returns 400 when gamer has no linked parent", async () => {
@@ -182,8 +183,8 @@ describe("POST /api/admin/products/[id]/participations", () => {
     });
     const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
     expect(response.status).toBe(400);
-    const body = (await response.json()) as { error: string };
-    expect(body.error).toContain("parent");
+    const error = getString(await response.json(), "error");
+    expect(error).toContain("parent");
   });
 
   it("returns 409 when the gamer is already enrolled", async () => {
@@ -198,8 +199,8 @@ describe("POST /api/admin/products/[id]/participations", () => {
     });
     const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
     expect(response.status).toBe(409);
-    const body = (await response.json()) as { error: string };
-    expect(body.error).toContain("already enrolled");
+    const error = getString(await response.json(), "error");
+    expect(error).toContain("already enrolled");
   });
 
   it("happy path: inserts an active participation and returns the id", async () => {
@@ -211,8 +212,8 @@ describe("POST /api/admin/products/[id]/participations", () => {
     });
     const response = await POST(createRequest({ gamerId: GAMER_ID }), { params });
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { participation_id: string };
-    expect(body.participation_id).toBe("new-participation-id");
+    const participationId = getString(await response.json(), "participation_id");
+    expect(participationId).toBe("new-participation-id");
   });
 
   it("happy path works for camps too", async () => {
