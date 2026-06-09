@@ -3,7 +3,8 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import type { SessionAudience } from "@/types";
-import { NextSessionCard, type NextSessionCardProps } from "./NextSessionCard";
+import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
+import { NextSessionCard } from "./NextSessionCard";
 import { UpcomingSessionCard } from "./UpcomingSessionCard";
 
 /**
@@ -25,15 +26,19 @@ export interface SessionsSectionProps {
    * The viewer's enrolled sessions, sorted ascending by `sessionStart`.
    *
    * - `[]` — viewer has no placed participations; render the empty-state copy.
-   * - non-empty — render the soonest as a full `NextSessionCard` (live/locked
-   *   CTA, countdown, reports), then the rest as compact `UpcomingSessionCard`s.
+   * - non-empty — each entry's `isNext` flag decides its card: the soonest
+   *   occurrence of every (gamer × product) renders as a full `NextSessionCard`
+   *   (live/locked CTA, countdown, reports/Padlet), and every later occurrence
+   *   of an already-promoted pairing renders as a compact `UpcomingSessionCard`.
+   *   The flat time order is preserved, so the prominent cards appear mixed in
+   *   among the compact ones wherever they fall.
    *
    * No loading state: both dashboards server-prefetch the rows in the page's
    * Server Component and pass them through `useMyUpcomingSessions`'s required
    * `initialData`, so the section always renders with real data on first
    * paint. See `parent/page.tsx` / `gamer/page.tsx`.
    */
-  sessions: NextSessionCardProps[];
+  sessions: UpcomingSessionEntry[];
   /**
    * Whose dashboard we're rendering on — `"customer"` is the parent's `/parent`
    * page (default; the admin UI demo also leaves this implicit), `"gamer"` is
@@ -51,7 +56,7 @@ export interface SessionsSectionProps {
    * can route on `gamerSeed` (gamer id) + `voiceHref`. Omit on the gamer
    * dashboard so the normal Link navigation is used.
    */
-  onJoinClick?: (session: NextSessionCardProps) => void;
+  onJoinClick?: (session: UpcomingSessionEntry) => void;
 }
 
 /**
@@ -74,28 +79,33 @@ export function SessionsSection({
     return <p className="text-muted-foreground">{t(placeholderKey)}</p>;
   }
 
-  const [next, ...upcoming] = sessions;
+  // The flat time order is preserved; `isNext` (set in `expandUpcomingSessions`
+  // for the soonest occurrence of each gamer × product) decides which card each
+  // entry gets, so prominent and compact cards interleave by time.
   return (
     <div className={cn(SECTION_FRAME, "space-y-3")}>
-      <NextSessionCard
-        key={sessionKey(next)}
-        {...next}
-        audience={audience}
-        onJoinClick={onJoinClick ? () => onJoinClick(next) : undefined}
-      />
-      {upcoming.map((s) => (
-        <UpcomingSessionCard
-          key={sessionKey(s)}
-          gamerFirstName={s.gamerFirstName}
-          gamerSeed={s.gamerSeed}
-          productName={s.productName}
-          sessionStart={s.sessionStart}
-          awaiting={s.awaiting}
-          audience={audience}
-          paymentProblem={s.paymentProblem}
-          cancellation={s.cancellation}
-        />
-      ))}
+      {sessions.map((s) =>
+        s.isNext ? (
+          <NextSessionCard
+            key={sessionKey(s)}
+            {...s}
+            audience={audience}
+            onJoinClick={onJoinClick ? () => onJoinClick(s) : undefined}
+          />
+        ) : (
+          <UpcomingSessionCard
+            key={sessionKey(s)}
+            gamerFirstName={s.gamerFirstName}
+            gamerSeed={s.gamerSeed}
+            productName={s.productName}
+            sessionStart={s.sessionStart}
+            awaiting={s.awaiting}
+            audience={audience}
+            paymentProblem={s.paymentProblem}
+            cancellation={s.cancellation}
+          />
+        ),
+      )}
     </div>
   );
 }
@@ -106,6 +116,6 @@ export function SessionsSection({
  * camp emits a card per scheduled day. The start instant disambiguates
  * those, so the key has to include it. `(gamer, product)` alone collides.
  */
-function sessionKey(s: NextSessionCardProps): string {
+function sessionKey(s: UpcomingSessionEntry): string {
   return `${s.gamerSeed ?? s.gamerFirstName}-${s.productName}-${s.sessionStart.toISOString()}`;
 }

@@ -5,10 +5,12 @@ import { useEffect, useMemo } from "react";
 import { useLocale } from "next-intl";
 import { getClient } from "@/lib/supabase/client";
 import { resolveLocale } from "@/lib/constants/locales";
-import { expandUpcomingSessions } from "@/lib/upcoming-sessions";
+import {
+  expandUpcomingSessions,
+  type UpcomingSessionEntry,
+} from "@/lib/upcoming-sessions";
 import { useNow } from "@/providers";
 import type { SessionAudience } from "@/types";
-import type { NextSessionCardProps } from "@/components/parent/NextSessionCard";
 import {
   ParticipationsService,
   type CreateParticipationInput,
@@ -46,7 +48,7 @@ export const participationKeys = {
 export function useMyUpcomingSessions(
   audience: SessionAudience,
   options: { initialData: MyUpcomingSessionRow[] },
-): NextSessionCardProps[] {
+): UpcomingSessionEntry[] {
   const supabase = getClient();
   const service = new ParticipationsService(supabase);
   const locale = resolveLocale(useLocale());

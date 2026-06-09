@@ -43,10 +43,8 @@ import { VoiceAvatar } from "@/components/voice/VoiceAvatar";
 import { ParticipantRow, type ParticipantRowData } from "@/components/voice/ParticipantRow";
 import { SwitchProfileDialog } from "@/components/family/SwitchProfileDialog";
 import { UserRow } from "@/components/admin/user-row";
-import {
-  SessionsSection,
-  type NextSessionCardProps,
-} from "@/components/parent";
+import { SessionsSection } from "@/components/parent";
+import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
 import { useAuth, useNow } from "@/providers";
 import { AVATAR_SIZE } from "@/lib/constants/spatial";
 import { computeGlowStyle } from "@/lib/constants/spatial.config";
@@ -573,18 +571,23 @@ const SESSIONS_COUNTDOWN_FIRST_GAMER = {
   seed: "28c26921-d051-4126-944b-e8cfae4bb8d3",
 } as const;
 
+// Two products, each appearing twice, interleaved by time. The first
+// occurrence of each product is the prominent `NextSessionCard` (so a
+// multi-product gamer gets a Join button + Padlet link for *each*), and the
+// second occurrence is the compact `UpcomingSessionCard` — so the demo shows
+// both card variants and how they interleave.
 const SESSIONS_FIXTURES_LIVE_FIRST: readonly SessionsFixture[] = [
   { name: "Cosmic Builders Camp", live: true },
-  { name: "Minecraft Survival Camp", daysAhead: 2 },
-  { name: "Lego Robotics Camp", daysAhead: 4 },
-  { name: "Rocket League Club", daysAhead: 11 },
+  { name: "Rocket League Club", daysAhead: 2 },
+  { name: "Cosmic Builders Camp", daysAhead: 4 },
+  { name: "Rocket League Club", daysAhead: 9 },
 ];
 
 const SESSIONS_FIXTURES_COUNTDOWN_FIRST: readonly SessionsFixture[] = [
   { name: "Cosmic Builders Camp", daysAhead: 1 },
-  { name: "Minecraft Survival Camp", daysAhead: 4 },
-  { name: "Lego Robotics Camp", daysAhead: 7 },
-  { name: "Rocket League Club", daysAhead: 11 },
+  { name: "Rocket League Club", daysAhead: 3 },
+  { name: "Cosmic Builders Camp", daysAhead: 8 },
+  { name: "Rocket League Club", daysAhead: 10 },
 ];
 
 /**
@@ -667,7 +670,7 @@ function buildLoadedSessions(
   fixtures: readonly SessionsFixture[],
   gamer: { firstName: string; seed: string },
   now: Date,
-): NextSessionCardProps[] {
+): UpcomingSessionEntry[] {
   const midnightTomorrow = new Date(now);
   midnightTomorrow.setHours(24, 0, 0, 0);
   const midnightTomorrowMs = midnightTomorrow.getTime();
@@ -681,7 +684,14 @@ function buildLoadedSessions(
     liveStart.setDate(liveStart.getDate() - 1);
   }
 
+  // Mirrors `expandUpcomingSessions`: the first occurrence of each product is
+  // the prominent card. Every demo stack uses a single gamer, so the product
+  // name alone keys the (gamer × product) pairing.
+  const seenProducts = new Set<string>();
+
   return fixtures.map((f) => {
+    const isNext = !seenProducts.has(f.name);
+    seenProducts.add(f.name);
     if (f.live) {
       const end = new Date(liveStart.getTime() + SESSIONS_DURATION_MS);
       return {
@@ -691,6 +701,7 @@ function buildLoadedSessions(
         sessionStart: liveStart,
         sessionEnd: end,
         voiceIsOpen: true,
+        isNext,
         voiceHref: "#",
         reportsHref: "#",
       };
@@ -708,6 +719,7 @@ function buildLoadedSessions(
       sessionStart: start,
       sessionEnd: end,
       voiceIsOpen: false,
+      isNext,
       voiceHref: "#",
       reportsHref: "#",
     };

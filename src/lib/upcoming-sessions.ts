@@ -24,6 +24,19 @@ function earlierBoundary(a: Date | null, b: Date | null): Date | null {
 }
 
 /**
+ * One expanded occurrence card. `isNext` distinguishes the soonest occurrence
+ * of each (gamer × product) pairing — rendered as the prominent
+ * `NextSessionCard` (live/locked Join button + Padlet/reports link) — from
+ * every later occurrence of the same pairing, which renders as a compact,
+ * info-only `UpcomingSessionCard`. Surfacing one prominent card *per pairing*
+ * (rather than only the single globally-soonest session) is what keeps the
+ * Join button + Padlet link reachable for every gamer in a multi-gamer family.
+ */
+export interface UpcomingSessionEntry extends NextSessionCardProps {
+  isNext: boolean;
+}
+
+/**
  * Expand the viewer's active participations into a flat, time-sorted list of
  * concrete upcoming sessions for the dashboard Sessions section (drives both
  * `/parent` and `/gamer`). Includes not-yet-placed (unassigned)
@@ -38,18 +51,19 @@ function earlierBoundary(a: Date | null, b: Date | null): Date | null {
  * card to reference. Sort is ascending by `sessionStart`, so an in-progress
  * session ends up at the top exactly as a "starts in 5 min" one would.
  *
- * `voiceIsOpen` is populated only for the first entry: `NextSessionCard` is
- * the only card that consumes it (`UpcomingSessionCard` is info-only), so
- * computing windows for every entry would be wasted work.
+ * `voiceIsOpen` is populated only for the `isNext` entries (the first
+ * occurrence of each gamer × product): `NextSessionCard` is the only card
+ * that consumes it (`UpcomingSessionCard` is info-only), so computing windows
+ * for every entry would be wasted work.
  */
 export function expandUpcomingSessions(
   rows: MyUpcomingSessionRow[],
   now: Date,
   locale: SupportedLocale,
-): NextSessionCardProps[] {
+): UpcomingSessionEntry[] {
   const windowCloseMs = VOICE_CONFIG.SESSION_WINDOW_AFTER_MINUTES * 60_000;
 
-  const sessions: NextSessionCardProps[] = [];
+  const sessions: UpcomingSessionEntry[] = [];
 
   for (const row of rows) {
     if (row.slots.length === 0) continue;
@@ -119,15 +133,31 @@ export function expandUpcomingSessions(
     const lastOccurrence = occurrences[lastIndex];
 
     occurrences.forEach((occ, index) => {
+      // The first occurrence of this row is the soonest occurrence of this
+      // (gamer × product) pairing, so it's the one promoted to the prominent
+      // `NextSessionCard`. Per-row `index === 0` is exactly that "first per
+      // pairing": the dashboard query filters `status = 'active'`, and the
+      // partial unique index `uq_participations_active_or_waitlisted`
+      // (product_id, gamer_id) guarantees one active row per pairing — so each
+      // row IS a distinct pairing, and its occurrences are sorted ascending.
+      // If either the status filter or that index changes, revisit this.
+      const isNext = index === 0;
       sessions.push({
         gamerFirstName: row.gamer.firstName,
         gamerSeed: row.gamer.id,
         productName,
         sessionStart: occ.start,
         sessionEnd: occ.end,
-        // Filled in for the soonest session below; UpcomingSessionCard
-        // ignores it.
-        voiceIsOpen: false,
+        // `voiceIsOpen` tracks the *window*, not join-ability: an awaiting
+        // gamer's session still goes live on schedule (the card keeps its live
+        // styling + "in progress"), they just can't join until placement — the
+        // Join button gates that on `awaiting`. Only `NextSessionCard`
+        // (isNext) consumes it, so it's left false for the compact cards. See
+        // NextSessionCard / JoinVoiceButton.
+        voiceIsOpen: isNext
+          ? isVoiceWindowOpen(occ.start, occ.end, now)
+          : false,
+        isNext,
         voiceHref,
         reportsHref,
         awaiting,
@@ -153,21 +183,6 @@ export function expandUpcomingSessions(
   sessions.sort(
     (a, b) => a.sessionStart.getTime() - b.sessionStart.getTime(),
   );
-
-  if (sessions.length > 0) {
-    const first = sessions[0];
-    // `voiceIsOpen` tracks the *window*, not join-ability: an awaiting
-    // gamer's session still goes live on schedule (the card keeps its live
-    // styling + "in progress"), they just can't join until placement — the
-    // Join button gates that on `awaiting`, swapping the active CTA for a
-    // disabled "matching with a Gedu" state. See NextSessionCard /
-    // JoinVoiceButton.
-    first.voiceIsOpen = isVoiceWindowOpen(
-      first.sessionStart,
-      first.sessionEnd,
-      now,
-    );
-  }
 
   return sessions;
 }
