@@ -213,4 +213,30 @@ export class GroupsService {
     }
     return (await response.json()) as { participation_id: string };
   }
+
+  /**
+   * Admin un-enrollment: hard-deletes a participation — the inverse of
+   * addGamerToProduct. Hits the DELETE participations route, which calls
+   * cancel_participation(reason='admin_cancelled'). No refund is issued (see
+   * the route). Blocked server-side on consumer_club, same as the add path. On
+   * success the caller should invalidate groupsKeys.byProduct(productId) so the
+   * chip leaves the panel.
+   */
+  async removeGamerFromProduct(
+    productId: string,
+    participationId: string,
+  ): Promise<void> {
+    const response = await fetch(
+      `/api/admin/products/${productId}/participations/${participationId}`,
+      { method: "DELETE" },
+    );
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      throw new Error(
+        body.error ?? `Failed to remove gamer (${response.status})`,
+      );
+    }
+  }
 }

@@ -114,6 +114,8 @@ A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoke
 
 **Rule: User-facing strings must be translated for every locale message file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected. Klingon (`tlh`) is an easter egg — fun and quirky takes are welcome, accuracy is not the goal there.**
 
+**Rule: No emoji in `messages/` files** — they're untranslatable copy that can't be themed or recolored. When a string needs a glyph (warning triangle, checkmark, arrow), render a `lucide-react` icon next to the translated text in the component instead.
+
 ### Styling
 - Dark mode is default (class-based via next-themes)
 

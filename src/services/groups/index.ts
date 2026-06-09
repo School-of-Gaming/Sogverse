@@ -13,6 +13,7 @@ export {
   useRemoveGedu,
   useDeleteGroup,
   useAdminAddGamerToProduct,
+  useAdminRemoveGamerFromProduct,
   useGroupPending,
   type GroupPending,
 } from "./groups.queries";
