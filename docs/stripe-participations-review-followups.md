@@ -85,12 +85,6 @@ Migration 00039:1043-1077. Function picks the lowest-position waitlist row and r
 
 These don't break flows, but real customers see them.
 
-### Detail page skeleton reflows on purchased state
-
-`src/components/public/products/product-detail-page.tsx:182-208`. Skeleton renders a 2-col `max-w-5xl` layout; the purchased path swaps to `max-w-3xl` single-column placeholder. Customers buying their first product see a hard reflow. Violates the no-shift rule. Architecture doc already flags it.
-
-**Fix when the real purchased layout lands:** branch the skeleton on a server-rendered hint or render a neutral subset.
-
 ### Signup CTA missing spinner during submit
 
 `signup-panel-view.tsx:648-660`. The `committing` flag is correctly wired into `disabled` (matches CLAUDE.md rule). But no `Loader2` icon. Other forms in the project (admin form) include the icon.
@@ -106,7 +100,6 @@ These don't break flows, but real customers see them.
 
 - Unmemoized `new Date()` in card derivation (`product-browse-card.tsx:55-59`, `product-detail-page.tsx:135-139`) — fresh `Date` per render defeats downstream memoization.
 - `mock-detail-fixtures.ts` uses `as never` per leaf — brittle to schema drift. Fixture-only.
-- Comment drift in `signup-panel.tsx:115-116` — references a `myParticipationState refresh` that's actually a `useParticipationCounts` invalidation.
 - Query invalidation too coarse: `useCreateParticipation`'s `onSuccess` invalidates `productKeys.all` (sledgehammer) — should scope to `productKeys.detail(productId)`.
 
 ---
@@ -115,15 +108,14 @@ These don't break flows, but real customers see them.
 
 These are documented in `products-architecture.md` already; listing here as a cross-reference:
 
-- **Stripe redirect URLs in security audit scope** — `docs/SECURITY_REPORT.md` (2026-03-01) didn't cover redirect URL validation; the Host-header open redirect (fixed) and `//evil.com/path` returnPath bypass (in scope below) both slipped through. Add to the next audit's coverage.
+- **Stripe redirect URLs in security audit scope** — `docs/SECURITY_REPORT.md` (2026-03-01) didn't cover redirect URL validation; the Host-header open redirect and `//evil.com/path` returnPath bypass (both since fixed) slipped through. Add redirect URL validation to the next audit's coverage.
 
 ---
 
 ## Suggested order if/when picking these up
 
 1. **Schema lock-in** — the `family_subscriptions.status` enum is a one-shot migration, cheap before data exists.
-2. **`returnPath: "//evil.com/path"` fix** — security, ~5 min. Already in scope for this PR / next iteration.
-3. **Webhook tests for the recurring-revenue hot loop** — high-value coverage, no schema risk.
-4. **Stripe API version pin + `invoice.subscription` shape** — silent-bomb prevention, one-time SDK change.
-5. **Realtime rollup vs. RPC seat-math fix** — UX glitch, two-line change.
-6. **Everything else** — handle as part of polishing for launch.
+2. **Webhook tests for the recurring-revenue hot loop** — high-value coverage, no schema risk.
+3. **Stripe API version pin + `invoice.subscription` shape** — silent-bomb prevention, one-time SDK change.
+4. **Realtime rollup vs. RPC seat-math fix** — UX glitch, two-line change.
+5. **Everything else** — handle as part of polishing for launch.

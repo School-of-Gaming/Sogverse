@@ -4,7 +4,9 @@
 **Target:** sogverse-staging.sog.gg
 **Supabase Project:** dbcozhkmfsczwgduizkg.supabase.co
 
-> **Note:** Migration files referenced below (00001–00048) were squashed into 10 domain-organized files in March 2026. All fixes described here are included in the current migrations under `supabase/migrations/`. See `00009_rls_and_grants.sql` for centralized RLS/grant policies.
+> **Note (historical audit record):** This report documents the 2026-03 audit and its remediation. Migration filenames cited below (e.g. `00042`–`00045`, `00013`, `00029`, `00037`) refer to the migration numbering *as it stood at audit time*; the migration set has since been re-sequenced and extended (current files are `00001`–`00093` under `supabase/migrations/`), so those exact filenames no longer exist. The fixes themselves all remain in effect.
+>
+> **Also note:** the token economy this report's financial findings (#3, #4, #6, #10) describe — `adjust_token_balance()`, `process_enrollment_charges()`, the `token_transactions` / `enrollment_charges` tables — was retired wholesale when Products v2 replaced the Sorg token / weekly-charge model with direct Stripe payments per participation (dropped in `00052_drop_sorg_enrollment_cron.sql` and `00059_drop_sorg_tokens.sql`). Those code paths no longer exist, so those findings are now moot by removal rather than only by patch. Findings #1, #2, #5, #7, #8, #9 remain verifiable against current code (`#5`'s `commit_group_changes` was renamed to `apply_group_changes`).
 
 ---
 
@@ -764,7 +766,7 @@ These go beyond individual fixes to prevent future classes of the same vulnerabi
 ### If reopening this audit
 
 - Run `npm run test:db` — the access control tests will catch any regressions in function grants or missing RLS.
-- Review any migrations added after `00010_access_control_helpers` for new SECURITY DEFINER functions or tables without RLS.
+- Review any migrations added after `00009_access_control_helpers` for new SECURITY DEFINER functions or tables without RLS.
 - Run https://securityheaders.com against the production domain to verify headers are served correctly.
 
 ---

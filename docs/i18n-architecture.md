@@ -155,10 +155,6 @@ next-intl supports passing only the namespaces each page needs (via `pick()` or 
 
 **Approach when needed:** Move `NextIntlClientProvider` into per-layout wrappers that declare their namespaces, or filter messages by the user's role in the root layout.
 
-### ICU placeholder validation in CI
-
-The `check-translations.mjs` script validates key presence and non-empty values, but does not verify that ICU placeholders (e.g. `{gamerName}`, `{productName}`) match between source and target locales. A dropped or extra placeholder is the most common i18n runtime error. Adding a placeholder comparison step would catch these before merge.
-
 ### Hardcoded metadata descriptions
 
 Page titles in `generateMetadata()` are translated, but `description` and `openGraph` fields remain hardcoded English across ~17 pages. These affect search results and social card previews for non-English users.
