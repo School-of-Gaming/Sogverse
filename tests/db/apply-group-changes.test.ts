@@ -4,6 +4,8 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { getStringRecord } from "../helpers/json";
+import { z } from "zod";
 
 /**
  * Tests for apply_group_changes + get_product_groups_with_details.
@@ -73,10 +75,10 @@ describe("apply_group_changes", () => {
       });
 
       expect(error).toBeNull();
-      const result = data as { tempMap: Record<string, string> };
-      expect(result.tempMap).toHaveProperty("t1");
+      const tempMap = getStringRecord(data, "tempMap");
+      expect(tempMap).toHaveProperty("t1");
 
-      const newId = result.tempMap.t1;
+      const newId = tempMap.t1;
       const { data: row } = await admin
         .from("product_groups")
         .select("name, product_id")
@@ -93,7 +95,7 @@ describe("apply_group_changes", () => {
           { tempId: "t1", name: "Group A", geduIds: [GEDU_A, GEDU_B] },
         ],
       });
-      const newId = (data as { tempMap: Record<string, string> }).tempMap.t1;
+      const newId = getStringRecord(data, "tempMap").t1;
 
       const { data: assignments } = await admin
         .from("gedu_group_assignments")
@@ -120,7 +122,7 @@ describe("apply_group_changes", () => {
           { tempId: "t3", name: "Group C", geduIds: [] },
         ],
       });
-      const map = (data as { tempMap: Record<string, string> }).tempMap;
+      const map = getStringRecord(data, "tempMap");
       const ids = [map.t1, map.t2, map.t3];
       expect(new Set(ids).size).toBe(3);
 
@@ -148,7 +150,7 @@ describe("apply_group_changes", () => {
         p_product_id: PRODUCT_RENAME,
         p_added_groups: [{ tempId: "t1", name: "Initial", geduIds: [] }],
       });
-      groupId = (data as { tempMap: Record<string, string> }).tempMap.t1;
+      groupId = getStringRecord(data, "tempMap").t1;
     });
 
     it("updates the name", async () => {
@@ -196,8 +198,7 @@ describe("apply_group_changes", () => {
         p_product_id: PRODUCT_DELETE,
         p_added_groups: [{ tempId: "t1", name: "Group A", geduIds: [GEDU_A] }],
       });
-      const groupId = (created.data as { tempMap: Record<string, string> })
-        .tempMap.t1;
+      const groupId = getStringRecord(created.data, "tempMap").t1;
 
       await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_DELETE,
@@ -216,8 +217,7 @@ describe("apply_group_changes", () => {
         p_product_id: PRODUCT_DELETE,
         p_added_groups: [{ tempId: "t1", name: "Group A", geduIds: [] }],
       });
-      const groupId = (created.data as { tempMap: Record<string, string> })
-        .tempMap.t1;
+      const groupId = getStringRecord(created.data, "tempMap").t1;
 
       // Insert an active participation in the group.
       const { data: part } = await admin
@@ -252,8 +252,7 @@ describe("apply_group_changes", () => {
         p_product_id: PRODUCT_BASIC,
         p_added_groups: [{ tempId: "t1", name: "G", geduIds: [] }],
       });
-      const otherId = (created.data as { tempMap: Record<string, string> })
-        .tempMap.t1;
+      const otherId = getStringRecord(created.data, "tempMap").t1;
 
       await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_DELETE,
@@ -293,7 +292,7 @@ describe("apply_group_changes", () => {
           { tempId: "tB", name: "Group B", geduIds: [] },
         ],
       });
-      const map = (setup.data as { tempMap: Record<string, string> }).tempMap;
+      const map = getStringRecord(setup.data, "tempMap");
       const groupA = map.tA;
       const groupB = map.tB;
 
@@ -319,8 +318,7 @@ describe("apply_group_changes", () => {
           { tempId: "tB", name: "Group B", geduIds: [] },
         ],
       });
-      const groupB = (setup.data as { tempMap: Record<string, string> })
-        .tempMap.tB;
+      const groupB = getStringRecord(setup.data, "tempMap").tB;
 
       const { error } = await adminAuth.rpc("apply_group_changes", {
         p_product_id: PRODUCT_GEDU_SWAP,
@@ -338,7 +336,7 @@ describe("apply_group_changes", () => {
         p_gedu_assignments_added: [{ groupId: "tA", geduId: GEDU_A }],
       });
       expect(error).toBeNull();
-      const newId = (data as { tempMap: Record<string, string> }).tempMap.tA;
+      const newId = getStringRecord(data, "tempMap").tA;
 
       const { data: rows } = await admin
         .from("gedu_group_assignments")
@@ -365,7 +363,7 @@ describe("apply_group_changes", () => {
           { tempId: "tB", name: "B", geduIds: [] },
         ],
       });
-      const map = (setup.data as { tempMap: Record<string, string> }).tempMap;
+      const map = getStringRecord(setup.data, "tempMap");
       groupA = map.tA;
       groupB = map.tB;
 
@@ -441,7 +439,7 @@ describe("apply_group_changes", () => {
           { participationId, toGroupId: "tNew" },
         ],
       });
-      const newId = (data as { tempMap: Record<string, string> }).tempMap.tNew;
+      const newId = getStringRecord(data, "tempMap").tNew;
 
       const { data: row } = await admin
         .from("participations")
@@ -528,8 +526,7 @@ describe("apply_group_changes", () => {
           p_added_groups: [{ tempId: "t1", name: "G", geduIds: [] }],
         },
       );
-      const groupId = (created as { tempMap: Record<string, string> }).tempMap
-        .t1;
+      const groupId = getStringRecord(created, "tempMap").t1;
 
       const { error } = await admin.from("gedu_group_assignments").insert({
         group_id: groupId,
@@ -576,8 +573,7 @@ describe("get_product_groups_with_details", () => {
         { tempId: "tA", name: "Alpha", geduIds: [GEDU_A] },
       ],
     });
-    const groupA = (setup.data as { tempMap: Record<string, string> }).tempMap
-      .tA;
+    const groupA = getStringRecord(setup.data, "tempMap").tA;
 
     // One participation in Alpha, one unassigned.
     await admin.from("participations").insert([
@@ -603,16 +599,20 @@ describe("get_product_groups_with_details", () => {
     );
     expect(error).toBeNull();
 
-    const result = data as {
-      product_id: string;
-      groups: Array<{
-        id: string;
-        name: string;
-        gedus: Array<{ id: string }>;
-        participations: Array<{ gamer_id: string }>;
-      }>;
-      unassigned: Array<{ gamer_id: string }>;
-    };
+    const result = z
+      .object({
+        product_id: z.string(),
+        groups: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            gedus: z.array(z.object({ id: z.string() })),
+            participations: z.array(z.object({ gamer_id: z.string() })),
+          }),
+        ),
+        unassigned: z.array(z.object({ gamer_id: z.string() })),
+      })
+      .parse(data);
 
     expect(result.product_id).toBe(PRODUCT_DETAILS);
     expect(result.groups).toHaveLength(1);
@@ -635,8 +635,7 @@ describe("get_product_groups_with_details", () => {
       p_product_id: PRODUCT_DETAILS,
       p_added_groups: [{ tempId: "tA", name: "Alpha", geduIds: [] }],
     });
-    const groupA = (setup.data as { tempMap: Record<string, string> }).tempMap
-      .tA;
+    const groupA = getStringRecord(setup.data, "tempMap").tA;
 
     // Two gamers in the group; GAMER_2 touched more recently than GAMER, so the
     // RPC must return GAMER first and GAMER_2 last.
@@ -662,9 +661,16 @@ describe("get_product_groups_with_details", () => {
     const { data } = await adminAuth.rpc("get_product_groups_with_details", {
       p_product_id: PRODUCT_DETAILS,
     });
-    const result = data as {
-      groups: Array<{ id: string; participations: Array<{ gamer_id: string }> }>;
-    };
+    const result = z
+      .object({
+        groups: z.array(
+          z.object({
+            id: z.string(),
+            participations: z.array(z.object({ gamer_id: z.string() })),
+          }),
+        ),
+      })
+      .parse(data);
     // A prior test leaves its own group behind, so target the one we created.
     const alpha = result.groups.find((g) => g.id === groupA);
     expect(alpha?.participations.map((p) => p.gamer_id)).toEqual([

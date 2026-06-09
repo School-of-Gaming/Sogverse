@@ -4,6 +4,7 @@ import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import { getStringRecord } from "../helpers/json";
 
 /**
  * RLS coverage for product_groups and gedu_group_assignments.
@@ -68,7 +69,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
       p_product_id: PRODUCT_X,
       p_added_groups: [{ tempId: "tX1", name: "X1", geduIds: [TEST_IDS.GEDU] }],
     });
-    groupX1 = (x.data as { tempMap: Record<string, string> }).tempMap.tX1;
+    groupX1 = getStringRecord(x.data, "tempMap").tX1;
 
     await admin.from("participations").insert({
       product_id: PRODUCT_X,
@@ -83,7 +84,7 @@ describe("product_groups + gedu_group_assignments RLS", () => {
       p_product_id: PRODUCT_Y,
       p_added_groups: [{ tempId: "tY1", name: "Y1", geduIds: [] }],
     });
-    groupY1 = (y.data as { tempMap: Record<string, string> }).tempMap.tY1;
+    groupY1 = getStringRecord(y.data, "tempMap").tY1;
   });
 
   afterAll(async () => {
@@ -255,7 +256,7 @@ describe("completed participation loses RLS visibility on v2 groups", () => {
       p_product_id: PRODUCT_Z,
       p_added_groups: [{ tempId: "tZ", name: "Z", geduIds: [TEST_IDS.GEDU] }],
     });
-    groupZ = (created.data as { tempMap: Record<string, string> }).tempMap.tZ;
+    groupZ = getStringRecord(created.data, "tempMap").tZ;
 
     const { data: part } = await admin
       .from("participations")
