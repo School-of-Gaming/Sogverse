@@ -1482,10 +1482,11 @@ export default function AdminUIComponentsPage() {
           side: a section-level loading placeholder (not card-shaped — the
           query hasn&rsquo;t told us how many cards to expect yet); the empty
           state copy shown when the parent has no upcoming sessions; and the
-          loaded stack — the soonest session at the top as a full{" "}
-          <code>NextSessionCard</code> (join button or locked CTA, countdown,
-          reports), then every remaining session as a compact{" "}
-          <code>UpcomingSessionCard</code> (purely informational).
+          loaded stack — the soonest occurrence of each gamer &times; product
+          as a full <code>NextSessionCard</code> (join button or locked CTA,
+          countdown, reports), interleaved by time with every later occurrence
+          rendered as a compact <code>UpcomingSessionCard</code> (purely
+          informational).
         </p>
         <SessionsSectionDemo />
       </Section>
