@@ -9,15 +9,6 @@ Features and capabilities present in the legacy SOGA platform (Gamers' Arena) th
 
 ## Geographic Hierarchy
 
-### 1. Country / Municipality / School Organization
-
-**Description:** SOGA organizes clubs into a four-level geographic hierarchy: Country > Municipality > School > Club. Each level has its own CRUD admin panel, active/registration flags, contact information, and invoicing metadata. Municipalities and schools can be independently toggled for public registration. Sogverse has a flat Product > Group structure with no geographic grouping.
-
-**Priority:** `Critical`
-**Complexity:** `Medium` — Three new tables with foreign keys to products, RLS policies, admin CRUD pages, and a migration to associate existing products with locations. The data model is straightforward; the work is in the admin UI and cascading filters.
-
----
-
 ### 2. Custom Fields System
 
 **Description:** Dynamic custom fields that can be attached at the Country, Municipality, School, or Club level. Fields are defined by admins and rendered dynamically in registration and admin forms. Supports text inputs and select dropdowns. Answers are stored as JSON metadata on participant records.
@@ -35,15 +26,6 @@ Features and capabilities present in the legacy SOGA platform (Gamers' Arena) th
 
 **Priority:** `Critical`
 **Complexity:** `High` — Multi-step public form with cascading data fetching, input validation (phone, email, birthdate), waiting list logic, automatic user account creation, email notifications, and custom field rendering. Requires a public API that bypasses auth.
-
----
-
-### 4. Waiting List Management
-
-**Description:** When a club reaches max capacity, new registrations automatically go to a waiting list group. The system tracks waiting list vs. active status, sends different email templates for each, and allows admins to move participants from waiting list to active. Waiting list status is also synced to ActiveCampaign CRM tags.
-
-**Priority:** `High`
-**Complexity:** `Medium` — A status field or separate group type for waiting list, automatic overflow logic on enrollment, admin UI to promote from waiting list, and differentiated email notifications.
 
 ---
 
@@ -288,15 +270,6 @@ Also includes Discord OAuth2 account linking (connect platform account to Discor
 
 ---
 
-### 28. Multiple Meeting Times per Club
-
-**Description:** SOGA clubs can have multiple meeting time slots, each with its own weekday, start time, end time, and assigned educator. Sogverse products have a single schedule (one day_of_week, start_time, duration). This matters for clubs that meet multiple times per week or have split sessions with different instructors.
-
-**Priority:** `Medium`
-**Complexity:** `Medium` — A `product_meeting_times` table replacing the single schedule columns on products, UI for managing multiple time slots, and downstream changes to session window calculations, voice room scheduling, and enrollment charge timing.
-
----
-
 ## Search & Discovery
 
 ### 29. Advanced Multi-Entity Search
@@ -315,22 +288,11 @@ Sogverse has basic admin user listing but lacks dedicated search pages with enti
 
 ---
 
-## Internationalization
-
-### 30. Multi-Language UI (i18n)
-
-**Description:** The SOGA APP supports three languages (English, Finnish, Spanish) via i18next with browser language detection. All UI text — navigation labels, form labels, button text, error messages, status values, and code domain names — has translation keys. Users can switch language via a selector in the navbar and footer. Achievement descriptions also have per-language translations in the database.
-
-**Priority:** `High`
-**Complexity:** `High` — Integrating next-intl or next-i18next into the Sogverse App Router, extracting all hardcoded strings into translation files, adding a language switcher, and ensuring SSR compatibility. The translation extraction is labor-intensive; the technical setup is well-documented for Next.js but touches every component.
-
----
-
 ## Summary by Priority
 
 | Priority | Items |
 |----------|-------|
-| **Critical** | Geographic Hierarchy, Municipality Registration, GEDU Invoicing, Municipality Invoicing |
-| **High** | Waiting List, Lesson Management, Attendance Tracking, GEDU Profiles, Criminal Record Check, Reporting Suite, Club Pricing, Club Calendar View, Multi-Entity Search, Internationalization |
-| **Medium** | Custom Fields, Lesson Rewards, Substitute Search, Achievement System, Code Domain System, ActiveCampaign CRM, Welcome Emails, Scheduled Jobs, Audit Logging, Participant Notes, Multiple Meeting Times |
+| **Critical** | Municipality Registration, GEDU Invoicing, Municipality Invoicing |
+| **High** | Lesson Management, Attendance Tracking, GEDU Profiles, Criminal Record Check, Reporting Suite, Club Pricing, Club Calendar View, Multi-Entity Search |
+| **Medium** | Custom Fields, Lesson Rewards, Substitute Search, Achievement System, Code Domain System, ActiveCampaign CRM, Welcome Emails, Scheduled Jobs, Audit Logging, Participant Notes |
 | **Low** | Activity Generator, Club Instructions, Entities, Webflow Webhooks, Discord Bot |
