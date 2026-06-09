@@ -59,12 +59,13 @@ function err(message: string): SupabaseResult<never> {
 interface WireOptions {
   participation?: SupabaseResult<{ id: string; product_id: string } | null>;
   product?: SupabaseResult<{ product_type: ProductType } | null>;
+  liveSub?: SupabaseResult<{ stripe_subscription_id: string } | null>;
   rpcResult?: SupabaseResult<unknown>;
 }
 
-// Wires the two from() calls (participations, products — both
-// select().eq().maybeSingle()) and the rpc() call. The route calls from() in a
-// fixed order; dispatch by table keeps tests off call-ordering hacks.
+// Wires the three from() calls (participations, products, family_subscriptions
+// — all select().eq().maybeSingle()) and the rpc() call. The route calls from()
+// in a fixed order; dispatch by table keeps tests off call-ordering hacks.
 function wireSupabase(opts: WireOptions) {
   const participationCall = {
     select: () => ({
@@ -82,9 +83,18 @@ function wireSupabase(opts: WireOptions) {
     }),
   };
 
+  const familySubscriptionCall = {
+    select: () => ({
+      eq: () => ({
+        maybeSingle: () => Promise.resolve(opts.liveSub ?? ok(null)),
+      }),
+    }),
+  };
+
   mockFrom.mockImplementation((table: string) => {
     if (table === "participations") return participationCall;
     if (table === "products") return productCall;
+    if (table === "family_subscriptions") return familySubscriptionCall;
     throw new Error(`Unexpected from() table: ${table}`);
   });
 
@@ -157,6 +167,21 @@ describe("DELETE /api/admin/products/[id]/participations/[participationId]", () 
     expect(response.status).toBe(400);
     const body = (await response.json()) as { error: string };
     expect(body.error).toContain("consumer club");
+    expect(mockRpc).not.toHaveBeenCalled();
+  });
+
+  it("refuses (500) and does NOT delete when a live Stripe subscription exists", async () => {
+    // Money-path guard: deleting would CASCADE-orphan the subscription, billing
+    // the customer forever. Unreachable under current invariants, but must fail
+    // loud rather than silently delete if it ever happens.
+    mockAuthenticatedAdmin();
+    wireSupabase({
+      participation: ok({ id: PARTICIPATION_ID, product_id: PRODUCT_ID }),
+      product: ok({ product_type: "camp" }),
+      liveSub: ok({ stripe_subscription_id: "sub_live_123" }),
+    });
+    const response = await DELETE(createRequest(), { params });
+    expect(response.status).toBe(500);
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
