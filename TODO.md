@@ -36,7 +36,6 @@
   **Suggested CLAUDE.md rule** (there's a gap — the existing redirect rule only covers `resolveInternalPath()` for *relative* targets from query params, not deriving a trusted *absolute* origin): under "Redirects & open-redirect safety", add — *"Any absolute URL built from an incoming request (especially links placed in emails) must derive its origin from `getOrigin(request)` (`src/lib/url.ts`), never from `new URL(request.url).origin` or the raw `Host` header. `getOrigin` validates `Host` against a trusted allowlist and falls back to canonical `NEXT_PUBLIC_SITE_URL`; the raw value is attacker-controllable and turns an emailed token link into a phishing vector."* Pairs with the existing `resolveInternalPath` rule — one governs relative redirect targets, the other absolute origins.
 
   **Regression tests:** add integration tests (mock `requireRole`/admin client + capture the email) asserting that when the request arrives with a spoofed `Host` (e.g. `Host: evil.com`), the emailed link's origin is the canonical `NEXT_PUBLIC_SITE_URL`, not `evil.com` — one per route (`forgot-password`, `pin/forgot`, `create-gedu`). Also worth a small unit test on `getOrigin` itself for the spoofed-Host-falls-back case if one doesn't already exist. These lock the behaviour so a future route can't silently regress to `request.url`.
-- [ ] **Retire `public.is_admin()` in favour of inline `get_user_role() = 'admin'`.** Both functions exist today (`supabase/migrations/00002_profiles.sql`) and are behaviourally identical — `is_admin()` is a thin wrapper. Current usage is already skewed toward the inline form (~55 uses of `get_user_role() = 'admin'` vs. ~8 of `is_admin()`). Standardising on the inline comparison reads consistently with customer/gedu/gamer role checks (which must use `get_user_role()` since there's no per-role wrapper) and eliminates a redundant primitive. Mechanical change: replace `is_admin()` call sites, drop the function, run `tests/db/access-control.test.ts`. Low-value cleanup — do when someone's already in the RLS files.
 - [ ] **Turn on `@typescript-eslint/no-unsafe-type-assertion`.** Catches the `as unknown as X` launder pattern (the second hop is unsafe because `unknown` isn't a subset of `X`). When trialed on this branch it flagged 127 errors across 35 files — only one was the laundering pattern; the rest were legit "narrow string/number after a runtime check" call sites (locale narrowing, role narrowing, DOM `as Node` after `contains`, mock-object casts in tests, etc.). Each needs either a type-guard helper or an `// eslint-disable-next-line ... -- runtime-validated, narrowed from string` escape hatch with a description (per the `eslint-comments/require-description` rule). Type info is already enabled in `eslint.config.mjs` so flipping the rule on is one line; the work is the cleanup. Do as a focused branch — most hits are a 5-min refactor each, but reviewing 100+ in one PR is its own friction.
 - [ ] **Replace hand-written row types + `as` casts on embedded `.from().select()` queries with `QueryData` inference.** Reference example: `getParticipationsForGamers` in `src/services/participations/participations.service.ts` — the query lives in a standalone builder and the row type is derived via `QueryData<ReturnType<typeof builder>>[number]` (with `!inner` on the NOT-NULL FK embed to recover the non-null type), so the select string and the type can't drift and there's no cast. See CLAUDE.md § "Verify generated nullability" for the rule. Sites still on the old hand-write-and-cast pattern, in rough ROI order:
   - `src/services/products/products.service.ts` `listVisibleByTypes`, gedu-assigned (same shape), `getByIdForAdmin` — direct-return embedded selects with a cast, exactly the reference shape. Highest value, but `ProductBrowseRow`/`ProductAdminDetailRow` are large hand-written types — check whether either *intentionally* tightens nullability (the `Omit` + intersection pattern) before swapping, so the inferred type doesn't silently re-widen a column.
@@ -106,68 +105,6 @@ The seam is `SUPPORTED_CURRENCIES` in `src/lib/constants/currency.ts`. To turn c
 - We do **not** record the customer's presentment currency. `payments`/`family_subscriptions` store EUR (our settlement currency) because, under single-currency settlement, Adaptive Pricing settles us the exact EUR price we set. If you later want "what the customer actually paid", it's in `session.presentment_details` (`presentment_amount` + `presentment_currency`) on the webhook event — capture it then; it needs a small schema add.
 - Stripe `Price` objects are immutable. `getOrCreateSubscriptionPrice` lazily creates one EUR Price per product; existing subscribers keep their old Price if the admin later changes the amount.
 - Legacy `product_prices` rows in non-EUR currencies (from before the lockdown) are harmless and ignored — `existingFormState` only loads the `eur` row.
-
-### Convert admin writes to SECURITY DEFINER RPCs
-
-See `docs/db-access-patterns.md` for the full architectural rationale. Short version: routes that currently use `createAdminClient` (service-role) to write to sensitive tables (`participations`, `payments`, `refunds`, family subscriptions, etc.) hold full database privileges for the duration of the request. The correct shape is a SECURITY DEFINER RPC called via the user-bound client from `requireRole` — three layers of defense (route role check + RPC role check + grant lockdown) instead of one, and the trust boundary becomes the RPC body rather than "everything the service-role connection could do."
-
-**Current state is not vulnerable.** Every route gates with `requireRole` correctly, the service-role key is server-only, and grants + RLS are configured to match what each route does. This is defense-in-depth hardening, not bug remediation — worth doing as a single coordinated sweep when there's time, but no fire.
-
-**Worked example:** `POST /api/admin/products/[id]/participations` — see `docs/db-access-patterns.md` § "Worked example" for the current shape and the target shape side-by-side. That route currently uses Model A (service-role) because that was the established pattern when it was written; the target is Model D (RPC + grant lockdown + user-bound client).
-
-**Triage of `createAdminClient` callers** (32 total — `git grep -l createAdminClient src/`):
-
-*Legitimate — keep as service-role:*
-- `src/app/api/auth/switch-account/route.ts`, `src/app/api/auth/forgot-password/route.ts`, `src/app/api/admin/create-gedu/route.ts`, `src/app/api/gamers/create/route.ts`, `src/app/api/gamers/[id]/route.ts` — all use `auth.admin.*` (Supabase's Auth Admin API requires service-role).
-- `src/app/api/admin/products/[id]/update/route.ts`, `src/app/api/admin/products/create/route.ts` — storage uploads to `product-images` bucket.
-- `src/app/api/webhooks/stripe/products/route.ts`, `src/app/api/webhooks/whatsapp/route.ts`, `src/app/api/minecraft/join-check/route.ts` — no user session (webhook / external secret-key auth).
-
-*Candidates for conversion (writes sensitive data — RPC + grant lockdown):*
-- [ ] `src/app/api/admin/products/[id]/participations/route.ts` — admin comp-enroll. **Use as the worked example.**
-- [ ] `src/app/api/participations/waitlist/route.ts` — customer joins waitlist.
-- [ ] `src/app/api/checkout/products/create/route.ts` — customer initiates checkout (verify whether seat-count / cross-user reads genuinely need service-role first).
-
-*Candidates for conversion (writes normal tables — user-bound client + RLS is enough, no RPC needed):*
-- [ ] `src/app/api/admin/locations/create/route.ts`, `src/app/api/admin/locations/[id]/route.ts` — admin locations CRUD.
-- [ ] `src/app/api/admin/create-game/route.ts` — admin games write.
-- [ ] `src/app/api/user/locale/route.ts` — user updates own profile column.
-- [ ] `src/app/api/minecraft/account/route.ts` — gamer/gedu own minecraft account.
-- [ ] `src/app/api/admin/whatsapp/send/route.ts` — admin DB write + external API call.
-
-*Needs investigation — may legitimately need service-role for cross-user reads:*
-- [ ] `src/app/api/feedback/route.ts` — reads other users' profiles via `parent_gamer`.
-- [ ] `src/app/api/family/list/route.ts` — customer reads sibling/parent data.
-- [ ] `src/app/api/voice/token/route.ts` — gedu/gamer minting tokens for rooms.
-
-**Per-route verification checklist** before flipping any of the candidates:
-1. The route does *no* storage writes and *no* `auth.admin.*` calls.
-2. For sensitive-table writes: an RPC exists (or is written) that encodes the route's business rules + internal role check.
-3. For normal-table writes: RLS on every touched table grants the caller's role the operation, AND the policy authorizes both the actor and the target (see CLAUDE.md "RLS INSERT/UPDATE policies must authorize both the actor AND the target").
-4. No cross-user/cross-tenant reads beyond what the caller's RLS view permits.
-5. Integration test exists or is added — at minimum: unauthenticated, wrong-role, missing/bad input, happy path.
-6. For new RPCs: added to the allowlist in `tests/db/access-control.test.ts`.
-
-**Sequencing:** Don't convert piecemeal. Pick a batch (e.g. the four "normal table" routes first — they're mechanical), do them in one PR, then tackle the sensitive-table set in a separate PR once a couple of RPCs are in place and the pattern is settled.
-
-### Make `tests/db/access-control.test.ts` a real security gate
-
-The RPC allowlist tests catch "did someone forget to `REVOKE EXECUTE`?" — a real but narrow failure mode. The original incident they were meant to prevent was "admin-only RPC ended up callable by anyone for two weeks," and the current shape doesn't catch the underlying class: an RPC granted to `authenticated` whose body forgets to check the caller's role. The allowlist asks "did you mean to GRANT this?" but doesn't verify the body enforces the intended access. Today every admin-write RPC (`create_product`, `update_product`, `apply_group_changes`, `get_product_groups_with_details`) sits on the authenticated allowlist with a body-level `get_user_role() <> 'admin'` guard — the allowlist doesn't distinguish "anyone authenticated can do this" from "anyone authenticated can call this but only admins succeed."
-
-The right shape is a role × RPC matrix:
-
-- Annotate each entry in `AUTHENTICATED_ALLOWLIST` with the role(s) the body actually permits — `admin`, `customer`, `gedu`, or `any-authenticated`.
-- For each `(role, rpc)` pair where the role is *not* in the entry's permitted set, sign in as that role and call the RPC; assert it raises 42501 (or the documented forbidden code).
-- `any-authenticated` covers self-scoping helpers (`is_admin`, `get_user_role`, `get_my_*`, `get_visible_products`) where every authenticated caller getting a response is the intent.
-
-This directly catches the original incident: an RPC tagged `admin` but missing its body guard fails the test when a customer/gedu/gamer session reaches it and *doesn't* get 42501.
-
-**Cost:** most RPCs take typed parameters, so the test needs dummy args that pass parameter validation but get rejected at the role check. A small per-RPC `forbiddenCallArgs` map handles this. `createAuthenticatedClient(email, password)` in `tests/db/helpers.ts` already covers role-switching.
-
-**Worth bundling into the same PR if scope allows:**
-- IDOR check on direct table writes: as user A, attempt UPDATE/DELETE on a row owned by user B via the user-bound client. RLS is supposed to block this but only the "actor" half of each policy is mechanically verified today (per CLAUDE.md "RLS INSERT/UPDATE policies must authorize both the actor AND the target").
-- Column-grant audit: explicit deny list for sensitive columns (`profiles.role`, `customer_profiles.token_balance`, …) — no UPDATE grant should reach them.
-
-Keep the existing grant-level allowlist tests until the matrix lands — they do catch grant misconfigs, just not body misconfigs. Either fold them into the matrix or retire them once the behavioral test covers the same ground.
 
 ### E2E Tests with Local Supabase
 

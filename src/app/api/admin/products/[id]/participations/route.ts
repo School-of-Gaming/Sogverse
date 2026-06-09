@@ -26,8 +26,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * sail past.
  *
  * The SECURITY DEFINER RPC + user-bound client pattern is a better
- * architectural fit for this route — see docs/db-access-patterns.md.
- * Tracked in TODO.md for a future coordinated rollout.
+ * architectural fit for this route; conversion is planned as part of the
+ * database authorization refactor.
  */
 export async function POST(
   request: Request,

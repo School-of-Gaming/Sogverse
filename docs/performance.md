@@ -115,7 +115,7 @@ Supersedes the earlier "move role into JWT everywhere" framing. Ordered by value
 
 **Not a guard against the 2026-05-31 incident** — it relieves Postgres (the `profiles` query); that incident was GoTrue connection-pool saturation, Postgres healthy throughout (18/60 connections).
 
-**Related cleanup:** retiring `is_admin()` for inline `get_user_role() = 'admin'` (TODO.md) touches the same RLS files — do them together if either is picked up.
+**Related cleanup:** retiring `is_admin()` for inline `get_user_role() = 'admin'` touches the same RLS files — do it alongside this if either is picked up.
 
 ## Completed improvements
 
