@@ -24,12 +24,15 @@ import {
 } from "@/lib/session-format";
 
 /**
- * Prominent card for the soonest joinable session in the parent's list.
+ * Prominent card for the soonest occurrence of a (gamer × product) pairing.
  *
- * Used once per section, at the top — shows the live/locked join button,
- * a per-minute countdown, and the reports link. Every session below this
- * one is rendered as a `UpcomingSessionCard` instead (no CTAs, no
- * countdown).
+ * Rendered once per pairing — the `isNext` entry from
+ * `expandUpcomingSessions` — and shows the live/locked join button, a
+ * per-minute countdown, and the reports link. Later occurrences of the same
+ * pairing render as a `UpcomingSessionCard` instead (no CTAs, no countdown).
+ * The list keeps flat time order, so in a multi-gamer / multi-product family
+ * these prominent cards interleave among the compact ones wherever they fall
+ * by `sessionStart` — they are not all grouped at the top.
  *
  * Live state ("can the parent click Join?") is owned upstream by
  * `computeSessionWindow` (lib/session-schedule.ts). The card takes

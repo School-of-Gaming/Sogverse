@@ -26,8 +26,9 @@ import { SessionsSection } from "./SessionsSection";
  * demo can keep feeding it fixture data for its loading / empty / live /
  * countdown variants.
  *
- * Parent-specific wiring: the Join Voice button on the soonest session has
- * to route through the switch-to-gamer dialog instead of a direct link.
+ * Parent-specific wiring: the Join Voice button on each prominent session
+ * (one per gamer × product) has to route through the switch-to-gamer dialog
+ * instead of a direct link.
  * The parent is signed in as themselves; the voice token endpoint gates
  * access on the *gamer's* enrollment in the group, so a direct nav would
  * always 403. The dialog confirms intent, the switch-account POST swaps

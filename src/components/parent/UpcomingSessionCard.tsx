@@ -15,11 +15,13 @@ import { formatDate, formatTime } from "@/lib/utils";
 /**
  * Compact, purely-informational sibling of `NextSessionCard`.
  *
- * The parent Sessions section renders the soonest session as a
- * `NextSessionCard` (live/locked CTA, countdown, reports link) and every
- * session after that as one of these — gamer attribution, product name,
- * start date/time, nothing clickable. Strips the join + reports surfaces
- * so the list reads as "here's what's next, and here's what comes after."
+ * The parent Sessions section renders the soonest occurrence of each
+ * (gamer × product) pairing as a `NextSessionCard` (live/locked CTA,
+ * countdown, reports link) and every later occurrence of an
+ * already-promoted pairing as one of these — gamer attribution, product
+ * name, start date/time, nothing clickable. Strips the join + reports
+ * surfaces so the list reads as "here's what's next, and here's what
+ * comes after."
  */
 
 export interface UpcomingSessionCardProps {
