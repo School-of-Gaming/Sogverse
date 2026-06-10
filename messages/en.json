@@ -238,8 +238,6 @@
       },
       "detailsPage": {
         "notFound": "Product not found.",
-        "online": "Online",
-        "onlineWithin": "Online (within {name})",
         "locationMissing": "—",
         "uncapped": "No seat limit",
         "visible": "Visible to parents",
@@ -247,7 +245,6 @@
         "waitlistOn": "waitlist on",
         "minutes": "{count} min",
         "perMonth": "{amount} / month",
-        "scheduleRow": "{day} · {time} · {duration} min",
         "billingMode": {
           "paid": "Paid",
           "free": "Free",
@@ -257,13 +254,10 @@
           "topic": "Topic",
           "padletUrl": "Padlet",
           "locales": "Languages",
-          "ageRange": "Age range",
-          "spokenLanguage": "Spoken language",
-          "location": "Location",
           "startDate": "Start date",
           "endDate": "End date",
           "signupThreshold": "Signup threshold",
-          "schedule": "Schedule",
+          "termDates": "Term dates",
           "holidayCalendars": "Holiday calendars",
           "billingMode": "Billing",
           "seats": "Seats",
@@ -1303,7 +1297,7 @@
       "event": "Event"
     },
     "sections": {
-      "whenWhere": "When & where",
+      "overview": "Good to know",
       "calendar": "Schedule",
       "topic": "Topic",
       "game": "About the game"

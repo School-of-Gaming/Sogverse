@@ -20,7 +20,7 @@ import { LongDescription } from "./long-description";
 import { formatInTimeZone } from "date-fns-tz";
 import { computeProductSessions } from "@/components/calendar/compute-product-sessions";
 import { SessionCalendarView } from "@/components/calendar/session-calendar-view";
-import { ProductWhenWhereCard } from "./product-when-where-card";
+import { ProductOverviewCard } from "./product-overview-card";
 import { GameInfoCard } from "./game-info-card";
 import type { RegistrationState } from "./derive-registration-state";
 import { SignupPanel } from "./signup-panel";
@@ -171,7 +171,7 @@ function MainColumn({
           the logistics cards. Omitted when the admin left it empty. */}
       <LongDescription blocks={longDescription} />
 
-      <ProductWhenWhereCard product={product} />
+      <ProductOverviewCard product={product} />
 
       {isGameTopic(product.topic) && <GameInfoCard topic={product.topic} />}
 

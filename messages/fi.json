@@ -238,8 +238,6 @@
       },
       "detailsPage": {
         "notFound": "Tuotetta ei löytynyt.",
-        "online": "Verkossa",
-        "onlineWithin": "Verkossa ({name})",
         "locationMissing": "—",
         "uncapped": "Ei paikkarajaa",
         "visible": "Näkyy vanhemmille",
@@ -247,7 +245,6 @@
         "waitlistOn": "jonotuslista käytössä",
         "minutes": "{count} min",
         "perMonth": "{amount} / kk",
-        "scheduleRow": "{day} · klo {time} · {duration} min",
         "billingMode": {
           "paid": "Maksullinen",
           "free": "Maksuton",
@@ -257,13 +254,10 @@
           "topic": "Aihe",
           "padletUrl": "Padlet",
           "locales": "Kielet",
-          "ageRange": "Ikäryhmä",
-          "spokenLanguage": "Puhuttu kieli",
-          "location": "Sijainti",
           "startDate": "Alkamispäivä",
           "endDate": "Päättymispäivä",
           "signupThreshold": "Ilmoittautumiskynnys",
-          "schedule": "Aikataulu",
+          "termDates": "Kausi",
           "holidayCalendars": "Lomakalenterit",
           "billingMode": "Laskutus",
           "seats": "Paikat",
@@ -1303,7 +1297,7 @@
       "event": "Tapahtuma"
     },
     "sections": {
-      "whenWhere": "Milloin ja missä",
+      "overview": "Hyvä tietää",
       "calendar": "Aikataulu",
       "topic": "Aihe",
       "game": "Tietoa pelistä"

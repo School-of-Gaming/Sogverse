@@ -283,8 +283,6 @@
       },
       "detailsPage": {
         "notFound": "Davchugh ghaj.",
-        "online": "QumlIj",
-        "onlineWithin": "QumlIj ({name})",
         "locationMissing": "—",
         "uncapped": "quS veH pagh",
         "visible": "vavpu' Daleghbej",
@@ -292,7 +290,6 @@
         "waitlistOn": "loS DIS naQ",
         "minutes": "{count} tup",
         "perMonth": "{amount} / jar",
-        "scheduleRow": "{day} · {time} · {duration} tup",
         "billingMode": {
           "paid": "Huch",
           "free": "HuchHa'",
@@ -302,13 +299,10 @@
           "topic": "Doch",
           "padletUrl": "Padlet",
           "locales": "Hol",
-          "ageRange": "ben'a'",
-          "spokenLanguage": "Hol jatlh",
-          "location": "Daq",
           "startDate": "tagh jaj",
           "endDate": "rIn jaj",
           "signupThreshold": "ghIH yum",
-          "schedule": "naQ poH",
+          "termDates": "poH",
           "holidayCalendars": "leSpoH naQ",
           "billingMode": "Huch yIv",
           "seats": "quS",
@@ -1348,7 +1342,7 @@
       "event": "wanI'"
     },
     "sections": {
-      "whenWhere": "ghorgh & nuqDaq",
+      "overview": "yISov",
       "calendar": "jaj tetlh",
       "topic": "Doch",
       "game": "Qujvam De'"

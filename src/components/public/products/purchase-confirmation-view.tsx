@@ -13,7 +13,7 @@ import { formatCurrencyFromCents } from "@/lib/utils";
 import { CURRENCY_CONFIG, DEFAULT_CURRENCY } from "@/lib/constants/currency";
 import type { ProductBrowseRow } from "@/types";
 import { buildPricingOption, type PricingOption } from "./pricing-options";
-import { ProductWhenWhereCard } from "./product-when-where-card";
+import { ProductOverviewCard } from "./product-overview-card";
 
 // Purchase confirmation — data-only presentational view (no fetching). A
 // non-tech-savvy parent has just paid (or signed up for a free event) and
@@ -104,7 +104,7 @@ export function PurchaseConfirmationView({
         </Card>
 
         <div className="mt-6">
-          <ProductWhenWhereCard product={product} />
+          <ProductOverviewCard product={product} />
         </div>
 
         <Card className="mt-6">
