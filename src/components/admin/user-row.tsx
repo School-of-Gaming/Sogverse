@@ -10,6 +10,7 @@ import type { UserRole } from "@/types";
 interface UserRowUser {
   id: string;
   first_name: string;
+  last_name: string;
   email: string | null;
   role: UserRole;
 }
@@ -36,7 +37,9 @@ export function UserRow({ user, linkedGamers, basePath = "/admin/users" }: UserR
           </Avatar>
           <div>
             <p className="font-medium">
-              {user.first_name || t('unnamedUser')}
+              {(user.role !== "gamer"
+                ? [user.first_name, user.last_name].filter(Boolean).join(" ")
+                : user.first_name) || t('unnamedUser')}
             </p>
             {user.role !== "gamer" && user.email && (
               <p className="text-sm text-muted-foreground">{user.email}</p>

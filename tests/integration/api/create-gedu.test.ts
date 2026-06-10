@@ -177,6 +177,38 @@ describe("POST /api/admin/create-gedu", () => {
     expect(data.error).toContain("First name");
   });
 
+  it("should return 400 when lastName is missing", async () => {
+    mockAdmin();
+
+    const response = await POST(createRequest({ email: "gedu@example.com", firstName: "Jane" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Last name");
+    expect(mockGenerateLink).not.toHaveBeenCalled();
+  });
+
+  it("should return 400 when lastName is blank", async () => {
+    mockAdmin();
+
+    const response = await POST(createRequest({ email: "gedu@example.com", firstName: "Jane", lastName: "   " }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Last name");
+    expect(mockGenerateLink).not.toHaveBeenCalled();
+  });
+
+  it("should return 400 when lastName is too short", async () => {
+    mockAdmin();
+
+    const response = await POST(createRequest({ email: "gedu@example.com", firstName: "Jane", lastName: "S" }));
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(data.error).toContain("Last name");
+  });
+
   // -- Happy path --
 
   it("should create user via generateLink, promote to gedu, and send invite email", async () => {

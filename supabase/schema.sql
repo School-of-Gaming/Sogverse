@@ -1111,10 +1111,10 @@ CREATE TABLE public.profiles (
     spoken_languages text[] DEFAULT '{}'::text[] NOT NULL,
     locale text,
     first_name text NOT NULL,
-    last_name text,
+    last_name text DEFAULT ''::text NOT NULL,
     CONSTRAINT auth_identifier_check CHECK ((((role = 'gamer'::public.user_role) AND (username IS NOT NULL)) OR ((role <> 'gamer'::public.user_role) AND (email IS NOT NULL)))),
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
-    CONSTRAINT profiles_last_name_len CHECK (((last_name IS NULL) OR (char_length(last_name) <= 32))),
+    CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text))
 );
 

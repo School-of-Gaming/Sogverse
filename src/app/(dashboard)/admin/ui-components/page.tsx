@@ -1349,14 +1349,14 @@ export default function AdminUIComponentsPage() {
           </p>
           <div className="space-y-4">
             <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000001", first_name: "Jane", email: "jane@example.com", role: "customer" }}
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000001", first_name: "Jane", last_name: "Doe", email: "jane@example.com", role: "customer" }}
               linkedGamers={[
-                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "Venla", email: null, role: "gamer" },
-                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "Lucas", email: null, role: "gamer" },
+                { id: "8e86d931-500c-49ed-889d-c2cd10879a28", first_name: "Venla", last_name: "Doe", email: null, role: "gamer" },
+                { id: "5aec0f5a-5398-46d7-a150-3554cf701beb", first_name: "Lucas", last_name: "Doe", email: null, role: "gamer" },
               ]}
             />
             <UserRow
-              user={{ id: "a1b2c3d4-0000-0000-0000-000000000002", first_name: "Sam", email: "sam@example.com", role: "gedu" }}
+              user={{ id: "a1b2c3d4-0000-0000-0000-000000000002", first_name: "Sam", last_name: "Smith", email: "sam@example.com", role: "gedu" }}
             />
           </div>
         </SubSection>

@@ -31,17 +31,15 @@ export async function POST(request: Request) {
       );
     }
 
-    if (lastName !== undefined && lastName !== null) {
-      if (typeof lastName !== "string" || lastName.trim().length > DISPLAY_NAME_MAX) {
-        return NextResponse.json(
-          { error: `Last name must be at most ${DISPLAY_NAME_MAX} characters` },
-          { status: 400 }
-        );
-      }
+    if (typeof lastName !== "string" || lastName.trim().length < DISPLAY_NAME_MIN || lastName.trim().length > DISPLAY_NAME_MAX) {
+      return NextResponse.json(
+        { error: `Last name must be ${DISPLAY_NAME_MIN}-${DISPLAY_NAME_MAX} characters` },
+        { status: 400 }
+      );
     }
 
     const trimmedFirstName = firstName.trim();
-    const trimmedLastName = typeof lastName === "string" ? lastName.trim() : "";
+    const trimmedLastName = lastName.trim();
     const composedDisplayName = [trimmedFirstName, trimmedLastName]
       .filter(Boolean)
       .join(" ");

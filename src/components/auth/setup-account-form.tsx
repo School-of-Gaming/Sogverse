@@ -20,7 +20,7 @@ import type { SpokenLanguage } from "@/types";
 
 const setupAccountSchema = z.object({
   firstName: z.string().min(DISPLAY_NAME_MIN, `First name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `First name must be at most ${DISPLAY_NAME_MAX} characters`),
-  lastName: z.string().max(DISPLAY_NAME_MAX, `Last name must be at most ${DISPLAY_NAME_MAX} characters`).optional(),
+  lastName: z.string().min(DISPLAY_NAME_MIN, `Last name must be at least ${DISPLAY_NAME_MIN} characters`).max(DISPLAY_NAME_MAX, `Last name must be at most ${DISPLAY_NAME_MAX} characters`),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -126,7 +126,7 @@ export function SetupAccountForm({
     try {
       const validatedData = setupAccountSchema.parse({
         firstName,
-        lastName: lastName.trim() || undefined,
+        lastName: lastName.trim(),
         password,
         confirmPassword,
       });
@@ -185,7 +185,7 @@ export function SetupAccountForm({
           .from("profiles")
           .update({
             first_name: validatedData.firstName,
-            last_name: validatedData.lastName ?? "",
+            last_name: validatedData.lastName,
             phone: toE164Digits(phone),
             spoken_languages: spokenLanguages,
           })
@@ -199,13 +199,13 @@ export function SetupAccountForm({
         // Sync to auth.users metadata so the Supabase dashboard label stays
         // current. display_name is composed for the dashboard; first/last
         // are written separately for tooling.
-        const composedDisplayName = [validatedData.firstName, validatedData.lastName ?? ""]
+        const composedDisplayName = [validatedData.firstName, validatedData.lastName]
           .filter(Boolean)
           .join(" ");
         await supabase.auth.updateUser({
           data: {
             first_name: validatedData.firstName,
-            last_name: validatedData.lastName ?? "",
+            last_name: validatedData.lastName,
             display_name: composedDisplayName,
           },
         });
@@ -284,6 +284,7 @@ export function SetupAccountForm({
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               disabled={isLoading}
+              required
               maxLength={DISPLAY_NAME_MAX}
               autoComplete="family-name"
             />
