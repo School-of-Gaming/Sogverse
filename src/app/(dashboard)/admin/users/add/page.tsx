@@ -26,8 +26,8 @@ export default function AddUserPage() {
       .max(DISPLAY_NAME_MAX, t('geduFirstNameTooLong')),
     lastName: z.string()
       .trim()
-      .max(DISPLAY_NAME_MAX, t('geduLastNameTooLong'))
-      .optional(),
+      .min(DISPLAY_NAME_MIN, t('geduLastNameTooShort'))
+      .max(DISPLAY_NAME_MAX, t('geduLastNameTooLong')),
   });
 
   const [email, setEmail] = useState("");
@@ -47,13 +47,13 @@ export default function AddUserPage() {
       const validatedData = createGeduSchema.parse({
         email,
         firstName,
-        lastName: lastName.trim() || undefined,
+        lastName,
       });
 
       const result = await createGedu.mutateAsync({
         email: validatedData.email,
         firstName: validatedData.firstName,
-        lastName: validatedData.lastName ?? null,
+        lastName: validatedData.lastName,
         locale,
       });
 
@@ -179,6 +179,7 @@ export default function AddUserPage() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 disabled={createGedu.isPending}
+                required
                 maxLength={DISPLAY_NAME_MAX}
                 autoComplete="off"
               />

@@ -14,7 +14,7 @@ import { MinecraftUsernameField } from "@/components/minecraft/minecraft-usernam
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
 import { SpokenLanguageCheckboxes } from "@/components/ui/spoken-language-checkboxes";
 import { GeduCoverageEditor } from "@/components/gedu/gedu-coverage-editor";
-import { DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
+import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX, ROUTES } from "@/lib/constants";
 import { useAuth } from "@/providers";
 import { isValidPhoneNumber } from "react-phone-number-input";
 import { useUpdateProfile, useSpokenLanguages } from "@/services/users";
@@ -74,9 +74,18 @@ export function SettingsSectionContent({
         return;
       }
 
+      // Last name is required for non-gamers (gamers don't render the field and
+      // keep their inherited name). This also gradually backfills legacy rows
+      // that hold an empty last name from before it was required.
+      if (!isGamer && lastName.trim().length < DISPLAY_NAME_MIN) {
+        setErrorMessage(t('lastNameRequired', { min: DISPLAY_NAME_MIN }));
+        setIsSaving(false);
+        return;
+      }
+
       const updates: ProfileUpdate = {
         first_name: firstName,
-        last_name: lastName.trim() || null,
+        last_name: lastName.trim(),
         phone: toE164Digits(phone),
         spoken_languages: spokenLanguages,
       };
