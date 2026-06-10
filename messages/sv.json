@@ -238,8 +238,6 @@
       },
       "detailsPage": {
         "notFound": "Produkten kunde inte hittas.",
-        "online": "Online",
-        "onlineWithin": "Online (inom {name})",
         "locationMissing": "—",
         "uncapped": "Ingen platsgräns",
         "visible": "Synlig för föräldrar",
@@ -247,7 +245,6 @@
         "waitlistOn": "väntelista på",
         "minutes": "{count} min",
         "perMonth": "{amount} / månad",
-        "scheduleRow": "{day} · kl. {time} · {duration} min",
         "billingMode": {
           "paid": "Betald",
           "free": "Gratis",
@@ -257,13 +254,10 @@
           "topic": "Ämne",
           "padletUrl": "Padlet",
           "locales": "Språk",
-          "ageRange": "Åldersintervall",
-          "spokenLanguage": "Talat språk",
-          "location": "Plats",
           "startDate": "Startdatum",
           "endDate": "Slutdatum",
           "signupThreshold": "Anmälningströskel",
-          "schedule": "Schema",
+          "termDates": "Period",
           "holidayCalendars": "Lovkalendrar",
           "billingMode": "Fakturering",
           "seats": "Platser",
@@ -1303,7 +1297,7 @@
       "event": "Evenemang"
     },
     "sections": {
-      "whenWhere": "När och var",
+      "overview": "Bra att veta",
       "calendar": "Schema",
       "topic": "Ämne",
       "game": "Om spelet"

@@ -190,6 +190,48 @@ export function scheduleCardLines(
   }
 }
 
+// Multi-line schedule for the detail surfaces — the parent/gedu "When &
+// where" card and the admin product details page. Unlike the single-line
+// card helper, this breaks each time-group onto its own line, so a
+// multi-day camp ("Apr 30 – May 5" + "Mon, Wed, Fri · 09:00–15:00") and a
+// rare multi-time club both surface their full shape.
+//
+// Timezone label appears once on the lead line — repeating it on each group
+// reads as noise; readers infer same-tz for the whole schedule.
+export function renderScheduleLinesForDetail(
+  schedule: ProductScheduleSummary,
+): string[] {
+  switch (schedule.kind) {
+    case "tbd":
+      return ["—"];
+    case "recurring":
+      return schedule.groups.map((g, idx) => {
+        const line = `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`;
+        return idx === 0 ? withTz(line, schedule.tz) : line;
+      });
+    case "ranged": {
+      const dateLine = withTz(
+        `${schedule.startDate} – ${schedule.endDate}`,
+        schedule.tz,
+      );
+      const groupLines = schedule.groups.map(
+        (g) => `${g.weekdaysLabel} · ${g.startTime}–${g.endTime}`,
+      );
+      return [dateLine, ...groupLines];
+    }
+    case "single": {
+      const time = schedule.time
+        ? ` · ${schedule.time.start}–${schedule.time.end}`
+        : "";
+      return [withTz(`${schedule.date}${time}`, schedule.tz)];
+    }
+  }
+}
+
+function withTz(line: string, tz: string): string {
+  return tz ? `${line} (${tz})` : line;
+}
+
 export function formatProductSchedule({
   product,
   locale,

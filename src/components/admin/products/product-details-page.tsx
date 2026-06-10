@@ -9,11 +9,8 @@ import {
   Clock,
   Copy,
   Globe2,
-  Languages,
-  MapPin,
   Pencil,
   Shapes,
-  Users,
   Wallet,
   ExternalLink,
 } from "lucide-react";
@@ -23,8 +20,8 @@ import { SUPPORTED_CURRENCIES } from "@/lib/constants";
 import { resolveLocale } from "@/lib/constants/locales";
 import { productImageUrl } from "@/lib/images/product-image-url";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
-import { clockTime } from "@/lib/time-of-day";
-import { DAYS_OF_WEEK, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
+import { ProductOverviewCard } from "@/components/public/products/product-overview-card";
 import {
   useProductAdmin,
   type ProductAdminDetailRow,
@@ -149,7 +146,18 @@ export function ProductDetailsPage({
         cloneLabel={c("clone")}
       />
 
-      <KeyFacts product={product} topicName={topicName} uiLocale={uiLocale} t={t} c={c} />
+      {/* Schedule / location / age / language are the parent-facing subset —
+          render the same "When & where" card the shop uses so the two never
+          drift. The admin-only operational fields live in the card below. */}
+      <ProductOverviewCard product={product} />
+
+      <OperationalFacts
+        product={product}
+        topicName={topicName}
+        uiLocale={uiLocale}
+        t={t}
+        c={c}
+      />
 
       <GroupsPanel
         productId={productId}
@@ -264,12 +272,12 @@ function HeaderCard({
 }
 
 // ──────────────────────────────────────────────────────────────────────
-// Key facts grid. Same data the list row shows, expanded — schedule,
-// location, audience, registration window, billing, topic. One scan
-// answers "what is this product, and is it set up the way I expect?"
-// without paging through form-shaped sections.
+// Operational facts grid — the admin-only fields the parent-facing "When &
+// where" card (rendered above this on the page) doesn't carry: club term
+// dates, capacity/waitlist, registration window, billing + prices, topic,
+// Padlet. One scan answers "is this product set up the way I expect?".
 // ──────────────────────────────────────────────────────────────────────
-function KeyFacts({
+function OperationalFacts({
   product,
   topicName,
   uiLocale,
@@ -282,28 +290,15 @@ function KeyFacts({
   t: ReturnType<typeof useTranslations<"admin.products">>;
   c: ReturnType<typeof useTranslations<"common">>;
 }) {
-  const scheduleLines = product.schedule_slots.map((s) =>
-    t("detailsPage.scheduleRow", {
-      day: DAYS_OF_WEEK[s.weekday],
-      time: clockTime(s.start_time),
-      duration: s.duration_minutes,
-    }),
-  );
+  const isClub =
+    product.product_type === "consumer_club" ||
+    product.product_type === "municipality_club";
 
-  const locationLine = (() => {
-    if (product.is_remote) {
-      return product.locations
-        ? t("detailsPage.onlineWithin", { name: product.locations.name })
-        : t("detailsPage.online");
-    }
-    if (!product.locations) return null;
-    return product.locations.parent?.name
-      ? `${product.locations.name}, ${product.locations.parent.name}`
-      : product.locations.name;
-  })();
-
-  const dateRange = (() => {
-    if (!product.start_date) return null;
+  // Camps/events surface their dates inside the shared "When & where" card
+  // (the schedule formatter folds them in); recurring clubs don't, so a
+  // club's term dates live here — the only admin-only date surface.
+  const termDates = (() => {
+    if (!isClub || !product.start_date) return null;
     if (product.end_date && product.end_date !== product.start_date) {
       return `${formatDate(product.start_date, uiLocale)} → ${formatDate(product.end_date, uiLocale)}`;
     }
@@ -337,32 +332,11 @@ function KeyFacts({
   return (
     <Card>
       <CardContent className="grid gap-x-6 gap-y-5 p-6 sm:grid-cols-2">
-        <Fact icon={Calendar} label={t("detailsPage.fields.schedule")}>
-          {scheduleLines.length > 0 ? (
-            <ul className="space-y-0.5">
-              {scheduleLines.map((line, i) => (
-                <li key={i}>{line}</li>
-              ))}
-            </ul>
-          ) : (
-            dateRange ?? <span className="text-muted-foreground">{c("notSet")}</span>
-          )}
-          {dateRange && scheduleLines.length > 0 && (
-            <p className="mt-1 text-xs text-muted-foreground">{dateRange}</p>
-          )}
-        </Fact>
-
-        <Fact icon={MapPin} label={t("detailsPage.fields.location")}>
-          {locationLine ?? <span className="text-muted-foreground">{c("notSet")}</span>}
-        </Fact>
-
-        <Fact icon={Users} label={t("detailsPage.fields.ageRange")}>
-          {t("list.ageRange", { min: product.min_age, max: product.max_age })}
-        </Fact>
-
-        <Fact icon={Languages} label={t("detailsPage.fields.spokenLanguage")}>
-          {product.spoken_language_code.toUpperCase()}
-        </Fact>
+        {termDates && (
+          <Fact icon={Calendar} label={t("detailsPage.fields.termDates")}>
+            {termDates}
+          </Fact>
+        )}
 
         <Fact icon={Clock} label={t("detailsPage.fields.seats")}>
           {seatsLine}
