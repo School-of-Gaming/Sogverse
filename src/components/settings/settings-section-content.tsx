@@ -6,7 +6,7 @@ import { User, Lock, Gamepad2, LogOut } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -186,8 +186,7 @@ export function SettingsSectionContent({
             </div>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="firstName">{c('firstName')}</Label>
+          <Field label={c('firstName')} htmlFor="firstName">
             <Input
               id="firstName"
               value={firstName}
@@ -196,11 +195,10 @@ export function SettingsSectionContent({
               maxLength={DISPLAY_NAME_MAX}
               autoComplete="given-name"
             />
-          </div>
+          </Field>
 
           {!isGamer && (
-            <div className="space-y-2">
-              <Label htmlFor="lastName">{c('lastName')}</Label>
+            <Field label={c('lastName')} htmlFor="lastName">
               <Input
                 id="lastName"
                 value={lastName}
@@ -209,17 +207,16 @@ export function SettingsSectionContent({
                 maxLength={DISPLAY_NAME_MAX}
                 autoComplete="family-name"
               />
-            </div>
+            </Field>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">{c('phoneNumber')}</Label>
+          <Field label={c('phoneNumber')} htmlFor="phone" optional>
             <InternationalPhoneInput
               id="phone"
               value={phone || undefined}
               onChange={(value) => setPhone(value ?? "")}
             />
-          </div>
+          </Field>
 
           <SpokenLanguageCheckboxes
             spokenLanguages={availableLanguages ?? []}
@@ -228,25 +225,23 @@ export function SettingsSectionContent({
           />
 
           {!isGamer && (
-            <div className="space-y-2">
-              <Label>{c('email')}</Label>
+            <Field label={c('email')}>
               <Input
                 value={profile?.email || ""}
                 disabled
                 className="bg-muted"
               />
-            </div>
+            </Field>
           )}
 
           {profile?.username && !isGamer && (
-            <div className="space-y-2">
-              <Label>{c('username')}</Label>
+            <Field label={c('username')}>
               <Input
                 value={profile.username}
                 disabled
                 className="bg-muted"
               />
-            </div>
+            </Field>
           )}
 
           <Button onClick={handleSaveProfile} disabled={isSaving}>

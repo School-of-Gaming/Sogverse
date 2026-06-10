@@ -9,7 +9,7 @@ import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale 
 import { z } from "zod";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCreateGedu } from "@/services/users";
 
@@ -152,8 +152,7 @@ export default function AddUserPage() {
               </div>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="firstName">{t('geduFirstName')}</Label>
+            <Field label={t('geduFirstName')} htmlFor="firstName" hint={t('geduFirstNameHelper')}>
               <Input
                 id="firstName"
                 type="text"
@@ -165,13 +164,9 @@ export default function AddUserPage() {
                 maxLength={DISPLAY_NAME_MAX}
                 autoComplete="off"
               />
-              <p className="text-xs text-muted-foreground">
-                {t('geduFirstNameHelper')}
-              </p>
-            </div>
+            </Field>
 
-            <div className="space-y-2">
-              <Label htmlFor="lastName">{t('geduLastName')}</Label>
+            <Field label={t('geduLastName')} htmlFor="lastName">
               <Input
                 id="lastName"
                 type="text"
@@ -183,10 +178,9 @@ export default function AddUserPage() {
                 maxLength={DISPLAY_NAME_MAX}
                 autoComplete="off"
               />
-            </div>
+            </Field>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('emailAddress')}</Label>
+            <Field label={t('emailAddress')} htmlFor="email" hint={t('inviteLinkExpiryNote')}>
               <Input
                 id="email"
                 type="email"
@@ -197,13 +191,9 @@ export default function AddUserPage() {
                 required
                 autoComplete="off"
               />
-              <p className="text-xs text-muted-foreground">
-                {t('inviteLinkExpiryNote')}
-              </p>
-            </div>
+            </Field>
 
-            <div className="space-y-2">
-              <Label htmlFor="locale">{t('inviteLanguage')}</Label>
+            <Field label={t('inviteLanguage')} htmlFor="locale">
               <select
                 id="locale"
                 value={locale}
@@ -217,7 +207,7 @@ export default function AddUserPage() {
                   </option>
                 ))}
               </select>
-            </div>
+            </Field>
 
             <Button
               type="submit"

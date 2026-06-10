@@ -48,6 +48,7 @@
     "on": "On",
     "off": "Off",
     "notSet": "Not set",
+    "optional": "(optional)",
     "signIn": "Sign In",
     "signOut": "Sign Out",
     "getStarted": "Get Started",

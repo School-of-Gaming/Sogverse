@@ -48,6 +48,7 @@
     "on": "Päällä",
     "off": "Pois",
     "notSet": "Ei asetettu",
+    "optional": "(valinnainen)",
     "signIn": "Kirjaudu sisään",
     "signOut": "Kirjaudu ulos",
     "getStarted": "Aloita tästä",
