@@ -8,12 +8,6 @@ import { z } from "zod";
 
 const objectSchema = z.record(z.string(), z.unknown());
 
-/** Read an arbitrary field off a JSON object. Returns `unknown` — enough for
- *  `expect(getField(data, "kind")).toBe("reserving")`. Throws if not an object. */
-export function getField(value: unknown, key: string): unknown {
-  return objectSchema.parse(value)[key];
-}
-
 /** Read a required string field. Throws if absent or not a string. */
 export function getString(value: unknown, key: string): string {
   return z.string().parse(objectSchema.parse(value)[key]);
