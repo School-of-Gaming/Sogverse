@@ -6,7 +6,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MinecraftUsernameField } from "@/components/minecraft/minecraft-username-field";
 import { InternationalPhoneInput } from "@/components/ui/phone-input";
@@ -261,8 +261,7 @@ export function SetupAccountForm({
           )}
           {/* Hidden email field so Chrome saves the password against the correct email */}
           <input type="email" autoComplete="username" value={sessionEmail} readOnly hidden />
-          <div className="space-y-2">
-            <Label htmlFor="firstName">{c('firstName')}</Label>
+          <Field label={c('firstName')} htmlFor="firstName">
             <Input
               id="firstName"
               type="text"
@@ -274,9 +273,8 @@ export function SetupAccountForm({
               maxLength={DISPLAY_NAME_MAX}
               autoComplete="given-name"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="lastName">{c('lastName')}</Label>
+          </Field>
+          <Field label={c('lastName')} htmlFor="lastName">
             <Input
               id="lastName"
               type="text"
@@ -288,9 +286,8 @@ export function SetupAccountForm({
               maxLength={DISPLAY_NAME_MAX}
               autoComplete="family-name"
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">{c('password')}</Label>
+          </Field>
+          <Field label={c('password')} htmlFor="password" hint={c('passwordMinLength', { count: 8 })}>
             <PasswordInput
               id="password"
               placeholder={t('setupAccount.passwordPlaceholder')}
@@ -300,12 +297,8 @@ export function SetupAccountForm({
               required
               autoComplete="new-password"
             />
-            <p className="text-xs text-muted-foreground">
-              {c('passwordMinLength', { count: 8 })}
-            </p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">{c('confirmPassword')}</Label>
+          </Field>
+          <Field label={c('confirmPassword')} htmlFor="confirmPassword">
             <PasswordInput
               id="confirmPassword"
               placeholder={t('setupAccount.confirmPasswordPlaceholder')}
@@ -315,21 +308,20 @@ export function SetupAccountForm({
               required
               autoComplete="new-password"
             />
-          </div>
+          </Field>
           <MinecraftUsernameField
             value={minecraftUsername}
             onChange={setMinecraftUsername}
             disabled={isLoading}
             optional
           />
-          <div className="space-y-2">
-            <Label htmlFor="phone">{c('phoneNumber')}</Label>
+          <Field label={c('phoneNumber')} htmlFor="phone" optional>
             <InternationalPhoneInput
               id="phone"
               value={phone || undefined}
               onChange={(value) => setPhone(value ?? "")}
             />
-          </div>
+          </Field>
           <SpokenLanguageCheckboxes
             spokenLanguages={availableLanguages ?? []}
             selected={spokenLanguages}

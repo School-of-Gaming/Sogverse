@@ -6,7 +6,6 @@ import {
   Plus,
   Pencil,
   Trash,
-  Search,
   Users,
   Package,
   TrendingUp,
@@ -28,6 +27,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import { Avatar } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -1094,39 +1094,40 @@ export default function AdminUIComponentsPage() {
       {/* Section 4: Input & Label                                      */}
       {/* ============================================================ */}
       <Section title="Input & Label">
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="demo-default">Default</Label>
-            <Input id="demo-default" placeholder="Placeholder text..." />
+        <SubSection title="Field — the canonical labelled-field wrapper">
+          <p className="text-sm text-muted-foreground mb-4">
+            Use <code>&lt;Field&gt;</code> for every labelled input — it owns the
+            label, the label→input spacing, and the optional hint. Do not
+            hand-roll a <code>&lt;Label&gt;</code> + input group. House rule for
+            required vs. optional: fields are <strong>required by default and
+            carry no marker</strong>; genuinely optional fields get{" "}
+            <code>optional</code>, which renders a muted <code>(optional)</code>{" "}
+            suffix. We mark the exceptions, not the norm — never an asterisk on
+            required fields.
+          </p>
+          {/*
+            NOTE: autoComplete="off" here is demo-only — it stops the browser
+            autofilling these throwaway fields (the unhinted phone input was
+            offering a saved email). Real forms must NOT copy this: use the
+            correct autocomplete token (given-name, family-name, tel,
+            new-password, …) so autofill and accessibility work properly.
+          */}
+          <div className="grid gap-6 md:grid-cols-2 max-w-2xl">
+            <Field label="First name" htmlFor="demo-field-required">
+              <Input id="demo-field-required" placeholder="e.g. Jane" autoComplete="off" />
+            </Field>
+            <Field label="Phone number" htmlFor="demo-field-optional" optional>
+              <Input id="demo-field-optional" type="tel" placeholder="+358 …" autoComplete="off" />
+            </Field>
+            <Field
+              label="Password"
+              htmlFor="demo-field-hint"
+              hint="Must be at least 8 characters."
+            >
+              <Input id="demo-field-hint" type="password" autoComplete="new-password" />
+            </Field>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="demo-value">With Value</Label>
-            <Input id="demo-value" defaultValue="Hello world" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="demo-disabled">Disabled</Label>
-            <Input id="demo-disabled" disabled placeholder="Cannot edit" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="demo-file">File Input</Label>
-            <Input id="demo-file" type="file" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="demo-search">With Search Icon</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="demo-search"
-                placeholder="Search..."
-                className="pl-10"
-              />
-            </div>
-          </div>
-        </div>
+        </SubSection>
       </Section>
 
       {/* ============================================================ */}
