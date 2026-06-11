@@ -13,7 +13,10 @@ export function useClickOutside(elementRef: RefObject<HTMLElement | null>, onCli
 
   useEffect(() => {
     const handler = (event: MouseEvent) => {
-      if (elementRef.current && !elementRef.current.contains(event.target as Node)) {
+      // A non-Node (or null) target can't be inside the element, so it counts
+      // as an outside click — same result `contains(null)` used to give.
+      const target = event.target;
+      if (elementRef.current && !(target instanceof Node && elementRef.current.contains(target))) {
         callbackRef.current();
       }
     };

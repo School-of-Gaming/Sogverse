@@ -34,7 +34,5 @@ export const SHOP_PRODUCT_TYPES: ProductType[] = Object.values(CATEGORY_TYPE);
 export const CATEGORY_PARAM = "category";
 
 export function parseCategory(raw: string | null): ShopCategory {
-  return SHOP_CATEGORIES.includes(raw as ShopCategory)
-    ? (raw as ShopCategory)
-    : DEFAULT_SHOP_CATEGORY;
+  return SHOP_CATEGORIES.find((c) => c === raw) ?? DEFAULT_SHOP_CATEGORY;
 }
