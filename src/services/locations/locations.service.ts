@@ -1,4 +1,9 @@
 import type { Location, LocationInsert, AppSupabaseClient } from "@/types";
+import {
+  parseJsonResponse,
+  readErrorMessage,
+} from "@/lib/api/json-response";
+import { locationRow } from "./locations.contracts";
 
 export class LocationsService {
   constructor(private supabase: AppSupabaseClient) {}
@@ -35,12 +40,11 @@ export class LocationsService {
       body: JSON.stringify(location),
     });
     if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      throw new Error(data.error ?? "Failed to create location");
+      throw new Error(
+        await readErrorMessage(response, "Failed to create location")
+      );
     }
-    return (await response.json()) as Location;
+    return parseJsonResponse(response, locationRow);
   }
 
   async updateLocation(
@@ -56,11 +60,10 @@ export class LocationsService {
       }
     );
     if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      throw new Error(data.error ?? "Failed to update location");
+      throw new Error(
+        await readErrorMessage(response, "Failed to update location")
+      );
     }
-    return (await response.json()) as Location;
+    return parseJsonResponse(response, locationRow);
   }
 }
