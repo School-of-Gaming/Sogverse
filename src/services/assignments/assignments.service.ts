@@ -4,6 +4,10 @@ import type {
   MyAssignedProductRow,
   ProductType,
 } from "@/types";
+import {
+  geduAssignedProduct,
+  myAssignedProductRows,
+} from "./assignments.contracts";
 
 /**
  * Row shape consumed by the gedu dashboard's "My Groups" section. One
@@ -72,7 +76,7 @@ export class AssignmentsService {
   async getMyAssignedProducts(): Promise<MyAssignedProductSessionRow[]> {
     const { data, error } = await this.supabase.rpc("get_my_assigned_products");
     if (error) throw error;
-    return (data as MyAssignedProductRow[]).map(toMyAssignedProductSessionRow);
+    return myAssignedProductRows.parse(data).map(toMyAssignedProductSessionRow);
   }
 
   /**
@@ -97,7 +101,7 @@ export class AssignmentsService {
       throw error;
     }
 
-    return data as unknown as GeduAssignedProduct;
+    return geduAssignedProduct.parse(data);
   }
 }
 

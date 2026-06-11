@@ -6,6 +6,7 @@ import {
 import {
   addParticipationResponse,
   applyGroupChangesResult,
+  productGroupsSnapshot,
   type ApplyGroupChangesResult,
   type GroupChangeSet,
 } from "./groups.contracts";
@@ -53,9 +54,8 @@ export class GroupsService {
       { p_product_id: productId },
     );
     if (error) throw error;
-    // The RPC always returns a populated object — the JSONB type from
-    // PostgREST is `Json`, so we narrow here.
-    return data as unknown as ProductGroupsSnapshot;
+    // The RPC returns `Json`; the contract schema is the structure.
+    return productGroupsSnapshot.parse(data);
   }
 
   /**

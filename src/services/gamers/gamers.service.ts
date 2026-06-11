@@ -36,7 +36,9 @@ export class GamerService {
   async getMyGamers(): Promise<GamerProfileRow[]> {
     const { data, error } = await this.supabase.rpc("get_my_gamers");
     if (error) throw error;
-    return data as GamerProfileRow[];
+    // Same checked narrowing as getLinkedGamers above: every row this RPC
+    // returns is a gamer, so the filter is a no-op that earns the type.
+    return data.filter(isGamerProfile);
   }
 
   async getMyParents(): Promise<Profile[]> {
