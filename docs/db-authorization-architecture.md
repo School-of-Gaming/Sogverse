@@ -69,15 +69,17 @@ the next instance of that class fails a test before it ships.
 
 **Platform regime change (2026-06):** Supabase no longer auto-grants Data API privileges
 (`anon`/`authenticated`/`service_role`) to new `public`-schema objects — on local stacks
-since CLI v2.106.0, on hosted projects for objects created after 2026-10-30. Layer 1 now
-fails closed by default: a new table or function is unreachable, even by `service_role`,
-until a migration explicitly `GRANT`s it. The pre-existing surface was backfilled
-verbatim from `schema.sql` (the explicit-grants migration); any phase of this refactor
-that creates objects must write its own grants, and the §3.5 template's `REVOKE` line is
-now redundant for new functions (kept in the template as harmless documentation of
-intent). This is the platform converging on §3.3's posture — it strengthens the grant
-layer but verifies nothing about function bodies or RLS, so it changes no phase of this
-plan.
+since CLI v2.106.0, and on our hosted DBs since `00099` proactively revoked the legacy
+`FOR ROLE postgres` default privileges (ahead of Supabase's own 2026-10-30 platform
+flip; the transition asymmetry had already produced one CI-invisible exposure, repaired
+in `00098`). Layer 1 now fails closed identically everywhere: a new table or function is
+unreachable, even by `service_role`, until a migration explicitly `GRANT`s it. The
+pre-existing surface was backfilled verbatim from `schema.sql` (the explicit-grants
+migration); any phase of this refactor that creates objects must write its own grants,
+and the §3.5 template's `REVOKE` line is now redundant for new functions (kept in the
+template as harmless documentation of intent). This is the platform converging on
+§3.3's posture — it strengthens the grant layer but verifies nothing about function
+bodies or RLS, so it changes no phase of this plan.
 
 ### The three layers PostgreSQL applies, in order
 
