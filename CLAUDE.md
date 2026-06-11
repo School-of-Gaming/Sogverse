@@ -207,7 +207,9 @@ export type MyType = Omit<_Generated, "nullable_col"> & { nullable_col: string |
 
 ### Function & Table Access Control
 
-**Rule: New PostgreSQL functions must be private by default.** After creating a function, add `REVOKE EXECUTE` from `authenticated`, `anon`, and `public` unless the function is intentionally called from the browser client. If the function IS public, add it to the allowlist in `tests/db/access-control.test.ts`. Extra care with `SECURITY DEFINER` functions — they bypass RLS, so a public grant is a privilege escalation vector.
+**Rule: Every migration that creates a table, view, sequence, or function must include explicit `GRANT`s for each Data API role that needs it — nothing is reachable by default, not even by `service_role`.** Supabase stopped auto-granting Data API privileges on new `public`-schema objects (local stacks since CLI v2.106.0; hosted projects for objects created after 2026-10-30). The pre-existing surface was backfilled verbatim in `00095_explicit_data_api_grants.sql`; from there on, each migration grants what it creates: `GRANT EXECUTE ... TO authenticated` for browser-called RPCs, `TO service_role` for admin-client-called ones, table grants per role as intended. A forgotten grant fails closed — CI's DB tests run on a fresh local stack and hit `permission denied`. Do not "fix" that by replaying blanket grants or `ALTER DEFAULT PRIVILEGES`; the failure is the feature.
+
+**Rule: Functions are born private — grant deliberately.** A new function with no `GRANT` is unreachable, which is the correct default (the old "add `REVOKE EXECUTE` after creating" boilerplate is now redundant, though harmless in older migrations). If a function IS exposed to `authenticated`/`anon`, add it to the allowlist in `tests/db/access-control.test.ts`. Extra care with `SECURITY DEFINER` functions — they bypass RLS, so a public grant is a privilege escalation vector.
 
 **Rule: All new tables must enable RLS.** Add `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and appropriate policies.
 
