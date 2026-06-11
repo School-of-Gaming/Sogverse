@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import {
+  parseJsonResponse,
+  readErrorMessage,
+} from "@/lib/api/json-response";
+import { pinStatusResponse, pinVerifyResponse } from "./pin.contracts";
 
 /**
  * Parent-PIN client service. Follows the project's two-file service pattern:
@@ -27,8 +32,8 @@ export class PinService {
    */
   async status(): Promise<{ isSet: boolean; unlocked: boolean }> {
     const res = await fetch("/api/auth/pin/status");
-    if (!res.ok) throw new Error(await errorMessage(res, "Failed to load PIN status"));
-    return (await res.json()) as { isSet: boolean; unlocked: boolean };
+    if (!res.ok) throw new Error(await readErrorMessage(res, "Failed to load PIN status"));
+    return parseJsonResponse(res, pinStatusResponse);
   }
 
   /**
@@ -43,8 +48,8 @@ export class PinService {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin }),
     });
-    if (!res.ok) throw new Error(await errorMessage(res, "Failed to verify PIN"));
-    const data = (await res.json()) as { verified?: boolean };
+    if (!res.ok) throw new Error(await readErrorMessage(res, "Failed to verify PIN"));
+    const data = await parseJsonResponse(res, pinVerifyResponse);
     return data.verified === true;
   }
 
@@ -60,13 +65,13 @@ export class PinService {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pin }),
     });
-    if (!res.ok) throw new Error(await errorMessage(res, "Failed to set PIN"));
+    if (!res.ok) throw new Error(await readErrorMessage(res, "Failed to set PIN"));
   }
 
   /** Email the parent's inbox a PIN-reset link. Always resolves (no info leak). */
   async forgot(): Promise<void> {
     const res = await fetch("/api/auth/pin/forgot", { method: "POST" });
-    if (!res.ok) throw new Error(await errorMessage(res, "Failed to send reset email"));
+    if (!res.ok) throw new Error(await readErrorMessage(res, "Failed to send reset email"));
   }
 
   /** Complete a reset from the emailed link's signed token. Session-agnostic. */
@@ -76,11 +81,6 @@ export class PinService {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, pin }),
     });
-    if (!res.ok) throw new Error(await errorMessage(res, "Failed to reset PIN"));
+    if (!res.ok) throw new Error(await readErrorMessage(res, "Failed to reset PIN"));
   }
-}
-
-async function errorMessage(res: Response, fallback: string): Promise<string> {
-  const data = (await res.json().catch(() => ({}))) as { error?: string };
-  return data.error || fallback;
 }

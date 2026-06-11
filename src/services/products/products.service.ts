@@ -12,6 +12,11 @@ import type { QueryData } from "@supabase/supabase-js";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { SupportedLocale } from "@/lib/constants/locales";
 import { effectiveStatus } from "@/lib/products/effective-status";
+import {
+  parseJsonResponse,
+  readErrorMessage,
+} from "@/lib/api/json-response";
+import { productIdResponse } from "./products.contracts";
 
 // ---------------------------------------------------------------------------
 // Query builders + inferred row types. Each select lives in a standalone
@@ -284,11 +289,12 @@ export class ProductsService {
     });
 
     if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error ?? "Failed to create product");
+      throw new Error(
+        await readErrorMessage(response, "Failed to create product"),
+      );
     }
 
-    const { product_id } = (await response.json()) as { product_id: string };
+    const { product_id } = await parseJsonResponse(response, productIdResponse);
     return product_id;
   }
 
@@ -330,11 +336,12 @@ export class ProductsService {
     });
 
     if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error ?? "Failed to update product");
+      throw new Error(
+        await readErrorMessage(response, "Failed to update product"),
+      );
     }
 
-    const { product_id } = (await response.json()) as { product_id: string };
+    const { product_id } = await parseJsonResponse(response, productIdResponse);
     return product_id;
   }
 }

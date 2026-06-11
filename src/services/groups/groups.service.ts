@@ -1,12 +1,22 @@
 import type { AppSupabaseClient, ProductGroupsSnapshot } from "@/types";
+import {
+  parseJsonResponse,
+  readErrorMessage,
+} from "@/lib/api/json-response";
+import {
+  addParticipationResponse,
+  applyGroupChangesResult,
+  type ApplyGroupChangesResult,
+  type GroupChangeSet,
+} from "./groups.contracts";
 
 /**
- * A set of group-structure changes applied atomically by `apply_group_changes`.
- * One change or many — single-change calls are the common case (the admin panel
- * auto-saves each action), and the panel never batches anymore. The set shape is
- * retained because the RPC applies its parts in a fixed order within one
- * transaction, which is what makes destructive actions (delete-group cascading
- * gamers back to unassigned) safe.
+ * `GroupChangeSet` — a set of group-structure changes applied atomically by
+ * `apply_group_changes`. One change or many — single-change calls are the
+ * common case (the admin panel auto-saves each action), and the panel never
+ * batches anymore. The set shape is retained because the RPC applies its parts
+ * in a fixed order within one transaction, which is what makes destructive
+ * actions (delete-group cascading gamers back to unassigned) safe.
  *
  * tempIds in addedGroups serve two purposes:
  *  - the RPC returns a tempId → realUuid map so the client can resolve them
@@ -16,27 +26,10 @@ import type { AppSupabaseClient, ProductGroupsSnapshot } from "@/types";
  * Prefer the intent-named methods below (createGroup, renameGroup, …) over
  * hand-building this shape at call sites — they keep callers expressing intent
  * while this generality stays an implementation detail of `applyChanges`.
+ *
+ * The schema itself lives in groups.contracts.ts, shared with the apply route.
  */
-export interface GroupChangeSet {
-  addedGroups: Array<{
-    tempId: string;
-    name: string;
-    geduIds: string[];
-  }>;
-  renamedGroups: Array<{ groupId: string; name: string }>;
-  deletedGroupIds: string[];
-  geduAssignmentsAdded: Array<{ groupId: string; geduId: string }>;
-  geduAssignmentsRemoved: Array<{ groupId: string; geduId: string }>;
-  participationMoves: Array<{
-    participationId: string;
-    /** null = unassign (back to inbox); a tempId resolves via the new-group map */
-    toGroupId: string | null;
-  }>;
-}
-
-export interface ApplyGroupChangesResult {
-  tempMap: Record<string, string>;
-}
+export type { ApplyGroupChangesResult, GroupChangeSet };
 
 /** An empty change set — spread it and override the one field a method touches. */
 function emptyChangeSet(): GroupChangeSet {
@@ -88,12 +81,14 @@ export class GroupsService {
       },
     );
     if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      throw new Error(body.error ?? `Failed to apply changes (${response.status})`);
+      throw new Error(
+        await readErrorMessage(
+          response,
+          `Failed to apply changes (${response.status})`,
+        ),
+      );
     }
-    return (await response.json()) as ApplyGroupChangesResult;
+    return parseJsonResponse(response, applyGroupChangesResult);
   }
 
   /**
@@ -204,14 +199,14 @@ export class GroupsService {
       },
     );
     if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
       throw new Error(
-        body.error ?? `Failed to add gamer (${response.status})`,
+        await readErrorMessage(
+          response,
+          `Failed to add gamer (${response.status})`,
+        ),
       );
     }
-    return (await response.json()) as { participation_id: string };
+    return parseJsonResponse(response, addParticipationResponse);
   }
 
   /**
@@ -231,11 +226,11 @@ export class GroupsService {
       { method: "DELETE" },
     );
     if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
       throw new Error(
-        body.error ?? `Failed to remove gamer (${response.status})`,
+        await readErrorMessage(
+          response,
+          `Failed to remove gamer (${response.status})`,
+        ),
       );
     }
   }

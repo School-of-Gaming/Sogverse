@@ -2,6 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import {
+  parseJsonResponse,
+  readErrorMessage,
+} from "@/lib/api/json-response";
+import { updateSiteNotesResponse } from "./reference-data.contracts";
 import type {
   CalendarHoliday,
   HolidayCalendar,
@@ -89,10 +94,11 @@ export function useUpdateSiteNotes() {
         body: JSON.stringify(input),
       });
       if (!res.ok) {
-        const data = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Failed to update site notes");
+        throw new Error(
+          await readErrorMessage(res, "Failed to update site notes")
+        );
       }
-      return (await res.json()) as { ok: true };
+      return parseJsonResponse(res, updateSiteNotesResponse);
     },
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({

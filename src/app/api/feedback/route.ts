@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 
-    const adminEmails = admins.map((a) => a.email).filter(Boolean) as string[];
+    const adminEmails = admins.flatMap((a) => (a.email ? [a.email] : []));
 
     // Determine reply-to email
     const role = profile.role;

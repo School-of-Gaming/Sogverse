@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { requireRole } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/json-body.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
@@ -41,23 +43,12 @@ export async function POST(
 
   const { id: productId } = await params;
 
-  let body: { gamerId?: unknown };
-  try {
-    body = (await request.json()) as { gamerId?: unknown };
-  } catch {
-    return NextResponse.json(
-      { error: "Request body must be valid JSON" },
-      { status: 400 },
-    );
-  }
-
-  const gamerId = body.gamerId;
-  if (typeof gamerId !== "string" || gamerId.length === 0) {
-    return NextResponse.json(
-      { error: "gamerId is required" },
-      { status: 400 },
-    );
-  }
+  const body = await parseJsonBody(
+    request,
+    z.object({ gamerId: z.string().min(1, "gamerId is required") }),
+  );
+  if (body instanceof NextResponse) return body;
+  const { gamerId } = body;
 
   const admin = createAdminClient();
 
