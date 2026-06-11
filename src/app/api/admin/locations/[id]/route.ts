@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/json-body.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Location } from "@/types";
+import { updateLocationBody } from "@/services/locations/locations.contracts";
 
 // See ../create/route.ts — `locations` writes go through the admin client
 // because table DML is revoked from `authenticated`.
@@ -20,25 +21,16 @@ export async function PATCH(
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
 
-  let body: { name?: unknown };
-  try {
-    body = (await request.json()) as { name?: unknown };
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-  if (!name) {
-    return NextResponse.json({ error: "Name is required" }, { status: 400 });
-  }
+  const body = await parseJsonBody(request, updateLocationBody);
+  if (body instanceof NextResponse) return body;
 
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("locations")
-    .update({ name })
+    .update(body)
     .eq("id", id)
     .select()
-    .single<Location>();
+    .single();
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
