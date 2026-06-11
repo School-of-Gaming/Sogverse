@@ -7,6 +7,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Narrow an arbitrary string to a key of `obj`. The predicate is backed by a real Object.hasOwn check. */
+export function isKeyOf<T extends object>(obj: T, key: PropertyKey): key is keyof T {
+  return Object.hasOwn(obj, key);
+}
+
 /**
  * Parse a time string into hours and minutes.
  * Accepts both "HH:MM" and Postgres TIME format "HH:MM:SS".

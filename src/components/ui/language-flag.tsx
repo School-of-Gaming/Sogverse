@@ -1,7 +1,7 @@
 "use client";
 
 import flags from "react-phone-number-input/flags";
-import { cn } from "@/lib/utils";
+import { cn, isKeyOf } from "@/lib/utils";
 
 // Spoken-language → country code mapping for flag display. Update when
 // adding new languages to the `spoken_languages` reference table.
@@ -23,7 +23,7 @@ export type SpokenLanguageFlag = (typeof flags)[keyof typeof flags];
  *  use `<LanguageFlag>` instead, which renders inline. */
 export function getSpokenLanguageFlag(code: string): SpokenLanguageFlag | undefined {
   const country = SPOKEN_LANG_TO_COUNTRY[code];
-  return country ? flags[country as keyof typeof flags] : undefined;
+  return country && isKeyOf(flags, country) ? flags[country] : undefined;
 }
 
 interface LanguageFlagProps {
@@ -51,7 +51,7 @@ export function LanguageFlag({
 }: LanguageFlagProps) {
   const upper = code.toUpperCase();
   const country = SPOKEN_LANG_TO_COUNTRY[code];
-  const Flag = country ? flags[country as keyof typeof flags] : undefined;
+  const Flag = country && isKeyOf(flags, country) ? flags[country] : undefined;
   return (
     <span
       className={cn(

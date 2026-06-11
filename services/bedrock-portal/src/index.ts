@@ -72,7 +72,7 @@ async function main() {
     maxMemberCount = Math.max(memberCount, Number(pong.playersMax) || maxMemberCount);
   } catch (err) {
     console.warn(
-      `[portal] initial ping to ${serverIp}:${serverPort} failed (${(err as Error).message}); using fallback world version "${worldVersion}"`
+      `[portal] initial ping to ${serverIp}:${serverPort} failed (${err instanceof Error ? err.message : String(err)}); using fallback world version "${worldVersion}"`
     );
   }
 
