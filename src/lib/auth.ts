@@ -11,6 +11,19 @@ type AuthSuccess<R extends UserRole> = {
 };
 
 /**
+ * Narrow a profile to the allowed-roles union. `Array.includes` can't refine
+ * the input type on its own, so this predicate is the one place the runtime
+ * role check and the type-level narrowing are tied together.
+ */
+function profileHasRole<R extends UserRole>(
+  profile: Profile,
+  roles: readonly R[],
+): profile is Profile & { role: R } {
+  const allowed: readonly UserRole[] = roles;
+  return allowed.includes(profile.role);
+}
+
+/**
  * Authenticate the current user and verify their role.
  *
  * Returns `{ user, profile, supabase }` on success, or a `NextResponse`
@@ -51,14 +64,11 @@ export async function requireRole<const R extends UserRole>(
     );
   }
 
-  const roles: readonly R[] = Array.isArray(allowedRoles)
-    ? allowedRoles
-    : [allowedRoles as R];
-  // `Array.includes` doesn't refine the input type, so the runtime check
-  // is the only thing turning the wider `profile.role: UserRole` into
-  // `R` here. Cast at the return seam — internal to this helper, safe
-  // by construction.
-  if (!roles.includes(profile.role as R)) {
+  // `typeof === "string"` (rather than Array.isArray) because roles are a
+  // string union — this is the check TS can narrow `R | readonly R[]` with.
+  const roles: readonly R[] =
+    typeof allowedRoles === "string" ? [allowedRoles] : allowedRoles;
+  if (!profileHasRole(profile, roles)) {
     return NextResponse.json(
       { error: options?.forbiddenMessage ?? "Forbidden" },
       { status: 403 },
@@ -86,5 +96,5 @@ export async function requireRole<const R extends UserRole>(
   }
 
   const user = { id: claims.sub, email: claims.email };
-  return { user, profile: profile as AuthSuccess<R>["profile"], supabase };
+  return { user, profile, supabase };
 }
