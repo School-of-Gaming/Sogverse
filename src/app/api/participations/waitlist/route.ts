@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/json-body.server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  joinWaitlistBody,
+  joinWaitlistRpcResult,
+} from "@/services/participations/participations.contracts";
 
 export async function POST(request: Request) {
   const result = await requireRole("customer", {
@@ -9,20 +14,9 @@ export async function POST(request: Request) {
   if (result instanceof NextResponse) return result;
   const { user } = result;
 
-  let body: { productId?: string; gamerId?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
+  const body = await parseJsonBody(request, joinWaitlistBody);
+  if (body instanceof NextResponse) return body;
   const { productId, gamerId } = body;
-  if (!productId || !gamerId) {
-    return NextResponse.json(
-      { error: "productId and gamerId are required" },
-      { status: 400 },
-    );
-  }
 
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("join_waitlist", {
@@ -35,15 +29,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  const json = data as {
-    participation_id: string;
-    waitlist_position: number;
-    status: string;
-  };
+  const parsed = joinWaitlistRpcResult.safeParse(data);
+  if (!parsed.success) {
+    console.error("join_waitlist returned an unexpected shape:", parsed.error);
+    return NextResponse.json(
+      { error: "Failed to join waitlist" },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({
-    participationId: json.participation_id,
-    waitlistPosition: json.waitlist_position,
-    status: json.status,
+    participationId: parsed.data.participation_id,
+    waitlistPosition: parsed.data.waitlist_position,
+    status: parsed.data.status,
   });
 }

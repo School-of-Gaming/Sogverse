@@ -130,7 +130,7 @@ describe("POST /api/participations/waitlist", () => {
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toBe("Invalid JSON");
+    expect(data.error).toBe("Invalid JSON body");
     expect(mockAdminRpc).not.toHaveBeenCalled();
   });
 
@@ -141,7 +141,7 @@ describe("POST /api/participations/waitlist", () => {
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toBe("productId and gamerId are required");
+    expect(data.error).toMatch(/(productId|gamerId): Required/);
     expect(mockAdminRpc).not.toHaveBeenCalled();
   });
 
@@ -152,7 +152,7 @@ describe("POST /api/participations/waitlist", () => {
     const data = await res.json();
 
     expect(res.status).toBe(400);
-    expect(data.error).toBe("productId and gamerId are required");
+    expect(data.error).toMatch(/(productId|gamerId): Required/);
     expect(mockAdminRpc).not.toHaveBeenCalled();
   });
 

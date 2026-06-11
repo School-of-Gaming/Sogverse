@@ -12,6 +12,7 @@ import {
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { resolveTranslation } from "@/lib/i18n/resolve-translation";
+import { createParticipationRpcResult } from "@/services/participations/participations.contracts";
 import type { PurchaseShape } from "@/types";
 import { ROUTES } from "@/lib/constants";
 import {
@@ -165,11 +166,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const rpcJson = rpcResult as {
-    kind: "free_active" | "reserving" | "full";
-    participation_id?: string;
-    reserved_until?: string;
-  };
+  const rpcParsed = createParticipationRpcResult.safeParse(rpcResult);
+  if (!rpcParsed.success) {
+    console.error(
+      "create_participation returned an unexpected shape:",
+      rpcParsed.error,
+    );
+    return NextResponse.json(
+      { error: "Failed to start checkout" },
+      { status: 500 },
+    );
+  }
+  const rpcJson = rpcParsed.data;
 
   if (rpcJson.kind === "full") {
     const respBody: CreateResponseBody = { status: "full" };
