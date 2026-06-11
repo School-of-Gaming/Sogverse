@@ -4424,7 +4424,7 @@ GRANT ALL ON FUNCTION public.get_my_assigned_products() TO authenticated;
 --
 
 GRANT ALL ON TABLE public.profiles TO anon;
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public.profiles TO authenticated;
+GRANT SELECT ON TABLE public.profiles TO authenticated;
 GRANT ALL ON TABLE public.profiles TO service_role;
 
 
@@ -4717,7 +4717,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.calendar_holidays TO authentic
 --
 
 GRANT ALL ON TABLE public.customer_profiles TO anon;
-GRANT ALL ON TABLE public.customer_profiles TO authenticated;
+GRANT SELECT ON TABLE public.customer_profiles TO authenticated;
 GRANT ALL ON TABLE public.customer_profiles TO service_role;
 
 
@@ -4744,7 +4744,7 @@ GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
 --
 
 GRANT ALL ON TABLE public.gamer_profiles TO anon;
-GRANT ALL ON TABLE public.gamer_profiles TO authenticated;
+GRANT SELECT,UPDATE ON TABLE public.gamer_profiles TO authenticated;
 GRANT ALL ON TABLE public.gamer_profiles TO service_role;
 
 
@@ -4781,7 +4781,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.holiday_calendars TO authentic
 
 GRANT ALL ON TABLE public.locations TO anon;
 GRANT ALL ON TABLE public.locations TO service_role;
-GRANT SELECT,DELETE ON TABLE public.locations TO authenticated;
+GRANT SELECT ON TABLE public.locations TO authenticated;
 
 
 --
@@ -4798,7 +4798,7 @@ GRANT SELECT ON TABLE public.minecraft_accounts TO authenticated;
 --
 
 GRANT ALL ON TABLE public.parent_gamer TO anon;
-GRANT SELECT,REFERENCES,DELETE,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE public.parent_gamer TO authenticated;
+GRANT SELECT,DELETE ON TABLE public.parent_gamer TO authenticated;
 GRANT ALL ON TABLE public.parent_gamer TO service_role;
 
 

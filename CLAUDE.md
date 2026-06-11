@@ -207,7 +207,7 @@ export type MyType = Omit<_Generated, "nullable_col"> & { nullable_col: string |
 
 ### Function & Table Access Control
 
-**Rule: New PostgreSQL functions must be private by default.** After creating a function, add `REVOKE EXECUTE` from `authenticated`, `anon`, and `public` unless the function is intentionally called from the browser client. If the function IS public, add it to the allowlist in `tests/db/access-control.test.ts`. Extra care with `SECURITY DEFINER` functions — they bypass RLS, so a public grant is a privilege escalation vector.
+**Rule: Migrations must explicitly `GRANT` every object they create — new tables, views, sequences, and functions have no Data API access by default, not even for `service_role`** (Supabase removed auto-expose: local stacks since CLI v2.106.0, hosted projects for objects created after 2026-10-30; `00095` backfilled everything older). Grant deliberately per role — `GRANT EXECUTE ... TO authenticated` for browser-called RPCs, `TO service_role` for admin-client-called ones — and add any function exposed to `authenticated`/`anon` to the allowlist in `tests/db/access-control.test.ts`. A forgotten grant fails closed as `permission denied` in CI's DB tests; never "fix" that with blanket `ON ALL TABLES` grants or `ALTER DEFAULT PRIVILEGES` — the failure is the feature. Extra care with `SECURITY DEFINER` functions: they bypass RLS, so granting one broadly is a privilege escalation vector.
 
 **Rule: All new tables must enable RLS.** Add `ALTER TABLE ... ENABLE ROW LEVEL SECURITY` and appropriate policies.
 
