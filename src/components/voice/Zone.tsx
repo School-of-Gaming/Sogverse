@@ -2,7 +2,7 @@
 
 import { Megaphone } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { cn } from "@/lib/utils";
+import { cn, isKeyOf } from "@/lib/utils";
 import {
   type ZoneRect,
   CANVAS_WIDTH,
@@ -30,9 +30,14 @@ export function Zone({ zone, isActive }: ZoneProps) {
   const colors = ZONE_COLORS[zone.id];
   const isBroadcast = zone.id === "broadcast";
 
+  // Every non-broadcast VisualZoneId is a BREAKOUT_KEY key, so the isKeyOf
+  // branch always hits; the untranslated config label is the (unreachable)
+  // fallback rather than an assertion.
   const label = isBroadcast
     ? voice("broadcast")
-    : yty(BREAKOUT_KEY[zone.id as keyof typeof BREAKOUT_KEY]);
+    : isKeyOf(BREAKOUT_KEY, zone.id)
+      ? yty(BREAKOUT_KEY[zone.id])
+      : zone.label;
 
   return (
     <div

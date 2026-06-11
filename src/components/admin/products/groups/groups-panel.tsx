@@ -53,6 +53,54 @@ interface GroupsPanelProps {
   opensTime: string;
 }
 
+// ---------------------------------------------------------------------------
+// dnd-kit payload readers. Drag/drop `data.current` is an untyped record, so
+// these narrow it by checking the discriminating fields for real. Unknown
+// shapes return null and the handlers no-op — a drag must never throw.
+// ---------------------------------------------------------------------------
+
+/** Payload attached by GamerChip's useDraggable. */
+interface GamerDragData {
+  participationId: string;
+  firstName: string;
+}
+
+function readGamerDragData(value: unknown): GamerDragData | null {
+  if (typeof value !== "object" || value === null) return null;
+  if (
+    !("participationId" in value) ||
+    typeof value.participationId !== "string"
+  ) {
+    return null;
+  }
+  if (!("firstName" in value) || typeof value.firstName !== "string") {
+    return null;
+  }
+  return {
+    participationId: value.participationId,
+    firstName: value.firstName,
+  };
+}
+
+/**
+ * Payload attached by the droppables: group columns and the unassigned card
+ * carry `{ toGroupId }` (null = unassigned inbox); the header's removal zone
+ * carries `{ remove: true }`.
+ */
+type DropData = { kind: "move"; toGroupId: string | null } | { kind: "remove" };
+
+function readDropData(value: unknown): DropData | null {
+  if (typeof value !== "object" || value === null) return null;
+  if ("remove" in value && value.remove === true) return { kind: "remove" };
+  if ("toGroupId" in value) {
+    const { toGroupId } = value;
+    if (typeof toGroupId === "string" || toGroupId === null) {
+      return { kind: "move", toGroupId };
+    }
+  }
+  return null;
+}
+
 // Renders the chip in the floating overlay during a drag. Reads `active` from
 // dnd-kit context so we don't propagate it through props (which would re-render
 // the entire panel on every pointer move).
@@ -65,9 +113,7 @@ function DragOverlayContent({
 
   const overlay = useMemo(() => {
     if (!active || !snapshot) return null;
-    const data = active.data.current as
-      | { participationId: string; gamerId: string; firstName: string }
-      | undefined;
+    const data = readGamerDragData(active.data.current);
     if (!data) return null;
 
     const all = [
@@ -104,9 +150,7 @@ function DragOverlayContent({
 function HeaderGamerAction({ onAddGamer }: { onAddGamer: () => void }) {
   const t = useTranslations("admin.products.groupsPanel");
   const { active } = useDndContext();
-  const draggingGamer = !!(
-    active?.data.current as { participationId?: string } | undefined
-  )?.participationId;
+  const draggingGamer = readGamerDragData(active?.data.current) !== null;
 
   const { setNodeRef, isOver } = useDroppable({
     id: "remove-gamer-zone",
@@ -213,16 +257,11 @@ export function GroupsPanel({
     const { over, active } = event;
     if (!over) return;
 
-    const dragData = active.data.current as
-      | { participationId: string; firstName: string }
-      | undefined;
-    const dropData = over.data.current as
-      | { toGroupId: string | null }
-      | { remove: true }
-      | undefined;
+    const dragData = readGamerDragData(active.data.current);
+    const dropData = readDropData(over.data.current);
     if (!dragData || !dropData) return;
 
-    if ("remove" in dropData) {
+    if (dropData.kind === "remove") {
       // Admin removal is a hard delete with no refund — confirm before
       // mutating. Stash the chip's identity for the dialog copy; the mutation
       // fires only when the admin confirms.

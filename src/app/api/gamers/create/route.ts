@@ -5,9 +5,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateGamerEmail } from "@/lib/utils";
 import { lookupMinecraftUser, isValidMinecraftUsername } from "@/lib/mojang";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
+import { Constants, type GenderType } from "@/types";
 
-type GenderValue = "boy" | "girl" | "non_binary";
-const VALID_GENDERS: readonly GenderValue[] = ["boy", "girl", "non_binary"];
+// Runtime values of the gender_type DB enum — the source of truth for what
+// the gamer_profiles CHECK accepts, so route validation can't drift from it.
+const VALID_GENDERS = Constants.public.Enums.gender_type;
+
+function isGenderValue(value: unknown): value is GenderType {
+  return (
+    typeof value === "string" &&
+    (VALID_GENDERS as readonly string[]).includes(value)
+  );
+}
 
 // Internal handle + password. Opaque on purpose: the parent never sees
 // either (gamer login is via account-switching from the parent).
@@ -52,11 +61,11 @@ export async function POST(request: Request) {
       );
     }
 
-    let gender: GenderValue | null;
+    let gender: GenderType | null;
     if (providedGender === undefined || providedGender === null || providedGender === "") {
       gender = null;
-    } else if (typeof providedGender === "string" && (VALID_GENDERS as readonly string[]).includes(providedGender)) {
-      gender = providedGender as GenderValue;
+    } else if (isGenderValue(providedGender)) {
+      gender = providedGender;
     } else {
       return NextResponse.json(
         { error: "Gender must be boy, girl, or non_binary" },

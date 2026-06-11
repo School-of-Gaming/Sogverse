@@ -22,7 +22,11 @@ export function SectionPill() {
           .filter((e) => e.isIntersecting)
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
         if (visible.length > 0) {
-          setActiveSection(visible[0].target.id as SectionId);
+          // Only SECTIONS elements are observed, so the id always matches —
+          // `find` narrows it to the union without asserting.
+          const id = visible[0].target.id;
+          const section = SECTIONS.find((s) => s === id);
+          if (section) setActiveSection(section);
         }
       },
       // Active band sits in the upper third of the viewport so the pill
