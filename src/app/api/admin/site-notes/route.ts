@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/json-body.server";
+import { updateSiteNotesBody } from "@/services/products/reference-data.contracts";
 
 // PATCH /api/admin/site-notes
 // Body: { location_id, member?: { address?, notes? }, staff?: { notes? } }
@@ -16,27 +18,9 @@ export async function PATCH(request: Request) {
   if (result instanceof NextResponse) return result;
   const { supabase } = result;
 
-  let body: {
-    location_id?: string;
-    member?: { address?: string | null; notes?: string | null };
-    staff?: { notes?: string | null };
-  };
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
+  const body = await parseJsonBody(request, updateSiteNotesBody);
+  if (body instanceof NextResponse) return body;
   const locationId = body.location_id;
-  if (!locationId) {
-    return NextResponse.json({ error: "location_id is required" }, { status: 400 });
-  }
-  if (!body.member && !body.staff) {
-    return NextResponse.json(
-      { error: "Provide at least one of 'member' or 'staff'" },
-      { status: 400 }
-    );
-  }
 
   if (body.member) {
     const memberRow = {

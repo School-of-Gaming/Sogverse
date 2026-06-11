@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { requireRole } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/json-body.server";
 import { deleteDailyRoom, DailyApiError } from "@/lib/daily";
 import { normalizeVoiceRoomCode } from "@/lib/voice-room-code";
 
@@ -19,14 +21,13 @@ export async function POST(request: Request) {
   });
   if (result instanceof NextResponse) return result;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
+  const body = await parseJsonBody(
+    request,
+    z.object({ code: z.string() }),
+  );
+  if (body instanceof NextResponse) return body;
 
-  const code = normalizeVoiceRoomCode((body as { code?: unknown }).code);
+  const code = normalizeVoiceRoomCode(body.code);
   if (!code) {
     return NextResponse.json({ error: "Invalid room code" }, { status: 400 });
   }

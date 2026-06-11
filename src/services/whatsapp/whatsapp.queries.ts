@@ -2,7 +2,12 @@
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getClient } from "@/lib/supabase/client";
+import {
+  parseJsonResponse,
+  readErrorMessage,
+} from "@/lib/api/json-response";
 import { WhatsAppService } from "./whatsapp.service";
+import { sendWhatsAppResponse } from "./whatsapp.contracts";
 
 export const whatsappKeys = {
   all: ["whatsapp"] as const,
@@ -39,9 +44,12 @@ export function useSendWhatsAppMessage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ to, body }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      return data as { messageId: string };
+      if (!res.ok) {
+        throw new Error(
+          await readErrorMessage(res, "Failed to send WhatsApp message")
+        );
+      }
+      return parseJsonResponse(res, sendWhatsAppResponse);
     },
   });
 }

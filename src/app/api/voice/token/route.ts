@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { requireRole } from "@/lib/auth";
+import { parseJsonBody } from "@/lib/api/json-body.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildUserName,
@@ -41,15 +43,12 @@ export async function POST(request: Request) {
     const { user, profile } = result;
     const role = profile.role;
 
-    const body = (await request.json()) as { groupId?: string };
+    const body = await parseJsonBody(
+      request,
+      z.object({ groupId: z.string().min(1, "groupId is required") }),
+    );
+    if (body instanceof NextResponse) return body;
     const { groupId } = body;
-
-    if (!groupId) {
-      return NextResponse.json(
-        { error: "groupId is required" },
-        { status: 400 },
-      );
-    }
 
     const admin = createAdminClient();
 

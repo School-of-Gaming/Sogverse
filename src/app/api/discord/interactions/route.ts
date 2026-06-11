@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { after } from "next/server";
+import { z } from "zod";
 import {
   verifyKey,
   InteractionType,
@@ -7,6 +8,20 @@ import {
 } from "discord-interactions";
 import { askGeduGuru, askHappinappi } from "@/lib/gemini";
 import { resetPassword } from "@/lib/microsoft-graph";
+
+// Just the slice of Discord's interaction payload we use. Lenient on
+// purpose — unknown fields and option value types Discord may add must not
+// break the webhook.
+const discordInteraction = z.object({
+  type: z.number(),
+  token: z.string().optional(),
+  data: z
+    .object({
+      name: z.string(),
+      options: z.array(z.object({ value: z.unknown() })).optional(),
+    })
+    .optional(),
+});
 
 const DISCORD_PUBLIC_KEY = process.env.DISCORD_PUBLIC_KEY!;
 const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
@@ -21,25 +36,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
-  const interaction = JSON.parse(body);
+  const parsed = discordInteraction.safeParse(JSON.parse(body));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Unknown interaction" }, { status: 400 });
+  }
+  const interaction = parsed.data;
 
   if (interaction.type === InteractionType.PING) {
     return NextResponse.json({ type: InteractionResponseType.PONG });
   }
 
   if (interaction.type === InteractionType.APPLICATION_COMMAND) {
-    const command = interaction.data.name as string;
-    const message = interaction.data.options?.[0]?.value;
+    const command = interaction.data?.name;
+    const value = interaction.data?.options?.[0]?.value;
+    const message = typeof value === "string" ? value : undefined;
+    const token = interaction.token;
 
-    if (!message) {
+    if (!command || !message || !token) {
       return NextResponse.json({ type: InteractionResponseType.PONG });
     }
 
     // All commands use deferred responses to avoid Discord's 3-second timeout on cold starts
     if (command === "reset-password") {
-      after(sendPasswordReset(interaction.token, message));
+      after(sendPasswordReset(token, message));
     } else {
-      after(sendFollowUp(interaction.token, command, message));
+      after(sendFollowUp(token, command, message));
     }
 
     return NextResponse.json({

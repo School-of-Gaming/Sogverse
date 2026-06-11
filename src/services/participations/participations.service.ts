@@ -9,6 +9,16 @@ import type {
 } from "@/types";
 import type { SupportedCurrency } from "@/lib/constants/currency";
 import type { QueryData } from "@supabase/supabase-js";
+import {
+  parseJsonResponse,
+  readErrorMessage,
+} from "@/lib/api/json-response";
+import {
+  createParticipationResponse,
+  joinWaitlistResponse,
+  type CreateParticipationResponse,
+  type JoinWaitlistResponse,
+} from "./participations.contracts";
 
 /**
  * Row shape returned by `getMyUpcomingSessions()`. The parent dashboard's
@@ -185,20 +195,14 @@ export interface ParticipationConfirmation {
   gamerName: string | null;
 }
 
-export type CreateParticipationResponse =
-  | { status: "redirect"; checkoutUrl: string }
-  | { status: "free_confirmed"; participationId: string }
-  | { status: "full" };
+export type {
+  CreateParticipationResponse,
+  JoinWaitlistResponse,
+} from "./participations.contracts";
 
 export type JoinWaitlistInput = {
   productId: string;
   gamerId: string;
-};
-
-export type JoinWaitlistResponse = {
-  participationId: string;
-  waitlistPosition: number;
-  status: string;
 };
 
 export class ParticipationsService {
@@ -435,10 +439,11 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error ?? "Failed to start checkout");
+      throw new Error(
+        await readErrorMessage(response, "Failed to start checkout"),
+      );
     }
-    return (await response.json()) as CreateParticipationResponse;
+    return parseJsonResponse(response, createParticipationResponse);
   }
 
   async joinWaitlist(input: JoinWaitlistInput): Promise<JoinWaitlistResponse> {
@@ -448,10 +453,11 @@ export class ParticipationsService {
       body: JSON.stringify(input),
     });
     if (!response.ok) {
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error ?? "Failed to join waitlist");
+      throw new Error(
+        await readErrorMessage(response, "Failed to join waitlist"),
+      );
     }
-    return (await response.json()) as JoinWaitlistResponse;
+    return parseJsonResponse(response, joinWaitlistResponse);
   }
 }
 

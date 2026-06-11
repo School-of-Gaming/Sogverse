@@ -1,17 +1,18 @@
-export type FamilyMember = {
-  id: string;
-  role: "customer" | "gamer";
-  first_name: string;
-};
+import {
+  parseJsonResponse,
+  readErrorMessage,
+} from "@/lib/api/json-response";
+import { familyListResponse, type FamilyMember } from "./family.contracts";
+
+export type { FamilyMember } from "./family.contracts";
 
 export class FamilyService {
   async getFamily(): Promise<FamilyMember[]> {
     const res = await fetch("/api/family/list", { method: "GET" });
     if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error || "Failed to load family");
+      throw new Error(await readErrorMessage(res, "Failed to load family"));
     }
-    const data = (await res.json()) as { family: FamilyMember[] };
+    const data = await parseJsonResponse(res, familyListResponse);
     return data.family;
   }
 
@@ -22,8 +23,9 @@ export class FamilyService {
       body: JSON.stringify({ userId }),
     });
     if (!res.ok) {
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      throw new Error(data.error || "Failed to switch account");
+      throw new Error(
+        await readErrorMessage(res, "Failed to switch account")
+      );
     }
   }
 }

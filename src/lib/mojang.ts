@@ -1,4 +1,8 @@
+import { z } from "zod";
+
 const MOJANG_API = "https://api.mojang.com/users/profiles/minecraft";
+
+const mojangResponse = z.object({ name: z.string(), id: z.string() });
 
 // Minecraft usernames: 3-16 chars, alphanumeric + underscore
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,16}$/;
@@ -25,12 +29,16 @@ export async function lookupMinecraftUser(
   const res = await fetch(`${MOJANG_API}/${encodeURIComponent(username)}`);
   if (!res.ok) return null;
 
-  const data = (await res.json()) as { name?: string; id?: string };
-  if (!data.name || !data.id) return null;
+  // External API — anything that isn't the expected shape (including the
+  // empty 204 body Mojang uses for "no such user") counts as not found.
+  const parsed = mojangResponse.safeParse(
+    await res.json().catch(() => null),
+  );
+  if (!parsed.success) return null;
 
   return {
-    username: data.name,
-    uuid: formatUuid(data.id),
+    username: parsed.data.name,
+    uuid: formatUuid(parsed.data.id),
   };
 }
 
