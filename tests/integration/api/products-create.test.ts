@@ -14,9 +14,11 @@ import { POST } from "@/app/api/admin/products/create/route";
 //   2. **Image is optional.** v2 lets admins create a product without
 //      an image, then add it later from the edit page.
 //
-// Validation beyond file/size lives in the RPC + form, not the route — so
-// these tests focus on auth, file handling, RPC error surfacing, and the
-// soft-warning fallback paths.
+// The route validates the body's *structure* against the contract schema
+// (products.contracts.ts); semantic rules (age ordering, translation
+// locales) stay in the RPC + form. These tests focus on auth, body
+// validation, file handling, RPC error surfacing, and the soft-warning
+// fallback paths.
 
 // --- Mocks ---
 
@@ -70,6 +72,8 @@ function mockAuthenticatedNonAdmin() {
   );
 }
 
+// Mirrors what the admin form actually sends: every CreateProductInput
+// field, with explicit nulls (the contract schema requires the full shape).
 const validBody = {
   product_type: "consumer_club",
   billing_mode: "paid",
@@ -80,10 +84,21 @@ const validBody = {
   min_age: 7,
   max_age: 12,
   spoken_language_code: "en",
+  padlet_url: null,
+  location_id: null,
   is_remote: true,
+  status: "draft",
+  signup_threshold: null,
+  start_date: null,
+  end_date: null,
   timezone: "Europe/Helsinki",
+  seat_count: null,
+  waitlist_enabled: false,
+  registration_opens_at: "2026-01-01T00:00:00Z",
+  is_visible: true,
   schedule_slots: [{ weekday: 1, start_time: "16:00", duration_minutes: 90 }],
   prices: [],
+  holiday_calendar_ids: [],
 };
 
 /**
@@ -151,6 +166,27 @@ describe("POST /api/admin/products/create", () => {
     expect(response.status).toBe(400);
     const json = await response.json();
     expect(json.error).toMatch(/valid JSON/);
+  });
+
+  it("returns 400 when the body fails the contract schema", async () => {
+    mockAuthenticatedAdmin();
+    const { min_age: _dropped, ...missingMinAge } = validBody;
+    const response = await POST(createRequest({ data: missingMinAge }));
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/min_age/);
+    expect(mockUserRpc).not.toHaveBeenCalled();
+  });
+
+  it("returns 400 for an out-of-enum product_type", async () => {
+    mockAuthenticatedAdmin();
+    const response = await POST(
+      createRequest({ data: { ...validBody, product_type: "nonsense" } }),
+    );
+    expect(response.status).toBe(400);
+    const json = await response.json();
+    expect(json.error).toMatch(/product_type/);
+    expect(mockUserRpc).not.toHaveBeenCalled();
   });
 
   it("returns 400 when formData itself fails to parse", async () => {
