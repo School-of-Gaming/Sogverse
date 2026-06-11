@@ -222,16 +222,16 @@ $$;
 
 
 --
--- Name: _list_table_grants(); Type: FUNCTION; Schema: public; Owner: -
+-- Name: _list_table_grants(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public._list_table_grants() RETURNS TABLE(table_name text, privilege_type text)
+CREATE FUNCTION public._list_table_grants(p_grantee text) RETURNS TABLE(table_name text, privilege_type text)
     LANGUAGE sql STABLE SECURITY DEFINER
     SET search_path TO ''
     AS $$
   SELECT table_name::text, privilege_type::text
   FROM information_schema.table_privileges
-  WHERE grantee = 'authenticated'
+  WHERE grantee = p_grantee
     AND table_schema = 'public'
   ORDER BY table_name, privilege_type;
 $$;
@@ -4294,11 +4294,11 @@ GRANT ALL ON FUNCTION public._list_security_definer_without_search_path() TO ser
 
 
 --
--- Name: FUNCTION _list_table_grants(); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION _list_table_grants(p_grantee text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public._list_table_grants() FROM PUBLIC;
-GRANT ALL ON FUNCTION public._list_table_grants() TO service_role;
+REVOKE ALL ON FUNCTION public._list_table_grants(p_grantee text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public._list_table_grants(p_grantee text) TO service_role;
 
 
 --
@@ -4423,7 +4423,7 @@ GRANT ALL ON FUNCTION public.get_my_assigned_products() TO authenticated;
 -- Name: TABLE profiles; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.profiles TO anon;
+GRANT SELECT ON TABLE public.profiles TO anon;
 GRANT SELECT ON TABLE public.profiles TO authenticated;
 GRANT ALL ON TABLE public.profiles TO service_role;
 
@@ -4707,7 +4707,7 @@ GRANT ALL ON FUNCTION public.verify_my_pin(p_pin text) TO authenticated;
 -- Name: TABLE calendar_holidays; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.calendar_holidays TO anon;
+GRANT SELECT ON TABLE public.calendar_holidays TO anon;
 GRANT ALL ON TABLE public.calendar_holidays TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.calendar_holidays TO authenticated;
 
@@ -4716,7 +4716,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.calendar_holidays TO authentic
 -- Name: TABLE customer_profiles; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.customer_profiles TO anon;
+GRANT SELECT ON TABLE public.customer_profiles TO anon;
 GRANT SELECT ON TABLE public.customer_profiles TO authenticated;
 GRANT ALL ON TABLE public.customer_profiles TO service_role;
 
@@ -4725,7 +4725,7 @@ GRANT ALL ON TABLE public.customer_profiles TO service_role;
 -- Name: TABLE family_subscriptions; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.family_subscriptions TO anon;
+GRANT SELECT ON TABLE public.family_subscriptions TO anon;
 GRANT ALL ON TABLE public.family_subscriptions TO service_role;
 GRANT SELECT ON TABLE public.family_subscriptions TO authenticated;
 
@@ -4734,7 +4734,7 @@ GRANT SELECT ON TABLE public.family_subscriptions TO authenticated;
 -- Name: TABLE feedback_submissions; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.feedback_submissions TO anon;
+GRANT SELECT ON TABLE public.feedback_submissions TO anon;
 GRANT ALL ON TABLE public.feedback_submissions TO service_role;
 GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
 
@@ -4743,7 +4743,7 @@ GRANT SELECT ON TABLE public.feedback_submissions TO authenticated;
 -- Name: TABLE gamer_profiles; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.gamer_profiles TO anon;
+GRANT SELECT ON TABLE public.gamer_profiles TO anon;
 GRANT SELECT,UPDATE ON TABLE public.gamer_profiles TO authenticated;
 GRANT ALL ON TABLE public.gamer_profiles TO service_role;
 
@@ -4752,7 +4752,7 @@ GRANT ALL ON TABLE public.gamer_profiles TO service_role;
 -- Name: TABLE gedu_group_assignments; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.gedu_group_assignments TO anon;
+GRANT SELECT ON TABLE public.gedu_group_assignments TO anon;
 GRANT ALL ON TABLE public.gedu_group_assignments TO service_role;
 GRANT SELECT ON TABLE public.gedu_group_assignments TO authenticated;
 
@@ -4761,7 +4761,7 @@ GRANT SELECT ON TABLE public.gedu_group_assignments TO authenticated;
 -- Name: TABLE gedu_locations; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.gedu_locations TO anon;
+GRANT SELECT ON TABLE public.gedu_locations TO anon;
 GRANT ALL ON TABLE public.gedu_locations TO service_role;
 GRANT SELECT,INSERT,DELETE ON TABLE public.gedu_locations TO authenticated;
 
@@ -4770,7 +4770,7 @@ GRANT SELECT,INSERT,DELETE ON TABLE public.gedu_locations TO authenticated;
 -- Name: TABLE holiday_calendars; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.holiday_calendars TO anon;
+GRANT SELECT ON TABLE public.holiday_calendars TO anon;
 GRANT ALL ON TABLE public.holiday_calendars TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.holiday_calendars TO authenticated;
 
@@ -4779,7 +4779,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.holiday_calendars TO authentic
 -- Name: TABLE locations; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.locations TO anon;
+GRANT SELECT ON TABLE public.locations TO anon;
 GRANT ALL ON TABLE public.locations TO service_role;
 GRANT SELECT ON TABLE public.locations TO authenticated;
 
@@ -4788,7 +4788,7 @@ GRANT SELECT ON TABLE public.locations TO authenticated;
 -- Name: TABLE minecraft_accounts; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.minecraft_accounts TO anon;
+GRANT SELECT ON TABLE public.minecraft_accounts TO anon;
 GRANT ALL ON TABLE public.minecraft_accounts TO service_role;
 GRANT SELECT ON TABLE public.minecraft_accounts TO authenticated;
 
@@ -4797,7 +4797,7 @@ GRANT SELECT ON TABLE public.minecraft_accounts TO authenticated;
 -- Name: TABLE parent_gamer; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.parent_gamer TO anon;
+GRANT SELECT ON TABLE public.parent_gamer TO anon;
 GRANT SELECT,DELETE ON TABLE public.parent_gamer TO authenticated;
 GRANT ALL ON TABLE public.parent_gamer TO service_role;
 
@@ -4806,7 +4806,7 @@ GRANT ALL ON TABLE public.parent_gamer TO service_role;
 -- Name: TABLE participations; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.participations TO anon;
+GRANT SELECT ON TABLE public.participations TO anon;
 GRANT ALL ON TABLE public.participations TO service_role;
 GRANT SELECT ON TABLE public.participations TO authenticated;
 
@@ -4815,7 +4815,7 @@ GRANT SELECT ON TABLE public.participations TO authenticated;
 -- Name: TABLE payments; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.payments TO anon;
+GRANT SELECT ON TABLE public.payments TO anon;
 GRANT ALL ON TABLE public.payments TO service_role;
 GRANT SELECT ON TABLE public.payments TO authenticated;
 
@@ -4824,7 +4824,7 @@ GRANT SELECT ON TABLE public.payments TO authenticated;
 -- Name: TABLE product_groups; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_groups TO anon;
+GRANT SELECT ON TABLE public.product_groups TO anon;
 GRANT ALL ON TABLE public.product_groups TO service_role;
 GRANT SELECT ON TABLE public.product_groups TO authenticated;
 
@@ -4833,7 +4833,7 @@ GRANT SELECT ON TABLE public.product_groups TO authenticated;
 -- Name: TABLE product_holiday_calendars; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_holiday_calendars TO anon;
+GRANT SELECT ON TABLE public.product_holiday_calendars TO anon;
 GRANT ALL ON TABLE public.product_holiday_calendars TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_holiday_calendars TO authenticated;
 
@@ -4842,7 +4842,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_holiday_calendars TO a
 -- Name: TABLE product_prices; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_prices TO anon;
+GRANT SELECT ON TABLE public.product_prices TO anon;
 GRANT ALL ON TABLE public.product_prices TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_prices TO authenticated;
 
@@ -4860,7 +4860,7 @@ GRANT SELECT ON TABLE public.product_seat_counts TO authenticated;
 -- Name: TABLE product_subscription_prices; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_subscription_prices TO anon;
+GRANT SELECT ON TABLE public.product_subscription_prices TO anon;
 GRANT ALL ON TABLE public.product_subscription_prices TO service_role;
 
 
@@ -4868,7 +4868,7 @@ GRANT ALL ON TABLE public.product_subscription_prices TO service_role;
 -- Name: TABLE product_translations; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.product_translations TO anon;
+GRANT SELECT ON TABLE public.product_translations TO anon;
 GRANT ALL ON TABLE public.product_translations TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_translations TO authenticated;
 
@@ -4877,7 +4877,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.product_translations TO authen
 -- Name: TABLE products; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.products TO anon;
+GRANT SELECT ON TABLE public.products TO anon;
 GRANT ALL ON TABLE public.products TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO authenticated;
 
@@ -4886,7 +4886,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.products TO authenticated;
 -- Name: TABLE refunds; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.refunds TO anon;
+GRANT SELECT ON TABLE public.refunds TO anon;
 GRANT ALL ON TABLE public.refunds TO service_role;
 GRANT SELECT ON TABLE public.refunds TO authenticated;
 
@@ -4895,7 +4895,7 @@ GRANT SELECT ON TABLE public.refunds TO authenticated;
 -- Name: TABLE schedule_slots; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.schedule_slots TO anon;
+GRANT SELECT ON TABLE public.schedule_slots TO anon;
 GRANT ALL ON TABLE public.schedule_slots TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.schedule_slots TO authenticated;
 
@@ -4904,7 +4904,6 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.schedule_slots TO authenticate
 -- Name: TABLE site_details; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,MAINTAIN,UPDATE ON TABLE public.site_details TO anon;
 GRANT ALL ON TABLE public.site_details TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_details TO authenticated;
 
@@ -4913,7 +4912,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_details TO authenticated;
 -- Name: TABLE site_staff_details; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.site_staff_details TO anon;
+GRANT SELECT ON TABLE public.site_staff_details TO anon;
 GRANT ALL ON TABLE public.site_staff_details TO service_role;
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_staff_details TO authenticated;
 
@@ -4922,7 +4921,7 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_staff_details TO authenti
 -- Name: TABLE spoken_languages; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.spoken_languages TO anon;
+GRANT SELECT ON TABLE public.spoken_languages TO anon;
 GRANT ALL ON TABLE public.spoken_languages TO service_role;
 GRANT SELECT ON TABLE public.spoken_languages TO authenticated;
 
@@ -4931,7 +4930,7 @@ GRANT SELECT ON TABLE public.spoken_languages TO authenticated;
 -- Name: TABLE whatsapp_contacts; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.whatsapp_contacts TO anon;
+GRANT SELECT ON TABLE public.whatsapp_contacts TO anon;
 GRANT ALL ON TABLE public.whatsapp_contacts TO service_role;
 GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_contacts TO authenticated;
 
@@ -4940,7 +4939,7 @@ GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_contacts TO authenticated;
 -- Name: TABLE whatsapp_messages; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT ALL ON TABLE public.whatsapp_messages TO anon;
+GRANT SELECT ON TABLE public.whatsapp_messages TO anon;
 GRANT ALL ON TABLE public.whatsapp_messages TO service_role;
 GRANT SELECT,INSERT,UPDATE ON TABLE public.whatsapp_messages TO authenticated;
 

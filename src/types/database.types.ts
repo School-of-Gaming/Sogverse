@@ -1094,7 +1094,7 @@ export type Database = {
         }[]
       }
       _list_table_grants: {
-        Args: never
+        Args: { p_grantee: string }
         Returns: {
           privilege_type: string
           table_name: string

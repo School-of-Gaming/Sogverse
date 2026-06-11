@@ -152,6 +152,15 @@ groups, per-product seat counts. The subscription-price catalog has no `authenti
 grant at all. When adding a table that holds money, seats, or enrollment state,
 grant-lock it by default.
 
+**`anon` holds zero table write grants, everywhere** (since `00097`). The 2026-03
+audit's lockdown revoked writes from `authenticated` only, leaving `anon`'s
+auto-expose-era write grants standing on 27 tables — inert (no anon write policy
+exists, default-deny blocked everything) but one unscoped `CREATE POLICY` (no `TO`
+clause → applies to `PUBLIC`, which includes `anon`) away from an unauthenticated
+write path. The access-control test now audits `anon` grants alongside
+`authenticated` and pins the write surface at zero; `anon` keeps `SELECT` for the
+public catalog policies.
+
 **Column-level grants are already in use on `profiles`**: `authenticated` holds
 `UPDATE` on exactly the safe columns (name, phone, spoken languages) — `role` is not
 grantable — and the self-update policy's `WITH CHECK` additionally pins `role` to its

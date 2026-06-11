@@ -138,7 +138,9 @@ describe("Access Control", () => {
       ["product_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
     ]);
 
-    const { data, error } = await admin.rpc("_list_table_grants");
+    const { data, error } = await admin.rpc("_list_table_grants", {
+      p_grantee: "authenticated",
+    });
 
     expect(error).toBeNull();
     expect(data).not.toBeNull();
@@ -171,6 +173,28 @@ describe("Access Control", () => {
     expect(missing, "allowlisted grants are missing from the database").toEqual(
       []
     );
+  });
+
+  it("anon has no write grants on any table", async () => {
+    // anon's only legitimate table access is SELECT through the public
+    // catalog policies (products, locations, holiday calendars, languages).
+    // Write grants for anon are never acceptable: RLS default-deny is the
+    // only thing between a standing grant and an unauthenticated write path,
+    // and a single future policy written without a TO clause (which defaults
+    // to PUBLIC, including anon) would arm it. 00097 revoked the legacy
+    // auto-expose leftovers; this test keeps the surface at zero.
+    const { data, error } = await admin.rpc("_list_table_grants", {
+      p_grantee: "anon",
+    });
+
+    expect(error).toBeNull();
+    expect(data).not.toBeNull();
+
+    const writeGrants = (
+      data as { table_name: string; privilege_type: string }[]
+    ).filter((row) => row.privilege_type !== "SELECT");
+
+    expect(writeGrants, "anon must never hold table write grants").toEqual([]);
   });
 
   it("all SECURITY DEFINER functions have SET search_path", async () => {
