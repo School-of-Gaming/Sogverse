@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireRole } from "@/lib/auth";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL } from "@/lib/constants";
-import { templateRegistry, type TemplateParams } from "@/lib/email-templates/registry";
+import { templateRegistry } from "@/lib/email-templates/registry";
 import { getEmailTranslator } from "@/lib/email-templates/translator";
 import { escapeHtml } from "@/lib/email-templates/utils";
 import { parseEmails } from "@/lib/utils";
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
       const paramsParsed = tmpl.schema.safeParse(parsed.data.params);
       if (!paramsParsed.success) {
-        const firstError = (paramsParsed as z.SafeParseError<unknown>).error.errors[0];
+        const firstError = paramsParsed.error.errors[0];
         return NextResponse.json(
           { error: `params.${firstError.path.join(".")}: ${firstError.message}` },
           { status: 400 },
@@ -92,10 +92,10 @@ export async function POST(request: Request) {
       const locale = resolveLocale(parsed.data.locale);
       const t = await getEmailTranslator(locale);
 
-      const validatedParams = paramsParsed.data as TemplateParams;
       fromName = t(tmpl.fromNameKey);
-      subject = tmpl.subject(validatedParams, t);
-      htmlContent = tmpl.build(validatedParams, t, locale);
+      const rendered = tmpl.render(paramsParsed.data, t, locale);
+      subject = rendered.subject;
+      htmlContent = rendered.html;
     }
 
     const emailResult = await sendTransactionalEmail({
