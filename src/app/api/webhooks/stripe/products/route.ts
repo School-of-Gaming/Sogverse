@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { PaymentPurpose } from "@/types";
+import type { Json, PaymentPurpose } from "@/types";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const webhookSecret = process.env.STRIPE_PRODUCTS_WEBHOOK_SECRET!;
@@ -73,8 +74,22 @@ export async function POST(request: Request) {
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
-  const session = event.data.object as Stripe.Checkout.Session;
+// Shape of confirm_reservation's jsonb return (function body lives in
+// supabase/schema.sql). `kind` is always present; participation_id only on
+// 'confirmed', existing_participation_id only on 'duplicate_payment'. The RPC
+// also returns keys this route doesn't read (product_id, idempotent, …) —
+// zod strips those.
+const confirmReservationResultSchema = z.object({
+  kind: z.enum(["confirmed", "orphan", "duplicate_payment"]),
+  participation_id: z.string().optional(),
+  existing_participation_id: z.string().optional(),
+});
+
+async function handleCheckoutCompleted(
+  admin: Admin,
+  event: Stripe.CheckoutSessionCompletedEvent,
+) {
+  const session = event.data.object;
   if (session.payment_status !== "paid") return;
 
   const reservationId = session.metadata?.reservationId;
@@ -119,11 +134,15 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
   if (confirmErr) {
     throw new Error(`confirm_reservation failed: ${confirmErr.message}`);
   }
-  const confirmJson = confirmResult as {
-    kind: "confirmed" | "orphan" | "duplicate_payment";
-    participation_id?: string;
-    existing_participation_id?: string;
-  };
+  const parsedConfirm = confirmReservationResultSchema.safeParse(confirmResult);
+  if (!parsedConfirm.success) {
+    // Unexpected shape from the RPC — throw so the route returns 500 and
+    // Stripe retries, same as a confirm_reservation error above.
+    throw new Error(
+      `confirm_reservation returned an unexpected shape: ${parsedConfirm.error.message}`,
+    );
+  }
+  const confirmJson = parsedConfirm.data;
 
   if (confirmJson.kind === "orphan") {
     console.error(
@@ -255,22 +274,26 @@ async function handleCheckoutCompleted(admin: Admin, event: Stripe.Event) {
   });
 }
 
-async function handleCheckoutExpired(admin: Admin, event: Stripe.Event) {
-  const session = event.data.object as Stripe.Checkout.Session;
+async function handleCheckoutExpired(
+  admin: Admin,
+  event: Stripe.CheckoutSessionExpiredEvent,
+) {
+  const session = event.data.object;
   const reservationId = session.metadata?.reservationId;
   if (!reservationId) return;
   await admin.rpc("expire_reservation", { p_reservation_id: reservationId });
 }
 
-async function handleInvoicePaid(admin: Admin, event: Stripe.Event) {
-  const invoice = event.data.object as Stripe.Invoice & {
-    subscription?: string | null;
-    billing_reason?: string;
-  };
+async function handleInvoicePaid(admin: Admin, event: Stripe.InvoicePaidEvent) {
+  const invoice = event.data.object;
+  // `subscription` is an expandable field; webhook payloads carry the
+  // un-expanded id string, but handle the object form for type completeness.
+  const subId =
+    typeof invoice.subscription === "string"
+      ? invoice.subscription
+      : (invoice.subscription?.id ?? null);
   // First-period invoices come in via checkout.session.completed.
-  if (!invoice.subscription || invoice.billing_reason === "subscription_create") return;
-
-  const subId = invoice.subscription;
+  if (!subId || invoice.billing_reason === "subscription_create") return;
   const { data: famSub } = await admin
     .from("family_subscriptions")
     .select("id, customer_id, currency")
@@ -300,8 +323,11 @@ async function handleInvoicePaid(admin: Admin, event: Stripe.Event) {
   });
 }
 
-async function handleSubscriptionUpdated(admin: Admin, event: Stripe.Event) {
-  const sub = event.data.object as Stripe.Subscription;
+async function handleSubscriptionUpdated(
+  admin: Admin,
+  event: Stripe.CustomerSubscriptionUpdatedEvent,
+) {
+  const sub = event.data.object;
 
   // Only act on subs we have a row for. The webhook subscribes to
   // customer.subscription.* at the account level, so it fires for every sub on
@@ -346,8 +372,11 @@ function currentPeriodEndOf(sub: Stripe.Subscription): number | null {
   return null;
 }
 
-async function handleSubscriptionDeleted(admin: Admin, event: Stripe.Event) {
-  const sub = event.data.object as Stripe.Subscription;
+async function handleSubscriptionDeleted(
+  admin: Admin,
+  event: Stripe.CustomerSubscriptionDeletedEvent,
+) {
+  const sub = event.data.object;
 
   const { data: famSub } = await admin
     .from("family_subscriptions")
@@ -374,8 +403,11 @@ async function handleSubscriptionDeleted(admin: Admin, event: Stripe.Event) {
   if (error) throw error;
 }
 
-async function handleChargeRefunded(admin: Admin, event: Stripe.Event) {
-  const charge = event.data.object as Stripe.Charge;
+async function handleChargeRefunded(
+  admin: Admin,
+  event: Stripe.ChargeRefundedEvent,
+) {
+  const charge = event.data.object;
   const paymentIntentId = typeof charge.payment_intent === "string"
     ? charge.payment_intent
     : null;
@@ -421,7 +453,7 @@ interface InsertPaymentParams {
   purpose: PaymentPurpose;
   stripePaymentIntentId: string | null;
   stripeInvoiceId: string | null;
-  metadata: Record<string, unknown>;
+  metadata: Json;
 }
 
 async function insertPaymentRow(admin: Admin, params: InsertPaymentParams) {
@@ -435,7 +467,7 @@ async function insertPaymentRow(admin: Admin, params: InsertPaymentParams) {
       purpose: params.purpose,
       stripe_payment_intent_id: params.stripePaymentIntentId,
       stripe_invoice_id: params.stripeInvoiceId,
-      metadata: params.metadata as never,
+      metadata: params.metadata,
     })
     .select("id")
     .single();
