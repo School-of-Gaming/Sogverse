@@ -9,13 +9,11 @@
 // through t() (see product-form.tsx).
 
 import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
-import {
-  SUPPORTED_CURRENCIES,
-  type SupportedCurrency,
-} from "@/lib/constants";
+import { isSupportedCurrency, SUPPORTED_CURRENCIES } from "@/lib/constants";
 import {
   isSupportedLocale,
   LOCALE_CONFIG,
+  SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/lib/constants/locales";
 import { decimalToCents } from "@/lib/utils";
@@ -90,17 +88,19 @@ export function validate(
   // Translations: at least one filled locale (any locale) and no
   // half-filled tabs. The display fallback chain (preferred → en → first
   // available) means a single locale of any kind is enough to render.
-  const entries = Object.entries(state.translations) as [
-    SupportedLocale,
-    TranslationDraft,
-  ][];
-  const filledLocales = entries
-    .filter(([, v]) => v.name.trim() && v.shortDescription.trim())
-    .map(([k]) => k);
+  // Iterate the closed locale union and skip absent tabs — `translations`
+  // is a Partial record, so this visits exactly the locales the admin added.
+  let hasFilledLocale = false;
+  for (const locale of SUPPORTED_LOCALES) {
+    const v = state.translations[locale];
+    if (v && v.name.trim() && v.shortDescription.trim()) hasFilledLocale = true;
+  }
 
-  if (filledLocales.length === 0) return err("translationRequired");
+  if (!hasFilledLocale) return err("translationRequired");
 
-  for (const [locale, v] of entries) {
+  for (const locale of SUPPORTED_LOCALES) {
+    const v = state.translations[locale];
+    if (!v) continue;
     if (!v.name.trim() || !v.shortDescription.trim()) {
       return err("translationIncomplete", {
         locale: LOCALE_CONFIG[locale].label,
@@ -272,9 +272,10 @@ function buildSharedFields(
     finalSlots = [{ ...state.scheduleSlots[0], weekday }];
   }
 
-  const translations = (
-    Object.entries(state.translations) as [SupportedLocale, TranslationDraft][]
-  ).map(([locale, v]) => {
+  const translations: UpdateProductInput["translations"] = [];
+  for (const locale of SUPPORTED_LOCALES) {
+    const v = state.translations[locale];
+    if (!v) continue;
     // Trim each block's text and drop any that end up empty — a half-typed
     // block (heading added, text not filled) must neither block submit nor
     // trip the DB's non-empty-text CHECK. An all-empty result becomes null
@@ -282,19 +283,25 @@ function buildSharedFields(
     const blocks = v.longDescription
       .map((b) => ({ type: b.type, text: b.text.trim() }))
       .filter((b) => b.text.length > 0);
-    return {
+    translations.push({
       locale,
       name: v.name.trim(),
       short_description: v.shortDescription.trim(),
       long_description: blocks.length > 0 ? blocks : null,
-    };
-  });
+    });
+  }
+
+  // validate() guarantees a non-empty topic before we ever build a payload;
+  // the "" sentinel only exists pre-validation, so reaching it here is a bug.
+  const { topic } = state;
+  if (topic === "") {
+    throw new Error("buildSharedFields called before validate(): topic is unset");
+  }
 
   return {
     billing_mode: billingMode,
     translations,
-    // validate() guarantees a non-empty topic before we ever build a payload.
-    topic: state.topic as Exclude<FormState["topic"], "">,
+    topic,
     min_age: minAge,
     max_age: maxAge,
     spoken_language_code: state.spokenLanguageCode,
@@ -442,6 +449,10 @@ export function existingFormState(
   uiLocale: SupportedLocale,
 ): FormState {
   const translations: Partial<Record<SupportedLocale, TranslationDraft>> = {};
+  // Row order, mirroring the Object.keys insertion order this replaced —
+  // `translationLocales[0]` is the first *fetched* translation, not the
+  // first locale in SUPPORTED_LOCALES order.
+  const translationLocales: SupportedLocale[] = [];
   for (const t of product.product_translations) {
     if (isSupportedLocale(t.locale)) {
       translations[t.locale] = {
@@ -449,10 +460,9 @@ export function existingFormState(
         shortDescription: t.short_description,
         longDescription: parseLongDescription(t.long_description),
       };
+      translationLocales.push(t.locale);
     }
   }
-
-  const translationLocales = Object.keys(translations) as SupportedLocale[];
   const activeLocale: SupportedLocale =
     translations[uiLocale] !== undefined
       ? uiLocale
@@ -462,8 +472,8 @@ export function existingFormState(
 
   // EUR-only price map. A blank row is invalid for paid products, but
   // validate() catches that on save. Legacy non-EUR `product_prices` rows
-  // (from before the EUR-only lockdown) are ignored — `cur in prices` only
-  // admits the eur row.
+  // (from before the EUR-only lockdown) are ignored — `isSupportedCurrency`
+  // only admits the eur row.
   //
   // The DB stores one `price_cents`; the form has two input slots
   // (session/month) but only ever uses the one its pricing shape selects.
@@ -474,9 +484,8 @@ export function existingFormState(
     eur: { session: "", month: "" },
   };
   for (const row of product.product_prices) {
-    const cur = row.currency as SupportedCurrency;
-    if (cur in prices) {
-      prices[cur] = {
+    if (isSupportedCurrency(row.currency)) {
+      prices[row.currency] = {
         session: "",
         month: "",
         [priceField]: centsToDecimalString(row.price_cents),
@@ -564,10 +573,9 @@ export function cloneFormState(
 ): FormState {
   const base = existingFormState(product, config, uiLocale);
   const translations: Partial<Record<SupportedLocale, TranslationDraft>> = {};
-  for (const [locale, draft] of Object.entries(base.translations) as [
-    SupportedLocale,
-    TranslationDraft,
-  ][]) {
+  for (const locale of SUPPORTED_LOCALES) {
+    const draft = base.translations[locale];
+    if (!draft) continue;
     translations[locale] = { ...draft, name: `${draft.name}${copySuffix}` };
   }
   return { ...base, image: null, translations };

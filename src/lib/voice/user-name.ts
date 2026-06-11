@@ -8,6 +8,21 @@
  * it is safe to import from both server routes and client components.
  */
 
+import { Constants } from "@/types";
+
+/**
+ * Every role a voice participant can carry: the four DB user roles plus
+ * "guest" (instant-room joiners without an account). Runtime counterpart of
+ * `VoiceRole` in src/components/voice/hooks/types.ts (`UserRole | "guest"`) —
+ * both derive from the user_role enum, so they can't drift.
+ */
+export const VOICE_ROLES = [...Constants.public.Enums.user_role, "guest"] as const;
+export type VoiceRole = (typeof VOICE_ROLES)[number];
+
+function isVoiceRole(value: string): value is VoiceRole {
+  return (VOICE_ROLES as readonly string[]).includes(value);
+}
+
 /**
  * Build the `user_name` field for Daily.co meeting tokens.
  *
@@ -61,8 +76,8 @@ export function buildUserName(parts: {
 export interface ParsedUserName {
   /** Slot 0. Empty string when absent; callers fall back to `session_id`. */
   userId: string;
-  /** Slot 1. Empty string when absent. */
-  role: string;
+  /** Slot 1. Validated against {@link VOICE_ROLES} — parsing throws otherwise. */
+  role: VoiceRole;
   /** Slot 2. Falls back to `"Unknown"` when absent. */
   displayName: string;
   /**
@@ -83,13 +98,24 @@ export interface ParsedUserName {
  * means "gedu/gamer with no linked account" → "(Unknown)". Because
  * `buildUserName` strips `|` from `displayName`, a real name can never bleed
  * into the Minecraft slots.
+ *
+ * **Throws** when the role slot isn't a known voice role (including when the
+ * name has no pipe separators at all). Our token routes are the only writers
+ * of `user_name`, so a malformed value is a token-generation bug — surface it
+ * loudly instead of papering over it with a sentinel role.
  */
 export function parseUserName(userName: string | null | undefined): ParsedUserName {
   const parts = (userName || "").split("|");
+  const role = parts[1] || "";
+  if (!isVoiceRole(role)) {
+    throw new Error(
+      `Malformed Daily user_name ${JSON.stringify(userName ?? "")}: role slot ${JSON.stringify(role)} is not a voice role`,
+    );
+  }
   const hasMinecraft = parts.length > 3;
   return {
     userId: parts[0] || "",
-    role: parts[1] || "",
+    role,
     displayName: parts[2] || "Unknown",
     minecraftUsername: hasMinecraft ? parts[3] || null : undefined,
     minecraftUuid: hasMinecraft ? parts[4] || null : undefined,

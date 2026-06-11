@@ -1,5 +1,8 @@
 import { useCallback, useRef, useState } from "react";
-import type { DailyCall } from "@daily-co/daily-js";
+import type {
+  DailyCall,
+  DailyParticipantPermissionsCanSendValues,
+} from "@daily-co/daily-js";
 import type { AppMessage, LockState } from "./types";
 
 interface UseModeratorControlsParams {
@@ -48,8 +51,9 @@ export function useModeratorControls({
     lockStateRef.current.set(sessionId, updated);
     flushLockStates();
 
-    // Build the canSend array based on what's NOT locked
-    const canSend: string[] = [];
+    // Build the canSend array based on what's NOT locked. Typed with Daily's
+    // own permission union so updateParticipant accepts it unasserted.
+    const canSend: DailyParticipantPermissionsCanSendValues[] = [];
     if (!updated.audio) canSend.push("audio");
     if (!updated.video) canSend.push("video");
     canSend.push("screenAudio", "screenVideo");
@@ -58,11 +62,11 @@ export function useModeratorControls({
       const forceOff = track === "audio" ? { setAudio: false } : { setVideo: false };
       co.updateParticipant(sessionId, {
         ...forceOff,
-        updatePermissions: { canSend: canSend as ("audio" | "video" | "screenAudio" | "screenVideo")[] },
+        updatePermissions: { canSend },
       });
     } else {
       co.updateParticipant(sessionId, {
-        updatePermissions: { canSend: canSend as ("audio" | "video" | "screenAudio" | "screenVideo")[] },
+        updatePermissions: { canSend },
       });
     }
 

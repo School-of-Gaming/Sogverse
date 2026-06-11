@@ -106,10 +106,12 @@ function buildBaseProduct(
   const registrationOpensAt = pickRegistrationOpensAt(stateKind, nowMs);
   const status = pickStatus(productType, stateKind);
 
-  // Cast through unknown — the mock only fills the fields the detail
-  // body reads, and we don't care about the `created_at` / `updated_at`
-  // metadata the database would otherwise populate.
   const locationFixture = pickLocationFixture(productType);
+
+  // Metadata the database would otherwise populate (created_at/updated_at,
+  // created_by) gets static demo values so the fixture is a complete,
+  // honestly-typed ProductDetailRow — no casts.
+  const refTimestamp = new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString();
 
   return {
     id: `mock-${productType}-${stateKind}`,
@@ -136,8 +138,10 @@ function buildBaseProduct(
     // the value just needs to be valid. Events get Fortnite, the rest
     // Minecraft Java — enough to exercise both game chips in the preview.
     topic: productType === "event" ? "fortnite" : "minecraft_java",
-    created_at: new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString(),
-    updated_at: new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString(),
+    refund_policy_days: null,
+    created_at: refTimestamp,
+    updated_at: refTimestamp,
+    created_by: "mock-admin",
     product_translations: [
       {
         locale: "en",
@@ -145,7 +149,9 @@ function buildBaseProduct(
         short_description: copy.description,
         long_description: copy.long ?? null,
         product_id: `mock-${productType}-${stateKind}`,
-      } as never,
+        created_at: refTimestamp,
+        updated_at: refTimestamp,
+      },
     ],
     product_prices:
       billingMode === "free" || billingMode === "external_contract"
@@ -153,7 +159,7 @@ function buildBaseProduct(
         : buildPriceRows(productType, stateKind),
     schedule_slots: scheduleSlots,
     holidays: pickHolidays(productType),
-  } as unknown as ProductDetailRow;
+  };
 }
 
 // ---------- Per-type narrative copy ----------
@@ -334,14 +340,17 @@ const FX_FROM_EUR = { eur: 1, gbp: 0.86, usd: 1.08 } as const;
 function buildPriceRows(
   productType: ProductType,
   stateKind: PreviewStateKind,
-): unknown[] {
+): ProductDetailRow["product_prices"] {
   // Consumer clubs price as a monthly subscription; camps/events as one
   // upfront total. Either way it's the single `price_cents` per currency.
   const eurPrice = productType === "consumer_club" ? 3600 : 9000;
+  const refTimestamp = new Date(STATIC_REF_MS - 30 * DAY_MS).toISOString();
   return SUPPORTED_CURRENCIES.map((currency) => ({
     product_id: `mock-${productType}-${stateKind}`,
     currency,
     price_cents: Math.round(eurPrice * FX_FROM_EUR[currency]),
+    created_at: refTimestamp,
+    updated_at: refTimestamp,
   }));
 }
 

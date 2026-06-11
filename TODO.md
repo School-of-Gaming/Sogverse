@@ -165,17 +165,6 @@ The send route (`src/app/api/admin/whatsapp/send/route.ts`) and webhook handler 
 - [ ] Extract `extractMessageContent()` and error-code mapping from the webhook into `src/lib/whatsapp.ts`
 - [ ] Update both route handlers to delegate persistence to the service
 
-### Extract `mapParticipant` from `VoiceRoomProvider`
-
-`mapParticipant` is a private function in `src/components/voice/VoiceRoomProvider.tsx:33` — not exported. Because it couldn't be imported, `tests/unit/voice/map-participant.test.ts` copy-pasted the function body and wrote tests against the copy. The two versions had already drifted: the test copy added defensive fallbacks (`|| "gamer"`, `?? false`, `?.state`) that production doesn't have, so tests were asserting behavior production didn't implement and nobody noticed until we expanded lint to cover `tests/`.
-
-- [ ] Extract a pure `parseUserName(user_name: string): { userId, role, userName }` helper into a new file (e.g. `src/components/voice/mapParticipant.ts`). This is the bit with real logic worth testing.
-- [ ] Leave `mapParticipant` itself as a thin wrapper in `VoiceRoomProvider.tsx` that calls `parseUserName` and assembles the `VoiceParticipant` object with Daily tracks + position. No tests needed for the wrapper.
-- [ ] Rewrite `tests/unit/voice/map-participant.test.ts` (probably rename to `parse-user-name.test.ts`) to import the real `parseUserName`. Delete the local hand-copied version.
-- [ ] While you're in there: decide what should happen on a malformed `user_name` (Daily types say `string` but our join-token code is the only writer, and the current code silently produces `role: undefined` on input without pipe separators). Two reasonable options: (a) throw in `parseUserName` so bad tokens surface loudly, (b) return a sentinel role and log. Leaning toward (a) — if it ever happens it's a bug in our token generation, not something to paper over.
-
-**Why this matters:** the test drift was a silent quality problem. The `no-unnecessary-condition` lint rule caught it only because we widened lint to `tests/` — the test file had `?.state` chains that TS said were unreachable, which was the thread that led to discovering the duplicated logic. Extracting the parser eliminates the duplication class entirely.
-
 ### Refactor SpatialVoiceRoom screen-share animation off render-time ref I/O
 
 `src/components/voice/SpatialVoiceRoom.tsx` uses a `staleSharerRef` to keep showing the previous screen sharer during the exit animation after `screenSharerSessionId` flips to `null`. The current implementation mutates the ref during render (line ~44), reads it during render in JSX (line ~113), and uses `setState` inside the synchronizing `useEffect` (line ~50). All three are flagged by `eslint-plugin-react-hooks@7` (the React-Compiler-aware rules `react-hooks/refs` and `react-hooks/set-state-in-effect`) — currently suppressed with inline `eslint-disable-next-line` comments pointing here.

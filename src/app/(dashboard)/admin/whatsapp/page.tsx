@@ -316,11 +316,11 @@ export default function WhatsAppInboxPage() {
           queryClient.invalidateQueries({ queryKey: whatsappKeys.all });
         }
       )
-      .on(
+      .on<WhatsAppMessage>(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "whatsapp_messages" },
         (payload) => {
-          const updated = payload.new as WhatsAppMessage;
+          const updated = payload.new;
           queryClient.setQueryData<WhatsAppMessage[]>(
             whatsappKeys.messages(updated.phone),
             (old) => old?.map((msg) => msg.id === updated.id ? updated : msg)

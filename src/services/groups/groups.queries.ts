@@ -411,6 +411,30 @@ interface PendingVars {
   geduId?: string;
 }
 
+/**
+ * Narrow a mutation's `unknown` variables to the id fields the pending
+ * registry reads. Field-by-field checks instead of an assertion: variables
+ * that don't carry an id (or aren't an object at all) simply contribute
+ * nothing, matching how the registry already treats absent ids.
+ */
+function toPendingVars(variables: unknown): PendingVars | undefined {
+  if (typeof variables !== "object" || variables === null) return undefined;
+  const vars: PendingVars = {};
+  if (
+    "participationId" in variables &&
+    typeof variables.participationId === "string"
+  ) {
+    vars.participationId = variables.participationId;
+  }
+  if ("groupId" in variables && typeof variables.groupId === "string") {
+    vars.groupId = variables.groupId;
+  }
+  if ("geduId" in variables && typeof variables.geduId === "string") {
+    vars.geduId = variables.geduId;
+  }
+  return vars;
+}
+
 export interface GroupPending {
   /** participation ids with an in-flight move */
   moves: Set<string>;
@@ -429,10 +453,13 @@ export interface GroupPending {
 export function useGroupPending(productId: string): GroupPending {
   const entries = useMutationState({
     filters: { mutationKey: groupMutationBase(productId), status: "pending" },
-    select: (mutation) => ({
-      action: mutation.options.mutationKey?.at(-1) as string | undefined,
-      vars: mutation.state.variables as PendingVars | undefined,
-    }),
+    select: (mutation) => {
+      const action = mutation.options.mutationKey?.at(-1);
+      return {
+        action: typeof action === "string" ? action : undefined,
+        vars: toPendingVars(mutation.state.variables),
+      };
+    },
   });
 
   const moves = new Set<string>();

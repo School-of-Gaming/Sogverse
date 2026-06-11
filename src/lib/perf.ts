@@ -71,6 +71,33 @@ interface LayoutShiftEntry extends PerformanceEntry {
   hadRecentInput: boolean;
 }
 
+// TS ships no lib type for layout-shift entries, so narrow by checking the
+// discriminating fields for real instead of asserting.
+function isLayoutShiftEntry(entry: PerformanceEntry): entry is LayoutShiftEntry {
+  return (
+    entry.entryType === "layout-shift" &&
+    "value" in entry &&
+    typeof entry.value === "number" &&
+    "hadRecentInput" in entry &&
+    typeof entry.hadRecentInput === "boolean"
+  );
+}
+
+/** The document's navigation entry, or null when unavailable. */
+function getNavigationEntry(): PerformanceNavigationTiming | null {
+  if (typeof PerformanceNavigationTiming === "undefined") return null;
+  const nav = performance.getEntriesByType("navigation")[0];
+  return nav instanceof PerformanceNavigationTiming ? nav : null;
+}
+
+/** All resource entries, instanceof-narrowed instead of asserted. */
+function getResourceEntries(): PerformanceResourceTiming[] {
+  if (typeof PerformanceResourceTiming === "undefined") return [];
+  return performance
+    .getEntriesByType("resource")
+    .filter((e): e is PerformanceResourceTiming => e instanceof PerformanceResourceTiming);
+}
+
 interface NetworkInformation {
   effectiveType?: string;
   downlink?: number;
@@ -103,9 +130,7 @@ function fmtMs(ms: number): string {
 
 function detectNavType(): string {
   if (hasEmittedThisDocument) return "soft";
-  const nav = performance.getEntriesByType(
-    "navigation",
-  )[0] as PerformanceNavigationTiming | undefined;
+  const nav = getNavigationEntry();
   if (!nav) return "hard (unknown)";
   switch (nav.type) {
     case "navigate":
@@ -166,15 +191,11 @@ function getNetworkInfo(): string {
 }
 
 type ResourceBucket = { bytes: number; count: number };
-type ResourceBuckets = Record<
-  "js" | "css" | "font" | "image" | "fetch" | "other",
-  ResourceBucket
->;
+const BUCKET_NAMES = ["js", "css", "font", "image", "fetch", "other"] as const;
+type ResourceBuckets = Record<(typeof BUCKET_NAMES)[number], ResourceBucket>;
 
 function getResourceSummary(): ResourceBuckets {
-  const entries = performance.getEntriesByType(
-    "resource",
-  ) as PerformanceResourceTiming[];
+  const entries = getResourceEntries();
   const buckets: ResourceBuckets = {
     js: { bytes: 0, count: 0 },
     css: { bytes: 0, count: 0 },
@@ -217,10 +238,7 @@ interface SlowResource {
 }
 
 function getSlowResources(topN: number): SlowResource[] {
-  const entries = performance.getEntriesByType(
-    "resource",
-  ) as PerformanceResourceTiming[];
-  return entries
+  return getResourceEntries()
     .filter((e) => e.duration >= SLOW_RESOURCE_MS)
     .sort((a, b) => b.duration - a.duration)
     .slice(0, topN)
@@ -251,10 +269,7 @@ interface RscPrefetchSummary {
 }
 
 function getRscPrefetches(): RscPrefetchSummary {
-  const entries = performance.getEntriesByType(
-    "resource",
-  ) as PerformanceResourceTiming[];
-  const prefetches = entries.filter((e) =>
+  const prefetches = getResourceEntries().filter((e) =>
     e.name.includes(RSC_PREFETCH_MARKER),
   );
   if (prefetches.length === 0)
@@ -280,9 +295,7 @@ interface NavTimingSummary {
 }
 
 function getNavTiming(): NavTimingSummary | null {
-  const nav = performance.getEntriesByType(
-    "navigation",
-  )[0] as PerformanceNavigationTiming | undefined;
+  const nav = getNavigationEntry();
   if (!nav || nav.requestStart === 0) return null;
   return {
     dns: Math.round(nav.domainLookupEnd - nav.domainLookupStart),
@@ -424,9 +437,8 @@ function emit(state: PageState) {
   }
 
   lines.push("# resources");
-  for (const [name, bucket] of Object.entries(resources) as Array<
-    [keyof ResourceBuckets, ResourceBucket]
-  >) {
+  for (const name of BUCKET_NAMES) {
+    const bucket = resources[name];
     if (bucket.count === 0) continue;
     const verdict = name === "js" ? `  ${jsVerdict}` : "";
     lines.push(
@@ -531,8 +543,8 @@ function startObservers(state: PageState) {
   });
 
   safeObserve("layout-shift", (entries) => {
-    for (const e of entries as LayoutShiftEntry[]) {
-      if (!e.hadRecentInput) state.cls += e.value;
+    for (const e of entries) {
+      if (isLayoutShiftEntry(e) && !e.hadRecentInput) state.cls += e.value;
     }
   });
 }

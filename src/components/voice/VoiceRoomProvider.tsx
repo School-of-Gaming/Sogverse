@@ -36,7 +36,7 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null, pos
   return {
     sessionId: p.session_id,
     userId: userId || p.session_id,
-    role: role as VoiceRole,
+    role,
     userName: displayName,
     minecraftUsername,
     minecraftUuid,
@@ -243,8 +243,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         setCameraAllowed(true);
 
         const local = co.participants().local;
-        const rawName = local.user_name || "";
-        setLocalRole(rawName.split("|")[1] as VoiceRole);
+        setLocalRole(parseUserName(local.user_name).role);
 
         // Set local position before updateParticipants so the local user
         // passes the position gate and appears immediately.
