@@ -111,7 +111,18 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       // A participant doesn't exist until we have their position.
       // The posUpdate message fills this in; updateParticipants re-runs then.
       if (!pos) continue;
-      list.push(mapParticipant(p, activeSpeakerIdRef.current, pos));
+      // parseUserName throws on a malformed token. Our routes are the only
+      // writers, so that's a bug worth surfacing — but isolate it per peer:
+      // one bad remote token must skip that participant, never abort the loop
+      // and blank the whole room for everyone else.
+      try {
+        list.push(mapParticipant(p, activeSpeakerIdRef.current, pos));
+      } catch (err) {
+        console.error(
+          `[voice] skipping participant ${p.session_id} with malformed user_name:`,
+          err,
+        );
+      }
     }
     setParticipants(list);
 

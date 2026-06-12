@@ -1,7 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
-import { geduAssignedProduct } from "@/services/assignments/assignments.contracts";
+import {
+  geduAssignedProduct,
+  myAssignedProductRows,
+} from "@/services/assignments/assignments.contracts";
 import { applyGroupChangesResult } from "@/services/groups/groups.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
@@ -187,6 +190,32 @@ describe("get_gedu_assigned_product", () => {
         p_product_id: NONEXISTENT_PRODUCT_ID,
       });
       expect(error?.code).toBe("42501");
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // get_my_assigned_products contract — reuses this file's gedu/assignment
+  // fixture (GEDU owns Cohort A in PRODUCT_GEDU_ON). The gedu dashboard calls
+  // myAssignedProductRows.parse() on this RPC's output; parse real output
+  // here so a schema/Postgres drift fails CI instead of throwing and blanking
+  // the dashboard in production.
+  // ---------------------------------------------------------------------------
+
+  describe("get_my_assigned_products", () => {
+    it("returns the caller's assigned product, parsed through the contract schema", async () => {
+      const { data, error } = await geduAuth.rpc("get_my_assigned_products");
+      expect(error).toBeNull();
+
+      const rows = myAssignedProductRows.parse(data);
+      const mine = rows.find((r) => r.product_id === PRODUCT_GEDU_ON);
+      expect(mine).toBeDefined();
+      // The caller owns exactly Cohort A on this product.
+      expect(mine?.group_id).toBe(myGroupId);
+      // Both groups exist on the product; one active gamer sits in each.
+      expect(mine?.group_count).toBe(2);
+      expect(mine?.gamer_count).toBe(2);
+      expect(mine?.product_translations.length).toBeGreaterThan(0);
+      expect(mine?.schedule_slots.length).toBeGreaterThan(0);
     });
   });
 
