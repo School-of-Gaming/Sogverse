@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import { geduAssignedProduct } from "@/services/assignments/assignments.contracts";
+import { applyGroupChangesResult } from "@/services/groups/groups.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
@@ -41,35 +43,6 @@ const NONEXISTENT_PRODUCT_ID = "00000000-0000-0000-0000-0000000007df";
 
 const GAMER_MINECRAFT_USERNAME = "TestGamerMC";
 const GAMER_MINECRAFT_UUID = "11111111-2222-3333-4444-555555555555";
-
-interface AssignedProductResult {
-  product: {
-    id: string;
-    product_type: string;
-    is_remote: boolean;
-    translations: Array<{ locale: string; name: string; description: string }>;
-    schedule_slots: Array<unknown>;
-  };
-  my_group_id: string;
-  groups: Array<{
-    id: string;
-    name: string;
-    is_my_group: boolean;
-    gamer_count: number;
-    gedus: Array<{ id: string; first_name: string }>;
-    roster:
-      | Array<{
-          gamer_id: string;
-          first_name: string;
-          date_of_birth: string | null;
-          gender: string | null;
-          minecraft_username: string | null;
-          minecraft_uuid: string | null;
-          parent_email: string | null;
-        }>
-      | null;
-  }>;
-}
 
 describe("get_gedu_assigned_product", () => {
   let admin: SupabaseClient<Database>;
@@ -115,8 +88,7 @@ describe("get_gedu_assigned_product", () => {
         { tempId: "tB", name: "Cohort B", geduIds: [] },
       ],
     });
-    const tempMap = (created.data as { tempMap: Record<string, string> })
-      .tempMap;
+    const { tempMap } = applyGroupChangesResult.parse(created.data);
     myGroupId = tempMap.tA;
     sisterGroupId = tempMap.tB;
 
@@ -229,7 +201,7 @@ describe("get_gedu_assigned_product", () => {
       });
 
       expect(error).toBeNull();
-      const result = data as unknown as AssignedProductResult;
+      const result = geduAssignedProduct.parse(data);
 
       expect(result.product.id).toBe(PRODUCT_GEDU_ON);
       expect(result.my_group_id).toBe(myGroupId);
@@ -240,7 +212,7 @@ describe("get_gedu_assigned_product", () => {
       const { data } = await geduAuth.rpc("get_gedu_assigned_product", {
         p_product_id: PRODUCT_GEDU_ON,
       });
-      const result = data as unknown as AssignedProductResult;
+      const result = geduAssignedProduct.parse(data);
 
       const mine = result.groups.find((g) => g.id === myGroupId);
       const sister = result.groups.find((g) => g.id === sisterGroupId);
@@ -262,7 +234,7 @@ describe("get_gedu_assigned_product", () => {
       const { data } = await geduAuth.rpc("get_gedu_assigned_product", {
         p_product_id: PRODUCT_GEDU_ON,
       });
-      const result = data as unknown as AssignedProductResult;
+      const result = geduAssignedProduct.parse(data);
       const mine = result.groups.find((g) => g.id === myGroupId);
       const entry = mine?.roster?.[0];
 
@@ -310,7 +282,7 @@ describe("get_gedu_assigned_product", () => {
           { p_product_id: PRODUCT_GEDU_ON },
         );
         expect(error).toBeNull();
-        const result = data as unknown as AssignedProductResult;
+        const result = geduAssignedProduct.parse(data);
         const mine = result.groups.find((g) => g.id === myGroupId);
         expect(mine?.roster).toEqual([]);
         expect(mine?.gamer_count).toBe(0);
