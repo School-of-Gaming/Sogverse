@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { GroupsService, type GroupChangeSet } from "@/services/groups";
+import { groupChangeSet } from "@/services/groups/groups.contracts";
 import type { Database } from "@/types/database.types";
 
 // The intent-named methods (createGroup, renameGroup, …) are thin adapters:
@@ -21,27 +22,45 @@ const EMPTY: GroupChangeSet = {
 };
 
 describe("GroupsService intent methods", () => {
-  let service: GroupsService;
-  let fetchMock: ReturnType<typeof vi.fn>;
+  // The fetch-based methods never touch the injected client, so a real (but
+  // never-used) typed client satisfies the constructor without any casting.
+  const service = new GroupsService(
+    createClient<Database>("http://localhost:54321", "test-anon-key"),
+  );
+  let fetchMock: ReturnType<typeof vi.fn<typeof fetch>>;
+
+  function jsonResponse(body: unknown, status = 200): Response {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   function mockApplyResponse(body: unknown = { tempMap: {} }) {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: async () => body,
-    } as Response);
+    // A fresh Response per call — a Response body is single-use, and some
+    // tests drive the service through more than one request.
+    fetchMock.mockImplementation(() => Promise.resolve(jsonResponse(body)));
+  }
+
+  /** The JSON string body of the given fetch RequestInit. */
+  function bodyOf(init: RequestInit | undefined): string {
+    if (!init || typeof init.body !== "string") {
+      throw new Error("expected a string request body");
+    }
+    return init.body;
   }
 
   /** The change set sent to the apply route on the most recent call. */
   function sentChangeSet(): GroupChangeSet {
-    const [, init] = fetchMock.mock.calls.at(-1) as [string, RequestInit];
-    return JSON.parse(init.body as string) as GroupChangeSet;
+    const call = fetchMock.mock.calls.at(-1);
+    if (!call) throw new Error("expected fetch to have been called");
+    const [, init] = call;
+    return groupChangeSet.parse(JSON.parse(bodyOf(init)));
   }
 
   beforeEach(() => {
-    fetchMock = vi.fn();
+    fetchMock = vi.fn<typeof fetch>();
     vi.stubGlobal("fetch", fetchMock);
-    // The fetch-based methods don't touch the injected client.
-    service = new GroupsService({} as unknown as SupabaseClient<Database>);
   });
 
   afterEach(() => {
@@ -51,13 +70,12 @@ describe("GroupsService intent methods", () => {
   it("createGroup sends only addedGroups and returns the tempMap-resolved id", async () => {
     // The service mints its own tempId; echo it back as the tempMap key so we
     // can verify it resolves the real id the RPC would assign.
-    fetchMock.mockImplementation((_url, init: RequestInit) => {
-      const body = JSON.parse(init.body as string) as GroupChangeSet;
+    fetchMock.mockImplementation((_url, init) => {
+      const body = groupChangeSet.parse(JSON.parse(bodyOf(init)));
       const tempId = body.addedGroups[0].tempId;
-      return Promise.resolve({
-        ok: true,
-        json: async () => ({ tempMap: { [tempId]: "real-group-id" } }),
-      } as Response);
+      return Promise.resolve(
+        jsonResponse({ tempMap: { [tempId]: "real-group-id" } }),
+      );
     });
 
     const realId = await service.createGroup(PRODUCT_ID, "Group A", ["ge1"]);
@@ -124,11 +142,9 @@ describe("GroupsService intent methods", () => {
   });
 
   it("surfaces the route's error message when the request fails", async () => {
-    fetchMock.mockResolvedValue({
-      ok: false,
-      status: 400,
-      json: async () => ({ error: "A Gedu can only run one group" }),
-    } as Response);
+    fetchMock.mockResolvedValue(
+      jsonResponse({ error: "A Gedu can only run one group" }, 400),
+    );
 
     await expect(service.addGedu(PRODUCT_ID, "G1", "ge1")).rejects.toThrow(
       "A Gedu can only run one group",

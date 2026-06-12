@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import type { DailyCall } from "@daily-co/daily-js";
 import type { AppMessage } from "@/components/voice/hooks/types";
 import type { SpatialPosition } from "@/lib/constants/spatial";
 
@@ -14,13 +13,20 @@ import type { SpatialPosition } from "@/lib/constants/spatial";
  *     if (msg.sessionId !== localSid) { ... }
  */
 
+// The exact slice of DailyCall the posUpdate branch reads. A real DailyCall is
+// structurally assignable to this, so the reproducer below stays faithful to
+// the hook without pretending a two-line stub is the full call object.
+interface PosUpdateCallObject {
+  participants(): { local: { session_id: string } };
+}
+
 // Minimal stub that mimics the parts of DailyCall used by onAppMessage
-function createMockCallObject(localSessionId: string): DailyCall {
+function createMockCallObject(localSessionId: string): PosUpdateCallObject {
   return {
     participants: () => ({
       local: { session_id: localSessionId },
     }),
-  } as unknown as DailyCall;
+  };
 }
 
 function createPositionsMap(entries: [string, SpatialPosition][] = []) {
@@ -37,7 +43,7 @@ const pos: SpatialPosition = { x: 50, y: 50, zone: "general" };
 function handlePosUpdate(
   msg: Extract<AppMessage, { type: "posUpdate" }>,
   fromId: string,
-  co: DailyCall,
+  co: PosUpdateCallObject,
   positionsRef: Map<string, SpatialPosition>,
 ) {
   // Reject spoofed updates — sender can only update their own position
