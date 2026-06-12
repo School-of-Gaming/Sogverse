@@ -13,11 +13,14 @@ const { mockStripeSessionCreate } = vi.hoisted(() => ({
 }));
 
 vi.mock("stripe", () => {
+  // The route only ever does `new Stripe(...)` and calls
+  // checkout.sessions.create — vi.mock's factory isn't typed against the
+  // real module, so the bare vi.fn constructor needs no cast.
   const StripeMock = vi.fn(function () {
     return {
       checkout: { sessions: { create: mockStripeSessionCreate } },
     };
-  }) as unknown as typeof import("stripe").default;
+  });
   return { default: StripeMock };
 });
 
