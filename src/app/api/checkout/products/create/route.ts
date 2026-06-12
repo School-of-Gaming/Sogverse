@@ -260,6 +260,12 @@ export async function POST(request: Request) {
     // parent's app locale. Falls back to 'auto' (browser Accept-Language) for
     // locales Stripe doesn't support — e.g. Klingon.
     locale: stripeCheckoutLocale(profile.locale),
+    // Show the "Add promotion code" field. Codes themselves are created and
+    // managed in the Stripe dashboard (per mode — test and live separately);
+    // nothing in our DB models them. With Adaptive Pricing, percent-off
+    // coupons convert cleanly; amount_off coupons are currency-bound, so
+    // prefer percent-off when creating codes.
+    allow_promotion_codes: true,
     expires_at: expiresAt,
     metadata,
     success_url: successUrl,
