@@ -15,11 +15,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/providers";
 import { SENDER_EMAIL } from "@/lib/constants";
-import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
+import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
+import { findOption } from "@/lib/utils";
 import { templateRegistry, type TemplateField } from "@/lib/email-templates/registry";
 
-type EmailProvider = "brevo" | "klaviyo";
-type EmailMode = "custom" | "template";
+const EMAIL_PROVIDERS = ["brevo", "klaviyo"] as const;
+type EmailProvider = (typeof EMAIL_PROVIDERS)[number];
+const EMAIL_MODES = ["custom", "template"] as const;
+type EmailMode = (typeof EMAIL_MODES)[number];
 
 interface EmailResult {
   type: "success" | "error";
@@ -165,7 +168,10 @@ export default function TestingPage() {
                 <select
                   id="provider"
                   value={provider}
-                  onChange={(e) => setProvider(e.target.value as EmailProvider)}
+                  onChange={(e) => {
+                    const value = findOption(EMAIL_PROVIDERS, e.target.value);
+                    if (value) setProvider(value);
+                  }}
                   className={selectClass}
                 >
                   <option value="brevo">{t('brevo')}</option>
@@ -179,7 +185,10 @@ export default function TestingPage() {
                 <select
                   id="mode"
                   value={mode}
-                  onChange={(e) => handleModeChange(e.target.value as EmailMode)}
+                  onChange={(e) => {
+                    const value = findOption(EMAIL_MODES, e.target.value);
+                    if (value) handleModeChange(value);
+                  }}
                   className={selectClass}
                 >
                   <option value="template">{t('template')}</option>
@@ -225,7 +234,9 @@ export default function TestingPage() {
                     <select
                       id="templateLocale"
                       value={templateLocale}
-                      onChange={(e) => setTemplateLocale(e.target.value as SupportedLocale)}
+                      onChange={(e) => {
+                        if (isSupportedLocale(e.target.value)) setTemplateLocale(e.target.value);
+                      }}
                       className={selectClass}
                     >
                       {SUPPORTED_LOCALES.map((opt) => (

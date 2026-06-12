@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { cn, findOption } from "@/lib/utils";
 import {
   LOCALE_CONFIG,
   SUPPORTED_LOCALES,
@@ -15,7 +15,7 @@ import {
   SUBJECT_TOPICS,
 } from "@/lib/products/topics";
 import { useTopicLabel } from "@/lib/products/use-topic-label";
-import type { ProductTopic } from "@/types";
+import { Constants } from "@/types";
 import { Field, FormSection } from "../form-primitives";
 import { ImagePicker } from "../image-picker";
 import { LongDescriptionBlocksEditor } from "../long-description-blocks-editor";
@@ -146,8 +146,8 @@ export function IdentitySection({
             <select
               value=""
               onChange={(e) => {
-                if (e.target.value)
-                  addLocaleTab(e.target.value as SupportedLocale);
+                const locale = findOption(addableLocales, e.target.value);
+                if (locale) addLocaleTab(locale);
               }}
               className="ml-1 mb-1 h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
             >
@@ -226,7 +226,11 @@ export function IdentitySection({
           id="p-topic"
           value={state.topic}
           onChange={(e) =>
-            setState({ ...state, topic: e.target.value as ProductTopic | "" })
+            setState({
+              ...state,
+              topic:
+                findOption(Constants.public.Enums.product_topic, e.target.value) ?? "",
+            })
           }
           required
           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"

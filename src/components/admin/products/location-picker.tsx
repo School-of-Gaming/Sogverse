@@ -116,9 +116,9 @@ export function LocationPicker({
   const existingCountryCodes = useMemo(
     () =>
       new Set(
-        all
-          .filter((l) => l.type === "country" && l.country_code)
-          .map((l) => l.country_code as string)
+        all.flatMap((l) =>
+          l.type === "country" && l.country_code ? [l.country_code] : []
+        )
       ),
     [all]
   );
