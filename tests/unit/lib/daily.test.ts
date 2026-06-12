@@ -142,7 +142,6 @@ describe("isDailyDuplicateRoomError", () => {
 });
 
 describe("getOrCreateDailyRoom", () => {
-  const originalFetch = global.fetch;
   const originalKey = process.env.DAILY_API_KEY;
 
   beforeEach(() => {
@@ -150,14 +149,14 @@ describe("getOrCreateDailyRoom", () => {
   });
 
   afterEach(() => {
-    global.fetch = originalFetch;
+    vi.unstubAllGlobals();
     process.env.DAILY_API_KEY = originalKey;
   });
 
   function mockSequence(
     calls: Array<{ status: number; body: unknown }>,
-  ): ReturnType<typeof vi.fn> {
-    const fn = vi.fn();
+  ): ReturnType<typeof vi.fn<typeof fetch>> {
+    const fn = vi.fn<typeof fetch>();
     for (const call of calls) {
       fn.mockResolvedValueOnce(
         new Response(JSON.stringify(call.body), {
@@ -166,7 +165,7 @@ describe("getOrCreateDailyRoom", () => {
         }),
       );
     }
-    global.fetch = fn as unknown as typeof global.fetch;
+    vi.stubGlobal("fetch", fn);
     return fn;
   }
 

@@ -154,7 +154,7 @@ describe("formatScheduleLocal", () => {
   const now = new Date("2026-02-25T12:00:00Z");
 
   afterEach(() => {
-    Intl.DateTimeFormat = RealDateTimeFormat;
+    vi.restoreAllMocks();
   });
 
   /**
@@ -163,22 +163,25 @@ describe("formatScheduleLocal", () => {
    * Also pins locale to "en-US" when the caller passes undefined, so
    * assertions on day names and AM/PM are deterministic regardless of the
    * test runner's system locale.
+   *
+   * vi.spyOn keeps the property's constructor type intact (a mock is callable
+   * with `new` and the returned formatter instance wins), so no cast is
+   * needed; restoration happens via vi.restoreAllMocks() above.
    */
   function pinLocalTimezone(tz: string) {
-    const Original = Intl.DateTimeFormat;
-    Intl.DateTimeFormat = function (
-      locale?: string | string[],
-      options?: Intl.DateTimeFormatOptions,
-    ) {
-      const resolvedLocale = locale ?? "en-US";
-      // If the caller didn't specify a timeZone, inject our pinned TZ
-      if (options && !options.timeZone) {
-        return new Original(resolvedLocale, { ...options, timeZone: tz });
-      }
-      return new Original(resolvedLocale, options);
-    } as typeof Intl.DateTimeFormat;
-    // Preserve static methods
-    Intl.DateTimeFormat.supportedLocalesOf = Original.supportedLocalesOf;
+    vi.spyOn(Intl, "DateTimeFormat").mockImplementation(
+      (locale?: Intl.LocalesArgument, options?: Intl.DateTimeFormatOptions) => {
+        const resolvedLocale = locale ?? "en-US";
+        // If the caller didn't specify a timeZone, inject our pinned TZ
+        if (options && !options.timeZone) {
+          return new RealDateTimeFormat(resolvedLocale, {
+            ...options,
+            timeZone: tz,
+          });
+        }
+        return new RealDateTimeFormat(resolvedLocale, options);
+      },
+    );
   }
 
   it("returns a valid day name, formatted time, and timezone abbreviation", () => {

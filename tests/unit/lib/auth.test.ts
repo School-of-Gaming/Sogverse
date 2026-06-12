@@ -31,6 +31,19 @@ process.env.PIN_COOKIE_SECRET = "auth-test-pin-secret";
 import { requireRole } from "@/lib/auth";
 import { pinTokenFor } from "@/lib/pin-session";
 
+/**
+ * Narrow requireRole's union result to its error branch. instanceof is the
+ * honest runtime check — the success side is a plain object, never a
+ * NextResponse — so a wrong branch fails the test loudly instead of slipping
+ * through a cast.
+ */
+function expectResponse(res: unknown): NextResponse {
+  if (!(res instanceof NextResponse)) {
+    throw new Error("expected a NextResponse");
+  }
+  return res;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -47,28 +60,27 @@ describe("requireRole", () => {
   it("returns 401 when getClaims errors", async () => {
     mockGetClaims.mockResolvedValue({ data: null, error: new Error("invalid token") });
     const res = await requireRole("admin");
-    expect(res).toBeInstanceOf(NextResponse);
-    expect((res as NextResponse).status).toBe(401);
+    expect(expectResponse(res).status).toBe(401);
   });
 
   it("returns 401 when the token carries no subject", async () => {
     mockGetClaims.mockResolvedValue({ data: { claims: {} }, error: null });
     const res = await requireRole("admin");
-    expect((res as NextResponse).status).toBe(401);
+    expect(expectResponse(res).status).toBe(401);
   });
 
   it("returns 500 when the profile lookup fails", async () => {
     mockGetClaims.mockResolvedValue({ data: { claims: { sub: "u1" } }, error: null });
     mockSingle.mockResolvedValue({ data: null, error: new Error("db down") });
     const res = await requireRole("admin");
-    expect((res as NextResponse).status).toBe(500);
+    expect(expectResponse(res).status).toBe(500);
   });
 
   it("returns 403 when the role is not allowed", async () => {
     mockGetClaims.mockResolvedValue({ data: { claims: { sub: "u1" } }, error: null });
     mockSingle.mockResolvedValue({ data: { id: "u1", role: "gamer" }, error: null });
     const res = await requireRole("admin");
-    expect((res as NextResponse).status).toBe(403);
+    expect(expectResponse(res).status).toBe(403);
   });
 
   it("returns user (id from claims.sub) + profile on the happy path", async () => {
@@ -106,9 +118,8 @@ describe("requireRole parent-PIN gate", () => {
     mockCookieGet.mockReturnValue(undefined);
 
     const res = await requireRole("customer");
-    expect(res).toBeInstanceOf(NextResponse);
-    expect((res as NextResponse).status).toBe(403);
-    expect(await (res as NextResponse).json()).toMatchObject({ code: "PIN_REQUIRED" });
+    expect(expectResponse(res).status).toBe(403);
+    expect(await expectResponse(res).json()).toMatchObject({ code: "PIN_REQUIRED" });
   });
 
   it("returns 403 for a customer whose cookie is bound to a different session", async () => {
@@ -116,7 +127,7 @@ describe("requireRole parent-PIN gate", () => {
     mockCookieGet.mockReturnValue({ value: await pinTokenFor("u1", "other-session") });
 
     const res = await requireRole("customer");
-    expect((res as NextResponse).status).toBe(403);
+    expect(expectResponse(res).status).toBe(403);
   });
 
   it("passes a customer with a valid unlock cookie", async () => {

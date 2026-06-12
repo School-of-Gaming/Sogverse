@@ -2,8 +2,9 @@ import { describe, it, expect } from "vitest";
 import { filterProducts } from "@/components/public/products/filter-products";
 import type { ProductBrowseRow, ProductTopic } from "@/types";
 
-// Minimal row factory — only the fields filterProducts() looks at need
-// real values. Everything else is filled with a placeholder cast.
+// Row factory — only the fields filterProducts() looks at are overridable;
+// every other ProductBrowseRow column carries an honest, fully-typed default
+// so the fixture satisfies the row type with no cast.
 function row(overrides: {
   id: string;
   topic: ProductTopic;
@@ -17,11 +18,29 @@ function row(overrides: {
 }): ProductBrowseRow {
   return {
     id: overrides.id,
+    billing_mode: "paid",
+    created_at: "2026-01-01T00:00:00.000Z",
+    created_by: "admin-1",
+    start_date: null,
+    end_date: null,
+    image_path: null,
     is_remote: overrides.isRemote ?? false,
-    spoken_language_code: overrides.spokenLanguageCode ?? "en",
-    topic: overrides.topic,
+    is_visible: true,
+    location_id: null,
     min_age: overrides.minAge ?? 7,
     max_age: overrides.maxAge ?? 17,
+    padlet_url: null,
+    product_type: "consumer_club",
+    refund_policy_days: null,
+    registration_opens_at: "2026-01-01T00:00:00.000Z",
+    seat_count: null,
+    signup_threshold: null,
+    spoken_language_code: overrides.spokenLanguageCode ?? "en",
+    status: "running",
+    timezone: "Europe/Helsinki",
+    topic: overrides.topic,
+    updated_at: "2026-01-01T00:00:00.000Z",
+    waitlist_enabled: false,
     product_translations: [],
     product_prices: [],
     schedule_slots: (overrides.weekdays ?? []).map((weekday) => ({
@@ -30,7 +49,7 @@ function row(overrides: {
       duration_minutes: 60,
     })),
     locations: null,
-  } as unknown as ProductBrowseRow;
+  };
 }
 
 const A = row({

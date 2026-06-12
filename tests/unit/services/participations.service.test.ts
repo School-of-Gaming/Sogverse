@@ -1,28 +1,52 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { ParticipationsService } from "@/services/participations/participations.service";
-import type { Database } from "@/types/database.types";
-import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
+import {
+  createFetchStubbedClient,
+  postgrestError,
+  postgrestJson,
+  requestedUrl,
+  type FetchMock,
+} from "../../mocks/postgrest-fetch";
+
+// These tests run the REAL Supabase client over a fake fetch transport (see
+// tests/mocks/postgrest-fetch.ts): the genuine query builder constructs the
+// PostgREST request, the mock answers with canned wire responses, and the
+// client parses them — so the full read path is exercised with no casts.
+
+/** Canned getClaims() success for the spied auth client. */
+function claimsFor(sub: string) {
+  return {
+    data: {
+      claims: {
+        iss: "http://localhost:54321/auth/v1",
+        sub,
+        aud: "authenticated",
+        exp: 4102444800,
+        iat: 1735689600,
+        role: "authenticated",
+        aal: "aal1" as const,
+        session_id: "session-1",
+      },
+      header: { alg: "ES256" as const, kid: "test-key", typ: "JWT" },
+      signature: new Uint8Array(),
+    },
+    error: null,
+  };
+}
 
 describe("ParticipationsService.getParticipationsForGamers", () => {
-  function createMockSupabase() {
-    return { from: vi.fn(), rpc: vi.fn(), auth: { getClaims: vi.fn() } };
-  }
-
-  let mockSupabase: ReturnType<typeof createMockSupabase>;
+  let fetchMock: FetchMock;
   let service: ParticipationsService;
 
   beforeEach(() => {
-    mockSupabase = createMockSupabase();
-    service = new ParticipationsService(
-      mockSupabase as unknown as SupabaseClient<Database>,
-    );
+    fetchMock = vi.fn<typeof fetch>();
+    service = new ParticipationsService(createFetchStubbedClient(fetchMock));
   });
 
   it("returns [] for empty input without touching the database", async () => {
     const result = await service.getParticipationsForGamers([]);
     expect(result).toEqual([]);
-    expect(mockSupabase.from).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("queries participations filtered by the given gamer ids", async () => {
@@ -40,27 +64,19 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
         group: { name: "Group A" },
       },
     ];
-
-    // Chain: from().select().in().order().order() → { data, error }
-    const order2 = vi.fn().mockResolvedValue(mockSupabaseSuccess(rows));
-    const order1 = vi.fn().mockReturnValue({ order: order2 });
-    const inFn = vi.fn().mockReturnValue({ order: order1 });
-    const select = vi.fn().mockReturnValue({ in: inFn });
-    mockSupabase.from.mockReturnValue({ select });
+    fetchMock.mockResolvedValue(postgrestJson(rows));
 
     const result = await service.getParticipationsForGamers(["g1", "g2"]);
 
-    expect(mockSupabase.from).toHaveBeenCalledWith("participations");
-    expect(inFn).toHaveBeenCalledWith("gamer_id", ["g1", "g2"]);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toBe("/rest/v1/participations");
+    expect(url.searchParams.get("gamer_id")).toBe("in.(g1,g2)");
     expect(result).toEqual(rows);
   });
 
   it("throws when the query errors", async () => {
-    const order2 = vi.fn().mockResolvedValue(mockSupabaseError("boom"));
-    const order1 = vi.fn().mockReturnValue({ order: order2 });
-    const inFn = vi.fn().mockReturnValue({ order: order1 });
-    const select = vi.fn().mockReturnValue({ in: inFn });
-    mockSupabase.from.mockReturnValue({ select });
+    fetchMock.mockResolvedValue(postgrestError("boom"));
 
     await expect(
       service.getParticipationsForGamers(["g1"]),
@@ -69,19 +85,33 @@ describe("ParticipationsService.getParticipationsForGamers", () => {
 });
 
 describe("ParticipationsService.getMyUpcomingSessions", () => {
-  function createMockSupabase() {
-    return { from: vi.fn(), rpc: vi.fn(), auth: { getClaims: vi.fn() } };
-  }
+  const RPC_PATH = "/rest/v1/rpc/get_my_participation_subscription_states";
 
-  let mockSupabase: ReturnType<typeof createMockSupabase>;
+  let fetchMock: FetchMock;
   let service: ParticipationsService;
 
-  // Chain: from().select().eq(audienceColumn, userId).eq("status", "active")
-  function mockParticipationsQuery(rows: unknown[]) {
-    const eq2 = vi.fn().mockResolvedValue(mockSupabaseSuccess(rows));
-    const eq1 = vi.fn().mockReturnValue({ eq: eq2 });
-    const select = vi.fn().mockReturnValue({ eq: eq1 });
-    mockSupabase.from.mockReturnValue({ select });
+  /**
+   * Routes the two concurrent backend calls the method makes: the
+   * participations select and the subscription-state RPC.
+   */
+  function mockBackend(
+    participations: unknown[],
+    subscriptionStates: { rows: unknown[] } | { errorMessage: string },
+  ) {
+    fetchMock.mockImplementation((input) => {
+      const url = requestedUrl(input);
+      if (url.pathname === RPC_PATH) {
+        return Promise.resolve(
+          "rows" in subscriptionStates
+            ? postgrestJson(subscriptionStates.rows)
+            : postgrestError(subscriptionStates.errorMessage),
+        );
+      }
+      if (url.pathname === "/rest/v1/participations") {
+        return Promise.resolve(postgrestJson(participations));
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${url.pathname}`));
+    });
   }
 
   function rawRow(id: string, gamerFirstName: string) {
@@ -105,28 +135,35 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
   }
 
   beforeEach(() => {
-    mockSupabase = createMockSupabase();
-    service = new ParticipationsService(
-      mockSupabase as unknown as SupabaseClient<Database>,
+    fetchMock = vi.fn<typeof fetch>();
+    const supabase = createFetchStubbedClient(fetchMock);
+    // The method derives the user id from getClaims(); a signature-verified
+    // session is out of scope here, so pin the claims on this test's client.
+    vi.spyOn(supabase.auth, "getClaims").mockResolvedValue(
+      claimsFor("user-1"),
     );
-    mockSupabase.auth.getClaims.mockResolvedValue({
-      data: { claims: { sub: "user-1" } },
-    });
+    service = new ParticipationsService(supabase);
   });
 
   it("derives the payment-problem flag from past_due rows of the subscription-state RPC", async () => {
-    mockParticipationsQuery([rawRow("p1", "Alex"), rawRow("p2", "Bobby")]);
-    mockSupabase.rpc.mockResolvedValue(
-      mockSupabaseSuccess([
+    mockBackend([rawRow("p1", "Alex"), rawRow("p2", "Bobby")], {
+      rows: [
         { participation_id: "p1", status: "past_due", current_period_end: null },
-      ]),
-    );
+      ],
+    });
 
     const result = await service.getMyUpcomingSessions("customer");
 
-    expect(mockSupabase.rpc).toHaveBeenCalledWith(
-      "get_my_participation_subscription_states",
+    const urls = fetchMock.mock.calls.map(([input]) => requestedUrl(input));
+    expect(urls.some((u) => u.pathname === RPC_PATH)).toBe(true);
+    // The 'customer' audience keys the select off customer_id = auth user.
+    const participationsUrl = urls.find(
+      (u) => u.pathname === "/rest/v1/participations",
     );
+    expect(participationsUrl?.searchParams.get("customer_id")).toBe(
+      "eq.user-1",
+    );
+
     const alex = result.find((r) => r.gamer.firstName === "Alex");
     const bobby = result.find((r) => r.gamer.firstName === "Bobby");
     expect(alex?.paymentProblem).toBe(true);
@@ -135,16 +172,15 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
   });
 
   it("derives subscriptionEndsAt from canceling rows (and never flags them as a payment problem)", async () => {
-    mockParticipationsQuery([rawRow("p1", "Alex")]);
-    mockSupabase.rpc.mockResolvedValue(
-      mockSupabaseSuccess([
+    mockBackend([rawRow("p1", "Alex")], {
+      rows: [
         {
           participation_id: "p1",
           status: "canceling",
           current_period_end: "2026-06-30T20:59:59.999Z",
         },
-      ]),
-    );
+      ],
+    });
 
     const result = await service.getMyUpcomingSessions("customer");
 
@@ -155,12 +191,11 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
   });
 
   it("leaves subscriptionEndsAt null for a canceling row missing current_period_end", async () => {
-    mockParticipationsQuery([rawRow("p1", "Alex")]);
-    mockSupabase.rpc.mockResolvedValue(
-      mockSupabaseSuccess([
+    mockBackend([rawRow("p1", "Alex")], {
+      rows: [
         { participation_id: "p1", status: "canceling", current_period_end: null },
-      ]),
-    );
+      ],
+    });
 
     const result = await service.getMyUpcomingSessions("customer");
 
@@ -171,8 +206,7 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
     const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
-    mockParticipationsQuery([rawRow("p1", "Alex")]);
-    mockSupabase.rpc.mockResolvedValue(mockSupabaseError("boom"));
+    mockBackend([rawRow("p1", "Alex")], { errorMessage: "boom" });
 
     const result = await service.getMyUpcomingSessions("customer");
 

@@ -1,30 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { ProductsService } from "@/services/products/products.service";
-import type { Database } from "@/types/database.types";
-import { mockSupabaseSuccess, mockSupabaseError } from "../../mocks/supabase";
+import {
+  createFetchStubbedClient,
+  postgrestError,
+  postgrestJson,
+  requestedUrl,
+  type FetchMock,
+} from "../../mocks/postgrest-fetch";
 
 describe("ProductsService.listVisibleByTypes", () => {
-  function createMockSupabase() {
-    return { from: vi.fn(), rpc: vi.fn(), auth: { getClaims: vi.fn() } };
-  }
-
-  // Wire up the from().select().in().eq().in().order() chain to resolve with
-  // `result`, mirroring the real query shape in listVisibleByTypes.
-  function mockQuery(
-    mockSupabase: ReturnType<typeof createMockSupabase>,
-    result: unknown,
-  ) {
-    const order = vi.fn().mockResolvedValue(result);
-    const inStatus = vi.fn().mockReturnValue({ order });
-    const eq = vi.fn().mockReturnValue({ in: inStatus });
-    const inType = vi.fn().mockReturnValue({ eq });
-    const select = vi.fn().mockReturnValue({ in: inType });
-    mockSupabase.from.mockReturnValue({ select });
-  }
+  // These tests run the REAL Supabase client over a fake fetch transport (see
+  // tests/mocks/postgrest-fetch.ts): the genuine query builder constructs the
+  // PostgREST request, the mock answers with canned row JSON, and the client
+  // parses it — so the full read path is exercised with no casts.
+  let fetchMock: FetchMock;
+  let service: ProductsService;
 
   // Minimal product row carrying only the columns effectiveStatus() reads.
-  // (listVisibleByTypes casts the query result to ProductBrowseRow[], so the
+  // (The canned wire JSON doesn't need every ProductBrowseRow column — the
   // runtime filter only ever touches these fields.)
   function row(overrides: {
     id: string;
@@ -42,18 +35,13 @@ describe("ProductsService.listVisibleByTypes", () => {
     };
   }
 
-  let mockSupabase: ReturnType<typeof createMockSupabase>;
-  let service: ProductsService;
-
   beforeEach(() => {
     // Freeze "now" so end_date comparisons are deterministic. Helsinki is
     // UTC+3 in June, so 09:00Z is the same calendar day (2026-06-04) locally.
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-06-04T09:00:00.000Z"));
-    mockSupabase = createMockSupabase();
-    service = new ProductsService(
-      mockSupabase as unknown as SupabaseClient<Database>,
-    );
+    fetchMock = vi.fn<typeof fetch>();
+    service = new ProductsService(createFetchStubbedClient(fetchMock));
   });
 
   afterEach(() => {
@@ -66,9 +54,15 @@ describe("ProductsService.listVisibleByTypes", () => {
       row({ id: "future", status: "running", end_date: "2026-12-31" }),
       row({ id: "open-ended", status: "running", end_date: null }),
     ];
-    mockQuery(mockSupabase, mockSupabaseSuccess(rows));
+    fetchMock.mockResolvedValue(postgrestJson(rows));
 
     const result = await service.listVisibleByTypes(["consumer_club"]);
+
+    // The real builder issued the browse query with its type + status filters.
+    const url = requestedUrl(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toBe("/rest/v1/products");
+    expect(url.searchParams.get("product_type")).toBe("in.(consumer_club)");
+    expect(url.searchParams.get("is_visible")).toBe("eq.true");
 
     expect(result.map((r) => r.id)).toEqual(["future", "open-ended"]);
   });
@@ -77,7 +71,7 @@ describe("ProductsService.listVisibleByTypes", () => {
     const rows = [
       row({ id: "ends-today", status: "running", end_date: "2026-06-04" }),
     ];
-    mockQuery(mockSupabase, mockSupabaseSuccess(rows));
+    fetchMock.mockResolvedValue(postgrestJson(rows));
 
     const result = await service.listVisibleByTypes(["camp"]);
 
@@ -100,7 +94,7 @@ describe("ProductsService.listVisibleByTypes", () => {
         end_date: "2026-08-01",
       }),
     ];
-    mockQuery(mockSupabase, mockSupabaseSuccess(rows));
+    fetchMock.mockResolvedValue(postgrestJson(rows));
 
     const result = await service.listVisibleByTypes(["event"]);
 
@@ -127,7 +121,7 @@ describe("ProductsService.listVisibleByTypes", () => {
         timezone: "Europe/Helsinki",
       }),
     ];
-    mockQuery(mockSupabase, mockSupabaseSuccess(rows));
+    fetchMock.mockResolvedValue(postgrestJson(rows));
 
     const result = await service.listVisibleByTypes(["consumer_club"]);
 
@@ -135,7 +129,7 @@ describe("ProductsService.listVisibleByTypes", () => {
   });
 
   it("throws when the query errors", async () => {
-    mockQuery(mockSupabase, mockSupabaseError("boom"));
+    fetchMock.mockResolvedValue(postgrestError("boom"));
 
     await expect(
       service.listVisibleByTypes(["consumer_club"]),
