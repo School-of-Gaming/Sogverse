@@ -44,9 +44,12 @@ Proxy (`src/proxy.ts`) refreshes Supabase auth sessions, enforces role-based rou
 - Auto-generated types in `types/database.types.ts`, convenience aliases in `types/index.ts`
 
 ### Service Layer Pattern
-Each feature in `src/services/` follows a two-file pattern:
+Each feature in `src/services/` follows a two-to-three-file pattern:
 - `*.service.ts` — Class that takes a `SupabaseClient<Database>` in the constructor. Read methods use the injected client (`.from()` queries, `.rpc()` calls). Write methods that need server-side secrets (Stripe, Daily.co, admin client) use `fetch()` to call API routes instead — the injected client is unused by those methods, and this is intentional.
 - `*.queries.ts` — React Query hooks. Each hook calls `getClient()`, instantiates the service, and returns `useQuery`/`useMutation`. Exports a `*Keys` factory object for cache key hierarchy (e.g., `groupKeys.all`, `groupKeys.byProduct(id)`).
+- `*.contracts.ts` — zod schemas for the feature's wire shapes, shared by both ends: the API route parses its request body with the body schema (`parseJsonBody` / `parseBodyValue` from `src/lib/api/json-body.server.ts`), and the service parses the route's response with the response schema (`parseJsonResponse` / `readErrorMessage` from `src/lib/api/json-response.ts`). Json-returning RPC result schemas live here too. Derive enum values from the generated `Constants` object (`z.enum(Constants.public.Enums.…)`) or the `SUPPORTED_*` tuples so schemas follow codegen.
+
+**Rule: never read a request body or an API/RPC response through a type assertion — parse it through the feature's contract schema.** The compiler keeps schemas honest at the use sites (`.insert(parsed)` checks the generated Insert type; a service method's declared return type checks the parse output), and the db tests parse real RPC output through the same schemas in CI.
 
 **Rule: Mutations must invalidate related queries in `onSuccess`.** Use the key hierarchy so invalidating a parent key (e.g., `groupKeys.all`) cascades to children.
 
@@ -196,14 +199,11 @@ A few objects live **outside** the `public` schema and are therefore **not** in 
 
 **Rule: Verify generated nullability matches what the SQL actually guarantees.** PostgreSQL has two ways to make a "nullable" column non-null in practice that the type generator can't see: RPC `RETURNS TABLE` columns produced by an INNER JOIN (the generator infers from the base column type alone, missing that the JOIN forbids null), and CHECK constraints that encode conditional invariants like "column X is NOT NULL whenever predicate P holds." Both are real, enforced guarantees, and both leave the generated type nullable everywhere. After pushing and regenerating, check the affected types in `database.types.ts` — the compiler trusts the column/function signature, not the query or the constraint.
 
-**Fix pattern:** When the generated type has wrong nullability, add a corrected alias in `src/types/index.ts` using `Omit` + intersection — never hand-edit `database.types.ts`. For RPC return rows, alias the function's return type and tighten the affected column. For CHECK-tightened columns, alias the row type and tighten under the predicate, plus a type-guard helper so call sites can narrow into the alias at runtime. Either alias is a manual claim about what the DB enforces — if the JOIN or CHECK is ever relaxed, the alias has to come with it, so keep the alias (and any guard) adjacent in `index.ts` and refer to the source constraint or query by name in its doc comment.
+**Fix pattern — never a type assertion; pick by where the truth lives.** `@typescript-eslint/no-unsafe-type-assertion` is on and suppressions are not accepted: every type is earned by inference or by a runtime check.
 
-```typescript
-type _Generated = Database["public"]["Functions"]["my_rpc"]["Returns"][number];
-export type MyType = Omit<_Generated, "nullable_col"> & { nullable_col: string | null };
-```
-
-**This applies to `.rpc()` returns and CHECK constraints — NOT to embedded `.from().select()` joins.** PostgREST joins are type-inferable, so a hand-written row shape + `as` cast there just throws away protection the generator already gives you. Instead, define the query in a standalone builder and derive the row type from it: `QueryData<ReturnType<typeof builder>>[number]` (import `QueryData` from `@supabase/supabase-js`). No hand-written type, no cast, and the select string and type can't drift.
+- **`.rpc()` returns (wrong nullability or `Json`):** parse the result through a zod schema in the feature's `*.contracts.ts`, written from the function body in `supabase/schema.sql`; the call site's declared return type checks the schema's output, and the db tests parse real RPC output through the same schema in CI. If the JOIN is ever relaxed, the parse fails loudly — unlike the old `Omit`+intersection alias casts this replaced, which went silently stale.
+- **CHECK-tightened columns:** a type-guard helper (`(row): row is Tightened` whose body really checks the predicate) adjacent to the row alias in `src/types/index.ts`, doc comment naming the source constraint. Type predicates are trusted, not verified — keep the body a literal transcription of the CHECK.
+- **Embedded `.from().select()` joins:** PostgREST joins are type-inferable — define the query in a standalone builder and derive the row type via `QueryData<ReturnType<typeof builder>>[number]` (import `QueryData` from `@supabase/supabase-js`). `!inner` makes a NOT-NULL-FK embed non-nullable. A hand-written row shape + cast throws away protection the generator already gives you. (Where a *test* must admit a value the generated type forbids — e.g. RLS nulling an embed — widen with a plain type annotation derived from `QueryData`, never a cast.)
 
 ### Function & Table Access Control
 
