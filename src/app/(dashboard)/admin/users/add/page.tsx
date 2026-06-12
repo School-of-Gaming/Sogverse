@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, UserPlus, Check } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { ROUTES, DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
-import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, type SupportedLocale } from "@/lib/constants/locales";
+import { SUPPORTED_LOCALES, LOCALE_CONFIG, DEFAULT_LOCALE, isSupportedLocale, type SupportedLocale } from "@/lib/constants/locales";
 import { z } from "zod";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -197,7 +197,9 @@ export default function AddUserPage() {
               <select
                 id="locale"
                 value={locale}
-                onChange={(e) => setLocale(e.target.value as SupportedLocale)}
+                onChange={(e) => {
+                  if (isSupportedLocale(e.target.value)) setLocale(e.target.value);
+                }}
                 disabled={createGedu.isPending}
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
