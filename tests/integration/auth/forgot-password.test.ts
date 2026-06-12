@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { POST } from "@/app/api/auth/forgot-password/route";
 
+// The route builds the emailed reset link's redirectTo via getOrigin(), which
+// falls back to NEXT_PUBLIC_SITE_URL when the request carries no trusted Host
+// (these mock requests don't). A fake value keeps the suite hermetic and
+// exercises the production-representative path (untrusted Host → canonical
+// origin). getOrigin reads process.env at call time, so setting it here works
+// despite import hoisting.
+process.env.NEXT_PUBLIC_SITE_URL = "https://test.sogverse.local";
+
 // --- Mocks ---
 
 const mockGenerateLink = vi.fn();
@@ -107,9 +115,33 @@ describe("POST /api/auth/forgot-password", () => {
       type: "recovery",
       email: "user@example.com",
       options: {
-        redirectTo: "http://localhost:3000/reset-password",
+        redirectTo: "https://test.sogverse.local/reset-password",
       },
     });
+  });
+
+  // Regression: the recovery link's redirectTo must be built off the trusted
+  // origin (getOrigin → canonical NEXT_PUBLIC_SITE_URL here), never the
+  // attacker-controllable Host header / request URL. This route is
+  // unauthenticated and takes an arbitrary email, so a spoofed Host would mail
+  // the victim a real recovery link pointing at the attacker's domain —
+  // clicking it hands over the recovery token (account takeover).
+  it("builds the reset link off the trusted origin, ignoring a spoofed Host", async () => {
+    // Both the URL and the Host header carry the attacker value, as a genuinely
+    // spoofed request would — so this fails if the route ever regresses to
+    // either `new URL(request.url).origin` or a raw Host read.
+    const spoofed = new Request("https://evil.com/api/auth/forgot-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", host: "evil.com" },
+      body: JSON.stringify({ email: "victim@example.com" }),
+    });
+    await POST(spoofed);
+
+    expect(mockGenerateLink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        options: { redirectTo: "https://test.sogverse.local/reset-password" },
+      }),
+    );
   });
 
   it("should send email via Brevo with the action link", async () => {

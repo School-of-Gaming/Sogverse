@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { getOrigin } from "@/lib/url";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTransactionalEmail } from "@/lib/brevo";
 import { SENDER_EMAIL } from "@/lib/constants";
@@ -22,7 +23,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    const origin = new URL(request.url).origin;
+    // Trusted origin, never the raw Host/request URL — the reset link goes
+    // into an email and carries a recovery token, so a spoofed Host would
+    // turn it into an account-takeover phishing link.
+    const origin = getOrigin(request);
     const adminClient = createAdminClient();
 
     // Fetch locale preference and generate reset link in parallel
