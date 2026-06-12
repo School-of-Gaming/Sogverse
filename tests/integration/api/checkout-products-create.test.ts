@@ -432,6 +432,9 @@ describe("POST /api/checkout/products/create", () => {
     expect(params.customer).toBe(STRIPE_CUSTOMER_ID);
     // Adaptive Pricing presents the customer's local currency; we settle EUR.
     expect(params.adaptive_pricing).toEqual({ enabled: true });
+    // Checkout shows the "Add promotion code" field (codes live in the Stripe
+    // dashboard).
+    expect(params.allow_promotion_codes).toBe(true);
     // One-time payments offer to save the card for future purchases.
     expect(params.saved_payment_method_options).toEqual({
       payment_method_save: "enabled",
@@ -562,6 +565,8 @@ describe("POST /api/checkout/products/create", () => {
     });
     // No app locale on the profile → Stripe chrome falls back to 'auto'.
     expect(params.locale).toBe("auto");
+    // Promotion-code entry is enabled on the subscription path too.
+    expect(params.allow_promotion_codes).toBe(true);
   });
 
   it("localizes the Stripe chrome and description to the parent's locale", async () => {
