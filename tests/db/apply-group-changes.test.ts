@@ -5,6 +5,7 @@ import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
+import { productGroupsSnapshot } from "@/services/groups/groups.contracts";
 import { z } from "zod";
 
 /**
@@ -599,20 +600,13 @@ describe("get_product_groups_with_details", () => {
     );
     expect(error).toBeNull();
 
-    const result = z
-      .object({
-        product_id: z.string(),
-        groups: z.array(
-          z.object({
-            id: z.string(),
-            name: z.string(),
-            gedus: z.array(z.object({ id: z.string() })),
-            participations: z.array(z.object({ gamer_id: z.string() })),
-          }),
-        ),
-        unassigned: z.array(z.object({ gamer_id: z.string() })),
-      })
-      .parse(data);
+    // Parse through the production contract schema (not an ad-hoc subset) so
+    // this real RPC output is the CI guard that groups.contracts.ts stays true
+    // to Postgres. The admin Groups panel calls productGroupsSnapshot.parse()
+    // on this exact shape; a drift would throw and blank the whole panel, so
+    // the schema needs a test that runs real output through it. This row has a
+    // grouped + an unassigned participation, exercising both detail arrays.
+    const result = productGroupsSnapshot.parse(data);
 
     expect(result.product_id).toBe(PRODUCT_DETAILS);
     expect(result.groups).toHaveLength(1);

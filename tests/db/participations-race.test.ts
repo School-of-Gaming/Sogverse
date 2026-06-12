@@ -9,6 +9,10 @@ import {
 } from "./product-helpers";
 import { z } from "zod";
 import { getString, getNumber } from "../helpers/json";
+import {
+  createParticipationRpcResult,
+  joinWaitlistRpcResult,
+} from "@/services/participations/participations.contracts";
 
 /**
  * Concurrency + idempotency tests for the participations lifecycle.
@@ -127,7 +131,14 @@ describe("participations race + idempotency", () => {
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      expect(getString(first.data, "kind")).toBe("reserving");
+      // Parse both through the contract schema the checkout route depends on
+      // (createParticipationRpcResult), so this real RPC output is the CI
+      // guard that participations.contracts.ts stays true to Postgres. This
+      // test covers both relevant kinds: 'reserving' (carries participation_id)
+      // and 'full' (no id).
+      expect(createParticipationRpcResult.parse(first.data).kind).toBe(
+        "reserving",
+      );
 
       const second = await admin.rpc("create_participation", {
         p_product_id: PRODUCT_RACE_1SEAT,
@@ -136,7 +147,7 @@ describe("participations race + idempotency", () => {
         p_purchase_shape: "subscription_monthly",
         p_currency: "eur",
       });
-      expect(getString(second.data, "kind")).toBe("full");
+      expect(createParticipationRpcResult.parse(second.data).kind).toBe("full");
     });
   });
 
@@ -386,9 +397,14 @@ describe("participations race + idempotency", () => {
       expect(a.error).toBeNull();
       expect(b.error).toBeNull();
 
+      // Parse both through the contract the waitlist route depends on
+      // (joinWaitlistRpcResult) so real RPC output guards the schema in CI.
+      const parsedA = joinWaitlistRpcResult.parse(a.data);
+      const parsedB = joinWaitlistRpcResult.parse(b.data);
+
       const positions = [
-        getNumber(a.data, "waitlist_position"),
-        getNumber(b.data, "waitlist_position"),
+        parsedA.waitlist_position,
+        parsedB.waitlist_position,
       ].sort();
       expect(positions).toEqual([1, 2]);
     });
