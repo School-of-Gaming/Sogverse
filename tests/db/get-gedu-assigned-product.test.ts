@@ -8,7 +8,11 @@ import {
 import { applyGroupChangesResult } from "@/services/groups/groups.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
-import { createTestProduct, deleteTestProducts } from "./product-helpers";
+import {
+  createScheduleSlot,
+  createTestProduct,
+  deleteTestProducts,
+} from "./product-helpers";
 
 /**
  * Auth + return-shape coverage for `get_gedu_assigned_product` (migrations
@@ -81,6 +85,23 @@ describe("get_gedu_assigned_product", () => {
     for (const id of ALL_PRODUCTS) {
       await createTestProduct(admin, { id, seatCount: 50 });
     }
+
+    // createTestProduct seeds only the products row. Give PRODUCT_GEDU_ON one
+    // translation and one schedule slot so the RPCs' embedded jsonb arrays are
+    // non-empty — that's what exercises the nested productTranslationSummary /
+    // scheduleSlotSummary element schemas against real Postgres output. Both
+    // cascade-delete with the product in afterAll.
+    await admin.from("product_translations").insert({
+      product_id: PRODUCT_GEDU_ON,
+      locale: "en",
+      name: "Gedu Cohort Club",
+      short_description: "A club the assigned gedu teaches.",
+    });
+    await createScheduleSlot(admin, PRODUCT_GEDU_ON, {
+      weekday: 2,
+      startTime: "16:00",
+      durationMinutes: 90,
+    });
 
     // PRODUCT_GEDU_ON: Cohort A owned by GEDU, Cohort B a sister group with
     // no caller assignment.
