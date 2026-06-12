@@ -1,7 +1,29 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { z } from "zod";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient } from "./helpers";
+
+/**
+ * Row shapes of the catalog-introspection RPCs (`_list_rpc_access`,
+ * `_list_table_grants`). These query information_schema/pg_catalog, so no
+ * src contract exists (or should) — validating the shape at runtime in the
+ * test is the honest move.
+ */
+const rpcAccessRows = z.array(
+  z.object({
+    function_name: z.string(),
+    authenticated_access: z.boolean(),
+    anon_access: z.boolean(),
+  })
+);
+
+const tableGrantRows = z.array(
+  z.object({
+    table_name: z.string(),
+    privilege_type: z.string(),
+  })
+);
 
 /**
  * Allowlist of functions that authenticated users can call via PostgREST /rpc/.
@@ -63,11 +85,8 @@ describe("Access Control", () => {
     expect(error).toBeNull();
     expect(data).not.toBeNull();
 
-    const authenticatedFunctions = (data as {
-      function_name: string;
-      authenticated_access: boolean;
-      anon_access: boolean;
-    }[])
+    const authenticatedFunctions = rpcAccessRows
+      .parse(data)
       .filter((row) => row.authenticated_access)
       .map((row) => row.function_name);
 
@@ -84,11 +103,8 @@ describe("Access Control", () => {
     expect(error).toBeNull();
     expect(data).not.toBeNull();
 
-    const anonFunctions = (data as {
-      function_name: string;
-      authenticated_access: boolean;
-      anon_access: boolean;
-    }[])
+    const anonFunctions = rpcAccessRows
+      .parse(data)
       .filter((row) => row.anon_access)
       .map((row) => row.function_name);
 
@@ -145,7 +161,7 @@ describe("Access Control", () => {
     expect(error).toBeNull();
     expect(data).not.toBeNull();
 
-    const grants = data as { table_name: string; privilege_type: string }[];
+    const grants = tableGrantRows.parse(data);
 
     const excess = grants.filter((row) => {
       if (row.privilege_type === "SELECT") return false;
@@ -190,9 +206,9 @@ describe("Access Control", () => {
     expect(error).toBeNull();
     expect(data).not.toBeNull();
 
-    const writeGrants = (
-      data as { table_name: string; privilege_type: string }[]
-    ).filter((row) => row.privilege_type !== "SELECT");
+    const writeGrants = tableGrantRows
+      .parse(data)
+      .filter((row) => row.privilege_type !== "SELECT");
 
     expect(writeGrants, "anon must never hold table write grants").toEqual([]);
   });

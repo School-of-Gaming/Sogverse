@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  type QueryData,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import { applyGroupChangesResult } from "@/services/groups/groups.contracts";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
 import {
@@ -78,8 +83,7 @@ describe("products gamer-read RLS (00067)", () => {
       p_product_id: HIDDEN_ACTIVE_PRODUCT,
       p_added_groups: [{ tempId: "tA", name: "Cohort A", geduIds: [] }],
     });
-    activeGroupId = (created.data as { tempMap: Record<string, string> })
-      .tempMap.tA;
+    activeGroupId = applyGroupChangesResult.parse(created.data).tempMap.tA;
 
     // GAMER's participations, keyed on gamer_id (the child's own account).
     // Admin client bypasses RLS to stage the post-signup state directly.
@@ -208,18 +212,7 @@ describe("products gamer-read RLS (00067)", () => {
   // ---------------------------------------------------------------------------
 
   it("dashboard join: gamer's active+placed session carries the hidden product with its slots and translations", async () => {
-    type SessionRow = {
-      gamer_id: string;
-      group_id: string | null;
-      product: {
-        id: string;
-        is_visible: boolean;
-        schedule_slots: { weekday: number }[];
-        product_translations: { locale: string; name: string }[];
-      } | null;
-    };
-
-    const { data, error } = await gamerClient
+    const query = gamerClient
       .from("participations")
       .select(
         "gamer_id, group_id, product:products!inner(id, is_visible, schedule_slots(weekday), product_translations(locale, name))",
@@ -229,17 +222,19 @@ describe("products gamer-read RLS (00067)", () => {
       .not("group_id", "is", null)
       .eq("product_id", HIDDEN_ACTIVE_PRODUCT);
 
+    const { data, error } = await query;
+
     expect(error).toBeNull();
-    const rows = (data ?? []) as unknown as SessionRow[];
+    const rows: QueryData<typeof query> = data ?? [];
     expect(rows).toHaveLength(1);
-    expect(rows[0].product?.id).toBe(HIDDEN_ACTIVE_PRODUCT);
-    expect(rows[0].product?.is_visible).toBe(false);
+    expect(rows[0].product.id).toBe(HIDDEN_ACTIVE_PRODUCT);
+    expect(rows[0].product.is_visible).toBe(false);
     // The product surviving the inner join isn't enough: the dashboard reads
     // the embedded children too. An empty slots array makes
     // `expandUpcomingSessions` drop the row (the reported empty-Sessions bug);
     // an empty translations array renders a blank product name. Both child
     // tables need the enrolled-read policy, so assert both actually arrive.
-    expect(rows[0].product?.schedule_slots.length).toBeGreaterThan(0);
-    expect(rows[0].product?.product_translations.length).toBeGreaterThan(0);
+    expect(rows[0].product.schedule_slots.length).toBeGreaterThan(0);
+    expect(rows[0].product.product_translations.length).toBeGreaterThan(0);
   });
 });

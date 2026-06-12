@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import {
+  createClient,
+  type QueryData,
+  type SupabaseClient,
+} from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import { createAdminTestClient, createAuthenticatedClient } from "./helpers";
 import { TEST_IDS, TEST_CREDENTIALS } from "./constants";
@@ -229,15 +233,10 @@ describe("products purchaser-read RLS (00047)", () => {
     // The embedded `product` is typed non-null by PostgREST because
     // `participations.product_id` is NOT NULL — but RLS can still
     // null it out for rows the viewer isn't allowed to see (the whole
-    // point of this assertion). Cast through `RailRow` to admit null
-    // at compile time so the runtime check on the reserving row works.
-    type RailRow = {
-      product_id: string;
-      status: string;
-      product: { id: string; is_visible: boolean } | null;
-    };
-
-    const { data, error } = await customerClient
+    // point of this assertion). Widen the QueryData row to admit null
+    // at compile time so the runtime check on the reserving row works —
+    // a widening annotation, not a narrowing cast.
+    const query = customerClient
       .from("participations")
       .select("product_id, status, product:products(id, is_visible)")
       .in("product_id", [
@@ -246,8 +245,15 @@ describe("products purchaser-read RLS (00047)", () => {
         HIDDEN_RESERVING_PRODUCT,
       ]);
 
+    const { data, error } = await query;
+
+    type QueryRow = QueryData<typeof query>[number];
+    type RailRow = Omit<QueryRow, "product"> & {
+      product: QueryRow["product"] | null;
+    };
+
     expect(error).toBeNull();
-    const rows = (data ?? []) as unknown as RailRow[];
+    const rows: RailRow[] = data ?? [];
     const byProduct = new Map(rows.map((row) => [row.product_id, row]));
 
     expect(byProduct.get(HIDDEN_ACTIVE_PRODUCT)?.product?.id).toBe(
@@ -271,14 +277,7 @@ describe("products purchaser-read RLS (00047)", () => {
   // ---------------------------------------------------------------------------
 
   it("detail join: purchaser reads the hidden product's slots and translations", async () => {
-    type DetailRow = {
-      id: string;
-      is_visible: boolean;
-      schedule_slots: { weekday: number }[];
-      product_translations: { locale: string; name: string }[];
-    };
-
-    const { data, error } = await customerClient
+    const { data: row, error } = await customerClient
       .from("products")
       .select(
         "id, is_visible, schedule_slots(weekday), product_translations(locale, name)",
@@ -287,7 +286,6 @@ describe("products purchaser-read RLS (00047)", () => {
       .maybeSingle();
 
     expect(error).toBeNull();
-    const row = data as unknown as DetailRow | null;
     expect(row?.id).toBe(HIDDEN_ACTIVE_PRODUCT);
     // Pin that the row really is hidden, so the assertion exercises the
     // purchaser carve-out rather than the public-read path.
