@@ -1099,7 +1099,8 @@
     }
   },
   "selectProfile": {
-    "title": "Kuka astuu Sogverseen?"
+    "title": "Kuka astuu Sogverseen?",
+    "notYou": "Etkö ole sinä?"
   },
   "footer": {
     "tagline": "School of Gaming – Ruutuaika muuttuu laatuajaksi.",

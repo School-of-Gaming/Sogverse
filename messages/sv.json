@@ -1099,7 +1099,8 @@
     }
   },
   "selectProfile": {
-    "title": "Vem ska in i Sogverse?"
+    "title": "Vem ska in i Sogverse?",
+    "notYou": "Inte du?"
   },
   "footer": {
     "tagline": "School of Gaming - Där skärmtid blir kvalitetstid.",

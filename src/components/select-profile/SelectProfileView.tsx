@@ -2,7 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { LogOut } from "lucide-react";
 import { useAuth } from "@/providers";
+import { Button } from "@/components/ui/button";
 import { FamilyProfileSelector } from "@/components/family";
 import type { FamilyMember } from "@/services/family";
 import { trackDashboardNav } from "@/lib/analytics";
@@ -27,6 +29,7 @@ export function SelectProfileView({
   initialFamily?: FamilyMember[];
 }) {
   const t = useTranslations("selectProfile");
+  const c = useTranslations("common");
   const pathname = usePathname();
   const { profile } = useAuth();
 
@@ -54,6 +57,22 @@ export function SelectProfileView({
           window.location.href = selfDashboardPath;
         }}
       />
+      {/* Escape hatch for a customer who can't get past the PIN gate (forgot
+          their PIN and can't reach the reset email). Sign-out is otherwise only
+          on /settings, which sits behind the gate — so a locked user has no way
+          out without this. /select-profile is PIN-exempt and the post-login
+          landing screen, so it's the one place a stuck user always reaches.
+          Canonical form-post sign-out (POST + Lax cookies = CSRF-safe), same
+          shape as the settings sign-out. */}
+      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <span>{t("notYou")}</span>
+        <form action="/api/auth/signout" method="post">
+          <Button type="submit" variant="link" className="h-auto gap-1.5 p-0 text-sm">
+            <LogOut className="h-4 w-4" />
+            {c("signOut")}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }

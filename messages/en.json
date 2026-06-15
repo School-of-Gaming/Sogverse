@@ -1099,7 +1099,8 @@
     }
   },
   "selectProfile": {
-    "title": "Who is entering Sogverse?"
+    "title": "Who is entering Sogverse?",
+    "notYou": "Not you?"
   },
   "footer": {
     "tagline": "School of Gaming - Where screen time becomes quality time.",
