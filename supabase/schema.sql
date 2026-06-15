@@ -1128,7 +1128,7 @@ COMMENT ON TABLE public.profiles IS 'User profiles extending Supabase auth.users
 -- Name: COLUMN profiles.email; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public.profiles.email IS 'Email address (NULL for gamer accounts)';
+COMMENT ON COLUMN public.profiles.email IS 'Email address (NOT NULL for every role). Gamer accounts carry a generated synthetic <token>@gamer.sogverse.internal address until/unless replaced by a real one.';
 
 
 --
