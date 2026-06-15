@@ -258,6 +258,15 @@ export async function POST(request: Request) {
     // coupons convert cleanly; amount_off coupons are currency-bound, so
     // prefer percent-off when creating codes.
     allow_promotion_codes: true,
+    // Enable Stripe Tax so new signups get VAT itemized like the migrated
+    // Chargebee subs do. `customer_update: { address: "auto" }` is required by
+    // Stripe whenever a `customer` is pre-set on the session with automatic_tax
+    // on; it also makes Checkout collect the billing address and persist it back
+    // onto the Customer (getOrCreateStripeCustomer creates customers with email
+    // + name only, no address), which Stripe Tax needs to locate the customer.
+    // Session-level automatic_tax covers both "subscription" and "payment" modes.
+    automatic_tax: { enabled: true },
+    customer_update: { address: "auto" },
     expires_at: expiresAt,
     metadata,
     success_url: successUrl,
