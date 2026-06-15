@@ -1,0 +1,30 @@
+# Line-ending policy for this repo.
+#
+# Without this file, line endings depend on each machine's core.autocrlf,
+# which produced whole-file CRLF<->LF diffs and "LF will be replaced by CRLF"
+# warnings on commit. These rules make it deterministic: every text file is
+# stored AND checked out as LF, regardless of platform or git config. Git
+# normalizes on commit, so even a working tree that holds CRLF commits clean.
+
+# Default: detect text vs binary, store + check out text as LF.
+* text=auto eol=lf
+
+# Windows shell scripts genuinely require CRLF.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+
+# Binary assets — never convert.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.avif  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+*.pdf   binary
+*.mp4   binary
+*.webm  binary
