@@ -1101,7 +1101,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.profiles (
     id uuid NOT NULL,
-    email text,
+    email text NOT NULL,
     username text,
     role public.user_role DEFAULT 'customer'::public.user_role NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,

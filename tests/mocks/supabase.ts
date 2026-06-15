@@ -24,7 +24,7 @@ export function createMockGamerProfile(
 ): Profile {
   return {
     id: "test-gamer-id",
-    email: null,
+    email: "testgamer@gamer.sogverse.internal",
     username: "testgamer",
     role: "gamer" as UserRole,
     first_name: "Test",

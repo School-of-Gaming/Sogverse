@@ -294,8 +294,8 @@ describe("get_gedu_assigned_product", () => {
       expect(entry?.gender).toBe("boy");
       expect(entry?.minecraft_username).toBe(GAMER_MINECRAFT_USERNAME);
       expect(entry?.minecraft_uuid).toBe(GAMER_MINECRAFT_UUID);
-      // parent_email comes from the parent's profile (the gamer's own
-      // profile email is null), and is the primary (oldest) parent link.
+      // parent_email comes from the parent's profile (not the gamer's own
+      // synthetic email), and is the primary (oldest) parent link.
       expect(entry?.parent_email).toBe(parentEmail);
       expect(entry?.parent_email).not.toBeNull();
     });

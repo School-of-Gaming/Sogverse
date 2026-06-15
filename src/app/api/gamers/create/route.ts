@@ -162,12 +162,14 @@ export async function POST(request: Request) {
 
     const gamerId = authData.user.id;
 
-    // Step 2: Promote to gamer — update profile, swap extension tables
+    // Step 2: Promote to gamer — update profile, swap extension tables.
+    // Keep the synthetic email the trigger seeded (handle_new_user copies
+    // NEW.email from auth.users): gamers are email-first, so `profiles.email`
+    // stays populated and queryable like every other role.
     const { error: promoteError } = await admin
       .from("profiles")
       .update({
         role: "gamer",
-        email: null,
         username,
         first_name: firstName,
         last_name: inheritedLastName,

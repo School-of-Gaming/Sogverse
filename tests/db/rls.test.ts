@@ -124,6 +124,7 @@ describe("Row Level Security", () => {
         id: "00000000-0000-0000-0000-000000000099",
         role: "customer",
         first_name: "Injected",
+        email: "injected@example.com",
       });
 
       expect(error).not.toBeNull();
@@ -439,10 +440,12 @@ describe("Row Level Security", () => {
           user_metadata: { first_name: "Temp", last_name: "Gamer" },
         });
 
-        // Promote to gamer (same pattern as seed.sql)
+        // Promote to gamer (same pattern as seed.sql). Keep the synthetic
+        // email the trigger seeded — gamers are email-first and profiles.email
+        // is NOT NULL.
         await admin
           .from("profiles")
-          .update({ role: "gamer", email: null, username: "tempgamer" })
+          .update({ role: "gamer", username: "tempgamer" })
           .eq("id", TEMP_GAMER_ID);
         await admin
           .from("customer_profiles")

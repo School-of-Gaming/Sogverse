@@ -60,7 +60,7 @@ function mockAuthenticated(role: "customer" | "gamer", userId: string) {
   });
 }
 
-type TargetProfile = { id: string; role: string; username: string | null } | null;
+type TargetProfile = { id: string; role: string; email: string | null } | null;
 
 /**
  * Configure the admin client to dispatch `from()` calls to per-table mock
@@ -216,7 +216,7 @@ describe("POST /api/auth/switch-account", () => {
     it("allows parent to switch to their own linked gamer", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
-        target: { id: GAMER_A1, role: "gamer", username: "alphaone" },
+        target: { id: GAMER_A1, role: "gamer", email: "alphaone@gamer.sogverse.internal" },
         parentGamerBuilder: linkLookup(true),
       });
       mockHappyPathSession("alphaone@gamer.sogverse.internal");
@@ -236,7 +236,7 @@ describe("POST /api/auth/switch-account", () => {
     it("forbids parent from switching to a different parent's gamer", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
-        target: { id: GAMER_B1, role: "gamer", username: "betaone" },
+        target: { id: GAMER_B1, role: "gamer", email: "betaone@gamer.sogverse.internal" },
         parentGamerBuilder: linkLookup(false),
       });
 
@@ -249,7 +249,7 @@ describe("POST /api/auth/switch-account", () => {
     it("forbids parent from switching to another customer", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
-        target: { id: PARENT_B, role: "customer", username: null },
+        target: { id: PARENT_B, role: "customer", email: "parent-b@example.com" },
         // parent_gamer should not even be checked when target role is wrong;
         // but if it were, configure as not-linked to be safe.
         parentGamerBuilder: linkLookup(false),
@@ -263,7 +263,7 @@ describe("POST /api/auth/switch-account", () => {
     it("forbids parent from switching to admin/gedu account", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
-        target: { id: "admin-1", role: "admin", username: null },
+        target: { id: "admin-1", role: "admin", email: "admin-1@example.com" },
       });
 
       const response = await POST(createRequest({ userId: "admin-1" }));
@@ -275,7 +275,7 @@ describe("POST /api/auth/switch-account", () => {
     it("allows gamer to switch to their own linked parent", async () => {
       mockAuthenticated("gamer", GAMER_A1);
       setupAdminFrom({
-        target: { id: PARENT_A, role: "customer", username: null },
+        target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
         parentGamerBuilder: linkLookup(true),
       });
       mockHappyPathSession("parent-a@example.com");
@@ -295,7 +295,7 @@ describe("POST /api/auth/switch-account", () => {
     it("forbids gamer from switching to an unrelated parent", async () => {
       mockAuthenticated("gamer", GAMER_A1);
       setupAdminFrom({
-        target: { id: PARENT_B, role: "customer", username: null },
+        target: { id: PARENT_B, role: "customer", email: "parent-b@example.com" },
         parentGamerBuilder: linkLookup(false),
       });
 
@@ -309,7 +309,7 @@ describe("POST /api/auth/switch-account", () => {
     it("allows sibling switch when both gamers share a parent", async () => {
       mockAuthenticated("gamer", GAMER_A1);
       setupAdminFrom({
-        target: { id: GAMER_A2, role: "gamer", username: "alphatwo" },
+        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
         parentGamerBuilder: siblingLookup([
           { parent_id: PARENT_A, gamer_id: GAMER_A1 },
           { parent_id: PARENT_A, gamer_id: GAMER_A2 },
@@ -324,7 +324,7 @@ describe("POST /api/auth/switch-account", () => {
     it("forbids sibling switch when gamers belong to different parents", async () => {
       mockAuthenticated("gamer", GAMER_A1);
       setupAdminFrom({
-        target: { id: GAMER_B1, role: "gamer", username: "betaone" },
+        target: { id: GAMER_B1, role: "gamer", email: "betaone@gamer.sogverse.internal" },
         parentGamerBuilder: siblingLookup([
           { parent_id: PARENT_A, gamer_id: GAMER_A1 },
           { parent_id: PARENT_B, gamer_id: GAMER_B1 },
@@ -340,7 +340,7 @@ describe("POST /api/auth/switch-account", () => {
     it("allows sibling switch even if siblings share only one of multiple parents (multi-parent family)", async () => {
       mockAuthenticated("gamer", GAMER_A1);
       setupAdminFrom({
-        target: { id: GAMER_A2, role: "gamer", username: "alphatwo" },
+        target: { id: GAMER_A2, role: "gamer", email: "alphatwo@gamer.sogverse.internal" },
         parentGamerBuilder: siblingLookup([
           // GAMER_A1 has both PARENT_A and PARENT_B as parents
           { parent_id: PARENT_A, gamer_id: GAMER_A1 },
@@ -360,7 +360,7 @@ describe("POST /api/auth/switch-account", () => {
     it("returns 500 when generateLink fails — does NOT sign out the caller", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
-        target: { id: GAMER_A1, role: "gamer", username: "alphaone" },
+        target: { id: GAMER_A1, role: "gamer", email: "alphaone@gamer.sogverse.internal" },
         parentGamerBuilder: linkLookup(true),
       });
       mockAdminGenerateLink.mockResolvedValue({
@@ -376,7 +376,7 @@ describe("POST /api/auth/switch-account", () => {
     it("returns 500 when verifyOtp fails (sign-out was already called)", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
-        target: { id: GAMER_A1, role: "gamer", username: "alphaone" },
+        target: { id: GAMER_A1, role: "gamer", email: "alphaone@gamer.sogverse.internal" },
         parentGamerBuilder: linkLookup(true),
       });
       mockAdminGenerateLink.mockResolvedValue({
@@ -393,10 +393,10 @@ describe("POST /api/auth/switch-account", () => {
       expect(mockSignOut).toHaveBeenCalledOnce();
     });
 
-    it("returns 500 when target gamer has no username (misconfigured)", async () => {
+    it("returns 500 when target gamer has no email (misconfigured)", async () => {
       mockAuthenticated("customer", PARENT_A);
       setupAdminFrom({
-        target: { id: GAMER_A1, role: "gamer", username: null },
+        target: { id: GAMER_A1, role: "gamer", email: null },
         parentGamerBuilder: linkLookup(true),
       });
 
@@ -410,7 +410,7 @@ describe("POST /api/auth/switch-account", () => {
     it("returns 500 when parent email lookup fails", async () => {
       mockAuthenticated("gamer", GAMER_A1);
       setupAdminFrom({
-        target: { id: PARENT_A, role: "customer", username: null },
+        target: { id: PARENT_A, role: "customer", email: "parent-a@example.com" },
         parentGamerBuilder: linkLookup(true),
       });
       mockAdminGetUserById.mockResolvedValue({
