@@ -83,6 +83,13 @@ export async function getOrCreateSubscriptionPrice(
     product: stripeProductId,
     currency,
     unit_amount: unitAmount,
+    // Our prices are the full amount the customer pays with VAT *inside* them
+    // (same as Chargebee). With Stripe Tax on, a price with unspecified
+    // tax_behavior resolves to exclusive and would add VAT on top — so mark it
+    // inclusive. tax_behavior is immutable once a price is created, so this only
+    // governs prices created from here on; existing prices rely on the account
+    // default tax behavior (set to Inclusive in the Stripe Dashboard).
+    tax_behavior: "inclusive",
     recurring: { interval: "month", interval_count: 1 },
     metadata: {
       productId,
