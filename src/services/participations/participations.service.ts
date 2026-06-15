@@ -407,7 +407,7 @@ export class ParticipationsService {
       .select(
         `
           status, product_id,
-          gamer:profiles!participations_gamer_id_fkey(first_name, username)
+          gamer:profiles!participations_gamer_id_fkey(first_name)
         `,
       )
       .eq("id", participationId)
@@ -419,7 +419,7 @@ export class ParticipationsService {
     return {
       status: data.status,
       productId: data.product_id,
-      gamerName: data.gamer.first_name || data.gamer.username || null,
+      gamerName: data.gamer.first_name || null,
     };
   }
 
@@ -491,7 +491,7 @@ function buildMyUpcomingSessionsQuery(
           schedule_slots(weekday, start_time, duration_minutes)
         ),
         gamer:profiles!participations_gamer_id_fkey!inner(
-          first_name, username
+          first_name
         )
       `,
     )
@@ -513,8 +513,7 @@ function toMyUpcomingSessionRow(
   // Mirror the purchased-card fallback chain so a missing first_name still
   // renders something readable. The seed comes from `gamer_id` regardless,
   // so the identicon stays stable across name edits.
-  const firstName =
-    gamer.first_name || gamer.username || row.gamer_id.slice(0, 8);
+  const firstName = gamer.first_name || row.gamer_id.slice(0, 8);
   return {
     gamer: { id: row.gamer_id, firstName },
     product: {

@@ -273,7 +273,7 @@ function ParentBlockRow({
           </Avatar>
           <div className="min-w-0">
             <p className="truncate font-medium">
-              {parent.first_name || parent.username || t("unnamedParent")}
+              {parent.first_name || t("unnamedParent")}
             </p>
             {parent.email && (
               <p className="truncate text-xs text-muted-foreground">
@@ -340,7 +340,7 @@ function GamerPickerRow({
         </Avatar>
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">
-            {gamer.first_name || gamer.username || t("unnamedGamer")}
+            {gamer.first_name || t("unnamedGamer")}
           </p>
           {error && (
             <p className="truncate text-xs text-destructive">{error}</p>

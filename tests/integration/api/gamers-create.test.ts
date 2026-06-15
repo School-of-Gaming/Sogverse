@@ -52,27 +52,27 @@ const validBody = {
 
 /**
  * Configure admin.from() chain mocks for the pre-createUser phase.
- * Only needs to handle "profiles" (username check) and "minecraft_accounts"
- * (UUID uniqueness check) — tests that use this helper stop before the
- * post-createUser DB operations.
+ * Only needs to handle "profiles" (synthetic-email uniqueness check) and
+ * "minecraft_accounts" (UUID uniqueness check) — tests that use this helper
+ * stop before the post-createUser DB operations.
  */
 function mockPreCreateChecks(config: {
-  usernameExists?: boolean;
+  emailExists?: boolean;
   uuidExists?: boolean;
   parentLastName?: string | null;
 }) {
   mockAdminFrom.mockImplementation((table: string) => {
     if (table === "profiles") {
       // Two distinct chains hit profiles in this phase:
-      //   1. username-uniqueness: .select("id").eq().maybeSingle()
+      //   1. email-uniqueness: .select("id").eq().maybeSingle()
       //   2. parent last_name snapshot: .select("last_name").eq().single()
       // Branch on the column passed to .select() so each test can configure
-      // whether the username is taken AND what last_name to inherit.
+      // whether the email is taken AND what last_name to inherit.
       return {
         select: (col: string) => ({
           eq: () => ({
             maybeSingle: () => Promise.resolve({
-              data: config.usernameExists ? { id: "existing-id" } : null,
+              data: config.emailExists ? { id: "existing-id" } : null,
               error: null,
             }),
             single: () => Promise.resolve({
@@ -183,7 +183,7 @@ describe("POST /api/gamers/create — Minecraft UUID ordering", () => {
       username: "TakenPlayer",
       uuid: "already-claimed-uuid",
     });
-    mockPreCreateChecks({ usernameExists: false, uuidExists: true });
+    mockPreCreateChecks({ emailExists: false, uuidExists: true });
 
     const response = await POST(
       createRequest({ ...validBody, minecraftUsername: "TakenPlayer" }),
@@ -201,7 +201,7 @@ describe("POST /api/gamers/create — Minecraft UUID ordering", () => {
       username: "FreePlayer",
       uuid: "available-uuid",
     });
-    mockPreCreateChecks({ usernameExists: false, uuidExists: false });
+    mockPreCreateChecks({ emailExists: false, uuidExists: false });
     // Let createUser fail so we don't need to mock the rest of the flow
     mockCreateUser.mockResolvedValue({
       data: null,
@@ -218,7 +218,7 @@ describe("POST /api/gamers/create — Minecraft UUID ordering", () => {
   it("should skip UUID check when Mojang finds no account (null UUID)", async () => {
     mockAuthenticated();
     mockLookupMinecraftUser.mockResolvedValue(null);
-    mockPreCreateChecks({ usernameExists: false });
+    mockPreCreateChecks({ emailExists: false });
     mockCreateUser.mockResolvedValue({
       data: null,
       error: { message: "mock-stop" },
@@ -236,7 +236,7 @@ describe("POST /api/gamers/create — Minecraft UUID ordering", () => {
 
   it("should skip minecraft check entirely when no minecraft username provided", async () => {
     mockAuthenticated();
-    mockPreCreateChecks({ usernameExists: false });
+    mockPreCreateChecks({ emailExists: false });
     mockCreateUser.mockResolvedValue({
       data: null,
       error: { message: "mock-stop" },
@@ -257,7 +257,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated credential
 
   it("accepts a body with only firstName + dateOfBirth and auto-generates credentials", async () => {
     mockAuthenticated();
-    mockPreCreateChecks({ usernameExists: false });
+    mockPreCreateChecks({ emailExists: false });
     // Stop the flow at createUser so we can inspect what got passed.
     mockCreateUser.mockResolvedValue({
       data: null,
@@ -273,7 +273,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated credential
         password: z.string(),
       })
       .parse(mockCreateUser.mock.calls[0][0]);
-    // Opaque internal username shape: "g" + 16 hex chars.
+    // Opaque internal email local-part shape: "g" + 16 hex chars.
     expect(callArg.email).toMatch(/^g[0-9a-f]{16}@gamer\.sogverse\.internal$/);
     // Auto-generated password is a non-empty random string.
     expect(typeof callArg.password).toBe("string");
@@ -294,7 +294,7 @@ describe("POST /api/gamers/create — v1 minimal body (auto-generated credential
 
   it("accepts a missing/null gender (no longer required)", async () => {
     mockAuthenticated();
-    mockPreCreateChecks({ usernameExists: false });
+    mockPreCreateChecks({ emailExists: false });
     mockCreateUser.mockResolvedValue({
       data: null,
       error: { message: "mock-stop" },

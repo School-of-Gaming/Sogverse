@@ -1102,7 +1102,6 @@ SET default_table_access_method = heap;
 CREATE TABLE public.profiles (
     id uuid NOT NULL,
     email text NOT NULL,
-    username text,
     role public.user_role DEFAULT 'customer'::public.user_role NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -1112,7 +1111,6 @@ CREATE TABLE public.profiles (
     locale text,
     first_name text NOT NULL,
     last_name text DEFAULT ''::text NOT NULL,
-    CONSTRAINT auth_identifier_check CHECK ((((role = 'gamer'::public.user_role) AND (username IS NOT NULL)) OR ((role <> 'gamer'::public.user_role) AND (email IS NOT NULL)))),
     CONSTRAINT profiles_first_name_len CHECK (((char_length(first_name) >= 2) AND (char_length(first_name) <= 32))),
     CONSTRAINT profiles_last_name_len CHECK ((char_length(last_name) <= 32)),
     CONSTRAINT profiles_phone_e164 CHECK ((phone ~ '^\d{7,15}$'::text))
@@ -1131,13 +1129,6 @@ COMMENT ON TABLE public.profiles IS 'User profiles extending Supabase auth.users
 --
 
 COMMENT ON COLUMN public.profiles.email IS 'Email address (NULL for gamer accounts)';
-
-
---
--- Name: COLUMN profiles.username; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public.profiles.username IS 'Username (required for gamers, optional for others)';
 
 
 --
@@ -2784,14 +2775,6 @@ ALTER TABLE ONLY public.profiles
 
 
 --
--- Name: profiles profiles_username_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.profiles
-    ADD CONSTRAINT profiles_username_key UNIQUE (username);
-
-
---
 -- Name: refunds refunds_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3093,13 +3076,6 @@ CREATE INDEX idx_profiles_email ON public.profiles USING btree (email) WHERE (em
 --
 
 CREATE INDEX idx_profiles_role ON public.profiles USING btree (role);
-
-
---
--- Name: idx_profiles_username; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX idx_profiles_username ON public.profiles USING btree (username) WHERE (username IS NOT NULL);
 
 
 --

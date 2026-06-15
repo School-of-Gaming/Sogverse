@@ -350,18 +350,18 @@ export async function POST(request: Request) {
 }
 
 // Resolve a short display name for the gamer, for the Stripe subscription
-// description (what the parent sees in the billing portal). Falls back through
-// username to a generic label so the description is never blank.
+// description (what the parent sees in the billing portal). Falls back to a
+// generic label so the description is never blank.
 async function pickGamerName(
   admin: ReturnType<typeof createAdminClient>,
   gamerId: string,
 ): Promise<string> {
   const { data } = await admin
     .from("profiles")
-    .select("first_name, username")
+    .select("first_name")
     .eq("id", gamerId)
     .maybeSingle();
-  return data?.first_name || data?.username || "your child";
+  return data?.first_name || "your child";
 }
 
 // Stripe Checkout's `locale` is its own fixed enum, not our SUPPORTED_LOCALES.

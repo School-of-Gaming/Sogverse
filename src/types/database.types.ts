@@ -817,7 +817,6 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
-          username: string | null
         }
         Insert: {
           created_at?: string
@@ -831,7 +830,6 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: string[]
           updated_at?: string
-          username?: string | null
         }
         Update: {
           created_at?: string
@@ -845,7 +843,6 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
           spoken_languages?: string[]
           updated_at?: string
-          username?: string | null
         }
         Relationships: []
       }
@@ -1205,7 +1202,6 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
-          username: string | null
         }[]
         SetofOptions: {
           from: "*"
@@ -1228,7 +1224,6 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
           spoken_languages: string[]
           updated_at: string
-          username: string | null
         }[]
         SetofOptions: {
           from: "*"

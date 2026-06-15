@@ -130,7 +130,7 @@ describe("ParticipationsService.getMyUpcomingSessions", () => {
         product_translations: [],
         schedule_slots: [],
       },
-      gamer: { first_name: gamerFirstName, username: null },
+      gamer: { first_name: gamerFirstName },
     };
   }
 

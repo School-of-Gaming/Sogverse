@@ -110,13 +110,13 @@ describe("Row Level Security", () => {
     it("gamer can read own profile", async () => {
       const { data, error } = await gamerClient
         .from("profiles")
-        .select("id, role, username")
+        .select("id, role, email")
         .eq("id", TEST_IDS.GAMER)
         .single();
 
       expect(error).toBeNull();
       expect(data!.role).toBe("gamer");
-      expect(data!.username).toBe("testgamer");
+      expect(data!.email).toBe("testgamer@gamer.sogverse.internal");
     });
 
     it("customer cannot insert a profile", async () => {
@@ -445,7 +445,7 @@ describe("Row Level Security", () => {
         // is NOT NULL.
         await admin
           .from("profiles")
-          .update({ role: "gamer", username: "tempgamer" })
+          .update({ role: "gamer" })
           .eq("id", TEMP_GAMER_ID);
         await admin
           .from("customer_profiles")

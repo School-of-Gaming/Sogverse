@@ -33,19 +33,8 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
 
-/**
- * Profile narrowed for gamer context — username is always set.
- *
- * Backed by the `auth_identifier_check` CHECK constraint on `profiles`,
- * which enforces `username IS NOT NULL` whenever `role = 'gamer'`. The
- * generated `Profile` type cannot express this conditional invariant
- * (column-level nullability only), so we narrow here. If that CHECK is
- * ever relaxed, this alias must be relaxed with it.
- */
-export type GamerProfileRow = Profile & { username: string };
-
-/** Type guard for `GamerProfileRow`. Use to narrow a `Profile | null | undefined` at sites that need `username` as a non-nullable `string`. */
-export function isGamerProfile(p: Profile | null | undefined): p is GamerProfileRow {
+/** Type guard: narrows a possibly-nullish `Profile` to a non-null gamer profile. */
+export function isGamerProfile(p: Profile | null | undefined): p is Profile & { role: "gamer" } {
   return p?.role === "gamer";
 }
 
@@ -479,11 +468,6 @@ export interface CreateGamerInput {
 
 export interface LoginCredentials {
   email: string;
-  password: string;
-}
-
-export interface GamerLoginCredentials {
-  username: string;
   password: string;
 }
 

@@ -46,7 +46,6 @@ function mockAuthenticatedAs(role: string, overrides?: Record<string, unknown>) 
       role,
       email: `${role}@test.local`,
       first_name: `Test ${role}`,
-      username: role === "gamer" ? "testgamer" : null,
       ...overrides,
     },
     supabase: {},
