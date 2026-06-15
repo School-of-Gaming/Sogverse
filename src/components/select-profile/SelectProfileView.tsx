@@ -64,10 +64,9 @@ export function SelectProfileView({
           landing screen, so it's the one place a stuck user always reaches.
           Canonical form-post sign-out (POST + Lax cookies = CSRF-safe), same
           shape as the settings sign-out. */}
-      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-        <span>{t("notYou")}</span>
+      <div className="flex items-center justify-center">
         <form action="/api/auth/signout" method="post">
-          <Button type="submit" variant="link" className="h-auto gap-1.5 p-0 text-sm">
+          <Button type="submit" variant="link" className="h-auto gap-1.5 p-0 text-sm text-muted-foreground">
             <LogOut className="h-4 w-4" />
             {c("signOut")}
           </Button>
