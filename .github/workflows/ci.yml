@@ -5,6 +5,17 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Single source of truth for the Supabase CLI version used by every job below.
+# Pinned (not `latest`) on purpose: `latest` makes supabase/setup-cli resolve the
+# newest release via the GitHub API at runtime, and that lookup intermittently
+# rate-limits / times out / hangs — which is a CI flake unrelated to our code.
+# This must stay >= the v2.106.0 floor the DB-grants regime depends on (see
+# CLAUDE.md "Function & Table Access Control"). Bump it when the local dev CLI is
+# upgraded (keep CI == what we run migrations against locally); check the newest
+# stable with `gh api repos/supabase/cli/releases/latest`.
+env:
+  SUPABASE_CLI_VERSION: "2.106.0"
+
 jobs:
   lint-and-typecheck:
     name: Lint & Type Check
@@ -118,7 +129,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v2
         with:
-          version: latest
+          version: ${{ env.SUPABASE_CLI_VERSION }}
 
       - name: Start local Supabase
         run: supabase start
@@ -158,7 +169,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v2
         with:
-          version: latest
+          version: ${{ env.SUPABASE_CLI_VERSION }}
 
       - name: Push migrations to Supabase
         run: |
