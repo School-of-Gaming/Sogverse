@@ -998,6 +998,119 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_locked_placements: {
+        Row: {
+          created_at: string
+          gamer_id: string
+          group_id: string
+          id: string
+          placed_by: string
+          session_opens_at: string
+          zone_id: string
+        }
+        Insert: {
+          created_at?: string
+          gamer_id: string
+          group_id: string
+          id?: string
+          placed_by: string
+          session_opens_at: string
+          zone_id: string
+        }
+        Update: {
+          created_at?: string
+          gamer_id?: string
+          group_id?: string
+          id?: string
+          placed_by?: string
+          session_opens_at?: string
+          zone_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_locked_placements_gamer_id_fkey"
+            columns: ["gamer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_locked_placements_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_locked_placements_placed_by_fkey"
+            columns: ["placed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_locked_placements_zone_id_fkey"
+            columns: ["zone_id"]
+            isOneToOne: false
+            referencedRelation: "voice_zones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voice_zones: {
+        Row: {
+          color: Database["public"]["Enums"]["voice_zone_color"]
+          created_at: string
+          created_by: string
+          group_id: string
+          icon: Database["public"]["Enums"]["voice_zone_icon"]
+          id: string
+          is_locked: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color: Database["public"]["Enums"]["voice_zone_color"]
+          created_at?: string
+          created_by: string
+          group_id: string
+          icon: Database["public"]["Enums"]["voice_zone_icon"]
+          id?: string
+          is_locked?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: Database["public"]["Enums"]["voice_zone_color"]
+          created_at?: string
+          created_by?: string
+          group_id?: string
+          icon?: Database["public"]["Enums"]["voice_zone_icon"]
+          id?: string
+          is_locked?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_zones_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_zones_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "product_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_contacts: {
         Row: {
           created_at: string
@@ -1250,6 +1363,11 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_parent_of: { Args: { gamer_uuid: string }; Returns: boolean }
+      is_voice_group_member: { Args: { p_group_id: string }; Returns: boolean }
+      is_voice_group_moderator: {
+        Args: { p_group_id: string }
+        Returns: boolean
+      }
       join_waitlist: {
         Args: {
           p_customer_id: string
@@ -1352,6 +1470,24 @@ export type Database = {
         | "subscription_period_proration"
         | "duplicate_payment"
       user_role: "admin" | "customer" | "gamer" | "gedu"
+      voice_zone_color:
+        | "red"
+        | "orange"
+        | "green"
+        | "teal"
+        | "sky"
+        | "indigo"
+        | "violet"
+        | "pink"
+      voice_zone_icon:
+        | "star"
+        | "rocket"
+        | "gamepad"
+        | "crown"
+        | "trophy"
+        | "flame"
+        | "ghost"
+        | "music"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1515,6 +1651,26 @@ export const Constants = {
         "duplicate_payment",
       ],
       user_role: ["admin", "customer", "gamer", "gedu"],
+      voice_zone_color: [
+        "red",
+        "orange",
+        "green",
+        "teal",
+        "sky",
+        "indigo",
+        "violet",
+        "pink",
+      ],
+      voice_zone_icon: [
+        "star",
+        "rocket",
+        "gamepad",
+        "crown",
+        "trophy",
+        "flame",
+        "ghost",
+        "music",
+      ],
     },
   },
 } as const

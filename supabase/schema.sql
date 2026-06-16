@@ -170,6 +170,38 @@ CREATE TYPE public.user_role AS ENUM (
 
 
 --
+-- Name: voice_zone_color; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.voice_zone_color AS ENUM (
+    'red',
+    'orange',
+    'green',
+    'teal',
+    'sky',
+    'indigo',
+    'violet',
+    'pink'
+);
+
+
+--
+-- Name: voice_zone_icon; Type: TYPE; Schema: public; Owner: -
+--
+
+CREATE TYPE public.voice_zone_icon AS ENUM (
+    'star',
+    'rocket',
+    'gamepad',
+    'crown',
+    'trophy',
+    'flame',
+    'ghost',
+    'music'
+);
+
+
+--
 -- Name: _list_cron_jobs(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -1430,6 +1462,53 @@ $$;
 
 
 --
+-- Name: is_voice_group_member(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_voice_group_member(p_group_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select
+    public.is_admin()
+    or exists (
+      select 1
+      from public.participations p
+      where p.group_id = p_group_id
+        and p.gamer_id = (select auth.uid())
+        and p.status = 'active'
+    )
+    or exists (
+      select 1
+      from public.product_groups g
+      join public.gedu_group_assignments a on a.product_id = g.product_id
+      where g.id = p_group_id
+        and a.gedu_id = (select auth.uid())
+    );
+$$;
+
+
+--
+-- Name: is_voice_group_moderator(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.is_voice_group_moderator(p_group_id uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+  select
+    public.is_admin()
+    or exists (
+      select 1
+      from public.product_groups g
+      join public.gedu_group_assignments a on a.product_id = g.product_id
+      where g.id = p_group_id
+        and a.gedu_id = (select auth.uid())
+    );
+$$;
+
+
+--
 -- Name: join_waitlist(uuid, uuid, uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2520,6 +2599,44 @@ CREATE TABLE public.spoken_languages (
 
 
 --
+-- Name: voice_locked_placements; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.voice_locked_placements (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    zone_id uuid NOT NULL,
+    gamer_id uuid NOT NULL,
+    group_id uuid NOT NULL,
+    placed_by uuid NOT NULL,
+    session_opens_at timestamp with time zone NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+ALTER TABLE ONLY public.voice_locked_placements REPLICA IDENTITY FULL;
+
+
+--
+-- Name: voice_zones; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.voice_zones (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    name text NOT NULL,
+    icon public.voice_zone_icon NOT NULL,
+    color public.voice_zone_color NOT NULL,
+    is_locked boolean DEFAULT false NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT voice_zones_name_check CHECK (((char_length(name) >= 1) AND (char_length(name) <= 40)))
+);
+
+ALTER TABLE ONLY public.voice_zones REPLICA IDENTITY FULL;
+
+
+--
 -- Name: whatsapp_contacts; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -2839,6 +2956,30 @@ ALTER TABLE ONLY public.parent_gamer
 
 
 --
+-- Name: voice_locked_placements voice_locked_placements_group_id_gamer_id_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_locked_placements
+    ADD CONSTRAINT voice_locked_placements_group_id_gamer_id_key UNIQUE (group_id, gamer_id);
+
+
+--
+-- Name: voice_locked_placements voice_locked_placements_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_locked_placements
+    ADD CONSTRAINT voice_locked_placements_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: voice_zones voice_zones_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_zones
+    ADD CONSTRAINT voice_zones_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: whatsapp_contacts whatsapp_contacts_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3114,6 +3255,27 @@ CREATE UNIQUE INDEX uq_participations_active_or_waitlisted ON public.participati
 
 
 --
+-- Name: voice_locked_placements_group_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX voice_locked_placements_group_id_idx ON public.voice_locked_placements USING btree (group_id);
+
+
+--
+-- Name: voice_locked_placements_zone_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX voice_locked_placements_zone_id_idx ON public.voice_locked_placements USING btree (zone_id);
+
+
+--
+-- Name: voice_zones_group_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX voice_zones_group_id_idx ON public.voice_zones USING btree (group_id);
+
+
+--
 -- Name: family_subscriptions family_subscriptions_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -3286,6 +3448,13 @@ CREATE TRIGGER trg_validate_site_staff_details_location BEFORE INSERT OR UPDATE 
 --
 
 CREATE TRIGGER validate_parent_gamer_on_insert BEFORE INSERT ON public.parent_gamer FOR EACH ROW EXECUTE FUNCTION public.validate_parent_gamer_roles();
+
+
+--
+-- Name: voice_zones voice_zones_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER voice_zones_updated_at BEFORE UPDATE ON public.voice_zones FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -3566,6 +3735,54 @@ ALTER TABLE ONLY public.site_details
 
 ALTER TABLE ONLY public.site_staff_details
     ADD CONSTRAINT site_staff_details_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id) ON DELETE CASCADE;
+
+
+--
+-- Name: voice_locked_placements voice_locked_placements_gamer_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_locked_placements
+    ADD CONSTRAINT voice_locked_placements_gamer_id_fkey FOREIGN KEY (gamer_id) REFERENCES public.profiles(id);
+
+
+--
+-- Name: voice_locked_placements voice_locked_placements_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_locked_placements
+    ADD CONSTRAINT voice_locked_placements_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.product_groups(id) ON DELETE CASCADE;
+
+
+--
+-- Name: voice_locked_placements voice_locked_placements_placed_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_locked_placements
+    ADD CONSTRAINT voice_locked_placements_placed_by_fkey FOREIGN KEY (placed_by) REFERENCES public.profiles(id);
+
+
+--
+-- Name: voice_locked_placements voice_locked_placements_zone_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_locked_placements
+    ADD CONSTRAINT voice_locked_placements_zone_id_fkey FOREIGN KEY (zone_id) REFERENCES public.voice_zones(id) ON DELETE CASCADE;
+
+
+--
+-- Name: voice_zones voice_zones_created_by_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_zones
+    ADD CONSTRAINT voice_zones_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.profiles(id);
+
+
+--
+-- Name: voice_zones voice_zones_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.voice_zones
+    ADD CONSTRAINT voice_zones_group_id_fkey FOREIGN KEY (group_id) REFERENCES public.product_groups(id) ON DELETE CASCADE;
 
 
 --
@@ -4224,6 +4441,69 @@ CREATE POLICY users_view_own_profile ON public.profiles FOR SELECT TO authentica
 
 
 --
+-- Name: voice_locked_placements; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.voice_locked_placements ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: voice_locked_placements voice_locked_placements_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_locked_placements_delete ON public.voice_locked_placements FOR DELETE TO authenticated USING (public.is_voice_group_moderator(group_id));
+
+
+--
+-- Name: voice_locked_placements voice_locked_placements_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_locked_placements_insert ON public.voice_locked_placements FOR INSERT TO authenticated WITH CHECK ((public.is_voice_group_moderator(group_id) AND (placed_by = ( SELECT auth.uid() AS uid)) AND (EXISTS ( SELECT 1
+   FROM public.voice_zones z
+  WHERE ((z.id = voice_locked_placements.zone_id) AND (z.group_id = voice_locked_placements.group_id) AND (z.is_locked = true))))));
+
+
+--
+-- Name: voice_locked_placements voice_locked_placements_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_locked_placements_select ON public.voice_locked_placements FOR SELECT TO authenticated USING (public.is_voice_group_member(group_id));
+
+
+--
+-- Name: voice_zones; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.voice_zones ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: voice_zones voice_zones_delete; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_zones_delete ON public.voice_zones FOR DELETE TO authenticated USING (public.is_voice_group_moderator(group_id));
+
+
+--
+-- Name: voice_zones voice_zones_insert; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_zones_insert ON public.voice_zones FOR INSERT TO authenticated WITH CHECK ((public.is_voice_group_moderator(group_id) AND (created_by = ( SELECT auth.uid() AS uid))));
+
+
+--
+-- Name: voice_zones voice_zones_select; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_zones_select ON public.voice_zones FOR SELECT TO authenticated USING (public.is_voice_group_member(group_id));
+
+
+--
+-- Name: voice_zones voice_zones_update; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY voice_zones_update ON public.voice_zones FOR UPDATE TO authenticated USING (public.is_voice_group_moderator(group_id)) WITH CHECK (public.is_voice_group_moderator(group_id));
+
+
+--
 -- Name: whatsapp_contacts; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -4511,6 +4791,20 @@ GRANT ALL ON FUNCTION public.is_admin() TO service_role;
 REVOKE ALL ON FUNCTION public.is_parent_of(gamer_uuid uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_parent_of(gamer_uuid uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.is_parent_of(gamer_uuid uuid) TO service_role;
+
+
+--
+-- Name: FUNCTION is_voice_group_member(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.is_voice_group_member(p_group_id uuid) TO authenticated;
+
+
+--
+-- Name: FUNCTION is_voice_group_moderator(p_group_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) TO authenticated;
 
 
 --
@@ -4900,6 +5194,20 @@ GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.site_staff_details TO authenti
 GRANT SELECT ON TABLE public.spoken_languages TO anon;
 GRANT ALL ON TABLE public.spoken_languages TO service_role;
 GRANT SELECT ON TABLE public.spoken_languages TO authenticated;
+
+
+--
+-- Name: TABLE voice_locked_placements; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,DELETE ON TABLE public.voice_locked_placements TO authenticated;
+
+
+--
+-- Name: TABLE voice_zones; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.voice_zones TO authenticated;
 
 
 --

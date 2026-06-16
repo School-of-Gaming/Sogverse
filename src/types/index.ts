@@ -250,6 +250,26 @@ export type ProductGroupUpdate = Database["public"]["Tables"]["product_groups"][
 export type GeduGroupAssignment = Database["public"]["Tables"]["gedu_group_assignments"]["Row"];
 export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group_assignments"]["Insert"];
 
+// ---------------------------------------------------------------------------
+// voice zones (00103) — the persisted half of the discrete-zone voice model.
+// See docs/voice-rooms-refactor-plan.md and src/components/voice/CLAUDE.md.
+// Lobby + the 4 Yty zones stay virtual/hardcoded on the client; only these
+// mod-created rows persist, tied to a product_group.
+// ---------------------------------------------------------------------------
+
+// Enums (the 8-icon / 8-color palette; keys match src/lib/constants/voice-zones.ts)
+export type VoiceZoneIcon = Database["public"]["Enums"]["voice_zone_icon"];
+export type VoiceZoneColor = Database["public"]["Enums"]["voice_zone_color"];
+
+// voice_zones
+export type VoiceZone = Database["public"]["Tables"]["voice_zones"]["Row"];
+export type VoiceZoneInsert = Database["public"]["Tables"]["voice_zones"]["Insert"];
+export type VoiceZoneUpdate = Database["public"]["Tables"]["voice_zones"]["Update"];
+
+// voice_locked_placements
+export type VoiceLockedPlacement = Database["public"]["Tables"]["voice_locked_placements"]["Row"];
+export type VoiceLockedPlacementInsert = Database["public"]["Tables"]["voice_locked_placements"]["Insert"];
+
 // get_product_groups_with_details — returns JSONB, so the generated type is
 // `Json`. Define a structured shape that mirrors what the RPC produces so the
 // admin UI gets type safety without a Zod parse step.

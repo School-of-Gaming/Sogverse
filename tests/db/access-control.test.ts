@@ -60,6 +60,14 @@ const AUTHENTICATED_ALLOWLIST = new Set([
   "set_my_pin",
   "verify_my_pin",
   "pin_is_set",
+
+  // Voice zones (00103). RLS predicate helpers for voice_zones /
+  // voice_locked_placements — evaluated in the caller's context by those
+  // tables' policies, so authenticated must hold EXECUTE (same rationale as
+  // can_read_product). SECURITY DEFINER with SET search_path; they only ever
+  // return a boolean derived from the caller's auth.uid(), no data leak.
+  "is_voice_group_member",
+  "is_voice_group_moderator",
 ]);
 
 /**
@@ -152,6 +160,12 @@ describe("Access Control", () => {
       ["site_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["site_staff_details", new Set(["INSERT", "UPDATE", "DELETE"])],
       ["product_translations", new Set(["INSERT", "UPDATE", "DELETE"])],
+      // Voice zones (00103). Moderators create/edit/delete custom zones and
+      // insert/delete locked placements directly from the browser under RLS
+      // (is_voice_group_moderator). Placements are insert/delete only — no
+      // UPDATE grant. RLS authorizes both actor and target.
+      ["voice_zones", new Set(["INSERT", "UPDATE", "DELETE"])],
+      ["voice_locked_placements", new Set(["INSERT", "DELETE"])],
     ]);
 
     const { data, error } = await admin.rpc("_list_table_grants", {
