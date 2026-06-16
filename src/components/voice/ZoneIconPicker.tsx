@@ -3,14 +3,20 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { VOICE_ZONE_ICONS, VOICE_ZONE_ICON_KEYS } from "@/lib/constants/voice-zones";
+import type { ZoneColorClasses } from "@/lib/constants/voice-zones";
 import type { VoiceZoneIcon } from "@/types";
 
-/** Grid picker for the 8 custom-zone icons. */
+/** Grid picker for the custom-zone icons. The selected icon previews the chosen
+ *  color exactly as it appears on an active zone card — the color's soft tile,
+ *  glyph color, high-contrast border and inset glow — so picking an icon and a
+ *  color together shows the finished zone, not an abstract "primary" highlight. */
 export function ZoneIconPicker({
   value,
+  color,
   onChange,
 }: {
   value: VoiceZoneIcon;
+  color: ZoneColorClasses;
   onChange: (value: VoiceZoneIcon) => void;
 }) {
   const t = useTranslations("voice.zoneIcon");
@@ -29,10 +35,12 @@ export function ZoneIconPicker({
             aria-pressed={selected}
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-lg border transition-colors",
-              selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-accent",
+              selected
+                ? cn("border-foreground", color.tile, color.glow)
+                : "border-border hover:bg-accent",
             )}
           >
-            <Icon className="h-5 w-5" />
+            <Icon className={cn("h-5 w-5", selected && color.glyph)} />
           </button>
         );
       })}

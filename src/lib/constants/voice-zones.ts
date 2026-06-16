@@ -164,36 +164,64 @@ export const VOICE_ZONE_ICONS: Record<VoiceZoneIcon, LucideIcon> = {
   sailboat: Sailboat,
 };
 
-/** A color rendered as the soft-tint avatar treatment (`bg-avatar-X/15` tile +
- *  `text-avatar-X` glyph). `ring` is the picker's selection token; `glow` is the
- *  active-zone treatment — an inset box-shadow that spills the color in from the
- *  border and fades toward the center (paired with a high-contrast border).
- *  Both are literal class strings (the `var(--color-X)` in `glow` references the
- *  same theme token) so Tailwind's source scanner generates the utilities. */
+/** A custom-zone color, expressed as five literal class strings (never built by
+ *  string templating, so Tailwind's source scanner can see every utility):
+ *  - `tile`  — soft-tint background for the zone-card icon tile (`bg-zone-X/15`)
+ *  - `glyph` — the icon color (`text-zone-X`), readable on both themes
+ *  - `ring`  — the picker's selection ring (`ring-zone-X`)
+ *  - `glow`  — the active-zone treatment: the shared `.zone-glow` class (the
+ *              inset-shadow geometry, defined once in globals.css) plus an
+ *              arbitrary-property class binding this color into `--glow-color`,
+ *              so the color spills in from the border and fades toward center
+ *  - `solid` — the full-saturation fill (`bg-zone-X`) the picker shows as a
+ *              vibrant swatch (the card uses the soft `tile` tint instead) */
 export interface ZoneColorClasses {
   tile: string;
   glyph: string;
   ring: string;
   glow: string;
+  solid: string;
 }
 
-/** Ordered color keys — source of truth for the valid set and picker order. */
+/** Ordered color keys — source of truth for the valid set and picker order.
+ *  A vibrant warm→cool rainbow that fills the picker's 2 rows of 8. See the
+ *  `--color-zone-*` tokens in globals.css for the hues and why they avoid the
+ *  Yty element colors. */
 export const VOICE_ZONE_COLOR_KEYS = [
-  "red", "orange", "green", "teal", "sky", "indigo", "violet", "pink",
+  // warm
+  "red", "orange", "amber", "yellow",
+  // green
+  "lime", "green", "emerald", "teal",
+  // blue
+  "cyan", "sky", "blue", "indigo",
+  // violet → pink
+  "violet", "purple", "fuchsia", "pink",
 ] as const;
 
 /** A custom-zone color key — derived from the key tuple so the type can't drift. */
 export type VoiceZoneColor = (typeof VOICE_ZONE_COLOR_KEYS)[number];
 
+// Literal per-key class strings — NOT built as `bg-zone-${key}` (Tailwind can't
+// scan a template); every value is a literal the source scanner sees. The glow
+// pairs the shared `.zone-glow` class (geometry — defined once in globals.css)
+// with an arbitrary-property class that binds this color into `--glow-color`.
 export const VOICE_ZONE_COLORS: Record<VoiceZoneColor, ZoneColorClasses> = {
-  red: { tile: "bg-avatar-red/15", glyph: "text-avatar-red", ring: "ring-avatar-red", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-red)]" },
-  orange: { tile: "bg-avatar-orange/15", glyph: "text-avatar-orange", ring: "ring-avatar-orange", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-orange)]" },
-  green: { tile: "bg-avatar-green/15", glyph: "text-avatar-green", ring: "ring-avatar-green", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-green)]" },
-  teal: { tile: "bg-avatar-teal/15", glyph: "text-avatar-teal", ring: "ring-avatar-teal", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-teal)]" },
-  sky: { tile: "bg-avatar-sky/15", glyph: "text-avatar-sky", ring: "ring-avatar-sky", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-sky)]" },
-  indigo: { tile: "bg-avatar-indigo/15", glyph: "text-avatar-indigo", ring: "ring-avatar-indigo", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-indigo)]" },
-  violet: { tile: "bg-avatar-violet/15", glyph: "text-avatar-violet", ring: "ring-avatar-violet", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-violet)]" },
-  pink: { tile: "bg-avatar-pink/15", glyph: "text-avatar-pink", ring: "ring-avatar-pink", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-pink)]" },
+  red: { tile: "bg-zone-red/15", glyph: "text-zone-red", ring: "ring-zone-red", glow: "zone-glow [--glow-color:var(--color-zone-red)]", solid: "bg-zone-red" },
+  orange: { tile: "bg-zone-orange/15", glyph: "text-zone-orange", ring: "ring-zone-orange", glow: "zone-glow [--glow-color:var(--color-zone-orange)]", solid: "bg-zone-orange" },
+  amber: { tile: "bg-zone-amber/15", glyph: "text-zone-amber", ring: "ring-zone-amber", glow: "zone-glow [--glow-color:var(--color-zone-amber)]", solid: "bg-zone-amber" },
+  yellow: { tile: "bg-zone-yellow/15", glyph: "text-zone-yellow", ring: "ring-zone-yellow", glow: "zone-glow [--glow-color:var(--color-zone-yellow)]", solid: "bg-zone-yellow" },
+  lime: { tile: "bg-zone-lime/15", glyph: "text-zone-lime", ring: "ring-zone-lime", glow: "zone-glow [--glow-color:var(--color-zone-lime)]", solid: "bg-zone-lime" },
+  green: { tile: "bg-zone-green/15", glyph: "text-zone-green", ring: "ring-zone-green", glow: "zone-glow [--glow-color:var(--color-zone-green)]", solid: "bg-zone-green" },
+  emerald: { tile: "bg-zone-emerald/15", glyph: "text-zone-emerald", ring: "ring-zone-emerald", glow: "zone-glow [--glow-color:var(--color-zone-emerald)]", solid: "bg-zone-emerald" },
+  teal: { tile: "bg-zone-teal/15", glyph: "text-zone-teal", ring: "ring-zone-teal", glow: "zone-glow [--glow-color:var(--color-zone-teal)]", solid: "bg-zone-teal" },
+  cyan: { tile: "bg-zone-cyan/15", glyph: "text-zone-cyan", ring: "ring-zone-cyan", glow: "zone-glow [--glow-color:var(--color-zone-cyan)]", solid: "bg-zone-cyan" },
+  sky: { tile: "bg-zone-sky/15", glyph: "text-zone-sky", ring: "ring-zone-sky", glow: "zone-glow [--glow-color:var(--color-zone-sky)]", solid: "bg-zone-sky" },
+  blue: { tile: "bg-zone-blue/15", glyph: "text-zone-blue", ring: "ring-zone-blue", glow: "zone-glow [--glow-color:var(--color-zone-blue)]", solid: "bg-zone-blue" },
+  indigo: { tile: "bg-zone-indigo/15", glyph: "text-zone-indigo", ring: "ring-zone-indigo", glow: "zone-glow [--glow-color:var(--color-zone-indigo)]", solid: "bg-zone-indigo" },
+  violet: { tile: "bg-zone-violet/15", glyph: "text-zone-violet", ring: "ring-zone-violet", glow: "zone-glow [--glow-color:var(--color-zone-violet)]", solid: "bg-zone-violet" },
+  purple: { tile: "bg-zone-purple/15", glyph: "text-zone-purple", ring: "ring-zone-purple", glow: "zone-glow [--glow-color:var(--color-zone-purple)]", solid: "bg-zone-purple" },
+  fuchsia: { tile: "bg-zone-fuchsia/15", glyph: "text-zone-fuchsia", ring: "ring-zone-fuchsia", glow: "zone-glow [--glow-color:var(--color-zone-fuchsia)]", solid: "bg-zone-fuchsia" },
+  pink: { tile: "bg-zone-pink/15", glyph: "text-zone-pink", ring: "ring-zone-pink", glow: "zone-glow [--glow-color:var(--color-zone-pink)]", solid: "bg-zone-pink" },
 };
 
 /** Type guard: is this free-text key a valid icon? Body is a literal `hasOwn`
@@ -231,6 +259,17 @@ export function asZoneColor(key: string): VoiceZoneColor {
   return isZoneColor(key) ? key : VOICE_ZONE_COLOR_KEYS[0];
 }
 
+/** A random icon + color for a *new* custom zone — each new zone opens on a
+ *  fresh random appearance, which keeps zones visually varied and a little
+ *  surprising. Zones may freely share an icon/color, so no de-duplication: a
+ *  moderator can change either afterward. */
+export function pickRandomZoneAppearance(): { icon: VoiceZoneIcon; color: VoiceZoneColor } {
+  return {
+    icon: VOICE_ZONE_ICON_KEYS[Math.floor(Math.random() * VOICE_ZONE_ICON_KEYS.length)],
+    color: VOICE_ZONE_COLOR_KEYS[Math.floor(Math.random() * VOICE_ZONE_COLOR_KEYS.length)],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Virtual zone presentation (lobby + Yty). These keep their own identity and
 // must not reuse the custom palette in a confusing way (§8). Names are
@@ -245,16 +284,19 @@ export interface VirtualZonePresentation {
   color: ZoneColorClasses;
 }
 
-/** Lobby — the default "general" zone, neutral semantic theme color. */
+/** Lobby / Clubhouse — the default "home" zone. A neutral white-ish identity
+ *  (the theme `foreground`: near-white on dark, near-black on light) so it reads
+ *  as the calm home base and stays distinct from all 16 colorful custom zones. */
 export const LOBBY_PRESENTATION: VirtualZonePresentation = {
   id: LOBBY_ZONE_ID,
   nameKey: "voice.zoneLobby",
   icon: Home,
   color: {
-    tile: "bg-primary/10",
-    glyph: "text-primary",
-    ring: "ring-primary",
-    glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-primary)]",
+    tile: "bg-foreground/10",
+    glyph: "text-foreground",
+    ring: "ring-foreground",
+    glow: "zone-glow [--glow-color:var(--color-foreground)]",
+    solid: "bg-foreground",
   },
 };
 
@@ -262,10 +304,20 @@ export const LOBBY_PRESENTATION: VirtualZonePresentation = {
  *  because the inset-shadow blur is a voice-room presentational choice, not a
  *  brand token. Literal strings so Tailwind generates each utility. */
 const YTY_ZONE_GLOW: Record<YtyElementId, string> = {
-  harmony: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-yty-harmony)]",
-  glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-yty-glow)]",
-  valor: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-yty-valor)]",
-  wit: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-yty-wit)]",
+  harmony: "zone-glow [--glow-color:var(--color-yty-harmony)]",
+  glow: "zone-glow [--glow-color:var(--color-yty-glow)]",
+  valor: "zone-glow [--glow-color:var(--color-yty-valor)]",
+  wit: "zone-glow [--glow-color:var(--color-yty-wit)]",
+};
+
+/** Yty solid fills, keyed by element id — literal `bg-yty-*` so Tailwind scans
+ *  them. Yty zones never appear in the picker (only custom colors do), but
+ *  `ZoneColorClasses` requires `solid`, so they carry their full-saturation fill. */
+const YTY_ZONE_SOLID: Record<YtyElementId, string> = {
+  harmony: "bg-yty-harmony",
+  glow: "bg-yty-glow",
+  valor: "bg-yty-valor",
+  wit: "bg-yty-wit",
 };
 
 /** The 4 Yty zones, reusing the existing Yty icons + theme tokens (yty.ts) and
@@ -283,6 +335,7 @@ export const YTY_PRESENTATIONS: VirtualZonePresentation[] = YTY_ELEMENTS.map(
       // is emitted to the DOM but has no CSS rule, falling back to a default.
       ring: e.color.ring,
       glow: YTY_ZONE_GLOW[e.id],
+      solid: YTY_ZONE_SOLID[e.id],
     },
   }),
 );

@@ -1,13 +1,10 @@
 import { describe, it, expect } from "vitest";
 import type { VoiceZone } from "@/types";
-import {
-  composeZones,
-  selfMovableZoneIds,
-  pickDefaultZoneAppearance,
-} from "@/lib/voice/zone-composition";
+import { composeZones, selfMovableZoneIds } from "@/lib/voice/zone-composition";
 import {
   VOICE_ZONE_ICON_KEYS,
   VOICE_ZONE_COLOR_KEYS,
+  pickRandomZoneAppearance,
 } from "@/lib/constants/voice-zones";
 
 function zone(overrides: Partial<VoiceZone> = {}): VoiceZone {
@@ -84,37 +81,16 @@ describe("composeZones", () => {
   });
 });
 
-describe("pickDefaultZoneAppearance", () => {
-  it("with no existing zones, defaults to the first icon and color", () => {
-    expect(pickDefaultZoneAppearance([])).toEqual({
-      icon: VOICE_ZONE_ICON_KEYS[0],
-      color: VOICE_ZONE_COLOR_KEYS[0],
-    });
-  });
-
-  it("avoids an icon and color already in use", () => {
-    const got = pickDefaultZoneAppearance([
-      { icon: VOICE_ZONE_ICON_KEYS[0], color: VOICE_ZONE_COLOR_KEYS[0] },
-    ]);
-    expect(got.icon).toBe(VOICE_ZONE_ICON_KEYS[1]);
-    expect(got.color).toBe(VOICE_ZONE_COLOR_KEYS[1]);
-  });
-
-  it("steers icon and color independently — only the used axis advances", () => {
-    // First icon is taken but the first color is free → icon advances, color stays.
-    const got = pickDefaultZoneAppearance([
-      { icon: VOICE_ZONE_ICON_KEYS[0], color: VOICE_ZONE_COLOR_KEYS[3] },
-    ]);
-    expect(got.icon).toBe(VOICE_ZONE_ICON_KEYS[1]);
-    expect(got.color).toBe(VOICE_ZONE_COLOR_KEYS[0]);
-  });
-
-  it("falls back to the first entry once every icon is in use", () => {
-    const used = VOICE_ZONE_ICON_KEYS.map((icon, i) => ({
-      icon,
-      color: VOICE_ZONE_COLOR_KEYS[i % VOICE_ZONE_COLOR_KEYS.length],
-    }));
-    expect(pickDefaultZoneAppearance(used).icon).toBe(VOICE_ZONE_ICON_KEYS[0]);
+describe("pickRandomZoneAppearance", () => {
+  it("always returns an icon and color from the palette", () => {
+    const icons = new Set<string>(VOICE_ZONE_ICON_KEYS);
+    const colors = new Set<string>(VOICE_ZONE_COLOR_KEYS);
+    // Sample many rolls — every pick must be a valid palette member.
+    for (let i = 0; i < 100; i++) {
+      const got = pickRandomZoneAppearance();
+      expect(icons.has(got.icon)).toBe(true);
+      expect(colors.has(got.color)).toBe(true);
+    }
   });
 });
 

@@ -126,18 +126,22 @@ function DragOverlayContent({
 
   if (!overlay) return null;
 
+  // `drag-ghost` (globals.css) makes the lifted chip read as grabbing — it's the
+  // element under the pointer mid-drag, and overrides the chip's own grab.
   return (
-    <GamerChip
-      participationId={overlay.id}
-      gamerId={overlay.gamer_id}
-      firstName={overlay.gamer_first_name}
-      dateOfBirth={overlay.gamer_date_of_birth}
-      gender={overlay.gamer_gender}
-      parentFirstName={overlay.gamer_parent_first_name}
-      parentLastName={overlay.gamer_parent_last_name}
-      minecraftUsername={overlay.gamer_minecraft_username}
-      minecraftUuid={overlay.gamer_minecraft_uuid}
-    />
+    <div className="drag-ghost">
+      <GamerChip
+        participationId={overlay.id}
+        gamerId={overlay.gamer_id}
+        firstName={overlay.gamer_first_name}
+        dateOfBirth={overlay.gamer_date_of_birth}
+        gender={overlay.gamer_gender}
+        parentFirstName={overlay.gamer_parent_first_name}
+        parentLastName={overlay.gamer_parent_last_name}
+        minecraftUsername={overlay.gamer_minecraft_username}
+        minecraftUuid={overlay.gamer_minecraft_uuid}
+      />
+    </div>
   );
 }
 

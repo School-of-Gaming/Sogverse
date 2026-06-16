@@ -46,7 +46,6 @@ import { UserRow } from "@/components/admin/user-row";
 import { SessionsSection } from "@/components/parent";
 import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
 import { useAuth, useNow } from "@/providers";
-import { AVATAR_SIZE } from "@/lib/constants/voice-zones";
 import { computeGlowStyle } from "@/lib/voice/glow";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { ZoneList } from "@/components/voice/ZoneList";
@@ -221,24 +220,21 @@ function VoiceAvatarDemo() {
 
   return (
     <div className="flex items-center gap-8">
-      <div style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}>
-        <VoiceAvatar
-          userId={profile?.id || user?.id || "demo"}
-          userName={profile?.first_name ?? "You"}
-          audioOn={micOn}
-          videoOn={cameraOn}
-          isLocal
-          glowStyle={glowStyle}
-        >
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="h-full w-full object-cover"
-          />
-        </VoiceAvatar>
-      </div>
+      <VoiceAvatar
+        userId={profile?.id || user?.id || "demo"}
+        audioOn={micOn}
+        videoOn={cameraOn}
+        isLocal
+        glowStyle={glowStyle}
+      >
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="h-full w-full object-cover"
+        />
+      </VoiceAvatar>
 
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
@@ -550,6 +546,35 @@ function VoiceZonesDemo() {
     member({ sessionId: "s2", userId: "fea034bc-7e25-4b75-976a-0e567b993279", userName: "Aino", zoneId: "lobby" }),
     member({ sessionId: "s3", userId: "6ee45509-c687-4d8b-88a8-e933929555e8", userName: "Eero", zoneId: "yty-glow", isSpeaking: true }),
     member({ sessionId: "s4", userId: "82d61f2c-636f-4cfb-bcd3-9f35b366229e", userName: "Liisa", zoneId: "demo-strategy" }),
+    // A very crowded zone (25) so the horizontal scroll, chevron scroll buttons,
+    // and edge fade are all exercised. Mixed English/Finnish names, with a few
+    // long ones (Maximilian, Aleksanteri, …) to show label truncation.
+    // Six muted members in Valor so the mic-off badge is visible in the demo.
+    member({ sessionId: "s5", userId: "6421f24d-01b3-47eb-a229-38b29c438715", userName: "Aino", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s6", userId: "c4d53024-4d40-4c2a-9bad-44909fdc333b", userName: "Oliver", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s7", userId: "a1df031a-f181-49f3-a964-4039d8546ee4", userName: "Väinö", zoneId: "yty-valor", isSpeaking: true }),
+    member({ sessionId: "s8", userId: "9c6f8a84-daa0-424f-a0a8-dd1af4fc3fbd", userName: "Charlotte", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s9", userId: "10b01f6c-e047-4d61-b5f0-bb80f4ec4a55", userName: "Onni", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s10", userId: "1620ec58-cc23-4a3f-b3ea-3880b12d19bf", userName: "James", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s11", userId: "b4af1059-f201-4718-8a1b-fa81e51c48d6", userName: "Helmi", zoneId: "yty-valor", audioOn: false }),
+    member({ sessionId: "s12", userId: "c7d3368f-75bd-4841-bb1f-0ccd7b01d365", userName: "Maximilian", zoneId: "yty-valor" }),
+    member({ sessionId: "s13", userId: "85b79539-938a-4787-96b6-40d85b53c923", userName: "Veera", zoneId: "yty-valor" }),
+    member({ sessionId: "s14", userId: "3f323fe9-a59f-4444-8a2b-77a6ec310153", userName: "Benjamin", zoneId: "yty-valor" }),
+    member({ sessionId: "s15", userId: "a75793f5-b793-44f0-a85e-3f91d19523c3", userName: "Aarni", zoneId: "yty-valor" }),
+    member({ sessionId: "s16", userId: "1941c285-0589-4d4d-b23d-a7b1b9aa01f0", userName: "Sophia", zoneId: "yty-valor" }),
+    member({ sessionId: "s17", userId: "dc3a240c-0397-4300-bbbe-23c56f0287b3", userName: "Niilo", zoneId: "yty-valor" }),
+    member({ sessionId: "s18", userId: "147929ab-93ab-4a24-9d31-8786e14fe771", userName: "Alexandra", zoneId: "yty-valor" }),
+    member({ sessionId: "s19", userId: "2fbddcc4-f8e0-4bf9-b59c-9ac975e54086", userName: "Iiro", zoneId: "yty-valor" }),
+    member({ sessionId: "s20", userId: "3ee04404-1425-4af8-a027-9cfa925f6273", userName: "William", zoneId: "yty-valor" }),
+    member({ sessionId: "s21", userId: "859834f2-89b4-4902-8ae9-ae3d3dbfd3e0", userName: "Eveliina", zoneId: "yty-valor" }),
+    member({ sessionId: "s22", userId: "b039e677-6e77-4cf3-af9d-bd5e5c2fabbc", userName: "Liam", zoneId: "yty-valor" }),
+    member({ sessionId: "s23", userId: "bc17a11c-48f3-46c7-90dd-f1d01da20456", userName: "Aleksanteri", zoneId: "yty-valor" }),
+    member({ sessionId: "s24", userId: "bc5b1c08-6b0d-4265-af42-cf42e12d98da", userName: "Isabella", zoneId: "yty-valor" }),
+    member({ sessionId: "s25", userId: "2330764b-f7e5-483a-875d-691532be11e5", userName: "Pinja", zoneId: "yty-valor" }),
+    member({ sessionId: "s26", userId: "156922f3-8a32-48d6-b7ea-7c8de8b07440", userName: "Matias", zoneId: "yty-valor" }),
+    member({ sessionId: "s27", userId: "a094598f-8ab8-4787-83ff-849e0653a58a", userName: "Tuuli", zoneId: "yty-valor" }),
+    member({ sessionId: "s28", userId: "720504a5-4d6f-496b-b2a1-038fc5c6bc45", userName: "Kaarina", zoneId: "yty-valor" }),
+    member({ sessionId: "s29", userId: "35d24824-26c7-417b-9b6b-32798e1bfe57", userName: "Theodore", zoneId: "yty-valor" }),
   ];
 
   const participantsByZone = new Map<string, VoiceParticipant[]>();

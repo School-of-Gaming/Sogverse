@@ -77,7 +77,7 @@ export function SectionPill() {
         isVisible ? "opacity-100" : "pointer-events-none opacity-0",
       )}
     >
-      <ul className="flex items-center gap-1 rounded-full border border-border bg-background/90 p-1 shadow-lg backdrop-blur supports-[backdrop-filter]:bg-background/70">
+      <ul className="glass-panel flex items-center gap-1 rounded-full border border-border p-1 shadow-lg">
         {SECTIONS.map((id) => (
           <li key={id}>
             <a

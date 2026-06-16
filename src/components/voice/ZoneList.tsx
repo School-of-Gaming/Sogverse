@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -12,16 +12,15 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { Lock, Plus, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Lock, Plus, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
-import { Identicon } from "@/components/ui/identicon";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { PrivacyScreen } from "./PrivacyScreen";
+import { VoiceAvatar } from "./VoiceAvatar";
 import { ZoneDialog } from "./ZoneDialog";
 import type { VoiceZoneView } from "@/lib/voice/zone-composition";
 import type { VoiceParticipant, LockedMember } from "./hooks/types";
@@ -95,11 +94,12 @@ export function ZoneList() {
   >(null);
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
 
-  // One PointerSensor for mouse and touch alike — a small movement starts a
-  // drag (so a tap still registers). On touch this only fights page scroll if
-  // the browser is allowed to scroll from the dragged element, so the draggable
-  // tiles set `touch-action: none` (see ZoneMemberTile): a finger that lands on
-  // a movable avatar and moves drags it; scrolling happens from anywhere else.
+  // A single PointerSensor (mouse + touch): a 5px movement starts a drag, so a
+  // tap still registers and an avatar is picked up immediately (no press-and-
+  // hold). The draggable tiles set `touch-action: none`, so a touch landing on a
+  // movable avatar drags it instead of scrolling. Because a crowded row is *all*
+  // draggable avatars (no gap to swipe), horizontal scrolling is driven by the
+  // explicit chevron buttons in MemberArea, not by swiping the strip.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -155,8 +155,13 @@ export function ZoneList() {
   const activeParticipant = participants.find((p) => p.userId === activeUserId) ?? null;
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="space-y-3">
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveUserId(null)}
+    >
+      <div className="space-y-2">
         {zones.map((zone) => (
           <ZoneCard
             key={zone.id}
@@ -165,7 +170,15 @@ export function ZoneList() {
             lockedMembers={lockedRoster.get(zone.id) ?? []}
             isCurrent={zone.id === currentZoneId}
             canDragOthers={isModerator}
-            onEnter={zone.isLocked ? undefined : () => moveSelfToZone(zone.id)}
+            // Tap to enter, mirroring drag-to-enter. Locked zones are tappable
+            // only for moderators (they self-enter freely); a gamer can't
+            // self-enter a locked zone, so it stays non-interactive for them
+            // (moveSelfToZone would no-op anyway — don't show a fake affordance).
+            onEnter={
+              zone.isLocked && !isModerator
+                ? undefined
+                : () => moveSelfToZone(zone.id)
+            }
             label={labelFor(zone)}
             manage={
               canManage && zone.kind === "custom"
@@ -221,10 +234,15 @@ export function ZoneList() {
           back to where it started — drop instantly instead. */}
       <DragOverlay dropAnimation={null}>
         {activeParticipant && (
-          <div className="h-11 w-11 overflow-hidden rounded-md border-2 border-primary shadow-lg">
-            <Avatar className="h-full w-full rounded-md">
-              <Identicon id={activeParticipant.userId} size={44} />
-            </Avatar>
+          // Mirror the member tile (avatar + name) so the whole thing lifts as a
+          // unit, not just the icon. `drag-ghost` (globals.css) makes it read as
+          // grabbing — dnd-kit puts no cursor on the overlay, and it sits right
+          // under the pointer mid-drag.
+          <div className="drag-ghost flex w-12 flex-col items-center gap-1">
+            <VoiceAvatar userId={activeParticipant.userId} className="border-primary shadow-lg" />
+            <span className="w-full truncate text-center text-[10px] leading-tight">
+              {activeParticipant.userName}
+            </span>
           </div>
         )}
       </DragOverlay>
@@ -288,7 +306,7 @@ function ZoneCard({
       }}
       aria-label={tappable ? t("joinZone", { zone: accessibleLabel }) : undefined}
       className={cn(
-        "rounded-xl border p-3 transition-colors",
+        "rounded-xl border px-3 py-2.5 transition-colors",
         // Active zone: high-contrast border to mark "you're here" (vs the muted
         // grey of the others), with the zone's color spilling in from the edge
         // via an inset-shadow glow. Non-active: muted grey border.
@@ -336,41 +354,219 @@ function ZoneCard({
         )}
       </div>
 
-      {/* Locked zone (outsider view): blurred roster from the DB placements. The
-          real privacy is the separate Daily room; the blur is the UI signal.
-          An insider sees the real members below instead. */}
+      {/* Member roster. Always rendered at a fixed reserved height (even empty)
+          so a card's height never changes as people move between zones — that
+          constant height is the whole point of MemberArea. Locked zones an
+          outsider can't enter show a blurred DB roster behind the PrivacyScreen
+          instead of live members; an insider sees the real members. */}
       {outsiderOfLocked ? (
-        lockedMembers.length > 0 && (
-          <div className="relative mt-3">
-            <div className="flex flex-wrap gap-3">
-              {lockedMembers.map((m) => (
-                <LockedMemberTile key={m.gamerId} gamerId={m.gamerId} name={m.name} />
-              ))}
-            </div>
-            <PrivacyScreen />
-          </div>
-        )
+        <MemberArea count={lockedMembers.length} privacy>
+          {lockedMembers.map((m) => (
+            <LockedMemberTile key={m.gamerId} gamerId={m.gamerId} name={m.name} />
+          ))}
+        </MemberArea>
       ) : (
-        members.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-3">
-            {members.map((p) => (
-              <ZoneMemberTile key={p.sessionId} participant={p} canDragOthers={canDragOthers} />
-            ))}
-          </div>
-        )
+        <MemberArea count={members.length}>
+          {members.map((p) => (
+            <ZoneMemberTile key={p.sessionId} participant={p} canDragOthers={canDragOthers} />
+          ))}
+        </MemberArea>
       )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Member roster strip.
+//
+// Each zone reserves a fixed-height member area whether or not anyone is in it,
+// so a card's height never changes as people move between zones (the whole
+// stack would otherwise reflow). When more avatars are present than fit, the
+// row scrolls horizontally and the overflowing edge(s) fade out — the same
+// "there's more to scroll" cue the session calendar uses — instead of wrapping
+// (which grows the card) or overlapping (which would hide names). Names are
+// always kept.
+// ---------------------------------------------------------------------------
+
+// Width of the fade ramp at each scrollable edge — wide enough that the edge
+// clearly dissolves (a thin ramp reads as a hard cut, not a "more to scroll"
+// cue).
+const MEMBER_FADE = "100px";
+
+// Scroll-chevron behavior: a single click nudges ~one avatar (tile w-12 + the
+// gap-1 between tiles); pressing and holding past the delay scrolls smoothly and
+// continuously at the per-frame speed until released or the edge is reached.
+const MEMBER_STEP_PX = 52;
+const MEMBER_HOLD_SPEED_PX = 7;
+const MEMBER_HOLD_DELAY_MS = 200;
+
+function MemberArea({
+  count,
+  privacy = false,
+  children,
+}: {
+  count: number;
+  privacy?: boolean;
+  children: ReactNode;
+}) {
+  const tv = useTranslations("voice");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [edges, setEdges] = useState({ start: false, end: false });
+
+  // Chevron scroll: a click steps one avatar; a press-and-hold scrolls smoothly.
+  // The row is all draggable avatars (no gap to swipe), so these are the scroll
+  // affordance. `pressed` guards against a stray double end (e.g. pointercancel
+  // after pointerup); `active` marks that the continuous loop took over, so the
+  // release is NOT also treated as a single-step click.
+  const holdRef = useRef<{
+    timer: ReturnType<typeof setTimeout> | null;
+    raf: number;
+    active: boolean;
+    pressed: boolean;
+  }>({ timer: null, raf: 0, active: false, pressed: false });
+
+  const startHold = (dir: number) => {
+    const s = holdRef.current;
+    if (s.timer) clearTimeout(s.timer);
+    cancelAnimationFrame(s.raf);
+    s.active = false;
+    s.pressed = true;
+    s.timer = setTimeout(() => {
+      s.active = true;
+      const tick = () => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const before = el.scrollLeft;
+        el.scrollLeft += dir * MEMBER_HOLD_SPEED_PX;
+        if (el.scrollLeft === before) {
+          // Hit the edge — stop the loop (the button itself will hide).
+          s.active = false;
+          s.pressed = false;
+          return;
+        }
+        s.raf = requestAnimationFrame(tick);
+      };
+      s.raf = requestAnimationFrame(tick);
+    }, MEMBER_HOLD_DELAY_MS);
+  };
+
+  const endHold = (dir: number) => {
+    const s = holdRef.current;
+    if (!s.pressed) return;
+    s.pressed = false;
+    if (s.timer) {
+      clearTimeout(s.timer);
+      s.timer = null;
+    }
+    cancelAnimationFrame(s.raf);
+    if (!s.active) {
+      // Released before the hold engaged → treat as a click: one avatar.
+      scrollRef.current?.scrollBy({ left: dir * MEMBER_STEP_PX, behavior: "smooth" });
+    }
+    s.active = false;
+  };
+
+  // Stop any in-flight hold if the area unmounts mid-press.
+  useEffect(() => {
+    const s = holdRef.current;
+    return () => {
+      if (s.timer) clearTimeout(s.timer);
+      cancelAnimationFrame(s.raf);
+    };
+  }, []);
+
+  const update = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const start = el.scrollLeft > 1;
+    const end = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+    setEdges((prev) =>
+      prev.start === start && prev.end === end ? prev : { start, end },
+    );
+  }, []);
+
+  // Recompute on mount, on resize, and whenever the roster size changes: a
+  // join/leave changes scrollWidth, which a ResizeObserver on the strip itself
+  // can't observe (its own box size is unchanged), so `count` drives a re-run.
+  useEffect(() => {
+    update();
+    const el = scrollRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [update, count]);
+
+  // Fade only the side that has more to reveal — left once scrolled off the
+  // start, right while content remains past the end. A mask (vs. the calendar's
+  // colored gradient) is background-agnostic, so it works over the card's
+  // hover/active background changes.
+  const maskImage = `linear-gradient(to right, ${
+    edges.start ? "transparent" : "black"
+  } 0, black ${MEMBER_FADE}, black calc(100% - ${MEMBER_FADE}), ${
+    edges.end ? "transparent" : "black"
+  })`;
+
+  return (
+    <div className="relative h-[68px]">
+      <div
+        ref={scrollRef}
+        onScroll={update}
+        style={{ maskImage, WebkitMaskImage: maskImage }}
+        className="flex h-full items-start gap-1 overflow-x-auto pt-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {children}
+      </div>
+
+      {/* Chevron scroll buttons — the row is all draggable avatars, so it can't
+          be swipe-scrolled; these are the scroll affordance. Each shows only
+          when there's more to reveal that way (reusing the same edge state that
+          drives the fade), sits over the faded edge, and `stopPropagation`s so a
+          tap scrolls without also entering the zone. */}
+      {edges.start && (
+        <button
+          type="button"
+          aria-label={tv("scrollMembersLeft")}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            e.currentTarget.setPointerCapture(e.pointerId);
+            startHold(-1);
+          }}
+          onPointerUp={() => endHold(-1)}
+          onPointerCancel={() => endHold(-1)}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute left-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-background/80 text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent touch-none"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+      )}
+      {edges.end && (
+        <button
+          type="button"
+          aria-label={tv("scrollMembersRight")}
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            e.currentTarget.setPointerCapture(e.pointerId);
+            startHold(1);
+          }}
+          onPointerUp={() => endHold(1)}
+          onPointerCancel={() => endHold(1)}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute right-0.5 top-1/2 z-10 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full border border-border bg-background/80 text-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-accent touch-none"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
+
+      {privacy && count > 0 && <PrivacyScreen />}
     </div>
   );
 }
 
 function LockedMemberTile({ gamerId, name }: { gamerId: string; name?: string }) {
   return (
-    <div className="flex w-12 flex-col items-center gap-1">
-      <div className="h-11 w-11 overflow-hidden rounded-md border-2 border-border">
-        <Avatar className="h-full w-full rounded-md">
-          <Identicon id={gamerId} size={44} />
-        </Avatar>
-      </div>
+    <div className="flex w-12 shrink-0 flex-col items-center gap-1">
+      <VoiceAvatar userId={gamerId} />
       {name && (
         <span className="w-full truncate text-center text-[10px] leading-tight">
           {name}
@@ -424,37 +620,33 @@ function ZoneMemberTile({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      // `touch-action: none` only when draggable: it tells the browser to hand a
-      // touch that starts on this tile to the drag instead of scrolling. Non-
-      // draggable tiles keep the default and scroll normally — you scroll the
-      // list by starting the swipe anywhere that isn't a movable avatar.
+      // `touch-action: none` on draggable tiles so a touch that lands on a
+      // movable avatar drags it immediately rather than panning. Scrolling a
+      // crowded (all-draggable) row is handled by the chevron buttons in
+      // MemberArea, not by swiping. `shrink-0` keeps avatars full-size so the
+      // row overflows into a scroll instead of squishing the tiles.
       className={cn(
-        "flex w-12 flex-col items-center gap-1",
-        draggable && "cursor-grab touch-none",
+        "flex w-12 shrink-0 flex-col items-center gap-1",
+        // Shared drag-cursor classes (defined in globals.css): grab on hover.
+        draggable && "drag-handle touch-none",
         isDragging && "opacity-50",
       )}
     >
-      <div
+      <VoiceAvatar
         ref={glowRef}
-        className={cn(
-          "h-11 w-11 overflow-hidden rounded-md border-2 border-border transition-shadow",
-          p.isLocal && "ring-1 ring-primary/30",
-        )}
+        userId={p.userId}
+        audioOn={p.audioOn}
+        videoOn={p.videoOn}
+        isLocal={p.isLocal}
       >
-        {p.videoOn ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <Avatar className="h-full w-full rounded-md">
-            <Identicon id={p.userId} size={44} />
-          </Avatar>
-        )}
-      </div>
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="h-full w-full object-cover"
+        />
+      </VoiceAvatar>
       <span className="w-full truncate text-center text-[10px] leading-tight">
         {p.userName}
         {p.isLocal && <span className="text-muted-foreground"> {t("you")}</span>}

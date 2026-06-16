@@ -76,9 +76,9 @@ export function VoiceRoom({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-48">
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-0">
           <CardTitle className="flex items-center gap-2">
             <Mic className="h-5 w-5" />
             {title ?? t('voiceRoom')}
@@ -87,7 +87,7 @@ export function VoiceRoom({
             {t('zonesDescription')}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pb-0">
           {/* Screen share display (above the zone list when active) — animated in/out */}
           <div
             className={cn(
@@ -109,30 +109,6 @@ export function VoiceRoom({
           </div>
 
           <ZoneList />
-
-          {/* Control bar, two columns: the left column is the stacked rows of
-              media/mod toggles (VoiceControls); the right column is Leave — the
-              only destructive button. `items-end` drops Leave to the bottom row's
-              level and `ml-auto` pushes it to the right edge, so it sits at the
-              row-2 level, right-aligned, at its normal button size. */}
-          <div className="flex items-end gap-3">
-            <VoiceControls />
-
-            <Button
-              variant="destructive"
-              onClick={handleLeave}
-              disabled={joining || leaving}
-              className="ml-auto gap-1.5"
-              title={leaveLabel ?? t('leave')}
-            >
-              {leaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <PhoneOff className="h-4 w-4" />
-              )}
-              {leaveLabel ?? t('leave')}
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
@@ -141,6 +117,38 @@ export function VoiceRoom({
 
       {/* Participant list (always visible below the voice room card) */}
       <ParticipantList />
+
+      {/* Fixed control dock — pinned to the bottom of the viewport (position:
+          fixed: the same overlapping-fixed idea as the home-page section pill,
+          a different UI but the same intent) so the mic / camera / leave
+          controls stay reachable no matter how far the user scrolls through the
+          fixed-height zone list. No scroll-triggered reveal — in a live call the
+          controls are always present. The full-width centering wrapper is
+          `pointer-events-none` so clicks fall through to content on either side
+          of the pill; the pill itself re-enables them. The page container
+          reserves matching bottom padding (`pb-32`) so the dock never sits on
+          top of the participant list. VoiceControls already collapses to two
+          short rows below `sm`, so the pill stays narrow on mobile. */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-2 pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+0.75rem))]">
+        <div className="glass-panel pointer-events-auto flex max-w-[calc(100vw-1rem)] items-end gap-3 rounded-2xl border px-4 py-3 shadow-lg">
+          <VoiceControls />
+
+          <Button
+            variant="destructive"
+            onClick={handleLeave}
+            disabled={joining || leaving}
+            className="gap-1.5"
+            title={leaveLabel ?? t('leave')}
+          >
+            {leaving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <PhoneOff className="h-4 w-4" />
+            )}
+            {leaveLabel ?? t('leave')}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

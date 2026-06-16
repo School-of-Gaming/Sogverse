@@ -17,8 +17,7 @@ import {
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { ZoneIconPicker } from "./ZoneIconPicker";
 import { ZoneColorPicker } from "./ZoneColorPicker";
-import { pickDefaultZoneAppearance } from "@/lib/voice/zone-composition";
-import { asZoneIcon, asZoneColor } from "@/lib/constants/voice-zones";
+import { asZoneIcon, asZoneColor, pickRandomZoneAppearance, VOICE_ZONE_COLORS } from "@/lib/constants/voice-zones";
 import type { VoiceZone, VoiceZoneIcon, VoiceZoneColor } from "@/types";
 
 const MAX_NAME = 40;
@@ -39,23 +38,27 @@ interface ZoneDialogProps {
 export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
   const t = useTranslations("voice");
   const c = useTranslations("common");
-  const { createZone, updateZone, customZones } = useVoiceRoom();
+  const { createZone, updateZone } = useVoiceRoom();
   const isEdit = !!zone;
 
   const [name, setName] = useState(zone?.name ?? "");
-  // On create, default to an icon + color not already used by another zone, so a
-  // new zone looks distinct without the moderator having to hunt for free ones.
-  // Lazy initializers → computed once on open from the zones present at that
-  // moment (the helper is cheap; the second call is mount-only).
+  // On create, start on a random icon + color so each new zone looks fresh and
+  // a little surprising (zones may share an appearance; the moderator can change
+  // either). Lazy initializers → rolled once on open, mount-only.
   const [icon, setIcon] = useState<VoiceZoneIcon>(
-    () => (zone ? asZoneIcon(zone.icon) : pickDefaultZoneAppearance(customZones).icon),
+    () => (zone ? asZoneIcon(zone.icon) : pickRandomZoneAppearance().icon),
   );
   const [color, setColor] = useState<VoiceZoneColor>(
-    () => (zone ? asZoneColor(zone.color) : pickDefaultZoneAppearance(customZones).color),
+    () => (zone ? asZoneColor(zone.color) : pickRandomZoneAppearance().color),
   );
   const [isLocked, setIsLocked] = useState(zone?.is_locked ?? false);
   const [committing, setCommitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // The dialog frame previews the selected color the same way an active zone
+  // card does: high-contrast border + the color's inset glow spilling in from
+  // the edge. Updates live as the moderator changes the color.
+  const colorClasses = VOICE_ZONE_COLORS[color];
 
   const trimmed = name.trim();
   // The name is optional — a blank zone is identified by its icon + color. Only
@@ -82,7 +85,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className={cn("border-foreground", colorClasses.glow)}>
         <DialogHeader>
           <DialogTitle>{isEdit ? t("editZone") : t("newZone")}</DialogTitle>
         </DialogHeader>
@@ -99,7 +102,7 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
           </Field>
 
           <Field label={t("chooseIcon")}>
-            <ZoneIconPicker value={icon} onChange={setIcon} />
+            <ZoneIconPicker value={icon} color={VOICE_ZONE_COLORS[color]} onChange={setIcon} />
           </Field>
 
           <Field label={t("chooseColor")}>

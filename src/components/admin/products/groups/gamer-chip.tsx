@@ -122,7 +122,9 @@ export function GamerChip({
         "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
         isPending
           ? "cursor-progress border-border bg-muted text-foreground opacity-50"
-          : "cursor-grab border-border bg-muted text-foreground",
+          // Shared drag-cursor class (globals.css): grab on hover. The grabbing
+          // cursor while dragging comes from the DragOverlay's `drag-ghost`.
+          : "drag-handle border-border bg-muted text-foreground",
         isDragging && "opacity-50",
       )}
     >

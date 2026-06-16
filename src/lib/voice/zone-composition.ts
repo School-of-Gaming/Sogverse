@@ -1,12 +1,10 @@
 import type { LucideIcon } from "lucide-react";
-import type { VoiceZone, VoiceZoneIcon, VoiceZoneColor } from "@/types";
+import type { VoiceZone } from "@/types";
 import {
   LOBBY_PRESENTATION,
   YTY_PRESENTATIONS,
   zoneIconFor,
   zoneColorFor,
-  VOICE_ZONE_ICON_KEYS,
-  VOICE_ZONE_COLOR_KEYS,
   type ZoneColorClasses,
 } from "@/lib/constants/voice-zones";
 
@@ -93,22 +91,4 @@ export function composeZones(
  *  except locked zones — placement into those is mod-only and server-enforced). */
 export function selfMovableZoneIds(zones: VoiceZoneView[]): string[] {
   return zones.filter((z) => !z.isLocked).map((z) => z.id);
-}
-
-/**
- * Default icon + color for a *new* custom zone, chosen to avoid duplicating an
- * existing zone's icon or color (independently) so a freshly created zone looks
- * distinct at a glance. Zones may still share an appearance — this only steers
- * the default; a moderator can pick any icon/color afterward. Falls back to the
- * first palette entry once every icon (or color) is already in use.
- */
-export function pickDefaultZoneAppearance(
-  existing: Pick<VoiceZone, "icon" | "color">[],
-): { icon: VoiceZoneIcon; color: VoiceZoneColor } {
-  const usedIcons = new Set(existing.map((z) => z.icon));
-  const usedColors = new Set(existing.map((z) => z.color));
-  return {
-    icon: VOICE_ZONE_ICON_KEYS.find((k) => !usedIcons.has(k)) ?? VOICE_ZONE_ICON_KEYS[0],
-    color: VOICE_ZONE_COLOR_KEYS.find((k) => !usedColors.has(k)) ?? VOICE_ZONE_COLOR_KEYS[0],
-  };
 }
