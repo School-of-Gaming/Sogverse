@@ -4797,6 +4797,7 @@ GRANT ALL ON FUNCTION public.is_parent_of(gamer_uuid uuid) TO service_role;
 -- Name: FUNCTION is_voice_group_member(p_group_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
+REVOKE ALL ON FUNCTION public.is_voice_group_member(p_group_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_voice_group_member(p_group_id uuid) TO authenticated;
 
 
@@ -4804,6 +4805,7 @@ GRANT ALL ON FUNCTION public.is_voice_group_member(p_group_id uuid) TO authentic
 -- Name: FUNCTION is_voice_group_moderator(p_group_id uuid); Type: ACL; Schema: public; Owner: -
 --
 
+REVOKE ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.is_voice_group_moderator(p_group_id uuid) TO authenticated;
 
 
@@ -5201,6 +5203,7 @@ GRANT SELECT ON TABLE public.spoken_languages TO authenticated;
 --
 
 GRANT SELECT,INSERT,DELETE ON TABLE public.voice_locked_placements TO authenticated;
+GRANT SELECT,INSERT,DELETE ON TABLE public.voice_locked_placements TO service_role;
 
 
 --
@@ -5208,6 +5211,7 @@ GRANT SELECT,INSERT,DELETE ON TABLE public.voice_locked_placements TO authentica
 --
 
 GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.voice_zones TO authenticated;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.voice_zones TO service_role;
 
 
 --

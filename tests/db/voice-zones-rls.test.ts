@@ -78,7 +78,11 @@ describe("voice_zones + voice_locked_placements RLS", () => {
     groupY1 = getStringRecord(y.data, "tempMap").tY1;
 
     // Seed one locked zone in X1 via the service-role client (bypasses RLS).
-    const { data: locked } = await admin
+    // Surface the error: a swallowed insert failure here would skip the whole
+    // suite via a null-deref in beforeAll rather than reporting the real cause.
+    // Don't destructure — that collapses the {data}|{error} union and the
+    // narrowing below would lint as an impossible condition.
+    const seeded = await admin
       .from("voice_zones")
       .insert({
         group_id: groupX1,
@@ -90,7 +94,10 @@ describe("voice_zones + voice_locked_placements RLS", () => {
       })
       .select("id")
       .single();
-    lockedZoneX = locked!.id;
+    if (seeded.error) {
+      throw new Error(`seed voice_zones insert failed: ${seeded.error.message}`);
+    }
+    lockedZoneX = seeded.data.id;
   });
 
   afterAll(async () => {

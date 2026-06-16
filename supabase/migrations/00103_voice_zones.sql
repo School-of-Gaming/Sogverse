@@ -200,6 +200,12 @@ alter publication supabase_realtime add table public.voice_locked_placements;
 -- in the caller's context by the policies above, so authenticated needs
 -- EXECUTE (same rationale as can_read_product). Added to the access-control
 -- allowlists in tests/db/access-control.test.ts.
+--
+-- NOTE: 00104 follows up with the service_role table grants and a REVOKE of the
+-- default PUBLIC execute on the helpers (CREATE FUNCTION grants EXECUTE to
+-- PUBLIC, which leaks to anon). Both are folded in there because this migration
+-- was already applied to staging when the gap was caught — same append-only
+-- repair pattern as 00095–00099.
 -- ---------------------------------------------------------------------------
 grant select, insert, update, delete on public.voice_zones to authenticated;
 grant select, insert, delete on public.voice_locked_placements to authenticated;
