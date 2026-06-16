@@ -492,7 +492,7 @@ function VoiceZonesDemo() {
       id: "demo-strategy",
       group_id: "demo",
       name: "Strategy corner",
-      icon: "crown",
+      icon: "rocket",
       color: "teal",
       is_locked: false,
       sort_order: 0,

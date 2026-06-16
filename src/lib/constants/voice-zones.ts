@@ -1,16 +1,47 @@
 import {
   Home,
-  Star,
   Rocket,
   Gamepad2,
-  Crown,
-  Trophy,
   Flame,
+  Droplet,
+  Sailboat,
   Ghost,
-  Music,
+  Birdhouse,
+  Anvil,
+  Axe,
+  Bone,
+  BowArrow,
+  Box,
+  Castle,
+  LandPlot,
+  Pickaxe,
+  Skull,
+  Sprout,
+  Swords,
+  Wand,
+  Wrench,
+  Shovel,
+  Joystick,
+  Dices,
+  Puzzle,
+  Bot,
+  Cat,
+  Dog,
+  Rabbit,
+  Rat,
+  Turtle,
+  Bird,
+  Fish,
+  Rainbow,
+  Snowflake,
+  TreePine,
+  Flower2,
+  Mountain,
+  Pizza,
+  IceCream,
+  Coffee,
   type LucideIcon,
 } from "lucide-react";
-import { Constants, type VoiceZoneIcon, type VoiceZoneColor } from "@/types";
 import { YTY_ELEMENTS, type YtyElementId } from "./yty";
 
 /**
@@ -48,21 +79,89 @@ export type YtyZoneId = (typeof YTY_ZONE_IDS)[number];
 export const AVATAR_SIZE = 56;
 
 // ---------------------------------------------------------------------------
-// Custom-zone palette (§8) — 8 icons + 8 colors, chosen to be instantly
-// recognizable to a 7-year-old. Keys are identical to the DB enum values
-// (voice_zone_icon / voice_zone_color) so the picker, the card renderer, and
-// the row round-trip cleanly.
+// Custom-zone palette — the icons + colors a moderator can pick, chosen to be
+// instantly recognizable to a 7-year-old.
+//
+// THIS IS THE SOURCE OF TRUTH for the valid icon/color sets. The `voice_zones`
+// `icon`/`color` columns are plain `text` (not DB enums), so adding, removing,
+// or renaming an entry here is a pure code change — no migration. The KEYS tuple
+// drives both the type and the picker order; the map below must cover exactly
+// those keys (the `Record<…>` type enforces it, so the two can't drift). The
+// renderer falls back to a default glyph/color for any key not in the map
+// (`zoneIconFor` / `zoneColorFor`), so a row pointing at a removed key is safe.
 // ---------------------------------------------------------------------------
 
+/** Ordered icon keys — source of truth for the valid set and picker order.
+ *  Grouped by category so the picker reads as a tidy 8-per-row grid. */
+export const VOICE_ZONE_ICON_KEYS = [
+  // Play & gaming
+  "rocket", "gamepad", "joystick", "dice", "puzzle", "robot",
+  // Tools & building
+  "wrench", "pickaxe", "axe", "shovel", "anvil", "box",
+  // Adventure & fantasy
+  "swords", "bow-arrow", "wand", "castle", "skull", "bone", "birdhouse", "ghost",
+  // Animals
+  "cat", "dog", "rabbit", "rat", "turtle", "bird", "fish",
+  // Plants & terrain
+  "sprout", "tree", "flower", "mountain", "land-plot",
+  // Weather & elements
+  "flame", "droplet", "rainbow", "snowflake",
+  // Food & leisure
+  "pizza", "ice-cream", "coffee", "sailboat",
+] as const;
+
+/** A custom-zone icon key — derived from the key tuple so the type can't drift. */
+export type VoiceZoneIcon = (typeof VOICE_ZONE_ICON_KEYS)[number];
+
+// Same grouping/order as VOICE_ZONE_ICON_KEYS above.
 export const VOICE_ZONE_ICONS: Record<VoiceZoneIcon, LucideIcon> = {
-  star: Star,
+  // Play & gaming
   rocket: Rocket,
   gamepad: Gamepad2,
-  crown: Crown,
-  trophy: Trophy,
-  flame: Flame,
+  joystick: Joystick,
+  dice: Dices,
+  puzzle: Puzzle,
+  robot: Bot,
+  // Tools & building
+  wrench: Wrench,
+  pickaxe: Pickaxe,
+  axe: Axe,
+  shovel: Shovel,
+  anvil: Anvil,
+  box: Box,
+  // Adventure & fantasy
+  swords: Swords,
+  "bow-arrow": BowArrow,
+  wand: Wand,
+  castle: Castle,
+  skull: Skull,
+  bone: Bone,
+  birdhouse: Birdhouse,
   ghost: Ghost,
-  music: Music,
+  // Animals
+  cat: Cat,
+  dog: Dog,
+  rabbit: Rabbit,
+  rat: Rat,
+  turtle: Turtle,
+  bird: Bird,
+  fish: Fish,
+  // Plants & terrain
+  sprout: Sprout,
+  tree: TreePine,
+  flower: Flower2,
+  mountain: Mountain,
+  "land-plot": LandPlot,
+  // Weather & elements
+  flame: Flame,
+  droplet: Droplet,
+  rainbow: Rainbow,
+  snowflake: Snowflake,
+  // Food & leisure
+  pizza: Pizza,
+  "ice-cream": IceCream,
+  coffee: Coffee,
+  sailboat: Sailboat,
 };
 
 /** A color rendered as the soft-tint avatar treatment (`bg-avatar-X/15` tile +
@@ -78,6 +177,14 @@ export interface ZoneColorClasses {
   glow: string;
 }
 
+/** Ordered color keys — source of truth for the valid set and picker order. */
+export const VOICE_ZONE_COLOR_KEYS = [
+  "red", "orange", "green", "teal", "sky", "indigo", "violet", "pink",
+] as const;
+
+/** A custom-zone color key — derived from the key tuple so the type can't drift. */
+export type VoiceZoneColor = (typeof VOICE_ZONE_COLOR_KEYS)[number];
+
 export const VOICE_ZONE_COLORS: Record<VoiceZoneColor, ZoneColorClasses> = {
   red: { tile: "bg-avatar-red/15", glyph: "text-avatar-red", ring: "ring-avatar-red", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-red)]" },
   orange: { tile: "bg-avatar-orange/15", glyph: "text-avatar-orange", ring: "ring-avatar-orange", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-orange)]" },
@@ -89,11 +196,40 @@ export const VOICE_ZONE_COLORS: Record<VoiceZoneColor, ZoneColorClasses> = {
   pink: { tile: "bg-avatar-pink/15", glyph: "text-avatar-pink", ring: "ring-avatar-pink", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-pink)]" },
 };
 
-/** The ordered list of color keys, for the create/edit zone color picker.
- *  Derived from the generated DB enum so it can't drift from the migration. */
-export const VOICE_ZONE_COLOR_KEYS = Constants.public.Enums.voice_zone_color;
-/** The ordered list of icon keys, for the create/edit zone icon picker. */
-export const VOICE_ZONE_ICON_KEYS = Constants.public.Enums.voice_zone_icon;
+/** Type guard: is this free-text key a valid icon? Body is a literal `hasOwn`
+ *  check (a trusted type predicate — no cast), so the value narrows safely. */
+export function isZoneIcon(key: string): key is VoiceZoneIcon {
+  return Object.hasOwn(VOICE_ZONE_ICONS, key);
+}
+
+/** Type guard: is this free-text key a valid color? */
+export function isZoneColor(key: string): key is VoiceZoneColor {
+  return Object.hasOwn(VOICE_ZONE_COLORS, key);
+}
+
+/** Resolve an icon key (free text from the DB) to its glyph, falling back to a
+ *  default for an unknown/removed key so an old row never renders nothing. */
+export function zoneIconFor(key: string): LucideIcon {
+  return isZoneIcon(key) ? VOICE_ZONE_ICONS[key] : VOICE_ZONE_ICONS.gamepad;
+}
+
+/** Resolve a color key (free text from the DB) to its class set, falling back to
+ *  a default for an unknown/removed key. */
+export function zoneColorFor(key: string): ZoneColorClasses {
+  return isZoneColor(key) ? VOICE_ZONE_COLORS[key] : VOICE_ZONE_COLORS.sky;
+}
+
+/** Narrow a free-text icon key to a valid `VoiceZoneIcon`, defaulting to the
+ *  first palette entry for an unknown/removed key. Use when seeding picker state
+ *  from a stored (text) value. */
+export function asZoneIcon(key: string): VoiceZoneIcon {
+  return isZoneIcon(key) ? key : VOICE_ZONE_ICON_KEYS[0];
+}
+
+/** Narrow a free-text color key to a valid `VoiceZoneColor`. */
+export function asZoneColor(key: string): VoiceZoneColor {
+  return isZoneColor(key) ? key : VOICE_ZONE_COLOR_KEYS[0];
+}
 
 // ---------------------------------------------------------------------------
 // Virtual zone presentation (lobby + Yty). These keep their own identity and

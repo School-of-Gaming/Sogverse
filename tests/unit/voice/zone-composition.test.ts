@@ -15,7 +15,7 @@ function zone(overrides: Partial<VoiceZone> = {}): VoiceZone {
     id: "z-1",
     group_id: "g-1",
     name: "Zone 1",
-    icon: "star",
+    icon: "rocket",
     color: "red",
     is_locked: false,
     sort_order: 0,

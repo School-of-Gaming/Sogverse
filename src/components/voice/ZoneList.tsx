@@ -222,7 +222,7 @@ export function ZoneList() {
       <DragOverlay dropAnimation={null}>
         {activeParticipant && (
           <div className="h-11 w-11 overflow-hidden rounded-md border-2 border-primary shadow-lg">
-            <Avatar className="h-11 w-11 rounded-md">
+            <Avatar className="h-full w-full rounded-md">
               <Identicon id={activeParticipant.userId} size={44} />
             </Avatar>
           </div>
@@ -298,8 +298,8 @@ function ZoneCard({
       )}
     >
       <div className="flex items-center gap-2">
-        <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg", zone.color.tile)}>
-          <Icon className={cn("h-4 w-4", zone.color.glyph)} />
+        <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg", zone.color.tile)}>
+          <Icon className={cn("h-5 w-5", zone.color.glyph)} />
         </span>
         <span className="flex-1 truncate text-sm font-medium">{label}</span>
         {zone.isLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
@@ -366,8 +366,8 @@ function ZoneCard({
 function LockedMemberTile({ gamerId, name }: { gamerId: string; name?: string }) {
   return (
     <div className="flex w-12 flex-col items-center gap-1">
-      <div className="rounded-md border-2 border-border">
-        <Avatar className="h-11 w-11 rounded-md">
+      <div className="h-11 w-11 overflow-hidden rounded-md border-2 border-border">
+        <Avatar className="h-full w-full rounded-md">
           <Identicon id={gamerId} size={44} />
         </Avatar>
       </div>
@@ -450,7 +450,7 @@ function ZoneMemberTile({
             className="h-full w-full object-cover"
           />
         ) : (
-          <Avatar className="h-11 w-11 rounded-md">
+          <Avatar className="h-full w-full rounded-md">
             <Identicon id={p.userId} size={44} />
           </Avatar>
         )}

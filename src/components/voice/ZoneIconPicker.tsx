@@ -32,7 +32,7 @@ export function ZoneIconPicker({
               selected ? "border-primary bg-primary/10 text-primary" : "border-border hover:bg-accent",
             )}
           >
-            <Icon className="h-4 w-4" />
+            <Icon className="h-5 w-5" />
           </button>
         );
       })}

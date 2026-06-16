@@ -70,7 +70,9 @@ There are four *kinds* of zone; only the custom/locked kind is persisted.
 | **Custom** | `voice_zones` (the UUID is the zoneId) | by mods | soft |
 | **Locked** | `voice_zones`, `is_locked = true` | by mods | **hard (separate Daily room)** |
 
-The virtual zones (lobby + 4 Yty) and the palette of 8 icons / 8 colors live in `src/lib/constants/voice-zones.ts`; the keys match the `voice_zone_icon` / `voice_zone_color` DB enums. `composeZones` (`src/lib/voice/zone-composition.ts`) builds the ordered list the UI renders (lobby + Yty + custom). Instant rooms pass `groupId === null` → lobby + Yty only.
+The virtual zones (lobby + 4 Yty) and the custom-zone icon/color palette live in `src/lib/constants/voice-zones.ts`. `composeZones` (`src/lib/voice/zone-composition.ts`) builds the ordered list the UI renders (lobby + Yty + custom). Instant rooms pass `groupId === null` → lobby + Yty only.
+
+**The icon/color sets are app-owned, not DB enums.** `voice_zones.icon` / `.color` are plain `text` columns; the `VOICE_ZONE_ICON_KEYS` / `VOICE_ZONE_COLOR_KEYS` tuples in `voice-zones.ts` are the single source of truth (they drive both the derived `VoiceZoneIcon` / `VoiceZoneColor` types and the picker order). So adding/removing/renaming an icon or color is a pure code change — no migration. The renderer resolves a stored key through `zoneIconFor` / `zoneColorFor`, which fall back to a default glyph/color for any unknown or removed key, so an old row never breaks. (This deliberately departs from the "derive enums from generated `Constants`" convention in the root CLAUDE.md — the value set is presentational and mod-gated, not a security boundary.) Each icon/color key needs a label under `voice.zoneIcon.*` / `voice.zoneColor.*` in every `messages/` locale.
 
 **A custom zone's name is optional** — `voice_zones.name` is nullable (the CHECK enforces 1–40 chars only when present), so a moderator can create a zone identified by its icon + color alone. `composeZones` maps a null name to `""`; the UI renders no label and falls back to a generic word only for the accessible (aria) label.
 

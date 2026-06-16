@@ -170,38 +170,6 @@ CREATE TYPE public.user_role AS ENUM (
 
 
 --
--- Name: voice_zone_color; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.voice_zone_color AS ENUM (
-    'red',
-    'orange',
-    'green',
-    'teal',
-    'sky',
-    'indigo',
-    'violet',
-    'pink'
-);
-
-
---
--- Name: voice_zone_icon; Type: TYPE; Schema: public; Owner: -
---
-
-CREATE TYPE public.voice_zone_icon AS ENUM (
-    'star',
-    'rocket',
-    'gamepad',
-    'crown',
-    'trophy',
-    'flame',
-    'ghost',
-    'music'
-);
-
-
---
 -- Name: _list_cron_jobs(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -2624,8 +2592,8 @@ CREATE TABLE public.voice_zones (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     group_id uuid NOT NULL,
     name text,
-    icon public.voice_zone_icon NOT NULL,
-    color public.voice_zone_color NOT NULL,
+    icon text NOT NULL,
+    color text NOT NULL,
     is_locked boolean DEFAULT false NOT NULL,
     sort_order integer DEFAULT 0 NOT NULL,
     created_by uuid NOT NULL,

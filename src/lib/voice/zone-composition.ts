@@ -3,8 +3,8 @@ import type { VoiceZone, VoiceZoneIcon, VoiceZoneColor } from "@/types";
 import {
   LOBBY_PRESENTATION,
   YTY_PRESENTATIONS,
-  VOICE_ZONE_ICONS,
-  VOICE_ZONE_COLORS,
+  zoneIconFor,
+  zoneColorFor,
   VOICE_ZONE_ICON_KEYS,
   VOICE_ZONE_COLOR_KEYS,
   type ZoneColorClasses,
@@ -54,8 +54,8 @@ function customView(zone: VoiceZone): VoiceZoneView {
     kind: "custom",
     name: zone.name ?? "",
     nameIsKey: false,
-    icon: VOICE_ZONE_ICONS[zone.icon],
-    color: VOICE_ZONE_COLORS[zone.color],
+    icon: zoneIconFor(zone.icon),
+    color: zoneColorFor(zone.color),
     isLocked: zone.is_locked,
   };
 }

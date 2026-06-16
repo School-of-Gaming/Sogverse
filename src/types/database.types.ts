@@ -1062,11 +1062,11 @@ export type Database = {
       }
       voice_zones: {
         Row: {
-          color: Database["public"]["Enums"]["voice_zone_color"]
+          color: string
           created_at: string
           created_by: string
           group_id: string
-          icon: Database["public"]["Enums"]["voice_zone_icon"]
+          icon: string
           id: string
           is_locked: boolean
           name: string | null
@@ -1074,11 +1074,11 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          color: Database["public"]["Enums"]["voice_zone_color"]
+          color: string
           created_at?: string
           created_by: string
           group_id: string
-          icon: Database["public"]["Enums"]["voice_zone_icon"]
+          icon: string
           id?: string
           is_locked?: boolean
           name?: string | null
@@ -1086,11 +1086,11 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          color?: Database["public"]["Enums"]["voice_zone_color"]
+          color?: string
           created_at?: string
           created_by?: string
           group_id?: string
-          icon?: Database["public"]["Enums"]["voice_zone_icon"]
+          icon?: string
           id?: string
           is_locked?: boolean
           name?: string | null
@@ -1473,24 +1473,6 @@ export type Database = {
         | "subscription_period_proration"
         | "duplicate_payment"
       user_role: "admin" | "customer" | "gamer" | "gedu"
-      voice_zone_color:
-        | "red"
-        | "orange"
-        | "green"
-        | "teal"
-        | "sky"
-        | "indigo"
-        | "violet"
-        | "pink"
-      voice_zone_icon:
-        | "star"
-        | "rocket"
-        | "gamepad"
-        | "crown"
-        | "trophy"
-        | "flame"
-        | "ghost"
-        | "music"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1654,26 +1636,6 @@ export const Constants = {
         "duplicate_payment",
       ],
       user_role: ["admin", "customer", "gamer", "gedu"],
-      voice_zone_color: [
-        "red",
-        "orange",
-        "green",
-        "teal",
-        "sky",
-        "indigo",
-        "violet",
-        "pink",
-      ],
-      voice_zone_icon: [
-        "star",
-        "rocket",
-        "gamepad",
-        "crown",
-        "trophy",
-        "flame",
-        "ghost",
-        "music",
-      ],
     },
   },
 } as const

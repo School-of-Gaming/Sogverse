@@ -18,6 +18,7 @@ import { useVoiceRoom } from "./VoiceRoomProvider";
 import { ZoneIconPicker } from "./ZoneIconPicker";
 import { ZoneColorPicker } from "./ZoneColorPicker";
 import { pickDefaultZoneAppearance } from "@/lib/voice/zone-composition";
+import { asZoneIcon, asZoneColor } from "@/lib/constants/voice-zones";
 import type { VoiceZone, VoiceZoneIcon, VoiceZoneColor } from "@/types";
 
 const MAX_NAME = 40;
@@ -47,10 +48,10 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
   // Lazy initializers → computed once on open from the zones present at that
   // moment (the helper is cheap; the second call is mount-only).
   const [icon, setIcon] = useState<VoiceZoneIcon>(
-    () => zone?.icon ?? pickDefaultZoneAppearance(customZones).icon,
+    () => (zone ? asZoneIcon(zone.icon) : pickDefaultZoneAppearance(customZones).icon),
   );
   const [color, setColor] = useState<VoiceZoneColor>(
-    () => zone?.color ?? pickDefaultZoneAppearance(customZones).color,
+    () => (zone ? asZoneColor(zone.color) : pickDefaultZoneAppearance(customZones).color),
   );
   const [isLocked, setIsLocked] = useState(zone?.is_locked ?? false);
   const [committing, setCommitting] = useState(false);

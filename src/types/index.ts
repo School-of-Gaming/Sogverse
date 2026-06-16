@@ -257,9 +257,11 @@ export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group
 // mod-created rows persist, tied to a product_group.
 // ---------------------------------------------------------------------------
 
-// Enums (the 8-icon / 8-color palette; keys match src/lib/constants/voice-zones.ts)
-export type VoiceZoneIcon = Database["public"]["Enums"]["voice_zone_icon"];
-export type VoiceZoneColor = Database["public"]["Enums"]["voice_zone_color"];
+// Icon/color keys are app-owned, not DB enums — the `voice_zones.icon`/`.color`
+// columns are plain text and `src/lib/constants/voice-zones.ts` is the source of
+// truth for the valid set (so adding/removing one needs no migration). Re-export
+// the derived types here so the rest of the app can keep importing from `@/types`.
+export type { VoiceZoneIcon, VoiceZoneColor } from "@/lib/constants/voice-zones";
 
 // voice_zones
 export type VoiceZone = Database["public"]["Tables"]["voice_zones"]["Row"];

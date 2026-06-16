@@ -150,7 +150,7 @@ describe("voice_zones + voice_locked_placements RLS", () => {
         .insert({
           group_id: groupX1,
           name: "Strategy corner",
-          icon: "crown",
+          icon: "gamepad",
           color: "teal",
           created_by: TEST_IDS.GEDU,
         })
@@ -182,7 +182,7 @@ describe("voice_zones + voice_locked_placements RLS", () => {
       const { error } = await geduAuth.from("voice_zones").insert({
         group_id: groupX1,
         name: "",
-        icon: "star",
+        icon: "rocket",
         color: "red",
         created_by: TEST_IDS.GEDU,
       });
@@ -193,7 +193,7 @@ describe("voice_zones + voice_locked_placements RLS", () => {
       const { error } = await gamerAuth.from("voice_zones").insert({
         group_id: groupX1,
         name: "Sneaky",
-        icon: "star",
+        icon: "rocket",
         color: "red",
         created_by: TEST_IDS.GAMER,
       });
@@ -204,7 +204,7 @@ describe("voice_zones + voice_locked_placements RLS", () => {
       const { error } = await geduAuth.from("voice_zones").insert({
         group_id: groupY1,
         name: "Trespass",
-        icon: "star",
+        icon: "rocket",
         color: "red",
         created_by: TEST_IDS.GEDU,
       });
@@ -215,7 +215,7 @@ describe("voice_zones + voice_locked_placements RLS", () => {
       const { error } = await geduAuth.from("voice_zones").insert({
         group_id: groupX1,
         name: "Spoofed",
-        icon: "star",
+        icon: "rocket",
         color: "red",
         created_by: TEST_IDS.ADMIN, // not the caller
       });
@@ -330,7 +330,7 @@ describe("voice_zones + voice_locked_placements RLS", () => {
         .insert({
           group_id: groupX1,
           name: "Open zone",
-          icon: "music",
+          icon: "coffee",
           color: "sky",
           is_locked: false,
           created_by: TEST_IDS.ADMIN,
