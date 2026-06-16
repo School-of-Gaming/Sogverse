@@ -9,8 +9,9 @@ import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
+import { PrivacyScreen } from "./PrivacyScreen";
 import type { VoiceZoneView } from "@/lib/voice/zone-composition";
-import type { VoiceParticipant } from "./hooks/types";
+import type { VoiceParticipant, LockedMember } from "./hooks/types";
 
 /**
  * Mobile-first vertical stack of zone cards. The PR2 baseline UI for the
@@ -20,7 +21,7 @@ import type { VoiceParticipant } from "./hooks/types";
  * membership/audio seam.
  */
 export function ZoneList() {
-  const { zones, participantsByZone, currentZoneId, moveSelfToZone } = useVoiceRoom();
+  const { zones, participantsByZone, lockedRoster, currentZoneId, moveSelfToZone } = useVoiceRoom();
   const t = useTranslations();
 
   // next-intl's message keys are typed literals, so resolve the fixed set of
@@ -43,6 +44,7 @@ export function ZoneList() {
           key={zone.id}
           zone={zone}
           members={participantsByZone.get(zone.id) ?? []}
+          lockedMembers={lockedRoster.get(zone.id) ?? []}
           isCurrent={zone.id === currentZoneId}
           onEnter={zone.isLocked ? undefined : () => moveSelfToZone(zone.id)}
           label={labelFor(zone)}
@@ -55,16 +57,19 @@ export function ZoneList() {
 interface ZoneCardProps {
   zone: VoiceZoneView;
   members: VoiceParticipant[];
+  /** Outsider roster for a locked zone (from the DB), rendered blurred. */
+  lockedMembers: LockedMember[];
   isCurrent: boolean;
   label: string;
   /** undefined → not tappable (locked zone). */
   onEnter?: () => void;
 }
 
-function ZoneCard({ zone, members, isCurrent, label, onEnter }: ZoneCardProps) {
+function ZoneCard({ zone, members, lockedMembers, isCurrent, label, onEnter }: ZoneCardProps) {
   const t = useTranslations("voice");
   const Icon = zone.icon;
   const tappable = !!onEnter && !isCurrent;
+  const memberCount = zone.isLocked ? lockedMembers.length : members.length;
 
   return (
     <div
@@ -95,18 +100,45 @@ function ZoneCard({ zone, members, isCurrent, label, onEnter }: ZoneCardProps) {
           <Badge variant="secondary" className="text-xs">{t("youAreHere")}</Badge>
         ) : (
           <Badge variant="outline" className="text-xs">
-            {t("participantsCount", { count: members.length })}
+            {t("participantsCount", { count: memberCount })}
           </Badge>
         )}
       </div>
 
-      {members.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-3">
-          {members.map((p) => (
-            <ZoneMemberTile key={p.sessionId} participant={p} />
-          ))}
-        </div>
+      {/* Locked zone (outsider view): blurred roster from the DB placements. The
+          real privacy is the separate Daily room; the blur is the UI signal. */}
+      {zone.isLocked ? (
+        lockedMembers.length > 0 && (
+          <div className="relative mt-3">
+            <div className="flex flex-wrap gap-3">
+              {lockedMembers.map((m) => (
+                <LockedMemberTile key={m.gamerId} gamerId={m.gamerId} />
+              ))}
+            </div>
+            <PrivacyScreen />
+          </div>
+        )
+      ) : (
+        members.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-3">
+            {members.map((p) => (
+              <ZoneMemberTile key={p.sessionId} participant={p} />
+            ))}
+          </div>
+        )
       )}
+    </div>
+  );
+}
+
+function LockedMemberTile({ gamerId }: { gamerId: string }) {
+  return (
+    <div className="flex w-14 flex-col items-center gap-1">
+      <div className="rounded-md border-2 border-border">
+        <Avatar className="h-12 w-12 rounded-md">
+          <Identicon id={gamerId} size={48} />
+        </Avatar>
+      </div>
     </div>
   );
 }

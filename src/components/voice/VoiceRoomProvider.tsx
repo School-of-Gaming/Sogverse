@@ -19,9 +19,11 @@ import type {
   AppMessage,
   VoiceRole,
   ZoneUserData,
+  LockedMember,
 } from "./hooks/types";
 import { useAudioPipeline, type LocalAudioState } from "./hooks/use-audio-pipeline";
 import { useZoneMembership } from "./hooks/use-zone-membership";
+import { useZoneData } from "./hooks/use-zone-data";
 import { useScreenShare } from "./hooks/use-screen-share";
 import { useModeratorControls } from "./hooks/use-moderator-controls";
 import { useChat } from "./hooks/use-chat";
@@ -132,6 +134,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   });
 
   const chat = useChat({ callObjectRef });
+
+  // Live custom zones + locked placements from the DB (group rooms only).
+  const { customZones, placements } = useZoneData(groupId);
 
   // --- Participant management ---
 
@@ -426,9 +431,8 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
   const isModerator = isModeratorRole(localRole);
 
-  // Custom zones come from the DB in a later PR; for now the list is the
-  // virtual lobby + 4 Yty zones (instant rooms only ever get these).
-  const zones = useMemo(() => composeZones(null, groupId), [groupId]);
+  // Composed zone list: virtual lobby + 4 Yty + the group's DB custom zones.
+  const zones = useMemo(() => composeZones(customZones, groupId), [customZones, groupId]);
 
   const participantsByZone = useMemo(() => {
     const map = new Map<string, VoiceParticipant[]>();
@@ -440,6 +444,19 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     }
     return map;
   }, [participants, zones]);
+
+  // Outsider view of locked zones: who's inside, from the DB placement rows
+  // (the viewer isn't connected to the separate locked room).
+  const lockedRoster = useMemo(() => {
+    const map = new Map<string, LockedMember[]>();
+    for (const p of placements) {
+      const bucket = map.get(p.zone_id);
+      const member: LockedMember = { gamerId: p.gamer_id };
+      if (bucket) bucket.push(member);
+      else map.set(p.zone_id, [member]);
+    }
+    return map;
+  }, [placements]);
 
   // --- Context ---
 
@@ -456,6 +473,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       zones,
       currentZoneId: membership.currentZoneId,
       participantsByZone,
+      lockedRoster,
       moveSelfToZone: membership.moveSelfToZone,
       moveParticipantToZone: membership.moveParticipantToZone,
       micOn,
@@ -482,7 +500,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       join,
       leave,
     }),
-    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, membership.currentZoneId, participantsByZone, membership.moveSelfToZone, membership.moveParticipantToZone, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
+    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, membership.currentZoneId, participantsByZone, lockedRoster, membership.moveSelfToZone, membership.moveParticipantToZone, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
   );
 
   return (

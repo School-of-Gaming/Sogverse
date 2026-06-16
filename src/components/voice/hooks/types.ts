@@ -51,6 +51,16 @@ export interface ZoneUserData {
   broadcasting: boolean;
 }
 
+/**
+ * A member of a locked zone, as seen by an *outsider* — sourced from the
+ * `voice_locked_placements` DB rows, not from Daily (the outsider isn't
+ * connected to the locked room). Only the gamer's id is available, which is all
+ * the blurred privacy-screen roster needs (identicon, no name).
+ */
+export interface LockedMember {
+  gamerId: string;
+}
+
 // ---------- Moderator ----------
 
 export interface LockState {
@@ -137,6 +147,9 @@ export interface VoiceRoomContextValue {
   zones: VoiceZoneView[];
   currentZoneId: string;
   participantsByZone: Map<string, VoiceParticipant[]>;
+  /** zoneId → who's inside a locked zone, from the DB placement rows. Drives the
+   *  blurred outsider roster (the viewer isn't in the separate locked room). */
+  lockedRoster: Map<string, LockedMember[]>;
   /** Tap or drag self into a zone. No-op for locked zones (placement is mod-only). */
   moveSelfToZone: (zoneId: string) => void;
   /** Moderator-only; moves another participant into a non-locked zone. */
