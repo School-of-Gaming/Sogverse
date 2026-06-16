@@ -37,7 +37,7 @@ interface InstantVoiceSessionProps {
  *                   camera/mic permission and pick a name. Resolves to
  *                   `lobby` or `not-found`.
  *   - `lobby`     — Pre-join: cam/mic preview, name input.
- *   - `in-call`   — Connected to Daily; renders the spatial canvas.
+ *   - `in-call`   — Connected to Daily; renders the zone-based voice room.
  *   - `ended`     — Either the user clicked Leave (reason: "left") or
  *                   the call ended for everyone (reason: "ended" — mod
  *                   ended it, token expired, room deleted, network drop).

@@ -28,7 +28,7 @@ interface InstantVoiceLobbyProps {
 
 /**
  * Pre-join screen for instant voice rooms. Shows a live preview of the
- * avatar exactly as it will appear in the spatial canvas — speaking
+ * avatar exactly as it will appear in the voice room — speaking
  * glow, camera-in-circle, mic indicator — and (for guests) collects a
  * display name.
  *

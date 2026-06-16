@@ -146,9 +146,9 @@ The send route (`src/app/api/admin/whatsapp/send/route.ts`) and webhook handler 
 - [ ] Extract `extractMessageContent()` and error-code mapping from the webhook into `src/lib/whatsapp.ts`
 - [ ] Update both route handlers to delegate persistence to the service
 
-### Refactor SpatialVoiceRoom screen-share animation off render-time ref I/O
+### Refactor VoiceRoom screen-share animation off render-time ref I/O
 
-`src/components/voice/SpatialVoiceRoom.tsx` uses a `staleSharerRef` to keep showing the previous screen sharer during the exit animation after `screenSharerSessionId` flips to `null`. The current implementation mutates the ref during render (line ~44), reads it during render in JSX (line ~113), and uses `setState` inside the synchronizing `useEffect` (line ~50). All three are flagged by `eslint-plugin-react-hooks@7` (the React-Compiler-aware rules `react-hooks/refs` and `react-hooks/set-state-in-effect`) — currently suppressed with inline `eslint-disable-next-line` comments pointing here.
+`src/components/voice/VoiceRoom.tsx` uses a `staleSharerRef` to keep showing the previous screen sharer during the exit animation after `screenSharerSessionId` flips to `null`. The current implementation mutates the ref during render (line ~44), reads it during render in JSX (line ~113), and uses `setState` inside the synchronizing `useEffect` (line ~50). All three are flagged by `eslint-plugin-react-hooks@7` (the React-Compiler-aware rules `react-hooks/refs` and `react-hooks/set-state-in-effect`) — currently suppressed with inline `eslint-disable-next-line` comments pointing here.
 
 These are real anti-patterns, not false positives. They happened to work but will become hostile under the React Compiler / future React 19+ behavior, which can re-render or skip renders in ways that break ref-during-render invariants.
 

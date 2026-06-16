@@ -34,7 +34,7 @@ Auth is detected server-side at the token endpoint and **never** trusted from th
 | Signed-in parent / gamer | false | server UUID + lobby name | Guest — auth ignored |
 | Signed-out | false | server UUID + lobby name | Guest |
 
-A voice "guest" is permission-equivalent to a gamer: no mute/lock/screen-share, can only drag own avatar, no broadcast zone. The voice role union is `UserRole | "guest"` — `"guest"` is display-only; all gating uses positive `role === "admin" || role === "gedu"` mod checks, so guest behavior falls out for free.
+A voice "guest" is permission-equivalent to a gamer: no mute/lock/screen-share/broadcast/deafen, can only move themselves between zones. The voice role union is `UserRole | "guest"` — `"guest"` is display-only; all gating uses positive `role === "admin" || role === "gedu"` mod checks, so guest behavior falls out for free. Instant rooms have no group, so they get the lobby + 4 Yty zones only — no custom or locked zones (`VoiceRoomProvider` is passed `groupId={null}`).
 
 **Rule: Token ownership is computed only from the server session (`getUserWithProfile`), never from the request body.** Body fields named `isOwner`/`role`/`userId` are ignored by design (pinned by an integration test). On any auth-detection failure — no session, profile lookup error, role not admin/gedu — fall through to the guest path. There must be no path where ambiguous auth grants ownership.
 
@@ -71,7 +71,7 @@ The room is open by design; defenses target privilege escalation and bounding bl
 - **`InstantVoiceHeader`** — simplified header for `/voice/[code]` (no sidebar/footer; replaces the main app `Header`). The "SOG Sogverse" mark is a non-link `<div>` on purpose — navigating home would yank the user out of an active call. Right side: a copy-room-URL button + `LocalePicker`. Outer chrome comes from `SiteHeaderShell` so brand tweaks carry over.
 - **`CreateInstantRoomCard`** — dashboard panel: idle "Create voice room" button → URL chip + Join after creation.
 
-Shared pieces live in the parent (`VoiceRoomProvider`, `SpatialVoiceRoom`, the spatial canvas/avatars) and `../hooks/` (`use-local-stream-glow` drives the lobby glow from a raw `getUserMedia` stream, paralleling `use-speaking-glow` which reads from Daily). See `../CLAUDE.md`.
+Shared pieces live in the parent (`VoiceRoomProvider`, `VoiceRoom`, `ZoneList`, the zone cards/avatars) and `../hooks/` (`use-local-stream-glow` drives the lobby glow from a raw `getUserMedia` stream, paralleling `use-speaking-glow` which reads from Daily). See `../CLAUDE.md`.
 
 ## Call-ended flow & the leave sentinel
 
@@ -97,4 +97,4 @@ When a mod ends for everyone:
 - Per-IP rate limiting on `token` (closes the enumeration window) and per-creator caps on `create` for gedus.
 - Permanent kick / ban-from-room (between "mute one" and "end the call" there's no "remove this person and keep them out").
 - Role badges in the voice UI + name-impersonation handling (a guest can name themselves "Admin Bob"; addressing badges and a name filter together is worthwhile, either alone is weak).
-- Mobile UX for the spatial canvas on narrow viewports.
+- Continued mobile-UX polish of the zone-card layout on narrow viewports.
