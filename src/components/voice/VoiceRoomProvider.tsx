@@ -37,7 +37,12 @@ import { useWakeLock } from "./hooks/use-wake-lock";
 // Re-export types so existing imports from VoiceRoomProvider still work
 export type { VoiceParticipant, LockState, ChatMessage } from "./hooks/types";
 
-const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
+// Exported so the /admin/ui-components style guide can render the voice UI with
+// a hand-built mock context value (no live Daily call). The components are pure
+// consumers of this context, so a fixture value drives them identically — which
+// doubles as a separation-of-concerns check: if the UI demos cleanly here,
+// business logic hasn't leaked into the view.
+export const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
 
 // ---------- Helpers ----------
 

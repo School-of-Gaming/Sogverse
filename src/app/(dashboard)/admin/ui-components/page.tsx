@@ -48,6 +48,15 @@ import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
 import { useAuth, useNow } from "@/providers";
 import { AVATAR_SIZE } from "@/lib/constants/voice-zones";
 import { computeGlowStyle } from "@/lib/voice/glow";
+import { composeZones } from "@/lib/voice/zone-composition";
+import { ZoneList } from "@/components/voice/ZoneList";
+import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
+import type {
+  VoiceRoomContextValue,
+  VoiceParticipant,
+  LockedMember,
+} from "@/components/voice/hooks/types";
+import type { VoiceZone } from "@/types";
 import {
   ProductBrowseCardView,
   type ProductBrowseCardViewProps,
@@ -472,6 +481,131 @@ function useSimulatedGlow(
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, [ref, audioOn, phaseOffset]);
+}
+
+// Mock provider context driving the discrete-zone voice UI with fixtures — no
+// live Daily call. Because the voice components are pure consumers of
+// VoiceRoomContext, this drives them identically to the real provider.
+function VoiceZonesDemo() {
+  const customZones: VoiceZone[] = [
+    {
+      id: "demo-strategy",
+      group_id: "demo",
+      name: "Strategy corner",
+      icon: "crown",
+      color: "teal",
+      is_locked: false,
+      sort_order: 0,
+      created_by: "demo",
+      created_at: "2026-06-16T10:00:00Z",
+      updated_at: "2026-06-16T10:00:00Z",
+    },
+    {
+      id: "demo-quiet",
+      group_id: "demo",
+      name: "Quiet room",
+      icon: "ghost",
+      color: "indigo",
+      is_locked: true,
+      sort_order: 1,
+      created_by: "demo",
+      created_at: "2026-06-16T10:00:00Z",
+      updated_at: "2026-06-16T10:00:00Z",
+    },
+  ];
+  const zones = composeZones(customZones, "demo");
+
+  const member = (
+    over: Pick<VoiceParticipant, "sessionId" | "userId" | "userName" | "zoneId"> &
+      Partial<VoiceParticipant>,
+  ): VoiceParticipant => ({
+    role: "gamer",
+    audioOn: true,
+    videoOn: false,
+    screenShareOn: false,
+    isLocal: false,
+    isOwner: false,
+    isSpeaking: false,
+    isBroadcasting: false,
+    ...over,
+  });
+
+  const participants: VoiceParticipant[] = [
+    member({ sessionId: "s1", userId: "u1", userName: "You", zoneId: "lobby", isLocal: true, role: "admin", isOwner: true }),
+    member({ sessionId: "s2", userId: "u2", userName: "Aino", zoneId: "lobby" }),
+    member({ sessionId: "s3", userId: "u3", userName: "Eero", zoneId: "yty-glow", isSpeaking: true }),
+    member({ sessionId: "s4", userId: "u4", userName: "Liisa", zoneId: "demo-strategy" }),
+  ];
+
+  const participantsByZone = new Map<string, VoiceParticipant[]>();
+  for (const z of zones) participantsByZone.set(z.id, []);
+  for (const p of participants) participantsByZone.get(p.zoneId)?.push(p);
+
+  const lockedRoster = new Map<string, LockedMember[]>([
+    ["demo-quiet", [{ gamerId: "u5" }, { gamerId: "u6" }]],
+  ]);
+
+  const noop = () => {};
+  const asyncNoop = async () => {};
+
+  const value: VoiceRoomContextValue = {
+    joined: true,
+    joining: false,
+    callObject: null,
+    localSessionId: "s1",
+    localRole: "admin",
+    isModerator: true,
+    groupId: "demo",
+    participants,
+    zones,
+    customZones,
+    currentZoneId: "lobby",
+    participantsByZone,
+    lockedRoster,
+    moveSelfToZone: noop,
+    moveParticipantToZone: noop,
+    placeInLockedZone: asyncNoop,
+    removeFromLockedZone: asyncNoop,
+    createZone: asyncNoop,
+    updateZone: asyncNoop,
+    deleteZone: asyncNoop,
+    micOn: true,
+    cameraOn: false,
+    cameraAllowed: true,
+    toggleMic: noop,
+    toggleCamera: noop,
+    screenSharerSessionId: null,
+    canScreenShare: true,
+    isScreenSharing: false,
+    startScreenShare: asyncNoop,
+    stopScreenShare: noop,
+    isBroadcasting: false,
+    toggleBroadcast: noop,
+    isDeafened: false,
+    toggleDeafen: noop,
+    audioInputs: [],
+    currentAudioInputId: null,
+    setAudioInput: asyncNoop,
+    micPermission: "granted",
+    localLocks: { audio: false, video: false },
+    lockStates: new Map(),
+    muteParticipant: noop,
+    lockParticipant: noop,
+    getAnalyser: () => null,
+    messages: [],
+    sendChatMessage: noop,
+    join: asyncNoop,
+    leave: asyncNoop,
+    roomTransition: null,
+  };
+
+  return (
+    <VoiceRoomContext.Provider value={value}>
+      <div className="max-w-sm">
+        <ZoneList />
+      </div>
+    </VoiceRoomContext.Provider>
+  );
 }
 
 function ParticipantCardDemo() {
@@ -1166,10 +1300,6 @@ export default function AdminUIComponentsPage() {
           </div>
         </SubSection>
 
-        <SubSection title="Voice Room Avatar (speaking glow)">
-          <VoiceAvatarDemo />
-        </SubSection>
-
         <SubSection title="Avatar Picker — icon + color (mockup)">
           <p className="text-sm text-muted-foreground mb-4">
             Exploration to replace the deterministic identicon: users pick a
@@ -1321,13 +1451,31 @@ export default function AdminUIComponentsPage() {
       <SwitchProfileDialogDemo />
 
       {/* ============================================================ */}
-      {/* Section 9: Participant Card                                   */}
+      {/* Section 9: Voice Room                                         */}
       {/* ============================================================ */}
-      <Section title="Participant Card">
-        <SubSection title="Voice Room Participant List">
+      <Section title="Voice Room">
+        <SubSection title="Zone list (mock data, moderator view)">
+          <p className="text-sm text-muted-foreground mb-3">
+            The discrete-zone room UI, fed a hand-built mock provider context
+            (no live Daily call) — which is also the separation-of-concerns
+            check: the components are pure consumers, so fixtures drive them
+            identically. Resize the panel to feel the mobile layout. Live video
+            and the audio-driven glow are inert under mock data (no real tracks);
+            everything else — cards, custom + locked zones, the privacy-screen
+            blur, current-zone emphasis, drag, and the moderator controls —
+            renders from the fixture.
+          </p>
+          <VoiceZonesDemo />
+        </SubSection>
+
+        <SubSection title="Avatar (speaking glow)">
+          <VoiceAvatarDemo />
+        </SubSection>
+
+        <SubSection title="Participant list">
           <p className="text-sm text-muted-foreground mb-3">
             Shows avatar, name, moderator controls (for non-owner remote participants), and status indicators.
-            Lock buttons toggle between ghost/destructive variants. Used in voice room sidebar.
+            Lock buttons toggle between ghost/destructive variants. Used in the voice room sidebar.
           </p>
           <ParticipantCardDemo />
         </SubSection>
