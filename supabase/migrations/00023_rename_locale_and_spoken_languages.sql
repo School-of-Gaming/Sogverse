@@ -5,7 +5,7 @@
 --   2. Spoken language  - human languages a person speaks / a club is delivered in
 --
 -- This migration renames everything on the database side so the two systems
--- have visibly different names. See docs/i18n-architecture.md and the rule in
+-- have visibly different names. See src/i18n/CLAUDE.md and the rule in
 -- CLAUDE.md ("Locale vs Spoken Language").
 --
 -- All renames are metadata-only - no data is rewritten.

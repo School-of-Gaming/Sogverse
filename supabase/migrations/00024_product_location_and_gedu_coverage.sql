@@ -4,7 +4,7 @@
 -- the system needs to find other gedus who (a) can physically reach the venue
 -- and (b) speak the language the club is delivered in.
 --
--- See docs/locations-architecture.md for the substitute-matching query shape
+-- See src/services/locations/CLAUDE.md for the substitute-matching query shape
 -- and the Gedu/Product Locations plan that drove this migration.
 
 -- =============================================================================

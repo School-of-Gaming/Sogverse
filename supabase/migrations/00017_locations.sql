@@ -2,7 +2,7 @@
 -- entities to geographic regions. Uses a self-referential adjacency list
 -- with a location_type enum for level classification.
 --
--- See docs/locations-architecture.md for the full design, hierarchy examples,
+-- See src/services/locations/CLAUDE.md for the full design, hierarchy examples,
 -- and international expansion plan.
 
 -- =============================================================================
