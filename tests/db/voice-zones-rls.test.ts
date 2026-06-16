@@ -161,6 +161,34 @@ describe("voice_zones + voice_locked_placements RLS", () => {
       if (data) await admin.from("voice_zones").delete().eq("id", data.id);
     });
 
+    it("a zone name is optional — a moderator can create one with a null name", async () => {
+      const { data, error } = await geduAuth
+        .from("voice_zones")
+        .insert({
+          group_id: groupX1,
+          name: null,
+          icon: "flame",
+          color: "orange",
+          created_by: TEST_IDS.GEDU,
+        })
+        .select("id, name")
+        .single();
+      expect(error).toBeNull();
+      expect(data?.name).toBeNull();
+      if (data) await admin.from("voice_zones").delete().eq("id", data.id);
+    });
+
+    it("an empty-string name is still rejected by the length check", async () => {
+      const { error } = await geduAuth.from("voice_zones").insert({
+        group_id: groupX1,
+        name: "",
+        icon: "star",
+        color: "red",
+        created_by: TEST_IDS.GEDU,
+      });
+      expect(error).not.toBeNull();
+    });
+
     it("gamer cannot create a zone", async () => {
       const { error } = await gamerAuth.from("voice_zones").insert({
         group_id: groupX1,

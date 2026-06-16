@@ -3,7 +3,12 @@ import type { VoiceZone } from "@/types";
 import {
   composeZones,
   selfMovableZoneIds,
+  pickDefaultZoneAppearance,
 } from "@/lib/voice/zone-composition";
+import {
+  VOICE_ZONE_ICON_KEYS,
+  VOICE_ZONE_COLOR_KEYS,
+} from "@/lib/constants/voice-zones";
 
 function zone(overrides: Partial<VoiceZone> = {}): VoiceZone {
   return {
@@ -68,6 +73,48 @@ describe("composeZones", () => {
   it("a locked custom zone is flagged isLocked", () => {
     const views = composeZones([zone({ id: "lz", is_locked: true })], "g-1");
     expect(views.find((v) => v.id === "lz")?.isLocked).toBe(true);
+  });
+
+  it("a blank (null) custom-zone name becomes an empty view name", () => {
+    const views = composeZones([zone({ id: "c-1", name: null })], "g-1");
+    expect(views.find((v) => v.id === "c-1")).toMatchObject({
+      name: "",
+      nameIsKey: false,
+    });
+  });
+});
+
+describe("pickDefaultZoneAppearance", () => {
+  it("with no existing zones, defaults to the first icon and color", () => {
+    expect(pickDefaultZoneAppearance([])).toEqual({
+      icon: VOICE_ZONE_ICON_KEYS[0],
+      color: VOICE_ZONE_COLOR_KEYS[0],
+    });
+  });
+
+  it("avoids an icon and color already in use", () => {
+    const got = pickDefaultZoneAppearance([
+      { icon: VOICE_ZONE_ICON_KEYS[0], color: VOICE_ZONE_COLOR_KEYS[0] },
+    ]);
+    expect(got.icon).toBe(VOICE_ZONE_ICON_KEYS[1]);
+    expect(got.color).toBe(VOICE_ZONE_COLOR_KEYS[1]);
+  });
+
+  it("steers icon and color independently — only the used axis advances", () => {
+    // First icon is taken but the first color is free → icon advances, color stays.
+    const got = pickDefaultZoneAppearance([
+      { icon: VOICE_ZONE_ICON_KEYS[0], color: VOICE_ZONE_COLOR_KEYS[3] },
+    ]);
+    expect(got.icon).toBe(VOICE_ZONE_ICON_KEYS[1]);
+    expect(got.color).toBe(VOICE_ZONE_COLOR_KEYS[0]);
+  });
+
+  it("falls back to the first entry once every icon is in use", () => {
+    const used = VOICE_ZONE_ICON_KEYS.map((icon, i) => ({
+      icon,
+      color: VOICE_ZONE_COLOR_KEYS[i % VOICE_ZONE_COLOR_KEYS.length],
+    }));
+    expect(pickDefaultZoneAppearance(used).icon).toBe(VOICE_ZONE_ICON_KEYS[0]);
   });
 });
 

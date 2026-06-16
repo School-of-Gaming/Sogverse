@@ -519,7 +519,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   // --- Custom-zone management (moderator) ---
 
   const createZone = useCallback(
-    async (input: { name: string; icon: VoiceZoneIcon; color: VoiceZoneColor; isLocked: boolean }) => {
+    async (input: { name: string | null; icon: VoiceZoneIcon; color: VoiceZoneColor; isLocked: boolean }) => {
       const createdBy = localUserIdRef.current;
       if (!groupId || !isModeratorRef.current || !createdBy) return;
       await new VoiceZonesService(getClient()).createZone({ groupId, createdBy, ...input });
@@ -528,7 +528,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   );
 
   const updateZone = useCallback(
-    async (id: string, patch: { name?: string; icon?: VoiceZoneIcon; color?: VoiceZoneColor }) => {
+    async (id: string, patch: { name?: string | null; icon?: VoiceZoneIcon; color?: VoiceZoneColor }) => {
       if (!isModeratorRef.current) return;
       await new VoiceZonesService(getClient()).updateZone(id, patch);
     },

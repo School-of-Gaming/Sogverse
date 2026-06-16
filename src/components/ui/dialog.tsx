@@ -94,7 +94,14 @@ function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-6", className)}
+      // Button order convention: footers are authored DOM-order [secondary, …,
+      // primary]. On desktop (sm:flex-row sm:justify-end) that reads left→right
+      // as secondary…primary (primary on the right). On mobile we keep the same
+      // order with plain `flex-col` — secondary on top, primary on the bottom
+      // (thumb-reachable) — so the primary action is the "last" one in both
+      // layouts (rightmost ≙ bottommost). `gap-2` (not `space-x`) so the stacked
+      // mobile buttons get vertical spacing too.
+      className={cn("mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end", className)}
       {...props}
     />
   );

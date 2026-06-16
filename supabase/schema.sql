@@ -2623,7 +2623,7 @@ ALTER TABLE ONLY public.voice_locked_placements REPLICA IDENTITY FULL;
 CREATE TABLE public.voice_zones (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     group_id uuid NOT NULL,
-    name text NOT NULL,
+    name text,
     icon public.voice_zone_icon NOT NULL,
     color public.voice_zone_color NOT NULL,
     is_locked boolean DEFAULT false NOT NULL,
@@ -2631,7 +2631,7 @@ CREATE TABLE public.voice_zones (
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT voice_zones_name_check CHECK (((char_length(name) >= 1) AND (char_length(name) <= 40)))
+    CONSTRAINT voice_zones_name_check CHECK (((name IS NULL) OR ((char_length(name) >= 1) AND (char_length(name) <= 40))))
 );
 
 ALTER TABLE ONLY public.voice_zones REPLICA IDENTITY FULL;

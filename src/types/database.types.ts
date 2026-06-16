@@ -1069,7 +1069,7 @@ export type Database = {
           icon: Database["public"]["Enums"]["voice_zone_icon"]
           id: string
           is_locked: boolean
-          name: string
+          name: string | null
           sort_order: number
           updated_at: string
         }
@@ -1081,7 +1081,7 @@ export type Database = {
           icon: Database["public"]["Enums"]["voice_zone_icon"]
           id?: string
           is_locked?: boolean
-          name: string
+          name?: string | null
           sort_order?: number
           updated_at?: string
         }
@@ -1093,7 +1093,7 @@ export type Database = {
           icon?: Database["public"]["Enums"]["voice_zone_icon"]
           id?: string
           is_locked?: boolean
-          name?: string
+          name?: string | null
           sort_order?: number
           updated_at?: string
         }

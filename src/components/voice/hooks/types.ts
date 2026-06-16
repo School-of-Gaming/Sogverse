@@ -171,14 +171,15 @@ export interface VoiceRoomContextValue {
 
   // --- custom zone management (moderator, group rooms only) ---
   createZone: (input: {
-    name: string;
+    /** null → an unnamed zone (identified by icon + color alone). */
+    name: string | null;
     icon: VoiceZoneIcon;
     color: VoiceZoneColor;
     isLocked: boolean;
   }) => Promise<void>;
   updateZone: (
     id: string,
-    patch: { name?: string; icon?: VoiceZoneIcon; color?: VoiceZoneColor },
+    patch: { name?: string | null; icon?: VoiceZoneIcon; color?: VoiceZoneColor },
   ) => Promise<void>;
   /** Deleting a zone moves its occupants back to the lobby. */
   deleteZone: (id: string) => Promise<void>;

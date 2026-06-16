@@ -1,7 +1,8 @@
-import { type Ref } from "react";
-import { Mic, MicOff, Video, VideoOff, Crown, Lock } from "lucide-react";
+"use client";
+
+import { type Ref, type ReactNode, useEffect, useRef, useState } from "react";
+import { Mic, MicOff, Video, VideoOff, Lock, LockOpen, MoreVertical } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -29,7 +30,7 @@ export interface ParticipantRowData {
 export interface ParticipantRowProps {
   participant: ParticipantRowData;
   lockState: { audio: boolean; video: boolean };
-  /** Whether the viewer is a moderator (shows mute/lock controls on others' rows). */
+  /** Whether the viewer is a moderator (shows the moderation menu on others' rows). */
   isModView: boolean;
   avatarRef?: Ref<HTMLDivElement>;
   onMute?: (track: "audio" | "video") => void;
@@ -45,7 +46,7 @@ export function ParticipantRow({
   onLock,
 }: ParticipantRowProps) {
   const t = useTranslations('voice');
-  const showModButtons = isModView && !p.isLocal && !p.isOwner;
+  const showModMenu = isModView && !p.isLocal && !p.isOwner;
   // Show the Minecraft badge for gedu/gamer participants, but only when the
   // token actually carried Minecraft context (group rooms). `undefined` ==
   // no context (instant rooms) → hide; `null` == linked-but-unset → render
@@ -68,8 +69,10 @@ export function ParticipantRow({
         </Avatar>
       </div>
 
-      {/* Name + badges — flex-[3] gives ~60% of flexible space */}
-      <div className="flex min-w-0 flex-[3] items-center gap-2">
+      {/* Name + badges — takes all the flexible width; the name truncates while
+          the badges stay intact. The moderation controls no longer sit here, so
+          there's nothing to crowd the Minecraft username on a narrow screen. */}
+      <div className="flex min-w-0 flex-1 items-center gap-2">
         <span className="truncate text-sm font-medium">
           {p.userName}
           {p.isLocal && (
@@ -84,74 +87,7 @@ export function ParticipantRow({
             className="shrink-0"
           />
         )}
-        {p.isOwner && (
-          <Badge variant="secondary" className="shrink-0 gap-1 text-xs">
-            <Crown className="h-3 w-3" />
-            {t('host')}
-          </Badge>
-        )}
       </div>
-
-      {/* Moderator controls — only on actionable rows (not self/owner). Labels
-          collapse to icon-only below sm so the row never overflows on mobile;
-          the right-aligned status icons stay aligned via the spacer below, not
-          a reserved placeholder. */}
-      {showModButtons && (
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 gap-1 px-1.5 text-xs"
-            onClick={() => onMute?.("audio")}
-            disabled={!p.audioOn}
-            title={t('muteMicrophone')}
-          >
-            <MicOff className="h-3 w-3" />
-            <span className="hidden sm:inline">{t('mute')}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 gap-1 px-1.5 text-xs"
-            onClick={() => onMute?.("video")}
-            disabled={!p.videoOn}
-            title={t('disableCamera')}
-          >
-            <VideoOff className="h-3 w-3" />
-            <span className="hidden sm:inline">{t('camOff')}</span>
-          </Button>
-          <Button
-            variant={lockState.audio ? "destructive" : "ghost"}
-            size="sm"
-            className="h-6 gap-1 px-1.5 text-xs"
-            onClick={() => onLock?.("audio", !lockState.audio)}
-            title={lockState.audio ? t('unlockMicrophone') : t('lockMicrophone')}
-          >
-            <Lock className="h-3 w-3" />
-            {/* Grid-stack: invisible longest label reserves stable width (≥sm) */}
-            <span className="hidden sm:inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
-              <span className="invisible">{t('unlockMic')}</span>
-              <span>{lockState.audio ? t('unlockMic') : t('lockMic')}</span>
-            </span>
-          </Button>
-          <Button
-            variant={lockState.video ? "destructive" : "ghost"}
-            size="sm"
-            className="h-6 gap-1 px-1.5 text-xs"
-            onClick={() => onLock?.("video", !lockState.video)}
-            title={lockState.video ? t('unlockCamera') : t('lockCamera')}
-          >
-            <Lock className="h-3 w-3" />
-            <span className="hidden sm:inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
-              <span className="invisible">{t('unlockCam')}</span>
-              <span>{lockState.video ? t('unlockCam') : t('lockCam')}</span>
-            </span>
-          </Button>
-        </div>
-      )}
-
-      {/* Spacer keeps name/badges left-aligned and status indicators right-aligned. */}
-      <div className="flex-1" />
 
       {/* Status indicators — always show both icons for stable layout */}
       <div className="flex shrink-0 items-center gap-1.5">
@@ -181,6 +117,153 @@ export function ParticipantRow({
           )}
         </div>
       </div>
+
+      {/* All moderator actions collapse into one overflow menu — a single icon at
+          the row's end, so the row layout is identical for every participant and
+          nothing spills into the name on mobile. */}
+      {showModMenu && (
+        <ParticipantModMenu
+          name={p.userName}
+          audioOn={p.audioOn}
+          videoOn={p.videoOn}
+          lockState={lockState}
+          onMute={onMute}
+          onLock={onLock}
+        />
+      )}
     </div>
+  );
+}
+
+/**
+ * Moderator actions for one participant behind a kebab menu. Collapsing the four
+ * controls (mute mic, turn off camera, lock/unlock mic, lock/unlock camera) into
+ * a single trigger keeps every participant row the same compact shape on mobile.
+ * Hand-rolled popover (no primitive in the kit) — same shape as MicSettingsPopover:
+ * click-outside / Escape to close.
+ */
+function ParticipantModMenu({
+  name,
+  audioOn,
+  videoOn,
+  lockState,
+  onMute,
+  onLock,
+}: {
+  name: string;
+  audioOn: boolean;
+  videoOn: boolean;
+  lockState: { audio: boolean; video: boolean };
+  onMute?: (track: "audio" | "video") => void;
+  onLock?: (track: "audio" | "video", locked: boolean) => void;
+}) {
+  const t = useTranslations("voice");
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (ref.current && e.target instanceof Node && !ref.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const run = (fn: () => void) => {
+    fn();
+    setOpen(false);
+  };
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
+        onClick={() => setOpen((v) => !v)}
+        title={t("moderate")}
+        aria-label={t("moderate")}
+        aria-expanded={open}
+      >
+        <MoreVertical className="h-4 w-4" />
+      </Button>
+
+      {/* Opens upward (bottom-full) so that on mobile — where the participant
+          list sits at the bottom of the page — the menu never extends past the
+          viewport and forces extra scroll height. */}
+      {open && (
+        <div className="absolute right-0 bottom-full z-50 mb-1 w-52 overflow-hidden rounded-lg border border-border bg-card py-1 shadow-lg">
+          <p className="truncate px-3 py-1.5 text-xs font-medium text-muted-foreground">
+            {name}
+          </p>
+          <MenuItem
+            icon={<MicOff className="h-4 w-4" />}
+            label={t("muteMicrophone")}
+            disabled={!audioOn}
+            onClick={() => run(() => onMute?.("audio"))}
+          />
+          <MenuItem
+            icon={<VideoOff className="h-4 w-4" />}
+            label={t("disableCamera")}
+            disabled={!videoOn}
+            onClick={() => run(() => onMute?.("video"))}
+          />
+          <div className="my-1 h-px bg-border" />
+          <MenuItem
+            icon={lockState.audio ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            label={lockState.audio ? t("unlockMicrophone") : t("lockMicrophone")}
+            active={lockState.audio}
+            onClick={() => run(() => onLock?.("audio", !lockState.audio))}
+          />
+          <MenuItem
+            icon={lockState.video ? <LockOpen className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            label={lockState.video ? t("unlockCamera") : t("lockCamera")}
+            active={lockState.video}
+            onClick={() => run(() => onLock?.("video", !lockState.video))}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MenuItem({
+  icon,
+  label,
+  disabled,
+  active,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  disabled?: boolean;
+  /** A persistent "on" state (e.g. currently locked) — tinted so it reads as engaged. */
+  active?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors",
+        "hover:bg-accent disabled:pointer-events-none disabled:opacity-40",
+        active ? "text-destructive" : "text-foreground",
+      )}
+    >
+      <span className="shrink-0">{icon}</span>
+      <span className="truncate">{label}</span>
+    </button>
   );
 }

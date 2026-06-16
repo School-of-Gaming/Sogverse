@@ -72,6 +72,8 @@ There are four *kinds* of zone; only the custom/locked kind is persisted.
 
 The virtual zones (lobby + 4 Yty) and the palette of 8 icons / 8 colors live in `src/lib/constants/voice-zones.ts`; the keys match the `voice_zone_icon` / `voice_zone_color` DB enums. `composeZones` (`src/lib/voice/zone-composition.ts`) builds the ordered list the UI renders (lobby + Yty + custom). Instant rooms pass `groupId === null` → lobby + Yty only.
 
+**A custom zone's name is optional** — `voice_zones.name` is nullable (the CHECK enforces 1–40 chars only when present), so a moderator can create a zone identified by its icon + color alone. `composeZones` maps a null name to `""`; the UI renders no label and falls back to a generic word only for the accessible (aria) label.
+
 **Rule: Normal-zone membership syncs through Daily `userData`, not a custom handshake.** Each client stamps `{ zoneId, broadcasting }` onto its own participant via `setUserData`. Daily hands a new joiner everyone's `userData` the instant they connect and pushes later changes as `participant-updated`, so a late joiner sees everyone's zone with no request/reply and no timing window. This replaced the old peer-to-peer `posUpdate` position handshake and its recurring races — do not reintroduce a coordination protocol for membership. A moderator moving *another* participant can't set their `userData`, so it sends a targeted `moveUser` app-message; the target verifies the sender is an owner and sets its own `userData`.
 
 ### Soft vs hard isolation

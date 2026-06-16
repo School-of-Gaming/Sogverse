@@ -110,15 +110,20 @@ export function VoiceRoom({
 
           <ZoneList />
 
-          <div className="flex flex-wrap items-center justify-between gap-2">
+          {/* Control bar, two columns: the left column is the stacked rows of
+              media/mod toggles (VoiceControls); the right column is Leave — the
+              only destructive button. `items-end` drops Leave to the bottom row's
+              level and `ml-auto` pushes it to the right edge, so it sits at the
+              row-2 level, right-aligned, at its normal button size. */}
+          <div className="flex items-end gap-3">
             <VoiceControls />
 
             <Button
-              variant="secondary"
-              size="sm"
+              variant="destructive"
               onClick={handleLeave}
               disabled={joining || leaving}
-              className="gap-1.5"
+              className="ml-auto gap-1.5"
+              title={leaveLabel ?? t('leave')}
             >
               {leaving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

@@ -215,7 +215,11 @@ export function ZoneList() {
         )}
       </div>
 
-      <DragOverlay>
+      {/* dropAnimation={null}: by default dnd-kit flies the overlay back to the
+          source tile's old position on release. Since a successful drop moves the
+          avatar to a *different* zone, that animation reads as the ghost snapping
+          back to where it started — drop instantly instead. */}
+      <DragOverlay dropAnimation={null}>
         {activeParticipant && (
           <div className="h-11 w-11 overflow-hidden rounded-md border-2 border-primary shadow-lg">
             <Avatar className="h-11 w-11 rounded-md">
@@ -256,6 +260,10 @@ function ZoneCard({
   const t = useTranslations("voice");
   const Icon = zone.icon;
   const tappable = !!onEnter && !isCurrent;
+  // A custom zone may have a blank name — it's then identified by icon + color
+  // alone. Fall back to a generic word only for the accessible (aria) label;
+  // the visible label area simply stays empty.
+  const accessibleLabel = label || t("unnamedZone");
   // Outsiders see a locked zone's roster from the DB (blurred); an insider
   // (the viewer is in this locked room) sees the real participants, no blur.
   const outsiderOfLocked = zone.isLocked && !isCurrent;
@@ -278,7 +286,7 @@ function ZoneCard({
           onEnter();
         }
       }}
-      aria-label={tappable ? t("joinZone", { zone: label }) : undefined}
+      aria-label={tappable ? t("joinZone", { zone: accessibleLabel }) : undefined}
       className={cn(
         "rounded-xl border p-3 transition-colors",
         // Active zone: high-contrast border to mark "you're here" (vs the muted

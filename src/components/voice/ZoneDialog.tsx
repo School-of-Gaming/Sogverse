@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field } from "@/components/ui/field";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import {
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { ZoneIconPicker } from "./ZoneIconPicker";
 import { ZoneColorPicker } from "./ZoneColorPicker";
+import { pickDefaultZoneAppearance } from "@/lib/voice/zone-composition";
 import type { VoiceZone, VoiceZoneIcon, VoiceZoneColor } from "@/types";
 
 const MAX_NAME = 40;
@@ -37,18 +38,29 @@ interface ZoneDialogProps {
 export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
   const t = useTranslations("voice");
   const c = useTranslations("common");
-  const { createZone, updateZone } = useVoiceRoom();
+  const { createZone, updateZone, customZones } = useVoiceRoom();
   const isEdit = !!zone;
 
   const [name, setName] = useState(zone?.name ?? "");
-  const [icon, setIcon] = useState<VoiceZoneIcon>(zone?.icon ?? "star");
-  const [color, setColor] = useState<VoiceZoneColor>(zone?.color ?? "sky");
+  // On create, default to an icon + color not already used by another zone, so a
+  // new zone looks distinct without the moderator having to hunt for free ones.
+  // Lazy initializers → computed once on open from the zones present at that
+  // moment (the helper is cheap; the second call is mount-only).
+  const [icon, setIcon] = useState<VoiceZoneIcon>(
+    () => zone?.icon ?? pickDefaultZoneAppearance(customZones).icon,
+  );
+  const [color, setColor] = useState<VoiceZoneColor>(
+    () => zone?.color ?? pickDefaultZoneAppearance(customZones).color,
+  );
   const [isLocked, setIsLocked] = useState(zone?.is_locked ?? false);
   const [committing, setCommitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const trimmed = name.trim();
-  const canSubmit = trimmed.length >= 1 && trimmed.length <= MAX_NAME && !committing;
+  // The name is optional — a blank zone is identified by its icon + color. Only
+  // the upper bound is enforced; an empty field is stored as null.
+  const nameValue = trimmed.length > 0 ? trimmed : null;
+  const canSubmit = trimmed.length <= MAX_NAME && !committing;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -56,9 +68,9 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
     setError(null);
     try {
       if (isEdit) {
-        await updateZone(zone.id, { name: trimmed, icon, color });
+        await updateZone(zone.id, { name: nameValue, icon, color });
       } else {
-        await createZone({ name: trimmed, icon, color, isLocked });
+        await createZone({ name: nameValue, icon, color, isLocked });
       }
       onOpenChange(false);
     } catch (err) {
@@ -74,9 +86,8 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
           <DialogTitle>{isEdit ? t("editZone") : t("newZone")}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <Label htmlFor="zone-name">{t("zoneName")}</Label>
+        <div className="mt-4 space-y-4">
+          <Field label={t("zoneName")} htmlFor="zone-name" optional>
             <Input
               id="zone-name"
               value={name}
@@ -84,32 +95,47 @@ export function ZoneDialog({ open, onOpenChange, zone }: ZoneDialogProps) {
               placeholder={t("zoneNamePlaceholder")}
               onChange={(e) => setName(e.target.value)}
             />
-          </div>
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label>{t("chooseIcon")}</Label>
+          <Field label={t("chooseIcon")}>
             <ZoneIconPicker value={icon} onChange={setIcon} />
-          </div>
+          </Field>
 
-          <div className="space-y-1.5">
-            <Label>{t("chooseColor")}</Label>
+          <Field label={t("chooseColor")}>
             <ZoneColorPicker value={color} onChange={setColor} />
-          </div>
+          </Field>
 
           {!isEdit && (
             <button
               type="button"
               onClick={() => setIsLocked((v) => !v)}
-              aria-pressed={isLocked}
+              role="switch"
+              aria-checked={isLocked}
               className={cn(
-                "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors",
+                "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
                 isLocked ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
               )}
             >
-              <Lock className={cn("mt-0.5 h-4 w-4 shrink-0", isLocked ? "text-primary" : "text-muted-foreground")} />
-              <span className="space-y-0.5">
+              <Lock className={cn("h-4 w-4 shrink-0", isLocked ? "text-primary" : "text-muted-foreground")} />
+              <span className="flex-1 space-y-0.5">
                 <span className="block text-sm font-medium">{t("makePrivate")}</span>
                 <span className="block text-xs text-muted-foreground">{t("makePrivateHint")}</span>
+              </span>
+              {/* Visible switch so the row reads as a toggle, not a static row.
+                  Decorative (the whole button is the control) → aria-hidden. */}
+              <span
+                aria-hidden
+                className={cn(
+                  "relative h-5 w-9 shrink-0 rounded-full transition-colors",
+                  isLocked ? "bg-primary" : "bg-muted-foreground/30",
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute top-0.5 left-0.5 h-4 w-4 rounded-full border border-border bg-background shadow-sm transition-transform",
+                    isLocked && "translate-x-4",
+                  )}
+                />
               </span>
             </button>
           )}

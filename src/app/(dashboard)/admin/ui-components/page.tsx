@@ -512,6 +512,19 @@ function VoiceZonesDemo() {
       created_at: "2026-06-16T10:00:00Z",
       updated_at: "2026-06-16T10:00:00Z",
     },
+    {
+      // Unnamed zone — identified by icon + color alone (name is optional).
+      id: "demo-unnamed",
+      group_id: "demo",
+      name: null,
+      icon: "flame",
+      color: "orange",
+      is_locked: false,
+      sort_order: 2,
+      created_by: "demo",
+      created_at: "2026-06-16T10:00:00Z",
+      updated_at: "2026-06-16T10:00:00Z",
+    },
   ];
   const zones = composeZones(customZones, "demo");
 

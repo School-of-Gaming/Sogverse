@@ -56,7 +56,8 @@ export class VoiceZonesService {
 
   async createZone(input: {
     groupId: string;
-    name: string;
+    /** null → an unnamed zone, identified by icon + color alone. */
+    name: string | null;
     icon: VoiceZoneIcon;
     color: VoiceZoneColor;
     isLocked: boolean;
@@ -75,7 +76,7 @@ export class VoiceZonesService {
 
   async updateZone(
     id: string,
-    patch: { name?: string; icon?: VoiceZoneIcon; color?: VoiceZoneColor },
+    patch: { name?: string | null; icon?: VoiceZoneIcon; color?: VoiceZoneColor },
   ): Promise<void> {
     const { error } = await this.supabase.from("voice_zones").update(patch).eq("id", id);
     if (error) throw new Error(error.message);
