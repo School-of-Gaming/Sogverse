@@ -1,6 +1,7 @@
 import type { DailyCall } from "@daily-co/daily-js";
 import type { UserRole, VoiceZone, VoiceZoneIcon, VoiceZoneColor } from "@/types";
 import type { VoiceZoneView } from "@/lib/voice/zone-composition";
+import type { AudioInputDevice, MicPermission } from "./use-mic-devices";
 
 /**
  * Voice-room-internal role union. Adds `"guest"` on top of the system roles
@@ -201,6 +202,12 @@ export interface VoiceRoomContextValue {
   toggleBroadcast: () => void;
   isDeafened: boolean;
   toggleDeafen: () => void;
+
+  // --- mic devices / troubleshooting ---
+  audioInputs: AudioInputDevice[];
+  currentAudioInputId: string | null;
+  setAudioInput: (deviceId: string) => Promise<void>;
+  micPermission: MicPermission;
 
   // --- moderation ---
   localLocks: LockState;

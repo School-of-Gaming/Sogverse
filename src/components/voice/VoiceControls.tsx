@@ -4,7 +4,7 @@ import { Mic, MicOff, Video, VideoOff, ScreenShare, ScreenShareOff, Lock, Megaph
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
-import { MicLevelIndicator } from "./MicLevelIndicator";
+import { MicSettingsPopover } from "./MicSettingsPopover";
 
 export function VoiceControls() {
   const {
@@ -50,6 +50,9 @@ export function VoiceControls() {
           <Lock className="absolute -right-1 -top-1 h-3 w-3 text-destructive" />
         )}
       </div>
+
+      {/* Mic device picker + level + troubleshooting */}
+      {!joining && <MicSettingsPopover />}
 
       {/* Camera toggle */}
       {cameraAllowed && (
@@ -119,9 +122,6 @@ export function VoiceControls() {
           </Button>
         </>
       )}
-
-      {/* Mic input level meter */}
-      {!joining && <MicLevelIndicator />}
     </div>
   );
 }

@@ -1717,6 +1717,13 @@
     "deleteZoneTitle": "Poistetaanko tämä alue?",
     "deleteZoneDescription": "Kaikki tällä alueella olevat siirtyvät takaisin aulaan.",
     "deleteZoneConfirm": "Poista alue",
+    "micSettings": "Mikrofoniasetukset",
+    "microphone": "Mikrofoni",
+    "micInput": "Tulo",
+    "noMics": "Mikrofoneja ei löytynyt",
+    "unnamedMic": "Mikrofoni",
+    "micBlockedHint": "Mikrofonin käyttö on estetty. Salli se selaimen asetuksista.",
+    "micTestHint": "Sano hei testataksesi mikrofonia",
     "zoneIcon": {
       "star": "Tähti",
       "rocket": "Raketti",

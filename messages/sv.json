@@ -1717,6 +1717,13 @@
     "deleteZoneTitle": "Ta bort den här zonen?",
     "deleteZoneDescription": "Alla i den här zonen flyttas tillbaka till lobbyn.",
     "deleteZoneConfirm": "Ta bort zon",
+    "micSettings": "Mikrofoninställningar",
+    "microphone": "Mikrofon",
+    "micInput": "Ingång",
+    "noMics": "Inga mikrofoner hittades",
+    "unnamedMic": "Mikrofon",
+    "micBlockedHint": "Mikrofonåtkomst är blockerad. Tillåt den i webbläsarens inställningar.",
+    "micTestHint": "Säg hej för att testa mikrofonen",
     "zoneIcon": {
       "star": "Stjärna",
       "rocket": "Raket",

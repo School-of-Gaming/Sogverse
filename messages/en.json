@@ -1717,6 +1717,13 @@
     "deleteZoneTitle": "Delete this zone?",
     "deleteZoneDescription": "Anyone in this zone moves back to the lobby.",
     "deleteZoneConfirm": "Delete zone",
+    "micSettings": "Microphone settings",
+    "microphone": "Microphone",
+    "micInput": "Input",
+    "noMics": "No microphones found",
+    "unnamedMic": "Microphone",
+    "micBlockedHint": "Microphone access is blocked. Allow it in your browser settings.",
+    "micTestHint": "Say hi to test your mic",
     "zoneIcon": {
       "star": "Star",
       "rocket": "Rocket",

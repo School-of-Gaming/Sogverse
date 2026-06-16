@@ -28,6 +28,7 @@ import type {
 import { useAudioPipeline, type LocalAudioState } from "./hooks/use-audio-pipeline";
 import { useZoneMembership } from "./hooks/use-zone-membership";
 import { useZoneData } from "./hooks/use-zone-data";
+import { useMicDevices } from "./hooks/use-mic-devices";
 import { useScreenShare } from "./hooks/use-screen-share";
 import { useModeratorControls } from "./hooks/use-moderator-controls";
 import { useChat } from "./hooks/use-chat";
@@ -156,6 +157,8 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   });
 
   const chat = useChat({ callObjectRef });
+
+  const micDevices = useMicDevices({ callObjectRef, joined });
 
   // Live custom zones + locked placements from the DB (group rooms only).
   const { customZones, placements } = useZoneData(groupId);
@@ -672,6 +675,10 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       toggleBroadcast: membership.toggleBroadcast,
       isDeafened,
       toggleDeafen,
+      audioInputs: micDevices.audioInputs,
+      currentAudioInputId: micDevices.currentAudioInputId,
+      setAudioInput: micDevices.setAudioInput,
+      micPermission: micDevices.micPermission,
       localLocks: moderator.localLocks,
       lockStates: moderator.lockStates,
       muteParticipant: moderator.muteParticipant,
@@ -682,7 +689,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       join,
       leave,
     }),
-    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, customZones, currentZoneId, participantsByZone, lockedRoster, moveSelfToZone, membership.moveParticipantToZone, placeInLockedZone, removeFromLockedZone, createZone, updateZone, deleteZone, roomTransition, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
+    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, customZones, currentZoneId, participantsByZone, lockedRoster, moveSelfToZone, membership.moveParticipantToZone, placeInLockedZone, removeFromLockedZone, createZone, updateZone, deleteZone, roomTransition, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, micDevices.audioInputs, micDevices.currentAudioInputId, micDevices.setAudioInput, micDevices.micPermission, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
   );
 
   return (

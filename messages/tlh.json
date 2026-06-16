@@ -1762,6 +1762,13 @@
     "deleteZoneTitle": "Daqvam yIteq'a'?",
     "deleteZoneDescription": "Daqvamdaq Hoch lojmIt Daq cheghpu'.",
     "deleteZoneConfirm": "Daq yIteq",
+    "micSettings": "wab jan SeHlaw",
+    "microphone": "wab jan",
+    "micInput": "'el",
+    "noMics": "wab jan tu'be'lu'",
+    "unnamedMic": "wab jan",
+    "micBlockedHint": "wab jan lo' luchol. De'wI'lij SeHlawmeyDaq yIchaw'.",
+    "micTestHint": "wab jan yInIDmeH 'IH yIjatlh",
     "zoneIcon": {
       "star": "Hov",
       "rocket": "puv DujHom",
