@@ -1,5 +1,5 @@
 import type { DailyCall } from "@daily-co/daily-js";
-import type { UserRole } from "@/types";
+import type { UserRole, VoiceZone, VoiceZoneIcon, VoiceZoneColor } from "@/types";
 import type { VoiceZoneView } from "@/lib/voice/zone-composition";
 
 /**
@@ -145,6 +145,9 @@ export interface VoiceRoomContextValue {
 
   // --- zones + membership ---
   zones: VoiceZoneView[];
+  /** Raw DB rows for the group's custom zones (for the management UI — the
+   *  edit dialog needs the icon/color enum keys, which VoiceZoneView discards). */
+  customZones: VoiceZone[];
   currentZoneId: string;
   participantsByZone: Map<string, VoiceParticipant[]>;
   /** zoneId → who's inside a locked zone, from the DB placement rows. Drives the
@@ -160,6 +163,20 @@ export interface VoiceRoomContextValue {
   placeInLockedZone: (gamerId: string, zoneId: string) => Promise<void>;
   /** Moderator-only; remove a gamer's locked placement (returns them to main). */
   removeFromLockedZone: (gamerId: string) => Promise<void>;
+
+  // --- custom zone management (moderator, group rooms only) ---
+  createZone: (input: {
+    name: string;
+    icon: VoiceZoneIcon;
+    color: VoiceZoneColor;
+    isLocked: boolean;
+  }) => Promise<void>;
+  updateZone: (
+    id: string,
+    patch: { name?: string; icon?: VoiceZoneIcon; color?: VoiceZoneColor },
+  ) => Promise<void>;
+  /** Deleting a zone moves its occupants back to the lobby. */
+  deleteZone: (id: string) => Promise<void>;
   /** Non-null while crossing the room boundary into/out of a locked zone —
    *  drives the "Securing your connection…" transition. `zoneId` is the locked
    *  zone being entered, or null when returning to the main room. */

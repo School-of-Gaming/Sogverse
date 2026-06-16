@@ -1,17 +1,21 @@
 "use client";
 
-import { useRef } from "react";
-import { Lock } from "lucide-react";
+import { useRef, useState } from "react";
+import { Lock, Plus, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { PrivacyScreen } from "./PrivacyScreen";
+import { ZoneDialog } from "./ZoneDialog";
 import type { VoiceZoneView } from "@/lib/voice/zone-composition";
 import type { VoiceParticipant, LockedMember } from "./hooks/types";
+import type { VoiceZone } from "@/types";
 
 /**
  * Mobile-first vertical stack of zone cards. The PR2 baseline UI for the
@@ -21,8 +25,31 @@ import type { VoiceParticipant, LockedMember } from "./hooks/types";
  * membership/audio seam.
  */
 export function ZoneList() {
-  const { zones, participantsByZone, lockedRoster, currentZoneId, moveSelfToZone } = useVoiceRoom();
+  const {
+    zones,
+    customZones,
+    participantsByZone,
+    lockedRoster,
+    currentZoneId,
+    moveSelfToZone,
+    isModerator,
+    groupId,
+    deleteZone,
+  } = useVoiceRoom();
   const t = useTranslations();
+  const tv = useTranslations("voice");
+
+  // create | { edit: zone } | { delete: zone } | null
+  const [dialog, setDialog] = useState<
+    | { kind: "create" }
+    | { kind: "edit"; zone: VoiceZone }
+    | { kind: "delete"; zone: VoiceZone }
+    | null
+  >(null);
+
+  // Custom-zone management is mod-only and group-rooms-only (instant rooms have
+  // no group to persist zones against).
+  const canManage = isModerator && groupId !== null;
 
   // next-intl's message keys are typed literals, so resolve the fixed set of
   // virtual-zone labels with literal t() calls (a dynamic `t(zone.name)` won't
@@ -48,8 +75,52 @@ export function ZoneList() {
           isCurrent={zone.id === currentZoneId}
           onEnter={zone.isLocked ? undefined : () => moveSelfToZone(zone.id)}
           label={labelFor(zone)}
+          manage={
+            canManage && zone.kind === "custom"
+              ? {
+                  onEdit: () => {
+                    const row = customZones.find((z) => z.id === zone.id);
+                    if (row) setDialog({ kind: "edit", zone: row });
+                  },
+                  onDelete: () => {
+                    const row = customZones.find((z) => z.id === zone.id);
+                    if (row) setDialog({ kind: "delete", zone: row });
+                  },
+                }
+              : undefined
+          }
         />
       ))}
+
+      {canManage && (
+        <Button
+          variant="outline"
+          className="w-full gap-1.5 border-dashed"
+          onClick={() => setDialog({ kind: "create" })}
+        >
+          <Plus className="h-4 w-4" />
+          {tv("newZone")}
+        </Button>
+      )}
+
+      {(dialog?.kind === "create" || dialog?.kind === "edit") && (
+        <ZoneDialog
+          open
+          onOpenChange={(open) => !open && setDialog(null)}
+          zone={dialog.kind === "edit" ? dialog.zone : undefined}
+        />
+      )}
+
+      {dialog?.kind === "delete" && (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => !open && setDialog(null)}
+          title={tv("deleteZoneTitle")}
+          description={tv("deleteZoneDescription")}
+          confirmLabel={tv("deleteZoneConfirm")}
+          onConfirm={() => void deleteZone(dialog.zone.id)}
+        />
+      )}
     </div>
   );
 }
@@ -63,9 +134,11 @@ interface ZoneCardProps {
   label: string;
   /** undefined → not tappable (locked zone). */
   onEnter?: () => void;
+  /** Moderator edit/delete controls (custom zones only); undefined → hidden. */
+  manage?: { onEdit: () => void; onDelete: () => void };
 }
 
-function ZoneCard({ zone, members, lockedMembers, isCurrent, label, onEnter }: ZoneCardProps) {
+function ZoneCard({ zone, members, lockedMembers, isCurrent, label, onEnter, manage }: ZoneCardProps) {
   const t = useTranslations("voice");
   const Icon = zone.icon;
   const tappable = !!onEnter && !isCurrent;
@@ -105,6 +178,37 @@ function ZoneCard({ zone, members, lockedMembers, isCurrent, label, onEnter }: Z
           <Badge variant="outline" className="text-xs">
             {t("participantsCount", { count: memberCount })}
           </Badge>
+        )}
+        {manage && (
+          <div className="flex items-center gap-0.5">
+            {/* stopPropagation so these don't trigger the card's tap-to-enter. */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                manage.onEdit();
+              }}
+              title={t("editZone")}
+              aria-label={t("editZone")}
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={(e) => {
+                e.stopPropagation();
+                manage.onDelete();
+              }}
+              title={t("deleteZoneConfirm")}
+              aria-label={t("deleteZoneConfirm")}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
         )}
       </div>
 

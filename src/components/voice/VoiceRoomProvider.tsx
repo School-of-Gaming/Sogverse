@@ -16,6 +16,7 @@ import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
 import { getClient } from "@/lib/supabase/client";
 import { VoiceService } from "@/services/voice/voice.service";
 import { VoiceZonesService } from "@/services/voice/voice-zones.service";
+import type { VoiceZoneIcon, VoiceZoneColor } from "@/types";
 import type {
   VoiceRoomContextValue,
   VoiceParticipant,
@@ -494,6 +495,30 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     [groupId],
   );
 
+  // --- Custom-zone management (moderator) ---
+
+  const createZone = useCallback(
+    async (input: { name: string; icon: VoiceZoneIcon; color: VoiceZoneColor; isLocked: boolean }) => {
+      const createdBy = localUserIdRef.current;
+      if (!groupId || !isModeratorRef.current || !createdBy) return;
+      await new VoiceZonesService(getClient()).createZone({ groupId, createdBy, ...input });
+    },
+    [groupId],
+  );
+
+  const updateZone = useCallback(
+    async (id: string, patch: { name?: string; icon?: VoiceZoneIcon; color?: VoiceZoneColor }) => {
+      if (!isModeratorRef.current) return;
+      await new VoiceZonesService(getClient()).updateZone(id, patch);
+    },
+    [],
+  );
+
+  const deleteZone = useCallback(async (id: string) => {
+    if (!isModeratorRef.current) return;
+    await new VoiceZonesService(getClient()).deleteZone(id);
+  }, []);
+
   // --- Lock-aware toggles ---
 
   const toggleMic = useCallback(() => {
@@ -558,8 +583,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     for (const p of participants) {
       // While connected to a locked room, every Daily participant *is* in that
       // locked zone (they share the separate room) — their userData zone is
-      // moot. In the main room, bucket by their self-reported zone.
-      const zid = lockedRoomZoneId ?? p.zoneId;
+      // moot. In the main room, bucket by their self-reported zone, falling back
+      // to the lobby if that zone was deleted (its occupants move to lobby).
+      const zid = lockedRoomZoneId ?? (map.has(p.zoneId) ? p.zoneId : DEFAULT_ZONE_ID);
       const bucket = map.get(zid);
       if (bucket) bucket.push(p);
       else map.set(zid, [p]);
@@ -583,6 +609,16 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       void switchRoom(target ? { kind: "locked", zoneId: target } : { kind: "main" });
     }
   }, [joined, groupId, isModerator, localUserId, placements, lockedRoomZoneId, switchRoom]);
+
+  // If the zone we're standing in gets deleted out from under us, fall back to
+  // the lobby (mirrors the occupant remap in participantsByZone, but updates our
+  // own userData so peers see the move too). Skipped while in a locked room.
+  useEffect(() => {
+    if (!joined || lockedRoomZoneId) return;
+    if (!zones.some((z) => z.id === membership.currentZoneId)) {
+      membership.moveSelfToZone(DEFAULT_ZONE_ID);
+    }
+  }, [joined, zones, lockedRoomZoneId, membership]);
 
   // Outsider view of locked zones: who's inside, from the DB placement rows
   // (the viewer isn't connected to the separate locked room).
@@ -610,6 +646,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       groupId,
       participants,
       zones,
+      customZones,
       currentZoneId,
       participantsByZone,
       lockedRoster,
@@ -617,6 +654,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       moveParticipantToZone: membership.moveParticipantToZone,
       placeInLockedZone,
       removeFromLockedZone,
+      createZone,
+      updateZone,
+      deleteZone,
       roomTransition,
       micOn,
       cameraOn,
@@ -642,7 +682,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       join,
       leave,
     }),
-    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, currentZoneId, participantsByZone, lockedRoster, moveSelfToZone, membership.moveParticipantToZone, placeInLockedZone, removeFromLockedZone, roomTransition, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
+    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, customZones, currentZoneId, participantsByZone, lockedRoster, moveSelfToZone, membership.moveParticipantToZone, placeInLockedZone, removeFromLockedZone, createZone, updateZone, deleteZone, roomTransition, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
   );
 
   return (
