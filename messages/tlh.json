@@ -1746,6 +1746,9 @@
     "youAreHere": "naDev SoH",
     "joinZone": "{zone} yIghoS",
     "zonesDescription": "Daq DaghoSmeH yI'uy. Daqlijdaq Hoch Daqoy.",
+    "securingConnection": "QumwI' yIQan…",
+    "privateZone": "pegh",
+    "privateZoneHint": "pegh Daq 'ej Hung Daq 'oH.",
     "chat": {
       "title": "ja'chuq",
       "placeholder": "QIn yIghItlh…",

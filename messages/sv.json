@@ -1701,6 +1701,9 @@
     "youAreHere": "Du är här",
     "joinZone": "Gå till {zone}",
     "zonesDescription": "Tryck på en zon för att flytta dit. Du hör alla i samma zon.",
+    "securingConnection": "Säkrar din anslutning…",
+    "privateZone": "Privat",
+    "privateZoneHint": "Den här zonen är privat och säker.",
     "chat": {
       "title": "Chatt",
       "placeholder": "Skriv ett meddelande…",

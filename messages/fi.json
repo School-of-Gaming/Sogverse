@@ -1701,6 +1701,9 @@
     "youAreHere": "Olet täällä",
     "joinZone": "Siirry: {zone}",
     "zonesDescription": "Siirry alueelle napauttamalla sitä. Kuulet kaikki samalla alueella olevat.",
+    "securingConnection": "Suojataan yhteyttäsi…",
+    "privateZone": "Yksityinen",
+    "privateZoneHint": "Tämä alue on yksityinen ja suojattu.",
     "chat": {
       "title": "Keskustelu",
       "placeholder": "Kirjoita viesti…",

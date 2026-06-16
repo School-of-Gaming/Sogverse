@@ -1701,6 +1701,9 @@
     "youAreHere": "You're here",
     "joinZone": "Join {zone}",
     "zonesDescription": "Tap a zone to move into it. You can hear everyone in the same zone.",
+    "securingConnection": "Securing your connection…",
+    "privateZone": "Private",
+    "privateZoneHint": "This zone is private and secure.",
     "chat": {
       "title": "Chat",
       "placeholder": "Type a message…",
