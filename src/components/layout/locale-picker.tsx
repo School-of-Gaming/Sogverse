@@ -7,7 +7,7 @@
  *
  * Not the user's spoken-language preference. For that, see
  * src/components/ui/spoken-language-checkboxes.tsx and
- * docs/i18n-architecture.md.
+ * src/i18n/CLAUDE.md.
  */
 
 import { useState, useRef } from "react";

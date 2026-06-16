@@ -55,7 +55,7 @@ Home and other `(public)` routes load with ~400–700ms TTFB on prod even on fas
 3. So Vercel routes every visit through a serverless function: proxy + token refresh + Supabase auth round-trip + render + stream. ~400–700ms before first byte; the edge CDN never serves it from cache.
 4. The load-bearing dynamic read for *public* pages is `getLocale()` — the locale cookie tells next-intl which translation to emit, so the same URL returns different bodies per request, which Vercel won't cache. The auth call, CSP nonce, and timezone cookie are `(dashboard)` needs leaked into the root layout.
 
-**Architectural fix — locale-in-URL:** `/fi`, `/en`, `/sv` each get a statically pre-rendered home page; bare `/` does an edge redirect on `Accept-Language`. Detailed in `docs/i18n-architecture.md` § "Locale-in-URL routing with translated slugs" (~L166-199; that doc frames it as SEO/sharing — add the perf bullet when picked up: TTFB ~400–700ms → ~50ms globally, an edge CDN file).
+**Architectural fix — locale-in-URL:** `/fi`, `/en`, `/sv` each get a statically pre-rendered home page; bare `/` does an edge redirect on `Accept-Language`. Detailed in the i18n CLAUDE.md (`src/i18n/`), which frames it as SEO/sharing — add the perf bullet when picked up: TTFB ~400–700ms → ~50ms globally, an edge CDN file.
 
 **What blocks a plain `export const dynamic = 'force-static'`:** even with locale solved you must (a) move `getUserWithProfile()` out of root layout into `(dashboard)/layout.tsx`, (b) skip CSP-nonce generation in `src/proxy.ts` for public paths (the per-request nonce makes every response unique HTML), and (c) scope the timezone cookie read similarly. None hard individually — the work is untangling four concerns currently mixed in the root layout.
 

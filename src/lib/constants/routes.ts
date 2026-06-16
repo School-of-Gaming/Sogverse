@@ -119,7 +119,7 @@ export const ROUTES = {
   /**
    * Voice rooms. Two shapes share the `/voice` prefix:
    * - `forCode(code)` → `/voice/<code>` — public on-the-fly instant rooms,
-   *   share-via-link by design (see docs/instant-voice-rooms.md).
+   *   share-via-link by design (see src/components/voice/instant/CLAUDE.md).
    * - `groupSession(groupId)` → `/voice/group/<id>` — authenticated group
    *   voice room used by gamers (as participants) and gedus/admins (as
    *   moderators); the page authorizes by role + product assignment via
@@ -158,7 +158,7 @@ export const ROUTES = {
     dashboard: "/parent",
     gamers: "/parent/gamers",
     // Lock gate: a customer session is redirected here until the parent PIN is
-    // entered (see src/proxy.ts and docs/parent-pin-architecture.md).
+    // entered (see src/proxy.ts and src/services/pin/CLAUDE.md).
     unlock: "/parent/unlock",
     // Authenticated "Change PIN" flow, reached from the settings security card.
     // Gated like the rest of /parent — only an unlocked customer can reach it.

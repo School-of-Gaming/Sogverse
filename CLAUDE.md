@@ -79,8 +79,6 @@ CSP is generated per-request in `src/proxy.ts` with a unique nonce (`crypto.rand
 
 ### Layout & Scrolling
 
-See `docs/layout-scroll-architecture.md` for the scroll containment model and how dashboard layouts handle overflow.
-
 **Rule: Once a clickable or readable element is on screen, it must not move unless the user does something.** The promise is about *rendered* content — text the user is reading, buttons/links/inputs they're about to click. If something is already painted, no in-place shift may happen without a user interaction triggering it. Shifts make the UI feel janky and — worse — cause fast users to mis-click when buttons move out from under their cursor.
 
 A skeleton with no rendered text or interactions (just animated placeholders) doesn't constrain anything — when the body renders, no element is "moving," the body simply appears for the first time. The rule kicks in *the moment* a real button/link/text is on the page; from there, no reflows around it without user input.
@@ -113,7 +111,7 @@ Setting the flag *inside* `onSuccess` (or via a hook that does so) is too late a
 - **Locale** — which translation of the web app the user sees. Owned by `src/lib/constants/locales.ts` (`SUPPORTED_LOCALES`, `DEFAULT_LOCALE`, `LocaleProvider`, `LocalePicker`), backed by `profiles.locale`. This is what next-intl's `useLocale()` returns.
 - **Spoken language** — the human languages a user speaks / a club is delivered in. Owned by the `spoken_languages` reference table and `profiles.spoken_languages` array. UI lives in `src/components/ui/spoken-language-checkboxes.tsx` and `useSpokenLanguages()`.
 
-A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them. See `docs/i18n-architecture.md` § "Two distinct concepts".
+A Finnish-speaking parent could have `locale = "fi"` (app in Finnish) and `spoken_languages = ["en"]` (wants their child placed in English clubs). Don't conflate them.
 
 **Rule: User-facing strings must be translated for every locale message file in `messages/`. Never leave placeholder copy or skip a locale. Best-effort translation is expected. Klingon (`tlh`) is an easter egg — fun and quirky takes are welcome, accuracy is not the goal there.**
 
@@ -133,13 +131,27 @@ See `docs/products-architecture.md` for the purchase / participation flow, the b
 
 ### Voice Chat (Daily.co)
 
-See `docs/voice-chat-architecture.md` for the full architecture, component map, permissions, and data flow. See `docs/chrome-webrtc-volume-bug.md` for the Web Audio workaround.
+The full voice architecture auto-loads from colocated `CLAUDE.md` files when you work under `src/components/voice/` (scheduled group rooms) and `src/components/voice/instant/` (instant rooms). The 9-approach Web Audio investigation behind the volume workaround remains in `docs/chrome-webrtc-volume-bug.md` as history.
 
 **Rule: Realtime hooks must only invalidate queries — never make Supabase data queries in callbacks.** Same deadlock risk as `onAuthStateChange`.
 
 ### Documentation
 
-- `docs/` holds architecture notes, bug/fix write-ups, and future-improvement plans — not exhaustive, so when a topic isn't there, treat the code as the source of truth.
+System architecture lives in **colocated `CLAUDE.md` files** next to the code they describe. They auto-load when you (or a future session) work in that directory — no pointer needed here — and are owned like code: update them in the same change that touches their system. Current homes:
+
+| System | Location |
+|---|---|
+| Layout & scrolling | `src/components/layout/` |
+| Parent PIN | `src/services/pin/` |
+| i18n | `src/i18n/` |
+| Email templates | `src/lib/email-templates/` |
+| Locations | `src/services/locations/` |
+| WhatsApp | `src/services/whatsapp/` |
+| Voice — scheduled group rooms | `src/components/voice/` |
+| Voice — instant rooms | `src/components/voice/instant/` |
+| Discord bot | `src/app/api/discord/` |
+
+- `docs/` holds the docs a human deliberately maintains and that don't map to one directory: cross-cutting architecture spanning many systems (products, db-authorization, performance), point-in-time records (security audit, bug/fix write-ups, gap analyses), and ops runbooks (slack, admin quota, stripe testing). When a topic is in neither a colocated `CLAUDE.md` nor `docs/`, treat the code as the source of truth.
 - `TODO.md` is the running list of cross-cutting work we know we want to come back to. Distinct from `docs/`.
 
 ## Environment Variables

@@ -18,7 +18,7 @@
 // what that means for re-lock timing.
 //
 // Web Crypto (not node:crypto) because the proxy runs on the Edge runtime.
-// See docs/parent-pin-architecture.md.
+// See src/services/pin/CLAUDE.md.
 
 export const PIN_COOKIE_NAME = "sog_pin_verified";
 

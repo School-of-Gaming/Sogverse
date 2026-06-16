@@ -8,7 +8,7 @@
  *
  * **Not the UI locale picker** (which translation of the app the user sees).
  * For that, see src/components/layout/locale-picker.tsx and the LocaleProvider.
- * See docs/i18n-architecture.md for the convention split between locale and
+ * See src/i18n/CLAUDE.md for the convention split between locale and
  * spoken language.
  *
  * Exports SpokenLanguageCheckboxes — multi-select, for user profile / settings.

@@ -10,7 +10,7 @@
  * managed separately via the SpokenLanguageCheckboxes component in settings
  * and used for matching gamers to gedus. See
  * src/components/ui/spoken-language-checkboxes.tsx and
- * docs/i18n-architecture.md for the convention split.
+ * src/i18n/CLAUDE.md for the convention split.
  */
 
 import {

@@ -36,7 +36,7 @@ export interface CountryConfig {
  *
  * Location type labels are translated for the country's native language only.
  * A Finnish user sees Finland's hierarchy in Finnish but UK/US in English.
- * See docs/locations-architecture.md § Localised Labels for the rationale.
+ * See src/services/locations/CLAUDE.md for the rationale.
  */
 export const SUPPORTED_COUNTRIES: CountryConfig[] = [
   {

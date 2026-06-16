@@ -6,7 +6,7 @@ Status: **In production.** DB foundation, admin create/edit UI, the checkout / w
 
 This doc is both the design rationale and the as-built reference: §1–§9 cover the business rules, schema, RPCs, and permission topology; §10 onward track what shipped and the component map.
 
-Related: `locations-architecture.md`, `voice-chat-architecture.md`, `email-architecture.md`, `whatsapp-automated-flow.md`.
+Related: `src/services/locations/CLAUDE.md`, `src/components/voice/CLAUDE.md`, `src/lib/email-templates/CLAUDE.md`, `src/services/whatsapp/CLAUDE.md`.
 
 ---
 
@@ -1106,10 +1106,10 @@ Flagged inline as `OPEN` in the sections they affect.
 
 ### 12.1 Cross-references
 
-- Location hierarchy & site binding: `docs/locations-architecture.md`
-- Voice-room wiring for online products: `docs/voice-chat-architecture.md`
-- Email pipeline for notifications: `docs/email-architecture.md`
-- WhatsApp notification channel: `docs/whatsapp-automated-flow.md`
+- Location hierarchy & site binding: `src/services/locations/CLAUDE.md`
+- Voice-room wiring for online products: `src/components/voice/CLAUDE.md`
+- Email pipeline for notifications: `src/lib/email-templates/CLAUDE.md`
+- WhatsApp notification channel: `src/services/whatsapp/CLAUDE.md`
 - Stripe testing locally: `docs/stripe-testing.md`
 
 ### 12.2 Mockup lineage

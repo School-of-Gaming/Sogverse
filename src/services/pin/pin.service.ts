@@ -12,7 +12,7 @@ import { pinStatusResponse, pinVerifyResponse } from "./pin.contracts";
  * to `authenticated` and scoped to the caller's own row), while the writes go
  * through the API routes — they set/clear the HMAC unlock cookie server-side
  * (`verify`, `setPin`) or touch the service-role admin client (`reset`), none
- * of which the browser client can do. See docs/parent-pin-architecture.md.
+ * of which the browser client can do. See ./CLAUDE.md.
  */
 export class PinService {
   constructor(private readonly supabase: SupabaseClient<Database>) {}

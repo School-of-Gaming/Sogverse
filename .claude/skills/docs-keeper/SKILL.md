@@ -5,38 +5,36 @@ description: Reminds when to update Sogverse docs and the house style they shoul
 
 # docs-keeper
 
-Nudges contributors when it's time to update docs and keeps them reading in the project's house style.
+Nudges when docs need updating and keeps them in the project's house style. There are two homes for docs — picking the right one is half the job.
 
-## Moments to suggest updating docs
+## Where a doc belongs
 
-After wrapping up work, ask *"should a doc be updated?"* if any of these are true:
+- **Colocated `CLAUDE.md`** (in the directory the system lives in) — living architecture for one subsystem that maps to a single directory. It auto-loads when Claude works there, and is owned like code: updated in the same change that touches the system. **This is the default for system/feature docs.** Current homes: layout (`src/components/layout/`), PIN (`src/services/pin/`), i18n (`src/i18n/`), email (`src/lib/email-templates/`), locations (`src/services/locations/`), whatsapp (`src/services/whatsapp/`), voice (`src/components/voice/` and `.../instant/`), discord (`src/app/api/discord/`).
+- **`docs/`** — docs a human deliberately maintains and that don't map to one directory: cross-cutting architecture spanning many systems (products, db-authorization, performance), point-in-time records (security audit, bug/fix write-ups, gap analyses), ops runbooks (slack, admin quota, stripe testing).
+- **Root `CLAUDE.md`** — project-wide rules that apply everywhere, `**Rule:**`-prefixed.
+- **`TODO.md`** — cross-cutting follow-ups not tied to one system.
 
-- A new cross-cutting rule emerged → `CLAUDE.md`
-- A subsystem's architecture shifted, or a new one shipped → `docs/*-architecture.md`
-- A tricky bug got a fix worth remembering → matching architecture doc, a `**Rule:**` in `CLAUDE.md`, or a dedicated `docs/*-fix.md`
-- A migration changed data shape, added an RPC, or shifted access patterns → matching architecture doc
-- A follow-up surfaced that needs to be remembered later:
-  - Tied to a specific feature → that feature's `## Future improvements` section in its architecture doc
-  - Cross-cutting or unattached → `TODO.md`
+Decision: does it describe **one subsystem that lives in one directory**? → colocated `CLAUDE.md` (create one if the system has a clear home and none exists). Does it **span the codebase, record a moment in time, or document ops**? → `docs/`. Is it a **rule that applies everywhere**? → root `CLAUDE.md`. If it genuinely fits nowhere, ask before creating a new top-level doc.
+
+## When to update
+
+After wrapping up non-trivial work, ask *"is a doc now stale or missing?"* when:
+
+- A subsystem's architecture shifted, or a new one shipped → its colocated `CLAUDE.md`
+- A new cross-cutting rule emerged → root `CLAUDE.md`
+- A tricky bug got a fix worth remembering → the actionable rule goes into the relevant colocated `CLAUDE.md` (or root `CLAUDE.md`); the deep investigation, if worth keeping, into a `docs/*-bug.md` record
+- A migration changed data shape, added an RPC, or shifted access patterns → the matching architecture doc
+- A follow-up surfaced to remember later → the system's "Known follow-ups" section, or `TODO.md` if unattached
 - A `TODO.md` item was completed or de-scoped → remove it
 
 Skip for: renames, typos, CSS tweaks, dep bumps, straightforward CRUD, isolated refactors with no behavior change.
 
-The bar: *would another developer be confused or get it wrong without this written down?*
-
-## Doc layout
-
-- **`CLAUDE.md`** — project-wide rules, `**Rule:**`-prefixed, grouped by section, with a one-line *why*.
-- **`docs/*-architecture.md`** — one per subsystem (groups, voice-chat, sorg-token, etc.). Cross-cutting concerns (i18n, email, layout, locations) live as siblings. Each can carry a `## Future improvements` section for feature-specific follow-ups.
-- **`docs/*-bug.md` / `*-fix.md` / `*-audit-findings.md` / `SECURITY_REPORT.md`** — point-in-time records when context outlives the fix.
-- **`TODO.md`** — things to come back to that aren't tied to a single feature doc. Items are grouped by section and carry enough context (symptom, why, suggested approach, risk) to pick up cold.
-
-If a doc doesn't fit anywhere obvious, ask before creating a new one.
+The bar: *would another developer — or a future session — get it wrong without this written down?*
 
 ## How docs should read
 
-- **Definitive, not historical.** Describe the current system. No "we used to" or "this was changed to".
+- **Audience-appropriate.** A colocated `CLAUDE.md` is read by future Claude sessions — terse, factual, actionable, no throat-clearing.
+- **Definitive, not historical.** Describe the current system. No "we used to" / "this was changed to".
 - **Concise.** Bullets and code over prose. Every line is a maintenance liability.
+- **Self-contained rules.** State each rule so it stands on its own, with a one-line *why* (the constraint or incident behind it). Avoid brittle pointers to specific symbols or `file:line` that rot — describe the pattern/shape instead; stable directory/module references for navigation are fine.
 - **Surgical updates.** Don't rewrite still-accurate sections.
-- **Context with the rule.** When stating a rule, include a one-line *why* — the constraint or incident behind it.
-- **Anchor with file paths.** `src/...` references so readers can navigate to the code.
