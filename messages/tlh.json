@@ -1705,7 +1705,7 @@
     "spokenLanguages": "Holmey jatlhlu'"
   },
   "voice": {
-    "participantsCount": "toy'wI'pu' ({count})",
+    "participants": "toy'wI'pu'",
     "noParticipantsYet": "toy'wI'pu' tu'be'lu'",
     "you": "(SoH)",
     "host": "HoD",
@@ -1743,7 +1743,6 @@
     "deafen": "yIQoybe'",
     "undeafen": "yIQoy",
     "zoneLobby": "lojmIt Daq",
-    "youAreHere": "naDev SoH",
     "joinZone": "{zone} yIghoS",
     "zonesDescription": "Daq DaghoSmeH yI'uy. Daqlijdaq Hoch Daqoy.",
     "securingConnection": "QumwI' yIQan…",
@@ -1768,7 +1767,7 @@
     "noMics": "wab jan tu'be'lu'",
     "unnamedMic": "wab jan",
     "micBlockedHint": "wab jan lo' luchol. De'wI'lij SeHlawmeyDaq yIchaw'.",
-    "micTestHint": "wab jan yInIDmeH 'IH yIjatlh",
+    "micTestHint": "wab jan yInIDmeH yIjatlh",
     "zoneIcon": {
       "star": "Hov",
       "rocket": "puv DujHom",

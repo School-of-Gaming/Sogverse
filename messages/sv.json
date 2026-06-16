@@ -1660,7 +1660,7 @@
     "spokenLanguages": "Talade språk"
   },
   "voice": {
-    "participantsCount": "Deltagare ({count})",
+    "participants": "Deltagare",
     "noParticipantsYet": "Inga deltagare ännu",
     "you": "(du)",
     "host": "Värd",
@@ -1698,7 +1698,6 @@
     "deafen": "Tysta allt",
     "undeafen": "Slå på ljud",
     "zoneLobby": "Lobby",
-    "youAreHere": "Du är här",
     "joinZone": "Gå till {zone}",
     "zonesDescription": "Tryck på en zon för att flytta dit. Du hör alla i samma zon.",
     "securingConnection": "Säkrar din anslutning…",
@@ -1723,7 +1722,7 @@
     "noMics": "Inga mikrofoner hittades",
     "unnamedMic": "Mikrofon",
     "micBlockedHint": "Mikrofonåtkomst är blockerad. Tillåt den i webbläsarens inställningar.",
-    "micTestHint": "Säg hej för att testa mikrofonen",
+    "micTestHint": "Prata för att testa mikrofonen",
     "zoneIcon": {
       "star": "Stjärna",
       "rocket": "Raket",

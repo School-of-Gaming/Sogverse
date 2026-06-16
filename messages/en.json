@@ -1660,7 +1660,7 @@
     "spokenLanguages": "Languages spoken"
   },
   "voice": {
-    "participantsCount": "Participants ({count})",
+    "participants": "Participants",
     "noParticipantsYet": "No participants yet",
     "you": "(you)",
     "host": "Host",
@@ -1698,7 +1698,6 @@
     "deafen": "Deafen",
     "undeafen": "Undeafen",
     "zoneLobby": "Lobby",
-    "youAreHere": "You're here",
     "joinZone": "Join {zone}",
     "zonesDescription": "Tap a zone to move into it. You can hear everyone in the same zone.",
     "securingConnection": "Securing your connection…",
@@ -1723,7 +1722,7 @@
     "noMics": "No microphones found",
     "unnamedMic": "Microphone",
     "micBlockedHint": "Microphone access is blocked. Allow it in your browser settings.",
-    "micTestHint": "Say hi to test your mic",
+    "micTestHint": "Speak to test your mic",
     "zoneIcon": {
       "star": "Star",
       "rocket": "Rocket",

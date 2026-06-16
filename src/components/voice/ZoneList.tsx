@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
   TouchSensor,
   useDraggable,
   useDroppable,
@@ -16,7 +16,6 @@ import {
 import { Lock, Plus, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
@@ -97,10 +96,14 @@ export function ZoneList() {
   >(null);
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
 
-  // Touch gets a short press-delay so dragging doesn't fight page scroll;
-  // pointer (mouse) starts after a small movement so taps still register.
+  // Mouse and touch are split onto separate sensors on purpose — a single
+  // PointerSensor fires for touch too, so its distance constraint would start a
+  // drag on a ~5px finger move and fight page scroll. With a mouse-only sensor
+  // (small distance so taps still register) and a touch-only sensor (long-press
+  // delay), touch scroll is unobstructed until the press delay elapses; once the
+  // drag is detected the TouchSensor suppresses scroll for the rest of the gesture.
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
   );
 
@@ -259,7 +262,6 @@ function ZoneCard({
   // Outsiders see a locked zone's roster from the DB (blurred); an insider
   // (the viewer is in this locked room) sees the real participants, no blur.
   const outsiderOfLocked = zone.isLocked && !isCurrent;
-  const memberCount = outsiderOfLocked ? lockedMembers.length : members.length;
 
   const { setNodeRef, isOver } = useDroppable({
     id: `zone-${zone.id}`,
@@ -293,13 +295,6 @@ function ZoneCard({
         </span>
         <span className="flex-1 truncate text-sm font-medium">{label}</span>
         {zone.isLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
-        {isCurrent ? (
-          <Badge variant="secondary" className="text-xs">{t("youAreHere")}</Badge>
-        ) : (
-          <Badge variant="outline" className="text-xs">
-            {t("participantsCount", { count: memberCount })}
-          </Badge>
-        )}
         {manage && (
           <div className="flex items-center gap-0.5">
             {/* stopPropagation so these don't trigger the card's tap-to-enter. */}

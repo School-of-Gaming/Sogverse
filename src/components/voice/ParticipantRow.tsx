@@ -29,7 +29,7 @@ export interface ParticipantRowData {
 export interface ParticipantRowProps {
   participant: ParticipantRowData;
   lockState: { audio: boolean; video: boolean };
-  /** Whether the viewer is a moderator (reserves column space on all rows). */
+  /** Whether the viewer is a moderator (shows mute/lock controls on others' rows). */
   isModView: boolean;
   avatarRef?: Ref<HTMLDivElement>;
   onMute?: (track: "audio" | "video") => void;
@@ -92,15 +92,12 @@ export function ParticipantRow({
         )}
       </div>
 
-      {/* Moderator controls — invisible placeholder keeps alignment on non-target rows */}
-      {isModView && (
-        <div
-          className={cn(
-            "flex shrink-0 items-center gap-1",
-            !showModButtons && "invisible",
-          )}
-          aria-hidden={!showModButtons || undefined}
-        >
+      {/* Moderator controls — only on actionable rows (not self/owner). Labels
+          collapse to icon-only below sm so the row never overflows on mobile;
+          the right-aligned status icons stay aligned via the spacer below, not
+          a reserved placeholder. */}
+      {showModButtons && (
+        <div className="flex shrink-0 items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
@@ -110,7 +107,7 @@ export function ParticipantRow({
             title={t('muteMicrophone')}
           >
             <MicOff className="h-3 w-3" />
-            {t('mute')}
+            <span className="hidden sm:inline">{t('mute')}</span>
           </Button>
           <Button
             variant="ghost"
@@ -121,7 +118,7 @@ export function ParticipantRow({
             title={t('disableCamera')}
           >
             <VideoOff className="h-3 w-3" />
-            {t('camOff')}
+            <span className="hidden sm:inline">{t('camOff')}</span>
           </Button>
           <Button
             variant={lockState.audio ? "destructive" : "ghost"}
@@ -131,8 +128,8 @@ export function ParticipantRow({
             title={lockState.audio ? t('unlockMicrophone') : t('lockMicrophone')}
           >
             <Lock className="h-3 w-3" />
-            {/* Grid-stack: invisible longest label reserves stable width */}
-            <span className="inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
+            {/* Grid-stack: invisible longest label reserves stable width (≥sm) */}
+            <span className="hidden sm:inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
               <span className="invisible">{t('unlockMic')}</span>
               <span>{lockState.audio ? t('unlockMic') : t('lockMic')}</span>
             </span>
@@ -145,7 +142,7 @@ export function ParticipantRow({
             title={lockState.video ? t('unlockCamera') : t('lockCamera')}
           >
             <Lock className="h-3 w-3" />
-            <span className="inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
+            <span className="hidden sm:inline-grid [&>*]:col-start-1 [&>*]:row-start-1">
               <span className="invisible">{t('unlockCam')}</span>
               <span>{lockState.video ? t('unlockCam') : t('lockCam')}</span>
             </span>

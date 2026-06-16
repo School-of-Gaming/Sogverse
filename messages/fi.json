@@ -1660,7 +1660,7 @@
     "spokenLanguages": "Puhutut kielet"
   },
   "voice": {
-    "participantsCount": "Osallistujat ({count})",
+    "participants": "Osallistujat",
     "noParticipantsYet": "Ei vielä osallistujia",
     "you": "(sinä)",
     "host": "Isäntä",
@@ -1698,7 +1698,6 @@
     "deafen": "Vaimenna kaikki",
     "undeafen": "Poista vaimennus",
     "zoneLobby": "Aula",
-    "youAreHere": "Olet täällä",
     "joinZone": "Siirry alueelle {zone}",
     "zonesDescription": "Siirry alueelle napauttamalla sitä. Kuulet kaikki samalla alueella olevat.",
     "securingConnection": "Suojataan yhteyttäsi…",
@@ -1723,7 +1722,7 @@
     "noMics": "Mikrofoneja ei löytynyt",
     "unnamedMic": "Mikrofoni",
     "micBlockedHint": "Mikrofonin käyttö on estetty. Salli se selaimen asetuksista.",
-    "micTestHint": "Sano hei testataksesi mikrofonia",
+    "micTestHint": "Puhu testataksesi mikrofonia",
     "zoneIcon": {
       "star": "Tähti",
       "rocket": "Raketti",

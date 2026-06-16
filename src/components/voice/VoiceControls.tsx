@@ -1,6 +1,6 @@
 "use client";
 
-import { Mic, MicOff, Video, VideoOff, ScreenShare, ScreenShareOff, Lock, Megaphone, Volume2, VolumeOff } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, ScreenShare, ScreenShareOff, Lock, Megaphone, Headphones, HeadphoneOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
@@ -28,7 +28,7 @@ export function VoiceControls() {
   const t = useTranslations("voice");
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {/* Mic toggle */}
       <div className="relative">
         <Button
@@ -118,7 +118,7 @@ export function VoiceControls() {
             disabled={joining}
             title={isDeafened ? t("undeafen") : t("deafen")}
           >
-            {isDeafened ? <VolumeOff className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+            {isDeafened ? <HeadphoneOff className="h-4 w-4" /> : <Headphones className="h-4 w-4" />}
           </Button>
         </>
       )}

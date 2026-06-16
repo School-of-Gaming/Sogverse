@@ -29,7 +29,7 @@ export function VoiceRoom({
   leaveLabel,
 }: VoiceRoomProps) {
   const t = useTranslations('voice');
-  const { participants, joining, screenSharerSessionId } = useVoiceRoom();
+  const { joining, screenSharerSessionId } = useVoiceRoom();
   const [leaving, setLeaving] = useState(false);
 
   // Animate screen share in/out: delay unmount so exit animation can play.
@@ -85,15 +85,10 @@ export function VoiceRoom({
               <Mic className="h-5 w-5" />
               {title ?? t('voiceRoom')}
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs">
-                {t('participantsCount', { count: participants.length })}
-              </Badge>
-              <Badge className="bg-success/10 text-success">
-                <Radio className="mr-1 h-3 w-3" />
-                {t('live')}
-              </Badge>
-            </div>
+            <Badge className="bg-success/10 text-success">
+              <Radio className="mr-1 h-3 w-3" />
+              {t('live')}
+            </Badge>
           </div>
           <CardDescription>
             {t('zonesDescription')}
@@ -122,7 +117,7 @@ export function VoiceRoom({
 
           <ZoneList />
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <VoiceControls />
 
             <Button

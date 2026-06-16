@@ -23,7 +23,7 @@ export function ParticipantList() {
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium">
-          {t('participantsCount', { count: participants.length })}
+          {t('participants')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
