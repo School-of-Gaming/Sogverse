@@ -12,6 +12,7 @@ export const YTY_ELEMENTS = [
       bgGradient: "from-yty-harmony/10 to-yty-harmony/5",
       border: "border-yty-harmony/30",
       accent: "text-yty-harmony",
+      ring: "ring-yty-harmony",
     },
   },
   {
@@ -24,6 +25,7 @@ export const YTY_ELEMENTS = [
       bgGradient: "from-yty-glow/10 to-yty-glow/5",
       border: "border-yty-glow/30",
       accent: "text-yty-glow",
+      ring: "ring-yty-glow",
     },
   },
   {
@@ -36,6 +38,7 @@ export const YTY_ELEMENTS = [
       bgGradient: "from-yty-valor/10 to-yty-valor/5",
       border: "border-yty-valor/30",
       accent: "text-yty-valor",
+      ring: "ring-yty-valor",
     },
   },
   {
@@ -48,6 +51,7 @@ export const YTY_ELEMENTS = [
       bgGradient: "from-yty-wit/10 to-yty-wit/5",
       border: "border-yty-wit/30",
       accent: "text-yty-wit",
+      ring: "ring-yty-wit",
     },
   },
 ] as const;

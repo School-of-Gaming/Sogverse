@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
-  MouseSensor,
-  TouchSensor,
+  PointerSensor,
   useDraggable,
   useDroppable,
   useSensor,
@@ -96,15 +95,13 @@ export function ZoneList() {
   >(null);
   const [activeUserId, setActiveUserId] = useState<string | null>(null);
 
-  // Mouse and touch are split onto separate sensors on purpose — a single
-  // PointerSensor fires for touch too, so its distance constraint would start a
-  // drag on a ~5px finger move and fight page scroll. With a mouse-only sensor
-  // (small distance so taps still register) and a touch-only sensor (long-press
-  // delay), touch scroll is unobstructed until the press delay elapses; once the
-  // drag is detected the TouchSensor suppresses scroll for the rest of the gesture.
+  // One PointerSensor for mouse and touch alike — a small movement starts a
+  // drag (so a tap still registers). On touch this only fights page scroll if
+  // the browser is allowed to scroll from the dragged element, so the draggable
+  // tiles set `touch-action: none` (see ZoneMemberTile): a finger that lands on
+  // a movable avatar and moves drags it; scrolling happens from anywhere else.
   const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
 
   const canManage = isModerator && groupId !== null;
@@ -220,9 +217,9 @@ export function ZoneList() {
 
       <DragOverlay>
         {activeParticipant && (
-          <div className="h-12 w-12 overflow-hidden rounded-md border-2 border-primary shadow-lg">
-            <Avatar className="h-12 w-12 rounded-md">
-              <Identicon id={activeParticipant.userId} size={48} />
+          <div className="h-11 w-11 overflow-hidden rounded-md border-2 border-primary shadow-lg">
+            <Avatar className="h-11 w-11 rounded-md">
+              <Identicon id={activeParticipant.userId} size={44} />
             </Avatar>
           </div>
         )}
@@ -284,7 +281,10 @@ function ZoneCard({
       aria-label={tappable ? t("joinZone", { zone: label }) : undefined}
       className={cn(
         "rounded-xl border p-3 transition-colors",
-        isCurrent ? cn("ring-2", zone.color.ring) : "border-border",
+        // Active zone: high-contrast border to mark "you're here" (vs the muted
+        // grey of the others), with the zone's color spilling in from the edge
+        // via an inset-shadow glow. Non-active: muted grey border.
+        isCurrent ? cn("border-foreground", zone.color.glow) : "border-border",
         isOver && "ring-2 ring-primary bg-accent/40",
         tappable && "cursor-pointer hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
@@ -357,10 +357,10 @@ function ZoneCard({
 
 function LockedMemberTile({ gamerId, name }: { gamerId: string; name?: string }) {
   return (
-    <div className="flex w-14 flex-col items-center gap-1">
+    <div className="flex w-12 flex-col items-center gap-1">
       <div className="rounded-md border-2 border-border">
-        <Avatar className="h-12 w-12 rounded-md">
-          <Identicon id={gamerId} size={48} />
+        <Avatar className="h-11 w-11 rounded-md">
+          <Identicon id={gamerId} size={44} />
         </Avatar>
       </div>
       {name && (
@@ -416,19 +416,20 @@ function ZoneMemberTile({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
-      // No `touch-action: none` here on purpose: the TouchSensor uses a press
-      // delay, so the browser must keep handling scroll until the delay elapses.
-      // touch-action:none would block page scroll whenever a swipe starts on a tile.
+      // `touch-action: none` only when draggable: it tells the browser to hand a
+      // touch that starts on this tile to the drag instead of scrolling. Non-
+      // draggable tiles keep the default and scroll normally — you scroll the
+      // list by starting the swipe anywhere that isn't a movable avatar.
       className={cn(
-        "flex w-14 flex-col items-center gap-1",
-        draggable && "cursor-grab",
+        "flex w-12 flex-col items-center gap-1",
+        draggable && "cursor-grab touch-none",
         isDragging && "opacity-50",
       )}
     >
       <div
         ref={glowRef}
         className={cn(
-          "h-12 w-12 overflow-hidden rounded-md border-2 border-border transition-shadow",
+          "h-11 w-11 overflow-hidden rounded-md border-2 border-border transition-shadow",
           p.isLocal && "ring-1 ring-primary/30",
         )}
       >
@@ -441,8 +442,8 @@ function ZoneMemberTile({
             className="h-full w-full object-cover"
           />
         ) : (
-          <Avatar className="h-12 w-12 rounded-md">
-            <Identicon id={p.userId} size={48} />
+          <Avatar className="h-11 w-11 rounded-md">
+            <Identicon id={p.userId} size={44} />
           </Avatar>
         )}
       </div>

@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Mic, Radio, Loader2, PhoneOff } from "lucide-react";
+import { Mic, Loader2, PhoneOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { VoiceControls } from "./VoiceControls";
@@ -80,16 +79,10 @@ export function VoiceRoom({
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Mic className="h-5 w-5" />
-              {title ?? t('voiceRoom')}
-            </CardTitle>
-            <Badge className="bg-success/10 text-success">
-              <Radio className="mr-1 h-3 w-3" />
-              {t('live')}
-            </Badge>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Mic className="h-5 w-5" />
+            {title ?? t('voiceRoom')}
+          </CardTitle>
           <CardDescription>
             {t('zonesDescription')}
           </CardDescription>

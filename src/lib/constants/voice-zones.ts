@@ -11,7 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Constants, type VoiceZoneIcon, type VoiceZoneColor } from "@/types";
-import { YTY_ELEMENTS } from "./yty";
+import { YTY_ELEMENTS, type YtyElementId } from "./yty";
 
 /**
  * The discrete-zone voice model (see src/components/voice/CLAUDE.md).
@@ -66,22 +66,27 @@ export const VOICE_ZONE_ICONS: Record<VoiceZoneIcon, LucideIcon> = {
 };
 
 /** A color rendered as the soft-tint avatar treatment (`bg-avatar-X/15` tile +
- *  `text-avatar-X` glyph), plus a `ring` token for the current-zone emphasis. */
+ *  `text-avatar-X` glyph). `ring` is the picker's selection token; `glow` is the
+ *  active-zone treatment — an inset box-shadow that spills the color in from the
+ *  border and fades toward the center (paired with a high-contrast border).
+ *  Both are literal class strings (the `var(--color-X)` in `glow` references the
+ *  same theme token) so Tailwind's source scanner generates the utilities. */
 export interface ZoneColorClasses {
   tile: string;
   glyph: string;
   ring: string;
+  glow: string;
 }
 
 export const VOICE_ZONE_COLORS: Record<VoiceZoneColor, ZoneColorClasses> = {
-  red: { tile: "bg-avatar-red/15", glyph: "text-avatar-red", ring: "ring-avatar-red" },
-  orange: { tile: "bg-avatar-orange/15", glyph: "text-avatar-orange", ring: "ring-avatar-orange" },
-  green: { tile: "bg-avatar-green/15", glyph: "text-avatar-green", ring: "ring-avatar-green" },
-  teal: { tile: "bg-avatar-teal/15", glyph: "text-avatar-teal", ring: "ring-avatar-teal" },
-  sky: { tile: "bg-avatar-sky/15", glyph: "text-avatar-sky", ring: "ring-avatar-sky" },
-  indigo: { tile: "bg-avatar-indigo/15", glyph: "text-avatar-indigo", ring: "ring-avatar-indigo" },
-  violet: { tile: "bg-avatar-violet/15", glyph: "text-avatar-violet", ring: "ring-avatar-violet" },
-  pink: { tile: "bg-avatar-pink/15", glyph: "text-avatar-pink", ring: "ring-avatar-pink" },
+  red: { tile: "bg-avatar-red/15", glyph: "text-avatar-red", ring: "ring-avatar-red", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-red)]" },
+  orange: { tile: "bg-avatar-orange/15", glyph: "text-avatar-orange", ring: "ring-avatar-orange", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-orange)]" },
+  green: { tile: "bg-avatar-green/15", glyph: "text-avatar-green", ring: "ring-avatar-green", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-green)]" },
+  teal: { tile: "bg-avatar-teal/15", glyph: "text-avatar-teal", ring: "ring-avatar-teal", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-teal)]" },
+  sky: { tile: "bg-avatar-sky/15", glyph: "text-avatar-sky", ring: "ring-avatar-sky", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-sky)]" },
+  indigo: { tile: "bg-avatar-indigo/15", glyph: "text-avatar-indigo", ring: "ring-avatar-indigo", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-indigo)]" },
+  violet: { tile: "bg-avatar-violet/15", glyph: "text-avatar-violet", ring: "ring-avatar-violet", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-violet)]" },
+  pink: { tile: "bg-avatar-pink/15", glyph: "text-avatar-pink", ring: "ring-avatar-pink", glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-avatar-pink)]" },
 };
 
 /** The ordered list of color keys, for the create/edit zone color picker.
@@ -109,7 +114,22 @@ export const LOBBY_PRESENTATION: VirtualZonePresentation = {
   id: LOBBY_ZONE_ID,
   nameKey: "voice.zoneLobby",
   icon: Home,
-  color: { tile: "bg-primary/10", glyph: "text-primary", ring: "ring-primary" },
+  color: {
+    tile: "bg-primary/10",
+    glyph: "text-primary",
+    ring: "ring-primary",
+    glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-primary)]",
+  },
+};
+
+/** Yty active-zone glow tokens, keyed by element id. Kept here (not in yty.ts)
+ *  because the inset-shadow blur is a voice-room presentational choice, not a
+ *  brand token. Literal strings so Tailwind generates each utility. */
+const YTY_ZONE_GLOW: Record<YtyElementId, string> = {
+  harmony: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-yty-harmony)]",
+  glow: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-yty-glow)]",
+  valor: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-yty-valor)]",
+  wit: "shadow-[inset_0_0_1.25rem_-0.25rem_var(--color-yty-wit)]",
 };
 
 /** The 4 Yty zones, reusing the existing Yty icons + theme tokens (yty.ts) and
@@ -122,7 +142,11 @@ export const YTY_PRESENTATIONS: VirtualZonePresentation[] = YTY_ELEMENTS.map(
     color: {
       tile: e.color.bg,
       glyph: e.color.accent,
-      ring: `ring-yty-${e.id}`,
+      // Literal tokens (not `ring-yty-${id}`/`shadow-[...${id}...]` templates) so
+      // Tailwind's source scanner generates the utilities — a dynamic class name
+      // is emitted to the DOM but has no CSS rule, falling back to a default.
+      ring: e.color.ring,
+      glow: YTY_ZONE_GLOW[e.id],
     },
   }),
 );
