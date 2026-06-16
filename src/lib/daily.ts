@@ -151,6 +151,25 @@ export function groupVoiceRoomName(params: {
 }
 
 /**
+ * Deterministic Daily.co room name for a locked (private/disciplinary) zone.
+ *
+ * Format: `{groupRoom}-z-{zoneId}` — the main group room name (same group +
+ * session-window stamp) with the zone UUID appended. Content-addressable like
+ * the main room: every authorized joiner (the placed gamer, the moderator)
+ * derives the same name, and the window stamp means next week's session gets a
+ * distinct room so a stale placement can't leak into it. The `exp` is the same
+ * window-close + grace as the main room.
+ */
+export function lockedVoiceRoomName(params: {
+  groupId: string;
+  windowOpensAt: Date;
+  timezone: string;
+  zoneId: string;
+}): string {
+  return `${groupVoiceRoomName(params)}-z-${params.zoneId}`;
+}
+
+/**
  * Get an existing Daily.co room by name, or create it if it doesn't exist.
  *
  * Use only when the room name is **deterministic and authorization-pre-gated**
