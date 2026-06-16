@@ -9,7 +9,7 @@ import {
 } from "@/lib/constants/voice-zones";
 
 /**
- * A zone as the UI consumes it (docs/voice-rooms-refactor-plan.md §9). Composed
+ * A zone as the UI consumes it (see src/components/voice/CLAUDE.md). Composed
  * from the virtual lobby + 4 Yty zones and the group's custom `voice_zones`
  * rows. The UI is a pure consumer — it renders these and never reconstructs the
  * zone list itself.

@@ -14,7 +14,7 @@ import { Constants, type VoiceZoneIcon, type VoiceZoneColor } from "@/types";
 import { YTY_ELEMENTS } from "./yty";
 
 /**
- * The discrete-zone voice model (docs/voice-rooms-refactor-plan.md §3, §8).
+ * The discrete-zone voice model (see src/components/voice/CLAUDE.md).
  *
  * A participant is simply "in zone X" — no coordinates. There are four *kinds*
  * of zone; only the custom/locked kind is persisted (in `voice_zones`). Lobby

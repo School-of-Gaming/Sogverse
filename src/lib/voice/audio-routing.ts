@@ -1,6 +1,6 @@
 /**
  * Pure audio-routing decision for the discrete-zone voice model
- * (docs/voice-rooms-refactor-plan.md §10).
+ * (see src/components/voice/CLAUDE.md).
  *
  * This replaces the spatial `canHearZone` geometry with simple zone equality
  * plus the broadcast/deafen toggles. The result is the value written to a

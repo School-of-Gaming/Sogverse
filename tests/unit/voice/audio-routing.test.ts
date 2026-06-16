@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { zoneVolume } from "@/lib/voice/audio-routing";
 
 /**
- * The discrete-zone routing decision (docs/voice-rooms-refactor-plan.md §10):
+ * The discrete-zone routing decision (see src/components/voice/CLAUDE.md):
  *   deafen  → 0
  *   broadcast → base (heard everywhere)
  *   same zone → base

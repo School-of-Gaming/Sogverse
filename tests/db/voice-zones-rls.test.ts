@@ -10,7 +10,7 @@ import { getStringRecord } from "../helpers/json";
  * RLS coverage for voice_zones and voice_locked_placements (00103).
  *
  * The persisted half of the discrete-zone voice model. The security contract
- * (docs/voice-rooms-refactor-plan.md §7):
+ * (see src/components/voice/CLAUDE.md):
  *   - SELECT: any group *member* (active-participation gamer, assigned gedu,
  *     admin) can read zones + the locked roster.
  *   - WRITE:  only a *moderator* (assigned gedu, admin) can create/edit/delete

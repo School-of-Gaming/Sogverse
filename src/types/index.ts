@@ -252,7 +252,7 @@ export type GeduGroupAssignmentInsert = Database["public"]["Tables"]["gedu_group
 
 // ---------------------------------------------------------------------------
 // voice zones (00103) — the persisted half of the discrete-zone voice model.
-// See docs/voice-rooms-refactor-plan.md and src/components/voice/CLAUDE.md.
+// See src/components/voice/CLAUDE.md for the discrete-zone voice model.
 // Lobby + the 4 Yty zones stay virtual/hardcoded on the client; only these
 // mod-created rows persist, tied to a product_group.
 // ---------------------------------------------------------------------------

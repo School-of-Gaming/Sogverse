@@ -1,7 +1,7 @@
 -- Voice rooms refactor: discrete zones replace the spatial canvas.
 --
 -- Adds the only *persisted* part of the new zone model (see
--- docs/voice-rooms-refactor-plan.md §3, §7). Lobby + the 4 Yty zones stay
+-- src/components/voice/CLAUDE.md). Lobby + the 4 Yty zones stay
 -- virtual/hardcoded on the client; only mod-created custom zones (and their
 -- locked variant) live in the DB, tied to a product_group so the next session
 -- of the same group inherits them.
