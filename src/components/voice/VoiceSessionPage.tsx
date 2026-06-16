@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Card, CardContent } from "@/components/ui/card";
 import { VoiceRoomProvider, useVoiceRoom } from "@/components/voice/VoiceRoomProvider";
-import { SpatialVoiceRoom } from "@/components/voice/SpatialVoiceRoom";
+import { VoiceRoom } from "@/components/voice/VoiceRoom";
 import { useVoiceToken } from "@/services/voice";
 
 interface VoiceSessionPageProps {
@@ -128,7 +128,7 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
     );
   }
 
-  return <SpatialVoiceRoom onLeave={handleLeave} leaveLabel={t('leave')} />;
+  return <VoiceRoom onLeave={handleLeave} leaveLabel={t('leave')} />;
 }
 
 export function VoiceSessionPage(props: VoiceSessionPageProps) {

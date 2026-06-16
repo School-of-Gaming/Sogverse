@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Lock, Plus, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
@@ -253,21 +253,51 @@ function LockedMemberTile({ gamerId }: { gamerId: string }) {
 
 function ZoneMemberTile({ participant: p }: { participant: VoiceParticipant }) {
   const t = useTranslations("voice");
+  const { callObject } = useVoiceRoom();
   const ref = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   useSpeakingGlow(ref, p.sessionId, p.audioOn);
+
+  // Attach the participant's camera track to the tile when their video is on —
+  // video replaces the identicon in place at the same size. The element is
+  // muted; remote audio plays through the pipeline's <audio> elements, not here.
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!callObject || !p.videoOn || !videoEl) return;
+    const dp = Object.values(callObject.participants()).find(
+      (x) => x.session_id === p.sessionId,
+    );
+    const track = dp?.tracks.video;
+    if (track?.state === "playable" && track.persistentTrack) {
+      videoEl.srcObject = new MediaStream([track.persistentTrack]);
+    }
+    return () => {
+      videoEl.srcObject = null;
+    };
+  }, [callObject, p.sessionId, p.videoOn]);
 
   return (
     <div className="flex w-14 flex-col items-center gap-1">
       <div
         ref={ref}
         className={cn(
-          "rounded-md border-2 border-border transition-shadow",
+          "h-12 w-12 overflow-hidden rounded-md border-2 border-border transition-shadow",
           p.isLocal && "ring-1 ring-primary/30",
         )}
       >
-        <Avatar className="h-12 w-12 rounded-md">
-          <Identicon id={p.userId} size={48} />
-        </Avatar>
+        {p.videoOn ? (
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <Avatar className="h-12 w-12 rounded-md">
+            <Identicon id={p.userId} size={48} />
+          </Avatar>
+        )}
       </div>
       <span className="w-full truncate text-center text-[10px] leading-tight">
         {p.userName}

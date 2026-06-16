@@ -14,7 +14,7 @@ import { ScreenShareDisplay } from "./ScreenShareDisplay";
 import { ChatPanel } from "./ChatPanel";
 import { ParticipantList } from "./ParticipantList";
 
-interface SpatialVoiceRoomProps {
+interface VoiceRoomProps {
   /** Optional title shown in the card header. Defaults to the localized "Voice room" string. */
   title?: string;
   onLeave: () => Promise<void>;
@@ -23,11 +23,11 @@ interface SpatialVoiceRoomProps {
 
 const SCREEN_SHARE_ANIMATION_MS = 700;
 
-export function SpatialVoiceRoom({
+export function VoiceRoom({
   title,
   onLeave,
   leaveLabel,
-}: SpatialVoiceRoomProps) {
+}: VoiceRoomProps) {
   const t = useTranslations('voice');
   const { participants, joining, screenSharerSessionId } = useVoiceRoom();
   const [leaving, setLeaving] = useState(false);
