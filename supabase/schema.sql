@@ -2609,7 +2609,8 @@ CREATE TABLE public.voice_locked_placements (
     group_id uuid NOT NULL,
     placed_by uuid NOT NULL,
     session_opens_at timestamp with time zone NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    gamer_name text
 );
 
 ALTER TABLE ONLY public.voice_locked_placements REPLICA IDENTITY FULL;

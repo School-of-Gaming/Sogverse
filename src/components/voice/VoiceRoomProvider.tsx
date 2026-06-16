@@ -499,6 +499,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
         groupId,
         placedBy,
         sessionOpensAt,
+        // We've just seen the gamer in the main room (we're placing them), so
+        // their name is in the cache — snapshot it onto the row for outsiders.
+        gamerName: nameCacheRef.current.get(gamerId) ?? null,
       });
     },
     [groupId],
@@ -645,7 +648,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       const bucket = map.get(p.zone_id);
       const member: LockedMember = {
         gamerId: p.gamer_id,
-        name: nameCacheRef.current.get(p.gamer_id),
+        // The row's snapshot is the durable source (works for late joiners); the
+        // live cache is a fallback for any older row that predates the snapshot.
+        name: p.gamer_name ?? nameCacheRef.current.get(p.gamer_id),
       };
       if (bucket) bucket.push(member);
       else map.set(p.zone_id, [member]);

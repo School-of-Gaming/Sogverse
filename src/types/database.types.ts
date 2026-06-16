@@ -1002,6 +1002,7 @@ export type Database = {
         Row: {
           created_at: string
           gamer_id: string
+          gamer_name: string | null
           group_id: string
           id: string
           placed_by: string
@@ -1011,6 +1012,7 @@ export type Database = {
         Insert: {
           created_at?: string
           gamer_id: string
+          gamer_name?: string | null
           group_id: string
           id?: string
           placed_by: string
@@ -1020,6 +1022,7 @@ export type Database = {
         Update: {
           created_at?: string
           gamer_id?: string
+          gamer_name?: string | null
           group_id?: string
           id?: string
           placed_by?: string

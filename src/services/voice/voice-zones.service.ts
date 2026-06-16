@@ -18,6 +18,9 @@ export class VoiceZonesService {
     groupId: string;
     placedBy: string;
     sessionOpensAt: string;
+    /** Display-name snapshot so outsiders (incl. late joiners) can label the
+     *  blurred roster without the gamer's Daily token or a profiles read. */
+    gamerName: string | null;
   }): Promise<void> {
     const { error } = await this.supabase.from("voice_locked_placements").insert({
       zone_id: input.zoneId,
@@ -25,6 +28,7 @@ export class VoiceZonesService {
       group_id: input.groupId,
       placed_by: input.placedBy,
       session_opens_at: input.sessionOpensAt,
+      gamer_name: input.gamerName,
     });
     if (error) throw new Error(error.message);
   }

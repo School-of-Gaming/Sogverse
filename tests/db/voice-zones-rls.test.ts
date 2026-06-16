@@ -227,11 +227,13 @@ describe("voice_zones + voice_locked_placements RLS", () => {
           group_id: groupX1,
           placed_by: TEST_IDS.GEDU,
           session_opens_at: new Date("2026-06-16T10:00:00Z").toISOString(),
+          gamer_name: "Test Gamer",
         })
-        .select("id")
+        .select("id, gamer_name")
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeTruthy();
+      expect(data?.gamer_name).toBe("Test Gamer");
     });
 
     it("group member (gamer) can read the locked roster", async () => {
