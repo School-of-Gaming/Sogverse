@@ -46,6 +46,12 @@ vi.mock("@/lib/session-schedule", async () => {
 const GROUP_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 const PRODUCT_ID = "11111111-2222-3333-4444-555555555555";
 
+// Inspectable spies for the self-healing prune chain
+// (voice_locked_placements.delete().eq().lt()).
+const placementLt = vi.fn();
+const placementEq = vi.fn();
+const placementDelete = vi.fn();
+
 function tokenRequest(body: Record<string, unknown>): Request {
   return new Request("http://localhost:3000/api/voice/token", {
     method: "POST",
@@ -159,13 +165,7 @@ function mockTables(opts: {
     }
     if (table === "voice_locked_placements") {
       // Self-healing prune of prior-session placements on join (delete().eq().lt()).
-      return {
-        delete: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            lt: vi.fn().mockResolvedValue({ error: null }),
-          }),
-        }),
-      };
+      return { delete: placementDelete };
     }
     return {};
   });
@@ -178,6 +178,10 @@ describe("POST /api/voice/token", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Rebuild the prune chain each test (clearAllMocks wipes return values).
+    placementLt.mockResolvedValue({ error: null });
+    placementEq.mockReturnValue({ lt: placementLt });
+    placementDelete.mockReturnValue({ eq: placementEq });
     process.env.NEXT_PUBLIC_DAILY_DOMAIN = "testdomain";
     mockCreateMeetingToken.mockResolvedValue("mock-daily-token");
     mockGetOrCreateDailyRoom.mockResolvedValue({
@@ -386,6 +390,32 @@ describe("POST /api/voice/token", () => {
         expect.objectContaining({
           userName: "gamer-id|gamer|Kid|Steve123|abc-uuid",
         }),
+      );
+    });
+
+    it("self-heals: prunes the group's prior-session locked placements on join", async () => {
+      // The non-obvious cleanup path — easy to drop in a refactor. Joining must
+      // delete this group's placements from windows before the current one, so
+      // stale rows can't block re-placement or phantom-render the roster.
+      authAs("admin-id", { role: "admin", first_name: "Boss" });
+      mockTables({ group: {} });
+      const windowOpensAt = new Date(Date.now() - 300_000);
+      mockComputeSessionWindow.mockReturnValue({
+        isOpen: true,
+        nextSessionStart: new Date(Date.now() - 60_000),
+        windowOpensAt,
+        windowClosesAt: new Date(Date.now() + 3600_000),
+      });
+
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+
+      expect(res.status).toBe(200);
+      expect(placementDelete).toHaveBeenCalled();
+      expect(placementEq).toHaveBeenCalledWith("group_id", GROUP_ID);
+      // Strictly older than the current window — current-session rows survive.
+      expect(placementLt).toHaveBeenCalledWith(
+        "session_opens_at",
+        windowOpensAt.toISOString(),
       );
     });
 

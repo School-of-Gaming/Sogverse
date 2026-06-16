@@ -236,6 +236,47 @@ describe("voice_zones + voice_locked_placements RLS", () => {
       expect(data?.gamer_name).toBe("Test Gamer");
     });
 
+    it("re-placing a gamer collides on the unique key, so the service deletes-then-inserts", async () => {
+      // A naive second insert for the same (group, gamer) must conflict — this
+      // is why placeInLockedZone clears the existing row first rather than
+      // upserting (the table has no UPDATE policy). Guards against a refactor
+      // back to a plain insert (which would throw on every re-placement) or to
+      // an upsert (which would be RLS-denied on the UPDATE path).
+      const dup = await geduAuth.from("voice_locked_placements").insert({
+        zone_id: lockedZoneX,
+        gamer_id: TEST_IDS.GAMER,
+        group_id: groupX1,
+        placed_by: TEST_IDS.GEDU,
+        session_opens_at: new Date("2026-06-16T10:00:00Z").toISOString(),
+        gamer_name: "Dup",
+      });
+      expect(dup.error).not.toBeNull(); // unique (group_id, gamer_id) violation
+
+      // delete-then-insert (what the service does) overwrites to a single row.
+      await geduAuth
+        .from("voice_locked_placements")
+        .delete()
+        .eq("group_id", groupX1)
+        .eq("gamer_id", TEST_IDS.GAMER);
+      const reinsert = await geduAuth.from("voice_locked_placements").insert({
+        zone_id: lockedZoneX,
+        gamer_id: TEST_IDS.GAMER,
+        group_id: groupX1,
+        placed_by: TEST_IDS.GEDU,
+        session_opens_at: new Date("2026-06-16T10:00:00Z").toISOString(),
+        gamer_name: "Renamed Gamer",
+      });
+      expect(reinsert.error).toBeNull();
+
+      const { data } = await admin
+        .from("voice_locked_placements")
+        .select("gamer_name")
+        .eq("group_id", groupX1)
+        .eq("gamer_id", TEST_IDS.GAMER);
+      expect(data?.length).toBe(1);
+      expect(data?.[0]?.gamer_name).toBe("Renamed Gamer");
+    });
+
     it("group member (gamer) can read the locked roster", async () => {
       const { data } = await gamerAuth
         .from("voice_locked_placements")
