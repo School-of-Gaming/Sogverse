@@ -4,7 +4,7 @@ import { forwardRef } from "react";
 import { Mic, MicOff, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Identicon } from "@/components/ui/identicon";
-import { AVATAR_SIZE } from "@/lib/constants/spatial";
+import { AVATAR_SIZE } from "@/lib/constants/voice-zones";
 
 interface VoiceAvatarProps {
   userId: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Mic, MicOff, Video, VideoOff, ScreenShare, ScreenShareOff, Lock } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, ScreenShare, ScreenShareOff, Lock, Megaphone, Volume2, VolumeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
@@ -19,6 +19,11 @@ export function VoiceControls() {
     isScreenSharing,
     startScreenShare,
     stopScreenShare,
+    isModerator,
+    isBroadcasting,
+    toggleBroadcast,
+    isDeafened,
+    toggleDeafen,
   } = useVoiceRoom();
   const t = useTranslations("voice");
 
@@ -89,6 +94,30 @@ export function VoiceControls() {
             <ScreenShare className="h-4 w-4" />
           )}
         </Button>
+      )}
+
+      {/* Broadcast + deafen (moderators only) */}
+      {isModerator && (
+        <>
+          <Button
+            variant={isBroadcasting ? "destructive" : "outline"}
+            size="icon"
+            onClick={toggleBroadcast}
+            disabled={joining}
+            title={isBroadcasting ? t("stopBroadcast") : t("broadcast")}
+          >
+            <Megaphone className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={isDeafened ? "destructive" : "outline"}
+            size="icon"
+            onClick={toggleDeafen}
+            disabled={joining}
+            title={isDeafened ? t("undeafen") : t("deafen")}
+          >
+            {isDeafened ? <VolumeOff className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+          </Button>
+        </>
       )}
 
       {/* Mic input level meter */}

@@ -11,16 +11,13 @@ import type { VoiceParticipant, LockState } from "./hooks/types";
 export function ParticipantList() {
   const {
     participants,
-    volumeMultipliers,
-    setParticipantVolume,
     lockStates,
     muteParticipant,
     lockParticipant,
-    localRole,
+    isModerator,
   } = useVoiceRoom();
 
   const t = useTranslations('voice');
-  const isLocalOwner = localRole === "admin" || localRole === "gedu";
 
   return (
     <Card>
@@ -34,10 +31,8 @@ export function ParticipantList() {
           <ParticipantRowWithGlow
             key={p.sessionId}
             participant={p}
-            volume={volumeMultipliers.get(p.sessionId) ?? 1.0}
             lockState={lockStates.get(p.sessionId) ?? { audio: false, video: false }}
-            isLocalOwner={isLocalOwner}
-            onVolumeChange={(vol) => setParticipantVolume(p.sessionId, vol)}
+            isLocalOwner={isModerator}
             onMute={(track) => muteParticipant(p.sessionId, track)}
             onLock={(track, locked) => lockParticipant(p.sessionId, track, locked)}
           />
@@ -56,18 +51,14 @@ export function ParticipantList() {
 /** Wraps ParticipantRow with the speaking-glow hook (needs sessionId for audio analysis). */
 function ParticipantRowWithGlow({
   participant,
-  volume,
   lockState,
   isLocalOwner,
-  onVolumeChange,
   onMute,
   onLock,
 }: {
   participant: VoiceParticipant;
-  volume: number;
   lockState: LockState;
   isLocalOwner: boolean;
-  onVolumeChange: (volume: number) => void;
   onMute: (track: "audio" | "video") => void;
   onLock: (track: "audio" | "video", locked: boolean) => void;
 }) {
@@ -77,11 +68,9 @@ function ParticipantRowWithGlow({
   return (
     <ParticipantRow
       participant={participant}
-      volume={volume}
       lockState={lockState}
       isModView={isLocalOwner}
       avatarRef={avatarRef}
-      onVolumeChange={onVolumeChange}
       onMute={onMute}
       onLock={onLock}
     />

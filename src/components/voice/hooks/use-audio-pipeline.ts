@@ -1,13 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
-import type { SpatialPosition } from "@/lib/constants/spatial";
-import { canHearZone } from "@/lib/constants/spatial";
-import { VOICE_CONFIG } from "@/lib/constants/voice";
-import type { AudioNodes } from "./types";
+import { zoneVolume } from "@/lib/voice/audio-routing";
+import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
+import type { AudioNodes, ZoneUserData } from "./types";
+
+/** The local listener's audio-routing state, owned by the provider. */
+export interface LocalAudioState {
+  zoneId: string;
+  deafened: boolean;
+}
 
 interface UseAudioPipelineParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
-  positionsRef: React.MutableRefObject<Map<string, SpatialPosition>>;
+  /** Per-remote zone state, mirrored from Daily `userData` by the provider. */
+  zoneInfoRef: React.MutableRefObject<Map<string, ZoneUserData>>;
+  /** The local listener's zone + deafen state, owned by the provider. */
+  localAudioStateRef: React.MutableRefObject<LocalAudioState>;
 }
 
 async function ensureAudioContextResumed(ctx: AudioContext): Promise<void> {
@@ -16,41 +24,43 @@ async function ensureAudioContextResumed(ctx: AudioContext): Promise<void> {
   }
 }
 
-export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipelineParams) {
+export function useAudioPipeline({
+  callObjectRef,
+  zoneInfoRef,
+  localAudioStateRef,
+}: UseAudioPipelineParams) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioNodesRef = useRef<Map<string, AudioNodes>>(new Map());
   const audioTrackIdsRef = useRef<Map<string, string>>(new Map());
   const localAnalyserRef = useRef<{ source: MediaStreamAudioSourceNode; analyser: AnalyserNode } | null>(null);
 
+  // The per-participant volume multiplier ("base" in the routing model). The
+  // slider UI was dropped (the discrete-zone redesign reclaimed the space), but
+  // the plumbing stays so it can be re-enabled cheaply — see TODO.md. With no
+  // setter wired up it stays 1.0 for everyone.
   const volumeMultipliersRef = useRef<Map<string, number>>(new Map());
-  const [volumeMultipliers, setVolumeMultipliers] = useState<Map<string, number>>(new Map());
 
-  /** Update audio routing — element.volume handles both zone muting and
-   *  user volume control. See docs/chrome-webrtc-volume-bug.md. */
+  /** Update audio routing — `element.volume` is the only audible control (zone
+   *  muting + broadcast + deafen, via the pure zoneVolume decision). The
+   *  separate analyser pipeline (speaking glow) and video are untouched, so
+   *  cross-zone peers stay visible. See docs/chrome-webrtc-volume-bug.md. */
   const updateAudioRouting = useCallback(() => {
     const co = callObjectRef.current;
     if (!co) return;
 
-    const localSessionId = co.participants().local.session_id;
-
-    const localPos = positionsRef.current.get(localSessionId);
-    const lZone = localPos?.zone ?? "general";
+    const { zoneId: localZoneId, deafened } = localAudioStateRef.current;
 
     for (const [sessionId, nodes] of audioNodesRef.current) {
-      const remotePos = positionsRef.current.get(sessionId);
-      const rZone = remotePos?.zone ?? "general";
-      const multiplier = volumeMultipliersRef.current.get(sessionId) ?? 1.0;
-      nodes.element.volume = canHearZone(lZone, rZone) ? multiplier : 0;
+      const info = zoneInfoRef.current.get(sessionId);
+      nodes.element.volume = zoneVolume({
+        localIsDeafened: deafened,
+        remoteIsBroadcasting: info?.broadcasting ?? false,
+        localZoneId,
+        remoteZoneId: info?.zoneId ?? DEFAULT_ZONE_ID,
+        base: volumeMultipliersRef.current.get(sessionId) ?? 1.0,
+      });
     }
-  }, [callObjectRef, positionsRef]);
-
-  /** Set volume multiplier for a remote participant (0.1–1.0) */
-  const setParticipantVolume = useCallback((sessionId: string, volume: number) => {
-    const clamped = Math.max(VOICE_CONFIG.MIN_VOLUME, Math.min(VOICE_CONFIG.MAX_VOLUME, volume));
-    volumeMultipliersRef.current.set(sessionId, clamped);
-    setVolumeMultipliers(new Map(volumeMultipliersRef.current));
-    updateAudioRouting();
-  }, [updateAudioRouting]);
+  }, [callObjectRef, zoneInfoRef, localAudioStateRef]);
 
   /** Manage audio pipeline for remote participants.
    *  <audio> elements handle WebRTC playback and all audible control (volume,
@@ -203,19 +213,15 @@ export function useAudioPipeline({ callObjectRef, positionsRef }: UseAudioPipeli
   /** Clean up volume multiplier for a participant who left */
   const onParticipantLeft = useCallback((sessionId: string) => {
     volumeMultipliersRef.current.delete(sessionId);
-    setVolumeMultipliers(new Map(volumeMultipliersRef.current));
   }, []);
 
   /** Reset all state (join/leave) */
   const reset = useCallback(() => {
     cleanupAudioNodes();
     volumeMultipliersRef.current.clear();
-    setVolumeMultipliers(new Map());
   }, [cleanupAudioNodes]);
 
   return {
-    volumeMultipliers,
-    setParticipantVolume,
     getAnalyser,
     updateAudioRouting,
     manageAudioNodes,

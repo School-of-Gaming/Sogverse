@@ -1,12 +1,11 @@
 import { type Ref } from "react";
-import { Mic, MicOff, Video, VideoOff, Crown, Lock, Volume2 } from "lucide-react";
+import { Mic, MicOff, Video, VideoOff, Crown, Lock } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Identicon } from "@/components/ui/identicon";
 import { MinecraftUsernameBadge } from "@/components/minecraft/minecraft-username-badge";
-import { VOICE_CONFIG } from "@/lib/constants/voice";
 import { cn } from "@/lib/utils";
 import type { VoiceRole } from "./hooks/types";
 
@@ -29,23 +28,19 @@ export interface ParticipantRowData {
 
 export interface ParticipantRowProps {
   participant: ParticipantRowData;
-  volume: number;
   lockState: { audio: boolean; video: boolean };
   /** Whether the viewer is a moderator (reserves column space on all rows). */
   isModView: boolean;
   avatarRef?: Ref<HTMLDivElement>;
-  onVolumeChange?: (volume: number) => void;
   onMute?: (track: "audio" | "video") => void;
   onLock?: (track: "audio" | "video", locked: boolean) => void;
 }
 
 export function ParticipantRow({
   participant: p,
-  volume,
   lockState,
   isModView,
   avatarRef,
-  onVolumeChange,
   onMute,
   onLock,
 }: ParticipantRowProps) {
@@ -158,26 +153,8 @@ export function ParticipantRow({
         </div>
       )}
 
-      {/* Volume slider — always rendered (flex-[2]) for stable layout, empty for local */}
-      <div className="flex min-w-0 flex-[2] items-center gap-1.5">
-        {!p.isLocal && (
-          <>
-            <Volume2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <input
-              type="range"
-              min={VOICE_CONFIG.MIN_VOLUME * 100}
-              max={VOICE_CONFIG.MAX_VOLUME * 100}
-              value={Math.round(volume * 100)}
-              onChange={(e) => onVolumeChange?.(Number(e.target.value) / 100)}
-              className="h-1.5 min-w-0 flex-1 accent-primary"
-              title={`Volume: ${Math.round(volume * 100)}%`}
-            />
-            <span className="w-8 shrink-0 text-right text-xs text-muted-foreground">
-              {Math.round(volume * 100)}%
-            </span>
-          </>
-        )}
-      </div>
+      {/* Spacer keeps name/badges left-aligned and status indicators right-aligned. */}
+      <div className="flex-1" />
 
       {/* Status indicators — always show both icons for stable layout */}
       <div className="flex shrink-0 items-center gap-1.5">

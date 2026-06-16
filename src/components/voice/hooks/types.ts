@@ -1,13 +1,13 @@
 import type { DailyCall } from "@daily-co/daily-js";
 import type { UserRole } from "@/types";
-import type { ZoneId, SpatialPosition } from "@/lib/constants/spatial";
+import type { VoiceZoneView } from "@/lib/voice/zone-composition";
 
 /**
  * Voice-room-internal role union. Adds `"guest"` on top of the system roles
  * to cover unauthenticated joiners on instant voice rooms (and authenticated
  * parents/gamers, who are also treated as guests when they join via a public
  * room link). Gating logic uses positive "is mod" checks so guest behavior is
- * the same as gamer — non-mod, no screen share, can't drag others.
+ * the same as gamer — non-mod, no screen share, can't move others.
  */
 export type VoiceRole = UserRole | "guest";
 
@@ -32,7 +32,23 @@ export interface VoiceParticipant {
   isLocal: boolean;
   isOwner: boolean;
   isSpeaking: boolean;
-  position: SpatialPosition;
+  /**
+   * The discrete zone the participant is in, read from their Daily `userData`
+   * (defaulting to `"lobby"` until/unless set). Replaces the old spatial
+   * `position` — membership now syncs through Daily's own participant state, so
+   * a late joiner sees everyone's zone with no handshake. See
+   * src/components/voice/CLAUDE.md.
+   */
+  zoneId: string;
+  /** Whether this participant is broadcasting (heard in every zone). From `userData`. */
+  isBroadcasting: boolean;
+}
+
+/** Per-participant zone state mirrored from Daily `userData`, used by the
+ *  audio pipeline to decide cross-zone volume. */
+export interface ZoneUserData {
+  zoneId: string;
+  broadcasting: boolean;
 }
 
 // ---------- Moderator ----------
@@ -69,11 +85,21 @@ export interface ChatMessage {
 
 // ---------- App Messages ----------
 
-/** App message types sent via Daily.co sendAppMessage */
+/** App message types sent via Daily.co sendAppMessage.
+ *
+ *  Note the spatial `posUpdate` handshake is gone — normal-zone membership now
+ *  rides on Daily `userData` (see CLAUDE.md), so the only zone message left is
+ *  the moderator's targeted `moveUser`. */
 export type AppMessage =
-  | { type: "posUpdate"; sessionId: string; position: SpatialPosition }
   | { type: "lockSync"; lock: LockState }
-  | { type: "moveUser"; targetSessionId: string; position: SpatialPosition }
+  /**
+   * A moderator asking a *target* to move itself to a zone. A client can't set
+   * another participant's `userData`, so the mod sends this; the target's
+   * client verifies the sender is an owner and then sets its own `userData`.
+   * Enforcement here is cosmetic (normal zones aren't a security boundary —
+   * locked zones use the separate-room token gate instead).
+   */
+  | { type: "moveUser"; targetSessionId: string; zoneId: string }
   | { type: "moderatorMute"; targetSessionId: string; track: "audio" | "video" }
   | { type: "moderatorLock"; targetSessionId: string; track: "audio" | "video"; locked: boolean }
   /**
@@ -94,39 +120,62 @@ export type AppMessage =
 // ---------- Context ----------
 
 export interface VoiceRoomContextValue {
+  // --- identity / role ---
   joined: boolean;
   joining: boolean;
+  callObject: DailyCall | null;
+  localSessionId: string | null;
+  localRole: VoiceRole;
+  isModerator: boolean;
+  /** `null` on instant rooms (no group → custom/locked zone features disabled). */
+  groupId: string | null;
+
+  // --- participants ---
   participants: VoiceParticipant[];
+
+  // --- zones + membership ---
+  zones: VoiceZoneView[];
+  currentZoneId: string;
+  participantsByZone: Map<string, VoiceParticipant[]>;
+  /** Tap or drag self into a zone. No-op for locked zones (placement is mod-only). */
+  moveSelfToZone: (zoneId: string) => void;
+  /** Moderator-only; moves another participant into a non-locked zone. */
+  moveParticipantToZone: (sessionId: string, zoneId: string) => void;
+
+  // --- media ---
   micOn: boolean;
   cameraOn: boolean;
   cameraAllowed: boolean;
-  join: (roomUrl: string, token: string) => Promise<void>;
-  leave: () => Promise<void>;
   toggleMic: () => void;
   toggleCamera: () => Promise<void> | void;
-  callObject: DailyCall | null;
-  // Spatial extensions
-  localZone: ZoneId;
-  localRole: VoiceRole;
-  moveLocal: (x: number, y: number) => void;
-  moveOther: (targetSessionId: string, x: number, y: number) => void;
-  // Audio analysis
-  getAnalyser: (sessionId: string) => AnalyserNode | null;
-  // Volume control
-  volumeMultipliers: Map<string, number>;
-  setParticipantVolume: (sessionId: string, volume: number) => void;
-  // Screen sharing
+
+  // --- screen sharing ---
   screenSharerSessionId: string | null;
   canScreenShare: boolean;
   isScreenSharing: boolean;
   startScreenShare: () => Promise<void>;
   stopScreenShare: () => void;
-  // Moderator controls
+
+  // --- broadcast / deafen (moderators only) ---
+  isBroadcasting: boolean;
+  toggleBroadcast: () => void;
+  isDeafened: boolean;
+  toggleDeafen: () => void;
+
+  // --- moderation ---
   localLocks: LockState;
   lockStates: Map<string, LockState>;
   muteParticipant: (sessionId: string, track: "audio" | "video") => void;
   lockParticipant: (sessionId: string, track: "audio" | "video", locked: boolean) => void;
-  // Chat (ephemeral, app-message-backed)
+
+  // --- audio analysis (speaking glow) ---
+  getAnalyser: (sessionId: string) => AnalyserNode | null;
+
+  // --- chat (ephemeral, app-message-backed) ---
   messages: ChatMessage[];
   sendChatMessage: (text: string) => void;
+
+  // --- lifecycle ---
+  join: (roomUrl: string, token: string) => Promise<void>;
+  leave: () => Promise<void>;
 }

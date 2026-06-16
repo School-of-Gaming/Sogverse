@@ -1694,6 +1694,13 @@
     "shareScreen": "Dela skärm",
     "stopScreenShare": "Sluta dela skärm",
     "broadcast": "Sändning",
+    "stopBroadcast": "Stoppa sändning",
+    "deafen": "Tysta allt",
+    "undeafen": "Slå på ljud",
+    "zoneLobby": "Lobby",
+    "youAreHere": "Du är här",
+    "joinZone": "Gå till {zone}",
+    "zonesDescription": "Tryck på en zon för att flytta dit. Du hör alla i samma zon.",
     "chat": {
       "title": "Chatt",
       "placeholder": "Skriv ett meddelande…",

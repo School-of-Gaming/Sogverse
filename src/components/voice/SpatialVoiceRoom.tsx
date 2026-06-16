@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { VoiceControls } from "./VoiceControls";
-import { SpatialCanvas } from "./SpatialCanvas";
+import { ZoneList } from "./ZoneList";
 import { ScreenShareDisplay } from "./ScreenShareDisplay";
 import { ChatPanel } from "./ChatPanel";
 import { ParticipantList } from "./ParticipantList";
@@ -96,7 +96,7 @@ export function SpatialVoiceRoom({
             </div>
           </div>
           <CardDescription>
-            {t('spatialDescription')}
+            {t('zonesDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -120,7 +120,7 @@ export function SpatialVoiceRoom({
             </div>
           </div>
 
-          <SpatialCanvas />
+          <ZoneList />
 
           <div className="flex items-center justify-between">
             <VoiceControls />

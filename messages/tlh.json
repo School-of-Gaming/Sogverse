@@ -1739,6 +1739,13 @@
     "shareScreen": "Daq yIngeH",
     "stopScreenShare": "Daq ngeH yImev",
     "broadcast": "Hoch ngeH",
+    "stopBroadcast": "ngeH yImev",
+    "deafen": "yIQoybe'",
+    "undeafen": "yIQoy",
+    "zoneLobby": "lojmIt Daq",
+    "youAreHere": "naDev SoH",
+    "joinZone": "{zone} yIghoS",
+    "zonesDescription": "Daq DaghoSmeH yI'uy. Daqlijdaq Hoch Daqoy.",
     "chat": {
       "title": "ja'chuq",
       "placeholder": "QIn yIghItlh…",

@@ -119,7 +119,7 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
 
 export function VoiceSessionPage(props: VoiceSessionPageProps) {
   return (
-    <VoiceRoomProvider>
+    <VoiceRoomProvider groupId={props.groupId}>
       <VoiceSessionInner {...props} />
     </VoiceRoomProvider>
   );

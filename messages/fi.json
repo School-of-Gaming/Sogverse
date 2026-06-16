@@ -1694,6 +1694,13 @@
     "shareScreen": "Jaa näyttö",
     "stopScreenShare": "Lopeta näytön jakaminen",
     "broadcast": "Kuulutus",
+    "stopBroadcast": "Lopeta kuulutus",
+    "deafen": "Mykistä kuulo",
+    "undeafen": "Palauta kuulo",
+    "zoneLobby": "Aula",
+    "youAreHere": "Olet täällä",
+    "joinZone": "Siirry: {zone}",
+    "zonesDescription": "Siirry alueelle napauttamalla sitä. Kuulet kaikki samalla alueella olevat.",
     "chat": {
       "title": "Keskustelu",
       "placeholder": "Kirjoita viesti…",

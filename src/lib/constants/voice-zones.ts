@@ -98,7 +98,7 @@ export const VOICE_ZONE_ICON_KEYS = Constants.public.Enums.voice_zone_icon;
 
 export interface VirtualZonePresentation {
   id: string;
-  /** Translation key under the `voice` namespace. */
+  /** Full dotted message key, resolved with the root `useTranslations()`. */
   nameKey: string;
   icon: LucideIcon;
   color: ZoneColorClasses;
@@ -107,16 +107,17 @@ export interface VirtualZonePresentation {
 /** Lobby — the default "general" zone, neutral semantic theme color. */
 export const LOBBY_PRESENTATION: VirtualZonePresentation = {
   id: LOBBY_ZONE_ID,
-  nameKey: "zoneLobby",
+  nameKey: "voice.zoneLobby",
   icon: Home,
   color: { tile: "bg-primary/10", glyph: "text-primary", ring: "ring-primary" },
 };
 
-/** The 4 Yty zones, reusing the existing Yty icons + theme tokens (yty.ts). */
+/** The 4 Yty zones, reusing the existing Yty icons + theme tokens (yty.ts) and
+ *  the existing `yty.elements.*.name` translations. */
 export const YTY_PRESENTATIONS: VirtualZonePresentation[] = YTY_ELEMENTS.map(
   (e) => ({
     id: `yty-${e.id}`,
-    nameKey: `zoneYty_${e.id}`,
+    nameKey: `yty.elements.${e.id}.name`,
     icon: e.icon,
     color: {
       tile: e.color.bg,

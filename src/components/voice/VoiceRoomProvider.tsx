@@ -9,15 +9,19 @@ import {
   useRef,
   useState,
 } from "react";
-import type {
-  DailyCall,
-  DailyParticipant,
-} from "@daily-co/daily-js";
-import type { SpatialPosition } from "@/lib/constants/spatial";
+import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
 import { parseUserName } from "@/lib/voice/user-name";
-import type { VoiceRoomContextValue, VoiceParticipant, AppMessage, VoiceRole } from "./hooks/types";
-import { useAudioPipeline } from "./hooks/use-audio-pipeline";
-import { useSpatialPositions } from "./hooks/use-spatial-positions";
+import { composeZones } from "@/lib/voice/zone-composition";
+import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
+import type {
+  VoiceRoomContextValue,
+  VoiceParticipant,
+  AppMessage,
+  VoiceRole,
+  ZoneUserData,
+} from "./hooks/types";
+import { useAudioPipeline, type LocalAudioState } from "./hooks/use-audio-pipeline";
+import { useZoneMembership } from "./hooks/use-zone-membership";
 import { useScreenShare } from "./hooks/use-screen-share";
 import { useModeratorControls } from "./hooks/use-moderator-controls";
 import { useChat } from "./hooks/use-chat";
@@ -30,8 +34,23 @@ const VoiceRoomContext = createContext<VoiceRoomContextValue | null>(null);
 
 // ---------- Helpers ----------
 
-function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null, position: SpatialPosition): VoiceParticipant {
+/** Decode the `{ zoneId, broadcasting }` we stamp onto Daily `userData`,
+ *  tolerating absent/garbage data (defaults to the lobby, not broadcasting). */
+function parseZoneUserData(userData: unknown): ZoneUserData {
+  if (typeof userData !== "object" || userData === null) {
+    return { zoneId: DEFAULT_ZONE_ID, broadcasting: false };
+  }
+  const zoneId =
+    "zoneId" in userData && typeof userData.zoneId === "string"
+      ? userData.zoneId
+      : DEFAULT_ZONE_ID;
+  const broadcasting = "broadcasting" in userData && userData.broadcasting === true;
+  return { zoneId, broadcasting };
+}
+
+function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null): VoiceParticipant {
   const { userId, role, displayName, minecraftUsername, minecraftUuid } = parseUserName(p.user_name);
+  const { zoneId, broadcasting } = parseZoneUserData(p.userData);
 
   return {
     sessionId: p.session_id,
@@ -46,16 +65,33 @@ function mapParticipant(p: DailyParticipant, activeSpeakerId: string | null, pos
     isLocal: p.local,
     isOwner: p.owner,
     isSpeaking: p.session_id === activeSpeakerId && Boolean(p.audio) && p.tracks.audio.state === "playable",
-    position,
+    zoneId,
+    isBroadcasting: broadcasting,
   };
+}
+
+function isModeratorRole(role: VoiceRole): boolean {
+  return role === "admin" || role === "gedu";
 }
 
 // ---------- Provider ----------
 
-export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
+interface VoiceRoomProviderProps {
+  children: React.ReactNode;
+  /** A `product_groups.id` for scheduled group rooms, or `null` for instant
+   *  rooms (no group → custom/locked zone features are disabled). */
+  groupId?: string | null;
+}
+
+export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProviderProps) {
   // --- Shared refs (owned by provider, passed to hooks) ---
   const callObjectRef = useRef<DailyCall | null>(null);
-  const positionsRef = useRef<Map<string, SpatialPosition>>(new Map());
+  // Per-remote zone state, mirrored from Daily userData each updateParticipants.
+  const zoneInfoRef = useRef<Map<string, ZoneUserData>>(new Map());
+  // The local listener's audio-routing state (zone + deafen).
+  const localAudioStateRef = useRef<LocalAudioState>({ zoneId: DEFAULT_ZONE_ID, deafened: false });
+  // Live mirror of mod status for hooks that verify it synchronously.
+  const isModeratorRef = useRef(false);
 
   // --- Core call state ---
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
@@ -66,23 +102,21 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   const [cameraOn, setCameraOn] = useState(false);
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [localRole, setLocalRole] = useState<VoiceRole>("gamer");
+  const [isDeafened, setIsDeafened] = useState(false);
   const activeSpeakerIdRef = useRef<string | null>(null);
   // Synchronous gate — events like track-started fire before joined-meeting,
   // when co.participants().local doesn't exist yet. updateParticipants skips
   // until this is true; handleJoined calls it to catch up on current state.
   const joinedRef = useRef(false);
-  // Tracks peers we've already sent our position to (via participant-joined
-  // or posUpdate reply). Prevents redundant replies in the handshake protocol.
-  const sentPositionToRef = useRef<Set<string>>(new Set());
 
   // --- Compose hooks ---
 
-  const audio = useAudioPipeline({ callObjectRef, positionsRef });
+  const audio = useAudioPipeline({ callObjectRef, zoneInfoRef, localAudioStateRef });
 
-  const spatial = useSpatialPositions({
+  const membership = useZoneMembership({
     callObjectRef,
-    positionsRef,
-    onPositionChanged: audio.updateAudioRouting,
+    isModeratorRef,
+    onChanged: audio.updateAudioRouting,
   });
 
   const localSessionId = participants.find((p) => p.isLocal)?.sessionId ?? null;
@@ -106,17 +140,16 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
     const pMap = co.participants();
     const list: VoiceParticipant[] = [];
+    const zoneInfo = new Map<string, ZoneUserData>();
     for (const p of Object.values(pMap)) {
-      const pos = positionsRef.current.get(p.session_id);
-      // A participant doesn't exist until we have their position.
-      // The posUpdate message fills this in; updateParticipants re-runs then.
-      if (!pos) continue;
       // parseUserName throws on a malformed token. Our routes are the only
       // writers, so that's a bug worth surfacing — but isolate it per peer:
       // one bad remote token must skip that participant, never abort the loop
       // and blank the whole room for everyone else.
       try {
-        list.push(mapParticipant(p, activeSpeakerIdRef.current, pos));
+        const mapped = mapParticipant(p, activeSpeakerIdRef.current);
+        list.push(mapped);
+        zoneInfo.set(p.session_id, { zoneId: mapped.zoneId, broadcasting: mapped.isBroadcasting });
       } catch (err) {
         console.error(
           `[voice] skipping participant ${p.session_id} with malformed user_name:`,
@@ -124,31 +157,23 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         );
       }
     }
+    zoneInfoRef.current = zoneInfo;
     setParticipants(list);
 
     const local = pMap.local;
     setMicOn(local.tracks.audio.state === "playable");
     setCameraOn(local.tracks.video.state === "playable");
+    // Keep the local audio-routing zone in sync with our own userData.
+    localAudioStateRef.current = {
+      zoneId: parseZoneUserData(local.userData).zoneId,
+      deafened: localAudioStateRef.current.deafened,
+    };
 
     screenShare.detectScreenSharer(list);
     void audio.manageAudioNodes(co);
     audio.manageLocalAnalyser(co);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- individual methods are stable useCallback refs; adding the parent objects would re-create this callback on every render
   }, [screenShare.detectScreenSharer, audio.manageAudioNodes, audio.manageLocalAnalyser]);
-
-  // --- Shared helpers ---
-
-  /** Send our posUpdate to a specific peer and mark them in sentPositionToRef.
-   *  No-op if local position isn't set yet (joined-meeting hasn't fired). */
-  const sendPositionTo = useCallback((co: DailyCall, targetSid: string) => {
-    const localSid = co.participants().local.session_id;
-    const localPos = positionsRef.current.get(localSid);
-    if (localPos) {
-      sentPositionToRef.current.add(targetSid);
-      const msg: AppMessage = { type: "posUpdate", sessionId: localSid, position: localPos };
-      co.sendAppMessage(msg, targetSid);
-    }
-  }, [positionsRef]);
 
   // --- App message dispatch ---
 
@@ -173,48 +198,49 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Spatial messages: posUpdate, moveUser
-    spatial.onAppMessage(msg, fromId, co);
-
-    // Position messages may have materialized new participants (their
-    // position now exists in positionsRef, passing the gate in
-    // updateParticipants). Re-derive the list synchronously so they
-    // appear without a setTimeout delay.
-    if (msg.type === "posUpdate" || msg.type === "moveUser") {
-      updateParticipants(co);
-    }
-
-    // Handshake reply: if we haven't sent our position to this peer yet,
-    // reply with our own posUpdate so they can see us. This completes the
-    // per-peer handshake initiated by participant-joined. sendPositionTo
-    // only marks the set when localPos exists, so if joined-meeting hasn't
-    // fired yet we'll retry on the next posUpdate from this peer.
-    if (msg.type === "posUpdate" && !sentPositionToRef.current.has(fromId)) {
-      sendPositionTo(co, fromId);
+    // Moderator asking us to move zones — verified-owner-gated inside the hook.
+    if (msg.type === "moveUser") {
+      membership.onAppMessage(msg, fromId, co);
+      return;
     }
 
     // Moderator messages: moderatorMute, moderatorLock
     moderator.onAppMessage(msg, fromId, co);
-  }, [spatial, moderator, chat, updateParticipants, sendPositionTo]);
+  }, [membership, moderator, chat]);
+
+  // --- Deafen (moderator-only): silences all remotes locally ---
+
+  const toggleDeafen = useCallback(() => {
+    if (!isModeratorRef.current) return;
+    setIsDeafened((prev) => {
+      const next = !prev;
+      localAudioStateRef.current = { ...localAudioStateRef.current, deafened: next };
+      audio.updateAudioRouting();
+      return next;
+    });
+  }, [audio]);
 
   // --- Shared reset ---
 
   const resetState = useCallback(() => {
     joinedRef.current = false;
-    sentPositionToRef.current.clear();
+    isModeratorRef.current = false;
+    zoneInfoRef.current = new Map();
+    localAudioStateRef.current = { zoneId: DEFAULT_ZONE_ID, deafened: false };
     setJoined(false);
     setParticipants([]);
     setMicOn(true);
     setCameraOn(false);
     setCameraAllowed(false);
     setLocalRole("gamer");
+    setIsDeafened(false);
     activeSpeakerIdRef.current = null;
-    spatial.reset();
+    membership.reset();
     moderator.reset();
     screenShare.reset();
     audio.reset();
     chat.reset();
-  }, [spatial, moderator, screenShare, audio, chat]);
+  }, [membership, moderator, screenShare, audio, chat]);
 
   // --- Join / Leave ---
 
@@ -254,39 +280,34 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
         setCameraAllowed(true);
 
         const local = co.participants().local;
-        setLocalRole(parseUserName(local.user_name).role);
+        const role = parseUserName(local.user_name).role;
+        setLocalRole(role);
+        isModeratorRef.current = isModeratorRole(role);
 
-        // Set local position before updateParticipants so the local user
-        // passes the position gate and appears immediately.
-        spatial.onJoined(local.session_id);
+        // Stamp our initial lobby zone onto userData so peers place us
+        // immediately, then derive the list.
+        membership.onJoined();
         updateParticipants(co);
       };
 
-      // Position handshake initiation + reply logic lives here in the
-      // provider; position storage and movement live in use-spatial-positions.
       const handleParticipantJoined = (event: { participant: DailyParticipant }) => {
-        // Guard against events on a stale call object (e.g., rapid
-        // rejoin before the previous instance is fully destroyed).
-        // Daily.co guarantees joined-meeting fires before any
-        // participant-joined, so this isn't a race condition guard.
+        // Guard against events on a stale call object (e.g., rapid rejoin).
+        // Daily guarantees joined-meeting fires before any participant-joined.
         if (!joinedRef.current) return;
         const newPeerSid = event.participant.session_id;
         const localSid = co.participants().local.session_id;
 
-        // Send our own position to the new peer. participant-joined only
-        // fires once the SFU route is established, so this message is
-        // guaranteed to arrive. The new peer replies with their own
-        // posUpdate, completing a bidirectional handshake.
-        sendPositionTo(co, newPeerSid);
-
         // Self-report our lock state so the new peer's moderator UI is accurate.
-        // Each peer only claims their own state — the real enforcement is
-        // Daily.co's canSend permission at the SFU level.
+        // Each peer only claims their own state — real enforcement is Daily's
+        // canSend permission at the SFU. (Zone membership needs no such message:
+        // Daily hands our userData to the new joiner automatically.)
         const myLocks = moderator.lockStateRef.current.get(localSid);
         if (myLocks && (myLocks.audio || myLocks.video)) {
           const lockMsg: AppMessage = { type: "lockSync", lock: myLocks };
           co.sendAppMessage(lockMsg, newPeerSid);
         }
+
+        updateParticipants(co);
       };
 
       const handleParticipantUpdate = () => updateParticipants(co);
@@ -294,8 +315,6 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       const handleParticipantLeft = (event: { participant: DailyParticipant }) => {
         const sid = event.participant.session_id;
-        sentPositionToRef.current.delete(sid);
-        spatial.onParticipantLeft(sid);
         moderator.onParticipantLeft(sid);
         audio.onParticipantLeft(sid);
         updateParticipants(co);
@@ -307,9 +326,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
       // the ref before us, so this handler runs as a no-op for that
       // case. For the involuntary paths the ref is still live — we
       // mirror the voluntary cleanup so post-eject reads of
-      // `callObjectRef.current` short-circuit naturally instead of
-      // racing against an rAF tick (e.g. `useSpeakingGlow`) that
-      // assumes `co.participants().local` exists.
+      // `callObjectRef.current` short-circuit naturally.
       const handleLeft = () => {
         if (callObjectRef.current) {
           callObjectRef.current.destroy().catch(() => {});
@@ -335,16 +352,15 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
 
       await co.join({ url: roomUrl, token });
     },
-    [updateParticipants, handleAppMessage, resetState, sendPositionTo, audio, spatial, moderator],
+    [updateParticipants, handleAppMessage, resetState, audio, membership, moderator],
   );
 
   const leave = useCallback(async () => {
     const co = callObjectRef.current;
     if (!co) return;
-    // Null the ref first so the `left-meeting` event fired during
-    // `co.leave()` is a no-op in `handleLeft`. Otherwise `handleLeft`
-    // destroys + nulls the ref mid-await and the `destroy()` below
-    // crashes on null.
+    // Null the ref first so the `left-meeting` event fired during `co.leave()`
+    // is a no-op in `handleLeft`. Otherwise `handleLeft` destroys + nulls the
+    // ref mid-await and the `destroy()` below crashes on null.
     callObjectRef.current = null;
     setCallObject(null);
     await co.leave();
@@ -379,10 +395,8 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   // ejected — for us, the expected end-of-session path. There is no
   // event handler, no SDK log level, and no Daily-side config that
   // disables it; the string-match patch is the canonical workaround
-  // across the daily-js / Vapi ecosystem (PostHog ships the same fix
-  // in their interview exporter, and dozens of public repos do the
-  // same). Scoped to the provider's mount lifetime so we don't touch
-  // console.error globally for the rest of the app.
+  // across the daily-js / Vapi ecosystem. Scoped to the provider's mount
+  // lifetime so we don't touch console.error globally for the rest of the app.
   useEffect(() => {
     const originalError = console.error;
     console.error = (...args: unknown[]) => {
@@ -398,7 +412,7 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Clean up call object on unmount.
-  // Audio and spatial hooks handle their own cleanup via internal useEffects.
+  // Audio and membership hooks handle their own cleanup via internal useEffects.
   useEffect(() => {
     return () => {
       if (callObjectRef.current) {
@@ -408,41 +422,67 @@ export function VoiceRoomProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  // --- Derived view state ---
+
+  const isModerator = isModeratorRole(localRole);
+
+  // Custom zones come from the DB in a later PR; for now the list is the
+  // virtual lobby + 4 Yty zones (instant rooms only ever get these).
+  const zones = useMemo(() => composeZones(null, groupId), [groupId]);
+
+  const participantsByZone = useMemo(() => {
+    const map = new Map<string, VoiceParticipant[]>();
+    for (const z of zones) map.set(z.id, []);
+    for (const p of participants) {
+      const bucket = map.get(p.zoneId);
+      if (bucket) bucket.push(p);
+      else map.set(p.zoneId, [p]);
+    }
+    return map;
+  }, [participants, zones]);
+
   // --- Context ---
 
   const contextValue = useMemo<VoiceRoomContextValue>(
     () => ({
       joined,
       joining,
+      callObject,
+      localSessionId,
+      localRole,
+      isModerator,
+      groupId,
       participants,
+      zones,
+      currentZoneId: membership.currentZoneId,
+      participantsByZone,
+      moveSelfToZone: membership.moveSelfToZone,
+      moveParticipantToZone: membership.moveParticipantToZone,
       micOn,
       cameraOn,
       cameraAllowed,
-      join,
-      leave,
       toggleMic,
       toggleCamera,
-      callObject,
-      localZone: spatial.localZone,
-      localRole,
-      moveLocal: spatial.moveLocal,
-      moveOther: spatial.moveOther,
-      getAnalyser: audio.getAnalyser,
-      volumeMultipliers: audio.volumeMultipliers,
-      setParticipantVolume: audio.setParticipantVolume,
       screenSharerSessionId: screenShare.screenSharerSessionId,
       canScreenShare: screenShare.canScreenShare,
       isScreenSharing: screenShare.isScreenSharing,
       startScreenShare: screenShare.startScreenShare,
       stopScreenShare: screenShare.stopScreenShare,
+      isBroadcasting: membership.isBroadcasting,
+      toggleBroadcast: membership.toggleBroadcast,
+      isDeafened,
+      toggleDeafen,
       localLocks: moderator.localLocks,
       lockStates: moderator.lockStates,
       muteParticipant: moderator.muteParticipant,
       lockParticipant: moderator.lockParticipant,
+      getAnalyser: audio.getAnalyser,
       messages: chat.messages,
       sendChatMessage: chat.sendChatMessage,
+      join,
+      leave,
     }),
-    [joined, joining, participants, micOn, cameraOn, cameraAllowed, join, leave, toggleMic, toggleCamera, callObject, spatial.localZone, localRole, spatial.moveLocal, spatial.moveOther, audio.getAnalyser, audio.volumeMultipliers, audio.setParticipantVolume, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, chat.messages, chat.sendChatMessage],
+    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, membership.currentZoneId, participantsByZone, membership.moveSelfToZone, membership.moveParticipantToZone, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
   );
 
   return (

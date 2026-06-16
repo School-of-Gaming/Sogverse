@@ -46,8 +46,8 @@ import { UserRow } from "@/components/admin/user-row";
 import { SessionsSection } from "@/components/parent";
 import type { UpcomingSessionEntry } from "@/lib/upcoming-sessions";
 import { useAuth, useNow } from "@/providers";
-import { AVATAR_SIZE } from "@/lib/constants/spatial";
-import { computeGlowStyle } from "@/lib/constants/spatial.config";
+import { AVATAR_SIZE } from "@/lib/constants/voice-zones";
+import { computeGlowStyle } from "@/lib/voice/glow";
 import {
   ProductBrowseCardView,
   type ProductBrowseCardViewProps,
@@ -475,7 +475,6 @@ function useSimulatedGlow(
 }
 
 function ParticipantCardDemo() {
-  const [volumes, setVolumes] = useState<Record<string, number>>({});
   const [locks, setLocks] = useState<Record<string, { audio: boolean; video: boolean }>>({
     "19ffd6e5-2e78-4742-a65f-6ed40b2b8b47": { audio: true, video: false },
   });
@@ -503,19 +502,14 @@ function ParticipantCardDemo() {
       </CardHeader>
       <CardContent className="space-y-2">
         {DEMO_PARTICIPANTS.map((p, i) => {
-          const volume = volumes[p.userId] ?? 1.0;
           const lockState = locks[p.userId] ?? { audio: false, video: false };
           return (
             <ParticipantRow
               key={p.userId}
               participant={p}
-              volume={volume}
               lockState={lockState}
               isModView
               avatarRef={avatarRefs[i]}
-              onVolumeChange={(vol) =>
-                setVolumes((prev) => ({ ...prev, [p.userId]: vol }))
-              }
               onLock={(track, locked) =>
                 setLocks((prev) => ({
                   ...prev,
@@ -1332,7 +1326,7 @@ export default function AdminUIComponentsPage() {
       <Section title="Participant Card">
         <SubSection title="Voice Room Participant List">
           <p className="text-sm text-muted-foreground mb-3">
-            Shows avatar, name, volume slider, moderator controls (for non-owner remote participants), and status indicators.
+            Shows avatar, name, moderator controls (for non-owner remote participants), and status indicators.
             Lock buttons toggle between ghost/destructive variants. Used in voice room sidebar.
           </p>
           <ParticipantCardDemo />

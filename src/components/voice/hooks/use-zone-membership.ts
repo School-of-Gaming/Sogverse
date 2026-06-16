@@ -1,0 +1,131 @@
+import { useCallback, useRef, useState } from "react";
+import type { DailyCall } from "@daily-co/daily-js";
+import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
+import type { AppMessage, ZoneUserData } from "./types";
+
+interface UseZoneMembershipParams {
+  callObjectRef: React.MutableRefObject<DailyCall | null>;
+  /** Live mirror of whether the local user is a moderator (token `is_owner`). */
+  isModeratorRef: React.MutableRefObject<boolean>;
+  /** Re-derive the participant list + audio routing after a local change.
+   *  (Daily's `participant-updated` also fires from `setUserData`, but calling
+   *  this makes the local UI update immediately rather than after the round-trip.) */
+  onChanged: () => void;
+}
+
+/**
+ * Normal-zone membership, synced through Daily `userData` instead of the old
+ * peer-to-peer position handshake. Each client stamps `{ zoneId, broadcasting }`
+ * onto its own participant; Daily hands that to every new joiner the instant
+ * they connect and pushes later changes via `participant-updated`. See
+ * src/components/voice/CLAUDE.md.
+ *
+ * Locked zones do NOT go through here — they are a separate Daily room gated by
+ * the token endpoint (the placement flow lives elsewhere).
+ */
+export function useZoneMembership({
+  callObjectRef,
+  isModeratorRef,
+  onChanged,
+}: UseZoneMembershipParams) {
+  const [currentZoneId, setCurrentZoneId] = useState<string>(DEFAULT_ZONE_ID);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+
+  // Refs mirror the state so `writeUserData` (called from either toggle) always
+  // serializes the current pair without stale closures.
+  const zoneIdRef = useRef<string>(DEFAULT_ZONE_ID);
+  const broadcastingRef = useRef(false);
+
+  /** Daily's `setUserData` replaces (not merges) userData, so always write the
+   *  full pair. */
+  const writeUserData = useCallback(() => {
+    const co = callObjectRef.current;
+    if (!co) return;
+    const data: ZoneUserData = {
+      zoneId: zoneIdRef.current,
+      broadcasting: broadcastingRef.current,
+    };
+    co.setUserData(data);
+  }, [callObjectRef]);
+
+  const setLocalZone = useCallback(
+    (zoneId: string) => {
+      zoneIdRef.current = zoneId;
+      setCurrentZoneId(zoneId);
+      writeUserData();
+      onChanged();
+    },
+    [writeUserData, onChanged],
+  );
+
+  /** Move self into a (non-locked) zone — tap or drag own avatar. */
+  const moveSelfToZone = useCallback(
+    (zoneId: string) => {
+      if (!callObjectRef.current) return;
+      setLocalZone(zoneId);
+    },
+    [callObjectRef, setLocalZone],
+  );
+
+  /** Moderator moves another participant. A client can't set another's
+   *  userData, so we ask the target to move itself (it verifies we're an owner). */
+  const moveParticipantToZone = useCallback(
+    (targetSessionId: string, zoneId: string) => {
+      const co = callObjectRef.current;
+      if (!co || !isModeratorRef.current) return;
+      const msg: AppMessage = { type: "moveUser", targetSessionId, zoneId };
+      co.sendAppMessage(msg, targetSessionId);
+    },
+    [callObjectRef, isModeratorRef],
+  );
+
+  const toggleBroadcast = useCallback(() => {
+    if (!callObjectRef.current || !isModeratorRef.current) return;
+    broadcastingRef.current = !broadcastingRef.current;
+    setIsBroadcasting(broadcastingRef.current);
+    writeUserData();
+    onChanged();
+  }, [callObjectRef, isModeratorRef, writeUserData, onChanged]);
+
+  /** Set the initial lobby userData on join so peers see us in the lobby. */
+  const onJoined = useCallback(() => {
+    zoneIdRef.current = DEFAULT_ZONE_ID;
+    broadcastingRef.current = false;
+    setCurrentZoneId(DEFAULT_ZONE_ID);
+    setIsBroadcasting(false);
+    writeUserData();
+  }, [writeUserData]);
+
+  /** Handle the moderator `moveUser` app message: if it targets us and the
+   *  sender is a verified owner, move ourselves. */
+  const onAppMessage = useCallback(
+    (msg: AppMessage, fromId: string, co: DailyCall) => {
+      if (msg.type !== "moveUser") return;
+      const localSid = co.participants().local.session_id;
+      if (msg.targetSessionId !== localSid) return;
+      const sender = co.participants()[fromId];
+      if (!sender.owner) return;
+      setLocalZone(msg.zoneId);
+    },
+    [setLocalZone],
+  );
+
+  const reset = useCallback(() => {
+    zoneIdRef.current = DEFAULT_ZONE_ID;
+    broadcastingRef.current = false;
+    setCurrentZoneId(DEFAULT_ZONE_ID);
+    setIsBroadcasting(false);
+  }, []);
+
+  return {
+    currentZoneId,
+    zoneIdRef,
+    isBroadcasting,
+    moveSelfToZone,
+    moveParticipantToZone,
+    toggleBroadcast,
+    onJoined,
+    onAppMessage,
+    reset,
+  };
+}

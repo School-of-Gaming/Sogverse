@@ -47,7 +47,7 @@ interface InstantVoiceSessionProps {
  */
 export function InstantVoiceSession({ code, copyright }: InstantVoiceSessionProps) {
   return (
-    <VoiceRoomProvider>
+    <VoiceRoomProvider groupId={null}>
       <InstantVoiceSessionInner code={code} copyright={copyright} />
     </VoiceRoomProvider>
   );

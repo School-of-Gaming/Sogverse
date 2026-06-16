@@ -1694,6 +1694,13 @@
     "shareScreen": "Share screen",
     "stopScreenShare": "Stop screen share",
     "broadcast": "Broadcast",
+    "stopBroadcast": "Stop broadcasting",
+    "deafen": "Deafen",
+    "undeafen": "Undeafen",
+    "zoneLobby": "Lobby",
+    "youAreHere": "You're here",
+    "joinZone": "Join {zone}",
+    "zonesDescription": "Tap a zone to move into it. You can hear everyone in the same zone.",
     "chat": {
       "title": "Chat",
       "placeholder": "Type a message…",
