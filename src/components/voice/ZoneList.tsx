@@ -416,9 +416,12 @@ function ZoneMemberTile({
       ref={setNodeRef}
       {...listeners}
       {...attributes}
+      // No `touch-action: none` here on purpose: the TouchSensor uses a press
+      // delay, so the browser must keep handling scroll until the delay elapses.
+      // touch-action:none would block page scroll whenever a swipe starts on a tile.
       className={cn(
         "flex w-14 flex-col items-center gap-1",
-        draggable && "cursor-grab touch-none",
+        draggable && "cursor-grab",
         isDragging && "opacity-50",
       )}
     >
