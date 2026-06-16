@@ -19,7 +19,7 @@ export class VoiceService {
    */
   async getToken(
     groupId: string,
-  ): Promise<{ token: string; roomUrl: string; role: string }> {
+  ): Promise<{ token: string; roomUrl: string; role: string; sessionOpensAt: string }> {
     const response = await fetch("/api/voice/token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

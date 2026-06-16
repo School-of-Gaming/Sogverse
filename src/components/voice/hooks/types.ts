@@ -150,10 +150,20 @@ export interface VoiceRoomContextValue {
   /** zoneId → who's inside a locked zone, from the DB placement rows. Drives the
    *  blurred outsider roster (the viewer isn't in the separate locked room). */
   lockedRoster: Map<string, LockedMember[]>;
-  /** Tap or drag self into a zone. No-op for locked zones (placement is mod-only). */
+  /** Tap or drag self into a zone. For a locked zone this is a moderator-only
+   *  room switch; for a confined gamer it's a no-op (placement is mod-only). */
   moveSelfToZone: (zoneId: string) => void;
   /** Moderator-only; moves another participant into a non-locked zone. */
   moveParticipantToZone: (sessionId: string, zoneId: string) => void;
+  /** Moderator-only; place a gamer into a locked zone (their client switches
+   *  rooms via the placement realtime). */
+  placeInLockedZone: (gamerId: string, zoneId: string) => Promise<void>;
+  /** Moderator-only; remove a gamer's locked placement (returns them to main). */
+  removeFromLockedZone: (gamerId: string) => Promise<void>;
+  /** Non-null while crossing the room boundary into/out of a locked zone —
+   *  drives the "Securing your connection…" transition. `zoneId` is the locked
+   *  zone being entered, or null when returning to the main room. */
+  roomTransition: { zoneId: string | null } | null;
 
   // --- media ---
   micOn: boolean;
@@ -189,6 +199,10 @@ export interface VoiceRoomContextValue {
   sendChatMessage: (text: string) => void;
 
   // --- lifecycle ---
-  join: (roomUrl: string, token: string) => Promise<void>;
+  join: (
+    roomUrl: string,
+    token: string,
+    meta?: { sessionOpensAt?: string },
+  ) => Promise<void>;
   leave: () => Promise<void>;
 }

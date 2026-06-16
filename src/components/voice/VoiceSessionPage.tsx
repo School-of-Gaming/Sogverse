@@ -17,7 +17,7 @@ interface VoiceSessionPageProps {
 function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
   const t = useTranslations('voice');
   const c = useTranslations('common');
-  const { joined, joining, join, leave } = useVoiceRoom();
+  const { joined, joining, join, leave, roomTransition } = useVoiceRoom();
   const getToken = useVoiceToken();
   const [error, setError] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
@@ -42,7 +42,7 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
 
     getToken
       .mutateAsync(groupId)
-      .then(({ token, roomUrl }) => join(roomUrl, token))
+      .then(({ token, roomUrl, sessionOpensAt }) => join(roomUrl, token, { sessionOpensAt }))
       .then(() => setWasJoined(true))
       .catch((err) => {
         setError(err instanceof Error ? err.message : t('failedToJoinRoom'));
@@ -80,6 +80,20 @@ function VoiceSessionInner({ groupId, backHref }: VoiceSessionPageProps) {
         <CardContent className="flex items-center justify-center gap-2 py-12">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           <p className="text-sm text-muted-foreground">{t('disconnecting')}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Crossing into/out of a locked zone re-joins a different Daily room, so
+  // `joined` briefly drops. Show the privacy-reinforcing transition instead of
+  // the connecting spinner or the "session ended" card.
+  if (roomTransition) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center gap-2 py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">{t('securingConnection')}</p>
         </CardContent>
       </Card>
     );

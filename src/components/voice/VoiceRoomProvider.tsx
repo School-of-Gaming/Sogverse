@@ -13,6 +13,9 @@ import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
 import { parseUserName } from "@/lib/voice/user-name";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
+import { getClient } from "@/lib/supabase/client";
+import { VoiceService } from "@/services/voice/voice.service";
+import { VoiceZonesService } from "@/services/voice/voice-zones.service";
 import type {
   VoiceRoomContextValue,
   VoiceParticipant,
@@ -94,6 +97,18 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const localAudioStateRef = useRef<LocalAudioState>({ zoneId: DEFAULT_ZONE_ID, deafened: false });
   // Live mirror of mod status for hooks that verify it synchronously.
   const isModeratorRef = useRef(false);
+  // The local user's profile id (decoded from the Daily token), for placement
+  // rows. The current session window's open time (from the main-token
+  // response), for stamping placements. Both persist across locked-room
+  // switches within a session.
+  const localUserIdRef = useRef<string | null>(null);
+  const sessionOpensAtRef = useRef<string | null>(null);
+  // Which locked zone's separate Daily room we're currently in (null = main
+  // room). A ref for synchronous reads in moveSelfToZone + the switch guard,
+  // mirrored to state for rendering.
+  const lockedRoomZoneIdRef = useRef<string | null>(null);
+  // Re-entrancy lock so overlapping placement events can't fire two switches.
+  const switchInProgressRef = useRef(false);
 
   // --- Core call state ---
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
@@ -105,6 +120,12 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [localRole, setLocalRole] = useState<VoiceRole>("gamer");
   const [isDeafened, setIsDeafened] = useState(false);
+  // Which locked zone's room we're in (null = main), mirrored from the ref.
+  const [lockedRoomZoneId, setLockedRoomZoneId] = useState<string | null>(null);
+  // Active while crossing the room boundary — drives the "Securing your
+  // connection…" transition. `zoneId` is the locked zone being entered, or null
+  // when returning to the main room.
+  const [roomTransition, setRoomTransition] = useState<{ zoneId: string | null } | null>(null);
   const activeSpeakerIdRef = useRef<string | null>(null);
   // Synchronous gate — events like track-started fire before joined-meeting,
   // when co.participants().local doesn't exist yet. updateParticipants skips
@@ -137,6 +158,10 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
   // Live custom zones + locked placements from the DB (group rooms only).
   const { customZones, placements } = useZoneData(groupId);
+
+  // Composed zone list: virtual lobby + 4 Yty + the group's DB custom zones.
+  // Declared here (before moveSelfToZone) so the room-switch logic can read it.
+  const zones = useMemo(() => composeZones(customZones, groupId), [customZones, groupId]);
 
   // --- Participant management ---
 
@@ -250,7 +275,8 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   // --- Join / Leave ---
 
   const join = useCallback(
-    async (roomUrl: string, token: string) => {
+    async (roomUrl: string, token: string, meta?: { sessionOpensAt?: string }) => {
+      if (meta?.sessionOpensAt) sessionOpensAtRef.current = meta.sessionOpensAt;
       if (callObjectRef.current) {
         await callObjectRef.current.destroy();
       }
@@ -285,9 +311,13 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
         setCameraAllowed(true);
 
         const local = co.participants().local;
-        const role = parseUserName(local.user_name).role;
-        setLocalRole(role);
-        isModeratorRef.current = isModeratorRole(role);
+        const parsed = parseUserName(local.user_name);
+        setLocalRole(parsed.role);
+        isModeratorRef.current = isModeratorRole(parsed.role);
+        localUserIdRef.current = parsed.userId || local.session_id;
+
+        // We've arrived in the target room — clear any in-flight switch state.
+        setRoomTransition(null);
 
         // Stamp our initial lobby zone onto userData so peers place us
         // immediately, then derive the list.
@@ -373,6 +403,97 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     resetState();
   }, [resetState]);
 
+  // --- Locked-zone room switching ---
+
+  /**
+   * Cross the room boundary: re-join either the main group room or a locked
+   * zone's separate Daily room. Drives the "Securing your connection…"
+   * transition (the deliberate ~1–2s reconnect that buys true isolation). The
+   * re-entrancy lock + the caller's already-there guards keep overlapping
+   * placement events from firing two switches.
+   */
+  const switchRoom = useCallback(
+    async (target: { kind: "main" } | { kind: "locked"; zoneId: string }) => {
+      if (!groupId || switchInProgressRef.current) return;
+      switchInProgressRef.current = true;
+      const targetZoneId = target.kind === "locked" ? target.zoneId : null;
+      setRoomTransition({ zoneId: targetZoneId });
+      try {
+        const svc = new VoiceService(getClient());
+        const res =
+          target.kind === "locked"
+            ? await svc.getLockedToken(groupId, target.zoneId)
+            : await svc.getToken(groupId);
+        lockedRoomZoneIdRef.current = targetZoneId;
+        setLockedRoomZoneId(targetZoneId);
+        // join() resets state and connects to the new room; handleJoined clears
+        // the transition once we've actually arrived.
+        await join(res.roomUrl, res.token);
+      } catch {
+        setRoomTransition(null);
+      } finally {
+        switchInProgressRef.current = false;
+      }
+    },
+    [groupId, join],
+  );
+
+  /** Move self into a zone — a userData change for normal zones, a room switch
+   *  for locked ones. Gamers can't self-enter a locked zone or self-exit one
+   *  they've been placed in (that's mod-only); moderators move freely. */
+  const moveSelfToZone = useCallback(
+    (zoneId: string) => {
+      const target = zones.find((z) => z.id === zoneId);
+      if (!target) return;
+      const inLocked = lockedRoomZoneIdRef.current !== null;
+
+      // A gamer confined to a locked room can't self-move at all.
+      if (inLocked && !isModeratorRef.current) return;
+
+      if (target.isLocked) {
+        if (!isModeratorRef.current) return; // gamers are placed, never self-enter
+        if (lockedRoomZoneIdRef.current === zoneId) return; // already inside
+        void switchRoom({ kind: "locked", zoneId });
+        return;
+      }
+
+      // Normal zone. If we're currently in a locked room, return to main first,
+      // then set the destination zone via userData.
+      if (inLocked) {
+        void switchRoom({ kind: "main" }).then(() => membership.moveSelfToZone(zoneId));
+      } else {
+        membership.moveSelfToZone(zoneId);
+      }
+    },
+    [zones, switchRoom, membership],
+  );
+
+  // --- Locked placement (moderator) ---
+
+  const placeInLockedZone = useCallback(
+    async (gamerId: string, zoneId: string) => {
+      const placedBy = localUserIdRef.current;
+      const sessionOpensAt = sessionOpensAtRef.current;
+      if (!groupId || !isModeratorRef.current || !placedBy || !sessionOpensAt) return;
+      await new VoiceZonesService(getClient()).placeInLockedZone({
+        zoneId,
+        gamerId,
+        groupId,
+        placedBy,
+        sessionOpensAt,
+      });
+    },
+    [groupId],
+  );
+
+  const removeFromLockedZone = useCallback(
+    async (gamerId: string) => {
+      if (!groupId || !isModeratorRef.current) return;
+      await new VoiceZonesService(getClient()).removeFromLockedZone({ groupId, gamerId });
+    },
+    [groupId],
+  );
+
   // --- Lock-aware toggles ---
 
   const toggleMic = useCallback(() => {
@@ -431,19 +552,37 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
   const isModerator = isModeratorRole(localRole);
 
-  // Composed zone list: virtual lobby + 4 Yty + the group's DB custom zones.
-  const zones = useMemo(() => composeZones(customZones, groupId), [customZones, groupId]);
-
   const participantsByZone = useMemo(() => {
     const map = new Map<string, VoiceParticipant[]>();
     for (const z of zones) map.set(z.id, []);
     for (const p of participants) {
-      const bucket = map.get(p.zoneId);
+      // While connected to a locked room, every Daily participant *is* in that
+      // locked zone (they share the separate room) — their userData zone is
+      // moot. In the main room, bucket by their self-reported zone.
+      const zid = lockedRoomZoneId ?? p.zoneId;
+      const bucket = map.get(zid);
       if (bucket) bucket.push(p);
-      else map.set(p.zoneId, [p]);
+      else map.set(zid, [p]);
     }
     return map;
-  }, [participants, zones]);
+  }, [participants, zones, lockedRoomZoneId]);
+
+  // When inside a locked room, that zone is the current one; otherwise the
+  // userData-tracked zone within the main room.
+  const currentZoneId = lockedRoomZoneId ?? membership.currentZoneId;
+
+  // A placed gamer's client auto-confines: when its own placement row appears
+  // (realtime), switch into the locked room; when it's removed, return to main.
+  // Moderators are exempt — they move in and out freely via moveSelfToZone.
+  const localUserId = participants.find((p) => p.isLocal)?.userId ?? null;
+  useEffect(() => {
+    if (!joined || !groupId || isModerator || !localUserId) return;
+    const myPlacement = placements.find((p) => p.gamer_id === localUserId);
+    const target = myPlacement?.zone_id ?? null;
+    if (target !== lockedRoomZoneId && !switchInProgressRef.current) {
+      void switchRoom(target ? { kind: "locked", zoneId: target } : { kind: "main" });
+    }
+  }, [joined, groupId, isModerator, localUserId, placements, lockedRoomZoneId, switchRoom]);
 
   // Outsider view of locked zones: who's inside, from the DB placement rows
   // (the viewer isn't connected to the separate locked room).
@@ -471,11 +610,14 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       groupId,
       participants,
       zones,
-      currentZoneId: membership.currentZoneId,
+      currentZoneId,
       participantsByZone,
       lockedRoster,
-      moveSelfToZone: membership.moveSelfToZone,
+      moveSelfToZone,
       moveParticipantToZone: membership.moveParticipantToZone,
+      placeInLockedZone,
+      removeFromLockedZone,
+      roomTransition,
       micOn,
       cameraOn,
       cameraAllowed,
@@ -500,7 +642,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       join,
       leave,
     }),
-    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, membership.currentZoneId, participantsByZone, lockedRoster, membership.moveSelfToZone, membership.moveParticipantToZone, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
+    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, currentZoneId, participantsByZone, lockedRoster, moveSelfToZone, membership.moveParticipantToZone, placeInLockedZone, removeFromLockedZone, roomTransition, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
   );
 
   return (

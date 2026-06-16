@@ -214,7 +214,15 @@ export async function POST(request: Request) {
       expUnix,
     });
 
-    return NextResponse.json({ token, roomUrl, role });
+    // sessionOpensAt lets the client stamp locked-zone placement rows with the
+    // current window (the placement table's `session_opens_at`), which the
+    // locked-token endpoint matches against — see /api/voice/token/locked.
+    return NextResponse.json({
+      token,
+      roomUrl,
+      role,
+      sessionOpensAt: openSlot.windowOpensAt.toISOString(),
+    });
   } catch (err) {
     console.error("Voice token error:", err);
     return NextResponse.json(

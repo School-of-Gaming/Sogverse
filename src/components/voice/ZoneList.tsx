@@ -69,7 +69,10 @@ function ZoneCard({ zone, members, lockedMembers, isCurrent, label, onEnter }: Z
   const t = useTranslations("voice");
   const Icon = zone.icon;
   const tappable = !!onEnter && !isCurrent;
-  const memberCount = zone.isLocked ? lockedMembers.length : members.length;
+  // Outsiders see a locked zone's roster from the DB (blurred); an insider
+  // (the viewer is in this locked room) sees the real participants, no blur.
+  const outsiderOfLocked = zone.isLocked && !isCurrent;
+  const memberCount = outsiderOfLocked ? lockedMembers.length : members.length;
 
   return (
     <div
@@ -106,8 +109,9 @@ function ZoneCard({ zone, members, lockedMembers, isCurrent, label, onEnter }: Z
       </div>
 
       {/* Locked zone (outsider view): blurred roster from the DB placements. The
-          real privacy is the separate Daily room; the blur is the UI signal. */}
-      {zone.isLocked ? (
+          real privacy is the separate Daily room; the blur is the UI signal.
+          An insider sees the real members below instead. */}
+      {outsiderOfLocked ? (
         lockedMembers.length > 0 && (
           <div className="relative mt-3">
             <div className="flex flex-wrap gap-3">
