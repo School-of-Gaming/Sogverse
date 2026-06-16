@@ -530,11 +530,13 @@ function VoiceZonesDemo() {
     ...over,
   });
 
+  // Real random UUIDs: the identicon hashes the id, so placeholder ids like
+  // "u1" render degenerate avatars that don't represent the real UI.
   const participants: VoiceParticipant[] = [
-    member({ sessionId: "s1", userId: "u1", userName: "You", zoneId: "lobby", isLocal: true, role: "admin", isOwner: true }),
-    member({ sessionId: "s2", userId: "u2", userName: "Aino", zoneId: "lobby" }),
-    member({ sessionId: "s3", userId: "u3", userName: "Eero", zoneId: "yty-glow", isSpeaking: true }),
-    member({ sessionId: "s4", userId: "u4", userName: "Liisa", zoneId: "demo-strategy" }),
+    member({ sessionId: "s1", userId: "1fc70377-0a73-4c36-b6c3-5cad0643748c", userName: "You", zoneId: "lobby", isLocal: true, role: "admin", isOwner: true }),
+    member({ sessionId: "s2", userId: "fea034bc-7e25-4b75-976a-0e567b993279", userName: "Aino", zoneId: "lobby" }),
+    member({ sessionId: "s3", userId: "6ee45509-c687-4d8b-88a8-e933929555e8", userName: "Eero", zoneId: "yty-glow", isSpeaking: true }),
+    member({ sessionId: "s4", userId: "82d61f2c-636f-4cfb-bcd3-9f35b366229e", userName: "Liisa", zoneId: "demo-strategy" }),
   ];
 
   const participantsByZone = new Map<string, VoiceParticipant[]>();
@@ -542,7 +544,13 @@ function VoiceZonesDemo() {
   for (const p of participants) participantsByZone.get(p.zoneId)?.push(p);
 
   const lockedRoster = new Map<string, LockedMember[]>([
-    ["demo-quiet", [{ gamerId: "u5" }, { gamerId: "u6" }]],
+    [
+      "demo-quiet",
+      [
+        { gamerId: "791c29d1-e2c0-4a9f-bcc8-9d888bf72610" },
+        { gamerId: "86592793-36ad-4247-a942-f2386cd27b43" },
+      ],
+    ],
   ]);
 
   const noop = () => {};
