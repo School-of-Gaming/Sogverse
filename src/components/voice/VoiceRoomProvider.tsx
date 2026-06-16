@@ -86,6 +86,17 @@ function isModeratorRole(role: VoiceRole): boolean {
   return role === "admin" || role === "gedu";
 }
 
+/** Whether a placement belongs to the current session window. Compares as
+ *  instants — timestamptz round-trips with varying string formats, so a string
+ *  `===` would wrongly reject the same moment. Prior-session rows are inert
+ *  (the server reaps them on join; this is the client's definitive guard). */
+function isCurrentSession(placementOpensAt: string, currentOpensAt: string | null): boolean {
+  return (
+    currentOpensAt !== null &&
+    new Date(placementOpensAt).getTime() === new Date(currentOpensAt).getTime()
+  );
+}
+
 // ---------- Provider ----------
 
 interface VoiceRoomProviderProps {
@@ -623,7 +634,11 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const localUserId = participants.find((p) => p.isLocal)?.userId ?? null;
   useEffect(() => {
     if (!joined || !groupId || isModerator || !localUserId) return;
-    const myPlacement = placements.find((p) => p.gamer_id === localUserId);
+    const myPlacement = placements.find(
+      (p) =>
+        p.gamer_id === localUserId &&
+        isCurrentSession(p.session_opens_at, sessionOpensAtRef.current),
+    );
     const target = myPlacement?.zone_id ?? null;
     if (target !== lockedRoomZoneId && !switchInProgressRef.current) {
       void switchRoom(target ? { kind: "locked", zoneId: target } : { kind: "main" });
@@ -645,6 +660,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const lockedRoster = useMemo(() => {
     const map = new Map<string, LockedMember[]>();
     for (const p of placements) {
+      // Only the current session's placements are live (prior-session rows are
+      // reaped server-side on join, but guard here so they never flash).
+      if (!isCurrentSession(p.session_opens_at, sessionOpensAtRef.current)) continue;
       const bucket = map.get(p.zone_id);
       const member: LockedMember = {
         gamerId: p.gamer_id,

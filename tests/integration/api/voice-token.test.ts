@@ -157,6 +157,16 @@ function mockTables(opts: {
         }),
       };
     }
+    if (table === "voice_locked_placements") {
+      // Self-healing prune of prior-session placements on join (delete().eq().lt()).
+      return {
+        delete: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            lt: vi.fn().mockResolvedValue({ error: null }),
+          }),
+        }),
+      };
+    }
     return {};
   });
 }

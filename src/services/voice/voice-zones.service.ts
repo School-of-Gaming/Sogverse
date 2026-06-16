@@ -22,14 +22,20 @@ export class VoiceZonesService {
      *  blurred roster without the gamer's Daily token or a profiles read. */
     gamerName: string | null;
   }): Promise<void> {
-    const { error } = await this.supabase.from("voice_locked_placements").insert({
-      zone_id: input.zoneId,
-      gamer_id: input.gamerId,
-      group_id: input.groupId,
-      placed_by: input.placedBy,
-      session_opens_at: input.sessionOpensAt,
-      gamer_name: input.gamerName,
-    });
+    // Upsert on the (group_id, gamer_id) unique key so re-placing a gamer —
+    // next session, or moving them to a different locked zone this session —
+    // overwrites the existing row instead of hitting a conflict.
+    const { error } = await this.supabase.from("voice_locked_placements").upsert(
+      {
+        zone_id: input.zoneId,
+        gamer_id: input.gamerId,
+        group_id: input.groupId,
+        placed_by: input.placedBy,
+        session_opens_at: input.sessionOpensAt,
+        gamer_name: input.gamerName,
+      },
+      { onConflict: "group_id,gamer_id" },
+    );
     if (error) throw new Error(error.message);
   }
 

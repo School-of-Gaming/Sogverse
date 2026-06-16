@@ -158,6 +158,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // Self-healing cleanup of locked-zone placements: every join reaps this
+    // group's placements from *prior* session windows. A placement is only
+    // valid for its own window (the locked-token endpoint matches on
+    // session_opens_at), so older rows are dead — they'd otherwise block
+    // re-placing the same gamer (the (group_id, gamer_id) unique constraint),
+    // show as phantom roster entries, and grow unbounded. No cron: someone
+    // joins every session, and because voice_locked_placements is in the
+    // realtime publication, these DELETEs propagate to every client's roster.
+    // Best-effort — a failed prune just lingers until the next join.
+    await admin
+      .from("voice_locked_placements")
+      .delete()
+      .eq("group_id", groupId)
+      .lt("session_opens_at", openSlot.windowOpensAt.toISOString());
+
     // ---- Daily room: get-or-create ----
     // The room name is content-addressable from (group, window open time),
     // so every joiner derives the same name independently and the helper
