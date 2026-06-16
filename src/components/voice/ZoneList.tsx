@@ -341,7 +341,7 @@ function ZoneCard({
           <div className="relative mt-3">
             <div className="flex flex-wrap gap-3">
               {lockedMembers.map((m) => (
-                <LockedMemberTile key={m.gamerId} gamerId={m.gamerId} />
+                <LockedMemberTile key={m.gamerId} gamerId={m.gamerId} name={m.name} />
               ))}
             </div>
             <PrivacyScreen />
@@ -360,7 +360,7 @@ function ZoneCard({
   );
 }
 
-function LockedMemberTile({ gamerId }: { gamerId: string }) {
+function LockedMemberTile({ gamerId, name }: { gamerId: string; name?: string }) {
   return (
     <div className="flex w-14 flex-col items-center gap-1">
       <div className="rounded-md border-2 border-border">
@@ -368,6 +368,11 @@ function LockedMemberTile({ gamerId }: { gamerId: string }) {
           <Identicon id={gamerId} size={48} />
         </Avatar>
       </div>
+      {name && (
+        <span className="w-full truncate text-center text-[10px] leading-tight">
+          {name}
+        </span>
+      )}
     </div>
   );
 }

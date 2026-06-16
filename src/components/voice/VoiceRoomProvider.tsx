@@ -116,6 +116,11 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const lockedRoomZoneIdRef = useRef<string | null>(null);
   // Re-entrancy lock so overlapping placement events can't fire two switches.
   const switchInProgressRef = useRef(false);
+  // userId → display name, accumulated from everyone we've seen in the main
+  // room. Lets the blurred locked-zone roster show names for gamers who were
+  // visible before a mod placed them (the common case) — they vanish from Daily
+  // once in the separate room, so this is the only name source for outsiders.
+  const nameCacheRef = useRef<Map<string, string>>(new Map());
 
   // --- Core call state ---
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
@@ -189,6 +194,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
         const mapped = mapParticipant(p, activeSpeakerIdRef.current);
         list.push(mapped);
         zoneInfo.set(p.session_id, { zoneId: mapped.zoneId, broadcasting: mapped.isBroadcasting });
+        // Remember names so the locked-zone roster stays legible after a placed
+        // gamer leaves the main room. Never deleted on leave — only on reset.
+        if (mapped.userName) nameCacheRef.current.set(mapped.userId, mapped.userName);
       } catch (err) {
         console.error(
           `[voice] skipping participant ${p.session_id} with malformed user_name:`,
@@ -265,6 +273,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     joinedRef.current = false;
     isModeratorRef.current = false;
     zoneInfoRef.current = new Map();
+    nameCacheRef.current = new Map();
     localAudioStateRef.current = { zoneId: DEFAULT_ZONE_ID, deafened: false };
     setJoined(false);
     setParticipants([]);
@@ -634,12 +643,18 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     const map = new Map<string, LockedMember[]>();
     for (const p of placements) {
       const bucket = map.get(p.zone_id);
-      const member: LockedMember = { gamerId: p.gamer_id };
+      const member: LockedMember = {
+        gamerId: p.gamer_id,
+        name: nameCacheRef.current.get(p.gamer_id),
+      };
       if (bucket) bucket.push(member);
       else map.set(p.zone_id, [member]);
     }
     return map;
-  }, [placements]);
+    // `participants` is a dep so the memo re-runs once a just-seen gamer's name
+    // has landed in the cache (the cache itself is a ref).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- nameCacheRef is a ref; participants drives the refresh
+  }, [placements, participants]);
 
   // --- Context ---
 

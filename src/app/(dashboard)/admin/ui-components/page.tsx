@@ -547,8 +547,8 @@ function VoiceZonesDemo() {
     [
       "demo-quiet",
       [
-        { gamerId: "791c29d1-e2c0-4a9f-bcc8-9d888bf72610" },
-        { gamerId: "86592793-36ad-4247-a942-f2386cd27b43" },
+        { gamerId: "791c29d1-e2c0-4a9f-bcc8-9d888bf72610", name: "Onni" },
+        { gamerId: "86592793-36ad-4247-a942-f2386cd27b43", name: "Venla" },
       ],
     ],
   ]);

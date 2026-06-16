@@ -60,6 +60,10 @@ export interface ZoneUserData {
  */
 export interface LockedMember {
   gamerId: string;
+  /** Display name, resolved from a name the viewer's client has seen for this
+   *  gamer (they were a main-room participant before being placed). `undefined`
+   *  when never seen — the tile falls back to the identicon alone. */
+  name?: string;
 }
 
 // ---------- Moderator ----------
