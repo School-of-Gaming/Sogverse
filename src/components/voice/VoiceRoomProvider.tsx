@@ -26,7 +26,7 @@ import type {
   VoiceRole,
   ZoneUserData,
 } from "./hooks/types";
-import { useAudioPipeline, type LocalAudioState } from "./hooks/use-audio-pipeline";
+import { useAudioPipeline } from "./hooks/use-audio-pipeline";
 import { useZoneMembership } from "./hooks/use-zone-membership";
 import { useZoneData } from "./hooks/use-zone-data";
 import { useReceivePermissions } from "./hooks/use-receive-permissions";
@@ -102,8 +102,12 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const callObjectRef = useRef<DailyCall | null>(null);
   // Per-remote zone state, mirrored from Daily userData each updateParticipants.
   const zoneInfoRef = useRef<Map<string, ZoneUserData>>(new Map());
-  // The local listener's audio-routing state (zone + deafen).
-  const localAudioStateRef = useRef<LocalAudioState>({ zoneId: DEFAULT_ZONE_ID, deafened: false });
+  // The local listener's current zone — single source of truth for audio
+  // routing, written synchronously by useZoneMembership and read by the audio
+  // pipeline. Not derived from our own Daily userData echo (see use-audio-pipeline).
+  const localZoneIdRef = useRef<string>(DEFAULT_ZONE_ID);
+  // Whether the local listener is deafened (moderator-only); read by routing.
+  const deafenedRef = useRef(false);
   // Live mirror of mod status for hooks that verify it synchronously.
   const isModeratorRef = useRef(false);
   // The local user's profile id (decoded from the Daily token), for occupancy
@@ -139,11 +143,12 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
   // --- Compose hooks ---
 
-  const audio = useAudioPipeline({ callObjectRef, zoneInfoRef, localAudioStateRef });
+  const audio = useAudioPipeline({ callObjectRef, zoneInfoRef, localZoneIdRef, deafenedRef });
 
   const membership = useZoneMembership({
     callObjectRef,
     isModeratorRef,
+    localZoneIdRef,
     onChanged: audio.updateAudioRouting,
   });
 
@@ -213,11 +218,9 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     const local = pMap.local;
     setMicOn(local.tracks.audio.state === "playable");
     setCameraOn(local.tracks.video.state === "playable");
-    // Keep the local audio-routing zone in sync with our own userData.
-    localAudioStateRef.current = {
-      zoneId: parseZoneUserData(local.userData).zoneId,
-      deafened: localAudioStateRef.current.deafened,
-    };
+    // Note: the local routing zone is NOT synced from local.userData here — it's
+    // owned by useZoneMembership and updated synchronously on a move. Reading it
+    // back from Daily's echo is what made routing lag a move on mobile Safari.
 
     screenShare.detectScreenSharer(list);
     void audio.manageAudioNodes(co);
@@ -270,7 +273,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     if (!isModeratorRef.current) return;
     setIsDeafened((prev) => {
       const next = !prev;
-      localAudioStateRef.current = { ...localAudioStateRef.current, deafened: next };
+      deafenedRef.current = next;
       audio.updateAudioRouting();
       return next;
     });
@@ -283,7 +286,8 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     isModeratorRef.current = false;
     confinedZoneRef.current = null;
     zoneInfoRef.current = new Map();
-    localAudioStateRef.current = { zoneId: DEFAULT_ZONE_ID, deafened: false };
+    localZoneIdRef.current = DEFAULT_ZONE_ID;
+    deafenedRef.current = false;
     setJoined(false);
     setParticipants([]);
     setMicOn(true);
@@ -489,7 +493,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
       // Normal zone. A confined gamer can't self-move out (mod-only).
       if (!isMod && iAmOccupant) return;
-      const leavingPrivate = zones.find((z) => z.id === membership.zoneIdRef.current)?.isLocked;
+      const leavingPrivate = zones.find((z) => z.id === localZoneIdRef.current)?.isLocked;
       membership.moveSelfToZone(zoneId);
       if (isMod && myUserId && leavingPrivate) void removeFromPrivateZone(myUserId);
     },

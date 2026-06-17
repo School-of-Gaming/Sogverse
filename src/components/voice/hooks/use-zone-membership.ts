@@ -7,9 +7,14 @@ interface UseZoneMembershipParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
   /** Live mirror of whether the local user is a moderator (token `is_owner`). */
   isModeratorRef: React.MutableRefObject<boolean>;
-  /** Re-derive the participant list + audio routing after a local change.
-   *  (Daily's `participant-updated` also fires from `setUserData`, but calling
-   *  this makes the local UI update immediately rather than after the round-trip.) */
+  /** The local user's current zone — the single source of truth for audio
+   *  routing, owned by the provider and shared with the audio pipeline. This
+   *  hook is its sole writer: it updates the ref *synchronously* on a move,
+   *  before calling `onChanged`, so routing re-evaluates against the new zone
+   *  immediately instead of waiting for Daily to echo our `setUserData` back. */
+  localZoneIdRef: React.MutableRefObject<string>;
+  /** Re-route audio after a local change (move or broadcast toggle). On a move,
+   *  `localZoneIdRef` is already updated by the time this runs. */
   onChanged: () => void;
 }
 
@@ -30,14 +35,16 @@ interface UseZoneMembershipParams {
 export function useZoneMembership({
   callObjectRef,
   isModeratorRef,
+  localZoneIdRef,
   onChanged,
 }: UseZoneMembershipParams) {
   const [currentZoneId, setCurrentZoneId] = useState<string>(DEFAULT_ZONE_ID);
   const [isBroadcasting, setIsBroadcasting] = useState(false);
 
-  // Refs mirror the state so `writeUserData` (called from either toggle) always
-  // serializes the current pair without stale closures.
-  const zoneIdRef = useRef<string>(DEFAULT_ZONE_ID);
+  // `broadcastingRef` mirrors the broadcast toggle so `writeUserData` always
+  // serializes the current pair without a stale closure. The zone half lives in
+  // the provider-owned `localZoneIdRef` (shared with the audio pipeline), which
+  // this hook writes synchronously on a move.
   const broadcastingRef = useRef(false);
 
   /** Daily's `setUserData` replaces (not merges) userData, so always write the
@@ -46,20 +53,20 @@ export function useZoneMembership({
     const co = callObjectRef.current;
     if (!co) return;
     const data: ZoneUserData = {
-      zoneId: zoneIdRef.current,
+      zoneId: localZoneIdRef.current,
       broadcasting: broadcastingRef.current,
     };
     co.setUserData(data);
-  }, [callObjectRef]);
+  }, [callObjectRef, localZoneIdRef]);
 
   const setLocalZone = useCallback(
     (zoneId: string) => {
-      zoneIdRef.current = zoneId;
+      localZoneIdRef.current = zoneId;
       setCurrentZoneId(zoneId);
       writeUserData();
       onChanged();
     },
-    [writeUserData, onChanged],
+    [writeUserData, onChanged, localZoneIdRef],
   );
 
   /** Move self into a (non-locked) zone — tap or drag own avatar. */
@@ -93,12 +100,12 @@ export function useZoneMembership({
 
   /** Set the initial lobby userData on join so peers see us in the lobby. */
   const onJoined = useCallback(() => {
-    zoneIdRef.current = DEFAULT_ZONE_ID;
+    localZoneIdRef.current = DEFAULT_ZONE_ID;
     broadcastingRef.current = false;
     setCurrentZoneId(DEFAULT_ZONE_ID);
     setIsBroadcasting(false);
     writeUserData();
-  }, [writeUserData]);
+  }, [writeUserData, localZoneIdRef]);
 
   /** Handle the moderator `moveUser` app message: if it targets us and the
    *  sender is a verified owner, move ourselves. */
@@ -115,15 +122,14 @@ export function useZoneMembership({
   );
 
   const reset = useCallback(() => {
-    zoneIdRef.current = DEFAULT_ZONE_ID;
+    localZoneIdRef.current = DEFAULT_ZONE_ID;
     broadcastingRef.current = false;
     setCurrentZoneId(DEFAULT_ZONE_ID);
     setIsBroadcasting(false);
-  }, []);
+  }, [localZoneIdRef]);
 
   return {
     currentZoneId,
-    zoneIdRef,
     isBroadcasting,
     moveSelfToZone,
     moveParticipantToZone,

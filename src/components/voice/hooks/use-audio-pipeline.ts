@@ -4,18 +4,20 @@ import { computeZoneVolumes, type RemoteAudioState } from "@/lib/voice/audio-rou
 import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
 import type { AudioNodes, ZoneUserData } from "./types";
 
-/** The local listener's audio-routing state, owned by the provider. */
-export interface LocalAudioState {
-  zoneId: string;
-  deafened: boolean;
-}
-
 interface UseAudioPipelineParams {
   callObjectRef: React.MutableRefObject<DailyCall | null>;
   /** Per-remote zone state, mirrored from Daily `userData` by the provider. */
   zoneInfoRef: React.MutableRefObject<Map<string, ZoneUserData>>;
-  /** The local listener's zone + deafen state, owned by the provider. */
-  localAudioStateRef: React.MutableRefObject<LocalAudioState>;
+  /** The local listener's current zone — the single source of truth, written
+   *  synchronously by `useZoneMembership` on a move. Deliberately NOT read back
+   *  from our own Daily `userData`: our own zone is something we know locally the
+   *  instant we move, not something we wait for the SFU to echo to us (that echo
+   *  lags on mobile Safari, and routing against the stale value made us hear the
+   *  zone we just left / go silent on the one we joined). `setUserData` still
+   *  fires on a move — but only so *other* clients learn where we are. */
+  localZoneIdRef: React.MutableRefObject<string>;
+  /** Whether the local listener is deafened (moderator-only). */
+  deafenedRef: React.MutableRefObject<boolean>;
 }
 
 async function ensureAudioContextResumed(ctx: AudioContext): Promise<void> {
@@ -27,7 +29,8 @@ async function ensureAudioContextResumed(ctx: AudioContext): Promise<void> {
 export function useAudioPipeline({
   callObjectRef,
   zoneInfoRef,
-  localAudioStateRef,
+  localZoneIdRef,
+  deafenedRef,
 }: UseAudioPipelineParams) {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioNodesRef = useRef<Map<string, AudioNodes>>(new Map());
@@ -48,7 +51,8 @@ export function useAudioPipeline({
     const co = callObjectRef.current;
     if (!co) return;
 
-    const { zoneId: localZoneId, deafened } = localAudioStateRef.current;
+    const localZoneId = localZoneIdRef.current;
+    const deafened = deafenedRef.current;
 
     const remotes: RemoteAudioState[] = [];
     for (const [sessionId] of audioNodesRef.current) {
@@ -66,7 +70,7 @@ export function useAudioPipeline({
       const volume = volumes.get(sessionId);
       if (volume !== undefined) nodes.element.volume = volume;
     }
-  }, [callObjectRef, zoneInfoRef, localAudioStateRef]);
+  }, [callObjectRef, zoneInfoRef, localZoneIdRef, deafenedRef]);
 
   /** Manage audio pipeline for remote participants.
    *  <audio> elements handle WebRTC playback and all audible control (volume,
