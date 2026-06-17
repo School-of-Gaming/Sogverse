@@ -1,9 +1,10 @@
 /**
- * A locked-zone placement is valid only for its own session window — the
- * locked-token endpoint matches on `session_opens_at`, and the client roster +
- * auto-confine ignore anything that isn't the current window (so a stale row
- * from a prior session can't trap a gamer, flash a doomed room-switch, or
- * phantom-render before the server's prune-on-join reaps it).
+ * A private-zone occupancy row is valid only for its own session window — the
+ * token route bakes `canReceive` from current-window occupancy, and the client
+ * filters occupancy to the current window before it drives audio routing, the
+ * `canReceive` projection, and the gamer auto-confine. So a stale row from a
+ * prior session can't trap a gamer or wrongly block media before the server's
+ * prune-on-join reaps it.
  *
  * Compares as **instants**, not strings: a `timestamptz` round-trips through
  * PostgREST / the token response with varying formats (`+00:00` vs `Z`,

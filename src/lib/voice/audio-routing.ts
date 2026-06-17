@@ -10,8 +10,12 @@
  * speaking glow + video is unaffected: cross-zone media is still *received*,
  * just silenced, so glow and video stay visible across zones (soft isolation).
  *
- * Hard-isolated locked zones don't go through this function at all — they are a
- * separate Daily room, so non-members never receive the track.
+ * Private (locked) zones add a *receive-side* boundary on top of this: an
+ * outsider is blocked at the SFU via Daily `canReceive` (see
+ * src/lib/voice/receive-permissions.ts), so they're never sent the track and
+ * this volume decision is moot for that pair. For pairs that aren't blocked
+ * (e.g. a private-zone occupant looking out at a normal zone, which Daily still
+ * delivers), this function silences the cross-zone audio client-side as usual.
  */
 export interface ZoneVolumeInput {
   /** Is the *local* listener deafened? (moderator-only toggle) */

@@ -20,8 +20,12 @@ interface UseZoneMembershipParams {
  * they connect and pushes later changes via `participant-updated`. See
  * src/components/voice/CLAUDE.md.
  *
- * Locked zones do NOT go through here — they are a separate Daily room gated by
- * the token endpoint (the placement flow lives elsewhere).
+ * This hook only moves a participant between *normal* zones. Placing someone
+ * into a locked zone is a separate, mod-only flow: it writes a
+ * `voice_private_zone_occupants` row (the authoritative privacy boundary) rather
+ * than relying on `userData`, and privacy is enforced at the SFU via
+ * `canReceive` — not a separate room. See the provider's `placeInPrivateZone`
+ * and `use-receive-permissions.ts`.
  */
 export function useZoneMembership({
   callObjectRef,

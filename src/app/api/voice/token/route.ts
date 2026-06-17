@@ -248,9 +248,11 @@ export async function POST(request: Request) {
       expUnix,
     });
 
-    // sessionOpensAt lets the client stamp locked-zone placement rows with the
-    // current window (the placement table's `session_opens_at`), which the
-    // locked-token endpoint matches against — see /api/voice/token/locked.
+    // sessionOpensAt lets the client stamp private-zone occupancy rows with the
+    // current window (`voice_private_zone_occupants.session_opens_at`). This same
+    // route reads current-window occupancy above to bake `canReceive`, and the
+    // client filters occupancy to the current window (`isCurrentSessionPlacement`)
+    // so a stale prior-session row can't affect routing or confinement.
     return NextResponse.json({
       token,
       roomUrl,
