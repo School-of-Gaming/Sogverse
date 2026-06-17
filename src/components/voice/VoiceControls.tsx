@@ -33,18 +33,20 @@ export function VoiceControls() {
     // row (`sm:flex-row`); on narrow screens they stack into two rows — we only
     // drop to a second row when we need the space.
     //
-    // Semantic color rule (see feedback): `destructive` is reserved for the
-    // Leave button. Every control here is a toggle, so it follows one consistent
-    // scheme — engaged → `default` (primary fill = "this is live/on"), idle →
-    // `outline`. A muted mic / off camera is a state, not a destructive action,
-    // so it never uses the destructive color.
+    // Color scheme for the toggles: engaged → `default` (primary fill = "this
+    // is live/on"), idle → `outline`. One deliberate exception — a *muted* mic
+    // is `destructive` (red). It's not flagging a dangerous state but the weight
+    // of the next click: un-muting makes the user audible to everyone in the
+    // room. That's a big, easy-to-forget change, so the muted mic stays loud
+    // until it's back on. Camera-off is a quieter change and keeps the plain
+    // outline. `destructive` is otherwise the Leave button's color.
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
       {/* Group 1 — personal media controls */}
       <div className="flex items-center gap-2">
         {/* Mic toggle */}
         <div className="relative">
           <Button
-            variant={micOn ? "default" : "outline"}
+            variant={micOn ? "default" : "destructive"}
             size="icon"
             onClick={toggleMic}
             disabled={joining || (localLocks.audio && !micOn)}

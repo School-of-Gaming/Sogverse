@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { Mic, Loader2, PhoneOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { VoiceControls } from "./VoiceControls";
@@ -106,37 +105,41 @@ export function VoiceRoom({
       // dock itself, so raising the dock raises this padding in lockstep.
       style={{ paddingBottom: `calc(${DOCK_FLOAT_OFFSET} + ${DOCK_HEIGHT_ESTIMATE})` }}
     >
-      <Card>
-        <CardHeader className="pb-0">
-          <CardTitle className="flex items-center gap-2">
-            <Mic className="h-5 w-5" />
+      {/* No enclosing Card: the zone list is itself a stack of bordered cards,
+          so wrapping it in another card was card-in-card — two borders and two
+          layers of padding eating the horizontal room the avatars need. The
+          voice room is now a flush, full-bleed section under a plain heading;
+          the zone cards reclaim the outer card's padding. Chat and participants
+          below stay carded — they wrap *flat* rows, so their border earns its
+          keep and they have no nesting to flatten. */}
+      <section className="space-y-4">
+        <div className="space-y-1">
+          <h2 className="flex items-center gap-2 text-sm font-medium">
+            <Mic className="h-4 w-4" />
             {title ?? t('voiceRoom')}
-          </CardTitle>
-          <CardDescription>
-            {t('zonesDescription')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 pb-0">
-          {/* Screen share display (above the zone list when active) — animated in/out */}
-          <div
-            className={cn(
-              "grid transition-[grid-template-rows,opacity] ease-in-out",
-              screenShareVisible
-                ? "grid-rows-[1fr] opacity-100"
-                : "grid-rows-[0fr] opacity-0",
-            )}
-            style={{ transitionDuration: `${SCREEN_SHARE_ANIMATION_MS}ms` }}
-          >
-            <div className="overflow-hidden">
-              {screenShareMounted && (
-                <ScreenShareDisplay sharerSessionIdOverride={exitingSharerId} />
-              )}
-            </div>
-          </div>
+          </h2>
+          <p className="text-xs text-muted-foreground">{t('zonesDescription')}</p>
+        </div>
 
-          <ZoneList />
-        </CardContent>
-      </Card>
+        {/* Screen share display (above the zone list when active) — animated in/out */}
+        <div
+          className={cn(
+            "grid transition-[grid-template-rows,opacity] ease-in-out",
+            screenShareVisible
+              ? "grid-rows-[1fr] opacity-100"
+              : "grid-rows-[0fr] opacity-0",
+          )}
+          style={{ transitionDuration: `${SCREEN_SHARE_ANIMATION_MS}ms` }}
+        >
+          <div className="overflow-hidden">
+            {screenShareMounted && (
+              <ScreenShareDisplay sharerSessionIdOverride={exitingSharerId} />
+            )}
+          </div>
+        </div>
+
+        <ZoneList />
+      </section>
 
       {/* Ephemeral in-call chat, between the voice room and the participants */}
       <ChatPanel />
