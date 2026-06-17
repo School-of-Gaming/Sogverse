@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { cn, findOption } from "@/lib/utils";
 import {
   LOCALE_CONFIG,
@@ -186,7 +187,7 @@ export function IdentitySection({
         required
         hint={t("hints.shortDescription")}
       >
-        <textarea
+        <Textarea
           id={`p-short-description-${state.activeLocale}`}
           placeholder={t(`placeholders.description.${config.i18nKey}`)}
           value={activeDraft.shortDescription}
@@ -195,7 +196,6 @@ export function IdentitySection({
           }
           rows={3}
           required
-          className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
       </Field>
 

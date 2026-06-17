@@ -6,6 +6,7 @@ import { Loader2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useUpdateSiteNotes } from "@/services/products";
 
 // One panel that renders the read state + edit affordance for either tier
@@ -92,14 +93,13 @@ export function SiteNotesEditor({
             <Label htmlFor={`notes-${locationId}-${tier}`} className="text-xs">
               {t(`${tier}NotesFieldLabel`)}
             </Label>
-            <textarea
+            <Textarea
               id={`notes-${locationId}-${tier}`}
               rows={3}
               value={draftNotes}
               onChange={(e) => setDraftNotes(e.target.value)}
               placeholder={t(`${tier}NotesPlaceholder`)}
               disabled={update.isPending}
-              className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>
           {error && (

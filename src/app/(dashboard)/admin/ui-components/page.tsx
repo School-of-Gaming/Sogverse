@@ -26,6 +26,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Field } from "@/components/ui/field";
 import { Avatar } from "@/components/ui/avatar";
@@ -1291,6 +1292,35 @@ export default function AdminUIComponentsPage() {
               hint="Must be at least 8 characters."
             >
               <Input id="demo-field-hint" type="password" autoComplete="new-password" />
+            </Field>
+          </div>
+        </SubSection>
+
+        <SubSection title="Textarea — the multi-line control">
+          <p className="text-sm text-muted-foreground mb-4">
+            <code>&lt;Textarea&gt;</code> is the multi-line sibling of{" "}
+            <code>&lt;Input&gt;</code> — same border, padding, and the
+            load-bearing <code>text-base</code> (anything under 16px makes iOS
+            Safari auto-zoom and horizontal-scroll the page on focus). Size it
+            with <code>rows</code>; add <code>resize-y</code> for a
+            user-resizable box. Wrap it in a <code>&lt;Field&gt;</code> exactly
+            like an input.
+          </p>
+          <div className="grid gap-6 md:grid-cols-2 max-w-2xl">
+            <Field label="Short description" htmlFor="demo-textarea">
+              <Textarea id="demo-textarea" rows={3} placeholder="A sentence or two…" />
+            </Field>
+            <Field
+              label="Message"
+              htmlFor="demo-textarea-resize"
+              hint="Drag the corner to resize."
+            >
+              <Textarea
+                id="demo-textarea-resize"
+                rows={3}
+                placeholder="Longer free text…"
+                className="resize-y"
+              />
             </Field>
           </div>
         </SubSection>

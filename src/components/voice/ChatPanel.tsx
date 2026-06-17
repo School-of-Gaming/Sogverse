@@ -80,10 +80,6 @@ export function ChatPanel() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex items-center gap-2">
-          {/* text-base (16px) on mobile, not the card's text-sm (14px): iOS
-              Safari auto-zooms the page when you focus a field under 16px, and
-              that zoom widens the viewport into a page-wide horizontal scroll.
-              Stepping back down to text-sm at md keeps the desktop sizing. */}
           <Input
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -91,7 +87,6 @@ export function ChatPanel() {
             maxLength={MAX_MESSAGE_LENGTH}
             disabled={!joined}
             aria-label={t("title")}
-            className="text-base md:text-sm"
           />
           <Button
             type="submit"

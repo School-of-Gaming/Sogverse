@@ -597,7 +597,6 @@ function ZoneMemberTile({
    *  so they're never shown as muted just because we can't receive their track. */
   privacyMasked?: boolean;
 }) {
-  const t = useTranslations("voice");
   const { callObject } = useVoiceRoom();
   const glowRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);

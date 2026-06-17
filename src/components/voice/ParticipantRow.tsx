@@ -45,7 +45,6 @@ export function ParticipantRow({
   onMute,
   onLock,
 }: ParticipantRowProps) {
-  const t = useTranslations('voice');
   const showModMenu = isModView && !p.isLocal && !p.isOwner;
   // Show the Minecraft badge for gedu/gamer participants, but only when the
   // token actually carried Minecraft context (group rooms). `undefined` ==

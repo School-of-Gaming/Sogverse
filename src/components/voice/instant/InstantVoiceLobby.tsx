@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Identicon } from "@/components/ui/identicon";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/providers";
 import { cn } from "@/lib/utils";
 import { DISPLAY_NAME_MIN, DISPLAY_NAME_MAX } from "@/lib/constants";
@@ -234,7 +235,7 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
                 <label htmlFor="display-name" className="text-sm font-medium">
                   {t("nameLabel")}
                 </label>
-                <input
+                <Input
                   id="display-name"
                   type="text"
                   value={name}
@@ -243,7 +244,7 @@ export function InstantVoiceLobby({ onJoin, joining, error }: InstantVoiceLobbyP
                   required
                   autoFocus
                   placeholder={t("namePlaceholder")}
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-ring"
+                  className="shadow-sm transition-colors"
                 />
               </div>
             )}
