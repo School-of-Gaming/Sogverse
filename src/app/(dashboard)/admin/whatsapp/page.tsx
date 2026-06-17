@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, Check, CheckCheck, Loader2, MessageCircle, Send } from "lucide-react";
 import { useTranslations, useLocale } from "next-intl";
+import { formatInTimeZone } from "date-fns-tz";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, formatTime, formatDate } from "@/lib/utils";
@@ -23,11 +24,14 @@ import {
 } from "@/types";
 
 function formatChatDate(dateStr: string, todayLabel: string, yesterdayLabel: string, locale: string, timeZone: string) {
+  // Bucket by calendar day in the viewer's zone, not the host-local zone
+  // toDateString() implies — the "today"/"yesterday" boundary must match the
+  // zone the label and message times render in (CLAUDE.md date-marker rule).
   const date = new Date(dateStr);
-  const today = new Date();
-  if (date.toDateString() === today.toDateString()) return todayLabel;
-  const yesterday = new Date(Date.now() - 86_400_000);
-  if (date.toDateString() === yesterday.toDateString()) return yesterdayLabel;
+  const dayKey = formatInTimeZone(date, timeZone, "yyyy-MM-dd");
+  const now = new Date();
+  if (dayKey === formatInTimeZone(now, timeZone, "yyyy-MM-dd")) return todayLabel;
+  if (dayKey === formatInTimeZone(new Date(Date.now() - 86_400_000), timeZone, "yyyy-MM-dd")) return yesterdayLabel;
   return formatDate(date, locale, { dateStyle: "medium", timeZone });
 }
 
