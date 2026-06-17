@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
+import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVoiceRoom } from "./VoiceRoomProvider";
 import { useSpeakingGlow } from "./hooks/use-speaking-glow";
 import { ParticipantRow } from "./ParticipantRow";
@@ -19,32 +19,33 @@ export function ParticipantList() {
 
   const t = useTranslations('voice');
 
+  // No enclosing Card: each ParticipantRow is itself a bordered card, so wrapping
+  // them in another card was card-in-card (two borders, doubled padding). Flush
+  // section under a plain heading, matching the voice-room section in VoiceRoom.
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">
-          {t('participants')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        {participants.map((p) => (
-          <ParticipantRowWithGlow
-            key={p.sessionId}
-            participant={p}
-            lockState={lockStates.get(p.sessionId) ?? { audio: false, video: false }}
-            isLocalOwner={isModerator}
-            onMute={(track) => muteParticipant(p.sessionId, track)}
-            onLock={(track, locked) => lockParticipant(p.sessionId, track, locked)}
-          />
-        ))}
+    <section className="space-y-2">
+      <h2 className="flex items-center gap-2 text-sm font-medium">
+        <Users className="h-4 w-4" />
+        {t('participants')}
+      </h2>
 
-        {participants.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground">
-            {t('noParticipantsYet')}
-          </p>
-        )}
-      </CardContent>
-    </Card>
+      {participants.map((p) => (
+        <ParticipantRowWithGlow
+          key={p.sessionId}
+          participant={p}
+          lockState={lockStates.get(p.sessionId) ?? { audio: false, video: false }}
+          isLocalOwner={isModerator}
+          onMute={(track) => muteParticipant(p.sessionId, track)}
+          onLock={(track, locked) => lockParticipant(p.sessionId, track, locked)}
+        />
+      ))}
+
+      {participants.length === 0 && (
+        <p className="text-center text-sm text-muted-foreground">
+          {t('noParticipantsYet')}
+        </p>
+      )}
+    </section>
   );
 }
 

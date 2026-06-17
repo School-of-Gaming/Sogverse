@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Send } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVoiceRoom } from "./VoiceRoomProvider";
@@ -21,12 +21,24 @@ export function ChatPanel() {
   const t = useTranslations("voice.chat");
   const [draft, setDraft] = useState("");
   const logRef = useRef<HTMLDivElement>(null);
+  // Whether the log is scrolled to (or within a line of) the bottom. Updated on
+  // every user scroll; the auto-stick effect reads it so a reader who scrolled
+  // up to revisit history keeps their position as new messages arrive, and only
+  // resumes following once they scroll back to the bottom themselves.
+  const atBottomRef = useRef(true);
 
-  // Keep the newest message in view. Setting scrollTop on the log itself (vs.
+  const handleScroll = () => {
+    const el = logRef.current;
+    if (!el) return;
+    atBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+  };
+
+  // Keep the newest message in view, but only when already at the bottom — never
+  // yank a user back down mid-scroll. Setting scrollTop on the log itself (vs.
   // scrollIntoView) confines the scroll to this box and never moves the page.
   useEffect(() => {
     const el = logRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (el && atBottomRef.current) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -39,11 +51,8 @@ export function ChatPanel() {
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-sm font-medium">{t("title")}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div ref={logRef} className="h-48 overflow-y-auto pr-1">
+      <CardContent className="space-y-3 pt-6">
+        <div ref={logRef} onScroll={handleScroll} className="h-48 overflow-y-auto pr-1">
           {messages.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground">{t("empty")}</p>
           ) : (

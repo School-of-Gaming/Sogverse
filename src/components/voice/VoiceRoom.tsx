@@ -109,9 +109,9 @@ export function VoiceRoom({
           so wrapping it in another card was card-in-card — two borders and two
           layers of padding eating the horizontal room the avatars need. The
           voice room is now a flush, full-bleed section under a plain heading;
-          the zone cards reclaim the outer card's padding. Chat and participants
-          below stay carded — they wrap *flat* rows, so their border earns its
-          keep and they have no nesting to flatten. */}
+          the zone cards reclaim the outer card's padding. The participant list
+          (also bordered rows) follows the same flush-section pattern. Chat stays
+          carded — it wraps flat text, so its border earns its keep. */}
       <section className="space-y-4">
         <div className="space-y-1">
           <h2 className="flex items-center gap-2 text-sm font-medium">
