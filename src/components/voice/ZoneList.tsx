@@ -106,6 +106,12 @@ export function ZoneList() {
 
   const canManage = isModerator && groupId !== null;
 
+  // A gamer placed in a private zone is "locked in place" — only a moderator can
+  // move them out. So no zone is tappable for them and their own avatar isn't
+  // draggable (no fake affordance); both return the moment they're freed.
+  const currentZone = zones.find((z) => z.id === currentZoneId);
+  const isConfinedGamer = !isModerator && !!currentZone?.isLocked;
+
   // Users currently in a private zone (bucketed there by their occupancy row) —
   // so dragging one onto a normal zone frees them (clears occupancy) before the
   // move, instead of letting the realtime auto-confine pull them back.
@@ -170,12 +176,14 @@ export function ZoneList() {
             members={participantsByZone.get(zone.id) ?? []}
             isCurrent={zone.id === currentZoneId}
             canDragOthers={isModerator}
-            // Tap to enter, mirroring drag-to-enter. Locked zones are tappable
-            // only for moderators (they self-enter freely); a gamer can't
-            // self-enter a locked zone, so it stays non-interactive for them
-            // (moveSelfToZone would no-op anyway — don't show a fake affordance).
+            selfLocked={isConfinedGamer}
+            // Tap to enter, mirroring drag-to-enter. Not tappable when there's no
+            // valid self-move: a confined gamer can't leave their private zone
+            // (mod-only), and no one can self-enter a locked zone except a
+            // moderator. moveSelfToZone would no-op anyway — don't show a fake
+            // affordance (cursor/hover).
             onEnter={
-              zone.isLocked && !isModerator
+              isConfinedGamer || (zone.isLocked && !isModerator)
                 ? undefined
                 : () => moveSelfToZone(zone.id)
             }
@@ -256,6 +264,9 @@ interface ZoneCardProps {
   isCurrent: boolean;
   /** Whether the viewer (a moderator) may drag other participants' tiles. */
   canDragOthers: boolean;
+  /** The viewer is a gamer confined to a private zone → their own avatar isn't
+   *  draggable (they can't self-move out). */
+  selfLocked: boolean;
   label: string;
   /** undefined → not tappable (a private zone a gamer can't self-enter). */
   onEnter?: () => void;
@@ -268,6 +279,7 @@ function ZoneCard({
   members,
   isCurrent,
   canDragOthers,
+  selfLocked,
   label,
   onEnter,
   manage,
@@ -283,6 +295,11 @@ function ZoneCard({
   // but SFU-blocked → no video/audio/glow) blurred behind the PrivacyScreen; an
   // insider (the viewer is in this private zone) sees them normally, no blur.
   const outsiderOfLocked = zone.isLocked && !isCurrent;
+  // Whether the avatar being dragged could actually land here. A non-moderator
+  // can only self-move into normal zones (locked zones are placed-into by mods,
+  // never self-entered), so a private zone isn't a valid drop for them — don't
+  // light up the drop ring there. Moderators can drop anyone anywhere.
+  const canDropHere = canDragOthers || !zone.isLocked;
 
   const { setNodeRef, isOver } = useDroppable({
     id: `zone-${zone.id}`,
@@ -309,7 +326,7 @@ function ZoneCard({
         // grey of the others), with the zone's color spilling in from the edge
         // via an inset-shadow glow. Non-active: muted grey border.
         isCurrent ? cn("border-foreground", zone.color.glow) : "border-border",
-        isOver && "ring-2 ring-primary bg-accent/40",
+        isOver && canDropHere && "ring-2 ring-primary bg-accent/40",
         tappable && "cursor-pointer hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
       )}
     >
@@ -318,7 +335,12 @@ function ZoneCard({
           <Icon className={cn("h-5 w-5", zone.color.glyph)} />
         </span>
         <span className="flex-1 truncate text-sm font-medium">{label}</span>
-        {zone.isLocked && <Lock className="h-3.5 w-3.5 text-muted-foreground" />}
+        {zone.isLocked && (
+          <span className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+            <Lock className="h-2.5 w-2.5" />
+            {t("privateZone")}
+          </span>
+        )}
         {manage && (
           <div className="flex items-center gap-0.5">
             {/* stopPropagation so these don't trigger the card's tap-to-enter. */}
@@ -360,7 +382,13 @@ function ZoneCard({
           media is SFU-blocked); an insider sees them unblurred. */}
       <MemberArea count={members.length} privacy={outsiderOfLocked}>
         {members.map((p) => (
-          <ZoneMemberTile key={p.sessionId} participant={p} canDragOthers={canDragOthers} />
+          <ZoneMemberTile
+            key={p.sessionId}
+            participant={p}
+            canDragOthers={canDragOthers}
+            selfLocked={selfLocked}
+            privacyMasked={outsiderOfLocked}
+          />
         ))}
       </MemberArea>
     </div>
@@ -557,9 +585,17 @@ function MemberArea({
 function ZoneMemberTile({
   participant: p,
   canDragOthers,
+  selfLocked = false,
+  privacyMasked = false,
 }: {
   participant: VoiceParticipant;
   canDragOthers: boolean;
+  /** The viewer is a confined gamer → their own tile isn't draggable. */
+  selfLocked?: boolean;
+  /** This tile is a private-zone occupant seen by an outsider: their media is
+   *  SFU-blocked, so the "live" audio/video state isn't real. Omit the mic state
+   *  so they're never shown as muted just because we can't receive their track. */
+  privacyMasked?: boolean;
 }) {
   const t = useTranslations("voice");
   const { callObject } = useVoiceRoom();
@@ -567,13 +603,16 @@ function ZoneMemberTile({
   const videoRef = useRef<HTMLVideoElement>(null);
   useSpeakingGlow(glowRef, p.sessionId, p.audioOn);
 
-  // Everyone can drag their own tile; moderators can drag anyone's.
+  // Everyone can drag their own tile; moderators can drag anyone's. A confined
+  // gamer is the exception — they can't move themselves out, so their own tile
+  // is not draggable (`selfLocked`).
+  const selfDraggable = p.isLocal && !selfLocked;
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `member-${p.sessionId}`,
     data: { kind: "member", sessionId: p.sessionId, userId: p.userId, isLocal: p.isLocal },
-    disabled: !p.isLocal && !canDragOthers,
+    disabled: !selfDraggable && !canDragOthers,
   });
-  const draggable = p.isLocal || canDragOthers;
+  const draggable = selfDraggable || canDragOthers;
 
   // Attach the participant's camera track to the tile when their video is on —
   // video replaces the identicon in place at the same size. The element is
@@ -613,7 +652,7 @@ function ZoneMemberTile({
       <VoiceAvatar
         ref={glowRef}
         userId={p.userId}
-        audioOn={p.audioOn}
+        audioOn={privacyMasked ? undefined : p.audioOn}
         videoOn={p.videoOn}
         isLocal={p.isLocal}
       >
