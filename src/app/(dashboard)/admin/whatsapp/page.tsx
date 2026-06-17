@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn, formatTime, formatDate } from "@/lib/utils";
+import { useTimezone } from "@/providers";
 import { getClient } from "@/lib/supabase/client";
 import {
   useWhatsAppContacts,
@@ -21,21 +22,21 @@ import {
   type WhatsAppMessage,
 } from "@/types";
 
-function formatChatDate(dateStr: string, todayLabel: string, yesterdayLabel: string, locale: string) {
+function formatChatDate(dateStr: string, todayLabel: string, yesterdayLabel: string, locale: string, timeZone: string) {
   const date = new Date(dateStr);
   const today = new Date();
   if (date.toDateString() === today.toDateString()) return todayLabel;
   const yesterday = new Date(Date.now() - 86_400_000);
   if (date.toDateString() === yesterday.toDateString()) return yesterdayLabel;
-  return formatDate(date, locale);
+  return formatDate(date, locale, { dateStyle: "medium", timeZone });
 }
 
-function groupMessagesByDate(messages: WhatsAppMessage[], todayLabel: string, yesterdayLabel: string, locale: string) {
+function groupMessagesByDate(messages: WhatsAppMessage[], todayLabel: string, yesterdayLabel: string, locale: string, timeZone: string) {
   const groups: { date: string; messages: WhatsAppMessage[] }[] = [];
   let currentDate = "";
 
   for (const msg of messages) {
-    const date = formatChatDate(msg.created_at, todayLabel, yesterdayLabel, locale);
+    const date = formatChatDate(msg.created_at, todayLabel, yesterdayLabel, locale, timeZone);
     if (date !== currentDate) {
       currentDate = date;
       groups.push({ date, messages: [] });
@@ -85,6 +86,7 @@ function ContactList({
 }) {
   const t = useTranslations('admin.whatsapp');
   const locale = useLocale();
+  const timeZone = useTimezone();
   const filtered = contacts.filter((c) => {
     const q = searchQuery.toLowerCase();
     return (
@@ -127,7 +129,7 @@ function ContactList({
               </p>
             </div>
             <span className="shrink-0 text-xs text-muted-foreground">
-              {formatTime(contact.last_message_at, locale)}
+              {formatTime(contact.last_message_at, locale, timeZone)}
             </span>
           </button>
         ))}
@@ -159,6 +161,7 @@ function ChatThread({
 }) {
   const t = useTranslations('admin.whatsapp');
   const locale = useLocale();
+  const timeZone = useTimezone();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -179,7 +182,7 @@ function ChatThread({
     inputRef.current?.focus();
   }
 
-  const dateGroups = groupMessagesByDate(messages, t("today"), t("yesterday"), locale);
+  const dateGroups = groupMessagesByDate(messages, t("today"), t("yesterday"), locale, timeZone);
 
   return (
     <div className="flex h-full flex-col">
@@ -243,7 +246,7 @@ function ChatThread({
                               : "text-muted-foreground"
                       )}
                     >
-                      <span>{formatTime(msg.created_at, locale)}</span>
+                      <span>{formatTime(msg.created_at, locale, timeZone)}</span>
                       {msg.direction === WHATSAPP_DIRECTION.OUTBOUND && msg.status !== WHATSAPP_MESSAGE_STATUS.FAILED && (
                         <StatusIndicator status={msg.status} />
                       )}

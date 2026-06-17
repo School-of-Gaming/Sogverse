@@ -148,17 +148,22 @@ The send route (`src/app/api/admin/whatsapp/send/route.ts`) and webhook handler 
 
 ### Audit setState-in-effect violations from eslint-plugin-react-hooks@7
 
-Three additional files trip the new `react-hooks/set-state-in-effect` rule with the same "set state once on mount" shape (currently suppressed inline pointing here):
+A few files trip the new `react-hooks/set-state-in-effect` rule with the "set state once on mount" shape (currently suppressed inline pointing here). The clean, safe cases have been migrated; the ones below remain because each has a wrinkle that makes the rewrite non-trivial or risky.
 
-- `src/app/(dashboard)/admin/ui-components/page.tsx` — `useEffect(() => setMounted(true), [])` for the canonical post-hydration flag. `SessionsSectionDemo` has already been migrated to `useNow()` (which gives the same SSR/client clock alignment without the mount-flag dance); `GroupCardDemo` is the remaining holdout in this file and can take the same treatment.
-- `src/components/auth/reset-password-form.tsx` — parses `window.location.hash` once on mount, calls `setSessionReady(true)` if no hash present
-- `src/components/auth/setup-account-form.tsx` — same hash-parse pattern
+Already done (no action needed):
+- `src/app/(dashboard)/admin/ui-components/page.tsx` — migrated to `useNow()`; no suppression left.
+- `src/components/pin/unlock-gate.tsx` — the `?redirect=` read moved into a lazy, SSR-guarded `useState` initializer. Safe because `redirectTo` is read only in the post-unlock navigation, never in rendered markup, so the server default and the client-resolved value can't mismatch.
+
+Remaining — the risky/non-trivial tier:
+- `src/components/auth/reset-password-form.tsx` — parses `window.location.hash` once on mount, then makes an **async** `supabase.auth.setSession()` call and sets several pieces of state across its `.then()`. The synchronous no-hash → `setSessionReady(true)` path could move to an initializer, but the async session work legitimately belongs in an effect/handler. Auth-critical (recovery link) and hard to exercise locally — verify carefully before touching.
+- `src/components/auth/setup-account-form.tsx` — same async hash-parse pattern (invite link).
+- `src/components/family/FamilyProfileSelector.tsx` — reads a URL marker on mount but also calls `window.history.replaceState` (a real side effect that doesn't belong in a `useState` initializer), and `pendingAddGamerIntent` drives rendered output — so a client-only initializer would risk a hydration mismatch. The effect is the right home; satisfying the rule here needs more than a lazy initializer.
 
 The rule's preferred patterns: derive from props/`useMemo`, use `useSyncExternalStore` for SSR-safe mount detection, or move the one-shot logic into an initializer / event handler. None of these rewrites are urgent — the current code works and the rule's concern (cascading renders) is mild for one-shot mount setup — but they should be revisited when touching these files.
 
-- [ ] Replace `useEffect(() => setMounted(true), [])` with `useSyncExternalStore` or an SSR-safe equivalent in `ui-components/page.tsx`
-- [ ] Move `window.location.hash` parsing in the auth forms out of `useEffect` (e.g., into a `useState` initializer guarded by `typeof window`, or a top-level helper called from an event handler)
-- [ ] Once each is rewritten, drop its `eslint-disable-next-line` comment
+- [ ] Move `window.location.hash` parsing in the auth forms out of `useEffect` where it's the synchronous path (e.g., a `typeof window`-guarded `useState` initializer), keeping only the async `setSession` work in the effect.
+- [ ] Decide whether `FamilyProfileSelector`'s URL-marker read can be restructured to avoid the in-effect setState without losing the `replaceState` cleanup.
+- [ ] Once each is rewritten, drop its `eslint-disable-next-line` comment.
 
 ### Adopt `useTimezone()` + `useNow()` across the app
 
@@ -175,8 +180,10 @@ The dashboard Sessions cards (`NextSessionCard`, `UpcomingSessionCard`) are the 
 
 **Why migrate other call sites:** today every `formatDate` / `formatTime` call without an explicit `timeZone` falls back to the runtime default — usually UTC on the server vs. the user's local zone in the browser. That's a latent hydration-mismatch hazard. Components dodge it by gating the date string behind a null state (the old `NextSessionCard` countdown) or by being client-only. The new pattern lets them render correctly on the server.
 
-- [ ] Grep `src/` for `formatDate(` / `formatTime(` and migrate each call site so it passes `timeZone` (from `useTimezone()` in client components, `await getServerTimezone()` in server components).
-- [ ] For components that compute "is this live right now?" / "starts in N minutes" with a per-component `useState + setInterval`, swap to `useNow()`.
+- [ ] Grep `src/` for `formatDate(` / `formatTime(` and migrate each call site so it passes `timeZone` (from `useTimezone()` in client components, `await getServerTimezone()` in server components). **Caveat — only true timestamps take the viewer's zone.** Date-only values (DB `date` columns, `YYYY-MM-DD` constants — e.g. a club's `start_date`/`end_date`, the legal pages' `LAST_UPDATED`) must NOT be re-anchored to the viewer's zone: `new Date("2026-09-01")` is UTC midnight, so the viewer's zone shifts it off-by-one (a "Sep 1" term start reads as "Aug 31" west of UTC). These want pinning to a fixed zone instead — needs a date-only-safe `formatDate` path before they can be migrated; don't blanket-apply `useTimezone()` to them.
+  - Done: the dashboard Sessions cards + gedu cards + `SubscriptionEndingBadge` (reference impl); all `computeAge()` call sites; `admin/whatsapp/page.tsx` (message timestamps, client → viewer zone).
+  - Remaining (blocked on the date-only decision above): `product-details-page.tsx` / `product-list-page.tsx` (mix `registration_opens_at` timestamp with date-only `start_date`/`end_date`) and the legal pages (`terms-and-conditions`, `privacy`, `anti-bullying`, all date-only `LAST_UPDATED`).
+- [ ] For components that compute "is this live right now?" / "starts in N minutes" with a per-component `useState + setInterval`, swap to `useNow()`. (`countdown-clock.tsx` is the only remaining candidate and deliberately ticks at 1s for sub-second perception — `useNow()`'s 30s cadence is too coarse, so it likely stays as-is.)
 - [ ] Once the bulk of UI surfaces consume `useTimezone()`, flip `NextIntlClientProvider`'s `timeZone` prop in `src/providers/index.tsx` from `DEFAULT_TIMEZONE` to the live value so `useFormatter().dateTime()` follows the same source of truth (today it still hardcodes `Europe/Helsinki`; the comment in the file flags this).
 - [ ] Consider pages that would benefit from the server-prefetch + `initialData` pattern (`MyGamersGrid`, billing, anything else where the section currently shows a client-side React Query skeleton on load) and adopt page-by-page. Drop the per-page skeleton at the same time so the win is visible.
 - [ ] Once `formatDate` / `formatTime` migration is done, consider an ESLint rule (or `tsc` overload trick) banning calls that omit `timeZone`, so the pattern can't regress.
