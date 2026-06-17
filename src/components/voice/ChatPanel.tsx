@@ -43,24 +43,30 @@ export function ChatPanel() {
         <CardTitle className="text-sm font-medium">{t("title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div ref={logRef} className="h-48 space-y-1.5 overflow-y-auto pr-1">
+        <div ref={logRef} className="h-48 overflow-y-auto pr-1">
           {messages.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground">{t("empty")}</p>
           ) : (
-            messages.map((m) => (
-              <div key={m.id} className="flex gap-2 text-sm leading-snug">
-                <span
-                  title={m.userName}
-                  className={cn(
-                    "w-20 shrink-0 truncate font-medium",
-                    m.isLocal ? "text-primary" : "text-muted-foreground",
+            messages.map((m, i) => {
+              // Group a run of consecutive messages from the same sender under
+              // one name header (Discord/Slack style): the name shows only on
+              // the first message of each run, and the run sits tighter together
+              // (mt-0.5) with a larger gap (mt-2) starting a new sender's block.
+              const grouped = i > 0 && messages[i - 1].senderId === m.senderId;
+              return (
+                <div key={m.id} className={cn("flex flex-col", grouped ? "mt-0.5" : "mt-2 first:mt-0")}>
+                  {/* The name is the only wayfinding cue in the grouped layout
+                      (no column, not repeated within a run), so it's the
+                      strongest text on the line: primary color + bold. Every
+                      name uses the brand color — the name text itself identifies
+                      the sender, so it needn't also encode self. */}
+                  {!grouped && (
+                    <span className="text-sm font-semibold text-primary">{m.userName}</span>
                   )}
-                >
-                  {m.userName}
-                </span>
-                <span className="min-w-0 flex-1 break-words text-foreground">{m.text}</span>
-              </div>
-            ))
+                  <span className="break-words text-sm leading-snug text-foreground">{m.text}</span>
+                </div>
+              );
+            })
           )}
         </div>
 

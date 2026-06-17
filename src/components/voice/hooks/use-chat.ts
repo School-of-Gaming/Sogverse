@@ -48,6 +48,7 @@ export function useChat({ callObjectRef }: UseChatParams) {
       // Daily does not loop sendAppMessage back to the sender, so echo locally.
       append({
         id: crypto.randomUUID(),
+        senderId: local.session_id,
         userName: parseUserName(local.user_name).displayName,
         text: trimmed,
         isLocal: true,
@@ -64,6 +65,7 @@ export function useChat({ callObjectRef }: UseChatParams) {
       if (!text) return;
       append({
         id: crypto.randomUUID(),
+        senderId: fromId,
         userName: parseUserName(co.participants()[fromId].user_name).displayName,
         text,
         isLocal: false,

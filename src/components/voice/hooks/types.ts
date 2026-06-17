@@ -79,6 +79,10 @@ export interface AudioNodes {
  */
 export interface ChatMessage {
   id: string;
+  /** Daily session id of the sender. Stable per participant for the session, so
+   *  the chat log groups a run of consecutive messages from one person under a
+   *  single name header (unlike `userName`, which two people could share). */
+  senderId: string;
   userName: string;
   text: string;
   isLocal: boolean;
