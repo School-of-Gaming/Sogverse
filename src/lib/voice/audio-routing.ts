@@ -46,3 +46,41 @@ export function zoneVolume({
   if (remoteZoneId === localZoneId) return base;
   return 0;
 }
+
+/** One remote participant's audio-routing inputs (their session + zone state). */
+export interface RemoteAudioState {
+  sessionId: string;
+  zoneId: string;
+  broadcasting: boolean;
+  /** Per-participant volume multiplier (the old slider's `base`); see above. */
+  base: number;
+}
+
+/**
+ * The full routing decision as a pure projection: every remote's target
+ * `<audio>.element.volume` from the current zone map + local listener state.
+ * The provider applies this on *every* participant update, so a remote changing
+ * zones (a `userData` change with no track change) re-routes the listener — the
+ * gap that previously let cross-zone audio leak. Exhaustively unit-testable
+ * because it's just data in → `Map` out, no Daily/DOM.
+ */
+export function computeZoneVolumes(
+  remotes: RemoteAudioState[],
+  localZoneId: string,
+  localIsDeafened: boolean,
+): Map<string, number> {
+  const volumes = new Map<string, number>();
+  for (const r of remotes) {
+    volumes.set(
+      r.sessionId,
+      zoneVolume({
+        localIsDeafened,
+        remoteIsBroadcasting: r.broadcasting,
+        localZoneId,
+        remoteZoneId: r.zoneId,
+        base: r.base,
+      }),
+    );
+  }
+  return volumes;
+}

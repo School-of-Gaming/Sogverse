@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { DailyCall } from "@daily-co/daily-js";
-import { zoneVolume } from "@/lib/voice/audio-routing";
+import { computeZoneVolumes, type RemoteAudioState } from "@/lib/voice/audio-routing";
 import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
 import type { AudioNodes, ZoneUserData } from "./types";
 
@@ -50,15 +50,21 @@ export function useAudioPipeline({
 
     const { zoneId: localZoneId, deafened } = localAudioStateRef.current;
 
-    for (const [sessionId, nodes] of audioNodesRef.current) {
+    const remotes: RemoteAudioState[] = [];
+    for (const [sessionId] of audioNodesRef.current) {
       const info = zoneInfoRef.current.get(sessionId);
-      nodes.element.volume = zoneVolume({
-        localIsDeafened: deafened,
-        remoteIsBroadcasting: info?.broadcasting ?? false,
-        localZoneId,
-        remoteZoneId: info?.zoneId ?? DEFAULT_ZONE_ID,
+      remotes.push({
+        sessionId,
+        zoneId: info?.zoneId ?? DEFAULT_ZONE_ID,
+        broadcasting: info?.broadcasting ?? false,
         base: volumeMultipliersRef.current.get(sessionId) ?? 1.0,
       });
+    }
+
+    const volumes = computeZoneVolumes(remotes, localZoneId, deafened);
+    for (const [sessionId, nodes] of audioNodesRef.current) {
+      const volume = volumes.get(sessionId);
+      if (volume !== undefined) nodes.element.volume = volume;
     }
   }, [callObjectRef, zoneInfoRef, localAudioStateRef]);
 

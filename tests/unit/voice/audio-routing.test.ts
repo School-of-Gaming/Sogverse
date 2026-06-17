@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { zoneVolume } from "@/lib/voice/audio-routing";
+import {
+  zoneVolume,
+  computeZoneVolumes,
+  type RemoteAudioState,
+} from "@/lib/voice/audio-routing";
 
 /**
  * The discrete-zone routing decision (see src/components/voice/CLAUDE.md):
@@ -82,5 +86,54 @@ describe("zoneVolume", () => {
         base: 0.8,
       }),
     ).toBe(0);
+  });
+});
+
+/**
+ * The full routing projection the provider applies on *every* participant
+ * update. The regression it guards: a remote peer changing zones (a `userData`
+ * change with no track change) must re-silence them for an observer in another
+ * zone. The old code only re-routed on track changes, so the observer kept
+ * hearing a peer who had walked into a different zone.
+ */
+describe("computeZoneVolumes", () => {
+  const lobby = "lobby";
+  const yty = "yty-glow";
+  const remotes: RemoteAudioState[] = [
+    { sessionId: "same", zoneId: lobby, broadcasting: false, base: 1 },
+    { sessionId: "other", zoneId: yty, broadcasting: false, base: 1 },
+    { sessionId: "caster", zoneId: yty, broadcasting: true, base: 1 },
+  ];
+
+  it("silences peers in other zones, keeps same-zone peers and broadcasters", () => {
+    const volumes = computeZoneVolumes(remotes, lobby, false);
+    expect(volumes.get("same")).toBe(1); // co-located → audible
+    expect(volumes.get("other")).toBe(0); // different zone → silenced
+    expect(volumes.get("caster")).toBe(1); // broadcaster → heard anywhere
+  });
+
+  it("re-silences a peer the moment they move to another zone (the leak)", () => {
+    // Both in the lobby → audible.
+    const together: RemoteAudioState[] = [
+      { sessionId: "peer", zoneId: lobby, broadcasting: false, base: 1 },
+    ];
+    expect(computeZoneVolumes(together, lobby, false).get("peer")).toBe(1);
+
+    // Same peer, same tracks, now reports a different zone via userData →
+    // re-projecting must drop them to 0 even though nothing about their audio
+    // track changed.
+    const movedAway: RemoteAudioState[] = [
+      { sessionId: "peer", zoneId: yty, broadcasting: false, base: 1 },
+    ];
+    expect(computeZoneVolumes(movedAway, lobby, false).get("peer")).toBe(0);
+  });
+
+  it("deafen silences every remote regardless of zone", () => {
+    const volumes = computeZoneVolumes(remotes, lobby, true);
+    expect([...volumes.values()]).toEqual([0, 0, 0]);
+  });
+
+  it("returns an empty map when there are no remotes", () => {
+    expect(computeZoneVolumes([], lobby, false).size).toBe(0);
   });
 });

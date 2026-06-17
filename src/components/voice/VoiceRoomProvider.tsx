@@ -13,6 +13,7 @@ import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
 import { parseUserName } from "@/lib/voice/user-name";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { isCurrentSessionPlacement } from "@/lib/voice/locked-session";
+import { nextConfinement } from "@/lib/voice/confinement";
 import type { PrivateOccupant } from "@/lib/voice/receive-permissions";
 import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
 import { getClient } from "@/lib/supabase/client";
@@ -113,6 +114,12 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   // Synchronous mirror of the current-session private-zone occupancy, so
   // moveSelfToZone can read "am I a confined gamer" without a stale closure.
   const occupantsRef = useRef<PrivateOccupant[]>([]);
+  // The private zone this client has already auto-confined *into*. Makes the
+  // pull-in one-shot per zone: once we've reached our occupancy zone we stop
+  // re-confining, so a moderator moving us back out (moveUser) isn't fought by a
+  // still-present occupancy row racing its own deletion. Reset when the row
+  // clears. (gamer clients only — moderators move freely.)
+  const confinedZoneRef = useRef<string | null>(null);
 
   // --- Core call state ---
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
@@ -215,8 +222,14 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     screenShare.detectScreenSharer(list);
     void audio.manageAudioNodes(co);
     audio.manageLocalAnalyser(co);
+    // Re-route audio against the zone map we just rebuilt. `manageAudioNodes`
+    // only re-routes when a *track* changes, but a remote peer changing zones
+    // fires `participant-updated` with no track change — so without this, an
+    // observer keeps hearing a peer who walked into another zone (the mover
+    // re-routes locally via membership.onChanged, but the observer wouldn't).
+    audio.updateAudioRouting();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- individual methods are stable useCallback refs; adding the parent objects would re-create this callback on every render
-  }, [screenShare.detectScreenSharer, audio.manageAudioNodes, audio.manageLocalAnalyser]);
+  }, [screenShare.detectScreenSharer, audio.manageAudioNodes, audio.manageLocalAnalyser, audio.updateAudioRouting]);
 
   // --- App message dispatch ---
 
@@ -268,6 +281,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const resetState = useCallback(() => {
     joinedRef.current = false;
     isModeratorRef.current = false;
+    confinedZoneRef.current = null;
     zoneInfoRef.current = new Map();
     localAudioStateRef.current = { zoneId: DEFAULT_ZONE_ID, deafened: false };
     setJoined(false);
@@ -615,19 +629,29 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   // row appears (realtime), released to the lobby when it's gone. Privacy itself
   // is enforced by `canReceive` (owner-set) regardless — this just keeps the
   // gamer's rendered/audio zone honest. Moderator-exempt (they move freely via
-  // moveSelfToZone). Discriminating on "currently standing in a private zone"
-  // (not "occupancy just disappeared") avoids racing a mod's free-then-move,
-  // whose `moveUser` already lands the gamer in a normal zone.
+  // moveSelfToZone).
+  //
+  // The pull-in is one-shot *per zone* (`confinedZoneRef`): we move into our
+  // occupancy zone once, then stop. This is what lets a moderator move a confined
+  // gamer back out. A "free-then-move" is two racing ops — delete the occupancy
+  // row (Supabase realtime) + `moveUser` to a normal zone (Daily) — and the
+  // moveUser usually lands first. Without the one-shot guard, the still-present
+  // row would yank the gamer back into the private zone, and then its deletion
+  // would drop them to the lobby (the bug). A move *between* private zones still
+  // works: the new zone differs from `confinedZoneRef`, so the pull-in re-fires.
   useEffect(() => {
     if (!joined || !groupId || isModerator || !localUserId) return;
     const myZone =
       privateOccupants.find((o) => o.userId === localUserId)?.zoneId ?? null;
-    const standingInPrivate = zones.find((z) => z.id === membership.currentZoneId)?.isLocked;
-    if (myZone) {
-      if (membership.currentZoneId !== myZone) membership.moveSelfToZone(myZone);
-    } else if (standingInPrivate) {
-      membership.moveSelfToZone(DEFAULT_ZONE_ID);
-    }
+    const { action, confinedZone } = nextConfinement({
+      myZone,
+      currentZoneId: membership.currentZoneId,
+      confinedZone: confinedZoneRef.current,
+      currentZoneIsLocked: !!zones.find((z) => z.id === membership.currentZoneId)?.isLocked,
+    });
+    confinedZoneRef.current = confinedZone;
+    if (action === "confine" && myZone) membership.moveSelfToZone(myZone);
+    else if (action === "releaseToLobby") membership.moveSelfToZone(DEFAULT_ZONE_ID);
   }, [joined, groupId, isModerator, localUserId, privateOccupants, zones, membership]);
 
   // If the zone we're standing in gets deleted out from under us, fall back to
