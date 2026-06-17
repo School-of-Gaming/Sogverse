@@ -23,7 +23,7 @@ import { PrivacyScreen } from "./PrivacyScreen";
 import { VoiceAvatar } from "./VoiceAvatar";
 import { ZoneDialog } from "./ZoneDialog";
 import type { VoiceZoneView } from "@/lib/voice/zone-composition";
-import type { VoiceParticipant, LockedMember } from "./hooks/types";
+import type { VoiceParticipant } from "./hooks/types";
 import type { VoiceZone } from "@/types";
 
 // ---------------------------------------------------------------------------
@@ -64,8 +64,9 @@ function readZoneDrop(value: unknown): ZoneDrop | null {
  * Mobile-first vertical stack of zone cards — the pure-consumer UI for the
  * discrete-zone model (see CLAUDE.md). Tap a zone to move into it, or drag your
  * own avatar onto it; moderators can drag any avatar (onto a normal zone =
- * move, onto a locked zone = place). Locked zones the viewer is outside of show
- * a blurred DB roster behind a privacy screen.
+ * move, onto a locked zone = place). A private (locked) zone the viewer is
+ * outside of renders its occupants — live Daily participants, just with no
+ * media (SFU-blocked) — behind a privacy screen.
  */
 export function ZoneList() {
   const {
@@ -73,12 +74,11 @@ export function ZoneList() {
     customZones,
     participants,
     participantsByZone,
-    lockedRoster,
     currentZoneId,
     moveSelfToZone,
     moveParticipantToZone,
-    placeInLockedZone,
-    removeFromLockedZone,
+    placeInPrivateZone,
+    removeFromPrivateZone,
     isModerator,
     groupId,
     deleteZone,
@@ -106,12 +106,13 @@ export function ZoneList() {
 
   const canManage = isModerator && groupId !== null;
 
-  // Gamers currently confined to a locked zone — so dragging one onto a normal
-  // zone frees them (delete placement) before the move, instead of letting the
-  // realtime auto-confine yank them back.
-  const placedGamerIds = new Set<string>();
-  for (const members of lockedRoster.values()) {
-    for (const m of members) placedGamerIds.add(m.gamerId);
+  // Users currently in a private zone (bucketed there by their occupancy row) —
+  // so dragging one onto a normal zone frees them (clears occupancy) before the
+  // move, instead of letting the realtime auto-confine pull them back.
+  const placedUserIds = new Set<string>();
+  for (const zone of zones) {
+    if (!zone.isLocked) continue;
+    for (const m of participantsByZone.get(zone.id) ?? []) placedUserIds.add(m.userId);
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -132,9 +133,9 @@ export function ZoneList() {
 
     // Moderator moving another participant (the tile is only draggable for them).
     if (drop.isLocked) {
-      void placeInLockedZone(drag.userId, drop.zoneId);
+      void placeInPrivateZone(drag.userId, drop.zoneId);
     } else {
-      if (placedGamerIds.has(drag.userId)) void removeFromLockedZone(drag.userId);
+      if (placedUserIds.has(drag.userId)) void removeFromPrivateZone(drag.userId);
       moveParticipantToZone(drag.sessionId, drop.zoneId);
     }
   };
@@ -167,7 +168,6 @@ export function ZoneList() {
             key={zone.id}
             zone={zone}
             members={participantsByZone.get(zone.id) ?? []}
-            lockedMembers={lockedRoster.get(zone.id) ?? []}
             isCurrent={zone.id === currentZoneId}
             canDragOthers={isModerator}
             // Tap to enter, mirroring drag-to-enter. Locked zones are tappable
@@ -253,13 +253,11 @@ export function ZoneList() {
 interface ZoneCardProps {
   zone: VoiceZoneView;
   members: VoiceParticipant[];
-  /** Outsider roster for a locked zone (from the DB), rendered blurred. */
-  lockedMembers: LockedMember[];
   isCurrent: boolean;
   /** Whether the viewer (a moderator) may drag other participants' tiles. */
   canDragOthers: boolean;
   label: string;
-  /** undefined → not tappable (locked zone). */
+  /** undefined → not tappable (a private zone a gamer can't self-enter). */
   onEnter?: () => void;
   /** Moderator edit/delete controls (custom zones only); undefined → hidden. */
   manage?: { onEdit: () => void; onDelete: () => void };
@@ -268,7 +266,6 @@ interface ZoneCardProps {
 function ZoneCard({
   zone,
   members,
-  lockedMembers,
   isCurrent,
   canDragOthers,
   label,
@@ -282,8 +279,9 @@ function ZoneCard({
   // alone. Fall back to a generic word only for the accessible (aria) label;
   // the visible label area simply stays empty.
   const accessibleLabel = label || t("unnamedZone");
-  // Outsiders see a locked zone's roster from the DB (blurred); an insider
-  // (the viewer is in this locked room) sees the real participants, no blur.
+  // An outsider to a private zone sees its occupants (live Daily participants,
+  // but SFU-blocked → no video/audio/glow) blurred behind the PrivacyScreen; an
+  // insider (the viewer is in this private zone) sees them normally, no blur.
   const outsiderOfLocked = zone.isLocked && !isCurrent;
 
   const { setNodeRef, isOver } = useDroppable({
@@ -356,22 +354,15 @@ function ZoneCard({
 
       {/* Member roster. Always rendered at a fixed reserved height (even empty)
           so a card's height never changes as people move between zones — that
-          constant height is the whole point of MemberArea. Locked zones an
-          outsider can't enter show a blurred DB roster behind the PrivacyScreen
-          instead of live members; an insider sees the real members. */}
-      {outsiderOfLocked ? (
-        <MemberArea count={lockedMembers.length} privacy>
-          {lockedMembers.map((m) => (
-            <LockedMemberTile key={m.gamerId} gamerId={m.gamerId} name={m.name} />
-          ))}
-        </MemberArea>
-      ) : (
-        <MemberArea count={members.length}>
-          {members.map((p) => (
-            <ZoneMemberTile key={p.sessionId} participant={p} canDragOthers={canDragOthers} />
-          ))}
-        </MemberArea>
-      )}
+          constant height is the whole point of MemberArea. A private zone an
+          outsider can't enter renders its occupants blurred behind the
+          PrivacyScreen (the occupants are real Daily participants — only their
+          media is SFU-blocked); an insider sees them unblurred. */}
+      <MemberArea count={members.length} privacy={outsiderOfLocked}>
+        {members.map((p) => (
+          <ZoneMemberTile key={p.sessionId} participant={p} canDragOthers={canDragOthers} />
+        ))}
+      </MemberArea>
     </div>
   );
 }
@@ -559,19 +550,6 @@ function MemberArea({
       )}
 
       {privacy && count > 0 && <PrivacyScreen />}
-    </div>
-  );
-}
-
-function LockedMemberTile({ gamerId, name }: { gamerId: string; name?: string }) {
-  return (
-    <div className="flex w-12 shrink-0 flex-col items-center gap-1">
-      <VoiceAvatar userId={gamerId} />
-      {name && (
-        <span className="w-full truncate text-center text-[10px] leading-tight">
-          {name}
-        </span>
-      )}
     </div>
   );
 }

@@ -33,28 +33,4 @@ export class VoiceService {
 
     return response.json();
   }
-
-  /**
-   * Mint a token for a locked zone's separate Daily room. The endpoint enforces
-   * the placement gate (a gamer needs a `voice_locked_placements` row for this
-   * zone + session window; moderators pass through), so a refusal here means
-   * the caller isn't authorized for that room.
-   */
-  async getLockedToken(
-    groupId: string,
-    zoneId: string,
-  ): Promise<{ token: string; roomUrl: string; role: string }> {
-    const response = await fetch("/api/voice/token/locked", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ groupId, zoneId }),
-    });
-
-    if (!response.ok) {
-      const data = await response.json();
-      throw new Error(data.error || "Failed to get locked token");
-    }
-
-    return response.json();
-  }
 }

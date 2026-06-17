@@ -11,6 +11,7 @@ import {
 } from "@/lib/daily";
 import { computeSessionWindow } from "@/lib/session-schedule";
 import { VOICE_CONFIG } from "@/lib/constants/voice";
+import { tokenCanReceiveFor } from "@/lib/voice/receive-permissions";
 
 /**
  * Mint a Daily.co meeting token for a product group's voice room.
@@ -158,20 +159,36 @@ export async function POST(request: Request) {
       );
     }
 
-    // Self-healing cleanup of locked-zone placements: every join reaps this
-    // group's placements from *prior* session windows. A placement is only
-    // valid for its own window (the locked-token endpoint matches on
-    // session_opens_at), so older rows are dead — they'd otherwise block
-    // re-placing the same gamer (the (group_id, gamer_id) unique constraint),
-    // show as phantom roster entries, and grow unbounded. No cron: someone
-    // joins every session, and because voice_locked_placements is in the
-    // realtime publication, these DELETEs propagate to every client's roster.
-    // Best-effort — a failed prune just lingers until the next join.
+    // Self-healing cleanup of private-zone occupancy: every join reaps this
+    // group's occupancy rows from *prior* session windows. A row is only valid
+    // for its own window (privacy is scoped to session_opens_at), so older rows
+    // are dead — they'd otherwise block re-occupying via the (group_id, user_id)
+    // unique constraint, over-block a returning user's joiners, and grow
+    // unbounded. This is also what cleans up a user who never left (closed their
+    // laptop mid-session): their row lingers only until the window rolls, then
+    // the next join reaps it. No cron: someone joins every session, and because
+    // the table is in the realtime publication these DELETEs propagate to every
+    // client's projection. Best-effort — a failed prune just lingers.
     await admin
-      .from("voice_locked_placements")
+      .from("voice_private_zone_occupants")
       .delete()
       .eq("group_id", groupId)
       .lt("session_opens_at", openSlot.windowOpensAt.toISOString());
+
+    // Bake the private-zone privacy boundary into this joiner's token: read the
+    // current window's occupancy and compute the `canReceive` block set, so the
+    // SFU refuses to forward a private member's media to this joiner *before*
+    // they ever connect (no leak window on join). Owners re-apply the same
+    // projection live for changes mid-session — see the provider.
+    const { data: occupantRows } = await admin
+      .from("voice_private_zone_occupants")
+      .select("user_id, zone_id")
+      .eq("group_id", groupId)
+      .eq("session_opens_at", openSlot.windowOpensAt.toISOString());
+    const canReceive = tokenCanReceiveFor(
+      user.id,
+      (occupantRows ?? []).map((r) => ({ userId: r.user_id, zoneId: r.zone_id })),
+    );
 
     // ---- Daily room: get-or-create ----
     // The room name is content-addressable from (group, window open time),
@@ -226,6 +243,8 @@ export async function POST(request: Request) {
       roomName: dailyRoomName,
       isOwner,
       userName,
+      userId: user.id,
+      canReceive,
       expUnix,
     });
 

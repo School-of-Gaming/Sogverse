@@ -1693,7 +1693,6 @@
     "zoneLobby": "Clubhouse",
     "joinZone": "Join {zone}",
     "zonesDescription": "Tap or drag yourself onto a zone to move in. You hear everyone in the same zone.",
-    "securingConnection": "Securing your connection…",
     "privateZone": "Private",
     "privateZoneHint": "This zone is private and secure.",
     "newZone": "New zone",

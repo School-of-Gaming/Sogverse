@@ -10,47 +10,51 @@ import type { AppSupabaseClient, VoiceZoneIcon, VoiceZoneColor } from "@/types";
 export class VoiceZonesService {
   constructor(private readonly supabase: AppSupabaseClient) {}
 
-  /** Place a gamer into a locked zone (moderator-only at the RLS layer). The
-   *  gamer's own client reacts to the realtime insert and switches rooms. */
-  async placeInLockedZone(input: {
+  /**
+   * Record that a user occupies a private (locked) zone this session window —
+   * the server-readable privacy boundary (RLS: moderators only). One method
+   * covers both write-paths: a mod placing a *gamer* (`userId` = the gamer,
+   * `placedBy` = the mod) and a mod recording *their own* entry (`userId` =
+   * `placedBy` = self). The token endpoint + the live `canReceive` projection
+   * read these rows; no Daily room switch happens.
+   */
+  async occupyPrivateZone(input: {
     zoneId: string;
-    gamerId: string;
+    userId: string;
     groupId: string;
     placedBy: string;
     sessionOpensAt: string;
-    /** Display-name snapshot so outsiders (incl. late joiners) can label the
-     *  blurred roster without the gamer's Daily token or a profiles read. */
-    gamerName: string | null;
   }): Promise<void> {
-    // Re-placing a gamer (next session, or moving them to a different locked
-    // zone) must overwrite their existing row, which collides with the
-    // (group_id, gamer_id) unique constraint. The table is insert/delete only
-    // (no UPDATE policy/grant — so an `upsert`'s ON CONFLICT DO UPDATE would be
-    // RLS-denied), so clear any existing placement for this gamer first, then
-    // insert. Single actor + rare action, so the non-atomic gap is immaterial.
+    // Re-occupying (a different zone, or a re-place) must overwrite the existing
+    // row, which collides with the (group_id, user_id) unique constraint. The
+    // table is insert/delete only (no UPDATE policy/grant — an upsert's ON
+    // CONFLICT DO UPDATE would be RLS-denied), so clear any existing row for
+    // this user first, then insert. Single actor + rare action, so the
+    // non-atomic gap is immaterial.
     await this.supabase
-      .from("voice_locked_placements")
+      .from("voice_private_zone_occupants")
       .delete()
       .eq("group_id", input.groupId)
-      .eq("gamer_id", input.gamerId);
-    const { error } = await this.supabase.from("voice_locked_placements").insert({
+      .eq("user_id", input.userId);
+    const { error } = await this.supabase.from("voice_private_zone_occupants").insert({
       zone_id: input.zoneId,
-      gamer_id: input.gamerId,
+      user_id: input.userId,
       group_id: input.groupId,
       placed_by: input.placedBy,
       session_opens_at: input.sessionOpensAt,
-      gamer_name: input.gamerName,
     });
     if (error) throw new Error(error.message);
   }
 
-  /** Remove a gamer's placement; their client returns to the main room. */
-  async removeFromLockedZone(input: { groupId: string; gamerId: string }): Promise<void> {
+  /** Remove a user's private-zone occupancy (a mod freeing a placed gamer, or a
+   *  mod leaving a private zone they walked into). Moderators only at the RLS
+   *  layer. */
+  async vacatePrivateZone(input: { groupId: string; userId: string }): Promise<void> {
     const { error } = await this.supabase
-      .from("voice_locked_placements")
+      .from("voice_private_zone_occupants")
       .delete()
       .eq("group_id", input.groupId)
-      .eq("gamer_id", input.gamerId);
+      .eq("user_id", input.userId);
     if (error) throw new Error(error.message);
   }
 

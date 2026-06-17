@@ -7,16 +7,18 @@ import { createTestProduct, deleteTestProducts } from "./product-helpers";
 import { getStringRecord } from "../helpers/json";
 
 /**
- * RLS coverage for voice_zones and voice_locked_placements (00103).
+ * RLS coverage for voice_zones and voice_private_zone_occupants (00103, 00108).
  *
  * The persisted half of the discrete-zone voice model. The security contract
  * (see src/components/voice/CLAUDE.md):
  *   - SELECT: any group *member* (active-participation gamer, assigned gedu,
- *     admin) can read zones + the locked roster.
+ *     admin) can read zones + private-zone occupancy.
  *   - WRITE:  only a *moderator* (assigned gedu, admin) can create/edit/delete
- *     zones or insert/delete locked placements. A gamer can NEVER write — that
- *     is what makes "only a mod moves you into a locked zone" real, independent
- *     of any client behavior.
+ *     zones or write/clear private-zone occupancy. A gamer can NEVER write —
+ *     that is what makes "only a mod confines you to a private zone" real, and
+ *     a gamer cannot free themselves either. Both write-paths of occupancy (a
+ *     mod placing a gamer, a mod recording their own entry) are "a moderator
+ *     writes a row".
  *
  * Test layout (mirrors group-rls.test.ts):
  *   - PRODUCT_X: GAMER participates (active) in group X1; GEDU assigned to X1.
@@ -27,7 +29,7 @@ const PRODUCT_X = "00000000-0000-0000-0000-0000000007c1";
 const PRODUCT_Y = "00000000-0000-0000-0000-0000000007c2";
 const ALL_PRODUCTS = [PRODUCT_X, PRODUCT_Y];
 
-describe("voice_zones + voice_locked_placements RLS", () => {
+describe("voice_zones + voice_private_zone_occupants RLS", () => {
   let admin: SupabaseClient<Database>;
   let adminAuth: SupabaseClient<Database>;
   let geduAuth: SupabaseClient<Database>;
@@ -101,9 +103,9 @@ describe("voice_zones + voice_locked_placements RLS", () => {
   });
 
   afterAll(async () => {
-    // placements → zones cascade from the group, but delete explicitly so a
+    // occupancy → zones cascade from the group, but delete explicitly so a
     // failed run doesn't leak rows that outlive the product teardown.
-    await admin.from("voice_locked_placements").delete().in("group_id", [groupX1, groupY1]);
+    await admin.from("voice_private_zone_occupants").delete().in("group_id", [groupX1, groupY1]);
     await admin.from("voice_zones").delete().in("group_id", [groupX1, groupY1]);
     await admin.from("participations").delete().in("product_id", ALL_PRODUCTS);
     await deleteTestProducts(admin, ALL_PRODUCTS);
@@ -238,85 +240,104 @@ describe("voice_zones + voice_locked_placements RLS", () => {
   });
 
   // ---------------------------------------------------------------------------
-  // voice_locked_placements — mod-only writes, member-readable roster.
+  // voice_private_zone_occupants — mod-only writes, member-readable.
   // ---------------------------------------------------------------------------
 
-  describe("voice_locked_placements", () => {
+  describe("voice_private_zone_occupants", () => {
     afterAll(async () => {
-      await admin.from("voice_locked_placements").delete().eq("group_id", groupX1);
+      await admin.from("voice_private_zone_occupants").delete().eq("group_id", groupX1);
     });
 
-    it("assigned gedu can place a gamer into a locked zone", async () => {
+    it("assigned gedu can place a gamer into a private zone", async () => {
       const { data, error } = await geduAuth
-        .from("voice_locked_placements")
+        .from("voice_private_zone_occupants")
         .insert({
           zone_id: lockedZoneX,
-          gamer_id: TEST_IDS.GAMER,
+          user_id: TEST_IDS.GAMER,
           group_id: groupX1,
           placed_by: TEST_IDS.GEDU,
           session_opens_at: new Date("2026-06-16T10:00:00Z").toISOString(),
-          gamer_name: "Test Gamer",
         })
-        .select("id, gamer_name")
+        .select("id, user_id")
         .single();
       expect(error).toBeNull();
       expect(data?.id).toBeTruthy();
-      expect(data?.gamer_name).toBe("Test Gamer");
+      expect(data?.user_id).toBe(TEST_IDS.GAMER);
     });
 
-    it("re-placing a gamer collides on the unique key, so the service deletes-then-inserts", async () => {
-      // A naive second insert for the same (group, gamer) must conflict — this
-      // is why placeInLockedZone clears the existing row first rather than
-      // upserting (the table has no UPDATE policy). Guards against a refactor
-      // back to a plain insert (which would throw on every re-placement) or to
-      // an upsert (which would be RLS-denied on the UPDATE path).
-      const dup = await geduAuth.from("voice_locked_placements").insert({
+    it("a moderator can record their own occupancy (user_id = placed_by = self)", async () => {
+      // The "mod walks into a private zone" write-path. The token bake reads
+      // this so a new joiner doesn't receive the mod's private audio either.
+      const { data, error } = await geduAuth
+        .from("voice_private_zone_occupants")
+        .insert({
+          zone_id: lockedZoneX,
+          user_id: TEST_IDS.GEDU,
+          group_id: groupX1,
+          placed_by: TEST_IDS.GEDU,
+          session_opens_at: new Date("2026-06-16T10:00:00Z").toISOString(),
+        })
+        .select("id, user_id")
+        .single();
+      expect(error).toBeNull();
+      expect(data?.user_id).toBe(TEST_IDS.GEDU);
+      await admin
+        .from("voice_private_zone_occupants")
+        .delete()
+        .eq("group_id", groupX1)
+        .eq("user_id", TEST_IDS.GEDU);
+    });
+
+    it("re-occupying collides on the unique key, so the service deletes-then-inserts", async () => {
+      // A naive second insert for the same (group, user) must conflict — this is
+      // why occupyPrivateZone clears the existing row first rather than upserting
+      // (the table has no UPDATE policy). Guards against a refactor back to a
+      // plain insert (which would throw on every re-occupy) or to an upsert
+      // (which would be RLS-denied on the UPDATE path).
+      const dup = await geduAuth.from("voice_private_zone_occupants").insert({
         zone_id: lockedZoneX,
-        gamer_id: TEST_IDS.GAMER,
+        user_id: TEST_IDS.GAMER,
         group_id: groupX1,
         placed_by: TEST_IDS.GEDU,
         session_opens_at: new Date("2026-06-16T10:00:00Z").toISOString(),
-        gamer_name: "Dup",
       });
-      expect(dup.error).not.toBeNull(); // unique (group_id, gamer_id) violation
+      expect(dup.error).not.toBeNull(); // unique (group_id, user_id) violation
 
       // delete-then-insert (what the service does) overwrites to a single row.
       await geduAuth
-        .from("voice_locked_placements")
+        .from("voice_private_zone_occupants")
         .delete()
         .eq("group_id", groupX1)
-        .eq("gamer_id", TEST_IDS.GAMER);
-      const reinsert = await geduAuth.from("voice_locked_placements").insert({
+        .eq("user_id", TEST_IDS.GAMER);
+      const reinsert = await geduAuth.from("voice_private_zone_occupants").insert({
         zone_id: lockedZoneX,
-        gamer_id: TEST_IDS.GAMER,
+        user_id: TEST_IDS.GAMER,
         group_id: groupX1,
         placed_by: TEST_IDS.GEDU,
-        session_opens_at: new Date("2026-06-16T10:00:00Z").toISOString(),
-        gamer_name: "Renamed Gamer",
+        session_opens_at: new Date("2026-06-16T11:00:00Z").toISOString(),
       });
       expect(reinsert.error).toBeNull();
 
       const { data } = await admin
-        .from("voice_locked_placements")
-        .select("gamer_name")
+        .from("voice_private_zone_occupants")
+        .select("session_opens_at")
         .eq("group_id", groupX1)
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("user_id", TEST_IDS.GAMER);
       expect(data?.length).toBe(1);
-      expect(data?.[0]?.gamer_name).toBe("Renamed Gamer");
     });
 
-    it("group member (gamer) can read the locked roster", async () => {
+    it("group member (gamer) can read the occupancy list", async () => {
       const { data } = await gamerAuth
-        .from("voice_locked_placements")
-        .select("gamer_id")
+        .from("voice_private_zone_occupants")
+        .select("user_id")
         .eq("group_id", groupX1);
-      expect((data ?? []).map((r) => r.gamer_id)).toContain(TEST_IDS.GAMER);
+      expect((data ?? []).map((r) => r.user_id)).toContain(TEST_IDS.GAMER);
     });
 
-    it("gamer cannot place themselves (or anyone) into a locked zone", async () => {
-      const { error } = await gamerAuth.from("voice_locked_placements").insert({
+    it("gamer cannot place themselves (or anyone) into a private zone", async () => {
+      const { error } = await gamerAuth.from("voice_private_zone_occupants").insert({
         zone_id: lockedZoneX,
-        gamer_id: TEST_IDS.GAMER,
+        user_id: TEST_IDS.GAMER,
         group_id: groupX1,
         placed_by: TEST_IDS.GAMER,
         session_opens_at: new Date("2026-06-16T11:00:00Z").toISOString(),
@@ -324,7 +345,7 @@ describe("voice_zones + voice_locked_placements RLS", () => {
       expect(error).not.toBeNull();
     });
 
-    it("placing into a non-locked zone is rejected", async () => {
+    it("occupying a non-locked zone is rejected", async () => {
       const { data: open } = await admin
         .from("voice_zones")
         .insert({
@@ -338,9 +359,9 @@ describe("voice_zones + voice_locked_placements RLS", () => {
         .select("id")
         .single();
 
-      const { error } = await geduAuth.from("voice_locked_placements").insert({
+      const { error } = await geduAuth.from("voice_private_zone_occupants").insert({
         zone_id: open!.id,
-        gamer_id: TEST_IDS.GAMER,
+        user_id: TEST_IDS.GAMER,
         group_id: groupX1,
         placed_by: TEST_IDS.GEDU,
         session_opens_at: new Date("2026-06-16T12:00:00Z").toISOString(),
@@ -350,15 +371,15 @@ describe("voice_zones + voice_locked_placements RLS", () => {
       if (open) await admin.from("voice_zones").delete().eq("id", open.id);
     });
 
-    it("assigned gedu can remove a placement", async () => {
+    it("assigned gedu can clear occupancy (free a placed gamer)", async () => {
       const { error } = await geduAuth
-        .from("voice_locked_placements")
+        .from("voice_private_zone_occupants")
         .delete()
         .eq("group_id", groupX1)
-        .eq("gamer_id", TEST_IDS.GAMER);
+        .eq("user_id", TEST_IDS.GAMER);
       expect(error).toBeNull();
       const { data } = await admin
-        .from("voice_locked_placements")
+        .from("voice_private_zone_occupants")
         .select("id")
         .eq("group_id", groupX1);
       expect(data ?? []).toEqual([]);

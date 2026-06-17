@@ -13,9 +13,9 @@ import type { DailyCall, DailyParticipant } from "@daily-co/daily-js";
 import { parseUserName } from "@/lib/voice/user-name";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { isCurrentSessionPlacement } from "@/lib/voice/locked-session";
+import type { PrivateOccupant } from "@/lib/voice/receive-permissions";
 import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
 import { getClient } from "@/lib/supabase/client";
-import { VoiceService } from "@/services/voice/voice.service";
 import { VoiceZonesService } from "@/services/voice/voice-zones.service";
 import type { VoiceZoneIcon, VoiceZoneColor } from "@/types";
 import type {
@@ -24,11 +24,11 @@ import type {
   AppMessage,
   VoiceRole,
   ZoneUserData,
-  LockedMember,
 } from "./hooks/types";
 import { useAudioPipeline, type LocalAudioState } from "./hooks/use-audio-pipeline";
 import { useZoneMembership } from "./hooks/use-zone-membership";
 import { useZoneData } from "./hooks/use-zone-data";
+import { useReceivePermissions } from "./hooks/use-receive-permissions";
 import { useMicDevices } from "./hooks/use-mic-devices";
 import { useScreenShare } from "./hooks/use-screen-share";
 import { useModeratorControls } from "./hooks/use-moderator-controls";
@@ -105,23 +105,14 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const localAudioStateRef = useRef<LocalAudioState>({ zoneId: DEFAULT_ZONE_ID, deafened: false });
   // Live mirror of mod status for hooks that verify it synchronously.
   const isModeratorRef = useRef(false);
-  // The local user's profile id (decoded from the Daily token), for placement
-  // rows. The current session window's open time (from the main-token
-  // response), for stamping placements. Both persist across locked-room
-  // switches within a session.
+  // The local user's profile id (decoded from the Daily token), for occupancy
+  // rows. The current session window's open time (from the token response), for
+  // stamping them. Both persist for the session.
   const localUserIdRef = useRef<string | null>(null);
   const sessionOpensAtRef = useRef<string | null>(null);
-  // Which locked zone's separate Daily room we're currently in (null = main
-  // room). A ref for synchronous reads in moveSelfToZone + the switch guard,
-  // mirrored to state for rendering.
-  const lockedRoomZoneIdRef = useRef<string | null>(null);
-  // Re-entrancy lock so overlapping placement events can't fire two switches.
-  const switchInProgressRef = useRef(false);
-  // userId → display name, accumulated from everyone we've seen in the main
-  // room. Lets the blurred locked-zone roster show names for gamers who were
-  // visible before a mod placed them (the common case) — they vanish from Daily
-  // once in the separate room, so this is the only name source for outsiders.
-  const nameCacheRef = useRef<Map<string, string>>(new Map());
+  // Synchronous mirror of the current-session private-zone occupancy, so
+  // moveSelfToZone can read "am I a confined gamer" without a stale closure.
+  const occupantsRef = useRef<PrivateOccupant[]>([]);
 
   // --- Core call state ---
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
@@ -133,12 +124,6 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
   const [cameraAllowed, setCameraAllowed] = useState(false);
   const [localRole, setLocalRole] = useState<VoiceRole>("gamer");
   const [isDeafened, setIsDeafened] = useState(false);
-  // Which locked zone's room we're in (null = main), mirrored from the ref.
-  const [lockedRoomZoneId, setLockedRoomZoneId] = useState<string | null>(null);
-  // Active while crossing the room boundary — drives the "Securing your
-  // connection…" transition. `zoneId` is the locked zone being entered, or null
-  // when returning to the main room.
-  const [roomTransition, setRoomTransition] = useState<{ zoneId: string | null } | null>(null);
   const activeSpeakerIdRef = useRef<string | null>(null);
   // Synchronous gate — events like track-started fire before joined-meeting,
   // when co.participants().local doesn't exist yet. updateParticipants skips
@@ -171,12 +156,25 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
   const micDevices = useMicDevices({ callObjectRef, joined });
 
-  // Live custom zones + locked placements from the DB (group rooms only).
-  const { customZones, placements } = useZoneData(groupId);
+  // Live custom zones + private-zone occupancy from the DB (group rooms only).
+  const { customZones, occupants } = useZoneData(groupId);
 
   // Composed zone list: virtual lobby + 4 Yty + the group's DB custom zones.
-  // Declared here (before moveSelfToZone) so the room-switch logic can read it.
   const zones = useMemo(() => composeZones(customZones, groupId), [customZones, groupId]);
+
+  // Current-session private-zone occupancy, projected to the `canReceive` shape.
+  // Prior-session rows are reaped server-side on join, but filter here too so a
+  // straggler never affects routing/permissions/rendering before the prune.
+  const privateOccupants = useMemo<PrivateOccupant[]>(
+    () =>
+      occupants
+        .filter((o) =>
+          isCurrentSessionPlacement(o.session_opens_at, sessionOpensAtRef.current),
+        )
+        .map((o) => ({ userId: o.user_id, zoneId: o.zone_id })),
+    [occupants],
+  );
+  occupantsRef.current = privateOccupants;
 
   // --- Participant management ---
 
@@ -195,9 +193,6 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
         const mapped = mapParticipant(p, activeSpeakerIdRef.current);
         list.push(mapped);
         zoneInfo.set(p.session_id, { zoneId: mapped.zoneId, broadcasting: mapped.isBroadcasting });
-        // Remember names so the locked-zone roster stays legible after a placed
-        // gamer leaves the main room. Never deleted on leave — only on reset.
-        if (mapped.userName) nameCacheRef.current.set(mapped.userId, mapped.userName);
       } catch (err) {
         console.error(
           `[voice] skipping participant ${p.session_id} with malformed user_name:`,
@@ -274,7 +269,6 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     joinedRef.current = false;
     isModeratorRef.current = false;
     zoneInfoRef.current = new Map();
-    nameCacheRef.current = new Map();
     localAudioStateRef.current = { zoneId: DEFAULT_ZONE_ID, deafened: false };
     setJoined(false);
     setParticipants([]);
@@ -334,9 +328,6 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
         setLocalRole(parsed.role);
         isModeratorRef.current = isModeratorRole(parsed.role);
         localUserIdRef.current = parsed.userId || local.session_id;
-
-        // We've arrived in the target room — clear any in-flight switch state.
-        setRoomTransition(null);
 
         // Stamp our initial lobby zone onto userData so peers place us
         // immediately, then derive the list.
@@ -422,98 +413,73 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     resetState();
   }, [resetState]);
 
-  // --- Locked-zone room switching ---
+  // --- Private-zone occupancy (moderator writes) ---
 
   /**
-   * Cross the room boundary: re-join either the main group room or a locked
-   * zone's separate Daily room. Drives the "Securing your connection…"
-   * transition (the deliberate ~1–2s reconnect that buys true isolation). The
-   * re-entrancy lock + the caller's already-there guards keep overlapping
-   * placement events from firing two switches.
+   * Record a user as occupying a private (locked) zone — the server-readable,
+   * mod-authored privacy boundary that the token bake + the `canReceive`
+   * projection read. One method, two write-paths: a mod placing a *gamer*
+   * (`userId` = the gamer) and a mod recording *their own* entry (`userId` =
+   * self). No Daily room switch — privacy is enforced by `canReceive` in the one
+   * shared room.
    */
-  const switchRoom = useCallback(
-    async (target: { kind: "main" } | { kind: "locked"; zoneId: string }) => {
-      if (!groupId || switchInProgressRef.current) return;
-      switchInProgressRef.current = true;
-      const targetZoneId = target.kind === "locked" ? target.zoneId : null;
-      setRoomTransition({ zoneId: targetZoneId });
-      try {
-        const svc = new VoiceService(getClient());
-        const res =
-          target.kind === "locked"
-            ? await svc.getLockedToken(groupId, target.zoneId)
-            : await svc.getToken(groupId);
-        lockedRoomZoneIdRef.current = targetZoneId;
-        setLockedRoomZoneId(targetZoneId);
-        // join() resets state and connects to the new room; handleJoined clears
-        // the transition once we've actually arrived.
-        await join(res.roomUrl, res.token);
-      } catch {
-        setRoomTransition(null);
-      } finally {
-        switchInProgressRef.current = false;
-      }
-    },
-    [groupId, join],
-  );
-
-  /** Move self into a zone — a userData change for normal zones, a room switch
-   *  for locked ones. Gamers can't self-enter a locked zone or self-exit one
-   *  they've been placed in (that's mod-only); moderators move freely. */
-  const moveSelfToZone = useCallback(
-    (zoneId: string) => {
-      const target = zones.find((z) => z.id === zoneId);
-      if (!target) return;
-      const inLocked = lockedRoomZoneIdRef.current !== null;
-
-      // A gamer confined to a locked room can't self-move at all.
-      if (inLocked && !isModeratorRef.current) return;
-
-      if (target.isLocked) {
-        if (!isModeratorRef.current) return; // gamers are placed, never self-enter
-        if (lockedRoomZoneIdRef.current === zoneId) return; // already inside
-        void switchRoom({ kind: "locked", zoneId });
-        return;
-      }
-
-      // Normal zone. If we're currently in a locked room, return to main first,
-      // then set the destination zone via userData.
-      if (inLocked) {
-        void switchRoom({ kind: "main" }).then(() => membership.moveSelfToZone(zoneId));
-      } else {
-        membership.moveSelfToZone(zoneId);
-      }
-    },
-    [zones, switchRoom, membership],
-  );
-
-  // --- Locked placement (moderator) ---
-
-  const placeInLockedZone = useCallback(
-    async (gamerId: string, zoneId: string) => {
+  const placeInPrivateZone = useCallback(
+    async (userId: string, zoneId: string) => {
       const placedBy = localUserIdRef.current;
       const sessionOpensAt = sessionOpensAtRef.current;
       if (!groupId || !isModeratorRef.current || !placedBy || !sessionOpensAt) return;
-      await new VoiceZonesService(getClient()).placeInLockedZone({
+      await new VoiceZonesService(getClient()).occupyPrivateZone({
         zoneId,
-        gamerId,
+        userId,
         groupId,
         placedBy,
         sessionOpensAt,
-        // We've just seen the gamer in the main room (we're placing them), so
-        // their name is in the cache — snapshot it onto the row for outsiders.
-        gamerName: nameCacheRef.current.get(gamerId) ?? null,
       });
     },
     [groupId],
   );
 
-  const removeFromLockedZone = useCallback(
-    async (gamerId: string) => {
+  /** Clear a user's private-zone occupancy (a mod freeing a placed gamer, or a
+   *  mod leaving a private zone they walked into). */
+  const removeFromPrivateZone = useCallback(
+    async (userId: string) => {
       if (!groupId || !isModeratorRef.current) return;
-      await new VoiceZonesService(getClient()).removeFromLockedZone({ groupId, gamerId });
+      await new VoiceZonesService(getClient()).vacatePrivateZone({ groupId, userId });
     },
     [groupId],
+  );
+
+  /**
+   * Move self into a zone. One Daily room now, so this is always a `userData`
+   * change (audio routing + rendering) — never a reconnect. Entering or leaving
+   * a *private* zone additionally writes/clears the mover's own occupancy row,
+   * which (re)applies the SFU `canReceive` boundary for everyone via the
+   * projection. Gamers can't self-enter a private zone, and a confined gamer
+   * can't self-leave one — both moderator-only.
+   */
+  const moveSelfToZone = useCallback(
+    (zoneId: string) => {
+      const target = zones.find((z) => z.id === zoneId);
+      if (!target) return;
+      const myUserId = localUserIdRef.current;
+      const isMod = isModeratorRef.current;
+      const iAmOccupant =
+        !!myUserId && occupantsRef.current.some((o) => o.userId === myUserId);
+
+      if (target.isLocked) {
+        if (!isMod || !myUserId) return; // gamers are placed, never self-enter
+        membership.moveSelfToZone(zoneId);
+        void placeInPrivateZone(myUserId, zoneId);
+        return;
+      }
+
+      // Normal zone. A confined gamer can't self-move out (mod-only).
+      if (!isMod && iAmOccupant) return;
+      const leavingPrivate = zones.find((z) => z.id === membership.zoneIdRef.current)?.isLocked;
+      membership.moveSelfToZone(zoneId);
+      if (isMod && myUserId && leavingPrivate) void removeFromPrivateZone(myUserId);
+    },
+    [zones, membership, placeInPrivateZone, removeFromPrivateZone],
   );
 
   // --- Custom-zone management (moderator) ---
@@ -607,76 +573,73 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
   const isModerator = isModeratorRole(localRole);
 
+  const localUserId = participants.find((p) => p.isLocal)?.userId ?? null;
+
+  // Owners enforce the private-zone `canReceive` boundary live on everyone
+  // already connected; new joiners get the same projection baked into their
+  // token server-side. Non-owners' effect is a no-op (they can't set perms).
+  useReceivePermissions({
+    callObjectRef,
+    isModeratorRef,
+    joined,
+    participants,
+    occupants: privateOccupants,
+  });
+
   const participantsByZone = useMemo(() => {
+    const occupancyByUser = new Map(privateOccupants.map((o) => [o.userId, o.zoneId]));
     const map = new Map<string, VoiceParticipant[]>();
     for (const z of zones) map.set(z.id, []);
     for (const p of participants) {
-      // While connected to a locked room, every Daily participant *is* in that
-      // locked zone (they share the separate room) — their userData zone is
-      // moot. In the main room, bucket by their self-reported zone, falling back
-      // to the lobby if that zone was deleted (its occupants move to lobby).
-      const zid = lockedRoomZoneId ?? (map.has(p.zoneId) ? p.zoneId : DEFAULT_ZONE_ID);
+      // A participant in a private zone is bucketed by their *occupancy* row —
+      // the authoritative, mod-written boundary — so a gamer can't fake their
+      // way out by editing their own userData. Otherwise bucket by self-reported
+      // userData zone, falling back to the lobby if that zone was deleted.
+      const zid =
+        occupancyByUser.get(p.userId) ?? (map.has(p.zoneId) ? p.zoneId : DEFAULT_ZONE_ID);
       const bucket = map.get(zid);
       if (bucket) bucket.push(p);
       else map.set(zid, [p]);
     }
     return map;
-  }, [participants, zones, lockedRoomZoneId]);
+  }, [participants, zones, privateOccupants]);
 
-  // When inside a locked room, that zone is the current one; otherwise the
-  // userData-tracked zone within the main room.
-  const currentZoneId = lockedRoomZoneId ?? membership.currentZoneId;
+  // The local user's current zone: their occupancy row if they're in a private
+  // zone (authoritative), else their self-reported userData zone.
+  const currentZoneId =
+    (localUserId
+      ? privateOccupants.find((o) => o.userId === localUserId)?.zoneId
+      : undefined) ?? membership.currentZoneId;
 
-  // A placed gamer's client auto-confines: when its own placement row appears
-  // (realtime), switch into the locked room; when it's removed, return to main.
-  // Moderators are exempt — they move in and out freely via moveSelfToZone.
-  const localUserId = participants.find((p) => p.isLocal)?.userId ?? null;
+  // A placed gamer's client auto-confines: pinned into its occupancy zone when a
+  // row appears (realtime), released to the lobby when it's gone. Privacy itself
+  // is enforced by `canReceive` (owner-set) regardless — this just keeps the
+  // gamer's rendered/audio zone honest. Moderator-exempt (they move freely via
+  // moveSelfToZone). Discriminating on "currently standing in a private zone"
+  // (not "occupancy just disappeared") avoids racing a mod's free-then-move,
+  // whose `moveUser` already lands the gamer in a normal zone.
   useEffect(() => {
     if (!joined || !groupId || isModerator || !localUserId) return;
-    const myPlacement = placements.find(
-      (p) =>
-        p.gamer_id === localUserId &&
-        isCurrentSessionPlacement(p.session_opens_at, sessionOpensAtRef.current),
-    );
-    const target = myPlacement?.zone_id ?? null;
-    if (target !== lockedRoomZoneId && !switchInProgressRef.current) {
-      void switchRoom(target ? { kind: "locked", zoneId: target } : { kind: "main" });
+    const myZone =
+      privateOccupants.find((o) => o.userId === localUserId)?.zoneId ?? null;
+    const standingInPrivate = zones.find((z) => z.id === membership.currentZoneId)?.isLocked;
+    if (myZone) {
+      if (membership.currentZoneId !== myZone) membership.moveSelfToZone(myZone);
+    } else if (standingInPrivate) {
+      membership.moveSelfToZone(DEFAULT_ZONE_ID);
     }
-  }, [joined, groupId, isModerator, localUserId, placements, lockedRoomZoneId, switchRoom]);
+  }, [joined, groupId, isModerator, localUserId, privateOccupants, zones, membership]);
 
   // If the zone we're standing in gets deleted out from under us, fall back to
   // the lobby (mirrors the occupant remap in participantsByZone, but updates our
-  // own userData so peers see the move too). Skipped while in a locked room.
+  // own userData so peers see the move too). A private zone's deletion cascades
+  // its occupancy rows, so the projection un-blocks automatically.
   useEffect(() => {
-    if (!joined || lockedRoomZoneId) return;
+    if (!joined) return;
     if (!zones.some((z) => z.id === membership.currentZoneId)) {
       membership.moveSelfToZone(DEFAULT_ZONE_ID);
     }
-  }, [joined, zones, lockedRoomZoneId, membership]);
-
-  // Outsider view of locked zones: who's inside, from the DB placement rows
-  // (the viewer isn't connected to the separate locked room).
-  const lockedRoster = useMemo(() => {
-    const map = new Map<string, LockedMember[]>();
-    for (const p of placements) {
-      // Only the current session's placements are live (prior-session rows are
-      // reaped server-side on join, but guard here so they never flash).
-      if (!isCurrentSessionPlacement(p.session_opens_at, sessionOpensAtRef.current)) continue;
-      const bucket = map.get(p.zone_id);
-      const member: LockedMember = {
-        gamerId: p.gamer_id,
-        // The row's snapshot is the durable source (works for late joiners); the
-        // live cache is a fallback for any older row that predates the snapshot.
-        name: p.gamer_name ?? nameCacheRef.current.get(p.gamer_id),
-      };
-      if (bucket) bucket.push(member);
-      else map.set(p.zone_id, [member]);
-    }
-    return map;
-    // `participants` is a dep so the memo re-runs once a just-seen gamer's name
-    // has landed in the cache (the cache itself is a ref).
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- nameCacheRef is a ref; participants drives the refresh
-  }, [placements, participants]);
+  }, [joined, zones, membership]);
 
   // --- Context ---
 
@@ -694,15 +657,13 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       customZones,
       currentZoneId,
       participantsByZone,
-      lockedRoster,
       moveSelfToZone,
       moveParticipantToZone: membership.moveParticipantToZone,
-      placeInLockedZone,
-      removeFromLockedZone,
+      placeInPrivateZone,
+      removeFromPrivateZone,
       createZone,
       updateZone,
       deleteZone,
-      roomTransition,
       micOn,
       cameraOn,
       cameraAllowed,
@@ -731,7 +692,7 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       join,
       leave,
     }),
-    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, customZones, currentZoneId, participantsByZone, lockedRoster, moveSelfToZone, membership.moveParticipantToZone, placeInLockedZone, removeFromLockedZone, createZone, updateZone, deleteZone, roomTransition, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, micDevices.audioInputs, micDevices.currentAudioInputId, micDevices.setAudioInput, micDevices.micPermission, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
+    [joined, joining, callObject, localSessionId, localRole, isModerator, groupId, participants, zones, customZones, currentZoneId, participantsByZone, moveSelfToZone, membership.moveParticipantToZone, placeInPrivateZone, removeFromPrivateZone, createZone, updateZone, deleteZone, micOn, cameraOn, cameraAllowed, toggleMic, toggleCamera, screenShare.screenSharerSessionId, screenShare.canScreenShare, screenShare.isScreenSharing, screenShare.startScreenShare, screenShare.stopScreenShare, membership.isBroadcasting, membership.toggleBroadcast, isDeafened, toggleDeafen, micDevices.audioInputs, micDevices.currentAudioInputId, micDevices.setAudioInput, micDevices.micPermission, moderator.localLocks, moderator.lockStates, moderator.muteParticipant, moderator.lockParticipant, audio.getAnalyser, chat.messages, chat.sendChatMessage, join, leave],
   );
 
   return (

@@ -52,20 +52,6 @@ export interface ZoneUserData {
   broadcasting: boolean;
 }
 
-/**
- * A member of a locked zone, as seen by an *outsider* — sourced from the
- * `voice_locked_placements` DB rows, not from Daily (the outsider isn't
- * connected to the locked room). Only the gamer's id is available, which is all
- * the blurred privacy-screen roster needs (identicon, no name).
- */
-export interface LockedMember {
-  gamerId: string;
-  /** Display name, resolved from a name the viewer's client has seen for this
-   *  gamer (they were a main-room participant before being placed). `undefined`
-   *  when never seen — the tile falls back to the identicon alone. */
-  name?: string;
-}
-
 // ---------- Moderator ----------
 
 export interface LockState {
@@ -108,11 +94,12 @@ export interface ChatMessage {
 export type AppMessage =
   | { type: "lockSync"; lock: LockState }
   /**
-   * A moderator asking a *target* to move itself to a zone. A client can't set
-   * another participant's `userData`, so the mod sends this; the target's
-   * client verifies the sender is an owner and then sets its own `userData`.
-   * Enforcement here is cosmetic (normal zones aren't a security boundary —
-   * locked zones use the separate-room token gate instead).
+   * A moderator asking a *target* to move itself to a (normal) zone. A client
+   * can't set another participant's `userData`, so the mod sends this; the
+   * target's client verifies the sender is an owner and then sets its own
+   * `userData`. Enforcement here is cosmetic (normal-zone membership isn't a
+   * security boundary — private zones use the SFU `canReceive` boundary, driven
+   * by the mod-authored `voice_private_zone_occupants` rows).
    */
   | { type: "moveUser"; targetSessionId: string; zoneId: string }
   | { type: "moderatorMute"; targetSessionId: string; track: "audio" | "video" }
@@ -155,19 +142,18 @@ export interface VoiceRoomContextValue {
   customZones: VoiceZone[];
   currentZoneId: string;
   participantsByZone: Map<string, VoiceParticipant[]>;
-  /** zoneId → who's inside a locked zone, from the DB placement rows. Drives the
-   *  blurred outsider roster (the viewer isn't in the separate locked room). */
-  lockedRoster: Map<string, LockedMember[]>;
-  /** Tap or drag self into a zone. For a locked zone this is a moderator-only
-   *  room switch; for a confined gamer it's a no-op (placement is mod-only). */
+  /** Tap or drag self into a zone. For a private (locked) zone this is
+   *  moderator-only (a gamer can't self-enter, and a confined gamer can't
+   *  self-leave); a mod entering/leaving also writes/clears their own occupancy
+   *  row. No room switch — one Daily room, `canReceive`-enforced privacy. */
   moveSelfToZone: (zoneId: string) => void;
   /** Moderator-only; moves another participant into a non-locked zone. */
   moveParticipantToZone: (sessionId: string, zoneId: string) => void;
-  /** Moderator-only; place a gamer into a locked zone (their client switches
-   *  rooms via the placement realtime). */
-  placeInLockedZone: (gamerId: string, zoneId: string) => Promise<void>;
-  /** Moderator-only; remove a gamer's locked placement (returns them to main). */
-  removeFromLockedZone: (gamerId: string) => Promise<void>;
+  /** Moderator-only; place a gamer into a private zone (writes the occupancy row
+   *  that drives the gamer's auto-confine + the `canReceive` boundary). */
+  placeInPrivateZone: (userId: string, zoneId: string) => Promise<void>;
+  /** Moderator-only; clear a user's private-zone occupancy. */
+  removeFromPrivateZone: (userId: string) => Promise<void>;
 
   // --- custom zone management (moderator, group rooms only) ---
   createZone: (input: {
@@ -183,10 +169,6 @@ export interface VoiceRoomContextValue {
   ) => Promise<void>;
   /** Deleting a zone moves its occupants back to the lobby. */
   deleteZone: (id: string) => Promise<void>;
-  /** Non-null while crossing the room boundary into/out of a locked zone —
-   *  drives the "Securing your connection…" transition. `zoneId` is the locked
-   *  zone being entered, or null when returning to the main room. */
-  roomTransition: { zoneId: string | null } | null;
 
   // --- media ---
   micOn: boolean;

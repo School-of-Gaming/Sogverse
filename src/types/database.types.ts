@@ -998,61 +998,58 @@ export type Database = {
         }
         Relationships: []
       }
-      voice_locked_placements: {
+      voice_private_zone_occupants: {
         Row: {
           created_at: string
-          gamer_id: string
-          gamer_name: string | null
           group_id: string
           id: string
           placed_by: string
           session_opens_at: string
+          user_id: string
           zone_id: string
         }
         Insert: {
           created_at?: string
-          gamer_id: string
-          gamer_name?: string | null
           group_id: string
           id?: string
           placed_by: string
           session_opens_at: string
+          user_id: string
           zone_id: string
         }
         Update: {
           created_at?: string
-          gamer_id?: string
-          gamer_name?: string | null
           group_id?: string
           id?: string
           placed_by?: string
           session_opens_at?: string
+          user_id?: string
           zone_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "voice_locked_placements_gamer_id_fkey"
-            columns: ["gamer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "voice_locked_placements_group_id_fkey"
+            foreignKeyName: "voice_private_zone_occupants_group_id_fkey"
             columns: ["group_id"]
             isOneToOne: false
             referencedRelation: "product_groups"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "voice_locked_placements_placed_by_fkey"
+            foreignKeyName: "voice_private_zone_occupants_placed_by_fkey"
             columns: ["placed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "voice_locked_placements_zone_id_fkey"
+            foreignKeyName: "voice_private_zone_occupants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_private_zone_occupants_zone_id_fkey"
             columns: ["zone_id"]
             isOneToOne: false
             referencedRelation: "voice_zones"

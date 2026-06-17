@@ -1693,7 +1693,6 @@
     "zoneLobby": "Klubbhus",
     "joinZone": "Gå till {zone}",
     "zonesDescription": "Tryck på eller dra dig själv till en zon för att flytta dit. Du hör alla i samma zon.",
-    "securingConnection": "Säkrar din anslutning…",
     "privateZone": "Privat",
     "privateZoneHint": "Den här zonen är privat och säker.",
     "newZone": "Ny zon",

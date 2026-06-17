@@ -10,9 +10,9 @@ A voice room is 1:1 with a `product_groups` row **and** a specific session windo
 
 **Rule: Daily.co owns room existence and live participant/presence state — there is no `voice_rooms` table, no `daily_room_name` column, no presence table, no scheduler that pre-creates rooms.** New groups need no provisioning; deleted groups need no room cleanup (rooms self-expire). Chat, lock state, and live presence are all deliberately ephemeral.
 
-**The two voice DB tables persist *zone definitions and placement intent*, never room/presence.** `voice_zones` holds mod-created custom/locked zone definitions for a group (so next week's session has the same zones); `voice_locked_placements` records which gamer a moderator has confined to a locked zone this session window. Neither tracks "who is in the call" or "what room exists" — that's still Daily's job. Don't add presence/room persistence here without revisiting this principle.
+**The two voice DB tables persist *zone definitions and the private-zone privacy boundary*, never general room/presence.** `voice_zones` holds mod-created custom/locked zone definitions for a group (so next week's session has the same zones); `voice_private_zone_occupants` records who is in a private (locked) zone this session window — the one piece of state that *must* be server-readable to enforce privacy at token-mint (see the private-zone section). Normal-zone membership, names, and "who's in the call" are **not** here — that's Daily's job. Don't add general presence/room persistence here without revisiting this principle.
 
-**Rule: Room names are content-addressable, derived independently by every joiner with no coordination.** Format `g-{groupId}-{YYYYMMDDHHMM}`, where the timestamp is the window's open time formatted in the product's timezone. Same group + same window → same name; different week or different slot → distinct name. The full group UUID prevents cross-group collisions; the timestamp prevents cross-session collisions (a stale prior-session room with an already-passed `exp`). Keep both. Locked zones get their own room: `g-{groupId}-{YYYYMMDDHHMM}-z-{zoneId}` (`lockedVoiceRoomName`).
+**Rule: Room names are content-addressable, derived independently by every joiner with no coordination.** Format `g-{groupId}-{YYYYMMDDHHMM}`, where the timestamp is the window's open time formatted in the product's timezone. Same group + same window → same name; different week or different slot → distinct name. The full group UUID prevents cross-group collisions; the timestamp prevents cross-session collisions (a stale prior-session room with an already-passed `exp`). Keep both. **There is one room per group session — private/locked zones are *not* separate rooms** (they used to be; privacy now rides on `canReceive`, see the private-zone section).
 
 **Rule: Get-or-create the Daily room on demand, never pre-create.** First joiner creates it, everyone after reuses it: `GET /rooms/{name}`; on 404 `POST /rooms`; on a duplicate-name race re-`GET` the winner. Daily returns the duplicate as `400 invalid-request-error` ("already exists") — not 409 — so detect it with `isDailyDuplicateRoomError`, never by branching on HTTP status.
 
@@ -36,16 +36,10 @@ Request `{ groupId }`. Gates, in order:
 2. **Group + remoteness** — group must exist and its product must be `is_remote = true`; else 404.
 3. **Membership** — gamer: active `participations` row for `(group_id, gamer_id)`. Gedu: a `gedu_group_assignments` row on **product_id** (cross-group voice mobility). Admin: bypass.
 4. **Session window** — at least one slot must currently be open; the first open slot drives the room name and token `exp`.
-5. **Issuance** — `is_owner = role !== "gamer"`. `exp = windowClosesAt + grace`. The response also returns `sessionOpensAt` so the client can stamp locked-zone placement rows with the current window.
+5. **Private-zone `canReceive` bake** — the route reads the current window's `voice_private_zone_occupants` and bakes the joiner's `canReceive` (see the private-zone section) so the SFU won't forward a private member's media to them before they even connect.
+6. **Issuance** — `is_owner = role !== "gamer"`. The Daily token also sets `user_id = profiles.id` (so peers' `participant.user_id` matches what `canReceive.byUserId` keys on). `exp = windowClosesAt + grace`. The response returns `sessionOpensAt` so the client can stamp occupancy rows with the current window.
 
-### Locked room — `POST /api/voice/token/locked`
-
-Request `{ groupId, zoneId }`. Same group/remoteness/window gates, plus the zone must be an `is_locked` zone belonging to the group, plus the **locked gate**:
-
-- **Moderator** (admin, or gedu assigned to the product) → authorized; mods enter/leave locked zones freely.
-- **Gamer** → only if a `voice_locked_placements` row matches `(zone_id, gamer_id, session_opens_at = current window open)`. No matching row → 403.
-
-**Rule: The locked-token endpoint is the real privacy boundary, independent of any client behavior.** Because placements are mod-only writes (RLS) and the token requires a matching placement for *this* session window, a gamer can neither self-enter a locked zone nor reload to escape one (the row persists for the window, so a reconnect lands them back). The matching `session_opens_at` is load-bearing: a prior week's placement doesn't grant access to this week's locked room.
+There is **no separate locked-room endpoint** — one room per session, so this is the only token route.
 
 | Capability | Admin | Gedu | Gamer |
 |---|---|---|---|
@@ -54,10 +48,10 @@ Request `{ groupId, zoneId }`. Same group/remoteness/window gates, plus the zone
 | Move self to a non-locked zone | yes | yes | yes |
 | Screen share / broadcast / deafen | yes | yes | no |
 | Create / edit / delete zones | yes | yes | no |
-| Move others; place into a locked zone | yes | yes | no |
-| Enter a locked zone | freely | freely | only when placed by a mod |
+| Move others; place into a private zone | yes | yes | no |
+| Enter a private zone | freely (writes own occupancy) | freely (writes own occupancy) | only when placed by a mod |
 
-**Rule: Owner-only actions (screen share, mute, lock, broadcast, deafen, moving others, locked placement) are enforced server-side — by the Daily `is_owner` token flag for SFU actions, and by RLS (`is_voice_group_moderator`) for the DB writes. Hiding buttons client-side is cosmetic defense-in-depth only.**
+**Rule: Owner-only actions (screen share, mute, lock, broadcast, deafen, moving others, private-zone occupancy writes) are enforced server-side — by the Daily `is_owner` token flag for SFU actions (including setting another participant's `canReceive`), and by RLS (`is_voice_group_moderator`) for the DB writes. Hiding buttons client-side is cosmetic defense-in-depth only.**
 
 ## Zone model
 
@@ -68,7 +62,7 @@ There are four *kinds* of zone; only the custom/locked kind is persisted.
 | **Lobby** | virtual (hardcoded `"lobby"`) | no | soft |
 | **4 Yty elements** | virtual (`"yty-harmony\|glow\|valor\|wit"`) | no | soft |
 | **Custom** | `voice_zones` (the UUID is the zoneId) | by mods | soft |
-| **Locked** | `voice_zones`, `is_locked = true` | by mods | **hard (separate Daily room)** |
+| **Locked** | `voice_zones`, `is_locked = true` | by mods | **hard (SFU `canReceive`)** |
 
 The virtual zones (lobby + 4 Yty) and the custom-zone icon/color palette live in `src/lib/constants/voice-zones.ts`. `composeZones` (`src/lib/voice/zone-composition.ts`) builds the ordered list the UI renders (lobby + Yty + custom). Instant rooms pass `groupId === null` → lobby + Yty only.
 
@@ -81,20 +75,21 @@ The virtual zones (lobby + 4 Yty) and the custom-zone icon/color palette live in
 ### Soft vs hard isolation
 
 - **Soft (lobby, Yty, custom):** *not* a privacy boundary. Every client still receives every track; cross-zone audio is silenced with `element.volume = 0`. **You still see other zones' video and speaking glow** — intentional and required (glow and video come from the still-received tracks). Good enough for breakout chatter; nobody is promised privacy.
-- **Hard (locked):** a **separate Daily room**, so the audio data never reaches non-members at all. This is the only place we pay a reconnect cost — fine, because locked zones are rare and deliberate. (Daily's server-enforced `canReceive` permissions are a one-room alternative, but they need a per-move permission *matrix* with timing-sensitive correctness — exactly the race-bug class this refactor removed — so we use separate rooms. Documented so nobody "discovers" `canReceive` and rewrites it.)
+- **Hard (locked):** **one room, SFU-enforced `canReceive`.** Outsiders are simply not *sent* a private-zone occupant's audio/video by the SFU — the data never reaches their client (a structural guarantee, not a client-side `volume = 0`). The reverse direction is deliberately **permissive**: an occupant still *receives* every other zone's tracks (per-zone `volume` mutes the audio client-side), so a moderator in a private zone keeps everyone's video + speaking glow. One-directional is all the privacy requirement needs ("outsiders don't receive private members"), and it's what makes the reverse cheap.
 
-### Locked-zone flow (separate room)
+> **Why not separate Daily rooms (the old design)?** Two rooms in one UI means Daily stops being the source of truth and the DB has to reconstruct names/presence both ways — which was lossy (a moderator who walked into a locked zone had no name source for outsiders, and the split was one-directional). The old objection to `canReceive` was "a per-move permission *matrix* with race conditions" — but that dissolves if you stop thinking in incremental pairwise deltas and instead recompute the **full** `canReceive` from current occupancy and apply it idempotently (token bake at join, owner re-projection on change). Full-state writes converge regardless of ordering. See `src/lib/voice/receive-permissions.ts`.
 
-1. A mod **places** a gamer: client `.insert` into `voice_locked_placements` (RLS allows only mods) carrying `zone_id, gamer_id, placed_by, group_id, session_opens_at`.
-2. The gamer's client is subscribed to `voice_locked_placements` (Supabase Realtime). On seeing its own row it **leaves the main room, requests a locked-room token, and joins the locked room**. A mod entering a locked zone is just a self-move that triggers the same room switch. The switch shows a "Securing your connection…" transition — the deliberate ~1–2s reconnect reframed as the privacy guarantee (a locked zone otherwise looks identical to an instant one).
-3. **Outsiders never join the locked room**, so they can't see its members via Daily. Instead they render a **blurred roster from the `voice_locked_placements` rows** (the `lockedRoster` map) behind a `PrivacyScreen`. The blur is UI grammar; the real privacy is the room split.
-4. **Removing** a placement (mod) → the gamer's client (realtime) leaves the locked room and rejoins the main room (lobby). Dragging a placed gamer onto a normal zone deletes the placement first, then moves them, so the auto-confine doesn't pull them back.
+### Private-zone flow (one room, `canReceive`)
 
-The placement's display name is **snapshotted** onto the row (`gamer_name`) at placement time — main-room names ride on the Daily token, but a placed gamer is in a separate room, so outsiders (incl. late joiners) have no other source. The placing mod has the name; it then reaches every group member via the SELECT RLS + realtime.
+1. A mod **places** a gamer (or records **their own** entry): client `.insert` into `voice_private_zone_occupants` (RLS allows only mods) carrying `zone_id, user_id, placed_by, group_id, session_opens_at`. `user_id` is the gamer for a placement, or the mod themselves for a self-entry — both are "a moderator writes a row".
+2. **Privacy is `canReceive`, set by owners + baked into tokens.** The pure projection (`blockedUserIdsFor`): a viewer may receive everyone *except* a private occupant whose zone they aren't in. New joiners get it baked into their token server-side (airtight — no connect window). Live changes are applied by owner clients via `updateParticipants` (only owners may set others' permissions; placements are mod-only, so the actor is always a connected owner) — see `use-receive-permissions.ts`. The occupancy row, not `userData`, is the boundary: `userData` is client-authored, so a gamer can't be trusted to report it; the mod-authored, server-readable row is.
+3. **The gamer's own client auto-confines** off the realtime occupancy row — pins its `userData` zone into the private zone (and the UI bars self-move) — but this is just rendering/audio-routing honesty. Even if a gamer edits their `userData`, outsiders still don't receive them (owner-set `canReceive` is unaffected). What they *hear* isn't protected; what others *receive* is.
+4. **Outsiders stay in the same room**, so they still see the occupant as a real Daily participant (name, avatar, presence) — just with no media (SFU-blocked → no audio/video/glow) — rendered blurred behind a `PrivacyScreen`. No DB roster, no name snapshot: Daily carries names again.
+5. **Removing** occupancy (mod) → the gamer's client (realtime) un-confines to the lobby; owners re-project `canReceive` to un-block. Dragging a placed gamer onto a normal zone clears occupancy first, then moves them. (The auto-confine discriminates on "currently standing in a private zone," not "occupancy just vanished," so it doesn't race the `moveUser`.)
 
-**Rule: Locked placements are cleaned up self-healingly on join, never by a cron.** A placement is valid only for its own session window (the locked-token endpoint matches on `session_opens_at`). The main token endpoint reaps the group's *prior-window* placements on every join (`session_opens_at < currentWindowOpen`); since someone joins every session and the table is in the realtime publication, those DELETEs propagate to every client's roster. Re-placing a gamer **deletes-then-inserts** (the table is insert/delete only — no UPDATE policy, so an upsert's DO UPDATE would be RLS-denied), overwriting any existing row for that `(group_id, gamer_id)`. Belt-and-suspenders on the client: the roster + the gamer auto-confine ignore any placement whose `session_opens_at` isn't the current window (`isCurrentSession`), so a stale row can never trap, flash, or phantom-render even before the prune lands. Net: if everyone in a locked room just closes their laptops, the rows are inert immediately and gone the next time anyone joins — no scheduled job.
+**Rule: Private-zone occupancy is cleaned up self-healingly on join, never by a cron.** A row is valid only for its own session window. The token endpoint reaps the group's *prior-window* rows on every join (`session_opens_at < currentWindowOpen`); since someone joins every session and the table is in the realtime publication, those DELETEs propagate to every client. This is also what cleans up **a user who never left** (closed their laptop mid-session): their row is reaped the next session a window rolls. Re-occupying **deletes-then-inserts** (insert/delete only — no UPDATE policy, so an upsert's DO UPDATE would be RLS-denied), overwriting any existing row for that `(group_id, user_id)`. A stale row makes a joiner's token *over-block* (fail-safe) rather than under-block (leak), and the live projection corrects it. The client also ignores any row whose `session_opens_at` isn't the current window (`isCurrentSessionPlacement`).
 
-**Rule: Realtime subscription callbacks only update state from the payload — never run a Supabase query inside the callback** (same deadlock risk as `onAuthStateChange`). `voice_zones` / `voice_locked_placements` are `REPLICA IDENTITY FULL` so DELETE payloads carry the full old row; that's what lets a `group_id`-filtered subscription receive deletions and update from the payload alone. See `use-zone-data.ts`.
+**Rule: Realtime subscription callbacks only update state from the payload — never run a Supabase query inside the callback** (same deadlock risk as `onAuthStateChange`). `voice_zones` / `voice_private_zone_occupants` are `REPLICA IDENTITY FULL` so DELETE payloads carry the full old row; that's what lets a `group_id`-filtered subscription receive deletions and update from the payload alone. See `use-zone-data.ts`.
 
 ## Audio pipeline (Chrome constraints)
 
@@ -132,17 +127,17 @@ Ephemeral text over the Daily app-message channel. **Rule: Chat is sender-truste
 **Rule: The UI is a pure consumer of the `VoiceRoomProvider` context.** All state and actions live in the provider + hooks; components only render what they're given and call actions. This is why the voice room demos in `/admin/ui-components` with a hand-built mock context (see the root CLAUDE.md note on that page) — and why the *visual* design is freely tweakable with zero risk to the logic.
 
 - `VoiceRoom` — the in-session layout (header, screen-share viewport, zone list, control bar, chat, participant list).
-- `ZoneList` / `ZoneCard` — the mobile-first vertical stack of zone cards. Tap a zone to move into it, or drag your avatar onto it (dnd-kit, `PointerSensor` + `TouchSensor` with a press-delay so touch-drag doesn't fight page scroll). Mods drag any avatar: onto a normal zone → move, onto a locked zone → place. Member tiles render live video in place when on; `PrivacyScreen` blurs the outsider roster of a locked zone.
+- `ZoneList` / `ZoneCard` — the mobile-first vertical stack of zone cards. Tap a zone to move into it, or drag your avatar onto it (dnd-kit, `PointerSensor` + `TouchSensor` with a press-delay so touch-drag doesn't fight page scroll). Mods drag any avatar: onto a normal zone → move, onto a private zone → place. A private zone is also tappable for mods (they self-enter, writing their own occupancy). Member tiles render live video in place when on; `PrivacyScreen` blurs a private zone's occupants for an outsider (they're real participants, just SFU-blocked of media).
 - `ZoneDialog` / `ZoneIconPicker` / `ZoneColorPicker` — mod-only create/edit; `MicSettingsPopover` — device picker + permission hint + live level behind the mic button.
 - `VoiceControls`, `ScreenShareDisplay`, `ParticipantList` / `ParticipantRow` (no volume slider), `ChatPanel`, `MicLevelIndicator`, `VoiceAvatar`, `JoinVoiceButton`.
 
-**Rule: Don't violate the root CLAUDE.md layout rules** — no in-place shifts of already-rendered content; the room-switch transition keeps the surrounding chrome mounted; the `committing` pattern on dialog submits.
+**Rule: Don't violate the root CLAUDE.md layout rules** — no in-place shifts of already-rendered content; the `committing` pattern on dialog submits. (Entering a private zone is now an in-place `userData` change, not a reconnect, so there's no transition screen to keep chrome mounted through.)
 
 ## Provider & hooks
 
-- `VoiceRoomProvider` — context orchestrator; takes `groupId: string | null` (null = instant room → custom/locked features disabled). Owns the room-switch state machine (main ↔ locked) and routes Daily app-messages in `handleAppMessage`. Exports `VoiceRoomContext` for the style-guide mock.
-- `hooks/` — `use-audio-pipeline` (playback + analyser), `use-zone-membership` (userData self-move + mod `moveUser`), `use-zone-data` (DB custom zones + placements + realtime), `use-mic-devices`, `use-screen-share`, `use-moderator-controls`, `use-chat`, `use-speaking-glow`, `use-local-stream-glow`, `use-wake-lock`. `hooks/types.ts` — shared types incl. the `VoiceRoomContextValue` contract.
-- Outside this dir: `src/services/voice/` (token service + `VoiceZonesService` + React Query hook), `src/app/api/voice/token/{route,locked/route}.ts`, `src/lib/daily.ts` (Daily REST + room-name helpers), `src/lib/session-schedule.ts` + `src/lib/voice-window.ts`, `src/lib/voice/{user-name,audio-routing,zone-composition,glow}.ts`, `src/lib/constants/{voice,voice-zones}.ts`.
+- `VoiceRoomProvider` — context orchestrator; takes `groupId: string | null` (null = instant room → custom/private features disabled). Composes the hooks, derives `participantsByZone` (bucketing private-zone occupants by their authoritative occupancy row, not `userData`), drives the gamer auto-confine, and routes Daily app-messages in `handleAppMessage`. Exports `VoiceRoomContext` for the style-guide mock.
+- `hooks/` — `use-audio-pipeline` (playback + analyser), `use-zone-membership` (userData self-move + mod `moveUser`), `use-zone-data` (DB custom zones + occupancy + realtime), `use-receive-permissions` (owner-side live `canReceive` projection), `use-mic-devices`, `use-screen-share`, `use-moderator-controls`, `use-chat`, `use-speaking-glow`, `use-local-stream-glow`, `use-wake-lock`. `hooks/types.ts` — shared types incl. the `VoiceRoomContextValue` contract.
+- Outside this dir: `src/services/voice/` (token service + `VoiceZonesService` + React Query hook), `src/app/api/voice/token/route.ts`, `src/lib/daily.ts` (Daily REST + room-name helpers + token `canReceive`/`user_id`), `src/lib/voice/receive-permissions.ts` (the pure `canReceive` projection, shared by the route + the hook), `src/lib/session-schedule.ts` + `src/lib/voice-window.ts`, `src/lib/voice/{user-name,audio-routing,zone-composition,glow,locked-session}.ts`, `src/lib/constants/{voice,voice-zones}.ts`.
 
 ## Env
 

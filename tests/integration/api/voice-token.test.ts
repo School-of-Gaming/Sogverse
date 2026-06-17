@@ -47,10 +47,16 @@ const GROUP_ID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
 const PRODUCT_ID = "11111111-2222-3333-4444-555555555555";
 
 // Inspectable spies for the self-healing prune chain
-// (voice_locked_placements.delete().eq().lt()).
+// (voice_private_zone_occupants.delete().eq().lt()).
 const placementLt = vi.fn();
 const placementEq = vi.fn();
 const placementDelete = vi.fn();
+
+// Spies for the occupancy read that bakes canReceive
+// (voice_private_zone_occupants.select().eq().eq()).
+const occupantEq2 = vi.fn();
+const occupantEq1 = vi.fn();
+const occupantSelect = vi.fn();
 
 function tokenRequest(body: Record<string, unknown>): Request {
   return new Request("http://localhost:3000/api/voice/token", {
@@ -163,9 +169,10 @@ function mockTables(opts: {
         }),
       };
     }
-    if (table === "voice_locked_placements") {
-      // Self-healing prune of prior-session placements on join (delete().eq().lt()).
-      return { delete: placementDelete };
+    if (table === "voice_private_zone_occupants") {
+      // Two uses on join: the self-healing prune (delete().eq().lt()) and the
+      // current-window occupancy read that bakes canReceive (select().eq().eq()).
+      return { delete: placementDelete, select: occupantSelect };
     }
     return {};
   });
@@ -182,6 +189,10 @@ describe("POST /api/voice/token", () => {
     placementLt.mockResolvedValue({ error: null });
     placementEq.mockReturnValue({ lt: placementLt });
     placementDelete.mockReturnValue({ eq: placementEq });
+    // Occupancy read defaults to empty (no private occupants → no canReceive).
+    occupantEq2.mockResolvedValue({ data: [], error: null });
+    occupantEq1.mockReturnValue({ eq: occupantEq2 });
+    occupantSelect.mockReturnValue({ eq: occupantEq1 });
     process.env.NEXT_PUBLIC_DAILY_DOMAIN = "testdomain";
     mockCreateMeetingToken.mockResolvedValue("mock-daily-token");
     mockGetOrCreateDailyRoom.mockResolvedValue({
@@ -366,10 +377,54 @@ describe("POST /api/voice/token", () => {
         expect.objectContaining({
           isOwner: false,
           expUnix: expectedExp,
+          // Daily `user_id` = our profile id, so peers' `participant.user_id`
+          // matches what `canReceive.byUserId` keys on.
+          userId: "gamer-id",
+          // No private-zone occupants → no receive block baked.
+          canReceive: undefined,
           // No Minecraft account → empty trailing slots, which the client
           // renders as the "(Unknown)" badge.
           userName: "gamer-id|gamer|Kid||",
         }),
+      );
+    });
+
+    it("bakes a canReceive block for a private-zone occupant the joiner isn't with", async () => {
+      // The privacy boundary baked at join time: a joiner who isn't in a private
+      // zone must not be sent its occupants' media, enforced by the SFU before
+      // they connect (no leak window). One occupant, in a zone the joiner isn't
+      // in → the joiner's token blocks receiving that occupant.
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({ group: {}, participation: { id: "participation-1" } });
+      occupantEq2.mockResolvedValue({
+        data: [{ user_id: "confined-gamer", zone_id: "zone-private" }],
+        error: null,
+      });
+
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "gamer-id",
+          canReceive: { base: true, byUserId: { "confined-gamer": false } },
+        }),
+      );
+    });
+
+    it("bakes no block for the occupant themselves (they receive their zone-mates)", async () => {
+      // The placed gamer's own token: they're co-zoned with themselves, so the
+      // projection blocks nobody — base true, no byUserId entries → undefined.
+      authAs("gamer-id", { role: "gamer", first_name: "Kid" });
+      mockTables({ group: {}, participation: { id: "participation-1" } });
+      occupantEq2.mockResolvedValue({
+        data: [{ user_id: "gamer-id", zone_id: "zone-private" }],
+        error: null,
+      });
+
+      const res = await POST(tokenRequest({ groupId: GROUP_ID }));
+      expect(res.status).toBe(200);
+      expect(mockCreateMeetingToken).toHaveBeenCalledWith(
+        expect.objectContaining({ canReceive: undefined }),
       );
     });
 
@@ -393,10 +448,11 @@ describe("POST /api/voice/token", () => {
       );
     });
 
-    it("self-heals: prunes the group's prior-session locked placements on join", async () => {
+    it("self-heals: prunes the group's prior-session private-zone occupancy on join", async () => {
       // The non-obvious cleanup path — easy to drop in a refactor. Joining must
-      // delete this group's placements from windows before the current one, so
-      // stale rows can't block re-placement or phantom-render the roster.
+      // delete this group's occupancy from windows before the current one, so
+      // stale rows can't block re-occupying or over-block a returning user's
+      // joiners (and a user who never left is reaped on the next join).
       authAs("admin-id", { role: "admin", first_name: "Boss" });
       mockTables({ group: {} });
       const windowOpensAt = new Date(Date.now() - 300_000);

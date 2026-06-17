@@ -1693,7 +1693,6 @@
     "zoneLobby": "Kerhotila",
     "joinZone": "Siirry alueelle {zone}",
     "zonesDescription": "Siirry alueelle napauttamalla tai vetämällä itsesi sille. Kuulet kaikki samalla alueella olevat.",
-    "securingConnection": "Suojataan yhteyttäsi…",
     "privateZone": "Yksityinen",
     "privateZoneHint": "Tämä alue on yksityinen ja suojattu.",
     "newZone": "Uusi alue",

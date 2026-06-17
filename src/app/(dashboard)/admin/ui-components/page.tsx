@@ -53,7 +53,6 @@ import { VoiceRoomContext } from "@/components/voice/VoiceRoomProvider";
 import type {
   VoiceRoomContextValue,
   VoiceParticipant,
-  LockedMember,
 } from "@/components/voice/hooks/types";
 import type { VoiceZone } from "@/types";
 import {
@@ -575,21 +574,16 @@ function VoiceZonesDemo() {
     member({ sessionId: "s27", userId: "a094598f-8ab8-4787-83ff-849e0653a58a", userName: "Tuuli", zoneId: "yty-valor" }),
     member({ sessionId: "s28", userId: "720504a5-4d6f-496b-b2a1-038fc5c6bc45", userName: "Kaarina", zoneId: "yty-valor" }),
     member({ sessionId: "s29", userId: "35d24824-26c7-417b-9b6b-32798e1bfe57", userName: "Theodore", zoneId: "yty-valor" }),
+    // Two confined to the private zone. In the real app their media is
+    // SFU-blocked for outsiders (canReceive) — here they're just members of the
+    // locked zone, rendered blurred behind the PrivacyScreen for an outsider.
+    member({ sessionId: "s30", userId: "791c29d1-e2c0-4a9f-bcc8-9d888bf72610", userName: "Onni", zoneId: "demo-quiet" }),
+    member({ sessionId: "s31", userId: "86592793-36ad-4247-a942-f2386cd27b43", userName: "Venla", zoneId: "demo-quiet" }),
   ];
 
   const participantsByZone = new Map<string, VoiceParticipant[]>();
   for (const z of zones) participantsByZone.set(z.id, []);
   for (const p of participants) participantsByZone.get(p.zoneId)?.push(p);
-
-  const lockedRoster = new Map<string, LockedMember[]>([
-    [
-      "demo-quiet",
-      [
-        { gamerId: "791c29d1-e2c0-4a9f-bcc8-9d888bf72610", name: "Onni" },
-        { gamerId: "86592793-36ad-4247-a942-f2386cd27b43", name: "Venla" },
-      ],
-    ],
-  ]);
 
   const noop = () => {};
   const asyncNoop = async () => {};
@@ -607,11 +601,10 @@ function VoiceZonesDemo() {
     customZones,
     currentZoneId: "lobby",
     participantsByZone,
-    lockedRoster,
     moveSelfToZone: noop,
     moveParticipantToZone: noop,
-    placeInLockedZone: asyncNoop,
-    removeFromLockedZone: asyncNoop,
+    placeInPrivateZone: asyncNoop,
+    removeFromPrivateZone: asyncNoop,
     createZone: asyncNoop,
     updateZone: asyncNoop,
     deleteZone: asyncNoop,
@@ -642,7 +635,6 @@ function VoiceZonesDemo() {
     sendChatMessage: noop,
     join: asyncNoop,
     leave: asyncNoop,
-    roomTransition: null,
   };
 
   return (

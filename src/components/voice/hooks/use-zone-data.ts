@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { getClient } from "@/lib/supabase/client";
-import type { VoiceZone, VoiceLockedPlacement } from "@/types";
+import type { VoiceZone, VoicePrivateZoneOccupant } from "@/types";
 
 /**
- * Live custom-zone + locked-placement data for a group room, sourced from the
- * DB (the only persisted part of the zone model). Instant rooms pass
+ * Live custom-zone + private-zone-occupancy data for a group room, sourced from
+ * the DB (the only persisted part of the zone model). Instant rooms pass
  * `groupId === null` and get empty lists — no group to tie persistence to.
  *
  * Both lists are seeded with an initial fetch on mount and then kept current by
@@ -18,7 +18,7 @@ import type { VoiceZone, VoiceLockedPlacement } from "@/types";
 export function useZoneData(groupId: string | null) {
   const supabase = getClient();
   const [customZones, setCustomZones] = useState<VoiceZone[]>([]);
-  const [placements, setPlacements] = useState<VoiceLockedPlacement[]>([]);
+  const [occupants, setOccupants] = useState<VoicePrivateZoneOccupant[]>([]);
 
   useEffect(() => {
     // Instant rooms (null group) keep the empty initial state — no group to
@@ -30,13 +30,13 @@ export function useZoneData(groupId: string | null) {
 
     // Initial fetch (outside the realtime callback — allowed).
     async function load() {
-      const [zonesRes, placementsRes] = await Promise.all([
+      const [zonesRes, occupantsRes] = await Promise.all([
         supabase.from("voice_zones").select("*").eq("group_id", gid),
-        supabase.from("voice_locked_placements").select("*").eq("group_id", gid),
+        supabase.from("voice_private_zone_occupants").select("*").eq("group_id", gid),
       ]);
       if (cancelled) return;
       if (zonesRes.data) setCustomZones(zonesRes.data);
-      if (placementsRes.data) setPlacements(placementsRes.data);
+      if (occupantsRes.data) setOccupants(occupantsRes.data);
     }
     void load();
 
@@ -51,9 +51,9 @@ export function useZoneData(groupId: string | null) {
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "voice_locked_placements", filter: `group_id=eq.${groupId}` },
-        (payload: RealtimePostgresChangesPayload<VoiceLockedPlacement>) => {
-          setPlacements((prev) => applyChange(prev, payload));
+        { event: "*", schema: "public", table: "voice_private_zone_occupants", filter: `group_id=eq.${groupId}` },
+        (payload: RealtimePostgresChangesPayload<VoicePrivateZoneOccupant>) => {
+          setOccupants((prev) => applyChange(prev, payload));
         },
       )
       .subscribe();
@@ -64,7 +64,7 @@ export function useZoneData(groupId: string | null) {
     };
   }, [groupId, supabase]);
 
-  return { customZones, placements };
+  return { customZones, occupants };
 }
 
 /** Apply a realtime change to a local list using only the payload (no re-query). */

@@ -268,9 +268,11 @@ export type VoiceZone = Database["public"]["Tables"]["voice_zones"]["Row"];
 export type VoiceZoneInsert = Database["public"]["Tables"]["voice_zones"]["Insert"];
 export type VoiceZoneUpdate = Database["public"]["Tables"]["voice_zones"]["Update"];
 
-// voice_locked_placements
-export type VoiceLockedPlacement = Database["public"]["Tables"]["voice_locked_placements"]["Row"];
-export type VoiceLockedPlacementInsert = Database["public"]["Tables"]["voice_locked_placements"]["Insert"];
+// voice_private_zone_occupants — who is currently in a private (locked) zone
+// this session window; the server-readable, mod-authored privacy boundary that
+// the token endpoint bakes into each joiner's Daily `canReceive`.
+export type VoicePrivateZoneOccupant = Database["public"]["Tables"]["voice_private_zone_occupants"]["Row"];
+export type VoicePrivateZoneOccupantInsert = Database["public"]["Tables"]["voice_private_zone_occupants"]["Insert"];
 
 // get_product_groups_with_details — returns JSONB, so the generated type is
 // `Json`. Define a structured shape that mirrors what the RPC produces so the
