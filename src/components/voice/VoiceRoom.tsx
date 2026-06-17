@@ -22,6 +22,19 @@ interface VoiceRoomProps {
 
 const SCREEN_SHARE_ANIMATION_MS = 700;
 
+// How far the fixed control dock floats above the bottom of the viewport.
+// Single source of truth: it's the dock's own bottom padding AND the base of the
+// page's reserved scroll space, so nudging this one value moves both together —
+// raise the dock and the scroll padding grows to match. The max() keeps a 2.5rem
+// floor and grows with the device safe-area inset.
+const DOCK_FLOAT_OFFSET = "max(2.5rem, calc(env(safe-area-inset-bottom) + 0.75rem))";
+
+// Generous estimate of the dock pill's own height. Tallest case is the mobile
+// two-row layout (~6.5rem); 8rem leaves breathing room. Overestimating only
+// leaves a little extra scroll room at the very bottom (harmless) — underestimating
+// would let the last participant hide behind the dock, so we round up on purpose.
+const DOCK_HEIGHT_ESTIMATE = "8rem";
+
 export function VoiceRoom({
   title,
   onLeave,
@@ -31,37 +44,46 @@ export function VoiceRoom({
   const { joining, screenSharerSessionId } = useVoiceRoom();
   const [leaving, setLeaving] = useState(false);
 
-  // Animate screen share in/out: delay unmount so exit animation can play.
-  // Keep the last non-null session ID so ScreenShareDisplay can still render
-  // its content during the exit animation (it reads from context which goes
-  // null immediately, so we override via prop).
+  // Animate screen share in/out: delay unmount so the exit animation can play.
   const [screenShareMounted, setScreenShareMounted] = useState(false);
   const [screenShareVisible, setScreenShareVisible] = useState(false);
-  const staleSharerRef = useRef<string | null>(null);
+  // The sharer to keep rendering during the exit animation. Context's
+  // screenSharerSessionId flips to null the instant sharing stops, so we hold the
+  // last known id in state (set in the effect below) and pass it to
+  // ScreenShareDisplay as an override so its content survives the collapse.
+  const [exitingSharerId, setExitingSharerId] = useState<string | null>(null);
   const exitTimerRef = useRef<ReturnType<typeof setTimeout>>(null);
 
-  if (screenSharerSessionId) {
-    // eslint-disable-next-line react-hooks/refs -- TODO: refactor stale-sharer tracking off render-time ref I/O — see TODO.md "Refactor VoiceRoom screen-share animation"
-    staleSharerRef.current = screenSharerSessionId;
-  }
-
+  // Drive the screen-share enter/exit animation. On share start: mount the
+  // viewport at 0-height, then expand it on the next frame so the grid-rows /
+  // opacity transition has a from-state to animate from. On share stop: collapse,
+  // then unmount after the animation finishes (holding exitingSharerId so the
+  // content stays painted while it collapses). Every state update is deferred into
+  // an rAF / timeout callback — never set synchronously in the effect body — so
+  // the mount/visibility state isn't written during the effect's render pass.
   useEffect(() => {
     if (screenSharerSessionId) {
       if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- TODO: see TODO.md "Refactor VoiceRoom screen-share animation"
-      setScreenShareMounted(true);
-      // Trigger enter animation on the next frame so the DOM has the 0-height state first
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setScreenShareVisible(true));
+      let expandFrame = 0;
+      const mountFrame = requestAnimationFrame(() => {
+        setExitingSharerId(screenSharerSessionId);
+        setScreenShareMounted(true);
+        // One more frame so the 0fr / opacity-0 state paints before expanding.
+        expandFrame = requestAnimationFrame(() => setScreenShareVisible(true));
       });
-    } else {
-      setScreenShareVisible(false);
-      exitTimerRef.current = setTimeout(() => {
-        setScreenShareMounted(false);
-        staleSharerRef.current = null;
-      }, SCREEN_SHARE_ANIMATION_MS);
+      return () => {
+        cancelAnimationFrame(mountFrame);
+        cancelAnimationFrame(expandFrame);
+      };
     }
+
+    const collapseFrame = requestAnimationFrame(() => setScreenShareVisible(false));
+    exitTimerRef.current = setTimeout(() => {
+      setScreenShareMounted(false);
+      setExitingSharerId(null);
+    }, SCREEN_SHARE_ANIMATION_MS);
     return () => {
+      cancelAnimationFrame(collapseFrame);
       if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
     };
   }, [screenSharerSessionId]);
@@ -76,7 +98,14 @@ export function VoiceRoom({
   };
 
   return (
-    <div className="space-y-4 pb-48">
+    <div
+      className="space-y-4"
+      // Reserve scroll space equal to the dock's full footprint (how far it floats
+      // above the bottom + an estimate of its own height) so the last participant
+      // clears it when scrolled all the way down. Shares DOCK_FLOAT_OFFSET with the
+      // dock itself, so raising the dock raises this padding in lockstep.
+      style={{ paddingBottom: `calc(${DOCK_FLOAT_OFFSET} + ${DOCK_HEIGHT_ESTIMATE})` }}
+    >
       <Card>
         <CardHeader className="pb-0">
           <CardTitle className="flex items-center gap-2">
@@ -100,10 +129,7 @@ export function VoiceRoom({
           >
             <div className="overflow-hidden">
               {screenShareMounted && (
-                <ScreenShareDisplay
-                  // eslint-disable-next-line react-hooks/refs -- TODO: see TODO.md "Refactor VoiceRoom screen-share animation"
-                  sharerSessionIdOverride={staleSharerRef.current}
-                />
+                <ScreenShareDisplay sharerSessionIdOverride={exitingSharerId} />
               )}
             </div>
           </div>
@@ -125,11 +151,16 @@ export function VoiceRoom({
           fixed-height zone list. No scroll-triggered reveal — in a live call the
           controls are always present. The full-width centering wrapper is
           `pointer-events-none` so clicks fall through to content on either side
-          of the pill; the pill itself re-enables them. The page container
-          reserves matching bottom padding (`pb-32`) so the dock never sits on
-          top of the participant list. VoiceControls already collapses to two
-          short rows below `sm`, so the pill stays narrow on mobile. */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-2 pb-[max(2.5rem,calc(env(safe-area-inset-bottom)+0.75rem))]">
+          of the pill; the pill itself re-enables them. Its bottom offset uses the
+          shared DOCK_FLOAT_OFFSET, which the page container also folds into its
+          reserved scroll padding — so the dock never sits on top of the participant
+          list, and raising the dock raises that padding in lockstep. VoiceControls
+          already collapses to two short rows below `sm`, so the pill stays narrow
+          on mobile. */}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-2"
+        style={{ paddingBottom: DOCK_FLOAT_OFFSET }}
+      >
         <div className="glass-panel pointer-events-auto flex max-w-[calc(100vw-1rem)] items-end gap-3 rounded-2xl border px-4 py-3 shadow-lg">
           <VoiceControls />
 
