@@ -666,7 +666,6 @@ function ZoneMemberTile({
       </VoiceAvatar>
       <span className="w-full truncate text-center text-[10px] leading-tight">
         {p.userName}
-        {p.isLocal && <span className="text-muted-foreground"> {t("you")}</span>}
       </span>
     </div>
   );

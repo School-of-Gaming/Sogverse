@@ -1662,7 +1662,6 @@
   "voice": {
     "participants": "Participants",
     "noParticipantsYet": "No participants yet",
-    "you": "(you)",
     "moderate": "Moderate",
     "muteMicrophone": "Mute microphone",
     "disableCamera": "Disable camera",

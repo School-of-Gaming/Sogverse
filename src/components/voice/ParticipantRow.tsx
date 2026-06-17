@@ -75,9 +75,6 @@ export function ParticipantRow({
       <div className="flex min-w-0 flex-1 items-center gap-2">
         <span className="truncate text-sm font-medium">
           {p.userName}
-          {p.isLocal && (
-            <span className="ml-1 text-xs text-muted-foreground">{t('you')}</span>
-          )}
         </span>
         {showMinecraft && (
           <MinecraftUsernameBadge
