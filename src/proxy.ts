@@ -204,14 +204,10 @@ export async function proxy(request: NextRequest) {
     return redirect(new URL(dashboardPath, request.url));
   }
 
-  // Signed-in parents, gamers, and gedus visiting the home page get bounced
-  // to their dashboard — mirrors the SOG-logo behavior so the home page
-  // isn't a dead-end for them. Admins pass through.
-  if (
-    userId &&
-    pathname === ROUTES.home &&
-    (userRole === "customer" || userRole === "gamer" || userRole === "gedu")
-  ) {
+  // Signed-in users visiting the home page get bounced to their dashboard, so
+  // the home page isn't a dead-end once you're logged in. Mirrors the SOG-logo
+  // behavior, which links to the dashboard for every role.
+  if (userId && userRole && pathname === ROUTES.home) {
     return redirect(new URL(ROLE_DASHBOARD_PATHS[userRole], request.url));
   }
 

@@ -148,6 +148,31 @@ describe("proxy", () => {
     });
   });
 
+  // --- Home page (authenticated → redirect to dashboard) ---
+  // Every signed-in role is bounced off "/" to its own dashboard so the home
+  // page isn't a dead-end. Admins are no exception — they go to /admin like
+  // everyone else goes to theirs.
+
+  describe("home page (authenticated)", () => {
+    it.each([
+      ["admin", "/admin"],
+      ["gedu", "/gedu"],
+      ["gamer", "/gamer"],
+    ])("redirects %s from / to %s", async (role, dashboard) => {
+      mockUser(role);
+      const response = await proxy(createNextRequest("/"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe(dashboard);
+    });
+
+    it("redirects an unlocked customer from / to /parent", async () => {
+      mockUser("customer");
+      const response = await proxy(await unlockedCustomerRequest("/"));
+      expect(response.status).toBe(307);
+      expect(getRedirectUrl(response).pathname).toBe("/parent");
+    });
+  });
+
   // --- Protected routes (unauthenticated → login with redirect) ---
 
   describe("protected routes (unauthenticated)", () => {
