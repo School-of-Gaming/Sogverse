@@ -14,6 +14,7 @@ import { parseUserName } from "@/lib/voice/user-name";
 import { composeZones } from "@/lib/voice/zone-composition";
 import { isCurrentSessionPlacement } from "@/lib/voice/locked-session";
 import { nextConfinement } from "@/lib/voice/confinement";
+import { correctSelfOccupancy } from "@/lib/voice/self-occupancy";
 import type { PrivateOccupant } from "@/lib/voice/receive-permissions";
 import { DEFAULT_ZONE_ID } from "@/lib/constants/voice-zones";
 import { getClient } from "@/lib/supabase/client";
@@ -493,9 +494,15 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
       // Normal zone. A confined gamer can't self-move out (mod-only).
       if (!isMod && iAmOccupant) return;
-      const leavingPrivate = zones.find((z) => z.id === localZoneIdRef.current)?.isLocked;
       membership.moveSelfToZone(zoneId);
-      if (isMod && myUserId && leavingPrivate) void removeFromPrivateZone(myUserId);
+      // Clear my own occupancy row when leaving a private zone for a normal one.
+      // Gate on "do I still hold a row" (`iAmOccupant`, from the DB echo) rather
+      // than "is the zone I'm leaving locked": after the synchronous move above,
+      // re-deriving locked-ness from `localZoneIdRef` would read the *new* zone
+      // and never fire on a second tap. Reading the echo also makes the clear
+      // self-healing — if a prior DELETE's echo was lost, the row lingers in
+      // `occupantsRef`, so a later move re-issues an idempotent DELETE.
+      if (isMod && myUserId && iAmOccupant) void removeFromPrivateZone(myUserId);
     },
     [zones, membership, placeInPrivateZone, removeFromPrivateZone],
   );
@@ -593,6 +600,25 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
 
   const localUserId = participants.find((p) => p.isLocal)?.userId ?? null;
 
+  // Occupancy as we act on it locally, with the local user's *own* row corrected
+  // to synchronous truth (a moderator self-manages their occupancy, so their own
+  // row follows the zone they're synchronously standing in, never the laggy /
+  // droppable realtime echo of it — see `correctSelfOccupancy`). The raw echo
+  // still lives in `privateOccupants`/`occupantsRef`, which gate the idempotent
+  // exit DELETE on what the DB still thinks.
+  const effectiveOccupants = useMemo<PrivateOccupant[]>(
+    () =>
+      correctSelfOccupancy({
+        echoed: privateOccupants,
+        localUserId,
+        isModerator,
+        localZoneId: membership.currentZoneId,
+        localZoneIsLocked: !!zones.find((z) => z.id === membership.currentZoneId)
+          ?.isLocked,
+      }),
+    [privateOccupants, localUserId, isModerator, zones, membership.currentZoneId],
+  );
+
   // Owners enforce the private-zone `canReceive` boundary live on everyone
   // already connected; new joiners get the same projection baked into their
   // token server-side. Non-owners' effect is a no-op (they can't set perms).
@@ -601,11 +627,11 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
     isModeratorRef,
     joined,
     participants,
-    occupants: privateOccupants,
+    occupants: effectiveOccupants,
   });
 
   const participantsByZone = useMemo(() => {
-    const occupancyByUser = new Map(privateOccupants.map((o) => [o.userId, o.zoneId]));
+    const occupancyByUser = new Map(effectiveOccupants.map((o) => [o.userId, o.zoneId]));
     const map = new Map<string, VoiceParticipant[]>();
     for (const z of zones) map.set(z.id, []);
     for (const p of participants) {
@@ -613,6 +639,8 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       // the authoritative, mod-written boundary — so a gamer can't fake their
       // way out by editing their own userData. Otherwise bucket by self-reported
       // userData zone, falling back to the lobby if that zone was deleted.
+      // (`effectiveOccupants` corrects the local mod's own row to synchronous
+      // truth so their tile isn't pinned by a lingering echo — see above.)
       const zid =
         occupancyByUser.get(p.userId) ?? (map.has(p.zoneId) ? p.zoneId : DEFAULT_ZONE_ID);
       const bucket = map.get(zid);
@@ -620,13 +648,15 @@ export function VoiceRoomProvider({ children, groupId = null }: VoiceRoomProvide
       else map.set(zid, [p]);
     }
     return map;
-  }, [participants, zones, privateOccupants]);
+  }, [participants, zones, effectiveOccupants]);
 
   // The local user's current zone: their occupancy row if they're in a private
-  // zone (authoritative), else their self-reported userData zone.
+  // zone (authoritative for a confined gamer), else their self-reported userData
+  // zone. For a moderator `effectiveOccupants` already reduces this to their
+  // synchronous membership zone, so a self-exit isn't pinned by the echo.
   const currentZoneId =
     (localUserId
-      ? privateOccupants.find((o) => o.userId === localUserId)?.zoneId
+      ? effectiveOccupants.find((o) => o.userId === localUserId)?.zoneId
       : undefined) ?? membership.currentZoneId;
 
   // A placed gamer's client auto-confines: pinned into its occupancy zone when a
